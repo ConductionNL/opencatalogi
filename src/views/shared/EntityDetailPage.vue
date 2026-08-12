@@ -1,3 +1,20 @@
+<!--
+	UNREACHABLE COMPONENT — no visual baseline is possible.
+
+	Nothing imports this file: `src/registry.js` is the only place page
+	components are handed to CnAppRoot, and it does not list it. Every
+	`*Detail` route in `src/manifest.json` (`OrganizationDetail`, `ThemeDetail`,
+	`GlossaryDetail`, `PageDetail`, `MenuDetail`, `PublicationDetail`) is a
+	manifest `type: "detail"` page rendered by nc-vue's generic CnDetailPage, so
+	this shared view is superseded migration debris. Confirmed by grepping the
+	built bundle: its `name: 'EntityDetailPage'` option occurs 0 times in
+	`js/opencatalogi-main.js`, while the six wired views each occur once —
+	webpack tree-shakes it out entirely.
+
+	See src/views/directory/DirectoryIndex.vue for the full rationale.
+
+	@visual exclude Unreachable: imported by nothing, in no route, tree-shaken out of the shipped bundle; superseded by the manifest type:"detail" pages (CnDetailPage). Tracked in ConductionNL/opencatalogi#849.
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { objectStore, navigationStore } from '../../store/store.js'

@@ -1747,8 +1747,8 @@ export default {
 		shouldShowPublishAction(object) {
 			if (!object) return false
 			const now = new Date()
-			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
-			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+			const published = object.publicationDate ? new Date(object.publicationDate) : null
+			const depublished = object.depublicationDate ? new Date(object.depublicationDate) : null
 
 			if (depublished && depublished < now) return true // currently depublished
 			if (!published && !depublished) return true // never published
@@ -1759,8 +1759,8 @@ export default {
 		shouldShowDepublishAction(object) {
 			if (!object) return false
 			const now = new Date()
-			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
-			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+			const published = object.publicationDate ? new Date(object.publicationDate) : null
+			const depublished = object.depublicationDate ? new Date(object.depublicationDate) : null
 
 			// Currently live: published in the past and not yet depublished
 			return !!(published && published <= now && (!depublished || depublished > now))

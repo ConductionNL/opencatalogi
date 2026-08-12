@@ -22,8 +22,8 @@ function resolveSchema(publication) {
 }
 
 /**
- * Check if a publication's schema declares both `publicatiedatum` and
- * `depublicatiedatum` properties — the two fields the publish/depublish
+ * Check if a publication's schema declares both `publicationDate` and
+ * `depublicationDate` properties — the two fields the publish/depublish
  * flows write to. Returns false (fail closed) when the schema can't be
  * resolved, so UI gates disable the action rather than silently saving
  * to a schema that doesn't model these fields.
@@ -37,5 +37,5 @@ export function schemaHasPublicationDateFields(publication) {
 	const schema = resolveSchema(publication)
 	const props = schema?.properties
 	if (!props || typeof props !== 'object') return false
-	return Boolean(props.publicatiedatum) && Boolean(props.depublicatiedatum)
+	return Boolean(props.publicationDate) && Boolean(props.depublicationDate)
 }

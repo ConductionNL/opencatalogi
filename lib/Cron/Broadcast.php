@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Broadcast Cron Job.
  *
@@ -26,9 +27,9 @@
 namespace OCA\OpenCatalogi\Cron;
 
 use OCA\OpenCatalogi\Service\BroadcastService;
-use OCP\BackgroundJob\TimedJob;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
+use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -39,73 +40,71 @@ use Psr\Log\LoggerInterface;
  *
  * @see https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
  */
-class Broadcast extends TimedJob
-{
-    /**
-     * Constructor for Broadcast cron job.
-     *
-     * @param ITimeFactory     $time             Time factory for scheduling.
-     * @param BroadcastService $broadcastService Service for handling broadcasts.
-     * @param LoggerInterface  $logger           Logger for recording broadcast activities.
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private readonly BroadcastService $broadcastService,
-        private readonly LoggerInterface $logger
-    ) {
-        parent::__construct($time);
+class Broadcast extends TimedJob {
+	/**
+	 * Constructor for Broadcast cron job.
+	 *
+	 * @param ITimeFactory $time Time factory for scheduling.
+	 * @param BroadcastService $broadcastService Service for handling broadcasts.
+	 * @param LoggerInterface $logger Logger for recording broadcast activities.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private readonly BroadcastService $broadcastService,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct($time);
 
-        // Set interval to 4 hours (14400 seconds).
-        $this->setInterval(14400);
+		// Set interval to 4 hours (14400 seconds).
+		$this->setInterval(14400);
 
-        // Set job to run during low-load times.
-        $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+		// Set job to run during low-load times.
+		$this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
 
-        // Prevent parallel runs to avoid duplicate broadcasts.
-        $this->setAllowParallelRuns(false);
+		// Prevent parallel runs to avoid duplicate broadcasts.
+		$this->setAllowParallelRuns(false);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Execute the broadcast job.
-     *
-     * This method is called by the Nextcloud background job system every 4 hours.
-     * It broadcasts this directory to all known external OpenCatalogi instances.
-     *
-     * @param array $argument Arguments passed to the job.
-     *
-     * @return void
-     *
-     * @throws \Exception When broadcasting fails critically.
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     *
-     * @spec openspec/specs/dashboard/spec.md
-     */
-    protected function run($argument): void
-    {
-        try {
-            // Log the start of the broadcast process.
-            $this->logger->info('Starting scheduled broadcast of OpenCatalogi directory');
+	/**
+	 * Execute the broadcast job.
+	 *
+	 * This method is called by the Nextcloud background job system every 4 hours.
+	 * It broadcasts this directory to all known external OpenCatalogi instances.
+	 *
+	 * @param array $argument Arguments passed to the job.
+	 *
+	 * @return void
+	 *
+	 * @throws \Exception When broadcasting fails critically.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	protected function run($argument): void {
+		try {
+			// Log the start of the broadcast process.
+			$this->logger->info('Starting scheduled broadcast of OpenCatalogi directory');
 
-            // Perform the broadcast to all known directories.
-            $this->broadcastService->broadcast(null);
+			// Perform the broadcast to all known directories.
+			$this->broadcastService->broadcast(null);
 
-            // Log successful completion.
-            $this->logger->info('Successfully completed scheduled broadcast of OpenCatalogi directory');
-        } catch (\Exception $e) {
-            // Log the error for debugging purposes.
-            $this->logger->error(
-                message: 'Failed to complete scheduled broadcast: '.$e->getMessage(),
-                context: [
-                    'exception' => $e,
-                    'trace'     => $e->getTraceAsString(),
-                ]
-            );
+			// Log successful completion.
+			$this->logger->info('Successfully completed scheduled broadcast of OpenCatalogi directory');
+		} catch (\Exception $e) {
+			// Log the error for debugging purposes.
+			$this->logger->error(
+				message: 'Failed to complete scheduled broadcast: ' . $e->getMessage(),
+				context: [
+					'exception' => $e,
+					'trace' => $e->getTraceAsString(),
+				]
+			);
 
-            // Re-throw the exception to mark the job as failed.
-            throw $e;
-        }//end try
+			// Re-throw the exception to mark the job as failed.
+			throw $e;
+		}//end try
 
-    }//end run()
+	}//end run()
 }//end class

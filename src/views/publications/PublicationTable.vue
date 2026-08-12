@@ -1,3 +1,19 @@
+<!--
+	UNREACHABLE COMPONENT — no visual baseline is possible.
+
+	Nothing imports this file: `src/registry.js` is the only place page
+	components are handed to CnAppRoot, and it does not list it. The publications
+	table is drawn by nc-vue's generic CnIndexPage for the manifest
+	`type: "index"` Publications page, so this view is superseded migration
+	debris. Confirmed by grepping the built bundle: its
+	`name: 'PublicationTable'` option occurs 0 times in
+	`js/opencatalogi-main.js`, while the six wired views each occur once —
+	webpack tree-shakes it out entirely.
+
+	See src/views/directory/DirectoryIndex.vue for the full rationale.
+
+	@visual exclude Unreachable: imported by nothing, in no route, tree-shaken out of the shipped bundle; superseded by the manifest type:"index" Publications page (CnIndexPage). Tracked in ConductionNL/opencatalogi#849.
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
@@ -91,14 +107,14 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<!-- Custom column: status -->
 		<template #column-published="{ row }">
 			<template v-if="getPublicationStatus(row) === 'concept'">
-				<span v-if="row.publicatiedatum">{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(row.publicatiedatum) }}</span>
+				<span v-if="row.publicationDate">{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(row.publicationDate) }}</span>
 				<span v-else>{{ t('opencatalogi', 'Concept') }}</span>
 			</template>
 			<template v-else-if="getPublicationStatus(row) === 'published'">
-				{{ t('opencatalogi', 'Published on') }} {{ formatDate(row.publicatiedatum) }}
+				{{ t('opencatalogi', 'Published on') }} {{ formatDate(row.publicationDate) }}
 			</template>
 			<template v-else>
-				{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(row.depublicatiedatum) }}
+				{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(row.depublicationDate) }}
 			</template>
 		</template>
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for Doctrine\DBAL\Connection.
  *
@@ -14,21 +15,17 @@ namespace Doctrine\DBAL;
 /**
  * Stub for Doctrine DBAL Connection.
  */
-class Connection
-{
+class Connection {
 
-    /**
-     * @param string $sql SQL query.
-     * @param array<mixed> $params Parameters.
-     * @param array<mixed> $types Types.
-     *
-     * @return mixed
-     */
-    public function executeQuery(string $sql, array $params=[], array $types=[]): mixed
-    {
-        return null;
-
-    }//end executeQuery()
-
+	/**
+	 * @param string $sql SQL query.
+	 * @param array<mixed> $params Parameters.
+	 * @param array<mixed> $types Types.
+	 *
+	 * @return mixed
+	 */
+	public function executeQuery(string $sql, array $params = [], array $types = []): mixed {
+		return null;
+	}//end executeQuery()
 
 }//end class

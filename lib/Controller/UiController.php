@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi UI Controller.
  *
@@ -35,225 +36,200 @@ use OCP\IRequest;
  *
  * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
  */
-class UiController extends Controller
-{
-    /**
-     * Constructor.
-     *
-     * @param string   $appName The application name.
-     * @param IRequest $request The HTTP request.
-     */
-    public function __construct(
-        string $appName,
-        IRequest $request
-    ) {
-        parent::__construct($appName, $request);
+class UiController extends Controller {
+	/**
+	 * Constructor.
+	 *
+	 * @param string $appName The application name.
+	 * @param IRequest $request The HTTP request.
+	 */
+	public function __construct(
+		string $appName,
+		IRequest $request,
+	) {
+		parent::__construct($appName, $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Returns the base SPA template response with permissive connect-src for API calls.
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse
-     */
-    private function makeSpaResponse(): TemplateResponse
-    {
-        // The manifest-config initial state (register/schema ids +
-        // default_directory_url) is provided controller-independently by
-        // ProvideManifestConfigStateListener on BeforeTemplateRenderedEvent, so
-        // it reaches the SPA whether this route or the AppHost dashboard route
-        // serves the index. This method only builds the template + CSP.
-        $response = new TemplateResponse(
-            $this->appName,
-            'index',
-            []
-        );
+	/**
+	 * Returns the base SPA template response with permissive connect-src for API calls.
+	 *
+	 * @phpstan-return TemplateResponse
+	 * @psalm-return   TemplateResponse
+	 *
+	 * @return TemplateResponse
+	 */
+	private function makeSpaResponse(): TemplateResponse {
+		// The manifest-config initial state (register/schema ids +
+		// default_directory_url) is provided controller-independently by
+		// ProvideManifestConfigStateListener on BeforeTemplateRenderedEvent, so
+		// it reaches the SPA whether this route or the AppHost dashboard route
+		// serves the index. This method only builds the template + CSP.
+		$response = new TemplateResponse(
+			$this->appName,
+			'index',
+			[]
+		);
 
-        // Set up Content Security Policy — permissive connect-src for API calls.
-        $csp = new ContentSecurityPolicy();
-        $csp->addAllowedConnectDomain('*');
-        $response->setContentSecurityPolicy($csp);
+		// Set up Content Security Policy — permissive connect-src for API calls.
+		$csp = new ContentSecurityPolicy();
+		$csp->addAllowedConnectDomain('*');
+		$response->setContentSecurityPolicy($csp);
 
-        return $response;
+		return $response;
+	}//end makeSpaResponse()
 
-    }//end makeSpaResponse()
+	/**
+	 * Serve dashboard page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function dashboard(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end dashboard()
 
-    /**
-     * Serve dashboard page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function dashboard(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
+	/**
+	 * Serve catalogi page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function catalogi(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end catalogi()
 
-    }//end dashboard()
+	/**
+	 * Serve publications index page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function publicationsIndex(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end publicationsIndex()
 
-    /**
-     * Serve catalogi page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function catalogi(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
+	/**
+	 * Serve publications detail page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function publicationsPage(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end publicationsPage()
 
-    }//end catalogi()
+	/**
+	 * Serve search page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function search(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end search()
 
-    /**
-     * Serve publications index page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function publicationsIndex(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
+	/**
+	 * Serve organizations page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function organizations(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end organizations()
 
-    }//end publicationsIndex()
+	/**
+	 * Serve themes page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function themes(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end themes()
 
-    /**
-     * Serve publications detail page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function publicationsPage(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
+	/**
+	 * Serve glossary page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function glossary(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end glossary()
 
-    }//end publicationsPage()
+	/**
+	 * Serve pages page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function pages(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end pages()
 
-    /**
-     * Serve search page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function search(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
+	/**
+	 * Serve menus page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function menus(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end menus()
 
-    }//end search()
-
-    /**
-     * Serve organizations page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function organizations(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
-
-    }//end organizations()
-
-    /**
-     * Serve themes page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function themes(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
-
-    }//end themes()
-
-    /**
-     * Serve glossary page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function glossary(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
-
-    }//end glossary()
-
-    /**
-     * Serve pages page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function pages(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
-
-    }//end pages()
-
-    /**
-     * Serve menus page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function menus(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
-
-    }//end menus()
-
-    /**
-     * Serve directory page.
-     *
-     * @return TemplateResponse
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-     */
-    public function directory(): TemplateResponse
-    {
-        return $this->makeSpaResponse();
-
-    }//end directory()
+	/**
+	 * Serve directory page.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
+	 */
+	public function directory(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end directory()
 }//end class

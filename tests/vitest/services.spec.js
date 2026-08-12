@@ -72,39 +72,39 @@ describe('publicationStatus', () => {
 	const past = '2026-01-01T00:00:00Z'
 	const future = '2026-12-31T00:00:00Z'
 
-	it('isConcept: no publicatiedatum or a future one', () => {
+	it('isConcept: no publicationDate or a future one', () => {
 		freezeNow()
 		expect(isConcept({})).toBe(true)
-		expect(isConcept({ publicatiedatum: future })).toBe(true)
-		expect(isConcept({ publicatiedatum: past })).toBe(false)
+		expect(isConcept({ publicationDate: future })).toBe(true)
+		expect(isConcept({ publicationDate: past })).toBe(false)
 	})
 
 	it('isPublished: past publish date, no/future depublish', () => {
 		freezeNow()
-		expect(isPublished({ publicatiedatum: past })).toBe(true)
-		expect(isPublished({ publicatiedatum: past, depublicatiedatum: future })).toBe(true)
-		expect(isPublished({ publicatiedatum: past, depublicatiedatum: past })).toBe(false)
-		expect(isPublished({ publicatiedatum: future })).toBe(false)
+		expect(isPublished({ publicationDate: past })).toBe(true)
+		expect(isPublished({ publicationDate: past, depublicationDate: future })).toBe(true)
+		expect(isPublished({ publicationDate: past, depublicationDate: past })).toBe(false)
+		expect(isPublished({ publicationDate: future })).toBe(false)
 		expect(isPublished({})).toBe(false)
 	})
 
 	it('isDepublished: past publish AND past depublish', () => {
 		freezeNow()
-		expect(isDepublished({ publicatiedatum: past, depublicatiedatum: past })).toBe(true)
-		expect(isDepublished({ publicatiedatum: past })).toBe(false)
-		expect(isDepublished({ publicatiedatum: future, depublicatiedatum: past })).toBe(false)
+		expect(isDepublished({ publicationDate: past, depublicationDate: past })).toBe(true)
+		expect(isDepublished({ publicationDate: past })).toBe(false)
+		expect(isDepublished({ publicationDate: future, depublicationDate: past })).toBe(false)
 	})
 
 	it('getPublicationStatus: resolves the three states by priority', () => {
 		freezeNow()
 		expect(getPublicationStatus({})).toBe('concept')
-		expect(getPublicationStatus({ publicatiedatum: future })).toBe('concept')
-		expect(getPublicationStatus({ publicatiedatum: past })).toBe('published')
-		expect(getPublicationStatus({ publicatiedatum: past, depublicatiedatum: past })).toBe('depublished')
+		expect(getPublicationStatus({ publicationDate: future })).toBe('concept')
+		expect(getPublicationStatus({ publicationDate: past })).toBe('published')
+		expect(getPublicationStatus({ publicationDate: past, depublicationDate: past })).toBe('depublished')
 	})
 
 	it('treats an unparseable date as absent (concept, fail-safe)', () => {
 		freezeNow()
-		expect(getPublicationStatus({ publicatiedatum: 'garbage' })).toBe('concept')
+		expect(getPublicationStatus({ publicationDate: 'garbage' })).toBe('concept')
 	})
 })

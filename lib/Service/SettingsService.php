@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi Settings Service
  *
@@ -34,12 +35,11 @@
 
 namespace OCA\OpenCatalogi\Service;
 
-use OCP\IAppConfig;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
-use OCP\AppFramework\Http\JSONResponse;
 use OC_App;
 use OCA\OpenCatalogi\AppInfo\Application;
+use OCP\App\IAppManager;
+use OCP\IAppConfig;
+use Psr\Container\ContainerInterface;
 use RuntimeException;
 
 /**
@@ -51,1369 +51,1335 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  */
-class SettingsService
-{
-
-    /**
-     * This property holds the name of the application, which is used for identification and configuration purposes.
-     *
-     * @var string $appName The name of the app.
-     */
-    private string $appName;
-
-    /**
-     * This constant represents the unique identifier for the
-     * OpenRegister application, used to check its installation
-     * and status.
-     *
-     * @var string $openRegisterAppId The ID of the OpenRegister app.
-     */
-    private const OPENREGISTER_APP_ID = 'openregister';
-
-    /**
-     * This constant defines the minimum version of the OpenRegister
-     * application that is required for compatibility and
-     * functionality.
-     *
-     * @var string $minORVersion The minimum required version of OpenRegister.
-     */
-    private const MIN_OPENREGISTER_VERSION = '0.1.7';
-
-    /**
-     * SettingsService constructor.
-     *
-     * @param IAppConfig                $config             App configuration interface.
-     * @param ContainerInterface        $container          Container for dependency injection.
-     * @param IAppManager               $appManager         App manager interface.
-     * @param RegisterSchemaLinkService $registerSchemaLink Repairs register-to-schema linkage after an import.
-     */
-    public function __construct(
-        private readonly IAppConfig $config,
-        private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager,
-        private readonly RegisterSchemaLinkService $registerSchemaLink
-    ) {
-        // Indulge in setting the application name for identification and configuration purposes.
-        $this->appName = 'opencatalogi';
-
-    }//end __construct()
-
-    /**
-     * Checks if OpenRegister is installed and meets version requirements.
-     *
-     * @param string|null $minVersion Minimum required version (e.g. '1.0.0').
-     *
-     * @return boolean True if OpenRegister is installed and meets version requirements.
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function isOpenRegisterInstalled(?string $minVersion=self::MIN_OPENREGISTER_VERSION): bool
-    {
-        if ($this->appManager->isInstalled(self::OPENREGISTER_APP_ID) === false) {
-            return false;
-        }
-
-        if ($minVersion === null) {
-            return true;
-        }
-
-        $currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
-        return version_compare(version1: $currentVersion, version2: $minVersion, operator: '>=');
-
-    }//end isOpenRegisterInstalled()
-
-    /**
-     * Checks if OpenRegister is enabled.
-     *
-     * @return boolean True if OpenRegister is enabled.
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function isOpenRegisterEnabled(): bool
-    {
-        /*
-         * @psalm-suppress UndefinedInterfaceMethod
-         */
-
-        return $this->appManager->isEnabledForUser(self::OPENREGISTER_APP_ID) === true;
-
-    }//end isOpenRegisterEnabled()
-
-    /**
-     * Attempts to install or update OpenRegister.
-     *
-     * @param string|null $minVersion Minimum required version.
-     *
-     * @return boolean True if installation/update was successful.
-     * @throws \RuntimeException If installation/update fails.
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.StaticAccess)         — OC_App is Nextcloud's legacy static API
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function installOrUpdateOpenRegister(?string $minVersion=self::MIN_OPENREGISTER_VERSION): bool
-    {
-        try {
-            if ($this->isOpenRegisterInstalled($minVersion) === false) {
-                // Removed problematic download functionality
-                // Then install the downloaded app.
-                if (OC_App::installApp(self::OPENREGISTER_APP_ID) === false) {
-                    throw new RuntimeException('Failed to install OpenRegister');
-                }
-
-                // Enable the app after installation.
-                if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
-                    throw new RuntimeException('Failed to enable OpenRegister');
-                }
-            }
-
-            if ($this->isOpenRegisterInstalled($minVersion) === true && $minVersion !== null) {
-                // Check if update is needed.
-                $currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
-                if (version_compare(version1: $currentVersion, version2: $minVersion, operator: '<') === true) {
-                    // Removed problematic download functionality
-                    // Then update the app.
-                    if (OC_App::updateApp(self::OPENREGISTER_APP_ID) === false) {
-                        throw new RuntimeException('Failed to update OpenRegister');
-                    }
-                }
-
-                // Ensure the app is enabled after update.
-                if ($this->isOpenRegisterEnabled() === false) {
-                    if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
-                        throw new RuntimeException('Failed to enable OpenRegister after update');
-                    }
-                }
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to install/update OpenRegister: '.$e->getMessage());
-        }//end try
-
-    }//end installOrUpdateOpenRegister()
-
-    /**
-     * Attempts to auto-configure registers and schemas.
-     *
-     * @return array The updated configuration.
-     * @throws \RuntimeException If auto-configuration fails.
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function autoConfigure(): array
-    {
-        try {
-            $registerMapper = $this->getRegisterMapper();
-            $registers      = $registerMapper->findAll();
-
-            $registerSlug = 'publication';
-
-            if (empty($registers) === true) {
-                return [];
-            }
-
-            $configuration = [];
-            foreach ($this->getSettings()['objectTypes'] as $type) {
-                // Try to find a register with a matching name.
-                $matchingRegister = null;
-                foreach ($registers as $register) {
-                    // Convert Register entity to array if needed.
-                    $registerData = $register;
-                    if (is_array($register) === false) {
-                        $registerData = $register->jsonSerialize();
-                    }
-
-                    if (stripos($registerData['slug'], $registerSlug) !== false) {
-                        $matchingRegister = $registerData;
-                        break;
-                    }
-                }
-
-                if ($matchingRegister !== null) {
-                    $configuration["{$type}_register"] = $matchingRegister['id'];
-
-                    // Try to find a matching schema.
-                    if (empty($matchingRegister['schemas']) === false) {
-                        foreach ($matchingRegister['schemas'] as $schema) {
-                            if (is_array($schema) === false) {
-                                continue;
-                            }
-
-                            if (stripos($schema['title'], $type) !== false) {
-                                $configuration["{$type}_schema"] = $schema['id'];
-                                break;
-                            }
-                        }
-                    }
-                }
-            }//end foreach
-
-            return $configuration;
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to auto-configure: '.$e->getMessage());
-        }//end try
-
-    }//end autoConfigure()
-
-    /**
-     * Initializes the app with all required components.
-     *
-     * @param string|null $minORVersion Minimum required OpenRegister version.
-     *
-     * @return array The initialization results.
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function initialize(?string $minORVersion=self::MIN_OPENREGISTER_VERSION): array
-    {
-        $results = [
-            'openRegister'   => false,
-            'autoConfigured' => false,
-            'settingsLoaded' => false,
-            'errors'         => [],
-        ];
-
-        try {
-            // Check and install/update OpenRegister.
-            if ($this->isOpenRegisterInstalled($minORVersion) === false) {
-                $this->installOrUpdateOpenRegister($minORVersion);
-            }
-
-            $results['openRegister'] = true;
-
-            // Auto-configure registers and schemas.
-            $configuration = $this->autoConfigure();
-            if (empty($configuration) === false) {
-                $this->updateSettings($configuration);
-                $results['autoConfigured'] = true;
-            }
-
-            // Load settings from file only if needed.
-            $results['settingsLoaded'] = true;
-            if ($this->shouldLoadSettings() === true) {
-                $this->loadSettings();
-            }
-        } catch (\Exception $e) {
-            $results['errors'][] = $e->getMessage();
-        }//end try
-
-        return $results;
-
-    }//end initialize()
-
-    /**
-     * Attempts to retrieve the OpenRegister service from the container.
-     *
-     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
-     * @throws \RuntimeException If the service is not available.
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       ObjectService from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        }
-
-        throw new RuntimeException('OpenRegister service is not available.');
-
-    }//end getObjectService()
-
-    /**
-     * Attempts to retrieve the RegisterMapper from the container.
-     *
-     * @return \OCA\OpenRegister\Db\RegisterMapper|null The RegisterMapper if available, null otherwise.
-     * @throws \RuntimeException If the service is not available.
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       RegisterMapper from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
-        }
-
-        throw new RuntimeException('RegisterMapper is not available.');
-
-    }//end getRegisterMapper()
-
-    /**
-     * Attempts to retrieve the Schema mapper from the container.
-     *
-     * @return \OCA\OpenRegister\Db\SchemaMapper|null The Schema mapper if available, null otherwise.
-     * @throws \RuntimeException If the mapper is not available.
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       SchemaMapper from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
-        }
-
-        throw new RuntimeException('SchemaMapper is not available.');
-
-    }//end getSchemaMapper()
-
-    /**
-     * Attempts to retrieve the Configuration service from the container.
-     *
-     * @return \OCA\OpenRegister\Service\ConfigurationService|null The Configuration service if available, null otherwise.
-     * @throws \RuntimeException If the service is not available.
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       ConfigurationService from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getConfigurationService(): ?\OCA\OpenRegister\Service\ConfigurationService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
-        }
-
-        throw new RuntimeException('Configuration service is not available.');
-
-    }//end getConfigurationService()
-
-    /**
-     * Retrieve the current settings.
-     *
-     * @return array The current settings configuration.
-     * @throws \RuntimeException If settings retrieval fails.
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function getSettings(): array
-    {
-        // Initialize the data array.
-        $data = [];
-        $data['objectTypes']        = [
-            'catalog',
-            'listing',
-            'organization',
-            'theme',
-            'page',
-            'menu',
-            'glossary',
-            'document',
-            'usageCounter',
-            // OOAPI-catalog-publication (OOAPI-010): materialized course/program/offering
-            // scope. Included here so the generic Settings.vue schema selector renders
-            // them like every other object type — no bespoke frontend needed.
-            'ooapi_courses',
-            'ooapi_programs',
-            'ooapi_offerings',
-        ];
-        $data['openRegisters']      = false;
-        $data['availableRegisters'] = [];
-
-        // Check if the OpenRegister service is available.
-        try {
-            $registerMapper = $this->getRegisterMapper();
-            if ($registerMapper !== null) {
-                $data['openRegisters'] = true;
-                $registers = $registerMapper->findAll(
-                    _rbac: false,
-                    _multitenancy: false
-                );
-
-                // Enrich registers with full schema objects instead of just IDs.
-                $data['availableRegisters'] = $this->enrichRegistersWithSchemas($registers);
-            }
-        } catch (\RuntimeException $e) {
-            // Service not available, continue with default values.
-        }
-
-        // Build defaults array dynamically based on object types.
-        $defaults = [];
-        foreach ($data['objectTypes'] as $type) {
-            // Always use openregister as source.
-            $defaults["{$type}_source"]   = 'openregister';
-            $defaults["{$type}_schema"]   = '';
-            $defaults["{$type}_register"] = '';
-        }
-
-        // Add publishing options defaults.
-        $defaults['auto_publish_attachments']      = 'false';
-        $defaults['auto_publish_objects']          = 'false';
-        $defaults['use_old_style_publishing_view'] = 'false';
-
-        // Add DCAT-AP-NL harvest publisher defaults (DCAT-005 / DCAT-010). These are the
-        // instance-level fallbacks used to complete mandatory dataset properties; the
-        // per-catalog DCAT enable toggle (hasDcat) lives on the catalog object itself.
-        $defaults['dcat_instance_title']  = 'OpenCatalogi';
-        $defaults['dcat_publisher_name']  = '';
-        $defaults['dcat_publisher_uri']   = '';
-        $defaults['dcat_default_license'] = 'http://creativecommons.org/publicdomain/zero/1.0/';
-        $defaults['dcat_contact_point']   = '';
-
-        // Add OOAPI 5.0 catalog-publication defaults (OOAPI-008/OOAPI-010). MVP
-        // consumer-credential gate (design.md D3): any authenticated Nextcloud user
-        // may read an OOAPI-enabled catalog's feed when the allowlist is empty
-        // (the default); a comma-separated list of Nextcloud usernames restricts
-        // access to exactly those accounts. Reuses Nextcloud's own user + app-password
-        // mechanism as the "credential" — no bespoke token store (D3: "no new auth
-        // framework"). Per-catalog credential scoping (design.md open question 3) is
-        // NOT implemented in this MVP; the allowlist is instance-wide.
-        $defaults['ooapi_consumers'] = '';
-
-        // Woo-index registration status (WOO-HR-003, woo-index-harvester-readiness
-        // design D3): tracks this instance's relationship to the national Woo-index /
-        // Register van Overheidsorganisaties. Operational config, not a publication.
-        $defaults['woo_index_registration_status'] = 'not_registered';
-        $defaults['woo_index_registration_url']    = '';
-        $defaults['woo_index_registration_at']     = '';
-
-        // Get the current values for the object types from the configuration.
-        try {
-            foreach ($defaults as $key => $defaultValue) {
-                $data['configuration'][$key] = $this->config->getValueString($this->appName, $key, $defaultValue);
-            }
-
-            return $data;
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to retrieve settings: '.$e->getMessage());
-        }
-
-    }//end getSettings()
-
-    /**
-     * Enrich registers with full schema objects instead of just schema IDs.
-     *
-     * This method takes an array of register entities and replaces their schema ID arrays
-     * with full schema objects containing id, title, and other metadata.
-     *
-     * @param array $registers Array of register entities from OpenRegister.
-     *
-     * @return array Array of registers with enriched schema data.
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    private function enrichRegistersWithSchemas(array $registers): array
-    {
-        try {
-            // Get the schema mapper to fetch full schema objects.
-            $schemaMapper = $this->getSchemaMapper();
-            if ($schemaMapper === null) {
-                // If we can't get the schema mapper, return registers as-is.
-                return $registers;
-            }
-
-            $enrichedRegisters = [];
-
-            foreach ($registers as $register) {
-                // Convert register to array if it's an object.
-                $registerArray = (array) $register;
-                if (is_object($register) === true && method_exists($register, 'jsonSerialize') === true) {
-                    $registerArray = $register->jsonSerialize();
-                }
-
-                // Get schema IDs from the register.
-                $schemaIds = $registerArray['schemas'] ?? [];
-
-                // If schemas is not an array or is empty, keep as-is.
-                if (is_array($schemaIds) === false || empty($schemaIds) === true) {
-                    $enrichedRegisters[] = $registerArray;
-                    continue;
-                }
-
-                // Fetch full schema objects for each schema ID.
-                $fullSchemas = [];
-                foreach ($schemaIds as $schemaId) {
-                    // Skip if not a number (already an object).
-                    if (is_numeric($schemaId) === false) {
-                        $fullSchemas[] = $schemaId;
-                        continue;
-                    }
-
-                    try {
-                        $schema = $schemaMapper->find((int) $schemaId, _rbac: false, _multitenancy: false);
-                        if ($schema !== null) {
-                            // Convert schema entity to array.
-                            $schemaArray = (array) $schema;
-                            if (is_object($schema) === true && method_exists($schema, 'jsonSerialize') === true) {
-                                $schemaArray = $schema->jsonSerialize();
-                            }
-
-                            $fullSchemas[] = $schemaArray;
-                        }
-                    } catch (\Exception $e) {
-                        // Schema not found, skip it.
-                        continue;
-                    }
-                }//end foreach
-
-                // Replace schema IDs with full schema objects.
-                $registerArray['schemas'] = $fullSchemas;
-                $enrichedRegisters[]      = $registerArray;
-            }//end foreach
-
-            return $enrichedRegisters;
-        } catch (\Exception $e) {
-            // If enrichment fails, return registers as-is.
-            return $registers;
-        }//end try
-
-    }//end enrichRegistersWithSchemas()
-
-    /**
-     * Update the settings configuration.
-     *
-     * Only keys that belong to the canonical settings allowlist (the same set
-     * enumerated in getSettings()) are accepted.  Any unrecognised key in $data
-     * is silently ignored, preventing arbitrary app-config key injection.
-     *
-     * @param array $data The settings data to update.
-     *
-     * @return array The updated settings configuration.
-     * @throws \RuntimeException If settings update fails.
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function updateSettings(array $data): array
-    {
-        try {
-            // Build the canonical allowlist from the same object-type enumeration
-            // used by getSettings() so the two methods stay in sync automatically.
-            $allowedTypes = [
-                'catalog',
-                'listing',
-                'organization',
-                'theme',
-                'page',
-                'menu',
-                'glossary',
-                'document',
-                // OOAPI-catalog-publication (OOAPI-010).
-                'ooapi_courses',
-                'ooapi_programs',
-                'ooapi_offerings',
-            ];
-
-            $allowedKeys = [];
-            foreach ($allowedTypes as $type) {
-                $allowedKeys[] = "{$type}_source";
-                $allowedKeys[] = "{$type}_schema";
-                $allowedKeys[] = "{$type}_register";
-            }
-
-            // Publishing-option keys are also settable via this endpoint.
-            $allowedKeys[] = 'auto_publish_attachments';
-            $allowedKeys[] = 'auto_publish_objects';
-            $allowedKeys[] = 'use_old_style_publishing_view';
-
-            // DCAT-AP-NL harvest publisher defaults (DCAT-010).
-            $allowedKeys[] = 'dcat_instance_title';
-            $allowedKeys[] = 'dcat_publisher_name';
-            $allowedKeys[] = 'dcat_publisher_uri';
-            $allowedKeys[] = 'dcat_default_license';
-            $allowedKeys[] = 'dcat_contact_point';
-
-            // OOAPI 5.0 consumer-credential allowlist (OOAPI-008/OOAPI-010).
-            $allowedKeys[] = 'ooapi_consumers';
-
-            // Woo-index registration status (WOO-HR-003).
-            $allowedKeys[] = 'woo_index_registration_status';
-            $allowedKeys[] = 'woo_index_registration_url';
-            $allowedKeys[] = 'woo_index_registration_at';
-
-            $updated = [];
-
-            // Only persist keys that are explicitly allowed.
-            foreach ($allowedKeys as $key) {
-                if (array_key_exists($key, $data) === true) {
-                    $this->config->setValueString($this->appName, $key, (string) $data[$key]);
-                    // Retrieve the persisted value to confirm the change.
-                    $updated[$key] = $this->config->getValueString($this->appName, $key);
-                }
-            }
-
-            return $updated;
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to update settings: '.$e->getMessage());
-        }//end try
-
-    }//end updateSettings()
-
-    /**
-     * Get the current publishing options.
-     *
-     * @return array The current publishing options configuration.
-     * @throws \RuntimeException If publishing options retrieval fails.
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function getPublishingOptions(): array
-    {
-        try {
-            // Retrieve publishing options from configuration with defaults to false.
-            $publishingOptions = [
-                // Convert string 'true'/'false' to boolean for auto publish attachments setting.
-                'auto_publish_attachments'      => $this->config->getValueString(
-                    $this->appName,
-                    'auto_publish_attachments',
-                    'false'
-                ) === 'true',
-                // Convert string 'true'/'false' to boolean for auto publish objects setting.
-                'auto_publish_objects'          => $this->config->getValueString(
-                    $this->appName,
-                    'auto_publish_objects',
-                    'false'
-                ) === 'true',
-                // Convert string 'true'/'false' to boolean for old style publishing view setting.
-                'use_old_style_publishing_view' => $this->config->getValueString(
-                    $this->appName,
-                    'use_old_style_publishing_view',
-                    'false'
-                ) === 'true',
-            ];
-
-            return $publishingOptions;
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to retrieve publishing options: '.$e->getMessage());
-        }//end try
-
-    }//end getPublishingOptions()
-
-    /**
-     * Update the publishing options configuration.
-     *
-     * @param array $options The publishing options data to update.
-     *
-     * @return array The updated publishing options configuration.
-     * @throws \RuntimeException If publishing options update fails.
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function updatePublishingOptions(array $options): array
-    {
-        try {
-            // Define valid publishing option keys for security.
-            $validOptions = [
-                'auto_publish_attachments',
-                'auto_publish_objects',
-                'use_old_style_publishing_view',
-            ];
-
-            $updatedOptions = [];
-
-            // Update each publishing option in the configuration.
-            foreach ($validOptions as $option) {
-                // Check if this option is provided in the input data.
-                if (isset($options[$option]) === true) {
-                    // Convert boolean or string to string format for storage.
-                    $value = 'false';
-                    if ($options[$option] === true || $options[$option] === 'true') {
-                        $value = 'true';
-                    }
-
-                    // Store the value in the configuration.
-                    $this->config->setValueString($this->appName, $option, $value);
-                    // Retrieve and convert back to boolean for the response.
-                    $updatedOptions[$option] = $this->config->getValueString($this->appName, $option) === 'true';
-                }
-            }
-
-            return $updatedOptions;
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to update publishing options: '.$e->getMessage());
-        }//end try
-
-    }//end updatePublishingOptions()
-
-    /**
-     * Load settings from the publication_register.json file.
-     *
-     * This method supports both old and new versions of OpenRegister:
-     * - New version (>= 0.2.10): Uses importFromFilePath method.
-     * - Old version (< 0.2.10): Uses importFromApp method with manual file reading.
-     *
-     * @param boolean $force Whether to force the import regardless of version checks.
-     *
-     * @return array The loaded settings configuration.
-     * @throws \RuntimeException If settings loading fails.
-     *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function loadSettings(bool $force=false): array
-    {
-        try {
-            // Get the absolute path to the app directory.
-            $appPath = $this->appManager->getAppPath(Application::APP_ID);
-
-            // Build absolute path to the configuration file.
-            $absoluteFilePath = $appPath.'/lib/Settings/publication_register.json';
-
-            // Check if file exists.
-            if (file_exists($absoluteFilePath) === false) {
-                throw new RuntimeException("Configuration file not found: {$absoluteFilePath}");
-            }
-
-            // Read the JSON file content.
-            $jsonContent = file_get_contents($absoluteFilePath);
-            if ($jsonContent === false) {
-                throw new RuntimeException("Failed to read configuration file: {$absoluteFilePath}");
-            }
-
-            // Parse JSON.
-            $data = json_decode($jsonContent, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new RuntimeException("Invalid JSON in configuration file: ".json_last_error_msg());
-            }
-
-            // ADR-037: merge modular register fragments from Settings/register.d/*.json.
-            // Each OpenSpec change drops its own fragment file instead of editing this
-            // monolith, so concurrent builds touch disjoint files (no merge conflicts).
-            // OpenAPI `components.schemas` / `paths` are keyed objects, so disjoint
-            // fragments union cleanly by key.
-            $fragmentDir = $appPath.'/lib/Settings/register.d';
-            if (is_dir($fragmentDir) === true) {
-                $fragmentFiles = glob($fragmentDir.'/*.json');
-                sort($fragmentFiles);
-                foreach ($fragmentFiles as $fragmentFile) {
-                    $fragmentContent = file_get_contents($fragmentFile);
-                    if ($fragmentContent === false) {
-                        continue;
-                    }
-
-                    $fragmentData = json_decode($fragmentContent, true);
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        // Skip malformed fragment; the monolith import still succeeds.
-                        continue;
-                    }
-
-                    $data = self::deepMergeConfig($data, $fragmentData);
-                }
-            }//end if
-
-            // ADR-037 guard: a fragment that declares a schema but forgets to list it
-            // under `components.registers.publication.schemas` gets the schema created
-            // and then orphaned — no register holds it, so no magic table is provisioned
-            // and the app's `{type}_register`/`{type}_schema` pair points at a register
-            // without that schema (how OOAPI course/program/offering broke). This
-            // pipeline only ever provisions one register, so attach the strays.
-            $data = self::attachOrphanSchemasToPublicationRegister($data);
-
-            // Calculate relative path from Nextcloud root for sourceUrl tracking.
-            // appPath is something like /var/www/html/apps-extra/opencatalogi
-            // We need to get the part after the Nextcloud root.
-            $nextcloudRoot = dirname(dirname(dirname($appPath)));
-            // Go up from apps-extra/opencatalogi to root.
-            $relativeFilePath = str_replace($nextcloudRoot.'/', '', $absoluteFilePath);
-
-            // Fallback: if path calculation fails, use the standard relative path.
-            if (str_starts_with($relativeFilePath, 'apps-extra/') === false
-                && str_starts_with($relativeFilePath, 'apps/') === false
-            ) {
-                $relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
-            }
-
-            // Set the sourceUrl in the data if not already set.
-            // This allows the cron job to track the file location.
-            if (isset($data['x-openregister']) === false) {
-                $data['x-openregister'] = [];
-            }
-
-            if (isset($data['x-openregister']['sourceUrl']) === false) {
-                $data['x-openregister']['sourceUrl'] = $relativeFilePath;
-            }
-
-            if (isset($data['x-openregister']['sourceType']) === false) {
-                $data['x-openregister']['sourceType'] = 'local';
-            }
-
-            // Get the configuration service.
-            $configurationService = $this->getConfigurationService();
-
-            // Get the current app version. dynamically.
-            $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
-
-            // The fragment digest is NOT folded into the version any more.
-            //
-            // ADR-037 originally appended `+frag.<md5>` so OpenRegister's
-            // version-gated import would re-import when a register.d fragment
-            // changed. That made the decision depend on how two md5 hashes SORT:
-            // version_compare treats `+…` as further version parts and compares
-            // them lexically, not as semver build metadata. Unchanged content
-            // re-imported roughly half the time, and a real change was skipped
-            // the other half — caught only by the content-differs fallback.
-            //
-            // OpenRegister now hashes the merged configuration itself and skips
-            // on hash equality, so a changed fragment is detected there, from the
-            // data, without this app encoding anything into a version string.
-            // The version means what it says again: the app's version.
-            //
-            // Use importFromApp to import the configuration data directly.
-            // This avoids the file path resolution issue in importFromFilePath.
-            $result = $configurationService->importFromApp(
-                appId: Application::APP_ID,
-                data: $data,
-                version: $currentAppVersion,
-                force: $force
-            );
-
-            // Update app configuration with imported schema and register IDs.
-            $this->updateObjectTypeConfiguration($result);
-
-            // OpenRegister's importRegister() version-gates the register update on
-            // `components.registers.publication.version` — unchanged since 0.1.0 — so a
-            // non-forced import silently skips it and schemas added by a newer fragment
-            // never get attached to the already-existing register. Reconcile additively.
-            $this->registerSchemaLink->reconcile($result);
-
-            // WOO-529: the seed data in publication_register.json creates the
-            // default "Publications" catalog with unset `registers`/`schemas`
-            // because the numeric IDs are only known AFTER importFromApp() has
-            // returned. Without those arrays PublicationService::getCatalogFilters()
-            // has no scope to union and every publish flow (federation search,
-            // create-publication modal) sees zero rows. Backfill now that the
-            // IDs are resolved, so a fresh install lands directly in a working
-            // state instead of the WOO-527 "not configured" empty state.
-            $this->backfillCatalogScopes();
-
-            return $result;
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to load settings: '.$e->getMessage());
-        }//end try
-
-    }//end loadSettings()
-
-    /**
-     * Deep-merge a register fragment onto the base config (ADR-037).
-     *
-     * Associative arrays (OpenAPI objects like `components.schemas`, `paths`) are
-     * merged by key union (recursing on shared keys); list arrays are concatenated;
-     * scalars in the fragment overwrite the base. Disjoint fragments never collide.
-     *
-     * @param array<mixed> $base    The accumulated config.
-     * @param array<mixed> $overlay The fragment to merge in.
-     *
-     * @return array<mixed> The merged config.
-     */
-    private static function deepMergeConfig(array $base, array $overlay): array
-    {
-        foreach ($overlay as $key => $value) {
-            if (is_array($value) === true
-                && isset($base[$key]) === true
-                && is_array($base[$key]) === true
-            ) {
-                $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
-                $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
-                if ($baseIsList === true && $overlayIsList === true) {
-                    $base[$key] = array_merge($base[$key], $value);
-                } else {
-                    $base[$key] = self::deepMergeConfig($base[$key], $value);
-                }
-            } else {
-                $base[$key] = $value;
-            }
-        }
-
-        return $base;
-
-    }//end deepMergeConfig()
-
-    /**
-     * Attach every unreferenced `components.schemas` slug to the publication register.
-     *
-     * Runs on the fully merged payload (monolith + every register.d fragment). A slug
-     * that no register in the payload declares is added to the publication register's
-     * schema list, plus a magic-mapping/auto-create-table entry so its physical table is
-     * provisioned like every other schema in that register.
-     *
-     * Idempotent, and never reorders or drops an existing declaration.
-     *
-     * @param array<mixed> $data The merged configuration payload.
-     *
-     * @return array<mixed> The payload with stray schemas attached.
-     */
-    private static function attachOrphanSchemasToPublicationRegister(array $data): array
-    {
-        $schemas = ($data['components']['schemas'] ?? null);
-        if (is_array($schemas) === false || $schemas === []) {
-            return $data;
-        }
-
-        // The publication register must already be declared (it lives in the monolith);
-        // without it there is nothing to attach to.
-        if (isset($data['components']['registers']['publication']) === false
-            || is_array($data['components']['registers']['publication']) === false
-        ) {
-            return $data;
-        }
-
-        // Every slug any register in this payload already declares.
-        $declared = self::collectDeclaredSchemaSlugs(($data['components']['registers'] ?? []));
-
-        $register = $data['components']['registers']['publication'];
-        foreach (array_keys($schemas) as $slug) {
-            if (is_string($slug) === false || isset($declared[$slug]) === true) {
-                continue;
-            }
-
-            $register['schemas'][] = $slug;
-
-            // Only supply the magic-mapping default when the fragment said nothing —
-            // an explicit `magicMapping: false` stays untouched.
-            if (isset($register['configuration']['schemas'][$slug]) === false) {
-                $register['configuration']['schemas'][$slug] = [
-                    'magicMapping'    => true,
-                    'autoCreateTable' => true,
-                    'comment'         => 'Auto-attached: declared in components.schemas without a register reference.',
-                ];
-            }
-        }
-
-        $data['components']['registers']['publication'] = $register;
-
-        return $data;
-
-    }//end attachOrphanSchemasToPublicationRegister()
-
-    /**
-     * Collect every schema slug that any register in the payload already declares.
-     *
-     * @param array<mixed> $registers The `components.registers` map from the payload.
-     *
-     * @return array<string, boolean> Declared slugs, keyed by slug for O(1) lookup.
-     *
-     * @spec exclude Internal collection step of attachOrphanSchemasToPublicationRegister().
-     */
-    private static function collectDeclaredSchemaSlugs(array $registers): array
-    {
-        $declared = [];
-        foreach ($registers as $registerData) {
-            if (is_array($registerData) === false || is_array($registerData['schemas'] ?? null) === false) {
-                continue;
-            }
-
-            foreach ($registerData['schemas'] as $declaredSlug) {
-                if (is_string($declaredSlug) === true) {
-                    $declared[$declaredSlug] = true;
-                }
-            }
-        }
-
-        return $declared;
-
-    }//end collectDeclaredSchemaSlugs()
-
-    /**
-     * Update the app configuration with imported schema and register IDs.
-     *
-     * After importing the configuration from OpenRegister, this method updates
-     * the app configuration with the actual schema and register IDs so that
-     * the frontend can construct correct API URLs.
-     *
-     * @param array $importResult The result from the importFromApp call containing registers and schemas.
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-woo-config-keys-are-auto-configured-on-install-and-repair-woo-prov-002
-     */
-    private function updateObjectTypeConfiguration(array $importResult): void
-    {
-        // Get the object types that need configuration.
-        // 'publication' is included so publication_register/publication_schema
-        // resolve for retention evaluation (RET-005); it was previously omitted.
-        // 'document' is included so document_register/document_schema resolve for the
-        // public full-text search assembly (SCH-PFTS-005/SCH-PFTS-002).
-        $objectTypes = [
-            'catalog',
-            'listing',
-            'organization',
-            'publication',
-            'document',
-            'theme',
-            'page',
-            'menu',
-            'glossary',
-        ];
-
-        // OOAPI-catalog-publication (OOAPI-003/OOAPI-010): the course/program/offering
-        // schemas are added to the SAME shared 'publication' register via a register.d
-        // fragment (ADR-037) — this app's loadSettings()/importFromApp() pipeline only
-        // ever creates one OpenRegister register, so a genuinely separate "dedicated"
-        // register (design.md D6) is not achievable without a larger SettingsService
-        // rearchitecture; the config-key prefix (`ooapi_courses` etc.) intentionally
-        // differs from the schema slug (`course` etc.) to match the OOAPI-010 config
-        // key names, so it is resolved via this explicit map rather than the direct
-        // type === slug convention used by $objectTypes above.
-        $ooapiTypeMap = [
-            'ooapi_courses'   => 'course',
-            'ooapi_programs'  => 'program',
-            'ooapi_offerings' => 'offering',
-        ];
-
-        // WOO transparency (fix-woo-capability-provisioning / WOO-PROV-002): the WOO
-        // config-key prefixes deliberately differ from their schema slugs (`woo_batch_schema`
-        // for `wooBatch`, `woo_assessment_schema` for `wooAssessment`) — same rationale as
-        // $ooapiTypeMap above. `woo_register` has no matching schema slug at all (both
-        // wooBatch and wooAssessment live in the SAME shared publication register, D1), so
-        // it is set directly from $registerId alongside this map rather than inside it.
-        $wooSchemaMap = [
-            'woo_batch_schema'      => 'wooBatch',
-            'woo_assessment_schema' => 'wooAssessment',
-        ];
-
-        // Build a map of schema slugs to schema IDs.
-        $schemaMap = [];
-        foreach (($importResult['schemas'] ?? []) as $schema) {
-            // Handle both object and array formats.
-            if (is_object($schema) === true) {
-                // Nextcloud entities have jsonSerialize() method to convert to array.
-                if (method_exists($schema, 'jsonSerialize') === true) {
-                    $schemaArray = $schema->jsonSerialize();
-                    if (isset($schemaArray['slug']) === true && isset($schemaArray['id']) === true) {
-                        $schemaMap[$schemaArray['slug']] = $schemaArray['id'];
-                    }
-                }
-
-                continue;
-            }
-
-            if (is_array($schema) === true && isset($schema['slug']) === true) {
-                $schemaMap[$schema['slug']] = ($schema['id'] ?? $schema['uuid'] ?? null);
-            }
-        }
-
-        // Get the register ID (all schemas share the same publication register).
-        $registerId = null;
-        foreach (($importResult['registers'] ?? []) as $register) {
-            // Handle both object and array formats.
-            if (is_object($register) === true) {
-                // Nextcloud entities have jsonSerialize() method to convert to array.
-                if (method_exists($register, 'jsonSerialize') === true) {
-                    $registerArray = $register->jsonSerialize();
-                    if (isset($registerArray['slug']) === true && $registerArray['slug'] === 'publication') {
-                        $registerId = ($registerArray['id'] ?? $registerArray['uuid'] ?? null);
-                        break;
-                    }
-                }
-
-                continue;
-            }
-
-            // Already an array.
-            if (is_array($register) === true && isset($register['slug']) === true
-                && $register['slug'] === 'publication'
-            ) {
-                $registerId = ($register['id'] ?? $register['uuid'] ?? null);
-                break;
-            }
-        }//end foreach
-
-        // Update configuration for each object type.
-        foreach ($objectTypes as $type) {
-            // Set source to openregister.
-            $this->config->setValueString($this->appName, "{$type}_source", 'openregister');
-
-            // Set schema ID if found in the import result.
-            if (isset($schemaMap[$type]) === true && $schemaMap[$type] !== null) {
-                $this->config->setValueString($this->appName, "{$type}_schema", (string) $schemaMap[$type]);
-            }
-
-            // Set register ID if found.
-            if ($registerId !== null) {
-                $this->config->setValueString($this->appName, "{$type}_register", (string) $registerId);
-            }
-        }
-
-        // OOAPI-catalog-publication: same two steps, keyed by the OOAPI-010 config
-        // prefix rather than the schema slug (see $ooapiTypeMap comment above).
-        foreach ($ooapiTypeMap as $configPrefix => $schemaSlug) {
-            $this->config->setValueString($this->appName, "{$configPrefix}_source", 'openregister');
-
-            if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
-                $this->config->setValueString($this->appName, "{$configPrefix}_schema", (string) $schemaMap[$schemaSlug]);
-            }
-
-            if ($registerId !== null) {
-                $this->config->setValueString($this->appName, "{$configPrefix}_register", (string) $registerId);
-            }
-        }
-
-        // WOO transparency: the shared publication register id, plus the two
-        // explicitly-mapped schema ids. Idempotent + never overwrite an existing
-        // value with an empty one — mirrors the conditional writes above (D5).
-        if ($registerId !== null) {
-            $this->config->setValueString($this->appName, 'woo_register', (string) $registerId);
-        }
-
-        foreach ($wooSchemaMap as $configKey => $schemaSlug) {
-            if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
-                $this->config->setValueString($this->appName, $configKey, (string) $schemaMap[$schemaSlug]);
-            }
-        }
-
-    }//end updateObjectTypeConfiguration()
-
-    /**
-     * Ensure every local catalog has a non-empty registers/schemas scope.
-     *
-     * `PublicationService::getCatalogFilters()` derives its visibility scope by
-     * iterating every local catalog and unioning their `registers` + `schemas`
-     * arrays. A catalog with both arrays unset contributes nothing, and with
-     * only one such catalog the entire union is empty — no publications are
-     * ever visible to /search or the create-publication modal (surfaces as the
-     * WOO-527 "not configured" empty state).
-     *
-     * The default "Publications" catalog seeded via publication_register.json
-     * (see WOO-529) exhibits this because the numeric register/schema IDs are
-     * only resolved AFTER importFromApp() completes, so the seed cannot
-     * hard-code them. This method runs after updateObjectTypeConfiguration()
-     * has stored the resolved IDs, walks the catalog collection, and patches
-     * any catalog missing a scope with `[publication_register]` / `[publication_schema]`.
-     *
-     * Idempotent — a catalog that already has a non-empty array is skipped so
-     * admin-configured multi-register catalogs are never touched.
-     *
-     * @return void
-     */
-    private function backfillCatalogScopes(): void
-    {
-        try {
-            $publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
-            $publicationSchema   = $this->config->getValueString($this->appName, 'publication_schema', '');
-            $catalogRegister     = $this->config->getValueString($this->appName, 'catalog_register', '');
-            $catalogSchema       = $this->config->getValueString($this->appName, 'catalog_schema', '');
-
-            if ($publicationRegister === '' || $publicationSchema === ''
-                || $catalogRegister === '' || $catalogSchema === ''
-            ) {
-                // Nothing to backfill against — the caller will surface the
-                // config gap via the setup wizard's reload-settings step.
-                return;
-            }
-
-            if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
-                return;
-            }
-
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $catalogs      = $objectService->searchObjects(
-                query: [
-                    '@self' => [
-                        'register' => $catalogRegister,
-                        'schema'   => $catalogSchema,
-                    ],
-                ]
-            );
-
-            foreach ($catalogs as $catalog) {
-                $catalogData = $catalog;
-                if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
-                    $catalogData = $catalog->jsonSerialize();
-                }
-
-                if (is_array($catalogData) === false) {
-                    continue;
-                }
-
-                $registers      = ($catalogData['registers'] ?? null);
-                $schemas        = ($catalogData['schemas'] ?? null);
-                $needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
-                $needsSchemas   = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
-
-                if ($needsRegisters === false && $needsSchemas === false) {
-                    // Admin has already configured a scope; leave it alone.
-                    continue;
-                }
-
-                $catalogId = ($catalogData['@self']['id'] ?? ($catalogData['id'] ?? null));
-                if ($catalogId === null) {
-                    continue;
-                }
-
-                // OpenRegister's saveObject re-validates against the full schema,
-                // so we can't send a partial diff — start from the current object
-                // (minus `@self`, which is server-owned) and merge the missing
-                // scope arrays on top.
-                $merged = $catalogData;
-                unset($merged['@self']);
-                if ($needsRegisters === true) {
-                    $merged['registers'] = [$publicationRegister];
-                }
-
-                if ($needsSchemas === true) {
-                    $merged['schemas'] = [$publicationSchema];
-                }
-
-                // Persisted date-time fields can come back in the SQL-style
-                // "YYYY-MM-DD HH:MM:SS" shape (no `T`, no timezone) that fails
-                // the schema's ISO 8601 format validator on re-save. Normalise
-                // any string field looking like that back to full ISO 8601 so
-                // the update passes validation without touching the intent of
-                // the value. Non-string / already-ISO values are left alone.
-                foreach ($merged as $key => $value) {
-                    if (is_string($value) === true
-                        && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) === 1
-                    ) {
-                        $merged[$key] = str_replace(' ', 'T', $value).'+00:00';
-                    }
-                }
-
-                try {
-                    $objectService->saveObject(
-                        object: $merged,
-                        register: $catalogRegister,
-                        schema: $catalogSchema,
-                        uuid: (string) $catalogId,
-                        _rbac: false,
-                        _multitenancy: false,
-                    );
-                } catch (\Exception) {
-                    // Per-catalog failure must not abort the whole settings
-                    // import; the admin can retro-fit via the catalog edit view.
-                    continue;
-                }
-            }//end foreach
-        } catch (\Exception) {
-            // Never let backfill failure sink the settings import — the wizard
-            // still needs to declare success so the app is at least usable.
-            return;
-        }//end try
-
-    }//end backfillCatalogScopes()
-
-    /**
-     * Check if settings should be loaded based on version comparison.
-     *
-     * This method compares the current app version with the stored configuration
-     * version to determine if a settings import is needed.
-     *
-     * @return boolean True if settings should be loaded, false otherwise.
-     * @throws \RuntimeException If version checking fails.
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    private function shouldLoadSettings(): bool
-    {
-        try {
-            // Get the current app version.
-            $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
-
-            // Get the configuration service. to check stored version.
-            $configurationService = $this->getConfigurationService();
-            $storedVersion        = $configurationService->getConfiguredAppVersion(Application::APP_ID);
-
-            // If no stored version exists, we need to load settings.
-            if ($storedVersion === null) {
-                return true;
-            }
-
-            // Compare versions using semantic versioning.
-            // Load settings if current version is newer than stored version.
-            return version_compare(version1: $currentAppVersion, version2: $storedVersion, operator: '>');
-        } catch (\Exception $e) {
-            // If we can't determine versions, err on the side of loading settings.
-            return true;
-        }//end try
-
-    }//end shouldLoadSettings()
-
-    /**
-     * Get version information for the app and configuration.
-     *
-     * This method returns version information including the current app version
-     * and the stored configuration version in OpenRegister.
-     *
-     * @return array Version information with app and configuration versions.
-     * @throws \RuntimeException If version retrieval fails.
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function getVersionInfo(): array
-    {
-        try {
-            // Get the current app version.
-            $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
-
-            // Get the configuration service. to check stored version.
-            $configurationService = $this->getConfigurationService();
-            $storedConfigVersion  = $configurationService->getConfiguredAppVersion(Application::APP_ID);
-
-            // Determine if versions match.
-            $versionsMatch = $storedConfigVersion !== null &&
-                           version_compare(version1: $currentAppVersion, version2: $storedConfigVersion, operator: '=');
-
-            return [
-                'appName'           => 'OpenCatalogi',
-                'appVersion'        => $currentAppVersion,
-                'configuredVersion' => $storedConfigVersion,
-                'versionsMatch'     => $versionsMatch,
-                'needsUpdate'       => $storedConfigVersion === null ||
-                               version_compare(version1: $currentAppVersion, version2: $storedConfigVersion, operator: '>'),
-            ];
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to get version information: '.$e->getMessage());
-        }//end try
-
-    }//end getVersionInfo()
-
-    /**
-     * Manually trigger configuration import from JSON.
-     *
-     * This method allows system administrators to manually trigger the import
-     * process, bypassing version checks.
-     *
-     * @param boolean $forceImport Whether to force import regardless of version.
-     *
-     * @return array The import results with success/error information.
-     *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-     *
-     * @spec openspec/specs/admin-settings/spec.md
-     */
-    public function manualImport(bool $forceImport=false): array
-    {
-        try {
-            // Get version info first.
-            $versionInfo = $this->getVersionInfo();
-
-            // Check if import is needed (unless forced).
-            if ($forceImport === false && $versionInfo['versionsMatch'] === true) {
-                return [
-                    'success'     => false,
-                    'message'     => 'Configuration is already up to date. Use force import if you want to reimport.',
-                    'versionInfo' => $versionInfo,
-                ];
-            }
-
-            // Perform the import.
-            $importResult = $this->loadSettings($forceImport);
-
-            // Get updated version info.
-            $updatedVersionInfo = $this->getVersionInfo();
-
-            return [
-                'success'      => true,
-                'message'      => 'Configuration imported successfully.',
-                'importResult' => $importResult,
-                'versionInfo'  => $updatedVersionInfo,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Import failed: '.$e->getMessage(),
-                'error'   => $e->getMessage(),
-            ];
-        }//end try
-
-    }//end manualImport()
+class SettingsService {
+
+	/**
+	 * This property holds the name of the application, which is used for identification and configuration purposes.
+	 *
+	 * @var string $appName The name of the app.
+	 */
+	private string $appName;
+
+	/**
+	 * This constant represents the unique identifier for the
+	 * OpenRegister application, used to check its installation
+	 * and status.
+	 *
+	 * @var string $openRegisterAppId The ID of the OpenRegister app.
+	 */
+	private const OPENREGISTER_APP_ID = 'openregister';
+
+	/**
+	 * This constant defines the minimum version of the OpenRegister
+	 * application that is required for compatibility and
+	 * functionality.
+	 *
+	 * @var string $minORVersion The minimum required version of OpenRegister.
+	 */
+	private const MIN_OPENREGISTER_VERSION = '0.1.7';
+
+	/**
+	 * SettingsService constructor.
+	 *
+	 * @param IAppConfig $config App configuration interface.
+	 * @param ContainerInterface $container Container for dependency injection.
+	 * @param IAppManager $appManager App manager interface.
+	 * @param RegisterSchemaLinkService $registerSchemaLink Repairs register-to-schema linkage after an import.
+	 */
+	public function __construct(
+		private readonly IAppConfig $config,
+		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
+		private readonly RegisterSchemaLinkService $registerSchemaLink,
+	) {
+		// Indulge in setting the application name for identification and configuration purposes.
+		$this->appName = 'opencatalogi';
+
+	}//end __construct()
+
+	/**
+	 * Checks if OpenRegister is installed and meets version requirements.
+	 *
+	 * @param string|null $minVersion Minimum required version (e.g. '1.0.0').
+	 *
+	 * @return boolean True if OpenRegister is installed and meets version requirements.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function isOpenRegisterInstalled(?string $minVersion = self::MIN_OPENREGISTER_VERSION): bool {
+		if ($this->appManager->isInstalled(self::OPENREGISTER_APP_ID) === false) {
+			return false;
+		}
+
+		if ($minVersion === null) {
+			return true;
+		}
+
+		$currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
+		return version_compare(version1: $currentVersion, version2: $minVersion, operator: '>=');
+	}//end isOpenRegisterInstalled()
+
+	/**
+	 * Checks if OpenRegister is enabled.
+	 *
+	 * @return boolean True if OpenRegister is enabled.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function isOpenRegisterEnabled(): bool {
+		/*
+		 * @psalm-suppress UndefinedInterfaceMethod
+		 */
+
+		return $this->appManager->isEnabledForUser(self::OPENREGISTER_APP_ID) === true;
+	}//end isOpenRegisterEnabled()
+
+	/**
+	 * Attempts to install or update OpenRegister.
+	 *
+	 * @param string|null $minVersion Minimum required version.
+	 *
+	 * @return boolean True if installation/update was successful.
+	 * @throws \RuntimeException If installation/update fails.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.StaticAccess)         — OC_App is Nextcloud's legacy static API
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function installOrUpdateOpenRegister(?string $minVersion = self::MIN_OPENREGISTER_VERSION): bool {
+		try {
+			if ($this->isOpenRegisterInstalled($minVersion) === false) {
+				// Removed problematic download functionality
+				// Then install the downloaded app.
+				if (OC_App::installApp(self::OPENREGISTER_APP_ID) === false) {
+					throw new RuntimeException('Failed to install OpenRegister');
+				}
+
+				// Enable the app after installation.
+				if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
+					throw new RuntimeException('Failed to enable OpenRegister');
+				}
+			}
+
+			if ($this->isOpenRegisterInstalled($minVersion) === true && $minVersion !== null) {
+				// Check if update is needed.
+				$currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
+				if (version_compare(version1: $currentVersion, version2: $minVersion, operator: '<') === true) {
+					// Removed problematic download functionality
+					// Then update the app.
+					if (OC_App::updateApp(self::OPENREGISTER_APP_ID) === false) {
+						throw new RuntimeException('Failed to update OpenRegister');
+					}
+				}
+
+				// Ensure the app is enabled after update.
+				if ($this->isOpenRegisterEnabled() === false) {
+					if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
+						throw new RuntimeException('Failed to enable OpenRegister after update');
+					}
+				}
+			}
+
+			return true;
+		} catch (\Exception $e) {
+			throw new RuntimeException('Failed to install/update OpenRegister: ' . $e->getMessage());
+		}//end try
+
+	}//end installOrUpdateOpenRegister()
+
+	/**
+	 * Attempts to auto-configure registers and schemas.
+	 *
+	 * @return array The updated configuration.
+	 * @throws \RuntimeException If auto-configuration fails.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function autoConfigure(): array {
+		try {
+			$registerMapper = $this->getRegisterMapper();
+			$registers = $registerMapper->findAll();
+
+			$registerSlug = 'publication';
+
+			if (empty($registers) === true) {
+				return [];
+			}
+
+			$configuration = [];
+			foreach ($this->getSettings()['objectTypes'] as $type) {
+				// Try to find a register with a matching name.
+				$matchingRegister = null;
+				foreach ($registers as $register) {
+					// Convert Register entity to array if needed.
+					$registerData = $register;
+					if (is_array($register) === false) {
+						$registerData = $register->jsonSerialize();
+					}
+
+					if (stripos($registerData['slug'], $registerSlug) !== false) {
+						$matchingRegister = $registerData;
+						break;
+					}
+				}
+
+				if ($matchingRegister !== null) {
+					$configuration["{$type}_register"] = $matchingRegister['id'];
+
+					// Try to find a matching schema.
+					if (empty($matchingRegister['schemas']) === false) {
+						foreach ($matchingRegister['schemas'] as $schema) {
+							if (is_array($schema) === false) {
+								continue;
+							}
+
+							if (stripos($schema['title'], $type) !== false) {
+								$configuration["{$type}_schema"] = $schema['id'];
+								break;
+							}
+						}
+					}
+				}
+			}//end foreach
+
+			return $configuration;
+		} catch (\Exception $e) {
+			throw new RuntimeException('Failed to auto-configure: ' . $e->getMessage());
+		}//end try
+
+	}//end autoConfigure()
+
+	/**
+	 * Initializes the app with all required components.
+	 *
+	 * @param string|null $minORVersion Minimum required OpenRegister version.
+	 *
+	 * @return array The initialization results.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function initialize(?string $minORVersion = self::MIN_OPENREGISTER_VERSION): array {
+		$results = [
+			'openRegister' => false,
+			'autoConfigured' => false,
+			'settingsLoaded' => false,
+			'errors' => [],
+		];
+
+		try {
+			// Check and install/update OpenRegister.
+			if ($this->isOpenRegisterInstalled($minORVersion) === false) {
+				$this->installOrUpdateOpenRegister($minORVersion);
+			}
+
+			$results['openRegister'] = true;
+
+			// Auto-configure registers and schemas.
+			$configuration = $this->autoConfigure();
+			if (empty($configuration) === false) {
+				$this->updateSettings($configuration);
+				$results['autoConfigured'] = true;
+			}
+
+			// Load settings from file only if needed.
+			$results['settingsLoaded'] = true;
+			if ($this->shouldLoadSettings() === true) {
+				$this->loadSettings();
+			}
+		} catch (\Exception $e) {
+			$results['errors'][] = $e->getMessage();
+		}//end try
+
+		return $results;
+	}//end initialize()
+
+	/**
+	 * Attempts to retrieve the OpenRegister service from the container.
+	 *
+	 * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
+	 * @throws \RuntimeException If the service is not available.
+	 *
+	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+	 *       ObjectService from the container; pure framework plumbing, no domain behavior.
+	 */
+	public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		}
+
+		throw new RuntimeException('OpenRegister service is not available.');
+	}//end getObjectService()
+
+	/**
+	 * Attempts to retrieve the RegisterMapper from the container.
+	 *
+	 * @return \OCA\OpenRegister\Db\RegisterMapper|null The RegisterMapper if available, null otherwise.
+	 * @throws \RuntimeException If the service is not available.
+	 *
+	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+	 *       RegisterMapper from the container; pure framework plumbing, no domain behavior.
+	 */
+	public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			return $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+		}
+
+		throw new RuntimeException('RegisterMapper is not available.');
+	}//end getRegisterMapper()
+
+	/**
+	 * Attempts to retrieve the Schema mapper from the container.
+	 *
+	 * @return \OCA\OpenRegister\Db\SchemaMapper|null The Schema mapper if available, null otherwise.
+	 * @throws \RuntimeException If the mapper is not available.
+	 *
+	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+	 *       SchemaMapper from the container; pure framework plumbing, no domain behavior.
+	 */
+	public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			return $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+		}
+
+		throw new RuntimeException('SchemaMapper is not available.');
+	}//end getSchemaMapper()
+
+	/**
+	 * Attempts to retrieve the Configuration service from the container.
+	 *
+	 * @return \OCA\OpenRegister\Service\ConfigurationService|null The Configuration service if available, null otherwise.
+	 * @throws \RuntimeException If the service is not available.
+	 *
+	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+	 *       ConfigurationService from the container; pure framework plumbing, no domain behavior.
+	 */
+	public function getConfigurationService(): ?\OCA\OpenRegister\Service\ConfigurationService {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			return $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
+		}
+
+		throw new RuntimeException('Configuration service is not available.');
+	}//end getConfigurationService()
+
+	/**
+	 * Retrieve the current settings.
+	 *
+	 * @return array The current settings configuration.
+	 * @throws \RuntimeException If settings retrieval fails.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function getSettings(): array {
+		// Initialize the data array.
+		$data = [];
+		$data['objectTypes'] = [
+			'catalog',
+			'listing',
+			'organization',
+			'theme',
+			'page',
+			'menu',
+			'glossary',
+			'document',
+			'usageCounter',
+			// OOAPI-catalog-publication (OOAPI-010): materialized course/program/offering
+			// scope. Included here so the generic Settings.vue schema selector renders
+			// them like every other object type — no bespoke frontend needed.
+			'ooapi_courses',
+			'ooapi_programs',
+			'ooapi_offerings',
+		];
+		$data['openRegisters'] = false;
+		$data['availableRegisters'] = [];
+
+		// Check if the OpenRegister service is available.
+		try {
+			$registerMapper = $this->getRegisterMapper();
+			if ($registerMapper !== null) {
+				$data['openRegisters'] = true;
+				$registers = $registerMapper->findAll(
+					_rbac: false,
+					_multitenancy: false
+				);
+
+				// Enrich registers with full schema objects instead of just IDs.
+				$data['availableRegisters'] = $this->enrichRegistersWithSchemas($registers);
+			}
+		} catch (\RuntimeException $e) {
+			// Service not available, continue with default values.
+		}
+
+		// Build defaults array dynamically based on object types.
+		$defaults = [];
+		foreach ($data['objectTypes'] as $type) {
+			// Always use openregister as source.
+			$defaults["{$type}_source"] = 'openregister';
+			$defaults["{$type}_schema"] = '';
+			$defaults["{$type}_register"] = '';
+		}
+
+		// Add publishing options defaults.
+		$defaults['auto_publish_attachments'] = 'false';
+		$defaults['auto_publish_objects'] = 'false';
+		$defaults['use_old_style_publishing_view'] = 'false';
+
+		// Add DCAT-AP-NL harvest publisher defaults (DCAT-005 / DCAT-010). These are the
+		// instance-level fallbacks used to complete mandatory dataset properties; the
+		// per-catalog DCAT enable toggle (hasDcat) lives on the catalog object itself.
+		$defaults['dcat_instance_title'] = 'OpenCatalogi';
+		$defaults['dcat_publisher_name'] = '';
+		$defaults['dcat_publisher_uri'] = '';
+		$defaults['dcat_default_license'] = 'http://creativecommons.org/publicdomain/zero/1.0/';
+		$defaults['dcat_contact_point'] = '';
+
+		// Add OOAPI 5.0 catalog-publication defaults (OOAPI-008/OOAPI-010). MVP
+		// consumer-credential gate (design.md D3): any authenticated Nextcloud user
+		// may read an OOAPI-enabled catalog's feed when the allowlist is empty
+		// (the default); a comma-separated list of Nextcloud usernames restricts
+		// access to exactly those accounts. Reuses Nextcloud's own user + app-password
+		// mechanism as the "credential" — no bespoke token store (D3: "no new auth
+		// framework"). Per-catalog credential scoping (design.md open question 3) is
+		// NOT implemented in this MVP; the allowlist is instance-wide.
+		$defaults['ooapi_consumers'] = '';
+
+		// Woo-index registration status (WOO-HR-003, woo-index-harvester-readiness
+		// design D3): tracks this instance's relationship to the national Woo-index /
+		// Register van Overheidsorganisaties. Operational config, not a publication.
+		$defaults['woo_index_registration_status'] = 'not_registered';
+		$defaults['woo_index_registration_url'] = '';
+		$defaults['woo_index_registration_at'] = '';
+
+		// Get the current values for the object types from the configuration.
+		try {
+			foreach ($defaults as $key => $defaultValue) {
+				$data['configuration'][$key] = $this->config->getValueString($this->appName, $key, $defaultValue);
+			}
+
+			return $data;
+		} catch (\Exception $e) {
+			throw new RuntimeException('Failed to retrieve settings: ' . $e->getMessage());
+		}
+
+	}//end getSettings()
+
+	/**
+	 * Enrich registers with full schema objects instead of just schema IDs.
+	 *
+	 * This method takes an array of register entities and replaces their schema ID arrays
+	 * with full schema objects containing id, title, and other metadata.
+	 *
+	 * @param array $registers Array of register entities from OpenRegister.
+	 *
+	 * @return array Array of registers with enriched schema data.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function enrichRegistersWithSchemas(array $registers): array {
+		try {
+			// Get the schema mapper to fetch full schema objects.
+			$schemaMapper = $this->getSchemaMapper();
+			if ($schemaMapper === null) {
+				// If we can't get the schema mapper, return registers as-is.
+				return $registers;
+			}
+
+			$enrichedRegisters = [];
+
+			foreach ($registers as $register) {
+				// Convert register to array if it's an object.
+				$registerArray = (array)$register;
+				if (is_object($register) === true && method_exists($register, 'jsonSerialize') === true) {
+					$registerArray = $register->jsonSerialize();
+				}
+
+				// Get schema IDs from the register.
+				$schemaIds = $registerArray['schemas'] ?? [];
+
+				// If schemas is not an array or is empty, keep as-is.
+				if (is_array($schemaIds) === false || empty($schemaIds) === true) {
+					$enrichedRegisters[] = $registerArray;
+					continue;
+				}
+
+				// Fetch full schema objects for each schema ID.
+				$fullSchemas = [];
+				foreach ($schemaIds as $schemaId) {
+					// Skip if not a number (already an object).
+					if (is_numeric($schemaId) === false) {
+						$fullSchemas[] = $schemaId;
+						continue;
+					}
+
+					try {
+						$schema = $schemaMapper->find((int)$schemaId, _rbac: false, _multitenancy: false);
+						if ($schema !== null) {
+							// Convert schema entity to array.
+							$schemaArray = (array)$schema;
+							if (is_object($schema) === true && method_exists($schema, 'jsonSerialize') === true) {
+								$schemaArray = $schema->jsonSerialize();
+							}
+
+							$fullSchemas[] = $schemaArray;
+						}
+					} catch (\Exception $e) {
+						// Schema not found, skip it.
+						continue;
+					}
+				}//end foreach
+
+				// Replace schema IDs with full schema objects.
+				$registerArray['schemas'] = $fullSchemas;
+				$enrichedRegisters[] = $registerArray;
+			}//end foreach
+
+			return $enrichedRegisters;
+		} catch (\Exception $e) {
+			// If enrichment fails, return registers as-is.
+			return $registers;
+		}//end try
+
+	}//end enrichRegistersWithSchemas()
+
+	/**
+	 * Update the settings configuration.
+	 *
+	 * Only keys that belong to the canonical settings allowlist (the same set
+	 * enumerated in getSettings()) are accepted.  Any unrecognised key in $data
+	 * is silently ignored, preventing arbitrary app-config key injection.
+	 *
+	 * @param array $data The settings data to update.
+	 *
+	 * @return array The updated settings configuration.
+	 * @throws \RuntimeException If settings update fails.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function updateSettings(array $data): array {
+		try {
+			// Build the canonical allowlist from the same object-type enumeration
+			// used by getSettings() so the two methods stay in sync automatically.
+			$allowedTypes = [
+				'catalog',
+				'listing',
+				'organization',
+				'theme',
+				'page',
+				'menu',
+				'glossary',
+				'document',
+				// OOAPI-catalog-publication (OOAPI-010).
+				'ooapi_courses',
+				'ooapi_programs',
+				'ooapi_offerings',
+			];
+
+			$allowedKeys = [];
+			foreach ($allowedTypes as $type) {
+				$allowedKeys[] = "{$type}_source";
+				$allowedKeys[] = "{$type}_schema";
+				$allowedKeys[] = "{$type}_register";
+			}
+
+			// Publishing-option keys are also settable via this endpoint.
+			$allowedKeys[] = 'auto_publish_attachments';
+			$allowedKeys[] = 'auto_publish_objects';
+			$allowedKeys[] = 'use_old_style_publishing_view';
+
+			// DCAT-AP-NL harvest publisher defaults (DCAT-010).
+			$allowedKeys[] = 'dcat_instance_title';
+			$allowedKeys[] = 'dcat_publisher_name';
+			$allowedKeys[] = 'dcat_publisher_uri';
+			$allowedKeys[] = 'dcat_default_license';
+			$allowedKeys[] = 'dcat_contact_point';
+
+			// OOAPI 5.0 consumer-credential allowlist (OOAPI-008/OOAPI-010).
+			$allowedKeys[] = 'ooapi_consumers';
+
+			// Woo-index registration status (WOO-HR-003).
+			$allowedKeys[] = 'woo_index_registration_status';
+			$allowedKeys[] = 'woo_index_registration_url';
+			$allowedKeys[] = 'woo_index_registration_at';
+
+			$updated = [];
+
+			// Only persist keys that are explicitly allowed.
+			foreach ($allowedKeys as $key) {
+				if (array_key_exists($key, $data) === true) {
+					$this->config->setValueString($this->appName, $key, (string)$data[$key]);
+					// Retrieve the persisted value to confirm the change.
+					$updated[$key] = $this->config->getValueString($this->appName, $key);
+				}
+			}
+
+			return $updated;
+		} catch (\Exception $e) {
+			throw new RuntimeException('Failed to update settings: ' . $e->getMessage());
+		}//end try
+
+	}//end updateSettings()
+
+	/**
+	 * Get the current publishing options.
+	 *
+	 * @return array The current publishing options configuration.
+	 * @throws \RuntimeException If publishing options retrieval fails.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function getPublishingOptions(): array {
+		try {
+			// Retrieve publishing options from configuration with defaults to false.
+			$publishingOptions = [
+				// Convert string 'true'/'false' to boolean for auto publish attachments setting.
+				'auto_publish_attachments' => $this->config->getValueString(
+					$this->appName,
+					'auto_publish_attachments',
+					'false'
+				) === 'true',
+				// Convert string 'true'/'false' to boolean for auto publish objects setting.
+				'auto_publish_objects' => $this->config->getValueString(
+					$this->appName,
+					'auto_publish_objects',
+					'false'
+				) === 'true',
+				// Convert string 'true'/'false' to boolean for old style publishing view setting.
+				'use_old_style_publishing_view' => $this->config->getValueString(
+					$this->appName,
+					'use_old_style_publishing_view',
+					'false'
+				) === 'true',
+			];
+
+			return $publishingOptions;
+		} catch (\Exception $e) {
+			throw new RuntimeException('Failed to retrieve publishing options: ' . $e->getMessage());
+		}//end try
+
+	}//end getPublishingOptions()
+
+	/**
+	 * Update the publishing options configuration.
+	 *
+	 * @param array $options The publishing options data to update.
+	 *
+	 * @return array The updated publishing options configuration.
+	 * @throws \RuntimeException If publishing options update fails.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function updatePublishingOptions(array $options): array {
+		try {
+			// Define valid publishing option keys for security.
+			$validOptions = [
+				'auto_publish_attachments',
+				'auto_publish_objects',
+				'use_old_style_publishing_view',
+			];
+
+			$updatedOptions = [];
+
+			// Update each publishing option in the configuration.
+			foreach ($validOptions as $option) {
+				// Check if this option is provided in the input data.
+				if (isset($options[$option]) === true) {
+					// Convert boolean or string to string format for storage.
+					$value = 'false';
+					if ($options[$option] === true || $options[$option] === 'true') {
+						$value = 'true';
+					}
+
+					// Store the value in the configuration.
+					$this->config->setValueString($this->appName, $option, $value);
+					// Retrieve and convert back to boolean for the response.
+					$updatedOptions[$option] = $this->config->getValueString($this->appName, $option) === 'true';
+				}
+			}
+
+			return $updatedOptions;
+		} catch (\Exception $e) {
+			throw new RuntimeException('Failed to update publishing options: ' . $e->getMessage());
+		}//end try
+
+	}//end updatePublishingOptions()
+
+	/**
+	 * Load settings from the publication_register.json file.
+	 *
+	 * This method supports both old and new versions of OpenRegister:
+	 * - New version (>= 0.2.10): Uses importFromFilePath method.
+	 * - Old version (< 0.2.10): Uses importFromApp method with manual file reading.
+	 *
+	 * @param boolean $force Whether to force the import regardless of version checks.
+	 *
+	 * @return array The loaded settings configuration.
+	 * @throws \RuntimeException If settings loading fails.
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function loadSettings(bool $force = false): array {
+		try {
+			// Get the absolute path to the app directory.
+			$appPath = $this->appManager->getAppPath(Application::APP_ID);
+
+			// Build absolute path to the configuration file.
+			$absoluteFilePath = $appPath . '/lib/Settings/publication_register.json';
+
+			// Check if file exists.
+			if (file_exists($absoluteFilePath) === false) {
+				throw new RuntimeException("Configuration file not found: {$absoluteFilePath}");
+			}
+
+			// Read the JSON file content.
+			$jsonContent = file_get_contents($absoluteFilePath);
+			if ($jsonContent === false) {
+				throw new RuntimeException("Failed to read configuration file: {$absoluteFilePath}");
+			}
+
+			// Parse JSON.
+			$data = json_decode($jsonContent, true);
+			if (json_last_error() !== JSON_ERROR_NONE) {
+				throw new RuntimeException('Invalid JSON in configuration file: ' . json_last_error_msg());
+			}
+
+			// ADR-037: merge modular register fragments from Settings/register.d/*.json.
+			// Each OpenSpec change drops its own fragment file instead of editing this
+			// monolith, so concurrent builds touch disjoint files (no merge conflicts).
+			// OpenAPI `components.schemas` / `paths` are keyed objects, so disjoint
+			// fragments union cleanly by key.
+			$fragmentDir = $appPath . '/lib/Settings/register.d';
+			if (is_dir($fragmentDir) === true) {
+				$fragmentFiles = glob($fragmentDir . '/*.json');
+				sort($fragmentFiles);
+				foreach ($fragmentFiles as $fragmentFile) {
+					$fragmentContent = file_get_contents($fragmentFile);
+					if ($fragmentContent === false) {
+						continue;
+					}
+
+					$fragmentData = json_decode($fragmentContent, true);
+					if (json_last_error() !== JSON_ERROR_NONE) {
+						// Skip malformed fragment; the monolith import still succeeds.
+						continue;
+					}
+
+					$data = self::deepMergeConfig($data, $fragmentData);
+				}
+			}//end if
+
+			// ADR-037 guard: a fragment that declares a schema but forgets to list it
+			// under `components.registers.publication.schemas` gets the schema created
+			// and then orphaned — no register holds it, so no magic table is provisioned
+			// and the app's `{type}_register`/`{type}_schema` pair points at a register
+			// without that schema (how OOAPI course/program/offering broke). This
+			// pipeline only ever provisions one register, so attach the strays.
+			$data = self::attachOrphanSchemasToPublicationRegister($data);
+
+			// Calculate relative path from Nextcloud root for sourceUrl tracking.
+			// appPath is something like /var/www/html/apps-extra/opencatalogi
+			// We need to get the part after the Nextcloud root.
+			$nextcloudRoot = dirname(dirname(dirname($appPath)));
+			// Go up from apps-extra/opencatalogi to root.
+			$relativeFilePath = str_replace($nextcloudRoot . '/', '', $absoluteFilePath);
+
+			// Fallback: if path calculation fails, use the standard relative path.
+			if (str_starts_with($relativeFilePath, 'apps-extra/') === false
+				&& str_starts_with($relativeFilePath, 'apps/') === false
+			) {
+				$relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
+			}
+
+			// Set the sourceUrl in the data if not already set.
+			// This allows the cron job to track the file location.
+			if (isset($data['x-openregister']) === false) {
+				$data['x-openregister'] = [];
+			}
+
+			if (isset($data['x-openregister']['sourceUrl']) === false) {
+				$data['x-openregister']['sourceUrl'] = $relativeFilePath;
+			}
+
+			if (isset($data['x-openregister']['sourceType']) === false) {
+				$data['x-openregister']['sourceType'] = 'local';
+			}
+
+			// Get the configuration service.
+			$configurationService = $this->getConfigurationService();
+
+			// Get the current app version. dynamically.
+			$currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+
+			// The fragment digest is NOT folded into the version any more.
+			//
+			// ADR-037 originally appended `+frag.<md5>` so OpenRegister's
+			// version-gated import would re-import when a register.d fragment
+			// changed. That made the decision depend on how two md5 hashes SORT:
+			// version_compare treats `+…` as further version parts and compares
+			// them lexically, not as semver build metadata. Unchanged content
+			// re-imported roughly half the time, and a real change was skipped
+			// the other half — caught only by the content-differs fallback.
+			//
+			// OpenRegister now hashes the merged configuration itself and skips
+			// on hash equality, so a changed fragment is detected there, from the
+			// data, without this app encoding anything into a version string.
+			// The version means what it says again: the app's version.
+			//
+			// Use importFromApp to import the configuration data directly.
+			// This avoids the file path resolution issue in importFromFilePath.
+			$result = $configurationService->importFromApp(
+				appId: Application::APP_ID,
+				data: $data,
+				version: $currentAppVersion,
+				force: $force
+			);
+
+			// Update app configuration with imported schema and register IDs.
+			$this->updateObjectTypeConfiguration($result);
+
+			// OpenRegister's importRegister() version-gates the register update on
+			// `components.registers.publication.version` — unchanged since 0.1.0 — so a
+			// non-forced import silently skips it and schemas added by a newer fragment
+			// never get attached to the already-existing register. Reconcile additively.
+			$this->registerSchemaLink->reconcile($result);
+
+			// WOO-529: the seed data in publication_register.json creates the
+			// default "Publications" catalog with unset `registers`/`schemas`
+			// because the numeric IDs are only known AFTER importFromApp() has
+			// returned. Without those arrays PublicationService::getCatalogFilters()
+			// has no scope to union and every publish flow (federation search,
+			// create-publication modal) sees zero rows. Backfill now that the
+			// IDs are resolved, so a fresh install lands directly in a working
+			// state instead of the WOO-527 "not configured" empty state.
+			$this->backfillCatalogScopes();
+
+			return $result;
+		} catch (\Exception $e) {
+			throw new RuntimeException('Failed to load settings: ' . $e->getMessage());
+		}//end try
+
+	}//end loadSettings()
+
+	/**
+	 * Deep-merge a register fragment onto the base config (ADR-037).
+	 *
+	 * Associative arrays (OpenAPI objects like `components.schemas`, `paths`) are
+	 * merged by key union (recursing on shared keys); list arrays are concatenated;
+	 * scalars in the fragment overwrite the base. Disjoint fragments never collide.
+	 *
+	 * @param array<mixed> $base The accumulated config.
+	 * @param array<mixed> $overlay The fragment to merge in.
+	 *
+	 * @return array<mixed> The merged config.
+	 */
+	private static function deepMergeConfig(array $base, array $overlay): array {
+		foreach ($overlay as $key => $value) {
+			if (is_array($value) === true
+				&& isset($base[$key]) === true
+				&& is_array($base[$key]) === true
+			) {
+				$baseIsList = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
+				$overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
+				if ($baseIsList === true && $overlayIsList === true) {
+					$base[$key] = array_merge($base[$key], $value);
+				} else {
+					$base[$key] = self::deepMergeConfig($base[$key], $value);
+				}
+			} else {
+				$base[$key] = $value;
+			}
+		}
+
+		return $base;
+	}//end deepMergeConfig()
+
+	/**
+	 * Attach every unreferenced `components.schemas` slug to the publication register.
+	 *
+	 * Runs on the fully merged payload (monolith + every register.d fragment). A slug
+	 * that no register in the payload declares is added to the publication register's
+	 * schema list, plus a magic-mapping/auto-create-table entry so its physical table is
+	 * provisioned like every other schema in that register.
+	 *
+	 * Idempotent, and never reorders or drops an existing declaration.
+	 *
+	 * @param array<mixed> $data The merged configuration payload.
+	 *
+	 * @return array<mixed> The payload with stray schemas attached.
+	 */
+	private static function attachOrphanSchemasToPublicationRegister(array $data): array {
+		$schemas = ($data['components']['schemas'] ?? null);
+		if (is_array($schemas) === false || $schemas === []) {
+			return $data;
+		}
+
+		// The publication register must already be declared (it lives in the monolith);
+		// without it there is nothing to attach to.
+		if (isset($data['components']['registers']['publication']) === false
+			|| is_array($data['components']['registers']['publication']) === false
+		) {
+			return $data;
+		}
+
+		// Every slug any register in this payload already declares.
+		$declared = self::collectDeclaredSchemaSlugs(($data['components']['registers'] ?? []));
+
+		$register = $data['components']['registers']['publication'];
+		foreach (array_keys($schemas) as $slug) {
+			if (is_string($slug) === false || isset($declared[$slug]) === true) {
+				continue;
+			}
+
+			$register['schemas'][] = $slug;
+
+			// Only supply the magic-mapping default when the fragment said nothing —
+			// an explicit `magicMapping: false` stays untouched.
+			if (isset($register['configuration']['schemas'][$slug]) === false) {
+				$register['configuration']['schemas'][$slug] = [
+					'magicMapping' => true,
+					'autoCreateTable' => true,
+					'comment' => 'Auto-attached: declared in components.schemas without a register reference.',
+				];
+			}
+		}
+
+		$data['components']['registers']['publication'] = $register;
+
+		return $data;
+	}//end attachOrphanSchemasToPublicationRegister()
+
+	/**
+	 * Collect every schema slug that any register in the payload already declares.
+	 *
+	 * @param array<mixed> $registers The `components.registers` map from the payload.
+	 *
+	 * @return array<string, boolean> Declared slugs, keyed by slug for O(1) lookup.
+	 *
+	 * @spec exclude Internal collection step of attachOrphanSchemasToPublicationRegister().
+	 */
+	private static function collectDeclaredSchemaSlugs(array $registers): array {
+		$declared = [];
+		foreach ($registers as $registerData) {
+			if (is_array($registerData) === false || is_array($registerData['schemas'] ?? null) === false) {
+				continue;
+			}
+
+			foreach ($registerData['schemas'] as $declaredSlug) {
+				if (is_string($declaredSlug) === true) {
+					$declared[$declaredSlug] = true;
+				}
+			}
+		}
+
+		return $declared;
+	}//end collectDeclaredSchemaSlugs()
+
+	/**
+	 * Update the app configuration with imported schema and register IDs.
+	 *
+	 * After importing the configuration from OpenRegister, this method updates
+	 * the app configuration with the actual schema and register IDs so that
+	 * the frontend can construct correct API URLs.
+	 *
+	 * @param array $importResult The result from the importFromApp call containing registers and schemas.
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-woo-config-keys-are-auto-configured-on-install-and-repair-woo-prov-002
+	 */
+	private function updateObjectTypeConfiguration(array $importResult): void {
+		// Get the object types that need configuration.
+		// 'publication' is included so publication_register/publication_schema
+		// resolve for retention evaluation (RET-005); it was previously omitted.
+		// 'document' is included so document_register/document_schema resolve for the
+		// public full-text search assembly (SCH-PFTS-005/SCH-PFTS-002).
+		$objectTypes = [
+			'catalog',
+			'listing',
+			'organization',
+			'publication',
+			'document',
+			'theme',
+			'page',
+			'menu',
+			'glossary',
+		];
+
+		// OOAPI-catalog-publication (OOAPI-003/OOAPI-010): the course/program/offering
+		// schemas are added to the SAME shared 'publication' register via a register.d
+		// fragment (ADR-037) — this app's loadSettings()/importFromApp() pipeline only
+		// ever creates one OpenRegister register, so a genuinely separate "dedicated"
+		// register (design.md D6) is not achievable without a larger SettingsService
+		// rearchitecture; the config-key prefix (`ooapi_courses` etc.) intentionally
+		// differs from the schema slug (`course` etc.) to match the OOAPI-010 config
+		// key names, so it is resolved via this explicit map rather than the direct
+		// type === slug convention used by $objectTypes above.
+		$ooapiTypeMap = [
+			'ooapi_courses' => 'course',
+			'ooapi_programs' => 'program',
+			'ooapi_offerings' => 'offering',
+		];
+
+		// WOO transparency (fix-woo-capability-provisioning / WOO-PROV-002): the WOO
+		// config-key prefixes deliberately differ from their schema slugs (`woo_batch_schema`
+		// for `wooBatch`, `woo_assessment_schema` for `wooAssessment`) — same rationale as
+		// $ooapiTypeMap above. `woo_register` has no matching schema slug at all (both
+		// wooBatch and wooAssessment live in the SAME shared publication register, D1), so
+		// it is set directly from $registerId alongside this map rather than inside it.
+		$wooSchemaMap = [
+			'woo_batch_schema' => 'wooBatch',
+			'woo_assessment_schema' => 'wooAssessment',
+		];
+
+		// Build a map of schema slugs to schema IDs.
+		$schemaMap = [];
+		foreach (($importResult['schemas'] ?? []) as $schema) {
+			// Handle both object and array formats.
+			if (is_object($schema) === true) {
+				// Nextcloud entities have jsonSerialize() method to convert to array.
+				if (method_exists($schema, 'jsonSerialize') === true) {
+					$schemaArray = $schema->jsonSerialize();
+					if (isset($schemaArray['slug']) === true && isset($schemaArray['id']) === true) {
+						$schemaMap[$schemaArray['slug']] = $schemaArray['id'];
+					}
+				}
+
+				continue;
+			}
+
+			if (is_array($schema) === true && isset($schema['slug']) === true) {
+				$schemaMap[$schema['slug']] = ($schema['id'] ?? $schema['uuid'] ?? null);
+			}
+		}
+
+		// Get the register ID (all schemas share the same publication register).
+		$registerId = null;
+		foreach (($importResult['registers'] ?? []) as $register) {
+			// Handle both object and array formats.
+			if (is_object($register) === true) {
+				// Nextcloud entities have jsonSerialize() method to convert to array.
+				if (method_exists($register, 'jsonSerialize') === true) {
+					$registerArray = $register->jsonSerialize();
+					if (isset($registerArray['slug']) === true && $registerArray['slug'] === 'publication') {
+						$registerId = ($registerArray['id'] ?? $registerArray['uuid'] ?? null);
+						break;
+					}
+				}
+
+				continue;
+			}
+
+			// Already an array.
+			if (is_array($register) === true && isset($register['slug']) === true
+				&& $register['slug'] === 'publication'
+			) {
+				$registerId = ($register['id'] ?? $register['uuid'] ?? null);
+				break;
+			}
+		}//end foreach
+
+		// Update configuration for each object type.
+		foreach ($objectTypes as $type) {
+			// Set source to openregister.
+			$this->config->setValueString($this->appName, "{$type}_source", 'openregister');
+
+			// Set schema ID if found in the import result.
+			if (isset($schemaMap[$type]) === true && $schemaMap[$type] !== null) {
+				$this->config->setValueString($this->appName, "{$type}_schema", (string)$schemaMap[$type]);
+			}
+
+			// Set register ID if found.
+			if ($registerId !== null) {
+				$this->config->setValueString($this->appName, "{$type}_register", (string)$registerId);
+			}
+		}
+
+		// OOAPI-catalog-publication: same two steps, keyed by the OOAPI-010 config
+		// prefix rather than the schema slug (see $ooapiTypeMap comment above).
+		foreach ($ooapiTypeMap as $configPrefix => $schemaSlug) {
+			$this->config->setValueString($this->appName, "{$configPrefix}_source", 'openregister');
+
+			if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+				$this->config->setValueString($this->appName, "{$configPrefix}_schema", (string)$schemaMap[$schemaSlug]);
+			}
+
+			if ($registerId !== null) {
+				$this->config->setValueString($this->appName, "{$configPrefix}_register", (string)$registerId);
+			}
+		}
+
+		// WOO transparency: the shared publication register id, plus the two
+		// explicitly-mapped schema ids. Idempotent + never overwrite an existing
+		// value with an empty one — mirrors the conditional writes above (D5).
+		if ($registerId !== null) {
+			$this->config->setValueString($this->appName, 'woo_register', (string)$registerId);
+		}
+
+		foreach ($wooSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+	}//end updateObjectTypeConfiguration()
+
+	/**
+	 * Ensure every local catalog has a non-empty registers/schemas scope.
+	 *
+	 * `PublicationService::getCatalogFilters()` derives its visibility scope by
+	 * iterating every local catalog and unioning their `registers` + `schemas`
+	 * arrays. A catalog with both arrays unset contributes nothing, and with
+	 * only one such catalog the entire union is empty — no publications are
+	 * ever visible to /search or the create-publication modal (surfaces as the
+	 * WOO-527 "not configured" empty state).
+	 *
+	 * The default "Publications" catalog seeded via publication_register.json
+	 * (see WOO-529) exhibits this because the numeric register/schema IDs are
+	 * only resolved AFTER importFromApp() completes, so the seed cannot
+	 * hard-code them. This method runs after updateObjectTypeConfiguration()
+	 * has stored the resolved IDs, walks the catalog collection, and patches
+	 * any catalog missing a scope with `[publication_register]` / `[publication_schema]`.
+	 *
+	 * Idempotent — a catalog that already has a non-empty array is skipped so
+	 * admin-configured multi-register catalogs are never touched.
+	 *
+	 * @return void
+	 */
+	private function backfillCatalogScopes(): void {
+		try {
+			$publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
+			$publicationSchema = $this->config->getValueString($this->appName, 'publication_schema', '');
+			$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
+			$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+
+			if ($publicationRegister === '' || $publicationSchema === ''
+				|| $catalogRegister === '' || $catalogSchema === ''
+			) {
+				// Nothing to backfill against — the caller will surface the
+				// config gap via the setup wizard's reload-settings step.
+				return;
+			}
+
+			if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
+				return;
+			}
+
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$catalogs = $objectService->searchObjects(
+				query: [
+					'@self' => [
+						'register' => $catalogRegister,
+						'schema' => $catalogSchema,
+					],
+				]
+			);
+
+			foreach ($catalogs as $catalog) {
+				$catalogData = $catalog;
+				if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+					$catalogData = $catalog->jsonSerialize();
+				}
+
+				if (is_array($catalogData) === false) {
+					continue;
+				}
+
+				$registers = ($catalogData['registers'] ?? null);
+				$schemas = ($catalogData['schemas'] ?? null);
+				$needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
+				$needsSchemas = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
+
+				if ($needsRegisters === false && $needsSchemas === false) {
+					// Admin has already configured a scope; leave it alone.
+					continue;
+				}
+
+				$catalogId = ($catalogData['@self']['id'] ?? ($catalogData['id'] ?? null));
+				if ($catalogId === null) {
+					continue;
+				}
+
+				// OpenRegister's saveObject re-validates against the full schema,
+				// so we can't send a partial diff — start from the current object
+				// (minus `@self`, which is server-owned) and merge the missing
+				// scope arrays on top.
+				$merged = $catalogData;
+				unset($merged['@self']);
+				if ($needsRegisters === true) {
+					$merged['registers'] = [$publicationRegister];
+				}
+
+				if ($needsSchemas === true) {
+					$merged['schemas'] = [$publicationSchema];
+				}
+
+				// Persisted date-time fields can come back in the SQL-style
+				// "YYYY-MM-DD HH:MM:SS" shape (no `T`, no timezone) that fails
+				// the schema's ISO 8601 format validator on re-save. Normalise
+				// any string field looking like that back to full ISO 8601 so
+				// the update passes validation without touching the intent of
+				// the value. Non-string / already-ISO values are left alone.
+				foreach ($merged as $key => $value) {
+					if (is_string($value) === true
+						&& preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) === 1
+					) {
+						$merged[$key] = str_replace(' ', 'T', $value) . '+00:00';
+					}
+				}
+
+				try {
+					$objectService->saveObject(
+						object: $merged,
+						register: $catalogRegister,
+						schema: $catalogSchema,
+						uuid: (string)$catalogId,
+						_rbac: false,
+						_multitenancy: false,
+					);
+				} catch (\Exception) {
+					// Per-catalog failure must not abort the whole settings
+					// import; the admin can retro-fit via the catalog edit view.
+					continue;
+				}
+			}//end foreach
+		} catch (\Exception) {
+			// Never let backfill failure sink the settings import — the wizard
+			// still needs to declare success so the app is at least usable.
+			return;
+		}//end try
+
+	}//end backfillCatalogScopes()
+
+	/**
+	 * Check if settings should be loaded based on version comparison.
+	 *
+	 * This method compares the current app version with the stored configuration
+	 * version to determine if a settings import is needed.
+	 *
+	 * @return boolean True if settings should be loaded, false otherwise.
+	 * @throws \RuntimeException If version checking fails.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function shouldLoadSettings(): bool {
+		try {
+			// Get the current app version.
+			$currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+
+			// Get the configuration service. to check stored version.
+			$configurationService = $this->getConfigurationService();
+			$storedVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
+
+			// If no stored version exists, we need to load settings.
+			if ($storedVersion === null) {
+				return true;
+			}
+
+			// Compare versions using semantic versioning.
+			// Load settings if current version is newer than stored version.
+			return version_compare(version1: $currentAppVersion, version2: $storedVersion, operator: '>');
+		} catch (\Exception $e) {
+			// If we can't determine versions, err on the side of loading settings.
+			return true;
+		}//end try
+
+	}//end shouldLoadSettings()
+
+	/**
+	 * Get version information for the app and configuration.
+	 *
+	 * This method returns version information including the current app version
+	 * and the stored configuration version in OpenRegister.
+	 *
+	 * @return array Version information with app and configuration versions.
+	 * @throws \RuntimeException If version retrieval fails.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function getVersionInfo(): array {
+		try {
+			// Get the current app version.
+			$currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+
+			// Get the configuration service. to check stored version.
+			$configurationService = $this->getConfigurationService();
+			$storedConfigVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
+
+			// Determine if versions match.
+			$versionsMatch = $storedConfigVersion !== null
+						   && version_compare(version1: $currentAppVersion, version2: $storedConfigVersion, operator: '=');
+
+			return [
+				'appName' => 'OpenCatalogi',
+				'appVersion' => $currentAppVersion,
+				'configuredVersion' => $storedConfigVersion,
+				'versionsMatch' => $versionsMatch,
+				'needsUpdate' => $storedConfigVersion === null
+							   || version_compare(version1: $currentAppVersion, version2: $storedConfigVersion, operator: '>'),
+			];
+		} catch (\Exception $e) {
+			throw new RuntimeException('Failed to get version information: ' . $e->getMessage());
+		}//end try
+
+	}//end getVersionInfo()
+
+	/**
+	 * Manually trigger configuration import from JSON.
+	 *
+	 * This method allows system administrators to manually trigger the import
+	 * process, bypassing version checks.
+	 *
+	 * @param boolean $forceImport Whether to force import regardless of version.
+	 *
+	 * @return array The import results with success/error information.
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	public function manualImport(bool $forceImport = false): array {
+		try {
+			// Get version info first.
+			$versionInfo = $this->getVersionInfo();
+
+			// Check if import is needed (unless forced).
+			if ($forceImport === false && $versionInfo['versionsMatch'] === true) {
+				return [
+					'success' => false,
+					'message' => 'Configuration is already up to date. Use force import if you want to reimport.',
+					'versionInfo' => $versionInfo,
+				];
+			}
+
+			// Perform the import.
+			$importResult = $this->loadSettings($forceImport);
+
+			// Get updated version info.
+			$updatedVersionInfo = $this->getVersionInfo();
+
+			return [
+				'success' => true,
+				'message' => 'Configuration imported successfully.',
+				'importResult' => $importResult,
+				'versionInfo' => $updatedVersionInfo,
+			];
+		} catch (\Exception $e) {
+			return [
+				'success' => false,
+				'message' => 'Import failed: ' . $e->getMessage(),
+				'error' => $e->getMessage(),
+			];
+		}//end try
+
+	}//end manualImport()
 }//end class

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Db\FileMapper.
  *
@@ -17,47 +18,37 @@ namespace OCA\OpenRegister\Db;
 /**
  * Minimal stub for FileMapper.
  */
-class FileMapper
-{
+class FileMapper {
 
-    /**
-     * Stub for findByFileId.
-     *
-     * @param integer $fileId The file ID.
-     *
-     * @return mixed
-     */
-    public function findByFileId(int $fileId): mixed
-    {
-        return null;
+	/**
+	 * Stub for findByFileId.
+	 *
+	 * @param integer $fileId The file ID.
+	 *
+	 * @return mixed
+	 */
+	public function findByFileId(int $fileId): mixed {
+		return null;
+	}//end findByFileId()
 
-    }//end findByFileId()
+	/**
+	 * Stub for getFiles.
+	 *
+	 * @return array<mixed>
+	 */
+	public function getFiles(): array {
+		return [];
+	}//end getFiles()
 
-
-    /**
-     * Stub for getFiles.
-     *
-     * @return array<mixed>
-     */
-    public function getFiles(): array
-    {
-        return [];
-
-    }//end getFiles()
-
-
-    /**
-     * Stub for getFilesForObject.
-     *
-     * @param ObjectEntity $object The object entity.
-     *
-     * @return array<mixed>
-     */
-    public function getFilesForObject(ObjectEntity $object): array
-    {
-        return [];
-
-    }//end getFilesForObject()
-
+	/**
+	 * Stub for getFilesForObject.
+	 *
+	 * @param ObjectEntity $object The object entity.
+	 *
+	 * @return array<mixed>
+	 */
+	public function getFilesForObject(ObjectEntity $object): array {
+		return [];
+	}//end getFilesForObject()
 
 }//end class

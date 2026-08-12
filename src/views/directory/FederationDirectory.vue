@@ -254,6 +254,7 @@ export default {
 .federation-directory {
 	padding: 20px;
 }
+
 .federation-directory__header {
 	display: flex;
 	align-items: center;
@@ -262,26 +263,40 @@ export default {
 	/*
 	 * 56px clears NcAppNavigationToggle — per-header pattern documented at
 	 * nextcloud-vue/src/components/CnPageRenderer/CnPageRenderer.vue:993.
-	 * @visual exclude scoped copy of .viewHeaderTitleIndented for manifest-v2
-	 * directory shell; same 8-char CSS delta, same regression envelope.
+	 * This is a deliberately scoped copy of .viewHeaderTitleIndented for the
+	 * manifest-v2 directory shell; same 8-char CSS delta, same regression
+	 * envelope.
+	 *
+	 * (Reworded 2026-08-11: the previous phrasing put the words "@visual" and
+	 * "exclude" next to each other in ordinary prose. gate-26's
+	 * _VISUAL_EXCLUDE_RE scans the whole file text and does not require the
+	 * marker to be a directive, so that sentence was silently waiving this
+	 * page — a real, routed, shipped component — from visual coverage.
+	 * Measured: neutering those two words alone turned gate-26 from PASS into
+	 * "FAIL — 1" naming this file. The page is now covered for real by
+	 * tests/e2e/spec-coverage/page-components.spec.ts.)
 	 */
 	padding-inline-start: 56px;
 }
+
 .federation-directory__title {
 	margin: 0;
 }
+
 .federation-directory__summary {
 	display: flex;
 	gap: 16px;
 	margin: 8px 0 16px;
 	font-size: 13px;
 }
+
 .federation-directory__summary-item {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
 	color: var(--color-text-maxcontrast);
 }
+
 .federation-directory__dot {
 	display: inline-block;
 	width: 10px;
@@ -289,9 +304,13 @@ export default {
 	border-radius: 50%;
 	background: var(--color-background-darker);
 }
+
 .federation-directory__dot--up { background: var(--color-success); }
+
 .federation-directory__dot--degraded { background: var(--color-warning); }
+
 .federation-directory__dot--down { background: var(--color-error); }
+
 .federation-directory__dot--unknown { background: var(--color-text-lighter); }
 /* WCAG 4.1.2 — pair `aria-hidden` dots with sr-only status text (F12). */
 .hidden-visually {
@@ -305,18 +324,22 @@ export default {
 	white-space: nowrap;
 	border: 0;
 }
+
 .federation-directory__hint {
 	color: var(--color-text-maxcontrast);
 }
+
 .federation-directory__error {
 	color: var(--color-error);
 }
+
 .federation-directory__list {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 	border-top: 1px solid var(--color-border);
 }
+
 .federation-directory__node {
 	display: flex;
 	align-items: center;
@@ -324,16 +347,19 @@ export default {
 	padding: 12px 8px;
 	border-bottom: 1px solid var(--color-border);
 }
+
 .federation-directory__node-info {
 	flex: 1;
 	min-width: 0;
 }
+
 .federation-directory__node-name {
 	font-weight: 600;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+
 .federation-directory__node-url {
 	font-size: 12px;
 	color: var(--color-text-lighter);
@@ -341,11 +367,13 @@ export default {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+
 .federation-directory__node-message {
 	font-size: 12px;
 	color: var(--color-warning);
 	margin-top: 2px;
 }
+
 .federation-directory__node-integration {
 	flex: 0 0 auto;
 	display: flex;
@@ -354,16 +382,19 @@ export default {
 	margin-inline: 12px;
 	min-width: 100px;
 }
+
 .federation-directory__field-label {
 	font-size: 11px;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 	color: var(--color-text-lighter);
 }
+
 .federation-directory__field-value {
 	font-size: 13px;
 	color: var(--color-text-maxcontrast);
 }
+
 .federation-directory__node-actions {
 	flex: 0 0 auto;
 }

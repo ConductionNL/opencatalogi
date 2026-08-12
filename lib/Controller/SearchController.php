@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi Search Controller.
  *
@@ -24,11 +25,11 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCP\AppFramework\Http\DataDownloadResponse;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -56,255 +57,241 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class SearchController extends Controller
-{
-    /**
-     * SearchController constructor.
-     *
-     * @param string                  $appName            The name of the app.
-     * @param IRequest                $request            The request object.
-     * @param PublicationService      $publicationService The publication service.
-     * @param IUserSession            $userSession        The user session.
-     * @param IL10N                   $l10n               The localization service.
-     * @param PublicationQueryService $queryService       Public search assembly helper (WOO-506).
-     * @param ContainerInterface      $container          DI container, to resolve OpenRegister's ObjectService.
-     * @param IAppManager             $appManager         The app manager.
-     * @param LoggerInterface         $logger             PSR-3 logger.
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
-     */
-    public function __construct(
-        $appName,
-        IRequest $request,
-        private readonly PublicationService $publicationService,
-        private readonly IUserSession $userSession,
-        private readonly IL10N $l10n,
-        private readonly PublicationQueryService $queryService,
-        private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager,
-        private readonly LoggerInterface $logger
-    ) {
-        parent::__construct(appName: $appName, request: $request);
+class SearchController extends Controller {
+	/**
+	 * SearchController constructor.
+	 *
+	 * @param string $appName The name of the app.
+	 * @param IRequest $request The request object.
+	 * @param PublicationService $publicationService The publication service.
+	 * @param IUserSession $userSession The user session.
+	 * @param IL10N $l10n The localization service.
+	 * @param PublicationQueryService $queryService Public search assembly helper (WOO-506).
+	 * @param ContainerInterface $container DI container, to resolve OpenRegister's ObjectService.
+	 * @param IAppManager $appManager The app manager.
+	 * @param LoggerInterface $logger PSR-3 logger.
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+	 */
+	public function __construct(
+		$appName,
+		IRequest $request,
+		private readonly PublicationService $publicationService,
+		private readonly IUserSession $userSession,
+		private readonly IL10N $l10n,
+		private readonly PublicationQueryService $queryService,
+		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: $appName, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Attempts to retrieve the OpenRegister ObjectService from the container.
-     *
-     * @return object The OpenRegister ObjectService.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     * @throws RuntimeException When OpenRegister is not installed.
-     *
-     * @spec exclude Lazy dependency-injection accessor; pure framework plumbing.
-     */
-    private function getObjectService(): object
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        }
+	/**
+	 * Attempts to retrieve the OpenRegister ObjectService from the container.
+	 *
+	 * @return object The OpenRegister ObjectService.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 * @throws RuntimeException When OpenRegister is not installed.
+	 *
+	 * @spec exclude Lazy dependency-injection accessor; pure framework plumbing.
+	 */
+	private function getObjectService(): object {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		}
 
-        throw new RuntimeException('OpenRegister service is not available.');
+		throw new RuntimeException('OpenRegister service is not available.');
+	}//end getObjectService()
 
-    }//end getObjectService()
+	/**
+	 * Public, RBAC-filtered full-text search across publications and documents (WOO-506).
+	 *
+	 * Absorbs the previous admin-only search into a public, anonymous-reachable
+	 * endpoint. Delegates entirely to OR's zoeken-filteren via
+	 * {@see PublicationQueryService::assemblePublicSearchResults()} (SCH-OR-003,
+	 * SCH-PFTS-001, SCH-PFTS-002, SCH-PFTS-006, SCH-PFTS-007) — this controller
+	 * performs no bespoke query building or scoring of its own.
+	 *
+	 * Dual-path (design.md "Dual-path design"): metadata-only matching (Path B) plus
+	 * the opt-in `_content` query parameter (Path A, WOO-517,
+	 * {@see PublicationQueryService::assemblePublicSearchResults()}), which widens
+	 * matching to OR-extracted document body text via OR's TextExtractionService +
+	 * ChunkMapper pipeline (SCH-PFTS-006, SCH-PFTS-CONTENT-001). This controller
+	 * itself performs no bespoke handling of `_content` — it flows through via the
+	 * existing `IRequest::getParams()` passthrough like every other query parameter;
+	 * OpenCatalogi does not add a parallel extraction pipeline here.
+	 *
+	 * @return JSONResponse JSON response containing the mixed publication/document result envelope.
+	 *
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-3
+	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
+	 */
+	public function index(): JSONResponse {
+		try {
+			$objectService = $this->getObjectService();
 
-    /**
-     * Public, RBAC-filtered full-text search across publications and documents (WOO-506).
-     *
-     * Absorbs the previous admin-only search into a public, anonymous-reachable
-     * endpoint. Delegates entirely to OR's zoeken-filteren via
-     * {@see PublicationQueryService::assemblePublicSearchResults()} (SCH-OR-003,
-     * SCH-PFTS-001, SCH-PFTS-002, SCH-PFTS-006, SCH-PFTS-007) — this controller
-     * performs no bespoke query building or scoring of its own.
-     *
-     * Dual-path (design.md "Dual-path design"): metadata-only matching (Path B) plus
-     * the opt-in `_content` query parameter (Path A, WOO-517,
-     * {@see PublicationQueryService::assemblePublicSearchResults()}), which widens
-     * matching to OR-extracted document body text via OR's TextExtractionService +
-     * ChunkMapper pipeline (SCH-PFTS-006, SCH-PFTS-CONTENT-001). This controller
-     * itself performs no bespoke handling of `_content` — it flows through via the
-     * existing `IRequest::getParams()` passthrough like every other query parameter;
-     * OpenCatalogi does not add a parallel extraction pipeline here.
-     *
-     * @return JSONResponse JSON response containing the mixed publication/document result envelope.
-     *
-     * @PublicPage
-     * @NoCSRFRequired
-     *
-     * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-3
-     * @spec openspec/changes/add-document-content-search/tasks.md#task-3
-     */
-    public function index(): JSONResponse
-    {
-        try {
-            $objectService = $this->getObjectService();
+			$result = $this->queryService->assemblePublicSearchResults(
+				queryParams: $this->request->getParams(),
+				objectService: $objectService
+			);
 
-            $result = $this->queryService->assemblePublicSearchResults(
-                queryParams: $this->request->getParams(),
-                objectService: $objectService
-            );
+			return new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
+		} catch (RuntimeException $e) {
+			// OR isn't installed — this is a deploy issue, not a code bug. Callers
+			// (and operators) benefit from a 503 that distinguishes "backend not
+			// ready" from "backend crashed"; keep the generic 500 branch below for
+			// truly unexpected errors. Log-level `warning` because the app can't
+			// do its job right now but nothing is broken in this code path.
+			$this->logger->warning(
+				'[SearchController::index] OpenRegister not installed — public search unavailable',
+				['error' => $e->getMessage()]
+			);
 
-            return new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
-        } catch (RuntimeException $e) {
-            // OR isn't installed — this is a deploy issue, not a code bug. Callers
-            // (and operators) benefit from a 503 that distinguishes "backend not
-            // ready" from "backend crashed"; keep the generic 500 branch below for
-            // truly unexpected errors. Log-level `warning` because the app can't
-            // do its job right now but nothing is broken in this code path.
-            $this->logger->warning(
-                '[SearchController::index] OpenRegister not installed — public search unavailable',
-                ['error' => $e->getMessage()]
-            );
+			return new JSONResponse(
+				data: ['error' => $this->l10n->t('Search backend is not available.')],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		} catch (\Exception $e) {
+			// Public endpoint — log exception details server-side only and return a
+			// generic error body to the caller; never leak raw $e->getMessage().
+			$this->logger->error(
+				'[SearchController::index] Failed to execute public search',
+				['error' => $e->getMessage()]
+			);
 
-            return new JSONResponse(
-                data: ['error' => $this->l10n->t('Search backend is not available.')],
-                statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-            );
-        } catch (\Exception $e) {
-            // Public endpoint — log exception details server-side only and return a
-            // generic error body to the caller; never leak raw $e->getMessage().
-            $this->logger->error(
-                '[SearchController::index] Failed to execute public search',
-                ['error' => $e->getMessage()]
-            );
+			return new JSONResponse(
+				data: ['error' => $this->l10n->t('Internal server error')],
+				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
 
-            return new JSONResponse(
-                data: ['error' => $this->l10n->t('Internal server error')],
-                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
+	}//end index()
 
-    }//end index()
+	/**
+	 * Retrieve a specific publication by its ID.
+	 *
+	 * This is an internal endpoint for testing and administrative purposes.
+	 *
+	 * @param string $id The ID of the publication to retrieve.
+	 *
+	 * @return JSONResponse JSON response containing the requested publication.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-a-single-publication-by-id-from-local-or-federated-sources-fed-002
+	 */
+	public function show(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
 
-    /**
-     * Retrieve a specific publication by its ID.
-     *
-     * This is an internal endpoint for testing and administrative purposes.
-     *
-     * @param string $id The ID of the publication to retrieve.
-     *
-     * @return JSONResponse JSON response containing the requested publication.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/federation/spec.md#requirement-retrieve-a-single-publication-by-id-from-local-or-federated-sources-fed-002
-     */
-    public function show(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
+		return $this->publicationService->show(id: $id);
+	}//end show()
 
-        return $this->publicationService->show(id: $id);
+	/**
+	 * Retrieve attachments/files of a publication.
+	 *
+	 * This is an internal endpoint for testing and administrative purposes.
+	 *
+	 * @param string $id Id of publication.
+	 *
+	 * @return JSONResponse JSON response containing the requested attachments.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-publication-attachments-from-local-or-federated-sources-fed-005
+	 */
+	public function attachments(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
 
-    }//end show()
+		return $this->publicationService->attachments(id: $id);
+	}//end attachments()
 
-    /**
-     * Retrieve attachments/files of a publication.
-     *
-     * This is an internal endpoint for testing and administrative purposes.
-     *
-     * @param string $id Id of publication.
-     *
-     * @return JSONResponse JSON response containing the requested attachments.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/federation/spec.md#requirement-retrieve-publication-attachments-from-local-or-federated-sources-fed-005
-     */
-    public function attachments(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Download files of a publication.
+	 *
+	 * This is an internal endpoint for testing and administrative purposes.
+	 *
+	 * @param string $id Id of publication.
+	 *
+	 * @return DataDownloadResponse|JSONResponse The download response.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/federation/spec.md#requirement-download-publication-files-from-local-or-federated-sources-fed-006
+	 */
+	public function download(string $id): DataDownloadResponse|JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
 
-        return $this->publicationService->attachments(id: $id);
+		return $this->publicationService->download(id: $id);
+	}//end download()
 
-    }//end attachments()
+	/**
+	 * Retrieves all objects that this publication references.
+	 *
+	 * This method returns all objects that this publication uses/references.
+	 * A -> B means that A (This publication) references B (Another object).
+	 *
+	 * @param string $id The ID of the publication to retrieve relations for.
+	 *
+	 * @return JSONResponse A JSON response containing the related objects.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-outgoing-relations-uses-with-federation-support-fed-003
+	 */
+	public function uses(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
 
-    /**
-     * Download files of a publication.
-     *
-     * This is an internal endpoint for testing and administrative purposes.
-     *
-     * @param string $id Id of publication.
-     *
-     * @return DataDownloadResponse|JSONResponse The download response.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/federation/spec.md#requirement-download-publication-files-from-local-or-federated-sources-fed-006
-     */
-    public function download(string $id): DataDownloadResponse|JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
+		return $this->publicationService->uses(id: $id);
+	}//end uses()
 
-        return $this->publicationService->download(id: $id);
+	/**
+	 * Retrieves all objects that use this publication.
+	 *
+	 * This method returns all objects that reference (use) this publication.
+	 * B -> A means that B (Another object) references A (This publication).
+	 *
+	 * @param string $id The ID of the publication to retrieve uses for.
+	 *
+	 * @return JSONResponse A JSON response containing the referenced objects.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-incoming-relations-used-by-with-federation-support-fed-004
+	 */
+	public function used(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
 
-    }//end download()
-
-    /**
-     * Retrieves all objects that this publication references.
-     *
-     * This method returns all objects that this publication uses/references.
-     * A -> B means that A (This publication) references B (Another object).
-     *
-     * @param string $id The ID of the publication to retrieve relations for.
-     *
-     * @return JSONResponse A JSON response containing the related objects.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/federation/spec.md#requirement-retrieve-outgoing-relations-uses-with-federation-support-fed-003
-     */
-    public function uses(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
-
-        return $this->publicationService->uses(id: $id);
-
-    }//end uses()
-
-    /**
-     * Retrieves all objects that use this publication.
-     *
-     * This method returns all objects that reference (use) this publication.
-     * B -> A means that B (Another object) references A (This publication).
-     *
-     * @param string $id The ID of the publication to retrieve uses for.
-     *
-     * @return JSONResponse A JSON response containing the referenced objects.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/federation/spec.md#requirement-retrieve-incoming-relations-used-by-with-federation-support-fed-004
-     */
-    public function used(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
-
-        return $this->publicationService->used(id: $id);
-
-    }//end used()
+		return $this->publicationService->used(id: $id);
+	}//end used()
 }//end class

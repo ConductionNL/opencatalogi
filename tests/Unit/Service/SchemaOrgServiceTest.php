@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Unit tests for SchemaOrgService.
  *
@@ -37,311 +38,288 @@ use Psr\Log\LoggerInterface;
 /**
  * Unit tests for SchemaOrgService.
  */
-class SchemaOrgServiceTest extends TestCase
-{
+class SchemaOrgServiceTest extends TestCase {
 
-    private ContainerInterface|MockObject $container;
+	private ContainerInterface|MockObject $container;
 
-    private DcatService|MockObject $dcatService;
+	private DcatService|MockObject $dcatService;
 
-    private IURLGenerator|MockObject $urlGenerator;
+	private IURLGenerator|MockObject $urlGenerator;
 
-    private LoggerInterface|MockObject $logger;
+	private LoggerInterface|MockObject $logger;
 
-    /**
-     * Map of container id → resolved service double.
-     *
-     * @var array<string, object>
-     */
-    private array $services = [];
+	/**
+	 * Map of container id → resolved service double.
+	 *
+	 * @var array<string, object>
+	 */
+	private array $services = [];
 
+	/**
+	 * Set up shared fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->dcatService = $this->createMock(DcatService::class);
+		$this->urlGenerator = $this->createMock(IURLGenerator::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    /**
-     * Set up shared fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->container    = $this->createMock(ContainerInterface::class);
-        $this->dcatService  = $this->createMock(DcatService::class);
-        $this->urlGenerator = $this->createMock(IURLGenerator::class);
-        $this->logger       = $this->createMock(LoggerInterface::class);
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.test');
 
-        $this->urlGenerator->method('getBaseUrl')->willReturn('https://example.test');
+		$this->dcatService->method('datasetIri')->willReturnCallback(
+			static fn (string $slug, string $uuid): string => "https://example.test/apps/opencatalogi/api/$slug/$uuid"
+		);
+		$this->dcatService->method('resolveDefaults')->willReturn(
+			[
+				'publisherName' => 'Gemeente Test',
+				'publisherUri' => 'https://example.test/org',
+				'license' => 'http://creativecommons.org/publicdomain/zero/1.0/',
+				'contactPoint' => '',
+				'organisation' => null,
+			]
+		);
 
-        $this->dcatService->method('datasetIri')->willReturnCallback(
-            static fn(string $slug, string $uuid): string => "https://example.test/apps/opencatalogi/api/$slug/$uuid"
-        );
-        $this->dcatService->method('resolveDefaults')->willReturn(
-            [
-                'publisherName' => 'Gemeente Test',
-                'publisherUri'  => 'https://example.test/org',
-                'license'       => 'http://creativecommons.org/publicdomain/zero/1.0/',
-                'contactPoint'  => '',
-                'organisation'  => null,
-            ]
-        );
+		$this->container->method('get')->willReturnCallback(
+			function (string $id) {
+				if (isset($this->services[$id]) === true) {
+					return $this->services[$id];
+				}
 
-        $this->container->method('get')->willReturnCallback(
-            function (string $id) {
-                if (isset($this->services[$id]) === true) {
-                    return $this->services[$id];
-                }
+				throw new \RuntimeException('unexpected container id: ' . $id);
+			}
+		);
 
-                throw new \RuntimeException('unexpected container id: '.$id);
-            }
-        );
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * Build the service under test.
+	 *
+	 * @return SchemaOrgService The service.
+	 */
+	private function service(): SchemaOrgService {
+		return new SchemaOrgService($this->container, $this->dcatService, $this->urlGenerator, $this->logger);
+	}//end service()
 
+	/**
+	 * A schema-mapper double whose find() returns a schema with the given marker.
+	 *
+	 * @param string $marker The x-schema-org CURIE.
+	 *
+	 * @return object The double.
+	 */
+	private function schemaMapperWithMarker(string $marker): object {
+		return new class($marker) {
+			/**
+			 * @param string $marker
+			 */
+			public function __construct(
+				private string $marker,
+			) {
+			}
 
-    /**
-     * Build the service under test.
-     *
-     * @return SchemaOrgService The service.
-     */
-    private function service(): SchemaOrgService
-    {
-        return new SchemaOrgService($this->container, $this->dcatService, $this->urlGenerator, $this->logger);
+			public function find(int|string $id): object {
+				return new class($this->marker) implements \JsonSerializable {
+					/**
+					 * @param string $marker
+					 */
+					public function __construct(
+						private string $marker,
+					) {
+					}
 
-    }//end service()
+					/**
+					 * @return array<string, mixed>
+					 */
+					public function jsonSerialize(): array {
+						return ['id' => 11, 'title' => 'Publication', 'x-schema-org' => $this->marker];
+					}
+				};
+			}
+		};
 
+	}//end schemaMapperWithMarker()
 
-    /**
-     * A schema-mapper double whose find() returns a schema with the given marker.
-     *
-     * @param string $marker The x-schema-org CURIE.
-     *
-     * @return object The double.
-     */
-    private function schemaMapperWithMarker(string $marker): object
-    {
-        return new class ($marker) {
-            /**
-             * @param string $marker
-             */
-            public function __construct(private string $marker)
-            {
-            }
+	/**
+	 * A file-service double returning the given formatFiles results.
+	 *
+	 * @param array<int, array<string, mixed>> $files The formatted files.
+	 *
+	 * @return object The double.
+	 */
+	private function fileServiceReturning(array $files): object {
+		return new class($files) {
+			/**
+			 * @param array<int, array<string, mixed>> $files
+			 */
+			public function __construct(
+				private array $files,
+			) {
+			}
 
-            public function find(int|string $id): object
-            {
-                return new class ($this->marker) implements \JsonSerializable {
-                    /**
-                     * @param string $marker
-                     */
-                    public function __construct(private string $marker)
-                    {
-                    }
+			/**
+			 * @return array<int, mixed>
+			 */
+			public function getFiles(mixed $object, ?bool $sharedFilesOnly = false): array {
+				return $this->files;
+			}
 
-                    /**
-                     * @return array<string, mixed>
-                     */
-                    public function jsonSerialize(): array
-                    {
-                        return ['id' => 11, 'title' => 'Publication', 'x-schema-org' => $this->marker];
-                    }
-                };
-            }
-        };
+			/**
+			 * @param array<int, mixed> $files
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function formatFiles(array $files, ?array $requestParams = []): array {
+				return ['results' => $files];
+			}
+		};
 
-    }//end schemaMapperWithMarker()
+	}//end fileServiceReturning()
 
+	/**
+	 * An object-service double whose searchObjectsPaginated returns the given results.
+	 *
+	 * @param array<int, array<string, mixed>> $results The publication rows.
+	 *
+	 * @return object The double.
+	 */
+	private function objectServiceReturning(array $results): object {
+		return new class($results) {
+			/**
+			 * @param array<int, array<string, mixed>> $results
+			 */
+			public function __construct(
+				private array $results,
+			) {
+			}
 
-    /**
-     * A file-service double returning the given formatFiles results.
-     *
-     * @param array<int, array<string, mixed>> $files The formatted files.
-     *
-     * @return object The double.
-     */
-    private function fileServiceReturning(array $files): object
-    {
-        return new class ($files) {
-            /**
-             * @param array<int, array<string, mixed>> $files
-             */
-            public function __construct(private array $files)
-            {
-            }
+			/**
+			 * @param array<string, mixed> $query
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function searchObjectsPaginated(array $query = [], bool $_rbac = true, bool $_multitenancy = true, bool $deleted = false): array {
+				return ['results' => $this->results, 'total' => count($this->results)];
+			}
+		};
 
-            /**
-             * @return array<int, mixed>
-             */
-            public function getFiles(mixed $object, ?bool $sharedFilesOnly=false): array
-            {
-                return $this->files;
-            }
+	}//end objectServiceReturning()
 
-            /**
-             * @param array<int, mixed> $files
-             *
-             * @return array<string, mixed>
-             */
-            public function formatFiles(array $files, ?array $requestParams=[]): array
-            {
-                return ['results' => $files];
-            }
-        };
+	/**
+	 * The marker `schema:CreativeWork` resolves to the bare type `CreativeWork`.
+	 *
+	 * @return void
+	 */
+	public function testMarkerTypeStripsCurie(): void {
+		$this->services['OCA\OpenRegister\Db\SchemaMapper'] = $this->schemaMapperWithMarker('schema:CreativeWork');
 
-    }//end fileServiceReturning()
+		$this->assertSame('CreativeWork', $this->service()->markerTypeForSchema(11));
 
+	}//end testMarkerTypeStripsCurie()
 
-    /**
-     * An object-service double whose searchObjectsPaginated returns the given results.
-     *
-     * @param array<int, array<string, mixed>> $results The publication rows.
-     *
-     * @return object The double.
-     */
-    private function objectServiceReturning(array $results): object
-    {
-        return new class ($results) {
-            /**
-             * @param array<int, array<string, mixed>> $results
-             */
-            public function __construct(private array $results)
-            {
-            }
+	/**
+	 * A non-elected catalog renders the publication with its marker type and no
+	 * dataset-only fields.
+	 *
+	 * @return void
+	 */
+	public function testNonElectedPublicationKeepsMarkerType(): void {
+		$this->services['OCA\OpenRegister\Db\SchemaMapper'] = $this->schemaMapperWithMarker('schema:CreativeWork');
 
-            /**
-             * @param array<string, mixed> $query
-             *
-             * @return array<string, mixed>
-             */
-            public function searchObjectsPaginated(array $query=[], bool $_rbac=true, bool $_multitenancy=true, bool $deleted=false): array
-            {
-                return ['results' => $this->results, 'total' => count($this->results)];
-            }
-        };
+		$object = [
+			'id' => 'uuid-1',
+			'@self' => ['uuid' => 'uuid-1', 'schema' => 11, 'updated' => '2024-01-15T10:00:00+00:00'],
+			'title' => 'Besluit X',
+			'description' => 'Een openbaar besluit',
+		];
+		$catalog = ['title' => 'WOO', 'schemaOrgDataset' => false];
 
-    }//end objectServiceReturning()
+		$node = $this->service()->buildPublicationNode($object, $catalog, 'woo');
 
+		$this->assertSame('https://schema.org', $node['@context']);
+		$this->assertSame('CreativeWork', $node['@type']);
+		$this->assertSame('Besluit X', $node['name']);
+		$this->assertSame('Een openbaar besluit', $node['description']);
+		$this->assertSame('https://example.test/apps/opencatalogi/api/woo/uuid-1', $node['url']);
+		$this->assertArrayHasKey('dateModified', $node);
+		$this->assertArrayNotHasKey('distribution', $node);
+		$this->assertArrayNotHasKey('includedInDataCatalog', $node);
 
-    /**
-     * The marker `schema:CreativeWork` resolves to the bare type `CreativeWork`.
-     *
-     * @return void
-     */
-    public function testMarkerTypeStripsCurie(): void
-    {
-        $this->services['OCA\OpenRegister\Db\SchemaMapper'] = $this->schemaMapperWithMarker('schema:CreativeWork');
+	}//end testNonElectedPublicationKeepsMarkerType()
 
-        $this->assertSame('CreativeWork', $this->service()->markerTypeForSchema(11));
+	/**
+	 * An elected catalog renders the publication as `Dataset` with `DataDownload`
+	 * distributions and an `includedInDataCatalog` backlink.
+	 *
+	 * @return void
+	 */
+	public function testElectedPublicationCarriesDatasetShape(): void {
+		$this->services['OCA\OpenRegister\Db\SchemaMapper'] = $this->schemaMapperWithMarker('schema:CreativeWork');
+		$this->services['OCA\OpenRegister\Service\FileService'] = $this->fileServiceReturning(
+			[
+				['downloadUrl' => 'https://example.test/f/a.pdf', 'mimetype' => 'application/pdf', 'name' => 'a.pdf', 'size' => 100],
+				['downloadUrl' => 'https://example.test/f/b.csv', 'mimetype' => 'text/csv', 'name' => 'b.csv'],
+			]
+		);
 
-    }//end testMarkerTypeStripsCurie()
+		$object = [
+			'id' => 'uuid-2',
+			'@self' => ['uuid' => 'uuid-2', 'schema' => 11, 'updated' => '2024-02-01T00:00:00+00:00'],
+			'title' => 'Dataset Y',
+		];
+		$catalog = ['title' => 'Open Data', 'schemaOrgDataset' => true];
 
+		$node = $this->service()->buildPublicationNode($object, $catalog, 'opendata');
 
-    /**
-     * A non-elected catalog renders the publication with its marker type and no
-     * dataset-only fields.
-     *
-     * @return void
-     */
-    public function testNonElectedPublicationKeepsMarkerType(): void
-    {
-        $this->services['OCA\OpenRegister\Db\SchemaMapper'] = $this->schemaMapperWithMarker('schema:CreativeWork');
+		$this->assertSame('Dataset', $node['@type']);
+		$this->assertCount(2, $node['distribution']);
+		$this->assertSame('DataDownload', $node['distribution'][0]['@type']);
+		$this->assertSame('https://example.test/f/a.pdf', $node['distribution'][0]['contentUrl']);
+		$this->assertSame('application/pdf', $node['distribution'][0]['encodingFormat']);
+		$this->assertSame('DataCatalog', $node['includedInDataCatalog']['@type']);
+		$this->assertSame('Open Data', $node['includedInDataCatalog']['name']);
 
-        $object = [
-            'id'          => 'uuid-1',
-            '@self'       => ['uuid' => 'uuid-1', 'schema' => 11, 'updated' => '2024-01-15T10:00:00+00:00'],
-            'title'       => 'Besluit X',
-            'description' => 'Een openbaar besluit',
-        ];
-        $catalog = ['title' => 'WOO', 'schemaOrgDataset' => false];
+	}//end testElectedPublicationCarriesDatasetShape()
 
-        $node = $this->service()->buildPublicationNode($object, $catalog, 'woo');
+	/**
+	 * The catalog node lists exactly the publicly visible publications as `dataset`
+	 * refs by their canonical URLs.
+	 *
+	 * @return void
+	 */
+	public function testCatalogNodeListsVisiblePublications(): void {
+		$this->services['OCA\OpenRegister\Service\ObjectService'] = $this->objectServiceReturning(
+			[
+				['id' => 'p1', '@self' => ['uuid' => 'p1']],
+				['id' => 'p2', '@self' => ['uuid' => 'p2']],
+				['id' => 'p3', '@self' => ['uuid' => 'p3']],
+			]
+		);
 
-        $this->assertSame('https://schema.org', $node['@context']);
-        $this->assertSame('CreativeWork', $node['@type']);
-        $this->assertSame('Besluit X', $node['name']);
-        $this->assertSame('Een openbaar besluit', $node['description']);
-        $this->assertSame('https://example.test/apps/opencatalogi/api/woo/uuid-1', $node['url']);
-        $this->assertArrayHasKey('dateModified', $node);
-        $this->assertArrayNotHasKey('distribution', $node);
-        $this->assertArrayNotHasKey('includedInDataCatalog', $node);
+		$catalog = [
+			'title' => 'WOO',
+			'registers' => [1],
+			'schemas' => [11],
+		];
 
-    }//end testNonElectedPublicationKeepsMarkerType()
+		$node = $this->service()->buildCatalogNode($catalog, 'woo');
 
+		$this->assertSame('DataCatalog', $node['@type']);
+		$this->assertSame('https://schema.org', $node['@context']);
+		$this->assertCount(3, $node['dataset']);
+		$this->assertSame('https://example.test/apps/opencatalogi/api/woo/p1', $node['dataset'][0]['@id']);
 
-    /**
-     * An elected catalog renders the publication as `Dataset` with `DataDownload`
-     * distributions and an `includedInDataCatalog` backlink.
-     *
-     * @return void
-     */
-    public function testElectedPublicationCarriesDatasetShape(): void
-    {
-        $this->services['OCA\OpenRegister\Db\SchemaMapper'] = $this->schemaMapperWithMarker('schema:CreativeWork');
-        $this->services['OCA\OpenRegister\Service\FileService'] = $this->fileServiceReturning(
-            [
-                ['downloadUrl' => 'https://example.test/f/a.pdf', 'mimetype' => 'application/pdf', 'name' => 'a.pdf', 'size' => 100],
-                ['downloadUrl' => 'https://example.test/f/b.csv', 'mimetype' => 'text/csv', 'name' => 'b.csv'],
-            ]
-        );
+	}//end testCatalogNodeListsVisiblePublications()
 
-        $object = [
-            'id'    => 'uuid-2',
-            '@self' => ['uuid' => 'uuid-2', 'schema' => 11, 'updated' => '2024-02-01T00:00:00+00:00'],
-            'title' => 'Dataset Y',
-        ];
-        $catalog = ['title' => 'Open Data', 'schemaOrgDataset' => true];
+	/**
+	 * The dataset election defaults to off.
+	 *
+	 * @return void
+	 */
+	public function testDatasetElectionDefaultsOff(): void {
+		$this->assertFalse($this->service()->isDatasetElected([]));
+		$this->assertTrue($this->service()->isDatasetElected(['schemaOrgDataset' => true]));
 
-        $node = $this->service()->buildPublicationNode($object, $catalog, 'opendata');
-
-        $this->assertSame('Dataset', $node['@type']);
-        $this->assertCount(2, $node['distribution']);
-        $this->assertSame('DataDownload', $node['distribution'][0]['@type']);
-        $this->assertSame('https://example.test/f/a.pdf', $node['distribution'][0]['contentUrl']);
-        $this->assertSame('application/pdf', $node['distribution'][0]['encodingFormat']);
-        $this->assertSame('DataCatalog', $node['includedInDataCatalog']['@type']);
-        $this->assertSame('Open Data', $node['includedInDataCatalog']['name']);
-
-    }//end testElectedPublicationCarriesDatasetShape()
-
-
-    /**
-     * The catalog node lists exactly the publicly visible publications as `dataset`
-     * refs by their canonical URLs.
-     *
-     * @return void
-     */
-    public function testCatalogNodeListsVisiblePublications(): void
-    {
-        $this->services['OCA\OpenRegister\Service\ObjectService'] = $this->objectServiceReturning(
-            [
-                ['id' => 'p1', '@self' => ['uuid' => 'p1']],
-                ['id' => 'p2', '@self' => ['uuid' => 'p2']],
-                ['id' => 'p3', '@self' => ['uuid' => 'p3']],
-            ]
-        );
-
-        $catalog = [
-            'title'     => 'WOO',
-            'registers' => [1],
-            'schemas'   => [11],
-        ];
-
-        $node = $this->service()->buildCatalogNode($catalog, 'woo');
-
-        $this->assertSame('DataCatalog', $node['@type']);
-        $this->assertSame('https://schema.org', $node['@context']);
-        $this->assertCount(3, $node['dataset']);
-        $this->assertSame('https://example.test/apps/opencatalogi/api/woo/p1', $node['dataset'][0]['@id']);
-
-    }//end testCatalogNodeListsVisiblePublications()
-
-
-    /**
-     * The dataset election defaults to off.
-     *
-     * @return void
-     */
-    public function testDatasetElectionDefaultsOff(): void
-    {
-        $this->assertFalse($this->service()->isDatasetElected([]));
-        $this->assertTrue($this->service()->isDatasetElected(['schemaOrgDataset' => true]));
-
-    }//end testDatasetElectionDefaultsOff()
+	}//end testDatasetElectionDefaultsOff()
 }//end class

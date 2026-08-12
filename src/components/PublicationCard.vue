@@ -30,16 +30,16 @@
 			<div class="publication-card__metadata">
 				<div class="publication-card__status">
 					<template v-if="status === 'concept'">
-						<span v-if="object.publicatiedatum">
-							{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(object.publicatiedatum) }}
+						<span v-if="object.publicationDate">
+							{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(object.publicationDate) }}
 						</span>
 						<span v-else>{{ t('opencatalogi', 'Concept') }}</span>
 					</template>
 					<template v-else-if="status === 'published'">
-						{{ t('opencatalogi', 'Published on') }} {{ formatDate(object.publicatiedatum) }}
+						{{ t('opencatalogi', 'Published on') }} {{ formatDate(object.publicationDate) }}
 					</template>
 					<template v-else>
-						{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(object.depublicatiedatum) }}
+						{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(object.depublicationDate) }}
 					</template>
 				</div>
 

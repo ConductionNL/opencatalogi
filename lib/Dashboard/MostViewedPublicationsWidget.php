@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Dashboard widget listing the most-viewed publications.
  *
@@ -19,99 +20,86 @@
 
 namespace OCA\OpenCatalogi\Dashboard;
 
+use OCA\OpenCatalogi\AppInfo\Application;
 use OCP\Dashboard\IWidget;
 use OCP\IL10N;
 use OCP\Util;
 
-use OCA\OpenCatalogi\AppInfo\Application;
-
 /**
  * Widget showing the most-viewed publications (privacy-safe reach) on the dashboard.
  */
-class MostViewedPublicationsWidget implements IWidget
-{
-    /**
-     * Constructor.
-     *
-     * @param IL10N $l10n Localization service.
-     */
-    public function __construct(
-        private IL10N $l10n,
-    ) {
+class MostViewedPublicationsWidget implements IWidget {
+	/**
+	 * Constructor.
+	 *
+	 * @param IL10N $l10n Localization service.
+	 */
+	public function __construct(
+		private IL10N $l10n,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Get the widget identifier.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return 'opencatalogi_most_viewed_publications_widget';
+	/**
+	 * Get the widget identifier.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return 'opencatalogi_most_viewed_publications_widget';
+	}//end getId()
 
-    }//end getId()
+	/**
+	 * Get the widget title.
+	 *
+	 * @return string
+	 */
+	public function getTitle(): string {
+		return $this->l10n->t('Most viewed publications');
+	}//end getTitle()
 
-    /**
-     * Get the widget title.
-     *
-     * @return string
-     */
-    public function getTitle(): string
-    {
-        return $this->l10n->t('Most viewed publications');
+	/**
+	 * Get the widget display order.
+	 *
+	 * @return int
+	 */
+	public function getOrder(): int {
+		return 11;
+	}//end getOrder()
 
-    }//end getTitle()
+	/**
+	 * Get the widget icon CSS class.
+	 *
+	 * @return string
+	 */
+	public function getIconClass(): string {
+		return 'icon-catalogi-widget';
+	}//end getIconClass()
 
-    /**
-     * Get the widget display order.
-     *
-     * @return int
-     */
-    public function getOrder(): int
-    {
-        return 11;
+	/**
+	 * Get the widget URL.
+	 *
+	 * @return string|null
+	 */
+	public function getUrl(): ?string {
+		return null;
+	}//end getUrl()
 
-    }//end getOrder()
+	/**
+	 * Load the widget scripts and styles.
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) — Nextcloud Util API is static by design
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	public function load(): void {
+		// Shared vendor chunks emitted by webpack splitChunks (see webpack.config.js).
+		Util::addScript(application: Application::APP_ID, file: Application::APP_ID . '-shared-vendor');
+		Util::addScript(application: Application::APP_ID, file: Application::APP_ID . '-shared-nc-vue');
+		Util::addScript(application: Application::APP_ID, file: Application::APP_ID . '-mostViewedPublicationsWidget');
+		Util::addStyle(application: Application::APP_ID, file: 'dashboardWidgets');
 
-    /**
-     * Get the widget icon CSS class.
-     *
-     * @return string
-     */
-    public function getIconClass(): string
-    {
-        return 'icon-catalogi-widget';
-
-    }//end getIconClass()
-
-    /**
-     * Get the widget URL.
-     *
-     * @return string|null
-     */
-    public function getUrl(): ?string
-    {
-        return null;
-
-    }//end getUrl()
-
-    /**
-     * Load the widget scripts and styles.
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.StaticAccess) — Nextcloud Util API is static by design
-     *
-     * @spec openspec/specs/publication-usage-analytics/spec.md
-     */
-    public function load(): void
-    {
-        // Shared vendor chunks emitted by webpack splitChunks (see webpack.config.js).
-        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-shared-vendor');
-        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-shared-nc-vue');
-        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-mostViewedPublicationsWidget');
-        Util::addStyle(application: Application::APP_ID, file: 'dashboardWidgets');
-
-    }//end load()
+	}//end load()
 }//end class

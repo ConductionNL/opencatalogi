@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Service\ToolRegistry.
  *
@@ -17,49 +18,40 @@ namespace OCA\OpenRegister\Service;
 /**
  * Minimal stub for ToolRegistry used by PHPUnit mocks in bare CI.
  */
-class ToolRegistry
-{
+class ToolRegistry {
 
-    /**
-     * Register a tool.
-     *
-     * @param string $id       Tool identifier.
-     * @param mixed  $tool     Tool instance.
-     * @param array<string,mixed> $metadata Tool metadata.
-     *
-     * @return void
-     */
-    public function registerTool(string $id, mixed $tool, array $metadata): void
-    {
-        // stub — no-op
+	/**
+	 * Register a tool.
+	 *
+	 * @param string $id Tool identifier.
+	 * @param mixed $tool Tool instance.
+	 * @param array<string,mixed> $metadata Tool metadata.
+	 *
+	 * @return void
+	 */
+	public function registerTool(string $id, mixed $tool, array $metadata): void {
+		// stub — no-op
 
-    }//end registerTool()
+	}//end registerTool()
 
+	/**
+	 * Get a registered tool.
+	 *
+	 * @param string $id Tool identifier.
+	 *
+	 * @return mixed
+	 */
+	public function getTool(string $id): mixed {
+		return null;
+	}//end getTool()
 
-    /**
-     * Get a registered tool.
-     *
-     * @param string $id Tool identifier.
-     *
-     * @return mixed
-     */
-    public function getTool(string $id): mixed
-    {
-        return null;
-
-    }//end getTool()
-
-
-    /**
-     * Get all registered tools.
-     *
-     * @return array<mixed>
-     */
-    public function getAllTools(): array
-    {
-        return [];
-
-    }//end getAllTools()
-
+	/**
+	 * Get all registered tools.
+	 *
+	 * @return array<mixed>
+	 */
+	public function getAllTools(): array {
+		return [];
+	}//end getAllTools()
 
 }//end class

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Db\Register.
  *
@@ -17,17 +18,13 @@ namespace OCA\OpenRegister\Db;
 /**
  * Minimal stub for Register entity.
  */
-class Register implements \JsonSerializable
-{
+class Register implements \JsonSerializable {
 
-    /**
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [];
-
-    }//end jsonSerialize()
-
+	/**
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [];
+	}//end jsonSerialize()
 
 }//end class

@@ -148,14 +148,14 @@
             "facetable": true,
             "title": "Themes"
           },
-          "publicatiedatum": {
+          "publicationDate": {
             "type": "string",
             "description": "Publication date (WOO/DIWOO) — when set to a date in the past, this publication is live and publicly accessible",
             "format": "date-time",
             "facetable": true,
             "title": "Publication Date"
           },
-          "depublicatiedatum": {
+          "depublicationDate": {
             "type": "string",
             "description": "Depublication date (WOO/DIWOO) — when set and in the past, this publication is withdrawn from public access. A future value schedules automatic depublication via the OpenRegister published-predicate.",
             "format": "date-time",
@@ -178,7 +178,7 @@
           },
           "retentionAction": {
             "type": "string",
-            "description": "Action taken when the retention term expires: review (flag only), depublish (set depublicatiedatum), or archive (lifecycle transition) (RET-003).",
+            "description": "Action taken when the retention term expires: review (flag only), depublish (set depublicationDate), or archive (lifecycle transition) (RET-003).",
             "enum": [
               "review",
               "depublish",
@@ -296,7 +296,7 @@
             {
               "group": "public",
               "match": {
-                "publicatiedatum": {
+                "publicationDate": {
                   "$lte": "$now"
                 }
               }
@@ -383,14 +383,14 @@
             "facetable": true,
             "title": "Organization"
           },
-          "publicatiedatum": {
+          "publicationDate": {
             "type": "string",
             "description": "Publication date (WOO/DIWOO) — when set to a date in the past, this document is live and publicly accessible",
             "format": "date-time",
             "facetable": true,
             "title": "Publication Date"
           },
-          "depublicatiedatum": {
+          "depublicationDate": {
             "type": "string",
             "description": "Depublication date (WOO/DIWOO) — when set and in the past, this document is withdrawn from public access",
             "format": "date-time",
@@ -408,7 +408,7 @@
             {
               "group": "public",
               "match": {
-                "publicatiedatum": {
+                "publicationDate": {
                   "$lte": "$now"
                 }
               }
@@ -599,6 +599,13 @@
             "default": false,
             "facetable": false,
             "title": "Has WOO Sitemap"
+          },
+          "hasOoapi": {
+            "type": "boolean",
+            "description": "Whether this catalog publishes its course/program/offering data via the Open Onderwijs API (OOAPI 5.0). Read by OoapiService::isOoapiEnabled() to gate every /api/catalogs/{slug}/ooapi/v5/* route, and by DirectoryService to advertise ooapiEndpoint. Without this declaration the catalog schema's hardValidation strips the key, the toggle in CatalogModal.vue is silently discarded on save, and the whole OOAPI capability is unreachable — see #847.",
+            "default": false,
+            "facetable": false,
+            "title": "Has OOAPI 5.0 Publication"
           },
           "published": {
             "type": "string",
@@ -1638,7 +1645,7 @@
         "summary": "Voorbeeld-publicatie (seed data) — fictief jaarverslag van een fictieve gemeente. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
         "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is. Gemeente Voorbeeld is een fictieve gemeente en representeert geen echte overheidsorganisatie.",
         "organization": "default-org",
-        "publicatiedatum": "2024-01-01T00:00:00+00:00"
+        "publicationDate": "2024-01-01T00:00:00+00:00"
       },
       {
         "@self": {
@@ -1650,7 +1657,7 @@
         "summary": "Voorbeeld-publicatie (seed data) — kwartaalrapport van Conduction B.V., de maintainer van OpenCatalogi. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
         "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is.",
         "organization": "default-org",
-        "publicatiedatum": "2024-04-01T00:00:00+00:00"
+        "publicationDate": "2024-04-01T00:00:00+00:00"
       },
       {
         "@self": {
@@ -1668,7 +1675,7 @@
           "title": "Voorbeeld: Jaarverslag 2024 — Gemeente Voorbeeld"
         },
         "organization": "default-org",
-        "publicatiedatum": "2024-01-01T00:00:00+00:00"
+        "publicationDate": "2024-01-01T00:00:00+00:00"
       },
       {
         "@self": {
@@ -1686,7 +1693,7 @@
           "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026"
         },
         "organization": "default-org",
-        "publicatiedatum": "2024-04-01T00:00:00+00:00"
+        "publicationDate": "2024-04-01T00:00:00+00:00"
       }
     ]
   }

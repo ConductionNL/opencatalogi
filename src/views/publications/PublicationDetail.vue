@@ -1,3 +1,32 @@
+<!--
+	UNREACHABLE COMPONENT — no visual baseline is possible.
+
+	Nothing imports this file: `src/registry.js` is the only place page
+	components are handed to CnAppRoot, and it imports Dashboard and
+	CatalogDetailPage but not this one. `/publications/:catalogSlug/:id` is a
+	manifest `type: "detail"` page rendered by nc-vue's generic CnDetailPage from
+	`src/manifest.json`, so this view is superseded migration debris.
+	`tests/e2e/spec-coverage/usage-analytics-page.spec.ts:165` already records
+	the same conclusion for its "Statistics" tab and parks that assertion as
+	`test.fixme`.
+
+	Bundle check, with a positive control: `"PublicationDetail"` occurs 3 times
+	in `js/opencatalogi-main.js`, and there are exactly 3
+	`name: 'PublicationDetail'` ROUTE-name references in `src/` — so every
+	occurrence is a router push, none is this component registering itself.
+	(Control: `"CatalogDetailPage"` occurs once and that file IS imported by
+	`src/registry.js:35`.)
+
+	⚠️ This component was NOT in gate-26's finding list, and not because it was
+	covered. The only two occurrences of the string `PublicationDetail` anywhere
+	under `tests/e2e/` are in the prose of that `test.fixme` docblock — the
+	comment explaining that nothing mounts it is what certified it as covered.
+	Measured: neutering those two words alone took gate-26 from PASS to
+	`FAIL — 2` naming this file and UserSettings.vue. See
+	ConductionNL/opencatalogi#849 and ConductionNL/.github#358.
+
+	@visual exclude Unreachable: imported by nothing, in no route, absent from the shipped bundle; superseded by the manifest type:"detail" Publications page (CnDetailPage). Tracked in ConductionNL/opencatalogi#849.
+-->
 <script setup>
 import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
 </script>

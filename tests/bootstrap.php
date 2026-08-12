@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bootstrap file for PHPUnit tests
  *
@@ -24,43 +25,43 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 // Bootstrap Nextcloud if not already done.
 if (!defined('OC_CONSOLE')) {
-    // Try to include the main Nextcloud bootstrap. It is only present when this app
-    // is checked out inside a Nextcloud server tree (apps/ or apps-extra/). A bare
-    // standalone checkout (CI, a worktree outside the server) has no base.php, and
-    // the \OC_App / OC_Hook calls below are meaningless — and fatal — without it.
-    if (file_exists(__DIR__ . '/../../../lib/base.php')) {
-        require_once __DIR__ . '/../../../lib/base.php';
+	// Try to include the main Nextcloud bootstrap. It is only present when this app
+	// is checked out inside a Nextcloud server tree (apps/ or apps-extra/). A bare
+	// standalone checkout (CI, a worktree outside the server) has no base.php, and
+	// the \OC_App / OC_Hook calls below are meaningless — and fatal — without it.
+	if (file_exists(__DIR__ . '/../../../lib/base.php')) {
+		require_once __DIR__ . '/../../../lib/base.php';
 
-        // Load Test\TestCase and other NC test classes (NC convention).
-        if (file_exists(__DIR__ . '/../../../tests/autoload.php')) {
-            require_once __DIR__ . '/../../../tests/autoload.php';
-        }
+		// Load Test\TestCase and other NC test classes (NC convention).
+		if (file_exists(__DIR__ . '/../../../tests/autoload.php')) {
+			require_once __DIR__ . '/../../../tests/autoload.php';
+		}
 
-        // Load all enabled apps.
-        \OC_App::loadApps();
+		// Load all enabled apps.
+		\OC_App::loadApps();
 
-        // Load our specific app.
-        \OC_App::loadApp('opencatalogi');
+		// Load our specific app.
+		\OC_App::loadApp('opencatalogi');
 
-        // Clear hooks for testing.
-        OC_Hook::clear();
-    }
+		// Clear hooks for testing.
+		OC_Hook::clear();
+	}
 }
 
 // IMcpToolProvider stub — loaded when the openregister runtime (PR #1466) is absent.
 // OpenCatalogiToolProvider implements this interface in production; the stub keeps the
 // class loadable in bare CI containers until the real interface ships.
 if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpToolProvider') === false) {
-    require_once __DIR__ . '/Stubs/Mcp/IMcpToolProvider.php';
+	require_once __DIR__ . '/Stubs/Mcp/IMcpToolProvider.php';
 }
 
 // AppHost observability stubs — loaded when the openregister runtime is absent.
 // OpenCatalogiMetricsProvider implements IMetricsProvider and returns MetricSample
 // objects in production; these stubs keep the provider loadable in bare CI.
 if (class_exists('OCA\\OpenRegister\\AppHost\\Observability\\MetricSample') === false) {
-    require_once __DIR__ . '/Stubs/AppHost/MetricSample.php';
+	require_once __DIR__ . '/Stubs/AppHost/MetricSample.php';
 }
 
 if (interface_exists('OCA\\OpenRegister\\AppHost\\IMetricsProvider') === false) {
-    require_once __DIR__ . '/Stubs/AppHost/IMetricsProvider.php';
+	require_once __DIR__ . '/Stubs/AppHost/IMetricsProvider.php';
 }
