@@ -230,6 +230,62 @@ class PublicationServiceTest extends TestCase {
 	// getCatalogFilters()
 	// =======================================================================
 
+	/**
+	 * An unconfigured catalog register/schema must NOT become "no scope".
+	 *
+	 * This is the twin of CatalogiService::getCatalogFilters(), which was hardened
+	 * to fail closed while THIS method — same name, same two keys, same query
+	 * shape — was left as it was. An empty key is written verbatim into the
+	 * `@self` filter, and MagicMapper casts it, so `find((int) '')` is `find(0)`:
+	 * it resolves nothing, the scoped branch is skipped, and the lookup falls
+	 * through to an unscoped cross-table sweep of every object on the instance —
+	 * performed in order to derive a catalog scope.
+	 *
+	 * The assertion that matters is `expects($this->never())->method('searchObjects')`.
+	 * Asserting only the empty return would keep passing if the method resumed
+	 * sweeping and merely happened to find nothing: a refusal and an empty result
+	 * set are the same value. What is under test is that THE QUERY NEVER RAN.
+	 */
+	public function testGetCatalogFiltersRefusesToSearchWhenRegisterIsUnconfigured(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', ''],
+			]);
+
+		$objectService->expects($this->never())->method('searchObjects');
+
+		$result = $this->service->getCatalogFilters();
+
+		$this->assertSame(['registers' => [], 'schemas' => []], $result);
+		$this->assertSame([], $this->service->getAvailableRegisters());
+		$this->assertSame([], $this->service->getAvailableSchemas());
+	}
+
+	/**
+	 * The schema half of the same guard — an unconfigured schema is equally unsafe,
+	 * and a one-sided check would leave the cross-table fall-through reachable.
+	 */
+	public function testGetCatalogFiltersRefusesToSearchWhenSchemaIsUnconfigured(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', ''],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$objectService->expects($this->never())->method('searchObjects');
+
+		$result = $this->service->getCatalogFilters();
+
+		$this->assertSame(['registers' => [], 'schemas' => []], $result);
+	}
+
 	public function testGetCatalogFiltersExtractsRegistersAndSchemas(): void {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);

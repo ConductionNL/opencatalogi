@@ -233,9 +233,20 @@ class ListingsController extends Controller {
 		];
 
 		// Add any additional filters from request params.
+		//
+		// `@self` IS ON THE DENYLIST, and leaving it off re-opened the exact scope
+		// loss the comment above says was closed. The denylist used to name only
+		// the top-level `schema` and `register` keys — but the scope built four
+		// lines up lives under `@self`, and `$query[$key] = $value` ASSIGNS rather
+		// than merges. So `?filters[@self][register]=7&filters[@self][schema]=12`
+		// replaced the whole scope block, and /api/listings became an
+		// arbitrary-register reader for any authenticated user. OpenRegister's own
+		// RBAC still applies underneath, but it grants read by default on any
+		// schema that declares no `authorization` block, so on a default instance
+		// that is not a meaningful backstop.
 		if (isset($requestParams['filters']) === true) {
 			foreach ($requestParams['filters'] as $key => $value) {
-				if (in_array($key, ['schema', 'register']) === false) {
+				if (in_array($key, ['schema', 'register', '@self']) === false) {
 					$query[$key] = $value;
 				}
 			}

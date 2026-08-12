@@ -283,9 +283,41 @@ class PublicationService {
 			return $cached['result'];
 		}
 
-		// Establish the default schema and register.
+		// FAIL CLOSED, exactly as the sibling does.
+		//
+		// CatalogiService::getCatalogFilters() — same method name, same two config
+		// keys, same query shape — was hardened to refuse an empty scope. THIS twin
+		// was not, and the asymmetry is the bug: the fix landed on one of the pair.
+		//
+		// An empty key does NOT fall through to "no scope" harmlessly. It is put
+		// into the query verbatim and MagicMapper casts it, so `find((int) '')` is
+		// `find(0)`, which resolves nothing and drops the lookup onto the
+		// cross-table path — an UNSCOPED sweep of every object on the instance,
+		// performed in order to derive a catalog scope. That is the degradation
+		// shape of #828 and #856: an unresolved scope becoming NO scope rather
+		// than a refusal.
+		//
+		// Empty arrays are the correct refusal rather than an exception, because
+		// that is already the contract every caller handles — setObjectServiceContext()
+		// above checks `empty($allowedRegisters) || empty($allowedSchemas)` and
+		// returns without querying, explicitly to "refuse to do a platform-wide scan".
+		// Refusing here means that check is reached without the sweep having
+		// already happened.
 		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
 		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+		//
+		// No logger call here, deliberately: this class has no LoggerInterface in
+		// its constructor, and the sibling's `$this->logger->error(...)` cannot be
+		// copied across without adding a dependency. The empty-compare IS the
+		// guard; the refusal is what matters.
+		if ($schema === '' || $register === '') {
+			$this->availableRegisters = [];
+			$this->availableSchemas = [];
+			return [
+				'registers' => [],
+				'schemas' => [],
+			];
+		}
 
 		// Setup the config array for searchObjects.
 		$query = [
@@ -1981,8 +2013,28 @@ class PublicationService {
 		$offset = (int)($queryParams['offset'] ?? (($page - 1) * $limit));
 
 		// Get minimal required config from cache or defaults.
+		//
+		// FAIL CLOSED — this is the "ultra fast" duplicate of getCatalogFilters()
+		// and it inherited the same defect: an empty key was written verbatim into
+		// the `@self` scope below, and the catch at the end of that block falls
+		// back to `[$register]`/`[$schema]` — i.e. `['']` — which reaches
+		// searchObjectsPaginated as an empty scalar filter rather than as a
+		// refusal. An unconfigured instance therefore answered this endpoint from
+		// an UNSCOPED sweep. Serving an empty page is the correct refusal and
+		// matches what setObjectServiceContext() and PublicationQueryService
+		// already do ("refuse to do a platform-wide scan").
 		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
 		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+		if ($schema === '' || $register === '') {
+			return [
+				'results' => [],
+				'total' => 0,
+				'limit' => $limit,
+				'offset' => $offset,
+				'page' => $page,
+				'pages' => 1,
+			];
+		}
 
 		$timings['setup'] = ((microtime(true) - $setupStart) * 1000);
 

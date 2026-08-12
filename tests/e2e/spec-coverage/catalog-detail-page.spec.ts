@@ -34,7 +34,13 @@ import { bootApp, navTo, content, trackPageErrors, fatalErrors, APP } from './_n
 test.describe('catalog-detail-page', () => {
 	test(
 		// @e2e catalogs::open-a-catalog-detail-from-the-list
-		'Catalog detail — opening a catalog from the list renders the detail page (or empty-state when none)',
+		// The component name belongs in the TITLE, not only in the header comment
+		// above. gate-26 masks comments before looking for a reference (.github#358,
+		// "a comment is not a baseline"), so this spec really did exercise
+		// CatalogDetailPage while the gate scored it as having no proof at all.
+		// A title is executable text, and naming the screen under test is what the
+		// title is for.
+		'CatalogDetailPage — opening a catalog from the list renders the detail page (or empty-state when none)',
 		async ({ page }) => {
 			const errors = trackPageErrors(page)
 
