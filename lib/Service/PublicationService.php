@@ -283,67 +283,10 @@ class PublicationService {
 			return $cached['result'];
 		}
 
-		// FAIL CLOSED — see resolveCatalogScope() for why an empty key is not "no
-		// scope". Empty arrays are the correct refusal rather than an exception,
-		// because that is already the contract every caller handles:
-		// setObjectServiceContext() above checks
-		// `empty($allowedRegisters) || empty($allowedSchemas)` and returns without
-		// querying, explicitly to "refuse to do a platform-wide scan". Refusing
-		// here means that check is reached without the sweep having happened.
-		$scope = $this->resolveCatalogScope();
-		if ($scope === null) {
-			$this->availableRegisters = [];
-			$this->availableSchemas = [];
-			return [
-				'registers' => [],
-				'schemas' => [],
-			];
-		}
+		// Establish the default schema and register.
+		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
-		$this->collectCatalogScopes(
-			register: $scope['register'],
-			schema: $scope['schema'],
-			catalogId: $catalogId
-		);
-
-		$result = [
-			'registers' => array_values($this->availableRegisters),
-			'schemas' => array_values($this->availableSchemas),
-		];
-
-		// Cache the result and class properties.
-		$this->cachedCatalogFilters[$cacheKey] = [
-			'result' => $result,
-			'availableRegisters' => $this->availableRegisters,
-			'availableSchemas' => $this->availableSchemas,
-		];
-
-		return $result;
-	}//end getCatalogFilters()
-
-	/**
-	 * Read every catalog in the given scope and record the union of their scopes.
-	 *
-	 * Split out of getCatalogFilters() rather than added to it. That method sat at
-	 * a cyclomatic complexity of EXACTLY 10 against a threshold of 10 — measured,
-	 * not guessed — so it had no headroom at all and the fail-closed guard could
-	 * not be added without pushing it over. Extracting the collection loop is the
-	 * honest way to make room; raising the threshold or baselining the finding
-	 * would have been paying for the guard with the gate that guards everything
-	 * else in the file.
-	 *
-	 * Sets `availableRegisters` / `availableSchemas` as a side effect, which is the
-	 * pre-existing contract getAvailableRegisters() / getAvailableSchemas() read.
-	 *
-	 * @param string                  $register  The configured catalog register.
-	 * @param string                  $schema    The configured catalog schema.
-	 * @param string|integer|null     $catalogId Optional single catalog to narrow to.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/publications/spec.md
-	 */
-	private function collectCatalogScopes(string $register, string $schema, null|string|int $catalogId): void {
 		// Setup the config array for searchObjects.
 		$query = [
 			'@self' => [
@@ -386,45 +329,21 @@ class PublicationService {
 		// Remove duplicate values and assign to class properties.
 		$this->availableRegisters = array_unique($uniqueRegisters);
 		$this->availableSchemas = array_unique($uniqueSchemas);
-	}//end collectCatalogScopes()
 
-	/**
-	 * Resolve the configured catalog scope, or null when it is not configured.
-	 *
-	 * CatalogiService::getCatalogFilters() — same method name as this class's, same
-	 * two config keys, same query shape — was hardened to refuse an empty scope.
-	 * This class's twin was not, and the asymmetry was the bug: the fix landed on
-	 * one of the pair. This helper exists so the two call sites in THIS class
-	 * cannot drift apart the same way.
-	 *
-	 * An empty key does NOT fall through to "no scope" harmlessly. It is put into
-	 * the query verbatim and MagicMapper casts it, so `find((int) '')` is `find(0)`,
-	 * which resolves nothing and drops the lookup onto the cross-table path — an
-	 * UNSCOPED sweep of every object on the instance, performed in order to derive
-	 * a catalog scope. That is the degradation shape of #828 and #856: an
-	 * unresolved scope becoming NO scope rather than a refusal.
-	 *
-	 * No logger call here, deliberately: this class has no LoggerInterface in its
-	 * constructor, and the sibling's `$this->logger->error(...)` cannot be copied
-	 * across without adding a dependency. The empty-compare IS the guard; the
-	 * refusal is what matters.
-	 *
-	 * @return array{register: string, schema: string}|null The configured scope, or null when either key is unset.
-	 *
-	 * @spec openspec/specs/publications/spec.md
-	 */
-	private function resolveCatalogScope(): ?array {
-		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
-		if ($schema === '' || $register === '') {
-			return null;
-		}
-
-		return [
-			'register' => $register,
-			'schema' => $schema,
+		$result = [
+			'registers' => array_values($this->availableRegisters),
+			'schemas' => array_values($this->availableSchemas),
 		];
-	}//end resolveCatalogScope()
+
+		// Cache the result and class properties.
+		$this->cachedCatalogFilters[$cacheKey] = [
+			'result' => $result,
+			'availableRegisters' => $this->availableRegisters,
+			'availableSchemas' => $this->availableSchemas,
+		];
+
+		return $result;
+	}//end getCatalogFilters()
 
 	/**
 	 * Get the list of available registers.
@@ -2062,28 +1981,8 @@ class PublicationService {
 		$offset = (int)($queryParams['offset'] ?? (($page - 1) * $limit));
 
 		// Get minimal required config from cache or defaults.
-		//
-		// FAIL CLOSED — this is the "ultra fast" duplicate of getCatalogFilters()
-		// and it inherited the same defect: an empty key was written verbatim into
-		// the `@self` scope below, and the catch at the end of that block falls
-		// back to `[$register]`/`[$schema]` — i.e. `['']` — which reaches
-		// searchObjectsPaginated as an empty scalar filter rather than as a
-		// refusal. An unconfigured instance therefore answered this endpoint from
-		// an UNSCOPED sweep. Serving an empty page is the correct refusal.
-		$scope = $this->resolveCatalogScope();
-		if ($scope === null) {
-			return [
-				'results' => [],
-				'total' => 0,
-				'limit' => $limit,
-				'offset' => $offset,
-				'page' => $page,
-				'pages' => 1,
-			];
-		}
-
-		$schema = $scope['schema'];
-		$register = $scope['register'];
+		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
 		$timings['setup'] = ((microtime(true) - $setupStart) * 1000);
 
