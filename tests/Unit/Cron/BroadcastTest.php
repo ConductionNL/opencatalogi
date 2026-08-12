@@ -10,68 +10,63 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-class BroadcastTest extends TestCase
-{
-    private Broadcast $job;
-    private BroadcastService $broadcastService;
-    private LoggerInterface $logger;
-    private ITimeFactory $timeFactory;
+class BroadcastTest extends TestCase {
+	private Broadcast $job;
+	private BroadcastService $broadcastService;
+	private LoggerInterface $logger;
+	private ITimeFactory $timeFactory;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->timeFactory = $this->createMock(ITimeFactory::class);
-        $this->broadcastService = $this->createMock(BroadcastService::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
+	protected function setUp(): void {
+		parent::setUp();
+		$this->timeFactory = $this->createMock(ITimeFactory::class);
+		$this->broadcastService = $this->createMock(BroadcastService::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->job = new Broadcast(
-            $this->timeFactory,
-            $this->broadcastService,
-            $this->logger
-        );
-    }
+		$this->job = new Broadcast(
+			$this->timeFactory,
+			$this->broadcastService,
+			$this->logger
+		);
+	}
 
-    public function testRunCallsBroadcastService(): void
-    {
-        $this->broadcastService->expects($this->once())
-            ->method('broadcast')
-            ->with(null);
+	public function testRunCallsBroadcastService(): void {
+		$this->broadcastService->expects($this->once())
+			->method('broadcast')
+			->with(null);
 
-        $this->logger->expects($this->exactly(2))
-            ->method('info');
+		$this->logger->expects($this->exactly(2))
+			->method('info');
 
-        $method = new \ReflectionMethod(Broadcast::class, 'run');
-        $method->setAccessible(true);
-        $method->invoke($this->job, []);
-    }
+		$method = new \ReflectionMethod(Broadcast::class, 'run');
+		$method->setAccessible(true);
+		$method->invoke($this->job, []);
+	}
 
-    public function testRunLogsAndRethrowsOnException(): void
-    {
-        $exception = new \RuntimeException('Broadcast failed');
+	public function testRunLogsAndRethrowsOnException(): void {
+		$exception = new \RuntimeException('Broadcast failed');
 
-        $this->broadcastService->method('broadcast')
-            ->willThrowException($exception);
+		$this->broadcastService->method('broadcast')
+			->willThrowException($exception);
 
-        $this->logger->expects($this->once())
-            ->method('info');
+		$this->logger->expects($this->once())
+			->method('info');
 
-        $this->logger->expects($this->once())
-            ->method('error');
+		$this->logger->expects($this->once())
+			->method('error');
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Broadcast failed');
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Broadcast failed');
 
-        $method = new \ReflectionMethod(Broadcast::class, 'run');
-        $method->setAccessible(true);
-        $method->invoke($this->job, []);
-    }
+		$method = new \ReflectionMethod(Broadcast::class, 'run');
+		$method->setAccessible(true);
+		$method->invoke($this->job, []);
+	}
 
-    public function testIntervalIsSetTo4Hours(): void
-    {
-        $reflection = new \ReflectionClass($this->job);
-        $prop = $reflection->getProperty('interval');
-        $prop->setAccessible(true);
+	public function testIntervalIsSetTo4Hours(): void {
+		$reflection = new \ReflectionClass($this->job);
+		$prop = $reflection->getProperty('interval');
+		$prop->setAccessible(true);
 
-        $this->assertSame(14400, $prop->getValue($this->job));
-    }
+		$this->assertSame(14400, $prop->getValue($this->job));
+	}
 }

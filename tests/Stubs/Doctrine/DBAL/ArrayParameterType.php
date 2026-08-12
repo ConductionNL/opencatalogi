@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for Doctrine\DBAL\ArrayParameterType.
  *
@@ -14,11 +15,10 @@ namespace Doctrine\DBAL;
 /**
  * Stub for ArrayParameterType.
  */
-class ArrayParameterType
-{
-    public const INTEGER = 101;
-    public const STRING  = 102;
-    public const ASCII   = 103;
-    public const BINARY  = 104;
+class ArrayParameterType {
+	public const INTEGER = 101;
+	public const STRING = 102;
+	public const ASCII = 103;
+	public const BINARY = 104;
 
 }//end class

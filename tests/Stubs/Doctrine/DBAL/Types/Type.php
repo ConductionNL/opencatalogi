@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for Doctrine\DBAL\Types\Type.
  *
@@ -14,12 +15,11 @@ namespace Doctrine\DBAL\Types;
 /**
  * Stub for Doctrine DBAL Type.
  */
-abstract class Type
-{
+abstract class Type {
 
-    /**
-     * @return string
-     */
-    abstract public function getName(): string;
+	/**
+	 * @return string
+	 */
+	abstract public function getName(): string;
 
 }//end class

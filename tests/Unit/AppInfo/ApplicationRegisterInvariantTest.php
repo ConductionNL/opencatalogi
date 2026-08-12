@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Pins the load-order invariant that keeps OpenCatalogi's register() safe
  * WITHOUT an autoloader prelude.
@@ -63,170 +64,163 @@ use PHPUnit\Framework\TestCase;
 /**
  * Asserts Application::register() resolves no OpenRegister class eagerly.
  */
-class ApplicationRegisterInvariantTest extends TestCase
-{
+class ApplicationRegisterInvariantTest extends TestCase {
 
-    /**
-     * Absolute path to the file under inspection.
-     *
-     * @var string
-     */
-    private const APPLICATION_PHP = __DIR__.'/../../../lib/AppInfo/Application.php';
+	/**
+	 * Absolute path to the file under inspection.
+	 *
+	 * @var string
+	 */
+	private const APPLICATION_PHP = __DIR__ . '/../../../lib/AppInfo/Application.php';
 
-    /**
-     * Read Application.php.
-     *
-     * The file is inspected as SOURCE rather than reflected over, deliberately:
-     * the invariant is about what the method would do at a moment when the
-     * OpenRegister autoloader is not yet registered, and a unit run cannot
-     * reproduce that moment. Reflection would also force the very resolution
-     * the invariant forbids.
-     *
-     * @return string
-     */
-    private function source(): string
-    {
-        $path = realpath(self::APPLICATION_PHP);
-        $this->assertNotFalse($path, 'lib/AppInfo/Application.php must exist');
+	/**
+	 * Read Application.php.
+	 *
+	 * The file is inspected as SOURCE rather than reflected over, deliberately:
+	 * the invariant is about what the method would do at a moment when the
+	 * OpenRegister autoloader is not yet registered, and a unit run cannot
+	 * reproduce that moment. Reflection would also force the very resolution
+	 * the invariant forbids.
+	 *
+	 * @return string
+	 */
+	private function source(): string {
+		$path = realpath(self::APPLICATION_PHP);
+		$this->assertNotFalse($path, 'lib/AppInfo/Application.php must exist');
 
-        $src = file_get_contents($path);
-        $this->assertIsString($src);
-        // Positive control on the reader itself: an empty or truncated read
-        // would make every assertion below pass vacuously.
-        $this->assertStringContainsString(
-            'public function register(',
-            $src,
-            'read Application.php but found no register() — the reader is broken, so any pass below would be meaningless'
-        );
+		$src = file_get_contents($path);
+		$this->assertIsString($src);
+		// Positive control on the reader itself: an empty or truncated read
+		// would make every assertion below pass vacuously.
+		$this->assertStringContainsString(
+			'public function register(',
+			$src,
+			'read Application.php but found no register() — the reader is broken, so any pass below would be meaningless'
+		);
 
-        return $src;
+		return $src;
+	}//end source()
 
-    }//end source()
+	/**
+	 * Extract the body of a method by brace matching.
+	 *
+	 * @param string $src Full file source.
+	 * @param string $signature The method signature to find.
+	 *
+	 * @return string The method body.
+	 */
+	private function methodBody(string $src, string $signature): string {
+		$start = strpos($src, $signature);
+		$this->assertNotFalse($start, $signature . ' not found in Application.php');
 
-    /**
-     * Extract the body of a method by brace matching.
-     *
-     * @param string $src        Full file source.
-     * @param string $signature  The method signature to find.
-     *
-     * @return string The method body.
-     */
-    private function methodBody(string $src, string $signature): string
-    {
-        $start = strpos($src, $signature);
-        $this->assertNotFalse($start, $signature.' not found in Application.php');
+		$open = strpos($src, '{', $start);
+		$this->assertNotFalse($open, 'no opening brace after ' . $signature);
 
-        $open = strpos($src, '{', $start);
-        $this->assertNotFalse($open, 'no opening brace after '.$signature);
+		$depth = 0;
+		$len = strlen($src);
+		for ($i = $open; $i < $len; $i++) {
+			if ($src[$i] === '{') {
+				$depth++;
+			} elseif ($src[$i] === '}') {
+				$depth--;
+				if ($depth === 0) {
+					return substr($src, $open, ($i - $open + 1));
+				}
+			}
+		}
 
-        $depth = 0;
-        $len   = strlen($src);
-        for ($i = $open; $i < $len; $i++) {
-            if ($src[$i] === '{') {
-                $depth++;
-            } elseif ($src[$i] === '}') {
-                $depth--;
-                if ($depth === 0) {
-                    return substr($src, $open, ($i - $open + 1));
-                }
-            }
-        }
+		$this->fail('unbalanced braces while extracting ' . $signature);
 
-        $this->fail('unbalanced braces while extracting '.$signature);
+	}//end methodBody()
 
-    }//end methodBody()
+	/**
+	 * register() must not probe for a class.
+	 *
+	 * This is the nldesign defect in one line. A class_exists() /
+	 * interface_exists() / enum_exists() call against an OCA\OpenRegister\*
+	 * name answers FALSE at register() time on a healthy instance, and the
+	 * `false` branch is silent by construction.
+	 *
+	 * @return void
+	 */
+	public function testRegisterDoesNotProbeForClasses(): void {
+		$body = $this->methodBody($this->source(), 'public function register(');
 
-    /**
-     * register() must not probe for a class.
-     *
-     * This is the nldesign defect in one line. A class_exists() /
-     * interface_exists() / enum_exists() call against an OCA\OpenRegister\*
-     * name answers FALSE at register() time on a healthy instance, and the
-     * `false` branch is silent by construction.
-     *
-     * @return void
-     */
-    public function testRegisterDoesNotProbeForClasses(): void
-    {
-        $body = $this->methodBody($this->source(), 'public function register(');
+		foreach (['class_exists', 'interface_exists', 'enum_exists'] as $probe) {
+			$this->assertStringNotContainsString(
+				$probe . '(',
+				$body,
+				"Application::register() calls {$probe}(). At register() time the OCA\\OpenRegister\\ "
+				. 'prefix is not on the autoloader yet — `opencatalogi` sorts before `openregister` — so '
+				. 'this answers FALSE on a healthy instance and whatever it guards is silently skipped. '
+				. "Move the check to boot(), which runs after every app's register() has completed."
+			);
+		}
 
-        foreach (['class_exists', 'interface_exists', 'enum_exists'] as $probe) {
-            $this->assertStringNotContainsString(
-                $probe.'(',
-                $body,
-                "Application::register() calls {$probe}(). At register() time the OCA\\OpenRegister\\ "
-                ."prefix is not on the autoloader yet — `opencatalogi` sorts before `openregister` — so "
-                ."this answers FALSE on a healthy instance and whatever it guards is silently skipped. "
-                ."Move the check to boot(), which runs after every app's register() has completed."
-            );
-        }
+	}//end testRegisterDoesNotProbeForClasses()
 
-    }//end testRegisterDoesNotProbeForClasses()
+	/**
+	 * register() must not eagerly construct an OpenRegister class.
+	 *
+	 * `new OCA\OpenRegister\...` at statement level would resolve the class
+	 * immediately. The four AppHost generics this app binds are constructed
+	 * INSIDE service closures, which the container only invokes at request
+	 * time — long after every app has registered. This test pins that
+	 * containment: it requires each construction to be preceded, within the
+	 * same method, by a closure opener.
+	 *
+	 * @return void
+	 */
+	public function testOpenRegisterClassesAreOnlyConstructedInsideClosures(): void {
+		$body = $this->methodBody($this->source(), 'public function register(');
 
-    /**
-     * register() must not eagerly construct an OpenRegister class.
-     *
-     * `new OCA\OpenRegister\...` at statement level would resolve the class
-     * immediately. The four AppHost generics this app binds are constructed
-     * INSIDE service closures, which the container only invokes at request
-     * time — long after every app has registered. This test pins that
-     * containment: it requires each construction to be preceded, within the
-     * same method, by a closure opener.
-     *
-     * @return void
-     */
-    public function testOpenRegisterClassesAreOnlyConstructedInsideClosures(): void
-    {
-        $body = $this->methodBody($this->source(), 'public function register(');
+		$matches = [];
+		preg_match_all('/\bnew\s+(Generic[A-Za-z]*Controller)\s*\(/', $body, $matches, PREG_OFFSET_CAPTURE);
 
-        $matches = [];
-        preg_match_all('/\bnew\s+(Generic[A-Za-z]*Controller)\s*\(/', $body, $matches, PREG_OFFSET_CAPTURE);
+		// The app does bind AppHost generics; if this ever finds none, the test
+		// has stopped watching anything and must be revisited rather than
+		// quietly passing.
+		$this->assertNotEmpty(
+			$matches[1],
+			'no `new Generic*Controller(` found in register() — this test no longer guards anything'
+		);
 
-        // The app does bind AppHost generics; if this ever finds none, the test
-        // has stopped watching anything and must be revisited rather than
-        // quietly passing.
-        $this->assertNotEmpty(
-            $matches[1],
-            'no `new Generic*Controller(` found in register() — this test no longer guards anything'
-        );
+		foreach ($matches[1] as $match) {
+			[$name, $offset] = $match;
+			$preceding = substr($body, 0, $offset);
+			$closureAt = strrpos($preceding, 'static function');
 
-        foreach ($matches[1] as $match) {
-            [$name, $offset] = $match;
-            $preceding       = substr($body, 0, $offset);
-            $closureAt       = strrpos($preceding, 'static function');
+			$this->assertNotFalse(
+				$closureAt,
+				"`new {$name}(` in register() is not inside a service closure. Constructing an "
+				. 'OCA\\OpenRegister class at register() time resolves it before the OpenRegister '
+				. 'autoloader is registered. Keep it inside the `static function ($c)` passed to '
+				. 'registerService(), which the container only calls at request time.'
+			);
+		}
 
-            $this->assertNotFalse(
-                $closureAt,
-                "`new {$name}(` in register() is not inside a service closure. Constructing an "
-                ."OCA\\OpenRegister class at register() time resolves it before the OpenRegister "
-                ."autoloader is registered. Keep it inside the `static function (\$c)` passed to "
-                ."registerService(), which the container only calls at request time."
-            );
-        }
+	}//end testOpenRegisterClassesAreOnlyConstructedInsideClosures()
 
-    }//end testOpenRegisterClassesAreOnlyConstructedInsideClosures()
+	/**
+	 * The AppHost service KEYS must stay plain strings.
+	 *
+	 * `registerService('OCA\\OpenRegister\\...', ...)` with a quoted key is
+	 * inert text. Rewriting it to `SomeOpenRegisterClass::class` would look
+	 * tidier and would still be a compile-time string — but importing the class
+	 * to do so invites the next author to dereference it. Asserting the keys
+	 * stay quoted keeps the boundary obvious.
+	 *
+	 * @return void
+	 */
+	public function testAppHostServiceKeysAreStringLiterals(): void {
+		$body = $this->methodBody($this->source(), 'public function register(');
 
-    /**
-     * The AppHost service KEYS must stay plain strings.
-     *
-     * `registerService('OCA\\OpenRegister\\...', ...)` with a quoted key is
-     * inert text. Rewriting it to `SomeOpenRegisterClass::class` would look
-     * tidier and would still be a compile-time string — but importing the class
-     * to do so invites the next author to dereference it. Asserting the keys
-     * stay quoted keeps the boundary obvious.
-     *
-     * @return void
-     */
-    public function testAppHostServiceKeysAreStringLiterals(): void
-    {
-        $body = $this->methodBody($this->source(), 'public function register(');
+		$this->assertMatchesRegularExpression(
+			'/registerServiceAlias\(\s*\'OCA\\\\\\\\OpenRegister\\\\\\\\Mcp\\\\\\\\IMcpToolProvider::opencatalogi\'/',
+			$body,
+			'the MCP tool-provider alias key must stay a quoted string: OpenRegister\'s McpToolsService '
+			. 'enumerates it by name, and it must not become a resolved class reference at register() time'
+		);
 
-        $this->assertMatchesRegularExpression(
-            '/registerServiceAlias\(\s*\'OCA\\\\\\\\OpenRegister\\\\\\\\Mcp\\\\\\\\IMcpToolProvider::opencatalogi\'/',
-            $body,
-            'the MCP tool-provider alias key must stay a quoted string: OpenRegister\'s McpToolsService '
-            .'enumerates it by name, and it must not become a resolved class reference at register() time'
-        );
-
-    }//end testAppHostServiceKeysAreStringLiterals()
+	}//end testAppHostServiceKeysAreStringLiterals()
 }//end class

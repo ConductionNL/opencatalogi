@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Event\ToolRegistrationEvent.
  *
@@ -20,41 +21,36 @@ use OCP\EventDispatcher\Event;
 /**
  * Stub for ToolRegistrationEvent.
  */
-class ToolRegistrationEvent extends Event
-{
+class ToolRegistrationEvent extends Event {
 
-    /**
-     * @var ToolRegistry
-     */
-    private ToolRegistry $registry;
+	/**
+	 * @var ToolRegistry
+	 */
+	private ToolRegistry $registry;
 
-    /**
-     * Constructor.
-     *
-     * @param ToolRegistry $registry The tool registry.
-     */
-    public function __construct(ToolRegistry $registry)
-    {
-        parent::__construct();
-        $this->registry = $registry;
+	/**
+	 * Constructor.
+	 *
+	 * @param ToolRegistry $registry The tool registry.
+	 */
+	public function __construct(ToolRegistry $registry) {
+		parent::__construct();
+		$this->registry = $registry;
 
-    }//end __construct()
+	}//end __construct()
 
+	/**
+	 * Register a tool in the registry.
+	 *
+	 * @param string $id Tool identifier.
+	 * @param mixed $tool Tool instance.
+	 * @param array<string,mixed> $metadata Tool metadata.
+	 *
+	 * @return void
+	 */
+	public function registerTool(string $id, mixed $tool, array $metadata): void {
+		$this->registry->registerTool($id, $tool, $metadata);
 
-    /**
-     * Register a tool in the registry.
-     *
-     * @param string              $id       Tool identifier.
-     * @param mixed               $tool     Tool instance.
-     * @param array<string,mixed> $metadata Tool metadata.
-     *
-     * @return void
-     */
-    public function registerTool(string $id, mixed $tool, array $metadata): void
-    {
-        $this->registry->registerTool($id, $tool, $metadata);
-
-    }//end registerTool()
-
+	}//end registerTool()
 
 }//end class

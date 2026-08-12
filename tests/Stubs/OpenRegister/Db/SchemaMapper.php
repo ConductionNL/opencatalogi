@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Db\SchemaMapper.
  *
@@ -18,56 +19,47 @@ namespace OCA\OpenRegister\Db;
  * Minimal stub for SchemaMapper.
  * Method signatures match real SchemaMapper so named-parameter calls work.
  */
-class SchemaMapper
-{
+class SchemaMapper {
 
-    /**
-     * Find a schema by ID or slug.
-     *
-     * @param string|integer      $id            The schema ID or slug.
-     * @param array<mixed>|null   $_extend       Extension config.
-     * @param boolean             $_rbac         Apply RBAC.
-     * @param boolean             $_multitenancy Apply multitenancy.
-     *
-     * @return Schema|null
-     */
-    public function find(
-        string|int $id,
-        ?array $_extend=[],
-        bool $_rbac=true,
-        bool $_multitenancy=true
-    ): ?Schema {
-        return null;
+	/**
+	 * Find a schema by ID or slug.
+	 *
+	 * @param string|integer $id The schema ID or slug.
+	 * @param array<mixed>|null $_extend Extension config.
+	 * @param boolean $_rbac Apply RBAC.
+	 * @param boolean $_multitenancy Apply multitenancy.
+	 *
+	 * @return Schema|null
+	 */
+	public function find(
+		string|int $id,
+		?array $_extend = [],
+		bool $_rbac = true,
+		bool $_multitenancy = true,
+	): ?Schema {
+		return null;
+	}//end find()
 
-    }//end find()
+	/**
+	 * Find multiple schemas by IDs.
+	 *
+	 * @param array<int> $ids The IDs to find.
+	 * @param boolean $_rbac Apply RBAC.
+	 * @param boolean $_multitenancy Apply multitenancy.
+	 *
+	 * @return array<Schema>
+	 */
+	public function findMultiple(array $ids, bool $_rbac = true, bool $_multitenancy = true): array {
+		return [];
+	}//end findMultiple()
 
-
-    /**
-     * Find multiple schemas by IDs.
-     *
-     * @param array<int> $ids           The IDs to find.
-     * @param boolean    $_rbac         Apply RBAC.
-     * @param boolean    $_multitenancy Apply multitenancy.
-     *
-     * @return array<Schema>
-     */
-    public function findMultiple(array $ids, bool $_rbac=true, bool $_multitenancy=true): array
-    {
-        return [];
-
-    }//end findMultiple()
-
-
-    /**
-     * Find all schemas.
-     *
-     * @return array<Schema>
-     */
-    public function findAll(): array
-    {
-        return [];
-
-    }//end findAll()
-
+	/**
+	 * Find all schemas.
+	 *
+	 * @return array<Schema>
+	 */
+	public function findAll(): array {
+		return [];
+	}//end findAll()
 
 }//end class

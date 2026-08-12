@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Service for handling catalog-related operations.
  *
@@ -30,21 +31,19 @@
 
 namespace OCA\OpenCatalogi\Service;
 
-use OCA\OpenRegister\Db\ObjectEntity;
-use OCP\IRequest;
-use OCP\IAppConfig;
-use OCP\App\IAppManager;
-use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use Psr\Container\ContainerInterface;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
-use OCP\AppFramework\Http\JSONResponse;
 use Exception;
+use OCA\OpenRegister\Db\ObjectEntity;
+use OCP\App\IAppManager;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\Common\Exception\NotFoundException;
+use OCP\IAppConfig;
 use OCP\ICache;
 use OCP\ICacheFactory;
+use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Uid\Uuid;
@@ -61,857 +60,829 @@ use Symfony\Component\Uid\Uuid;
  * @spec openspec/specs/catalogs/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
  */
-class CatalogiService
-{
-
-    /**
-     * Properties stripped from the `@self` envelope for anonymous (logged-out)
-     * callers on public read endpoints.
-     *
-     * Single source of truth for the anonymous strip list (authenticated-read-parity,
-     * CAT-AUTH-001): OpenRegister RBAC (`_rbac: true`) already decides WHICH objects
-     * a caller may read; this list only governs envelope metadata richness for
-     * callers with no authenticated Nextcloud session. Authenticated callers OR RBAC
-     * already lets read the object receive every one of these properties unmodified.
-     * Referenced by {@see PublicationService::filterUnwantedProperties()} so the
-     * anonymous envelope cannot fork between the catalogs and publications endpoints.
-     *
-     * @var array<int, string>
-     */
-    public const UNWANTED_SELF_PROPERTIES = [
-        'schemaVersion',
-        'relations',
-        'locked',
-        'owner',
-        'folder',
-        'application',
-        'validation',
-        'retention',
-        'size',
-        'deleted',
-    ];
-
-    /**
-     * The cached object service instance.
-     *
-     * @var object|null
-     */
-    private ?object $objectService = null;
-
-    /**
-     * The name of the app.
-     *
-     * @var string $appName The name of the app
-     */
-    private string $appName;
-
-    /**
-     * List of available registers from catalogs.
-     *
-     * @var array<string> List of available registers from catalogs
-     */
-    private array $availableRegisters = [];
-
-    /**
-     * List of available schemas from catalogs.
-     *
-     * @var array<string> List of available schemas from catalogs
-     */
-    private array $availableSchemas = [];
-
-    /**
-     * Cache instance for storing catalog data.
-     *
-     * @var ICache Cache instance for storing catalog data
-     */
-    private ICache $cache;
-
-    /**
-     * Constructor for CatalogiService.
-     *
-     * @param IAppConfig         $config       App configuration interface
-     * @param IRequest           $request      Request interface
-     * @param ContainerInterface $container    Server container for dependency injection
-     * @param IAppManager        $appManager   App manager for checking installed apps
-     * @param ICacheFactory      $cacheFactory Cache factory for creating cache instances
-     * @param LoggerInterface    $logger       Logger for logging errors and debug information
-     * @param IUserSession|null  $userSession  User session used to decide whether the
-     *                                         anonymous `@self` strip list applies
-     *                                         (authenticated-read-parity, CAT-AUTH-001).
-     *                                         Nullable/optional so existing call sites and
-     *                                         tests keep working unmodified; a null session
-     *                                         fails closed to the anonymous (stripped) envelope.
-     *
-     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
-     */
-    public function __construct(
-        private readonly IAppConfig $config,
-        private readonly IRequest $request,
-        private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager,
-        ICacheFactory $cacheFactory,
-        private readonly LoggerInterface $logger,
-        private readonly ?IUserSession $userSession=null,
-    ) {
-        $this->appName = 'opencatalogi';
-        $this->cache   = $cacheFactory->createDistributed('opencatalogi_catalogs');
-
-    }//end __construct()
-
-    /**
-     * Attempts to retrieve the OpenRegister service from the container.
-     *
-     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       service from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            $this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-            return $this->objectService;
-        }
-
-        throw new RuntimeException('OpenRegister service is not available.');
-
-    }//end getObjectService()
-
-    /**
-     * Attempts to retrieve the OpenRegister FileService from the container.
-     *
-     * @return \OCA\OpenRegister\Service\FileService|null The OpenRegister service if available, null otherwise.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       FileService from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getFileService(): ?\OCA\OpenRegister\Service\FileService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            $this->objectService = $this->container->get('OCA\OpenRegister\Service\FileService');
-
-            return $this->objectService;
-        }
-
-        throw new RuntimeException('OpenRegister service is not available.');
-
-    }//end getFileService()
-
-    /**
-     * Attempts to retrieve the SchemaMapper from the Container
-     *
-     * @return \OCA\OpenRegister\Db\SchemaMapper|null
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       SchemaMapper from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            $schemaMapper = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
-
-            return $schemaMapper;
-        }
-
-        throw new RuntimeException('OpenRegister service is not available.');
-    }//end getSchemaMapper()
-
-    /**
-     * Attempts to retrieve the RegisterMapper from the Container
-     *
-     * @return \OCA\OpenRegister\Db\RegisterMapper|null
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       RegisterMapper from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            $registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
-
-            return $registerMapper;
-        }
-
-        throw new RuntimeException('OpenRegister service is not available.');
-    }//end getRegisterMapper()
-
-    /**
-     * Compute rewritten register and schema arrays for a catalog object.
-     *
-     * Resolves slug-or-id values in `registers` and `schemas` to integer ids. Returns
-     * only the keys that actually changed, so callers can pass the result straight
-     * into a pre-save hook's `setModifiedData(...)` without overwriting unrelated fields.
-     *
-     * @param array<string, mixed> $object The decoded catalog object payload.
-     *
-     * @return array<string, array<int|string>> Map containing only the changed keys
-     *                                          (`registers` and/or `schemas`). Empty
-     *                                          when nothing needs rewriting.
-     *
-     * @throws \RuntimeException When a slug cannot be resolved to a register/schema.
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     */
-    public function computeRewrittenRegistersAndSchemas(array $object): array
-    {
-        $modified = [];
-
-        if (isset($object['registers']) === true && is_array($object['registers']) === true) {
-            $rewrittenRegisters = array_map(
-                function ($register) {
-                    if ($this->isNumericId($register) === true) {
-                        return $register;
-                    }
-
-                    try {
-                        return $this->getRegisterMapper()->find($register)->getId();
-                    } catch (NotFoundException $e) {
-                        throw new RuntimeException('Register '.$register.' not found.');
-                    }
-                },
-                $object['registers']
-            );
-
-            if ($rewrittenRegisters !== $object['registers']) {
-                $modified['registers'] = $rewrittenRegisters;
-            }
-        }
-
-        if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
-            $rewrittenSchemas = array_map(
-                function ($schema) {
-                    if ($this->isNumericId($schema) === true) {
-                        return $schema;
-                    }
-
-                    try {
-                        return $this->getSchemaMapper()->find($schema)->getId();
-                    } catch (NotFoundException $e) {
-                        throw new RuntimeException('Schema '.$schema.' not found.');
-                    }
-                },
-                $object['schemas']
-            );
-
-            if ($rewrittenSchemas !== $object['schemas']) {
-                $modified['schemas'] = $rewrittenSchemas;
-            }
-        }
-
-        return $modified;
-
-    }//end computeRewrittenRegistersAndSchemas()
-
-    /**
-     * Determine whether a value is already a numeric integer ID (not a slug).
-     *
-     * Used inside computeRewrittenRegistersAndSchemas() to short-circuit
-     * mapper lookups when the value is already a resolved integer ID.
-     *
-     * @param mixed $value The register or schema value to test.
-     *
-     * @return bool True when the value consists entirely of digits.
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     */
-    private function isNumericId($value): bool
-    {
-        return preg_match("/^\d+$/", (string) $value) === 1;
-
-    }//end isNumericId()
-
-    /**
-     * Rewrite slugs and uuids in register and schema fields of a Catalog to actual ids.
-     *
-     * @param ObjectEntity $objectEntity The catalog object to rewrite.
-     *
-     * @return bool Whether the object has been updated.
-     *
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     *
-     * @deprecated Calling this from a post-save event handler causes an infinite loop
-     *             because the inner `saveObject(...)` re-emits `ObjectUpdatedEvent`. Subscribe
-     *             to the pre-save events (`ObjectCreatingEvent` / `ObjectUpdatingEvent`) and use
-     *             {@see self::computeRewrittenRegistersAndSchemas()} together with
-     *             `$event->setModifiedData(...)` instead.
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     */
-    public function rewriteSchemasAndRegisters(ObjectEntity $objectEntity): bool
-    {
-        $object   = $objectEntity->getObject() ?? [];
-        $modified = $this->computeRewrittenRegistersAndSchemas($object);
-
-        if ($modified === []) {
-            return false;
-        }
-
-        $objectEntity->setObject(array_merge($object, $modified));
-        $this->getObjectService()->saveObject($objectEntity);
-
-        return true;
-
-    }//end rewriteSchemasAndRegisters()
-
-    /**
-     * Get register and schema combinations from catalogs.
-     *
-     * This method retrieves all catalogs (or a specific one if ID is provided),
-     * extracts their registers and schemas, and stores them as general variables.
-     *
-     * @param string|integer|null $catalogId Optional ID of a specific catalog to filter by
-     *
-     * @return array<string, array<string>> Array containing available registers and schemas
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @SuppressWarnings(PHPMD.StaticAccess)
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     */
-    public function getCatalogFilters(null|string|int $catalogId=null): array
-    {
-        // Establish the default schema and register.
-        $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
-        $register = $this->config->getValueString($this->appName, 'catalog_register', '');
-
-        // FAIL CLOSED. getCatalogBySlug() — the sibling method in this same class
-        // — already refuses when either key is empty; this method did not, and the
-        // asymmetry is the bug.
-        //
-        // An empty key does NOT fall through to "no scope" harmlessly. It is put
-        // into the query verbatim, and `??` only falls through on null, so
-        // MagicMapper receives '' and casts it: `find((int) '')` is `find(0)`,
-        // which resolves nothing, leaves $register/$schema null, and so SKIPS the
-        // `if ($register !== null && $schema !== null)` scoped branch entirely —
-        // falling through to the cross-table path. Combined with the
-        // `_rbac: false` below, an unconfigured instance therefore ran an
-        // UNSCOPED, RBAC-DISABLED sweep of every object on the instance in order
-        // to derive a catalog scope. That is the same degradation shape as #828
-        // (GET /api/listings): an unresolved scope becoming NO scope rather than
-        // a refusal.
-        //
-        // Returning empty arrays is the correct refusal here rather than an
-        // exception, because that is already the contract callers handle:
-        // PublicationService::setObjectServiceContext() checks
-        // `empty($allowedRegisters) || empty($allowedSchemas)` and returns
-        // without querying, explicitly to "refuse to do a platform-wide scan".
-        if ($schema === '' || $register === '') {
-            $this->logger->error(
-                'Catalog schema or register not configured — refusing to derive a catalog scope from an unscoped search',
-                [
-                    'schema'   => $schema,
-                    'register' => $register,
-                ]
-            );
-            $this->availableRegisters = [];
-            $this->availableSchemas   = [];
-            return [
-                'registers' => [],
-                'schemas'   => [],
-            ];
-        }
-
-        // Setup the base query for searchObjects.
-        $query = [
-            '@self' => [
-                'register' => $register,
-                'schema'   => $schema,
-            ],
-        ];
-
-        // If a specific catalog ID is provided, add it as a filter.
-        // UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
-        // on the object's own 'slug' field.
-        if ($catalogId !== null) {
-            $query['slug'] = (string) $catalogId;
-            if (Uuid::isValid((string) $catalogId) === true) {
-                unset($query['slug']);
-                $query['@self']['uuid'] = $catalogId;
-            }
-        }
-
-        // Get catalogs using searchObjects (handles deleted field correctly).
-        $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
-
-        // Remove duplicate values and assign to class properties.
-        $this->availableRegisters = $this->collectUnique($catalogs, 'registers');
-        $this->availableSchemas   = $this->collectUnique($catalogs, 'schemas');
-
-        return [
-            'registers' => array_values($this->availableRegisters),
-            'schemas'   => array_values($this->availableSchemas),
-        ];
-
-    }//end getCatalogFilters()
-
-    /**
-     * Collect the unique values of one array-valued property across catalogs.
-     *
-     * Extracted from getCatalogFilters() so the fail-closed guard added there
-     * does not push that method over PHPMD's cyclomatic-complexity threshold.
-     * A baseline entry would have been the wrong repair: it is scoped to
-     * (rule, file) and would licence every future violation of that rule in
-     * this file, including ones nobody has looked at.
-     *
-     * @param array<int,mixed> $catalogs The catalog objects returned by the search.
-     * @param string           $property The array-valued property to collect ('registers' | 'schemas').
-     *
-     * @return array<int,mixed> The de-duplicated union of that property's values.
-     */
-    private function collectUnique(array $catalogs, string $property): array
-    {
-        $collected = [];
-
-        foreach ($catalogs as $catalog) {
-            $catalog = $catalog->jsonSerialize();
-            if (isset($catalog[$property]) === true && is_array($catalog[$property]) === true) {
-                $collected = array_merge($collected, $catalog[$property]);
-            }
-        }
-
-        return array_unique($collected);
-
-    }//end collectUnique()
-
-    /**
-     * Get the list of available registers.
-     *
-     * @return array<string> List of available registers
-     */
-    public function getAvailableRegisters(): array
-    {
-        return $this->availableRegisters;
-
-    }//end getAvailableRegisters()
-
-    /**
-     * Get the list of available schemas.
-     *
-     * @return array<string> List of available schemas
-     */
-    public function getAvailableSchemas(): array
-    {
-        return $this->availableSchemas;
-
-    }//end getAvailableSchemas()
-
-    /**
-     * Helper method to get configuration array from the current request.
-     *
-     * @param string|null $register Optional register identifier
-     * @param string|null $schema   Optional schema identifier
-     * @param array|null  $ids      Optional array of specific IDs to filter
-     *
-     * @return array Configuration array with limit, offset, page,
-     *                filters, sort, search, extend, fields, unset,
-     *                queries, ids.
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     */
-    private function getConfig(?string $register=null, ?string $schema=null, ?array $ids=null): array
-    {
-        $params = $this->request->getParams();
-
-        unset($params['id']);
-        unset($params['_route']);
-
-        // Extract and normalize parameters.
-        $limit  = (int) ($params['limit'] ?? $params['_limit'] ?? 20);
-        $offset = null;
-        if (isset($params['offset']) === true) {
-            $offset = (int) $params['offset'];
-        } else if (isset($params['_offset']) === true) {
-            $offset = (int) $params['_offset'];
-        }
-
-        $page = null;
-        if (isset($params['page']) === true) {
-            $page = (int) $params['page'];
-        } else if (isset($params['_page']) === true) {
-            $page = (int) $params['_page'];
-        }
-
-        // If we have a page but no offset, calculate the offset.
-        if ($page !== null && $offset === null) {
-            $offset = (($page - 1) * $limit);
-        }
-
-        $queries = ($params['queries'] ?? $params['_queries'] ?? []);
-        if (is_string($queries) === true) {
-            $queries = [$queries];
-        }
-
-        return [
-            'limit'   => $limit,
-            'offset'  => $offset,
-            'page'    => $page,
-            'filters' => $params,
-            'sort'    => ($params['order'] ?? $params['_order'] ?? []),
-            'search'  => ($params['_search'] ?? null),
-            'extend'  => ($params['extend'] ?? $params['_extend'] ?? null),
-            'fields'  => ($params['fields'] ?? $params['_fields'] ?? null),
-            'unset'   => ($params['unset'] ?? $params['_unset'] ?? null),
-            'queries' => $queries,
-            'ids'     => $ids,
-        ];
-
-    }//end getConfig()
-
-    /**
-     * Get a catalog by its slug from cache or database.
-     *
-     * This method first attempts to retrieve the catalog from cache. If not found in cache,
-     * it queries the database and stores the result in cache for future requests.
-     *
-     * @param string $slug The slug of the catalog to retrieve
-     *
-     * @return array|null The catalog data as an array, or null if not found
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     */
-    public function getCatalogBySlug(string $slug): ?array
-    {
-        // Step 1: Try to get from cache.
-        $cacheKey      = 'catalog_slug_'.$slug;
-        $cachedCatalog = $this->cache->get($cacheKey);
-
-        if ($cachedCatalog !== null) {
-            $this->logger->debug('Catalog retrieved from cache', ['slug' => $slug]);
-            return $cachedCatalog;
-        }
-
-        // Step 2: Not in cache, query the database.
-        $this->logger->debug('Catalog not in cache, querying database', ['slug' => $slug]);
-
-        try {
-            // Get catalog schema and register from config.
-            $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
-            $register = $this->config->getValueString($this->appName, 'catalog_register', '');
-
-            if (empty($schema) === true || empty($register) === true) {
-                $this->logger->error(
-                    'Catalog schema or register not found in config',
-                    [
-                        'slug'     => $slug,
-                        'schema'   => $schema,
-                        'register' => $register,
-                    ]
-                );
-                return null;
-            }
-
-            $query = [
-                '_register' => $register,
-                '_schema'   => $schema,
-                'slug'      => $slug,
-                '_limit'    => 1,
-            ];
-
-            $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: true, _multitenancy: false);
-
-            if (empty($catalogs) === true) {
-                $this->logger->error(
-                    'Catalog not found',
-                    [
-                        'slug'     => $slug,
-                        'schema'   => $schema,
-                        'register' => $register,
-                    ]
-                );
-                return null;
-            }
-
-            // RBAC already filtered unpublished catalogs for anonymous callers above
-            // (catalog schema grants public read only when published <= $now).
-            $catalog = $catalogs[0]->jsonSerialize();
-
-            // Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
-            $this->cache->set($cacheKey, $catalog, 3600);
-            $this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
-
-            return $catalog;
-        } catch (Exception $e) {
-            $this->logger->error(
-                'Error retrieving catalog',
-                [
-                    'slug'  => $slug,
-                    'error' => $e->getMessage(),
-                ]
-            );
-            return null;
-        }//end try
-
-    }//end getCatalogBySlug()
-
-    /**
-     * Invalidate the cache for a specific catalog.
-     *
-     * This method removes the catalog from cache, forcing the next request
-     * to fetch fresh data from the database.
-     *
-     * @param string $slug The slug of the catalog to invalidate
-     *
-     * @return void
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     */
-    public function invalidateCatalogCache(string $slug): void
-    {
-        $cacheKey = 'catalog_slug_'.$slug;
-        $this->cache->remove($cacheKey);
-        $this->logger->debug('Catalog cache invalidated', ['slug' => $slug]);
-
-    }//end invalidateCatalogCache()
-
-    /**
-     * Invalidate cache for a catalog by its ID.
-     *
-     * This method retrieves the catalog by ID to get its slug, then invalidates the cache.
-     *
-     * @param integer|string $catalogId The ID of the catalog
-     *
-     * @return void
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     */
-    public function invalidateCatalogCacheById(int|string $catalogId): void
-    {
-        try {
-            // Get catalog register and schema for magic mapper routing.
-            $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
-            $register = $this->config->getValueString($this->appName, 'catalog_register', '');
-
-            $catalog     = $this->getObjectService()->find(
-                id: $catalogId,
-                register: $register,
-                schema: $schema
-            );
-            $catalogData = $catalog->jsonSerialize();
-
-            if (isset($catalogData['slug']) === true) {
-                $this->invalidateCatalogCache($catalogData['slug']);
-            }
-        } catch (Exception $e) {
-            $this->logger->error(
-                'Error invalidating catalog cache',
-                [
-                    'catalogId' => $catalogId,
-                    'error'     => $e->getMessage(),
-                ]
-            );
-        }//end try
-
-    }//end invalidateCatalogCacheById()
-
-    /**
-     * Warm up the cache for a specific catalog.
-     *
-     * This method pre-loads the catalog into cache to improve performance
-     * for subsequent requests.
-     *
-     * @param string $slug The slug of the catalog to warm up
-     *
-     * @return void
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     */
-    public function warmupCatalogCache(string $slug): void
-    {
-        // Force a fresh load from database and store in cache.
-        $this->invalidateCatalogCache($slug);
-        $this->getCatalogBySlug($slug);
-        $this->logger->debug('Catalog cache warmed up', ['slug' => $slug]);
-
-    }//end warmupCatalogCache()
-
-    /**
-     * Warm up cache for a catalog by its ID.
-     *
-     * @param integer|string $catalogId The ID of the catalog
-     *
-     * @return void
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     */
-    public function warmupCatalogCacheById(int|string $catalogId): void
-    {
-        try {
-            // Get catalog register and schema for magic mapper routing.
-            $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
-            $register = $this->config->getValueString($this->appName, 'catalog_register', '');
-
-            $catalog     = $this->getObjectService()->find(
-                id: $catalogId,
-                register: $register,
-                schema: $schema
-            );
-            $catalogData = $catalog->jsonSerialize();
-
-            if (isset($catalogData['slug']) === true) {
-                $this->warmupCatalogCache($catalogData['slug']);
-            }
-        } catch (Exception $e) {
-            $this->logger->error(
-                'Error warming up catalog cache',
-                [
-                    'catalogId' => $catalogId,
-                    'error'     => $e->getMessage(),
-                ]
-            );
-        }//end try
-
-    }//end warmupCatalogCacheById()
-
-    /**
-     * Retrieves a list of all objects for a specific register and schema.
-     *
-     * This method returns a paginated list of objects that match the specified register and schema.
-     * It supports filtering, sorting, and pagination through query parameters.
-     *
-     * @param string|integer|null $catalogId Optional catalog ID to filter by
-     *
-     * @return JSONResponse A JSON response containing the list of objects
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     *
-     * @spec openspec/specs/catalogs/spec.md
-     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
-     */
-    public function index(null|string|int $catalogId=null): JSONResponse
-    {
-        // Get config and fetch objects.
-        $config = $this->getConfig();
-
-        // Get the context for the catalog.
-        $context = $this->getCatalogFilters($catalogId);
-
-        $objectService = $this->getObjectService();
-
-        // Build search query from config using _register and _schema for magic mapper routing.
-        $query = [];
-        if (empty($context['registers']) === false || empty($context['schemas']) === false) {
-            $query['@self'] = [];
-            if (empty($context['registers']) === false) {
-                // Use scalar value when only one register to avoid magic_mapper overhead.
-                $query['@self']['register'] = $context['registers'];
-                if (count($context['registers']) === 1) {
-                    $query['@self']['register'] = $context['registers'][0];
-                }
-            }
-
-            if (empty($context['schemas']) === false) {
-                // Use scalar value when only one schema to avoid magic_mapper overhead.
-                $query['@self']['schema'] = $context['schemas'];
-                if (count($context['schemas']) === 1) {
-                    $query['@self']['schema'] = $context['schemas'][0];
-                }
-            }
-        }
-
-        // Add other filters from config.
-        if (empty($config['filters']) === false) {
-            foreach ($config['filters'] as $key => $value) {
-                if (in_array($key, ['register', 'schema']) === false) {
-                    $query[$key] = $value;
-                }
-            }
-        }
-
-        // Add special parameters.
-        if (isset($config['limit']) === true) {
-            $query['_limit'] = $config['limit'];
-        }
-
-        if (isset($config['offset']) === true) {
-            $query['_offset'] = $config['offset'];
-        }
-
-        if (isset($config['page']) === true) {
-            $query['_page'] = $config['page'];
-        }
-
-        if (isset($config['queries']) === true) {
-            $query['_queries'] = $config['queries'];
-        }
-
-        if (isset($config['order']) === true) {
-            $query['_order'] = $config['order'];
-        }
-
-        // Use searchObjectsPaginated which handles pagination internally. RBAC governs
-        // visibility (_rbac: true); _multitenancy: false so cross-org public reads resolve.
-        // The catalog schema's conditional public-read rule (published <= $now) already
-        // gates published-vs-draft for anonymous callers — no extra filtering needed.
-        $result = $objectService->searchObjectsPaginated(
-            query: $query,
-            _rbac: true,
-            _multitenancy: false
-        );
-
-        // Authenticated-read-parity (CAT-AUTH-001): OpenRegister RBAC already decided
-        // (via _rbac: true above) that this caller may read every object in $result;
-        // this only governs how much `@self` metadata the envelope carries. Anonymous
-        // callers keep today's minimal envelope; authenticated callers see the full
-        // `@self` metadata OR already lets them read.
-        $isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
-
-        // Filter out unwanted properties from the @self array in each object.
-        $filteredResults = array_map(
-            function ($object) use ($isAnonymous) {
-                // The OR SOLR backend returns array shapes (not ObjectEntity instances)
-                // from searchObjectsPaginated; the magic-mapper backend returns entities.
-                // Guard so we do not fatal with "Call to a member function jsonSerialize()
-                // on array" under SOLR (#736), mirroring the dual-shape handling already
-                // present in CatalogiController/PublicationsController::index.
-                if (is_array($object) === true) {
-                    $objectArray = $object;
-                } else {
-                    $objectArray = $object->jsonSerialize();
-                }
-
-                if ($isAnonymous === true
-                    && isset($objectArray['@self']) === true
-                    && is_array($objectArray['@self']) === true
-                ) {
-                    // Remove unwanted properties from the @self array.
-                    $objectArray['@self'] = array_diff_key(
-                        $objectArray['@self'],
-                        array_flip(self::UNWANTED_SELF_PROPERTIES)
-                    );
-                }
-
-                return $objectArray;
-            },
-            $result['results']
-        );
-
-        $result['results'] = $filteredResults;
-
-        // Return paginated results.
-        return new JSONResponse($result);
-
-    }//end index()
+class CatalogiService {
+
+	/**
+	 * Properties stripped from the `@self` envelope for anonymous (logged-out)
+	 * callers on public read endpoints.
+	 *
+	 * Single source of truth for the anonymous strip list (authenticated-read-parity,
+	 * CAT-AUTH-001): OpenRegister RBAC (`_rbac: true`) already decides WHICH objects
+	 * a caller may read; this list only governs envelope metadata richness for
+	 * callers with no authenticated Nextcloud session. Authenticated callers OR RBAC
+	 * already lets read the object receive every one of these properties unmodified.
+	 * Referenced by {@see PublicationService::filterUnwantedProperties()} so the
+	 * anonymous envelope cannot fork between the catalogs and publications endpoints.
+	 *
+	 * @var array<int, string>
+	 */
+	public const UNWANTED_SELF_PROPERTIES = [
+		'schemaVersion',
+		'relations',
+		'locked',
+		'owner',
+		'folder',
+		'application',
+		'validation',
+		'retention',
+		'size',
+		'deleted',
+	];
+
+	/**
+	 * The cached object service instance.
+	 *
+	 * @var object|null
+	 */
+	private ?object $objectService = null;
+
+	/**
+	 * The name of the app.
+	 *
+	 * @var string $appName The name of the app
+	 */
+	private string $appName;
+
+	/**
+	 * List of available registers from catalogs.
+	 *
+	 * @var array<string> List of available registers from catalogs
+	 */
+	private array $availableRegisters = [];
+
+	/**
+	 * List of available schemas from catalogs.
+	 *
+	 * @var array<string> List of available schemas from catalogs
+	 */
+	private array $availableSchemas = [];
+
+	/**
+	 * Cache instance for storing catalog data.
+	 *
+	 * @var ICache Cache instance for storing catalog data
+	 */
+	private ICache $cache;
+
+	/**
+	 * Constructor for CatalogiService.
+	 *
+	 * @param IAppConfig $config App configuration interface
+	 * @param IRequest $request Request interface
+	 * @param ContainerInterface $container Server container for dependency injection
+	 * @param IAppManager $appManager App manager for checking installed apps
+	 * @param ICacheFactory $cacheFactory Cache factory for creating cache instances
+	 * @param LoggerInterface $logger Logger for logging errors and debug information
+	 * @param IUserSession|null $userSession User session used to decide whether the
+	 *                                       anonymous `@self` strip list applies
+	 *                                       (authenticated-read-parity, CAT-AUTH-001).
+	 *                                       Nullable/optional so existing call sites and
+	 *                                       tests keep working unmodified; a null session
+	 *                                       fails closed to the anonymous (stripped) envelope.
+	 *
+	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+	 */
+	public function __construct(
+		private readonly IAppConfig $config,
+		private readonly IRequest $request,
+		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
+		ICacheFactory $cacheFactory,
+		private readonly LoggerInterface $logger,
+		private readonly ?IUserSession $userSession = null,
+	) {
+		$this->appName = 'opencatalogi';
+		$this->cache = $cacheFactory->createDistributed('opencatalogi_catalogs');
+
+	}//end __construct()
+
+	/**
+	 * Attempts to retrieve the OpenRegister service from the container.
+	 *
+	 * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+	 *       service from the container; pure framework plumbing, no domain behavior.
+	 */
+	public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+			return $this->objectService;
+		}
+
+		throw new RuntimeException('OpenRegister service is not available.');
+	}//end getObjectService()
+
+	/**
+	 * Attempts to retrieve the OpenRegister FileService from the container.
+	 *
+	 * @return \OCA\OpenRegister\Service\FileService|null The OpenRegister service if available, null otherwise.
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+	 *       FileService from the container; pure framework plumbing, no domain behavior.
+	 */
+	public function getFileService(): ?\OCA\OpenRegister\Service\FileService {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			$this->objectService = $this->container->get('OCA\OpenRegister\Service\FileService');
+
+			return $this->objectService;
+		}
+
+		throw new RuntimeException('OpenRegister service is not available.');
+	}//end getFileService()
+
+	/**
+	 * Attempts to retrieve the SchemaMapper from the Container
+	 *
+	 * @return \OCA\OpenRegister\Db\SchemaMapper|null
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 *
+	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+	 *       SchemaMapper from the container; pure framework plumbing, no domain behavior.
+	 */
+	public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			$schemaMapper = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+
+			return $schemaMapper;
+		}
+
+		throw new RuntimeException('OpenRegister service is not available.');
+	}//end getSchemaMapper()
+
+	/**
+	 * Attempts to retrieve the RegisterMapper from the Container
+	 *
+	 * @return \OCA\OpenRegister\Db\RegisterMapper|null
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 *
+	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+	 *       RegisterMapper from the container; pure framework plumbing, no domain behavior.
+	 */
+	public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			$registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+
+			return $registerMapper;
+		}
+
+		throw new RuntimeException('OpenRegister service is not available.');
+	}//end getRegisterMapper()
+
+	/**
+	 * Compute rewritten register and schema arrays for a catalog object.
+	 *
+	 * Resolves slug-or-id values in `registers` and `schemas` to integer ids. Returns
+	 * only the keys that actually changed, so callers can pass the result straight
+	 * into a pre-save hook's `setModifiedData(...)` without overwriting unrelated fields.
+	 *
+	 * @param array<string, mixed> $object The decoded catalog object payload.
+	 *
+	 * @return array<string, array<int|string>> Map containing only the changed keys
+	 *                                          (`registers` and/or `schemas`). Empty
+	 *                                          when nothing needs rewriting.
+	 *
+	 * @throws \RuntimeException When a slug cannot be resolved to a register/schema.
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 */
+	public function computeRewrittenRegistersAndSchemas(array $object): array {
+		$modified = [];
+
+		if (isset($object['registers']) === true && is_array($object['registers']) === true) {
+			$rewrittenRegisters = array_map(
+				function ($register) {
+					if ($this->isNumericId($register) === true) {
+						return $register;
+					}
+
+					try {
+						return $this->getRegisterMapper()->find($register)->getId();
+					} catch (NotFoundException $e) {
+						throw new RuntimeException('Register ' . $register . ' not found.');
+					}
+				},
+				$object['registers']
+			);
+
+			if ($rewrittenRegisters !== $object['registers']) {
+				$modified['registers'] = $rewrittenRegisters;
+			}
+		}
+
+		if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
+			$rewrittenSchemas = array_map(
+				function ($schema) {
+					if ($this->isNumericId($schema) === true) {
+						return $schema;
+					}
+
+					try {
+						return $this->getSchemaMapper()->find($schema)->getId();
+					} catch (NotFoundException $e) {
+						throw new RuntimeException('Schema ' . $schema . ' not found.');
+					}
+				},
+				$object['schemas']
+			);
+
+			if ($rewrittenSchemas !== $object['schemas']) {
+				$modified['schemas'] = $rewrittenSchemas;
+			}
+		}
+
+		return $modified;
+	}//end computeRewrittenRegistersAndSchemas()
+
+	/**
+	 * Determine whether a value is already a numeric integer ID (not a slug).
+	 *
+	 * Used inside computeRewrittenRegistersAndSchemas() to short-circuit
+	 * mapper lookups when the value is already a resolved integer ID.
+	 *
+	 * @param mixed $value The register or schema value to test.
+	 *
+	 * @return bool True when the value consists entirely of digits.
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function isNumericId($value): bool {
+		return preg_match("/^\d+$/", (string)$value) === 1;
+	}//end isNumericId()
+
+	/**
+	 * Rewrite slugs and uuids in register and schema fields of a Catalog to actual ids.
+	 *
+	 * @param ObjectEntity $objectEntity The catalog object to rewrite.
+	 *
+	 * @return bool Whether the object has been updated.
+	 *
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 *
+	 * @deprecated Calling this from a post-save event handler causes an infinite loop
+	 *             because the inner `saveObject(...)` re-emits `ObjectUpdatedEvent`. Subscribe
+	 *             to the pre-save events (`ObjectCreatingEvent` / `ObjectUpdatingEvent`) and use
+	 *             {@see self::computeRewrittenRegistersAndSchemas()} together with
+	 *             `$event->setModifiedData(...)` instead.
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	public function rewriteSchemasAndRegisters(ObjectEntity $objectEntity): bool {
+		$object = $objectEntity->getObject() ?? [];
+		$modified = $this->computeRewrittenRegistersAndSchemas($object);
+
+		if ($modified === []) {
+			return false;
+		}
+
+		$objectEntity->setObject(array_merge($object, $modified));
+		$this->getObjectService()->saveObject($objectEntity);
+
+		return true;
+	}//end rewriteSchemasAndRegisters()
+
+	/**
+	 * Get register and schema combinations from catalogs.
+	 *
+	 * This method retrieves all catalogs (or a specific one if ID is provided),
+	 * extracts their registers and schemas, and stores them as general variables.
+	 *
+	 * @param string|integer|null $catalogId Optional ID of a specific catalog to filter by
+	 *
+	 * @return array<string, array<string>> Array containing available registers and schemas
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess)
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	public function getCatalogFilters(null|string|int $catalogId = null): array {
+		// Establish the default schema and register.
+		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+		// FAIL CLOSED. getCatalogBySlug() — the sibling method in this same class
+		// — already refuses when either key is empty; this method did not, and the
+		// asymmetry is the bug.
+		//
+		// An empty key does NOT fall through to "no scope" harmlessly. It is put
+		// into the query verbatim, and `??` only falls through on null, so
+		// MagicMapper receives '' and casts it: `find((int) '')` is `find(0)`,
+		// which resolves nothing, leaves $register/$schema null, and so SKIPS the
+		// `if ($register !== null && $schema !== null)` scoped branch entirely —
+		// falling through to the cross-table path. Combined with the
+		// `_rbac: false` below, an unconfigured instance therefore ran an
+		// UNSCOPED, RBAC-DISABLED sweep of every object on the instance in order
+		// to derive a catalog scope. That is the same degradation shape as #828
+		// (GET /api/listings): an unresolved scope becoming NO scope rather than
+		// a refusal.
+		//
+		// Returning empty arrays is the correct refusal here rather than an
+		// exception, because that is already the contract callers handle:
+		// PublicationService::setObjectServiceContext() checks
+		// `empty($allowedRegisters) || empty($allowedSchemas)` and returns
+		// without querying, explicitly to "refuse to do a platform-wide scan".
+		if ($schema === '' || $register === '') {
+			$this->logger->error(
+				'Catalog schema or register not configured — refusing to derive a catalog scope from an unscoped search',
+				[
+					'schema' => $schema,
+					'register' => $register,
+				]
+			);
+			$this->availableRegisters = [];
+			$this->availableSchemas = [];
+			return [
+				'registers' => [],
+				'schemas' => [],
+			];
+		}
+
+		// Setup the base query for searchObjects.
+		$query = [
+			'@self' => [
+				'register' => $register,
+				'schema' => $schema,
+			],
+		];
+
+		// If a specific catalog ID is provided, add it as a filter.
+		// UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
+		// on the object's own 'slug' field.
+		if ($catalogId !== null) {
+			$query['slug'] = (string)$catalogId;
+			if (Uuid::isValid((string)$catalogId) === true) {
+				unset($query['slug']);
+				$query['@self']['uuid'] = $catalogId;
+			}
+		}
+
+		// Get catalogs using searchObjects (handles deleted field correctly).
+		$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
+
+		// Remove duplicate values and assign to class properties.
+		$this->availableRegisters = $this->collectUnique($catalogs, 'registers');
+		$this->availableSchemas = $this->collectUnique($catalogs, 'schemas');
+
+		return [
+			'registers' => array_values($this->availableRegisters),
+			'schemas' => array_values($this->availableSchemas),
+		];
+
+	}//end getCatalogFilters()
+
+	/**
+	 * Collect the unique values of one array-valued property across catalogs.
+	 *
+	 * Extracted from getCatalogFilters() so the fail-closed guard added there
+	 * does not push that method over PHPMD's cyclomatic-complexity threshold.
+	 * A baseline entry would have been the wrong repair: it is scoped to
+	 * (rule, file) and would licence every future violation of that rule in
+	 * this file, including ones nobody has looked at.
+	 *
+	 * @param array<int,mixed> $catalogs The catalog objects returned by the search.
+	 * @param string $property The array-valued property to collect ('registers' | 'schemas').
+	 *
+	 * @return array<int,mixed> The de-duplicated union of that property's values.
+	 */
+	private function collectUnique(array $catalogs, string $property): array {
+		$collected = [];
+
+		foreach ($catalogs as $catalog) {
+			$catalog = $catalog->jsonSerialize();
+			if (isset($catalog[$property]) === true && is_array($catalog[$property]) === true) {
+				$collected = array_merge($collected, $catalog[$property]);
+			}
+		}
+
+		return array_unique($collected);
+	}//end collectUnique()
+
+	/**
+	 * Get the list of available registers.
+	 *
+	 * @return array<string> List of available registers
+	 */
+	public function getAvailableRegisters(): array {
+		return $this->availableRegisters;
+	}//end getAvailableRegisters()
+
+	/**
+	 * Get the list of available schemas.
+	 *
+	 * @return array<string> List of available schemas
+	 */
+	public function getAvailableSchemas(): array {
+		return $this->availableSchemas;
+	}//end getAvailableSchemas()
+
+	/**
+	 * Helper method to get configuration array from the current request.
+	 *
+	 * @param string|null $register Optional register identifier
+	 * @param string|null $schema Optional schema identifier
+	 * @param array|null $ids Optional array of specific IDs to filter
+	 *
+	 * @return array Configuration array with limit, offset, page,
+	 *               filters, sort, search, extend, fields, unset,
+	 *               queries, ids.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function getConfig(?string $register = null, ?string $schema = null, ?array $ids = null): array {
+		$params = $this->request->getParams();
+
+		unset($params['id']);
+		unset($params['_route']);
+
+		// Extract and normalize parameters.
+		$limit = (int)($params['limit'] ?? $params['_limit'] ?? 20);
+		$offset = null;
+		if (isset($params['offset']) === true) {
+			$offset = (int)$params['offset'];
+		} elseif (isset($params['_offset']) === true) {
+			$offset = (int)$params['_offset'];
+		}
+
+		$page = null;
+		if (isset($params['page']) === true) {
+			$page = (int)$params['page'];
+		} elseif (isset($params['_page']) === true) {
+			$page = (int)$params['_page'];
+		}
+
+		// If we have a page but no offset, calculate the offset.
+		if ($page !== null && $offset === null) {
+			$offset = (($page - 1) * $limit);
+		}
+
+		$queries = ($params['queries'] ?? $params['_queries'] ?? []);
+		if (is_string($queries) === true) {
+			$queries = [$queries];
+		}
+
+		return [
+			'limit' => $limit,
+			'offset' => $offset,
+			'page' => $page,
+			'filters' => $params,
+			'sort' => ($params['order'] ?? $params['_order'] ?? []),
+			'search' => ($params['_search'] ?? null),
+			'extend' => ($params['extend'] ?? $params['_extend'] ?? null),
+			'fields' => ($params['fields'] ?? $params['_fields'] ?? null),
+			'unset' => ($params['unset'] ?? $params['_unset'] ?? null),
+			'queries' => $queries,
+			'ids' => $ids,
+		];
+
+	}//end getConfig()
+
+	/**
+	 * Get a catalog by its slug from cache or database.
+	 *
+	 * This method first attempts to retrieve the catalog from cache. If not found in cache,
+	 * it queries the database and stores the result in cache for future requests.
+	 *
+	 * @param string $slug The slug of the catalog to retrieve
+	 *
+	 * @return array|null The catalog data as an array, or null if not found
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	public function getCatalogBySlug(string $slug): ?array {
+		// Step 1: Try to get from cache.
+		$cacheKey = 'catalog_slug_' . $slug;
+		$cachedCatalog = $this->cache->get($cacheKey);
+
+		if ($cachedCatalog !== null) {
+			$this->logger->debug('Catalog retrieved from cache', ['slug' => $slug]);
+			return $cachedCatalog;
+		}
+
+		// Step 2: Not in cache, query the database.
+		$this->logger->debug('Catalog not in cache, querying database', ['slug' => $slug]);
+
+		try {
+			// Get catalog schema and register from config.
+			$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+			$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+			if (empty($schema) === true || empty($register) === true) {
+				$this->logger->error(
+					'Catalog schema or register not found in config',
+					[
+						'slug' => $slug,
+						'schema' => $schema,
+						'register' => $register,
+					]
+				);
+				return null;
+			}
+
+			$query = [
+				'_register' => $register,
+				'_schema' => $schema,
+				'slug' => $slug,
+				'_limit' => 1,
+			];
+
+			$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: true, _multitenancy: false);
+
+			if (empty($catalogs) === true) {
+				$this->logger->error(
+					'Catalog not found',
+					[
+						'slug' => $slug,
+						'schema' => $schema,
+						'register' => $register,
+					]
+				);
+				return null;
+			}
+
+			// RBAC already filtered unpublished catalogs for anonymous callers above
+			// (catalog schema grants public read only when published <= $now).
+			$catalog = $catalogs[0]->jsonSerialize();
+
+			// Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
+			$this->cache->set($cacheKey, $catalog, 3600);
+			$this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+
+			return $catalog;
+		} catch (Exception $e) {
+			$this->logger->error(
+				'Error retrieving catalog',
+				[
+					'slug' => $slug,
+					'error' => $e->getMessage(),
+				]
+			);
+			return null;
+		}//end try
+
+	}//end getCatalogBySlug()
+
+	/**
+	 * Invalidate the cache for a specific catalog.
+	 *
+	 * This method removes the catalog from cache, forcing the next request
+	 * to fetch fresh data from the database.
+	 *
+	 * @param string $slug The slug of the catalog to invalidate
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	public function invalidateCatalogCache(string $slug): void {
+		$cacheKey = 'catalog_slug_' . $slug;
+		$this->cache->remove($cacheKey);
+		$this->logger->debug('Catalog cache invalidated', ['slug' => $slug]);
+
+	}//end invalidateCatalogCache()
+
+	/**
+	 * Invalidate cache for a catalog by its ID.
+	 *
+	 * This method retrieves the catalog by ID to get its slug, then invalidates the cache.
+	 *
+	 * @param integer|string $catalogId The ID of the catalog
+	 *
+	 * @return void
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	public function invalidateCatalogCacheById(int|string $catalogId): void {
+		try {
+			// Get catalog register and schema for magic mapper routing.
+			$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+			$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+			$catalog = $this->getObjectService()->find(
+				id: $catalogId,
+				register: $register,
+				schema: $schema
+			);
+			$catalogData = $catalog->jsonSerialize();
+
+			if (isset($catalogData['slug']) === true) {
+				$this->invalidateCatalogCache($catalogData['slug']);
+			}
+		} catch (Exception $e) {
+			$this->logger->error(
+				'Error invalidating catalog cache',
+				[
+					'catalogId' => $catalogId,
+					'error' => $e->getMessage(),
+				]
+			);
+		}//end try
+
+	}//end invalidateCatalogCacheById()
+
+	/**
+	 * Warm up the cache for a specific catalog.
+	 *
+	 * This method pre-loads the catalog into cache to improve performance
+	 * for subsequent requests.
+	 *
+	 * @param string $slug The slug of the catalog to warm up
+	 *
+	 * @return void
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	public function warmupCatalogCache(string $slug): void {
+		// Force a fresh load from database and store in cache.
+		$this->invalidateCatalogCache($slug);
+		$this->getCatalogBySlug($slug);
+		$this->logger->debug('Catalog cache warmed up', ['slug' => $slug]);
+
+	}//end warmupCatalogCache()
+
+	/**
+	 * Warm up cache for a catalog by its ID.
+	 *
+	 * @param integer|string $catalogId The ID of the catalog
+	 *
+	 * @return void
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	public function warmupCatalogCacheById(int|string $catalogId): void {
+		try {
+			// Get catalog register and schema for magic mapper routing.
+			$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+			$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+			$catalog = $this->getObjectService()->find(
+				id: $catalogId,
+				register: $register,
+				schema: $schema
+			);
+			$catalogData = $catalog->jsonSerialize();
+
+			if (isset($catalogData['slug']) === true) {
+				$this->warmupCatalogCache($catalogData['slug']);
+			}
+		} catch (Exception $e) {
+			$this->logger->error(
+				'Error warming up catalog cache',
+				[
+					'catalogId' => $catalogId,
+					'error' => $e->getMessage(),
+				]
+			);
+		}//end try
+
+	}//end warmupCatalogCacheById()
+
+	/**
+	 * Retrieves a list of all objects for a specific register and schema.
+	 *
+	 * This method returns a paginated list of objects that match the specified register and schema.
+	 * It supports filtering, sorting, and pagination through query parameters.
+	 *
+	 * @param string|integer|null $catalogId Optional catalog ID to filter by
+	 *
+	 * @return JSONResponse A JSON response containing the list of objects
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+	 */
+	public function index(null|string|int $catalogId = null): JSONResponse {
+		// Get config and fetch objects.
+		$config = $this->getConfig();
+
+		// Get the context for the catalog.
+		$context = $this->getCatalogFilters($catalogId);
+
+		$objectService = $this->getObjectService();
+
+		// Build search query from config using _register and _schema for magic mapper routing.
+		$query = [];
+		if (empty($context['registers']) === false || empty($context['schemas']) === false) {
+			$query['@self'] = [];
+			if (empty($context['registers']) === false) {
+				// Use scalar value when only one register to avoid magic_mapper overhead.
+				$query['@self']['register'] = $context['registers'];
+				if (count($context['registers']) === 1) {
+					$query['@self']['register'] = $context['registers'][0];
+				}
+			}
+
+			if (empty($context['schemas']) === false) {
+				// Use scalar value when only one schema to avoid magic_mapper overhead.
+				$query['@self']['schema'] = $context['schemas'];
+				if (count($context['schemas']) === 1) {
+					$query['@self']['schema'] = $context['schemas'][0];
+				}
+			}
+		}
+
+		// Add other filters from config.
+		if (empty($config['filters']) === false) {
+			foreach ($config['filters'] as $key => $value) {
+				if (in_array($key, ['register', 'schema']) === false) {
+					$query[$key] = $value;
+				}
+			}
+		}
+
+		// Add special parameters.
+		if (isset($config['limit']) === true) {
+			$query['_limit'] = $config['limit'];
+		}
+
+		if (isset($config['offset']) === true) {
+			$query['_offset'] = $config['offset'];
+		}
+
+		if (isset($config['page']) === true) {
+			$query['_page'] = $config['page'];
+		}
+
+		if (isset($config['queries']) === true) {
+			$query['_queries'] = $config['queries'];
+		}
+
+		if (isset($config['order']) === true) {
+			$query['_order'] = $config['order'];
+		}
+
+		// Use searchObjectsPaginated which handles pagination internally. RBAC governs
+		// visibility (_rbac: true); _multitenancy: false so cross-org public reads resolve.
+		// The catalog schema's conditional public-read rule (published <= $now) already
+		// gates published-vs-draft for anonymous callers — no extra filtering needed.
+		$result = $objectService->searchObjectsPaginated(
+			query: $query,
+			_rbac: true,
+			_multitenancy: false
+		);
+
+		// Authenticated-read-parity (CAT-AUTH-001): OpenRegister RBAC already decided
+		// (via _rbac: true above) that this caller may read every object in $result;
+		// this only governs how much `@self` metadata the envelope carries. Anonymous
+		// callers keep today's minimal envelope; authenticated callers see the full
+		// `@self` metadata OR already lets them read.
+		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
+
+		// Filter out unwanted properties from the @self array in each object.
+		$filteredResults = array_map(
+			function ($object) use ($isAnonymous) {
+				// The OR SOLR backend returns array shapes (not ObjectEntity instances)
+				// from searchObjectsPaginated; the magic-mapper backend returns entities.
+				// Guard so we do not fatal with "Call to a member function jsonSerialize()
+				// on array" under SOLR (#736), mirroring the dual-shape handling already
+				// present in CatalogiController/PublicationsController::index.
+				if (is_array($object) === true) {
+					$objectArray = $object;
+				} else {
+					$objectArray = $object->jsonSerialize();
+				}
+
+				if ($isAnonymous === true
+					&& isset($objectArray['@self']) === true
+					&& is_array($objectArray['@self']) === true
+				) {
+					// Remove unwanted properties from the @self array.
+					$objectArray['@self'] = array_diff_key(
+						$objectArray['@self'],
+						array_flip(self::UNWANTED_SELF_PROPERTIES)
+					);
+				}
+
+				return $objectArray;
+			},
+			$result['results']
+		);
+
+		$result['results'] = $filteredResults;
+
+		// Return paginated results.
+		return new JSONResponse($result);
+	}//end index()
 }//end class

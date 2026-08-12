@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Event\ObjectCreatingEvent.
  *
@@ -20,128 +21,107 @@ use OCP\EventDispatcher\Event;
 /**
  * Stub for ObjectCreatingEvent (fired before creation).
  */
-class ObjectCreatingEvent extends Event implements \Psr\EventDispatcher\StoppableEventInterface
-{
+class ObjectCreatingEvent extends Event implements \Psr\EventDispatcher\StoppableEventInterface {
 
-    /**
-     * @var ObjectEntity
-     */
-    private ObjectEntity $object;
+	/**
+	 * @var ObjectEntity
+	 */
+	private ObjectEntity $object;
 
-    /**
-     * @var boolean
-     */
-    private bool $propagationStopped = false;
+	/**
+	 * @var boolean
+	 */
+	private bool $propagationStopped = false;
 
-    /**
-     * @var array<string>
-     */
-    private array $errors = [];
+	/**
+	 * @var array<string>
+	 */
+	private array $errors = [];
 
-    /**
-     * @var array<string,mixed>
-     */
-    private array $modifiedData = [];
+	/**
+	 * @var array<string,mixed>
+	 */
+	private array $modifiedData = [];
 
-    /**
-     * Constructor.
-     *
-     * @param ObjectEntity $object The object being created.
-     */
-    public function __construct(ObjectEntity $object)
-    {
-        parent::__construct();
-        $this->object = $object;
+	/**
+	 * Constructor.
+	 *
+	 * @param ObjectEntity $object The object being created.
+	 */
+	public function __construct(ObjectEntity $object) {
+		parent::__construct();
+		$this->object = $object;
 
-    }//end __construct()
+	}//end __construct()
 
+	/**
+	 * Get the object.
+	 *
+	 * @return ObjectEntity
+	 */
+	public function getObject(): ObjectEntity {
+		return $this->object;
+	}//end getObject()
 
-    /**
-     * Get the object.
-     *
-     * @return ObjectEntity
-     */
-    public function getObject(): ObjectEntity
-    {
-        return $this->object;
+	/**
+	 * Check if propagation was stopped.
+	 *
+	 * @return boolean
+	 */
+	public function isPropagationStopped(): bool {
+		return $this->propagationStopped;
+	}//end isPropagationStopped()
 
-    }//end getObject()
+	/**
+	 * Stop propagation.
+	 *
+	 * @return void
+	 */
+	public function stopPropagation(): void {
+		$this->propagationStopped = true;
 
+	}//end stopPropagation()
 
-    /**
-     * Check if propagation was stopped.
-     *
-     * @return boolean
-     */
-    public function isPropagationStopped(): bool
-    {
-        return $this->propagationStopped;
+	/**
+	 * Set errors.
+	 *
+	 * @param array<string> $errors Error messages.
+	 *
+	 * @return void
+	 */
+	public function setErrors(array $errors): void {
+		$this->errors = $errors;
 
-    }//end isPropagationStopped()
+	}//end setErrors()
 
+	/**
+	 * Get errors.
+	 *
+	 * @return array<string>
+	 */
+	public function getErrors(): array {
+		return $this->errors;
+	}//end getErrors()
 
-    /**
-     * Stop propagation.
-     *
-     * @return void
-     */
-    public function stopPropagation(): void
-    {
-        $this->propagationStopped = true;
+	/**
+	 * Set modified data.
+	 *
+	 * @param array<string,mixed> $data Modified data.
+	 *
+	 * @return void
+	 */
+	public function setModifiedData(array $data): void {
+		$this->modifiedData = $data;
 
-    }//end stopPropagation()
+	}//end setModifiedData()
 
-
-    /**
-     * Set errors.
-     *
-     * @param array<string> $errors Error messages.
-     *
-     * @return void
-     */
-    public function setErrors(array $errors): void
-    {
-        $this->errors = $errors;
-
-    }//end setErrors()
-
-
-    /**
-     * Get errors.
-     *
-     * @return array<string>
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-
-    }//end getErrors()
-
-
-    /**
-     * Set modified data.
-     *
-     * @param array<string,mixed> $data Modified data.
-     *
-     * @return void
-     */
-    public function setModifiedData(array $data): void
-    {
-        $this->modifiedData = $data;
-
-    }//end setModifiedData()
-
-
-    /**
-     * Get modified data.
-     *
-     * @return array<string,mixed>
-     */
-    public function getModifiedData(): array
-    {
-        return $this->modifiedData;
-
-    }//end getModifiedData()
-
+	/**
+	 * Get modified data.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function getModifiedData(): array {
+		return $this->modifiedData;
+	}//end getModifiedData()
 
 }//end class

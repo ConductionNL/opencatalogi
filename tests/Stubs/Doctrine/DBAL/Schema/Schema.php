@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for Doctrine\DBAL\Schema\Schema.
  *
@@ -14,7 +15,6 @@ namespace Doctrine\DBAL\Schema;
 /**
  * Stub for Doctrine DBAL Schema.
  */
-class Schema
-{
+class Schema {
 
 }//end class

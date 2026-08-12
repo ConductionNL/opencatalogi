@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for Doctrine\DBAL\Exception.
  *
@@ -14,7 +15,6 @@ namespace Doctrine\DBAL;
 /**
  * Stub for Doctrine DBAL Exception.
  */
-class Exception extends \RuntimeException
-{
+class Exception extends \RuntimeException {
 
 }//end class

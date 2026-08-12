@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Unit tests for DcatVocabularyService.
  *
@@ -30,78 +31,69 @@ use PHPUnit\Framework\TestCase;
 /**
  * Unit tests for DcatVocabularyService.
  */
-class DcatVocabularyServiceTest extends TestCase
-{
+class DcatVocabularyServiceTest extends TestCase {
 
-    private DcatVocabularyService $service;
+	private DcatVocabularyService $service;
 
+	/**
+	 * Set up the service under test.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->service = new DcatVocabularyService();
 
-    /**
-     * Set up the service under test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->service = new DcatVocabularyService();
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * HVD category resolves by label, alias, bare id, and full URI.
+	 *
+	 * @return void
+	 */
+	public function testResolveHvdCategory(): void {
+		$expected = 'http://data.europa.eu/bna/c_b79e35eb';
 
+		foreach (['Mobility', 'mobiliteit', 'c_b79e35eb', $expected] as $input) {
+			$resolved = $this->service->resolveHvdCategory($input);
+			$this->assertNotNull($resolved, "should resolve: $input");
+			$this->assertSame($expected, $resolved['uri']);
+			$this->assertSame('Mobility', $resolved['label']);
+		}
 
-    /**
-     * HVD category resolves by label, alias, bare id, and full URI.
-     *
-     * @return void
-     */
-    public function testResolveHvdCategory(): void
-    {
-        $expected = 'http://data.europa.eu/bna/c_b79e35eb';
+		$this->assertNull($this->service->resolveHvdCategory('not-a-category'));
+		$this->assertNull($this->service->resolveHvdCategory(null));
 
-        foreach (['Mobility', 'mobiliteit', 'c_b79e35eb', $expected] as $input) {
-            $resolved = $this->service->resolveHvdCategory($input);
-            $this->assertNotNull($resolved, "should resolve: $input");
-            $this->assertSame($expected, $resolved['uri']);
-            $this->assertSame('Mobility', $resolved['label']);
-        }
+	}//end testResolveHvdCategory()
 
-        $this->assertNull($this->service->resolveHvdCategory('not-a-category'));
-        $this->assertNull($this->service->resolveHvdCategory(null));
+	/**
+	 * All six ODD HVD categories are bundled.
+	 *
+	 * @return void
+	 */
+	public function testHvdCategoryListHasSixMembers(): void {
+		$this->assertCount(6, $this->service->hvdCategoryList());
 
-    }//end testResolveHvdCategory()
+	}//end testHvdCategoryListHasSixMembers()
 
+	/**
+	 * Data theme resolves by MDR code, synonym, and full URI; unknown → null.
+	 *
+	 * @return void
+	 */
+	public function testResolveDataTheme(): void {
+		$tran = 'http://publications.europa.eu/resource/authority/data-theme/TRAN';
+		$this->assertSame($tran, $this->service->resolveDataTheme('TRAN'));
+		$this->assertSame($tran, $this->service->resolveDataTheme('transport'));
+		$this->assertSame($tran, $this->service->resolveDataTheme('vervoer'));
+		$this->assertSame($tran, $this->service->resolveDataTheme($tran));
 
-    /**
-     * All six ODD HVD categories are bundled.
-     *
-     * @return void
-     */
-    public function testHvdCategoryListHasSixMembers(): void
-    {
-        $this->assertCount(6, $this->service->hvdCategoryList());
+		$this->assertSame(
+			'http://publications.europa.eu/resource/authority/data-theme/ENVI',
+			$this->service->resolveDataTheme('milieu')
+		);
 
-    }//end testHvdCategoryListHasSixMembers()
+		$this->assertNull($this->service->resolveDataTheme('nonsense-theme'));
+		$this->assertNull($this->service->resolveDataTheme(null));
 
-
-    /**
-     * Data theme resolves by MDR code, synonym, and full URI; unknown → null.
-     *
-     * @return void
-     */
-    public function testResolveDataTheme(): void
-    {
-        $tran = 'http://publications.europa.eu/resource/authority/data-theme/TRAN';
-        $this->assertSame($tran, $this->service->resolveDataTheme('TRAN'));
-        $this->assertSame($tran, $this->service->resolveDataTheme('transport'));
-        $this->assertSame($tran, $this->service->resolveDataTheme('vervoer'));
-        $this->assertSame($tran, $this->service->resolveDataTheme($tran));
-
-        $this->assertSame(
-            'http://publications.europa.eu/resource/authority/data-theme/ENVI',
-            $this->service->resolveDataTheme('milieu')
-        );
-
-        $this->assertNull($this->service->resolveDataTheme('nonsense-theme'));
-        $this->assertNull($this->service->resolveDataTheme(null));
-
-    }//end testResolveDataTheme()
+	}//end testResolveDataTheme()
 }//end class

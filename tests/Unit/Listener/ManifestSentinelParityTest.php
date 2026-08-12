@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi manifest resolve-sentinel parity test.
  *
@@ -42,159 +43,148 @@ use ReflectionClass;
  *
  * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-every-manifest-resolve-sentinel-is-backed-by-provided-initial-state-woo-prov-003
  */
-class ManifestSentinelParityTest extends TestCase
-{
-    /**
-     * Regex matching a `@resolve:<key>` sentinel string, mirroring the
-     * pattern `resolveManifestSentinelsSync()` in `src/main.js` uses.
-     *
-     * @var string
-     */
-    private const SENTINEL_PATTERN = '/@resolve:([a-z][a-z0-9_-]*)/';
+class ManifestSentinelParityTest extends TestCase {
+	/**
+	 * Regex matching a `@resolve:<key>` sentinel string, mirroring the
+	 * pattern `resolveManifestSentinelsSync()` in `src/main.js` uses.
+	 *
+	 * @var string
+	 */
+	private const SENTINEL_PATTERN = '/@resolve:([a-z][a-z0-9_-]*)/';
 
-    /**
-     * Decode one manifest JSON file.
-     *
-     * @param string $path Absolute path to the JSON file.
-     *
-     * @return array<string, mixed> The decoded document.
-     */
-    private function loadJson(string $path): array
-    {
-        $raw = file_get_contents($path);
-        $this->assertIsString($raw, $path.' must be readable');
+	/**
+	 * Decode one manifest JSON file.
+	 *
+	 * @param string $path Absolute path to the JSON file.
+	 *
+	 * @return array<string, mixed> The decoded document.
+	 */
+	private function loadJson(string $path): array {
+		$raw = file_get_contents($path);
+		$this->assertIsString($raw, $path . ' must be readable');
 
-        $decoded = json_decode($raw, true);
-        $this->assertIsArray($decoded, $path.' must parse as JSON');
+		$decoded = json_decode($raw, true);
+		$this->assertIsArray($decoded, $path . ' must parse as JSON');
 
-        return $decoded;
+		return $decoded;
+	}//end loadJson()
 
-    }//end loadJson()
+	/**
+	 * Recursively collect every `@resolve:<key>` sentinel key found anywhere
+	 * (strings, nested arrays/objects) within a decoded manifest structure.
+	 *
+	 * @param mixed $node The (sub-)structure to scan.
+	 *
+	 * @return array<int, string> The sentinel keys found.
+	 */
+	private function collectSentinelKeys(mixed $node): array {
+		$found = [];
 
-    /**
-     * Recursively collect every `@resolve:<key>` sentinel key found anywhere
-     * (strings, nested arrays/objects) within a decoded manifest structure.
-     *
-     * @param mixed $node The (sub-)structure to scan.
-     *
-     * @return array<int, string> The sentinel keys found.
-     */
-    private function collectSentinelKeys(mixed $node): array
-    {
-        $found = [];
+		if (is_array($node) === true) {
+			foreach ($node as $value) {
+				$found = array_merge($found, $this->collectSentinelKeys($value));
+			}
 
-        if (is_array($node) === true) {
-            foreach ($node as $value) {
-                $found = array_merge($found, $this->collectSentinelKeys($value));
-            }
+			return $found;
+		}
 
-            return $found;
-        }
+		if (is_string($node) === true && preg_match(self::SENTINEL_PATTERN, $node, $matches) === 1) {
+			$found[] = $matches[1];
+		}
 
-        if (is_string($node) === true && preg_match(self::SENTINEL_PATTERN, $node, $matches) === 1) {
-            $found[] = $matches[1];
-        }
+		return $found;
+	}//end collectSentinelKeys()
 
-        return $found;
+	/**
+	 * Build the effective manifest's set of `@resolve:<key>` sentinel keys:
+	 * base `src/manifest.json` + every `src/manifest.d/*.json` fragment +
+	 * `src/menu-layout.json` when present — the same file set `src/main.js`
+	 * merges before `resolveManifestSentinelsSync()` runs.
+	 *
+	 * @return array<int, string> The unique sentinel keys found.
+	 */
+	private function collectEffectiveManifestSentinelKeys(): array {
+		$srcDir = __DIR__ . '/../../../src';
+		$keys = [];
 
-    }//end collectSentinelKeys()
+		$keys = array_merge($keys, $this->collectSentinelKeys($this->loadJson($srcDir . '/manifest.json')));
 
-    /**
-     * Build the effective manifest's set of `@resolve:<key>` sentinel keys:
-     * base `src/manifest.json` + every `src/manifest.d/*.json` fragment +
-     * `src/menu-layout.json` when present — the same file set `src/main.js`
-     * merges before `resolveManifestSentinelsSync()` runs.
-     *
-     * @return array<int, string> The unique sentinel keys found.
-     */
-    private function collectEffectiveManifestSentinelKeys(): array
-    {
-        $srcDir = __DIR__.'/../../../src';
-        $keys   = [];
+		$fragmentDir = $srcDir . '/manifest.d';
+		if (is_dir($fragmentDir) === true) {
+			$fragments = glob($fragmentDir . '/*.json');
+			$this->assertIsArray($fragments, 'manifest.d must be globbable');
 
-        $keys = array_merge($keys, $this->collectSentinelKeys($this->loadJson($srcDir.'/manifest.json')));
+			foreach ($fragments as $fragmentPath) {
+				$keys = array_merge($keys, $this->collectSentinelKeys($this->loadJson($fragmentPath)));
+			}
+		}
 
-        $fragmentDir = $srcDir.'/manifest.d';
-        if (is_dir($fragmentDir) === true) {
-            $fragments = glob($fragmentDir.'/*.json');
-            $this->assertIsArray($fragments, 'manifest.d must be globbable');
+		$menuLayoutPath = $srcDir . '/menu-layout.json';
+		if (is_file($menuLayoutPath) === true) {
+			$keys = array_merge($keys, $this->collectSentinelKeys($this->loadJson($menuLayoutPath)));
+		}
 
-            foreach ($fragments as $fragmentPath) {
-                $keys = array_merge($keys, $this->collectSentinelKeys($this->loadJson($fragmentPath)));
-            }
-        }
+		return array_values(array_unique($keys));
+	}//end collectEffectiveManifestSentinelKeys()
 
-        $menuLayoutPath = $srcDir.'/menu-layout.json';
-        if (is_file($menuLayoutPath) === true) {
-            $keys = array_merge($keys, $this->collectSentinelKeys($this->loadJson($menuLayoutPath)));
-        }
+	/**
+	 * Read `ProvideManifestConfigStateListener::MANIFEST_CONFIG_KEYS` via
+	 * reflection — never a duplicated literal list, so this test cannot drift
+	 * from the listener it guards (design decision D4).
+	 *
+	 * @return array<int, string> The declared manifest-config keys.
+	 */
+	private function reflectManifestConfigKeys(): array {
+		$reflection = new ReflectionClass(ProvideManifestConfigStateListener::class);
+		$constant = $reflection->getConstant('MANIFEST_CONFIG_KEYS');
 
-        return array_values(array_unique($keys));
+		$this->assertIsArray($constant, 'MANIFEST_CONFIG_KEYS must be an array');
 
-    }//end collectEffectiveManifestSentinelKeys()
+		return $constant;
+	}//end reflectManifestConfigKeys()
 
-    /**
-     * Read `ProvideManifestConfigStateListener::MANIFEST_CONFIG_KEYS` via
-     * reflection — never a duplicated literal list, so this test cannot drift
-     * from the listener it guards (design decision D4).
-     *
-     * @return array<int, string> The declared manifest-config keys.
-     */
-    private function reflectManifestConfigKeys(): array
-    {
-        $reflection = new ReflectionClass(ProvideManifestConfigStateListener::class);
-        $constant   = $reflection->getConstant('MANIFEST_CONFIG_KEYS');
+	/**
+	 * Every `@resolve:<key>` sentinel in the effective manifest must have its
+	 * `<key>` present in `MANIFEST_CONFIG_KEYS`, or the frontend leaves the
+	 * literal sentinel string in place and it reaches the network as an
+	 * invalid register/schema id (404).
+	 *
+	 * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-every-manifest-resolve-sentinel-is-backed-by-provided-initial-state-woo-prov-003
+	 *
+	 * @return void
+	 */
+	public function testEveryManifestSentinelIsBackedByAManifestConfigKey(): void {
+		$sentinelKeys = $this->collectEffectiveManifestSentinelKeys();
+		$this->assertNotEmpty($sentinelKeys, 'Sanity check: the effective manifest should reference at least one @resolve: sentinel.');
 
-        $this->assertIsArray($constant, 'MANIFEST_CONFIG_KEYS must be an array');
+		$configKeys = $this->reflectManifestConfigKeys();
 
-        return $constant;
+		$unbacked = array_values(array_diff($sentinelKeys, $configKeys));
 
-    }//end reflectManifestConfigKeys()
+		$this->assertSame(
+			expected: [],
+			actual: $unbacked,
+			message: 'Manifest @resolve: sentinel(s) with no backing key in '
+				. 'ProvideManifestConfigStateListener::MANIFEST_CONFIG_KEYS (they will reach the network as a '
+				. 'literal "@resolve:<key>" string and 404): ' . implode(', ', $unbacked)
+		);
 
-    /**
-     * Every `@resolve:<key>` sentinel in the effective manifest must have its
-     * `<key>` present in `MANIFEST_CONFIG_KEYS`, or the frontend leaves the
-     * literal sentinel string in place and it reaches the network as an
-     * invalid register/schema id (404).
-     *
-     * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-every-manifest-resolve-sentinel-is-backed-by-provided-initial-state-woo-prov-003
-     *
-     * @return void
-     */
-    public function testEveryManifestSentinelIsBackedByAManifestConfigKey(): void
-    {
-        $sentinelKeys = $this->collectEffectiveManifestSentinelKeys();
-        $this->assertNotEmpty($sentinelKeys, 'Sanity check: the effective manifest should reference at least one @resolve: sentinel.');
+	}//end testEveryManifestSentinelIsBackedByAManifestConfigKey()
 
-        $configKeys = $this->reflectManifestConfigKeys();
+	/**
+	 * The three WOO keys this change introduces must be members of
+	 * `MANIFEST_CONFIG_KEYS` (WOO-PROV-003).
+	 *
+	 * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-every-manifest-resolve-sentinel-is-backed-by-provided-initial-state-woo-prov-003
+	 *
+	 * @return void
+	 */
+	public function testWooKeysAreManifestConfigKeys(): void {
+		$configKeys = $this->reflectManifestConfigKeys();
 
-        $unbacked = array_values(array_diff($sentinelKeys, $configKeys));
+		$this->assertContains('woo_register', $configKeys);
+		$this->assertContains('woo_batch_schema', $configKeys);
+		$this->assertContains('woo_assessment_schema', $configKeys);
 
-        $this->assertSame(
-            expected: [],
-            actual: $unbacked,
-            message: 'Manifest @resolve: sentinel(s) with no backing key in '.
-                'ProvideManifestConfigStateListener::MANIFEST_CONFIG_KEYS (they will reach the network as a '.
-                'literal "@resolve:<key>" string and 404): '.implode(', ', $unbacked)
-        );
-
-    }//end testEveryManifestSentinelIsBackedByAManifestConfigKey()
-
-    /**
-     * The three WOO keys this change introduces must be members of
-     * `MANIFEST_CONFIG_KEYS` (WOO-PROV-003).
-     *
-     * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-every-manifest-resolve-sentinel-is-backed-by-provided-initial-state-woo-prov-003
-     *
-     * @return void
-     */
-    public function testWooKeysAreManifestConfigKeys(): void
-    {
-        $configKeys = $this->reflectManifestConfigKeys();
-
-        $this->assertContains('woo_register', $configKeys);
-        $this->assertContains('woo_batch_schema', $configKeys);
-        $this->assertContains('woo_assessment_schema', $configKeys);
-
-    }//end testWooKeysAreManifestConfigKeys()
+	}//end testWooKeysAreManifestConfigKeys()
 }//end class

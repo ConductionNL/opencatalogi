@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Migration to clean up old tables.
  *
@@ -20,76 +21,70 @@ namespace OCA\OpenCatalogi\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;
-use OCP\DB\Types;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
 /**
  * Migration to remove old tables and add uri columns.
  */
-class Version6Date20250419123213 extends SimpleMigrationStep
-{
-    /**
-     * Pre-schema change hook.
-     *
-     * @param IOutput                  $output        The output handler.
-     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                    $options       Migration options.
-     *
-     * @return void
-     */
-    public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
-    {
+class Version6Date20250419123213 extends SimpleMigrationStep {
+	/**
+	 * Pre-schema change hook.
+	 *
+	 * @param IOutput $output The output handler.
+	 * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+	 * @param array $options Migration options.
+	 *
+	 * @return void
+	 */
+	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
 
-    }//end preSchemaChange()
+	}//end preSchemaChange()
 
-    /**
-     * Apply schema changes.
-     *
-     * @param IOutput                  $output        The output handler.
-     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                    $options       Migration options.
-     *
-     * @return null|ISchemaWrapper
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+	/**
+	 * Apply schema changes.
+	 *
+	 * @param IOutput $output The output handler.
+	 * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+	 * @param array $options Migration options.
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        // Remove old tables that are no longer used.
-        $tablesToRemove = [
-            'ocat_attachments',
-            'ocat_catalogi',
-            'ocat_listings',
-            'ocat_organizations',
-            'ocat_pages',
-            'ocat_publication_types',
-            'ocat_publications',
-            'ocat_themes',
-        ];
+		// Remove old tables that are no longer used.
+		$tablesToRemove = [
+			'ocat_attachments',
+			'ocat_catalogi',
+			'ocat_listings',
+			'ocat_organizations',
+			'ocat_pages',
+			'ocat_publication_types',
+			'ocat_publications',
+			'ocat_themes',
+		];
 
-        foreach ($tablesToRemove as $tableName) {
-            if ($schema->hasTable($tableName) === true) {
-                $schema->dropTable($tableName);
-            }
-        }
+		foreach ($tablesToRemove as $tableName) {
+			if ($schema->hasTable($tableName) === true) {
+				$schema->dropTable($tableName);
+			}
+		}
 
-        return $schema;
+		return $schema;
+	}//end changeSchema()
 
-    }//end changeSchema()
+	/**
+	 * Post-schema change hook.
+	 *
+	 * @param IOutput $output The output handler.
+	 * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+	 * @param array $options Migration options.
+	 *
+	 * @return void
+	 */
+	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
 
-    /**
-     * Post-schema change hook.
-     *
-     * @param IOutput                  $output        The output handler.
-     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                    $options       Migration options.
-     *
-     * @return void
-     */
-    public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
-    {
-
-    }//end postSchemaChange()
+	}//end postSchemaChange()
 }//end class
