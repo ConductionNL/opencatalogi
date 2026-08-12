@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ThemesController;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -321,8 +322,18 @@ class ThemesControllerTest extends TestCase
         $mockEntity->method('jsonSerialize')
             ->willReturn(['id' => 'theme-1', 'title' => 'Dark Theme', 'colors' => ['primary' => '#000']]);
 
-        $mockObjService->method('find')
-            ->with('theme-1')
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'theme_schema', '', '10'],
+                ['opencatalogi', 'theme_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
+            ]);
+
+        // The register and schema are the point of the assertion: unscoped, find() resolves
+        // the identifier in any register on the instance, and this route is @PublicPage.
+        $mockObjService->expects($this->once())
+            ->method('find')
+            ->with('theme-1', [], false, '2', '10', true, false)
             ->willReturn($mockEntity);
 
         $this->request->server = [];
@@ -341,8 +352,16 @@ class ThemesControllerTest extends TestCase
         $mockEntity->method('jsonSerialize')
             ->willReturn(['id' => 5, 'title' => 'Entity Theme']);
 
-        $mockObjService->method('find')
-            ->with(5)
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'theme_schema', '', '10'],
+                ['opencatalogi', 'theme_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
+            ]);
+
+        $mockObjService->expects($this->once())
+            ->method('find')
+            ->with(5, [], false, '2', '10', true, false)
             ->willReturn($mockEntity);
 
         $this->request->server = [];
@@ -361,8 +380,16 @@ class ThemesControllerTest extends TestCase
         $mockEntity->method('jsonSerialize')
             ->willReturn(['id' => 'uuid-abc-123', 'title' => 'Theme ABC']);
 
-        $mockObjService->method('find')
-            ->with('uuid-abc-123')
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'theme_schema', '', '10'],
+                ['opencatalogi', 'theme_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
+            ]);
+
+        $mockObjService->expects($this->once())
+            ->method('find')
+            ->with('uuid-abc-123', [], false, '2', '10', true, false)
             ->willReturn($mockEntity);
 
         $this->request->server = [];
@@ -373,13 +400,55 @@ class ThemesControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatus());
     }
 
-    public function testShowThrowsWhenOpenRegisterNotInstalled(): void
+    /**
+     * An identifier that is not a theme must be refused, not resolved elsewhere.
+     *
+     * This is the regression test for the anonymous cross-register read: unscoped, find()
+     * fell back to OpenRegister's every-magic-table path and returned the foreign object's
+     * body with HTTP 200 to a caller who was not logged in.
+     */
+    public function testShowReturns404ForAnIdentifierOutsideTheThemeRegister(): void
     {
+        $mockObjService = $this->mockObjectService();
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'theme_schema', '', '10'],
+                ['opencatalogi', 'theme_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
+            ]);
+
+        // Scoped to the theme register/schema, OpenRegister cannot find an object that
+        // lives in another register and raises DoesNotExistException.
+        $mockObjService->expects($this->once())
+            ->method('find')
+            ->with('an-object-in-another-register', [], false, '2', '10', true, false)
+            ->willThrowException(new DoesNotExistException('not found'));
+
+        $this->request->server = [];
+
+        $response = $this->controller->show('an-object-in-another-register');
+
+        $this->assertEquals(404, $response->getStatus());
+        $data = json_decode($response->render(), true);
+        $this->assertSame('Not Found', $data['error']);
+    }
+
+    public function testShowReturns503WhenOpenRegisterNotInstalled(): void
+    {
+        // Matches index(): with OpenRegister unavailable the resolver cannot be obtained,
+        // so the controller degrades to a 503 rather than letting a RuntimeException
+        // bubble out of a public route as an opaque 500.
         $this->appManager->method('getInstalledApps')
             ->willReturn([]);
+        $this->container->method('get')
+            ->willThrowException(new RuntimeException('not available'));
 
-        $this->expectException(RuntimeException::class);
+        $this->config->method('getValueString')->willReturn('');
 
-        $this->controller->show('theme-1');
+        $response = $this->controller->show('theme-1');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(503, $response->getStatus());
     }
 }

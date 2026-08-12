@@ -25,6 +25,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
@@ -37,6 +38,14 @@ use RuntimeException;
 
 /**
  * Controller for handling theme-related operations.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *   Catching DoesNotExistException in show() takes the coupling count from 12 to 13.
+ *   The six sibling controllers that resolve OpenRegister objects — including
+ *   ListingsController and PublicationsController, whose scoped-find() shape show()
+ *   now follows — already carry this suppression for the same reason. Dropping the
+ *   catch to keep a design metric one point lower would leave a public JSON route
+ *   answering an unknown identifier with an HTML 500.
  */
 class ThemesController extends Controller
 {
@@ -300,11 +309,45 @@ class ThemesController extends Controller
      */
     public function show(string|int $id): JSONResponse
     {
-        // Rbac=true enforces schema authorization; multi=false for public theme access.
-        $theme = $this->getObjectService()->find($id, _rbac: true, _multitenancy: false);
+        // Get theme configuration from settings (resolved via OpenRegister; 503 if
+        // unconfigured), exactly as index() does.
+        try {
+            $themeConfig = $this->getThemeConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
 
-        // Visibility governed by RBAC: find() above runs with _rbac: true, so a theme the
-        // caller may not read is never returned here.
+        // Scope the lookup to the theme register/schema. Without them, find() falls back
+        // to OpenRegister's findAcrossAllMagicTables() path and resolves the identifier in
+        // ANY register on the instance — and this route is @PublicPage, so that was an
+        // unauthenticated read of arbitrary objects. Measured on a live instance: an
+        // anonymous request for an identifier belonging to an unrelated app's register
+        // returned that object's full body with HTTP 200.
+        //
+        // `_rbac: true` was never sufficient on its own: OpenRegister grants read by
+        // default on a schema that declares no authorization block, which is the state of
+        // most registers on a shared instance.
+        try {
+            $theme = $this->getObjectService()->find(
+                $id,
+                [],
+                false,
+                $themeConfig['register'],
+                $themeConfig['schema'],
+                _rbac: true,
+                _multitenancy: false
+            );
+        } catch (DoesNotExistException $e) {
+            $theme = null;
+        }
+
+        // An identifier that is not a theme and one that does not exist at all are the
+        // same answer here. Unhandled, the lookup surfaced as a 500 rendering Nextcloud's
+        // HTML error page on a public JSON route.
+        if ($theme === null) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
+
         $data = $theme;
         if ($theme instanceof \OCP\AppFramework\Db\Entity) {
             $data = $theme->jsonSerialize();

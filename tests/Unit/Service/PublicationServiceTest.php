@@ -534,6 +534,11 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
+        // Provide a minimal catalog so getCatalogFilters() resolves a non-empty scope and
+        // the #855 catalog-scope gate in show() passes.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $objectEntity = $this->createSerializableObject(['id' => 'pub-1', 'title' => 'Found Publication']);
         $objectService->method('find')
             ->with('pub-1', [])
@@ -554,7 +559,14 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
-        $objectService->method('find')
+        // In catalog scope, so the 404 asserted below is the one raised by find() and not
+        // the #855 scope refusal — the two are deliberately indistinguishable to a caller,
+        // which means a fixture without this stub would pass for the wrong reason.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $objectService->expects($this->once())
+            ->method('find')
             ->willThrowException(new DoesNotExistException('Not found'));
 
         $this->request->method('getParams')->willReturn([]);
@@ -571,6 +583,10 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
+        // In catalog scope, so show() reaches the extend handling under test.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
         $objectService->method('find')
             ->with('pub-1', ['@self.files'])
@@ -581,13 +597,20 @@ class PublicationServiceTest extends TestCase
         ]);
 
         $response = $this->service->show('pub-1');
-        $this->assertInstanceOf(JSONResponse::class, $response);
+        // Asserting the status, not merely the response class: a 404 is also a
+        // JSONResponse, so the class assertion alone cannot tell a served object from a
+        // refusal and would keep passing if this test stopped reaching show()'s body.
+        $this->assertSame(200, $response->getStatus());
     }
 
     public function testShowWithExtendAsString(): void
     {
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
+
+        // In catalog scope, so show() reaches the string-to-array normalisation under test.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
 
         $objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
         $objectService->method('find')
@@ -599,13 +622,17 @@ class PublicationServiceTest extends TestCase
         ]);
 
         $response = $this->service->show('pub-1');
-        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertSame(200, $response->getStatus());
     }
 
     public function testShowFiltersNonSelfExtend(): void
     {
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
+
+        // In catalog scope, so show() reaches the '@self.' allowlist under test.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
 
         // After filtering, only @self.files should remain; 'other.field' is stripped
         $objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
@@ -618,7 +645,69 @@ class PublicationServiceTest extends TestCase
         ]);
 
         $response = $this->service->show('pub-1');
-        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertSame(200, $response->getStatus());
+    }
+
+    /**
+     * Build a service whose catalog scope is configured but does NOT contain the object.
+     *
+     * This is the shape of the #855 exposure: a UUID that exists somewhere on the
+     * instance (another app's register) while the configured catalogs cover a different
+     * (register x schema) set, so findObjectLocation() cannot place it.
+     *
+     * @param MockObject $objectService The ObjectService mock to wire into the container.
+     *
+     * @return void
+     */
+    private function mockObjectOutsideCatalogScope(MockObject $objectService): void
+    {
+        $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+        // A real, non-empty catalog scope — so the refusal cannot be attributed to an
+        // unconfigured instance.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        // The UUID cannot be located within that scope.
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('findObjectLocation')->willReturn(null);
+
+        $this->container->method('get')
+            ->willReturnCallback(
+                function (string $id) use ($objectService, $queryService) {
+                    if ($id === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                        return $queryService;
+                    }
+
+                    return $objectService;
+                }
+            );
+    }
+
+    /**
+     * show() must refuse a UUID outside the configured catalog scope (#855).
+     *
+     * find() is called with no register and no schema, so OpenRegister falls back to
+     * findAcrossAllMagicTables() and resolves the UUID in any register on the instance.
+     * The assertion that find() is never reached is the load-bearing one: a 404 produced
+     * after the lookup would still have read the foreign object.
+     */
+    public function testShowRefusesObjectOutsideCatalogScope(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectOutsideCatalogScope($objectService);
+
+        // Registered before the call, so it observes it (an expectation set afterwards
+        // counts zero invocations and passes vacuously).
+        $objectService->expects($this->never())->method('find');
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->service->show('foreign-object-uuid');
+
+        $this->assertSame(404, $response->getStatus());
+        $data = json_decode($response->render(), true);
+        $this->assertSame('Not Found', $data['error']);
     }
 
     // =======================================================================
@@ -833,6 +922,11 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
+        // Provide a minimal catalog so getCatalogFilters() resolves a non-empty scope and
+        // the #855 catalog-scope gate in uses() passes.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $pubObj = $this->createSerializableObject([
             'id'        => 'pub-1',
             'relations' => [],
@@ -887,6 +981,53 @@ class PublicationServiceTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
     }
 
+    /**
+     * uses() answers 404 when an in-scope identifier resolves to nothing.
+     *
+     * The scope gate and this branch return the same body on purpose, so this test pins
+     * the branch that runs when the object really is inside the configured catalogs.
+     */
+    public function testUsesReturns404WhenObjectNotFound(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $objectService->expects($this->once())->method('find')->willReturn(null);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->service->uses('pub-1');
+
+        $this->assertSame(404, $response->getStatus());
+        $data = json_decode($response->render(), true);
+        $this->assertSame('Not Found', $data['error']);
+    }
+
+    /**
+     * uses() must refuse a UUID outside the configured catalog scope (#855).
+     *
+     * Unguarded, an existing foreign object answers 200 with an empty result set while a
+     * non-existent UUID answers 500 — a cross-register existence oracle.
+     */
+    public function testUsesRefusesObjectOutsideCatalogScope(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectOutsideCatalogScope($objectService);
+
+        $objectService->expects($this->never())->method('find');
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->service->uses('foreign-object-uuid');
+
+        $this->assertSame(404, $response->getStatus());
+        $data = json_decode($response->render(), true);
+        $this->assertSame('Not Found', $data['error']);
+    }
+
     // =======================================================================
     // used()
     // =======================================================================
@@ -895,6 +1036,11 @@ class PublicationServiceTest extends TestCase
     {
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
+
+        // Provide a minimal catalog so getCatalogFilters() resolves a non-empty scope and
+        // the #855 catalog-scope gate in used() passes.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
 
         // used() now calls find() first to enforce the published predicate. Return a
         // published object so the predicate check does not short-circuit the test.
@@ -949,6 +1095,49 @@ class PublicationServiceTest extends TestCase
 
         $response = $this->service->used('pub-1');
         $this->assertInstanceOf(JSONResponse::class, $response);
+    }
+
+    /**
+     * used() answers 404 when an in-scope identifier resolves to nothing.
+     */
+    public function testUsedReturns404WhenObjectNotFound(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $objectService->expects($this->once())->method('find')->willReturn(null);
+        $objectService->expects($this->never())->method('findByRelations');
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->service->used('pub-1');
+
+        $this->assertSame(404, $response->getStatus());
+        $data = json_decode($response->render(), true);
+        $this->assertSame('Not Found', $data['error']);
+    }
+
+    /**
+     * used() must refuse a UUID outside the configured catalog scope (#855).
+     */
+    public function testUsedRefusesObjectOutsideCatalogScope(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectOutsideCatalogScope($objectService);
+
+        $objectService->expects($this->never())->method('find');
+        $objectService->expects($this->never())->method('findByRelations');
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->service->used('foreign-object-uuid');
+
+        $this->assertSame(404, $response->getStatus());
+        $data = json_decode($response->render(), true);
+        $this->assertSame('Not Found', $data['error']);
     }
 
     // =======================================================================
@@ -1282,6 +1471,12 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
+        // getFederatedPublication() resolves the local copy through show(), which now
+        // applies the #855 catalog-scope gate — a local publication is by definition
+        // inside a configured catalog, so the fixture must express that.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $objectService->method('find')
             ->willReturn($this->createSerializableObject(['id' => 'pub-1', '@self' => ['title' => 'Local Pub']]));
 
@@ -1304,7 +1499,12 @@ class PublicationServiceTest extends TestCase
         $objectService->method('find')
             ->willReturn($this->createSerializableObject(['id' => 'pub-1', '@self' => ['title' => 'Local Pub']]));
 
-        $objectService->method('searchObjects')->willReturn([]);
+        // A configured catalog, not an empty list: the local lookup runs through show(),
+        // which applies the #855 catalog-scope gate, and an instance with no catalog
+        // configured deliberately serves nothing (the same C-1 policy attachments() and
+        // download() have shipped with since wave-7).
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
 
         $this->request->method('getParams')->willReturn([]);
 
@@ -2423,6 +2623,10 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
+        // In catalog scope, so show() reaches the '_extend' fallback under test.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
         $objectService->method('find')
             ->with('pub-1', ['@self.attachments'])
@@ -2433,7 +2637,7 @@ class PublicationServiceTest extends TestCase
         ]);
 
         $response = $this->service->show('pub-1');
-        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertSame(200, $response->getStatus());
     }
 
     // =======================================================================

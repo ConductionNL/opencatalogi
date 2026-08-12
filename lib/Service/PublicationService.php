@@ -766,15 +766,25 @@ class PublicationService
      */
     public function show(string $id): JSONResponse
     {
+        // Catalog-scope gate (#855): verify the requested object belongs to one of the
+        // catalogs configured on this instance before rendering it.
+        //
+        // The catalog-scoped PublicationsController::show() applies its own check (#733),
+        // but this method is also reached from the generic /api/search/{id} route and from
+        // the MCP tool provider, neither of which passes through that controller. Without
+        // this gate, find() below is called with no register and no schema, so
+        // OpenRegister falls back to findAcrossAllMagicTables() and resolves the UUID in
+        // ANY register on the instance — and OpenRegister grants read by default to any
+        // authenticated user on a schema that declares no `authorization` block.
+        // Measured on a live instance: a plain account in no groups read objects from the
+        // OpenConnector, LarpingApp and Portaliq registers through this endpoint.
+        if ($this->isObjectInCatalogScope(objectId: $id) === false) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
 
         // Get request parameters for filtering and searching.
         $requestParams = $this->request->getParams();
 
-        // Catalog membership is enforced by the catalog-scoped show() in
-        // PublicationsController; this generic /api/objects/{id} entry point trusts OR
-        // RBAC + the '@self.'-prefix extend allowlist below. The previous "@todo this
-        // is a bit dangerous now" comment referred to the missing catalog check, which
-        // is now applied at the controller layer (#733).
         $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
         // Normalize to array.
         if (is_array($extend) === false) {
@@ -1134,6 +1144,14 @@ class PublicationService
      */
     public function uses(string $id): JSONResponse
     {
+        // Catalog-scope gate (#855): the relation traversal below reads the root object
+        // itself, so an out-of-scope UUID must be refused here rather than distinguished
+        // by its response. Without this gate an existing foreign object answers 200 and a
+        // non-existent one answers 500, which is a cross-register existence oracle.
+        if ($this->isObjectInCatalogScope(objectId: $id) === false) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
+
         try {
             // Get the object service.
             $objectService = $this->getObjectService();
@@ -1206,6 +1224,13 @@ class PublicationService
      */
     public function used(string $id): JSONResponse
     {
+        // Catalog-scope gate (#855): same reasoning as uses() — refuse an out-of-scope
+        // UUID before the root object is read, so that "exists elsewhere on this
+        // instance" and "does not exist" are indistinguishable to the caller.
+        if ($this->isObjectInCatalogScope(objectId: $id) === false) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
+
         try {
             // Get the object service.
             $objectService = $this->getObjectService();
