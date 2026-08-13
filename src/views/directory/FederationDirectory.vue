@@ -64,7 +64,11 @@ export default {
 	watch: {
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		modalState(next, prev) {
-			const dirModals = ['federationAddDirectory', 'federationEditListing', 'federationDeleteListing']
+			const dirModals = [
+				'federationAddDirectory',
+				'federationEditListing',
+				'federationDeleteListing',
+			]
 			if (dirModals.includes(prev) && next !== prev) {
 				if (prev === 'federationEditListing') this.editingListing = null
 				if (prev === 'federationDeleteListing') this.deletingListing = null
@@ -83,7 +87,9 @@ export default {
 			this.error = null
 			try {
 				const url = generateUrl('/apps/opencatalogi/api/listings')
-				const res = await fetch(url, { headers: { Accept: 'application/json' } })
+				const res = await fetch(url, {
+					headers: { Accept: 'application/json' },
+				})
 				if (!res.ok) {
 					throw new Error(`HTTP ${res.status}`)
 				}
@@ -100,7 +106,8 @@ export default {
 		statusFor(listing) {
 			if (listing.available === false) return 'down'
 			if (typeof listing.statusCode === 'number') {
-				if (listing.statusCode >= 200 && listing.statusCode < 300) return 'up'
+				if (listing.statusCode >= 200 && listing.statusCode < 300)
+					return 'up'
 				if (listing.statusCode >= 500) return 'down'
 				return 'degraded'
 			}
@@ -118,8 +125,12 @@ export default {
 		},
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		messageFor(listing) {
-			if (listing.available === false) return t('opencatalogi', 'Peer is unreachable')
-			if (typeof listing.statusCode === 'number' && (listing.statusCode < 200 || listing.statusCode >= 300)) {
+			if (listing.available === false)
+				return t('opencatalogi', 'Peer is unreachable')
+			if (
+				typeof listing.statusCode === 'number'
+				&& (listing.statusCode < 200 || listing.statusCode >= 300)
+			) {
 				return t('opencatalogi', 'HTTP status:') + ' ' + listing.statusCode
 			}
 			return ''
@@ -141,7 +152,8 @@ export default {
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		integrationLevelFor(listing) {
 			const raw = listing.integrationLevel
-			if (raw === undefined || raw === null || raw === '') return t('opencatalogi', 'not set')
+			if (raw === undefined || raw === null || raw === '')
+				return t('opencatalogi', 'not set')
 			if (raw === 'search') return t('opencatalogi', 'Federated search')
 			if (raw === 'sync') return t('opencatalogi', 'Full sync')
 			if (raw === 'none') return t('opencatalogi', 'Disabled')
@@ -162,21 +174,36 @@ export default {
 			</NcButton>
 		</header>
 
-		<div class="federation-directory__summary" data-testid="federation-directory-summary">
-			<span class="federation-directory__summary-item federation-directory__summary-item--up">
-				<span aria-hidden="true" class="federation-directory__dot federation-directory__dot--up" />
+		<div
+			class="federation-directory__summary"
+			data-testid="federation-directory-summary">
+			<span
+				class="federation-directory__summary-item federation-directory__summary-item--up">
+				<span
+					aria-hidden="true"
+					class="federation-directory__dot federation-directory__dot--up" />
 				{{ summary.up }} {{ t('opencatalogi', 'available') }}
 			</span>
-			<span class="federation-directory__summary-item federation-directory__summary-item--degraded">
-				<span aria-hidden="true" class="federation-directory__dot federation-directory__dot--degraded" />
+			<span
+				class="federation-directory__summary-item federation-directory__summary-item--degraded">
+				<span
+					aria-hidden="true"
+					class="federation-directory__dot federation-directory__dot--degraded" />
 				{{ summary.degraded }} {{ t('opencatalogi', 'degraded') }}
 			</span>
-			<span class="federation-directory__summary-item federation-directory__summary-item--down">
-				<span aria-hidden="true" class="federation-directory__dot federation-directory__dot--down" />
+			<span
+				class="federation-directory__summary-item federation-directory__summary-item--down">
+				<span
+					aria-hidden="true"
+					class="federation-directory__dot federation-directory__dot--down" />
 				{{ summary.down }} {{ t('opencatalogi', 'unreachable') }}
 			</span>
-			<span v-if="summary.unknown > 0" class="federation-directory__summary-item federation-directory__summary-item--unknown">
-				<span aria-hidden="true" class="federation-directory__dot federation-directory__dot--unknown" />
+			<span
+				v-if="summary.unknown > 0"
+				class="federation-directory__summary-item federation-directory__summary-item--unknown">
+				<span
+					aria-hidden="true"
+					class="federation-directory__dot federation-directory__dot--unknown" />
 				{{ summary.unknown }} {{ t('opencatalogi', 'unknown') }}
 			</span>
 		</div>
@@ -189,26 +216,39 @@ export default {
 		</p>
 
 		<p v-else-if="listings.length === 0" class="federation-directory__hint">
-			{{ t('opencatalogi', 'No federation peers registered. Use \'Add directory\' to connect to a peer instance.') }}
+			{{
+				t(
+					'opencatalogi',
+					"No federation peers registered. Use 'Add directory' to connect to a peer instance.",
+				)
+			}}
 		</p>
 
 		<ul v-else class="federation-directory__list">
-			<li v-for="listing in listings"
+			<li
+				v-for="listing in listings"
 				:key="listing.id"
 				class="federation-directory__node"
 				:class="'federation-directory__node--' + statusFor(listing)">
-				<span aria-hidden="true"
+				<span
+					aria-hidden="true"
 					class="federation-directory__dot"
 					:class="'federation-directory__dot--' + statusFor(listing)" />
 				<span class="hidden-visually">{{ statusLabelFor(listing) }}</span>
 				<div class="federation-directory__node-info">
 					<div class="federation-directory__node-name">
-						{{ listing.title || listing.directory || t('opencatalogi', 'Unnamed instance') }}
+						{{
+							listing.title
+							|| listing.directory
+							|| t('opencatalogi', 'Unnamed instance')
+						}}
 					</div>
 					<div class="federation-directory__node-url">
 						{{ listing.directory }}
 					</div>
-					<div v-if="messageFor(listing)" class="federation-directory__node-message">
+					<div
+						v-if="messageFor(listing)"
+						class="federation-directory__node-message">
 						{{ messageFor(listing) }}
 					</div>
 				</div>
@@ -221,19 +261,28 @@ export default {
 					</span>
 				</div>
 				<div class="federation-directory__node-actions">
-					<NcActions :force-menu="false"
+					<NcActions
+						:force-menu="false"
 						:menu-name="t('opencatalogi', 'Actions')"
-						:aria-label="t('opencatalogi', 'Actions for {name}', { name: listing.title || listing.directory })">
+						:aria-label="
+							t('opencatalogi', 'Actions for {name}', {
+								name: listing.title || listing.directory,
+							})
+						">
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
-						<NcActionButton :close-after-click="true" @click="openEdit(listing)">
+						<NcActionButton
+							:close-after-click="true"
+							@click="openEdit(listing)">
 							<template #icon>
 								<PencilOutline :size="20" />
 							</template>
 							{{ t('opencatalogi', 'Edit') }}
 						</NcActionButton>
-						<NcActionButton :close-after-click="true" @click="openDelete(listing)">
+						<NcActionButton
+							:close-after-click="true"
+							@click="openDelete(listing)">
 							<template #icon>
 								<DeleteOutline :size="20" />
 							</template>
@@ -305,13 +354,21 @@ export default {
 	background: var(--color-background-darker);
 }
 
-.federation-directory__dot--up { background: var(--color-success); }
+.federation-directory__dot--up {
+	background: var(--color-success);
+}
 
-.federation-directory__dot--degraded { background: var(--color-warning); }
+.federation-directory__dot--degraded {
+	background: var(--color-warning);
+}
 
-.federation-directory__dot--down { background: var(--color-error); }
+.federation-directory__dot--down {
+	background: var(--color-error);
+}
 
-.federation-directory__dot--unknown { background: var(--color-text-lighter); }
+.federation-directory__dot--unknown {
+	background: var(--color-text-lighter);
+}
 /* WCAG 4.1.2 — pair `aria-hidden` dots with sr-only status text (F12). */
 .hidden-visually {
 	position: absolute !important;

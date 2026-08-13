@@ -24,7 +24,6 @@ import { SafeParseReturnType, z } from 'zod'
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Listing implements TListing {
-
 	public id!: string
 	public catalogusId!: string
 	public title!: string
@@ -102,5 +101,4 @@ export class Listing implements TListing {
 			...this,
 		})
 	}
-
 }

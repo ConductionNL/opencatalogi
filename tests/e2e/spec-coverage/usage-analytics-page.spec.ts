@@ -24,7 +24,12 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test usage-analytics-page
  */
-import { test, expect, request as pwRequest, type APIRequestContext } from '@playwright/test'
+import {
+	test,
+	expect,
+	request as pwRequest,
+	type APIRequestContext,
+} from '@playwright/test'
 import { APP, bootApp, dismissOverlays, trackPageErrors, fatalErrors } from './_nav'
 import { resolveBaseUrl } from '../base-url'
 
@@ -47,14 +52,18 @@ const ADMIN_PASS = process.env.NC_ADMIN_PASS || 'admin'
 async function objectTypeConfig(
 	request: APIRequestContext,
 	type: 'catalog' | 'publication',
-): Promise<{ register: string, schema: string }> {
+): Promise<{ register: string; schema: string }> {
 	const resp = await request.get('/index.php/apps/opencatalogi/api/settings')
 	expect(resp.status(), 'GET /api/settings must succeed').toBe(200)
 	const settings = await resp.json()
-	const register = settings?.configuration?.[`${type}_register`]
-		?? settings?.[`${type}_register`] ?? 'publication'
-	const schema = settings?.configuration?.[`${type}_schema`]
-		?? settings?.[`${type}_schema`] ?? type
+	const register =
+		settings?.configuration?.[`${type}_register`]
+		?? settings?.[`${type}_register`]
+		?? 'publication'
+	const schema =
+		settings?.configuration?.[`${type}_schema`]
+		?? settings?.[`${type}_schema`]
+		?? type
 	return { register: String(register), schema: String(schema) }
 }
 
@@ -67,7 +76,9 @@ async function resolveCatalogSlug(request: APIRequestContext): Promise<string> {
 	const list = await request.get('/index.php/apps/opencatalogi/api/catalogi')
 	expect(list.status(), 'GET /api/catalogi must succeed').toBe(200)
 	const body = await list.json()
-	const results: Array<Record<string, any>> = Array.isArray(body) ? body : (body?.results ?? [])
+	const results: Array<Record<string, any>> = Array.isArray(body)
+		? body
+		: (body?.results ?? [])
 	const existing = results.find((c) => c?.slug || c?.['@self']?.slug)
 	if (existing) return String(existing.slug ?? existing['@self']?.slug)
 
@@ -76,7 +87,12 @@ async function resolveCatalogSlug(request: APIRequestContext): Promise<string> {
 	const created = await request.post(
 		`/index.php/apps/openregister/api/objects/${register}/${schema}`,
 		{
-			data: { title: `${RUN_ID} catalog`, summary: 'usage-analytics seeded catalog', slug, listed: true },
+			data: {
+				title: `${RUN_ID} catalog`,
+				summary: 'usage-analytics seeded catalog',
+				slug,
+				listed: true,
+			},
 			headers: { 'Content-Type': 'application/json' },
 		},
 	)
@@ -94,9 +110,13 @@ async function resolvePublicationId(request: APIRequestContext): Promise<string>
 	const list = await request.get(
 		`/index.php/apps/openregister/api/objects/${register}/${schema}?_limit=1`,
 	)
-	expect(list.status(), 'listing publications via OpenRegister must succeed').toBe(200)
+	expect(list.status(), 'listing publications via OpenRegister must succeed').toBe(
+		200,
+	)
 	const body = await list.json()
-	const results: Array<Record<string, any>> = Array.isArray(body) ? body : (body?.results ?? [])
+	const results: Array<Record<string, any>> = Array.isArray(body)
+		? body
+		: (body?.results ?? [])
 	const existing = results[0]
 	if (existing) {
 		return String(existing['@self']?.id ?? existing.id ?? existing.uuid)
@@ -119,42 +139,52 @@ async function resolvePublicationId(request: APIRequestContext): Promise<string>
 }
 
 test.describe('usage-analytics', () => {
-	test(
-		// @e2e publication-usage-analytics::stats-panel-on-the-detail-page
-		'Stats panel — the publication detail page renders the Views/Downloads usage stats surface',
-		async ({ page, request }) => {
-			const errors = trackPageErrors(page)
+	test(// @e2e publication-usage-analytics::stats-panel-on-the-detail-page
+	'Stats panel — the publication detail page renders the Views/Downloads usage stats surface', async ({
+		page,
+		request,
+	}) => {
+		const errors = trackPageErrors(page)
 
-			const slug = await resolveCatalogSlug(request)
-			const pubId = await resolvePublicationId(request)
+		const slug = await resolveCatalogSlug(request)
+		const pubId = await resolvePublicationId(request)
 
-			await bootApp(page)
+		await bootApp(page)
 
-			// The Publications index for the catalog (hash route — path-form
-			// gotos boot the Dashboard in this hash-mode SPA).
-			await page.goto(`${APP}/#/publications/${slug}`, { waitUntil: 'domcontentloaded' })
-			await page.waitForTimeout(1500)
-			await dismissOverlays(page)
-			await expect(page.locator('[data-testid="cn-index-page"]').first())
-				.toBeVisible({ timeout: 15000 })
+		// The Publications index for the catalog (hash route — path-form
+		// gotos boot the Dashboard in this hash-mode SPA).
+		await page.goto(`${APP}/#/publications/${slug}`, {
+			waitUntil: 'domcontentloaded',
+		})
+		await page.waitForTimeout(1500)
+		await dismissOverlays(page)
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
 
-			// The publication detail page for a real publication.
-			await page.goto(`${APP}/#/publications/${slug}/${pubId}`, { waitUntil: 'domcontentloaded' })
-			await page.waitForTimeout(1500)
-			await dismissOverlays(page)
-			await expect(page.locator('[data-testid="cn-detail-page"]').first())
-				.toBeVisible({ timeout: 15000 })
+		// The publication detail page for a real publication.
+		await page.goto(`${APP}/#/publications/${slug}/${pubId}`, {
+			waitUntil: 'domcontentloaded',
+		})
+		await page.waitForTimeout(1500)
+		await dismissOverlays(page)
+		await expect(
+			page.locator('[data-testid="cn-detail-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
 
-			// The usage stats surface (manifest stats-block widgets pub-stats-views
-			// and pub-stats-downloads) MUST render its Views and Downloads totals —
-			// unconditionally. Zero-usage publications still render the blocks.
-			const detail = page.locator('[data-testid="cn-detail-page"]').first()
-			await expect(detail.getByText(/^Views$/i).first()).toBeVisible({ timeout: 15000 })
-			await expect(detail.getByText(/^Downloads$/i).first()).toBeVisible({ timeout: 15000 })
+		// The usage stats surface (manifest stats-block widgets pub-stats-views
+		// and pub-stats-downloads) MUST render its Views and Downloads totals —
+		// unconditionally. Zero-usage publications still render the blocks.
+		const detail = page.locator('[data-testid="cn-detail-page"]').first()
+		await expect(detail.getByText(/^Views$/i).first()).toBeVisible({
+			timeout: 15000,
+		})
+		await expect(detail.getByText(/^Downloads$/i).first()).toBeVisible({
+			timeout: 15000,
+		})
 
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * REAL DEFECT (exposed by de-vacuuming this suite): ANA-006 requires the
@@ -170,80 +200,107 @@ test.describe('usage-analytics', () => {
 	 * panel is wired into the manifest detail page (or the manifest grows a
 	 * trend widget). Do not weaken; un-fixme when the surface ships.
 	 */
-	test.fixme(
-		// @e2e publication-usage-analytics::stats-panel-on-the-detail-page
-		'Stats panel — trend + counting-start note render on the detail page (ANA-006, orphaned PublicationStatsPanel)',
-		async ({ page, request }) => {
-			const slug = await resolveCatalogSlug(request)
-			const pubId = await resolvePublicationId(request)
-			await bootApp(page)
-			await page.goto(`${APP}/#/publications/${slug}/${pubId}`, { waitUntil: 'domcontentloaded' })
-			await page.waitForTimeout(1500)
-			await expect(page.locator('[data-testid="usage-stats-panel"]').first())
-				.toBeVisible({ timeout: 15000 })
-			await expect(page.locator('[data-testid="usage-counting-start"]').first())
-				.toBeVisible({ timeout: 10000 })
-		},
-	)
+	test.fixme(// @e2e publication-usage-analytics::stats-panel-on-the-detail-page
+	'Stats panel — trend + counting-start note render on the detail page (ANA-006, orphaned PublicationStatsPanel)', async ({
+		page,
+		request,
+	}) => {
+		const slug = await resolveCatalogSlug(request)
+		const pubId = await resolvePublicationId(request)
+		await bootApp(page)
+		await page.goto(`${APP}/#/publications/${slug}/${pubId}`, {
+			waitUntil: 'domcontentloaded',
+		})
+		await page.waitForTimeout(1500)
+		await expect(
+			page.locator('[data-testid="usage-stats-panel"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		await expect(
+			page.locator('[data-testid="usage-counting-start"]').first(),
+		).toBeVisible({ timeout: 10000 })
+	})
 
-	test(
-		// @e2e publication-usage-analytics::most-viewed-dashboard-widget
-		'Most-viewed widget — enabling the NC dashboard widget renders it with content',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
+	test(// @e2e publication-usage-analytics::most-viewed-dashboard-widget
+	'Most-viewed widget — enabling the NC dashboard widget renders it with content', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
 
-			// The dashboard layout OCS API needs non-cookie auth (cookie-auth OCS
-			// calls fail the CSRF check), so use a basic-auth request context.
-			const ocs = await pwRequest.newContext({
-				baseURL: BASE_URL,
-				httpCredentials: { username: ADMIN_USER, password: ADMIN_PASS },
-				extraHTTPHeaders: { 'OCS-APIRequest': 'true', Accept: 'application/json' },
-			})
+		// The dashboard layout OCS API needs non-cookie auth (cookie-auth OCS
+		// calls fail the CSRF check), so use a basic-auth request context.
+		const ocs = await pwRequest.newContext({
+			baseURL: BASE_URL,
+			httpCredentials: { username: ADMIN_USER, password: ADMIN_PASS },
+			extraHTTPHeaders: {
+				'OCS-APIRequest': 'true',
+				Accept: 'application/json',
+			},
+		})
+		try {
+			const layoutResp = await ocs.get(
+				'/ocs/v2.php/apps/dashboard/api/v3/layout?format=json',
+			)
+			expect(layoutResp.status(), 'GET dashboard layout must succeed').toBe(
+				200,
+			)
+			const layoutBody = await layoutResp.json()
+			const originalLayout: string[] = layoutBody?.ocs?.data?.layout ?? []
+
 			try {
-				const layoutResp = await ocs.get('/ocs/v2.php/apps/dashboard/api/v3/layout?format=json')
-				expect(layoutResp.status(), 'GET dashboard layout must succeed').toBe(200)
-				const layoutBody = await layoutResp.json()
-				const originalLayout: string[] = layoutBody?.ocs?.data?.layout ?? []
-
-				try {
-					// Enable the most-viewed widget when it is not already on the board.
-					if (!originalLayout.includes(WIDGET_ID)) {
-						const setResp = await ocs.post('/ocs/v2.php/apps/dashboard/api/v3/layout?format=json', {
+				// Enable the most-viewed widget when it is not already on the board.
+				if (!originalLayout.includes(WIDGET_ID)) {
+					const setResp = await ocs.post(
+						'/ocs/v2.php/apps/dashboard/api/v3/layout?format=json',
+						{
 							headers: { 'Content-Type': 'application/json' },
 							data: { layout: [...originalLayout, WIDGET_ID] },
-						})
-						expect(setResp.status(), 'POST dashboard layout must succeed').toBe(200)
-					}
+						},
+					)
+					expect(
+						setResp.status(),
+						'POST dashboard layout must succeed',
+					).toBe(200)
+				}
 
-					// The NC dashboard must render the widget panel and the widget's
-					// own root element (mounted by src/mostViewedPublicationsWidget.js).
-					await page.goto('/index.php/apps/dashboard/', { waitUntil: 'domcontentloaded' })
-					await dismissOverlays(page)
-					await expect(page.locator('#app-dashboard, .app-dashboard').first())
-						.toBeVisible({ timeout: 20000 })
-					await expect(page.locator(`[data-testid="most-viewed-widget"], #${WIDGET_ID}`).first())
-						.toBeVisible({ timeout: 20000 })
-					// The widget panel carries its registered title.
-					await expect(page.getByText(/Most viewed publications/i).first())
-						.toBeVisible({ timeout: 15000 })
-				} finally {
-					// Restore the user's original layout so the shared dev instance
-					// is left as found.
-					await ocs.post('/ocs/v2.php/apps/dashboard/api/v3/layout?format=json', {
+				// The NC dashboard must render the widget panel and the widget's
+				// own root element (mounted by src/mostViewedPublicationsWidget.js).
+				await page.goto('/index.php/apps/dashboard/', {
+					waitUntil: 'domcontentloaded',
+				})
+				await dismissOverlays(page)
+				await expect(
+					page.locator('#app-dashboard, .app-dashboard').first(),
+				).toBeVisible({ timeout: 20000 })
+				await expect(
+					page
+						.locator(`[data-testid="most-viewed-widget"], #${WIDGET_ID}`)
+						.first(),
+				).toBeVisible({ timeout: 20000 })
+				// The widget panel carries its registered title.
+				await expect(
+					page.getByText(/Most viewed publications/i).first(),
+				).toBeVisible({ timeout: 15000 })
+			} finally {
+				// Restore the user's original layout so the shared dev instance
+				// is left as found.
+				await ocs
+					.post('/ocs/v2.php/apps/dashboard/api/v3/layout?format=json', {
 						headers: { 'Content-Type': 'application/json' },
 						data: { layout: originalLayout },
-					}).catch(() => {})
-				}
-			} finally {
-				await ocs.dispose()
+					})
+					.catch(() => {})
 			}
+		} finally {
+			await ocs.dispose()
+		}
 
-			// The NC dashboard hosts widgets from OTHER apps too; the Photos
-			// app's greeting background throws "Couldn't fetch photos upload
-			// folder" on this dev instance. That is not an OpenCatalogi error —
-			// exclude it, but keep failing on anything else.
-			const relevant = fatalErrors(errors).filter((e) => !/photos upload folder/i.test(e))
-			expect(relevant).toHaveLength(0)
-		},
-	)
+		// The NC dashboard hosts widgets from OTHER apps too; the Photos
+		// app's greeting background throws "Couldn't fetch photos upload
+		// folder" on this dev instance. That is not an OpenCatalogi error —
+		// exclude it, but keep failing on anything else.
+		const relevant = fatalErrors(errors).filter(
+			(e) => !/photos upload folder/i.test(e),
+		)
+		expect(relevant).toHaveLength(0)
+	})
 })

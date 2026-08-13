@@ -17,7 +17,9 @@
 	<CnIndexPage
 		ref="indexPage"
 		:title="t('opencatalogi', 'Glossary')"
-		:description="t('opencatalogi', 'Manage your glossary terms and definitions')"
+		:description="
+			t('opencatalogi', 'Manage your glossary terms and definitions')
+		"
 		:show-title="true"
 		:objects="currentObjects"
 		:columns="tableColumns"
@@ -51,7 +53,12 @@
 		@row-click="onRowClick">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
-				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+				{{
+					t(
+						'opencatalogi',
+						'This page is read-only. Only administrators can create, edit, or delete entries here.',
+					)
+				}}
 			</NcNoteCard>
 		</template>
 		<template #form-fields="{ formData, errors, updateField }">
@@ -62,32 +69,38 @@
 					:error="!!errors.title"
 					:helper-text="errors.title"
 					maxlength="255"
-					@update:model-value="v => updateField('title', v)" />
+					@update:model-value="(v) => updateField('title', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'Summary')"
 					:model-value="formData.summary || ''"
 					maxlength="255"
-					@update:model-value="v => updateField('summary', v)" />
+					@update:model-value="(v) => updateField('summary', v)" />
 				<NcTextArea
 					:label="t('opencatalogi', 'Description')"
 					:model-value="formData.description || ''"
-					@update:model-value="v => updateField('description', v)" />
+					@update:model-value="(v) => updateField('description', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'External link')"
 					:model-value="formData.externalLink || ''"
-					@update:model-value="v => updateField('externalLink', v)" />
+					@update:model-value="(v) => updateField('externalLink', v)" />
 				<NcSelect
 					:model-value="formData.keywords || []"
 					:input-label="t('opencatalogi', 'Keywords')"
 					:multiple="true"
 					:taggable="true"
-					:placeholder="t('opencatalogi', 'Type and press Enter to add keywords')"
-					@update:model-value="v => updateField('keywords', v)" />
+					:placeholder="
+						t('opencatalogi', 'Type and press Enter to add keywords')
+					"
+					@update:model-value="(v) => updateField('keywords', v)" />
 			</div>
 		</template>
 		<template #column-published="{ row }">
 			<CnStatusBadge
-				:label="row.published ? t('opencatalogi', 'Public') : t('opencatalogi', 'Private')"
+				:label="
+					row.published
+						? t('opencatalogi', 'Public')
+						: t('opencatalogi', 'Private')
+				"
 				:color-map="statusColorMap" />
 		</template>
 		<template #column-keywords="{ row }">
@@ -104,19 +117,28 @@
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="$refs.indexPage.openFormDialog(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="$refs.indexPage.openFormDialog(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="copyTerm(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="copyTerm(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="deleteTerm(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="deleteTerm(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -129,7 +151,14 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
-import { NcActions, NcActionButton, NcTextField, NcTextArea, NcSelect, NcNoteCard } from '@nextcloud/vue'
+import {
+	NcActions,
+	NcActionButton,
+	NcTextField,
+	NcTextArea,
+	NcSelect,
+	NcNoteCard,
+} from '@nextcloud/vue'
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
@@ -176,11 +205,25 @@ export default {
 			return {
 				title: t('opencatalogi', 'Term'),
 				properties: {
-					title: { type: 'string', title: t('opencatalogi', 'Title'), required: true, minLength: 1 },
+					title: {
+						type: 'string',
+						title: t('opencatalogi', 'Title'),
+						required: true,
+						minLength: 1,
+					},
 					summary: { type: 'string', title: t('opencatalogi', 'Summary') },
-					description: { type: 'string', title: t('opencatalogi', 'Description') },
-					externalLink: { type: 'string', title: t('opencatalogi', 'External link') },
-					keywords: { type: 'array', title: t('opencatalogi', 'Keywords') },
+					description: {
+						type: 'string',
+						title: t('opencatalogi', 'Description'),
+					},
+					externalLink: {
+						type: 'string',
+						title: t('opencatalogi', 'External link'),
+					},
+					keywords: {
+						type: 'array',
+						title: t('opencatalogi', 'Keywords'),
+					},
 				},
 				required: ['title'],
 			}
@@ -188,7 +231,11 @@ export default {
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
-				{ key: 'published', label: t('opencatalogi', 'Status'), sortable: true },
+				{
+					key: 'published',
+					label: t('opencatalogi', 'Status'),
+					sortable: true,
+				},
 				{ key: 'relatedTerms', label: t('opencatalogi', 'Related terms') },
 				{ key: 'keywords', label: t('opencatalogi', 'Keywords') },
 			]
@@ -199,8 +246,14 @@ export default {
 			return collection?.results || []
 		},
 		currentPagination() {
-			return objectStore.getPagination('glossary')
-				|| { total: 0, page: 1, pages: 1, limit: 20 }
+			return (
+				objectStore.getPagination('glossary') || {
+					total: 0,
+					page: 1,
+					pages: 1,
+					limit: 20,
+				}
+			)
 		},
 	},
 	mounted() {
@@ -222,7 +275,9 @@ export default {
 				this.$refs.indexPage.setFormResult({ success: true })
 				await objectStore.fetchCollection('glossary')
 			} catch (error) {
-				this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save term' })
+				this.$refs.indexPage.setFormResult({
+					error: error.message || 'Failed to save term',
+				})
 			}
 		},
 		async handleRefresh() {
@@ -234,7 +289,10 @@ export default {
 			}
 		},
 		onPageChange(page) {
-			objectStore.fetchCollection('glossary', { _page: page, _limit: this.currentPagination.limit || 20 })
+			objectStore.fetchCollection('glossary', {
+				_page: page,
+				_limit: this.currentPagination.limit || 20,
+			})
 		},
 		onPageSizeChange(size) {
 			objectStore.fetchCollection('glossary', { _page: 1, _limit: size })
@@ -252,11 +310,17 @@ export default {
 		},
 		copyTerm(term) {
 			objectStore.setActiveObject('glossary', term)
-			navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term' })
+			navigationStore.setDialog('copyObject', {
+				objectType: 'glossary',
+				dialogTitle: 'Term',
+			})
 		},
 		deleteTerm(term) {
 			objectStore.setActiveObject('glossary', term)
-			navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term' })
+			navigationStore.setDialog('deleteObject', {
+				objectType: 'glossary',
+				dialogTitle: 'Term',
+			})
 		},
 	},
 }

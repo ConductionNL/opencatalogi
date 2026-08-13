@@ -2,7 +2,8 @@ import { PublicationType } from './publicationType'
 import { TPublicationType } from './publicationType.types'
 
 export const mockPublicationTypeData = (): TPublicationType[] => [
-	{ // full data
+	{
+		// full data
 		id: '1',
 		title: 'Test metadata',
 		description: 'this is a very long description for test metadata',
@@ -58,9 +59,9 @@ export const mockPublicationTypeData = (): TPublicationType[] => [
 			class: 1,
 		},
 		source: 'https://nextcloud.test.commonground.nu/apps/opencatalogi/api/metadata/b2f02f60-3243-49a1-82eb-75a133090e18',
-
 	},
-	{ // partial data
+	{
+		// partial data
 		id: '2',
 		title: 'Test metadata',
 		description: 'this is a very long description for test metadata',
@@ -74,7 +75,8 @@ export const mockPublicationTypeData = (): TPublicationType[] => [
 		},
 		source: 'https://nextcloud.test.commonground.nu/apps/opencatalogi/api/metadata/b2f02f60-3243-49a1-82eb-75a133090e18',
 	},
-	{ // invalid data
+	{
+		// invalid data
 		id: '1',
 		title: 'Test metadata',
 		description: 'this is a very long description for test metadata',
@@ -130,8 +132,9 @@ export const mockPublicationTypeData = (): TPublicationType[] => [
 			class: 1,
 		},
 		source: '5',
-
 	},
 ]
 
-export const mockPublicationType = (data: TPublicationType[] = mockPublicationTypeData()): TPublicationType[] => data.map(item => new PublicationType(item))
+export const mockPublicationType = (
+	data: TPublicationType[] = mockPublicationTypeData(),
+): TPublicationType[] => data.map((item) => new PublicationType(item))

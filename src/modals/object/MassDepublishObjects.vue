@@ -3,7 +3,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcDialog :name="dialogTitle"
+	<NcDialog
+		:name="dialogTitle"
 		:can-close="true"
 		size="normal"
 		class="mass-action-dialog"
@@ -11,11 +12,15 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<div v-if="success === null" class="depublish-step">
 			<div class="mode-row">
 				<div class="mode-row__mode">
-					<span v-for="opt in modeOptions"
+					<span
+						v-for="opt in modeOptions"
 						:key="opt.id"
 						class="mode-row__mode-sizer"
-						aria-hidden="true">{{ opt.label }}</span>
-					<NcSelect v-model="selectedMode"
+						aria-hidden="true"
+						>{{ opt.label }}</span
+					>
+					<NcSelect
+						v-model="selectedMode"
 						:options="modeOptions"
 						:clearable="false"
 						:searchable="false"
@@ -36,7 +41,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					the accessible name is `aria-label`, and the lower bound is
 					enforced by `:min` (plus the active guard in `handleDateInput`).
 				-->
-				<NcDateTimePicker v-if="mode === 'later'"
+				<NcDateTimePicker
+					v-if="mode === 'later'"
 					:key="'depublish-later-date'"
 					class="mode-row__date"
 					:model-value="depublishDateObj"
@@ -78,9 +84,14 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
+				{{
+					success === null
+						? t('opencatalogi', 'Cancel')
+						: t('opencatalogi', 'Close')
+				}}
 			</NcButton>
-			<NcButton v-if="success === null"
+			<NcButton
+				v-if="success === null"
 				:disabled="submitDisabled"
 				variant="error"
 				@click="depublishObjects()">
@@ -165,27 +176,44 @@ export default {
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		alreadyDepublishedCount() {
-			return this.selectedObjects.filter(obj => this.isDepublished(obj)).length
+			return this.selectedObjects.filter((obj) => this.isDepublished(obj))
+				.length
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		alreadyDepublishedWarning() {
 			const count = this.alreadyDepublishedCount
 			if (count === 1) {
-				return t('opencatalogi', '1 of the selected publications is already depublished and will be skipped. Its depublication date will not be changed.')
+				return t(
+					'opencatalogi',
+					'1 of the selected publications is already depublished and will be skipped. Its depublication date will not be changed.',
+				)
 			}
-			return t('opencatalogi', '{count} of the selected publications are already depublished and will be skipped. Their depublication dates will not be changed.', { count })
+			return t(
+				'opencatalogi',
+				'{count} of the selected publications are already depublished and will be skipped. Their depublication dates will not be changed.',
+				{ count },
+			)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		unsupportedCount() {
-			return this.selectedObjects.filter(obj => !schemaHasPublicationDateFields(obj)).length
+			return this.selectedObjects.filter(
+				(obj) => !schemaHasPublicationDateFields(obj),
+			).length
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		unsupportedWarning() {
 			const count = this.unsupportedCount
 			if (count === 1) {
-				return t('opencatalogi', '1 of the selected publications has a schema that does not support depublishing and will be skipped. Ask your IT manager for help.')
+				return t(
+					'opencatalogi',
+					'1 of the selected publications has a schema that does not support depublishing and will be skipped. Ask your IT manager for help.',
+				)
 			}
-			return t('opencatalogi', '{count} of the selected publications have schemas that do not support depublishing and will be skipped. Ask your IT manager for help.', { count })
+			return t(
+				'opencatalogi',
+				'{count} of the selected publications have schemas that do not support depublishing and will be skipped. Ask your IT manager for help.',
+				{ count },
+			)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		modeOptions() {
@@ -205,9 +233,15 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		infoText() {
 			if (this.mode === 'later') {
-				return t('opencatalogi', 'The depublication date will be set to the chosen date. The publication date will remain unchanged.')
+				return t(
+					'opencatalogi',
+					'The depublication date will be set to the chosen date. The publication date will remain unchanged.',
+				)
 			}
-			return t('opencatalogi', 'Publications will be depublished with today\'s date. The publication date will remain unchanged.')
+			return t(
+				'opencatalogi',
+				"Publications will be depublished with today's date. The publication date will remain unchanged.",
+			)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		submitDisabled() {
@@ -216,7 +250,8 @@ export default {
 			if (this.mode === 'later' && !this.depublishDate) return true
 			// Nothing to do if every selected item would be skipped.
 			if (this.unsupportedCount === this.selectedObjects.length) return true
-			if (this.alreadyDepublishedCount === this.selectedObjects.length) return true
+			if (this.alreadyDepublishedCount === this.selectedObjects.length)
+				return true
 			return false
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
@@ -292,7 +327,10 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		unsupportedReason() {
-			return t('opencatalogi', 'This schema does not support depublishing. Ask your IT manager for help.')
+			return t(
+				'opencatalogi',
+				'This schema does not support depublishing. Ask your IT manager for help.',
+			)
 		},
 
 		/**
@@ -357,7 +395,8 @@ export default {
 			this.loading = true
 			this.error = false
 
-			const targetDate = this.mode === 'later' ? this.depublishDate : this.today
+			const targetDate =
+				this.mode === 'later' ? this.depublishDate : this.today
 			const objectsToProcess = [...this.selectedObjects]
 			const successful = []
 			const failed = []
@@ -399,7 +438,11 @@ export default {
 					this.closeDialog()
 				}, 2000)
 			} else if (failed.length > 0) {
-				this.error = t('opencatalogi', 'Failed to depublish {count} object(s)', { count: failed.length })
+				this.error = t(
+					'opencatalogi',
+					'Failed to depublish {count} object(s)',
+					{ count: failed.length },
+				)
 				if (successful.length > 0) {
 					this.success = true
 				}

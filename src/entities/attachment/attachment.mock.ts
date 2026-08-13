@@ -78,4 +78,6 @@ export const mockAttachmentsData = (): TAttachment[] => [
 	},
 ]
 
-export const mockAttachments = (data: TAttachment[] = mockAttachmentsData()): TAttachment[] => data.map(item => new Attachment(item))
+export const mockAttachments = (
+	data: TAttachment[] = mockAttachmentsData(),
+): TAttachment[] => data.map((item) => new Attachment(item))

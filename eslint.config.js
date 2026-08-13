@@ -1,12 +1,8 @@
-const {
-	defineConfig,
-} = require('@eslint/config-helpers')
+const { defineConfig } = require('@eslint/config-helpers')
 
 const js = require('@eslint/js')
 
-const {
-	FlatCompat,
-} = require('@eslint/eslintrc')
+const { FlatCompat } = require('@eslint/eslintrc')
 
 const compat = new FlatCompat({
 	baseDirectory: __dirname,
@@ -84,4 +80,18 @@ module.exports = defineConfig([
 	// The preset already disables `vue/no-v-model-argument` and
 	// `vue/no-v-for-template-key` itself; do not add local copies.
 	...conductionVue3Fixes,
+
+	// `eslint-config-prettier` LAST OF ALL, and it has to be: it only turns rules
+	// OFF — every stylistic rule prettier now owns (indent, quotes,
+	// operator-linebreak, comma-dangle…). Anything spread after it would switch
+	// some of them back on, and eslint and prettier would then demand opposite
+	// things — the unfixable state this fleet already hit once with php-cs-fixer
+	// and PHPCS.
+	//
+	// It disables no CORRECTNESS rule: the whole `vue/no-deprecated-*` family
+	// spread just above is still present and still ON, because prettier has no
+	// opinion about it. `indent` is now off HERE and enforced by prettier's
+	// `useTabs: true` instead — the same tab, from the tool that also covers CSS
+	// and SCSS, which @nextcloud/stylelint-config no longer does.
+	require('eslint-config-prettier'),
 ])

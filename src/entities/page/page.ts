@@ -13,7 +13,6 @@ import { TPage, TPageContent } from './page.types'
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Page implements TPage {
-
 	public id!: string
 	public title!: string
 	public slug!: string
@@ -42,7 +41,10 @@ export class Page implements TPage {
 		this.id = data?.id?.toString() || ''
 		this.title = data?.title || ''
 		this.slug = data?.slug || ''
-		this.contents = Array.isArray(data?.contents) && data.contents.length > 0 ? data.contents : null
+		this.contents =
+			Array.isArray(data?.contents) && data.contents.length > 0
+				? data.contents
+				: null
 		this.groups = data?.groups || []
 
 		this.hideAfterLogin = data?.hideAfterLogin || false
@@ -59,19 +61,25 @@ export class Page implements TPage {
 		// Schema validation for page data
 		const schema = z.object({
 			title: z.string().min(1, 'title is verplicht'),
-			slug: z.string()
+			slug: z
+				.string()
 				.min(1, 'slug is verplicht')
-				.regex(/^[a-z0-9-]+$/g, 'een slug mag alleen kleine letters, cijfers en streepjes bevatten'),
-			contents: z.array(
-				z.object({
-					type: z.string().min(1, 'type is verplicht'),
-					id: z.string(),
-					data: z.record(z.string(), z.any()),
-					groups: z.array(z.string()).optional(),
-					hideAfterLogin: z.boolean().optional(),
-					hideBeforeLogin: z.boolean().optional(),
-				}),
-			).nullable(),
+				.regex(
+					/^[a-z0-9-]+$/g,
+					'een slug mag alleen kleine letters, cijfers en streepjes bevatten',
+				),
+			contents: z
+				.array(
+					z.object({
+						type: z.string().min(1, 'type is verplicht'),
+						id: z.string(),
+						data: z.record(z.string(), z.any()),
+						groups: z.array(z.string()).optional(),
+						hideAfterLogin: z.boolean().optional(),
+						hideBeforeLogin: z.boolean().optional(),
+					}),
+				)
+				.nullable(),
 			groups: z.array(z.string()).optional(),
 			hideAfterLogin: z.boolean().optional(),
 			hideBeforeLogin: z.boolean().optional(),
@@ -83,5 +91,4 @@ export class Page implements TPage {
 
 		return result
 	}
-
 }

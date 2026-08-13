@@ -3,7 +3,11 @@
 
 import { createApp, h } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
+import {
+	translate as t,
+	translatePlural as n,
+	loadTranslations,
+} from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
 import {
@@ -138,7 +142,10 @@ try {
 } catch (e) {
 	// Non-fatal — lib translations fall back to English source.
 	// eslint-disable-next-line no-console
-	console.warn('[opencatalogi] registerTranslations failed; falling back to English', e)
+	console.warn(
+		'[opencatalogi] registerTranslations failed; falling back to English',
+		e,
+	)
 }
 
 // Fire-and-forget translation load. Some Nextcloud installs only allow
@@ -149,7 +156,10 @@ function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('opencatalogi', () => {})
 		if (result && typeof result.then === 'function') {
-			result.then(() => {}, () => {})
+			result.then(
+				() => {},
+				() => {},
+			)
 		}
 	} catch {
 		// no-op
@@ -165,7 +175,10 @@ function tryLoadTranslations() {
 const RoutePageRenderer = { ...CnPageRenderer }
 
 const fragmentCtx = require.context('./manifest.d/', false, /\.json$/)
-const fragments = fragmentCtx.keys().sort().map((key) => fragmentCtx(key))
+const fragments = fragmentCtx
+	.keys()
+	.sort()
+	.map((key) => fragmentCtx(key))
 const mergedManifest = buildManifest(bundledManifest, fragments, menuLayout)
 
 /**
@@ -224,11 +237,14 @@ function resolveManifestSentinelsSync(manifest) {
 	const pages = Array.isArray(manifest.pages) ? manifest.pages : []
 	return {
 		...manifest,
-		pages: pages.map((page) => (
-			page && typeof page === 'object' && page.config && typeof page.config === 'object'
+		pages: pages.map((page) =>
+			page
+			&& typeof page === 'object'
+			&& page.config
+			&& typeof page.config === 'object'
 				? { ...page, config: substitute(page.config) }
-				: page
-		)),
+				: page,
+		),
 	}
 }
 
@@ -276,11 +292,12 @@ const pageTypesProp = { ...defaultPageTypes }
 const customComponentsProp = { ...customComponents }
 
 const app = createApp({
-	render: () => h(App, {
-		manifest: resolvedManifest,
-		customComponents: customComponentsProp,
-		pageTypes: pageTypesProp,
-	}),
+	render: () =>
+		h(App, {
+			manifest: resolvedManifest,
+			customComponents: customComponentsProp,
+			pageTypes: pageTypesProp,
+		}),
 })
 
 // Vue 3 has no `Vue.prototype`; per-app globals live on

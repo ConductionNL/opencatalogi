@@ -64,7 +64,10 @@ function createObjectStore(id, options = {}) {
 				const config = this.objectTypeRegistry[type]
 				if (!config) return null
 				if (this.schemas[type]) return this.schemas[type]
-				const response = await fetch(`/apps/openregister/api/schemas/${config.schema}`, { method: 'GET' })
+				const response = await fetch(
+					`/apps/openregister/api/schemas/${config.schema}`,
+					{ method: 'GET' },
+				)
 				if (!response.ok) return null
 				const data = await response.json()
 				this.schemas = { ...this.schemas, [type]: data }
@@ -77,7 +80,12 @@ function createObjectStore(id, options = {}) {
 	})
 }
 
-const noopPlugin = () => ({ name: 'noop', state: () => ({}), getters: {}, actions: {} })
+const noopPlugin = () => ({
+	name: 'noop',
+	state: () => ({}),
+	getters: {},
+	actions: {},
+})
 
 // Faithful-enough stub of the real CnThemePreview (mirrors its `pickers`
 // required-prop + `buildInitialModel`/`previewStyle` logic) so component
@@ -91,8 +99,15 @@ const CnThemePreview = {
 		pickers: {
 			type: Array,
 			required: true,
-			validator: (v) => Array.isArray(v) && v.length > 0
-				&& v.every((p) => p && typeof p.key === 'string' && typeof p.label === 'string'),
+			validator: (v) =>
+				Array.isArray(v)
+				&& v.length > 0
+				&& v.every(
+					(p) =>
+						p
+						&& typeof p.key === 'string'
+						&& typeof p.label === 'string',
+				),
 		},
 		value: { type: Object, default: () => ({}) },
 		defaults: { type: Object, default: null },
@@ -130,7 +145,11 @@ const CnThemePreview = {
 	// 'vue' instead. The Vue 2 spelling `render(h)` leaves `h` undefined and
 	// throws `h is not a function` on first paint.
 	render() {
-		return h('div', { class: 'cn-theme-preview-stub', style: this.previewStyle }, [this.sampleTitle])
+		return h(
+			'div',
+			{ class: 'cn-theme-preview-stub', style: this.previewStyle },
+			[this.sampleTitle],
+		)
 	},
 }
 

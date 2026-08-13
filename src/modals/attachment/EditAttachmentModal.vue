@@ -7,7 +7,15 @@
 import { translate as t } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
-import { NcButton, NcModal, NcTextField, NcSelectTags, NcCheckboxRadioSwitch, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcModal,
+	NcTextField,
+	NcSelectTags,
+	NcCheckboxRadioSwitch,
+	NcNoteCard,
+	NcLoadingIcon,
+} from '@nextcloud/vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 
 /**
@@ -42,7 +50,11 @@ const handleSave = async () => {
 	loading.value = true
 	errorMessage.value = null
 	try {
-		await objectStore.updateObject('attachment', attachment.value.id, attachment.value)
+		await objectStore.updateObject(
+			'attachment',
+			attachment.value.id,
+			attachment.value,
+		)
 		await objectStore.fetchCollection('attachment')
 		success.value = true
 	} catch (err) {
@@ -76,7 +88,14 @@ const handleCancel = () => {
 					<p>{{ t('opencatalogi', 'Attachment successfully updated') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="success === false" type="error">
-					<p>{{ t('opencatalogi', 'Something went wrong while updating the attachment') }}</p>
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Something went wrong while updating the attachment',
+							)
+						}}
+					</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="errorMessage" type="error">
 					<p>{{ errorMessage }}</p>
@@ -105,9 +124,14 @@ const handleCancel = () => {
 
 			<span class="buttonContainer">
 				<NcButton @click="handleCancel">
-					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+					{{
+						success
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="success === null"
+				<NcButton
+					v-if="success === null"
 					:disabled="loading"
 					variant="primary"
 					@click="handleSave">

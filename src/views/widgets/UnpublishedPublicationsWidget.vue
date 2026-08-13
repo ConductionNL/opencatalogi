@@ -4,7 +4,8 @@ import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<CnDataTable :rows="items"
+	<CnDataTable
+		:rows="items"
 		:columns="columns"
 		:loading="loading"
 		hide-header
@@ -12,7 +13,8 @@ import { objectStore } from '../../store/store.js'
 		row-icon="DatabaseEyeOutline"
 		@row-click="onRowClick">
 		<template #empty>
-			<NcEmptyContent :title="t('opencatalogi', 'No concept publications found')">
+			<NcEmptyContent
+				:title="t('opencatalogi', 'No concept publications found')">
 				<template #icon>
 					<FolderIcon />
 				</template>
@@ -69,8 +71,9 @@ export default {
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
-			return objectStore.getCollection('publication').results
-				.filter((publication) => publication.status === 'Concept')
+			return objectStore
+				.getCollection('publication')
+				.results.filter((publication) => publication.status === 'Concept')
 				.map((publication) => ({
 					id: publication.id,
 					mainText: publication.title,
@@ -101,10 +104,16 @@ export default {
 			const publication = row.publication
 			const catalogId = publication?.catalog?.id || publication?.catalog
 			const catalogs = objectStore.getCollection('catalog')?.results || []
-			const matchedCatalog = catalogs.find((c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''))
+			const matchedCatalog = catalogs.find(
+				(c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''),
+			)
 			const slug = matchedCatalog?.slug || publication?.catalog?.slug
 			if (!slug || !publication?.id) return
-			navigateTo(generateUrl(`/apps/opencatalogi/publications/${slug}/${publication.id}`))
+			navigateTo(
+				generateUrl(
+					`/apps/opencatalogi/publications/${slug}/${publication.id}`,
+				),
+			)
 		},
 		/**
 		 * Fetch the publication data (and the catalog collection used to

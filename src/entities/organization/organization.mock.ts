@@ -72,5 +72,6 @@ export const mockOrganizationData = (): TOrganization[] => [
  * @param {TOrganization[]} data Optional mock data to use instead of default
  * @return {Organization[]} Array of Organization instances
  */
-export const mockOrganizations = (data: TOrganization[] = mockOrganizationData()): Organization[] =>
-	data.map(item => new Organization(item))
+export const mockOrganizations = (
+	data: TOrganization[] = mockOrganizationData(),
+): Organization[] => data.map((item) => new Organization(item))

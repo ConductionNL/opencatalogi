@@ -19,7 +19,9 @@ function readCssVar(name, fallback) {
 	if (typeof document === 'undefined' || typeof getComputedStyle === 'undefined') {
 		return fallback
 	}
-	const value = getComputedStyle(document.documentElement).getPropertyValue(name)?.trim()
+	const value = getComputedStyle(document.documentElement)
+		.getPropertyValue(name)
+		?.trim()
 	return value || fallback
 }
 

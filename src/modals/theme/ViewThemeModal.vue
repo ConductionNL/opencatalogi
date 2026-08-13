@@ -1,14 +1,7 @@
-/**
- * ViewThemeModal.vue
- * Modal component for viewing theme details and configuration
- * @category Modals
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license EUPL-1.2
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * ViewThemeModal.vue * Modal component for viewing theme details and
+configuration * @category Modals * @package opencatalogi * @author Ruben Linde *
+@copyright 2024 * @license EUPL-1.2 * @version 1.0.0 * @link
+https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
@@ -16,7 +9,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'viewTheme'"
+	<NcModal
+		v-if="navigationStore.modal === 'viewTheme'"
 		ref="modalRef"
 		:name="theme?.title || t('opencatalogi', 'Theme')"
 		label-id="viewThemeModal"
@@ -56,14 +50,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="theme.image || theme.screenshot" class="detailSection">
 					<h3>{{ t('opencatalogi', 'Visual preview') }}</h3>
 					<div class="imageContainer">
-						<img v-if="theme.image"
+						<img
+							v-if="theme.image"
 							:src="theme.image"
 							:alt="theme.title || 'Theme preview'"
-							class="themeImage">
-						<img v-else-if="theme.screenshot"
+							class="themeImage" />
+						<img
+							v-else-if="theme.screenshot"
 							:src="theme.screenshot"
 							:alt="theme.title || 'Theme screenshot'"
-							class="themeImage">
+							class="themeImage" />
 					</div>
 				</div>
 
@@ -81,7 +77,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</div>
 				</div>
 
-				<div v-if="theme.author || theme.license || theme.repository" class="detailSection">
+				<div
+					v-if="theme.author || theme.license || theme.repository"
+					class="detailSection">
 					<h3>{{ t('opencatalogi', 'Theme information') }}</h3>
 					<div class="detailGrid">
 						<div v-if="theme.author" class="detailItem">
@@ -95,7 +93,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<div v-if="theme.repository" class="detailItem">
 							<strong>{{ t('opencatalogi', 'Repository') }}:</strong>
 							<span>
-								<a :href="theme.repository" target="_blank" rel="noopener noreferrer">
+								<a
+									:href="theme.repository"
+									target="_blank"
+									rel="noopener noreferrer">
 									{{ theme.repository }}
 								</a>
 							</span>
@@ -103,18 +104,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<div v-if="theme.homepage" class="detailItem">
 							<strong>{{ t('opencatalogi', 'Homepage') }}:</strong>
 							<span>
-								<a :href="theme.homepage" target="_blank" rel="noopener noreferrer">
+								<a
+									:href="theme.homepage"
+									target="_blank"
+									rel="noopener noreferrer">
 									{{ theme.homepage }}
 								</a>
 							</span>
 						</div>
 						<div v-if="theme.updatedAt" class="detailItem">
 							<strong>{{ t('opencatalogi', 'Last updated') }}:</strong>
-							<span>{{ new Date(theme.updatedAt).toLocaleDateString() }}</span>
+							<span>{{
+								new Date(theme.updatedAt).toLocaleDateString()
+							}}</span>
 						</div>
 						<div v-if="theme.createdAt" class="detailItem">
 							<strong>{{ t('opencatalogi', 'Created') }}:</strong>
-							<span>{{ new Date(theme.createdAt).toLocaleDateString() }}</span>
+							<span>{{
+								new Date(theme.createdAt).toLocaleDateString()
+							}}</span>
 						</div>
 					</div>
 				</div>

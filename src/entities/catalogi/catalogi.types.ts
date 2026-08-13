@@ -11,18 +11,18 @@
 export type CatalogStatus = 'development' | 'beta' | 'stable' | 'obsolete'
 
 export type TCatalogi = {
-    id: string
-    title: string
-    summary: string
-    description: string
-    image: string
-    listed: boolean
-    organization: string // it is supposed to be TOrganization according to the stoplight, but reality is a bit different
-    registers: string[]
-    schemas: string[]
-    filters: Record<string, unknown>
-    status: CatalogStatus
-    slug: string
-    hasWooSitemap: boolean
-    hasOoapi: boolean
+	id: string
+	title: string
+	summary: string
+	description: string
+	image: string
+	listed: boolean
+	organization: string // it is supposed to be TOrganization according to the stoplight, but reality is a bit different
+	registers: string[]
+	schemas: string[]
+	filters: Record<string, unknown>
+	status: CatalogStatus
+	slug: string
+	hasWooSitemap: boolean
+	hasOoapi: boolean
 }

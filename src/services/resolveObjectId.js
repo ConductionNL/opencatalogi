@@ -13,9 +13,5 @@
  * @spec exclude row-shape plumbing; no domain behavior of its own.
  */
 export function resolveObjectId(obj) {
-	return obj?.['@self']?.id
-		|| obj?.id
-		|| obj?.uuid
-		|| obj?.['@self']?.uuid
-		|| null
+	return obj?.['@self']?.id || obj?.id || obj?.uuid || obj?.['@self']?.uuid || null
 }

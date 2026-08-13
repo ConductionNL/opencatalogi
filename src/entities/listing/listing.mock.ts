@@ -97,4 +97,4 @@ export const mockListingData = (): TListing[] => [
  * @return {Listing[]} Array of Listing instances
  */
 export const mockListings = (data: TListing[] = mockListingData()): Listing[] =>
-	data.map(item => new Listing(item))
+	data.map((item) => new Listing(item))

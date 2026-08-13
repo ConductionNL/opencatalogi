@@ -1,14 +1,6 @@
-/**
- * DeleteMenuItemModal.vue
- * Modal for deleting menu items
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license EUPL-1.2
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * DeleteMenuItemModal.vue * Modal for deleting menu items * @category Components
+* @package opencatalogi * @author Ruben Linde * @copyright 2024 * @license EUPL-1.2 *
+@version 1.0.0 * @link https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
 import { ref, computed } from 'vue'
@@ -17,7 +9,8 @@ import { EventBus } from '../../eventBus.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'deleteMenuItem'"
+	<NcModal
+		v-if="navigationStore.modal === 'deleteMenuItem'"
 		ref="modalRef"
 		class="deleteMenuItemModal"
 		label-id="deleteMenuItemModal"
@@ -29,26 +22,44 @@ import { EventBus } from '../../eventBus.js'
 					<p>{{ t('opencatalogi', 'Menu item successfully deleted') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>{{ t('opencatalogi', 'Something went wrong while deleting the menu item') }}</p>
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Something went wrong while deleting the menu item',
+							)
+						}}
+					</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>{{ t('opencatalogi', 'Are you sure you want to delete the menu item {name}?', { name: menuItem.title || menuItem.name }) }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Are you sure you want to delete the menu item {name}?',
+							{ name: menuItem.title || menuItem.name },
+						)
+					}}
+				</p>
 			</div>
 
 			<div class="modalActions">
-				<NcButton
-					class="modalCloseButton"
-					@click="handleCancel">
+				<NcButton class="modalCloseButton" @click="handleCancel">
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+					{{
+						success
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="success === null"
+				<NcButton
+					v-if="success === null"
 					:disabled="loading"
 					variant="error"
 					@click="handleDelete">
@@ -66,12 +77,7 @@ import { EventBus } from '../../eventBus.js'
 </template>
 
 <script>
-import {
-	NcButton,
-	NcModal,
-	NcNoteCard,
-	NcLoadingIcon,
-} from '@nextcloud/vue'
+import { NcButton, NcModal, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
 import { Menu } from '../../entities/index.js'
 
 // icons
@@ -119,19 +125,30 @@ const handleDelete = async () => {
 		let itemIndex = -1
 
 		// Try to find by index first (most reliable)
-		if (activeMenuItem.index !== undefined && activeMenuItem.index >= 0 && activeMenuItem.index < menuItems.length) {
+		if (
+			activeMenuItem.index !== undefined
+			&& activeMenuItem.index >= 0
+			&& activeMenuItem.index < menuItems.length
+		) {
 			itemIndex = activeMenuItem.index
 		} else {
 			// Try to find by id
-			if (activeMenuItem.id && activeMenuItem.id !== null && activeMenuItem.id !== undefined) {
-				itemIndex = menuItems.findIndex(item => item.id === activeMenuItem.id)
+			if (
+				activeMenuItem.id
+				&& activeMenuItem.id !== null
+				&& activeMenuItem.id !== undefined
+			) {
+				itemIndex = menuItems.findIndex(
+					(item) => item.id === activeMenuItem.id,
+				)
 			}
 
 			// If still not found, try by name and order
 			if (itemIndex === -1) {
-				itemIndex = menuItems.findIndex(item =>
-					item.name === activeMenuItem.name
-					&& item.order === activeMenuItem.order,
+				itemIndex = menuItems.findIndex(
+					(item) =>
+						item.name === activeMenuItem.name
+						&& item.order === activeMenuItem.order,
 				)
 			}
 		}

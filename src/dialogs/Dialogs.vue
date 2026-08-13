@@ -9,9 +9,11 @@ import { navigationStore } from './../store/store.js'
 		<CopyObjectDialog />
 		<DeleteListingDialog />
 		<ViewLogDialog />
-		<DeleteAttachmentDialog v-if="navigationStore.dialog === 'deleteAttachment'" />
+		<DeleteAttachmentDialog
+			v-if="navigationStore.dialog === 'deleteAttachment'" />
 		<UploadFiles />
-		<DeletePageContentDialog v-if="navigationStore.dialog === 'deletePageContent'" />
+		<DeletePageContentDialog
+			v-if="navigationStore.dialog === 'deletePageContent'" />
 	</div>
 </template>
 

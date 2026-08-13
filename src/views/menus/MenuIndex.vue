@@ -17,7 +17,9 @@
 	<CnIndexPage
 		ref="indexPage"
 		:title="t('opencatalogi', 'Menus')"
-		:description="t('opencatalogi', 'Manage your navigation menus and menu items')"
+		:description="
+			t('opencatalogi', 'Manage your navigation menus and menu items')
+		"
 		:show-title="true"
 		:schema="menuSchema"
 		:objects="currentObjects"
@@ -53,7 +55,12 @@
 		@row-click="onRowClick">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
-				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+				{{
+					t(
+						'opencatalogi',
+						'This page is read-only. Only administrators can create, edit, or delete entries here.',
+					)
+				}}
 			</NcNoteCard>
 		</template>
 
@@ -73,25 +80,37 @@
 				<template #icon>
 					<DotsHorizontal :size="20" />
 				</template>
-				<NcActionButton v-if="isAdmin" close-after-click @click="editMenu(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="editMenu(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="addMenuItem(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="addMenuItem(row)">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Add Item') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="copyMenu(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="copyMenu(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="deleteMenu(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="deleteMenu(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -132,12 +151,34 @@ export default {
 	},
 	setup() {
 		const sidebarState = inject('sidebarState', null)
-		const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('menu', {
+		const {
+			schema,
+			sortKey,
+			sortOrder,
+			visibleColumns,
+			onSort,
+			onPageChange,
+			onPageSizeChange,
+			refresh,
+		} = useListView('menu', {
 			sidebarState,
 			objectStore,
 		})
 		const { isAdmin, loaded } = useIsAdmin()
-		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh, objectStore, navigationStore, isAdmin, loaded }
+		return {
+			schema,
+			sortKey,
+			sortOrder,
+			visibleColumns,
+			onSort,
+			onPageChange,
+			onPageSizeChange,
+			refresh,
+			objectStore,
+			navigationStore,
+			isAdmin,
+			loaded,
+		}
 	},
 	data() {
 		return {
@@ -165,7 +206,10 @@ export default {
 					icon: {
 						type: 'string',
 						title: t('opencatalogi', 'Icon'),
-						description: t('opencatalogi', 'Pick an icon (Material / FontAwesome / OpenGemeenten) or paste custom SVG.'),
+						description: t(
+							'opencatalogi',
+							'Pick an icon (Material / FontAwesome / OpenGemeenten) or paste custom SVG.',
+						),
 						widget: 'icon',
 						iconSources: ['mdi', 'fontawesome', 'opengemeenten'],
 						catalogues: buildMenuItemIconCatalogues(),
@@ -178,9 +222,17 @@ export default {
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
-				{ key: 'position', label: t('opencatalogi', 'Position'), sortable: true },
+				{
+					key: 'position',
+					label: t('opencatalogi', 'Position'),
+					sortable: true,
+				},
 				{ key: 'items', label: t('opencatalogi', 'Menu Items') },
-				{ key: 'updatedAt', label: t('opencatalogi', 'Last Updated'), sortable: true },
+				{
+					key: 'updatedAt',
+					label: t('opencatalogi', 'Last Updated'),
+					sortable: true,
+				},
 			]
 		},
 		currentObjects() {
@@ -189,8 +241,14 @@ export default {
 			return collection?.results || []
 		},
 		currentPagination() {
-			return objectStore.getPagination('menu')
-				|| { total: 0, page: 1, pages: 1, limit: 20 }
+			return (
+				objectStore.getPagination('menu') || {
+					total: 0,
+					page: 1,
+					pages: 1,
+					limit: 20,
+				}
+			)
 		},
 	},
 	methods: {
@@ -236,11 +294,17 @@ export default {
 		},
 		copyMenu(menu) {
 			objectStore.setActiveObject('menu', menu)
-			navigationStore.setDialog('copyObject', { objectType: 'menu', dialogTitle: 'Menu' })
+			navigationStore.setDialog('copyObject', {
+				objectType: 'menu',
+				dialogTitle: 'Menu',
+			})
 		},
 		deleteMenu(menu) {
 			objectStore.setActiveObject('menu', menu)
-			navigationStore.setDialog('deleteObject', { objectType: 'menu', dialogTitle: 'Menu' })
+			navigationStore.setDialog('deleteObject', {
+				objectType: 'menu',
+				dialogTitle: 'Menu',
+			})
 		},
 	},
 }

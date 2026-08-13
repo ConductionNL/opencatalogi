@@ -37,7 +37,11 @@ export default {
 		},
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		listingName() {
-			return this.listing?.title || this.listing?.directory || t('opencatalogi', 'Unnamed instance')
+			return (
+				this.listing?.title
+				|| this.listing?.directory
+				|| t('opencatalogi', 'Unnamed instance')
+			)
 		},
 	},
 	watch: {
@@ -87,7 +91,9 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const endpoint = generateUrl(`/apps/opencatalogi/api/listings/${this.listing.id}`)
+				const endpoint = generateUrl(
+					`/apps/opencatalogi/api/listings/${this.listing.id}`,
+				)
 				const res = await fetch(endpoint, {
 					method: 'DELETE',
 					headers: {
@@ -97,7 +103,12 @@ export default {
 				})
 				if (!res.ok) {
 					const body = await res.json().catch(() => ({}))
-					throw new Error(body?.data?.error || body?.error || body?.message || `HTTP ${res.status}`)
+					throw new Error(
+						body?.data?.error
+							|| body?.error
+							|| body?.message
+							|| `HTTP ${res.status}`,
+					)
 				}
 				this.success = true
 				this.$emit('deleted', this.listing)
@@ -119,7 +130,8 @@ export default {
 </script>
 
 <template>
-	<NcModal v-if="isOpen && listing"
+	<NcModal
+		v-if="isOpen && listing"
 		label-id="federationDeleteListingModal"
 		:name="t('opencatalogi', 'Remove from directory')"
 		@close="close">
@@ -137,7 +149,13 @@ export default {
 			</div>
 
 			<p v-if="success === null && !loading">
-				{{ t('opencatalogi', 'Remove {name} from the directory? This instance will stop syncing publications from {name}. {name} itself is not affected. This action cannot be undone.', { name: listingName }) }}
+				{{
+					t(
+						'opencatalogi',
+						'Remove {name} from the directory? This instance will stop syncing publications from {name}. {name} itself is not affected. This action cannot be undone.',
+						{ name: listingName },
+					)
+				}}
 			</p>
 
 			<div v-if="loading" class="federation-delete-listing-modal__loading">
@@ -150,9 +168,14 @@ export default {
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+					{{
+						success
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="success === null"
+				<NcButton
+					v-if="success === null"
 					variant="error"
 					:disabled="loading"
 					@click="handleDelete">

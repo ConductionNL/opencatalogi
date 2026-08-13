@@ -86,11 +86,26 @@ describe('catalog store — getters', () => {
 	it('publicationPagination projects defaults and overrides from the publications collection', () => {
 		const store = useCatalogStore()
 		expect(store.publicationPagination).toEqual({
-			page: 1, pages: 0, total: 0, limit: 20, offset: 0,
+			page: 1,
+			pages: 0,
+			total: 0,
+			limit: 20,
+			offset: 0,
 		})
-		store.publications = { page: 2, pages: 5, total: 90, limit: 20, offset: 20, results: [] }
+		store.publications = {
+			page: 2,
+			pages: 5,
+			total: 90,
+			limit: 20,
+			offset: 20,
+			results: [],
+		}
 		expect(store.publicationPagination).toEqual({
-			page: 2, pages: 5, total: 90, limit: 20, offset: 20,
+			page: 2,
+			pages: 5,
+			total: 90,
+			limit: 20,
+			offset: 20,
 		})
 	})
 })

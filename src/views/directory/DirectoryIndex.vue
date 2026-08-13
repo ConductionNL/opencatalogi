@@ -22,7 +22,12 @@
 	<CnIndexPage
 		ref="indexPage"
 		:title="t('opencatalogi', 'Directory')"
-		:description="t('opencatalogi', 'Browse and manage directory listings from various catalogs')"
+		:description="
+			t(
+				'opencatalogi',
+				'Browse and manage directory listings from various catalogs',
+			)
+		"
 		:show-title="true"
 		:objects="currentObjects"
 		:columns="tableColumns"
@@ -53,22 +58,30 @@
 		@row-click="onRowClick">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
-				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+				{{
+					t(
+						'opencatalogi',
+						'This page is read-only. Only administrators can create, edit, or delete entries here.',
+					)
+				}}
 			</NcNoteCard>
 		</template>
 
 		<!-- Custom column: name with status icon and badges -->
 		<template #column-name="{ row }">
 			<div class="titleContent">
-				<component :is="getStatusIcon(row)"
+				<component
+					:is="getStatusIcon(row)"
 					:size="16"
 					:class="getStatusClass(row)" />
 				<strong>{{ row.name || row.title }}</strong>
-				<CnStatusBadge v-if="row.default"
+				<CnStatusBadge
+					v-if="row.default"
 					:label="t('opencatalogi', 'Default')"
 					variant="primary"
 					size="small" />
-				<CnStatusBadge v-if="!row.available"
+				<CnStatusBadge
+					v-if="!row.available"
 					:label="t('opencatalogi', 'Disabled')"
 					variant="error"
 					size="small" />
@@ -98,11 +111,7 @@
 		</template>
 
 		<template #column-search="{ row }">
-			<a
-				v-if="row.search"
-				:href="row.search"
-				target="_blank"
-				class="urlLink">
+			<a v-if="row.search" :href="row.search" target="_blank" class="urlLink">
 				{{ truncateUrl(row.search) }}
 			</a>
 			<span v-else>-</span>
@@ -143,17 +152,35 @@
 					</template>
 					{{ t('opencatalogi', 'Sync Directory') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="toggleIntegrationLevel(row)">
+				<NcActionButton
+					close-after-click
+					@click="toggleIntegrationLevel(row)">
 					<template #icon>
-						<component :is="row.integrationLevel === 'search' ? CloseCircle : CheckCircle" :size="20" />
+						<component
+							:is="
+								row.integrationLevel === 'search'
+									? CloseCircle
+									: CheckCircle
+							"
+							:size="20" />
 					</template>
-					{{ row.integrationLevel === 'search' ? t('opencatalogi', 'Disable') : t('opencatalogi', 'Enable') }}
+					{{
+						row.integrationLevel === 'search'
+							? t('opencatalogi', 'Disable')
+							: t('opencatalogi', 'Enable')
+					}}
 				</NcActionButton>
 				<NcActionButton close-after-click @click="toggleDefault(row)">
 					<template #icon>
-						<component :is="row.default ? Star : StarOutline" :size="20" />
+						<component
+							:is="row.default ? Star : StarOutline"
+							:size="20" />
 					</template>
-					{{ row.default ? t('opencatalogi', 'Remove as Default') : t('opencatalogi', 'Set as Default') }}
+					{{
+						row.default
+							? t('opencatalogi', 'Remove as Default')
+							: t('opencatalogi', 'Set as Default')
+					}}
 				</NcActionButton>
 			</NcActions>
 		</template>
@@ -223,11 +250,22 @@ export default {
 				{ key: 'name', label: t('opencatalogi', 'Name'), sortable: true },
 				{ key: 'organization', label: t('opencatalogi', 'Organization') },
 				{ key: 'schemas', label: t('opencatalogi', 'Schemas') },
-				{ key: 'publications', label: t('opencatalogi', 'Publications URL') },
+				{
+					key: 'publications',
+					label: t('opencatalogi', 'Publications URL'),
+				},
 				{ key: 'search', label: t('opencatalogi', 'Search URL') },
 				{ key: 'directory', label: t('opencatalogi', 'Directory URL') },
-				{ key: 'lastSync', label: t('opencatalogi', 'Last Sync'), sortable: true },
-				{ key: 'statusCode', label: t('opencatalogi', 'Status'), sortable: true },
+				{
+					key: 'lastSync',
+					label: t('opencatalogi', 'Last Sync'),
+					sortable: true,
+				},
+				{
+					key: 'statusCode',
+					label: t('opencatalogi', 'Status'),
+					sortable: true,
+				},
 			]
 		},
 		currentObjects() {
@@ -236,8 +274,14 @@ export default {
 			return collection?.results || []
 		},
 		currentPagination() {
-			return objectStore.getPagination('listing')
-				|| { total: 0, page: 1, pages: 1, limit: 20 }
+			return (
+				objectStore.getPagination('listing') || {
+					total: 0,
+					page: 1,
+					pages: 1,
+					limit: 20,
+				}
+			)
 		},
 	},
 	mounted() {
@@ -257,7 +301,10 @@ export default {
 			}
 		},
 		onPageChange(page) {
-			objectStore.fetchCollection('listing', { _page: page, _limit: this.currentPagination.limit || 20 })
+			objectStore.fetchCollection('listing', {
+				_page: page,
+				_limit: this.currentPagination.limit || 20,
+			})
 		},
 		onPageSizeChange(size) {
 			objectStore.fetchCollection('listing', { _page: 1, _limit: size })
@@ -283,7 +330,8 @@ export default {
 		},
 		getStatusLabel(listing) {
 			const statusCode = listing.statusCode || listing.status
-			if (statusCode >= 200 && statusCode < 300) return t('opencatalogi', 'Online')
+			if (statusCode >= 200 && statusCode < 300)
+				return t('opencatalogi', 'Online')
 			if (!statusCode || statusCode === 0) return t('opencatalogi', 'Unknown')
 			return t('opencatalogi', 'Error')
 		},
@@ -299,7 +347,11 @@ export default {
 				if (diffHours < 1) return 'Just now'
 				if (diffHours < 24) return `${diffHours} hours ago`
 				if (diffDays < 7) return `${diffDays} days ago`
-				return date.toLocaleDateString('nl-NL', { year: 'numeric', month: 'short', day: 'numeric' })
+				return date.toLocaleDateString('nl-NL', {
+					year: 'numeric',
+					month: 'short',
+					day: 'numeric',
+				})
 			} catch (e) {
 				return 'Invalid'
 			}
@@ -324,18 +376,23 @@ export default {
 				// Auth-required `/api/listings/add` (WOO-513) — same syncDirectory()
 				// side-effects as the public `/api/directory` but admin-only.
 				// `OCS-APIRequest: true` is NC's CSRF bypass for programmatic clients.
-				const response = await fetch(generateUrl('/apps/opencatalogi/api/listings/add'), {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'OCS-APIRequest': 'true',
+				const response = await fetch(
+					generateUrl('/apps/opencatalogi/api/listings/add'),
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'OCS-APIRequest': 'true',
+						},
+						body: JSON.stringify({ url: listing.directory }),
 					},
-					body: JSON.stringify({ url: listing.directory }),
-				})
+				)
 				const result = await response.json()
 				if (response.ok) {
 					await objectStore.fetchCollection('listing')
-					showSuccess(`Directory "${listing.title || listing.name}" synced successfully`)
+					showSuccess(
+						`Directory "${listing.title || listing.name}" synced successfully`,
+					)
 				} else {
 					throw new Error(result.message || 'Sync failed')
 				}
@@ -354,10 +411,20 @@ export default {
 		 */
 		async toggleIntegrationLevel(listing) {
 			try {
-				const newLevel = (!listing.integrationLevel || listing.integrationLevel === 'none' || listing.integrationLevel === 'connection') ? 'search' : 'connection'
+				const newLevel =
+					!listing.integrationLevel
+					|| listing.integrationLevel === 'none'
+					|| listing.integrationLevel === 'connection'
+						? 'search'
+						: 'connection'
 				listing.integrationLevel = newLevel
-				await objectStore.updateObject('listing', listing.id, { ...listing, integrationLevel: newLevel })
-				showSuccess(`Directory "${listing.title || listing.name}" ${newLevel === 'search' ? 'enabled' : 'disabled'}`)
+				await objectStore.updateObject('listing', listing.id, {
+					...listing,
+					integrationLevel: newLevel,
+				})
+				showSuccess(
+					`Directory "${listing.title || listing.name}" ${newLevel === 'search' ? 'enabled' : 'disabled'}`,
+				)
 			} catch (error) {
 				console.error('Failed to toggle integration level:', error)
 				showError(`Failed to update directory: ${error.message}`)
@@ -379,16 +446,27 @@ export default {
 						if (other.id !== listing.id && other.default) {
 							other.default = false
 							try {
-								await objectStore.updateObject('listing', other.id, { ...other, default: false })
+								await objectStore.updateObject('listing', other.id, {
+									...other,
+									default: false,
+								})
 							} catch (error) {
-								console.warn('Failed to remove default from other listing:', error)
+								console.warn(
+									'Failed to remove default from other listing:',
+									error,
+								)
 							}
 						}
 					}
 				}
 				listing.default = newDefaultState
-				await objectStore.updateObject('listing', listing.id, { ...listing, default: newDefaultState })
-				showSuccess(`Directory "${listing.title || listing.name}" ${newDefaultState ? 'set as default' : 'removed as default'}`)
+				await objectStore.updateObject('listing', listing.id, {
+					...listing,
+					default: newDefaultState,
+				})
+				showSuccess(
+					`Directory "${listing.title || listing.name}" ${newDefaultState ? 'set as default' : 'removed as default'}`,
+				)
 			} catch (error) {
 				listing.default = !listing.default
 				console.error('Failed to toggle default state:', error)
@@ -406,11 +484,17 @@ export default {
 	gap: 8px;
 }
 
-.status-success { color: var(--color-success); }
+.status-success {
+	color: var(--color-success);
+}
 
-.status-warning { color: var(--color-warning); }
+.status-warning {
+	color: var(--color-warning);
+}
 
-.status-error { color: var(--color-error); }
+.status-error {
+	color: var(--color-error);
+}
 
 .urlLink {
 	color: var(--color-primary);

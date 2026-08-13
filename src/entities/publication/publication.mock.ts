@@ -2,7 +2,8 @@ import { Publication } from './publication'
 import { TPublication } from './publication.types'
 
 export const mockPublicationsData = (): TPublication[] => [
-	{ // full data
+	{
+		// full data
 		id: '1',
 		reference: 'ref1',
 		title: 'test 1',
@@ -49,7 +50,8 @@ export const mockPublicationsData = (): TPublication[] => [
 			coordinates: [2, 23],
 		},
 	},
-	{ // partial data
+	{
+		// partial data
 		id: '2',
 		reference: 'ref2',
 		title: 'test 2',
@@ -91,7 +93,8 @@ export const mockPublicationsData = (): TPublication[] => [
 			folder: 'folder2',
 		},
 	},
-	{ // invalid data
+	{
+		// invalid data
 		id: '3',
 		title: 'test 3',
 		summary: 'a short form summary',
@@ -136,4 +139,6 @@ export const mockPublicationsData = (): TPublication[] => [
 	},
 ]
 
-export const mockPublications = (data: TPublication[] = mockPublicationsData()): TPublication[] => data.map(item => new Publication(item))
+export const mockPublications = (
+	data: TPublication[] = mockPublicationsData(),
+): TPublication[] => data.map((item) => new Publication(item))

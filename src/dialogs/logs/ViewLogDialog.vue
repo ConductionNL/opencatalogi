@@ -7,12 +7,23 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		v-if="navigationStore.dialog === 'viewLog'"
 		:name="t('opencatalogi', 'View Log')"
 		:can-close="false">
-		<div v-if="objectStore.getState('log').success !== null || objectStore.getState('log').error">
+		<div
+			v-if="
+				objectStore.getState('log').success !== null
+				|| objectStore.getState('log').error
+			">
 			<NcNoteCard v-if="objectStore.getState('log').success" type="success">
 				<p>{{ t('opencatalogi', 'Log successfully viewed') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('log').success" type="error">
-				<p>{{ t('opencatalogi', 'Something went wrong while viewing the log') }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Something went wrong while viewing the log',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('log').error" type="error">
 				<p>{{ objectStore.getState('log').error }}</p>
@@ -22,13 +33,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcLoadingIcon :size="20" />
 			<span>{{ t('opencatalogi', 'Log is being loaded...') }}</span>
 		</div>
-		<div v-if="objectStore.getState('log').success === null && !objectStore.isLoading('log')" class="log-content">
+		<div
+			v-if="
+				objectStore.getState('log').success === null
+				&& !objectStore.isLoading('log')
+			"
+			class="log-content">
 			<pre>{{ objectStore.getActiveObject('log')?.content }}</pre>
 		</div>
 		<template #actions>
-			<NcButton
-				icon=""
-				@click="navigationStore.setDialog(false)">
+			<NcButton icon="" @click="navigationStore.setDialog(false)">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
@@ -68,7 +82,6 @@ export default {
 </script>
 
 <style>
-
 .zaakDetailsContainer {
 	margin-block-start: var(--OC-margin-20);
 	margin-inline-start: var(--OC-margin-20);

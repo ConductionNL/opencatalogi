@@ -1,5 +1,5 @@
 export type TAttachment = {
-    id: string
+	id: string
 	reference: string
 	title: string
 	summary: string
@@ -7,21 +7,22 @@ export type TAttachment = {
 	labels: string[]
 	accessUrl: string
 	downloadUrl: string
-    status: 'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
+	status:
+		'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
 	type: string
 	extension: string
 	size: string
 	anonymization: {
-        anonymized: boolean
-        results: string
-    }
+		anonymized: boolean
+		results: string
+	}
 	language: {
-        code: string
-        level: string
-    }
-    versionOf: string
-    hash: string
-    published: string | Date | null
-    modified: string | Date
-    license: string
+		code: string
+		level: string
+	}
+	versionOf: string
+	hash: string
+	published: string | Date | null
+	modified: string | Date
+	license: string
 }

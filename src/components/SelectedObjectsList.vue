@@ -4,16 +4,18 @@ import { objectStore } from '../store/store.js'
 
 <template>
 	<div class="selected-objects-container">
-		<h4 v-if="!hideTitle">
-			{{ title }} ({{ selectedObjects.length }})
-		</h4>
+		<h4 v-if="!hideTitle">{{ title }} ({{ selectedObjects.length }})</h4>
 
 		<div v-if="selectedObjects.length" class="selected-objects-list">
 			<TransitionGroup name="list" tag="div">
-				<div v-for="obj in selectedObjects"
+				<div
+					v-for="obj in selectedObjects"
 					:key="obj.id"
 					class="selected-object-item"
-					:class="{ 'has-error': getObjectError(obj), 'is-disabled': isItemDisabled(obj) }"
+					:class="{
+						'has-error': getObjectError(obj),
+						'is-disabled': isItemDisabled(obj),
+					}"
 					:title="getDisabledReason(obj) || undefined">
 					<div class="object-info">
 						<strong>{{ getObjectName(obj) }}</strong>
@@ -25,9 +27,14 @@ import { objectStore } from '../store/store.js'
 							{{ getObjectError(obj) }}
 						</p>
 					</div>
-					<NcButton v-if="showRemove"
+					<NcButton
+						v-if="showRemove"
 						variant="tertiary"
-						:aria-label="t('opencatalogi', 'Remove {name}', { name: getObjectName(obj) })"
+						:aria-label="
+							t('opencatalogi', 'Remove {name}', {
+								name: getObjectName(obj),
+							})
+						"
 						@click="removeObject(obj.id || obj['@self']?.id)">
 						<template #icon>
 							<Close :size="20" />
@@ -46,10 +53,7 @@ import { objectStore } from '../store/store.js'
 </template>
 
 <script>
-import {
-	NcButton,
-	NcEmptyContent,
-} from '@nextcloud/vue'
+import { NcButton, NcEmptyContent } from '@nextcloud/vue'
 
 import Close from 'vue-material-design-icons/Close.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
@@ -151,20 +155,33 @@ export default {
 
 			// Try to resolve selected attachments (IDs) to full attachment objects
 			const selectedAttachmentIds = objectStore.selectedAttachments || []
-			if (Array.isArray(selectedAttachmentIds) && selectedAttachmentIds.length > 0) {
+			if (
+				Array.isArray(selectedAttachmentIds)
+				&& selectedAttachmentIds.length > 0
+			) {
 				// Prefer reading from collections maintained in the store
-				const attachmentsCollection = (objectStore.collections && objectStore.collections.publicationAttachments)
-					? objectStore.collections.publicationAttachments
-					: (typeof objectStore.getCollection === 'function' ? objectStore.getCollection('publicationAttachments') : null)
+				const attachmentsCollection =
+					objectStore.collections
+					&& objectStore.collections.publicationAttachments
+						? objectStore.collections.publicationAttachments
+						: typeof objectStore.getCollection === 'function'
+							? objectStore.getCollection('publicationAttachments')
+							: null
 
-				const attachments = attachmentsCollection?.results || attachmentsCollection || []
+				const attachments =
+					attachmentsCollection?.results || attachmentsCollection || []
 				if (Array.isArray(attachments) && attachments.length > 0) {
-					return attachments.filter(att => selectedAttachmentIds.includes(att.id))
+					return attachments.filter((att) =>
+						selectedAttachmentIds.includes(att.id),
+					)
 				}
 			}
 
 			// Fall back to object selections if they exist and non-empty
-			if (Array.isArray(objectStore.selectedObjects) && objectStore.selectedObjects.length > 0) {
+			if (
+				Array.isArray(objectStore.selectedObjects)
+				&& objectStore.selectedObjects.length > 0
+			) {
 				return objectStore.selectedObjects
 			}
 
@@ -180,9 +197,14 @@ export default {
 		removeObject(objectId) {
 			// Always remove from store - the store is the source of truth
 			// 1) Remove from selectedObjects (objects flow)
-			if (Array.isArray(objectStore.selectedObjects) && objectStore.selectedObjects.length > 0) {
+			if (
+				Array.isArray(objectStore.selectedObjects)
+				&& objectStore.selectedObjects.length > 0
+			) {
 				const currentSelected = [...objectStore.selectedObjects]
-				const index = currentSelected.findIndex(obj => (obj.id || obj['@self']?.id) === objectId)
+				const index = currentSelected.findIndex(
+					(obj) => (obj.id || obj['@self']?.id) === objectId,
+				)
 				if (index > -1) {
 					currentSelected.splice(index, 1)
 					objectStore.setSelectedObjects(currentSelected)
@@ -190,8 +212,13 @@ export default {
 			}
 
 			// 2) Remove from selectedAttachments (attachments flow)
-			if (Array.isArray(objectStore.selectedAttachments) && objectStore.selectedAttachments.length > 0) {
-				const remaining = objectStore.selectedAttachments.filter(id => id !== objectId)
+			if (
+				Array.isArray(objectStore.selectedAttachments)
+				&& objectStore.selectedAttachments.length > 0
+			) {
+				const remaining = objectStore.selectedAttachments.filter(
+					(id) => id !== objectId,
+				)
 				objectStore.setSelectedAttachments(remaining)
 			}
 		},
@@ -203,11 +230,13 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		getObjectName(obj) {
-			return obj['@self']?.name
+			return (
+				obj['@self']?.name
 				|| obj.name
 				|| obj.title
 				|| obj['@self']?.title
 				|| `Unnamed ${this.title.includes('Publication') ? 'Publication' : 'Object'}`
+			)
 		},
 
 		/**
@@ -224,7 +253,9 @@ export default {
 			}
 
 			if (schema != null && schema !== '') {
-				const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(schema))
+				const match = objectStore.availableSchemas.find(
+					(s) => Number(s.id) === Number(schema),
+				)
 				return match?.title || match?.name || String(schema)
 			}
 
@@ -242,9 +273,10 @@ export default {
 			if (this.subtitleAttribute === 'schema') {
 				return this.getObjectSchema(obj)
 			}
-			const value = obj?.[this.subtitleAttribute]
+			const value =
+				obj?.[this.subtitleAttribute]
 				?? obj?.['@self']?.[this.subtitleAttribute]
-			return (value == null || value === '') ? '' : String(value)
+			return value == null || value === '' ? '' : String(value)
 		},
 
 		/**
@@ -264,7 +296,9 @@ export default {
 		 * @return {boolean} true when the parent's `isDisabled` predicate returns true.
 		 */
 		isItemDisabled(obj) {
-			return typeof this.isDisabled === 'function' ? !!this.isDisabled(obj) : false
+			return typeof this.isDisabled === 'function'
+				? !!this.isDisabled(obj)
+				: false
 		},
 
 		/**

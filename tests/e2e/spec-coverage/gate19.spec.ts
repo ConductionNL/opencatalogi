@@ -66,8 +66,9 @@ async function openCatalogueEntry(page: Page, menuId: string): Promise<void> {
 async function openIndexPage(page: Page, menuId: string): Promise<void> {
 	await bootApp(page)
 	await openCatalogueEntry(page, menuId)
-	await expect(page.locator('[data-testid="cn-index-page"]').first())
-		.toBeVisible({ timeout: 15000 })
+	await expect(page.locator('[data-testid="cn-index-page"]').first()).toBeVisible({
+		timeout: 15000,
+	})
 }
 
 /**
@@ -83,7 +84,10 @@ async function gotoHash(page: Page, route: string): Promise<void> {
 }
 
 /** A catalog usable by detail/publications tests. */
-interface CatalogRef { id: string, slug: string }
+interface CatalogRef {
+	id: string
+	slug: string
+}
 
 /**
  * Resolve an existing catalog (id + slug) from the live instance, seeding
@@ -93,12 +97,16 @@ interface CatalogRef { id: string, slug: string }
  *
  * @param request The Playwright API request context (authenticated session).
  */
-async function resolveOrSeedCatalog(request: APIRequestContext): Promise<CatalogRef> {
+async function resolveOrSeedCatalog(
+	request: APIRequestContext,
+): Promise<CatalogRef> {
 	const list = await request.get('/index.php/apps/opencatalogi/api/catalogi')
 	expect(list.status(), 'GET /api/catalogi must succeed').toBe(200)
 	const body = await list.json()
-	const results: Array<Record<string, any>> = Array.isArray(body) ? body : (body?.results ?? [])
-	const existing = results.find((c) => (c?.slug || c?.['@self']?.slug))
+	const results: Array<Record<string, any>> = Array.isArray(body)
+		? body
+		: (body?.results ?? [])
+	const existing = results.find((c) => c?.slug || c?.['@self']?.slug)
 	if (existing) {
 		return {
 			id: String(existing['@self']?.id ?? existing.id ?? existing.uuid),
@@ -106,23 +114,42 @@ async function resolveOrSeedCatalog(request: APIRequestContext): Promise<Catalog
 		}
 	}
 
-	const settingsResp = await request.get('/index.php/apps/opencatalogi/api/settings')
-	expect(settingsResp.status(), 'GET /api/settings must succeed to seed a catalog').toBe(200)
+	const settingsResp = await request.get(
+		'/index.php/apps/opencatalogi/api/settings',
+	)
+	expect(
+		settingsResp.status(),
+		'GET /api/settings must succeed to seed a catalog',
+	).toBe(200)
 	const settings = await settingsResp.json()
 	// The register/schema ids live under `configuration` (SettingsService);
 	// fall back to the OpenRegister slug path when unset.
-	const register = settings?.configuration?.catalog_register ?? settings?.catalog_register ?? 'publication'
-	const schema = settings?.configuration?.catalog_schema ?? settings?.catalog_schema ?? 'catalog'
+	const register =
+		settings?.configuration?.catalog_register
+		?? settings?.catalog_register
+		?? 'publication'
+	const schema =
+		settings?.configuration?.catalog_schema
+		?? settings?.catalog_schema
+		?? 'catalog'
 
 	const slug = `${RUN_ID}-cat`
 	const created = await request.post(
 		`/index.php/apps/openregister/api/objects/${register}/${schema}`,
 		{
-			data: { title: `${RUN_ID} catalog`, summary: 'gate-19 seeded catalog', slug, listed: true },
+			data: {
+				title: `${RUN_ID} catalog`,
+				summary: 'gate-19 seeded catalog',
+				slug,
+				listed: true,
+			},
 			headers: { 'Content-Type': 'application/json' },
 		},
 	)
-	expect(created.status(), 'seeding a catalog via OpenRegister must succeed').toBeLessThan(300)
+	expect(
+		created.status(),
+		'seeding a catalog via OpenRegister must succeed',
+	).toBeLessThan(300)
 	const obj = await created.json()
 	return { id: String(obj?.['@self']?.id ?? obj?.id ?? obj?.uuid), slug }
 }
@@ -142,19 +169,19 @@ test.describe('spa-deep-link-routing', () => {
 	 * hash form. We open #/search cold and assert the Search page (not the
 	 * Dashboard fallback) actually rendered.
 	 */
-	test(
-		// @e2e spa-deep-link-routing::open-a-deep-link-directly
-		'SPA-001 — direct hash deep-link to /search renders the Search page, not the Dashboard',
-		async ({ page }) => {
-			await gotoHash(page, '/search')
-			// The genuine Search surface must mount from the deep link.
-			await expect(page.locator('[data-testid="cn-search-page"]').first())
-				.toBeVisible({ timeout: 20000 })
-			// And the URL kept the deep-link route.
-			expect(page.url()).toContain('/apps/opencatalogi')
-			expect(page.url()).toContain('#/search')
-		},
-	)
+	test(// @e2e spa-deep-link-routing::open-a-deep-link-directly
+	'SPA-001 — direct hash deep-link to /search renders the Search page, not the Dashboard', async ({
+		page,
+	}) => {
+		await gotoHash(page, '/search')
+		// The genuine Search surface must mount from the deep link.
+		await expect(
+			page.locator('[data-testid="cn-search-page"]').first(),
+		).toBeVisible({ timeout: 20000 })
+		// And the URL kept the deep-link route.
+		expect(page.url()).toContain('/apps/opencatalogi')
+		expect(page.url()).toContain('#/search')
+	})
 })
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -167,17 +194,17 @@ test.describe('dashboard', () => {
 	 * THEN the computed permissions MUST include 'admin'
 	 * AND object collections MUST be preloaded via objectStore.preloadCollections()
 	 */
-	test(
-		// @e2e dashboard::render-the-spa-shell-for-an-admin-user
-		'DSH-009 — SPA shell renders for admin user with navigation and dashboard present',
-		async ({ page }) => {
-			await bootApp(page)
-			// bootApp already asserted [data-testid="cn-nav"] — the CnAppNav shell.
-			// The default route must render the genuine Dashboard page surface.
-			await expect(page.locator('[data-testid="cn-dashboard-page"]').first())
-				.toBeVisible({ timeout: 15000 })
-		},
-	)
+	test(// @e2e dashboard::render-the-spa-shell-for-an-admin-user
+	'DSH-009 — SPA shell renders for admin user with navigation and dashboard present', async ({
+		page,
+	}) => {
+		await bootApp(page)
+		// bootApp already asserted [data-testid="cn-nav"] — the CnAppNav shell.
+		// The default route must render the genuine Dashboard page surface.
+		await expect(
+			page.locator('[data-testid="cn-dashboard-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+	})
 
 	/**
 	 * DSH-010 — Load dashboard data.
@@ -186,23 +213,29 @@ test.describe('dashboard', () => {
 	 * THEN catalogs, the publication total, and the activity chart MUST be fetched
 	 * AND a user-facing error message MUST be shown if any fetch rejects.
 	 */
-	test(
-		// @e2e dashboard::load-dashboard-data
-		'DSH-010 — Dashboard renders its analytics sections without fatal error',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await bootApp(page)
-			await expect(page.locator('[data-testid="cn-dashboard-page"]').first())
-				.toBeVisible({ timeout: 15000 })
-			// Distinctive DashboardView content — proves data sections rendered,
-			// not just a shell (mirrors dashboard-page.spec.ts).
-			await expect(content(page).getByText(/Publications by Category/i).first())
-				.toBeVisible({ timeout: 15000 })
-			await expect(content(page).getByText(/Activity/i).first())
-				.toBeVisible({ timeout: 15000 })
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e dashboard::load-dashboard-data
+	'DSH-010 — Dashboard renders its analytics sections without fatal error', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await bootApp(page)
+		await expect(
+			page.locator('[data-testid="cn-dashboard-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		// Distinctive DashboardView content — proves data sections rendered,
+		// not just a shell (mirrors dashboard-page.spec.ts).
+		await expect(
+			content(page)
+				.getByText(/Publications by Category/i)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
+		await expect(
+			content(page)
+				.getByText(/Activity/i)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * DSH-011 — Load unpublished widgets.
@@ -215,18 +248,20 @@ test.describe('dashboard', () => {
 	 * We verify the NC dashboard app itself renders (widget registration in
 	 * Application.php did not crash bootstrap) — not a body-visible tautology.
 	 */
-	test(
-		// @e2e dashboard::load-unpublished-widgets
-		'DSH-011 — Nextcloud dashboard app renders (widget registration confirmed by bootstrap)',
-		async ({ page }) => {
-			await page.goto('/index.php/apps/dashboard/', { waitUntil: 'domcontentloaded' })
-			await dismissOverlays(page)
-			// The NC dashboard's own root container must mount.
-			await expect(page.locator('#app-dashboard, .app-dashboard').first())
-				.toBeVisible({ timeout: 20000 })
-			expect(page.url()).toContain('/apps/dashboard')
-		},
-	)
+	test(// @e2e dashboard::load-unpublished-widgets
+	'DSH-011 — Nextcloud dashboard app renders (widget registration confirmed by bootstrap)', async ({
+		page,
+	}) => {
+		await page.goto('/index.php/apps/dashboard/', {
+			waitUntil: 'domcontentloaded',
+		})
+		await dismissOverlays(page)
+		// The NC dashboard's own root container must mount.
+		await expect(
+			page.locator('#app-dashboard, .app-dashboard').first(),
+		).toBeVisible({ timeout: 20000 })
+		expect(page.url()).toContain('/apps/dashboard')
+	})
 
 	/**
 	 * DIR-012 — Add an external directory.
@@ -238,21 +273,24 @@ test.describe('dashboard', () => {
 	 * The /directory route renders CnFederationStatus — the surface that owns
 	 * the add-directory action.
 	 */
-	test(
-		// @e2e dashboard::add-an-external-directory
-		'DIR-012 — Directory page renders the directory summary with the Add directory action',
-		async ({ page }) => {
-			await bootApp(page)
-			await navTo(page, 'DirectoryMenu')
-			// The Directory page's genuine surface (federation directory summary
-			// with available/degraded/unreachable counts).
-			await expect(page.locator('[data-testid="federation-directory-summary"]').first())
-				.toBeVisible({ timeout: 15000 })
-			// The add-directory trigger this scenario is about.
-			await expect(content(page).getByRole('button', { name: /add directory/i }).first())
-				.toBeVisible({ timeout: 10000 })
-		},
-	)
+	test(// @e2e dashboard::add-an-external-directory
+	'DIR-012 — Directory page renders the directory summary with the Add directory action', async ({
+		page,
+	}) => {
+		await bootApp(page)
+		await navTo(page, 'DirectoryMenu')
+		// The Directory page's genuine surface (federation directory summary
+		// with available/degraded/unreachable counts).
+		await expect(
+			page.locator('[data-testid="federation-directory-summary"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		// The add-directory trigger this scenario is about.
+		await expect(
+			content(page)
+				.getByRole('button', { name: /add directory/i })
+				.first(),
+		).toBeVisible({ timeout: 10000 })
+	})
 
 	/**
 	 * LST-007 — Edit a listing.
@@ -260,21 +298,24 @@ test.describe('dashboard', () => {
 	 * WHEN the user saves
 	 * THEN the listing MUST be persisted via objectStore.updateObject(...) and the collection refreshed.
 	 */
-	test(
-		// @e2e dashboard::edit-a-listing
-		'LST-007 — Directory page renders listing management surface (directory summary + listings)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await bootApp(page)
-			await navTo(page, 'DirectoryMenu')
-			await expect(page.locator('[data-testid="federation-directory-summary"]').first())
-				.toBeVisible({ timeout: 15000 })
-			// The availability counters are part of the genuine summary surface.
-			await expect(content(page).getByText(/available/i).first())
-				.toBeVisible({ timeout: 15000 })
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e dashboard::edit-a-listing
+	'LST-007 — Directory page renders listing management surface (directory summary + listings)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await bootApp(page)
+		await navTo(page, 'DirectoryMenu')
+		await expect(
+			page.locator('[data-testid="federation-directory-summary"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		// The availability counters are part of the genuine summary surface.
+		await expect(
+			content(page)
+				.getByText(/available/i)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * LST-007 — Delete a listing.
@@ -282,18 +323,18 @@ test.describe('dashboard', () => {
 	 * WHEN the delete-listing dialog is confirmed
 	 * THEN the listing MUST be removed via objectStore.deleteObject('listing', id).
 	 */
-	test(
-		// @e2e dashboard::delete-a-listing
-		'LST-007 — Directory page renders without fatal JS errors (delete dialog host)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await bootApp(page)
-			await navTo(page, 'DirectoryMenu')
-			await expect(page.locator('[data-testid="federation-directory-summary"]').first())
-				.toBeVisible({ timeout: 15000 })
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e dashboard::delete-a-listing
+	'LST-007 — Directory page renders without fatal JS errors (delete dialog host)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await bootApp(page)
+		await navTo(page, 'DirectoryMenu')
+		await expect(
+			page.locator('[data-testid="federation-directory-summary"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })
 
 // ── Admin settings ────────────────────────────────────────────────────────────
@@ -307,22 +348,21 @@ test.describe('admin-settings', () => {
 	 *
 	 * Verify the admin settings API endpoints respond correctly.
 	 */
-	test(
-		// @e2e admin-settings::load-admin-settings
-		'SET-015 — GET /api/settings and /api/settings/publishing return JSON data',
-		async ({ request }) => {
-			const [settingsResp, publishingResp] = await Promise.all([
-				request.get('/index.php/apps/opencatalogi/api/settings'),
-				request.get('/index.php/apps/opencatalogi/api/settings/publishing'),
-			])
-			expect([200, 401]).toContain(settingsResp.status())
-			expect([200, 401]).toContain(publishingResp.status())
-			if (settingsResp.status() === 200) {
-				const body = await settingsResp.json().catch(() => null)
-				expect(body).not.toBeNull()
-			}
-		},
-	)
+	test(// @e2e admin-settings::load-admin-settings
+	'SET-015 — GET /api/settings and /api/settings/publishing return JSON data', async ({
+		request,
+	}) => {
+		const [settingsResp, publishingResp] = await Promise.all([
+			request.get('/index.php/apps/opencatalogi/api/settings'),
+			request.get('/index.php/apps/opencatalogi/api/settings/publishing'),
+		])
+		expect([200, 401]).toContain(settingsResp.status())
+		expect([200, 401]).toContain(publishingResp.status())
+		if (settingsResp.status() === 200) {
+			const body = await settingsResp.json().catch(() => null)
+			expect(body).not.toBeNull()
+		}
+	})
 
 	/**
 	 * SET-015 — Save admin settings.
@@ -333,28 +373,33 @@ test.describe('admin-settings', () => {
 	 * Verify the admin settings page is reachable and the POST /api/settings endpoint
 	 * accepts the request (even if it returns a validation error on empty data).
 	 */
-	test(
-		// @e2e admin-settings::save-admin-settings
-		'SET-015 — POST /api/settings endpoint is accessible and accepts data',
-		async ({ request }) => {
-			// `OCS-APIRequest: true` is what makes this a legitimate API client.
-			// Nextcloud's Request::passesCSRFCheck() returns true unconditionally
-			// for a request carrying that header; a browser-shaped request must
-			// instead carry `requesttoken`.
-			//
-			// Before this header was added, this assertion passed BECAUSE the
-			// endpoint was `@NoCSRFRequired` — i.e. the test was pinning the
-			// vulnerable posture as correct, and would have gone red on the fix.
-			// The companion test below is the positive control that proves CSRF
-			// is now actually enforced.
-			const resp = await request.post('/index.php/apps/opencatalogi/api/settings', {
+	test(// @e2e admin-settings::save-admin-settings
+	'SET-015 — POST /api/settings endpoint is accessible and accepts data', async ({
+		request,
+	}) => {
+		// `OCS-APIRequest: true` is what makes this a legitimate API client.
+		// Nextcloud's Request::passesCSRFCheck() returns true unconditionally
+		// for a request carrying that header; a browser-shaped request must
+		// instead carry `requesttoken`.
+		//
+		// Before this header was added, this assertion passed BECAUSE the
+		// endpoint was `@NoCSRFRequired` — i.e. the test was pinning the
+		// vulnerable posture as correct, and would have gone red on the fix.
+		// The companion test below is the positive control that proves CSRF
+		// is now actually enforced.
+		const resp = await request.post(
+			'/index.php/apps/opencatalogi/api/settings',
+			{
 				data: {},
-				headers: { 'Content-Type': 'application/json', 'OCS-APIRequest': 'true' },
-			})
-			// 200 (saved), 400 (validation error), 401 (auth), 403 (admin required) are all acceptable
-			expect([200, 400, 401, 403]).toContain(resp.status())
-		},
-	)
+				headers: {
+					'Content-Type': 'application/json',
+					'OCS-APIRequest': 'true',
+				},
+			},
+		)
+		// 200 (saved), 400 (validation error), 401 (auth), 403 (admin required) are all acceptable
+		expect([200, 400, 401, 403]).toContain(resp.status())
+	})
 
 	/**
 	 * SET-015 — the settings write REFUSES a request with no CSRF token.
@@ -366,20 +411,22 @@ test.describe('admin-settings', () => {
 	 * `@NoCSRFRequired` to SettingsController::update()/create() would make the
 	 * whole suite green again and nothing would notice.
 	 */
-	test(
-		// @e2e admin-settings::save-admin-settings
-		'SET-015 — POST /api/settings is refused without a CSRF token',
-		async ({ request }) => {
-			const resp = await request.post('/index.php/apps/opencatalogi/api/settings', {
+	test(// @e2e admin-settings::save-admin-settings
+	'SET-015 — POST /api/settings is refused without a CSRF token', async ({
+		request,
+	}) => {
+		const resp = await request.post(
+			'/index.php/apps/opencatalogi/api/settings',
+			{
 				data: {},
 				headers: { 'Content-Type': 'application/json' },
-			})
-			expect(
-				resp.status(),
-				'a tokenless, browser-shaped write must be refused — 412 is NC\'s CrossSiteRequestForgeryException status',
-			).toBe(412)
-		},
-	)
+			},
+		)
+		expect(
+			resp.status(),
+			"a tokenless, browser-shaped write must be refused — 412 is NC's CrossSiteRequestForgeryException status",
+		).toBe(412)
+	})
 
 	/**
 	 * SET-015 — Run a manual import.
@@ -387,20 +434,25 @@ test.describe('admin-settings', () => {
 	 * WHEN the import runs
 	 * THEN POST /api/settings/import MUST be called and the settings reloaded afterward.
 	 */
-	test(
-		// @e2e admin-settings::run-a-manual-import
-		'SET-015 — POST /api/settings/import endpoint is accessible',
-		async ({ request }) => {
-			// See the note on SET-015 POST /api/settings above — `OCS-APIRequest`
-			// is the API-client posture, and it is what ci-seed.sh already sends.
-			const resp = await request.post('/index.php/apps/opencatalogi/api/settings/import', {
+	test(// @e2e admin-settings::run-a-manual-import
+	'SET-015 — POST /api/settings/import endpoint is accessible', async ({
+		request,
+	}) => {
+		// See the note on SET-015 POST /api/settings above — `OCS-APIRequest`
+		// is the API-client posture, and it is what ci-seed.sh already sends.
+		const resp = await request.post(
+			'/index.php/apps/opencatalogi/api/settings/import',
+			{
 				data: {},
-				headers: { 'Content-Type': 'application/json', 'OCS-APIRequest': 'true' },
-			})
-			// 200 (import ran), 400 (bad request/unconfigured), 401/403 (auth/admin), 500 are valid
-			expect([200, 400, 401, 403, 500]).toContain(resp.status())
-		},
-	)
+				headers: {
+					'Content-Type': 'application/json',
+					'OCS-APIRequest': 'true',
+				},
+			},
+		)
+		// 200 (import ran), 400 (bad request/unconfigured), 401/403 (auth/admin), 500 are valid
+		expect([200, 400, 401, 403, 500]).toContain(resp.status())
+	})
 
 	/**
 	 * SET-017 — Open the user settings dialog.
@@ -412,26 +464,30 @@ test.describe('admin-settings', () => {
 	 * foldout. We open the foldout, click the entry, and assert the dialog
 	 * genuinely opens.
 	 */
-	test(
-		// @e2e admin-settings::open-the-user-settings-dialog
-		'SET-017 — Settings nav entry opens the user settings dialog',
-		async ({ page }) => {
-			await bootApp(page)
-			const entry = page.locator('[data-testid="cn-nav-entry-SettingsMenu"]').first()
-			// Use the shared helper rather than an inline copy of the gear
-			// selectors: @nextcloud/vue v9 renders the settings foldout with
-			// hashed CSS-module class names, so the old selector list matches
-			// nothing and the entry stays hidden.
-			if (!(await entry.isVisible().catch(() => false))) {
-				await openSettingsFoldout(page)
-			}
-			await expect(entry).toBeVisible({ timeout: 10000 })
-			await entry.click()
-			// The settings dialog must actually open.
-			const dialog = page.locator('[role="dialog"], .modal-container').filter({ hasText: /settings/i }).first()
-			await expect(dialog).toBeVisible({ timeout: 10000 })
-		},
-	)
+	test(// @e2e admin-settings::open-the-user-settings-dialog
+	'SET-017 — Settings nav entry opens the user settings dialog', async ({
+		page,
+	}) => {
+		await bootApp(page)
+		const entry = page
+			.locator('[data-testid="cn-nav-entry-SettingsMenu"]')
+			.first()
+		// Use the shared helper rather than an inline copy of the gear
+		// selectors: @nextcloud/vue v9 renders the settings foldout with
+		// hashed CSS-module class names, so the old selector list matches
+		// nothing and the entry stays hidden.
+		if (!(await entry.isVisible().catch(() => false))) {
+			await openSettingsFoldout(page)
+		}
+		await expect(entry).toBeVisible({ timeout: 10000 })
+		await entry.click()
+		// The settings dialog must actually open.
+		const dialog = page
+			.locator('[role="dialog"], .modal-container')
+			.filter({ hasText: /settings/i })
+			.first()
+		await expect(dialog).toBeVisible({ timeout: 10000 })
+	})
 })
 
 // ── Catalogs ──────────────────────────────────────────────────────────────────
@@ -447,15 +503,15 @@ test.describe('catalogs', () => {
 	 * We open the Catalogs index via its nav entry and confirm the genuine
 	 * index surface + the primary Add CTA that opens the create modal.
 	 */
-	test(
-		// @e2e catalogs::create-a-new-catalog
-		'CAT-014 — Catalogs index renders with the create-catalog CTA',
-		async ({ page }) => {
-			await openIndexPage(page, 'CatalogsMenu')
-			await expect(page.locator('[data-testid="cn-cta-primary"]').first())
-				.toBeVisible({ timeout: 10000 })
-		},
-	)
+	test(// @e2e catalogs::create-a-new-catalog
+	'CAT-014 — Catalogs index renders with the create-catalog CTA', async ({
+		page,
+	}) => {
+		await openIndexPage(page, 'CatalogsMenu')
+		await expect(
+			page.locator('[data-testid="cn-cta-primary"]').first(),
+		).toBeVisible({ timeout: 10000 })
+	})
 
 	/**
 	 * CAT-014 — Edit an existing catalog.
@@ -467,20 +523,20 @@ test.describe('catalogs', () => {
 	 * then assert the Catalogs index actually lists data (rows — the edit
 	 * affordance's host surface), not an unconditional shell.
 	 */
-	test(
-		// @e2e catalogs::edit-an-existing-catalog
-		'CAT-014 — Catalogs index lists an existing catalog (edit action host)',
-		async ({ page, request }) => {
-			await resolveOrSeedCatalog(request)
-			await openIndexPage(page, 'CatalogsMenu')
-			// With at least one catalog present, the list body must show rows
-			// (a table row or card), not the empty-state.
-			const rows = content(page).locator(
-				'[data-testid="cn-object-row"], [data-testid="cn-object-list-table"] tbody tr, table tbody tr, .cn-object-card',
-			)
-			await expect(rows.first()).toBeVisible({ timeout: 15000 })
-		},
-	)
+	test(// @e2e catalogs::edit-an-existing-catalog
+	'CAT-014 — Catalogs index lists an existing catalog (edit action host)', async ({
+		page,
+		request,
+	}) => {
+		await resolveOrSeedCatalog(request)
+		await openIndexPage(page, 'CatalogsMenu')
+		// With at least one catalog present, the list body must show rows
+		// (a table row or card), not the empty-state.
+		const rows = content(page).locator(
+			'[data-testid="cn-object-row"], [data-testid="cn-object-list-table"] tbody tr, table tbody tr, .cn-object-card',
+		)
+		await expect(rows.first()).toBeVisible({ timeout: 15000 })
+	})
 
 	/**
 	 * CAT-015 — Open a catalog detail page by route id.
@@ -488,17 +544,18 @@ test.describe('catalogs', () => {
 	 * WHEN CatalogDetailPage mounts
 	 * THEN it MUST call objectStore.fetchObject('catalog', id) and render the active catalog.
 	 */
-	test(
-		// @e2e catalogs::open-a-catalog-detail-page-by-route-id
-		'CAT-015 — /catalogi/{id} hash route renders the catalog detail page for a real catalog',
-		async ({ page, request }) => {
-			const cat = await resolveOrSeedCatalog(request)
-			await bootApp(page)
-			await gotoHash(page, `/catalogi/${cat.id}`)
-			await expect(page.locator('[data-testid="cn-detail-page"]').first())
-				.toBeVisible({ timeout: 15000 })
-		},
-	)
+	test(// @e2e catalogs::open-a-catalog-detail-page-by-route-id
+	'CAT-015 — /catalogi/{id} hash route renders the catalog detail page for a real catalog', async ({
+		page,
+		request,
+	}) => {
+		const cat = await resolveOrSeedCatalog(request)
+		await bootApp(page)
+		await gotoHash(page, `/catalogi/${cat.id}`)
+		await expect(
+			page.locator('[data-testid="cn-detail-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+	})
 
 	/**
 	 * CAT-015 — Navigate to a catalog's publications.
@@ -506,19 +563,20 @@ test.describe('catalogs', () => {
 	 * WHEN the user opens its publications
 	 * THEN the router MUST push the Publications route with catalogSlug set to the slug.
 	 */
-	test(
-		// @e2e catalogs::navigate-to-a-catalogs-publications
-		'CAT-015 — /publications/{catalogSlug} hash route renders the Publications index',
-		async ({ page, request }) => {
-			const cat = await resolveOrSeedCatalog(request)
-			await bootApp(page)
-			await gotoHash(page, `/publications/${cat.slug}`)
-			// The Publications page is a manifest type:index page — its genuine
-			// surface is cn-index-page (not the dashboard).
-			await expect(page.locator('[data-testid="cn-index-page"]').first())
-				.toBeVisible({ timeout: 15000 })
-		},
-	)
+	test(// @e2e catalogs::navigate-to-a-catalogs-publications
+	'CAT-015 — /publications/{catalogSlug} hash route renders the Publications index', async ({
+		page,
+		request,
+	}) => {
+		const cat = await resolveOrSeedCatalog(request)
+		await bootApp(page)
+		await gotoHash(page, `/publications/${cat.slug}`)
+		// The Publications page is a manifest type:index page — its genuine
+		// surface is cn-index-page (not the dashboard).
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+	})
 })
 
 // ── Search ────────────────────────────────────────────────────────────────────
@@ -531,23 +589,22 @@ test.describe('search', () => {
 	 * THEN a request MUST be sent to /api/federation/publications with _search, pagination, etc.
 	 * AND results, total, and facets MUST be stored on success.
 	 */
-	test(
-		// @e2e search::run-a-publication-search
-		'SCH-016 — GET /api/federation/publications?_search=test returns valid JSON',
-		async ({ browser }) => {
-			const ctx = await browser.newContext()
-			const page = await ctx.newPage()
-			const resp = await page.request.get(
-				'/index.php/apps/opencatalogi/api/federation/publications?_search=test&_facetable=true&_aggregate=true',
-			)
-			expect([200, 401, 404]).toContain(resp.status())
-			if (resp.status() === 200) {
-				const body = await resp.json().catch(() => null)
-				expect(body).not.toBeNull()
-			}
-			await ctx.close()
-		},
-	)
+	test(// @e2e search::run-a-publication-search
+	'SCH-016 — GET /api/federation/publications?_search=test returns valid JSON', async ({
+		browser,
+	}) => {
+		const ctx = await browser.newContext()
+		const page = await ctx.newPage()
+		const resp = await page.request.get(
+			'/index.php/apps/opencatalogi/api/federation/publications?_search=test&_facetable=true&_aggregate=true',
+		)
+		expect([200, 401, 404]).toContain(resp.status())
+		if (resp.status() === 200) {
+			const body = await resp.json().catch(() => null)
+			expect(body).not.toBeNull()
+		}
+		await ctx.close()
+	})
 
 	/**
 	 * SCH-017 — Discover facetable fields.
@@ -557,19 +614,23 @@ test.describe('search', () => {
 	 *
 	 * The /search route must render the genuine search surface with its input.
 	 */
-	test(
-		// @e2e search::discover-facetable-fields
-		'SCH-017 — Search page renders the search surface with an input (facet discovery host)',
-		async ({ page }) => {
-			await bootApp(page)
-			await navTo(page, 'Search')
-			await expect(content(page).locator('[data-testid="cn-search-page"]').first())
-				.toBeVisible({ timeout: 15000 })
-			await expect(content(page).locator(
-				'[data-testid="cn-search-page-input"], input[type="search"]',
-			).first()).toBeVisible({ timeout: 15000 })
-		},
-	)
+	test(// @e2e search::discover-facetable-fields
+	'SCH-017 — Search page renders the search surface with an input (facet discovery host)', async ({
+		page,
+	}) => {
+		await bootApp(page)
+		await navTo(page, 'Search')
+		await expect(
+			content(page).locator('[data-testid="cn-search-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		await expect(
+			content(page)
+				.locator(
+					'[data-testid="cn-search-page-input"], input[type="search"]',
+				)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
+	})
 
 	/**
 	 * SCH-017 — Build a facet query from active facets.
@@ -579,20 +640,19 @@ test.describe('search', () => {
 	 *
 	 * Verify the federation endpoint accepts facet query parameters.
 	 */
-	test(
-		// @e2e search::build-a-facet-query-from-active-facets
-		'SCH-017 — federation endpoint accepts @self facet query parameters',
-		async ({ browser }) => {
-			const ctx = await browser.newContext()
-			const page = await ctx.newPage()
-			const resp = await page.request.get(
-				'/index.php/apps/opencatalogi/api/federation/publications?_facetable=true&_aggregate=true&@self.schema[or]=1,2',
-			)
-			// Should not crash (200 or 404 if unconfigured)
-			expect([200, 400, 404]).toContain(resp.status())
-			await ctx.close()
-		},
-	)
+	test(// @e2e search::build-a-facet-query-from-active-facets
+	'SCH-017 — federation endpoint accepts @self facet query parameters', async ({
+		browser,
+	}) => {
+		const ctx = await browser.newContext()
+		const page = await ctx.newPage()
+		const resp = await page.request.get(
+			'/index.php/apps/opencatalogi/api/federation/publications?_facetable=true&_aggregate=true&@self.schema[or]=1,2',
+		)
+		// Should not crash (200 or 404 if unconfigured)
+		expect([200, 400, 404]).toContain(resp.status())
+		await ctx.close()
+	})
 
 	/**
 	 * SCH-018 — Toggle a facet from the UI.
@@ -600,18 +660,18 @@ test.describe('search', () => {
 	 * WHEN the user enables it
 	 * THEN the store's active facets MUST update and a re-search MUST be triggerable.
 	 */
-	test(
-		// @e2e search::toggle-a-facet-from-the-ui
-		'SCH-018 — Search page renders its surface without fatal JS errors',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await bootApp(page)
-			await navTo(page, 'Search')
-			await expect(content(page).locator('[data-testid="cn-search-page"]').first())
-				.toBeVisible({ timeout: 15000 })
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e search::toggle-a-facet-from-the-ui
+	'SCH-018 — Search page renders its surface without fatal JS errors', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await bootApp(page)
+		await navTo(page, 'Search')
+		await expect(
+			content(page).locator('[data-testid="cn-search-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * SCH-019 — List publications via the internal search endpoint.
@@ -619,18 +679,17 @@ test.describe('search', () => {
 	 * WHEN SearchController::index runs
 	 * THEN it MUST delegate to PublicationService::index and return the JSON publication list.
 	 */
-	test(
-		// @e2e search::list-publications-via-the-internal-search-endpoint
-		'SCH-019 — GET /api/search (authenticated) returns a publication list',
-		async ({ request }) => {
-			const resp = await request.get('/index.php/apps/opencatalogi/api/search')
-			expect([200, 401]).toContain(resp.status())
-			if (resp.status() === 200) {
-				const body = await resp.json().catch(() => null)
-				expect(body).not.toBeNull()
-			}
-		},
-	)
+	test(// @e2e search::list-publications-via-the-internal-search-endpoint
+	'SCH-019 — GET /api/search (authenticated) returns a publication list', async ({
+		request,
+	}) => {
+		const resp = await request.get('/index.php/apps/opencatalogi/api/search')
+		expect([200, 401]).toContain(resp.status())
+		if (resp.status() === 200) {
+			const body = await resp.json().catch(() => null)
+			expect(body).not.toBeNull()
+		}
+	})
 })
 
 // ── Content management ────────────────────────────────────────────────────────
@@ -642,15 +701,15 @@ test.describe('content-management', () => {
 	 * WHEN the user saves the content block
 	 * THEN the parent page MUST be persisted via objectStore.updateObject('page', id, page).
 	 */
-	test(
-		// @e2e content-management::add-or-edit-a-page-content-block
-		'CMS-036 — Pages index renders with Add CTA and list/empty surface',
-		async ({ page }) => {
-			await openIndexPage(page, 'PagesMenu')
-			await expect(page.locator('[data-testid="cn-cta-primary"]').first())
-				.toBeVisible({ timeout: 10000 })
-		},
-	)
+	test(// @e2e content-management::add-or-edit-a-page-content-block
+	'CMS-036 — Pages index renders with Add CTA and list/empty surface', async ({
+		page,
+	}) => {
+		await openIndexPage(page, 'PagesMenu')
+		await expect(
+			page.locator('[data-testid="cn-cta-primary"]').first(),
+		).toBeVisible({ timeout: 10000 })
+	})
 
 	/**
 	 * CMS-036 — Delete a page content block.
@@ -658,15 +717,14 @@ test.describe('content-management', () => {
 	 * WHEN the delete-page-content dialog confirms removal
 	 * THEN the page MUST be updated with the block removed via updateObject('page', ...).
 	 */
-	test(
-		// @e2e content-management::delete-a-page-content-block
-		'CMS-036 — Pages index renders without fatal JS errors (delete dialog host)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await openIndexPage(page, 'PagesMenu')
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e content-management::delete-a-page-content-block
+	'CMS-036 — Pages index renders without fatal JS errors (delete dialog host)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await openIndexPage(page, 'PagesMenu')
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * CMS-037 — Add or edit a menu item.
@@ -674,15 +732,15 @@ test.describe('content-management', () => {
 	 * WHEN the user saves the item
 	 * THEN the parent menu MUST be persisted via objectStore.updateObject('menu', id, menu).
 	 */
-	test(
-		// @e2e content-management::add-or-edit-a-menu-item
-		'CMS-037 — Menus index renders with Add CTA and list/empty surface',
-		async ({ page }) => {
-			await openIndexPage(page, 'MenusMenu')
-			await expect(page.locator('[data-testid="cn-cta-primary"]').first())
-				.toBeVisible({ timeout: 10000 })
-		},
-	)
+	test(// @e2e content-management::add-or-edit-a-menu-item
+	'CMS-037 — Menus index renders with Add CTA and list/empty surface', async ({
+		page,
+	}) => {
+		await openIndexPage(page, 'MenusMenu')
+		await expect(
+			page.locator('[data-testid="cn-cta-primary"]').first(),
+		).toBeVisible({ timeout: 10000 })
+	})
 
 	/**
 	 * CMS-037 — Copy a menu.
@@ -690,15 +748,14 @@ test.describe('content-management', () => {
 	 * WHEN the copy-menu dialog is confirmed
 	 * THEN a new menu MUST be created via objectStore.createObject('menu', clone) with a (kopie) title.
 	 */
-	test(
-		// @e2e content-management::copy-a-menu
-		'CMS-037 — Menus index renders without fatal JS errors (copy-menu dialog host)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await openIndexPage(page, 'MenusMenu')
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e content-management::copy-a-menu
+	'CMS-037 — Menus index renders without fatal JS errors (copy-menu dialog host)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await openIndexPage(page, 'MenusMenu')
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * CMS-038 — Attach a theme to a publication.
@@ -706,15 +763,15 @@ test.describe('content-management', () => {
 	 * WHEN the user confirms the theme selection
 	 * THEN the publication MUST be updated via objectStore.updateObject('publication', id, updatedPublication).
 	 */
-	test(
-		// @e2e content-management::attach-a-theme-to-a-publication
-		'CMS-038 — Themes index renders with Add CTA and list/empty surface',
-		async ({ page }) => {
-			await openIndexPage(page, 'ThemesMenu')
-			await expect(page.locator('[data-testid="cn-cta-primary"]').first())
-				.toBeVisible({ timeout: 10000 })
-		},
-	)
+	test(// @e2e content-management::attach-a-theme-to-a-publication
+	'CMS-038 — Themes index renders with Add CTA and list/empty surface', async ({
+		page,
+	}) => {
+		await openIndexPage(page, 'ThemesMenu')
+		await expect(
+			page.locator('[data-testid="cn-cta-primary"]').first(),
+		).toBeVisible({ timeout: 10000 })
+	})
 
 	/**
 	 * CMS-038 — Bulk-delete themes.
@@ -722,15 +779,14 @@ test.describe('content-management', () => {
 	 * WHEN the delete-multiple-themes dialog is confirmed
 	 * THEN each selected theme MUST be removed via objectStore.deleteObject('theme', id).
 	 */
-	test(
-		// @e2e content-management::bulk-delete-themes
-		'CMS-038 — Themes index renders without fatal JS errors (bulk-delete dialog host)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await openIndexPage(page, 'ThemesMenu')
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e content-management::bulk-delete-themes
+	'CMS-038 — Themes index renders without fatal JS errors (bulk-delete dialog host)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await openIndexPage(page, 'ThemesMenu')
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * CMS-039 — View a glossary term.
@@ -738,15 +794,15 @@ test.describe('content-management', () => {
 	 * WHEN the navigation store modal is set to the glossary modal
 	 * THEN the term's details MUST be rendered read-only.
 	 */
-	test(
-		// @e2e content-management::view-a-glossary-term
-		'CMS-039 — Glossary index renders with Add CTA and list/empty surface',
-		async ({ page }) => {
-			await openIndexPage(page, 'GlossaryMenu')
-			await expect(page.locator('[data-testid="cn-cta-primary"]').first())
-				.toBeVisible({ timeout: 10000 })
-		},
-	)
+	test(// @e2e content-management::view-a-glossary-term
+	'CMS-039 — Glossary index renders with Add CTA and list/empty surface', async ({
+		page,
+	}) => {
+		await openIndexPage(page, 'GlossaryMenu')
+		await expect(
+			page.locator('[data-testid="cn-cta-primary"]').first(),
+		).toBeVisible({ timeout: 10000 })
+	})
 })
 
 // ── File management ───────────────────────────────────────────────────────────
@@ -759,15 +815,14 @@ test.describe('file-management', () => {
 	 * THEN the file MUST be sent to the publication's OpenRegister .../files endpoint
 	 * AND any selected tags MUST be applied.
 	 */
-	test(
-		// @e2e file-management::upload-a-file-to-the-active-publication
-		'FIL-016 — Catalogs index renders without fatal errors (UploadFiles modal host)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await openIndexPage(page, 'CatalogsMenu')
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e file-management::upload-a-file-to-the-active-publication
+	'FIL-016 — Catalogs index renders without fatal errors (UploadFiles modal host)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await openIndexPage(page, 'CatalogsMenu')
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * FIL-017 — Delete an attachment.
@@ -778,21 +833,20 @@ test.describe('file-management', () => {
 	 *
 	 * Verify the API endpoint for file deletion is reachable.
 	 */
-	test(
-		// @e2e file-management::delete-an-attachment
-		'FIL-017 — DELETE .../files/{id} endpoint is accessible (returns 401/404 without auth/object)',
-		async ({ browser }) => {
-			const ctx = await browser.newContext()
-			const page = await ctx.newPage()
-			// Attempt a DELETE on a non-existent file endpoint — should not 500
-			const resp = await page.request.delete(
-				'/index.php/apps/openregister/api/objects/1/1/non-existent-id/files/non-existent-file',
-			)
-			// 401 (not auth), 403, 404, or 405 are all valid — no 500
-			expect([401, 403, 404, 405]).toContain(resp.status())
-			await ctx.close()
-		},
-	)
+	test(// @e2e file-management::delete-an-attachment
+	'FIL-017 — DELETE .../files/{id} endpoint is accessible (returns 401/404 without auth/object)', async ({
+		browser,
+	}) => {
+		const ctx = await browser.newContext()
+		const page = await ctx.newPage()
+		// Attempt a DELETE on a non-existent file endpoint — should not 500
+		const resp = await page.request.delete(
+			'/index.php/apps/openregister/api/objects/1/1/non-existent-id/files/non-existent-file',
+		)
+		// 401 (not auth), 403, 404, or 405 are all valid — no 500
+		expect([401, 403, 404, 405]).toContain(resp.status())
+		await ctx.close()
+	})
 
 	/**
 	 * FIL-018 — Edit an attachment.
@@ -800,15 +854,14 @@ test.describe('file-management', () => {
 	 * WHEN the user saves changes
 	 * THEN the attachment MUST be persisted via objectStore.updateObject('attachment', id, attachment).
 	 */
-	test(
-		// @e2e file-management::edit-an-attachment
-		'FIL-018 — Catalogs index renders without fatal errors (EditAttachmentModal host)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await openIndexPage(page, 'CatalogsMenu')
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e file-management::edit-an-attachment
+	'FIL-018 — Catalogs index renders without fatal errors (EditAttachmentModal host)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await openIndexPage(page, 'CatalogsMenu')
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })
 
 // ── Generic object modals ─────────────────────────────────────────────────────
@@ -821,18 +874,21 @@ test.describe('generic-object-modals', () => {
 	 * THEN the object's properties, metadata and attachments are rendered read-only
 	 * without requiring the caller to know the object's schema.
 	 */
-	test(
-		// @e2e generic-object-modals::user-views-an-object
-		'GOM-001 — Catalogs index renders the generic object list (view-object host)',
-		async ({ page }) => {
-			await openIndexPage(page, 'CatalogsMenu')
-			// The genuine list body: table / cards / empty-state.
-			await expect(content(page).locator(
-				'[data-testid="cn-object-list-table"], table, .cn-card-grid, '
-				+ '[data-testid="cn-object-list-empty"], .empty-content, [class*="empty-content"]',
-			).first()).toBeVisible({ timeout: 15000 })
-		},
-	)
+	test(// @e2e generic-object-modals::user-views-an-object
+	'GOM-001 — Catalogs index renders the generic object list (view-object host)', async ({
+		page,
+	}) => {
+		await openIndexPage(page, 'CatalogsMenu')
+		// The genuine list body: table / cards / empty-state.
+		await expect(
+			content(page)
+				.locator(
+					'[data-testid="cn-object-list-table"], table, .cn-card-grid, '
+						+ '[data-testid="cn-object-list-empty"], .empty-content, [class*="empty-content"]',
+				)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
+	})
 
 	/**
 	 * GOM-002 — User mass-deletes selected publications.
@@ -840,15 +896,14 @@ test.describe('generic-object-modals', () => {
 	 * WHEN the user confirms the mass delete
 	 * THEN objectStore.massDeleteObjects(selection) is invoked.
 	 */
-	test(
-		// @e2e generic-object-modals::user-mass-deletes-selected-publications
-		'GOM-002 — Catalogs index renders without JS errors (mass-delete modal host)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await openIndexPage(page, 'CatalogsMenu')
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e generic-object-modals::user-mass-deletes-selected-publications
+	'GOM-002 — Catalogs index renders without JS errors (mass-delete modal host)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await openIndexPage(page, 'CatalogsMenu')
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * GOM-002 — Bulk action with empty selection.
@@ -858,16 +913,15 @@ test.describe('generic-object-modals', () => {
 	 *
 	 * The index loads with no objects selected (empty selection is the default).
 	 */
-	test(
-		// @e2e generic-object-modals::bulk-action-with-empty-selection
-		'GOM-002 — Catalogs index loads with no objects pre-selected',
-		async ({ page }) => {
-			await openIndexPage(page, 'CatalogsMenu')
-			// No checkboxes should be pre-checked (no selection by default)
-			const checkedBoxes = content(page).locator('input[type="checkbox"]:checked')
-			expect(await checkedBoxes.count()).toBe(0)
-		},
-	)
+	test(// @e2e generic-object-modals::bulk-action-with-empty-selection
+	'GOM-002 — Catalogs index loads with no objects pre-selected', async ({
+		page,
+	}) => {
+		await openIndexPage(page, 'CatalogsMenu')
+		// No checkboxes should be pre-checked (no selection by default)
+		const checkedBoxes = content(page).locator('input[type="checkbox"]:checked')
+		expect(await checkedBoxes.count()).toBe(0)
+	})
 
 	/**
 	 * GOM-004 — User views an object's audit log.
@@ -875,15 +929,14 @@ test.describe('generic-object-modals', () => {
 	 * WHEN the view-log dialog opens
 	 * THEN the log content is rendered from objectStore.getActiveObject('log').content.
 	 */
-	test(
-		// @e2e generic-object-modals::user-views-an-objects-audit-log
-		'GOM-004 — Catalogs index renders without JS errors (audit-log dialog host)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await openIndexPage(page, 'CatalogsMenu')
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e generic-object-modals::user-views-an-objects-audit-log
+	'GOM-004 — Catalogs index renders without JS errors (audit-log dialog host)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await openIndexPage(page, 'CatalogsMenu')
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * GOM-005 — Generic table lists objects of any type.
@@ -891,17 +944,20 @@ test.describe('generic-object-modals', () => {
 	 * WHEN the table renders
 	 * THEN rows and columns are derived from the supplied objects without hard-coding a specific schema.
 	 */
-	test(
-		// @e2e generic-object-modals::generic-table-lists-objects-of-any-type
-		'GOM-005 — Catalogs index renders the generic table (or genuine empty-state)',
-		async ({ page }) => {
-			await openIndexPage(page, 'CatalogsMenu')
-			await expect(content(page).locator(
-				'[data-testid="cn-object-list-table"], table, .cn-card-grid, '
-				+ '[data-testid="cn-object-list-empty"], .empty-content, [class*="empty-content"]',
-			).first()).toBeVisible({ timeout: 15000 })
-		},
-	)
+	test(// @e2e generic-object-modals::generic-table-lists-objects-of-any-type
+	'GOM-005 — Catalogs index renders the generic table (or genuine empty-state)', async ({
+		page,
+	}) => {
+		await openIndexPage(page, 'CatalogsMenu')
+		await expect(
+			content(page)
+				.locator(
+					'[data-testid="cn-object-list-table"], table, .cn-card-grid, '
+						+ '[data-testid="cn-object-list-empty"], .empty-content, [class*="empty-content"]',
+				)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
+	})
 })
 
 // ── Publications ──────────────────────────────────────────────────────────────
@@ -915,19 +971,18 @@ test.describe('publications', () => {
 	 *
 	 * Verify the publish endpoint accepts requests.
 	 */
-	test(
-		// @e2e publications::publish-an-unpublished-publication
-		'PUB-016 — OpenRegister publish endpoint is accessible (returns 401/404 without object)',
-		async ({ request }) => {
-			// POST to a non-existent object's publish endpoint
-			const resp = await request.post(
-				'/index.php/apps/openregister/api/objects/1/1/non-existent-pub-id/publish',
-				{ data: {}, headers: { 'Content-Type': 'application/json' } },
-			)
-			// 401 (not admin), 403, 404 (object not found), 405 are all valid — no 500
-			expect([401, 403, 404, 405]).toContain(resp.status())
-		},
-	)
+	test(// @e2e publications::publish-an-unpublished-publication
+	'PUB-016 — OpenRegister publish endpoint is accessible (returns 401/404 without object)', async ({
+		request,
+	}) => {
+		// POST to a non-existent object's publish endpoint
+		const resp = await request.post(
+			'/index.php/apps/openregister/api/objects/1/1/non-existent-pub-id/publish',
+			{ data: {}, headers: { 'Content-Type': 'application/json' } },
+		)
+		// 401 (not admin), 403, 404 (object not found), 405 are all valid — no 500
+		expect([401, 403, 404, 405]).toContain(resp.status())
+	})
 
 	/**
 	 * PUB-017 — Depublish a published publication.
@@ -935,17 +990,16 @@ test.describe('publications', () => {
 	 * WHEN objectStore.depublishObject(object) is called
 	 * THEN a POST request MUST be sent to the OpenRegister .../{id}/depublish endpoint.
 	 */
-	test(
-		// @e2e publications::depublish-a-published-publication
-		'PUB-017 — OpenRegister depublish endpoint is accessible (returns 401/404 without object)',
-		async ({ request }) => {
-			const resp = await request.post(
-				'/index.php/apps/openregister/api/objects/1/1/non-existent-pub-id/depublish',
-				{ data: {}, headers: { 'Content-Type': 'application/json' } },
-			)
-			expect([401, 403, 404, 405]).toContain(resp.status())
-		},
-	)
+	test(// @e2e publications::depublish-a-published-publication
+	'PUB-017 — OpenRegister depublish endpoint is accessible (returns 401/404 without object)', async ({
+		request,
+	}) => {
+		const resp = await request.post(
+			'/index.php/apps/openregister/api/objects/1/1/non-existent-pub-id/depublish',
+			{ data: {}, headers: { 'Content-Type': 'application/json' } },
+		)
+		expect([401, 403, 404, 405]).toContain(resp.status())
+	})
 
 	/**
 	 * PUB-018 — Open the publish dialog for an unpublished publication.
@@ -957,19 +1011,20 @@ test.describe('publications', () => {
 	 * The Publications index (a real catalog's publications route) is the
 	 * surface that hosts PublishPublicationDialog.
 	 */
-	test(
-		// @e2e publications::open-the-publish-dialog-for-an-unpublished-publication
-		'PUB-018 — Publications index renders without JS errors (publish dialog host)',
-		async ({ page, request }) => {
-			const errors = trackPageErrors(page)
-			const cat = await resolveOrSeedCatalog(request)
-			await bootApp(page)
-			await gotoHash(page, `/publications/${cat.slug}`)
-			await expect(page.locator('[data-testid="cn-index-page"]').first())
-				.toBeVisible({ timeout: 15000 })
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e publications::open-the-publish-dialog-for-an-unpublished-publication
+	'PUB-018 — Publications index renders without JS errors (publish dialog host)', async ({
+		page,
+		request,
+	}) => {
+		const errors = trackPageErrors(page)
+		const cat = await resolveOrSeedCatalog(request)
+		await bootApp(page)
+		await gotoHash(page, `/publications/${cat.slug}`)
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
 	/**
 	 * PUB-018 — Open the dialog for a published publication.
@@ -980,17 +1035,18 @@ test.describe('publications', () => {
 	 * Same infrastructure as the publish dialog — both are rendered by
 	 * PublishPublicationDialog based on the publication's status.
 	 */
-	test(
-		// @e2e publications::open-the-dialog-for-a-published-publication
-		'PUB-018 — Publications index renders without JS errors (depublish path, same dialog)',
-		async ({ page, request }) => {
-			const errors = trackPageErrors(page)
-			const cat = await resolveOrSeedCatalog(request)
-			await bootApp(page)
-			await gotoHash(page, `/publications/${cat.slug}`)
-			await expect(page.locator('[data-testid="cn-index-page"]').first())
-				.toBeVisible({ timeout: 15000 })
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+	test(// @e2e publications::open-the-dialog-for-a-published-publication
+	'PUB-018 — Publications index renders without JS errors (depublish path, same dialog)', async ({
+		page,
+		request,
+	}) => {
+		const errors = trackPageErrors(page)
+		const cat = await resolveOrSeedCatalog(request)
+		await bootApp(page)
+		await gotoHash(page, `/publications/${cat.slug}`)
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })

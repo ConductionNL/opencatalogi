@@ -23,7 +23,9 @@ export function createZodErrorHandler(result) {
 	 */
 	const getError = (path) => {
 		const normalizedPath = normalizePath(path)
-		const error = issues.find((issue) => issue.path.join('.') === normalizedPath.join('.'))
+		const error = issues.find(
+			(issue) => issue.path.join('.') === normalizedPath.join('.'),
+		)
 		return error?.message
 	}
 
@@ -41,7 +43,9 @@ export function createZodErrorHandler(result) {
 	 */
 	const getErrors = (path) => {
 		const normalizedPath = normalizePath(path)
-		const errors = issues.filter((issue) => issue.path.join('.') === normalizedPath.join('.'))
+		const errors = issues.filter(
+			(issue) => issue.path.join('.') === normalizedPath.join('.'),
+		)
 		return errors.map((error) => error.message)
 	}
 
@@ -67,7 +71,9 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {string[]}
 		 */
-		flatErrorMessages: result?.error ? getFlatErrorMessages(result.error.issues) : [],
+		flatErrorMessages: result?.error
+			? getFlatErrorMessages(result.error.issues)
+			: [],
 
 		/**
 		 * A grouped list of errors by path.
@@ -83,7 +89,9 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		groupedErrorsByPath: result?.error ? getGroupedErrorsByPath(result.error.issues) : {},
+		groupedErrorsByPath: result?.error
+			? getGroupedErrorsByPath(result.error.issues)
+			: {},
 
 		/**
 		 * A nested list of errors by path.
@@ -103,7 +111,9 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		nestedFieldErrors: result?.error ? getNestedFieldErrors(result.error.issues) : {},
+		nestedFieldErrors: result?.error
+			? getNestedFieldErrors(result.error.issues)
+			: {},
 
 		/**
 		 * A list of errors with path, message, code and type.
@@ -128,7 +138,9 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		fieldSpecificErrors: result?.error ? getFieldSpecificErrors(result.error.issues) : [],
+		fieldSpecificErrors: result?.error
+			? getFieldSpecificErrors(result.error.issues)
+			: [],
 
 		/**
 		 * A summary of the errors.

@@ -4,14 +4,16 @@ import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<CnDataTable :rows="items"
+	<CnDataTable
+		:rows="items"
 		:columns="columns"
 		:loading="loading"
 		hide-header
 		borderless
 		row-icon="FileOutline">
 		<template #empty>
-			<NcEmptyContent :title="t('opencatalogi', 'No concept attachments found')">
+			<NcEmptyContent
+				:title="t('opencatalogi', 'No concept attachments found')">
 				<template #icon>
 					<FolderIcon />
 				</template>
@@ -66,8 +68,9 @@ export default {
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
-			return objectStore.getCollection('attachment').results
-				.filter((attachment) => attachment.status === 'Concept')
+			return objectStore
+				.getCollection('attachment')
+				.results.filter((attachment) => attachment.status === 'Concept')
 				.map((attachment) => ({
 					id: attachment.id,
 					mainText: attachment.title,

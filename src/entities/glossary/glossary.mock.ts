@@ -17,7 +17,8 @@ export const mockGlossaryData = (): TGlossary[] => [
 		id: '1',
 		title: 'API',
 		summary: 'Application Programming Interface',
-		description: 'A set of rules and protocols for building and interacting with software applications',
+		description:
+			'A set of rules and protocols for building and interacting with software applications',
 		externalLink: 'https://en.wikipedia.org/wiki/API',
 		keywords: ['development', 'programming', 'integration'],
 	},
@@ -33,10 +34,12 @@ export const mockGlossaryData = (): TGlossary[] => [
 		id: '3',
 		title: 'GraphQL',
 		summary: 'Query Language for APIs',
-		description: 'A query language for APIs and a runtime for fulfilling those queries with your existing data',
+		description:
+			'A query language for APIs and a runtime for fulfilling those queries with your existing data',
 		externalLink: 'invalid-url',
 		keywords: ['api', 'query', 'data'],
 	},
 ]
 
-export const mockGlossary = (data: TGlossary[] = mockGlossaryData()): TGlossary[] => data.map(item => new Glossary(item))
+export const mockGlossary = (data: TGlossary[] = mockGlossaryData()): TGlossary[] =>
+	data.map((item) => new Glossary(item))

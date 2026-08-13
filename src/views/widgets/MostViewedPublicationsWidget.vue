@@ -5,15 +5,17 @@
 <template>
 	<div data-testid="most-viewed-widget">
 		<div class="mostViewedControls">
-			<NcSelect v-model="period"
+			<NcSelect
+				v-model="period"
 				input-label=""
 				:aria-label-combobox="t('opencatalogi', 'Period')"
 				:options="periodOptions"
-				:reduce="option => option.value"
+				:reduce="(option) => option.value"
 				label="label"
 				@update:model-value="load" />
 		</div>
-		<CnDataTable :rows="items"
+		<CnDataTable
+			:rows="items"
 			:columns="columns"
 			:loading="loading"
 			hide-header
@@ -87,7 +89,9 @@ export default {
 			return this.topViewed.map((entry) => ({
 				id: entry.publication,
 				mainText: entry.publication,
-				subText: this.t('opencatalogi', '{count} views', { count: formatCount(entry.views) }),
+				subText: this.t('opencatalogi', '{count} views', {
+					count: formatCount(entry.views),
+				}),
 			}))
 		},
 	},
@@ -105,8 +109,12 @@ export default {
 		async load() {
 			this.loading = true
 			try {
-				const stats = await fetchCatalogStats(this.catalogSlug, { from: this.rangeFrom() })
-				this.topViewed = Array.isArray(stats.topViewed) ? stats.topViewed : []
+				const stats = await fetchCatalogStats(this.catalogSlug, {
+					from: this.rangeFrom(),
+				})
+				this.topViewed = Array.isArray(stats.topViewed)
+					? stats.topViewed
+					: []
 			} catch (e) {
 				this.topViewed = []
 			} finally {

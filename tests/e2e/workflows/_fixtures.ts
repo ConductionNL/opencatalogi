@@ -92,11 +92,14 @@ export interface SeededObject {
 }
 
 export class Fixtures {
-
 	readonly runId: string
 	readonly prefix: string
 	private ctx!: APIRequestContext
-	private created: Array<{ register: number | string; schema: number | string; id: string }> = []
+	private created: Array<{
+		register: number | string
+		schema: number | string
+		id: string
+	}> = []
 
 	constructor(runId = newRunId()) {
 		this.runId = runId
@@ -108,7 +111,10 @@ export class Fixtures {
 		this.ctx = await request.newContext({
 			baseURL: BASE,
 			httpCredentials: { username: ADMIN_USER, password: ADMIN_PASS },
-			extraHTTPHeaders: { 'OCS-APIRequest': 'true', 'Content-Type': 'application/json' },
+			extraHTTPHeaders: {
+				'OCS-APIRequest': 'true',
+				'Content-Type': 'application/json',
+			},
 		})
 		await this.resolveRegisterAndSchemas()
 	}
@@ -122,23 +128,36 @@ export class Fixtures {
 	 */
 	private async resolveRegisterAndSchemas(): Promise<void> {
 		try {
-			const regRes = await this.ctx.get('/index.php/apps/openregister/api/registers?_limit=300')
+			const regRes = await this.ctx.get(
+				'/index.php/apps/openregister/api/registers?_limit=300',
+			)
 			if (regRes.ok()) {
 				const body = await regRes.json()
-				const list = Array.isArray(body) ? body : (body.results || [])
-				const reg = list.find((r: Record<string, unknown>) => r.slug === REGISTER_SLUG)
-				if (reg && (reg.id || reg.id === 0)) REG_PUBLICATION = reg.id as number | string
+				const list = Array.isArray(body) ? body : body.results || []
+				const reg = list.find(
+					(r: Record<string, unknown>) => r.slug === REGISTER_SLUG,
+				)
+				if (reg && (reg.id || reg.id === 0))
+					REG_PUBLICATION = reg.id as number | string
 			}
-			const schRes = await this.ctx.get('/index.php/apps/openregister/api/schemas?_limit=1000')
+			const schRes = await this.ctx.get(
+				'/index.php/apps/openregister/api/schemas?_limit=1000',
+			)
 			if (schRes.ok()) {
 				const body = await schRes.json()
-				const list = Array.isArray(body) ? body : (body.results || [])
+				const list = Array.isArray(body) ? body : body.results || []
 				const bySlug = new Map<string, number | string>()
-				for (const s of list) if (s && s.slug) bySlug.set(s.slug as string, s.id as number | string)
-				if (bySlug.has(SCHEMA_SLUGS.publication)) SCHEMA_PUBLICATION = bySlug.get(SCHEMA_SLUGS.publication)!
-				if (bySlug.has(SCHEMA_SLUGS.catalog)) SCHEMA_CATALOG = bySlug.get(SCHEMA_SLUGS.catalog)!
-				if (bySlug.has(SCHEMA_SLUGS.organization)) SCHEMA_ORGANIZATION = bySlug.get(SCHEMA_SLUGS.organization)!
-				if (bySlug.has(SCHEMA_SLUGS.document)) SCHEMA_DOCUMENT = bySlug.get(SCHEMA_SLUGS.document)!
+				for (const s of list)
+					if (s && s.slug)
+						bySlug.set(s.slug as string, s.id as number | string)
+				if (bySlug.has(SCHEMA_SLUGS.publication))
+					SCHEMA_PUBLICATION = bySlug.get(SCHEMA_SLUGS.publication)!
+				if (bySlug.has(SCHEMA_SLUGS.catalog))
+					SCHEMA_CATALOG = bySlug.get(SCHEMA_SLUGS.catalog)!
+				if (bySlug.has(SCHEMA_SLUGS.organization))
+					SCHEMA_ORGANIZATION = bySlug.get(SCHEMA_SLUGS.organization)!
+				if (bySlug.has(SCHEMA_SLUGS.document))
+					SCHEMA_DOCUMENT = bySlug.get(SCHEMA_SLUGS.document)!
 			}
 		} catch {
 			/* keep dev-box seed ids on any resolution failure */
@@ -164,11 +183,16 @@ export class Fixtures {
 	): Promise<SeededObject> {
 		const res = await this.ctx.post(OBJ(register, schema), { data })
 		if (!res.ok()) {
-			throw new Error(`create ${register}/${schema} failed: ${res.status()} ${await res.text()}`)
+			throw new Error(
+				`create ${register}/${schema} failed: ${res.status()} ${await res.text()}`,
+			)
 		}
 		const body = await res.json()
 		const id = (body.id as string) || (body['@self']?.id as string)
-		if (!id) throw new Error(`create ${register}/${schema} returned no id: ${JSON.stringify(body)}`)
+		if (!id)
+			throw new Error(
+				`create ${register}/${schema} returned no id: ${JSON.stringify(body)}`,
+			)
 		this.created.push({ register, schema, id })
 		return {
 			id,
@@ -217,7 +241,10 @@ export class Fixtures {
 	 * @param name
 	 * @param extra
 	 */
-	async createCatalog(name: string, extra: Record<string, unknown> = {}): Promise<SeededObject> {
+	async createCatalog(
+		name: string,
+		extra: Record<string, unknown> = {},
+	): Promise<SeededObject> {
 		const title = this.label(name)
 		return this.create(REG_PUBLICATION, SCHEMA_CATALOG, {
 			title,
@@ -238,7 +265,10 @@ export class Fixtures {
 	 * @param name
 	 * @param extra
 	 */
-	async createPublication(name: string, extra: Record<string, unknown> = {}): Promise<SeededObject> {
+	async createPublication(
+		name: string,
+		extra: Record<string, unknown> = {},
+	): Promise<SeededObject> {
 		const title = this.label(name)
 		return this.create(REG_PUBLICATION, SCHEMA_PUBLICATION, {
 			title,
@@ -253,7 +283,10 @@ export class Fixtures {
 	 * @param name
 	 * @param extra
 	 */
-	async createOrganization(name: string, extra: Record<string, unknown> = {}): Promise<SeededObject> {
+	async createOrganization(
+		name: string,
+		extra: Record<string, unknown> = {},
+	): Promise<SeededObject> {
 		const title = this.label(name)
 		return this.create(REG_PUBLICATION, SCHEMA_ORGANIZATION, {
 			title,
@@ -309,11 +342,16 @@ export class Fixtures {
 			data: { name: fileName, content },
 		})
 		if (!res.ok()) {
-			throw new Error(`attachFile ${register}/${schema}/${id} failed: ${res.status()} ${await res.text()}`)
+			throw new Error(
+				`attachFile ${register}/${schema}/${id} failed: ${res.status()} ${await res.text()}`,
+			)
 		}
 		const body = await res.json()
 		const fileId = body.id as number
-		if (!fileId) throw new Error(`attachFile returned no file id: ${JSON.stringify(body)}`)
+		if (!fileId)
+			throw new Error(
+				`attachFile returned no file id: ${JSON.stringify(body)}`,
+			)
 		return fileId
 	}
 
@@ -364,7 +402,11 @@ export class Fixtures {
 	 * @param schema
 	 * @param id
 	 */
-	async remove(register: number | string, schema: number | string, id: string): Promise<void> {
+	async remove(
+		register: number | string,
+		schema: number | string,
+		id: string,
+	): Promise<void> {
 		await this.ctx.delete(OBJ(register, schema, id)).catch(() => {})
 		this.created = this.created.filter((c) => !(c.id === id))
 	}
@@ -381,13 +423,26 @@ export class Fixtures {
 		this.created = []
 
 		// Prefix sweep across the fixture schemas (catches UI-created rows).
-		for (const schema of [SCHEMA_PUBLICATION, SCHEMA_CATALOG, SCHEMA_ORGANIZATION, SCHEMA_DOCUMENT]) {
+		for (const schema of [
+			SCHEMA_PUBLICATION,
+			SCHEMA_CATALOG,
+			SCHEMA_ORGANIZATION,
+			SCHEMA_DOCUMENT,
+		]) {
 			const rows = await this.list(REG_PUBLICATION, schema, 500)
 			for (const row of rows) {
-				const title = (row.title as string) ?? (row['@self'] as Record<string, unknown>)?.name ?? ''
+				const title =
+					(row.title as string)
+					?? (row['@self'] as Record<string, unknown>)?.name
+					?? ''
 				if (typeof title === 'string' && title.startsWith(this.prefix)) {
-					const id = (row.id as string) || ((row['@self'] as Record<string, unknown>)?.id as string)
-					if (id) await this.ctx.delete(OBJ(REG_PUBLICATION, schema, id)).catch(() => {})
+					const id =
+						(row.id as string)
+						|| ((row['@self'] as Record<string, unknown>)?.id as string)
+					if (id)
+						await this.ctx
+							.delete(OBJ(REG_PUBLICATION, schema, id))
+							.catch(() => {})
 				}
 			}
 		}
@@ -396,5 +451,4 @@ export class Fixtures {
 	async dispose(): Promise<void> {
 		await this.ctx.dispose()
 	}
-
 }

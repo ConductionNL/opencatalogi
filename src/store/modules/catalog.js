@@ -127,9 +127,15 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @spec openspec/specs/catalogs/spec.md
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
-			const resolvedCatalogId = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id || this.lastCatalogId
+			const resolvedCatalogId =
+				catalogId
+				|| this.activeCatalog?.slug
+				|| this.activeCatalog?.id
+				|| this.lastCatalogId
 			if (!resolvedCatalogId) {
-				console.error('[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists')
+				console.error(
+					'[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists',
+				)
 				return
 			}
 
@@ -146,7 +152,7 @@ export const useCatalogStore = defineStore('catalog', {
 			}
 
 			// Add any additional parameters (excluding page and limit to avoid duplication)
-			Object.keys(params).forEach(key => {
+			Object.keys(params).forEach((key) => {
 				if (key !== 'page' && key !== 'limit') {
 					searchParams[key] = params[key]
 				}
@@ -159,7 +165,10 @@ export const useCatalogStore = defineStore('catalog', {
 
 				// Use the slug-based publications endpoint (GET /api/{catalogSlug})
 				const url = `/index.php/apps/opencatalogi/api/${catalogIdToUse}?${queryParams}`
-				const response = await fetch(url, { method: 'GET', headers: buildHeaders() })
+				const response = await fetch(url, {
+					method: 'GET',
+					headers: buildHeaders(),
+				})
 				const data = await response.json()
 
 				this.publications = {
@@ -184,23 +193,33 @@ export const useCatalogStore = defineStore('catalog', {
 				const schemasMap = data['@self']?.schemas || {}
 				const registersMap = data['@self']?.registers || {}
 				for (const publication of data.results || []) {
-					const schemaRef = publication['@self']?.schema ?? publication.schema
-					const registerRef = publication['@self']?.register ?? publication.register
+					const schemaRef =
+						publication['@self']?.schema ?? publication.schema
+					const registerRef =
+						publication['@self']?.register ?? publication.register
 					if (!schemaRef || !registerRef) continue
 
-					const schemaObj = typeof schemaRef === 'object'
-						? schemaRef
-						: schemasMap[String(schemaRef)] || schemasMap[Number(schemaRef)]
-					const registerObj = typeof registerRef === 'object'
-						? registerRef
-						: registersMap[String(registerRef)] || registersMap[Number(registerRef)]
+					const schemaObj =
+						typeof schemaRef === 'object'
+							? schemaRef
+							: schemasMap[String(schemaRef)]
+								|| schemasMap[Number(schemaRef)]
+					const registerObj =
+						typeof registerRef === 'object'
+							? registerRef
+							: registersMap[String(registerRef)]
+								|| registersMap[Number(registerRef)]
 
 					const slug = schemaObj?.slug
 					const schemaId = schemaObj?.id ?? schemaRef
 					const registerId = registerObj?.id ?? registerRef
 
 					if (slug && !this.registeredTypes.has(slug)) {
-						await objectStore.registerObjectType(slug, schemaId, registerId)
+						await objectStore.registerObjectType(
+							slug,
+							schemaId,
+							registerId,
+						)
 						this.registeredTypes.add(slug)
 					}
 				}
@@ -229,7 +248,9 @@ export const useCatalogStore = defineStore('catalog', {
 			const schema = publication['@self'].schema
 			const id = publication.id
 
-			const response = await fetch(`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files`)
+			const response = await fetch(
+				`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files`,
+			)
 			const data = await response.json()
 			objectStore.setCollection('publicationAttachments', data.results || [])
 		},
@@ -240,7 +261,6 @@ export const useCatalogStore = defineStore('catalog', {
 		 */
 		/** @spec openspec/specs/catalogs/spec.md */
 		clearActiveCatalog() {
-
 			// Unregister all object types
 			for (const slug of this.registeredTypes) {
 				objectStore.unregisterObjectType(slug)

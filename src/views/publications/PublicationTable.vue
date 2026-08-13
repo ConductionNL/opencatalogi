@@ -56,7 +56,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		@row-click="toggleSelection">
 		<!-- Mass actions -->
 		<template #action-items>
-			<NcActionButton close-after-click
+			<NcActionButton
+				close-after-click
 				:disabled="selectedPublicationIds.length === 0 || !canBulkDelete"
 				@click="bulkDeletePublications">
 				<template #icon>
@@ -64,7 +65,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</template>
 				{{ t('opencatalogi', 'Delete Selected') }}
 			</NcActionButton>
-			<NcActionButton close-after-click
+			<NcActionButton
+				close-after-click
 				:disabled="selectedPublicationIds.length === 0 || !canBulkUpdate"
 				@click="bulkPublishPublications">
 				<template #icon>
@@ -72,7 +74,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</template>
 				{{ t('opencatalogi', 'Publish Selected') }}
 			</NcActionButton>
-			<NcActionButton close-after-click
+			<NcActionButton
+				close-after-click
 				:disabled="selectedPublicationIds.length === 0 || !canBulkUpdate"
 				@click="bulkDepublishPublications">
 				<template #icon>
@@ -100,21 +103,28 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<template #column-name="{ row }">
 			<span class="titleWithIcon">
 				<PublishedIcon :object="row" :size="16" />
-				<span>{{ row['@self']?.name || row.title || row.name || row.id }}</span>
+				<span>{{
+					row['@self']?.name || row.title || row.name || row.id
+				}}</span>
 			</span>
 		</template>
 
 		<!-- Custom column: status -->
 		<template #column-published="{ row }">
 			<template v-if="getPublicationStatus(row) === 'concept'">
-				<span v-if="row.publicationDate">{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(row.publicationDate) }}</span>
+				<span v-if="row.publicationDate"
+					>{{ t('opencatalogi', 'Scheduled for') }}
+					{{ formatDate(row.publicationDate) }}</span
+				>
 				<span v-else>{{ t('opencatalogi', 'Concept') }}</span>
 			</template>
 			<template v-else-if="getPublicationStatus(row) === 'published'">
-				{{ t('opencatalogi', 'Published on') }} {{ formatDate(row.publicationDate) }}
+				{{ t('opencatalogi', 'Published on') }}
+				{{ formatDate(row.publicationDate) }}
 			</template>
 			<template v-else>
-				{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(row.depublicationDate) }}
+				{{ t('opencatalogi', 'Depublished on') }}
+				{{ formatDate(row.depublicationDate) }}
 			</template>
 		</template>
 
@@ -134,7 +144,10 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 import { NcActionButton, NcCounterBubble } from '@nextcloud/vue'
 import { CnIndexPage, CnRowActions } from '@conduction/nextcloud-vue'
 import getValidISOstring from '../../services/getValidISOstring.js'
-import { isPublished, getPublicationStatus } from '../../services/publicationStatus.js'
+import {
+	isPublished,
+	getPublicationStatus,
+} from '../../services/publicationStatus.js'
 import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -171,32 +184,55 @@ export default {
 		tableColumns() {
 			return [
 				{ key: 'name', label: t('opencatalogi', 'Name'), sortable: true },
-				{ key: 'published', label: t('opencatalogi', 'Status'), sortable: true },
+				{
+					key: 'published',
+					label: t('opencatalogi', 'Status'),
+					sortable: true,
+				},
 				{ key: 'files', label: t('opencatalogi', 'Files') },
-				{ key: 'updated', label: t('opencatalogi', 'Updated'), sortable: true },
+				{
+					key: 'updated',
+					label: t('opencatalogi', 'Updated'),
+					sortable: true,
+				},
 			]
 		},
 		filteredPublications() {
 			return objectStore.getCollection('publication')?.results || []
 		},
 		currentPagination() {
-			return catalogStore.publicationPagination || { page: 1, limit: 20, total: 0, pages: 0 }
+			return (
+				catalogStore.publicationPagination || {
+					page: 1,
+					limit: 20,
+					total: 0,
+					pages: 0,
+				}
+			)
 		},
 		canBulkDelete() {
 			if (this.currentUserGroups === null) return true
-			const selected = this.filteredPublications.filter(pub =>
+			const selected = this.filteredPublications.filter((pub) =>
 				this.selectedPublicationIds.includes(pub['@self']?.id || pub.id),
 			)
-			return selected.length > 0
-				&& selected.every(pub => this.hasSchemaActionRight(this.getSchemaForRow(pub), 'delete'))
+			return (
+				selected.length > 0
+				&& selected.every((pub) =>
+					this.hasSchemaActionRight(this.getSchemaForRow(pub), 'delete'),
+				)
+			)
 		},
 		canBulkUpdate() {
 			if (this.currentUserGroups === null) return true
-			const selected = this.filteredPublications.filter(pub =>
+			const selected = this.filteredPublications.filter((pub) =>
 				this.selectedPublicationIds.includes(pub['@self']?.id || pub.id),
 			)
-			return selected.length > 0
-				&& selected.every(pub => this.hasSchemaActionRight(this.getSchemaForRow(pub), 'update'))
+			return (
+				selected.length > 0
+				&& selected.every((pub) =>
+					this.hasSchemaActionRight(this.getSchemaForRow(pub), 'update'),
+				)
+			)
 		},
 		canAddPublication() {
 			// While groups are loading keep the button enabled
@@ -205,21 +241,25 @@ export default {
 			const catalogSlug = this.$route.params.catalogSlug
 			if (!catalogSlug) return true
 
-			const catalog = objectStore.getCollection('catalog').results.find(c => c.slug === catalogSlug)
+			const catalog = objectStore
+				.getCollection('catalog')
+				.results.find((c) => c.slug === catalogSlug)
 			if (!catalog) return true
 
 			const catalogSchemaIds = catalog.schemas || []
 			if (catalogSchemaIds.length === 0) return false
 
-			return catalogSchemaIds.some(schemaId => {
-				const schema = objectStore.availableSchemas.find(s => s.id === schemaId)
+			return catalogSchemaIds.some((schemaId) => {
+				const schema = objectStore.availableSchemas.find(
+					(s) => s.id === schemaId,
+				)
 				return schema ? this.hasSchemaActionRight(schema, 'create') : false
 			})
 		},
 		selectedPublicationIds() {
-			return (objectStore.selectedObjects || []).map(obj =>
-				obj.id || obj['@self']?.id,
-			).filter(Boolean)
+			return (objectStore.selectedObjects || [])
+				.map((obj) => obj.id || obj['@self']?.id)
+				.filter(Boolean)
 		},
 		rowActions() {
 			return [
@@ -227,71 +267,116 @@ export default {
 					label: t('opencatalogi', 'Edit'),
 					icon: Pencil,
 					handler: (row) => this.viewPublication(row),
-					visible: (row) => this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
+					visible: (row) =>
+						this.hasSchemaActionRight(
+							this.getSchemaForRow(row),
+							'update',
+						),
 				},
 				{
 					label: t('opencatalogi', 'View'),
 					icon: Eye,
 					handler: (row) => this.viewPublication(row),
-					visible: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
+					visible: (row) =>
+						!this.hasSchemaActionRight(
+							this.getSchemaForRow(row),
+							'update',
+						),
 				},
 				{
 					label: t('opencatalogi', 'Copy'),
 					icon: ContentCopy,
 					handler: (row) => this.copyPublication(row),
-					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'create'),
+					disabled: (row) =>
+						!this.hasSchemaActionRight(
+							this.getSchemaForRow(row),
+							'create',
+						),
 				},
 				{
 					label: t('opencatalogi', 'Publish'),
 					icon: Publish,
 					handler: (row) => this.singlePublishPublication(row),
 					visible: (row) => !isPublished(row),
-					disabled: (row) => !schemaHasPublicationDateFields(row) || !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
-					title: (row) => schemaHasPublicationDateFields(row)
-						? undefined
-						: t('opencatalogi', 'This schema does not support publishing. Ask your IT manager for help.'),
+					disabled: (row) =>
+						!schemaHasPublicationDateFields(row)
+						|| !this.hasSchemaActionRight(
+							this.getSchemaForRow(row),
+							'update',
+						),
+					title: (row) =>
+						schemaHasPublicationDateFields(row)
+							? undefined
+							: t(
+									'opencatalogi',
+									'This schema does not support publishing. Ask your IT manager for help.',
+								),
 				},
 				{
 					label: t('opencatalogi', 'Depublish'),
 					icon: PublishOff,
 					handler: (row) => this.singleDepublishPublication(row),
 					visible: (row) => isPublished(row),
-					disabled: (row) => !schemaHasPublicationDateFields(row) || !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
-					title: (row) => schemaHasPublicationDateFields(row)
-						? undefined
-						: t('opencatalogi', 'This schema does not support depublishing. Ask your IT manager for help.'),
+					disabled: (row) =>
+						!schemaHasPublicationDateFields(row)
+						|| !this.hasSchemaActionRight(
+							this.getSchemaForRow(row),
+							'update',
+						),
+					title: (row) =>
+						schemaHasPublicationDateFields(row)
+							? undefined
+							: t(
+									'opencatalogi',
+									'This schema does not support depublishing. Ask your IT manager for help.',
+								),
 				},
 				{
 					label: t('opencatalogi', 'Add Attachment'),
 					icon: FilePlusOutline,
 					handler: (row) => this.addAttachment(row),
-					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
+					disabled: (row) =>
+						!this.hasSchemaActionRight(
+							this.getSchemaForRow(row),
+							'update',
+						),
 				},
 				{
 					label: t('opencatalogi', 'Delete'),
 					icon: TrashCanOutline,
 					handler: (row) => this.singleDeletePublication(row),
 					destructive: true,
-					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'delete'),
+					disabled: (row) =>
+						!this.hasSchemaActionRight(
+							this.getSchemaForRow(row),
+							'delete',
+						),
 				},
 			]
 		},
 	},
 	mounted() {
 		catalogStore.fetchPublications({}, this.$route.params.catalogSlug)
-		fetch('/ocs/v1.php/cloud/user?format=json', { headers: { 'OCS-APIREQUEST': 'true' } })
-			.then(r => r.json())
-			.then(data => {
+		fetch('/ocs/v1.php/cloud/user?format=json', {
+			headers: { 'OCS-APIREQUEST': 'true' },
+		})
+			.then((r) => r.json())
+			.then((data) => {
 				const groups = data?.ocs?.data?.groups
 				if (Array.isArray(groups)) {
 					this.currentUserGroups = groups
 				}
 			})
-			.catch(() => { /* keep null — button stays enabled on error */ })
+			.catch(() => {
+				/* keep null — button stays enabled on error */
+			})
 	},
 	methods: {
 		getFilesCount(publication) {
-			const countFromSelf = publication?.['@self']?.filesCount || publication?.['@self']?.attachmentsCount || publication?.['@self']?.attachmentCount
+			const countFromSelf =
+				publication?.['@self']?.filesCount
+				|| publication?.['@self']?.attachmentsCount
+				|| publication?.['@self']?.attachmentCount
 			if (typeof countFromSelf === 'number') return countFromSelf
 			const filesProp = publication?.['@self']?.files
 			if (Array.isArray(filesProp)) return filesProp.length
@@ -306,15 +391,21 @@ export default {
 		onSelect(ids) {
 			// Map IDs back to full objects for the store
 			const selectedObjects = this.filteredPublications
-				.filter(pub => ids.includes(pub['@self']?.id || pub.id))
-				.map(pub => ({ ...pub, id: pub['@self']?.id || pub.id }))
+				.filter((pub) => ids.includes(pub['@self']?.id || pub.id))
+				.map((pub) => ({ ...pub, id: pub['@self']?.id || pub.id }))
 			objectStore.setSelectedObjects(selectedObjects)
 		},
 		onPageChanged(page) {
-			catalogStore.fetchPublications({ page, limit: this.currentPagination.limit || 20 }, this.$route.params.catalogSlug)
+			catalogStore.fetchPublications(
+				{ page, limit: this.currentPagination.limit || 20 },
+				this.$route.params.catalogSlug,
+			)
 		},
 		onPageSizeChanged(pageSize) {
-			catalogStore.fetchPublications({ page: 1, limit: pageSize }, this.$route.params.catalogSlug)
+			catalogStore.fetchPublications(
+				{ page: 1, limit: pageSize },
+				this.$route.params.catalogSlug,
+			)
 		},
 		hasSchemaReadRight(schema) {
 			return this.hasSchemaActionRight(schema, 'read')
@@ -324,19 +415,27 @@ export default {
 			if (!schema) return true
 			const auth = schema.authorization
 			if (!auth) return true
-			if (!auth[action] || !Array.isArray(auth[action]) || auth[action].length === 0) {
+			if (
+				!auth[action]
+				|| !Array.isArray(auth[action])
+				|| auth[action].length === 0
+			) {
 				// For write actions: if the schema has any auth rules, deny by default so that
 				// a user with only 'read' access cannot create/update/delete.
 				if (action !== 'read') {
-					const hasAnyRules = Object.values(auth).some(v => Array.isArray(v) && v.length > 0)
+					const hasAnyRules = Object.values(auth).some(
+						(v) => Array.isArray(v) && v.length > 0,
+					)
 					if (hasAnyRules) return this.currentUserGroups.includes('admin')
 				}
 				return true
 			}
 			if (this.currentUserGroups.includes('admin')) return true
-			return auth[action].some(entry => {
-				if (typeof entry === 'string') return this.currentUserGroups.includes(entry)
-				if (entry && typeof entry === 'object' && entry.group) return this.currentUserGroups.includes(entry.group)
+			return auth[action].some((entry) => {
+				if (typeof entry === 'string')
+					return this.currentUserGroups.includes(entry)
+				if (entry && typeof entry === 'object' && entry.group)
+					return this.currentUserGroups.includes(entry.group)
 				return true
 			})
 		},
@@ -344,7 +443,11 @@ export default {
 			const schemaRef = row?.['@self']?.schema
 			if (!schemaRef) return null
 			const schemaId = typeof schemaRef === 'object' ? schemaRef.id : schemaRef
-			return objectStore.availableSchemas.find(s => String(s.id) === String(schemaId)) || null
+			return (
+				objectStore.availableSchemas.find(
+					(s) => String(s.id) === String(schemaId),
+				) || null
+			)
 		},
 		addPublication() {
 			objectStore.setActiveObject('publication', null)
@@ -353,7 +456,10 @@ export default {
 		async refreshPublications() {
 			this.isRefreshing = true
 			try {
-				await catalogStore.fetchPublications({}, this.$route.params.catalogSlug)
+				await catalogStore.fetchPublications(
+					{},
+					this.$route.params.catalogSlug,
+				)
 				objectStore.setSelectedObjects([])
 			} finally {
 				this.isRefreshing = false
@@ -365,7 +471,10 @@ export default {
 		},
 		copyPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
-			navigationStore.setDialog('copyObject', { objectType: 'publication', dialogTitle: 'Publication' })
+			navigationStore.setDialog('copyObject', {
+				objectType: 'publication',
+				dialogTitle: 'Publication',
+			})
 		},
 		addAttachment(publication) {
 			objectStore.setActiveObject('publication', publication)
@@ -373,17 +482,26 @@ export default {
 			navigationStore.setModal('viewObject')
 		},
 		singleDeletePublication(publication) {
-			const publicationObject = { ...publication, id: publication['@self']?.id || publication.id }
+			const publicationObject = {
+				...publication,
+				id: publication['@self']?.id || publication.id,
+			}
 			objectStore.setSelectedObjects([publicationObject])
 			navigationStore.setDialog('massDeleteObject')
 		},
 		singlePublishPublication(publication) {
-			const publicationObject = { ...publication, id: publication['@self']?.id || publication.id }
+			const publicationObject = {
+				...publication,
+				id: publication['@self']?.id || publication.id,
+			}
 			objectStore.setSelectedObjects([publicationObject])
 			navigationStore.setDialog('massPublishObjects')
 		},
 		singleDepublishPublication(publication) {
-			const publicationObject = { ...publication, id: publication['@self']?.id || publication.id }
+			const publicationObject = {
+				...publication,
+				id: publication['@self']?.id || publication.id,
+			}
 			objectStore.setSelectedObjects([publicationObject])
 			navigationStore.setDialog('massDepublishObjects')
 		},
@@ -405,7 +523,7 @@ export default {
 			const id = object['@self']?.id || object.id
 			const currentIds = [...this.selectedPublicationIds]
 			const newIds = currentIds.includes(id)
-				? currentIds.filter(i => i !== id)
+				? currentIds.filter((i) => i !== id)
 				: [...currentIds, id]
 			this.onSelect(newIds)
 		},

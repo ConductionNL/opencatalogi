@@ -52,10 +52,6 @@ export default {
 		getDropPropertyTooltip: { type: Function, required: true },
 		isNew: { type: Boolean, default: false },
 	},
-	emits: [
-		'update:selected-property',
-		'update:property-value',
-		'drop-property',
-	],
+	emits: ['update:selected-property', 'update:property-value', 'drop-property'],
 }
 </script>
