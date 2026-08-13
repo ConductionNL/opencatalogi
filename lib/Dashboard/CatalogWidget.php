@@ -21,6 +21,7 @@ use OCP\IL10N;
 use OCP\Util;
 
 use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Service\ScriptManifestLoader;
 
 /**
  * Widget showing catalog overview on the dashboard.
@@ -102,7 +103,11 @@ class CatalogWidget implements IWidget
      */
     public function load(): void
     {
-        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-catalogiWidget');
+        ScriptManifestLoader::addEntryScripts(
+            appId: Application::APP_ID,
+            entry: 'catalogiWidget',
+            fallbackScript: Application::APP_ID.'-catalogiWidget'
+        );
         Util::addStyle(application: Application::APP_ID, file: 'dashboardWidgets');
 
     }//end load()

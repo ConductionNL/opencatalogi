@@ -1,8 +1,9 @@
 <?php
 use OCP\Util;
+use OCA\OpenCatalogi\Service\ScriptManifestLoader;
 
 $appId = OCA\OpenCatalogi\AppInfo\Application::APP_ID;
-Util::addScript($appId, $appId . '-settings');
+ScriptManifestLoader::addEntryScripts($appId, 'adminSettings', $appId . '-settings');
 Util::addStyle($appId, 'main');
 
 ?>
