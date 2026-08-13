@@ -1,22 +1,19 @@
-/**
- * @file PublishedIcon.vue
- * @module Components
- * @author Your Name
- * @copyright 2024 Your Organization
- * @license EUPL-1.2
- * @version 1.0.0
- */
+/** * @file PublishedIcon.vue * @module Components * @author Your Name * @copyright
+2024 Your Organization * @license EUPL-1.2 * @version 1.0.0 */
 
 <template>
-	<ListBoxOutline v-if="isPublished"
+	<ListBoxOutline
+		v-if="isPublished"
 		:title="publishedTooltip"
 		:size="size"
 		:class="['published-icon', iconClass]" />
-	<AlertOutline v-else-if="isDepublished"
+	<AlertOutline
+		v-else-if="isDepublished"
 		:title="depublishedTooltip"
 		:size="size"
 		:class="['depublished-icon', iconClass]" />
-	<Pencil v-else
+	<Pencil
+		v-else
 		:title="draftTooltip"
 		:size="size"
 		:class="['unpublished-icon', iconClass]" />
@@ -85,12 +82,17 @@ export default {
 		 */
 		depublishedTooltip: {
 			type: String,
-			default: 'Depublished: This publication has been withdrawn from public access',
+			default:
+				'Depublished: This publication has been withdrawn from public access',
 		},
 	},
 	computed: {
-		isPublished() { return isPublished(this.object) },
-		isDepublished() { return isDepublished(this.object) },
+		isPublished() {
+			return isPublished(this.object)
+		},
+		isDepublished() {
+			return isDepublished(this.object)
+		},
 	},
 }
 </script>

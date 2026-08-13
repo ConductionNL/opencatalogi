@@ -9,13 +9,28 @@ import { TPage } from './page.types'
  * Used for testing and development purposes
  */
 export const mockPageData = (): TPage[] => [
-	{ // full data
+	{
+		// full data
 		id: '1',
 		title: 'Test Page',
 		slug: 'test-page',
 		contents: [
-			{ type: 'text', id: '1', data: { text: 'Test content' }, groups: ['admin'], hideAfterLogin: false, hideBeforeLogin: false },
-			{ type: 'image', id: '2', data: { url: 'https://example.com/image.jpg' }, groups: [], hideAfterLogin: false, hideBeforeLogin: false },
+			{
+				type: 'text',
+				id: '1',
+				data: { text: 'Test content' },
+				groups: ['admin'],
+				hideAfterLogin: false,
+				hideBeforeLogin: false,
+			},
+			{
+				type: 'image',
+				id: '2',
+				data: { url: 'https://example.com/image.jpg' },
+				groups: [],
+				hideAfterLogin: false,
+				hideBeforeLogin: false,
+			},
 		],
 		groups: ['users'],
 
@@ -23,12 +38,14 @@ export const mockPageData = (): TPage[] => [
 		hideBeforeLogin: true,
 	},
 	// @ts-expect-error -- expected missing contents
-	{ // partial data
+	{
+		// partial data
 		id: '2',
 		title: 'Another Page',
 		slug: 'another-page',
 	},
-	{ // invalid data
+	{
+		// invalid data
 		id: '3',
 		title: '',
 		slug: '',
@@ -41,4 +58,5 @@ export const mockPageData = (): TPage[] => [
  * @param {TPage[]} data Optional array of page data to convert to Page instances
  * @return {Page[]} Array of Page instances
  */
-export const mockPage = (data: TPage[] = mockPageData()): Page[] => data.map(item => new Page(item))
+export const mockPage = (data: TPage[] = mockPageData()): Page[] =>
+	data.map((item) => new Page(item))

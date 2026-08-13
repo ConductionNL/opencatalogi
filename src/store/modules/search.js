@@ -276,7 +276,9 @@ export const useSearchStore = defineStore('search', {
 			if (selected && !this.selectedPublications.includes(id)) {
 				this.selectedPublications.push(id)
 			} else if (!selected) {
-				this.selectedPublications = this.selectedPublications.filter(pubId => pubId !== id)
+				this.selectedPublications = this.selectedPublications.filter(
+					(pubId) => pubId !== id,
+				)
 			}
 		},
 
@@ -285,8 +287,12 @@ export const useSearchStore = defineStore('search', {
 		 */
 		/** @spec openspec/specs/search/spec.md */
 		selectAllPublications() {
-			const currentIds = this.searchResults.map(pub => pub.id).filter(id => id)
-			this.selectedPublications = [...new Set([...this.selectedPublications, ...currentIds])]
+			const currentIds = this.searchResults
+				.map((pub) => pub.id)
+				.filter((id) => id)
+			this.selectedPublications = [
+				...new Set([...this.selectedPublications, ...currentIds]),
+			]
 		},
 
 		/**
@@ -316,7 +322,9 @@ export const useSearchStore = defineStore('search', {
 				...this.filters,
 
 				// Ordering
-				...(Object.keys(this.ordering).length > 0 && { _order: this.ordering }),
+				...(Object.keys(this.ordering).length > 0 && {
+					_order: this.ordering,
+				}),
 
 				// Enable faceting and aggregation
 				_facetable: true,
@@ -330,8 +338,12 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			// Remove empty values
-			Object.keys(params).forEach(key => {
-				if (params[key] === '' || params[key] === null || params[key] === undefined) {
+			Object.keys(params).forEach((key) => {
+				if (
+					params[key] === ''
+					|| params[key] === null
+					|| params[key] === undefined
+				) {
 					delete params[key]
 				}
 			})
@@ -351,7 +363,7 @@ export const useSearchStore = defineStore('search', {
 
 			Object.entries(params).forEach(([key, value]) => {
 				if (Array.isArray(value)) {
-					value.forEach(v => queryString.append(`${key}[]`, v))
+					value.forEach((v) => queryString.append(`${key}[]`, v))
 				} else if (typeof value === 'object' && value !== null) {
 					Object.entries(value).forEach(([subKey, subValue]) => {
 						queryString.append(`${key}[${subKey}]`, subValue)
@@ -398,7 +410,9 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Search failed with status ${response.status}: ${response.statusText}`)
+					throw new Error(
+						`Search failed with status ${response.status}: ${response.statusText}`,
+					)
 				}
 
 				const data = await response.json()
@@ -426,7 +440,6 @@ export const useSearchStore = defineStore('search', {
 					results: data.results?.length || 0,
 					page: data.page,
 				})
-
 			} catch (error) {
 				console.error('Search error:', error)
 				this.setError(error.message || 'Failed to search publications')
@@ -473,7 +486,9 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			try {
-				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}`)
+				const url = generateOcsUrl(
+					`/apps/opencatalogi/api/federation/publications/${id}`,
+				)
 
 				const response = await fetch(url, {
 					method: 'GET',
@@ -484,11 +499,12 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to fetch publication: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to fetch publication: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				return await response.json()
-
 			} catch (error) {
 				console.error('Error fetching publication:', error)
 				throw error
@@ -507,7 +523,9 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			try {
-				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}/uses`)
+				const url = generateOcsUrl(
+					`/apps/opencatalogi/api/federation/publications/${id}/uses`,
+				)
 
 				const response = await fetch(url, {
 					method: 'GET',
@@ -518,11 +536,12 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to fetch publication uses: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to fetch publication uses: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				return await response.json()
-
 			} catch (error) {
 				console.error('Error fetching publication uses:', error)
 				throw error
@@ -541,7 +560,9 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			try {
-				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}/used`)
+				const url = generateOcsUrl(
+					`/apps/opencatalogi/api/federation/publications/${id}/used`,
+				)
 
 				const response = await fetch(url, {
 					method: 'GET',
@@ -552,11 +573,12 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to fetch publication used: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to fetch publication used: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				return await response.json()
-
 			} catch (error) {
 				console.error('Error fetching publication used:', error)
 				throw error
@@ -575,7 +597,9 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			try {
-				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}/attachments`)
+				const url = generateOcsUrl(
+					`/apps/opencatalogi/api/federation/publications/${id}/attachments`,
+				)
 
 				const response = await fetch(url, {
 					method: 'GET',
@@ -586,11 +610,12 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to fetch publication attachments: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to fetch publication attachments: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				return await response.json()
-
 			} catch (error) {
 				console.error('Error fetching publication attachments:', error)
 				throw error

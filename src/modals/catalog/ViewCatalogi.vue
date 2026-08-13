@@ -4,8 +4,13 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog v-if="navigationStore.modal === 'viewCatalogi'"
-		:name="t('opencatalogi', 'View Catalog: {title}', { title: activeCatalog?.title || t('opencatalogi', 'Unknown') })"
+	<NcDialog
+		v-if="navigationStore.modal === 'viewCatalogi'"
+		:name="
+			t('opencatalogi', 'View Catalog: {title}', {
+				title: activeCatalog?.title || t('opencatalogi', 'Unknown'),
+			})
+		"
 		size="large"
 		:can-close="false">
 		<div class="formContainer viewCatalogiDialog">
@@ -21,7 +26,11 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<div class="catalogProperties">
 					<div class="propertyItem">
 						<strong>{{ t('opencatalogi', 'Status') }}:</strong>
-						<span>{{ activeCatalog?.listed ? t('opencatalogi', 'Publicly findable') : t('opencatalogi', 'Not publicly findable') }}</span>
+						<span>{{
+							activeCatalog?.listed
+								? t('opencatalogi', 'Publicly findable')
+								: t('opencatalogi', 'Not publicly findable')
+						}}</span>
 					</div>
 					<div v-if="activeCatalog?.description" class="propertyItem">
 						<strong>{{ t('opencatalogi', 'Description') }}:</strong>
@@ -54,14 +63,24 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<div class="tabContent">
 					<!-- Registers Tab -->
 					<div v-if="activeTab === 0" class="tabPanel">
-						<div v-if="activeCatalog?.registers?.length > 0" class="itemsGrid">
-							<div v-for="registerId in activeCatalog.registers"
+						<div
+							v-if="activeCatalog?.registers?.length > 0"
+							class="itemsGrid">
+							<div
+								v-for="registerId in activeCatalog.registers"
 								:key="registerId"
 								class="itemCard">
 								<div class="itemHeader">
-									<h3>{{ getRegisterById(registerId)?.title || t('opencatalogi', 'Unknown Register') }}</h3>
+									<h3>
+										{{
+											getRegisterById(registerId)?.title
+											|| t('opencatalogi', 'Unknown Register')
+										}}
+									</h3>
 								</div>
-								<p v-if="getRegisterById(registerId)?.description" class="itemDescription">
+								<p
+									v-if="getRegisterById(registerId)?.description"
+									class="itemDescription">
 									{{ getRegisterById(registerId).description }}
 								</p>
 							</div>
@@ -69,7 +88,12 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<div v-else class="emptyTabContent">
 							<NcEmptyContent
 								:name="t('opencatalogi', 'No registers found')"
-								:description="t('opencatalogi', 'This catalog has no associated registers.')">
+								:description="
+									t(
+										'opencatalogi',
+										'This catalog has no associated registers.',
+									)
+								">
 								<template #icon>
 									<DatabaseOutline :size="64" />
 								</template>
@@ -79,14 +103,24 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 					<!-- Schemas Tab -->
 					<div v-if="activeTab === 1" class="tabPanel">
-						<div v-if="activeCatalog?.schemas?.length > 0" class="itemsGrid">
-							<div v-for="schemaId in activeCatalog.schemas"
+						<div
+							v-if="activeCatalog?.schemas?.length > 0"
+							class="itemsGrid">
+							<div
+								v-for="schemaId in activeCatalog.schemas"
 								:key="schemaId"
 								class="itemCard">
 								<div class="itemHeader">
-									<h3>{{ getSchemaById(schemaId)?.title || t('opencatalogi', 'Unknown Schema') }}</h3>
+									<h3>
+										{{
+											getSchemaById(schemaId)?.title
+											|| t('opencatalogi', 'Unknown Schema')
+										}}
+									</h3>
 								</div>
-								<p v-if="getSchemaById(schemaId)?.description" class="itemDescription">
+								<p
+									v-if="getSchemaById(schemaId)?.description"
+									class="itemDescription">
 									{{ getSchemaById(schemaId).description }}
 								</p>
 							</div>
@@ -94,7 +128,12 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<div v-else class="emptyTabContent">
 							<NcEmptyContent
 								:name="t('opencatalogi', 'No schemas found')"
-								:description="t('opencatalogi', 'This catalog has no associated schemas.')">
+								:description="
+									t(
+										'opencatalogi',
+										'This catalog has no associated schemas.',
+									)
+								">
 								<template #icon>
 									<FileTreeOutline :size="64" />
 								</template>
@@ -111,7 +150,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							</p>
 							<div class="organizationActions">
 								<NcActions>
-									<NcActionButton close-after-click @click="goToOrganization()">
+									<NcActionButton
+										close-after-click
+										@click="goToOrganization()">
 										<template #icon>
 											<OpenInApp :size="20" />
 										</template>
@@ -123,7 +164,12 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<div v-else class="emptyTabContent">
 							<NcEmptyContent
 								:name="t('opencatalogi', 'No organization')"
-								:description="t('opencatalogi', 'This catalog has no associated organization.')">
+								:description="
+									t(
+										'opencatalogi',
+										'This catalog has no associated organization.',
+									)
+								">
 								<template #icon>
 									<OfficeBuilding :size="64" />
 								</template>
@@ -218,7 +264,12 @@ export default {
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		organization() {
-			return this.activeCatalog?.organization ? objectStore.getObject('organization', this.activeCatalog.organization) : null
+			return this.activeCatalog?.organization
+				? objectStore.getObject(
+						'organization',
+						this.activeCatalog.organization,
+					)
+				: null
 		},
 	},
 	methods: {
@@ -233,7 +284,9 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		viewCatalog() {
 			if (!this.activeCatalog?.slug) {
-				console.error('[ViewCatalogi#viewCatalog] Cannot navigate: catalog or slug is missing')
+				console.error(
+					'[ViewCatalogi#viewCatalog] Cannot navigate: catalog or slug is missing',
+				)
 				return
 			}
 			navigationStore.setModal(false)
@@ -242,17 +295,20 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		deleteCatalog() {
 			navigationStore.setModal(false)
-			navigationStore.setDialog('deleteObject', { objectType: 'catalog', dialogTitle: 'Catalogus' })
+			navigationStore.setDialog('deleteObject', {
+				objectType: 'catalog',
+				dialogTitle: 'Catalogus',
+			})
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		getRegisterById(id) {
 			const availableRegisters = objectStore.availableRegisters
-			return availableRegisters.find(register => register.id === id)
+			return availableRegisters.find((register) => register.id === id)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		getSchemaById(id) {
 			const availableSchemas = objectStore.availableSchemas
-			return availableSchemas.find(schema => schema.id === id)
+			return availableSchemas.find((schema) => schema.id === id)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		goToOrganization() {

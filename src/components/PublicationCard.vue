@@ -1,7 +1,10 @@
 <template>
 	<div
 		class="publication-card"
-		:class="[`publication-card--${status}`, { 'publication-card--selected': selected }]"
+		:class="[
+			`publication-card--${status}`,
+			{ 'publication-card--selected': selected },
+		]"
 		role="button"
 		tabindex="0"
 		@click="$emit('click', object)"
@@ -31,15 +34,18 @@
 				<div class="publication-card__status">
 					<template v-if="status === 'concept'">
 						<span v-if="object.publicationDate">
-							{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(object.publicationDate) }}
+							{{ t('opencatalogi', 'Scheduled for') }}
+							{{ formatDate(object.publicationDate) }}
 						</span>
 						<span v-else>{{ t('opencatalogi', 'Concept') }}</span>
 					</template>
 					<template v-else-if="status === 'published'">
-						{{ t('opencatalogi', 'Published on') }} {{ formatDate(object.publicationDate) }}
+						{{ t('opencatalogi', 'Published on') }}
+						{{ formatDate(object.publicationDate) }}
 					</template>
 					<template v-else>
-						{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(object.depublicationDate) }}
+						{{ t('opencatalogi', 'Depublished on') }}
+						{{ formatDate(object.depublicationDate) }}
 					</template>
 				</div>
 
@@ -100,7 +106,13 @@ export default {
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		title() {
-			return this.object['@self']?.name || this.object.title || this.object.name || this.object.id || '—'
+			return (
+				this.object['@self']?.name
+				|| this.object.title
+				|| this.object.name
+				|| this.object.id
+				|| '—'
+			)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		summary() {
@@ -109,12 +121,14 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		truncatedSummary() {
 			if (!this.summary) return null
-			if (this.summary.length > 120) return this.summary.substring(0, 120) + '...'
+			if (this.summary.length > 120)
+				return this.summary.substring(0, 120) + '...'
 			return this.summary
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		filesCount() {
-			const countFromSelf = this.object?.['@self']?.filesCount
+			const countFromSelf =
+				this.object?.['@self']?.filesCount
 				|| this.object?.['@self']?.attachmentsCount
 				|| this.object?.['@self']?.attachmentCount
 			if (typeof countFromSelf === 'number') return countFromSelf
@@ -146,7 +160,9 @@ export default {
 	border-left: 4px solid var(--color-border);
 	border-radius: var(--border-radius-large, 10px);
 	cursor: pointer;
-	transition: box-shadow 0.2s ease, border-color 0.2s ease;
+	transition:
+		box-shadow 0.2s ease,
+		border-color 0.2s ease;
 }
 
 /* WCAG 2.3.3. Decorative hover/selection feedback only; the resulting

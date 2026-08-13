@@ -73,13 +73,16 @@ webpackConfig.entry = {
 // that uses @babel/preset-typescript to strip types only — same toolchain
 // as the .js files. Type-checking moves to `npx tsc --noEmit` (run separately
 // or in CI), where it can fail loud without blocking the bundle.
-webpackConfig.module.rules = webpackConfig.module.rules.filter(rule =>
-	!(rule && rule.use && (
-		(typeof rule.use === 'string' && rule.use === 'ts-loader')
-		|| (Array.isArray(rule.use) && rule.use.some(u => (u?.loader || u) === 'ts-loader'))
-		|| (typeof rule.use === 'object' && (rule.use.loader === 'ts-loader'))
-	))
-	&& !(rule && rule.loader === 'ts-loader')
+webpackConfig.module.rules = webpackConfig.module.rules.filter(
+	(rule) =>
+		!(
+			rule
+			&& rule.use
+			&& ((typeof rule.use === 'string' && rule.use === 'ts-loader')
+				|| (Array.isArray(rule.use)
+					&& rule.use.some((u) => (u?.loader || u) === 'ts-loader'))
+				|| (typeof rule.use === 'object' && rule.use.loader === 'ts-loader'))
+		) && !(rule && rule.loader === 'ts-loader'),
 )
 webpackConfig.module.rules.push({
 	test: /\.ts$/,
@@ -100,7 +103,9 @@ webpackConfig.plugins = [
 	// TODO: Remove NodePolyfillPlugin when upgrading to Vue 3.
 	new NodePolyfillPlugin({ additionalAliases: ['process'] }),
 	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
-	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
+	new webpack.DefinePlugin({
+		appVersion: JSON.stringify(process.env.npm_package_version),
+	}),
 ]
 
 // Use local source when available (monorepo dev), otherwise fall back to the
@@ -114,13 +119,15 @@ const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
 const localLibPkg = path.resolve(__dirname, '../nextcloud-vue/package.json')
 let useLocalLib = process.env.USE_LOCAL_LIB === 'true' && fs.existsSync(localLib)
 if (useLocalLib && fs.existsSync(localLibPkg)) {
-	const localVersion = String(JSON.parse(fs.readFileSync(localLibPkg, 'utf8')).version || '')
+	const localVersion = String(
+		JSON.parse(fs.readFileSync(localLibPkg, 'utf8')).version || '',
+	)
 	const localMajor = parseInt(localVersion, 10)
 	if (!Number.isInteger(localMajor) || localMajor < 2) {
 		// eslint-disable-next-line no-console
 		console.warn(
 			`[opencatalogi] IGNORING USE_LOCAL_LIB: ../nextcloud-vue is ${localVersion || 'unversioned'}, `
-			+ 'which is the Vue 2 line. Building against node_modules instead.',
+				+ 'which is the Vue 2 line. Building against node_modules instead.',
 		)
 		useLocalLib = false
 	}
@@ -159,16 +166,28 @@ webpackConfig.resolve.alias = {
 // Aliasing to the concrete ESM ENTRY FILE sidesteps exports resolution
 // entirely. The exact-match (`$`) form keeps deep imports such as
 // `@nextcloud/vue/components/NcButton` going through the exports map.
-webpackConfig.resolve.alias['@nextcloud/vue$'] = path.resolve(__dirname, 'node_modules/@nextcloud/vue/dist/index.mjs')
-webpackConfig.resolve.alias['@nextcloud/dialogs$'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs/dist/index.mjs')
-webpackConfig.resolve.alias['@nextcloud/dialogs/style.css$'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs/dist/style.css')
+webpackConfig.resolve.alias['@nextcloud/vue$'] = path.resolve(
+	__dirname,
+	'node_modules/@nextcloud/vue/dist/index.mjs',
+)
+webpackConfig.resolve.alias['@nextcloud/dialogs$'] = path.resolve(
+	__dirname,
+	'node_modules/@nextcloud/dialogs/dist/index.mjs',
+)
+webpackConfig.resolve.alias['@nextcloud/dialogs/style.css$'] = path.resolve(
+	__dirname,
+	'node_modules/@nextcloud/dialogs/dist/style.css',
+)
 
 // `@nextcloud/vue@9` hard-depends on `vue-router@^5.1.0` while this app is on
 // v4, so npm nests a SECOND copy under node_modules/@nextcloud/vue. Two copies
 // of vue-router means two `routerKey` symbols: any nc-vue component calling
 // `useRouter()` gets `undefined` rather than this app's router, with no error.
 // Pin every request to the app's single copy.
-webpackConfig.resolve.alias['vue-router$'] = path.resolve(__dirname, 'node_modules/vue-router/dist/vue-router.mjs')
+webpackConfig.resolve.alias['vue-router$'] = path.resolve(
+	__dirname,
+	'node_modules/vue-router/dist/vue-router.mjs',
+)
 
 // Share Vue + @nextcloud/vue + pinia + icons + @conduction/nextcloud-vue
 // across every entry-point so each widget bundle no longer inlines its own

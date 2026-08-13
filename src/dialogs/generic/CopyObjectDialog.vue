@@ -30,12 +30,14 @@ const sourceSchemaId = computed(() => {
 const displayName = computed(() => {
 	const obj = activeObject.value
 	if (!obj) return ''
-	return obj['@self']?.name
+	return (
+		obj['@self']?.name
 		|| obj.name
 		|| obj.title
 		|| obj['@self']?.id
 		|| obj.id
 		|| ''
+	)
 })
 
 // Cache for the source object's schema, keyed by schema id. Loaded only so
@@ -55,7 +57,10 @@ watch(
 				{ method: 'GET', headers: { 'Content-Type': 'application/json' } },
 			)
 			if (!response.ok) return
-			schemasById.value = { ...schemasById.value, [schemaId]: await response.json() }
+			schemasById.value = {
+				...schemasById.value,
+				[schemaId]: await response.json(),
+			}
 		} catch {
 			// Silent failure — copyObject falls back to title/name.
 		}
@@ -101,18 +106,24 @@ const copyObject = () => {
 		const selectedObjects = objectStore.getSelectedObjects(objectType.value)
 		if (!selectedObjects?.length) return
 
-		Promise.all(selectedObjects.map(obj =>
-			objectStore.copyObject(objectType.value, obj.id, nameFieldPath.value),
-		))
-			.then(() => {
-				refreshObjectList(objectType.value)
-				closeDialog()
-			})
+		Promise.all(
+			selectedObjects.map((obj) =>
+				objectStore.copyObject(
+					objectType.value,
+					obj.id,
+					nameFieldPath.value,
+				),
+			),
+		).then(() => {
+			refreshObjectList(objectType.value)
+			closeDialog()
+		})
 	} else {
 		const activeObject = objectStore.getActiveObject(objectType.value)
 		if (!activeObject?.id) return
 
-		objectStore.copyObject(objectType.value, activeObject.id, nameFieldPath.value)
+		objectStore
+			.copyObject(objectType.value, activeObject.id, nameFieldPath.value)
 			.then(() => {
 				refreshObjectList(objectType.value)
 				closeDialog()
@@ -136,14 +147,50 @@ const closeDialog = () => {
 <template>
 	<NcDialog
 		v-if="shouldShowDialog"
-		:name="isMultiple ? t('opencatalogi', 'Copy {type}s', { type: dialogTitle }) : t('opencatalogi', 'Copy {type}', { type: dialogTitle })"
+		:name="
+			isMultiple
+				? t('opencatalogi', 'Copy {type}s', { type: dialogTitle })
+				: t('opencatalogi', 'Copy {type}', { type: dialogTitle })
+		"
 		:can-close="false">
-		<div v-if="objectStore.getState(objectType).success !== null || objectStore.getState(objectType).error">
-			<NcNoteCard v-if="objectStore.getState(objectType).success" type="success">
-				<p>{{ isMultiple ? t('opencatalogi', '{type}s successfully copied', { type: dialogTitle }) : t('opencatalogi', '{type} successfully copied', { type: dialogTitle }) }}</p>
+		<div
+			v-if="
+				objectStore.getState(objectType).success !== null
+				|| objectStore.getState(objectType).error
+			">
+			<NcNoteCard
+				v-if="objectStore.getState(objectType).success"
+				type="success">
+				<p>
+					{{
+						isMultiple
+							? t('opencatalogi', '{type}s successfully copied', {
+									type: dialogTitle,
+								})
+							: t('opencatalogi', '{type} successfully copied', {
+									type: dialogTitle,
+								})
+					}}
+				</p>
 			</NcNoteCard>
-			<NcNoteCard v-if="!objectStore.getState(objectType).success" type="error">
-				<p>{{ isMultiple ? t('opencatalogi', 'Something went wrong while copying {type}s', { type: dialogTitle.toLowerCase() }) : t('opencatalogi', 'Something went wrong while copying {type}', { type: dialogTitle.toLowerCase() }) }}</p>
+			<NcNoteCard
+				v-if="!objectStore.getState(objectType).success"
+				type="error">
+				<p>
+					{{
+						isMultiple
+							? t(
+									'opencatalogi',
+									'Something went wrong while copying {type}s',
+									{ type: dialogTitle.toLowerCase() },
+								)
+							: t(
+									'opencatalogi',
+									'Something went wrong while copying {type}',
+									{ type: dialogTitle.toLowerCase() },
+								)
+					}}
+				</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState(objectType).error" type="error">
 				<p>{{ objectStore.getState(objectType).error }}</p>
@@ -151,17 +198,42 @@ const closeDialog = () => {
 		</div>
 		<div v-if="objectStore.isLoading(objectType)" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>{{ isMultiple ? t('opencatalogi', '{type}s are being copied...', { type: dialogTitle }) : t('opencatalogi', '{type} is being copied...', { type: dialogTitle }) }}</span>
+			<span>{{
+				isMultiple
+					? t('opencatalogi', '{type}s are being copied...', {
+							type: dialogTitle,
+						})
+					: t('opencatalogi', '{type} is being copied...', {
+							type: dialogTitle,
+						})
+			}}</span>
 		</div>
-		<p v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)">
+		<p
+			v-if="
+				objectStore.getState(objectType).success === null
+				&& !objectStore.isLoading(objectType)
+			">
 			<template v-if="isMultiple">
-				{{ t('opencatalogi', 'Do you want to copy the selected {type}s?', { type: dialogTitle.toLowerCase() }) }}
+				{{
+					t('opencatalogi', 'Do you want to copy the selected {type}s?', {
+						type: dialogTitle.toLowerCase(),
+					})
+				}}
 			</template>
 			<template v-else>
-				{{ t('opencatalogi', 'Do you want to copy {name}?', { name: displayName }) }}
+				{{
+					t('opencatalogi', 'Do you want to copy {name}?', {
+						name: displayName,
+					})
+				}}
 			</template>
 		</p>
-		<template v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)" #actions>
+		<template
+			v-if="
+				objectStore.getState(objectType).success === null
+				&& !objectStore.isLoading(objectType)
+			"
+			#actions>
 			<NcButton
 				:disabled="objectStore.isLoading(objectType)"
 				icon=""
@@ -183,9 +255,7 @@ const closeDialog = () => {
 			</NcButton>
 		</template>
 		<template v-else #actions>
-			<NcButton
-				icon=""
-				@click="navigationStore.setDialog(false)">
+			<NcButton icon="" @click="navigationStore.setDialog(false)">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
@@ -227,23 +297,25 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		copyObject() {
 			if (this.isMultiple) {
-				const selectedObjects = objectStore.getSelectedObjects(this.objectType)
+				const selectedObjects = objectStore.getSelectedObjects(
+					this.objectType,
+				)
 				if (!selectedObjects?.length) return
 
-				Promise.all(selectedObjects.map(obj =>
-					objectStore.copyObject(this.objectType, obj.id),
-				))
-					.then(() => {
-						this.closeDialog()
-					})
+				Promise.all(
+					selectedObjects.map((obj) =>
+						objectStore.copyObject(this.objectType, obj.id),
+					),
+				).then(() => {
+					this.closeDialog()
+				})
 			} else {
 				const activeObject = objectStore.getActiveObject(this.objectType)
 				if (!activeObject?.id) return
 
-				objectStore.copyObject(this.objectType, activeObject.id)
-					.then(() => {
-						this.closeDialog()
-					})
+				objectStore.copyObject(this.objectType, activeObject.id).then(() => {
+					this.closeDialog()
+				})
 			}
 		},
 		/**

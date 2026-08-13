@@ -51,23 +51,27 @@ function ensureBundleBuilt(): void {
 	if (process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true') {
 		throw new Error(
 			`[playwright globalSetup] bundle missing at ${BUNDLE_PATH} on CI. `
-			+ 'The workflow\'s "Build app frontend" step should already have produced it — '
-			+ 'check that step rather than rebuilding here, because a rebuild would hide it.',
+				+ 'The workflow\'s "Build app frontend" step should already have produced it — '
+				+ 'check that step rather than rebuilding here, because a rebuild would hide it.',
 		)
 	}
 	// eslint-disable-next-line no-console
-	console.log(`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`)
+	console.log(
+		`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`,
+	)
 	execSync('npm run build', { cwd: APP_ROOT, stdio: 'inherit' })
 }
 
 async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 	const ctx = await request.newContext()
 	try {
-		const res = await ctx.get(`${baseURL}/status.php`, { failOnStatusCode: false })
+		const res = await ctx.get(`${baseURL}/status.php`, {
+			failOnStatusCode: false,
+		})
 		if (!res.ok()) {
 			throw new Error(
 				`Nextcloud status.php returned ${res.status()} at ${baseURL}. `
-				+ 'Make sure the docker container is running and reachable.',
+					+ 'Make sure the docker container is running and reachable.',
 			)
 		}
 		const body = await res.json().catch(() => ({}))
@@ -87,8 +91,8 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	// SHARED dev container whenever no target was configured — the mechanism by
 	// which another app in this fleet triggered brute-force lockouts in
 	// somebody else's environment. `resolveBaseUrl()` throws instead.
-	const baseURL = (config.projects[0]?.use?.baseURL as string | undefined)
-		?? resolveBaseUrl()
+	const baseURL =
+		(config.projects[0]?.use?.baseURL as string | undefined) ?? resolveBaseUrl()
 	const username = process.env.NC_ADMIN_USER ?? 'admin'
 	const password = process.env.NC_ADMIN_PASS ?? 'admin'
 
@@ -109,7 +113,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	if (/\/login(\?|$|\/)/.test(currentUrl)) {
 		throw new Error(
 			`Login appears to have failed — still on ${currentUrl}. `
-			+ 'Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin).',
+				+ 'Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin).',
 		)
 	}
 

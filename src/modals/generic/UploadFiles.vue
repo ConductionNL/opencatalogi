@@ -3,7 +3,8 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.dialog === 'uploadFiles'"
+	<NcModal
+		v-if="navigationStore.dialog === 'uploadFiles'"
 		ref="modalRef"
 		label-id="AddAttachmentModal"
 		@close="closeDialog()">
@@ -11,7 +12,8 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 			<h2>{{ t('opencatalogi', 'Add attachment') }}</h2>
 
 			<div class="labelAndShareContainer">
-				<NcSelect v-bind="labelOptions"
+				<NcSelect
+					v-bind="labelOptions"
 					v-model="labelOptions.value"
 					:input-label="t('opencatalogi', 'Labels')"
 					:disabled="loading || retryLoading || tagsLoading"
@@ -19,7 +21,8 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:taggable="true"
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
-				<NcCheckboxRadioSwitch v-model="share"
+				<NcCheckboxRadioSwitch
+					v-model="share"
 					:disabled="loading || retryLoading"
 					:label="t('opencatalogi', 'Automatically publish')"
 					type="switch">
@@ -28,18 +31,37 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 			</div>
 
 			<div class="container">
-				<div v-if="!labelOptions.value?.length || loading || retryLoading" class="filesListDragDropNotice" :class="'tabPanelFileUpload'">
+				<div
+					v-if="!labelOptions.value?.length || loading || retryLoading"
+					class="filesListDragDropNotice"
+					:class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>{{ t('opencatalogi', 'Select or create labels or select "No label" to add files') }}</p>
+							<p>
+								{{
+									t(
+										'opencatalogi',
+										'Select or create labels or select "No label" to add files',
+									)
+								}}
+							</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="success !== null || error || duplicateWarning">
 						<NcNoteCard v-if="success" type="success">
-							<p>{{ t('opencatalogi', 'Files added successfully') }}</p>
+							<p>
+								{{ t('opencatalogi', 'Files added successfully') }}
+							</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>{{ t('opencatalogi', 'Something went wrong when adding files') }}</p>
+							<p>
+								{{
+									t(
+										'opencatalogi',
+										'Something went wrong when adding files',
+									)
+								}}
+							</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
@@ -49,11 +71,25 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>{{ t('opencatalogi', 'Select files with the correct extension') }}</p>
+								<p>
+									{{
+										t(
+											'opencatalogi',
+											'Select files with the correct extension',
+										)
+									}}
+								</p>
 							</NcNoteCard>
 						</div>
 					</div>
-					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length || loading || retryLoading }">
+					<div
+						class="filesListDragDropNoticeWrapper"
+						:class="{
+							'filesListDragDropNoticeWrapper--disabled':
+								!labelOptions.value?.length
+								|| loading
+								|| retryLoading,
+						}">
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
@@ -67,7 +103,11 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 						<div class="filesListDragDropNoticeTitle">
 							<NcButton
-								:disabled="loading || retryLoading || !labelOptions.value?.length"
+								:disabled="
+									loading
+									|| retryLoading
+									|| !labelOptions.value?.length
+								"
 								variant="primary"
 								@click="openFileUpload()">
 								<template #icon>
@@ -78,23 +118,43 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</div>
 					</div>
 				</div>
-				<div v-if="labelOptions.value?.length && !loading && !retryLoading"
+				<div
+					v-if="labelOptions.value?.length && !loading && !retryLoading"
 					ref="dropZoneRef"
 					class="filesListDragDropNotice"
 					:class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>{{ t('opencatalogi', 'Select or create labels or select "No label" to add files') }}</p>
+							<p>
+								{{
+									t(
+										'opencatalogi',
+										'Select or create labels or select "No label" to add files',
+									)
+								}}
+							</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="checkForTooBigFiles(files)">
 						<NcNoteCard type="warning">
 							<p class="folderLink">
-								{{ t('opencatalogi', 'If you want to add files larger than or equal to 512MB, go to the') }}
-								<NcButton variant="secondary"
+								{{
+									t(
+										'opencatalogi',
+										'If you want to add files larger than or equal to 512MB, go to the',
+									)
+								}}
+								<NcButton
+									variant="secondary"
 									class="folderLinkButton"
 									:aria-label="t('opencatalogi', 'Open folder')"
-									@click="openFolder(publicationStore.publicationItem?.['@self']?.folder)">
+									@click="
+										openFolder(
+											publicationStore.publicationItem?.[
+												'@self'
+											]?.folder,
+										)
+									">
 									<template #icon>
 										<FolderOutline :size="20" />
 									</template>
@@ -106,10 +166,19 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					</div>
 					<div v-if="success !== null || error || duplicateWarning">
 						<NcNoteCard v-if="success" type="success">
-							<p>{{ t('opencatalogi', 'Files added successfully') }}</p>
+							<p>
+								{{ t('opencatalogi', 'Files added successfully') }}
+							</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>{{ t('opencatalogi', 'Something went wrong when adding files') }}</p>
+							<p>
+								{{
+									t(
+										'opencatalogi',
+										'Something went wrong when adding files',
+									)
+								}}
+							</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
@@ -119,11 +188,25 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>{{ t('opencatalogi', 'Select files with the correct extension') }}</p>
+								<p>
+									{{
+										t(
+											'opencatalogi',
+											'Select files with the correct extension',
+										)
+									}}
+								</p>
 							</NcNoteCard>
 						</div>
 					</div>
-					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length || loading || retryLoading }">
+					<div
+						class="filesListDragDropNoticeWrapper"
+						:class="{
+							'filesListDragDropNoticeWrapper--disabled':
+								!labelOptions.value?.length
+								|| loading
+								|| retryLoading,
+						}">
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
@@ -137,7 +220,11 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 						<div class="filesListDragDropNoticeTitle">
 							<NcButton
-								:disabled="loading || retryLoading || !labelOptions.value?.length"
+								:disabled="
+									loading
+									|| retryLoading
+									|| !labelOptions.value?.length
+								"
 								variant="primary"
 								@click="openFileUpload()">
 								<template #icon>
@@ -152,7 +239,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					<thead>
 						<tr class="files-table-tr">
 							<th scope="col" class="files-table-td-status">
-								<span class="hidden-visually">{{ t('opencatalogi', 'Status') }}</span>
+								<span class="hidden-visually">{{
+									t('opencatalogi', 'Status')
+								}}</span>
 							</th>
 							<th scope="col">
 								{{ t('opencatalogi', 'File name') }}
@@ -166,43 +255,84 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="file of files" :key="file.name" class="files-table-tr">
+						<tr
+							v-for="file of files"
+							:key="file.name"
+							class="files-table-tr">
 							<td>
-								<CheckCircle v-if="file.status === 'uploaded'" class="success" :size="20" />
-								<NcLoadingIcon v-if="file.status === 'uploading'" :size="20" />
-								<AlphaXCircle v-if="file.status === 'failed'" class="failed" :size="20" />
-								<Exclamation v-if="file.status === 'too_large'" class="failed" :size="20" />
+								<CheckCircle
+									v-if="file.status === 'uploaded'"
+									class="success"
+									:size="20" />
+								<NcLoadingIcon
+									v-if="file.status === 'uploading'"
+									:size="20" />
+								<AlphaXCircle
+									v-if="file.status === 'failed'"
+									class="failed"
+									:size="20" />
+								<Exclamation
+									v-if="file.status === 'too_large'"
+									class="failed"
+									:size="20" />
 							</td>
-							<td class="files-table-td-name" :class="{ 'files-table-name-wrong': getTooBigFiles(file.size) }">
-								<span class="files-table-name">{{ getFileNameAndExtension(file.name).name }}</span>
-								<span class="files-table-extension">.{{ getFileNameAndExtension(file.name).extension }}</span>
+							<td
+								class="files-table-td-name"
+								:class="{
+									'files-table-name-wrong': getTooBigFiles(
+										file.size,
+									),
+								}">
+								<span class="files-table-name">{{
+									getFileNameAndExtension(file.name).name
+								}}</span>
+								<span class="files-table-extension"
+									>.{{
+										getFileNameAndExtension(file.name).extension
+									}}</span
+								>
 							</td>
 							<td>
 								{{ bytesToSize(file.size) }}
 							</td>
 							<td class="files-table-td-labels">
-								<span v-if="editingTags !== file.name"
+								<span
+									v-if="editingTags !== file.name"
 									class="files-list__row-action--inline files-list__row-action-system-tags">
-									<ul v-if="file.tags && file.tags.length > 0" class="files-list__system-tags" :aria-label="t('opencatalogi', 'Assigned collaborative tags')">
-										<li v-for="label of file.tags"
+									<ul
+										v-if="file.tags && file.tags.length > 0"
+										class="files-list__system-tags"
+										:aria-label="
+											t(
+												'opencatalogi',
+												'Assigned collaborative tags',
+											)
+										">
+										<li
+											v-for="label of file.tags"
 											:key="label"
 											class="files-list__system-tag"
 											:title="label">
 											{{ label }}
 										</li>
 									</ul>
-									<span v-if="!file.tags || file.tags.length === 0">
+									<span
+										v-if="!file.tags || file.tags.length === 0">
 										{{ t('opencatalogi', 'No labels') }}
 									</span>
 								</span>
 								<NcSelect
 									v-if="editingTags === file.name"
 									v-model="editedTags"
-									:disabled="loading || retryLoading || tagsLoading"
+									:disabled="
+										loading || retryLoading || tagsLoading
+									"
 									:loading="tagsLoading"
 									:taggable="true"
 									:multiple="true"
-									:aria-label-combobox="labelOptionsEdit.inputLabel"
+									:aria-label-combobox="
+										labelOptionsEdit.inputLabel
+									"
 									:options="labelOptionsEdit.options" />
 
 								<span class="buttonContainer">
@@ -210,11 +340,27 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									<NcButton
 										v-if="editingTags !== file.name"
 										:title="t('opencatalogi', 'Edit labels')"
-										:disabled="editingTags && editingTags !== file.name || loading || retryLoading || file.status === 'too_large' || tagsLoading"
-										:aria-label="t('opencatalogi', 'Edit tags for {name}', { name: file.name })"
+										:disabled="
+											(editingTags
+												&& editingTags !== file.name)
+											|| loading
+											|| retryLoading
+											|| file.status === 'too_large'
+											|| tagsLoading
+										"
+										:aria-label="
+											t(
+												'opencatalogi',
+												'Edit tags for {name}',
+												{ name: file.name },
+											)
+										"
 										variant="secondary"
 										class="editTagsButton"
-										@click="editingTags = file.name, editedTags = file.tags">
+										@click="
+											((editingTags = file.name),
+											(editedTags = file.tags))
+										">
 										<template #icon>
 											<TagEdit :size="20" />
 										</template>
@@ -223,7 +369,13 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 										v-if="editingTags === file.name"
 										:title="t('opencatalogi', 'Save labels')"
 										variant="primary"
-										:aria-label="t('opencatalogi', 'Save tags for {name}', { name: file.name })"
+										:aria-label="
+											t(
+												'opencatalogi',
+												'Save tags for {name}',
+												{ name: file.name },
+											)
+										"
 										class="editTagsButton"
 										@click="saveTags(file, editedTags)">
 										<template #icon>
@@ -242,8 +394,11 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 
 									<!-- File Actions -->
-									<NcButton v-if="file.status === 'failed'"
-										:aria-label="t('opencatalogi', 'Retry upload')"
+									<NcButton
+										v-if="file.status === 'failed'"
+										:aria-label="
+											t('opencatalogi', 'Retry upload')
+										"
 										:title="t('opencatalogi', 'Retry upload')"
 										variant="primary"
 										@click="addAttachments(file)">
@@ -253,8 +408,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="file.status === 'too_large'"
-										:aria-label="t('opencatalogi', 'Remove from list')"
-										:title="t('opencatalogi', 'Remove from list')"
+										:aria-label="
+											t('opencatalogi', 'Remove from list')
+										"
+										:title="
+											t('opencatalogi', 'Remove from list')
+										"
 										variant="primary"
 										@click="removeFile(file.name)">
 										<template #icon>
@@ -269,20 +428,37 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 			</div>
 			<div class="modalFooter">
 				<div class="modalFooterStatus">
-					<span v-if="!files">{{ t('opencatalogi', 'No files selected') }}</span>
-					<span v-if="files" class="uploadSummary">{{ t('opencatalogi', '{uploaded} / {total} files uploaded', { uploaded: uploadedCount, total: files.length }) }}</span>
+					<span v-if="!files">{{
+						t('opencatalogi', 'No files selected')
+					}}</span>
+					<span v-if="files" class="uploadSummary">{{
+						t('opencatalogi', '{uploaded} / {total} files uploaded', {
+							uploaded: uploadedCount,
+							total: files.length,
+						})
+					}}</span>
 				</div>
 				<div class="buttonContainer">
-					<NcButton v-if="files && failedCount > 0"
+					<NcButton
+						v-if="files && failedCount > 0"
 						variant="secondary"
 						:disabled="loading || retryLoading"
 						@click="retryAllFailed">
 						<template #icon>
-							<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
+							<Refresh
+								:size="20"
+								:class="{ loadingIcon: retryLoading }" />
 						</template>
-						{{ retryLoading ? t('opencatalogi', 'In progress...') : t('opencatalogi', 'Retry all ({count})', { count: failedCount }) }}
+						{{
+							retryLoading
+								? t('opencatalogi', 'In progress...')
+								: t('opencatalogi', 'Retry all ({count})', {
+										count: failedCount,
+									})
+						}}
 					</NcButton>
-					<NcButton variant="primary"
+					<NcButton
+						variant="primary"
 						:disabled="loading || retryLoading"
 						@click="closeDialog()">
 						{{ t('opencatalogi', 'Done') }}
@@ -294,7 +470,14 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcModal, NcNoteCard, NcSelect, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcLoadingIcon,
+	NcModal,
+	NcNoteCard,
+	NcSelect,
+	NcCheckboxRadioSwitch,
+} from '@nextcloud/vue'
 import { useFileSelection } from './../../composables/UseFileSelection.js'
 import axios from 'axios'
 import { ref, isRef } from 'vue'
@@ -315,10 +498,11 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 const dropZoneRef = ref()
 
-const { openFileUpload, files, reset, setTags, rejectedDuplicates } = useFileSelection({
-	allowMultiple: true,
-	dropzone: dropZoneRef,
-})
+const { openFileUpload, files, reset, setTags, rejectedDuplicates } =
+	useFileSelection({
+		allowMultiple: true,
+		dropzone: dropZoneRef,
+	})
 
 /**
  * UploadFiles — upload files to a publication's OpenRegister files endpoint.
@@ -389,7 +573,10 @@ export default {
 
 			return {
 				success: result.success,
-				errorMessages: result?.error?.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`) || [],
+				errorMessages:
+					result?.error?.issues.map(
+						(issue) => `${issue.path.join('.')}: ${issue.message}`,
+					) || [],
 				fieldErrors: result?.error?.formErrors?.fieldErrors || {},
 			}
 		},
@@ -428,9 +615,16 @@ export default {
 				// `v-if="error && !success"` and so the auto-clear timeout from
 				// a previous warning doesn't truncate this one.
 				this.success = null
-				this.duplicateWarning = t('opencatalogi', 'These files were skipped because a file with the same name already exists: {names}', { names: newRejected.join(', ') })
-				if (this._duplicateWarningTimer) clearTimeout(this._duplicateWarningTimer)
-				this._duplicateWarningTimer = setTimeout(() => { this.duplicateWarning = null }, 5000)
+				this.duplicateWarning = t(
+					'opencatalogi',
+					'These files were skipped because a file with the same name already exists: {names}',
+					{ names: newRejected.join(', ') },
+				)
+				if (this._duplicateWarningTimer)
+					clearTimeout(this._duplicateWarningTimer)
+				this._duplicateWarningTimer = setTimeout(() => {
+					this.duplicateWarning = null
+				}, 5000)
 			},
 			deep: true,
 		},
@@ -442,14 +636,18 @@ export default {
 		this.updateUploadCounts()
 		// watch for dialog open/close toggles to fire every time
 		if (this._uploadFilesDialogUnwatch) this._uploadFilesDialogUnwatch()
-		this._uploadFilesDialogUnwatch = this.$watch(() => navigationStore.dialog, (newVal, oldVal) => {
-			if (newVal === 'uploadFiles' && oldVal !== 'uploadFiles') {
-				this.onOpenModal()
-			}
-			if (oldVal === 'uploadFiles' && newVal !== 'uploadFiles') {
-				this.onExternalClose()
-			}
-		}, { immediate: true })
+		this._uploadFilesDialogUnwatch = this.$watch(
+			() => navigationStore.dialog,
+			(newVal, oldVal) => {
+				if (newVal === 'uploadFiles' && oldVal !== 'uploadFiles') {
+					this.onOpenModal()
+				}
+				if (oldVal === 'uploadFiles' && newVal !== 'uploadFiles') {
+					this.onExternalClose()
+				}
+			},
+			{ immediate: true },
+		)
 	},
 	/**
 	 * Tear down the dialog watcher and the pending duplicate-file warning timer.
@@ -458,7 +656,10 @@ export default {
 	 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-file-attachment-management-req-objm-004
 	 */
 	unmounted() {
-		if (this._uploadFilesDialogUnwatch) try { this._uploadFilesDialogUnwatch() } catch (e) {}
+		if (this._uploadFilesDialogUnwatch)
+			try {
+				this._uploadFilesDialogUnwatch()
+			} catch (e) {}
 		// The duplicate-warning timeout writes `this.duplicateWarning` 5s later;
 		// without this it fires against an unmounted instance.
 		if (this._duplicateWarningTimer) {
@@ -472,20 +673,35 @@ export default {
 			// mark internal close to avoid duplicate external watcher emission
 			this.__uploadFilesClosingInternally = true
 			// compute safe tags to emit
-			let tagsToEmit = Array.isArray(this.latestTags) && this.latestTags.length > 0 ? this.latestTags : []
+			let tagsToEmit =
+				Array.isArray(this.latestTags) && this.latestTags.length > 0
+					? this.latestTags
+					: []
 			if (tagsToEmit.length === 0) {
-				const stored = objectStore.getCollection && objectStore.getCollection('tags')
+				const stored =
+					objectStore.getCollection && objectStore.getCollection('tags')
 				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
 			}
 			// ensure latest tags are saved globally
-			try { objectStore.setCollection('tags', tagsToEmit) } catch (e) {}
+			try {
+				objectStore.setCollection('tags', tagsToEmit)
+			} catch (e) {}
 			// emit closed and tags-updated once
-			EventBus.$emit('upload-files:closed', { tags: tagsToEmit, newTags: this.newTags })
+			EventBus.$emit('upload-files:closed', {
+				tags: tagsToEmit,
+				newTags: this.newTags,
+			})
 			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
-				EventBus.$emit('upload-files:tags-updated', { tags: tagsToEmit, newTags: this.newTags })
+				EventBus.$emit('upload-files:tags-updated', {
+					tags: tagsToEmit,
+					newTags: this.newTags,
+				})
 			}
 			navigationStore.setDialog(null)
-			objectStore.setActiveObject('publication', objectStore.getActiveObject('publication'))
+			objectStore.setActiveObject(
+				'publication',
+				objectStore.getActiveObject('publication'),
+			)
 			catalogStore.fetchPublications()
 			this.success = null
 			this.error = null
@@ -498,7 +714,9 @@ export default {
 			this.initialTags = []
 			this.latestTags = []
 			this.newTags = []
-			setTimeout(() => { this.__uploadFilesClosingInternally = false }, 0)
+			setTimeout(() => {
+				this.__uploadFilesClosingInternally = false
+			}, 0)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		bytesToSize(bytes) {
@@ -521,11 +739,11 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		checkForTooBigFiles(files) {
 			if (!files) return false
-			const wrongFiles = files.filter(file => {
+			const wrongFiles = files.filter((file) => {
 				return this.getTooBigFiles(file.size)
 			})
 
-			wrongFiles.forEach(file => {
+			wrongFiles.forEach((file) => {
 				file.status = 'too_large'
 			})
 
@@ -538,10 +756,17 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		isSelectable(option) {
-			if (this.labelOptions.value?.includes('No label') && option !== 'No label') {
+			if (
+				this.labelOptions.value?.includes('No label')
+				&& option !== 'No label'
+			) {
 				return false
 			}
-			if (this.labelOptions.value?.length >= 1 && !this.labelOptions.value?.includes('No label') && option === 'No label') {
+			if (
+				this.labelOptions.value?.length >= 1
+				&& !this.labelOptions.value?.includes('No label')
+				&& option === 'No label'
+			) {
 				return false
 			}
 			return true
@@ -569,8 +794,12 @@ export default {
 				// merge with tags from current publication attachments (if collection exists and is array)
 				let attachmentsCollection = []
 				try {
-					const attCol = objectStore.getCollection && objectStore.getCollection('publicationAttachments')
-					attachmentsCollection = Array.isArray(attCol?.results) ? attCol.results : []
+					const attCol =
+						objectStore.getCollection
+						&& objectStore.getCollection('publicationAttachments')
+					attachmentsCollection = Array.isArray(attCol?.results)
+						? attCol.results
+						: []
 				} catch (_) {
 					attachmentsCollection = []
 				}
@@ -581,7 +810,9 @@ export default {
 				}
 				// also merge with previously stored tags in store, if present
 				try {
-					const storedTags = objectStore.getCollection && objectStore.getCollection('tags')
+					const storedTags =
+						objectStore.getCollection
+						&& objectStore.getCollection('tags')
 					if (Array.isArray(storedTags)) {
 						for (const t of storedTags) tagSet.add(t)
 					}
@@ -599,11 +830,18 @@ export default {
 					this.initialTags = [...newLabelOptionsEdit]
 				}
 				this.latestTags = [...newLabelOptionsEdit]
-				this.newTags = this.latestTags.filter(t => !this.initialTags.includes(t))
+				this.newTags = this.latestTags.filter(
+					(t) => !this.initialTags.includes(t),
+				)
 				// save globally so other views may pull
-				try { objectStore.setCollection('tags', this.latestTags) } catch (e) {}
+				try {
+					objectStore.setCollection('tags', this.latestTags)
+				} catch (e) {}
 				// notify listeners about fresh tags
-				EventBus.$emit('upload-files:tags-fetched', { tags: this.latestTags, newTags: this.newTags })
+				EventBus.$emit('upload-files:tags-fetched', {
+					tags: this.latestTags,
+					newTags: this.newTags,
+				})
 			} catch (e) {
 				console.error('Failed to fetch tags', e)
 			} finally {
@@ -635,16 +873,20 @@ export default {
 				const schemaRef = publication?.['@self']?.schema
 				if (!schemaRef) return
 
-				let configuration = (typeof schemaRef === 'object' && schemaRef !== null)
-					? schemaRef.configuration
-					: null
+				let configuration =
+					typeof schemaRef === 'object' && schemaRef !== null
+						? schemaRef.configuration
+						: null
 
 				if (!configuration) {
-					const schemaId = typeof schemaRef === 'object'
-						? (schemaRef.id || schemaRef.uuid || schemaRef.slug)
-						: schemaRef
+					const schemaId =
+						typeof schemaRef === 'object'
+							? schemaRef.id || schemaRef.uuid || schemaRef.slug
+							: schemaRef
 					if (!schemaId) return
-					const response = await fetch(`/index.php/apps/openregister/api/schemas/${schemaId}`)
+					const response = await fetch(
+						`/index.php/apps/openregister/api/schemas/${schemaId}`,
+					)
 					if (!response.ok) return
 					const schema = await response.json().catch(() => null)
 					configuration = schema?.configuration || null
@@ -665,15 +907,25 @@ export default {
 				return
 			}
 			// compute safe tags source
-			let tagsToEmit = Array.isArray(this.latestTags) && this.latestTags.length > 0 ? this.latestTags : []
+			let tagsToEmit =
+				Array.isArray(this.latestTags) && this.latestTags.length > 0
+					? this.latestTags
+					: []
 			if (tagsToEmit.length === 0) {
-				const stored = objectStore.getCollection && objectStore.getCollection('tags')
+				const stored =
+					objectStore.getCollection && objectStore.getCollection('tags')
 				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
 			}
 			// mirror close behavior when dialog is toggled from outside
-			EventBus.$emit('upload-files:closed', { tags: tagsToEmit, newTags: this.newTags || [] })
+			EventBus.$emit('upload-files:closed', {
+				tags: tagsToEmit,
+				newTags: this.newTags || [],
+			})
 			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
-				EventBus.$emit('upload-files:tags-updated', { tags: tagsToEmit, newTags: this.newTags || [] })
+				EventBus.$emit('upload-files:tags-updated', {
+					tags: tagsToEmit,
+					newTags: this.newTags || [],
+				})
 			}
 			this.initialTags = []
 			this.latestTags = []
@@ -684,13 +936,15 @@ export default {
 		 * Opens the folder URL in a new tab after parsing the encoded URL and converting to Nextcloud format
 		 * @param {string} url - The encoded folder URL to open (e.g. "Open Registers\/Publicatie Register\/Publicatie\/123")
 		 */
-		 /** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
-		 openFolder(url) {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+		openFolder(url) {
 			// Parse the encoded URL by replacing escaped characters
 			const decodedUrl = url.replace(/\\\//g, '/')
 
 			// Ensure URL starts with forward slash
-			const normalizedUrl = decodedUrl.startsWith('/') ? decodedUrl : '/' + decodedUrl
+			const normalizedUrl = decodedUrl.startsWith('/')
+				? decodedUrl
+				: '/' + decodedUrl
 
 			// Construct the proper Nextcloud Files app URL with the normalized path
 			// Use window.location.origin to get the current domain instead of hardcoding
@@ -705,7 +959,8 @@ export default {
 			try {
 				if (file && file.id) {
 					const publication = objectStore.getActiveObject('publication')
-					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+					const { registerId, schemaId } =
+						this.getRegisterSchemaIds(publication)
 					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
 
 					const response = await fetch(endpoint, {
@@ -715,29 +970,48 @@ export default {
 					})
 
 					if (!response.ok) {
-						throw new Error(`Failed to update file tags: ${response.statusText}`)
+						throw new Error(
+							`Failed to update file tags: ${response.statusText}`,
+						)
 					}
 
-					try { file.tags = Array.isArray(editedTags) ? [...editedTags] : [] } catch (_) {}
+					try {
+						file.tags = Array.isArray(editedTags) ? [...editedTags] : []
+					} catch (_) {}
 
-					const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
+					const getAttachments = await fetch(
+						`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`,
+					)
 					const attachments = await getAttachments.json().catch(() => null)
-					try { objectStore.setCollection('publicationAttachments', attachments?.results || []) } catch (_) {}
+					try {
+						objectStore.setCollection(
+							'publicationAttachments',
+							attachments?.results || [],
+						)
+					} catch (_) {}
 					catalogStore.fetchPublications()
 
 					this.success = 'File labels updated successfully'
-					setTimeout(() => { this.success = null }, 3000)
+					setTimeout(() => {
+						this.success = null
+					}, 3000)
 				} else {
 					file.tags = editedTags
 					file.status = 'pending'
 					const idMap = await this.addAttachments(file)
-					const newId = idMap && (idMap[file.name] || idMap[file.title] || null)
-					try { if (newId) file.id = newId } catch (_) {}
+					const newId =
+						idMap && (idMap[file.name] || idMap[file.title] || null)
+					try {
+						if (newId) file.id = newId
+					} catch (_) {}
 				}
 			} catch (error) {
 				console.error('Error saving tags:', error)
-				this.error = 'Failed to save file labels: ' + (error?.message || error)
-				setTimeout(() => { this.error = null }, 5000)
+				this.error =
+					'Failed to save file labels: ' + (error?.message || error)
+				setTimeout(() => {
+					this.error = null
+				}, 5000)
 			} finally {
 				this.editingTags = null
 				this.editedTags = []
@@ -760,7 +1034,11 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		checkIfDisabled() {
-			if (objectStore.getActiveObject('attachment').downloadUrl || objectStore.getActiveObject('attachment').title) return true
+			if (
+				objectStore.getActiveObject('attachment').downloadUrl
+				|| objectStore.getActiveObject('attachment').title
+			)
+				return true
 			return false
 		},
 
@@ -776,9 +1054,16 @@ export default {
 				if (specificFile) {
 					filesToUpload = [specificFile]
 				} else {
-					filesToUpload = this.files.value.filter(file => file.status !== 'uploaded' && file.status !== 'uploading' && file.status !== 'failed')
+					filesToUpload = this.files.value.filter(
+						(file) =>
+							file.status !== 'uploaded'
+							&& file.status !== 'uploading'
+							&& file.status !== 'failed',
+					)
 
-					filesToUpload = filesToUpload.filter(file => !this.getTooBigFiles(file.size))
+					filesToUpload = filesToUpload.filter(
+						(file) => !this.getTooBigFiles(file.size),
+					)
 				}
 
 				if (filesToUpload.length === 0) {
@@ -786,17 +1071,23 @@ export default {
 					return
 				}
 
-				filesToUpload.forEach(file => {
+				filesToUpload.forEach((file) => {
 					file.status = 'uploading'
 				})
 
-				const uploadPromises = filesToUpload.map(file => {
-					return this.createPublicationAttachment([file], reset, this.share)
-						.then(response => {
+				const uploadPromises = filesToUpload.map((file) => {
+					return this.createPublicationAttachment(
+						[file],
+						reset,
+						this.share,
+					)
+						.then((response) => {
 							if (response.status === 200) {
 								file.status = 'uploaded'
 								try {
-									const payload = Array.isArray(response?.data) ? response.data : []
+									const payload = Array.isArray(response?.data)
+										? response.data
+										: []
 									const created = payload && payload[0]
 									if (created && created.id) {
 										file.id = created.id
@@ -809,7 +1100,7 @@ export default {
 							this.updateUploadCounts()
 							return response
 						})
-						.catch(error => {
+						.catch((error) => {
 							file.status = 'failed'
 							this.updateUploadCounts()
 							throw error
@@ -821,24 +1112,32 @@ export default {
 				await this.getAllTags()
 
 				const publication = objectStore.getActiveObject('publication')
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
+				const { registerId, schemaId } =
+					this.getRegisterSchemaIds(publication)
+				const getAttachments = await fetch(
+					`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`,
+				)
 				const attachments = await getAttachments.json()
-				objectStore.setCollection('publicationAttachments', attachments?.results || [])
+				objectStore.setCollection(
+					'publicationAttachments',
+					attachments?.results || [],
+				)
 
 				catalogStore.fetchPublications()
 
-				const rejected = results.filter(r => r.status === 'rejected')
+				const rejected = results.filter((r) => r.status === 'rejected')
 				if (rejected.length > 0) {
 					const firstError = rejected[0].reason
-					this.error = firstError?.response?.data?.error ?? String(firstError)
+					this.error =
+						firstError?.response?.data?.error ?? String(firstError)
 				} else {
 					this.success = true
 				}
 
 				EventBus.$emit('upload-files:uploaded', {
 					publicationId: publication.id,
-					uploadedCount: results.filter(r => r.status === 'fulfilled').length,
+					uploadedCount: results.filter((r) => r.status === 'fulfilled')
+						.length,
 					failedCount: rejected.length,
 				})
 
@@ -855,12 +1154,16 @@ export default {
 		// Utility method to get register and schema IDs from publication object
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		getRegisterSchemaIds(publication) {
-			const registerId = typeof publication['@self'].register === 'object'
-				? publication['@self'].register?.id || publication['@self'].register?.uuid
-				: publication['@self'].register
-			const schemaId = typeof publication['@self'].schema === 'object'
-				? publication['@self'].schema?.id || publication['@self'].schema?.uuid
-				: publication['@self'].schema
+			const registerId =
+				typeof publication['@self'].register === 'object'
+					? publication['@self'].register?.id
+						|| publication['@self'].register?.uuid
+					: publication['@self'].register
+			const schemaId =
+				typeof publication['@self'].schema === 'object'
+					? publication['@self'].schema?.id
+						|| publication['@self'].schema?.uuid
+					: publication['@self'].schema
 			return { registerId, schemaId }
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
@@ -894,15 +1197,16 @@ export default {
 			const publication = objectStore.getActiveObject('publication')
 			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
 
-			return await axios.post(
-				`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/filesMultipart`,
-				formData,
-				{
-					headers: {
-						'Content-Type': 'multipart/form-data',
+			return await axios
+				.post(
+					`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/filesMultipart`,
+					formData,
+					{
+						headers: {
+							'Content-Type': 'multipart/form-data',
+						},
 					},
-				},
-			)
+				)
 				.then((response) => {
 					console.info('Importing files:', response.data)
 					return response
@@ -915,38 +1219,58 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		async retryAllFailed() {
 			this.retryLoading = true
-			const uploadPromises = this.files.value.filter(file => file.status === 'failed').map(file => {
-				file.status = 'uploading'
-				return this.createPublicationAttachment([file], reset, this.share)
-					.then(response => {
-						if (response.status === 200) {
-							file.status = 'uploaded'
-						} else {
+			const uploadPromises = this.files.value
+				.filter((file) => file.status === 'failed')
+				.map((file) => {
+					file.status = 'uploading'
+					return this.createPublicationAttachment(
+						[file],
+						reset,
+						this.share,
+					)
+						.then((response) => {
+							if (response.status === 200) {
+								file.status = 'uploaded'
+							} else {
+								file.status = 'failed'
+							}
+							this.updateUploadCounts()
+							return response
+						})
+						.catch((error) => {
 							file.status = 'failed'
-						}
-						this.updateUploadCounts()
-						return response
-					})
-					.catch(error => {
-						file.status = 'failed'
-						this.updateUploadCounts()
-						throw error
-					})
-			})
+							this.updateUploadCounts()
+							throw error
+						})
+				})
 
 			const results = await Promise.allSettled(uploadPromises)
 
 			const publication = objectStore.getActiveObject('publication')
 			if (publication?.id) {
-				const fulfilledCount = results.filter(r => r.status === 'fulfilled').length
-				const rejectedCount = results.filter(r => r.status === 'rejected').length
+				const fulfilledCount = results.filter(
+					(r) => r.status === 'fulfilled',
+				).length
+				const rejectedCount = results.filter(
+					(r) => r.status === 'rejected',
+				).length
 				if (fulfilledCount > 0) {
 					try {
-						const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-						const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
-						const attachments = await getAttachments.json().catch(() => null)
-						objectStore.setCollection('publicationAttachments', attachments?.results || [])
-					} catch (_) { /* ignore */ }
+						const { registerId, schemaId } =
+							this.getRegisterSchemaIds(publication)
+						const getAttachments = await fetch(
+							`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`,
+						)
+						const attachments = await getAttachments
+							.json()
+							.catch(() => null)
+						objectStore.setCollection(
+							'publicationAttachments',
+							attachments?.results || [],
+						)
+					} catch (_) {
+						/* ignore */
+					}
 				}
 				EventBus.$emit('upload-files:uploaded', {
 					publicationId: publication.id,
@@ -966,8 +1290,10 @@ export default {
 				return
 			}
 			const filesArr = this.files.value
-			this.uploadedCount = filesArr.filter(f => f.status === 'uploaded').length
-			this.failedCount = filesArr.filter(f => f.status === 'failed').length
+			this.uploadedCount = filesArr.filter(
+				(f) => f.status === 'uploaded',
+			).length
+			this.failedCount = filesArr.filter((f) => f.status === 'failed').length
 		},
 	},
 }
@@ -1006,7 +1332,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	margin-inline-end: var(--OC-margin-20);
 }
 
-.filesListDragDropNoticeWrapper--disabled{
+.filesListDragDropNoticeWrapper--disabled {
 	opacity: 0.4;
 }
 
@@ -1059,7 +1385,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	border-collapse: collapse;
 }
 
-.files-table-td-name{
+.files-table-td-name {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -1165,7 +1491,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	box-sizing: border-box;
 }
 
-.labelAndShareContainer{
+.labelAndShareContainer {
 	display: flex;
 	justify-content: center;
 	align-items: end;
@@ -1182,14 +1508,14 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	gap: 10px;
 }
 
-.uploadSummaryContainer{
+.uploadSummaryContainer {
 	margin-block-end: 20px;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 }
 
-.uploadSummary{
+.uploadSummary {
 	font-weight: bold;
 }
 

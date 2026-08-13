@@ -57,10 +57,10 @@ export function resolveBaseUrl(): string {
 
 	throw new Error(
 		'No Nextcloud base URL configured for the e2e suite. Set one of '
-		+ CANDIDATES.join(', ')
-		+ ' — e.g. PLAYWRIGHT_BASE_URL=http://localhost:8086 for the isolated '
-		+ 'opencatalogi-vue3-e2e instance. There is deliberately no default: '
-		+ 'the old fallback was http://localhost:8080, the SHARED dev container.',
+			+ CANDIDATES.join(', ')
+			+ ' — e.g. PLAYWRIGHT_BASE_URL=http://localhost:8086 for the isolated '
+			+ 'opencatalogi-vue3-e2e instance. There is deliberately no default: '
+			+ 'the old fallback was http://localhost:8080, the SHARED dev container.',
 	)
 }
 

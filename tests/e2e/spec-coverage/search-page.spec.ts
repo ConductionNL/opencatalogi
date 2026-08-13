@@ -21,25 +21,23 @@ import { test, expect } from '@playwright/test'
 import { bootApp, navTo, content, trackPageErrors, fatalErrors } from './_nav'
 
 test.describe('search-page', () => {
-	test(
-		// @e2e search::search-page-renders-search-surface
-		'Search — renders the search surface with a search input',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await bootApp(page)
-			await navTo(page, 'Search')
+	test(// @e2e search::search-page-renders-search-surface
+	'Search — renders the search surface with a search input', async ({ page }) => {
+		const errors = trackPageErrors(page)
+		await bootApp(page)
+		await navTo(page, 'Search')
 
-			// CnSearchPage mounts (type:"search" dispatched by CnPageRenderer).
-			await expect(content(page).locator('[data-testid="cn-search-page"]').first())
-				.toBeVisible({ timeout: 15000 })
+		// CnSearchPage mounts (type:"search" dispatched by CnPageRenderer).
+		await expect(
+			content(page).locator('[data-testid="cn-search-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
 
-			// A search input the user can interact with.
-			const searchInput = content(page).locator(
-				'[data-testid="cn-search-page-input"], input[type="search"]',
-			).first()
-			await expect(searchInput).toBeVisible({ timeout: 15000 })
+		// A search input the user can interact with.
+		const searchInput = content(page)
+			.locator('[data-testid="cn-search-page-input"], input[type="search"]')
+			.first()
+		await expect(searchInput).toBeVisible({ timeout: 15000 })
 
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })

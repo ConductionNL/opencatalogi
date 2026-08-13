@@ -2,7 +2,8 @@ import { Theme } from './theme'
 import { TTheme } from './theme.types'
 
 export const mockThemeData = (): TTheme[] => [
-	{ // full data
+	{
+		// full data
 		id: '1',
 		title: 'Decat',
 		summary: 'a short form summary',
@@ -16,13 +17,15 @@ export const mockThemeData = (): TTheme[] => [
 		sort: 1,
 	},
 	// @ts-expect-error -- expected missing properties
-	{ // partial data
+	{
+		// partial data
 		id: '2',
 		title: 'Woo',
 		summary: 'a short form summary',
 		description: 'a really really long description about this Theme',
 	},
-	{ // invalid data
+	{
+		// invalid data
 		id: '3',
 		title: '',
 		summary: 'a short form summary',
@@ -37,4 +40,5 @@ export const mockThemeData = (): TTheme[] => [
 	},
 ]
 
-export const mockTheme = (data: TTheme[] = mockThemeData()): TTheme[] => data.map(item => new Theme(item))
+export const mockTheme = (data: TTheme[] = mockThemeData()): TTheme[] =>
+	data.map((item) => new Theme(item))

@@ -8,26 +8,45 @@
 		<div v-else>
 			<div class="usageStatsTotals">
 				<div class="usageStatCard" data-testid="usage-stat-views">
-					<span class="usageStatLabel">{{ t('opencatalogi', 'Views') }}</span>
-					<span class="usageStatValue">{{ formatCount(stats.views) }}</span>
+					<span class="usageStatLabel">{{
+						t('opencatalogi', 'Views')
+					}}</span>
+					<span class="usageStatValue">{{
+						formatCount(stats.views)
+					}}</span>
 					<span class="usageStatTrend">{{ trendLabel(trendViews) }}</span>
 				</div>
 				<div class="usageStatCard" data-testid="usage-stat-downloads">
-					<span class="usageStatLabel">{{ t('opencatalogi', 'Downloads') }}</span>
-					<span class="usageStatValue">{{ formatCount(stats.downloads) }}</span>
-					<span class="usageStatTrend">{{ trendLabel(trendDownloads) }}</span>
+					<span class="usageStatLabel">{{
+						t('opencatalogi', 'Downloads')
+					}}</span>
+					<span class="usageStatValue">{{
+						formatCount(stats.downloads)
+					}}</span>
+					<span class="usageStatTrend">{{
+						trendLabel(trendDownloads)
+					}}</span>
 				</div>
 			</div>
 			<NcNoteCard type="info" data-testid="usage-counting-start">
 				<p>{{ countingStartText }}</p>
-				<p>{{ t('opencatalogi', 'Counts are requests, not unique visitors.') }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Counts are requests, not unique visitors.',
+						)
+					}}
+				</p>
 			</NcNoteCard>
-			<table v-if="stats.series && stats.series.length" class="usageStatsTable">
+			<table
+				v-if="stats.series && stats.series.length"
+				class="usageStatsTable">
 				<thead>
 					<tr>
-						<th scope="col">{{ t('opencatalogi','Date') }}</th>
-						<th scope="col">{{ t('opencatalogi','Views') }}</th>
-						<th scope="col">{{ t('opencatalogi','Downloads') }}</th>
+						<th scope="col">{{ t('opencatalogi', 'Date') }}</th>
+						<th scope="col">{{ t('opencatalogi', 'Views') }}</th>
+						<th scope="col">{{ t('opencatalogi', 'Downloads') }}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -116,7 +135,12 @@ export default {
 			try {
 				this.stats = await fetchPublicationStats(this.publicationId)
 			} catch (e) {
-				this.stats = { views: 0, downloads: 0, series: [], countingStart: null }
+				this.stats = {
+					views: 0,
+					downloads: 0,
+					series: [],
+					countingStart: null,
+				}
 			} finally {
 				this.loading = false
 			}

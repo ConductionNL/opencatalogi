@@ -1,14 +1,7 @@
-/**
- * GenericObjectTable.vue
- * Generic component for displaying objects with cards and table view
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license EUPL-1.2
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * GenericObjectTable.vue * Generic component for displaying objects with cards
+and table view * @category Components * @package opencatalogi * @author Ruben Linde *
+@copyright 2024 * @license EUPL-1.2 * @version 1.0.0 * @link
+https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
@@ -30,10 +23,26 @@ import { objectStore, navigationStore } from '../store/store.js'
 			<div class="viewActionsBar">
 				<div class="viewInfo">
 					<span v-if="filteredObjects.length" class="viewTotalCount">
-						{{ t('opencatalogi', 'Showing {showing} of {total} {type}', { showing: filteredObjects.length, total: currentPagination.total || filteredObjects.length, type: objectTypePlural }) }}
+						{{
+							t(
+								'opencatalogi',
+								'Showing {showing} of {total} {type}',
+								{
+									showing: filteredObjects.length,
+									total:
+										currentPagination.total
+										|| filteredObjects.length,
+									type: objectTypePlural,
+								},
+							)
+						}}
 					</span>
 					<span v-if="selectedObjects.length > 0" class="viewIndicator">
-						({{ t('opencatalogi', '{count} selected', { count: selectedObjects.length }) }})
+						({{
+							t('opencatalogi', '{count} selected', {
+								count: selectedObjects.length,
+							})
+						}})
 					</span>
 				</div>
 				<div class="viewActions">
@@ -42,8 +51,24 @@ import { objectStore, navigationStore } from '../store/store.js'
 						v-if="massActions && massActions.length > 0"
 						:force-name="true"
 						:disabled="selectedObjects.length === 0"
-						:title="selectedObjects.length === 0 ? t('opencatalogi', 'Select one or more {objectType} to use mass actions', { objectType: objectTypePlural }) : t('opencatalogi', 'Mass actions ({count} selected)', { count: selectedObjects.length })"
-						:menu-name="t('opencatalogi', 'Mass Actions ({count})', { count: selectedObjects.length })">
+						:title="
+							selectedObjects.length === 0
+								? t(
+										'opencatalogi',
+										'Select one or more {objectType} to use mass actions',
+										{ objectType: objectTypePlural },
+									)
+								: t(
+										'opencatalogi',
+										'Mass actions ({count} selected)',
+										{ count: selectedObjects.length },
+									)
+						"
+						:menu-name="
+							t('opencatalogi', 'Mass Actions ({count})', {
+								count: selectedObjects.length,
+							})
+						">
 						<template #icon>
 							<FormatListChecks :size="20" />
 						</template>
@@ -63,10 +88,17 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<!-- View Mode Switch -->
 					<div class="viewModeSwitchContainer">
 						<NcCheckboxRadioSwitch
-							:title="t('opencatalogi', 'See {objectType} as cards', { objectType: objectTypePlural })"
+							:title="
+								t('opencatalogi', 'See {objectType} as cards', {
+									objectType: objectTypePlural,
+								})
+							"
 							:model-value="viewMode"
 							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
+							:class="{
+								'checkbox-radio-switch--checked':
+									viewMode === 'cards',
+							}"
 							:name="`${objectType}_view_mode`"
 							value="cards"
 							type="radio"
@@ -75,10 +107,17 @@ import { objectStore, navigationStore } from '../store/store.js'
 							{{ t('opencatalogi', 'Cards') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
-							:title="t('opencatalogi', 'See {objectType} as a table', { objectType: objectTypePlural })"
+							:title="
+								t('opencatalogi', 'See {objectType} as a table', {
+									objectType: objectTypePlural,
+								})
+							"
 							:model-value="viewMode"
 							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
+							:class="{
+								'checkbox-radio-switch--checked':
+									viewMode === 'table',
+							}"
 							:name="`${objectType}_view_mode`"
 							value="table"
 							type="radio"
@@ -91,7 +130,9 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<!-- Regular Actions -->
 					<NcActions
 						:force-name="true"
-						:inline="actions && actions.length > 2 ? 3 : actions?.length || 2"
+						:inline="
+							actions && actions.length > 2 ? 3 : actions?.length || 2
+						"
 						:menu-name="t('opencatalogi', 'Actions')">
 						<NcActionButton
 							v-for="action in actions"
@@ -122,18 +163,36 @@ import { objectStore, navigationStore } from '../store/store.js'
 						<NcActionCheckbox
 							v-for="meta in metadataColumns"
 							:key="`meta_${meta.id}`"
-							:model-value="objectStore.columnFilters[`meta_${meta.id}`]"
-							@update:model-value="(status) => objectStore.updateColumnFilter(`meta_${meta.id}`, status)">
+							:model-value="
+								objectStore.columnFilters[`meta_${meta.id}`]
+							"
+							@update:model-value="
+								(status) =>
+									objectStore.updateColumnFilter(
+										`meta_${meta.id}`,
+										status,
+									)
+							">
 							{{ meta.label }}
 						</NcActionCheckbox>
 
 						<!-- Properties Section -->
-						<NcActionCaption v-if="propertyColumns && propertyColumns.length > 0" :name="t('opencatalogi', 'Properties')" />
+						<NcActionCaption
+							v-if="propertyColumns && propertyColumns.length > 0"
+							:name="t('opencatalogi', 'Properties')" />
 						<NcActionCheckbox
 							v-for="prop in propertyColumns"
 							:key="`prop_${prop.id}`"
-							:model-value="objectStore.columnFilters[`prop_${prop.id}`]"
-							@update:model-value="(status) => objectStore.updateColumnFilter(`prop_${prop.id}`, status)">
+							:model-value="
+								objectStore.columnFilters[`prop_${prop.id}`]
+							"
+							@update:model-value="
+								(status) =>
+									objectStore.updateColumnFilter(
+										`prop_${prop.id}`,
+										status,
+									)
+							">
 							{{ prop.label }}
 						</NcActionCheckbox>
 					</NcActions>
@@ -141,14 +200,23 @@ import { objectStore, navigationStore } from '../store/store.js'
 			</div>
 
 			<!-- Loading, Error, and Empty States -->
-			<NcEmptyContent v-if="objectStore.isLoading(objectType) || !filteredObjects.length"
+			<NcEmptyContent
+				v-if="objectStore.isLoading(objectType) || !filteredObjects.length"
 				:name="emptyContentName"
 				:description="emptyContentDescription">
 				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading(objectType)" :size="64" />
+					<NcLoadingIcon
+						v-if="objectStore.isLoading(objectType)"
+						:size="64" />
 					<component :is="emptyIcon" v-else :size="64" />
 				</template>
-				<template v-if="!objectStore.isLoading(objectType) && !filteredObjects.length && addAction" #action>
+				<template
+					v-if="
+						!objectStore.isLoading(objectType)
+						&& !filteredObjects.length
+						&& addAction
+					"
+					#action>
 					<NcButton variant="primary" @click="executeAction(addAction)">
 						{{ addAction.label }}
 					</NcButton>
@@ -159,13 +227,18 @@ import { objectStore, navigationStore } from '../store/store.js'
 			<div v-else>
 				<template v-if="viewMode === 'cards'">
 					<div class="cardGrid">
-						<div v-for="item in paginatedObjects" :key="getObjectId(item)" class="card">
+						<div
+							v-for="item in paginatedObjects"
+							:key="getObjectId(item)"
+							class="card">
 							<div class="cardHeader">
 								<h2 :title="getObjectSummary(item)">
 									<component :is="cardIcon" :size="20" />
 									{{ getObjectTitle(item) }}
 								</h2>
-								<NcActions :primary="true" :menu-name="t('opencatalogi', 'Actions')">
+								<NcActions
+									:primary="true"
+									:menu-name="t('opencatalogi', 'Actions')">
 									<template #icon>
 										<DotsHorizontal :size="20" />
 									</template>
@@ -173,10 +246,15 @@ import { objectStore, navigationStore } from '../store/store.js'
 										v-for="action in objectActions"
 										:key="action.id"
 										close-after-click
-										:disabled="action.condition && !action.condition(item)"
+										:disabled="
+											action.condition
+											&& !action.condition(item)
+										"
 										@click="executeObjectAction(action, item)">
 										<template #icon>
-											<component :is="action.icon" :size="20" />
+											<component
+												:is="action.icon"
+												:size="20" />
 										</template>
 										{{ action.label }}
 									</NcActionButton>
@@ -186,13 +264,21 @@ import { objectStore, navigationStore } from '../store/store.js'
 							<table class="statisticsTable">
 								<thead>
 									<tr>
-										<th scope="col">{{ t('opencatalogi','Property') }}</th>
-										<th scope="col">{{ t('opencatalogi','Value') }}</th>
-										<th scope="col">{{ t('opencatalogi','Status') }}</th>
+										<th scope="col">
+											{{ t('opencatalogi', 'Property') }}
+										</th>
+										<th scope="col">
+											{{ t('opencatalogi', 'Value') }}
+										</th>
+										<th scope="col">
+											{{ t('opencatalogi', 'Status') }}
+										</th>
 									</tr>
 								</thead>
 								<tbody>
-									<tr v-for="property in getCardProperties(item)" :key="property.key">
+									<tr
+										v-for="property in getCardProperties(item)"
+										:key="property.key">
 										<td>{{ property.label }}</td>
 										<td class="truncatedText">
 											{{ property.value }}
@@ -206,7 +292,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 				</template>
 				<template v-else>
 					<div class="viewTableContainer">
-						<VueDraggable v-if="enableColumnReorder"
+						<VueDraggable
+							v-if="enableColumnReorder"
 							v-model="orderedEnabledColumns"
 							target=".sort-target"
 							animation="150"
@@ -216,41 +303,91 @@ import { objectStore, navigationStore } from '../store/store.js'
 									<tr class="viewTableRow sort-target">
 										<th scope="col" class="tableColumnCheckbox">
 											<NcCheckboxRadioSwitch
-												:aria-label="t('opencatalogi', 'Select all {objectType} on this page', { objectType: objectTypePlural })"
+												:aria-label="
+													t(
+														'opencatalogi',
+														'Select all {objectType} on this page',
+														{
+															objectType:
+																objectTypePlural,
+														},
+													)
+												"
 												:model-value="allSelected"
 												:indeterminate="someSelected"
-												@update:model-value="toggleSelectAll" />
+												@update:model-value="
+													toggleSelectAll
+												" />
 										</th>
-										<th v-for="(column, index) in orderedEnabledColumns"
+										<th
+											v-for="(
+												column, index
+											) in orderedEnabledColumns"
 											:key="`header-${column.id || column.key || `col-${index}`}`"
 											scope="col"
 											:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
-											<span class="stickyHeader columnTitle" :title="column.description">
+											<span
+												class="stickyHeader columnTitle"
+												:title="column.description">
 												{{ column.label }}
 											</span>
 										</th>
 										<th scope="col" class="tableColumnActions">
-											<span class="hidden-visually">{{ t('opencatalogi', 'Actions') }}</span>
+											<span class="hidden-visually">{{
+												t('opencatalogi', 'Actions')
+											}}</span>
 										</th>
 									</tr>
 								</thead>
 								<tbody>
-									<tr v-for="item in paginatedObjects"
+									<tr
+										v-for="item in paginatedObjects"
 										:key="getObjectId(item)"
 										class="viewTableRow table-row-selectable"
-										:class="{ 'table-row-selected': selectedObjects.includes(getObjectId(item)) }"
-										@click="handleRowClick(getObjectId(item), $event)">
+										:class="{
+											'table-row-selected':
+												selectedObjects.includes(
+													getObjectId(item),
+												),
+										}"
+										@click="
+											handleRowClick(getObjectId(item), $event)
+										">
 										<td class="tableColumnCheckbox">
 											<NcCheckboxRadioSwitch
-												:aria-label="t('opencatalogi', 'Select {title}', { title: getObjectTitle(item) })"
-												:model-value="selectedObjects.includes(getObjectId(item))"
-												@update:model-value="handleSelectObject(getObjectId(item))" />
+												:aria-label="
+													t(
+														'opencatalogi',
+														'Select {title}',
+														{
+															title: getObjectTitle(
+																item,
+															),
+														},
+													)
+												"
+												:model-value="
+													selectedObjects.includes(
+														getObjectId(item),
+													)
+												"
+												@update:model-value="
+													handleSelectObject(
+														getObjectId(item),
+													)
+												" />
 										</td>
-										<td v-for="(column, index) in orderedEnabledColumns"
+										<td
+											v-for="(
+												column, index
+											) in orderedEnabledColumns"
 											:key="`cell-${getObjectId(item)}-${column.id || column.key || `col-${index}`}`"
 											:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
 											<span v-if="column.renderer">
-												<component :is="column.renderer" :object="item" :column="column" />
+												<component
+													:is="column.renderer"
+													:object="item"
+													:column="column" />
 											</span>
 											<span v-else>
 												{{ getColumnValue(item, column) }}
@@ -262,10 +399,20 @@ import { objectStore, navigationStore } from '../store/store.js'
 													v-for="action in objectActions"
 													:key="action.id"
 													close-after-click
-													:disabled="action.condition && !action.condition(item)"
-													@click="executeObjectAction(action, item)">
+													:disabled="
+														action.condition
+														&& !action.condition(item)
+													"
+													@click="
+														executeObjectAction(
+															action,
+															item,
+														)
+													">
 													<template #icon>
-														<component :is="action.icon" :size="20" />
+														<component
+															:is="action.icon"
+															:size="20" />
 													</template>
 													{{ action.label }}
 												</NcActionButton>
@@ -280,16 +427,27 @@ import { objectStore, navigationStore } from '../store/store.js'
 								<tr class="viewTableRow">
 									<th scope="col" class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
-											:aria-label="t('opencatalogi', 'Select all {objectType} on this page', { objectType: objectTypePlural })"
+											:aria-label="
+												t(
+													'opencatalogi',
+													'Select all {objectType} on this page',
+													{ objectType: objectTypePlural },
+												)
+											"
 											:model-value="allSelected"
 											:indeterminate="someSelected"
 											@update:model-value="toggleSelectAll" />
 									</th>
-									<th v-for="(column, index) in orderedEnabledColumns"
+									<th
+										v-for="(
+											column, index
+										) in orderedEnabledColumns"
 										:key="`header-${column.id || column.key || `col-${index}`}`"
 										scope="col"
 										:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
-										<span class="columnTitle" :title="column.description">
+										<span
+											class="columnTitle"
+											:title="column.description">
 											{{ column.label }}
 										</span>
 									</th>
@@ -299,22 +457,46 @@ import { objectStore, navigationStore } from '../store/store.js'
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="item in paginatedObjects"
+								<tr
+									v-for="item in paginatedObjects"
 									:key="getObjectId(item)"
 									class="viewTableRow table-row-selectable"
-									:class="{ 'table-row-selected': selectedObjects.includes(getObjectId(item)) }"
-									@click="handleRowClick(getObjectId(item), $event)">
+									:class="{
+										'table-row-selected':
+											selectedObjects.includes(
+												getObjectId(item),
+											),
+									}"
+									@click="
+										handleRowClick(getObjectId(item), $event)
+									">
 									<td class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
-											:aria-label="t('opencatalogi', 'Select {title}', { title: getObjectTitle(item) })"
-											:model-value="selectedObjects.includes(getObjectId(item))"
-											@update:model-value="handleSelectObject(getObjectId(item))" />
+											:aria-label="
+												t('opencatalogi', 'Select {title}', {
+													title: getObjectTitle(item),
+												})
+											"
+											:model-value="
+												selectedObjects.includes(
+													getObjectId(item),
+												)
+											"
+											@update:model-value="
+												handleSelectObject(getObjectId(item))
+											" />
 									</td>
-									<td v-for="(column, index) in orderedEnabledColumns"
+									<td
+										v-for="(
+											column, index
+										) in orderedEnabledColumns"
 										:key="`cell-${getObjectId(item)}-${column.id || column.key || `col-${index}`}`"
 										:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
 										<span v-if="column.renderer">
-											<component :is="column.renderer" :object="item" :column="column" />
+											<component
+												:is="column.renderer"
+												:object="item"
+												:column="column" />
 										</span>
 										<span v-else>
 											{{ getColumnValue(item, column) }}
@@ -326,10 +508,17 @@ import { objectStore, navigationStore } from '../store/store.js'
 												v-for="action in objectActions"
 												:key="action.id"
 												close-after-click
-												:disabled="action.condition && !action.condition(item)"
-												@click="executeObjectAction(action, item)">
+												:disabled="
+													action.condition
+													&& !action.condition(item)
+												"
+												@click="
+													executeObjectAction(action, item)
+												">
 												<template #icon>
-													<component :is="action.icon" :size="20" />
+													<component
+														:is="action.icon"
+														:size="20" />
 												</template>
 												{{ action.label }}
 											</NcActionButton>
@@ -345,7 +534,12 @@ import { objectStore, navigationStore } from '../store/store.js'
 			<!-- Pagination -->
 			<PaginationComponent
 				:current-page="currentPagination.page || 1"
-				:total-pages="currentPagination.pages || Math.ceil(filteredObjects.length / (currentPagination.limit || 20))"
+				:total-pages="
+					currentPagination.pages
+					|| Math.ceil(
+						filteredObjects.length / (currentPagination.limit || 20),
+					)
+				"
 				:total-items="currentPagination.total || filteredObjects.length"
 				:current-page-size="currentPagination.limit || 20"
 				:min-items-to-show="0"
@@ -550,14 +744,17 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		selectedObjects() {
 			// Use store-managed selected objects if available, otherwise use local state
-			return (objectStore.selectedObjects || []).map(obj =>
-				this.getObjectId(obj),
-			).filter(Boolean)
+			return (objectStore.selectedObjects || [])
+				.map((obj) => this.getObjectId(obj))
+				.filter(Boolean)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		allSelected() {
-			return this.filteredObjects.length > 0 && this.filteredObjects.every(obj =>
-				this.selectedObjects.includes(this.getObjectId(obj)),
+			return (
+				this.filteredObjects.length > 0
+				&& this.filteredObjects.every((obj) =>
+					this.selectedObjects.includes(this.getObjectId(obj)),
+				)
 			)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
@@ -567,18 +764,28 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		emptyContentName() {
 			if (objectStore.isLoading(this.objectType)) {
-				return t('opencatalogi', 'Loading {objectType}...', { objectType: this.objectTypePlural })
+				return t('opencatalogi', 'Loading {objectType}...', {
+					objectType: this.objectTypePlural,
+				})
 			} else if (!this.filteredObjects.length) {
-				return t('opencatalogi', 'No {objectType} found', { objectType: this.objectTypePlural })
+				return t('opencatalogi', 'No {objectType} found', {
+					objectType: this.objectTypePlural,
+				})
 			}
 			return ''
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		emptyContentDescription() {
 			if (objectStore.isLoading(this.objectType)) {
-				return t('opencatalogi', 'Please wait while we fetch your {objectType}.', { objectType: this.objectTypePlural })
+				return t(
+					'opencatalogi',
+					'Please wait while we fetch your {objectType}.',
+					{ objectType: this.objectTypePlural },
+				)
 			} else if (!this.filteredObjects.length) {
-				return t('opencatalogi', 'No {objectType} are available.', { objectType: this.objectTypePlural })
+				return t('opencatalogi', 'No {objectType} are available.', {
+					objectType: this.objectTypePlural,
+				})
 			}
 			return ''
 		},
@@ -593,21 +800,24 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		propertyColumns() {
 			// Get all available property columns from objectStore
-			return Object.entries(objectStore.properties || {}).map(([key, prop]) => ({
-				id: key,
-				...prop,
-			}))
+			return Object.entries(objectStore.properties || {}).map(
+				([key, prop]) => ({
+					id: key,
+					...prop,
+				}),
+			)
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		orderedEnabledColumns() {
 			// Get enabled columns from the store or use provided properties
-			const enabledColumns = objectStore.enabledColumns.length > 0
-				? objectStore.enabledColumns
-				: this.properties
+			const enabledColumns =
+				objectStore.enabledColumns.length > 0
+					? objectStore.enabledColumns
+					: this.properties
 
 			// Apply custom ordering if provided
 			if (this.properties && this.properties.length > 0) {
-				const desiredOrder = this.properties.map(p => p.id)
+				const desiredOrder = this.properties.map((p) => p.id)
 				return enabledColumns.sort((a, b) => {
 					const aIndex = desiredOrder.indexOf(a.id)
 					const bIndex = desiredOrder.indexOf(b.id)
@@ -626,7 +836,9 @@ export default {
 
 	/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 	mounted() {
-		console.info(`GenericObjectTable mounted for ${this.objectType}, fetching objects...`)
+		console.info(
+			`GenericObjectTable mounted for ${this.objectType}, fetching objects...`,
+		)
 		this.refreshObjects()
 		// Initialize column filters
 		objectStore.initializeColumnFilters()
@@ -643,7 +855,7 @@ export default {
 		toggleSelectAll(checked) {
 			if (checked) {
 				// Select all - update store with full objects
-				const selectedObjects = this.filteredObjects.map(obj => ({
+				const selectedObjects = this.filteredObjects.map((obj) => ({
 					...obj,
 					id: this.getObjectId(obj),
 				}))
@@ -657,8 +869,8 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		handleSelectObject(objectId) {
 			const currentSelected = [...(objectStore.selectedObjects || [])]
-			const existingIndex = currentSelected.findIndex(obj =>
-				this.getObjectId(obj) === objectId,
+			const existingIndex = currentSelected.findIndex(
+				(obj) => this.getObjectId(obj) === objectId,
 			)
 
 			if (existingIndex > -1) {
@@ -666,8 +878,8 @@ export default {
 				currentSelected.splice(existingIndex, 1)
 			} else {
 				// Add to selection - find the full object
-				const objectToAdd = this.filteredObjects.find(obj =>
-					this.getObjectId(obj) === objectId,
+				const objectToAdd = this.filteredObjects.find(
+					(obj) => this.getObjectId(obj) === objectId,
 				)
 				if (objectToAdd) {
 					currentSelected.push({
@@ -683,9 +895,11 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		handleRowClick(id, event) {
 			// Don't select if clicking on the checkbox, actions button, or inside actions menu
-			if (event.target.closest('.tableColumnCheckbox')
+			if (
+				event.target.closest('.tableColumnCheckbox')
 				|| event.target.closest('.tableColumnActions')
-				|| event.target.closest('.actionsButton')) {
+				|| event.target.closest('.actionsButton')
+			) {
 				return
 			}
 
@@ -698,7 +912,13 @@ export default {
 		},
 
 		getObjectTitle(item) {
-			return item?.title || item?.name || item?.['@self']?.name || this.getObjectId(item) || 'Unknown'
+			return (
+				item?.title
+				|| item?.name
+				|| item?.['@self']?.name
+				|| this.getObjectId(item)
+				|| 'Unknown'
+			)
 		},
 
 		getObjectSummary(item) {
@@ -723,12 +943,14 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		getCardProperties(item) {
 			// Convert properties to card display format
-			return this.orderedEnabledColumns.map(column => ({
-				key: column.key || column.id,
-				label: column.label,
-				value: this.getColumnValue(item, column),
-				status: 'Available', // Default status, can be customized
-			})).filter(prop => prop.value !== 'N/A')
+			return this.orderedEnabledColumns
+				.map((column) => ({
+					key: column.key || column.id,
+					label: column.label,
+					value: this.getColumnValue(item, column),
+					status: 'Available', // Default status, can be customized
+				}))
+				.filter((prop) => prop.value !== 'N/A')
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
@@ -748,9 +970,13 @@ export default {
 				if (action.clearActiveObject) {
 					objectStore.clearActiveObject(this.objectType)
 				}
-				navigationStore.setModal(this.modalConfig[action.modal] || action.modal)
+				navigationStore.setModal(
+					this.modalConfig[action.modal] || action.modal,
+				)
 			} else if (action.dialog) {
-				navigationStore.setDialog(this.dialogConfig[action.dialog] || action.dialog)
+				navigationStore.setDialog(
+					this.dialogConfig[action.dialog] || action.dialog,
+				)
 			} else if (action.method) {
 				this[action.method]()
 			}
@@ -763,14 +989,21 @@ export default {
 			} else if (action.modal) {
 				// Set the object as active
 				objectStore.setActiveObject(this.objectType, item)
-				navigationStore.setModal(this.modalConfig[action.modal] || action.modal)
+				navigationStore.setModal(
+					this.modalConfig[action.modal] || action.modal,
+				)
 			} else if (action.dialog) {
 				// Set the object as active
 				objectStore.setActiveObject(this.objectType, item)
-				navigationStore.setDialog(this.dialogConfig[action.dialog] || action.dialog, {
-					objectType: this.objectType,
-					dialogTitle: this.objectType.charAt(0).toUpperCase() + this.objectType.slice(1),
-				})
+				navigationStore.setDialog(
+					this.dialogConfig[action.dialog] || action.dialog,
+					{
+						objectType: this.objectType,
+						dialogTitle:
+							this.objectType.charAt(0).toUpperCase()
+							+ this.objectType.slice(1),
+					},
+				)
 			} else if (action.method) {
 				this[action.method](item)
 			}
@@ -795,7 +1028,10 @@ export default {
 			if (this.paginationFunction) {
 				this.paginationFunction(page, this.currentPagination.limit || 20)
 			} else {
-				objectStore.fetchCollection(this.objectType, { _page: page, _limit: this.currentPagination.limit || 20 })
+				objectStore.fetchCollection(this.objectType, {
+					_page: page,
+					_limit: this.currentPagination.limit || 20,
+				})
 			}
 		},
 
@@ -805,7 +1041,10 @@ export default {
 			if (this.paginationFunction) {
 				this.paginationFunction(1, pageSize)
 			} else {
-				objectStore.fetchCollection(this.objectType, { _page: 1, _limit: pageSize })
+				objectStore.fetchCollection(this.objectType, {
+					_page: 1,
+					_limit: pageSize,
+				})
 			}
 		},
 

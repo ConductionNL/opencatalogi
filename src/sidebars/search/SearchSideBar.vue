@@ -55,19 +55,54 @@ const currentSortOption = computed(() => {
 	if (!firstOrder) return null
 
 	const [field, direction] = firstOrder
-	return sortOptions.value.find(option =>
-		option.field === field && option.direction === direction,
+	return sortOptions.value.find(
+		(option) => option.field === field && option.direction === direction,
 	)
 })
 
 const sortOptions = computed(() => [
-	{ value: 'relevance', label: t('opencatalogi', 'Relevance'), field: null, direction: null },
-	{ value: 'title-asc', label: t('opencatalogi', 'Title A-Z'), field: 'title', direction: 'ASC' },
-	{ value: 'title-desc', label: t('opencatalogi', 'Title Z-A'), field: 'title', direction: 'DESC' },
-	{ value: 'modified-desc', label: t('opencatalogi', 'Recently modified'), field: '@self.updated', direction: 'DESC' },
-	{ value: 'modified-asc', label: t('opencatalogi', 'Oldest first'), field: '@self.updated', direction: 'ASC' },
-	{ value: 'created-desc', label: t('opencatalogi', 'Recently created'), field: '@self.created', direction: 'DESC' },
-	{ value: 'created-asc', label: t('opencatalogi', 'Oldest created'), field: '@self.created', direction: 'ASC' },
+	{
+		value: 'relevance',
+		label: t('opencatalogi', 'Relevance'),
+		field: null,
+		direction: null,
+	},
+	{
+		value: 'title-asc',
+		label: t('opencatalogi', 'Title A-Z'),
+		field: 'title',
+		direction: 'ASC',
+	},
+	{
+		value: 'title-desc',
+		label: t('opencatalogi', 'Title Z-A'),
+		field: 'title',
+		direction: 'DESC',
+	},
+	{
+		value: 'modified-desc',
+		label: t('opencatalogi', 'Recently modified'),
+		field: '@self.updated',
+		direction: 'DESC',
+	},
+	{
+		value: 'modified-asc',
+		label: t('opencatalogi', 'Oldest first'),
+		field: '@self.updated',
+		direction: 'ASC',
+	},
+	{
+		value: 'created-desc',
+		label: t('opencatalogi', 'Recently created'),
+		field: '@self.created',
+		direction: 'DESC',
+	},
+	{
+		value: 'created-asc',
+		label: t('opencatalogi', 'Oldest created'),
+		field: '@self.created',
+		direction: 'ASC',
+	},
 ])
 
 const hasActiveFilters = computed(() => {
@@ -113,9 +148,12 @@ const refreshFacets = async () => {
 const formatFilterKey = (key) => {
 	// Format filter keys for display
 	if (key.startsWith('@self.')) {
-		return key.replace('@self.', '').replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+		return key
+			.replace('@self.', '')
+			.replace(/[_-]/g, ' ')
+			.replace(/\b\w/g, (l) => l.toUpperCase())
 	}
-	return key.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+	return key.replace(/[_-]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
 const formatFilterValue = (value) => {
@@ -130,7 +168,7 @@ const getFieldDisplayName = (fieldName) => {
 	// Format field names nicely for display
 	return fieldName
 		.replace(/[@._]/g, ' ')
-		.replace(/\b\w/g, l => l.toUpperCase())
+		.replace(/\b\w/g, (l) => l.toUpperCase())
 		.trim()
 }
 
@@ -141,7 +179,7 @@ const getFacetOptions = (facetResult) => {
 	}
 
 	const buckets = facetResult.buckets || facetResult
-	return buckets.map(bucket => ({
+	return buckets.map((bucket) => ({
 		value: bucket._id || bucket.key || bucket.value,
 		label: `${bucket._id || bucket.key || bucket.value} (${bucket.count || bucket.results || bucket.doc_count || 0})`,
 	}))
@@ -157,7 +195,8 @@ const getSelectedFilterValue = (fieldName) => {
 	// Find the option that matches the current filter value
 	const facetResult = searchStore.currentFacets[fieldName]
 	const options = getFacetOptions(facetResult)
-	const selectedOption = options.find(option => option.value === currentValue) || null
+	const selectedOption =
+		options.find((option) => option.value === currentValue) || null
 
 	return selectedOption
 }
@@ -179,16 +218,21 @@ const handleFilterSelect = (fieldName, option) => {
 }
 
 // Watchers
-watch(() => searchStore.getSearchTerm, (newTerm) => {
-	if (newTerm !== searchTerm.value) {
-		searchTerm.value = typeof newTerm === 'string' ? newTerm : String(newTerm || '')
-	}
-})
+watch(
+	() => searchStore.getSearchTerm,
+	(newTerm) => {
+		if (newTerm !== searchTerm.value) {
+			searchTerm.value =
+				typeof newTerm === 'string' ? newTerm : String(newTerm || '')
+		}
+	},
+)
 
 // Watch for changes to searchTerm and debounce the search
 watch(searchTerm, (newValue) => {
 	// Ensure we have a string value, not an event object
-	const searchValue = typeof newValue === 'string' ? newValue : String(newValue || '')
+	const searchValue =
+		typeof newValue === 'string' ? newValue : String(newValue || '')
 
 	// Debounce search input
 	if (searchTimeout.value) {
@@ -228,7 +272,8 @@ function applyQueryToState(routeQuery) {
 	if (q.view === 'cards' || q.view === 'table') searchStore.setViewMode(q.view)
 	const filters = {}
 	Object.entries(q).forEach(([k, v]) => {
-		if (!RESERVED.has(k) && typeof v !== 'undefined' && v !== null && v !== '') filters[k] = String(v)
+		if (!RESERVED.has(k) && typeof v !== 'undefined' && v !== null && v !== '')
+			filters[k] = String(v)
 	})
 	searchStore.clearAllFilters()
 	if (Object.keys(filters).length) searchStore.setFilters(filters)
@@ -267,24 +312,30 @@ onMounted(async () => {
 })
 
 // Watch route changes -> apply to state
-watch(() => instance?.$route?.fullPath, () => {
-	if (!instance?.$route) return
-	if (instance.$route.path !== '/search') return
-	applyQueryToState(instance.$route.query || {})
-})
+watch(
+	() => instance?.$route?.fullPath,
+	() => {
+		if (!instance?.$route) return
+		if (instance.$route.path !== '/search') return
+		applyQueryToState(instance.$route.query || {})
+	},
+)
 
 // Watch state changes -> write to URL (debounced)
-watch([
-	() => searchStore.getSearchTerm,
-	() => searchStore.getViewMode,
-	() => searchStore.getOrdering,
-	() => searchStore.getFilters,
-], () => {
-	if (debounceTimer.value) clearTimeout(debounceTimer.value)
-	debounceTimer.value = setTimeout(() => {
-		writeUrlFromStateIfChanged()
-	}, 400)
-})
+watch(
+	[
+		() => searchStore.getSearchTerm,
+		() => searchStore.getViewMode,
+		() => searchStore.getOrdering,
+		() => searchStore.getFilters,
+	],
+	() => {
+		if (debounceTimer.value) clearTimeout(debounceTimer.value)
+		debounceTimer.value = setTimeout(() => {
+			writeUrlFromStateIfChanged()
+		}, 400)
+	},
+)
 </script>
 
 <template>
@@ -295,7 +346,10 @@ watch([
 		subname="Across all federated catalogs"
 		:open="sidebarOpen"
 		@update:open="(e) => updateSidebarOpen(e)">
-		<NcAppSidebarTab id="search-tab" :name="t('opencatalogi', 'Search')" :order="1">
+		<NcAppSidebarTab
+			id="search-tab"
+			:name="t('opencatalogi', 'Search')"
+			:order="1">
 			<template #icon>
 				<Magnify :size="20" />
 			</template>
@@ -309,9 +363,11 @@ watch([
 					<input
 						v-model="searchTerm"
 						type="search"
-						:placeholder="t('opencatalogi', 'Type to search publications...')"
+						:placeholder="
+							t('opencatalogi', 'Type to search publications...')
+						"
 						class="search-input"
-						:aria-label="t('opencatalogi', 'Search publications')">
+						:aria-label="t('opencatalogi', 'Search publications')" />
 
 					<NcButton
 						v-if="searchTerm"
@@ -326,23 +382,45 @@ watch([
 				</div>
 
 				<!-- Filter Results Section -->
-				<div v-if="searchStore.hasFacetResults && Object.keys(searchStore.getActiveFacets).length > 0" class="filter-results-section">
+				<div
+					v-if="
+						searchStore.hasFacetResults
+						&& Object.keys(searchStore.getActiveFacets).length > 0
+					"
+					class="filter-results-section">
 					<h4>{{ t('opencatalogi', 'Filter results') }}</h4>
 
 					<div class="filter-results-list">
-						<div v-for="(facetResult, fieldName) in searchStore.currentFacets"
+						<div
+							v-for="(
+								facetResult, fieldName
+							) in searchStore.currentFacets"
 							:key="`filter-${fieldName}`"
 							class="filter-result-item">
-							<label>{{ getFieldDisplayName(fieldName.replace('@self.', '').replace('@self', 'metadata')) }}</label>
+							<label>{{
+								getFieldDisplayName(
+									fieldName
+										.replace('@self.', '')
+										.replace('@self', 'metadata'),
+								)
+							}}</label>
 							<NcSelect
 								:model-value="getSelectedFilterValue(fieldName)"
 								:options="getFacetOptions(facetResult)"
 								label="label"
-								:aria-label-combobox="t('opencatalogi', 'Filter results')"
-								:placeholder="t('opencatalogi', 'Select a filter...')"
+								:aria-label-combobox="
+									t('opencatalogi', 'Filter results')
+								"
+								:placeholder="
+									t('opencatalogi', 'Select a filter...')
+								"
 								:clearable="true"
-								@option:selected="(option) => handleFilterSelect(fieldName, option)"
-								@option:deselected="() => handleFilterSelect(fieldName, null)" />
+								@option:selected="
+									(option) => handleFilterSelect(fieldName, option)
+								"
+								@option:deselected="
+									() => handleFilterSelect(fieldName, null)
+								" />
 						</div>
 					</div>
 				</div>
@@ -369,7 +447,11 @@ watch([
 						<label>{{ t('opencatalogi', 'View mode') }}</label>
 						<div class="view-mode-toggle">
 							<NcButton
-								:variant="searchStore.getViewMode === 'cards' ? 'primary' : 'tertiary'"
+								:variant="
+									searchStore.getViewMode === 'cards'
+										? 'primary'
+										: 'tertiary'
+								"
 								:aria-label="t('opencatalogi', 'Card view')"
 								@click="searchStore.setViewMode('cards')">
 								<template #icon>
@@ -378,7 +460,11 @@ watch([
 								{{ t('opencatalogi', 'Cards') }}
 							</NcButton>
 							<NcButton
-								:variant="searchStore.getViewMode === 'table' ? 'primary' : 'tertiary'"
+								:variant="
+									searchStore.getViewMode === 'table'
+										? 'primary'
+										: 'tertiary'
+								"
 								:aria-label="t('opencatalogi', 'Table view')"
 								@click="searchStore.setViewMode('table')">
 								<template #icon>
@@ -394,11 +480,16 @@ watch([
 				<div v-if="hasActiveFilters" class="active-filters">
 					<h4>{{ t('opencatalogi', 'Active filters') }}</h4>
 					<div class="active-filters-list">
-						<div v-for="(value, key) in searchStore.getFilters"
+						<div
+							v-for="(value, key) in searchStore.getFilters"
 							:key="`filter-${key}`"
 							class="active-filter-item">
-							<span class="filter-key">{{ formatFilterKey(key) }}:</span>
-							<span class="filter-value">{{ formatFilterValue(value) }}</span>
+							<span class="filter-key"
+								>{{ formatFilterKey(key) }}:</span
+							>
+							<span class="filter-value">{{
+								formatFilterValue(value)
+							}}</span>
 							<NcButton
 								variant="tertiary-no-background"
 								:aria-label="t('opencatalogi', 'Remove filter')"
@@ -434,7 +525,12 @@ watch([
 					</div>
 
 					<NcNoteCard type="info" class="facets-info">
-						{{ t('opencatalogi', 'Facets help you filter results by different criteria. Enable facets below to see available filter options.') }}
+						{{
+							t(
+								'opencatalogi',
+								'Facets help you filter results by different criteria. Enable facets below to see available filter options.',
+							)
+						}}
 					</NcNoteCard>
 
 					<!-- Facet component -->

@@ -12,7 +12,6 @@ import { TMenu, TMenuItem } from './menu.types'
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Menu implements TMenu {
-
 	public id!: string
 	public uuid!: string
 	public title!: string
@@ -69,17 +68,8 @@ export class Menu implements TMenu {
 		const schema = z.object({
 			title: z.string().min(1, 'title is verplicht'),
 			position: z.number().min(0, 'positie moet 0 of hoger zijn'),
-			items: z.array(z.object({
-				id: z.string().optional(),
-				order: z.number().min(0, 'order moet 0 of hoger zijn'),
-				name: z.string().min(1, 'name is verplicht'),
-				link: z.string().min(1, 'link is verplicht'),
-				description: z.string().optional(),
-				icon: z.string().optional(),
-				groups: z.array(z.string()).optional(),
-
-				hideBeforeLogin: z.boolean().optional(),
-				items: z.array(z.object({
+			items: z.array(
+				z.object({
 					id: z.string().optional(),
 					order: z.number().min(0, 'order moet 0 of hoger zijn'),
 					name: z.string().min(1, 'name is verplicht'),
@@ -87,10 +77,23 @@ export class Menu implements TMenu {
 					description: z.string().optional(),
 					icon: z.string().optional(),
 					groups: z.array(z.string()).optional(),
-					hideAfterLogin: z.boolean().optional(),
+
 					hideBeforeLogin: z.boolean().optional(),
-				})),
-			})), // At least '[]'
+					items: z.array(
+						z.object({
+							id: z.string().optional(),
+							order: z.number().min(0, 'order moet 0 of hoger zijn'),
+							name: z.string().min(1, 'name is verplicht'),
+							link: z.string().min(1, 'link is verplicht'),
+							description: z.string().optional(),
+							icon: z.string().optional(),
+							groups: z.array(z.string()).optional(),
+							hideAfterLogin: z.boolean().optional(),
+							hideBeforeLogin: z.boolean().optional(),
+						}),
+					),
+				}),
+			), // At least '[]'
 			groups: z.array(z.string()).optional(),
 			hideAfterLogin: z.boolean().optional(),
 			hideBeforeLogin: z.boolean().optional(),
@@ -102,5 +105,4 @@ export class Menu implements TMenu {
 
 		return result
 	}
-
 }

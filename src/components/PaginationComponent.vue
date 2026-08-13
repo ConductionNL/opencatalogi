@@ -3,16 +3,19 @@
 		<!-- Page info first -->
 		<div class="viewPaginationInfo">
 			<span class="viewPageInfo">
-				{{ t('opencatalogi', 'Page {current} of {total}', { current: currentPage, total: totalPages }) }}
+				{{
+					t('opencatalogi', 'Page {current} of {total}', {
+						current: currentPage,
+						total: totalPages,
+					})
+				}}
 			</span>
 		</div>
 
 		<!-- Page navigation in middle -->
 		<div v-if="totalPages > 1" class="viewPaginationNav">
 			<!-- First page button -->
-			<NcButton
-				:disabled="currentPage === 1"
-				@click="changePage(1)">
+			<NcButton :disabled="currentPage === 1" @click="changePage(1)">
 				{{ t('opencatalogi', 'First') }}
 			</NcButton>
 
@@ -25,8 +28,12 @@
 
 			<!-- Page number buttons -->
 			<div class="viewPaginationNumbers">
-				<template v-for="(page, index) in visiblePages" :key="`page-${index}`">
-					<span v-if="page === '...'" class="viewPaginationEllipsis">...</span>
+				<template
+					v-for="(page, index) in visiblePages"
+					:key="`page-${index}`">
+					<span v-if="page === '...'" class="viewPaginationEllipsis"
+						>...</span
+					>
 					<NcButton
 						v-else
 						:variant="page === currentPage ? 'primary' : 'secondary'"
@@ -159,7 +166,11 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
 		currentPageSizeOption() {
-			return this.pageSizeOptions.find(option => option.value === this.currentPageSize) || this.pageSizeOptions[1]
+			return (
+				this.pageSizeOptions.find(
+					(option) => option.value === this.currentPageSize,
+				) || this.pageSizeOptions[1]
+			)
 		},
 		/**
 		 * Calculate visible page numbers for pagination

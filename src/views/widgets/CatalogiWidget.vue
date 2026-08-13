@@ -4,7 +4,8 @@ import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<CnDataTable :rows="items"
+	<CnDataTable
+		:rows="items"
 		:columns="columns"
 		:loading="loading"
 		hide-header

@@ -42,7 +42,9 @@ import { test, expect, type Page } from '@playwright/test'
 async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
-		const close = wizard.getByRole('button', { name: /close|got it|finish|skip/i }).first()
+		const close = wizard
+			.getByRole('button', { name: /close|got it|finish|skip/i })
+			.first()
 		if (await close.isVisible().catch(() => false)) {
 			await close.click().catch(() => {})
 		} else {
@@ -71,7 +73,9 @@ test.describe('catalogs (CAT)', () => {
 	 * CAT-008: CORS headers on GET response (Nextcloud handles CORS at framework level,
 	 * echoing the Origin header on GET/POST/DELETE responses — not via a separate OPTIONS 405).
 	 */
-	test('CAT-008 — GET /api/catalogi with Origin header returns CORS headers', async ({ request }) => {
+	test('CAT-008 — GET /api/catalogi with Origin header returns CORS headers', async ({
+		request,
+	}) => {
 		const resp = await request.get('/index.php/apps/opencatalogi/api/catalogi', {
 			headers: { Origin: 'https://external.example.nl' },
 		})
@@ -87,9 +91,13 @@ test.describe('catalogs (CAT)', () => {
 	 * scope its result set to the path segment, so the assertion is that no catalog
 	 * matching the bogus slug is present rather than that the whole list is empty.
 	 */
-	test('CAT-002 — GET /api/catalogi/{nonexistent} returns 200 with empty or error JSON', async ({ request }) => {
+	test('CAT-002 — GET /api/catalogi/{nonexistent} returns 200 with empty or error JSON', async ({
+		request,
+	}) => {
 		const bogusSlug = 'this-slug-does-not-exist-99999'
-		const resp = await request.get(`/index.php/apps/opencatalogi/api/catalogi/${bogusSlug}`)
+		const resp = await request.get(
+			`/index.php/apps/opencatalogi/api/catalogi/${bogusSlug}`,
+		)
 		// Backend returns 200 (list) or 404 for unknown IDs — assert the structure is valid JSON
 		expect([200, 404]).toContain(resp.status())
 		const body = await resp.json().catch(() => null)
@@ -117,9 +125,13 @@ test.describe('publications (PUB)', () => {
 	 * without seeded data the endpoint returns 404 or an empty list — both are
 	 * handled gracefully below.
 	 */
-	test('PUB-001/010 — GET /api/{slug} public endpoint is accessible', async ({ request }) => {
+	test('PUB-001/010 — GET /api/{slug} public endpoint is accessible', async ({
+		request,
+	}) => {
 		// First get catalog list to find any real slug, otherwise use fallback.
-		const listResp = await request.get('/index.php/apps/opencatalogi/api/catalogi')
+		const listResp = await request.get(
+			'/index.php/apps/opencatalogi/api/catalogi',
+		)
 		let slug = 'publications'
 		if (listResp.ok()) {
 			const body = await listResp.json().catch(() => null)
@@ -145,8 +157,12 @@ test.describe('publications (PUB)', () => {
 	 * The publication endpoint /api/{catalogSlug} returns 404 when the slug
 	 * is unknown (unlike the /api/catalogi/{id} endpoint which returns 200+empty).
 	 */
-	test('PUB-011 — unknown catalog slug on publication endpoint returns 404 or empty', async ({ request }) => {
-		const resp = await request.get('/index.php/apps/opencatalogi/api/this-catalog-does-not-exist-xyz')
+	test('PUB-011 — unknown catalog slug on publication endpoint returns 404 or empty', async ({
+		request,
+	}) => {
+		const resp = await request.get(
+			'/index.php/apps/opencatalogi/api/this-catalog-does-not-exist-xyz',
+		)
 		// Either 404 (slug not found) or 200 with empty results are acceptable
 		expect([200, 404]).toContain(resp.status())
 	})
@@ -159,8 +175,12 @@ test.describe('search (SCH)', () => {
 	 * SCH-001: Internal search endpoint at /api/search (authenticated).
 	 * SCH-002: Supports _search parameter for full-text search.
 	 */
-	test('SCH-001/002 — GET /api/search with _search param returns results structure', async ({ request }) => {
-		const resp = await request.get('/index.php/apps/opencatalogi/api/search?_search=test')
+	test('SCH-001/002 — GET /api/search with _search param returns results structure', async ({
+		request,
+	}) => {
+		const resp = await request.get(
+			'/index.php/apps/opencatalogi/api/search?_search=test',
+		)
 		// Authenticated endpoint: 200 or 401 (not authenticated in request context)
 		// The globalSetup persists auth state, so this should be 200.
 		expect([200, 401]).toContain(resp.status())
@@ -178,7 +198,9 @@ test.describe('admin-settings (SET)', () => {
 	 * SET-001: Retrieve current settings including object type configurations.
 	 * API check — returns JSON with settings data.
 	 */
-	test('SET-001 — GET /api/settings returns settings JSON', async ({ request }) => {
+	test('SET-001 — GET /api/settings returns settings JSON', async ({
+		request,
+	}) => {
 		const resp = await request.get('/index.php/apps/opencatalogi/api/settings')
 		expect([200, 401]).toContain(resp.status())
 		if (resp.status() === 200) {
@@ -194,16 +216,24 @@ test.describe('admin-settings (SET)', () => {
 	 * NC page satisfies; now we require the OpenCatalogi settings content
 	 * itself to be present.
 	 */
-	test('SET-012 — admin settings page renders the OpenCatalogi section', async ({ page }) => {
-		await page.goto('/index.php/settings/admin/opencatalogi', { waitUntil: 'domcontentloaded' })
+	test('SET-012 — admin settings page renders the OpenCatalogi section', async ({
+		page,
+	}) => {
+		await page.goto('/index.php/settings/admin/opencatalogi', {
+			waitUntil: 'domcontentloaded',
+		})
 		await dismissOverlays(page)
 		// The URL must stay on the opencatalogi admin section (no redirect to
 		// another section, which is what happens for an unknown section id).
 		await expect(page).toHaveURL(/settings\/admin\/opencatalogi/)
 		// The OpenCatalogi admin settings mount point / section content renders.
-		await expect(page.locator(
-			'#opencatalogi, [id*="opencatalogi"], .section:has-text("OpenCatalogi"), .settings-section:has-text("OpenCatalogi")',
-		).first()).toBeVisible({ timeout: 20000 })
+		await expect(
+			page
+				.locator(
+					'#opencatalogi, [id*="opencatalogi"], .section:has-text("OpenCatalogi"), .settings-section:has-text("OpenCatalogi")',
+				)
+				.first(),
+		).toBeVisible({ timeout: 20000 })
 	})
 })
 
@@ -216,10 +246,14 @@ test.describe('woo-compliance (WOO)', () => {
 	 *
 	 * Uses a new request context (no auth) to verify public access (WOO-009).
 	 */
-	test('WOO-004/009 — /api/robots.txt is publicly accessible and contains text', async ({ browser }) => {
+	test('WOO-004/009 — /api/robots.txt is publicly accessible and contains text', async ({
+		browser,
+	}) => {
 		const context = await browser.newContext() // no auth
 		const page = await context.newPage()
-		const resp = await page.request.get('/index.php/apps/opencatalogi/api/robots.txt')
+		const resp = await page.request.get(
+			'/index.php/apps/opencatalogi/api/robots.txt',
+		)
 		// 200 OK — even when no WOO catalogs exist the endpoint is reachable
 		expect([200, 404]).toContain(resp.status())
 		if (resp.status() === 200) {
@@ -233,10 +267,14 @@ test.describe('woo-compliance (WOO)', () => {
 	/**
 	 * WOO-001/009: Sitemap endpoint is public; returns XML or 404 when unconfigured.
 	 */
-	test('WOO-001/009 — /api/sitemaps/unknown-catalog/woo-sitemap.xml returns 404 or XML', async ({ browser }) => {
+	test('WOO-001/009 — /api/sitemaps/unknown-catalog/woo-sitemap.xml returns 404 or XML', async ({
+		browser,
+	}) => {
 		const context = await browser.newContext()
 		const page = await context.newPage()
-		const resp = await page.request.get('/index.php/apps/opencatalogi/api/sitemaps/does-not-exist/woo-sitemap.xml')
+		const resp = await page.request.get(
+			'/index.php/apps/opencatalogi/api/sitemaps/does-not-exist/woo-sitemap.xml',
+		)
 		// 404 is expected for a non-existent catalog — but it must be publicly reachable (no 401/403)
 		expect([200, 404]).toContain(resp.status())
 		await context.close()
@@ -256,7 +294,9 @@ test.describe('cross-origin-api-access (COR)', () => {
 	 * NOTE: Nextcloud 28+ returns HTTP 405 for OPTIONS on some routes — the CORS
 	 * contract is fulfilled via GET response headers, not a separate OPTIONS endpoint.
 	 */
-	test('COR-001 — GET /api/catalogi with Origin echoes CORS header', async ({ request }) => {
+	test('COR-001 — GET /api/catalogi with Origin echoes CORS header', async ({
+		request,
+	}) => {
 		const resp = await request.get('/index.php/apps/opencatalogi/api/catalogi', {
 			headers: { Origin: 'https://example.nl' },
 		})
@@ -266,12 +306,17 @@ test.describe('cross-origin-api-access (COR)', () => {
 		expect(['https://example.nl', '*']).toContain(acao)
 	})
 
-	test('COR-001 — GET /api/directory with Origin echoes CORS header', async ({ browser }) => {
+	test('COR-001 — GET /api/directory with Origin echoes CORS header', async ({
+		browser,
+	}) => {
 		const context = await browser.newContext()
 		const page = await context.newPage()
-		const resp = await page.request.get('/index.php/apps/opencatalogi/api/directory', {
-			headers: { Origin: 'https://example.nl' },
-		})
+		const resp = await page.request.get(
+			'/index.php/apps/opencatalogi/api/directory',
+			{
+				headers: { Origin: 'https://example.nl' },
+			},
+		)
 		expect([200, 404]).toContain(resp.status())
 		if (resp.status() === 200) {
 			const acao = resp.headers()['access-control-allow-origin']
@@ -283,7 +328,9 @@ test.describe('cross-origin-api-access (COR)', () => {
 	/**
 	 * COR-001 — GET without Origin still works (no broken response).
 	 */
-	test('COR-001 — GET /api/catalogi without Origin is accessible', async ({ request }) => {
+	test('COR-001 — GET /api/catalogi without Origin is accessible', async ({
+		request,
+	}) => {
 		const resp = await request.get('/index.php/apps/opencatalogi/api/catalogi')
 		expect(resp.status()).toBe(200)
 	})
@@ -300,7 +347,9 @@ test.describe('prometheus-metrics', () => {
 	 * Note: Playwright browser.newContext() may inherit session cookies from test setup —
 	 * use the `request` fixture (which uses the authenticated session) instead.
 	 */
-	test('metrics — endpoint exists and returns structured data', async ({ request }) => {
+	test('metrics — endpoint exists and returns structured data', async ({
+		request,
+	}) => {
 		const resp = await request.get('/index.php/apps/opencatalogi/api/metrics')
 		// 200 when authenticated (admin), 401/403 when not — both are valid
 		expect([200, 401, 403]).toContain(resp.status())
@@ -313,7 +362,9 @@ test.describe('prometheus-metrics', () => {
 	/**
 	 * Metrics endpoint returns Prometheus-formatted text when authenticated.
 	 */
-	test('metrics — authenticated request returns Prometheus text format', async ({ request }) => {
+	test('metrics — authenticated request returns Prometheus text format', async ({
+		request,
+	}) => {
 		const resp = await request.get('/index.php/apps/opencatalogi/api/metrics')
 		expect([200, 401, 403, 404]).toContain(resp.status())
 		if (resp.status() === 200) {
@@ -345,10 +396,14 @@ test.describe('federation (FED)', () => {
 	/**
 	 * FED-001/007: List publications from local and federated sources — public endpoint.
 	 */
-	test('FED-007 — federation search endpoint is publicly accessible (no auth)', async ({ browser }) => {
+	test('FED-007 — federation search endpoint is publicly accessible (no auth)', async ({
+		browser,
+	}) => {
 		const context = await browser.newContext()
 		const page = await context.newPage()
-		const resp = await page.request.get('/index.php/apps/opencatalogi/api/search')
+		const resp = await page.request.get(
+			'/index.php/apps/opencatalogi/api/search',
+		)
 		// Public endpoint should not require authentication → 200 or 401 for internal search
 		// (SCH-001 says /api/search is for authenticated users; federation via /api/{slug} is public)
 		expect([200, 401]).toContain(resp.status())
@@ -359,12 +414,17 @@ test.describe('federation (FED)', () => {
 	 * FED-009: Directory endpoint provides directory URLs for remote instances.
 	 * DIR-008: CORS support on directory endpoints.
 	 */
-	test('FED-009/DIR-008 — GET /api/directory is public and returns JSON', async ({ browser }) => {
+	test('FED-009/DIR-008 — GET /api/directory is public and returns JSON', async ({
+		browser,
+	}) => {
 		const context = await browser.newContext()
 		const page = await context.newPage()
-		const resp = await page.request.get('/index.php/apps/opencatalogi/api/directory', {
-			headers: { Origin: 'https://remote.example.nl' },
-		})
+		const resp = await page.request.get(
+			'/index.php/apps/opencatalogi/api/directory',
+			{
+				headers: { Origin: 'https://remote.example.nl' },
+			},
+		)
 		expect([200, 404]).toContain(resp.status())
 		if (resp.status() === 200) {
 			const body = await resp.json().catch(() => null)
@@ -382,7 +442,9 @@ test.describe('content-management (CMS)', () => {
 	/**
 	 * CMS-001: List all pages via public API.
 	 */
-	test('CMS-001 — GET /api/pages returns JSON (public endpoint)', async ({ browser }) => {
+	test('CMS-001 — GET /api/pages returns JSON (public endpoint)', async ({
+		browser,
+	}) => {
 		const context = await browser.newContext()
 		const page = await context.newPage()
 		const resp = await page.request.get('/index.php/apps/opencatalogi/api/pages')
@@ -397,7 +459,9 @@ test.describe('content-management (CMS)', () => {
 	/**
 	 * CMS-010: List all menus via public API.
 	 */
-	test('CMS-010 — GET /api/menus returns JSON (public endpoint)', async ({ browser }) => {
+	test('CMS-010 — GET /api/menus returns JSON (public endpoint)', async ({
+		browser,
+	}) => {
 		const context = await browser.newContext()
 		const page = await context.newPage()
 		const resp = await page.request.get('/index.php/apps/opencatalogi/api/menus')
@@ -413,8 +477,13 @@ test.describe('content-management (CMS)', () => {
 	 * CMS-006/016: CORS headers on pages and menus — checked via GET (with Origin),
 	 * since Nextcloud returns 405 for OPTIONS on these routes at the framework level.
 	 */
-	test('CMS-006/016 — GET /api/pages and /api/menus with Origin return CORS headers', async ({ browser }) => {
-		for (const endpoint of ['/index.php/apps/opencatalogi/api/pages', '/index.php/apps/opencatalogi/api/menus']) {
+	test('CMS-006/016 — GET /api/pages and /api/menus with Origin return CORS headers', async ({
+		browser,
+	}) => {
+		for (const endpoint of [
+			'/index.php/apps/opencatalogi/api/pages',
+			'/index.php/apps/opencatalogi/api/menus',
+		]) {
 			const context = await browser.newContext()
 			const page = await context.newPage()
 			const resp = await page.request.get(endpoint, {

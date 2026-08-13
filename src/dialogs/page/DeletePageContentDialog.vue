@@ -3,7 +3,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog v-if="navigationStore.dialog === 'deletePageContent'"
+	<NcDialog
+		v-if="navigationStore.dialog === 'deletePageContent'"
 		ref="dialogRef"
 		:name="t('opencatalogi', 'Delete content')"
 		:can-close="false"
@@ -14,14 +15,26 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<p>{{ t('opencatalogi', 'Content successfully deleted') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>{{ t('opencatalogi', 'Something went wrong while deleting content') }}</p>
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Something went wrong while deleting content',
+							)
+						}}
+					</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<p v-if="success === null">
-				{{ t('opencatalogi', 'Do you want to delete this content item? This action cannot be undone.') }}
+				{{
+					t(
+						'opencatalogi',
+						'Do you want to delete this content item? This action cannot be undone.',
+					)
+				}}
 			</p>
 
 			<span class="modalActions">
@@ -29,9 +42,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+					{{
+						success
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="success === null"
+				<NcButton
+					v-if="success === null"
 					:disabled="loading"
 					variant="error"
 					@click="handleDelete">
@@ -99,7 +117,9 @@ export default {
 
 			try {
 				const clone = structuredClone(this.pageItem)
-				clone.contents = (clone.contents || []).filter(c => c.id !== this.contentItem.id)
+				clone.contents = (clone.contents || []).filter(
+					(c) => c.id !== this.contentItem.id,
+				)
 
 				const newPage = new Page(clone)
 				await objectStore.updateObject('page', this.pageItem.id, newPage)

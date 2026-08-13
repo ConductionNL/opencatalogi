@@ -7,7 +7,8 @@ import { navigationStore } from './../store/store.js'
 	<div>
 		<!--Generic-->
 		<CatalogModal />
-		<AddPublicationThemeModal v-if="navigationStore.modal === 'addPublicationTheme'" />
+		<AddPublicationThemeModal
+			v-if="navigationStore.modal === 'addPublicationTheme'" />
 		<!--View Modals-->
 		<ViewDirectoryModal />
 		<ViewGlossaryModal />
@@ -35,14 +36,15 @@ import { navigationStore } from './../store/store.js'
 		<!-- Mass Action Modals -->
 		<MassDeleteObject v-if="navigationStore.dialog === 'massDeleteObject'" />
 		<MassPublishObjects v-if="navigationStore.dialog === 'massPublishObjects'" />
-		<MassDepublishObjects v-if="navigationStore.dialog === 'massDepublishObjects'" />
-		<MassValidateObjects v-if="navigationStore.dialog === 'massValidateObjects'" />
+		<MassDepublishObjects
+			v-if="navigationStore.dialog === 'massDepublishObjects'" />
+		<MassValidateObjects
+			v-if="navigationStore.dialog === 'massValidateObjects'" />
 		<MassAttachmentModal v-if="navigationStore.dialog === 'massAttachment'" />
 	</div>
 </template>
 
 <script>
-
 // Generic
 import CatalogModal from './catalog/CatalogModal.vue'
 import UploadFilesModal from './generic/UploadFiles.vue'

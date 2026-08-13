@@ -7,12 +7,27 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		v-if="navigationStore.dialog === 'deleteCategory'"
 		:name="t('opencatalogi', 'Delete Category')"
 		:can-close="false">
-		<div v-if="objectStore.getState('category').success !== null || objectStore.getState('category').error">
-			<NcNoteCard v-if="objectStore.getState('category').success" type="success">
+		<div
+			v-if="
+				objectStore.getState('category').success !== null
+				|| objectStore.getState('category').error
+			">
+			<NcNoteCard
+				v-if="objectStore.getState('category').success"
+				type="success">
 				<p>{{ t('opencatalogi', 'Category successfully deleted') }}</p>
 			</NcNoteCard>
-			<NcNoteCard v-if="!objectStore.getState('category').success" type="error">
-				<p>{{ t('opencatalogi', 'Something went wrong while deleting the category') }}</p>
+			<NcNoteCard
+				v-if="!objectStore.getState('category').success"
+				type="error">
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Something went wrong while deleting the category',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('category').error" type="error">
 				<p>{{ objectStore.getState('category').error }}</p>
@@ -22,10 +37,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcLoadingIcon :size="20" />
 			<span>{{ t('opencatalogi', 'Category is being deleted...') }}</span>
 		</div>
-		<p v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')">
-			{{ t('opencatalogi', 'Do you want to delete {name}? This action cannot be undone.', { name: objectStore.getActiveObject('category')?.name }) }}
+		<p
+			v-if="
+				objectStore.getState('category').success === null
+				&& !objectStore.isLoading('category')
+			">
+			{{
+				t(
+					'opencatalogi',
+					'Do you want to delete {name}? This action cannot be undone.',
+					{ name: objectStore.getActiveObject('category')?.name },
+				)
+			}}
 		</p>
-		<template v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')" #actions>
+		<template
+			v-if="
+				objectStore.getState('category').success === null
+				&& !objectStore.isLoading('category')
+			"
+			#actions>
 			<NcButton
 				:disabled="objectStore.isLoading('category')"
 				icon=""
@@ -47,9 +77,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</NcButton>
 		</template>
 		<template v-else #actions>
-			<NcButton
-				icon=""
-				@click="navigationStore.setDialog(false)">
+			<NcButton icon="" @click="navigationStore.setDialog(false)">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
@@ -98,14 +126,13 @@ export default {
 			const activeCategory = objectStore.getActiveObject('category')
 			if (!activeCategory?.id) return
 
-			objectStore.deleteObject('category', activeCategory.id)
-				.then(() => {
-					// Wait for the user to read the feedback then close the dialog
-					setTimeout(() => {
-						objectStore.setState('category', { success: null, error: null })
-						navigationStore.setDialog(false)
-					}, 2000)
-				})
+			objectStore.deleteObject('category', activeCategory.id).then(() => {
+				// Wait for the user to read the feedback then close the dialog
+				setTimeout(() => {
+					objectStore.setState('category', { success: null, error: null })
+					navigationStore.setDialog(false)
+				}, 2000)
+			})
 		},
 	},
 }

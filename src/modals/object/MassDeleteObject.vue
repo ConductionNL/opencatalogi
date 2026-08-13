@@ -3,7 +3,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcDialog :name="dialogTitle"
+	<NcDialog
+		:name="dialogTitle"
 		:can-close="true"
 		size="normal"
 		class="mass-action-dialog"
@@ -11,16 +12,46 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="delete-step">
 			<NcNoteCard type="info">
-				{{ t('opencatalogi', 'Publications will be soft deleted and moved to the') }} <a href="#" class="deleted-link" @click.prevent="navigateToDeleted">{{ t('opencatalogi', 'deleted publications section') }}</a>{{ t('opencatalogi', '. They will be retained according to their schema\'s configured retention period and automatically permanently deleted after wards.') }}
+				{{
+					t(
+						'opencatalogi',
+						'Publications will be soft deleted and moved to the',
+					)
+				}}
+				<a
+					href="#"
+					class="deleted-link"
+					@click.prevent="navigateToDeleted"
+					>{{ t('opencatalogi', 'deleted publications section') }}</a
+				>{{
+					t(
+						'opencatalogi',
+						". They will be retained according to their schema's configured retention period and automatically permanently deleted after wards.",
+					)
+				}}
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="(objectStore.selectedObjects?.length || 0) === 1 ? t('opencatalogi', 'Publication to Delete') : t('opencatalogi', 'Selected Publications')"
+				:title="
+					(objectStore.selectedObjects?.length || 0) === 1
+						? t('opencatalogi', 'Publication to Delete')
+						: t('opencatalogi', 'Selected Publications')
+				"
 				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>{{ originalSelectedCount > 1 ? t('opencatalogi', '{type}s successfully deleted', { type: t('opencatalogi', 'Publication') }) : t('opencatalogi', '{type} successfully deleted', { type: t('opencatalogi', 'Publication') }) }}</p>
+			<p>
+				{{
+					originalSelectedCount > 1
+						? t('opencatalogi', '{type}s successfully deleted', {
+								type: t('opencatalogi', 'Publication'),
+							})
+						: t('opencatalogi', '{type} successfully deleted', {
+								type: t('opencatalogi', 'Publication'),
+							})
+				}}
+			</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -31,10 +62,17 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
+				{{
+					success === null
+						? t('opencatalogi', 'Cancel')
+						: t('opencatalogi', 'Close')
+				}}
 			</NcButton>
-			<NcButton v-if="success === null"
-				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
+			<NcButton
+				v-if="success === null"
+				:disabled="
+					loading || (objectStore.selectedObjects?.length || 0) === 0
+				"
 				variant="error"
 				@click="deleteObject()">
 				<template #icon>
@@ -48,12 +86,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import {
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-} from '@nextcloud/vue'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
@@ -148,7 +181,8 @@ export default {
 				const objectsToProcess = [...(objectStore.selectedObjects || [])]
 
 				// Use the store's mass delete method
-				const { successful, failed } = await objectStore.massDeleteObjects(objectsToProcess)
+				const { successful, failed } =
+					await objectStore.massDeleteObjects(objectsToProcess)
 
 				if (successful.length > 0) {
 					this.success = true
@@ -166,10 +200,10 @@ export default {
 				if (failed.length > 0) {
 					this.error = `Failed to delete ${failed.length} object${failed.length > 1 ? 's' : ''}`
 				}
-
 			} catch (error) {
 				this.success = false
-				this.error = error.message || 'An error occurred while deleting objects'
+				this.error =
+					error.message || 'An error occurred while deleting objects'
 			} finally {
 				this.loading = false
 			}

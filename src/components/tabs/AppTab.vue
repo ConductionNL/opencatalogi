@@ -10,7 +10,14 @@
  * Accepts EITHER a `title` prop or a `#title` slot, matching `<BTab>`; the
  * slot wins when both are given.
  */
-import { getCurrentInstance, inject, onBeforeUnmount, onMounted, ref, useSlots } from 'vue'
+import {
+	getCurrentInstance,
+	inject,
+	onBeforeUnmount,
+	onMounted,
+	ref,
+	useSlots,
+} from 'vue'
 import { TABS_CONTEXT } from './tabsContext.js'
 
 const props = defineProps({

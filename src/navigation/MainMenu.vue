@@ -19,7 +19,10 @@
 				v-for="catalogus in catalogs"
 				:key="catalogus.id || catalogus.slug"
 				:name="catalogus.title"
-				:to="{ name: 'Publications', params: { catalogSlug: catalogus.slug } }">
+				:to="{
+					name: 'Publications',
+					params: { catalogSlug: catalogus.slug },
+				}">
 				<template #icon>
 					<DatabaseEyeOutline :size="20" />
 				</template>
@@ -161,7 +164,9 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		catalogs() {
 			const collection = objectStore.getCollection('catalog')
-			const results = Array.isArray(collection) ? collection : collection?.results || []
+			const results = Array.isArray(collection)
+				? collection
+				: collection?.results || []
 			return results.filter((c) => c && c.slug)
 		},
 	},

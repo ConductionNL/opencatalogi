@@ -38,7 +38,10 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:sidebar-open="sidebarOpen"
 		:object-type="entityType"
 		:object-id="entityId"
-		:sidebar-props="{ register: String(entity?.['@self']?.register || ''), schema: String(entity?.['@self']?.schema || '') }">
+		:sidebar-props="{
+			register: String(entity?.['@self']?.register || ''),
+			schema: String(entity?.['@self']?.schema || ''),
+		}">
 		<!-- Header actions -->
 		<template #actions>
 			<NcButton @click="goBack">
@@ -68,9 +71,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 		<!-- Metadata widget -->
 		<template #widget-metadata>
-			<CnDetailGrid
-				:items="metadataItems"
-				layout="horizontal" />
+			<CnDetailGrid :items="metadataItems" layout="horizontal" />
 		</template>
 
 		<!-- Description widget -->
@@ -99,16 +100,42 @@ import { objectStore, navigationStore } from '../../store/store.js'
 <script>
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
-import { CnDetailPage, CnDetailGrid, CnJsonViewer, buildHeaders } from '@conduction/nextcloud-vue'
+import {
+	CnDetailPage,
+	CnDetailGrid,
+	CnJsonViewer,
+	buildHeaders,
+} from '@conduction/nextcloud-vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 const DETAIL_LAYOUT = [
-	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 12, gridHeight: 4 },
-	{ id: 2, widgetId: 'description', gridX: 0, gridY: 4, gridWidth: 12, gridHeight: 2 },
-	{ id: 3, widgetId: 'raw-data', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 4 },
+	{
+		id: 1,
+		widgetId: 'metadata',
+		gridX: 0,
+		gridY: 0,
+		gridWidth: 12,
+		gridHeight: 4,
+	},
+	{
+		id: 2,
+		widgetId: 'description',
+		gridX: 0,
+		gridY: 4,
+		gridWidth: 12,
+		gridHeight: 2,
+	},
+	{
+		id: 3,
+		widgetId: 'raw-data',
+		gridX: 0,
+		gridY: 6,
+		gridWidth: 12,
+		gridHeight: 4,
+	},
 ]
 
 /**
@@ -184,21 +211,48 @@ export default {
 			if (!this.entity) return []
 			const self = this.entity['@self'] || {}
 			const base = [
-				{ label: t('opencatalogi', 'Title'), value: this.entity.title || this.entity.name || '-' },
-				{ label: t('opencatalogi', 'Summary'), value: this.entity.summary || '-' },
+				{
+					label: t('opencatalogi', 'Title'),
+					value: this.entity.title || this.entity.name || '-',
+				},
+				{
+					label: t('opencatalogi', 'Summary'),
+					value: this.entity.summary || '-',
+				},
 				...this.extraMetadata(this.entity),
-				{ label: t('opencatalogi', 'Created'), value: self.created ? new Date(self.created).toLocaleString() : '-' },
-				{ label: t('opencatalogi', 'Updated'), value: self.updated ? new Date(self.updated).toLocaleString() : '-' },
+				{
+					label: t('opencatalogi', 'Created'),
+					value: self.created
+						? new Date(self.created).toLocaleString()
+						: '-',
+				},
+				{
+					label: t('opencatalogi', 'Updated'),
+					value: self.updated
+						? new Date(self.updated).toLocaleString()
+						: '-',
+				},
 				{ label: t('opencatalogi', 'Owner'), value: self.owner || '-' },
-				{ label: t('opencatalogi', 'ID'), value: self.id || this.entity.id || '-' },
+				{
+					label: t('opencatalogi', 'ID'),
+					value: self.id || this.entity.id || '-',
+				},
 			]
 			return base
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		widgetDefs() {
 			return [
-				{ id: 'metadata', title: t('opencatalogi', 'Metadata'), type: 'custom' },
-				{ id: 'description', title: t('opencatalogi', 'Description'), type: 'custom' },
+				{
+					id: 'metadata',
+					title: t('opencatalogi', 'Metadata'),
+					type: 'custom',
+				},
+				{
+					id: 'description',
+					title: t('opencatalogi', 'Description'),
+					type: 'custom',
+				},
 				{ id: 'raw-data', title: t('opencatalogi', 'Data'), type: 'custom' },
 			]
 		},
@@ -221,10 +275,15 @@ export default {
 			this.error = null
 			try {
 				const response = await fetch(
-					generateUrl(`/apps/opencatalogi/api/${this.apiPath}/${this.entityId}`),
+					generateUrl(
+						`/apps/opencatalogi/api/${this.apiPath}/${this.entityId}`,
+					),
 					{ method: 'GET', headers: buildHeaders() },
 				)
-				if (!response.ok) throw new Error(`Failed to load ${this.entityLabel} (${response.status})`)
+				if (!response.ok)
+					throw new Error(
+						`Failed to load ${this.entityLabel} (${response.status})`,
+					)
 				this.entity = await response.json()
 				objectStore.setActiveObject(this.entityType, this.entity)
 			} catch (err) {
@@ -245,7 +304,10 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		deleteEntity() {
 			objectStore.setActiveObject(this.entityType, this.entity)
-			navigationStore.setDialog('deleteObject', { objectType: this.entityType, dialogTitle: this.entityLabel })
+			navigationStore.setDialog('deleteObject', {
+				objectType: this.entityType,
+				dialogTitle: this.entityLabel,
+			})
 		},
 	},
 }

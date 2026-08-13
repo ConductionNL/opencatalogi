@@ -84,8 +84,8 @@ export default {
 		themeOptions() {
 			const publication = objectStore.getActiveObject('publication')
 			return this.themes
-				.filter(t => !publication?.theme?.includes(t.id))
-				.map(t => ({
+				.filter((t) => !publication?.theme?.includes(t.id))
+				.map((t) => ({
 					value: t.id,
 					label: t.title || `#${t.id}`,
 				}))
@@ -114,7 +114,11 @@ export default {
 					...publication,
 					theme: this.selectedTheme,
 				}
-				await objectStore.updateObject('publication', publication.id, updatedPublication)
+				await objectStore.updateObject(
+					'publication',
+					publication.id,
+					updatedPublication,
+				)
 				await objectStore.fetchCollection('theme')
 				this.successState = true
 				this.errorState = null

@@ -7,14 +7,16 @@ import { translate as t } from '@nextcloud/l10n'
 		<div v-if="loading" class="retentionWidget__loading">
 			<NcLoadingIcon :size="32" />
 		</div>
-		<NcEmptyContent v-else-if="entries.length === 0"
+		<NcEmptyContent
+			v-else-if="entries.length === 0"
 			:title="t('opencatalogi', 'Nothing requires retention review')">
 			<template #icon>
 				<ClockOutlineIcon />
 			</template>
 		</NcEmptyContent>
 		<div v-else class="retentionWidget__stats">
-			<CnStatsBlock v-for="entry in entries"
+			<CnStatsBlock
+				v-for="entry in entries"
 				:key="entry.id"
 				:title="entry.label"
 				:count="entry.count"
@@ -108,7 +110,12 @@ export default {
 		 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 		 */
 		onEntryClick(entry) {
-			window.open(generateUrl('/apps/opencatalogi/?retention=' + encodeURIComponent(entry.id)), '_self')
+			window.open(
+				generateUrl(
+					'/apps/opencatalogi/?retention=' + encodeURIComponent(entry.id),
+				),
+				'_self',
+			)
 		},
 		/**
 		 * Fetch the retention queue summary.
@@ -119,7 +126,9 @@ export default {
 		async fetchData() {
 			this.loading = true
 			try {
-				const response = await axios.get(generateUrl('/apps/opencatalogi/api/retention/queue'))
+				const response = await axios.get(
+					generateUrl('/apps/opencatalogi/api/retention/queue'),
+				)
 				this.summary = { ...this.summary, ...response.data }
 			} catch (error) {
 				console.error('Failed to load retention queue summary', error)

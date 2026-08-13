@@ -17,7 +17,9 @@
 	<CnIndexPage
 		ref="indexPage"
 		:title="t('opencatalogi', 'Organizations')"
-		:description="t('opencatalogi', 'Manage your organizations and their configurations')"
+		:description="
+			t('opencatalogi', 'Manage your organizations and their configurations')
+		"
 		:show-title="true"
 		:objects="currentObjects"
 		:columns="tableColumns"
@@ -51,7 +53,12 @@
 		@row-click="onRowClick">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
-				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+				{{
+					t(
+						'opencatalogi',
+						'This page is read-only. Only administrators can create, edit, or delete entries here.',
+					)
+				}}
 			</NcNoteCard>
 		</template>
 
@@ -63,60 +70,69 @@
 					:model-value="formData.name || ''"
 					:error="!!errors.name"
 					:helper-text="errors.name"
-					@update:model-value="v => updateField('name', v)" />
+					@update:model-value="(v) => updateField('name', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'Website') + ' *'"
 					:model-value="formData.website || ''"
 					:error="!!errors.website"
 					:helper-text="errors.website"
-					@update:model-value="v => updateField('website', v)" />
+					@update:model-value="(v) => updateField('website', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'Summary')"
 					:model-value="formData.summary || ''"
-					@update:model-value="v => updateField('summary', v)" />
+					@update:model-value="(v) => updateField('summary', v)" />
 				<NcTextArea
 					:label="t('opencatalogi', 'Description')"
 					:model-value="formData.description || ''"
 					resize="vertical"
-					@update:model-value="v => updateField('description', v)" />
+					@update:model-value="(v) => updateField('description', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'OIN')"
 					:model-value="formData.oin || ''"
-					@update:model-value="v => updateField('oin', v)" />
+					@update:model-value="(v) => updateField('oin', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'TOOI')"
 					:model-value="formData.tooi || ''"
-					@update:model-value="v => updateField('tooi', v)" />
+					@update:model-value="(v) => updateField('tooi', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'RSIN')"
 					:model-value="formData.rsin || ''"
-					@update:model-value="v => updateField('rsin', v)" />
+					@update:model-value="(v) => updateField('rsin', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'PKI')"
 					:model-value="formData.pki || ''"
-					@update:model-value="v => updateField('pki', v)" />
+					@update:model-value="(v) => updateField('pki', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'Image (url)')"
 					:model-value="formData.image || ''"
-					@update:model-value="v => updateField('image', v)" />
+					@update:model-value="(v) => updateField('image', v)" />
 			</div>
 		</template>
 
 		<!-- Mass actions -->
 		<template v-if="isAdmin" #action-items>
-			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassDelete">
+			<NcActionButton
+				close-after-click
+				:disabled="selectedIds.length === 0"
+				@click="onMassDelete">
 				<template #icon>
 					<Delete :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Delete selected') }}
 			</NcActionButton>
-			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassPublish">
+			<NcActionButton
+				close-after-click
+				:disabled="selectedIds.length === 0"
+				@click="onMassPublish">
 				<template #icon>
 					<PublishIcon :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Publish selected') }}
 			</NcActionButton>
-			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassDepublish">
+			<NcActionButton
+				close-after-click
+				:disabled="selectedIds.length === 0"
+				@click="onMassDepublish">
 				<template #icon>
 					<PublishOffIcon :size="20" />
 				</template>
@@ -136,19 +152,28 @@
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="$refs.indexPage.openFormDialog(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="$refs.indexPage.openFormDialog(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="copyOrganization(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="copyOrganization(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="deleteOrganization(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="deleteOrganization(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -161,7 +186,13 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
-import { NcActions, NcActionButton, NcTextField, NcTextArea, NcNoteCard } from '@nextcloud/vue'
+import {
+	NcActions,
+	NcActionButton,
+	NcTextField,
+	NcTextArea,
+	NcNoteCard,
+} from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
 import { navigationStore, objectStore } from '../../store/store.js'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
@@ -204,10 +235,22 @@ export default {
 			return {
 				title: t('opencatalogi', 'Organization'),
 				properties: {
-					name: { type: 'string', title: t('opencatalogi', 'Name'), required: true, minLength: 1 },
-					website: { type: 'string', title: t('opencatalogi', 'Website'), required: true },
+					name: {
+						type: 'string',
+						title: t('opencatalogi', 'Name'),
+						required: true,
+						minLength: 1,
+					},
+					website: {
+						type: 'string',
+						title: t('opencatalogi', 'Website'),
+						required: true,
+					},
 					summary: { type: 'string', title: t('opencatalogi', 'Summary') },
-					description: { type: 'string', title: t('opencatalogi', 'Description') },
+					description: {
+						type: 'string',
+						title: t('opencatalogi', 'Description'),
+					},
 					oin: { type: 'string', title: t('opencatalogi', 'OIN') },
 					tooi: { type: 'string', title: t('opencatalogi', 'TOOI') },
 					rsin: { type: 'string', title: t('opencatalogi', 'RSIN') },
@@ -220,7 +263,11 @@ export default {
 		tableColumns() {
 			return [
 				{ key: 'name', label: t('opencatalogi', 'Name'), sortable: true },
-				{ key: 'website', label: t('opencatalogi', 'Website'), sortable: true },
+				{
+					key: 'website',
+					label: t('opencatalogi', 'Website'),
+					sortable: true,
+				},
 				{ key: 'summary', label: t('opencatalogi', 'Summary') },
 				{ key: 'oin', label: t('opencatalogi', 'OIN'), sortable: true },
 				{ key: 'tooi', label: t('opencatalogi', 'TOOI'), sortable: true },
@@ -232,35 +279,111 @@ export default {
 			return Array.isArray(c) ? c : c?.results || []
 		},
 		currentPagination() {
-			return objectStore.getPagination('organization') || { total: 0, page: 1, pages: 1, limit: 20 }
+			return (
+				objectStore.getPagination('organization') || {
+					total: 0,
+					page: 1,
+					pages: 1,
+					limit: 20,
+				}
+			)
 		},
 	},
-	mounted() { objectStore.fetchCollection('organization') },
+	mounted() {
+		objectStore.fetchCollection('organization')
+	},
 	methods: {
 		t,
-		onAdd() { objectStore.clearActiveObject('organization'); this.$refs.indexPage.openFormDialog(null) },
+		onAdd() {
+			objectStore.clearActiveObject('organization')
+			this.$refs.indexPage.openFormDialog(null)
+		},
 		async onSaveOrganization(formData) {
 			try {
-				if (formData.id) { await objectStore.updateObject('organization', formData.id, formData) } else { await objectStore.createObject('organization', formData) }
+				if (formData.id) {
+					await objectStore.updateObject(
+						'organization',
+						formData.id,
+						formData,
+					)
+				} else {
+					await objectStore.createObject('organization', formData)
+				}
 				this.$refs.indexPage.setFormResult({ success: true })
 				await objectStore.fetchCollection('organization')
-			} catch (error) { this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save organization' }) }
+			} catch (error) {
+				this.$refs.indexPage.setFormResult({
+					error: error.message || 'Failed to save organization',
+				})
+			}
 		},
-		async handleRefresh() { this.isRefreshing = true; try { await objectStore.fetchCollection('organization') } finally { this.isRefreshing = false } },
-		onPageChange(page) { objectStore.fetchCollection('organization', { _page: page, _limit: this.currentPagination.limit || 20 }) },
-		onPageSizeChange(size) { objectStore.fetchCollection('organization', { _page: 1, _limit: size }) },
-		onSelect(ids) { this.selectedIds = ids; objectStore.setSelectedObjects(ids) },
-		onRowClick(row) { objectStore.setActiveObject('organization', row); navigationStore.setModal('viewOrganization') },
-		viewOrganization(org) { objectStore.setActiveObject('organization', org); navigationStore.setModal('viewOrganization') },
-		copyOrganization(org) { objectStore.setActiveObject('organization', org); navigationStore.setDialog('copyObject', { objectType: 'organization', dialogTitle: 'Organization' }) },
-		deleteOrganization(org) { objectStore.setActiveObject('organization', org); navigationStore.setDialog('deleteObject', { objectType: 'organization', dialogTitle: 'Organization' }) },
-		onMassDelete() { navigationStore.setDialog('massDeleteObjects', { objectType: 'organization', dialogTitle: 'Organizations' }) },
-		onMassPublish() { navigationStore.setDialog('massPublishObjects', { objectType: 'organization', dialogTitle: 'Organizations' }) },
-		onMassDepublish() { navigationStore.setDialog('massDepublishObjects', { objectType: 'organization', dialogTitle: 'Organizations' }) },
+		async handleRefresh() {
+			this.isRefreshing = true
+			try {
+				await objectStore.fetchCollection('organization')
+			} finally {
+				this.isRefreshing = false
+			}
+		},
+		onPageChange(page) {
+			objectStore.fetchCollection('organization', {
+				_page: page,
+				_limit: this.currentPagination.limit || 20,
+			})
+		},
+		onPageSizeChange(size) {
+			objectStore.fetchCollection('organization', { _page: 1, _limit: size })
+		},
+		onSelect(ids) {
+			this.selectedIds = ids
+			objectStore.setSelectedObjects(ids)
+		},
+		onRowClick(row) {
+			objectStore.setActiveObject('organization', row)
+			navigationStore.setModal('viewOrganization')
+		},
+		viewOrganization(org) {
+			objectStore.setActiveObject('organization', org)
+			navigationStore.setModal('viewOrganization')
+		},
+		copyOrganization(org) {
+			objectStore.setActiveObject('organization', org)
+			navigationStore.setDialog('copyObject', {
+				objectType: 'organization',
+				dialogTitle: 'Organization',
+			})
+		},
+		deleteOrganization(org) {
+			objectStore.setActiveObject('organization', org)
+			navigationStore.setDialog('deleteObject', {
+				objectType: 'organization',
+				dialogTitle: 'Organization',
+			})
+		},
+		onMassDelete() {
+			navigationStore.setDialog('massDeleteObjects', {
+				objectType: 'organization',
+				dialogTitle: 'Organizations',
+			})
+		},
+		onMassPublish() {
+			navigationStore.setDialog('massPublishObjects', {
+				objectType: 'organization',
+				dialogTitle: 'Organizations',
+			})
+		},
+		onMassDepublish() {
+			navigationStore.setDialog('massDepublishObjects', {
+				objectType: 'organization',
+				dialogTitle: 'Organizations',
+			})
+		},
 	},
 }
 </script>
 
 <style scoped>
-.formContainer > * { margin-block-end: 10px; }
+.formContainer > * {
+	margin-block-end: 10px;
+}
 </style>

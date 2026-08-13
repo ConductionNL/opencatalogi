@@ -10,10 +10,10 @@
  */
 
 export type TGlossary = {
-    id: string
-    title: string
-    summary: string
-    description: string
-    externalLink: string
-    keywords: string[]
+	id: string
+	title: string
+	summary: string
+	description: string
+	externalLink: string
+	keywords: string[]
 }

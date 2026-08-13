@@ -56,7 +56,9 @@ const mockRelatedData = {
 		total: 1,
 		page: 1,
 		perPage: 10,
-		results: [{ id: '1', usedBy: 'character-1', timestamp: '2024-04-13T00:00:00Z' }],
+		results: [
+			{ id: '1', usedBy: 'character-1', timestamp: '2024-04-13T00:00:00Z' },
+		],
 	},
 	used: {
 		total: 1,
@@ -96,7 +98,9 @@ describe('ObjectStore', () => {
 
 			expect(store.settings).toEqual(mockSettings)
 			expect(store.objectTypes).toEqual(['character', 'item', 'skill'])
-			expect(fetch).toHaveBeenCalledWith('/index.php/apps/opencatalogi/api/settings')
+			expect(fetch).toHaveBeenCalledWith(
+				'/index.php/apps/opencatalogi/api/settings',
+			)
 		})
 
 		it('handles settings fetch error', async () => {
@@ -104,7 +108,9 @@ describe('ObjectStore', () => {
 				ok: false,
 			})
 
-			await expect(store.fetchSettings()).rejects.toThrow('Failed to fetch settings')
+			await expect(store.fetchSettings()).rejects.toThrow(
+				'Failed to fetch settings',
+			)
 		})
 	})
 
@@ -127,7 +133,9 @@ describe('ObjectStore', () => {
 		})
 
 		it('throws error for invalid object type', () => {
-			expect(() => store.getSchemaConfig('invalid')).toThrow('Invalid configuration for object type: invalid')
+			expect(() => store.getSchemaConfig('invalid')).toThrow(
+				'Invalid configuration for object type: invalid',
+			)
 		})
 	})
 
@@ -152,7 +160,9 @@ describe('ObjectStore', () => {
 			// defaults it to `{ results: [] }`, appends via `...collections[type].results`,
 			// and SelectedObjectsList.vue reads `collection?.results`. This assertion
 			// compared against the bare array, which the store has never stored.
-			expect(store.collections.character).toEqual({ results: mockCollection.results })
+			expect(store.collections.character).toEqual({
+				results: mockCollection.results,
+			})
 			expect(store.objects.character).toEqual({
 				1: { id: '1', name: 'Test 1' },
 				2: { id: '2', name: 'Test 2' },
@@ -166,9 +176,13 @@ describe('ObjectStore', () => {
 				ok: false,
 			})
 
-			await expect(store.fetchCollection('character')).rejects.toThrow('Failed to fetch character collection')
+			await expect(store.fetchCollection('character')).rejects.toThrow(
+				'Failed to fetch character collection',
+			)
 			expect(store.isLoading('character')).toBe(false)
-			expect(store.getError('character')).toBe('Failed to fetch character collection')
+			expect(store.getError('character')).toBe(
+				'Failed to fetch character collection',
+			)
 		})
 	})
 
@@ -220,10 +234,13 @@ describe('ObjectStore', () => {
 			// legitimately ends up holding whatever the collection returned.
 			fetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({ ...mockCollection, results: [mockObject] }),
+				json: () =>
+					Promise.resolve({ ...mockCollection, results: [mockObject] }),
 			})
 
-			const newObject = await store.createObject('character', { name: 'New Character' })
+			const newObject = await store.createObject('character', {
+				name: 'New Character',
+			})
 
 			expect(newObject).toEqual(mockObject)
 			expect(store.objects.character['1']).toEqual(mockObject)
@@ -239,10 +256,13 @@ describe('ObjectStore', () => {
 			})
 			fetch.mockResolvedValueOnce({
 				ok: true,
-				json: () => Promise.resolve({ ...mockCollection, results: [updatedObject] }),
+				json: () =>
+					Promise.resolve({ ...mockCollection, results: [updatedObject] }),
 			})
 
-			const result = await store.updateObject('character', '1', { name: 'Updated Name' })
+			const result = await store.updateObject('character', '1', {
+				name: 'Updated Name',
+			})
 
 			expect(result).toEqual(updatedObject)
 			expect(store.objects.character['1']).toEqual(updatedObject)
@@ -258,7 +278,10 @@ describe('ObjectStore', () => {
 		it('deletes object successfully', async () => {
 			fetch.mockResolvedValueOnce({ ok: true })
 
-			const objectItem = { ...mockObject, '@self': { id: '1', register: '20', schema: '105' } }
+			const objectItem = {
+				...mockObject,
+				'@self': { id: '1', register: '20', schema: '105' },
+			}
 			store.setSelectedObjects([objectItem])
 
 			await expect(store.deleteObject(objectItem)).resolves.toBe(true)
@@ -335,7 +358,10 @@ describe('ObjectStore', () => {
 
 			expect(store.activeObjects.character).toBeNull()
 			expect(store.relatedData.character).toEqual({
-				logs: null, uses: null, used: null, files: null,
+				logs: null,
+				uses: null,
+				used: null,
+				files: null,
 			})
 		})
 
@@ -377,7 +403,10 @@ describe('ObjectStore', () => {
 		// threw before issuing a request. The store now resolves the pair from
 		// `objects[type][id]`, so these buttons work again.
 		it('deletes via the legacy (type, id) pair used by the modals', async () => {
-			const objectItem = { ...mockObject, '@self': { id: '1', register: '20', schema: '105' } }
+			const objectItem = {
+				...mockObject,
+				'@self': { id: '1', register: '20', schema: '105' },
+			}
 			store.objects.character = { 1: objectItem }
 			fetch.mockResolvedValueOnce({ ok: true })
 
@@ -399,7 +428,9 @@ describe('ObjectStore', () => {
 			fetch.mockReset()
 			fetch.mockRejectedValueOnce(new Error('Network error'))
 
-			await expect(store.fetchRelatedData('character', '1', 'logs')).rejects.toThrow()
+			await expect(
+				store.fetchRelatedData('character', '1', 'logs'),
+			).rejects.toThrow()
 			// The failure is recorded against the TYPE, not a per-request composite
 			// key: the catch does `setState(type, { error })`. Asserting on
 			// 'character_1_logs' read an error slot the store never writes, so it

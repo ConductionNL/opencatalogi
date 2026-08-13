@@ -22,7 +22,6 @@ import { TOrganization } from './organization.types'
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Organization implements TOrganization {
-
 	/**
 	 * Unique identifier of the organization
 	 */
@@ -106,10 +105,22 @@ export class Organization implements TOrganization {
 			summary: z.string().min(1, 'is verplicht'),
 			description: z.string(),
 			// Regex could be wrong since there is no clear public information on the format of any of these.
-			oin: z.string().regex(/^0000000\d{10}000$/, 'is niet een geldige OIN nummer').or(z.literal('')),
-			tooi: z.string().regex(/^\w{2,}\d{4}$/, 'is niet een geldige TOOI nummer').or(z.literal('')),
-			rsin: z.string().regex(/^\d{9}$/, 'is niet een geldige RSIN nummer').or(z.literal('')),
-			pki: z.string().regex(/^\d{1,}$/, 'is niet een geldige PKI nummer').or(z.literal('')),
+			oin: z
+				.string()
+				.regex(/^0000000\d{10}000$/, 'is niet een geldige OIN nummer')
+				.or(z.literal('')),
+			tooi: z
+				.string()
+				.regex(/^\w{2,}\d{4}$/, 'is niet een geldige TOOI nummer')
+				.or(z.literal('')),
+			rsin: z
+				.string()
+				.regex(/^\d{9}$/, 'is niet een geldige RSIN nummer')
+				.or(z.literal('')),
+			pki: z
+				.string()
+				.regex(/^\d{1,}$/, 'is niet een geldige PKI nummer')
+				.or(z.literal('')),
 			image: z.string(),
 		})
 
@@ -119,5 +130,4 @@ export class Organization implements TOrganization {
 
 		return result
 	}
-
 }

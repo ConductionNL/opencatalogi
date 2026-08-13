@@ -87,114 +87,125 @@ async function catalogListing(
 }
 
 test.describe('publish workflow', () => {
-	test(
-		// @e2e publications::draft-is-author-visible-but-anonymous-excluded
-		'Publish gate — a draft publication is visible to the author but EXCLUDED from the anonymous catalog directory',
-		async () => {
-			// Catalog wired to the publication register/schema, with a slug we can
-			// hit on the public endpoint.
-			//
-			// `published` MUST be set to a past date. This test's whole point is
-			// that the anonymous catalog directory renders (200) while the draft
-			// publication inside it is filtered out — so an anonymously *visible
-			// catalog* is the precondition, not the thing under test. The catalog
-			// schema grants public read conditionally:
-			//
-			//     authorization.read: [{ group: "public",
-			//                            match: { published: { $lte: "$now" } } }, …]
-			//
-			// and `published` is documented on the schema as "when set to a date in
-			// the past, this catalog becomes publicly accessible". The fixture does
-			// not set it, so without this the catalog is correctly NOT public and
-			// `GET /api/{slug}` 404s on `getCatalogBySlug()` returning null.
-			//
-			// This test used to pass anyway on a dev container running an older
-			// OpenRegister, whose list path returned objects the conditional
-			// public-read grant should have excluded — so the precondition was
-			// being supplied by an RBAC leak rather than by the fixture. Against an
-			// OpenRegister that enforces the grant it failed with 404. Establishing
-			// the precondition explicitly makes the assertion below mean what it
-			// says on both.
-			const slug = `e2e-${fx.runId}-cat`
-			const catalog = await fx.createCatalog('Publish Catalog', {
-				slug,
-				published: '2020-01-01T00:00:00+00:00',
-			})
-			const realSlug = (catalog.raw['@self'] as Record<string, unknown>)?.slug as string
-				?? (catalog.raw.slug as string) ?? slug
+	test(// @e2e publications::draft-is-author-visible-but-anonymous-excluded
+	'Publish gate — a draft publication is visible to the author but EXCLUDED from the anonymous catalog directory', async () => {
+		// Catalog wired to the publication register/schema, with a slug we can
+		// hit on the public endpoint.
+		//
+		// `published` MUST be set to a past date. This test's whole point is
+		// that the anonymous catalog directory renders (200) while the draft
+		// publication inside it is filtered out — so an anonymously *visible
+		// catalog* is the precondition, not the thing under test. The catalog
+		// schema grants public read conditionally:
+		//
+		//     authorization.read: [{ group: "public",
+		//                            match: { published: { $lte: "$now" } } }, …]
+		//
+		// and `published` is documented on the schema as "when set to a date in
+		// the past, this catalog becomes publicly accessible". The fixture does
+		// not set it, so without this the catalog is correctly NOT public and
+		// `GET /api/{slug}` 404s on `getCatalogBySlug()` returning null.
+		//
+		// This test used to pass anyway on a dev container running an older
+		// OpenRegister, whose list path returned objects the conditional
+		// public-read grant should have excluded — so the precondition was
+		// being supplied by an RBAC leak rather than by the fixture. Against an
+		// OpenRegister that enforces the grant it failed with 404. Establishing
+		// the precondition explicitly makes the assertion below mean what it
+		// says on both.
+		const slug = `e2e-${fx.runId}-cat`
+		const catalog = await fx.createCatalog('Publish Catalog', {
+			slug,
+			published: '2020-01-01T00:00:00+00:00',
+		})
+		const realSlug =
+			((catalog.raw['@self'] as Record<string, unknown>)?.slug as string)
+			?? (catalog.raw.slug as string)
+			?? slug
 
-			// Sanity: the anon context really is unauthenticated, otherwise the
-			// public-gate assertion below would be meaningless.
-			const whoami = await anon.get('/ocs/v2.php/cloud/user?format=json')
-			expect(whoami.status(), 'anon context is unauthenticated').toBe(401)
+		// Sanity: the anon context really is unauthenticated, otherwise the
+		// public-gate assertion below would be meaningless.
+		const whoami = await anon.get('/ocs/v2.php/cloud/user?format=json')
+		expect(whoami.status(), 'anon context is unauthenticated').toBe(401)
 
-			// A draft publication (no publish action; @self.published stays null).
-			const pub = await fx.createPublication('Draft Publication')
-			const draft = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, pub.id)
-			expect(
-				(draft!['@self'] as Record<string, unknown>)?.published ?? null,
-				'a freshly created publication has no published timestamp (it is a draft)',
-			).toBeFalsy()
+		// A draft publication (no publish action; @self.published stays null).
+		const pub = await fx.createPublication('Draft Publication')
+		const draft = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, pub.id)
+		expect(
+			(draft!['@self'] as Record<string, unknown>)?.published ?? null,
+			'a freshly created publication has no published timestamp (it is a draft)',
+		).toBeFalsy()
 
-			// AUTHENTICATED author sees the draft in the catalog listing.
-			const authed = await catalogListing(fx.api, realSlug)
-			expect(authed.status, 'authed catalog listing succeeds').toBe(200)
-			expect(authed.titles, 'author sees the draft publication').toContain(pub.title)
+		// AUTHENTICATED author sees the draft in the catalog listing.
+		const authed = await catalogListing(fx.api, realSlug)
+		expect(authed.status, 'authed catalog listing succeeds').toBe(200)
+		expect(authed.titles, 'author sees the draft publication').toContain(
+			pub.title,
+		)
 
-			// ANONYMOUS caller does NOT see the draft — the published gate filters
-			// it out of the public directory. This is the real, load-bearing
-			// behavioral guarantee that publishing controls discoverability.
-			const publicView = await catalogListing(anon, realSlug)
-			expect(publicView.status, 'anonymous catalog listing succeeds').toBe(200)
-			expect(publicView.titles, 'draft is hidden from the public directory')
-				.not.toContain(pub.title)
-		},
-	)
+		// ANONYMOUS caller does NOT see the draft — the published gate filters
+		// it out of the public directory. This is the real, load-bearing
+		// behavioral guarantee that publishing controls discoverability.
+		const publicView = await catalogListing(anon, realSlug)
+		expect(publicView.status, 'anonymous catalog listing succeeds').toBe(200)
+		expect(
+			publicView.titles,
+			'draft is hidden from the public directory',
+		).not.toContain(pub.title)
+	})
 
-	test(
-		// @e2e publications::public-group-read-makes-content-anonymously-discoverable
-		'Public-group read — the `public` group read grant on the publication schema makes a publication readable by an anonymous OpenRegister caller (RBAC discoverability)',
-		async () => {
-			// A publication created under the publication schema (53). That schema's
-			// `public`-group read grant is CONDITIONAL on a publication date that has
-			// already passed (authorization.read.public.match = { publicationDate:
-			// { $lte: $now } }) — that is precisely what makes "publishing" control
-			// anonymous discoverability. So seed publicationDate in the PAST to satisfy
-			// the public-read match; a draft (no publicationDate) is correctly hidden
-			// and is covered by the publish-gate test above.
-			const pastPublicatiedatum = '2020-01-01T00:00:00+00:00'
-			const pub = await fx.createPublication('Publicly Readable Publication', {
-				publicationDate: pastPublicatiedatum,
-			})
+	test(// @e2e publications::public-group-read-makes-content-anonymously-discoverable
+	'Public-group read — the `public` group read grant on the publication schema makes a publication readable by an anonymous OpenRegister caller (RBAC discoverability)', async () => {
+		// A publication created under the publication schema (53). That schema's
+		// `public`-group read grant is CONDITIONAL on a publication date that has
+		// already passed (authorization.read.public.match = { publicationDate:
+		// { $lte: $now } }) — that is precisely what makes "publishing" control
+		// anonymous discoverability. So seed publicationDate in the PAST to satisfy
+		// the public-read match; a draft (no publicationDate) is correctly hidden
+		// and is covered by the publish-gate test above.
+		const pastPublicatiedatum = '2020-01-01T00:00:00+00:00'
+		const pub = await fx.createPublication('Publicly Readable Publication', {
+			publicationDate: pastPublicatiedatum,
+		})
 
-			// Sanity: the anon context really is unauthenticated.
-			const whoami = await anon.get('/ocs/v2.php/cloud/user?format=json')
-			expect(whoami.status(), 'anon context is unauthenticated').toBe(401)
+		// Sanity: the anon context really is unauthenticated.
+		const whoami = await anon.get('/ocs/v2.php/cloud/user?format=json')
+		expect(whoami.status(), 'anon context is unauthenticated').toBe(401)
 
-			// Because the schema grants read to the `public` group for publications
-			// whose publicationDate has passed, an ANONYMOUS OpenRegister caller can
-			// read this (past-dated) object directly via the object API — this is the
-			// RBAC `public`-group discoverability guarantee.
-			const anonRead = await anon.get(
-				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${pub.id}`,
-			)
-			expect(anonRead.status(), 'public-group read grant lets anon read the object').toBe(200)
-			const body = await anonRead.json().catch(() => ({}))
-			const anonTitle = (body.title as string)
-				?? ((body['@self'] as Record<string, unknown>)?.name as string)
-				?? ''
-			expect(anonTitle, 'anon receives the real publication object').toBe(pub.title)
+		// Because the schema grants read to the `public` group for publications
+		// whose publicationDate has passed, an ANONYMOUS OpenRegister caller can
+		// read this (past-dated) object directly via the object API — this is the
+		// RBAC `public`-group discoverability guarantee.
+		const anonRead = await anon.get(
+			`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${pub.id}`,
+		)
+		expect(
+			anonRead.status(),
+			'public-group read grant lets anon read the object',
+		).toBe(200)
+		const body = await anonRead.json().catch(() => ({}))
+		const anonTitle =
+			(body.title as string)
+			?? ((body['@self'] as Record<string, unknown>)?.name as string)
+			?? ''
+		expect(anonTitle, 'anon receives the real publication object').toBe(
+			pub.title,
+		)
 
-			// And it is anonymously listable within the public-read schema.
-			const anonList = await anon.get(
-				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}?_search=${encodeURIComponent(pub.title)}`,
-			)
-			expect(anonList.status(), 'anon can list public-read schema objects').toBe(200)
-			const listBody = await anonList.json().catch(() => ({}))
-			const titles = ((listBody.results as Array<Record<string, unknown>>) ?? [])
-				.map((r) => (r.title as string) ?? '')
-			expect(titles, 'the public-read publication is discoverable anonymously')
-				.toContain(pub.title)
-		},
-	)
+		// And it is anonymously listable within the public-read schema.
+		const anonList = await anon.get(
+			`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}?_search=${encodeURIComponent(pub.title)}`,
+		)
+		expect(anonList.status(), 'anon can list public-read schema objects').toBe(
+			200,
+		)
+		const listBody = await anonList.json().catch(() => ({}))
+		const titles = (
+			(listBody.results as Array<Record<string, unknown>>) ?? []
+		).map((r) => (r.title as string) ?? '')
+		expect(
+			titles,
+			'the public-read publication is discoverable anonymously',
+		).toContain(pub.title)
+	})
 })

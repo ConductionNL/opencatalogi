@@ -1,18 +1,13 @@
-/**
- * @file MassValidateObjects.vue
- * @module Modals/Object
- * @author Your Name
- * @copyright 2024 Your Organization
- * @license EUPL-1.2
- * @version 1.0.0
- */
+/** * @file MassValidateObjects.vue * @module Modals/Object * @author Your Name *
+@copyright 2024 Your Organization * @license EUPL-1.2 * @version 1.0.0 */
 
 <script setup>
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog :name="dialogTitle"
+	<NcDialog
+		:name="dialogTitle"
 		:can-close="true"
 		size="normal"
 		class="mass-action-dialog"
@@ -20,21 +15,63 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="validate-step">
 			<NcNoteCard type="info">
-				<strong>{{ t('opencatalogi', 'When to use mass validation:') }}</strong><br>
-				{{ t('opencatalogi', '• After updating the schema to apply new validation rules') }}<br>
-				{{ t('opencatalogi', '• When publications need to be re-enriched with updated name/description logic') }}<br>
-				{{ t('opencatalogi', '• To refresh computed properties or auto-generated fields') }}<br>
-				{{ t('opencatalogi', '• After changing schema configuration that affects existing publications') }}<br><br>
-				{{ t('opencatalogi', 'Publications will be saved without modification to trigger validation and enrichment processes against the current schema.') }}
+				<strong>{{
+					t('opencatalogi', 'When to use mass validation:')
+				}}</strong
+				><br />
+				{{
+					t(
+						'opencatalogi',
+						'• After updating the schema to apply new validation rules',
+					)
+				}}<br />
+				{{
+					t(
+						'opencatalogi',
+						'• When publications need to be re-enriched with updated name/description logic',
+					)
+				}}<br />
+				{{
+					t(
+						'opencatalogi',
+						'• To refresh computed properties or auto-generated fields',
+					)
+				}}<br />
+				{{
+					t(
+						'opencatalogi',
+						'• After changing schema configuration that affects existing publications',
+					)
+				}}<br /><br />
+				{{
+					t(
+						'opencatalogi',
+						'Publications will be saved without modification to trigger validation and enrichment processes against the current schema.',
+					)
+				}}
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="(objectStore.selectedObjects?.length || 0) === 1 ? t('opencatalogi', 'Publication to Validate') : t('opencatalogi', 'Selected Publications')"
+				:title="
+					(objectStore.selectedObjects?.length || 0) === 1
+						? t('opencatalogi', 'Publication to Validate')
+						: t('opencatalogi', 'Selected Publications')
+				"
 				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>{{ originalSelectedCount > 1 ? t('opencatalogi', '{type}s successfully validated', { type: t('opencatalogi', 'Publication') }) : t('opencatalogi', '{type} successfully validated', { type: t('opencatalogi', 'Publication') }) }}</p>
+			<p>
+				{{
+					originalSelectedCount > 1
+						? t('opencatalogi', '{type}s successfully validated', {
+								type: t('opencatalogi', 'Publication'),
+							})
+						: t('opencatalogi', '{type} successfully validated', {
+								type: t('opencatalogi', 'Publication'),
+							})
+				}}
+			</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -45,10 +82,17 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
+				{{
+					success === null
+						? t('opencatalogi', 'Cancel')
+						: t('opencatalogi', 'Close')
+				}}
 			</NcButton>
-			<NcButton v-if="success === null"
-				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
+			<NcButton
+				v-if="success === null"
+				:disabled="
+					loading || (objectStore.selectedObjects?.length || 0) === 0
+				"
 				variant="primary"
 				@click="validateObjects()">
 				<template #icon>
@@ -62,12 +106,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import {
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-} from '@nextcloud/vue'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
@@ -160,7 +199,8 @@ export default {
 				const objectsToProcess = [...this.objectsToValidate]
 
 				// Use the store's mass validate method
-				const { successful, failed } = await objectStore.massValidateObjects(objectsToProcess)
+				const { successful, failed } =
+					await objectStore.massValidateObjects(objectsToProcess)
 
 				if (successful.length > 0) {
 					this.success = true
@@ -178,10 +218,10 @@ export default {
 				if (failed.length > 0) {
 					this.error = `Failed to validate ${failed.length} object${failed.length > 1 ? 's' : ''}`
 				}
-
 			} catch (error) {
 				this.success = false
-				this.error = error.message || 'An error occurred while validating objects'
+				this.error =
+					error.message || 'An error occurred while validating objects'
 			} finally {
 				this.loading = false
 			}

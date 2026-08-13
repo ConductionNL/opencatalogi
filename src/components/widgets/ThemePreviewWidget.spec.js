@@ -63,7 +63,14 @@ describe('ThemePreviewWidget', () => {
 		const wrapper = mount(ThemePreviewWidget, {
 			global: {
 				provide: {
-					cnObjectContext: { value: { object: { title: 'Housing', summary: 'Municipal housing theme' } } },
+					cnObjectContext: {
+						value: {
+							object: {
+								title: 'Housing',
+								summary: 'Municipal housing theme',
+							},
+						},
+					},
 				},
 			},
 		})

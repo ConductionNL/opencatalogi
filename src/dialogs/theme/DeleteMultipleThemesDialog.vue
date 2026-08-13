@@ -7,12 +7,23 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		v-if="navigationStore.dialog === 'deleteMultipleThemes'"
 		:name="t('opencatalogi', 'Delete Themes')"
 		:can-close="false">
-		<div v-if="objectStore.getState('theme').success !== null || objectStore.getState('theme').error">
+		<div
+			v-if="
+				objectStore.getState('theme').success !== null
+				|| objectStore.getState('theme').error
+			">
 			<NcNoteCard v-if="objectStore.getState('theme').success" type="success">
 				<p>{{ t('opencatalogi', 'Themes successfully deleted') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('theme').success" type="error">
-				<p>{{ t('opencatalogi', 'Something went wrong while deleting the themes') }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Something went wrong while deleting the themes',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('theme').error" type="error">
 				<p>{{ objectStore.getState('theme').error }}</p>
@@ -22,10 +33,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcLoadingIcon :size="20" />
 			<span>{{ t('opencatalogi', 'Themes are being deleted...') }}</span>
 		</div>
-		<p v-if="objectStore.getState('theme').success === null && !objectStore.isLoading('theme')">
-			{{ t('opencatalogi', 'Do you want to delete the selected themes? This action cannot be undone.') }}
+		<p
+			v-if="
+				objectStore.getState('theme').success === null
+				&& !objectStore.isLoading('theme')
+			">
+			{{
+				t(
+					'opencatalogi',
+					'Do you want to delete the selected themes? This action cannot be undone.',
+				)
+			}}
 		</p>
-		<template v-if="objectStore.getState('theme').success === null && !objectStore.isLoading('theme')" #actions>
+		<template
+			v-if="
+				objectStore.getState('theme').success === null
+				&& !objectStore.isLoading('theme')
+			"
+			#actions>
 			<NcButton
 				:disabled="objectStore.isLoading('theme')"
 				icon=""
@@ -47,9 +72,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</NcButton>
 		</template>
 		<template v-else #actions>
-			<NcButton
-				icon=""
-				@click="navigationStore.setDialog(false)">
+			<NcButton icon="" @click="navigationStore.setDialog(false)">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
@@ -102,16 +125,17 @@ export default {
 			const selectedThemes = objectStore.getSelectedObjects('theme')
 			if (!selectedThemes?.length) return
 
-			Promise.all(selectedThemes.map(theme =>
-				objectStore.deleteObject('theme', theme.id),
-			))
-				.then(() => {
-					// Wait for the user to read the feedback then close the dialog
-					setTimeout(() => {
-						objectStore.setState('theme', { success: null, error: null })
-						navigationStore.setDialog(false)
-					}, 2000)
-				})
+			Promise.all(
+				selectedThemes.map((theme) =>
+					objectStore.deleteObject('theme', theme.id),
+				),
+			).then(() => {
+				// Wait for the user to read the feedback then close the dialog
+				setTimeout(() => {
+					objectStore.setState('theme', { success: null, error: null })
+					navigationStore.setDialog(false)
+				}, 2000)
+			})
 		},
 	},
 }

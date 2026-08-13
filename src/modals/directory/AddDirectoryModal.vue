@@ -1,14 +1,7 @@
-/**
- * AddDirectoryModal.vue
- * Modal for synchronizing with external directories
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license EUPL-1.2
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * AddDirectoryModal.vue * Modal for synchronizing with external directories *
+@category Components * @package opencatalogi * @author Ruben Linde * @copyright 2024
+* @license EUPL-1.2 * @version 1.0.0 * @link
+https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
 import { ref } from 'vue'
@@ -16,7 +9,8 @@ import { navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'addDirectory'"
+	<NcModal
+		v-if="navigationStore.modal === 'addDirectory'"
 		ref="modalRef"
 		class="addDirectoryModal"
 		label-id="addDirectoryModal"
@@ -24,79 +18,161 @@ import { navigationStore } from '../../store/store.js'
 		<div class="modal__content">
 			<h2>{{ t('opencatalogi', 'Synchronize Directory') }}</h2>
 			<p class="description">
-				{{ t('opencatalogi', 'Enter the URL of an OpenCatalogi directory to synchronize with their catalogs and publications.') }}
+				{{
+					t(
+						'opencatalogi',
+						'Enter the URL of an OpenCatalogi directory to synchronize with their catalogs and publications.',
+					)
+				}}
 			</p>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p><strong>{{ t('opencatalogi', 'Directory successfully synchronized') }}</strong></p>
+					<p>
+						<strong>{{
+							t('opencatalogi', 'Directory successfully synchronized')
+						}}</strong>
+					</p>
 					<div v-if="syncResults" class="sync-report">
 						<h4>{{ t('opencatalogi', 'Synchronization report') }}</h4>
 						<div class="sync-stats">
 							<div class="stat-item">
-								<span class="stat-label">{{ t('opencatalogi', 'Directory URL:') }}</span>
-								<span class="stat-value">{{ syncResults.directory_url }}</span>
+								<span class="stat-label">{{
+									t('opencatalogi', 'Directory URL:')
+								}}</span>
+								<span class="stat-value">{{
+									syncResults.directory_url
+								}}</span>
 							</div>
 							<div class="stat-item">
-								<span class="stat-label">{{ t('opencatalogi', 'Sync time:') }}</span>
-								<span class="stat-value">{{ formatDateTime(syncResults.sync_time) }}</span>
+								<span class="stat-label">{{
+									t('opencatalogi', 'Sync time:')
+								}}</span>
+								<span class="stat-value">{{
+									formatDateTime(syncResults.sync_time)
+								}}</span>
 							</div>
 							<div class="stat-item">
-								<span class="stat-label">{{ t('opencatalogi', 'Total processed:') }}</span>
-								<span class="stat-value">{{ syncResults.total_processed }}</span>
+								<span class="stat-label">{{
+									t('opencatalogi', 'Total processed:')
+								}}</span>
+								<span class="stat-value">{{
+									syncResults.total_processed
+								}}</span>
 							</div>
 							<div class="stat-item success">
-								<span class="stat-label">{{ t('opencatalogi', 'New listings:') }}</span>
-								<span class="stat-value">{{ syncResults.listings_created }}</span>
+								<span class="stat-label">{{
+									t('opencatalogi', 'New listings:')
+								}}</span>
+								<span class="stat-value">{{
+									syncResults.listings_created
+								}}</span>
 							</div>
 							<div class="stat-item warning">
-								<span class="stat-label">{{ t('opencatalogi', 'Updated listings:') }}</span>
-								<span class="stat-value">{{ syncResults.listings_updated }}</span>
+								<span class="stat-label">{{
+									t('opencatalogi', 'Updated listings:')
+								}}</span>
+								<span class="stat-value">{{
+									syncResults.listings_updated
+								}}</span>
 							</div>
 							<div class="stat-item">
-								<span class="stat-label">{{ t('opencatalogi', 'Unchanged listings:') }}</span>
-								<span class="stat-value">{{ syncResults.listings_unchanged }}</span>
+								<span class="stat-label">{{
+									t('opencatalogi', 'Unchanged listings:')
+								}}</span>
+								<span class="stat-value">{{
+									syncResults.listings_unchanged
+								}}</span>
 							</div>
-							<div v-if="syncResults.listings_failed > 0" class="stat-item error">
-								<span class="stat-label">{{ t('opencatalogi', 'Failed listings:') }}</span>
-								<span class="stat-value">{{ syncResults.listings_failed }}</span>
+							<div
+								v-if="syncResults.listings_failed > 0"
+								class="stat-item error">
+								<span class="stat-label">{{
+									t('opencatalogi', 'Failed listings:')
+								}}</span>
+								<span class="stat-value">{{
+									syncResults.listings_failed
+								}}</span>
 							</div>
 						</div>
 
 						<!-- Show errors if any -->
-						<div v-if="syncResults.errors && syncResults.errors.length > 0" class="sync-errors">
-							<h5>{{ t('opencatalogi', 'Errors during synchronization:') }}</h5>
+						<div
+							v-if="
+								syncResults.errors && syncResults.errors.length > 0
+							"
+							class="sync-errors">
+							<h5>
+								{{
+									t(
+										'opencatalogi',
+										'Errors during synchronization:',
+									)
+								}}
+							</h5>
 							<ul>
-								<li v-for="(syncError, index) in syncResults.errors" :key="index" class="error-item">
+								<li
+									v-for="(syncError, index) in syncResults.errors"
+									:key="index"
+									class="error-item">
 									{{ syncError }}
 								</li>
 							</ul>
 						</div>
 
 						<!-- Show detailed listing results if available -->
-						<div v-if="showDetails && syncResults.listing_details && syncResults.listing_details.length > 0" class="listing-details">
+						<div
+							v-if="
+								showDetails
+								&& syncResults.listing_details
+								&& syncResults.listing_details.length > 0
+							"
+							class="listing-details">
 							<h5>{{ t('opencatalogi', 'Detailed results:') }}</h5>
 							<div class="listing-list">
-								<div v-for="listing in syncResults.listing_details"
+								<div
+									v-for="listing in syncResults.listing_details"
 									:key="listing.listing_id"
 									class="listing-item"
 									:class="listing.success ? 'success' : 'error'">
-									<span class="listing-title">{{ listing.listing_title || listing.listing_id }}</span>
-									<span class="listing-action" :class="listing.action">{{ getActionLabel(listing.action) }}</span>
-									<span v-if="listing.error" class="listing-error">{{ listing.error }}</span>
+									<span class="listing-title">{{
+										listing.listing_title || listing.listing_id
+									}}</span>
+									<span
+										class="listing-action"
+										:class="listing.action"
+										>{{ getActionLabel(listing.action) }}</span
+									>
+									<span
+										v-if="listing.error"
+										class="listing-error"
+										>{{ listing.error }}</span
+									>
 								</div>
 							</div>
 						</div>
 
-						<NcButton v-if="syncResults.listing_details && syncResults.listing_details.length > 0"
+						<NcButton
+							v-if="
+								syncResults.listing_details
+								&& syncResults.listing_details.length > 0
+							"
 							variant="tertiary"
 							class="toggle-details"
 							@click="showDetails = !showDetails">
-							{{ showDetails ? t('opencatalogi', 'Hide details') : t('opencatalogi', 'Show details') }}
+							{{
+								showDetails
+									? t('opencatalogi', 'Hide details')
+									: t('opencatalogi', 'Show details')
+							}}
 						</NcButton>
 					</div>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success && error" type="error">
-					<p><strong>{{ t('opencatalogi', 'Synchronization failed') }}</strong></p>
+					<p>
+						<strong>{{
+							t('opencatalogi', 'Synchronization failed')
+						}}</strong>
+					</p>
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
@@ -107,15 +183,24 @@ import { navigationStore } from '../../store/store.js'
 					:placeholder="defaultDirectoryUrl"
 					:disabled="loading"
 					:loading="loading"
-					:helper-text="t('opencatalogi', 'The URL of the OpenCatalogi directory API endpoint')" />
+					:helper-text="
+						t(
+							'opencatalogi',
+							'The URL of the OpenCatalogi directory API endpoint',
+						)
+					" />
 			</div>
 
 			<span class="buttonContainer">
-				<NcButton
-					@click="closeModal">
-					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+				<NcButton @click="closeModal">
+					{{
+						success
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="success === null"
+				<NcButton
+					v-if="success === null"
 					:disabled="loading || !directoryUrl"
 					variant="primary"
 					@click="handleSync">
@@ -167,9 +252,12 @@ const handleSync = async () => {
 	try {
 		// Admin-only `/api/listings/add` (WOO-513) — same syncDirectory() as the
 		// public `/api/directory` gossip endpoint, but requires an authed user.
-		const response = await axios.post(generateUrl('/apps/opencatalogi/api/listings/add'), {
-			url: directoryUrl.value,
-		})
+		const response = await axios.post(
+			generateUrl('/apps/opencatalogi/api/listings/add'),
+			{
+				url: directoryUrl.value,
+			},
+		)
 
 		success.value = true
 		// `/api/listings/add` returns the sync report bare; the `?? response.data`
@@ -178,7 +266,11 @@ const handleSync = async () => {
 	} catch (err) {
 		console.error('Error synchronizing directory:', err)
 		success.value = false
-		error.value = err.response?.data?.error || err.response?.data?.message || err.message || 'Er is een fout opgetreden bij het synchroniseren'
+		error.value =
+			err.response?.data?.error
+			|| err.response?.data?.message
+			|| err.message
+			|| 'Er is een fout opgetreden bij het synchroniseren'
 	} finally {
 		loading.value = false
 	}
@@ -297,7 +389,8 @@ export default {
 	margin-top: 15px;
 }
 
-.sync-report h4, .sync-report h5 {
+.sync-report h4,
+.sync-report h5 {
 	margin: 15px 0 10px 0;
 	color: var(--color-main-text);
 }

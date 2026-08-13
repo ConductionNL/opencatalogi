@@ -16,7 +16,9 @@ import {
 } from '../../src/services/usageStats.js'
 
 const t = (app, key, params = {}) =>
-	key.replace(/\{(\w+)\}/g, (_, k) => (params[k] !== undefined ? params[k] : `{${k}}`))
+	key.replace(/\{(\w+)\}/g, (_, k) =>
+		params[k] !== undefined ? params[k] : `{${k}}`,
+	)
 
 describe('deriveTrend', () => {
 	it('returns up when the recent half outweighs the older half', () => {

@@ -96,7 +96,8 @@ export default {
 		 * @spec openspec/specs/search/spec.md#requirement-search-frontend-store-calls-the-federation-endpoint-sch-or-004
 		 */
 		onSearch(payload) {
-			const query = typeof payload === 'string' ? payload : (payload?.query ?? '')
+			const query =
+				typeof payload === 'string' ? payload : (payload?.query ?? '')
 			this.searchStore.setSearchTerm(query)
 			this.searchStore.searchPublications({ _page: 1 })
 		},
@@ -171,11 +172,18 @@ export default {
 				// Fast-path shape: pluck the first catalog id off
 				// `@self.catalogs[]` and look up the slug in the store.
 				const catalogsList = result?.['@self']?.catalogs
-				const firstCatalogId = Array.isArray(catalogsList) && catalogsList[0]?.id
+				const firstCatalogId =
+					Array.isArray(catalogsList) && catalogsList[0]?.id
 				if (firstCatalogId) {
 					const collection = objectStore.getCollection('catalog')
-					const catalogs = Array.isArray(collection) ? collection : (collection?.results || [])
-					const match = catalogs.find(c => String(c.id) === String(firstCatalogId) || String(c?.['@self']?.id) === String(firstCatalogId))
+					const catalogs = Array.isArray(collection)
+						? collection
+						: collection?.results || []
+					const match = catalogs.find(
+						(c) =>
+							String(c.id) === String(firstCatalogId)
+							|| String(c?.['@self']?.id) === String(firstCatalogId),
+					)
 					catalogSlug = match?.slug || match?.['@self']?.slug || null
 				}
 			}
@@ -222,9 +230,10 @@ export default {
 				// guessing a catalog slug (`publications`) would 404 on any
 				// peer that uses a different default and there is no way to
 				// verify the assumption from the payload alone.
-				const target = (catalogSlug && publicationId)
-					? `${peerRoot}/#/publications/${encodeURIComponent(catalogSlug)}/${encodeURIComponent(publicationId)}`
-					: `${peerRoot}/`
+				const target =
+					catalogSlug && publicationId
+						? `${peerRoot}/#/publications/${encodeURIComponent(catalogSlug)}/${encodeURIComponent(publicationId)}`
+						: `${peerRoot}/`
 				window.open(target, '_blank', 'noopener,noreferrer')
 				return
 			}
@@ -234,7 +243,10 @@ export default {
 			if (catalogSlug && publicationId) {
 				this.$router.push({
 					name: 'PublicationDetail',
-					params: { catalogSlug: String(catalogSlug), id: String(publicationId) },
+					params: {
+						catalogSlug: String(catalogSlug),
+						id: String(publicationId),
+					},
 				})
 			}
 		},
@@ -252,8 +264,15 @@ export default {
 			:loading="loading"
 			:placeholder="t('opencatalogi', 'Search across the federated network…')"
 			:search-label="t('opencatalogi', 'Search')"
-			:empty-label="t('opencatalogi', 'No matching publications across the federation.')"
-			:idle-label="t('opencatalogi', 'Start typing to search publications across all connected instances.')"
+			:empty-label="
+				t('opencatalogi', 'No matching publications across the federation.')
+			"
+			:idle-label="
+				t(
+					'opencatalogi',
+					'Start typing to search publications across all connected instances.',
+				)
+			"
 			:loading-label="t('opencatalogi', 'Searching the federated network…')"
 			@search="onSearch"
 			@query-change="onQueryChange"
@@ -261,13 +280,22 @@ export default {
 			<template #result="{ result }">
 				<div class="federation-search-result">
 					<h4 class="federation-search-result__title">
-						{{ result.title || result['@self']?.name || t('opencatalogi', 'Untitled publication') }}
+						{{
+							result.title
+							|| result['@self']?.name
+							|| t('opencatalogi', 'Untitled publication')
+						}}
 					</h4>
-					<p v-if="result.summary" class="federation-search-result__summary">
+					<p
+						v-if="result.summary"
+						class="federation-search-result__summary">
 						{{ result.summary }}
 					</p>
-					<p v-if="result['@self']?.directory" class="federation-search-result__source">
-						{{ t('opencatalogi', 'Source:') }} {{ result['@self'].directory }}
+					<p
+						v-if="result['@self']?.directory"
+						class="federation-search-result__source">
+						{{ t('opencatalogi', 'Source:') }}
+						{{ result['@self'].directory }}
 					</p>
 				</div>
 			</template>

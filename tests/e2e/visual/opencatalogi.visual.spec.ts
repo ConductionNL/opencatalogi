@@ -42,9 +42,14 @@ test.describe('OpenCatalogi — visual baselines', () => {
 		const listResp = await request.get(`${APP}/api/catalogi`)
 		expect(listResp.status(), 'GET /api/catalogi must succeed').toBe(200)
 		const body = await listResp.json()
-		const results: Array<Record<string, any>> = Array.isArray(body) ? body : (body?.results ?? [])
+		const results: Array<Record<string, any>> = Array.isArray(body)
+			? body
+			: (body?.results ?? [])
 		const withSlug = results.find((c) => c?.slug || c?.['@self']?.slug)
-		expect(withSlug, 'at least one catalog with a slug must exist for the publications baseline').toBeTruthy()
+		expect(
+			withSlug,
+			'at least one catalog with a slug must exist for the publications baseline',
+		).toBeTruthy()
 		const slug = String(withSlug!.slug ?? withSlug!['@self']?.slug)
 
 		// Boot the SPA, then take the in-app hash route (path-form gotos boot
@@ -52,15 +57,18 @@ test.describe('OpenCatalogi — visual baselines', () => {
 		await page.goto(`${APP}/#/`, { waitUntil: 'domcontentloaded' })
 		await dismissSupportDialog(page)
 		await waitForContentReady(page)
-		await page.goto(`${APP}/#/publications/${slug}`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP}/#/publications/${slug}`, {
+			waitUntil: 'domcontentloaded',
+		})
 		await page.waitForTimeout(1500)
 		await dismissSupportDialog(page)
 		await waitForContentReady(page)
 
 		// Prove the publications index rendered (not the dashboard fallback)
 		// before committing a baseline of it.
-		await expect(page.locator('[data-testid="cn-index-page"]').first())
-			.toBeVisible({ timeout: 15000 })
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
 
 		await freezePage(page)
 		await expect(page).toHaveScreenshot('publications.png', {

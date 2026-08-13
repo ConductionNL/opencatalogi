@@ -43,7 +43,9 @@ describe('getValidISOstring', () => {
 
 describe('getPublicationTypeId', () => {
 	it('extracts the trailing path segment from a URL', () => {
-		expect(getPublicationTypeId('https://example.org/api/publication_types/42')).toBe('42')
+		expect(
+			getPublicationTypeId('https://example.org/api/publication_types/42'),
+		).toBe('42')
 		expect(getPublicationTypeId('/local/path/abc-123')).toBe('abc-123')
 	})
 
@@ -82,17 +84,25 @@ describe('publicationStatus', () => {
 	it('isPublished: past publish date, no/future depublish', () => {
 		freezeNow()
 		expect(isPublished({ publicationDate: past })).toBe(true)
-		expect(isPublished({ publicationDate: past, depublicationDate: future })).toBe(true)
-		expect(isPublished({ publicationDate: past, depublicationDate: past })).toBe(false)
+		expect(
+			isPublished({ publicationDate: past, depublicationDate: future }),
+		).toBe(true)
+		expect(isPublished({ publicationDate: past, depublicationDate: past })).toBe(
+			false,
+		)
 		expect(isPublished({ publicationDate: future })).toBe(false)
 		expect(isPublished({})).toBe(false)
 	})
 
 	it('isDepublished: past publish AND past depublish', () => {
 		freezeNow()
-		expect(isDepublished({ publicationDate: past, depublicationDate: past })).toBe(true)
+		expect(
+			isDepublished({ publicationDate: past, depublicationDate: past }),
+		).toBe(true)
 		expect(isDepublished({ publicationDate: past })).toBe(false)
-		expect(isDepublished({ publicationDate: future, depublicationDate: past })).toBe(false)
+		expect(
+			isDepublished({ publicationDate: future, depublicationDate: past }),
+		).toBe(false)
 	})
 
 	it('getPublicationStatus: resolves the three states by priority', () => {
@@ -100,7 +110,9 @@ describe('publicationStatus', () => {
 		expect(getPublicationStatus({})).toBe('concept')
 		expect(getPublicationStatus({ publicationDate: future })).toBe('concept')
 		expect(getPublicationStatus({ publicationDate: past })).toBe('published')
-		expect(getPublicationStatus({ publicationDate: past, depublicationDate: past })).toBe('depublished')
+		expect(
+			getPublicationStatus({ publicationDate: past, depublicationDate: past }),
+		).toBe('depublished')
 	})
 
 	it('treats an unparseable date as absent (concept, fail-safe)', () => {

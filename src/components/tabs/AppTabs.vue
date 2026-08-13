@@ -63,11 +63,14 @@ const tabs = ref([])
 /** Internal selection, used when the parent does not bind `v-model`. */
 const internalIndex = ref(props.modelValue)
 
-watch(() => props.modelValue, (next) => {
-	if (typeof next === 'number' && next !== internalIndex.value) {
-		internalIndex.value = next
-	}
-})
+watch(
+	() => props.modelValue,
+	(next) => {
+		if (typeof next === 'number' && next !== internalIndex.value) {
+			internalIndex.value = next
+		}
+	},
+)
 
 /**
  * Child panels ordered by real DOM position.
@@ -85,7 +88,9 @@ const orderedTabs = computed(() => {
 			return 0
 		}
 		// eslint-disable-next-line no-bitwise
-		return (ea.compareDocumentPosition(eb) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1
+		return ea.compareDocumentPosition(eb) & Node.DOCUMENT_POSITION_FOLLOWING
+			? -1
+			: 1
 	})
 })
 

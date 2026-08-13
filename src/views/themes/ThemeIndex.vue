@@ -17,7 +17,9 @@
 	<CnIndexPage
 		ref="indexPage"
 		:title="t('opencatalogi', 'Themes')"
-		:description="t('opencatalogi', 'Manage your website themes and visual styling')"
+		:description="
+			t('opencatalogi', 'Manage your website themes and visual styling')
+		"
 		:show-title="true"
 		:schema="schema"
 		:objects="currentObjects"
@@ -53,7 +55,12 @@
 		@row-click="onRowClick">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
-				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+				{{
+					t(
+						'opencatalogi',
+						'This page is read-only. Only administrators can create, edit, or delete entries here.',
+					)
+				}}
 			</NcNoteCard>
 		</template>
 
@@ -69,19 +76,28 @@
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="editTheme(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="editTheme(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="copyTheme(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="copyTheme(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="deleteTheme(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="deleteTheme(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -121,12 +137,34 @@ export default {
 	},
 	setup() {
 		const sidebarState = inject('sidebarState', null)
-		const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('theme', {
+		const {
+			schema,
+			sortKey,
+			sortOrder,
+			visibleColumns,
+			onSort,
+			onPageChange,
+			onPageSizeChange,
+			refresh,
+		} = useListView('theme', {
 			sidebarState,
 			objectStore,
 		})
 		const { isAdmin, loaded } = useIsAdmin()
-		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh, objectStore, navigationStore, isAdmin, loaded }
+		return {
+			schema,
+			sortKey,
+			sortOrder,
+			visibleColumns,
+			onSort,
+			onPageChange,
+			onPageSizeChange,
+			refresh,
+			objectStore,
+			navigationStore,
+			isAdmin,
+			loaded,
+		}
 	},
 	data() {
 		return {
@@ -139,7 +177,11 @@ export default {
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
-				{ key: 'status', label: t('opencatalogi', 'Status'), sortable: true },
+				{
+					key: 'status',
+					label: t('opencatalogi', 'Status'),
+					sortable: true,
+				},
 				{ key: 'summary', label: t('opencatalogi', 'Summary') },
 			]
 		},
@@ -149,8 +191,14 @@ export default {
 			return collection?.results || []
 		},
 		currentPagination() {
-			return objectStore.getPagination('theme')
-				|| { total: 0, page: 1, pages: 1, limit: 20 }
+			return (
+				objectStore.getPagination('theme') || {
+					total: 0,
+					page: 1,
+					pages: 1,
+					limit: 20,
+				}
+			)
 		},
 	},
 	methods: {
@@ -171,7 +219,10 @@ export default {
 		onRowClick(row) {
 			const id = resolveObjectId(row)
 			if (id) {
-				this.$router.push({ name: 'ThemeDetail', params: { id: String(id) } })
+				this.$router.push({
+					name: 'ThemeDetail',
+					params: { id: String(id) },
+				})
 				return
 			}
 			// eslint-disable-next-line no-console
@@ -187,7 +238,10 @@ export default {
 		viewTheme(theme) {
 			const id = resolveObjectId(theme)
 			if (id) {
-				this.$router.push({ name: 'ThemeDetail', params: { id: String(id) } })
+				this.$router.push({
+					name: 'ThemeDetail',
+					params: { id: String(id) },
+				})
 			}
 		},
 		editTheme(theme) {
@@ -196,11 +250,17 @@ export default {
 		},
 		copyTheme(theme) {
 			objectStore.setActiveObject('theme', theme)
-			navigationStore.setDialog('copyObject', { objectType: 'theme', dialogTitle: 'Theme' })
+			navigationStore.setDialog('copyObject', {
+				objectType: 'theme',
+				dialogTitle: 'Theme',
+			})
 		},
 		deleteTheme(theme) {
 			objectStore.setActiveObject('theme', theme)
-			navigationStore.setDialog('deleteObject', { objectType: 'theme', dialogTitle: 'Theme' })
+			navigationStore.setDialog('deleteObject', {
+				objectType: 'theme',
+				dialogTitle: 'Theme',
+			})
 		},
 	},
 }

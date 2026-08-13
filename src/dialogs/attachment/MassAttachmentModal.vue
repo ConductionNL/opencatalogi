@@ -3,7 +3,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcDialog :name="dialogTitle"
+	<NcDialog
+		:name="dialogTitle"
 		:can-close="true"
 		size="normal"
 		class="mass-action-dialog"
@@ -12,24 +13,40 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<div v-if="success === null" class="publish-step">
 			<NcNoteCard type="info">
 				<template v-if="operation === 'publish'">
-					{{ t('opencatalogi', 'Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.') }}
+					{{
+						t(
+							'opencatalogi',
+							'Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.',
+						)
+					}}
 				</template>
 				<template v-else>
-					{{ t('opencatalogi', 'Selected attachments will be depublished immediately and will no longer be publicly accessible.') }}
+					{{
+						t(
+							'opencatalogi',
+							'Selected attachments will be depublished immediately and will no longer be publicly accessible.',
+						)
+					}}
 				</template>
 			</NcNoteCard>
 
 			<SelectAttachmentsList
 				:title="t('opencatalogi', 'Selected Attachments')"
 				:empty-title="t('opencatalogi', 'No attachments selected')"
-				:empty-description="t('opencatalogi', 'No attachments are currently selected.')"
+				:empty-description="
+					t('opencatalogi', 'No attachments are currently selected.')
+				"
 				:attachments="filteredAttachmentIds"
 				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
 			<p>
-				{{ operation === 'publish' ? t('opencatalogi', 'Attachment successfully published') : t('opencatalogi', 'Attachment successfully depublished') }}
+				{{
+					operation === 'publish'
+						? t('opencatalogi', 'Attachment successfully published')
+						: t('opencatalogi', 'Attachment successfully depublished')
+				}}
 			</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
@@ -41,30 +58,36 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
+				{{
+					success === null
+						? t('opencatalogi', 'Cancel')
+						: t('opencatalogi', 'Close')
+				}}
 			</NcButton>
-			<NcButton v-if="success === null"
+			<NcButton
+				v-if="success === null"
 				:disabled="loading || (attachments?.length || 0) === 0"
 				variant="primary"
 				@click="process()">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Publish v-if="!loading && operation === 'publish'" :size="20" />
-					<LockOutline v-if="!loading && operation === 'depublish'" :size="20" />
+					<LockOutline
+						v-if="!loading && operation === 'depublish'"
+						:size="20" />
 				</template>
-				{{ operation === 'publish' ? t('opencatalogi', 'Publish') : t('opencatalogi', 'Depublish') }}
+				{{
+					operation === 'publish'
+						? t('opencatalogi', 'Publish')
+						: t('opencatalogi', 'Depublish')
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>
 </template>
 
 <script>
-import {
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-} from '@nextcloud/vue'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
@@ -127,14 +150,14 @@ export default {
 			const files = filesData?.results || []
 			if (this.operation === 'publish') {
 				// Only not shared
-				return ids.filter(id => {
-					const f = files.find(x => x.id === id)
+				return ids.filter((id) => {
+					const f = files.find((x) => x.id === id)
 					return f && !f.accessUrl && !f.downloadUrl
 				})
 			}
 			// Depublish: only shared
-			return ids.filter(id => {
-				const f = files.find(x => x.id === id)
+			return ids.filter((id) => {
+				const f = files.find((x) => x.id === id)
 				return f && (f.accessUrl || f.downloadUrl)
 			})
 		},
@@ -152,7 +175,9 @@ export default {
 		dialogTitle() {
 			const count = this.filteredCount
 			if (count === 1) {
-				return this.operation === 'publish' ? 'Publish attachment' : 'Depublish attachment'
+				return this.operation === 'publish'
+					? 'Publish attachment'
+					: 'Depublish attachment'
 			}
 			return `${this.operation === 'publish' ? 'Publish' : 'Depublish'} ${count} ${count !== 1 ? 'attachments' : 'attachment'}`
 		},
@@ -166,7 +191,9 @@ export default {
 			// Pick data from navigationStore dialog properties
 			const props = navigationStore.dialogProperties || {}
 			this.operation = props.operation || 'publish'
-			const ids = Array.isArray(props.attachments) ? props.attachments : (objectStore.selectedAttachments || [])
+			const ids = Array.isArray(props.attachments)
+				? props.attachments
+				: objectStore.selectedAttachments || []
 			this.attachments = ids
 			this.originalSelectedCount = this.filteredAttachmentIds.length
 		},
@@ -192,9 +219,10 @@ export default {
 			try {
 				// Use the store's mass attachments methods depending on operation
 				const ids = [...(this.filteredAttachmentIds || [])]
-				const { successful, failed } = this.operation === 'publish'
-					? await objectStore.massPublishAttachments(ids)
-					: await objectStore.massDepublishAttachments(ids)
+				const { successful, failed } =
+					this.operation === 'publish'
+						? await objectStore.massPublishAttachments(ids)
+						: await objectStore.massDepublishAttachments(ids)
 
 				if (successful.length > 0) {
 					this.success = true
@@ -212,10 +240,11 @@ export default {
 				if (failed.length > 0) {
 					this.error = `${this.operation === 'publish' ? 'Failed to publish' : 'Failed to depublish'} ${failed.length} attachment${failed.length > 1 ? 's' : ''}`
 				}
-
 			} catch (error) {
 				this.success = false
-				this.error = error.message || `An error occurred while ${this.operation === 'publish' ? 'publishing' : 'depublishing'} attachments`
+				this.error =
+					error.message
+					|| `An error occurred while ${this.operation === 'publish' ? 'publishing' : 'depublishing'} attachments`
 			} finally {
 				this.loading = false
 			}

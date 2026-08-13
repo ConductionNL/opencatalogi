@@ -1,9 +1,6 @@
 <template>
 	<div class="markdown-editor-wrapper">
-		<v-md-editor
-			v-model="content"
-			:height="height"
-			:disabled="disabled" />
+		<v-md-editor v-model="content" :height="height" :disabled="disabled" />
 	</div>
 </template>
 

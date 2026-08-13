@@ -4,7 +4,8 @@ import '../../css/json-highlight.css'
 </script>
 
 <template>
-	<NcDialog :name="t('opencatalogi', 'Upload Object')"
+	<NcDialog
+		:name="t('opencatalogi', 'Upload Object')"
 		size="normal"
 		:can-close="false">
 		<NcNoteCard v-if="success" type="success">
@@ -15,7 +16,8 @@ import '../../css/json-highlight.css'
 		</NcNoteCard>
 
 		<template #actions>
-			<NcButton v-if="registers?.value?.id && !schemas?.value?.id"
+			<NcButton
+				v-if="registers?.value?.id && !schemas?.value?.id"
 				:disabled="loading"
 				@click="registers.value = null">
 				<template #icon>
@@ -23,7 +25,8 @@ import '../../css/json-highlight.css'
 				</template>
 				{{ t('opencatalogi', 'Back to Register') }}
 			</NcButton>
-			<NcButton v-if="registers.value?.id && schemas.value?.id"
+			<NcButton
+				v-if="registers.value?.id && schemas.value?.id"
 				:disabled="loading"
 				@click="schemas.value = null">
 				<template #icon>
@@ -31,15 +34,24 @@ import '../../css/json-highlight.css'
 				</template>
 				{{ t('opencatalogi', 'Back to Schema') }}
 			</NcButton>
-			<NcButton
-				@click="closeModal">
+			<NcButton @click="closeModal">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+				{{
+					success
+						? t('opencatalogi', 'Close')
+						: t('opencatalogi', 'Cancel')
+				}}
 			</NcButton>
-			<NcButton v-if="success === null"
-				:disabled="!registers.value?.id || !schemas.value?.id || loading || !validateJson(object)"
+			<NcButton
+				v-if="success === null"
+				:disabled="
+					!registers.value?.id
+					|| !schemas.value?.id
+					|| loading
+					|| !validateJson(object)
+				"
 				variant="primary"
 				@click="uploadObject()">
 				<template #icon>
@@ -52,7 +64,8 @@ import '../../css/json-highlight.css'
 
 		<div v-if="!success" class="formContainer">
 			<div v-if="registers?.value?.id && success === null">
-				<b>{{ t('opencatalogi', 'Register:') }}</b> {{ registers.value.label }}
+				<b>{{ t('opencatalogi', 'Register:') }}</b>
+				{{ registers.value.label }}
 				<NcButton @click="registers.value = null">
 					{{ t('opencatalogi', 'Edit Register') }}
 				</NcButton>
@@ -66,7 +79,8 @@ import '../../css/json-highlight.css'
 
 			<!-- STAGE 1 -->
 			<div v-if="!registers?.value?.id">
-				<NcSelect v-bind="registers"
+				<NcSelect
+					v-bind="registers"
 					v-model="registers.value"
 					:input-label="t('opencatalogi', 'Register')"
 					:loading="registersLoading"
@@ -75,7 +89,8 @@ import '../../css/json-highlight.css'
 
 			<!-- STAGE 2 -->
 			<div v-if="registers?.value?.id && !schemas?.value?.id">
-				<NcSelect v-bind="schemas"
+				<NcSelect
+					v-bind="schemas"
 					v-model="schemas.value"
 					:input-label="t('opencatalogi', 'Schemas')"
 					:loading="schemasLoading"
@@ -84,7 +99,8 @@ import '../../css/json-highlight.css'
 
 			<!-- STAGE 3 -->
 			<div v-if="registers.value?.id && schemas.value?.id">
-				<NcSelect v-bind="mappings"
+				<NcSelect
+					v-bind="mappings"
 					v-model="mappings.value"
 					:input-label="t('opencatalogi', 'Mappings')"
 					:loading="mappingsLoading"
@@ -92,12 +108,15 @@ import '../../css/json-highlight.css'
 
 				<div :class="`codeMirrorContainer ${getTheme()}`">
 					<p>{{ t('opencatalogi', 'Object') }}</p>
-					<CodeMirror v-model="object"
+					<CodeMirror
+						v-model="object"
 						:basic="true"
 						:dark="getTheme() === 'dark'"
 						:lang="json()"
 						:linter="jsonParseLinter()"
-						:placeholder="t('opencatalogi', 'Enter your object here...')" />
+						:placeholder="
+							t('opencatalogi', 'Enter your object here...')
+						" />
 
 					<NcButton class="prettifyButton" @click="prettifyJson">
 						<template #icon>
@@ -169,7 +188,8 @@ export default {
 		initializeMappings() {
 			this.mappingsLoading = true
 
-			objectStore.getMappings()
+			objectStore
+				.getMappings()
 				.then(({ data }) => {
 					this.mappings = {
 						multiple: false,
@@ -189,7 +209,8 @@ export default {
 		initializeSchemas() {
 			this.schemasLoading = true
 
-			catalogStore.refreshSchemaList()
+			catalogStore
+				.refreshSchemaList()
 				.then(() => {
 					this.schemas = {
 						multiple: false,
@@ -209,7 +230,8 @@ export default {
 		initializeRegisters() {
 			this.registersLoading = true
 
-			catalogStore.refreshCatalogiList()
+			catalogStore
+				.refreshCatalogiList()
 				.then(() => {
 					this.registers = {
 						multiple: false,
@@ -249,15 +271,20 @@ export default {
 				schemas: '',
 			}
 
-			objectStore.saveObject(newObject)
+			objectStore
+				.saveObject(newObject)
 				.then(({ response }) => {
 					this.success = response.ok
 					this.error = false
 					response.ok && setTimeout(this.closeModal, 2000)
-				}).catch((error) => {
+				})
+				.catch((error) => {
 					this.success = false
-					this.error = error.message || 'An error occurred while uploading the object'
-				}).finally(() => {
+					this.error =
+						error.message
+						|| 'An error occurred while uploading the object'
+				})
+				.finally(() => {
 					this.loading = false
 				})
 		},

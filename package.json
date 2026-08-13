@@ -26,6 +26,8 @@
     "test:e2e": "playwright test",
     "test:e2e:docs": "playwright test --project docs-capture",
     "test:e2e:install": "playwright install chromium",
+    "format": "prettier --check \"**/*.{js,ts,vue,css,scss}\"",
+    "format:fix": "prettier --write \"**/*.{js,ts,vue,css,scss}\"",
     "prepare": "git config core.hooksPath .githooks || true"
   },
   "browserslist": [
@@ -90,6 +92,7 @@
     "@nextcloud/browserslist-config": "^3.0.1",
     "@nextcloud/eslint-config": "^8.4.1",
     "@nextcloud/eslint-plugin": "^2.2.1",
+    "@nextcloud/prettier-config": "^1.2.0",
     "@nextcloud/stylelint-config": "^2.4.0",
     "@nextcloud/webpack-vue-config": "^7.0.2",
     "@pinia/testing": "^0.1.5",
@@ -106,6 +109,7 @@
     "axe-core": "^4.10.0",
     "babel-loader": "^10.1.1",
     "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-config-standard": "^17.1.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-import-resolver-exports": "^1.0.0-beta.5",
@@ -121,6 +125,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "jest-transform-stub": "^2.0.0",
     "postcss-html": "^1.0.0",
+    "prettier": "^3.9.6",
     "sass": "^1.98.0",
     "sass-loader": "^16.0.7",
     "stylelint": "^15.6.0",
@@ -148,5 +153,6 @@
     "fast-xml-parser": ">=5.7.0",
     "markdown-it": ">=12.3.2",
     "uuid": ">=14.0.0"
-  }
+  },
+  "prettier": "@nextcloud/prettier-config"
 }

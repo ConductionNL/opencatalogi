@@ -17,7 +17,9 @@
 	<CnIndexPage
 		ref="indexPage"
 		:title="t('opencatalogi', 'Pages')"
-		:description="t('opencatalogi', 'Manage your content pages and their components')"
+		:description="
+			t('opencatalogi', 'Manage your content pages and their components')
+		"
 		:show-title="true"
 		:schema="schema"
 		:objects="currentObjects"
@@ -53,7 +55,12 @@
 		@row-click="onRowClick">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
-				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+				{{
+					t(
+						'opencatalogi',
+						'This page is read-only. Only administrators can create, edit, or delete entries here.',
+					)
+				}}
 			</NcNoteCard>
 		</template>
 
@@ -79,19 +86,28 @@
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="editPage(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="editPage(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="copyPage(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="copyPage(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="deletePage(row)">
+				<NcActionButton
+					v-if="isAdmin"
+					close-after-click
+					@click="deletePage(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -131,12 +147,34 @@ export default {
 	},
 	setup() {
 		const sidebarState = inject('sidebarState', null)
-		const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('page', {
+		const {
+			schema,
+			sortKey,
+			sortOrder,
+			visibleColumns,
+			onSort,
+			onPageChange,
+			onPageSizeChange,
+			refresh,
+		} = useListView('page', {
 			sidebarState,
 			objectStore,
 		})
 		const { isAdmin, loaded } = useIsAdmin()
-		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh, objectStore, navigationStore, isAdmin, loaded }
+		return {
+			schema,
+			sortKey,
+			sortOrder,
+			visibleColumns,
+			onSort,
+			onPageChange,
+			onPageSizeChange,
+			refresh,
+			objectStore,
+			navigationStore,
+			isAdmin,
+			loaded,
+		}
 	},
 	data() {
 		return {
@@ -151,7 +189,11 @@ export default {
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
 				{ key: 'slug', label: t('opencatalogi', 'Slug'), sortable: true },
 				{ key: 'contents', label: t('opencatalogi', 'Content Items') },
-				{ key: 'updatedAt', label: t('opencatalogi', 'Last Updated'), sortable: true },
+				{
+					key: 'updatedAt',
+					label: t('opencatalogi', 'Last Updated'),
+					sortable: true,
+				},
 			]
 		},
 		currentObjects() {
@@ -160,8 +202,14 @@ export default {
 			return collection?.results || []
 		},
 		currentPagination() {
-			return objectStore.getPagination('page')
-				|| { total: 0, page: 1, pages: 1, limit: 20 }
+			return (
+				objectStore.getPagination('page') || {
+					total: 0,
+					page: 1,
+					pages: 1,
+					limit: 20,
+				}
+			)
 		},
 	},
 	methods: {
@@ -215,11 +263,17 @@ export default {
 		},
 		copyPage(page) {
 			objectStore.setActiveObject('page', page)
-			navigationStore.setDialog('copyObject', { objectType: 'page', dialogTitle: 'Pagina' })
+			navigationStore.setDialog('copyObject', {
+				objectType: 'page',
+				dialogTitle: 'Pagina',
+			})
 		},
 		deletePage(page) {
 			objectStore.setActiveObject('page', page)
-			navigationStore.setDialog('deleteObject', { objectType: 'page', dialogTitle: 'Pagina' })
+			navigationStore.setDialog('deleteObject', {
+				objectType: 'page',
+				dialogTitle: 'Pagina',
+			})
 		},
 	},
 }

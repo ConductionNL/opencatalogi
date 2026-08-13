@@ -10,13 +10,13 @@
  */
 
 export type TOrganization = {
-    id: string
-    name: string
-    summary: string
-    description: string
-    oin: string
-    tooi: string
-    rsin: string
-    pki: string
-    image: string
+	id: string
+	name: string
+	summary: string
+	description: string
+	oin: string
+	tooi: string
+	rsin: string
+	pki: string
+	image: string
 }

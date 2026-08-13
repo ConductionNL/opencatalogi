@@ -1,11 +1,5 @@
-/**
- * @file SelectAttachmentsList.vue
- * @module Components
- * @author Your Name
- * @copyright 2024 Your Organization
- * @license EUPL-1.2
- * @version 1.0.0
- */
+/** * @file SelectAttachmentsList.vue * @module Components * @author Your Name *
+@copyright 2024 Your Organization * @license EUPL-1.2 * @version 1.0.0 */
 
 <script setup>
 import { objectStore } from '../store/store.js'
@@ -17,7 +11,8 @@ import { objectStore } from '../store/store.js'
 
 		<div v-if="selectedAttachments.length" class="selected-objects-list">
 			<TransitionGroup name="list" tag="div">
-				<div v-for="attachment in selectedAttachments"
+				<div
+					v-for="attachment in selectedAttachments"
 					:key="attachment.id"
 					class="selected-object-item"
 					:class="{ 'has-error': getObjectError(attachment) }">
@@ -31,9 +26,14 @@ import { objectStore } from '../store/store.js'
 							{{ getObjectError(attachment) }}
 						</p>
 					</div>
-					<NcButton v-if="showRemove"
+					<NcButton
+						v-if="showRemove"
 						variant="tertiary"
-						:aria-label="t('opencatalogi', 'Remove {name}', { name: getObjectName(attachment) })"
+						:aria-label="
+							t('opencatalogi', 'Remove {name}', {
+								name: getObjectName(attachment),
+							})
+						"
 						@click="removeObject(attachment.id)">
 						<template #icon>
 							<Close :size="20" />
@@ -52,10 +52,7 @@ import { objectStore } from '../store/store.js'
 </template>
 
 <script>
-import {
-	NcButton,
-	NcEmptyContent,
-} from '@nextcloud/vue'
+import { NcButton, NcEmptyContent } from '@nextcloud/vue'
 
 import Close from 'vue-material-design-icons/Close.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
@@ -115,7 +112,12 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		selectedAttachmentIds() {
-			return this.attachments || (Array.isArray(objectStore.selectedAttachments) ? objectStore.selectedAttachments : [])
+			return (
+				this.attachments
+				|| (Array.isArray(objectStore.selectedAttachments)
+					? objectStore.selectedAttachments
+					: [])
+			)
 		},
 		/**
 		 * Map selected IDs to detailed attachment objects from the active publication files
@@ -127,8 +129,8 @@ export default {
 			if (!currentPublication) return []
 			const filesData = objectStore.getRelatedData('publication', 'files')
 			const files = filesData?.results || []
-			return this.selectedAttachmentIds.map(id => {
-				const file = files.find(f => f.id === id)
+			return this.selectedAttachmentIds.map((id) => {
+				const file = files.find((f) => f.id === id)
 				return file || { id, name: `#${id}`, size: null }
 			})
 		},
@@ -140,8 +142,10 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		removeObject(attachmentId) {
-			const currentSelected = Array.isArray(objectStore.selectedAttachments) ? [...objectStore.selectedAttachments] : []
-			const index = currentSelected.findIndex(id => id === attachmentId)
+			const currentSelected = Array.isArray(objectStore.selectedAttachments)
+				? [...objectStore.selectedAttachments]
+				: []
+			const index = currentSelected.findIndex((id) => id === attachmentId)
 			if (index > -1) {
 				currentSelected.splice(index, 1)
 				objectStore.setSelectedAttachments(currentSelected)
@@ -176,7 +180,9 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		getObjectError(obj) {
 			const objectId = obj?.id || obj?.['@self']?.id
-			return objectStore.getObjectError ? objectStore.getObjectError(objectId) : null
+			return objectStore.getObjectError
+				? objectStore.getObjectError(objectId)
+				: null
 		},
 
 		/**

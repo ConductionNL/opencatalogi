@@ -14,11 +14,14 @@ function resolveSchema(publication) {
 	const schemas = objectStore?.availableSchemas
 	if (!Array.isArray(schemas)) return null
 
-	return schemas.find(s =>
-		String(s.id) === String(id)
-		|| String(s.uuid) === String(id)
-		|| String(s.slug) === String(id),
-	) || null
+	return (
+		schemas.find(
+			(s) =>
+				String(s.id) === String(id)
+				|| String(s.uuid) === String(id)
+				|| String(s.slug) === String(id),
+		) || null
+	)
 }
 
 /**

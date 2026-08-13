@@ -121,17 +121,20 @@ onBeforeUnmount(() => {
 	}
 })
 
-watch(() => props.modelValue, (next) => {
-	if (!editor) {
-		return
-	}
-	// Ignore the echo of our own emit, and any value already on screen —
-	// `setHTML` resets the selection, so calling it while typing is visible.
-	if (next === lastEmitted || next === editor.getHTML()) {
-		return
-	}
-	editor.setHTML(next || '', false)
-})
+watch(
+	() => props.modelValue,
+	(next) => {
+		if (!editor) {
+			return
+		}
+		// Ignore the echo of our own emit, and any value already on screen —
+		// `setHTML` resets the selection, so calling it while typing is visible.
+		if (next === lastEmitted || next === editor.getHTML()) {
+			return
+		}
+		editor.setHTML(next || '', false)
+	},
+)
 
 defineExpose({
 	/**
