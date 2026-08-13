@@ -367,10 +367,6 @@ class CatalogiService {
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function getCatalogFilters(null|string|int $catalogId = null): array {
-		// Establish the default schema and register.
-		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
-
 		// FAIL CLOSED. getCatalogBySlug() — the sibling method in this same class
 		// — already refuses when either key is empty; this method did not, and the
 		// asymmetry is the bug.
@@ -392,6 +388,13 @@ class CatalogiService {
 		// PublicationService::setObjectServiceContext() checks
 		// `empty($allowedRegisters) || empty($allowedSchemas)` and returns
 		// without querying, explicitly to "refuse to do a platform-wide scan".
+		//
+		// The two reads sit directly above their guard on purpose. They used to be
+		// twenty lines higher, above this comment, which put the read and the check
+		// that makes it safe far enough apart that both a reviewer and hydra
+		// gate-50 read the site as unguarded.
+		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
 		if ($schema === '' || $register === '') {
 			$this->logger->error(
 				'Catalog schema or register not configured — refusing to derive a catalog scope from an unscoped search',
@@ -669,8 +672,18 @@ class CatalogiService {
 	public function invalidateCatalogCacheById(int|string $catalogId): void {
 		try {
 			// Get catalog register and schema for magic mapper routing.
+			// FAIL CLOSED, for the reason spelled out in getCatalogFilters() above:
+			// an empty key is not "no scope", it is a scope of `find(0)` that
+			// resolves nothing and drops the lookup onto the unscoped cross-table
+			// path. Here that would resolve $catalogId in ANY register on the
+			// instance and then invalidate whatever slug came back — a cache
+			// operation driven by a foreign object. The catch below cannot stand in
+			// for this check: the unscoped path SUCCEEDS, so nothing is thrown.
 			$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
 			$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+			if ($schema === '' || $register === '') {
+				return;
+			}
 
 			$catalog = $this->getObjectService()->find(
 				id: $catalogId,
@@ -728,8 +741,15 @@ class CatalogiService {
 	public function warmupCatalogCacheById(int|string $catalogId): void {
 		try {
 			// Get catalog register and schema for magic mapper routing.
+			// FAIL CLOSED — same reasoning as invalidateCatalogCacheById() above:
+			// an empty key resolves $catalogId against every register on the
+			// instance rather than against none, and because that path SUCCEEDS the
+			// catch below never fires.
 			$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
 			$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+			if ($schema === '' || $register === '') {
+				return;
+			}
 
 			$catalog = $this->getObjectService()->find(
 				id: $catalogId,
