@@ -321,6 +321,7 @@
 .publishedIcon > svg {
 	fill: var(--color-element-success);
 }
+
 .warningIcon > svg {
 	fill: var(--color-element-warning);
 }
@@ -372,6 +373,7 @@
 .successMessage {
 	color: var(--color-success);
 }
+
 .errorMessage {
 	color: var(--color-error);
 }
@@ -385,7 +387,7 @@
 	user-select: none;
 	color: var(--color-text-maxcontrast);
 	background-color: var(--color-main-background);
-	border-color: #000;
+	border-color: var(--color-border-dark);
 }
 
 .filesListDragDropNoticeWrapper {
@@ -406,9 +408,6 @@
 
 .filesListDragDropNoticeTitle {
 	margin: 12px 0;
-}
-
-.filesListDragDropNoticeTitle {
 	margin-left: 16px;
 	color: inherit;
 }
