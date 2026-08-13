@@ -321,6 +321,7 @@
 .publishedIcon > svg {
 	fill: var(--color-element-success);
 }
+
 .warningIcon > svg {
 	fill: var(--color-element-warning);
 }
@@ -372,6 +373,7 @@
 .successMessage {
 	color: var(--color-success);
 }
+
 .errorMessage {
 	color: var(--color-error);
 }
