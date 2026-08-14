@@ -31,6 +31,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -389,6 +390,46 @@ class BroadcastService {
 	}//end sendBroadcastRequest()
 
 	/**
+	 * Enqueue a broadcast to a single target URL.
+	 *
+	 * Phase 1 adapter towards moving federation broadcast delivery onto
+	 * OpenRegister's `WebhookService` (see `design.md` "Implementation Sketch —
+	 * Phase 1" for opencatalogi-delegate-broadcast-to-or-webhooks). Callers get
+	 * the eventual OR-backed signature now so they do not change again once
+	 * delivery moves off this synchronous path; the body still dispatches via
+	 * {@see sendBroadcastRequest()} because OR's
+	 * `WebhookService::triggerWebhookForEvent()` surface is not present in this
+	 * app's OpenRegister integration surface yet — it is not referenced by
+	 * `tests/Stubs/OpenRegister` or the cross-app allowlist in `psalm.xml`, and
+	 * `design.md`'s "Open Items" flags the exact signature as unconfirmed
+	 * pending OR-API review. Wiring the real delegation is tracked as a
+	 * follow-up once that surface exists to build against.
+	 *
+	 * @param string $url The target URL to broadcast to.
+	 * @param string $directoryUrl The URL of this directory to include in the broadcast.
+	 *
+	 * @return BroadcastResult The outcome of this broadcast attempt.
+	 *
+	 * @throws InvalidArgumentException When the target URL fails the pre-flight SSRF guard.
+	 *
+	 * @spec openspec/changes/opencatalogi-delegate-broadcast-to-or-webhooks/specs/federation/spec.md
+	 */
+	public function enqueueBroadcast(string $url, string $directoryUrl): BroadcastResult {
+		// Pre-flight SSRF guard runs before any dispatch attempt, sync or
+		// OR-backed (design.md "Decision 2 — Pre-flight SSRF guard stays in OC").
+		$this->assertSafeOutboundUrl($url);
+
+		$delivered = $this->sendBroadcastRequest($url, $directoryUrl);
+
+		return new BroadcastResult(
+			url: $url,
+			status: $delivered ? BroadcastResult::STATUS_DELIVERED : BroadcastResult::STATUS_FAILED,
+			delivered: $delivered,
+		);
+
+	}//end enqueueBroadcast()
+
+	/**
 	 * Broadcast this OpenCatalogi directory to one or more instances.
 	 *
 	 * This method handles broadcasting the current directory information to external
@@ -441,18 +482,17 @@ class BroadcastService {
 				continue;
 			}
 
-			// Validate outbound URL before broadcasting — rejects private/internal addresses.
+			// Enqueue the broadcast; the pre-flight SSRF guard runs inside
+			// enqueueBroadcast() and rejects private/internal addresses.
 			try {
-				$this->assertSafeOutboundUrl($targetUrl);
+				$result = $this->enqueueBroadcast($targetUrl, $directoryUrl);
 			} catch (InvalidArgumentException $e) {
 				$this->logger->warning("Skipping unsafe broadcast target: {$targetUrl}");
 				$results[$targetUrl] = false;
 				continue;
 			}
 
-			// Attempt to send broadcast request.
-			$success = $this->sendBroadcastRequest($targetUrl, $directoryUrl);
-			$results[$targetUrl] = $success;
+			$results[$targetUrl] = $result->delivered;
 		}
 
 		// Log summary of broadcast operation.

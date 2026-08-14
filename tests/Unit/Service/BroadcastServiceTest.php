@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -479,6 +480,75 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertTrue($result);
 
 	}//end testSendBroadcastRequestSuccessOnRetry()
+
+	// ===== enqueueBroadcast tests =====
+
+	/**
+	 * Test enqueueBroadcast returns a delivered BroadcastResult when the
+	 * underlying (still synchronous, Phase 1) dispatch succeeds.
+	 */
+	/**
+	 * @group network
+	 */
+	public function testEnqueueBroadcastSuccess(): void {
+		$this->clientMock->method('post')
+			->willReturn(new Response(200));
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->broadcastService->enqueueBroadcast(
+			'https://target.example.com/api/directory',
+			'https://self.example.com/api/directory'
+		);
+
+		$this->assertInstanceOf(BroadcastResult::class, $result);
+		$this->assertSame('https://target.example.com/api/directory', $result->url);
+		$this->assertSame(BroadcastResult::STATUS_DELIVERED, $result->status);
+		$this->assertTrue($result->delivered);
+
+	}//end testEnqueueBroadcastSuccess()
+
+	/**
+	 * Test enqueueBroadcast returns a failed BroadcastResult when the
+	 * underlying dispatch never succeeds.
+	 */
+	/**
+	 * @group network
+	 */
+	public function testEnqueueBroadcastFailure(): void {
+		$this->clientMock->method('post')
+			->willReturn(new Response(500));
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->broadcastService->enqueueBroadcast(
+			'https://target.example.com/api/directory',
+			'https://self.example.com/api/directory'
+		);
+
+		$this->assertSame(BroadcastResult::STATUS_FAILED, $result->status);
+		$this->assertFalse($result->delivered);
+
+	}//end testEnqueueBroadcastFailure()
+
+	/**
+	 * Test enqueueBroadcast runs the pre-flight SSRF guard before any dispatch
+	 * attempt: an unsafe target throws and the HTTP client is never invoked.
+	 */
+	public function testEnqueueBroadcastRejectsUnsafeUrlBeforeDispatch(): void {
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$this->expectException(InvalidArgumentException::class);
+
+		$this->broadcastService->enqueueBroadcast(
+			'http://169.254.169.254/latest/meta-data',
+			'https://self.example.com/api/directory'
+		);
+
+	}//end testEnqueueBroadcastRejectsUnsafeUrlBeforeDispatch()
 
 	// ===== broadcast tests =====
 
