@@ -31,6 +31,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -462,6 +463,41 @@ class BroadcastService {
 
 		return $results;
 	}//end broadcast()
+
+	/**
+	 * Send a broadcast to a single target and report the outcome as a
+	 * {@see BroadcastResult} instead of a bare boolean.
+	 *
+	 * This is the adapter phase of FED-OR-001 (design.md "Phase 1 — Adapter
+	 * method, no behaviour change yet"): the SSRF pre-flight guard
+	 * (assertSafeOutboundUrl) already runs before anything is dispatched, but
+	 * delivery itself still goes through the synchronous sendBroadcastRequest()
+	 * retry loop. Wiring this to OR's WebhookService (design.md Phase 2) is
+	 * deliberately not done here — it depends on confirming
+	 * WebhookService::triggerWebhookForEvent's signature against
+	 * OpenRegister's development HEAD, which this change could not verify.
+	 *
+	 * @param string $url The target URL to broadcast to.
+	 * @param string $directoryUrl The URL of this directory to include in the broadcast.
+	 *
+	 * @return BroadcastResult The outcome of the delivery attempt.
+	 *
+	 * @throws InvalidArgumentException When the target URL fails the SSRF pre-flight guard.
+	 *
+	 * @spec openspec/changes/opencatalogi-delegate-broadcast-to-or-webhooks/specs/federation/spec.md#requirement-broadcast-pre-flight-ssrf-guard-fed-or-001
+	 */
+	public function enqueueBroadcast(string $url, string $directoryUrl): BroadcastResult {
+		// Pre-flight SSRF guard runs before any delivery attempt — see spec scenario
+		// "pre-flight SSRF guard short-circuits before delegation".
+		$this->assertSafeOutboundUrl($url);
+
+		$delivered = $this->sendBroadcastRequest($url, $directoryUrl);
+
+		return new BroadcastResult(
+			url: $url,
+			status: $delivered === true ? BroadcastResult::STATUS_DELIVERED : BroadcastResult::STATUS_FAILED,
+		);
+	}//end enqueueBroadcast()
 
 	/**
 	 * Check whether a host is on the dev-only local-federation allowlist.

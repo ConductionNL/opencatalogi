@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -807,5 +808,63 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame(1, $this->invokePrivateMethod($service, 'getRequestTimeout'));
 
 	}//end testRetryAndTimeoutClampInvalidValues()
+
+	// ===== enqueueBroadcast tests =====
+	//
+	// enqueueBroadcast() is the Phase 1 adapter from
+	// openspec/changes/opencatalogi-delegate-broadcast-to-or-webhooks: it wraps
+	// the existing synchronous sendBroadcastRequest() in a BroadcastResult
+	// without changing dispatch behaviour, so these targets are literal IPs
+	// (no DNS lookup) rather than the `@group network`-tagged hostnames used
+	// by the broadcast() tests above.
+
+	/**
+	 * Test enqueueBroadcast returns a delivered BroadcastResult on success.
+	 */
+	public function testEnqueueBroadcastReturnsDeliveredOnSuccess(): void {
+		$this->clientMock->method('post')
+			->willReturn(new Response(200));
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->broadcastService->enqueueBroadcast('https://203.0.113.10/directory', 'https://self.example.com/api/directory');
+
+		$this->assertInstanceOf(BroadcastResult::class, $result);
+		$this->assertSame('https://203.0.113.10/directory', $result->url);
+		$this->assertSame(BroadcastResult::STATUS_DELIVERED, $result->status);
+		$this->assertTrue($result->isSuccessful());
+
+	}//end testEnqueueBroadcastReturnsDeliveredOnSuccess()
+
+	/**
+	 * Test enqueueBroadcast returns a failed BroadcastResult when delivery does not succeed.
+	 */
+	public function testEnqueueBroadcastReturnsFailedOnDeliveryFailure(): void {
+		$this->clientMock->method('post')
+			->willReturn(new Response(500));
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->broadcastService->enqueueBroadcast('https://203.0.113.10/directory', 'https://self.example.com/api/directory');
+
+		$this->assertSame(BroadcastResult::STATUS_FAILED, $result->status);
+		$this->assertFalse($result->isSuccessful());
+
+	}//end testEnqueueBroadcastReturnsFailedOnDeliveryFailure()
+
+	/**
+	 * Test enqueueBroadcast rejects an unsafe URL before any delivery is attempted.
+	 */
+	public function testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery(): void {
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$this->expectException(InvalidArgumentException::class);
+
+		$this->broadcastService->enqueueBroadcast('http://169.254.169.254/latest/meta-data', 'https://self.example.com/api/directory');
+
+	}//end testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery()
 
 }//end class
