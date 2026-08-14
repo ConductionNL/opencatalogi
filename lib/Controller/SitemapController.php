@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -68,6 +69,7 @@ class SitemapController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(string $catalogSlug, string $categoryCode): XMLResponse {
 		return $this->sitemapService->buildSitemapIndex(
 			catalogSlug: $catalogSlug,
@@ -89,6 +91,7 @@ class SitemapController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function sitemap(string $catalogSlug, string $categoryCode): XMLResponse {
 		$page = (int)($this->request->getParams()['page'] ?? 1);
 		return $this->sitemapService->buildSitemap(

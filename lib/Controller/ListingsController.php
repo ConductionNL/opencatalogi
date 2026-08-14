@@ -38,6 +38,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -163,6 +164,7 @@ class ListingsController extends Controller {
 	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		$response = new Response();
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
@@ -281,6 +283,7 @@ class ListingsController extends Controller {
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string|int $id): JSONResponse {
 		// Get listing register/schema from configuration; 503 if unconfigured.
 		// An `''` here would reach OR's setRegister('') and surface as an uncaught

@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
@@ -132,6 +133,9 @@ class SearchController extends Controller {
 	 * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-3
 	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
 	 */
+	// Lower than a plain read: search is the most expensive query this app
+	// serves anonymously.
+	#[AnonRateLimit(limit: 60, period: 60)]
 	public function index(): JSONResponse {
 		try {
 			$objectService = $this->getObjectService();

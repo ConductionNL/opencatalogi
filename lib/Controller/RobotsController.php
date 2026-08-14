@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IURLGenerator;
@@ -86,6 +87,9 @@ class RobotsController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
+	// Generous: robots.txt is fetched by every crawler that visits, and a
+	// ceiling that trips here blocks indexing rather than abuse.
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function index(): TextResponse {
 		$settings = $this->settingsService->getSettings();
 

@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
@@ -76,6 +77,7 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publications(): JSONResponse {
 		// Get all current query parameters.
 		$queryParams = $this->request->getParams();
@@ -129,6 +131,7 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publication(string $id): JSONResponse {
 		try {
 			// Use the service method to get the publication with federation support.
@@ -169,6 +172,7 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationUses(string $id): JSONResponse {
 		try {
 			// Use the service method to get the publication uses with federation support.
@@ -209,6 +213,7 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationUsed(string $id): JSONResponse {
 		try {
 			// Use the service method to get the publication used with federation support.
@@ -246,6 +251,7 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
 		return $this->publicationService->attachments(id: $id);
 	}//end publicationAttachments()
@@ -264,6 +270,9 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
+	// Lower than the sibling reads: a download moves file bytes, so the cost of
+	// one call is materially higher than a metadata lookup.
+	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicationDownload(string $id): DataDownloadResponse|JSONResponse {
 		return $this->publicationService->download(id: $id);
 	}//end publicationDownload()
