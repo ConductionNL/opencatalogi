@@ -151,6 +151,22 @@ function extractTCalls(files, app) {
 // match an l10n key but must NOT be wrapped in t().
 const NON_DISPLAY_ATTRS = new Set([
 	'back-route', // Vue Router route name passed to $router.push({ name })
+	// Form/DOM plumbing. `value` is the one that bit: eslint's
+	// `vue/no-useless-v-bind` rewrites `:value="'concept'"` to the equivalent
+	// static `value="concept"`, and the static form then looks exactly like a
+	// display attribute to this scanner. The rendered markup is identical, so a
+	// checker that passes before the rewrite and fails after it is reporting the
+	// spelling, not the string. A form value is an identifier submitted to the
+	// server — translating it would BREAK the filter it drives.
+	'value',
+	'name',
+	'id',
+	'key',
+	'type',
+	'href',
+	'src',
+	'for',
+	'role',
 ])
 
 function findUnwrapped(vueFiles, keys) {
