@@ -714,10 +714,6 @@ class PublicationService {
 	 *
 	 * @return JSONResponse A JSON response containing the list of objects
 	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
 	public function index(null|string|int $catalogId = null, ?array $customParams = null): JSONResponse {
@@ -1113,10 +1109,6 @@ class PublicationService {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
 	public function uses(string $id): JSONResponse {
@@ -1191,10 +1183,6 @@ class PublicationService {
 	 * @return JSONResponse A JSON response containing the referenced objects
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @PublicPage
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
