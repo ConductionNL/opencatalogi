@@ -13,13 +13,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		v-if="navigationStore.modal === 'viewPage'"
 		:name="isAddMode ? t('opencatalogi', 'Add Page') : getModalTitle()"
 		size="large"
-		:can-close="true"
+		:canClose="true"
 		@update:open="handleDialogClose">
 		<div class="dialog__content">
 			<div class="pageDetails">
 				<!-- Content Items Tab -->
 				<div class="tabContainer">
-					<AppTabs v-model="tabIndex" content-class="mt-3" justified>
+					<AppTabs v-model="tabIndex" contentClass="mt-3" justified>
 						<AppTab
 							v-if="!isAddMode"
 							:title="
@@ -185,7 +185,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										:error="
 											!!inputValidation.fieldErrors?.['title']
 										"
-										:helper-text="
+										:helperText="
 											inputValidation.fieldErrors?.[
 												'title'
 											]?.[0]
@@ -198,7 +198,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										:error="
 											!!inputValidation.fieldErrors?.['slug']
 										"
-										:helper-text="
+										:helperText="
 											inputValidation.fieldErrors?.[
 												'slug'
 											]?.[0]
@@ -232,7 +232,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 											objectStore.isLoading('page')
 											|| groupsOptions.loading
 										"
-										:input-label="
+										:inputLabel="
 											t('opencatalogi', 'Select Groups')
 										"
 										multiple />
@@ -332,21 +332,21 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <script>
 import {
 	NcButton,
-	NcDialog,
-	NcTextField,
 	NcCheckboxRadioSwitch,
-	NcNoteCard,
+	NcDialog,
 	NcLoadingIcon,
+	NcNoteCard,
 	NcSelect,
+	NcTextField,
 } from '@nextcloud/vue'
-import AppTabs from '../../components/tabs/AppTabs.vue'
-import AppTab from '../../components/tabs/AppTab.vue'
+import ContentSave from 'vue-material-design-icons/ContentSave.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-import ContentSave from 'vue-material-design-icons/ContentSave.vue'
-import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
 import { Page } from '../../entities/index.js'
+import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 /**
  * ViewPageModal — read a page and its embedded content blocks.
@@ -370,6 +370,7 @@ export default {
 		Delete,
 		ContentSave,
 	},
+
 	data() {
 		return {
 			editForm: {
@@ -379,47 +380,59 @@ export default {
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
+
 			hasUpdated: false,
 			groupsOptions: {
 				options: [],
 				loading: false,
 			},
+
 			tabIndex: 0, // 0 = first visible tab (Content Items in edit, Configuration in add)
 		}
 	},
+
 	computed: {
 		/**
 		 * Get the currently active page from the store
+		 *
 		 * @return {object|null} The active page object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		page() {
 			return objectStore.getActiveObject('page')
 		},
+
 		/**
 		 * Check if we're in edit mode
+		 *
 		 * @return {boolean} True if editing an existing page
 		 */
 		isEdit() {
 			return !!this.page
 		},
+
 		/**
 		 * Check if we're in add mode
+		 *
 		 * @return {boolean} True if adding a new page
 		 */
 		isAddMode() {
 			return !(this.page && this.page.id)
 		},
+
 		/**
 		 * Get the page state from the store
+		 *
 		 * @return {object} The page state object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		pageState() {
 			return objectStore.getState('page')
 		},
+
 		/**
 		 * Get contents sorted by order field
+		 *
 		 * @return {Array} Sorted contents array
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -429,8 +442,10 @@ export default {
 				(a, b) => (a.order || 0) - (b.order || 0),
 			)
 		},
+
 		/**
 		 * Validate the input form
+		 *
 		 * @return {object} Validation result
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -448,17 +463,23 @@ export default {
 					result?.error?.issues.map(
 						(issue) => `${issue.path.join('.')}: ${issue.message}`,
 					) || [],
+
 				fieldErrors: result?.error?.formErrors?.fieldErrors || {},
 			}
 		},
 	},
+
 	watch: {
 		/**
 		 * Watch for changes in the page data and update editForm accordingly
+		 *
 		 * @param {object} newPage - The new page data
 		 */
 		page: {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+			/**
+			 * @param newPage
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+			 */
 			handler(newPage) {
 				if (newPage && !this.isAddMode) {
 					// Initialize editForm with existing page data
@@ -480,35 +501,46 @@ export default {
 					}
 				}
 			},
+
 			immediate: true,
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 	mounted() {
 		// Fetch groups for the dropdown
 		this.fetchGroups()
 	},
+
 	methods: {
 		/**
 		 * Get the modal title
+		 *
 		 * @return {string} The modal title
 		 */
 		getModalTitle() {
 			return this.page?.title || 'Page'
 		},
+
 		/**
 		 * Handle dialog close event
+		 *
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+
 		/**
 		 * Close the modal and clear the active object
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -516,16 +548,20 @@ export default {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('page')
 		},
+
 		/**
 		 * Open the edit modal for the current page
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		openEditModal() {
 			navigationStore.setModal('viewPage')
 		},
+
 		/**
 		 * Open the add content modal
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -533,26 +569,38 @@ export default {
 			objectStore.setState('page', { success: null, error: null })
 			navigationStore.setModal('pageContentForm')
 		},
+
 		/**
 		 * Open edit modal for a specific content item
+		 *
 		 * @param {object} content - The content item to edit
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+		/**
+		 * @param content
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+		 */
 		editContent(content) {
 			objectStore.setActiveObject('pageContent', content)
 			navigationStore.setModal('pageContentForm')
 		},
+
 		/**
 		 * Open delete confirmation dialog for a specific content item
+		 *
 		 * @param {object} content - The content item to delete
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+		/**
+		 * @param content
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+		 */
 		deleteContent(content) {
 			objectStore.setActiveObject('pageContent', content)
 			navigationStore.setDialog('deletePageContent')
 		},
+
 		/**
 		 * Fetch groups from Nextcloud
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -569,8 +617,10 @@ export default {
 					this.groupsOptions.loading = false
 				})
 		},
+
 		/**
 		 * Save the page configuration
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -595,8 +645,10 @@ export default {
 				})
 			}
 		},
+
 		/**
 		 * Delete the current page
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -612,12 +664,17 @@ export default {
 					})
 			}
 		},
+
 		/**
 		 * Normalize groups array to ensure consistent format
+		 *
 		 * @param {Array} selected - Selected groups from NcSelect
 		 * @return {Array} Normalized groups array
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+		/**
+		 * @param selected
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+		 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected

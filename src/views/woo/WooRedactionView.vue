@@ -13,15 +13,15 @@
   - the batch detail page.
   -->
 <script>
+import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
 	NcLoadingIcon,
 	NcSelect,
 } from '@nextcloud/vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import {
 	buildRedactionInstructions,
 	pagesWithEntities,
@@ -35,23 +35,27 @@ export default {
 		NcLoadingIcon,
 		NcSelect,
 	},
+
 	props: {
 		/** The document-assessment object id. */
 		documentId: {
 			type: String,
 			default: '',
 		},
+
 		/** The owning batch id (path scoping for the assessment update). */
 		batchId: {
 			type: String,
 			default: '',
 		},
+
 		/** Entities detected by Docudesk: [{ id, text, type, page }]. */
 		entities: {
 			type: Array,
 			default: () => [],
 		},
 	},
+
 	data() {
 		return {
 			t,
@@ -65,19 +69,23 @@ export default {
 			previewUrl: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context */
 		pagesWithEntities() {
 			return pagesWithEntities(this.entities)
 		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context */
 		selectedCount() {
 			return Object.values(this.selected).filter(Boolean).length
 		},
 	},
+
 	mounted() {
 		this.loadGronden()
 	},
+
 	methods: {
 		/**
 		 * Load the WOO weigeringsgronden catalogue for the per-redaction selector.
@@ -98,6 +106,7 @@ export default {
 				this.error = err.message
 			}
 		},
+
 		/**
 		 * Toggle an entity's redaction selection.
 		 *
@@ -108,6 +117,7 @@ export default {
 		toggleEntity(entityId) {
 			this.selected[entityId] = !this.selected[entityId]
 		},
+
 		/**
 		 * Build the redaction-instruction payload (entity -> ground mapping).
 		 *
@@ -121,6 +131,7 @@ export default {
 				this.grounds,
 			)
 		},
+
 		/**
 		 * Request a redaction preview (delegated to Docudesk; URL surfaced here).
 		 *
@@ -200,8 +211,8 @@ export default {
 									text: entity.text,
 								})
 							"
-							:model-value="!!selected[entity.id]"
-							@update:model-value="toggleEntity(entity.id)" />
+							:modelValue="!!selected[entity.id]"
+							@update:modelValue="toggleEntity(entity.id)" />
 					</td>
 					<td>{{ entity.text }}</td>
 					<td>{{ entity.type }}</td>
@@ -211,7 +222,7 @@ export default {
 							v-model="grounds[entity.id]"
 							:options="grondOptions"
 							:disabled="!selected[entity.id]"
-							:input-label="t('opencatalogi', 'Refusal ground')"
+							:inputLabel="t('opencatalogi', 'Refusal ground')"
 							:placeholder="
 								t('opencatalogi', 'Select a refusal ground')
 							" />

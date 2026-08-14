@@ -28,34 +28,34 @@
 				'Browse and manage directory listings from various catalogs',
 			)
 		"
-		:show-title="true"
+		:showTitle="true"
 		:objects="currentObjects"
 		:columns="tableColumns"
 		:pagination="currentPagination"
 		:loading="objectStore.isLoading('listing')"
 		:selectable="true"
-		:selected-ids="selectedIds"
-		:show-view-toggle="true"
-		:show-edit-action="false"
-		:show-copy-action="false"
-		:show-delete-action="false"
-		:show-mass-import="false"
-		:show-mass-export="false"
-		:show-mass-copy="false"
-		:show-mass-delete="false"
-		:view-mode="viewMode"
-		:add-label="t('opencatalogi', 'Add Directory')"
-		:show-add="isAdmin"
-		row-key="id"
-		:empty-text="t('opencatalogi', 'No directory listings found')"
+		:selectedIds="selectedIds"
+		:showViewToggle="true"
+		:showEditAction="false"
+		:showCopyAction="false"
+		:showDeleteAction="false"
+		:showMassImport="false"
+		:showMassExport="false"
+		:showMassCopy="false"
+		:showMassDelete="false"
+		:viewMode="viewMode"
+		:addLabel="t('opencatalogi', 'Add Directory')"
+		:showAdd="isAdmin"
+		rowKey="id"
+		:emptyText="t('opencatalogi', 'No directory listings found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
 		@refresh="handleRefresh"
-		@page-changed="onPageChange"
-		@page-size-changed="onPageSizeChange"
-		@view-mode-change="viewMode = $event"
+		@pageChanged="onPageChange"
+		@pageSizeChanged="onPageSizeChange"
+		@viewModeChange="viewMode = $event"
 		@select="onSelect"
-		@row-click="onRowClick">
+		@rowClick="onRowClick">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
 				{{
@@ -135,9 +135,7 @@
 
 		<!-- Custom column: status -->
 		<template #column-statusCode="{ row }">
-			<CnStatusBadge
-				:label="getStatusLabel(row)"
-				:color-map="statusColorMap" />
+			<CnStatusBadge :label="getStatusLabel(row)" :colorMap="statusColorMap" />
 		</template>
 
 		<!-- Row actions -->
@@ -146,15 +144,13 @@
 				<template #icon>
 					<DotsHorizontal :size="20" />
 				</template>
-				<NcActionButton close-after-click @click="refreshDirectory(row)">
+				<NcActionButton closeAfterClick @click="refreshDirectory(row)">
 					<template #icon>
 						<Refresh :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Sync Directory') }}
 				</NcActionButton>
-				<NcActionButton
-					close-after-click
-					@click="toggleIntegrationLevel(row)">
+				<NcActionButton closeAfterClick @click="toggleIntegrationLevel(row)">
 					<template #icon>
 						<component
 							:is="
@@ -170,7 +166,7 @@
 							: t('opencatalogi', 'Enable')
 					}}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="toggleDefault(row)">
+				<NcActionButton closeAfterClick @click="toggleDefault(row)">
 					<template #icon>
 						<component
 							:is="row.default ? Star : StarOutline"
@@ -188,29 +184,30 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n'
+import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 // `OC.Notification` was REMOVED in Nextcloud 34 (this app declares
 // max-version="34"), so the six `OC.Notification.showMessage()` calls this
 // file used to make aborted silently — no toast, no error. `@nextcloud/dialogs`
 // is the supported replacement.
 import { showError, showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcActionButton, NcActions, NcNoteCard } from '@nextcloud/vue'
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
+import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
+import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
+import Star from 'vue-material-design-icons/Star.vue'
+import StarOutline from 'vue-material-design-icons/StarOutline.vue'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
+import { navigationStore, objectStore } from '../../store/store.js'
+
 // `@nextcloud/dialogs@7` exposes its stylesheet as a separate `./style.css`
 // entry and does NOT self-inject it, so without this import the toasts are
 // emitted but never positioned or made visible. This belongs in `src/main.js`
 // once any other module needs toasts too.
 import '@nextcloud/dialogs/style.css'
-import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
-import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
-import { objectStore, navigationStore } from '../../store/store.js'
-import { useIsAdmin } from '../../composables/useIsAdmin.js'
-import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
-import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
-import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
-import Star from 'vue-material-design-icons/Star.vue'
-import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 
 export default {
 	name: 'DirectoryIndex',
@@ -228,10 +225,12 @@ export default {
 		Star,
 		StarOutline,
 	},
+
 	setup() {
 		const { isAdmin, loaded } = useIsAdmin()
 		return { isAdmin, loaded, objectStore, navigationStore }
 	},
+
 	data() {
 		return {
 			selectedIds: [],
@@ -244,6 +243,7 @@ export default {
 			},
 		}
 	},
+
 	computed: {
 		tableColumns() {
 			return [
@@ -268,11 +268,13 @@ export default {
 				},
 			]
 		},
+
 		currentObjects() {
 			const collection = objectStore.getCollection('listing')
 			if (Array.isArray(collection)) return collection
 			return collection?.results || []
 		},
+
 		currentPagination() {
 			return (
 				objectStore.getPagination('listing') || {
@@ -284,14 +286,17 @@ export default {
 			)
 		},
 	},
+
 	mounted() {
 		objectStore.fetchCollection('listing')
 	},
+
 	methods: {
 		t,
 		onAdd() {
 			navigationStore.setModal('addDirectory')
 		},
+
 		async handleRefresh() {
 			this.isRefreshing = true
 			try {
@@ -300,34 +305,41 @@ export default {
 				this.isRefreshing = false
 			}
 		},
+
 		onPageChange(page) {
 			objectStore.fetchCollection('listing', {
 				_page: page,
 				_limit: this.currentPagination.limit || 20,
 			})
 		},
+
 		onPageSizeChange(size) {
 			objectStore.fetchCollection('listing', { _page: 1, _limit: size })
 		},
+
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
+
 		onRowClick(row) {
 			objectStore.setActiveObject('listing', row)
 			navigationStore.setModal('viewDirectory')
 		},
+
 		getStatusIcon(listing) {
 			const statusCode = listing.statusCode || listing.status
 			if (statusCode >= 200 && statusCode < 300) return CheckCircle
 			if (!statusCode || statusCode === 0) return AlertCircle
 			return CloseCircle
 		},
+
 		getStatusClass(listing) {
 			const statusCode = listing.statusCode || listing.status
 			if (statusCode >= 200 && statusCode < 300) return 'status-success'
 			if (!statusCode || statusCode === 0) return 'status-warning'
 			return 'status-error'
 		},
+
 		getStatusLabel(listing) {
 			const statusCode = listing.statusCode || listing.status
 			if (statusCode >= 200 && statusCode < 300)
@@ -335,6 +347,7 @@ export default {
 			if (!statusCode || statusCode === 0) return t('opencatalogi', 'Unknown')
 			return t('opencatalogi', 'Error')
 		},
+
 		formatDate(dateString) {
 			if (!dateString) return 'Never'
 			try {
@@ -356,12 +369,14 @@ export default {
 				return 'Invalid'
 			}
 		},
+
 		truncateUrl(url) {
 			if (!url) return ''
 			const cleanUrl = url.replace(/^https?:\/\/(www\.)?/, '')
 			if (cleanUrl.length > 35) return cleanUrl.substring(0, 32) + '...'
 			return cleanUrl
 		},
+
 		/**
 		 * Re-add the peer directory URL through the admin-gated
 		 * `POST /api/listings/add` endpoint, which re-reads the peer's directory
@@ -401,6 +416,7 @@ export default {
 				showError(`Failed to sync directory: ${error.message}`)
 			}
 		},
+
 		/**
 		 * Toggle a listing between `integrationLevel: 'search'` (participates in
 		 * the federated search fan-out) and `'connection'` (does not).
@@ -430,6 +446,7 @@ export default {
 				showError(`Failed to update directory: ${error.message}`)
 			}
 		},
+
 		/**
 		 * Update a listing's `default` flag, clearing the flag from any other
 		 * listing so exactly one stays default.

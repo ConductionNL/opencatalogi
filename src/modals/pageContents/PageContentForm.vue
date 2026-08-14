@@ -1,8 +1,8 @@
 <script setup>
-import { objectStore, navigationStore } from '../../store/store.js'
-import { getTheme } from '../../services/getTheme.js'
 import { EventBus } from '../../eventBus.js'
+import { getTheme } from '../../services/getTheme.js'
 import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -17,7 +17,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					})
 		"
 		size="large"
-		:can-close="true"
+		:canClose="true"
 		@update:open="handleDialogClose">
 		<div class="dialog__content">
 			<div
@@ -50,7 +50,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 			<div
 				v-if="objectStore.getState('page').success === null"
 				class="tabContainer">
-				<AppTabs content-class="mt-3" justified>
+				<AppTabs contentClass="mt-3" justified>
 					<!-- Configuration Tab -->
 					<AppTab :title="t('opencatalogi', 'Configuration')" active>
 						<div class="form-group">
@@ -67,7 +67,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								v-if="!isEdit"
 								v-bind="typeOptions"
 								v-model="contentsItem.type"
-								:input-label="t('opencatalogi', 'Content type')"
+								:inputLabel="t('opencatalogi', 'Content type')"
 								required />
 
 							<!-- Order -->
@@ -118,8 +118,8 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								<ToastUiEditor
 									v-model="contentsItem.richTextData"
 									:options="editorOptions"
-									initial-edit-type="wysiwyg"
-									preview-style="tab"
+									initialEditType="wysiwyg"
+									previewStyle="tab"
 									height="300px"
 									@load="(editor) => (richTextEditor = editor)" />
 							</div>
@@ -335,7 +335,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 												<NcSelect
 													v-bind="iconOptions"
 													v-model="item.icon"
-													:input-label="
+													:inputLabel="
 														t('opencatalogi', 'Icon')
 													"
 													style="min-width: 160px" />
@@ -398,7 +398,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 										objectStore.isLoading('page')
 										|| groupsOptions.loading
 									"
-									:input-label="t('opencatalogi', 'Select Groups')"
+									:inputLabel="t('opencatalogi', 'Select Groups')"
 									multiple />
 								<p
 									v-if="groupsOptions.loading"
@@ -478,29 +478,28 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 <script>
 import {
 	NcButton,
+	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
 	NcSelect,
 	NcTextField,
-	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
-import AppTabs from '../../components/tabs/AppTabs.vue'
-import AppTab from '../../components/tabs/AppTab.vue'
-import { VueDraggable } from 'vue-draggable-plus'
+import DOMPurify from 'dompurify'
 import cloneDeep from 'lodash/cloneDeep'
 import upperFirst from 'lodash/upperFirst'
-import DOMPurify from 'dompurify'
-import ToastUiEditor from '../../components/editor/ToastUiEditor.vue'
-import '@toast-ui/editor/dist/toastui-editor.css'
-
-import Plus from 'vue-material-design-icons/Plus.vue'
+import { VueDraggable } from 'vue-draggable-plus'
+import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
+import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
-import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
-import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
-
+import Plus from 'vue-material-design-icons/Plus.vue'
+import ToastUiEditor from '../../components/editor/ToastUiEditor.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
 import { Page } from '../../entities/index.js'
+
+import '@toast-ui/editor/dist/toastui-editor.css'
 
 /**
  * PageContentForm — add/edit a page content block (persists the parent page).
@@ -528,6 +527,7 @@ export default {
 		ArrowUp,
 		ArrowDown,
 	},
+
 	data() {
 		return {
 			isEdit: !!objectStore.getActiveObject('pageContent')?.id,
@@ -548,6 +548,7 @@ export default {
 						answer: '',
 					},
 				],
+
 				contentBlocksData: [
 					{
 						id: Math.random().toString(36).substring(2, 12),
@@ -558,10 +559,12 @@ export default {
 						linkTitle: '',
 					},
 				],
+
 				groups: [],
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
+
 			typeOptions: {
 				options: [
 					'text',
@@ -572,6 +575,7 @@ export default {
 					'ContentBlocks',
 				],
 			},
+
 			// The ContentBlocks icon set — the SECOND legal icon dialect under
 			// ADR-077, and the only place it is authored. These lowercase names
 			// are stored in page/register data and drawn by the PUBLIC
@@ -604,6 +608,7 @@ export default {
 					'house',
 				],
 			},
+
 			success: null,
 			error: false,
 			errorCode: '',
@@ -612,6 +617,7 @@ export default {
 				options: [],
 				loading: false,
 			},
+
 			textEditor: null,
 			richTextEditor: null,
 			editorOptions: {
@@ -625,19 +631,25 @@ export default {
 					['table', 'image', 'link'],
 					['code', 'codeblock'],
 				],
+
 				initialEditType: 'wysiwyg',
 			},
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		pageItem() {
 			return objectStore.getActiveObject('page')
 		},
 	},
+
 	watch: {
 		'contentsItem.faqData': {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
+			/**
+			 * @param newVal
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4
+			 */
 			handler(newVal) {
 				const currentFaqLength = newVal.length
 
@@ -662,10 +674,15 @@ export default {
 					}
 				}
 			},
+
 			deep: true,
 		},
+
 		'contentsItem.contentBlocksData': {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
+			/**
+			 * @param newVal
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4
+			 */
 			handler(newVal) {
 				const len = newVal.length
 				const last = newVal[len - 1]
@@ -691,9 +708,11 @@ export default {
 					}
 				}
 			},
+
 			deep: true,
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 	mounted() {
 		// Fetch groups for the dropdown.
@@ -756,30 +775,38 @@ export default {
 			}
 		}
 	},
+
 	methods: {
 		/**
 		 * Handle dialog close event
+		 *
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('pageContent')
 			objectStore.setState('page', { success: null, error: null })
 		},
+
 		/**
 		 * Build an accessible name for a move button that identifies both the
 		 * action and the target item (WCAG 2.1 AA 4.1.2 — screen-reader users
 		 * tabbing between several rows' move buttons need to distinguish them).
 		 * Falls back to a 1-based position when the item has no title/question
 		 * text yet (e.g. a freshly-added empty row).
+		 *
 		 * @param {'up'|'down'} direction - Which direction the button moves the item.
 		 * @param {string} itemLabel - The item's own text (question / block title), if any.
 		 * @param {number} index - The item's zero-based index, used as a fallback label.
@@ -796,10 +823,12 @@ export default {
 				|| t('opencatalogi', 'item {position}', { position: index + 1 })
 			return `${action}: ${target}`
 		},
+
 		/**
 		 * Keyboard- and screen-reader-operable alternative to the pointer-only
 		 * drag handle for reordering FAQ items (WCAG 2.1 AA 2.1.1 — CMS-036).
 		 * Swaps `contentsItem.faqData[index]` with its neighbor at `index + direction`.
+		 *
 		 * @param {number} index - The index of the item to move.
 		 * @param {number} direction - `-1` to move up, `1` to move down.
 		 * @return {void}
@@ -814,11 +843,13 @@ export default {
 			const [moved] = items.splice(index, 1)
 			items.splice(target, 0, moved)
 		},
+
 		/**
 		 * Keyboard- and screen-reader-operable alternative to the pointer-only
 		 * drag handle for reordering content blocks (WCAG 2.1 AA 2.1.1 — CMS-036).
 		 * Swaps `contentsItem.contentBlocksData[index]` with its neighbor at
 		 * `index + direction`.
+		 *
 		 * @param {number} index - The index of the item to move.
 		 * @param {number} direction - `-1` to move up, `1` to move down.
 		 * @return {void}
@@ -833,6 +864,7 @@ export default {
 			const [moved] = items.splice(index, 1)
 			items.splice(target, 0, moved)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		addPageContent() {
 			objectStore.setState('page', {
@@ -861,6 +893,7 @@ export default {
 					id:
 						this.contentsItem.id
 						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						html: textContent,
 						text: DOMPurify.sanitize(textContent, {
@@ -868,6 +901,7 @@ export default {
 							ALLOWED_ATTR: [],
 						}),
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -879,9 +913,11 @@ export default {
 					id:
 						this.contentsItem.id
 						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						content: richTextContent,
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -893,10 +929,12 @@ export default {
 					id:
 						this.contentsItem.id
 						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						url: this.contentsItem.imageUrl,
 						srcset: this.contentsItem.imageSrcset || undefined,
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -908,6 +946,7 @@ export default {
 					id:
 						this.contentsItem.id
 						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						// Remove the last item since it's a placeholder and is always empty no matter what.
 						faqs: this.contentsItem.faqData.slice(0, -1).map((faq) => ({
@@ -915,6 +954,7 @@ export default {
 							answer: faq.answer,
 						})),
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -926,10 +966,12 @@ export default {
 					id:
 						this.contentsItem.id
 						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						title: this.contentsItem.quoteTitle,
 						subtitle: this.contentsItem.quoteSubtitle,
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -941,6 +983,7 @@ export default {
 					id:
 						this.contentsItem.id
 						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						// Remove the last item since it's a placeholder.
 						blocks: this.contentsItem.contentBlocksData
@@ -953,6 +996,7 @@ export default {
 								linkTitle: block.linkTitle,
 							})),
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -999,6 +1043,7 @@ export default {
 					objectStore.setState('page', { loading: false })
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
@@ -1013,12 +1058,17 @@ export default {
 					this.groupsOptions.loading = false
 				})
 		},
+
 		/**
 		 * Normalize groups array to ensure consistent format
+		 *
 		 * @param {Array} selected - Selected groups from NcSelect
 		 * @return {Array} Normalized groups array
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
+		/**
+		 * @param selected
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4
+		 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected

@@ -1,5 +1,6 @@
 <script setup>
-import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
+
 import '../../css/json-highlight.css'
 </script>
 
@@ -7,7 +8,7 @@ import '../../css/json-highlight.css'
 	<NcDialog
 		:name="t('opencatalogi', 'Upload Object')"
 		size="normal"
-		:can-close="false">
+		:canClose="false">
 		<NcNoteCard v-if="success" type="success">
 			<p>{{ t('opencatalogi', 'Object successfully uploaded') }}</p>
 		</NcNoteCard>
@@ -82,7 +83,7 @@ import '../../css/json-highlight.css'
 				<NcSelect
 					v-bind="registers"
 					v-model="registers.value"
-					:input-label="t('opencatalogi', 'Register')"
+					:inputLabel="t('opencatalogi', 'Register')"
 					:loading="registersLoading"
 					:disabled="loading" />
 			</div>
@@ -92,7 +93,7 @@ import '../../css/json-highlight.css'
 				<NcSelect
 					v-bind="schemas"
 					v-model="schemas.value"
-					:input-label="t('opencatalogi', 'Schemas')"
+					:inputLabel="t('opencatalogi', 'Schemas')"
 					:loading="schemasLoading"
 					:disabled="loading" />
 			</div>
@@ -102,7 +103,7 @@ import '../../css/json-highlight.css'
 				<NcSelect
 					v-bind="mappings"
 					v-model="mappings.value"
-					:input-label="t('opencatalogi', 'Mappings')"
+					:inputLabel="t('opencatalogi', 'Mappings')"
 					:loading="mappingsLoading"
 					:disabled="loading || !mappings.options?.length" />
 
@@ -131,6 +132,7 @@ import '../../css/json-highlight.css'
 </template>
 
 <script>
+import { json, jsonParseLinter } from '@codemirror/lang-json'
 import {
 	NcButton,
 	NcDialog,
@@ -138,14 +140,12 @@ import {
 	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
-import { getTheme } from '../../services/getTheme.js'
-import { json, jsonParseLinter } from '@codemirror/lang-json'
 import CodeMirror from 'vue-codemirror6'
-
-import Cancel from 'vue-material-design-icons/Cancel.vue'
-import Upload from 'vue-material-design-icons/Upload.vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
+import Upload from 'vue-material-design-icons/Upload.vue'
+import { getTheme } from '../../services/getTheme.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -162,6 +162,7 @@ export default {
 		Cancel,
 		Upload,
 	},
+
 	data() {
 		return {
 			object: '{}',
@@ -177,12 +178,14 @@ export default {
 			hasUpdated: false,
 		}
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 	mounted() {
 		this.initializeMappings()
 		this.initializeSchemas()
 		this.initializeRegisters()
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		initializeMappings() {
@@ -205,6 +208,7 @@ export default {
 					this.mappingsLoading = false
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		initializeSchemas() {
 			this.schemasLoading = true
@@ -226,6 +230,7 @@ export default {
 					this.schemasLoading = false
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		initializeRegisters() {
 			this.registersLoading = true
@@ -247,6 +252,7 @@ export default {
 					this.registersLoading = false
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		closeModal() {
 			navigationStore.setModal(false)
@@ -259,6 +265,7 @@ export default {
 				url: '',
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		async uploadObject() {
 			this.loading = true
@@ -288,11 +295,16 @@ export default {
 					this.loading = false
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		prettifyJson() {
 			this.object = JSON.stringify(JSON.parse(this.object), null, 2)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
+
+		/**
+		 * @param json
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3
+		 */
 		validateJson(json) {
 			try {
 				JSON.parse(json)

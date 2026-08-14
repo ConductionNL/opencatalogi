@@ -13,7 +13,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		v-if="navigationStore.modal === 'viewTheme'"
 		ref="modalRef"
 		:name="theme?.title || t('opencatalogi', 'Theme')"
-		label-id="viewThemeModal"
+		labelId="viewThemeModal"
 		@close="closeModal">
 		<div class="modal__content">
 			<div v-if="theme" class="themeDetails">
@@ -159,8 +159,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <script>
 import { NcButton, NcModal } from '@nextcloud/vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 
 /**
  * ViewThemeModal — read a theme.
@@ -175,9 +175,11 @@ export default {
 		Pencil,
 		Cancel,
 	},
+
 	computed: {
 		/**
 		 * Get the currently active theme from the store
+		 *
 		 * @return {object|null} The active theme object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
@@ -185,9 +187,11 @@ export default {
 			return objectStore.getActiveObject('theme')
 		},
 	},
+
 	methods: {
 		/**
 		 * Close the modal and clear the active object
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
@@ -195,8 +199,10 @@ export default {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('theme')
 		},
+
 		/**
 		 * Open the edit modal for the current theme
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */

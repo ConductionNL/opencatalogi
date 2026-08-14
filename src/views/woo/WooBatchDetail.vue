@@ -11,12 +11,12 @@
   - publish transition is gated by the OpenRegister approval-workflow chain).
   -->
 <script>
-import { translate as t } from '@nextcloud/l10n'
-import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { canMarkReadyForReview } from '../../services/wooHelpers.js'
+import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import WooRedactionView from './WooRedactionView.vue'
+import { canMarkReadyForReview } from '../../services/wooHelpers.js'
 
 export default {
 	name: 'WooBatchDetail',
@@ -27,6 +27,7 @@ export default {
 		NcNoteCard,
 		WooRedactionView,
 	},
+
 	data() {
 		return {
 			t,
@@ -36,15 +37,18 @@ export default {
 			activeDocument: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
 		batchId() {
 			return this.$route?.params?.id || ''
 		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf */
 		deckUnavailable() {
 			return this.batch && this.batch.deckAvailable === false
 		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
 		summary() {
 			return (
@@ -56,6 +60,7 @@ export default {
 				}
 			)
 		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model */
 		canReview() {
 			return (
@@ -63,11 +68,13 @@ export default {
 				&& canMarkReadyForReview(this.summary)
 			)
 		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication */
 		canPublish() {
 			return this.batch?.status === 'ready_for_review'
 		},
 	},
+
 	watch: {
 		batchId: {
 			immediate: true,
@@ -79,6 +86,7 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		/**
 		 * Load the batch + derived document summary.
@@ -102,6 +110,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Mark the batch ready for review (opens the approval gate).
 		 *
@@ -120,6 +129,7 @@ export default {
 				this.error = err.response?.data?.error || err.message
 			}
 		},
+
 		/**
 		 * Publish the batch to the public reading room.
 		 *
@@ -138,6 +148,7 @@ export default {
 				this.error = err.response?.data?.error || err.message
 			}
 		},
+
 		/**
 		 * Build the inventarislijst download URL (CSV by default).
 		 *
@@ -214,8 +225,8 @@ export default {
 
 			<WooRedactionView
 				v-if="activeDocument"
-				:document-id="activeDocument.id"
-				:batch-id="batchId"
+				:documentId="activeDocument.id"
+				:batchId="batchId"
 				:entities="activeDocument.entities || []" />
 
 			<div class="woo-batch__actions">

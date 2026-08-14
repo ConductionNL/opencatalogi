@@ -8,8 +8,8 @@
 		:pickers="pickers"
 		:defaults="defaults"
 		:value="value"
-		:sample-title="sampleTitle"
-		:sample-body-text="sampleBodyText" />
+		:sampleTitle="sampleTitle"
+		:sampleBodyText="sampleBodyText" />
 	<NcEmptyContent
 		v-else
 		:name="t('opencatalogi', 'No theme colours to preview yet')">
@@ -21,9 +21,9 @@
 
 <script>
 import { CnThemePreview } from '@conduction/nextcloud-vue'
+import { translate as t } from '@nextcloud/l10n'
 import { NcEmptyContent } from '@nextcloud/vue'
 import Web from 'vue-material-design-icons/Web.vue'
-import { translate as t } from '@nextcloud/l10n'
 
 /**
  * ThemePreviewWidget — thin adapter that renders the library's CnThemePreview
@@ -49,10 +49,12 @@ export default {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
 	},
+
 	props: {
 		/** Catalog widget content blob (CnDetailPage body path). */
 		content: { type: Object, default: () => ({}) },
 	},
+
 	data() {
 		return {
 			/** Fallback colour-picker declarations used when the manifest supplies none. */
@@ -75,6 +77,7 @@ export default {
 			],
 		}
 	},
+
 	computed: {
 		/**
 		 * The resolved object-context bag from inject (either shape) or {}.
@@ -89,6 +92,7 @@ export default {
 				this.cnDetailObjectContext && this.cnDetailObjectContext.value
 			return inj || holder || {}
 		},
+
 		/**
 		 * The current theme object, when the detail page has loaded one.
 		 *
@@ -97,6 +101,7 @@ export default {
 		theme() {
 			return (this.ctx && this.ctx.object) || {}
 		},
+
 		/**
 		 * Colour-picker declarations. Guarded so CnThemePreview never
 		 * receives `undefined` — falls back to a built-in default set
@@ -111,6 +116,7 @@ export default {
 					: []
 			return configured.length > 0 ? configured : this.defaultPickers
 		},
+
 		/**
 		 * Reset-button defaults map, derived from whichever picker set is active.
 		 *
@@ -129,6 +135,7 @@ export default {
 				return acc
 			}, {})
 		},
+
 		/**
 		 * Initial colour map, guarded to always be a plain object.
 		 *
@@ -142,6 +149,7 @@ export default {
 				|| {}
 			)
 		},
+
 		/**
 		 * Sample-preview title — prefers the loaded theme's own title.
 		 *
@@ -154,6 +162,7 @@ export default {
 				|| t('opencatalogi', 'Theme preview')
 			)
 		},
+
 		/**
 		 * Sample-preview body text — prefers the loaded theme's summary/description.
 		 *
@@ -171,6 +180,7 @@ export default {
 			)
 		},
 	},
+
 	methods: { t },
 }
 </script>

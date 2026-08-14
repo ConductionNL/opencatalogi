@@ -23,9 +23,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			     `@update:model-value`, matching PublicationList.vue. -->
 			<NcTextField
 				class="searchField"
-				:model-value="objectStore.getSearchTerm('search')"
+				:modelValue="objectStore.getSearchTerm('search')"
 				:label="t('opencatalogi', 'Search')"
-				@update:model-value="objectStore.setSearchTerm('search', $event)" />
+				@update:modelValue="objectStore.setSearchTerm('search', $event)" />
 			<NcNoteCard v-if="objectStore.getError('search')" type="error">
 				<p>{{ objectStore.getError('search') }}</p>
 			</NcNoteCard>
@@ -47,14 +47,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					v-bind="catalogi"
 					v-model="catalogi.value"
 					style="min-width: unset; width: 100%"
-					:input-label="t('opencatalogi', 'Catalog*')"
+					:inputLabel="t('opencatalogi', 'Catalog*')"
 					:loading="catalogiLoading"
 					:disabled="catalogiLoading || loading" />
 				<NcSelect
 					v-bind="filteredPublicationTypeOptions"
 					v-model="publicationType.value"
 					style="min-width: unset; width: 100%"
-					:input-label="t('opencatalogi', 'Publication type*')"
+					:inputLabel="t('opencatalogi', 'Publication type*')"
 					:loading="publicationTypeLoading"
 					:disabled="
 						publicationTypeLoading || loading || !catalogi.value?.id
@@ -121,7 +121,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				:key="`${publication}${i}`"
 				:name="publication.title"
 				:bold="false"
-				:force-display-actions="true"
+				:forceDisplayActions="true"
 				:active="
 					objectStore.getActiveObject('publication')?.id
 					=== publication?.id
@@ -133,7 +133,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							objectStore.getActiveObject('publication')?.id
 								=== publication?.id && 'selectedZaakIcon'
 						"
-						disable-menu
+						disableMenu
 						:size="44" />
 				</template>
 				<template #subname>
@@ -141,7 +141,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</template>
 				<template #actions>
 					<NcActionButton
-						close-after-click
+						closeAfterClick
 						@click="handleViewPublication(publication)">
 						<template #icon>
 							<ListBoxOutline :size="20" />
@@ -149,7 +149,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						{{ t('opencatalogi', 'View') }}
 					</NcActionButton>
 					<NcActionButton
-						close-after-click
+						closeAfterClick
 						@click="
 							() => {
 								objectStore.setActiveObject(
@@ -165,7 +165,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						{{ t('opencatalogi', 'Edit') }}
 					</NcActionButton>
 					<NcActionButton
-						close-after-click
+						closeAfterClick
 						@click="
 							() => {
 								objectStore.setActiveObject(
@@ -181,7 +181,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						{{ t('opencatalogi', 'Publish') }}
 					</NcActionButton>
 					<NcActionButton
-						close-after-click
+						closeAfterClick
 						@click="
 							() => {
 								objectStore.setActiveObject(
@@ -226,7 +226,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				:key="`${attachment}${i}`"
 				:name="attachment.title"
 				:bold="false"
-				:force-display-actions="true"
+				:forceDisplayActions="true"
 				:active="
 					objectStore.getActiveObject('attachment')?.id === attachment?.id
 				"
@@ -237,7 +237,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							objectStore.getActiveObject('attachment')?.id
 								=== attachment.id && 'selectedZaakIcon'
 						"
-						disable-menu
+						disableMenu
 						:size="44" />
 				</template>
 				<template #subname>
@@ -245,7 +245,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</template>
 				<template #actions>
 					<NcActionButton
-						close-after-click
+						closeAfterClick
 						@click="
 							() => {
 								objectStore.setActiveObject('attachment', attachment)
@@ -258,7 +258,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						{{ t('opencatalogi', 'Edit') }}
 					</NcActionButton>
 					<NcActionButton
-						close-after-click
+						closeAfterClick
 						@click="
 							() => {
 								objectStore.setActiveObject('attachment', attachment)
@@ -271,7 +271,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						{{ t('opencatalogi', 'Publish') }}
 					</NcActionButton>
 					<NcActionButton
-						close-after-click
+						closeAfterClick
 						@click="
 							() => {
 								objectStore.setActiveObject('attachment', attachment)
@@ -300,30 +300,29 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</NcAppSidebarTab>
 	</NcAppSidebar>
 </template>
+
 <script>
 import {
+	NcActionButton,
 	NcAppSidebar,
 	NcAppSidebarTab,
-	NcLoadingIcon,
-	NcTextField,
-	NcNoteCard,
-	NcListItem,
-	NcActionButton,
-	NcSelect,
 	NcButton,
+	NcListItem,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
 } from '@nextcloud/vue'
-import Magnify from 'vue-material-design-icons/Magnify.vue'
-import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import FileOutline from 'vue-material-design-icons/FileOutline.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
-import Publish from 'vue-material-design-icons/Publish.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-
-import { useFileSelection } from '../../composables/UseFileSelection.js'
-import { ref } from 'vue'
 import axios from 'axios'
-
+import { ref } from 'vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
+import FileOutline from 'vue-material-design-icons/FileOutline.vue'
+import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
+import Magnify from 'vue-material-design-icons/Magnify.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Publish from 'vue-material-design-icons/Publish.vue'
+import { useFileSelection } from '../../composables/UseFileSelection.js'
 import { Publication } from '../../entities/index.js'
 
 const dropZoneRef = ref()
@@ -354,6 +353,7 @@ export default {
 		Publish,
 		Delete,
 	},
+
 	data() {
 		return {
 			publications: false,
@@ -366,12 +366,14 @@ export default {
 				portal: '',
 				license: '',
 			},
+
 			catalogiLoading: false,
 			catalogiList: [],
 			catalogi: {
 				options: [],
 				value: null,
 			},
+
 			publicationTypeLoading: false,
 			publicationTypeList: [], // this is the entire dataset of publicationType
 			publicationType: {},
@@ -380,6 +382,7 @@ export default {
 			success: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * Filters publicationType (Now known as Publication Type) based on the catalogi
@@ -417,6 +420,7 @@ export default {
 			}
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 	mounted() {
 		objectStore.fetchCollection('publication')
@@ -424,8 +428,12 @@ export default {
 		this.fetchCatalogi()
 		this.fetchPublicationType()
 	},
+
 	methods: {
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+		/**
+		 * @param publication
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2
+		 */
 		handleViewPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
 			const catalogId = publication?.catalog?.id || publication?.catalog
@@ -440,6 +448,7 @@ export default {
 			if (!slug || !publication?.id) return
 			this.$router.push(`/publications/${slug}/${publication.id}`)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		cleanup() {
 			if (this.success === true) {
@@ -456,6 +465,7 @@ export default {
 			}
 			this.error = null
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		fetchCatalogi() {
 			this.catalogiLoading = true
@@ -476,6 +486,7 @@ export default {
 					this.catalogiLoading = false
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		fetchPublicationType() {
 			this.publicationTypeLoading = true
@@ -491,6 +502,7 @@ export default {
 					this.publicationTypeLoading = false
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		addPublication() {
 			this.loading = true
@@ -526,7 +538,11 @@ export default {
 					this.hasUpdated = false
 				})
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+
+		/**
+		 * @param publicationItem
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2
+		 */
 		addAttachment(publicationItem) {
 			this.loading = true
 			this.errorMessage = false
@@ -606,6 +622,7 @@ export default {
 	padding-block: 2rem;
 }
 </style>
+
 <style scoped>
 .addButton {
 	margin-block-start: 10px;

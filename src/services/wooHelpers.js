@@ -66,7 +66,7 @@ export function deriveSummary(assessments) {
 	const counts = ASSESSMENTS.reduce((acc, key) => ({ ...acc, [key]: 0 }), {})
 	for (const a of assessments || []) {
 		const status = a.assessment || 'te_beoordelen'
-		if (Object.prototype.hasOwnProperty.call(counts, status)) {
+		if (Object.hasOwn(counts, status)) {
 			counts[status]++
 		}
 	}

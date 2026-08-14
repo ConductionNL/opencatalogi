@@ -1,5 +1,6 @@
 /**
  * Catalogi entity class
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
@@ -9,8 +10,10 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { SafeParseReturnType, z } from 'zod'
-import { CatalogStatus, TCatalogi } from './catalogi.types'
+import type { SafeParseReturnType } from 'zod'
+import type { CatalogStatus, TCatalogi } from './catalogi.types'
+
+import { z } from 'zod'
 
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -33,7 +36,10 @@ export class Catalogi implements TCatalogi {
 	public hasWooSitemap!: boolean
 	public hasOoapi!: boolean
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TCatalogi) {
 		this.hydrate(data)
 	}

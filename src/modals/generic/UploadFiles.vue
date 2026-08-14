@@ -6,7 +6,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 	<NcModal
 		v-if="navigationStore.dialog === 'uploadFiles'"
 		ref="modalRef"
-		label-id="AddAttachmentModal"
+		labelId="AddAttachmentModal"
 		@close="closeDialog()">
 		<div class="modal__content TestMappingMainModal">
 			<h2>{{ t('opencatalogi', 'Add attachment') }}</h2>
@@ -15,7 +15,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				<NcSelect
 					v-bind="labelOptions"
 					v-model="labelOptions.value"
-					:input-label="t('opencatalogi', 'Labels')"
+					:inputLabel="t('opencatalogi', 'Labels')"
 					:disabled="loading || retryLoading || tagsLoading"
 					:loading="tagsLoading"
 					:taggable="true"
@@ -33,8 +33,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 			<div class="container">
 				<div
 					v-if="!labelOptions.value?.length || loading || retryLoading"
-					class="filesListDragDropNotice"
-					:class="'tabPanelFileUpload'">
+					class="filesListDragDropNotice tabPanelFileUpload">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
 							<p>
@@ -121,8 +120,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				<div
 					v-if="labelOptions.value?.length && !loading && !retryLoading"
 					ref="dropZoneRef"
-					class="filesListDragDropNotice"
-					:class="'tabPanelFileUpload'">
+					class="filesListDragDropNotice tabPanelFileUpload">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
 							<p>
@@ -472,29 +470,28 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 <script>
 import {
 	NcButton,
+	NcCheckboxRadioSwitch,
 	NcLoadingIcon,
 	NcModal,
 	NcNoteCard,
 	NcSelect,
-	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
-import { useFileSelection } from './../../composables/UseFileSelection.js'
 import axios from 'axios'
-import { ref, isRef } from 'vue'
+import { isRef, ref } from 'vue'
+import AlphaXCircle from 'vue-material-design-icons/AlphaXCircle.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
+import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import Exclamation from 'vue-material-design-icons/Exclamation.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
+import Minus from 'vue-material-design-icons/Minus.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
+import TagEdit from 'vue-material-design-icons/TagEdit.vue'
+import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
 import { Attachment } from '../../entities/index.js'
 import { EventBus } from '../../eventBus.js'
-
-import Plus from 'vue-material-design-icons/Plus.vue'
-import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
-import TagEdit from 'vue-material-design-icons/TagEdit.vue'
-import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
-import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
-import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
-import AlphaXCircle from 'vue-material-design-icons/AlphaXCircle.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import Exclamation from 'vue-material-design-icons/Exclamation.vue'
-import Minus from 'vue-material-design-icons/Minus.vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
+import { useFileSelection } from './../../composables/UseFileSelection.js'
 
 const dropZoneRef = ref()
 
@@ -519,6 +516,7 @@ export default {
 		NcSelect,
 		Cancel,
 	},
+
 	props: {
 		dropFiles: {
 			type: Array,
@@ -526,6 +524,7 @@ export default {
 			default: null,
 		},
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -540,10 +539,12 @@ export default {
 				inputLabel: 'Labels',
 				multiple: true,
 			},
+
 			labelOptionsEdit: {
 				inputLabel: 'Labels',
 				multiple: true,
 			},
+
 			tagsLoading: false,
 			uploadedCount: 0,
 			failedCount: 0,
@@ -552,17 +553,20 @@ export default {
 			newTags: [],
 		}
 	},
+
 	computed: {
 		// only used for watching
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		files() {
 			return files
 		},
+
 		// only used for watching
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		rejectedDuplicatesList() {
 			return rejectedDuplicates
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		inputValidation() {
 			const catalogiItem = new Attachment({
@@ -577,37 +581,52 @@ export default {
 					result?.error?.issues.map(
 						(issue) => `${issue.path.join('.')}: ${issue.message}`,
 					) || [],
+
 				fieldErrors: result?.error?.formErrors?.fieldErrors || {},
 			}
 		},
 	},
+
 	watch: {
 		files: {
-			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+			/**
+			 * @param newFiles
+			 * @param oldFiles
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+			 */
 			handler(newFiles, oldFiles) {
 				if (newFiles.value?.length) {
 					this.addAttachments()
 				}
 			},
+
 			deep: true,
 		},
+
 		labelOptions: {
 			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 			handler() {
 				setTags(this.getLabels())
 			},
+
 			deep: true,
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		success() {
 			this.updateUploadCounts()
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		error() {
 			this.updateUploadCounts()
 		},
+
 		rejectedDuplicatesList: {
-			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+			/**
+			 * @param newRef
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+			 */
 			handler(newRef) {
 				const newRejected = newRef?.value?.names
 				if (!Array.isArray(newRejected) || newRejected.length === 0) return
@@ -626,9 +645,11 @@ export default {
 					this.duplicateWarning = null
 				}, 5000)
 			},
+
 			deep: true,
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 	mounted() {
 		objectStore.setActiveObject('attachment', [])
@@ -649,6 +670,7 @@ export default {
 			{ immediate: true },
 		)
 	},
+
 	/**
 	 * Tear down the dialog watcher and the pending duplicate-file warning timer.
 	 *
@@ -667,6 +689,7 @@ export default {
 			this._duplicateWarningTimer = null
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		closeDialog() {
@@ -718,7 +741,11 @@ export default {
 				this.__uploadFilesClosingInternally = false
 			}, 0)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+
+		/**
+		 * @param bytes
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		bytesToSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
 			if (bytes === 0) return 'n/a'
@@ -728,7 +755,10 @@ export default {
 			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+		/**
+		 * @param fullname
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		getFileNameAndExtension(fullname) {
 			const lastDot = fullname.lastIndexOf('.')
 			const name = fullname.slice(0, lastDot)
@@ -736,7 +766,10 @@ export default {
 			return { name, extension }
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+		/**
+		 * @param files
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		checkForTooBigFiles(files) {
 			if (!files) return false
 			const wrongFiles = files.filter((file) => {
@@ -754,7 +787,10 @@ export default {
 			return size > 536870480 // 512MB
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+		/**
+		 * @param option
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		isSelectable(option) {
 			if (
 				this.labelOptions.value?.includes('No label')
@@ -780,6 +816,7 @@ export default {
 				return this.labelOptions.value
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		async getAllTags() {
 			this.tagsLoading = true
@@ -848,6 +885,7 @@ export default {
 				this.tagsLoading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		onOpenModal() {
 			this.initialTags = []
@@ -857,6 +895,7 @@ export default {
 			this.getAllTags()
 			this.applySchemaDefaults()
 		},
+
 		/**
 		 * Seed the `share` toggle from the active publication's schema
 		 * (`configuration.defaultAutoShare`). Falls back to `false`
@@ -900,6 +939,7 @@ export default {
 				// hiccup never silently flips publications to "share on upload".
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		onExternalClose() {
 			if (this.__uploadFilesClosingInternally) {
@@ -934,9 +974,13 @@ export default {
 
 		/**
 		 * Opens the folder URL in a new tab after parsing the encoded URL and converting to Nextcloud format
+		 *
 		 * @param {string} url - The encoded folder URL to open (e.g. "Open Registers\/Publicatie Register\/Publicatie\/123")
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+		/**
+		 * @param url
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		openFolder(url) {
 			// Parse the encoded URL by replacing escaped characters
 			const decodedUrl = url.replace(/\\\//g, '/')
@@ -954,7 +998,11 @@ export default {
 			window.open(nextcloudUrl, '_blank')
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+		/**
+		 * @param file
+		 * @param editedTags
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		async saveTags(file, editedTags) {
 			try {
 				if (file && file.id) {
@@ -1024,7 +1072,10 @@ export default {
 			this.editedTags = []
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+		/**
+		 * @param fileName
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		removeFile(fileName) {
 			reset(fileName)
 			if (this.editingTags === fileName) {
@@ -1042,7 +1093,10 @@ export default {
 			return false
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+		/**
+		 * @param specificFile
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		async addAttachments(specificFile = null) {
 			this.loading = true
 			this.error = null
@@ -1152,7 +1206,10 @@ export default {
 		},
 
 		// Utility method to get register and schema IDs from publication object
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+		/**
+		 * @param publication
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		getRegisterSchemaIds(publication) {
 			const registerId =
 				typeof publication['@self'].register === 'object'
@@ -1166,7 +1223,13 @@ export default {
 					: publication['@self'].schema
 			return { registerId, schemaId }
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
+
+		/**
+		 * @param files
+		 * @param reset
+		 * @param share
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
 		async createPublicationAttachment(files, reset, share = false) {
 			if (!files) {
 				throw Error('No files to import')
@@ -1216,6 +1279,7 @@ export default {
 					throw err
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		async retryAllFailed() {
 			this.retryLoading = true
@@ -1282,6 +1346,7 @@ export default {
 			this.updateUploadCounts()
 			this.retryLoading = false
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		updateUploadCounts() {
 			if (!this.files || !this.files.value) {

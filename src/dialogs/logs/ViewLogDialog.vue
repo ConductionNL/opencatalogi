@@ -6,7 +6,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcDialog
 		v-if="navigationStore.dialog === 'viewLog'"
 		:name="t('opencatalogi', 'View Log')"
-		:can-close="false">
+		:canClose="false">
 		<div
 			v-if="
 				objectStore.getState('log').success !== null
@@ -53,12 +53,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 /**
  * View Log Dialog Component
+ *
  * @module Dialogs
  * @package
  * @author Ruben Linde

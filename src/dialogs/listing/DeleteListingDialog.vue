@@ -3,8 +3,8 @@
 @version 1.0.0 * @link https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { computed, ref } from 'vue'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -12,7 +12,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		v-if="navigationStore.dialog === 'deleteListing'"
 		ref="dialogRef"
 		class="deleteListingDialog"
-		label-id="deleteListingDialog"
+		labelId="deleteListingDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
 			<h2>{{ t('opencatalogi', 'Delete Listing') }}</h2>
@@ -73,40 +73,44 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 // icons
 import Delete from 'vue-material-design-icons/Delete.vue'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Success state for the component
+ *
  * @type {import('vue').Ref<boolean|null>}
  */
 const success = ref(null)
 
 /**
  * Error state for the component
+ *
  * @type {import('vue').Ref<string|null>}
  */
 const error = ref(null)
 
 /**
  * Get the active listing from the store
+ *
  * @return {object | null}
  */
 const listing = computed(() => objectStore.getActiveObject('listing'))
 
 /**
  * Handle delete action
+ *
  * @return {Promise<void>}
  */
-const handleDelete = async () => {
+async function handleDelete() {
 	loading.value = true
 	try {
 		await objectStore.deleteObject('listing', listing.value.id)
@@ -133,6 +137,7 @@ export default {
 		NcNoteCard,
 		NcLoadingIcon,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -140,6 +145,7 @@ export default {
 			error: null,
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		closeDialog() {

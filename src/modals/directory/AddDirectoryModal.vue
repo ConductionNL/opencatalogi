@@ -13,7 +13,7 @@ import { navigationStore } from '../../store/store.js'
 		v-if="navigationStore.modal === 'addDirectory'"
 		ref="modalRef"
 		class="addDirectoryModal"
-		label-id="addDirectoryModal"
+		labelId="addDirectoryModal"
 		@close="closeModal">
 		<div class="modal__content">
 			<h2>{{ t('opencatalogi', 'Synchronize Directory') }}</h2>
@@ -183,7 +183,7 @@ import { navigationStore } from '../../store/store.js'
 					:placeholder="defaultDirectoryUrl"
 					:disabled="loading"
 					:loading="loading"
-					:helper-text="
+					:helperText="
 						t(
 							'opencatalogi',
 							'The URL of the OpenCatalogi directory API endpoint',
@@ -218,17 +218,16 @@ import { navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { loadState } from '@nextcloud/initial-state'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
-	NcModal,
-	NcTextField,
-	NcNoteCard,
 	NcLoadingIcon,
+	NcModal,
+	NcNoteCard,
+	NcTextField,
 } from '@nextcloud/vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { loadState } from '@nextcloud/initial-state'
-
 // icons
 import Sync from 'vue-material-design-icons/Sync.vue'
 
@@ -246,7 +245,10 @@ const error = ref(null)
 const directoryUrl = ref(DEFAULT_DIRECTORY_URL)
 const syncResults = ref(null)
 
-const handleSync = async () => {
+/**
+ *
+ */
+async function handleSync() {
 	loading.value = true
 	error.value = null
 	try {
@@ -276,7 +278,10 @@ const handleSync = async () => {
 	}
 }
 
-const closeModal = () => {
+/**
+ *
+ */
+function closeModal() {
 	navigationStore.setModal(false)
 	success.value = null
 	error.value = null
@@ -299,6 +304,7 @@ export default {
 		NcLoadingIcon,
 		Sync,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -310,16 +316,21 @@ export default {
 			showDetails: false,
 		}
 	},
+
 	methods: {
 		closeModal,
 		handleSync,
 
 		/**
 		 * Format a date/time string for display
+		 *
 		 * @param {string|object} dateTime The date/time to format
 		 * @return {string} Formatted date/time string
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */
+		/**
+		 * @param dateTime
+		 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2
+		 */
 		formatDateTime(dateTime) {
 			if (!dateTime) return 'Unknown'
 
@@ -342,10 +353,14 @@ export default {
 
 		/**
 		 * Get a human-readable label for a listing action
+		 *
 		 * @param {string} action The action type
 		 * @return {string} Human-readable label
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */
+		/**
+		 * @param action
+		 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2
+		 */
 		getActionLabel(action) {
 			const labels = {
 				created: 'New',

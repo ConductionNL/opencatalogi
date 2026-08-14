@@ -1,6 +1,6 @@
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -9,19 +9,19 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:description="catalog?.summary || ''"
 		icon="DatabaseEyeOutline"
 		:loading="loading"
-		:loading-label="t('opencatalogi', 'Loading catalog...')"
+		:loadingLabel="t('opencatalogi', 'Loading catalog...')"
 		:empty="!catalog && !loading"
-		:empty-label="t('opencatalogi', 'Catalog not found')"
+		:emptyLabel="t('opencatalogi', 'Catalog not found')"
 		:error="!!error"
-		:error-message="error"
-		:on-retry="loadCatalog"
+		:errorMessage="error"
+		:onRetry="loadCatalog"
 		:layout="detailLayout"
 		:widgets="widgetDefs"
 		:sidebar="!!catalog"
-		:sidebar-open="sidebarOpen"
-		object-type="catalog"
-		:object-id="catalogId"
-		:sidebar-props="{
+		:sidebarOpen="sidebarOpen"
+		objectType="catalog"
+		:objectId="catalogId"
+		:sidebarProps="{
 			register: String(catalog?.['@self']?.register || ''),
 			schema: String(catalog?.['@self']?.schema || ''),
 		}">
@@ -74,18 +74,18 @@ import { objectStore, navigationStore } from '../../store/store.js'
 			<CnJsonViewer
 				:value="JSON.stringify(catalog, null, 2)"
 				language="json"
-				:read-only="true"
+				:readOnly="true"
 				height="300px" />
 		</template>
 	</CnDetailPage>
 </template>
 
 <script>
+import { CnDetailGrid, CnDetailPage, CnJsonViewer } from '@conduction/nextcloud-vue'
 import { NcButton } from '@nextcloud/vue'
-import { CnDetailPage, CnDetailGrid, CnJsonViewer } from '@conduction/nextcloud-vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 
 const DETAIL_LAYOUT = [
 	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
@@ -131,6 +131,7 @@ export default {
 		Pencil,
 		OpenInApp,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -139,11 +140,13 @@ export default {
 			detailLayout: [...DETAIL_LAYOUT],
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		catalogId() {
 			return this.$route.params.id
 		},
+
 		/**
 		 * Prefer the id-keyed cache populated by `fetchObject` (route-driven
 		 * loads never set active, so `getActiveObject` returns null on a
@@ -158,6 +161,7 @@ export default {
 				|| objectStore.getActiveObject('catalog')
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		metadataItems() {
 			if (!this.catalog) return []
@@ -203,6 +207,7 @@ export default {
 				},
 			]
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		configItems() {
 			if (!this.catalog) return []
@@ -229,6 +234,7 @@ export default {
 				},
 			]
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		widgetDefs() {
 			return [
@@ -251,6 +257,7 @@ export default {
 			]
 		},
 	},
+
 	watch: {
 		catalogId: {
 			immediate: true,
@@ -262,6 +269,7 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		async loadCatalog() {
@@ -275,15 +283,18 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		goBack() {
 			this.$router.push({ name: 'Catalogs' })
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		editCatalog() {
 			objectStore.setActiveObject('catalog', this.catalog)
 			navigationStore.setModal('catalog')
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		openPublications() {
 			if (this.catalog?.slug) {

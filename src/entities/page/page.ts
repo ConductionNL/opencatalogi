@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { SafeParseReturnType, z } from 'zod'
-import { TPage, TPageContent } from './page.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TPage, TPageContent } from './page.types'
+
+import { z } from 'zod'
 
 /** @typedef {import('./page.types').TPage} TPage */
 /** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
@@ -8,6 +9,7 @@ import { TPage, TPageContent } from './page.types'
 /**
  * Page class representing a page entity with validation
  * Implements the TPage interface for type safety
+ *
  * @spec openspec/specs/entity-typescript-models/spec.md
  * @spec openspec/specs/entity-typescript-models/spec.md
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -24,6 +26,7 @@ export class Page implements TPage {
 
 	/**
 	 * Creates a new Page instance
+	 *
 	 * @param data Initial page data conforming to TPage interface
 	 *
 	 * @spec openspec/specs/entity-typescript-models/spec.md
@@ -35,6 +38,7 @@ export class Page implements TPage {
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	/**
 	 * Hydrates the page object with provided data
+	 *
 	 * @param data Page data to populate the instance
 	 */
 	private hydrate(data: TPage) {
@@ -55,7 +59,8 @@ export class Page implements TPage {
 	/* istanbul ignore next */
 	/**
 	 * Validates the page data against a schema
-	 * @return {SafeParseReturnType<TPage, unknown>} containing validation result
+	 *
+	 * @return containing validation result
 	 */
 	public validate(): SafeParseReturnType<TPage, unknown> {
 		// Schema validation for page data

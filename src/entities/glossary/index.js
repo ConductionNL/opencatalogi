@@ -1,6 +1,7 @@
 /**
  * Glossary Entity Index
  * Export file for glossary entities
+ *
  * @module Entities
  * @package
  * @author Ruben Linde

@@ -12,7 +12,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcModal
 		v-if="navigationStore.modal === 'viewDirectory'"
 		ref="modalRef"
-		label-id="viewDirectoryModal"
+		labelId="viewDirectoryModal"
 		@close="closeModal">
 		<div class="modal__content">
 			<h2>
@@ -104,9 +104,11 @@ export default {
 		NcModal,
 		NcButton,
 	},
+
 	computed: {
 		/**
 		 * Get the currently active listing from the store
+		 *
 		 * @return {object|null} The active listing object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */
@@ -114,9 +116,11 @@ export default {
 			return objectStore.getActiveObject('listing')
 		},
 	},
+
 	methods: {
 		/**
 		 * Close the modal and clear the active object
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */

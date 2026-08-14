@@ -5,7 +5,7 @@ https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore } from '../store/store.js'
+import { navigationStore, objectStore } from '../store/store.js'
 </script>
 
 <template>
@@ -49,7 +49,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<!-- Mass Actions Dropdown -->
 					<NcActions
 						v-if="massActions && massActions.length > 0"
-						:force-name="true"
+						:forceName="true"
 						:disabled="selectedObjects.length === 0"
 						:title="
 							selectedObjects.length === 0
@@ -64,7 +64,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 										{ count: selectedObjects.length },
 									)
 						"
-						:menu-name="
+						:menuName="
 							t('opencatalogi', 'Mass Actions ({count})', {
 								count: selectedObjects.length,
 							})
@@ -76,7 +76,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 							v-for="action in massActions"
 							:key="action.id"
 							:disabled="selectedObjects.length === 0"
-							close-after-click
+							closeAfterClick
 							@click="executeMassAction(action)">
 							<template #icon>
 								<component :is="action.icon" :size="20" />
@@ -93,8 +93,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 									objectType: objectTypePlural,
 								})
 							"
-							:model-value="viewMode"
-							:button-variant="true"
+							:modelValue="viewMode"
+							:buttonVariant="true"
 							:class="{
 								'checkbox-radio-switch--checked':
 									viewMode === 'cards',
@@ -102,8 +102,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 							:name="`${objectType}_view_mode`"
 							value="cards"
 							type="radio"
-							button-variant-grouped="horizontal"
-							@update:model-value="setViewMode">
+							buttonVariantGrouped="horizontal"
+							@update:modelValue="setViewMode">
 							{{ t('opencatalogi', 'Cards') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
@@ -112,8 +112,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 									objectType: objectTypePlural,
 								})
 							"
-							:model-value="viewMode"
-							:button-variant="true"
+							:modelValue="viewMode"
+							:buttonVariant="true"
 							:class="{
 								'checkbox-radio-switch--checked':
 									viewMode === 'table',
@@ -121,24 +121,24 @@ import { objectStore, navigationStore } from '../store/store.js'
 							:name="`${objectType}_view_mode`"
 							value="table"
 							type="radio"
-							button-variant-grouped="horizontal"
-							@update:model-value="setViewMode">
+							buttonVariantGrouped="horizontal"
+							@update:modelValue="setViewMode">
 							{{ t('opencatalogi', 'Table') }}
 						</NcCheckboxRadioSwitch>
 					</div>
 
 					<!-- Regular Actions -->
 					<NcActions
-						:force-name="true"
+						:forceName="true"
 						:inline="
 							actions && actions.length > 2 ? 3 : actions?.length || 2
 						"
-						:menu-name="t('opencatalogi', 'Actions')">
+						:menuName="t('opencatalogi', 'Actions')">
 						<NcActionButton
 							v-for="action in actions"
 							:key="action.id"
 							:primary="action.primary || false"
-							close-after-click
+							closeAfterClick
 							:disabled="getActionDisabled(action)"
 							@click="executeAction(action)">
 							<template #icon>
@@ -151,9 +151,9 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<!-- Columns Actions for table view -->
 					<NcActions
 						v-if="viewMode === 'table' && showColumnSelector"
-						:force-name="true"
+						:forceName="true"
 						:inline="1"
-						:menu-name="t('opencatalogi', 'Columns')">
+						:menuName="t('opencatalogi', 'Columns')">
 						<template #icon>
 							<FormatColumns :size="20" />
 						</template>
@@ -163,10 +163,10 @@ import { objectStore, navigationStore } from '../store/store.js'
 						<NcActionCheckbox
 							v-for="meta in metadataColumns"
 							:key="`meta_${meta.id}`"
-							:model-value="
+							:modelValue="
 								objectStore.columnFilters[`meta_${meta.id}`]
 							"
-							@update:model-value="
+							@update:modelValue="
 								(status) =>
 									objectStore.updateColumnFilter(
 										`meta_${meta.id}`,
@@ -183,10 +183,10 @@ import { objectStore, navigationStore } from '../store/store.js'
 						<NcActionCheckbox
 							v-for="prop in propertyColumns"
 							:key="`prop_${prop.id}`"
-							:model-value="
+							:modelValue="
 								objectStore.columnFilters[`prop_${prop.id}`]
 							"
-							@update:model-value="
+							@update:modelValue="
 								(status) =>
 									objectStore.updateColumnFilter(
 										`prop_${prop.id}`,
@@ -238,14 +238,14 @@ import { objectStore, navigationStore } from '../store/store.js'
 								</h2>
 								<NcActions
 									:primary="true"
-									:menu-name="t('opencatalogi', 'Actions')">
+									:menuName="t('opencatalogi', 'Actions')">
 									<template #icon>
 										<DotsHorizontal :size="20" />
 									</template>
 									<NcActionButton
 										v-for="action in objectActions"
 										:key="action.id"
-										close-after-click
+										closeAfterClick
 										:disabled="
 											action.condition
 											&& !action.condition(item)
@@ -313,9 +313,9 @@ import { objectStore, navigationStore } from '../store/store.js'
 														},
 													)
 												"
-												:model-value="allSelected"
+												:modelValue="allSelected"
 												:indeterminate="someSelected"
-												@update:model-value="
+												@update:modelValue="
 													toggleSelectAll
 												" />
 										</th>
@@ -366,12 +366,12 @@ import { objectStore, navigationStore } from '../store/store.js'
 														},
 													)
 												"
-												:model-value="
+												:modelValue="
 													selectedObjects.includes(
 														getObjectId(item),
 													)
 												"
-												@update:model-value="
+												@update:modelValue="
 													handleSelectObject(
 														getObjectId(item),
 													)
@@ -398,7 +398,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 												<NcActionButton
 													v-for="action in objectActions"
 													:key="action.id"
-													close-after-click
+													closeAfterClick
 													:disabled="
 														action.condition
 														&& !action.condition(item)
@@ -434,9 +434,9 @@ import { objectStore, navigationStore } from '../store/store.js'
 													{ objectType: objectTypePlural },
 												)
 											"
-											:model-value="allSelected"
+											:modelValue="allSelected"
 											:indeterminate="someSelected"
-											@update:model-value="toggleSelectAll" />
+											@update:modelValue="toggleSelectAll" />
 									</th>
 									<th
 										v-for="(
@@ -477,12 +477,12 @@ import { objectStore, navigationStore } from '../store/store.js'
 													title: getObjectTitle(item),
 												})
 											"
-											:model-value="
+											:modelValue="
 												selectedObjects.includes(
 													getObjectId(item),
 												)
 											"
-											@update:model-value="
+											@update:modelValue="
 												handleSelectObject(getObjectId(item))
 											" />
 									</td>
@@ -507,7 +507,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 											<NcActionButton
 												v-for="action in objectActions"
 												:key="action.id"
-												close-after-click
+												closeAfterClick
 												:disabled="
 													action.condition
 													&& !action.condition(item)
@@ -533,40 +533,38 @@ import { objectStore, navigationStore } from '../store/store.js'
 
 			<!-- Pagination -->
 			<PaginationComponent
-				:current-page="currentPagination.page || 1"
-				:total-pages="
+				:currentPage="currentPagination.page || 1"
+				:totalPages="
 					currentPagination.pages
 					|| Math.ceil(
 						filteredObjects.length / (currentPagination.limit || 20),
 					)
 				"
-				:total-items="currentPagination.total || filteredObjects.length"
-				:current-page-size="currentPagination.limit || 20"
-				:min-items-to-show="0"
-				@page-changed="onPageChanged"
-				@page-size-changed="onPageSizeChanged" />
+				:totalItems="currentPagination.total || filteredObjects.length"
+				:currentPageSize="currentPagination.limit || 20"
+				:minItemsToShow="0"
+				@pageChanged="onPageChanged"
+				@pageSizeChanged="onPageSizeChanged" />
 		</div>
 	</NcAppContent>
 </template>
 
 <script>
 import {
+	NcActionButton,
+	NcActionCaption,
+	NcActionCheckbox,
+	NcActions,
 	NcAppContent,
+	NcButton,
+	NcCheckboxRadioSwitch,
 	NcEmptyContent,
 	NcLoadingIcon,
-	NcActions,
-	NcActionButton,
-	NcActionCheckbox,
-	NcActionCaption,
-	NcCheckboxRadioSwitch,
-	NcButton,
 } from '@nextcloud/vue'
 import { VueDraggable } from 'vue-draggable-plus'
-
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
-import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
 import FormatColumns from 'vue-material-design-icons/FormatColumns.vue'
-
+import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
 import PaginationComponent from './PaginationComponent.vue'
 
 /**
@@ -599,6 +597,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * Plural form of object type for display
 		 */
@@ -606,6 +605,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * Title for the view
 		 */
@@ -613,6 +613,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * Description for the view
 		 */
@@ -620,6 +621,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * Icon for empty state
 		 */
@@ -627,6 +629,7 @@ export default {
 			type: [String, Object],
 			required: true,
 		},
+
 		/**
 		 * Icon for cards
 		 */
@@ -634,6 +637,7 @@ export default {
 			type: [String, Object],
 			required: true,
 		},
+
 		/**
 		 * Properties to display in table/cards
 		 */
@@ -641,6 +645,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		/**
 		 * Available actions for individual objects
 		 */
@@ -648,6 +653,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		/**
 		 * Available mass actions
 		 */
@@ -655,6 +661,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		/**
 		 * Available header actions
 		 */
@@ -662,6 +669,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		/**
 		 * Add action (for empty state)
 		 */
@@ -669,6 +677,7 @@ export default {
 			type: Object,
 			default: null,
 		},
+
 		/**
 		 * Custom modal configurations
 		 */
@@ -676,6 +685,7 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * Custom dialog configurations
 		 */
@@ -683,6 +693,7 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * Whether to show column selector
 		 */
@@ -690,6 +701,7 @@ export default {
 			type: Boolean,
 			default: true,
 		},
+
 		/**
 		 * Whether to enable column reordering
 		 */
@@ -697,6 +709,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		/**
 		 * Custom refresh function
 		 */
@@ -704,6 +717,7 @@ export default {
 			type: Function,
 			default: null,
 		},
+
 		/**
 		 * Custom pagination function
 		 */
@@ -711,6 +725,7 @@ export default {
 			type: Function,
 			default: null,
 		},
+
 		/**
 		 * Help URL for documentation
 		 */
@@ -732,15 +747,18 @@ export default {
 		filteredObjects() {
 			return objectStore.getCollection(this.objectType)?.results || []
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		currentPagination() {
 			const pagination = objectStore.getPagination(this.objectType)
 			return pagination
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		paginatedObjects() {
 			return this.filteredObjects
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		selectedObjects() {
 			// Use store-managed selected objects if available, otherwise use local state
@@ -748,6 +766,7 @@ export default {
 				.map((obj) => this.getObjectId(obj))
 				.filter(Boolean)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		allSelected() {
 			return (
@@ -757,10 +776,12 @@ export default {
 				)
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		someSelected() {
 			return this.selectedObjects.length > 0 && !this.allSelected
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		emptyContentName() {
 			if (objectStore.isLoading(this.objectType)) {
@@ -774,6 +795,7 @@ export default {
 			}
 			return ''
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		emptyContentDescription() {
 			if (objectStore.isLoading(this.objectType)) {
@@ -789,6 +811,7 @@ export default {
 			}
 			return ''
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		metadataColumns() {
 			// Get all available metadata columns from objectStore
@@ -797,6 +820,7 @@ export default {
 				...meta,
 			}))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		propertyColumns() {
 			// Get all available property columns from objectStore
@@ -807,6 +831,7 @@ export default {
 				}),
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		orderedEnabledColumns() {
 			// Get enabled columns from the store or use provided properties
@@ -845,13 +870,19 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param mode
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		setViewMode(mode) {
 			console.info('Setting view mode to:', mode)
 			this.viewMode = mode
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param checked
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		toggleSelectAll(checked) {
 			if (checked) {
 				// Select all - update store with full objects
@@ -866,7 +897,10 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param objectId
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		handleSelectObject(objectId) {
 			const currentSelected = [...(objectStore.selectedObjects || [])]
 			const existingIndex = currentSelected.findIndex(
@@ -892,7 +926,11 @@ export default {
 			objectStore.setSelectedObjects(currentSelected)
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param id
+		 * @param event
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		handleRowClick(id, event) {
 			// Don't select if clicking on the checkbox, actions button, or inside actions menu
 			if (
@@ -925,7 +963,11 @@ export default {
 			return item?.summary || item?.description || ''
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param item
+		 * @param column
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		getColumnValue(item, column) {
 			if (column.key) {
 				// Handle nested properties
@@ -940,7 +982,10 @@ export default {
 			return 'N/A'
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param item
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		getCardProperties(item) {
 			// Convert properties to card display format
 			return this.orderedEnabledColumns
@@ -953,7 +998,10 @@ export default {
 				.filter((prop) => prop.value !== 'N/A')
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param action
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		getActionDisabled(action) {
 			if (typeof action.disabled === 'function') {
 				return action.disabled()
@@ -961,7 +1009,10 @@ export default {
 			return action.disabled || false
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param action
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		executeAction(action) {
 			if (action.handler) {
 				action.handler()
@@ -982,7 +1033,11 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param action
+		 * @param item
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		executeObjectAction(action, item) {
 			if (action.handler) {
 				action.handler(item)
@@ -1009,7 +1064,10 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param action
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		executeMassAction(action) {
 			if (this.selectedObjects.length === 0) return
 
@@ -1022,7 +1080,10 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param page
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		onPageChanged(page) {
 			console.info('Page changed to:', page)
 			if (this.paginationFunction) {
@@ -1035,7 +1096,10 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param pageSize
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		onPageSizeChanged(pageSize) {
 			console.info('Page size changed to:', pageSize)
 			if (this.paginationFunction) {
@@ -1059,7 +1123,11 @@ export default {
 			objectStore.setSelectedObjects([])
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
+		/**
+		 * @param url
+		 * @param type
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1
+		 */
 		openLink(url, type = '') {
 			window.open(url, type)
 		},

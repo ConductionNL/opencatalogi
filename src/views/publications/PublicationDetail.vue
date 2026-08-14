@@ -28,7 +28,7 @@
 	@visual exclude Unreachable: imported by nothing, in no route, absent from the shipped bundle; superseded by the manifest type:"detail" Publications page (CnDetailPage). Tracked in ConductionNL/opencatalogi#849.
 -->
 <script setup>
-import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -41,7 +41,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 			<NcActions
 				:disabled="objectStore.isLoading('publication')"
 				:primary="true"
-				:menu-name="
+				:menuName="
 					objectStore.isLoading('publication')
 						? t('opencatalogi', 'Loading...')
 						: t('opencatalogi', 'Actions')
@@ -62,7 +62,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					</span>
 				</template>
 				<NcActionButton
-					close-after-click
+					closeAfterClick
 					:title="
 						t(
 							'opencatalogi',
@@ -81,7 +81,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					{{ t('opencatalogi', 'Help') }}
 				</NcActionButton>
 				<NcActionButton
-					close-after-click
+					closeAfterClick
 					@click="navigationStore.setModal('objectModal')">
 					<template #icon>
 						<Pencil :size="20" />
@@ -89,7 +89,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
 				<NcActionButton
-					close-after-click
+					closeAfterClick
 					@click="navigationStore.setDialog('copyPublication')">
 					<template #icon>
 						<ContentCopy :size="20" />
@@ -101,7 +101,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						objectStore.getActiveObject('publication')['@self']
 							?.published === null
 					"
-					close-after-click
+					closeAfterClick
 					@click="publishPublication('publish')">
 					<template #icon>
 						<Publish :size="20" />
@@ -113,7 +113,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						objectStore.getActiveObject('publication')['@self']
 							?.published
 					"
-					close-after-click
+					closeAfterClick
 					@click="publishPublication('depublish')">
 					<template #icon>
 						<PublishOff :size="20" />
@@ -121,21 +121,21 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					{{ t('opencatalogi', 'Depublish') }}
 				</NcActionButton>
 				<NcActionButton
-					close-after-click
+					closeAfterClick
 					@click="navigationStore.setDialog('downloadPublication')">
 					<template #icon>
 						<Download :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Download') }}
 				</NcActionButton>
-				<NcActionButton close-after-click disabled>
+				<NcActionButton closeAfterClick disabled>
 					<template #icon>
 						<FolderOutline :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Add attachment') }}
 				</NcActionButton>
 				<NcActionButton
-					close-after-click
+					closeAfterClick
 					@click="
 						navigationStore.setDialog('deleteObject', {
 							objectType: 'publication',
@@ -258,7 +258,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 			</div> -->
 		</div>
 		<div class="tabContainer">
-			<AppTabs content-class="mt-3" justified>
+			<AppTabs contentClass="mt-3" justified>
 				<AppTab :title="t('opencatalogi', 'Attachments')" active>
 					<div class="tabPanel">
 						<div class="buttonsContainer">
@@ -286,7 +286,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								"
 								:primary="true"
 								class="checkboxListActionButton"
-								:menu-name="
+								:menuName="
 									objectStore.isLoading('publicationAttachments')
 										? t('opencatalogi', 'Loading...')
 										: t('opencatalogi', 'Actions')
@@ -318,7 +318,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									</span>
 								</template>
 								<NcActionButton
-									close-after-click
+									closeAfterClick
 									@click="selectAllAttachments('published')">
 									<template #icon>
 										<SelectAllIcon
@@ -339,7 +339,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									}}
 								</NcActionButton>
 								<NcActionButton
-									close-after-click
+									closeAfterClick
 									@click="selectAllAttachments('unpublished')">
 									<template #icon>
 										<SelectAllIcon
@@ -361,7 +361,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								</NcActionButton>
 								<NcActionButton
 									v-if="selectedUnpublishedCount > 0"
-									close-after-click
+									closeAfterClick
 									@click="bulkPublish">
 									<template #icon>
 										<Publish :size="20" />
@@ -386,7 +386,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								</NcActionButton>
 								<NcActionButton
 									v-if="selectedPublishedCount > 0"
-									close-after-click
+									closeAfterClick
 									@click="bulkDepublish">
 									<template #icon>
 										<PublishOff :size="20" />
@@ -411,7 +411,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								</NcActionButton>
 								<NcActionButton
 									v-if="selectedAttachments.length > 0"
-									close-after-click
+									closeAfterClick
 									@click="bulkDeleteAttachments">
 									<template #icon>
 										<Delete :size="20" />
@@ -450,10 +450,10 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											{ title: attachment?.title },
 										)
 									"
-									:model-value="
+									:modelValue="
 										selectedAttachments.includes(attachment.id)
 									"
-									@update:model-value="
+									@update:modelValue="
 										toggleSelection(attachment)
 									" />
 
@@ -466,7 +466,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											'publicationAttachment',
 										)?.id === attachment.id
 									"
-									:force-display-actions="true"
+									:forceDisplayActions="true"
 									@click="setActiveAttachment(attachment)">
 									<template #icon>
 										<NcLoadingIcon
@@ -495,7 +495,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										<FileOutline
 											v-else
 											class="publishedIcon"
-											disable-menu
+											disableMenu
 											:size="44" />
 									</template>
 
@@ -583,7 +583,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									</template>
 									<template #actions>
 										<NcActionButton
-											close-after-click
+											closeAfterClick
 											@click="openFile(attachment)">
 											<template #icon>
 												<OpenInNew :size="20" />
@@ -592,7 +592,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										</NcActionButton>
 										<NcActionButton
 											v-if="!attachment.published"
-											close-after-click
+											closeAfterClick
 											@click="publishFile(attachment)">
 											<template #icon>
 												<Publish :size="20" />
@@ -601,7 +601,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										</NcActionButton>
 										<NcActionButton
 											v-if="attachment.published"
-											close-after-click
+											closeAfterClick
 											@click="depublishFile(attachment)">
 											<template #icon>
 												<PublishOff :size="20" />
@@ -609,7 +609,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											{{ t('opencatalogi', 'Depublish') }}
 										</NcActionButton>
 										<NcActionButton
-											close-after-click
+											closeAfterClick
 											@click="deleteFile(attachment)">
 											<template #icon>
 												<Delete :size="20" />
@@ -618,7 +618,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										</NcActionButton>
 										<NcActionButton
 											v-if="editingTags !== attachment.title"
-											close-after-click
+											closeAfterClick
 											@click="editTags(attachment)">
 											<template #icon>
 												<TagEdit :size="20" />
@@ -627,7 +627,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										</NcActionButton>
 										<NcActionButton
 											v-if="editingTags === attachment.title"
-											close-after-click
+											closeAfterClick
 											@click="
 												() => {
 													editingTags = null
@@ -650,13 +650,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 
 							<div class="paginationContainer">
 								<CnPagination
-									:current-page="currentPage"
-									:total-pages="attachmentsTotalPages"
-									:total-items="attachmentsTotal"
-									:current-page-size="limit"
-									:page-size-options="pageSizeOptions"
-									@page-changed="onAttachmentsPageChanged"
-									@page-size-changed="
+									:currentPage="currentPage"
+									:totalPages="attachmentsTotalPages"
+									:totalItems="attachmentsTotal"
+									:currentPageSize="limit"
+									:pageSizeOptions="pageSizeOptions"
+									@pageChanged="onAttachmentsPageChanged"
+									@pageSizeChanged="
 										onAttachmentsPageSizeChanged
 									" />
 							</div>
@@ -785,7 +785,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								:disabled="objectStore.isLoading('themes')"
 								:primary="true"
 								class="checkboxListActionButton"
-								:menu-name="
+								:menuName="
 									objectStore.isLoading('themes')
 										? t('opencatalogi', 'Loading...')
 										: t('opencatalogi', 'Actions')
@@ -809,7 +809,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									</span>
 								</template>
 								<NcActionButton
-									close-after-click
+									closeAfterClick
 									@click="selectAllThemes()">
 									<template #icon>
 										<SelectAllIcon
@@ -827,7 +827,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									}}
 								</NcActionButton>
 								<NcActionButton
-									close-after-click
+									closeAfterClick
 									:disabled="selectedThemes.length === 0"
 									@click="bulkDeleteThemes">
 									<template #icon>
@@ -860,14 +860,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											title: value.title,
 										})
 									"
-									:model-value="selectedThemes.includes(value.id)"
-									@update:model-value="
+									:modelValue="selectedThemes.includes(value.id)"
+									@update:modelValue="
 										toggleThemeSelection(value)
 									" />
 								<NcListItem
 									:name="value.title"
 									:bold="false"
-									:force-display-actions="true">
+									:forceDisplayActions="true">
 									<template #icon>
 										<ShapeOutline
 											:class="
@@ -875,7 +875,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 													?.id === value.id
 												&& 'selectedZaakIcon'
 											"
-											disable-menu
+											disableMenu
 											:size="44" />
 									</template>
 									<template #subname>
@@ -883,7 +883,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									</template>
 									<template #actions>
 										<NcActionButton
-											close-after-click
+											closeAfterClick
 											@click="
 												() => {
 													objectStore.setActiveObject(
@@ -899,7 +899,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											{{ t('opencatalogi', 'View') }}
 										</NcActionButton>
 										<NcActionButton
-											close-after-click
+											closeAfterClick
 											@click="
 												() => {
 													objectStore.setActiveObject(
@@ -928,9 +928,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									})
 								"
 								:bold="false"
-								:force-display-actions="true">
+								:forceDisplayActions="true">
 								<template #icon>
-									<Alert disable-menu :size="44" />
+									<Alert disableMenu :size="44" />
 								</template>
 								<template #subname>
 									{{
@@ -943,7 +943,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								</template>
 								<template #actions>
 									<NcActionButton
-										close-after-click
+										closeAfterClick
 										:disabled="deleteThemeLoading"
 										@click="deleteMissingTheme(value)">
 										<template #icon>
@@ -953,7 +953,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 														=== value.id
 													&& 'selectedZaakIcon'
 												"
-												disable-menu
+												disableMenu
 												:size="44" />
 										</template>
 										<template #subname>
@@ -1002,9 +1002,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								t('opencatalogi', 'Theme {name}', { name: value })
 							"
 							:bold="false"
-							:force-display-actions="true">
+							:forceDisplayActions="true">
 							<template #icon>
-								<Alert disable-menu :size="44" />
+								<Alert disableMenu :size="44" />
 							</template>
 							<template #subname>
 								{{
@@ -1114,7 +1114,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							<dd>
 								<NcSelectTags
 									v-model="userGroups"
-									:input-label="t('opencatalogi', 'user groups')"
+									:inputLabel="t('opencatalogi', 'user groups')"
 									:multiple="true" />
 							</dd>
 						</div>
@@ -1124,7 +1124,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<div class="tabPanel">
 						<PublicationStatsPanel
 							v-if="publication && publication.id"
-							:publication-id="String(publication.id)" />
+							:publicationId="String(publication.id)" />
 					</div>
 				</AppTab>
 			</AppTabs>
@@ -1133,46 +1133,46 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
+import { CnPagination } from '@conduction/nextcloud-vue'
 import {
 	NcActionButton,
+	NcActionLink,
 	NcActions,
 	NcButton,
+	NcCheckboxRadioSwitch,
+	NcCounterBubble,
 	NcListItem,
 	NcLoadingIcon,
 	NcSelect,
 	NcSelectTags,
-	NcActionLink,
-	NcCounterBubble,
-	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
-import { CnPagination } from '@conduction/nextcloud-vue'
-import AppTabs from '../../components/tabs/AppTabs.vue'
-import AppTab from '../../components/tabs/AppTab.vue'
+import Alert from 'vue-material-design-icons/Alert.vue'
 // Icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
+import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Download from 'vue-material-design-icons/Download.vue'
+import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
+import FileOutline from 'vue-material-design-icons/FileOutline.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 import LockOpenVariantOutline from 'vue-material-design-icons/LockOpenVariantOutline.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
+import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
-import TimelineQuestionOutline from 'vue-material-design-icons/TimelineQuestionOutline.vue'
-import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
-import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
-import Alert from 'vue-material-design-icons/Alert.vue'
-import FileOutline from 'vue-material-design-icons/FileOutline.vue'
-import ShapeOutline from 'vue-material-design-icons/ShapeOutline.vue'
-import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import TagEdit from 'vue-material-design-icons/TagEdit.vue'
-import TagOff from 'vue-material-design-icons/TagOff.vue'
-import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import SelectAllIcon from 'vue-material-design-icons/SelectAll.vue'
 import SelectRemove from 'vue-material-design-icons/SelectRemove.vue'
+import ShapeOutline from 'vue-material-design-icons/ShapeOutline.vue'
+import TagEdit from 'vue-material-design-icons/TagEdit.vue'
+import TagOff from 'vue-material-design-icons/TagOff.vue'
+import TimelineQuestionOutline from 'vue-material-design-icons/TimelineQuestionOutline.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
 import PublicationStatsPanel from './PublicationStatsPanel.vue'
 
 export default {
@@ -1193,6 +1193,7 @@ export default {
 		CnPagination,
 		PublicationStatsPanel,
 	},
+
 	data() {
 		return {
 			test: false,
@@ -1221,9 +1222,11 @@ export default {
 				inputLabel: 'Labels',
 				multiple: true,
 			},
+
 			editingTags: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * All attachments of the active publication.
@@ -1243,6 +1246,7 @@ export default {
 		publicationAttachments() {
 			return objectStore.getCollection('publicationAttachments').results || []
 		},
+
 		/**
 		 * Total number of attachments across all pages.
 		 *
@@ -1256,6 +1260,7 @@ export default {
 		attachmentsTotal() {
 			return this.publicationAttachments.length
 		},
+
 		/**
 		 * Number of attachment pages at the current page size.
 		 *
@@ -1265,6 +1270,7 @@ export default {
 		attachmentsTotalPages() {
 			return Math.max(1, Math.ceil(this.attachmentsTotal / this.limit))
 		},
+
 		/**
 		 * The attachments visible on the current page.
 		 *
@@ -1275,6 +1281,7 @@ export default {
 			const start = (this.currentPage - 1) * this.limit
 			return this.publicationAttachments.slice(start, start + this.limit)
 		},
+
 		/**
 		 * Page-size choices for `CnPagination`, which expects `{ value, label }`
 		 * entries rather than the bare numbers held in `limitOptions`.
@@ -1288,24 +1295,30 @@ export default {
 				label: String(size),
 			}))
 		},
+
 		publication() {
 			return objectStore.getActiveObject('publication')
 		},
+
 		registerId() {
 			return this.publication['@self'].register
 		},
+
 		schemaId() {
 			return this.publication['@self'].schema
 		},
+
 		publicationId() {
 			return this.publication.id
 		},
+
 		filteredThemes() {
 			const themes = objectStore.getCollection('theme').results
 			return themes.filter((theme) =>
 				this.publication?.themes?.includes(theme.id),
 			)
 		},
+
 		missingThemes() {
 			// themes (id's)- which are on the publication but do not exist on the themeList
 			const themes = objectStore.getCollection('theme').results
@@ -1314,6 +1327,7 @@ export default {
 				(themeId) => !themes.map((theme) => theme.id).includes(themeId),
 			)
 		},
+
 		allPublishedSelected() {
 			const published =
 				this.publicationAttachments
@@ -1327,6 +1341,7 @@ export default {
 				this.selectedAttachments.includes(pubId),
 			)
 		},
+
 		allUnpublishedSelected() {
 			const unpublished =
 				this.publicationAttachments
@@ -1341,10 +1356,12 @@ export default {
 			)
 		},
 	},
+
 	watch: {
 		// React to route id changes by delegating to a named method
 		'$route.params.id': 'onRouteIdChange',
 	},
+
 	mounted() {
 		// Ensure the active publication is loaded based on the router param, then load attachments
 		this.syncWithRoute()
@@ -1352,6 +1369,7 @@ export default {
 			this.labelOptionsEdit.options = data
 		})
 	},
+
 	updated() {
 		const currentPublicationId = objectStore.getActiveObject('publication')?.id
 		if (
@@ -1362,6 +1380,7 @@ export default {
 			catalogStore.getPublicationAttachments()
 		}
 	},
+
 	methods: {
 		/**
 		 * Move the attachment pager to another page.
@@ -1381,6 +1400,7 @@ export default {
 				this.attachmentsTotalPages,
 			)
 		},
+
 		/**
 		 * Change the attachment page size, keeping the pager in range.
 		 *
@@ -1392,8 +1412,10 @@ export default {
 			this.limit = Number(size)
 			this.currentPage = 1
 		},
+
 		/**
 		 * Handle route id changes to load a different publication and its attachments
+		 *
 		 * @param {string} newId - New publication ID from the route
 		 * @param {string} oldId - Previous publication ID from the route
 		 * @return {void}
@@ -1406,6 +1428,7 @@ export default {
 
 		/**
 		 * Ensure active publication is loaded from the current route and attachments are fetched
+		 *
 		 * @return {Promise<void>}
 		 */
 		async syncWithRoute() {
@@ -1418,6 +1441,7 @@ export default {
 
 		/**
 		 * Load publication by id via store and set it as active (includes @self.schema and @self.register)
+		 *
 		 * @param {string} id - Publication ID
 		 * @return {Promise<void>}
 		 */
@@ -1441,6 +1465,7 @@ export default {
 				console.error('Failed to load publication from route:', e)
 			}
 		},
+
 		formatFileSize(size) {
 			if (size < 1024) return size + ' bytes'
 			if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB'
@@ -1448,15 +1473,19 @@ export default {
 				return (size / (1024 * 1024)).toFixed(2) + ' MB'
 			return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
 		},
+
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
+
 		addAttachment() {
 			navigationStore.setModal('uploadFiles')
 		},
+
 		openFolder(folder) {
 			window.open(folder, '_blank')
 		},
+
 		selectedPublishedCount() {
 			return this.selectedAttachments.filter((a) => {
 				const found = this.publicationAttachments?.find(
@@ -1467,6 +1496,7 @@ export default {
 				return !!found.published
 			}).length
 		},
+
 		selectedUnpublishedCount() {
 			return this.selectedAttachments.filter((a) => {
 				const found = this.publicationAttachments?.find(
@@ -1476,6 +1506,7 @@ export default {
 				return found.published === null
 			}).length
 		},
+
 		selectedAttachmentsEntities() {
 			return (
 				this.publicationAttachments?.filter((attach) =>
@@ -1483,10 +1514,12 @@ export default {
 				) || []
 			)
 		},
+
 		editTags(attachment) {
 			this.editingTags = attachment.title
 			this.editedTags = attachment.labels
 		},
+
 		addNewTag(newTag) {
 			if (!newTag) return
 			if (
@@ -1505,6 +1538,7 @@ export default {
 				this.editedTags = [...(this.editedTags || []), newTag]
 			}
 		},
+
 		async getTags() {
 			const response = await fetch('/index.php/apps/openregister/api/tags', {
 				method: 'get',
@@ -1516,6 +1550,7 @@ export default {
 			// this.setTagsList(filteredData)
 			return { response, data }
 		},
+
 		async saveTags(attachment) {
 			this.saveTagsLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
@@ -1579,6 +1614,7 @@ export default {
 				? this.selectedAttachments.filter((id) => id !== attachment.id)
 				: [...this.selectedAttachments, attachment.id]
 		},
+
 		selectAllPublicationData() {
 			const keys = this.publication?.data
 				? Object.keys(this.publication.data)
@@ -1591,6 +1627,7 @@ export default {
 				this.selectedPublicationData = []
 			}
 		},
+
 		allPublicationDataSelected() {
 			const keys = this.publication?.data
 				? Object.keys(this.publication.data)
@@ -1598,6 +1635,7 @@ export default {
 			if (!keys.length) return false
 			return keys.every((key) => this.selectedPublicationData.includes(key))
 		},
+
 		publishPublication(mode) {
 			fetch(
 				`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/${mode}`,
@@ -1614,6 +1652,7 @@ export default {
 				})
 			})
 		},
+
 		publishFile(attachment) {
 			this.publishLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
@@ -1641,6 +1680,7 @@ export default {
 					catalogStore.fetchPublications()
 				})
 		},
+
 		depublishFile(attachment) {
 			this.depublishLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
@@ -1668,6 +1708,7 @@ export default {
 					catalogStore.fetchPublications()
 				})
 		},
+
 		deleteFile(attachment) {
 			objectStore.setActiveObject('publicationAttachment', attachment)
 			// publicationStore.setAttachmentItem(attachment)
@@ -1675,6 +1716,7 @@ export default {
 			// publicationStore.setLimit(this.limit)
 			navigationStore.setDialog('deleteAttachment')
 		},
+
 		setActiveAttachment(attachment) {
 			if (
 				JSON.stringify(objectStore.getActiveObject('publicationAttachment'))
@@ -1685,6 +1727,7 @@ export default {
 				objectStore.setActiveObject('publicationAttachment', attachment)
 			}
 		},
+
 		bulkPublish() {
 			const unpublishedAttachments =
 				this.publicationAttachments?.filter(
@@ -1709,6 +1752,7 @@ export default {
 				)
 			})
 		},
+
 		bulkDepublish() {
 			const publishedAttachments =
 				this.publicationAttachments?.results?.filter(
@@ -1733,6 +1777,7 @@ export default {
 				)
 			})
 		},
+
 		bulkDeleteEigenschappen() {
 			if (!this.selectedPublicationData.length) return
 			navigationStore.setDialog('deleteMultiplePublicationData')
@@ -1769,10 +1814,12 @@ export default {
 			if (!this.selectedThemes.length) return
 			navigationStore.setDialog('deleteMultipleThemes')
 		},
+
 		onBulkDeleteThemesDone() {
 			navigationStore.setDialog(false)
 			this.selectedThemes = []
 		},
+
 		onBulkDeleteThemesCancel() {
 			navigationStore.setDialog(false)
 		},
@@ -1789,11 +1836,13 @@ export default {
 	},
 }
 </script>
+
 <style>
 .editingTags > div > a {
 	height: auto !important;
 }
 </style>
+
 <style scoped>
 h4 {
 	font-weight: bold;

@@ -3,8 +3,8 @@ opencatalogi * @author Ruben Linde * @copyright 2024 * @license EUPL-1.2 * @vers
 1.0.0 * @link https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { computed, ref } from 'vue'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -12,7 +12,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		v-if="navigationStore.dialog === 'copyMenu'"
 		ref="dialogRef"
 		class="copyMenuDialog"
-		label-id="copyMenuDialog"
+		labelId="copyMenuDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
 			<h2>{{ t('opencatalogi', 'Copy Menu') }}</h2>
@@ -71,40 +71,44 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 // icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Success state for the component
+ *
  * @type {import('vue').Ref<boolean|null>}
  */
 const success = ref(null)
 
 /**
  * Error state for the component
+ *
  * @type {import('vue').Ref<string|null>}
  */
 const error = ref(null)
 
 /**
  * Get the active menu from the store
+ *
  * @return {object | null}
  */
 const menu = computed(() => objectStore.getActiveObject('menu'))
 
 /**
  * Handle copy action
+ *
  * @return {Promise<void>}
  */
-const handleCopy = async () => {
+async function handleCopy() {
 	loading.value = true
 	try {
 		const newMenu = {
@@ -136,6 +140,7 @@ export default {
 		NcNoteCard,
 		NcLoadingIcon,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -143,6 +148,7 @@ export default {
 			error: null,
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-5 */
 		closeDialog() {

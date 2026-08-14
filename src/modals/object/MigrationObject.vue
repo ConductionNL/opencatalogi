@@ -1,5 +1,6 @@
 <script setup>
-import { objectStore, navigationStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
+
 import '../../css/json-highlight.css'
 </script>
 
@@ -15,7 +16,7 @@ import '../../css/json-highlight.css'
 					})
 		"
 		size="large"
-		:can-close="false">
+		:canClose="false">
 		<!-- Source and Target Information -->
 		<div class="migration-overview">
 			<div class="source-info">
@@ -184,10 +185,10 @@ import '../../css/json-highlight.css'
 					v-model="targetRegister"
 					:options="availableRegisters"
 					label="title"
-					track-by="id"
+					trackBy="id"
 					:aria-label-combobox="t('opencatalogi', 'Target Register')"
 					:placeholder="t('opencatalogi', 'Select a register...')"
-					@update:model-value="onRegisterChange" />
+					@update:modelValue="onRegisterChange" />
 			</div>
 
 			<!-- Target Schema Selection -->
@@ -197,10 +198,10 @@ import '../../css/json-highlight.css'
 					v-model="targetSchema"
 					:options="availableSchemas"
 					label="title"
-					track-by="id"
+					trackBy="id"
 					:aria-label-combobox="t('opencatalogi', 'Target Schema')"
 					:placeholder="t('opencatalogi', 'Select a schema...')"
-					@update:model-value="onSchemaChange" />
+					@update:modelValue="onSchemaChange" />
 			</div>
 		</div>
 
@@ -258,13 +259,13 @@ import '../../css/json-highlight.css'
 								v-model="uiMappings[sourceProperty.name]"
 								:options="targetPropertyOptions"
 								label="label"
-								track-by="value"
-								:input-label="t('opencatalogi', 'Target property')"
+								trackBy="value"
+								:inputLabel="t('opencatalogi', 'Target property')"
 								:placeholder="
 									t('opencatalogi', 'Map to target property...')
 								"
 								:clearable="true"
-								@update:model-value="
+								@update:modelValue="
 									updateMappingFromUI(sourceProperty.name)
 								" />
 						</div>
@@ -386,10 +387,8 @@ import '../../css/json-highlight.css'
 									detail.objectTitle || detail.objectId
 								}}</strong>
 								<span
-									:class="[
-										'status',
-										detail.success ? 'success' : 'error',
-									]">
+									class="status"
+									:class="[detail.success ? 'success' : 'error']">
 									{{
 										detail.success
 											? t('opencatalogi', 'Success')
@@ -504,11 +503,10 @@ import {
 	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
-
+import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
+import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
 // Icons
 import Cancel from 'vue-material-design-icons/Cancel.vue'
-import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
-import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import DatabaseExport from 'vue-material-design-icons/DatabaseExport.vue'
 import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
@@ -552,6 +550,7 @@ export default {
 			migrationResult: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		sourceRegister() {
@@ -570,6 +569,7 @@ export default {
 				}
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		sourceSchema() {
 			// Get schema info from the first selected object
@@ -587,6 +587,7 @@ export default {
 				}
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		targetPropertyOptions() {
 			const options = this.targetProperties.map((prop) => ({
@@ -601,6 +602,7 @@ export default {
 
 			return options
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		canMigrate() {
 			// Check if we have target register/schema and at least one property mapping
@@ -610,9 +612,11 @@ export default {
 			return this.targetRegister && this.targetSchema && hasValidMappings
 		},
 	},
+
 	mounted() {
 		this.initializeMigration()
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		initializeMigration() {
@@ -624,6 +628,7 @@ export default {
 			}
 			this.loadAvailableRegisters()
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async loadAvailableRegisters() {
 			this.loading = true
@@ -640,6 +645,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async onRegisterChange() {
 			if (!this.targetRegister) {
@@ -662,6 +668,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async onSchemaChange() {
 			if (!this.targetSchema) {
@@ -669,7 +676,11 @@ export default {
 			}
 			await this.loadSchemaProperties()
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
+
+		/**
+		 * @param objectId
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7
+		 */
 		removeObject(objectId) {
 			this.selectedObjects = this.selectedObjects.filter(
 				(obj) => obj.id !== objectId,
@@ -678,6 +689,7 @@ export default {
 				this.closeModal()
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		nextStep() {
 			if (this.step === 1 && this.selectedObjects.length > 0) {
@@ -686,12 +698,14 @@ export default {
 				this.step = 3
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		previousStep() {
 			if (this.step > 1) {
 				this.step--
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async loadSchemaProperties() {
 			if (!this.sourceSchema || !this.targetSchema) {
@@ -721,7 +735,11 @@ export default {
 				console.error('Error loading schema properties:', error)
 			}
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
+
+		/**
+		 * @param schema
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7
+		 */
 		extractSchemaProperties(schema) {
 			// Extract properties from schema definition
 			const properties = []
@@ -736,6 +754,7 @@ export default {
 			}
 			return properties
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		initializePropertyMappings() {
 			this.mapping = {}
@@ -760,6 +779,7 @@ export default {
 				}
 			})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async performMigration() {
 			if (!this.canMigrate) {
@@ -809,15 +829,21 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		closeModal() {
 			navigationStore.setModal(false)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
+
+		/**
+		 * @param sourceProperty
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7
+		 */
 		updateMappingFromUI(sourceProperty) {
 			// Convert UI mappings to our simple mapping format
 			this.convertUIToMapping()
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		convertUIToMapping() {
 			// Convert from UI format (source -> target option) to our format (target -> source)
@@ -831,6 +857,7 @@ export default {
 				}
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		convertMappingToUI() {
 			// Convert from our format (target -> source) to UI format (source -> target option)

@@ -8,9 +8,9 @@ import { objectStore } from '../../store/store.js'
 		:rows="items"
 		:columns="columns"
 		:loading="loading"
-		hide-header
+		hideHeader
 		borderless
-		row-icon="FileOutline">
+		rowIcon="FileOutline">
 		<template #empty>
 			<NcEmptyContent
 				:title="t('opencatalogi', 'No concept attachments found')">
@@ -26,11 +26,9 @@ import { objectStore } from '../../store/store.js'
 // Components
 import { CnDataTable, registerIcons } from '@conduction/nextcloud-vue'
 import { NcEmptyContent } from '@nextcloud/vue'
-
+import FileOutline from 'vue-material-design-icons/FileOutline.vue'
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
-import FileOutline from 'vue-material-design-icons/FileOutline.vue'
-
 import { LIST_COLUMNS } from './widgetTable.js'
 
 // The row's leading icon renders through CnDataTable's shared CnIcon
@@ -53,18 +51,21 @@ export default {
 		CnDataTable,
 		NcEmptyContent,
 	},
+
 	props: {
 		title: {
 			type: String,
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			loading: false,
 			columns: LIST_COLUMNS,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
@@ -78,12 +79,15 @@ export default {
 				}))
 		},
 	},
+
 	mounted() {
 		this.fetchData()
 	},
+
 	methods: {
 		/**
 		 * Fetch the attachment data
+		 *
 		 * @return {Promise<void>}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */

@@ -7,20 +7,20 @@
 		<div class="mostViewedControls">
 			<NcSelect
 				v-model="period"
-				input-label=""
+				inputLabel=""
 				:aria-label-combobox="t('opencatalogi', 'Period')"
 				:options="periodOptions"
 				:reduce="(option) => option.value"
 				label="label"
-				@update:model-value="load" />
+				@update:modelValue="load" />
 		</div>
 		<CnDataTable
 			:rows="items"
 			:columns="columns"
 			:loading="loading"
-			hide-header
+			hideHeader
 			borderless
-			@row-click="onRowClick">
+			@rowClick="onRowClick">
 			<template #empty>
 				<NcEmptyContent :title="t('opencatalogi', 'No usage measured yet')">
 					<template #icon>
@@ -34,8 +34,8 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { NcEmptyContent, NcSelect } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
+import { NcEmptyContent, NcSelect } from '@nextcloud/vue'
 import ChartLine from 'vue-material-design-icons/ChartLine.vue'
 import { fetchCatalogStats, formatCount } from '../../services/usageStats.js'
 import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
@@ -57,16 +57,19 @@ export default {
 		NcSelect,
 		ChartLine,
 	},
+
 	props: {
 		title: {
 			type: String,
 			default: '',
 		},
+
 		catalogSlug: {
 			type: String,
 			default: 'publications',
 		},
 	},
+
 	data() {
 		return {
 			loading: true,
@@ -75,6 +78,7 @@ export default {
 			columns: LIST_COLUMNS,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		periodOptions() {
@@ -84,6 +88,7 @@ export default {
 				{ value: 90, label: this.t('opencatalogi', 'Last 90 days') },
 			]
 		},
+
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		items() {
 			return this.topViewed.map((entry) => ({
@@ -95,9 +100,11 @@ export default {
 			}))
 		},
 	},
+
 	mounted() {
 		this.load()
 	},
+
 	methods: {
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		rangeFrom() {
@@ -105,6 +112,7 @@ export default {
 			d.setDate(d.getDate() - this.period)
 			return d.toISOString().slice(0, 10)
 		},
+
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		async load() {
 			this.loading = true
@@ -121,7 +129,11 @@ export default {
 				this.loading = false
 			}
 		},
-		/** @spec openspec/specs/publication-usage-analytics/spec.md */
+
+		/**
+		 * @param row
+		 * @spec openspec/specs/publication-usage-analytics/spec.md
+		 */
 		onRowClick(row) {
 			navigateTo(generateUrl(`/apps/opencatalogi/publications/${row.id}`))
 		},

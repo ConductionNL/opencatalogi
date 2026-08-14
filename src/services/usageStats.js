@@ -1,3 +1,4 @@
+import axios from '@nextcloud/axios'
 /**
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -11,7 +12,6 @@
  * officers do not misread the numbers (ANA-002 honest-limitation requirement).
  */
 import { generateUrl } from '@nextcloud/router'
-import axios from '@nextcloud/axios'
 
 /**
  * Fetch usage statistics for a single publication.

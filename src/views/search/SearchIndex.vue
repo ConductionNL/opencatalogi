@@ -69,8 +69,8 @@ import { objectStore } from '../../store/store.js'
 					<div class="viewModeSwitchContainer">
 						<NcCheckboxRadioSwitch
 							:title="t('opencatalogi', 'See publications as cards')"
-							:model-value="searchStore.getViewMode"
-							:button-variant="true"
+							:modelValue="searchStore.getViewMode"
+							:buttonVariant="true"
 							:class="{
 								'checkbox-radio-switch--checked':
 									viewMode === 'cards',
@@ -78,16 +78,16 @@ import { objectStore } from '../../store/store.js'
 							value="cards"
 							name="publications_view_mode"
 							type="radio"
-							button-variant-grouped="horizontal"
-							@update:model-value="
+							buttonVariantGrouped="horizontal"
+							@update:modelValue="
 								() => searchStore.setViewMode('cards')
 							">
 							{{ t('opencatalogi', 'Cards') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
 							:title="t('opencatalogi', 'See publications as a table')"
-							:model-value="searchStore.getViewMode"
-							:button-variant="true"
+							:modelValue="searchStore.getViewMode"
+							:buttonVariant="true"
 							:class="{
 								'checkbox-radio-switch--checked':
 									viewMode === 'table',
@@ -95,8 +95,8 @@ import { objectStore } from '../../store/store.js'
 							value="table"
 							name="publications_view_mode"
 							type="radio"
-							button-variant-grouped="horizontal"
-							@update:model-value="
+							buttonVariantGrouped="horizontal"
+							@update:modelValue="
 								() => searchStore.setViewMode('table')
 							">
 							{{ t('opencatalogi', 'Table') }}
@@ -104,11 +104,11 @@ import { objectStore } from '../../store/store.js'
 					</div>
 
 					<NcActions
-						:force-name="true"
+						:forceName="true"
 						:inline="3"
-						:menu-name="t('opencatalogi', 'Actions')">
+						:menuName="t('opencatalogi', 'Actions')">
 						<NcActionButton
-							close-after-click
+							closeAfterClick
 							:disabled="searchStore.isLoading"
 							@click="performSearch">
 							<template #icon>
@@ -212,12 +212,12 @@ import { objectStore } from '../../store/store.js'
 								</h2>
 								<NcActions
 									:primary="true"
-									:menu-name="t('opencatalogi', 'Actions')">
+									:menuName="t('opencatalogi', 'Actions')">
 									<template #icon>
 										<DotsHorizontal :size="20" />
 									</template>
 									<NcActionButton
-										close-after-click
+										closeAfterClick
 										@click="viewPublication(publication)">
 										<template #icon>
 											<Eye :size="20" />
@@ -225,7 +225,7 @@ import { objectStore } from '../../store/store.js'
 										{{ t('opencatalogi', 'View') }}
 									</NcActionButton>
 									<NcActionButton
-										close-after-click
+										closeAfterClick
 										@click="viewPublicationUses(publication)">
 										<template #icon>
 											<LinkVariant :size="20" />
@@ -233,7 +233,7 @@ import { objectStore } from '../../store/store.js'
 										{{ t('opencatalogi', 'View uses') }}
 									</NcActionButton>
 									<NcActionButton
-										close-after-click
+										closeAfterClick
 										@click="viewPublicationUsed(publication)">
 										<template #icon>
 											<LinkVariantOff :size="20" />
@@ -241,7 +241,7 @@ import { objectStore } from '../../store/store.js'
 										{{ t('opencatalogi', 'View used by') }}
 									</NcActionButton>
 									<NcActionButton
-										close-after-click
+										closeAfterClick
 										@click="downloadPublication(publication)">
 										<template #icon>
 											<Download :size="20" />
@@ -340,9 +340,9 @@ import { objectStore } from '../../store/store.js'
 													'Select all publications on this page',
 												)
 											"
-											:model-value="allSelected"
+											:modelValue="allSelected"
 											:indeterminate="someSelected"
-											@update:model-value="toggleSelectAll" />
+											@update:modelValue="toggleSelectAll" />
 									</th>
 									<th scope="col">
 										{{ t('opencatalogi', 'Title') }}
@@ -390,12 +390,12 @@ import { objectStore } from '../../store/store.js'
 														|| publication.name,
 												})
 											"
-											:model-value="
+											:modelValue="
 												searchStore.getSelectedPublications.includes(
 													publication.id,
 												)
 											"
-											@update:model-value="
+											@update:modelValue="
 												(checked) =>
 													searchStore.togglePublicationSelection(
 														publication.id,
@@ -443,7 +443,7 @@ import { objectStore } from '../../store/store.js'
 												<DotsHorizontal :size="20" />
 											</template>
 											<NcActionButton
-												close-after-click
+												closeAfterClick
 												@click="
 													viewPublication(publication)
 												">
@@ -453,7 +453,7 @@ import { objectStore } from '../../store/store.js'
 												{{ t('opencatalogi', 'View') }}
 											</NcActionButton>
 											<NcActionButton
-												close-after-click
+												closeAfterClick
 												@click="
 													viewPublicationUses(publication)
 												">
@@ -463,7 +463,7 @@ import { objectStore } from '../../store/store.js'
 												{{ t('opencatalogi', 'View uses') }}
 											</NcActionButton>
 											<NcActionButton
-												close-after-click
+												closeAfterClick
 												@click="
 													viewPublicationUsed(publication)
 												">
@@ -475,7 +475,7 @@ import { objectStore } from '../../store/store.js'
 												}}
 											</NcActionButton>
 											<NcActionButton
-												close-after-click
+												closeAfterClick
 												@click="
 													downloadPublication(publication)
 												">
@@ -495,16 +495,16 @@ import { objectStore } from '../../store/store.js'
 				<!-- Pagination -->
 				<PaginationComponent
 					v-if="searchStore.getSearchResults.length"
-					:current-page="searchStore.getPagination.page || 1"
-					:total-pages="searchStore.getPagination.pages || 1"
-					:total-items="
+					:currentPage="searchStore.getPagination.page || 1"
+					:totalPages="searchStore.getPagination.pages || 1"
+					:totalItems="
 						searchStore.getPagination.total
 						|| searchStore.getSearchResults.length
 					"
-					:current-page-size="searchStore.getPagination.limit || 20"
-					:min-items-to-show="0"
-					@page-changed="onPageChanged"
-					@page-size-changed="onPageSizeChanged" />
+					:currentPageSize="searchStore.getPagination.limit || 20"
+					:minItemsToShow="0"
+					@pageChanged="onPageChanged"
+					@pageSizeChanged="onPageSizeChanged" />
 			</div>
 		</div>
 	</NcAppContent>
@@ -512,26 +512,24 @@ import { objectStore } from '../../store/store.js'
 
 <script>
 import {
+	NcActionButton,
+	NcActions,
 	NcAppContent,
+	NcButton,
+	NcCheckboxRadioSwitch,
 	NcEmptyContent,
 	NcLoadingIcon,
-	NcActions,
-	NcActionButton,
-	NcCheckboxRadioSwitch,
-	NcButton,
 } from '@nextcloud/vue'
-
+import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
+import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
+import Download from 'vue-material-design-icons/Download.vue'
+import Eye from 'vue-material-design-icons/Eye.vue'
 // Icons
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
-import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
-import Download from 'vue-material-design-icons/Download.vue'
+import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
-import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
-
 import PaginationComponent from '../../components/PaginationComponent.vue'
 
 export default {
@@ -555,11 +553,13 @@ export default {
 		AlertCircleOutline,
 		PaginationComponent,
 	},
+
 	data() {
 		return {
 			searchStore: useSearchStore(),
 		}
 	},
+
 	computed: {
 		allSelected() {
 			return (
@@ -569,6 +569,7 @@ export default {
 				)
 			)
 		},
+
 		someSelected() {
 			return (
 				this.searchStore.getSelectedPublications.length > 0
@@ -576,6 +577,7 @@ export default {
 			)
 		},
 	},
+
 	mounted() {
 		console.info('SearchIndex mounted')
 		// Load initial results or perform search if there's already a search term
@@ -586,6 +588,7 @@ export default {
 			this.searchStore.loadInitialResults()
 		}
 	},
+
 	methods: {
 		async performSearch() {
 			console.info(
@@ -594,6 +597,7 @@ export default {
 			)
 			await this.searchStore.searchPublications()
 		},
+
 		toggleSelectAll(checked) {
 			if (checked) {
 				this.searchStore.selectAllPublications()
@@ -601,19 +605,23 @@ export default {
 				this.searchStore.clearAllSelections()
 			}
 		},
+
 		async onPageChanged(page) {
 			console.info('Page changed to:', page)
 			await this.searchStore.searchPublications({ _page: page })
 		},
+
 		async onPageSizeChanged(pageSize) {
 			console.info('Page size changed to:', pageSize)
 			await this.searchStore.searchPublications({ _page: 1, _limit: pageSize })
 		},
+
 		viewPublication(publication) {
 			console.info('Viewing publication:', publication)
 			// TODO: Implement publication detail view
 			// This could open a modal or navigate to a detail page
 		},
+
 		async viewPublicationUses(publication) {
 			console.info('Viewing publication uses:', publication)
 			try {
@@ -626,6 +634,7 @@ export default {
 				console.error('Failed to fetch publication uses:', error)
 			}
 		},
+
 		async viewPublicationUsed(publication) {
 			console.info('Viewing publication used by:', publication)
 			try {
@@ -638,6 +647,7 @@ export default {
 				console.error('Failed to fetch publication used by:', error)
 			}
 		},
+
 		downloadPublication(publication) {
 			console.info('Downloading publication:', publication)
 			// Use federation endpoint for download
@@ -646,6 +656,7 @@ export default {
 				'_blank',
 			)
 		},
+
 		formatDate(dateString) {
 			if (!dateString) return '-'
 			try {
@@ -654,9 +665,11 @@ export default {
 				return dateString
 			}
 		},
+
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
+
 		formatCatalogs(publication) {
 			if (
 				!publication['@self']
@@ -668,6 +681,7 @@ export default {
 				.map((catalog) => catalog.title || catalog.name || 'Unknown')
 				.join(', ')
 		},
+
 		formatSchema(publication) {
 			const schema = publication['@self']?.schema
 			if (!schema) return '-'

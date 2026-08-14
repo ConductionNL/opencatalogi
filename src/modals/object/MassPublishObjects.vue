@@ -1,11 +1,11 @@
 <script setup>
-import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcDialog
 		:name="dialogTitle"
-		:can-close="true"
+		:canClose="true"
 		size="normal"
 		class="mass-action-dialog"
 		@update:open="handleDialogClose">
@@ -24,7 +24,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 						:options="modeOptions"
 						:clearable="false"
 						:searchable="false"
-						label-attribute="label"
+						labelAttribute="label"
 						:aria-label-combobox="t('opencatalogi', 'Publishing mode')"
 						:disabled="loading">
 						<template #option="option">
@@ -47,9 +47,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				-->
 				<NcDateTimePicker
 					v-if="mode === 'later'"
-					:key="'publish-later-date'"
+					key="publish-later-date"
 					class="mode-row__date"
-					:model-value="publishDateObj"
+					:modelValue="publishDateObj"
 					:aria-label="t('opencatalogi', 'Publication date')"
 					:placeholder="t('opencatalogi', 'Publication date')"
 					type="date"
@@ -59,11 +59,11 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</div>
 
 			<SelectedObjectsList
-				hide-title
-				subtitle-attribute="summary"
-				:show-remove="true"
-				:is-disabled="isObjectUnsupported"
-				:disabled-reason="unsupportedReason" />
+				hideTitle
+				subtitleAttribute="summary"
+				:showRemove="true"
+				:isDisabled="isObjectUnsupported"
+				:disabledReason="unsupportedReason" />
 		</div>
 
 		<NcNoteCard type="info">
@@ -120,7 +120,6 @@ import {
 	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
-
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
@@ -160,30 +159,36 @@ export default {
 		mode() {
 			return this.selectedMode?.id || 'now'
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		today() {
 			return new Date().toISOString().slice(0, 10)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		minPublishDate() {
 			const start = new Date()
 			start.setHours(0, 0, 0, 0)
 			return start
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		publishDateObj() {
 			if (!this.publishDate) return null
 			const [year, month, day] = this.publishDate.split('-').map(Number)
 			return new Date(year, month - 1, day)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		selectedObjects() {
 			return objectStore.selectedObjects || []
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		anyDepublished() {
 			return this.selectedObjects.some((obj) => this.isDepublished(obj))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		allDepublished() {
 			return (
@@ -191,11 +196,13 @@ export default {
 				&& this.selectedObjects.every((obj) => this.isDepublished(obj))
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		alreadyPublishedCount() {
 			return this.selectedObjects.filter((obj) => this.isAlreadyPublished(obj))
 				.length
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		alreadyPublishedWarning() {
 			const count = this.alreadyPublishedCount
@@ -211,12 +218,14 @@ export default {
 				{ count },
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		unsupportedCount() {
 			return this.selectedObjects.filter(
 				(obj) => !schemaHasPublicationDateFields(obj),
 			).length
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		unsupportedWarning() {
 			const count = this.unsupportedCount
@@ -232,6 +241,7 @@ export default {
 				{ count },
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		modeOptions() {
 			const options = [
@@ -253,6 +263,7 @@ export default {
 			}
 			return options
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		dialogTitle() {
 			const count = this.selectedObjects.length
@@ -261,6 +272,7 @@ export default {
 			}
 			return t('opencatalogi', 'Publish {count} publications', { count })
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		infoText() {
 			if (this.mode === 'later') {
@@ -280,6 +292,7 @@ export default {
 				"Publications will be published with today's date. Any existing depublication date will be removed.",
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		submitDisabled() {
 			if (this.loading) return true
@@ -298,6 +311,7 @@ export default {
 			}
 			return false
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		successMessage() {
 			const plural = this.originalSelectedCount > 1
@@ -351,7 +365,10 @@ export default {
 		 * @param {unknown} value - The raw date value from the object
 		 * @return {string|null} The normalized YYYY-MM-DD string or null
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
+		/**
+		 * @param value
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
+		 */
 		normalizeDate(value) {
 			if (value == null || value === '') return null
 			return String(value).slice(0, 10)
@@ -366,7 +383,10 @@ export default {
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently published
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
+		/**
+		 * @param obj
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
+		 */
 		isAlreadyPublished(obj) {
 			const pub = this.normalizeDate(obj?.publicationDate)
 			if (!pub) return false
@@ -384,7 +404,10 @@ export default {
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently depublished
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
+		/**
+		 * @param obj
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
+		 */
 		isDepublished(obj) {
 			const depub = this.normalizeDate(obj?.depublicationDate)
 			if (!depub) return false
@@ -426,7 +449,10 @@ export default {
 		 * @param {Date} date - A day passed by the picker
 		 * @return {boolean} true if the date should be unselectable
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
+		/**
+		 * @param date
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
+		 */
 		isDateBeforeMin(date) {
 			if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false
 			const d = new Date(date)
@@ -434,7 +460,10 @@ export default {
 			return d.getTime() < this.minPublishDate.getTime()
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
+		/**
+		 * @param value
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
+		 */
 		handleDateInput(value) {
 			if (!value) {
 				this.publishDate = null
@@ -469,7 +498,10 @@ export default {
 			navigationStore.setDialog(false)
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()

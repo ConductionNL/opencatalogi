@@ -1,13 +1,13 @@
-import { defineStore } from 'pinia'
 import {
-	createObjectStore,
 	auditTrailsPlugin,
+	createObjectStore,
 	filesPlugin,
 	lifecyclePlugin,
 	liveUpdatesPlugin,
 	relationsPlugin,
 	selectionPlugin,
 } from '@conduction/nextcloud-vue'
+import { defineStore } from 'pinia'
 
 /**
  * @typedef {object} Schema
@@ -266,6 +266,7 @@ export const useObjectStore = defineStore('object', {
 	getters: {
 		/**
 		 * Get object types from settings
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<string>}
 		 */
@@ -273,6 +274,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get available registers from settings
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, title: string, schemas: Array<{id: string, title: string}>}>}
 		 */
@@ -280,6 +282,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get available schemas from settings
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, title: string, registerId: string, registerTitle: string}>}
 		 */
@@ -296,6 +299,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get loading state for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => boolean}
 		 */
@@ -303,6 +307,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get error for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => string|null}
 		 */
@@ -311,6 +316,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Get collection for specific type — preserves the historical
 		 * `{ results: [...] }` shape used by all opencatalogi Vue files.
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {results: Array<any>}}
 		 */
@@ -320,6 +326,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get search term for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => string}
 		 */
@@ -327,6 +334,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get single object
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string, id: string) => object | null}
 		 */
@@ -334,6 +342,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get active object for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => object | null}
 		 */
@@ -341,6 +350,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get related data for active object
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string, dataType: string) => object | null}
 		 */
@@ -349,6 +359,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get pagination info for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {total: number, page: number, pages: number, limit: number}}
 		 */
@@ -363,6 +374,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Check if there are more pages to load for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => boolean}
 		 */
@@ -375,6 +387,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Check if there are previous pages available
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => boolean}
 		 */
@@ -387,6 +400,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get audit trails for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => Array<any>}
 		 */
@@ -394,6 +408,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get state for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {success: boolean|null, error: string|null}}
 		 */
@@ -404,6 +419,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get object type configuration for a schema slug
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(slug: string) => {schema: string, register: string}|null}
 		 */
@@ -411,6 +427,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Check if an object type exists
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(slug: string) => boolean}
 		 */
@@ -418,6 +435,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get enabled metadata columns
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, label: string, key: string, description: string}>}
 		 */
@@ -429,6 +447,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get enabled property columns
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, label: string, key: string, description: string}>}
 		 */
@@ -440,6 +459,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get all enabled columns (metadata + properties)
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, label: string, key: string, description: string}>}
 		 */
@@ -457,6 +477,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Check if all objects are selected
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {boolean}
 		 */
@@ -474,6 +495,7 @@ export const useObjectStore = defineStore('object', {
 		 * Lazily resolve the inner lib store. The inner store is a Pinia
 		 * composable; calling it without an explicit Pinia instance picks up
 		 * the active one (which is the same one the outer store uses).
+		 *
 		 * @return {object} The inner store instance
 		 * @private
 		 */
@@ -485,10 +507,14 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Mirror an object type registration into the inner store so its
 		 * CRUD calls know which register/schema to target. Idempotent.
+		 *
 		 * @param {string} type - The type slug
 		 * @private
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		_ensureInnerType(type) {
 			const inner = this._inner()
 			if (inner.objectTypeRegistry?.[type]) return
@@ -517,11 +543,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set collection for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {Array} results - Collection results
 		 * @param {boolean} append - Whether to append results to existing collection
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param results
+		 * @param append
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setCollection(type, results, append = false) {
 			// Initialize if needed
 			if (!this.collections[type] || !append) {
@@ -554,6 +586,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set loading state for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {boolean} isLoading - Loading state
 		 */
@@ -563,10 +596,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set error for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {string|null} error - Error message
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param error
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setError(type, error) {
 			this.errors = { ...this.errors, [type]: error }
 			if (error) {
@@ -576,11 +614,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set active object for type and fetch related data
+		 *
 		 * @param {string} type - Object type
 		 * @param {object} object - Object to set as active
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param object
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async setActiveObject(type, object) {
 			// Update using reactive assignment
 			this.activeObjects = { ...this.activeObjects, [type]: object }
@@ -633,9 +676,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Clear active object for type
+		 *
 		 * @param {string} type - Object type
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		clearActiveObject(type) {
 			this.activeObjects = { ...this.activeObjects, [type]: null }
 			this.relatedData = {
@@ -646,12 +693,18 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Register a new object type
+		 *
 		 * @param {string} slug - The schema slug to use as type identifier
 		 * @param {string} schema - The schema ID
 		 * @param {string} register - The register ID
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param slug
+		 * @param schema
+		 * @param register
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async registerObjectType(slug, schema, register) {
 			if (this.objectTypeRegistry[slug]) {
 				return
@@ -681,10 +734,14 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Fetch and cache the JSON Schema for a registered object type.
 		 * Required by useListView composable for CnIndexSidebar integration.
+		 *
 		 * @param {string} type - The object type slug
 		 * @return {Promise<object|null>} The schema object or null on failure
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async fetchSchema(type) {
 			if (this.schemas[type]) {
 				return this.schemas[type]
@@ -707,9 +764,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Unregister an object type
+		 *
 		 * @param {string} slug - The schema slug to unregister
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param slug
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		unregisterObjectType(slug) {
 			if (!this.objectTypeRegistry[slug]) {
 				return
@@ -744,11 +805,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get schema configuration for object type
+		 *
 		 * @param {string} objectType - Type of object
 		 * @return {{source: string, schema: string, register: string}}
 		 * @throws {Error} If settings not found or invalid configuration
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objectType
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		getSchemaConfig(objectType) {
 			// First check if this is a registered object type
 			let objectTypeConfig = this.objectTypeRegistry[objectType]
@@ -809,7 +874,14 @@ export const useObjectStore = defineStore('object', {
 		 * @return {string} The constructed URL
 		 * @private
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param id
+		 * @param action
+		 * @param params
+		 * @param publicationData
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		_constructApiUrl(
 			type,
 			id = null,
@@ -876,7 +948,12 @@ export const useObjectStore = defineStore('object', {
 		 * @param {boolean} append - Whether to append results to existing collection
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param params
+		 * @param append
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async fetchCollection(type, params = {}, append = false) {
 			this.setLoading(type, true)
 			this.setState(type, { success: null, error: null })
@@ -1009,7 +1086,12 @@ export const useObjectStore = defineStore('object', {
 		 * @param {object} params - Query parameters (currently unused; lib does not accept query params)
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param id
+		 * @param params
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async fetchObject(type, id, params = {}) {
 			this.setLoading(`${type}_${id}`, true)
 			this.setState(type, { success: null, error: null })
@@ -1048,6 +1130,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Fetch related data for object
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID
 		 * @param {string} dataType - Type of related data (logs, uses, used, files)
@@ -1055,7 +1138,14 @@ export const useObjectStore = defineStore('object', {
 		 * @param {object|null} publicationData - Publication data with schema and register info (optional)
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param id
+		 * @param dataType
+		 * @param params
+		 * @param publicationData
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async fetchRelatedData(
 			type,
 			id,
@@ -1138,6 +1228,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Fetch and update settings
+		 *
 		 * @return {Promise<void>}
 		 */
 		/** @spec openspec/specs/generic-object-modals/spec.md */
@@ -1158,12 +1249,18 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Create new object
+		 *
 		 * @param {string} type - Object type
 		 * @param {object} data - Object data
 		 * @param {object|null} publicationData - Optional override with explicit { register, schema } so copies/creates target the source's actual schema instead of the type's default config
 		 * @return {Promise<object>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param data
+		 * @param publicationData
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async createObject(type, data, publicationData = null) {
 			this.setLoading(`${type}_create`, true)
 			this.setError(`${type}_create`, null)
@@ -1219,7 +1316,13 @@ export const useObjectStore = defineStore('object', {
 		 * @param {{register: string|object, schema: string|object}} options - Register/schema config
 		 * @return {Promise<{response: Response, data: object}>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objectItem
+		 * @param root0
+		 * @param root0.register
+		 * @param root0.schema
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async saveObject(objectItem, { register, schema }) {
 			if (!objectItem || !register || !schema) {
 				throw new Error('Object item, register and schema are required')
@@ -1268,12 +1371,18 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Update existing object
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID
 		 * @param {object} data - Updated object data
 		 * @return {Promise<object>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param id
+		 * @param data
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async updateObject(type, id, data) {
 			this.setLoading(`${type}_${id}`, true)
 			this.setError(`${type}_${id}`, null)
@@ -1316,10 +1425,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Extract ID from a value that can be either a primitive or an object
+		 *
 		 * @param {string|number|object} value - The value to extract ID from
 		 * @return {string|number} The extracted ID
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param value
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		extractId(value) {
 			if (value === null || value === undefined) {
 				return value
@@ -1353,7 +1466,11 @@ export const useObjectStore = defineStore('object', {
 		 * @param {string} [legacyId] - Object id, when called as (type, id).
 		 * @return {Promise<boolean>} True once the object is deleted.
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objectItem
+		 * @param legacyId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async deleteObject(objectItem, legacyId = undefined) {
 			if (typeof objectItem === 'string') {
 				const resolved = this.objects[objectItem]?.[legacyId]
@@ -1418,6 +1535,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Publish object
+		 *
 		 * @param {object} objectItem - Object to publish
 		 * @return {Promise<object>} The updated object
 		 *
@@ -1491,6 +1609,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Depublish object
+		 *
 		 * @param {object} objectItem - Object to depublish
 		 * @return {Promise<object>} The updated object
 		 *
@@ -1564,10 +1683,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Validate object by saving it without modifications
+		 *
 		 * @param {object} objectItem - Object to validate
 		 * @return {Promise<object>} The validated object
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objectItem
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async validateObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
 			const register = objectItem['@self']?.register || objectItem.register
@@ -1619,12 +1742,18 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Lock object
+		 *
 		 * @param {object} objectItem - Object to lock
 		 * @param {string} process - Process name (optional)
 		 * @param {number} duration - Duration in seconds (optional)
 		 * @return {Promise<object>} The updated object
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objectItem
+		 * @param process
+		 * @param duration
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async lockObject(objectItem, process = null, duration = null) {
 			const objectId = objectItem.id || objectItem['@self']?.id
 			const register = objectItem['@self']?.register || objectItem.register
@@ -1697,10 +1826,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Unlock object
+		 *
 		 * @param {object} objectItem - Object to unlock
 		 * @return {Promise<object>} The updated object
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objectItem
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async unlockObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
 			const register = objectItem['@self']?.register || objectItem.register
@@ -1759,10 +1892,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set search term for type — debounces 500ms then fetches.
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} term - Search term
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param term
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setSearchTerm(type, term) {
 			if (!this.searchTerms[type]) {
 				this.searchTerms = { ...this.searchTerms, [type]: '' }
@@ -1784,9 +1922,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Clear search term for type
+		 *
 		 * @param {string} type - Object type
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		clearSearchTerm(type) {
 			this.searchTerms = { ...this.searchTerms, [type]: '' }
 
@@ -1803,6 +1945,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set pagination info for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {{total: number, page: number, pages: number, limit: number}} pagination - Pagination info
 		 */
@@ -1812,10 +1955,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Load next page of results
+		 *
 		 * @param {string} type - Object type
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async loadMore(type) {
 			const pagination = this.getPagination(type)
 
@@ -1837,10 +1984,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Load previous page of results
+		 *
 		 * @param {string} type - Object type
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async loadPrevious(type) {
 			const pagination = this.getPagination(type)
 
@@ -1862,6 +2013,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Preload collections for all available schemas
+		 *
 		 * @return {Promise<void>}
 		 */
 		/** @spec openspec/specs/generic-object-modals/spec.md */
@@ -1894,6 +2046,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Register object types from settings into objectTypeRegistry.
+		 *
 		 * @private
 		 */
 		/** @spec openspec/specs/generic-object-modals/spec.md */
@@ -1948,10 +2101,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set state for specific type
+		 *
 		 * @param {string} type - Object type
 		 * @param {{success: boolean|null, error: string|null}} state - State to set
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param root0
+		 * @param root0.success
+		 * @param root0.error
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setState(type, { success, error }) {
 			if (success !== undefined) {
 				this.success = { ...this.success, [type]: success }
@@ -1963,6 +2123,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Copy an existing object
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID to copy
 		 * @param {string|null} nameFieldPath - Optional dot-notation path of the schema's
@@ -1971,7 +2132,12 @@ export const useObjectStore = defineStore('object', {
 		 *   Twig templates (e.g. "{{ voornaam }} {{ achternaam }}") are not supported.
 		 * @return {Promise<object>} The newly created copy
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param type
+		 * @param id
+		 * @param nameFieldPath
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async copyObject(type, id, nameFieldPath = null) {
 			this.setLoading(`${type}_${id}_copy`, true)
 			this.setError(`${type}_${id}_copy`, null)
@@ -2068,6 +2234,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set selected objects
+		 *
 		 * @param {Array<string>} objects - Array of object IDs
 		 */
 		setSelectedObjects(objects) {
@@ -2076,6 +2243,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set selected attachments
+		 *
 		 * @param {Array<string>} attachments - Array of attachment IDs
 		 */
 		setSelectedAttachments(attachments) {
@@ -2084,6 +2252,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set error for a specific object
+		 *
 		 * @param {string} objectId - The object ID
 		 * @param {string} error - The error message
 		 */
@@ -2093,9 +2262,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Clear error for a specific object
+		 *
 		 * @param {string} objectId - The object ID
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objectId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		clearObjectError(objectId) {
 			delete this.objectErrors[objectId]
 		},
@@ -2110,6 +2283,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get error for a specific object
+		 *
 		 * @param {string} objectId - The object ID
 		 * @return {string|null} The error message or null if no error
 		 */
@@ -2136,10 +2310,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Update column filter
+		 *
 		 * @param {string} id - Column ID
 		 * @param {boolean} enabled - Whether the column is enabled
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param id
+		 * @param enabled
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		updateColumnFilter(id, enabled) {
 			this.columnFilters = { ...this.columnFilters, [id]: enabled }
 
@@ -2158,9 +2337,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Initialize properties from schema
+		 *
 		 * @param {object} schema - Schema object
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param schema
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		initializeProperties(schema) {
 			if (!schema?.properties) {
 				this.properties = {}
@@ -2200,11 +2383,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass delete objects
+		 *
 		 * @param {Array<object|string>} objects - Array of objects or object IDs to delete
 		 * @param {Function} onProgress - Callback function called after each deletion (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massDeleteObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
@@ -2269,11 +2457,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass publish objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to publish
 		 * @param {Function} onProgress - Callback function called after each publication (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massPublishObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
@@ -2333,11 +2526,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass depublish objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to depublish
 		 * @param {Function} onProgress - Callback function called after each depublication (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massDepublishObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
@@ -2400,11 +2598,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass validate objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to validate
 		 * @param {Function} onProgress - Callback function called after each validation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massValidateObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
@@ -2467,13 +2670,20 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass lock objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to lock
 		 * @param {string} process - Process name (optional)
 		 * @param {number} duration - Duration in seconds (optional)
 		 * @param {Function} onProgress - Callback function called after each lock operation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objects
+		 * @param process
+		 * @param duration
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massLockObjects(
 			objects,
 			process = null,
@@ -2538,11 +2748,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass unlock objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to unlock
 		 * @param {Function} onProgress - Callback function called after each unlock operation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massUnlockObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
@@ -2602,6 +2817,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Refresh files (attachments) for the active publication
+		 *
 		 * @return {Promise<void>}
 		 */
 		/** @spec openspec/specs/generic-object-modals/spec.md */
@@ -2630,10 +2846,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Publish a single attachment (file) for the active publication
+		 *
 		 * @param {string|number} fileId - Attachment ID
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param fileId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async publishAttachment(fileId) {
 			const activePublication = this.activeObjects?.publication
 			if (
@@ -2674,10 +2894,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Depublish a single attachment (file) for the active publication
+		 *
 		 * @param {string|number} fileId - Attachment ID
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param fileId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async depublishAttachment(fileId) {
 			const activePublication = this.activeObjects?.publication
 			if (
@@ -2718,11 +2942,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass publish attachments for the active publication
+		 *
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
 		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param fileIds
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massPublishAttachments(fileIds, onProgress = null) {
 			if (!Array.isArray(fileIds) || fileIds.length === 0) {
 				return { successful: [], failed: [] }
@@ -2765,11 +2994,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass depublish attachments for the active publication
+		 *
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
 		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param fileIds
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massDepublishAttachments(fileIds, onProgress = null) {
 			if (!Array.isArray(fileIds) || fileIds.length === 0) {
 				return { successful: [], failed: [] }

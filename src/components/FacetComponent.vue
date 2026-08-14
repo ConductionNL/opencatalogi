@@ -34,11 +34,11 @@
 						:key="`meta-${fieldName}`"
 						class="facet-control">
 						<NcCheckboxRadioSwitch
-							:model-value="isActiveFacet(`@self.${fieldName}`)"
+							:modelValue="isActiveFacet(`@self.${fieldName}`)"
 							:title="
 								fieldInfo.description || `Filter by ${fieldName}`
 							"
-							@update:model-value="
+							@update:modelValue="
 								(enabled) =>
 									toggleFacet(
 										`@self.${fieldName}`,
@@ -61,7 +61,7 @@
 							"
 							class="facet-type-selector">
 							<NcSelect
-								:model-value="
+								:modelValue="
 									getActiveFacetTypeOption(
 										`@self.${fieldName}`,
 										fieldInfo.facet_types,
@@ -69,9 +69,9 @@
 								"
 								:options="getFacetTypeOptions(fieldInfo.facet_types)"
 								label="label"
-								:input-label="t('opencatalogi', 'Facet type')"
+								:inputLabel="t('opencatalogi', 'Facet type')"
 								:placeholder="t('opencatalogi', 'Select facet type')"
-								@update:model-value="
+								@update:modelValue="
 									(option) =>
 										option
 										&& updateFacetType(
@@ -91,7 +91,7 @@
 							"
 							class="facet-config">
 							<NcSelect
-								:model-value="
+								:modelValue="
 									getActiveFacetIntervalOption(
 										`@self.${fieldName}`,
 										fieldInfo.intervals,
@@ -99,11 +99,11 @@
 								"
 								:options="getIntervalOptions(fieldInfo.intervals)"
 								label="label"
-								:input-label="
+								:inputLabel="
 									t('opencatalogi', 'Date histogram interval')
 								"
 								:placeholder="t('opencatalogi', 'Select interval')"
-								@update:model-value="
+								@update:modelValue="
 									(option) =>
 										option
 										&& updateFacetInterval(
@@ -131,11 +131,11 @@
 						:key="`obj-${fieldName}`"
 						class="facet-control">
 						<NcCheckboxRadioSwitch
-							:model-value="isActiveFacet(fieldName)"
+							:modelValue="isActiveFacet(fieldName)"
 							:title="
 								fieldInfo.description || `Filter by ${fieldName}`
 							"
-							@update:model-value="
+							@update:modelValue="
 								(enabled) =>
 									toggleFacet(fieldName, fieldInfo, enabled)
 							">
@@ -158,7 +158,7 @@
 							"
 							class="facet-type-selector">
 							<NcSelect
-								:model-value="
+								:modelValue="
 									getActiveFacetTypeOption(
 										fieldName,
 										fieldInfo.facet_types,
@@ -166,9 +166,9 @@
 								"
 								:options="getFacetTypeOptions(fieldInfo.facet_types)"
 								label="label"
-								:input-label="t('opencatalogi', 'Facet type')"
+								:inputLabel="t('opencatalogi', 'Facet type')"
 								:placeholder="t('opencatalogi', 'Select facet type')"
-								@update:model-value="
+								@update:modelValue="
 									(option) =>
 										option
 										&& updateFacetType(
@@ -225,44 +225,59 @@
 </template>
 
 <script setup>
+import { t } from '@nextcloud/l10n'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+} from '@nextcloud/vue'
+import Close from 'vue-material-design-icons/Close.vue'
 /**
  * FacetComponent — renders and toggles an individual facet filter.
  *
  * @spec openspec/specs/search/spec.md
  */
 import { useSearchStore } from '../store/modules/search.ts'
-import { t } from '@nextcloud/l10n'
-import {
-	NcCheckboxRadioSwitch,
-	NcButton,
-	NcSelect,
-	NcNoteCard,
-	NcLoadingIcon,
-} from '@nextcloud/vue'
-import Close from 'vue-material-design-icons/Close.vue'
 
 // Store
 const searchStore = useSearchStore()
 
 // Methods
-const isActiveFacet = (fieldName) => {
-	return Object.prototype.hasOwnProperty.call(
-		searchStore.getActiveFacets,
-		fieldName,
-	)
+/**
+ *
+ * @param fieldName
+ */
+function isActiveFacet(fieldName) {
+	return Object.hasOwn(searchStore.getActiveFacets, fieldName)
 }
 
-const getActiveFacetType = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function getActiveFacetType(fieldName) {
 	const facetConfig = searchStore.getActiveFacets[fieldName]
 	return facetConfig ? facetConfig.type : null
 }
 
-const getActiveFacetInterval = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function getActiveFacetInterval(fieldName) {
 	const facetConfig = searchStore.getActiveFacets[fieldName]
 	return facetConfig?.config?.interval || 'month'
 }
 
-const toggleFacet = (fieldName, fieldInfo, enabled) => {
+/**
+ *
+ * @param fieldName
+ * @param fieldInfo
+ * @param enabled
+ */
+function toggleFacet(fieldName, fieldInfo, enabled) {
 	if (enabled) {
 		// Determine default facet type
 		const defaultType = fieldInfo.facet_types?.[0] || 'terms'
@@ -281,7 +296,13 @@ const toggleFacet = (fieldName, fieldInfo, enabled) => {
 	// Don't trigger search here - the store method already does it
 }
 
-const updateFacetType = (fieldName, newType, fieldInfo) => {
+/**
+ *
+ * @param fieldName
+ * @param newType
+ * @param fieldInfo
+ */
+function updateFacetType(fieldName, newType, fieldInfo) {
 	const config = {}
 
 	// Add type-specific configuration
@@ -294,7 +315,12 @@ const updateFacetType = (fieldName, newType, fieldInfo) => {
 	// Don't trigger search here - the store method already does it
 }
 
-const updateFacetInterval = (fieldName, interval) => {
+/**
+ *
+ * @param fieldName
+ * @param interval
+ */
+function updateFacetInterval(fieldName, interval) {
 	const currentConfig = searchStore.getActiveFacets[fieldName]
 	if (currentConfig) {
 		const newConfig = { ...currentConfig.config, interval }
@@ -304,26 +330,41 @@ const updateFacetInterval = (fieldName, interval) => {
 	}
 }
 
-const removeFacet = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function removeFacet(fieldName) {
 	searchStore.toggleActiveFacet(fieldName, '', false)
 
 	// Don't trigger search here - the store method already does it
 }
 
-const clearAllFacets = () => {
+/**
+ *
+ */
+function clearAllFacets() {
 	searchStore.clearAllActiveFacets()
 
 	// Don't trigger search here - the store method already does it
 }
 
-const getFacetTypeOptions = (facetTypes) => {
+/**
+ *
+ * @param facetTypes
+ */
+function getFacetTypeOptions(facetTypes) {
 	return facetTypes.map((type) => ({
 		value: type,
 		label: type.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
 	}))
 }
 
-const getIntervalOptions = (intervals) => {
+/**
+ *
+ * @param intervals
+ */
+function getIntervalOptions(intervals) {
 	const defaultIntervals = ['day', 'week', 'month', 'year']
 	const availableIntervals = intervals || defaultIntervals
 
@@ -343,7 +384,7 @@ const getIntervalOptions = (intervals) => {
  * @param {Array<string>} facetTypes - The facet types declared for the field.
  * @return {object|null} The matching option object, or null when none is active.
  */
-const getActiveFacetTypeOption = (fieldName, facetTypes) => {
+function getActiveFacetTypeOption(fieldName, facetTypes) {
 	const current = getActiveFacetType(fieldName)
 	return (
 		getFacetTypeOptions(facetTypes || []).find(
@@ -359,7 +400,7 @@ const getActiveFacetTypeOption = (fieldName, facetTypes) => {
  * @param {Array<string>} intervals - The intervals declared for the field.
  * @return {object|null} The matching option object, or null when none matches.
  */
-const getActiveFacetIntervalOption = (fieldName, intervals) => {
+function getActiveFacetIntervalOption(fieldName, intervals) {
 	const current = getActiveFacetInterval(fieldName)
 	return (
 		getIntervalOptions(intervals).find((option) => option.value === current)
@@ -367,7 +408,12 @@ const getActiveFacetIntervalOption = (fieldName, intervals) => {
 	)
 }
 
-const getFieldDisplayName = (fieldName, fieldInfo) => {
+/**
+ *
+ * @param fieldName
+ * @param fieldInfo
+ */
+function getFieldDisplayName(fieldName, fieldInfo) {
 	// Use description if available, otherwise format field name
 	if (fieldInfo.description) {
 		return fieldInfo.description

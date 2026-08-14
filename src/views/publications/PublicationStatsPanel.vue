@@ -64,10 +64,10 @@
 <script>
 import { NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import {
+	countingStartNote,
+	deriveTrend,
 	fetchPublicationStats,
 	formatCount,
-	deriveTrend,
-	countingStartNote,
 } from '../../services/usageStats.js'
 
 /**
@@ -85,46 +85,58 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 	},
+
 	props: {
 		publicationId: {
 			type: String,
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			loading: true,
 			stats: { views: 0, downloads: 0, series: [], countingStart: null },
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		trendViews() {
 			return deriveTrend(this.stats.series, 'views')
 		},
+
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		trendDownloads() {
 			return deriveTrend(this.stats.series, 'downloads')
 		},
+
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		countingStartText() {
 			return countingStartNote(this.stats.countingStart, this.t)
 		},
 	},
+
 	watch: {
 		publicationId: 'loadStats',
 	},
+
 	mounted() {
 		this.loadStats()
 	},
+
 	methods: {
 		formatCount,
-		/** @spec openspec/specs/publication-usage-analytics/spec.md */
+		/**
+		 * @param trend
+		 * @spec openspec/specs/publication-usage-analytics/spec.md
+		 */
 		trendLabel(trend) {
 			if (trend === 'up') return this.t('opencatalogi', 'Trending up')
 			if (trend === 'down') return this.t('opencatalogi', 'Trending down')
 			return this.t('opencatalogi', 'Stable')
 		},
+
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		async loadStats() {
 			if (!this.publicationId) {

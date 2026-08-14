@@ -3,12 +3,12 @@
 		<CnPropertiesTab
 			:schema="resolvedSchema"
 			:item="currentObject || {}"
-			:form-data="formData"
-			:selected-property="selectedProperty"
-			:property-overrides="propertyOverrides"
-			:is-new="isNew"
-			@update:selected-property="$emit('update:selected-property', $event)"
-			@update:property-value="$emit('update:property-value', $event)">
+			:formData="formData"
+			:selectedProperty="selectedProperty"
+			:propertyOverrides="propertyOverrides"
+			:isNew="isNew"
+			@update:selectedProperty="$emit('update:selected-property', $event)"
+			@update:propertyValue="$emit('update:property-value', $event)">
 			<template #row-actions="{ propertyKey, resolvedValue }">
 				<NcButton
 					v-if="canDropProperty(propertyKey, resolvedValue)"
@@ -28,8 +28,8 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { CnPropertiesTab } from '@conduction/nextcloud-vue'
+import { NcButton } from '@nextcloud/vue'
 import Close from 'vue-material-design-icons/Close.vue'
 
 /**
@@ -42,6 +42,7 @@ export default {
 		CnPropertiesTab,
 		Close,
 	},
+
 	props: {
 		resolvedSchema: { type: Object, default: null },
 		currentObject: { type: Object, default: null },
@@ -52,6 +53,7 @@ export default {
 		getDropPropertyTooltip: { type: Function, required: true },
 		isNew: { type: Boolean, default: false },
 	},
+
 	emits: ['update:selected-property', 'update:property-value', 'drop-property'],
 }
 </script>

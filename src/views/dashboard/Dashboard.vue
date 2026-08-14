@@ -5,9 +5,9 @@
 			:widgets="widgetDefs"
 			:layout="dashboardLayout"
 			:loading="globalLoading && !hasData"
-			:empty-label="t('opencatalogi', 'No widgets configured')"
-			:unavailable-label="t('opencatalogi', 'Widget not available')"
-			@layout-change="onLayoutChange">
+			:emptyLabel="t('opencatalogi', 'No widgets configured')"
+			:unavailableLabel="t('opencatalogi', 'Widget not available')"
+			@layoutChange="onLayoutChange">
 			<!-- Header actions -->
 			<template #actions>
 				<NcButton variant="primary" @click="createPublication">
@@ -79,7 +79,7 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Publications')"
 					:count="kpis.publicationCount"
-					:count-label="t('opencatalogi', 'publications')"
+					:countLabel="t('opencatalogi', 'publications')"
 					:icon="DatabaseEyeOutline"
 					variant="primary"
 					horizontal
@@ -92,7 +92,7 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Concept Publications')"
 					:count="kpis.conceptPublicationCount"
-					:count-label="t('opencatalogi', 'concept')"
+					:countLabel="t('opencatalogi', 'concept')"
 					:icon="FileDocumentEditOutline"
 					variant="warning"
 					horizontal
@@ -105,7 +105,7 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Published')"
 					:count="kpis.publishedPublicationCount"
-					:count-label="t('opencatalogi', 'published')"
+					:countLabel="t('opencatalogi', 'published')"
 					:icon="FileDocumentCheckOutline"
 					variant="success"
 					horizontal
@@ -118,7 +118,7 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Depublished')"
 					:count="kpis.depublishedPublicationCount"
-					:count-label="t('opencatalogi', 'depublished')"
+					:countLabel="t('opencatalogi', 'depublished')"
 					:icon="AlertOutline"
 					variant="error"
 					horizontal
@@ -412,35 +412,35 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 // eslint-disable-next-line import/named -- CnChartWidget available in local source; will be in next npm release
 import {
+	buildHeaders,
+	CnChartWidget,
 	CnDashboardPage,
 	CnStatsBlock,
-	CnChartWidget,
-	buildHeaders,
 } from '@conduction/nextcloud-vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
-import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
-import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
-import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
-import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue'
 // TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 // import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 // import PaperclipOff from 'vue-material-design-icons/PaperclipOff.vue'
 import { loadState } from '@nextcloud/initial-state'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { NcButton } from '@nextcloud/vue'
+import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
+import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue'
+import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
+import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
+import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
 import {
-	isPublished,
-	isDepublished,
-	isConcept,
-} from '../../services/publicationStatus.js'
-import {
-	useCategoricalChartColors,
 	useAccentChartColor,
+	useCategoricalChartColors,
 } from '../../composables/useChartColors.js'
+import {
+	isConcept,
+	isDepublished,
+	isPublished,
+} from '../../services/publicationStatus.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 // Register/schema ids for the `publication` schema, surfaced as initial state by
 // UiController::MANIFEST_CONFIG_KEYS (same zero-network resolution AddDirectoryModal.vue
@@ -577,6 +577,7 @@ export default {
 		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 		// Paperclip,
 	},
+
 	data() {
 		return {
 			// Icon components for CnStatsBlock :icon prop
@@ -598,42 +599,52 @@ export default {
 			// attachmentsList: [],
 		}
 	},
+
 	computed: {
 		/**
 		 * Theme-aware donut-chart palette, resolved from NC CSS variables instead
 		 * of hardcoded hex literals (ADR-004 / ADR-010 NL Design).
+		 *
 		 * @spec openspec/changes/nc-css-vars-color-cleanup/tasks.md#task-1
 		 */
 		categoricalChartColors() {
 			return useCategoricalChartColors()
 		},
+
 		/**
 		 * Theme-aware accent color for the traffic chart.
+		 *
 		 * @spec openspec/changes/nc-css-vars-color-cleanup/tasks.md#task-1
 		 */
 		accentChartColor() {
 			return useAccentChartColor()
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		catalogs() {
 			return objectStore.getCollection('catalog').results || []
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		allPublications() {
 			return objectStore.getCollection('publication').results || []
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		conceptPublications() {
 			return this.allPublications.filter((p) => isConcept(p))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		publishedPublications() {
 			return this.allPublications.filter((p) => isPublished(p))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		depublishedPublications() {
 			return this.allPublications.filter((p) => isDepublished(p))
 		},
+
 		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 		// allAttachments() { return this.attachmentsList },
 		// conceptAttachments() {
@@ -645,6 +656,7 @@ export default {
 				catalogCount: this.catalogs.length,
 				publicationCount:
 					this.publicationTotal || this.allPublications.length,
+
 				conceptPublicationCount: this.conceptPublications.length,
 				publishedPublicationCount: this.publishedPublications.length,
 				depublishedPublicationCount: this.depublishedPublications.length,
@@ -652,6 +664,7 @@ export default {
 				// conceptAttachmentCount: this.conceptAttachments.length,
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		publicationsByCategoryData() {
 			const counts = {}
@@ -678,10 +691,12 @@ export default {
 				series: Object.values(counts),
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		hasData() {
 			return this.catalogs.length > 0 || this.allPublications.length > 0
 		},
+
 		/**
 		 * First catalog slug available in the store, used for Publications route navigation.
 		 *
@@ -690,6 +705,7 @@ export default {
 		firstCatalogSlug() {
 			return this.catalogs[0]?.slug || null
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		widgetDefs() {
 			return [
@@ -761,6 +777,7 @@ export default {
 			]
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 	async mounted() {
 		await this.loadDashboardData()
@@ -771,6 +788,7 @@ export default {
 			5 * 60 * 1000,
 		)
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 	beforeUnmount() {
 		if (this.refreshTimer) {
@@ -778,6 +796,7 @@ export default {
 			this.refreshTimer = null
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		async loadDashboardData() {
@@ -933,6 +952,7 @@ export default {
 		/**
 		 * Fetch API read-request volume over time (traffic graph).
 		 * Filters the audit-trail-actions chart to the "Read" series.
+		 *
 		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
 		 */
 		async fetchTrafficChart() {
@@ -969,6 +989,7 @@ export default {
 
 		/**
 		 * Fetch the most popular search terms from OpenRegister search trails.
+		 *
 		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
 		 */
 		async fetchPopularSearchTerms() {
@@ -992,7 +1013,10 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
+		/**
+		 * @param publication
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
 		resolveSchemaName(publication) {
 			const schemaRef = publication['@self']?.schema
 			if (!schemaRef) return ''
@@ -1011,7 +1035,10 @@ export default {
 			navigationStore.setModal('viewObject')
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
+		/**
+		 * @param publication
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
 		openPublication(publication) {
 			const catalogSlug = this.catalogSlugById(publication?.catalog)
 			const pubId = publication?.id || publication?.['@self']?.id
@@ -1049,6 +1076,7 @@ export default {
 
 		/**
 		 * Resolve a catalog slug from a catalog ID reference on a publication.
+		 *
 		 * @param {string|number|object|null} catalogRef - catalog field value from a publication
 		 * @return {string|null}
 		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
@@ -1065,7 +1093,10 @@ export default {
 			return found?.slug || this.firstCatalogSlug
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
+		/**
+		 * @param newLayout
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
 		onLayoutChange(newLayout) {
 			this.dashboardLayout = newLayout
 		},

@@ -8,10 +8,10 @@ import { objectStore } from '../../store/store.js'
 		:rows="items"
 		:columns="columns"
 		:loading="loading"
-		hide-header
+		hideHeader
 		borderless
-		row-icon="DatabaseEyeOutline"
-		@row-click="onRowClick">
+		rowIcon="DatabaseEyeOutline"
+		@rowClick="onRowClick">
 		<template #empty>
 			<NcEmptyContent
 				:title="t('opencatalogi', 'No concept publications found')">
@@ -26,13 +26,11 @@ import { objectStore } from '../../store/store.js'
 <script>
 // Components
 import { CnDataTable, registerIcons } from '@conduction/nextcloud-vue'
-import { NcEmptyContent } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
-
+import { NcEmptyContent } from '@nextcloud/vue'
+import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
-import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
-
 import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
 
 // The row's leading icon renders through CnDataTable's shared CnIcon
@@ -56,18 +54,21 @@ export default {
 		CnDataTable,
 		NcEmptyContent,
 	},
+
 	props: {
 		title: {
 			type: String,
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			loading: false,
 			columns: LIST_COLUMNS,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
@@ -84,9 +85,11 @@ export default {
 				}))
 		},
 	},
+
 	mounted() {
 		this.fetchData()
 	},
+
 	methods: {
 		/**
 		 * Open the clicked publication's detail page in the same tab.
@@ -99,7 +102,10 @@ export default {
 		 * @param {object} row - The clicked row (a shaped publication item).
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
+		/**
+		 * @param row
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3
+		 */
 		onRowClick(row) {
 			const publication = row.publication
 			const catalogId = publication?.catalog?.id || publication?.catalog
@@ -115,9 +121,11 @@ export default {
 				),
 			)
 		},
+
 		/**
 		 * Fetch the publication data (and the catalog collection used to
 		 * resolve catalog slugs for row-click deep links).
+		 *
 		 * @return {Promise<void>}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */

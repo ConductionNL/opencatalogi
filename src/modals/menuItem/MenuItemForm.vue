@@ -1,12 +1,12 @@
 <script setup>
-import { objectStore, navigationStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<CnFormDialog
 		v-if="navigationStore.modal === 'menuItemForm'"
-		:dialog-title="
+		:dialogTitle="
 			isEdit
 				? t('opencatalogi', 'Edit Menu Item')
 				: t('opencatalogi', 'Add Menu Item')
@@ -32,7 +32,7 @@ import { buildMenuItemIconCatalogues } from './menuItemIconCatalogues.js'
  * back into the parent menu's `items` array.
  *
  * @category Components
- * @package opencatalogi
+ * @package
  * @author Ruben Linde
  * @license EUPL-1.2
  */
@@ -97,6 +97,7 @@ export default {
 							value: g.value,
 							id: g.value,
 						})),
+
 					description: t(
 						'opencatalogi',
 						'When set, the item only shows for users in one of these groups.',
@@ -115,6 +116,7 @@ export default {
 			],
 		}
 	},
+
 	computed: {
 		/**
 		 * @return {object|null} The active menu whose items are edited.
@@ -123,6 +125,7 @@ export default {
 		menuObject() {
 			return objectStore.getActiveObject('menu')
 		},
+
 		/**
 		 * @return {object|null} Flattened item for CnFormDialog (null in create mode).
 		 * @spec openspec/specs/retrofit-2026-05-26-menu-page-management/spec.md#requirement-menu-item-form-req-menu-002
@@ -145,6 +148,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		/**
 		 * Persist the confirmed form data back into the parent menu.
@@ -224,6 +228,7 @@ export default {
 					console.error('Error saving menu item:', error)
 				})
 		},
+
 		/**
 		 * Normalize the groups multiselect value to an array of group ids.
 		 *
@@ -243,6 +248,7 @@ export default {
 				)
 				.filter(Boolean)
 		},
+
 		/**
 		 * Close the dialog and return to the parent menu view.
 		 *

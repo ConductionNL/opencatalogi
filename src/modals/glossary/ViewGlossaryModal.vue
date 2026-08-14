@@ -13,7 +13,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		v-if="navigationStore.modal === 'viewGlossary'"
 		ref="modalRef"
 		:name="term?.title || t('opencatalogi', 'Glossary Term')"
-		label-id="viewGlossaryModal"
+		labelId="viewGlossaryModal"
 		@close="closeModal">
 		<div class="modal__content">
 			<div v-if="term" class="glossaryDetails">
@@ -113,8 +113,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <script>
 import { NcButton, NcModal } from '@nextcloud/vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 
 /**
  * ViewGlossaryModal — read-only view of a glossary term.
@@ -129,9 +129,11 @@ export default {
 		Pencil,
 		Cancel,
 	},
+
 	computed: {
 		/**
 		 * Get the currently active glossary term from the store
+		 *
 		 * @return {object|null} The active glossary term object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
@@ -139,9 +141,11 @@ export default {
 			return objectStore.getActiveObject('glossary')
 		},
 	},
+
 	methods: {
 		/**
 		 * Close the modal and clear the active object
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
@@ -149,20 +153,27 @@ export default {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('glossary')
 		},
+
 		/**
 		 * Open the edit modal for the current term
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		openEditModal() {
 			navigationStore.setModal('glossary')
 		},
+
 		/**
 		 * Select a related term and view its details
+		 *
 		 * @param {object} term - The term to select
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
+		/**
+		 * @param term
+		 * @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2
+		 */
 		selectTerm(term) {
 			objectStore.setActiveObject('glossary', term)
 		},

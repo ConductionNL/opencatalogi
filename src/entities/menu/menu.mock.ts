@@ -1,5 +1,6 @@
 /**
  * Menu mock data
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
@@ -9,7 +10,7 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { TMenuItem, TMenu } from './menu.types'
+import type { TMenu, TMenuItem } from './menu.types'
 
 /**
  * Mock menu item data

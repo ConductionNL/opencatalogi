@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { createPinia, setActivePinia } from 'pinia'
 import { useObjectStore } from './object.js'
 

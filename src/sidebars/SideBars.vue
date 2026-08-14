@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { objectStore, navigationStore } from '../store/store.js'
 import SearchSideBar from './search/SearchSideBar.vue'
+import { navigationStore, objectStore } from '../store/store.js'
 </script>
 
 <template>
@@ -57,18 +57,21 @@ const isSidebarOpen = ref(true)
 
 /**
  * Get the active directory from the store
+ *
  * @return {object | null}
  */
 const directory = computed(() => objectStore.getActiveObject('directory'))
 
 /**
  * Get the active listing from the store
+ *
  * @return {object | null}
  */
 const listing = computed(() => objectStore.getActiveObject('listing'))
 
 /**
  * Check if we're on the search page
+ *
  * @return {boolean}
  */
 const isSearchPage = computed(() => this.$route.path === '/search')

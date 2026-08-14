@@ -1,5 +1,6 @@
 /**
  * Mock data for Catalogi entity testing
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
@@ -9,7 +10,7 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { TCatalogi } from './catalogi.types'
+import type { TCatalogi } from './catalogi.types'
 
 export const mockCatalogi: TCatalogi = {
 	id: '1',

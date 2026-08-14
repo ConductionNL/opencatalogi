@@ -54,9 +54,8 @@ import { objectStore } from '../store/store.js'
 
 <script>
 import { NcButton, NcEmptyContent } from '@nextcloud/vue'
-
-import Close from 'vue-material-design-icons/Close.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import Close from 'vue-material-design-icons/Close.vue'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -69,6 +68,7 @@ export default {
 		Close,
 		AlertCircle,
 	},
+
 	props: {
 		/**
 		 * Title for the selected objects section
@@ -77,6 +77,7 @@ export default {
 			type: String,
 			default: 'Selected Publications',
 		},
+
 		/**
 		 * Title to show when no objects are selected
 		 */
@@ -84,6 +85,7 @@ export default {
 			type: String,
 			default: 'No publications selected',
 		},
+
 		/**
 		 * Description to show when no objects are selected
 		 */
@@ -91,6 +93,7 @@ export default {
 			type: String,
 			default: 'No publications are currently selected.',
 		},
+
 		/**
 		 * Array of objects to display (optional, if not provided uses selected objects from store)
 		 */
@@ -98,6 +101,7 @@ export default {
 			type: Array,
 			default: null,
 		},
+
 		/**
 		 * Whether to show remove buttons
 		 */
@@ -105,6 +109,7 @@ export default {
 			type: Boolean,
 			default: true,
 		},
+
 		/**
 		 * Hide the internal title heading (useful when the parent renders its own header)
 		 */
@@ -112,6 +117,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		/**
 		 * Which object field to render as the per-item subtitle. Defaults to 'schema'
 		 * for backwards compatibility. Set to e.g. 'summary' to show the object summary,
@@ -121,6 +127,7 @@ export default {
 			type: String,
 			default: 'schema',
 		},
+
 		/**
 		 * Optional predicate marking individual items as disabled. Disabled
 		 * items render at reduced opacity to communicate that they will be
@@ -131,6 +138,7 @@ export default {
 			type: Function,
 			default: null,
 		},
+
 		/**
 		 * Optional helper returning a tooltip string explaining why an item
 		 * is disabled. Receives the object. Only consulted for items where
@@ -141,9 +149,11 @@ export default {
 			default: null,
 		},
 	},
+
 	computed: {
 		/**
 		 * Get objects to display (either from props or from store)
+		 *
 		 * @return {Array<object>} Array of publication objects
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
@@ -188,12 +198,17 @@ export default {
 			return []
 		},
 	},
+
 	methods: {
 		/**
 		 * Remove object from selected objects in the store
+		 *
 		 * @param {string|number} objectId - The object ID to remove
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param objectId
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		removeObject(objectId) {
 			// Always remove from store - the store is the source of truth
 			// 1) Remove from selectedObjects (objects flow)
@@ -225,10 +240,14 @@ export default {
 
 		/**
 		 * Get display name for an object
+		 *
 		 * @param {object} obj - The object to get name for
 		 * @return {string} The display name
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param obj
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		getObjectName(obj) {
 			return (
 				obj['@self']?.name
@@ -241,10 +260,14 @@ export default {
 
 		/**
 		 * Get schema name for an object
+		 *
 		 * @param {object} obj - The object to get schema for
 		 * @return {string} The schema name or fallback text
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param obj
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		getObjectSchema(obj) {
 			const schema = obj['@self']?.schema || obj.schema
 
@@ -265,10 +288,14 @@ export default {
 		/**
 		 * Get the subtitle text for an object, based on the subtitle-attribute prop.
 		 * Defaults to the schema name for backwards compatibility.
+		 *
 		 * @param {object} obj - The object to get the subtitle for
 		 * @return {string} The subtitle text
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param obj
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		getObjectSubtitle(obj) {
 			if (this.subtitleAttribute === 'schema') {
 				return this.getObjectSchema(obj)
@@ -281,10 +308,14 @@ export default {
 
 		/**
 		 * Get error message for an object
+		 *
 		 * @param {object} obj - The object to get error for
 		 * @return {string|null} The error message or null if no error
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param obj
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		getObjectError(obj) {
 			const objectId = obj.id || obj['@self']?.id
 			return objectStore.getObjectError(objectId)
@@ -292,6 +323,7 @@ export default {
 
 		/**
 		 * Whether the item should render in its disabled state.
+		 *
 		 * @param {object} obj - The object to check.
 		 * @return {boolean} true when the parent's `isDisabled` predicate returns true.
 		 */
@@ -303,10 +335,14 @@ export default {
 
 		/**
 		 * Tooltip text for a disabled item, if the parent supplied a reason helper.
+		 *
 		 * @param {object} obj - The object to inspect.
 		 * @return {string|null} The reason or null.
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param obj
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		getDisabledReason(obj) {
 			if (!this.isItemDisabled(obj)) return null
 			if (typeof this.disabledReason !== 'function') return null

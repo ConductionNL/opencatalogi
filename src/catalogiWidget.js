@@ -1,10 +1,10 @@
+import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 /**
  * Dashboard bundle entry-point that registers the catalogs widget.
  *
  * @spec openspec/specs/catalogs/spec.md
  */
 import { createApp } from 'vue'
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import CatalogiWidget from './views/widgets/CatalogiWidget.vue'
 
 // Vue 3: `Vue.extend()` + `new View({ propsData })` + `$mount()` are all gone.

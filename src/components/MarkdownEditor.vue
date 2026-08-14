@@ -15,15 +15,18 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		height: {
 			type: String,
 			default: '400px',
 		},
+
 		disabled: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	// Vue 3 v-model: the `value`/`input` pair of Vue 2 became
 	// `modelValue`/`update:modelValue`. Keeping the old names would leave every
 	// `v-model` on this component silently dead.
@@ -33,21 +36,31 @@ export default {
 			content: this.modelValue || '',
 		}
 	},
+
 	watch: {
 		modelValue: {
-			/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4 */
+			/**
+			 * @param newVal
+			 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4
+			 */
 			handler(newVal) {
 				if (newVal !== this.content) {
 					this.content = newVal || ''
 				}
 			},
+
 			immediate: true,
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4 */
+
+		/**
+		 * @param newVal
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4
+		 */
 		content(newVal) {
 			this.$emit('update:modelValue', newVal)
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4 */
 	mounted() {
 		this.$nextTick(() => {
