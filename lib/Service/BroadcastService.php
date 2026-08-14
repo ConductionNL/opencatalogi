@@ -442,18 +442,14 @@ class BroadcastService {
 				continue;
 			}
 
-			// Validate outbound URL before broadcasting — rejects private/internal addresses.
+			// Validate the outbound URL and deliver via the enqueueBroadcast adapter
+			// (SSRF pre-flight guard, then the synchronous retry loop).
 			try {
-				$this->assertSafeOutboundUrl($targetUrl);
+				$results[$targetUrl] = $this->enqueueBroadcast($targetUrl, $directoryUrl)->isSuccessful();
 			} catch (InvalidArgumentException $e) {
 				$this->logger->warning("Skipping unsafe broadcast target: {$targetUrl}");
 				$results[$targetUrl] = false;
-				continue;
 			}
-
-			// Attempt to send broadcast request.
-			$success = $this->sendBroadcastRequest($targetUrl, $directoryUrl);
-			$results[$targetUrl] = $success;
 		}
 
 		// Log summary of broadcast operation.
@@ -472,7 +468,8 @@ class BroadcastService {
 	 * method, no behaviour change yet"): the SSRF pre-flight guard
 	 * (assertSafeOutboundUrl) already runs before anything is dispatched, but
 	 * delivery itself still goes through the synchronous sendBroadcastRequest()
-	 * retry loop. Wiring this to OR's WebhookService (design.md Phase 2) is
+	 * retry loop. {@see BroadcastService::broadcast()} delegates each target to
+	 * this method. Wiring this to OR's WebhookService (design.md Phase 2) is
 	 * deliberately not done here — it depends on confirming
 	 * WebhookService::triggerWebhookForEvent's signature against
 	 * OpenRegister's development HEAD, which this change could not verify.
