@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -136,6 +137,7 @@ class DcatController extends Controller {
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		$response = new Response();
 		foreach ($this->corsHeaders() as $name => $value) {
@@ -157,6 +159,7 @@ class DcatController extends Controller {
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function instance(): Response {
 		try {
 			$format = $this->serializer->negotiate(
@@ -195,6 +198,7 @@ class DcatController extends Controller {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function catalog(string $catalogSlug): Response {
 		try {
 			$format = $this->serializer->negotiate(

@@ -30,6 +30,7 @@ use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -145,6 +146,7 @@ class DirectoryController extends Controller {
 	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		$response = new Response();
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
@@ -168,6 +170,7 @@ class DirectoryController extends Controller {
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
 		try {
 			// Retrieve all request parameters.
@@ -225,6 +228,7 @@ class DirectoryController extends Controller {
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
+	#[AnonRateLimit(limit: 30, period: 60)]
 	public function update(): JSONResponse {
 		// Get the directory URL from the request parameters.
 		$directoryUrl = $this->request->getParam('directory');

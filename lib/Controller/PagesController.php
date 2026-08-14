@@ -27,6 +27,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -181,6 +182,7 @@ class PagesController extends Controller {
 	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		// Create and configure the response.
 		$response = new Response();
@@ -204,6 +206,7 @@ class PagesController extends Controller {
 	 *
 	 * @spec openspec/specs/content-management/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
 		// Get page configuration from settings (resolved via OpenRegister; 503 if unconfigured).
 		try {
@@ -259,6 +262,7 @@ class PagesController extends Controller {
 	 *
 	 * @spec openspec/specs/content-management/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string $slug): JSONResponse {
 		// Get page configuration from settings (resolved via OpenRegister; 503 if unconfigured).
 		try {

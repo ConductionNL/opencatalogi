@@ -30,6 +30,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -134,6 +135,7 @@ class ApiDocumentationController extends Controller {
 	 *
 	 * @spec openspec/changes/public-api-openapi-document/specs/api-documentation/spec.md#requirement-the-document-is-served-publicly-with-cors-api-doc-003
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
 		try {
 			$raw = file_get_contents(__DIR__ . '/../../openapi.json');
