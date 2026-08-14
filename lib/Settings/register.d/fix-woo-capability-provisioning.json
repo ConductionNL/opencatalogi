@@ -83,7 +83,7 @@
             "facetable": false,
             "title": "Decision Letter"
           },
-          "inventarislijst": {
+          "inventoryList": {
             "type": "string",
             "description": "The generated inventarislijst (document inventory list) content or reference for this batch",
             "facetable": false,

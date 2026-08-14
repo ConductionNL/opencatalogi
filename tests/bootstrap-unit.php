@@ -280,7 +280,7 @@ if (OC::$server instanceof OC_Server_Stub) {
 	OC::$server->registerService(
 		'OCP\\L10N\\IFactory',
 		static fn () => new class {
-			public function get(string $app, ?string $lang = null, ?string $locale = null): object {
+			public function get(string $app, ?string $long = null, ?string $locale = null): object {
 				return new class {
 					public function t(string $text, array $parameters = []): string {
 						return $text;
