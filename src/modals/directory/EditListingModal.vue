@@ -5,27 +5,30 @@ EUPL-1.2 * @version 1.0.0 * @link https://github.com/opencatalogi/opencatalogi *
 
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
 import { NcButton, NcInputField } from '@nextcloud/vue'
+import { computed, ref } from 'vue'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Get the active listing from the store
+ *
  * @return {object | null}
  */
 const listing = computed(() => objectStore.getActiveObject('listing'))
 
 /**
  * Handle save action
+ *
  * @return {Promise<void>}
  */
-const handleSave = async () => {
+async function handleSave() {
 	loading.value = true
 	try {
 		await objectStore.updateObject('listing', listing.value.id, listing.value)
@@ -40,9 +43,10 @@ const handleSave = async () => {
 
 /**
  * Handle cancel action
+ *
  * @return {void}
  */
-const handleCancel = () => {
+function handleCancel() {
 	navigationStore.setModal(false)
 }
 </script>

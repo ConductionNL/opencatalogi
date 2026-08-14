@@ -1,5 +1,6 @@
 /**
  * Type definitions for Glossary entity
+ *
  * @module Entities
  * @package
  * @author Ruben Linde

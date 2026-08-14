@@ -20,7 +20,7 @@ import { translate as t } from '@nextcloud/l10n'
 				:key="entry.id"
 				:title="entry.label"
 				:count="entry.count"
-				count-label=""
+				countLabel=""
 				horizontal
 				clickable
 				@click="onEntryClick(entry)" />
@@ -31,10 +31,9 @@ import { translate as t } from '@nextcloud/l10n'
 <script>
 // Components
 import { CnStatsBlock } from '@conduction/nextcloud-vue'
-import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
-
+import { generateUrl } from '@nextcloud/router'
+import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 // Icons
 import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
 
@@ -58,18 +57,21 @@ export default {
 		NcLoadingIcon,
 		ClockOutlineIcon,
 	},
+
 	props: {
 		title: {
 			type: String,
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			loading: false,
 			summary: { expiringSoon: 0, reviewRequired: 0, archived: 0 },
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007 */
 		entries() {
@@ -98,12 +100,15 @@ export default {
 			return rows
 		},
 	},
+
 	mounted() {
 		this.fetchData()
 	},
+
 	methods: {
 		/**
 		 * Open the publications listing pre-filtered to the chosen retention status.
+		 *
 		 * @param {object} entry - The clicked summary entry.
 		 * @return {void}
 		 *
@@ -117,8 +122,10 @@ export default {
 				'_self',
 			)
 		},
+
 		/**
 		 * Fetch the retention queue summary.
+		 *
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007

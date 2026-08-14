@@ -1,11 +1,11 @@
 <script setup>
-import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcDialog
 		:name="dialogTitle"
-		:can-close="true"
+		:canClose="true"
 		size="normal"
 		class="mass-action-dialog"
 		@update:open="handleDialogClose">
@@ -32,12 +32,12 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 
 			<SelectAttachmentsList
 				:title="t('opencatalogi', 'Selected Attachments')"
-				:empty-title="t('opencatalogi', 'No attachments selected')"
-				:empty-description="
+				:emptyTitle="t('opencatalogi', 'No attachments selected')"
+				:emptyDescription="
 					t('opencatalogi', 'No attachments are currently selected.')
 				"
 				:attachments="filteredAttachmentIds"
-				:show-remove="true" />
+				:showRemove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
@@ -88,10 +88,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 
 <script>
 import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-
 import Cancel from 'vue-material-design-icons/Cancel.vue'
-import Publish from 'vue-material-design-icons/Publish.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
+import Publish from 'vue-material-design-icons/Publish.vue'
 import SelectAttachmentsList from '../../components/SelectAttachmentsList.vue'
 
 /**
@@ -133,6 +132,7 @@ export default {
 	computed: {
 		/**
 		 * Get the objects to operate on from selected objects
+		 *
 		 * @return {Array<object>} Array of objects to publish
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
@@ -169,6 +169,7 @@ export default {
 
 		/**
 		 * Get the dialog title based on number of objects
+		 *
 		 * @return {string} Dialog title
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
@@ -182,9 +183,11 @@ export default {
 			return `${this.operation === 'publish' ? 'Publish' : 'Depublish'} ${count} ${count !== 1 ? 'attachments' : 'attachment'}`
 		},
 	},
+
 	mounted() {
 		this.initializeSelection()
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		initializeSelection() {
@@ -197,6 +200,7 @@ export default {
 			this.attachments = ids
 			this.originalSelectedCount = this.filteredAttachmentIds.length
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
@@ -206,12 +210,17 @@ export default {
 			}
 			navigationStore.setDialog(false)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
+
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		async process() {
 			this.loading = true

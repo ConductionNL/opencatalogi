@@ -1,13 +1,14 @@
+import { buildHeaders } from '@conduction/nextcloud-vue'
 import { defineStore } from 'pinia'
 import { Catalogi } from '../../entities/catalogi/catalogi.ts'
 import { objectStore } from '../../store/store.js'
-import { buildHeaders } from '@conduction/nextcloud-vue'
 
 /** @typedef {import('../../entities/catalogi/catalogi.ts').Catalogi} CatalogEntity */
 /** @typedef {{id: string, title: string, [key: string]: any}} ObjectEntity */
 
 /**
  * Store for managing catalogs and their publications in OpenCatalogi.
+ *
  * @module Store
  * @package
  * @author Ruben Linde
@@ -62,9 +63,13 @@ export const useCatalogStore = defineStore('catalog', {
 	actions: {
 		/**
 		 * Set the view mode.
+		 *
 		 * @param {string} mode - The view mode to set ('cards' or 'table')
 		 */
-		/** @spec openspec/specs/catalogs/spec.md */
+		/**
+		 * @param mode
+		 * @spec openspec/specs/catalogs/spec.md
+		 */
 		setViewMode(mode) {
 			this.viewMode = mode
 			console.info('Catalog view mode set to:', mode)
@@ -72,10 +77,15 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Set pagination details.
+		 *
 		 * @param {number} page - The current page number for pagination
 		 * @param {number} limit - The number of items to display per page
 		 */
-		/** @spec openspec/specs/catalogs/spec.md */
+		/**
+		 * @param page
+		 * @param limit
+		 * @spec openspec/specs/catalogs/spec.md
+		 */
 		setPagination(page, limit = 20) {
 			this.pagination = { page, limit }
 			console.info('Catalog pagination set to', { page, limit })
@@ -83,6 +93,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Set the active catalog and fetch its publications
+		 *
 		 * @param {CatalogEntity} catalog The catalog to set as active
 		 * @return {Promise<void>}
 		 *
@@ -100,6 +111,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Set the active publication
+		 *
 		 * @param {ObjectEntity} publication The publication to set as active
 		 * @return {void}
 		 */
@@ -109,6 +121,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Clear the active publication
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/specs/catalogs/spec.md */
@@ -118,6 +131,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Fetch publications for a catalog
+		 *
 		 * @param {object} params - Optional parameters for pagination and filtering
 		 * @param {number} params.page - Page number (default: 1)
 		 * @param {number} params.limit - Items per page (default: 20)
@@ -257,6 +271,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Clear the active catalog and its publications
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/specs/catalogs/spec.md */
@@ -283,6 +298,7 @@ export const useCatalogStore = defineStore('catalog', {
 	getters: {
 		/**
 		 * Get the list of available registers from the active catalog
+		 *
 		 * @return {Array<string>} List of register IDs
 		 */
 		/** @spec openspec/specs/catalogs/spec.md */
@@ -292,6 +308,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get the list of available schemas from the active catalog
+		 *
 		 * @return {Array<string>} List of schema IDs
 		 */
 		/** @spec openspec/specs/catalogs/spec.md */
@@ -301,6 +318,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Check if a catalog is currently active
+		 *
 		 * @return {boolean} True if a catalog is active
 		 */
 		hasActiveCatalog() {
@@ -309,6 +327,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Check if a publication is currently active
+		 *
 		 * @return {boolean} True if a publication is active
 		 */
 		hasActivePublication() {
@@ -317,6 +336,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get the active publication
+		 *
 		 * @param {object} state - Store state
 		 * @return {object|null} The active publication
 		 */
@@ -324,6 +344,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get loading state for specific type
+		 *
 		 * @param {object} state - Store state
 		 * @return {boolean}
 		 */
@@ -331,6 +352,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get the publications collection
+		 *
 		 * @param {object} state - The store state
 		 * @return {object} The publications collection
 		 */
@@ -340,6 +362,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get pagination info for publications
+		 *
 		 * @param {object} state - The store state
 		 * @return {object} The pagination info
 		 */

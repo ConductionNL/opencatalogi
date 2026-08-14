@@ -11,7 +11,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				? t('opencatalogi', 'Catalog edit')
 				: t('opencatalogi', 'Add Catalog')
 		"
-		:label-id="isEdit ? 'editCatalogModal' : 'addCatalogModal'"
+		:labelId="isEdit ? 'editCatalogModal' : 'addCatalogModal'"
 		@close="closeModal">
 		<div class="modal__content">
 			<div
@@ -65,21 +65,21 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:label="t('opencatalogi', 'Title*')"
 					maxlength="255"
 					:error="!!inputValidation.fieldErrors?.['title']"
-					:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
+					:helperText="inputValidation.fieldErrors?.['title']?.[0]" />
 				<NcTextField
 					v-model="catalogi.summary"
 					:disabled="objectStore.isLoading('catalog')"
 					:label="t('opencatalogi', 'Summary')"
 					maxlength="255"
 					:error="!!inputValidation.fieldErrors?.['summary']"
-					:helper-text="inputValidation.fieldErrors?.['summary']?.[0]" />
+					:helperText="inputValidation.fieldErrors?.['summary']?.[0]" />
 				<NcTextField
 					v-model="catalogi.description"
 					:disabled="objectStore.isLoading('catalog')"
 					:label="t('opencatalogi', 'Description')"
 					maxlength="255"
 					:error="!!inputValidation.fieldErrors?.['description']"
-					:helper-text="
+					:helperText="
 						inputValidation.fieldErrors?.['description']?.[0]
 					" />
 				<NcTextField
@@ -88,7 +88,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:label="t('opencatalogi', 'Slug*')"
 					maxlength="255"
 					:error="!!inputValidation.fieldErrors?.['slug']"
-					:helper-text="
+					:helperText="
 						inputValidation.fieldErrors?.['slug']?.[0]
 						|| t(
 							'opencatalogi',
@@ -105,26 +105,26 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<NcSelect
 					v-model="selectedOrganization"
 					:options="organizationOptions"
-					:input-label="t('opencatalogi', 'Organization')"
+					:inputLabel="t('opencatalogi', 'Organization')"
 					:disabled="objectStore.isLoading('catalog')" />
 				<NcSelect
 					v-model="selectedRegisters"
 					:options="registerOptions"
-					:input-label="t('opencatalogi', 'Registers*')"
+					:inputLabel="t('opencatalogi', 'Registers*')"
 					:disabled="objectStore.isLoading('catalog')"
 					multiple />
 				<NcSelect
 					v-model="selectedSchemas"
 					:options="schemaOptions"
-					:input-label="t('opencatalogi', 'Schemas*')"
+					:inputLabel="t('opencatalogi', 'Schemas*')"
 					:disabled="objectStore.isLoading('catalog')"
-					:keep-open="true"
+					:keepOpen="true"
 					multiple />
 				<NcSelect
 					v-model="catalogi.status"
 					:options="statusOptions"
-					:label-attribute="'label'"
-					:input-label="t('opencatalogi', 'Status*')"
+					labelAttribute="label"
+					:inputLabel="t('opencatalogi', 'Status*')"
 					:disabled="objectStore.isLoading('catalog')" />
 				<NcCheckboxRadioSwitch
 					v-model="catalogi.hasWooSitemap"
@@ -189,16 +189,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <script>
 import {
 	NcButton,
-	NcModal,
-	NcTextField,
-	NcLoadingIcon,
-	NcNoteCard,
 	NcCheckboxRadioSwitch,
+	NcLoadingIcon,
+	NcModal,
+	NcNoteCard,
 	NcSelect,
+	NcTextField,
 } from '@nextcloud/vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import { Catalogi } from '../../entities/index.js'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'CatalogModal',
@@ -214,6 +214,7 @@ export default {
 		ContentSaveOutline,
 		Cancel,
 	},
+
 	data() {
 		return {
 			catalogi: {
@@ -229,6 +230,7 @@ export default {
 				hasWooSitemap: false,
 				hasOoapi: false,
 			},
+
 			selectedOrganization: null,
 			selectedRegisters: [],
 			selectedSchemas: [],
@@ -241,10 +243,12 @@ export default {
 			],
 		}
 	},
+
 	computed: {
 		isEdit() {
 			return !!objectStore.getActiveObject('catalog')
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		organizationOptions() {
 			return objectStore
@@ -254,6 +258,7 @@ export default {
 					label: organization.name,
 				}))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		registerOptions() {
 			return objectStore.availableRegisters.map((register) => ({
@@ -261,6 +266,7 @@ export default {
 				label: register.title,
 			}))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		schemaOptions() {
 			// Get the selected register IDs
@@ -305,6 +311,7 @@ export default {
 					label: `${schema.title} (${schema.registerTitle})`,
 				}))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		inputValidation() {
 			// Map selected objects to their IDs for validation
@@ -332,10 +339,12 @@ export default {
 					result?.error?.issues.map(
 						(issue) => `${issue.path.join('.')}: ${issue.message}`,
 					) || [],
+
 				fieldErrors: result?.error?.formErrors?.fieldErrors || {},
 			}
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 	updated() {
 		if (navigationStore.modal === 'catalog' && !this.hasUpdated) {
@@ -351,6 +360,7 @@ export default {
 					filters: Array.isArray(activeCatalog.filters)
 						? {}
 						: activeCatalog.filters || {},
+
 					status:
 						this.statusOptions.find(
 							(opt) =>
@@ -391,6 +401,7 @@ export default {
 			}
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		closeModal() {
@@ -415,6 +426,7 @@ export default {
 			// Reset the object store state
 			objectStore.setState('catalog', { success: null, error: null })
 		},
+
 		/**
 		 * Create or update the catalog via the object store.
 		 *

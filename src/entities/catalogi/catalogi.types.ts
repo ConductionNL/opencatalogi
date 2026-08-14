@@ -1,5 +1,6 @@
 /**
  * Type definitions for Catalogi entity
+ *
  * @module Entities
  * @package
  * @author Ruben Linde

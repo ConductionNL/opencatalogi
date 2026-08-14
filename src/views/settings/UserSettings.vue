@@ -24,7 +24,7 @@
 <template>
 	<NcAppSettingsDialog
 		:open="open"
-		:show-navigation="false"
+		:showNavigation="false"
 		:name="t('opencatalogi', 'OpenCatalogi settings')"
 		@update:open="$emit('update:open', $event)">
 		<NcAppSettingsSection id="general" :name="t('opencatalogi', 'General')">
@@ -35,6 +35,7 @@
 		</NcAppSettingsSection>
 	</NcAppSettingsDialog>
 </template>
+
 <script>
 import { NcAppSettingsDialog, NcAppSettingsSection } from '@nextcloud/vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'

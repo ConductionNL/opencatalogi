@@ -2,13 +2,13 @@
 @copyright 2024 Your Organization * @license EUPL-1.2 * @version 1.0.0 */
 
 <script setup>
-import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcDialog
 		:name="dialogTitle"
-		:can-close="true"
+		:canClose="true"
 		size="normal"
 		class="mass-action-dialog"
 		@update:open="handleDialogClose">
@@ -29,7 +29,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 						? t('opencatalogi', 'Publication to Lock')
 						: t('opencatalogi', 'Selected Publications')
 				"
-				:show-remove="true" />
+				:showRemove="true" />
 
 			<div v-if="!success" class="formContainer">
 				<NcTextField
@@ -97,7 +97,6 @@ import {
 	NcNoteCard,
 	NcTextField,
 } from '@nextcloud/vue'
-
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
@@ -139,6 +138,7 @@ export default {
 	computed: {
 		/**
 		 * Get the objects to operate on from selected objects
+		 *
 		 * @return {Array<object>} Array of objects to lock
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
@@ -148,6 +148,7 @@ export default {
 
 		/**
 		 * Get the dialog title based on number of objects
+		 *
 		 * @return {string} Dialog title
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
@@ -159,15 +160,18 @@ export default {
 			return `Lock ${count} publication${count !== 1 ? 's' : ''}`
 		},
 	},
+
 	mounted() {
 		this.initializeSelection()
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		initializeSelection() {
 			// Store the original count for success message
 			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
@@ -177,12 +181,17 @@ export default {
 			}
 			navigationStore.setDialog(false)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
+
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		async lockObjects() {
 			this.loading = true

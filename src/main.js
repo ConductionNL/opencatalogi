@@ -1,58 +1,54 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-import { createApp, h } from 'vue'
-import { createRouter, createWebHashHistory } from 'vue-router'
 import {
-	translate as t,
-	translatePlural as n,
-	loadTranslations,
-} from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
-import { loadState } from '@nextcloud/initial-state'
-import {
-	CnPageRenderer,
-	defaultPageTypes,
-	registerIcons,
-	registerTranslations,
-	registerBuiltinDashboardWidgets,
 	buildManifest,
-	registerDashboardWidget,
 	CnFileManager,
+	CnPageRenderer,
 	CnRelationshipGraph,
 	CnTreeView,
+	defaultPageTypes,
+	registerBuiltinDashboardWidgets,
+	registerDashboardWidget,
+	registerIcons,
+	registerTranslations,
 } from '@conduction/nextcloud-vue'
+// Font Awesome setup
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { fab } from '@fortawesome/free-brands-svg-icons'
+import { far } from '@fortawesome/free-regular-svg-icons'
+import { fas } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import VueMarkdownEditor from '@kangc/v-md-editor'
+import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
+import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
+import { loadState } from '@nextcloud/initial-state'
+import {
+	loadTranslations,
+	translatePlural as n,
+	translate as t,
+} from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import hljs from 'highlight.js'
+import { createApp, h } from 'vue'
+import { createRouter, createWebHashHistory } from 'vue-router'
+import App from './App.vue'
+import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
+import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
+import appIcons from './icons.js'
+import bundledManifest from './manifest.json'
+import menuLayout from './menu-layout.json'
+import pinia from './pinia.js'
+import customComponents from './registry.js'
 
 // gridstack v12 sizes dashboard items with `width: var(--gs-column-width)`.
 // Without this stylesheet every dashboard item renders 0 px wide, with no
 // error and correct heights — the height comes from JS, the width from CSS.
 import 'gridstack/dist/gridstack.min.css'
-
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-
-import pinia from './pinia.js'
-import App from './App.vue'
-import bundledManifest from './manifest.json'
-import menuLayout from './menu-layout.json'
-import customComponents from './registry.js'
-import appIcons from './icons.js'
-import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
-import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
-
-import VueMarkdownEditor from '@kangc/v-md-editor'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
-import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
 import '@kangc/v-md-editor/lib/theme/style/github.css'
-import hljs from 'highlight.js'
-import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
-
-// Font Awesome setup
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { fas } from '@fortawesome/free-solid-svg-icons'
-import { fab } from '@fortawesome/free-brands-svg-icons'
-import { far } from '@fortawesome/free-regular-svg-icons'
 library.add(fas, fab, far)
 
 // The runtime public path is now set by webpack itself (`output.publicPath:
@@ -152,6 +148,9 @@ try {
 // the JS/CSS allowlist through Apache and rewrite everything else to
 // index.php — there's no route for /custom_apps/<app>/l10n/<locale>.json
 // so the request 404s. Boot MUST not depend on this resolving.
+/**
+ *
+ */
 function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('opencatalogi', () => {})

@@ -13,13 +13,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		v-if="navigationStore.modal === 'viewMenu'"
 		:name="isAddMode ? t('opencatalogi', 'Add Menu') : getModalTitle()"
 		size="large"
-		:can-close="true"
+		:canClose="true"
 		@update:open="handleDialogClose">
 		<div class="modal__content">
 			<div v-if="menu || isAddMode" class="menuDetails">
 				<!-- Menu Items Tab -->
 				<div class="tabContainer">
-					<AppTabs v-model="tabIndex" content-class="mt-3" justified>
+					<AppTabs v-model="tabIndex" contentClass="mt-3" justified>
 						<AppTab
 							v-if="!isAddMode"
 							:title="
@@ -206,7 +206,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										:error="
 											!!inputValidation.fieldErrors?.['title']
 										"
-										:helper-text="
+										:helperText="
 											inputValidation.fieldErrors?.[
 												'title'
 											]?.[0]
@@ -222,7 +222,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 												'description'
 											]
 										"
-										:helper-text="
+										:helperText="
 											inputValidation.fieldErrors?.[
 												'description'
 											]?.[0]
@@ -236,7 +236,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										:error="
 											!!inputValidation.fieldErrors?.['icon']
 										"
-										:helper-text="
+										:helperText="
 											inputValidation.fieldErrors?.[
 												'icon'
 											]?.[0]
@@ -249,13 +249,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										:label="t('opencatalogi', 'Position')"
 										type="number"
 										min="0"
-										:model-value="editForm.position"
+										:modelValue="editForm.position"
 										:error="
 											!!inputValidation.fieldErrors?.[
 												'position'
 											]
 										"
-										:helper-text="
+										:helperText="
 											inputValidation.fieldErrors?.[
 												'position'
 											]?.[0]
@@ -343,7 +343,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 											objectStore.isLoading('menu')
 											|| groupsOptions?.loading
 										"
-										:input-label="
+										:inputLabel="
 											t('opencatalogi', 'Select Groups')
 										"
 										multiple />
@@ -458,19 +458,19 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <script>
 import {
 	NcButton,
-	NcDialog,
-	NcTextField,
-	NcNoteCard,
-	NcLoadingIcon,
 	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
 	NcSelect,
+	NcTextField,
 } from '@nextcloud/vue'
-import AppTabs from '../../components/tabs/AppTabs.vue'
-import AppTab from '../../components/tabs/AppTab.vue'
+import ContentSave from 'vue-material-design-icons/ContentSave.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-import ContentSave from 'vue-material-design-icons/ContentSave.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
 import { Menu } from '../../entities/index.js'
 
 /**
@@ -495,6 +495,7 @@ export default {
 		Delete,
 		ContentSave,
 	},
+
 	data() {
 		return {
 			editForm: {
@@ -509,47 +510,59 @@ export default {
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
+
 			hasUpdated: false,
 			groupsOptions: {
 				options: [],
 				loading: false,
 			},
+
 			tabIndex: 1, // 1 = Configuration by default for add, 0 = Menu Items
 		}
 	},
+
 	computed: {
 		/**
 		 * Get the currently active menu from the store
+		 *
 		 * @return {object|null} The active menu object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		menu() {
 			return objectStore.getActiveObject('menu')
 		},
+
 		/**
 		 * Check if we're in edit mode
+		 *
 		 * @return {boolean} True if editing an existing menu
 		 */
 		isEdit() {
 			return !!this.menu
 		},
+
 		/**
 		 * Check if we're in add mode
+		 *
 		 * @return {boolean} True if adding a new menu
 		 */
 		isAddMode() {
 			return !(this.menu && this.menu.id)
 		},
+
 		/**
 		 * Get the menu state from the store
+		 *
 		 * @return {object} The menu state object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		menuState() {
 			return objectStore.getState('menu')
 		},
+
 		/**
 		 * Validate the input form
+		 *
 		 * @return {object} Validation result
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
@@ -563,24 +576,31 @@ export default {
 					result?.error?.issues.map(
 						(issue) => `${issue.path.join('.')}: ${issue.message}`,
 					) || [],
+
 				fieldErrors: result?.error?.formErrors?.fieldErrors || {},
 			}
 		},
 	},
+
 	watch: {
-		'menuState.success'(val) {
+		'menuState.success': function (val) {
 			if (val === true) {
 				setTimeout(() => {
 					objectStore.setState('menu', { success: null })
 				}, 2000)
 			}
 		},
+
 		/**
 		 * Watch for changes in the menu data and update editForm accordingly
+		 *
 		 * @param {object} newMenu - The new menu data
 		 */
 		menu: {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+			/**
+			 * @param newMenu
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+			 */
 			handler(newMenu) {
 				if (newMenu && !this.isAddMode) {
 					this.editForm = {
@@ -592,12 +612,17 @@ export default {
 					this.resetComponentState()
 				}
 			},
+
 			immediate: true,
 		},
 
 		// Add watcher for modal state to handle cleanup
 		'navigationStore.modal': {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+			/**
+			 * @param newModal
+			 * @param oldModal
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+			 */
 			handler(newModal, oldModal) {
 				if (oldModal === 'viewMenu' && newModal !== 'viewMenu') {
 					// Modal was closed, ensure cleanup
@@ -609,12 +634,14 @@ export default {
 			},
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 	mounted() {
 		// Initialize form when component mounts
 		// Fetch groups for the dropdown
 		this.fetchGroups && this.fetchGroups()
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 	beforeUnmount() {
 		// Clean up any pending timeouts or intervals
@@ -626,35 +653,46 @@ export default {
 			objectStore.setState('menu', { success: null, error: null })
 		}
 	},
+
 	methods: {
 		/**
 		 * Get the modal title
+		 *
 		 * @return {string} The modal title
 		 */
 		getModalTitle() {
 			return this.menu?.title || 'Menu'
 		},
+
 		/**
 		 * Handle dialog close event
+		 *
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+
 		/**
 		 * Open the edit modal for the current menu
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		openEditModal() {
 			navigationStore.setModal('viewMenu')
 		},
+
 		/**
 		 * Open the add menu item modal
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
@@ -662,36 +700,55 @@ export default {
 			objectStore.setState('menu', { success: null, error: null })
 			navigationStore.setModal('menuItemForm')
 		},
+
 		/**
 		 * Open the edit modal for a specific menu item
+		 *
 		 * @param {object} item - The menu item to edit
 		 * @param {number} index - The index of the menu item
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+		/**
+		 * @param item
+		 * @param index
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+		 */
 		editItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })
 			navigationStore.setModal('menuItemForm')
 		},
+
 		/**
 		 * Open the delete modal for a specific menu item
+		 *
 		 * @param {object} item - The menu item to delete
 		 * @param {number} index - The index of the menu item in the items array
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+		/**
+		 * @param item
+		 * @param index
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+		 */
 		deleteItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })
 			navigationStore.setModal('deleteMenuItem')
 		},
+
 		/**
 		 * Handle position update
+		 *
 		 * @param {number} value - The new position value
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+		/**
+		 * @param value
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+		 */
 		handlePositionUpdate(value) {
 			this.editForm.position = parseInt(value, 10) || 0
 		},
+
 		/**
 		 * Reset all component data to initial state
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
@@ -718,6 +775,7 @@ export default {
 
 		/**
 		 * Close the modal and clear all state
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
@@ -755,8 +813,10 @@ export default {
 				})
 			}
 		},
+
 		/**
 		 * Delete the current menu
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
@@ -772,6 +832,7 @@ export default {
 					})
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		fetchGroups() {
 			this.groupsOptions.loading = true

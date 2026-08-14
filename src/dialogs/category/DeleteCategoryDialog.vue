@@ -6,7 +6,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcDialog
 		v-if="navigationStore.dialog === 'deleteCategory'"
 		:name="t('opencatalogi', 'Delete Category')"
-		:can-close="false">
+		:canClose="false">
 		<div
 			v-if="
 				objectStore.getState('category').success !== null
@@ -88,13 +88,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
 /**
  * Delete Category Dialog Component
+ *
  * @module Dialogs
  * @package
  * @author Ruben Linde
@@ -115,6 +115,7 @@ export default {
 		Cancel,
 		Delete,
 	},
+
 	methods: {
 		/**
 		 * Delete the active category

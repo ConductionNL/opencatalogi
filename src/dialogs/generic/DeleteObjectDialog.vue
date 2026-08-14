@@ -1,5 +1,5 @@
 <script setup>
-import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -10,7 +10,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				? t('opencatalogi', 'Delete {type}s', { type: dialogTitle })
 				: t('opencatalogi', 'Delete {type}', { type: dialogTitle })
 		"
-		:can-close="false">
+		:canClose="false">
 		<div
 			v-if="
 				objectStore.getState(objectType).success !== null
@@ -144,7 +144,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
@@ -162,6 +162,7 @@ export default {
 		Cancel,
 		Delete,
 	},
+
 	data() {
 		return {
 			closeTimeout: null,
@@ -169,32 +170,41 @@ export default {
 			loading: false,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		dialogProperties() {
 			return navigationStore.dialogProperties
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		dialogTitle() {
 			return this.dialogProperties?.dialogTitle
 		},
+
 		isMultiple() {
 			return this.dialogProperties?.isMultiple ?? false
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		shouldShowDialog() {
 			return navigationStore.dialog === 'deleteObject'
 		},
 	},
+
 	watch: {
 		dialogProperties: {
 			immediate: true,
-			/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
+			/**
+			 * @param newProps
+			 * @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1
+			 */
 			handler(newProps) {
 				this.objectType = newProps?.objectType
 			},
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		deleteObject() {
@@ -289,7 +299,11 @@ export default {
 					})
 			}
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
+
+		/**
+		 * @param objectType
+		 * @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1
+		 */
 		refreshObjectList(objectType) {
 			switch (objectType) {
 				case 'publication':
@@ -299,6 +313,7 @@ export default {
 					objectStore.fetchCollection(objectType)
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		closeDialog() {
 			if (this.closeTimeout) {

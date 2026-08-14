@@ -2,11 +2,11 @@
 <template>
 	<div>
 		<CnAppRoot
-			:ai-companion="true"
+			:aiCompanion="true"
 			:manifest="manifest"
-			:custom-components="customComponents"
-			:page-types="pageTypes"
-			app-id="opencatalogi"
+			:customComponents="customComponents"
+			:pageTypes="pageTypes"
+			appId="opencatalogi"
 			:translate="translateForApp"
 			:permissions="permissions" />
 		<!-- WOO-525: Modals.vue and Dialogs.vue were previously mounted by
@@ -22,12 +22,12 @@
 </template>
 
 <script>
-import { reactive } from 'vue'
-import { translate as ncT } from '@nextcloud/l10n'
 import { CnAppRoot } from '@conduction/nextcloud-vue'
-import { objectStore } from './store/store.js'
-import Modals from './modals/Modals.vue'
+import { translate as ncT } from '@nextcloud/l10n'
+import { reactive } from 'vue'
 import Dialogs from './dialogs/Dialogs.vue'
+import Modals from './modals/Modals.vue'
+import { objectStore } from './store/store.js'
 
 /**
  * App — manifest-driven CnAppRoot SPA shell for opencatalogi.
@@ -60,10 +60,12 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		customComponents: {
 			type: Object,
 			default: () => ({}),
 		},
+
 		pageTypes: {
 			type: Object,
 			default: () => ({}),
@@ -119,7 +121,10 @@ export default {
 		 * @param {string} key Translation key.
 		 * @return {string} Translated string (or the key on miss).
 		 */
-		/** @spec exclude i18n wrapper delegating to Nextcloud translate() */
+		/**
+		 * @param key
+		 * @spec exclude i18n wrapper delegating to Nextcloud translate()
+		 */
 		translateForApp(key) {
 			return ncT('opencatalogi', key)
 		},

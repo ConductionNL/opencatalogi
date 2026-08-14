@@ -1,13 +1,13 @@
 <template>
 	<CnAdminSettingsShell
-		app-id="opencatalogi"
-		app-name="OpenCatalogi"
-		doc-url="https://docs.opencatalogi.nl"
-		:app-version="versionInfo.appVersion"
-		:configured-version="versionInfo.configuredVersion"
-		:is-up-to-date="versionInfo.versionsMatch"
-		:show-update-button="versionInfo.needsUpdate"
-		:show-reimport="false">
+		appId="opencatalogi"
+		appName="OpenCatalogi"
+		docUrl="https://docs.opencatalogi.nl"
+		:appVersion="versionInfo.appVersion"
+		:configuredVersion="versionInfo.configuredVersion"
+		:isUpToDate="versionInfo.versionsMatch"
+		:showUpdateButton="versionInfo.needsUpdate"
+		:showReimport="false">
 		<template #actions>
 			<NcButton
 				variant="secondary"
@@ -77,9 +77,9 @@
 					<NcSelect
 						v-model="selectedRegister"
 						:options="registerOptions"
-						:input-label="t('opencatalogi', 'Register')"
+						:inputLabel="t('opencatalogi', 'Register')"
 						:disabled="loading || !settings.openRegisters"
-						@update:model-value="handleRegisterChange" />
+						@update:modelValue="handleRegisterChange" />
 				</div>
 
 				<!-- Warning if selected register has no schemas -->
@@ -117,7 +117,7 @@
 						<NcSelect
 							v-model="configuration[objectType].schema"
 							:options="computedSchemaOptions"
-							:input-label="t('opencatalogi', 'Schema')"
+							:inputLabel="t('opencatalogi', 'Schema')"
 							:disabled="loading" />
 					</div>
 				</div>
@@ -192,15 +192,15 @@
 							<CheckCircle
 								v-if="check.status === 'pass'"
 								:size="20"
-								fill-color="var(--color-success)" />
+								fillColor="var(--color-success)" />
 							<CloseCircle
 								v-else-if="check.status === 'fail'"
 								:size="20"
-								fill-color="var(--color-error)" />
+								fillColor="var(--color-error)" />
 							<MinusCircle
 								v-else
 								:size="20"
-								fill-color="var(--color-text-lighter)" />
+								fillColor="var(--color-text-lighter)" />
 							<div class="woo-readiness-check-body">
 								<strong>{{ check.id }}</strong>
 								<span
@@ -246,22 +246,22 @@
 					<NcSelect
 						v-model="registration.status"
 						:options="registrationStatusOptions"
-						:input-label="t('opencatalogi', 'Registration status')"
+						:inputLabel="t('opencatalogi', 'Registration status')"
 						:disabled="savingRegistration" />
 
 					<NcTextField
-						:model-value="registration.registeredUrl"
+						:modelValue="registration.registeredUrl"
 						:label="t('opencatalogi', 'Registered URL')"
 						:disabled="savingRegistration"
-						@update:model-value="
+						@update:modelValue="
 							(v) => (registration.registeredUrl = v)
 						" />
 
 					<NcTextField
-						:model-value="registration.registeredAt"
+						:modelValue="registration.registeredAt"
 						:label="t('opencatalogi', 'Registered on (date)')"
 						:disabled="savingRegistration"
-						@update:model-value="
+						@update:modelValue="
 							(v) => (registration.registeredAt = v)
 						" />
 				</div>
@@ -367,22 +367,7 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue'
-import {
-	NcSettingsSection,
-	NcNoteCard,
-	NcSelect,
-	NcTextField,
-	NcButton,
-	NcLoadingIcon,
-	NcCheckboxRadioSwitch,
-} from '@nextcloud/vue'
 import { CnAdminSettingsShell } from '@conduction/nextcloud-vue'
-import Save from 'vue-material-design-icons/ContentSave.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
-import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
-import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 // Every state-changing call below goes through @nextcloud/axios rather than a
 // bare fetch(). It attaches the `requesttoken` header Nextcloud's
 // SecurityMiddleware checks, which is what lets the settings write endpoints
@@ -394,6 +379,21 @@ import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 // calls did not check at all: a 403 or 500 was indistinguishable from a save.
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+	NcSettingsSection,
+	NcTextField,
+} from '@nextcloud/vue'
+import { defineComponent } from 'vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
+import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
+import Save from 'vue-material-design-icons/ContentSave.vue'
+import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
 
 /**
  * @class Settings
@@ -447,6 +447,7 @@ export default defineComponent({
 				availableRegisters: [],
 				configuration: {},
 			},
+
 			selectedRegister: null,
 			configuration: {},
 			schemaOptions: [],
@@ -455,6 +456,7 @@ export default defineComponent({
 				autoPublishObjects: false,
 				useOldStylePublishingView: false,
 			},
+
 			versionInfo: {
 				appName: '',
 				appVersion: '',
@@ -462,6 +464,7 @@ export default defineComponent({
 				versionsMatch: false,
 				needsUpdate: false,
 			},
+
 			importResult: null,
 			wooReadinessReport: null,
 			wooReadinessError: null,
@@ -471,6 +474,7 @@ export default defineComponent({
 				registeredUrl: '',
 				registeredAt: '',
 			},
+
 			savingRegistration: false,
 		}
 	},
@@ -492,6 +496,7 @@ export default defineComponent({
 				{ label: this.t('opencatalogi', 'Registered'), value: 'registered' },
 			]
 		},
+
 		/**
 		 * Generates options for register selection dropdown
 		 *
@@ -533,6 +538,7 @@ export default defineComponent({
 				)
 			)
 		},
+
 		/**
 		 * Returns all available schema options (no filtering for reuse)
 		 *
@@ -584,6 +590,7 @@ export default defineComponent({
 					this.publishingOptions = {
 						autoPublishAttachments:
 							publishingData.auto_publish_attachments,
+
 						autoPublishObjects: publishingData.auto_publish_objects,
 						useOldStylePublishingView:
 							publishingData.use_old_style_publishing_view,
@@ -607,10 +614,12 @@ export default defineComponent({
 						this.registrationStatusOptions.find(
 							(option) => option.value === registrationStatus,
 						) || this.registrationStatusOptions[0],
+
 					registeredUrl:
 						(data.configuration
 							&& data.configuration.woo_index_registration_url)
 						|| '',
+
 					registeredAt:
 						(data.configuration
 							&& data.configuration.woo_index_registration_at)
@@ -773,7 +782,10 @@ export default defineComponent({
 		 *
 		 * @param {object} register - The selected register object
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @param register
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 */
 		autoSelectMatchingSchemas(register) {
 			// Only proceed if register has schemas array
 			if (!register || !Array.isArray(register.schemas)) {
@@ -816,7 +828,10 @@ export default defineComponent({
 		 *
 		 * @param {string} registerId - The ID of the selected register
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @param registerId
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 */
 		updateSchemaOptions(registerId) {
 			const register = this.settings.availableRegisters.find(
 				(r) => r.id.toString() === registerId,
@@ -856,7 +871,10 @@ export default defineComponent({
 		 * @param {string} objectType - The object type to format
 		 * @return {string} The formatted title
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @param objectType
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 */
 		formatTitle(objectType) {
 			return objectType.charAt(0).toUpperCase() + objectType.slice(1)
 		},
@@ -994,6 +1012,7 @@ export default defineComponent({
 				const configToSave = {
 					auto_publish_attachments:
 						this.publishingOptions.autoPublishAttachments,
+
 					auto_publish_objects: this.publishingOptions.autoPublishObjects,
 					use_old_style_publishing_view:
 						this.publishingOptions.useOldStylePublishingView,
@@ -1059,7 +1078,10 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @param force
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 */
 		async manualImport(force = false) {
 			this.importing = true
 			this.importResult = null
@@ -1184,7 +1206,10 @@ export default defineComponent({
 		 * @param {string} checkedAt ISO 8601 timestamp.
 		 * @return {string} A locale-formatted date/time string.
 		 */
-		/** @spec exclude Display-formatting helper; no independent domain behavior. */
+		/**
+		 * @param checkedAt
+		 * @spec exclude Display-formatting helper; no independent domain behavior.
+		 */
 		formatCheckedAt(checkedAt) {
 			if (!checkedAt) {
 				return ''
@@ -1202,69 +1227,87 @@ export default defineComponent({
 		 * @param {string} reason The machine-readable reason code.
 		 * @return {string} A human-readable remediation hint.
 		 */
-		/** @spec exclude Display-copy lookup; no independent domain behavior. */
+		/**
+		 * @param reason
+		 * @spec exclude Display-copy lookup; no independent domain behavior.
+		 */
 		remediationHint(reason) {
 			const hints = {
 				'http-404': this.t(
 					'opencatalogi',
 					'Not found (404) — check webserver routing/rewrites for this URL.',
 				),
+
 				'ssrf-blocked': this.t(
 					'opencatalogi',
 					'Blocked as an unsafe outbound target — check the configured public base URL.',
 				),
+
 				'network-error': this.t(
 					'opencatalogi',
 					'Could not connect — check that this instance is reachable from the public internet.',
 				),
+
 				'invalid-xml': this.t(
 					'opencatalogi',
 					'Response was not well-formed XML.',
 				),
+
 				'no-diwoo-elements': this.t(
 					'opencatalogi',
 					'No DIWOO metadata elements found — the category sitemap may be empty.',
 				),
+
 				'diwoo-xsd-invalid': this.t(
 					'opencatalogi',
 					'DIWOO metadata failed validation — see the DIWOO validation report for this catalog.',
 				),
+
 				'diwoo-validation-error': this.t(
 					'opencatalogi',
 					'Could not run DIWOO validation for this catalog/category.',
 				),
+
 				'missing-sitemap-reference': this.t(
 					'opencatalogi',
 					'robots.txt does not reference any Woo sitemap — check the robots.txt rewrite/proxy configuration.',
 				),
+
 				'sitemapindex-unreachable': this.t(
 					'opencatalogi',
 					'Skipped — the sitemapindex for this catalog was not reachable.',
 				),
+
 				'sitemapindex-invalid': this.t(
 					'opencatalogi',
 					'Skipped — the sitemapindex for this catalog was not well-formed.',
 				),
+
 				'no-sitemap-pages': this.t(
 					'opencatalogi',
 					'Skipped — the sitemapindex has no sitemap pages to sample.',
 				),
+
 				'no-publications-found': this.t(
 					'opencatalogi',
 					'Skipped — no publication URL was found to sample.',
 				),
+
 				'request-cap-reached': this.t(
 					'opencatalogi',
 					'Skipped — the per-run outbound request cap was reached.',
 				),
+
 				'not-registered': this.t(
 					'opencatalogi',
 					'Not yet registered with the Woo-index.',
 				),
+
 				'registration-pending': this.t(
 					'opencatalogi',
 					'Registration requested but not yet confirmed.',
 				),
+
 				'url-mismatch': this.t(
 					'opencatalogi',
 					"The registered URL does not match this instance's public base URL.",

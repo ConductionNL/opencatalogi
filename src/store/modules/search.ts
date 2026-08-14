@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
+import type { TPublication } from '../../entities/publication/publication.types'
+
 import { defineStore } from 'pinia'
-import { TPublication } from '../../entities/publication/publication.types'
 
 // Type definitions for faceting
 interface FacetFieldInfo {
@@ -207,7 +208,10 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param searchTerm The search term to set
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param searchTerm
+		 * @spec openspec/specs/search/spec.md
+		 */
 		setSearchTerm(searchTerm: string) {
 			this.searchTerm = searchTerm
 			console.log('Search term set to:', searchTerm)
@@ -218,7 +222,10 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param filters Object containing filter key-value pairs
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param filters
+		 * @spec openspec/specs/search/spec.md
+		 */
 		setFilters(filters: object) {
 			this.filters = { ...this.filters, ...filters }
 			console.log('Search filters updated:', this.filters)
@@ -229,7 +236,10 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param filterKey The key of the filter to clear
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param filterKey
+		 * @spec openspec/specs/search/spec.md
+		 */
 		clearFilter(filterKey: string) {
 			const remainingFilters = { ...this.filters }
 			delete remainingFilters[filterKey]
@@ -257,7 +267,11 @@ export const useSearchStore = defineStore('search', {
 		 * @param field The field to order by
 		 * @param direction ASC or DESC
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param field
+		 * @param direction
+		 * @spec openspec/specs/search/spec.md
+		 */
 		setOrdering(field: string, direction: 'ASC' | 'DESC') {
 			this.ordering = { ...this.ordering, [field]: direction }
 			console.log('Ordering updated:', this.ordering)
@@ -268,7 +282,10 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param field The field to remove ordering from
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param field
+		 * @spec openspec/specs/search/spec.md
+		 */
 		removeOrdering(field: string) {
 			const remainingOrdering = { ...this.ordering }
 			delete remainingOrdering[field]
@@ -295,7 +312,10 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param mode The view mode to set
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param mode
+		 * @spec openspec/specs/search/spec.md
+		 */
 		setViewMode(mode: 'cards' | 'table') {
 			this.viewMode = mode
 			console.log('View mode set to:', mode)
@@ -307,7 +327,11 @@ export const useSearchStore = defineStore('search', {
 		 * @param publicationId The ID of the publication to toggle
 		 * @param selected Whether the publication should be selected
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param publicationId
+		 * @param selected
+		 * @spec openspec/specs/search/spec.md
+		 */
 		togglePublicationSelection(publicationId: string, selected: boolean) {
 			if (selected) {
 				if (!this.selectedPublications.includes(publicationId)) {
@@ -411,7 +435,13 @@ export const useSearchStore = defineStore('search', {
 		 * @param enabled Whether to enable or disable the facet
 		 * @param config Optional configuration for the facet
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param fieldName
+		 * @param facetType
+		 * @param enabled
+		 * @param config
+		 * @spec openspec/specs/search/spec.md
+		 */
 		toggleActiveFacet(
 			fieldName: string,
 			facetType: string,
@@ -770,7 +800,10 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param publicationId The ID of the publication to fetch
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param publicationId
+		 * @spec openspec/specs/search/spec.md
+		 */
 		async getPublication(publicationId: string) {
 			try {
 				const response = await fetch(
@@ -802,7 +835,11 @@ export const useSearchStore = defineStore('search', {
 		 * @param publicationId The ID of the publication
 		 * @param params Optional search parameters
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param publicationId
+		 * @param params
+		 * @spec openspec/specs/search/spec.md
+		 */
 		async getPublicationUses(
 			publicationId: string,
 			params: Record<string, string | number | boolean> = {},
@@ -840,7 +877,11 @@ export const useSearchStore = defineStore('search', {
 		 * @param publicationId The ID of the publication
 		 * @param params Optional search parameters
 		 */
-		/** @spec openspec/specs/search/spec.md */
+		/**
+		 * @param publicationId
+		 * @param params
+		 * @spec openspec/specs/search/spec.md
+		 */
 		async getPublicationUsed(
 			publicationId: string,
 			params: Record<string, string | number | boolean> = {},

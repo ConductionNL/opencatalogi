@@ -10,14 +10,14 @@
 
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
-import PencilOutline from 'vue-material-design-icons/PencilOutline.vue'
+import { NcActionButton, NcActions, NcButton } from '@nextcloud/vue'
 import DeleteOutline from 'vue-material-design-icons/DeleteOutline.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
-import { navigationStore } from '../../store/store.js'
+import PencilOutline from 'vue-material-design-icons/PencilOutline.vue'
 import FederationAddDirectoryModal from '../../modals/directory/FederationAddDirectoryModal.vue'
-import FederationEditListingModal from '../../modals/directory/FederationEditListingModal.vue'
 import FederationDeleteListingModal from '../../modals/directory/FederationDeleteListingModal.vue'
+import FederationEditListingModal from '../../modals/directory/FederationEditListingModal.vue'
+import { navigationStore } from '../../store/store.js'
 
 export default {
 	name: 'FederationDirectory',
@@ -32,6 +32,7 @@ export default {
 		FederationEditListingModal,
 		FederationDeleteListingModal,
 	},
+
 	data() {
 		return {
 			listings: [],
@@ -41,6 +42,7 @@ export default {
 			deletingListing: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * The active navigation-store modal key, watched so the directory list
@@ -52,6 +54,7 @@ export default {
 		modalState() {
 			return navigationStore.modal
 		},
+
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		summary() {
 			const counts = { up: 0, degraded: 0, down: 0, unknown: 0 }
@@ -61,8 +64,13 @@ export default {
 			return counts
 		},
 	},
+
 	watch: {
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+		/**
+		 * @param next
+		 * @param prev
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		modalState(next, prev) {
 			const dirModals = [
 				'federationAddDirectory',
@@ -76,9 +84,11 @@ export default {
 			}
 		},
 	},
+
 	mounted() {
 		this.load()
 	},
+
 	methods: {
 		t,
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
@@ -102,7 +112,11 @@ export default {
 				this.loading = false
 			}
 		},
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+
+		/**
+		 * @param listing
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		statusFor(listing) {
 			if (listing.available === false) return 'down'
 			if (typeof listing.statusCode === 'number') {
@@ -113,7 +127,11 @@ export default {
 			}
 			return 'unknown'
 		},
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+
+		/**
+		 * @param listing
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		statusLabelFor(listing) {
 			const map = {
 				up: t('opencatalogi', 'available'),
@@ -123,7 +141,11 @@ export default {
 			}
 			return map[this.statusFor(listing)]
 		},
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+
+		/**
+		 * @param listing
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		messageFor(listing) {
 			if (listing.available === false)
 				return t('opencatalogi', 'Peer is unreachable')
@@ -135,21 +157,34 @@ export default {
 			}
 			return ''
 		},
+
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		openAdd() {
 			navigationStore.setModal('federationAddDirectory')
 		},
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+
+		/**
+		 * @param listing
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		openEdit(listing) {
 			this.editingListing = listing
 			navigationStore.setModal('federationEditListing')
 		},
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+
+		/**
+		 * @param listing
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		openDelete(listing) {
 			this.deletingListing = listing
 			navigationStore.setModal('federationDeleteListing')
 		},
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+
+		/**
+		 * @param listing
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		integrationLevelFor(listing) {
 			const raw = listing.integrationLevel
 			if (raw === undefined || raw === null || raw === '')
@@ -262,8 +297,8 @@ export default {
 				</div>
 				<div class="federation-directory__node-actions">
 					<NcActions
-						:force-menu="false"
-						:menu-name="t('opencatalogi', 'Actions')"
+						:forceMenu="false"
+						:menuName="t('opencatalogi', 'Actions')"
 						:aria-label="
 							t('opencatalogi', 'Actions for {name}', {
 								name: listing.title || listing.directory,
@@ -273,7 +308,7 @@ export default {
 							<DotsHorizontal :size="20" />
 						</template>
 						<NcActionButton
-							:close-after-click="true"
+							:closeAfterClick="true"
 							@click="openEdit(listing)">
 							<template #icon>
 								<PencilOutline :size="20" />
@@ -281,7 +316,7 @@ export default {
 							{{ t('opencatalogi', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton
-							:close-after-click="true"
+							:closeAfterClick="true"
 							@click="openDelete(listing)">
 							<template #icon>
 								<DeleteOutline :size="20" />

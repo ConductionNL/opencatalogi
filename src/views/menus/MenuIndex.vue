@@ -20,39 +20,39 @@
 		:description="
 			t('opencatalogi', 'Manage your navigation menus and menu items')
 		"
-		:show-title="true"
+		:showTitle="true"
 		:schema="menuSchema"
 		:objects="currentObjects"
 		:columns="tableColumns"
 		:pagination="currentPagination"
 		:loading="objectStore.isLoading('menu')"
 		:selectable="true"
-		:selected-ids="selectedIds"
-		:show-view-toggle="true"
-		:show-edit-action="false"
-		:show-copy-action="false"
-		:show-delete-action="false"
-		:show-mass-import="false"
-		:show-mass-export="false"
-		:show-mass-copy="false"
-		:show-mass-delete="false"
-		:view-mode="viewMode"
-		:sort-key="sortKey"
-		:sort-order="sortOrder"
-		:include-columns="visibleColumns"
-		:add-label="t('opencatalogi', 'Add Menu')"
-		:show-add="isAdmin"
-		row-key="id"
-		:empty-text="t('opencatalogi', 'No menus found')"
+		:selectedIds="selectedIds"
+		:showViewToggle="true"
+		:showEditAction="false"
+		:showCopyAction="false"
+		:showDeleteAction="false"
+		:showMassImport="false"
+		:showMassExport="false"
+		:showMassCopy="false"
+		:showMassDelete="false"
+		:viewMode="viewMode"
+		:sortKey="sortKey"
+		:sortOrder="sortOrder"
+		:includeColumns="visibleColumns"
+		:addLabel="t('opencatalogi', 'Add Menu')"
+		:showAdd="isAdmin"
+		rowKey="id"
+		:emptyText="t('opencatalogi', 'No menus found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
 		@refresh="refresh"
 		@sort="onSort"
-		@page-changed="onPageChange"
-		@page-size-changed="onPageSizeChange"
-		@view-mode-change="viewMode = $event"
+		@pageChanged="onPageChange"
+		@pageSizeChanged="onPageSizeChange"
+		@viewModeChange="viewMode = $event"
 		@select="onSelect"
-		@row-click="onRowClick">
+		@rowClick="onRowClick">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
 				{{
@@ -82,7 +82,7 @@
 				</template>
 				<NcActionButton
 					v-if="isAdmin"
-					close-after-click
+					closeAfterClick
 					@click="editMenu(row)">
 					<template #icon>
 						<Pencil :size="20" />
@@ -91,7 +91,7 @@
 				</NcActionButton>
 				<NcActionButton
 					v-if="isAdmin"
-					close-after-click
+					closeAfterClick
 					@click="addMenuItem(row)">
 					<template #icon>
 						<Plus :size="20" />
@@ -100,7 +100,7 @@
 				</NcActionButton>
 				<NcActionButton
 					v-if="isAdmin"
-					close-after-click
+					closeAfterClick
 					@click="copyMenu(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
@@ -109,7 +109,7 @@
 				</NcActionButton>
 				<NcActionButton
 					v-if="isAdmin"
-					close-after-click
+					closeAfterClick
 					@click="deleteMenu(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
@@ -122,19 +122,19 @@
 </template>
 
 <script>
-import { inject } from 'vue'
+import { CnIndexPage, useListView } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
-import { useListView, CnIndexPage } from '@conduction/nextcloud-vue'
-import { objectStore, navigationStore } from '../../store/store.js'
-import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
-import { useIsAdmin } from '../../composables/useIsAdmin.js'
-import { resolveObjectId } from '../../services/resolveObjectId.js'
-import { buildMenuItemIconCatalogues } from '../../modals/menuItem/menuItemIconCatalogues.js'
+import { NcActionButton, NcActions, NcNoteCard } from '@nextcloud/vue'
+import { inject } from 'vue'
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
+import { buildMenuItemIconCatalogues } from '../../modals/menuItem/menuItemIconCatalogues.js'
+import { resolveObjectId } from '../../services/resolveObjectId.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 export default {
 	name: 'MenuIndex',
@@ -149,6 +149,7 @@ export default {
 		ContentCopy,
 		TrashCanOutline,
 	},
+
 	setup() {
 		const sidebarState = inject('sidebarState', null)
 		const {
@@ -180,6 +181,7 @@ export default {
 			loaded,
 		}
 	},
+
 	data() {
 		return {
 			selectedIds: [],
@@ -187,6 +189,7 @@ export default {
 			isRefreshing: false,
 		}
 	},
+
 	computed: {
 		/**
 		 * Augment the OpenRegister menu schema with an `icon` property rendered
@@ -210,6 +213,7 @@ export default {
 							'opencatalogi',
 							'Pick an icon (Material / FontAwesome / OpenGemeenten) or paste custom SVG.',
 						),
+
 						widget: 'icon',
 						iconSources: ['mdi', 'fontawesome', 'opengemeenten'],
 						catalogues: buildMenuItemIconCatalogues(),
@@ -219,6 +223,7 @@ export default {
 				},
 			}
 		},
+
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
@@ -235,11 +240,13 @@ export default {
 				},
 			]
 		},
+
 		currentObjects() {
 			const collection = objectStore.getCollection('menu')
 			if (Array.isArray(collection)) return collection
 			return collection?.results || []
 		},
+
 		currentPagination() {
 			return (
 				objectStore.getPagination('menu') || {
@@ -251,14 +258,17 @@ export default {
 			)
 		},
 	},
+
 	methods: {
 		onAdd() {
 			objectStore.clearActiveObject('menu')
 			navigationStore.setModal('viewMenu')
 		},
+
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
+
 		/**
 		 * Open the clicked menu's detail page.
 		 *
@@ -275,6 +285,7 @@ export default {
 			// eslint-disable-next-line no-console
 			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
+
 		/**
 		 * Open a menu for editing on its detail page.
 		 *
@@ -288,10 +299,12 @@ export default {
 				this.$router.push({ name: 'MenuDetail', params: { id: String(id) } })
 			}
 		},
+
 		addMenuItem(menu) {
 			objectStore.setActiveObject('menu', menu)
 			navigationStore.setModal('menuItemForm')
 		},
+
 		copyMenu(menu) {
 			objectStore.setActiveObject('menu', menu)
 			navigationStore.setDialog('copyObject', {
@@ -299,6 +312,7 @@ export default {
 				dialogTitle: 'Menu',
 			})
 		},
+
 		deleteMenu(menu) {
 			objectStore.setActiveObject('menu', menu)
 			navigationStore.setDialog('deleteObject', {

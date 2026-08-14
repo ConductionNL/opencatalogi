@@ -1,6 +1,6 @@
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -12,7 +12,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 			})
 		"
 		size="large"
-		:can-close="false">
+		:canClose="false">
 		<div class="formContainer viewCatalogiDialog">
 			<!-- Catalog Details -->
 			<div class="catalogDetailsGrid">
@@ -151,7 +151,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							<div class="organizationActions">
 								<NcActions>
 									<NcActionButton
-										close-after-click
+										closeAfterClick
 										@click="goToOrganization()">
 										<template #icon>
 											<OpenInApp :size="20" />
@@ -181,19 +181,19 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		</div>
 
 		<template #actions>
-			<NcActionButton close-after-click @click="editCatalog">
+			<NcActionButton closeAfterClick @click="editCatalog">
 				<template #icon>
 					<Pencil :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Edit Catalog') }}
 			</NcActionButton>
-			<NcActionButton close-after-click @click="viewCatalog">
+			<NcActionButton closeAfterClick @click="viewCatalog">
 				<template #icon>
 					<OpenInApp :size="20" />
 				</template>
 				{{ t('opencatalogi', 'View Catalog') }}
 			</NcActionButton>
-			<NcActionButton close-after-click @click="deleteCatalog">
+			<NcActionButton closeAfterClick @click="deleteCatalog">
 				<template #icon>
 					<TrashCanOutline :size="20" />
 				</template>
@@ -211,20 +211,19 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 <script>
 import {
-	NcDialog,
-	NcButton,
-	NcActions,
 	NcActionButton,
+	NcActions,
+	NcButton,
+	NcDialog,
 	NcEmptyContent,
 } from '@nextcloud/vue'
-
 import Cancel from 'vue-material-design-icons/Cancel.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
 import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
 import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 /**
  * ViewCatalogi — read-only tabbed view of a catalog's details.
@@ -247,6 +246,7 @@ export default {
 		OfficeBuilding,
 		OpenInApp,
 	},
+
 	data() {
 		return {
 			activeTab: 0,
@@ -257,11 +257,13 @@ export default {
 			],
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		activeCatalog() {
 			return objectStore.getActiveObject('catalog')
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		organization() {
 			return this.activeCatalog?.organization
@@ -272,15 +274,18 @@ export default {
 				: null
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		closeModal() {
 			navigationStore.setModal(false)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		editCatalog() {
 			navigationStore.setModal('catalog')
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		viewCatalog() {
 			if (!this.activeCatalog?.slug) {
@@ -292,6 +297,7 @@ export default {
 			navigationStore.setModal(false)
 			this.$router.push(`/publications/${this.activeCatalog.slug}`)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		deleteCatalog() {
 			navigationStore.setModal(false)
@@ -300,16 +306,25 @@ export default {
 				dialogTitle: 'Catalogus',
 			})
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
+
+		/**
+		 * @param id
+		 * @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2
+		 */
 		getRegisterById(id) {
 			const availableRegisters = objectStore.availableRegisters
 			return availableRegisters.find((register) => register.id === id)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
+
+		/**
+		 * @param id
+		 * @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2
+		 */
 		getSchemaById(id) {
 			const availableSchemas = objectStore.availableSchemas
 			return availableSchemas.find((schema) => schema.id === id)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		goToOrganization() {
 			if (this.organization) {

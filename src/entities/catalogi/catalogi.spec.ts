@@ -9,7 +9,6 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-/* eslint-disable no-console */
 import { Catalogi } from './catalogi'
 import { mockCatalogi, mockCatalogiList } from './catalogi.mock'
 

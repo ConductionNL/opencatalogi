@@ -8,11 +8,14 @@
 
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { NcModal, NcButton, NcSelect, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcModal, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
 
 // `value` = wire enum for ListingsController::UPDATABLE_LISTING_FIELDS;
 // `label` = the rendering also shown in the row's integrationLevel column.
+/**
+ *
+ */
 function buildIntegrationLevels() {
 	return [
 		{ value: 'search', label: t('opencatalogi', 'Federated search') },
@@ -30,6 +33,7 @@ export default {
 			default: null,
 		},
 	},
+
 	emits: ['saved'],
 	data() {
 		return {
@@ -39,6 +43,7 @@ export default {
 			integrationLevels: buildIntegrationLevels(),
 		}
 	},
+
 	computed: {
 		// Manifest-v2 uses a `federation…` prefix so the flag never collides
 		// with the legacy `EditListingModal` (which keys on `'editListing'`)
@@ -47,14 +52,22 @@ export default {
 			return navigationStore.modal === 'federationEditListing'
 		},
 	},
+
 	watch: {
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+		/**
+		 * @param open
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		isOpen(open) {
 			if (open) {
 				this.reset()
 			}
 		},
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+
+		/**
+		 * @param l
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		listing(l) {
 			this.integrationLevel =
 				this.integrationLevels.find(
@@ -62,6 +75,7 @@ export default {
 				) || this.integrationLevels[0]
 		},
 	},
+
 	methods: {
 		t,
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
@@ -73,10 +87,12 @@ export default {
 					(o) => o.value === (this.listing?.integrationLevel || 'search'),
 				) || this.integrationLevels[0]
 		},
+
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		close() {
 			navigationStore.setModal(null)
 		},
+
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		async submit() {
 			if (!this.listing) {
@@ -123,7 +139,7 @@ export default {
 <template>
 	<NcModal
 		v-if="isOpen && listing"
-		label-id="federationEditListingModal"
+		labelId="federationEditListingModal"
 		@close="close">
 		<div class="federation-edit-listing-modal">
 			<h2>{{ t('opencatalogi', 'Edit listing') }}</h2>
@@ -171,7 +187,7 @@ export default {
 					:id="'federationEditListingIntegration-' + (listing.id || 'x')"
 					v-model="integrationLevel"
 					:options="integrationLevels"
-					:input-label="t('opencatalogi', 'Integration level')"
+					:inputLabel="t('opencatalogi', 'Integration level')"
 					:reduce="(o) => o"
 					:clearable="false" />
 			</div>

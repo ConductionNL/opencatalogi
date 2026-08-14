@@ -48,22 +48,35 @@ export const useNavigationStore = defineStore('ui', {
 			transferData: null,
 		}) as NavigationStoreState,
 	actions: {
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param selected
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setSelected(selected: NavigationStoreState['selected']) {
 			this.selected = selected
 			console.log('Active menu item set to ' + selected)
 		},
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param selectedCatalogus
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setSelectedCatalogus(selectedCatalogus: string) {
 			this.selectedCatalogus = selectedCatalogus
 			console.log('Active catalogus menu set to ' + selectedCatalogus)
 		},
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param modal
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setModal(modal: NavigationStoreState['modal']) {
 			this.modal = modal
 			console.log('Active modal set to ' + modal)
 		},
-		/** @spec openspec/specs/generic-object-modals/spec.md */
+		/**
+		 * @param dialog
+		 * @param properties
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setDialog(
 			dialog: NavigationStoreState['dialog'],
 			properties?: DialogProperties,

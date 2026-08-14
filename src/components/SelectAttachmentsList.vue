@@ -53,9 +53,8 @@ import { objectStore } from '../store/store.js'
 
 <script>
 import { NcButton, NcEmptyContent } from '@nextcloud/vue'
-
-import Close from 'vue-material-design-icons/Close.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import Close from 'vue-material-design-icons/Close.vue'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -68,6 +67,7 @@ export default {
 		Close,
 		AlertCircle,
 	},
+
 	props: {
 		/**
 		 * Title for the selected objects section
@@ -76,6 +76,7 @@ export default {
 			type: String,
 			default: 'Selected Attachments',
 		},
+
 		/**
 		 * Title to show when no objects are selected
 		 */
@@ -83,6 +84,7 @@ export default {
 			type: String,
 			default: 'No attachments selected',
 		},
+
 		/**
 		 * Description to show when no objects are selected
 		 */
@@ -90,6 +92,7 @@ export default {
 			type: String,
 			default: 'No attachments are currently selected.',
 		},
+
 		/**
 		 * Array of attachment IDs to display (optional, if not provided uses selected attachments from store)
 		 */
@@ -97,6 +100,7 @@ export default {
 			type: Array,
 			default: null,
 		},
+
 		/**
 		 * Whether to show remove buttons
 		 */
@@ -105,9 +109,11 @@ export default {
 			default: true,
 		},
 	},
+
 	computed: {
 		/**
 		 * Get selected attachment IDs (either from props or from store)
+		 *
 		 * @return {Array<string|number>} Array of attachment IDs
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
@@ -119,8 +125,10 @@ export default {
 					: [])
 			)
 		},
+
 		/**
 		 * Map selected IDs to detailed attachment objects from the active publication files
+		 *
 		 * @return {Array<object>} attachments with id, name/title, size
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
@@ -135,12 +143,17 @@ export default {
 			})
 		},
 	},
+
 	methods: {
 		/**
 		 * Remove attachment ID from selected attachments in the store
+		 *
 		 * @param {string|number} attachmentId - The attachment ID to remove
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param attachmentId
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		removeObject(attachmentId) {
 			const currentSelected = Array.isArray(objectStore.selectedAttachments)
 				? [...objectStore.selectedAttachments]
@@ -154,6 +167,7 @@ export default {
 
 		/**
 		 * Get display name for an attachment
+		 *
 		 * @param {object} attachment - The attachment object
 		 * @return {string}
 		 */
@@ -163,10 +177,14 @@ export default {
 
 		/**
 		 * Get formatted size for an attachment
+		 *
 		 * @param {object} attachment - The attachment object
 		 * @return {string}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param attachment
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		getAttachmentSize(attachment) {
 			if (!attachment || typeof attachment.size !== 'number') return ''
 			return this.formatFileSize(attachment.size)
@@ -174,10 +192,14 @@ export default {
 
 		/**
 		 * Get error message for an item (kept for compatibility; returns null for attachments by default)
+		 *
 		 * @param {object} obj - The object to get error for
 		 * @return {string|null}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param obj
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		getObjectError(obj) {
 			const objectId = obj?.id || obj?.['@self']?.id
 			return objectStore.getObjectError
@@ -187,10 +209,14 @@ export default {
 
 		/**
 		 * Format file size (bytes to human-readable)
+		 *
 		 * @param {number} bytes - File size in bytes to format
 		 * @return {string}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param bytes
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		formatFileSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
 			if (!bytes || bytes <= 0) return 'n/a'

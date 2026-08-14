@@ -3,9 +3,9 @@
 @version 1.0.0 * @link https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { computed, ref } from 'vue'
 import { EventBus } from '../../eventBus.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -13,7 +13,7 @@ import { EventBus } from '../../eventBus.js'
 		v-if="navigationStore.modal === 'deleteMenuItem'"
 		ref="modalRef"
 		class="deleteMenuItemModal"
-		label-id="deleteMenuItemModal"
+		labelId="deleteMenuItemModal"
 		:name="t('opencatalogi', 'Delete menu item')"
 		@close="handleCancel">
 		<div class="modal__content">
@@ -77,33 +77,36 @@ import { EventBus } from '../../eventBus.js'
 </template>
 
 <script>
-import { NcButton, NcModal, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-import { Menu } from '../../entities/index.js'
-
+import { NcButton, NcLoadingIcon, NcModal, NcNoteCard } from '@nextcloud/vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 // icons
 import Delete from 'vue-material-design-icons/Delete.vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
+import { Menu } from '../../entities/index.js'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Success state for the component
+ *
  * @type {import('vue').Ref<boolean|null>}
  */
 const success = ref(null)
 
 /**
  * Error state for the component
+ *
  * @type {import('vue').Ref<string|null>}
  */
 const error = ref(null)
 
 /**
  * Get the active menu item from the store
+ *
  * @return {object | null}
  */
 const menuItem = computed(() => objectStore.getActiveObject('menuItem') || {})
@@ -111,9 +114,10 @@ const menuItem = computed(() => objectStore.getActiveObject('menuItem') || {})
 /**
  * Handle delete action
  * Remove the item from the active menu and update the menu object
+ *
  * @return {Promise<void>}
  */
-const handleDelete = async () => {
+async function handleDelete() {
 	loading.value = true
 	try {
 		const menu = objectStore.getActiveObject('menu')
@@ -179,9 +183,10 @@ const handleDelete = async () => {
 
 /**
  * Handle cancel action
+ *
  * @return {void}
  */
-const handleCancel = () => {
+function handleCancel() {
 	navigationStore.setModal(false)
 	objectStore.clearActiveObject('menuItem')
 }
@@ -200,6 +205,7 @@ export default {
 		NcLoadingIcon,
 		Cancel,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -207,6 +213,7 @@ export default {
 			error: null,
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		closeModal() {

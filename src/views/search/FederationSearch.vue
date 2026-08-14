@@ -13,8 +13,8 @@
 //   - src/store/modules/search.ts — federation-aware store (uses `_search`,
 //     hits `/api/federation/publications`).
 
+import { CnPagination, CnSearchPage } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
-import { CnSearchPage, CnPagination } from '@conduction/nextcloud-vue'
 import { useSearchStore } from '../../store/modules/search.ts'
 import { objectStore } from '../../store/store.js'
 
@@ -27,6 +27,7 @@ export default {
 			localQuery: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * The federation search store's result rows, rendered as-is — no local
@@ -38,6 +39,7 @@ export default {
 		results() {
 			return this.searchStore.searchResults || []
 		},
+
 		/**
 		 * Total result count as reported by the federation endpoint's pagination
 		 * envelope — not counted locally.
@@ -48,6 +50,7 @@ export default {
 		totalCount() {
 			return this.searchStore.pagination?.total || 0
 		},
+
 		/**
 		 * Whether the federation search store has a request in flight.
 		 *
@@ -57,6 +60,7 @@ export default {
 		loading() {
 			return this.searchStore.loading
 		},
+
 		/**
 		 * Pagination state passed to CnPagination. Falls back to safe
 		 * defaults when the search-store hasn't populated pagination yet.
@@ -73,6 +77,7 @@ export default {
 			}
 		},
 	},
+
 	/**
 	 * Seed the query input from the store and load the initial result set
 	 * through the federation-aware search store.
@@ -84,6 +89,7 @@ export default {
 		this.localQuery = this.searchStore.searchTerm || ''
 		this.searchStore.loadInitialResults()
 	},
+
 	methods: {
 		t,
 		/**
@@ -101,6 +107,7 @@ export default {
 			this.searchStore.setSearchTerm(query)
 			this.searchStore.searchPublications({ _page: 1 })
 		},
+
 		/**
 		 * Track the query input so the controlled `:query` prop stays in sync.
 		 *
@@ -111,6 +118,7 @@ export default {
 		onQueryChange(query) {
 			this.localQuery = query
 		},
+
 		/**
 		 * Refetch results for the newly-selected page. CnPagination emits
 		 * a 1-based page number.
@@ -122,6 +130,7 @@ export default {
 		onPageChange(newPage) {
 			this.searchStore.searchPublications({ _page: newPage })
 		},
+
 		/**
 		 * Refetch results with a new items-per-page value, resetting to
 		 * page 1 so the user doesn't land on an out-of-bounds page when
@@ -134,6 +143,7 @@ export default {
 		onPageSizeChange(newSize) {
 			this.searchStore.searchPublications({ _limit: newSize, _page: 1 })
 		},
+
 		/**
 		 * Navigate to a search result's detail. Federated results (carrying
 		 * `@self.directory`) open the source instance in a new tab so the
@@ -260,23 +270,23 @@ export default {
 			:title="t('opencatalogi', 'Search publications')"
 			:query="localQuery"
 			:results="results"
-			:total-count="totalCount"
+			:totalCount="totalCount"
 			:loading="loading"
 			:placeholder="t('opencatalogi', 'Search across the federated network…')"
-			:search-label="t('opencatalogi', 'Search')"
-			:empty-label="
+			:searchLabel="t('opencatalogi', 'Search')"
+			:emptyLabel="
 				t('opencatalogi', 'No matching publications across the federation.')
 			"
-			:idle-label="
+			:idleLabel="
 				t(
 					'opencatalogi',
 					'Start typing to search publications across all connected instances.',
 				)
 			"
-			:loading-label="t('opencatalogi', 'Searching the federated network…')"
+			:loadingLabel="t('opencatalogi', 'Searching the federated network…')"
 			@search="onSearch"
-			@query-change="onQueryChange"
-			@result-click="onResultClick">
+			@queryChange="onQueryChange"
+			@resultClick="onResultClick">
 			<template #result="{ result }">
 				<div class="federation-search-result">
 					<h4 class="federation-search-result__title">
@@ -301,12 +311,12 @@ export default {
 			</template>
 		</CnSearchPage>
 		<CnPagination
-			:current-page="paginationState.page"
-			:total-pages="paginationState.pages"
-			:total-items="paginationState.total"
-			:current-page-size="paginationState.limit"
-			@page-changed="onPageChange"
-			@page-size-changed="onPageSizeChange" />
+			:currentPage="paginationState.page"
+			:totalPages="paginationState.pages"
+			:totalItems="paginationState.total"
+			:currentPageSize="paginationState.limit"
+			@pageChanged="onPageChange"
+			@pageSizeChanged="onPageSizeChange" />
 	</div>
 </template>
 

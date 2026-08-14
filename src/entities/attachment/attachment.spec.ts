@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Attachment } from './attachment'
 import { mockAttachments } from './attachment.mock'
 

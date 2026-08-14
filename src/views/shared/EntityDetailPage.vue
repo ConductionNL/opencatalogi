@@ -17,7 +17,7 @@
 -->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -26,19 +26,19 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:description="entity?.summary || ''"
 		:icon="icon"
 		:loading="loading"
-		:loading-label="t('opencatalogi', 'Loading...')"
+		:loadingLabel="t('opencatalogi', 'Loading...')"
 		:empty="!entity && !loading"
-		:empty-label="t('opencatalogi', '{type} not found', { type: entityLabel })"
+		:emptyLabel="t('opencatalogi', '{type} not found', { type: entityLabel })"
 		:error="!!error"
-		:error-message="error"
-		:on-retry="loadEntity"
+		:errorMessage="error"
+		:onRetry="loadEntity"
 		:layout="detailLayout"
 		:widgets="widgetDefs"
 		:sidebar="!!entity"
-		:sidebar-open="sidebarOpen"
-		:object-type="entityType"
-		:object-id="entityId"
-		:sidebar-props="{
+		:sidebarOpen="sidebarOpen"
+		:objectType="entityType"
+		:objectId="entityId"
+		:sidebarProps="{
 			register: String(entity?.['@self']?.register || ''),
 			schema: String(entity?.['@self']?.schema || ''),
 		}">
@@ -60,7 +60,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<DotsHorizontal :size="20" />
 				</template>
-				<NcActionButton close-after-click @click="deleteEntity">
+				<NcActionButton closeAfterClick @click="deleteEntity">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -91,24 +91,24 @@ import { objectStore, navigationStore } from '../../store/store.js'
 			<CnJsonViewer
 				:value="JSON.stringify(entity, null, 2)"
 				language="json"
-				:read-only="true"
+				:readOnly="true"
 				height="300px" />
 		</template>
 	</CnDetailPage>
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
-import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
 import {
-	CnDetailPage,
-	CnDetailGrid,
-	CnJsonViewer,
 	buildHeaders,
+	CnDetailGrid,
+	CnDetailPage,
+	CnJsonViewer,
 } from '@conduction/nextcloud-vue'
+import { generateUrl } from '@nextcloud/router'
+import { NcActionButton, NcActions, NcButton } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 const DETAIL_LAYOUT = [
@@ -155,43 +155,51 @@ export default {
 		DotsHorizontal,
 		TrashCanOutline,
 	},
+
 	props: {
 		/** Entity type slug (e.g., 'glossary', 'theme', 'page', 'menu') */
 		entityType: {
 			type: String,
 			required: true,
 		},
+
 		/** Human-readable label for the entity type */
 		entityLabel: {
 			type: String,
 			required: true,
 		},
+
 		/** MDI icon name */
 		icon: {
 			type: String,
 			default: 'InformationOutline',
 		},
+
 		/** API path segment (e.g., 'glossary', 'themes', 'pages', 'menus') */
 		apiPath: {
 			type: String,
 			required: true,
 		},
+
 		/** Route name to go back to */
 		backRoute: {
 			type: String,
 			required: true,
 		},
+
 		/** Modal name to open for editing */
 		editModal: {
 			type: String,
 			required: true,
 		},
+
 		/** Extra metadata items to display (beyond title/summary/dates) */
 		extraMetadata: {
 			type: Function,
 			default: () => [],
 		},
 	},
+
 	data() {
 		return {
 			entity: null,
@@ -201,11 +209,13 @@ export default {
 			detailLayout: [...DETAIL_LAYOUT],
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		entityId() {
 			return this.$route.params.id
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		metadataItems() {
 			if (!this.entity) return []
@@ -240,6 +250,7 @@ export default {
 			]
 			return base
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		widgetDefs() {
 			return [
@@ -257,6 +268,7 @@ export default {
 			]
 		},
 	},
+
 	watch: {
 		entityId: {
 			immediate: true,
@@ -268,6 +280,7 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		async loadEntity() {
@@ -292,15 +305,18 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		goBack() {
 			this.$router.push({ name: this.backRoute })
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		editEntity() {
 			objectStore.setActiveObject(this.entityType, this.entity)
 			navigationStore.setModal(this.editModal)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		deleteEntity() {
 			objectStore.setActiveObject(this.entityType, this.entity)

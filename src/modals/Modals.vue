@@ -45,40 +45,38 @@ import { navigationStore } from './../store/store.js'
 </template>
 
 <script>
-// Generic
-import CatalogModal from './catalog/CatalogModal.vue'
-import UploadFilesModal from './generic/UploadFiles.vue'
-// View Modals
-import ViewDirectoryModal from './directory/ViewDirectoryModal.vue'
-import ViewGlossaryModal from './glossary/ViewGlossaryModal.vue'
-import ViewMenuModal from './menu/ViewMenuModal.vue'
-import ViewPageModal from './page/ViewPageModal.vue'
-import ViewThemeModal from './theme/ViewThemeModal.vue'
+import MassAttachmentModal from '../dialogs/attachment/MassAttachmentModal.vue'
 // Specific
 import EditAttachmentModal from './attachment/EditAttachmentModal.vue'
-
+// Generic
+import CatalogModal from './catalog/CatalogModal.vue'
 import AddDirectoryModal from './directory/AddDirectoryModal.vue'
 import EditListingModal from './directory/EditListingModal.vue'
-import PageContentForm from './pageContents/PageContentForm.vue'
+// View Modals
+import ViewDirectoryModal from './directory/ViewDirectoryModal.vue'
+import UploadFilesModal from './generic/UploadFiles.vue'
+import ViewGlossaryModal from './glossary/ViewGlossaryModal.vue'
+import ViewMenuModal from './menu/ViewMenuModal.vue'
+import DeleteMenuItemModal from './menuItem/DeleteMenuItemModal.vue'
 // menu
 import MenuItemForm from './menuItem/MenuItemForm.vue'
-import DeleteMenuItemModal from './menuItem/DeleteMenuItemModal.vue'
-import ObjectModal from './object/ObjectModal.vue'
-// Object Modals
-import ViewObject from './object/ViewObject.vue'
-
-import MergeObject from './object/MergeObject.vue'
-import UploadObject from './object/UploadObject.vue'
 import DownloadObject from './object/DownloadObject.vue'
 import LockObject from './object/LockObject.vue'
-import MigrationObject from './object/MigrationObject.vue'
 import MassDeleteObject from './object/MassDeleteObject.vue'
-import MassPublishObjects from './object/MassPublishObjects.vue'
 import MassDepublishObjects from './object/MassDepublishObjects.vue'
+import MassPublishObjects from './object/MassPublishObjects.vue'
 import MassValidateObjects from './object/MassValidateObjects.vue'
-import MassAttachmentModal from '../dialogs/attachment/MassAttachmentModal.vue'
+import MergeObject from './object/MergeObject.vue'
+import MigrationObject from './object/MigrationObject.vue'
+import ObjectModal from './object/ObjectModal.vue'
+import UploadObject from './object/UploadObject.vue'
+// Object Modals
+import ViewObject from './object/ViewObject.vue'
+import ViewPageModal from './page/ViewPageModal.vue'
+import PageContentForm from './pageContents/PageContentForm.vue'
 // Publication
 import AddPublicationThemeModal from './theme/AddPublicationThemeModal.vue'
+import ViewThemeModal from './theme/ViewThemeModal.vue'
 /**
  * Component that contains all modals used in the application
  */

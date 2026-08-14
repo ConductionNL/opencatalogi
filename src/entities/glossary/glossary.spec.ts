@@ -9,7 +9,6 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-/* eslint-disable no-console */
 import { Glossary } from './glossary'
 import { mockGlossary } from './glossary.mock'
 

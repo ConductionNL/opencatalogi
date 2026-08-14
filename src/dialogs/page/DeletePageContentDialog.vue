@@ -7,7 +7,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		v-if="navigationStore.dialog === 'deletePageContent'"
 		ref="dialogRef"
 		:name="t('opencatalogi', 'Delete content')"
-		:can-close="false"
+		:canClose="false"
 		@close="closeDialog">
 		<div>
 			<div v-if="success !== null || error">
@@ -65,7 +65,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import { Page } from '../../entities/index.js'
@@ -85,6 +85,7 @@ export default {
 		Cancel,
 		Delete,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -92,16 +93,19 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		pageItem() {
 			return objectStore.getActiveObject('page')
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		contentItem() {
 			return objectStore.getActiveObject('pageContent')
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		closeDialog() {
@@ -109,6 +113,7 @@ export default {
 			objectStore.setState('page', { success: null, error: null })
 			objectStore.clearActiveObject('pageContent')
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		async handleDelete() {
 			this.loading = true

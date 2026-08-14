@@ -5,48 +5,53 @@
  * @spec openspec/specs/file-management/spec.md
  */
 import { translate as t } from '@nextcloud/l10n'
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
 import {
 	NcButton,
-	NcModal,
-	NcTextField,
-	NcSelectTags,
 	NcCheckboxRadioSwitch,
-	NcNoteCard,
 	NcLoadingIcon,
+	NcModal,
+	NcNoteCard,
+	NcSelectTags,
+	NcTextField,
 } from '@nextcloud/vue'
+import { computed, ref } from 'vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Success state for the component: null = form, true = saved, false = failed
+ *
  * @type {import('vue').Ref<boolean|null>}
  */
 const success = ref(null)
 
 /**
  * Error message from the failed save, if any
+ *
  * @type {import('vue').Ref<string|null>}
  */
 const errorMessage = ref(null)
 
 /**
  * Get the active attachment from the store
+ *
  * @return {object | null}
  */
 const attachment = computed(() => objectStore.getActiveObject('attachment'))
 
 /**
  * Handle save action
+ *
  * @return {Promise<void>}
  */
-const handleSave = async () => {
+async function handleSave() {
 	loading.value = true
 	errorMessage.value = null
 	try {
@@ -68,9 +73,10 @@ const handleSave = async () => {
 
 /**
  * Handle cancel action
+ *
  * @return {void}
  */
-const handleCancel = () => {
+function handleCancel() {
 	navigationStore.setModal(false)
 }
 </script>
@@ -79,7 +85,7 @@ const handleCancel = () => {
 	<NcModal
 		ref="modalRef"
 		class="editAttachmentModal"
-		label-id="editAttachmentModal"
+		labelId="editAttachmentModal"
 		@close="handleCancel">
 		<div class="modal__content">
 			<h2>{{ t('opencatalogi', 'Edit Attachment') }}</h2>

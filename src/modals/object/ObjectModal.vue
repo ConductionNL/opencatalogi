@@ -1,5 +1,6 @@
 <script setup>
-import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
+
 import '../../css/json-highlight.css'
 </script>
 
@@ -9,7 +10,7 @@ import '../../css/json-highlight.css'
 			id="objectModal"
 			:name="dialogTitle"
 			size="large"
-			:can-close="false">
+			:canClose="false">
 			<div class="dialog-content">
 				<NcNoteCard v-if="success" type="success" class="note-card">
 					<p>
@@ -73,7 +74,7 @@ import '../../css/json-highlight.css'
 									:aria-label-combobox="
 										t('opencatalogi', 'Catalog')
 									"
-									label-outside
+									labelOutside
 									:disabled="objectStore.isLoading('object')"
 									required
 									:loading="loading" />
@@ -114,7 +115,7 @@ import '../../css/json-highlight.css'
 									:aria-label-combobox="
 										t('opencatalogi', 'Register')
 									"
-									label-outside
+									labelOutside
 									:disabled="
 										objectStore.isLoading('object')
 										|| !selectedCatalogus
@@ -157,7 +158,7 @@ import '../../css/json-highlight.css'
 									:aria-label-combobox="
 										t('opencatalogi', 'Schema')
 									"
-									label-outside
+									labelOutside
 									:disabled="
 										objectStore.isLoading('object')
 										|| !selectedRegister
@@ -181,7 +182,7 @@ import '../../css/json-highlight.css'
 
 					<!-- Edit Tabs -->
 					<div class="tabContainer">
-						<AppTabs v-model="activeTab" content-class="mt-3" justified>
+						<AppTabs v-model="activeTab" contentClass="mt-3" justified>
 							<AppTab :title="t('opencatalogi', 'Form Editor')" active>
 								<div v-if="fullSelectedSchema" class="form-editor">
 									<div
@@ -193,9 +194,9 @@ import '../../css/json-highlight.css'
 											     the old `value` / `update:value` pair no longer exists. -->
 											<NcTextField
 												:label="prop.title || key"
-												:model-value="getFieldValue(key)"
+												:modelValue="getFieldValue(key)"
 												:placeholder="prop.example"
-												:helper-text="prop.description"
+												:helperText="prop.description"
 												:required="prop.required"
 												@update:modelValue="
 													(value) =>
@@ -208,7 +209,7 @@ import '../../css/json-highlight.css'
 											     `modelValue`, so `:checked.sync` was doubly dead. -->
 											<NcCheckboxRadioSwitch
 												v-model="formData[key]"
-												:helper-text="prop.description"
+												:helperText="prop.description"
 												type="switch">
 												{{ prop.title || key }}
 											</NcCheckboxRadioSwitch>
@@ -220,9 +221,9 @@ import '../../css/json-highlight.css'
 											">
 											<NcTextField
 												:label="prop.title || key"
-												:model-value="getFieldValue(key)"
+												:modelValue="getFieldValue(key)"
 												:placeholder="prop.example"
-												:helper-text="prop.description"
+												:helperText="prop.description"
 												:required="prop.required"
 												type="number"
 												:min="prop.minimum"
@@ -265,7 +266,7 @@ import '../../css/json-highlight.css'
 											:linter="jsonParseLinter()"
 											:lang="json()"
 											:extensions="[json()]"
-											:tab-size="2"
+											:tabSize="2"
 											style="height: 400px" />
 										<NcButton
 											class="format-json-button"
@@ -327,28 +328,26 @@ import '../../css/json-highlight.css'
 </template>
 
 <script>
+import { json, jsonParseLinter } from '@codemirror/lang-json'
 import {
 	NcButton,
-	NcDialog,
-	NcTextField,
 	NcCheckboxRadioSwitch,
+	NcDialog,
 	NcEmptyContent,
 	NcLoadingIcon,
 	NcNoteCard,
 	NcSelect,
+	NcTextField,
 } from '@nextcloud/vue'
-import AppTabs from '../../components/tabs/AppTabs.vue'
-import AppTab from '../../components/tabs/AppTab.vue'
-import { getTheme } from '../../services/getTheme.js'
-import { json, jsonParseLinter } from '@codemirror/lang-json'
-
 import CodeMirror from 'vue-codemirror6'
-
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 // Icons
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
+import { getTheme } from '../../services/getTheme.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -376,6 +375,7 @@ export default {
 		Plus,
 		Pencil,
 	},
+
 	data() {
 		return {
 			activeTab: 0,
@@ -393,6 +393,7 @@ export default {
 			jsonData: '',
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		catalogOptions() {
@@ -401,6 +402,7 @@ export default {
 				label: catalog.title,
 			}))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		registerOptions() {
 			if (!this.selectedCatalogus) {
@@ -421,6 +423,7 @@ export default {
 					label: register.title,
 				}))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		schemaOptions() {
 			if (!this.selectedRegister || !this.selectedCatalogus) {
@@ -449,33 +452,45 @@ export default {
 					label: schema.title,
 				}))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		fullSelectedSchema() {
 			return objectStore.availableSchemas.find(
 				(schema) => schema.id === this.selectedSchema?.id,
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		schemaProperties() {
 			return this.fullSelectedSchema?.properties || {}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		dialogTitle() {
 			return this.isNewObject ? 'Add Publication' : 'Edit Publication'
 		},
 	},
+
 	watch: {
 		objectStore: {
-			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
+			/**
+			 * @param newValue
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2
+			 */
 			handler(newValue) {
 				if (newValue) {
 					this.initializeData()
 				}
 			},
+
 			deep: true,
 		},
+
 		'navigationStore.modal': {
-			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
+			/**
+			 * @param newValue
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2
+			 */
 			handler(newValue) {
 				if (newValue === 'objectModal') {
 					// Reinitialize when modal opens
@@ -488,30 +503,42 @@ export default {
 				}
 			},
 		},
+
 		jsonData: {
-			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
+			/**
+			 * @param newValue
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2
+			 */
 			handler(newValue) {
 				if (this.activeTab === 1 && this.isValidJson(newValue)) {
 					this.updateFormFromJson()
 				}
 			},
 		},
+
 		formData: {
-			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
+			/**
+			 * @param newValue
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2
+			 */
 			handler(newValue) {
 				if (this.activeTab === 0) {
 					this.updateJsonFromForm()
 				}
 			},
+
 			deep: true,
 		},
 	},
+
 	mounted() {
 		this.initializeData()
 	},
+
 	beforeUnmount() {
 		clearTimeout(this.closeModalTimeout)
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		initializeData() {
@@ -643,6 +670,7 @@ export default {
 				}
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		async saveObject() {
 			if (!this.selectedRegister || !this.selectedSchema) {
@@ -736,6 +764,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		updateFormFromJson() {
 			try {
@@ -755,7 +784,10 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
+		/**
+		 * @param str
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2
+		 */
 		isValidJson(str) {
 			if (!str || !str.trim()) {
 				return false
@@ -801,7 +833,11 @@ export default {
 			return this.formData[key] ?? ''
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
+		/**
+		 * @param key
+		 * @param value
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2
+		 */
 		setFieldValue(key, value) {
 			if (this.formData[key] === value) return
 			this.formData[key] = value

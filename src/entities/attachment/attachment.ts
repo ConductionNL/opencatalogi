@@ -1,5 +1,7 @@
-import { TAttachment } from './attachment.types'
-import { SafeParseReturnType, z } from 'zod'
+import type { SafeParseReturnType } from 'zod'
+import type { TAttachment } from './attachment.types'
+
+import { z } from 'zod'
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
@@ -38,7 +40,10 @@ export class Attachment implements TAttachment {
 	public modified!: string | Date
 	public license!: string
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TAttachment) {
 		this.hydrate(data)
 	}

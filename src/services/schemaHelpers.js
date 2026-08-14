@@ -1,5 +1,9 @@
 import { objectStore } from '../store/store.js'
 
+/**
+ *
+ * @param publication
+ */
 function resolveSchema(publication) {
 	const ref = publication?.['@self']?.schema ?? publication?.schema
 	if (!ref) return null

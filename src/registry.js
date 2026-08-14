@@ -30,19 +30,19 @@
 //     because the lookup path reads the bare value)
 //   - openconnector/src/registry.js — same pattern
 
-import DashboardView from './views/dashboard/Dashboard.vue'
-import CatalogsIndexView from './views/catalogi/CatalogiIndex.vue'
-import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
-import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
-import FederationDirectory from './views/directory/FederationDirectory.vue'
-import FederationSearch from './views/search/FederationSearch.vue'
-import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import {
 	CnFederationStatus,
 	CnFileManager,
 	CnRelationshipGraph,
 	CnTreeView,
 } from '@conduction/nextcloud-vue'
+import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
+import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
+import CatalogsIndexView from './views/catalogi/CatalogiIndex.vue'
+import DashboardView from './views/dashboard/Dashboard.vue'
+import FederationDirectory from './views/directory/FederationDirectory.vue'
+import FederationSearch from './views/search/FederationSearch.vue'
+import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
 
 export default {
 	// --- Page components (referenced by `component` in manifest pages). ---

@@ -1,5 +1,6 @@
 /**
  * Type definitions for Organization entity
+ *
  * @module Entities
  * @package
  * @author Ruben Linde

@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TCatalogi } from '../'
-import { TPublication } from './publication.types'
-import { SafeParseReturnType, z } from 'zod'
+import type { SafeParseReturnType } from 'zod'
+import type { TCatalogi } from '../'
+import type { TPublication } from './publication.types'
+
+import { z } from 'zod'
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
@@ -61,7 +63,10 @@ export class Publication implements TPublication {
 	public register!: number | null
 	public schema!: number | null
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TPublication) {
 		this.hydrate(data)
 	}

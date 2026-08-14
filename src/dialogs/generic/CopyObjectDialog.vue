@@ -1,10 +1,10 @@
 <script setup>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
+import { computed, ref, watch } from 'vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import { generateUrl } from '@nextcloud/router'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
-import { computed, ref, watch } from 'vue'
 
 const dialogProperties = computed(() => navigationStore.dialogProperties)
 
@@ -76,7 +76,7 @@ watch(
  * @param {string} type - Object type
  * @return {void}
  */
-const refreshObjectList = (type) => {
+function refreshObjectList(type) {
 	if (type === 'publication') {
 		catalogStore.fetchPublications()
 	} else {
@@ -101,7 +101,7 @@ const nameFieldPath = computed(() => {
  *
  * @return {void}
  */
-const copyObject = () => {
+function copyObject() {
 	if (isMultiple.value) {
 		const selectedObjects = objectStore.getSelectedObjects(objectType.value)
 		if (!selectedObjects?.length) return
@@ -136,7 +136,7 @@ const copyObject = () => {
  *
  * @return {void}
  */
-const closeDialog = () => {
+function closeDialog() {
 	setTimeout(() => {
 		objectStore.setState(objectType.value, { success: null, error: null })
 		navigationStore.setDialog(false)
@@ -152,7 +152,7 @@ const closeDialog = () => {
 				? t('opencatalogi', 'Copy {type}s', { type: dialogTitle })
 				: t('opencatalogi', 'Copy {type}', { type: dialogTitle })
 		"
-		:can-close="false">
+		:canClose="false">
 		<div
 			v-if="
 				objectStore.getState(objectType).success !== null
@@ -268,6 +268,7 @@ const closeDialog = () => {
 <script>
 /**
  * Copy Object Dialog Component
+ *
  * @module Dialogs
  * @package
  * @author Ruben Linde
@@ -288,6 +289,7 @@ export default {
 		Cancel,
 		ContentCopy,
 	},
+
 	methods: {
 		/**
 		 * Copy the object(s)
@@ -318,6 +320,7 @@ export default {
 				})
 			}
 		},
+
 		/**
 		 * Close the dialog after a delay
 		 *

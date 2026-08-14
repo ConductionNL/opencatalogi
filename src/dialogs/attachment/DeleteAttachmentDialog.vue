@@ -1,9 +1,9 @@
 <script setup>
-import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog :name="t('opencatalogi', 'Delete attachment')" :can-close="false">
+	<NcDialog :name="t('opencatalogi', 'Delete attachment')" :canClose="false">
 		<p v-if="!succes">
 			{{
 				t(
@@ -51,8 +51,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
@@ -72,6 +71,7 @@ export default {
 		Cancel,
 		Delete,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -79,6 +79,7 @@ export default {
 			error: false,
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		DeleteAttachment() {

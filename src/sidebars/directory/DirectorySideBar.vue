@@ -182,9 +182,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcCheckboxRadioSwitch
 						v-else
 						:key="`${publicationType}${i}`"
-						:model-value="publicationType.listed"
+						:modelValue="publicationType.listed"
 						type="switch"
-						@update:model-value="togglePublicationType(publicationType)">
+						@update:modelValue="togglePublicationType(publicationType)">
 						{{
 							publicationType.title
 							?? publicationType.source
@@ -197,24 +197,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</NcAppSidebarTab>
 	</NcAppSidebar>
 </template>
+
 <script>
 import {
 	NcAppSidebar,
-	NcEmptyContent,
-	NcButton,
 	NcAppSidebarTab,
+	NcButton,
 	NcCheckboxRadioSwitch,
+	NcEmptyContent,
 	NcLoadingIcon,
 } from '@nextcloud/vue'
-import LayersOutline from 'vue-material-design-icons/LayersOutline.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
-import DatabaseSyncOutline from 'vue-material-design-icons/DatabaseSyncOutline.vue'
-import CogOutline from 'vue-material-design-icons/CogOutline.vue'
-import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
-import InformationSlabSymbol from 'vue-material-design-icons/InformationSlabSymbol.vue'
 import CertificateOutline from 'vue-material-design-icons/CertificateOutline.vue'
 import Check from 'vue-material-design-icons/Check.vue'
+import CogOutline from 'vue-material-design-icons/CogOutline.vue'
+import DatabaseSyncOutline from 'vue-material-design-icons/DatabaseSyncOutline.vue'
+import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
+import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
+import InformationSlabSymbol from 'vue-material-design-icons/InformationSlabSymbol.vue'
+import LayersOutline from 'vue-material-design-icons/LayersOutline.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
 
 /**
  * DirectorySideBar — sidebar for directory management.
@@ -231,6 +232,7 @@ export default {
 		NcCheckboxRadioSwitch,
 		NcLoadingIcon,
 	},
+
 	data() {
 		return {
 			checkedPublicationTypeObject: {},
@@ -241,19 +243,26 @@ export default {
 			publicationTypeLoading: false,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		listingItem() {
 			return objectStore.getActiveObject('listing')
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		checkedPublicationType() {
-			return Object.assign({}, this.checkedPublicationTypeObject)
+			return { ...this.checkedPublicationTypeObject }
 		},
 	},
+
 	watch: {
 		checkedPublicationType: {
-			/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
+			/**
+			 * @param newValue
+			 * @param oldValue
+			 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
+			 */
 			handler(newValue, oldValue) {
 				// Set new and old values to objects
 				const newValueObject = Object.entries(newValue)
@@ -289,10 +298,15 @@ export default {
 					return {}
 				})
 			},
+
 			deep: true,
 		},
+
 		listingItem: {
-			/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
+			/**
+			 * @param newValue
+			 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
+			 */
 			handler(newValue) {
 				if (
 					newValue !== false
@@ -303,21 +317,32 @@ export default {
 					this.checkPublicationTypeSwitches()
 				}
 			},
+
 			deep: true, // Track changes in nested objects
 			immediate: true, // Run the handler immediately on initialization
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 	created() {
 		objectStore.fetchCollection('publication_type')
 		this.checkPublicationTypeSwitches()
 	},
+
 	methods: {
-		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
+		/**
+		 * @param url
+		 * @param type
+		 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
+		 */
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
+
+		/**
+		 * @param publicationTypeUrl
+		 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
+		 */
 		getPublicationTypeId(publicationTypeUrl) {
 			let publicationTypeId
 			objectStore
@@ -329,6 +354,7 @@ export default {
 				})
 			return publicationTypeId
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		checkPublicationTypeSwitches() {
 			if (
@@ -353,7 +379,11 @@ export default {
 			}
 			this.loading = false
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
+
+		/**
+		 * @param publicationTypeUrl
+		 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
+		 */
 		copyPublicationType(publicationTypeUrl) {
 			this.loading = true
 
@@ -376,7 +406,11 @@ export default {
 					this.loading = false
 				})
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
+
+		/**
+		 * @param data
+		 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
+		 */
 		createPublicationType(data) {
 			this.loading = true
 
@@ -400,7 +434,11 @@ export default {
 					this.loading = false
 				})
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
+
+		/**
+		 * @param publicationTypeUrl
+		 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
+		 */
 		deletePublicationType(publicationTypeUrl) {
 			this.loading = true
 
@@ -418,6 +456,7 @@ export default {
 					this.loading = false
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		synDirectroy() {
 			this.syncLoading = true
@@ -436,12 +475,20 @@ export default {
 					this.syncLoading = false
 				})
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
+
+		/**
+		 * @param publicationType
+		 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
+		 */
 		togglePublicationType(publicationType) {
 			publicationType.listed = !publicationType.listed
 			this.synchronizePublicationType(publicationType)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
+
+		/**
+		 * @param publicationType
+		 * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
+		 */
 		synchronizePublicationType(publicationType) {
 			this.publicationTypeLoading = true
 			fetch('/index.php/apps/opencatalogi/api/publication_types/synchronise', {

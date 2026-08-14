@@ -1,5 +1,6 @@
 /**
  * Type definitions for Listing entity
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
@@ -10,7 +11,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TOrganization } from '../organization'
+import type { TOrganization } from '../organization'
 
 export type TListing = {
 	id: string

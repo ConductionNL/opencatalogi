@@ -49,8 +49,8 @@
  * @see {@link https://docs.nextcloud.com/server/latest/developer_manual/client_apis/OCS/ocs-share-api.html}
  */
 
-import axios from '@nextcloud/axios'
 import { getCurrentUser } from '@nextcloud/auth'
+import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
 /**

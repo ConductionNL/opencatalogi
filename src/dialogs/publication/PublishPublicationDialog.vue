@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { computed, ref } from 'vue'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		v-if="navigationStore.dialog === 'publishPublication'"
 		ref="dialogRef"
 		class="publishPublicationDialog"
-		label-id="publishPublicationDialog"
+		labelId="publishPublicationDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
 			<h2>
@@ -82,40 +82,44 @@ import { objectStore, navigationStore } from '../../store/store.js'
  *
  * @spec openspec/specs/publications/spec.md
  */
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 // icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Success state for the component
+ *
  * @type {import('vue').Ref<boolean|null>}
  */
 const success = ref(null)
 
 /**
  * Error state for the component
+ *
  * @type {import('vue').Ref<string|null>}
  */
 const error = ref(null)
 
 /**
  * Get the active menu from the store
+ *
  * @return {object | null}
  */
 const menu = computed(() => objectStore.getActiveObject('menu'))
 
 /**
  * Handle copy action
+ *
  * @return {Promise<void>}
  */
-const handleCopy = async () => {
+async function handleCopy() {
 	loading.value = true
 	try {
 		const newMenu = {
@@ -142,6 +146,7 @@ export default {
 		NcNoteCard,
 		NcLoadingIcon,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -149,12 +154,14 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-3 */
 		publication() {
 			return objectStore.getActiveObject('publication')
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-3 */
 		closeDialog() {

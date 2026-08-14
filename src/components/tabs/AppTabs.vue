@@ -87,7 +87,7 @@ const orderedTabs = computed(() => {
 		if (!ea || !eb) {
 			return 0
 		}
-		// eslint-disable-next-line no-bitwise
+
 		return ea.compareDocumentPosition(eb) & Node.DOCUMENT_POSITION_FOLLOWING
 			? -1
 			: 1

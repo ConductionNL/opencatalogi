@@ -18,12 +18,12 @@ import { navigationStore } from './../store/store.js'
 </template>
 
 <script>
-import DeleteObjectDialog from './generic/DeleteObjectDialog.vue'
+import UploadFiles from '../modals/generic/UploadFiles.vue'
+import DeleteAttachmentDialog from './attachment/DeleteAttachmentDialog.vue'
 import CopyObjectDialog from './generic/CopyObjectDialog.vue'
+import DeleteObjectDialog from './generic/DeleteObjectDialog.vue'
 import DeleteListingDialog from './listing/DeleteListingDialog.vue'
 import ViewLogDialog from './logs/ViewLogDialog.vue'
-import DeleteAttachmentDialog from './attachment/DeleteAttachmentDialog.vue'
-import UploadFiles from '../modals/generic/UploadFiles.vue'
 import DeletePageContentDialog from './page/DeletePageContentDialog.vue'
 
 export default {

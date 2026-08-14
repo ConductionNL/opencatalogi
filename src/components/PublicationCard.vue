@@ -13,8 +13,8 @@
 		<div v-if="selectable" class="publication-card__checkbox" @click.stop>
 			<NcCheckboxRadioSwitch
 				:aria-label="t('opencatalogi', 'Select {title}', { title })"
-				:model-value="selected"
-				@update:model-value="$emit('select', object)" />
+				:modelValue="selected"
+				@update:modelValue="$emit('select', object)" />
 		</div>
 
 		<div class="publication-card__content">
@@ -66,9 +66,9 @@
 import { translate as t } from '@nextcloud/l10n'
 import { NcCheckboxRadioSwitch, NcCounterBubble } from '@nextcloud/vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
-import { getPublicationStatus } from '../services/publicationStatus.js'
 import PublishedIcon from './PublishedIcon.vue'
 import getValidISOstring from '../services/getValidISOstring.js'
+import { getPublicationStatus } from '../services/publicationStatus.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -81,20 +81,24 @@ export default {
 		Paperclip,
 		PublishedIcon,
 	},
+
 	props: {
 		object: {
 			type: Object,
 			required: true,
 		},
+
 		selected: {
 			type: Boolean,
 			default: false,
 		},
+
 		selectable: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	// Vue 3 merges $listeners into $attrs: without declaring `click` here a
 	// parent's @click would both fall through to the root <div> natively AND
 	// be re-emitted by the handler below, firing the parent twice.
@@ -104,6 +108,7 @@ export default {
 		status() {
 			return getPublicationStatus(this.object)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		title() {
 			return (
@@ -114,10 +119,12 @@ export default {
 				|| '—'
 			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		summary() {
 			return this.object.summary || null
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		truncatedSummary() {
 			if (!this.summary) return null
@@ -125,6 +132,7 @@ export default {
 				return this.summary.substring(0, 120) + '...'
 			return this.summary
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		filesCount() {
 			const countFromSelf =
@@ -138,9 +146,13 @@ export default {
 			return 0
 		},
 	},
+
 	methods: {
 		t,
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
+		/**
+		 * @param dateString
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3
+		 */
 		formatDate(dateString) {
 			if (!dateString) return 'N/A'
 			if (!getValidISOstring(dateString)) return dateString

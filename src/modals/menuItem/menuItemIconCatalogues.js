@@ -11,14 +11,14 @@
  * lives at gemeenteniconen.nl — CC0 icons; the npm package is CC BY-NC-ND).
  *
  * @category Services
- * @package opencatalogi
+ * @package
  * @license EUPL-1.2
  */
 
 import { fromFontAwesome, fromOpenGemeenten } from '@conduction/nextcloud-vue'
-import { fas } from '@fortawesome/free-solid-svg-icons'
-import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
+import { far } from '@fortawesome/free-regular-svg-icons'
+import { fas } from '@fortawesome/free-solid-svg-icons'
 
 /**
  * A small CC0 OpenGemeenten sample so the "OpenGemeenten" source tab renders

@@ -16,7 +16,7 @@
 -->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -24,40 +24,40 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		ref="indexPage"
 		:title="t('opencatalogi', 'Publications')"
 		:description="t('opencatalogi', 'Manage your publications and their status')"
-		:show-title="true"
+		:showTitle="true"
 		:objects="filteredPublications"
 		:columns="tableColumns"
 		:pagination="currentPagination"
 		:loading="catalogStore.isLoading"
 		:selectable="true"
-		:selected-ids="selectedPublicationIds"
-		:show-view-toggle="true"
-		:show-view-action="false"
-		:show-edit-action="false"
-		:show-copy-action="false"
-		:show-delete-action="false"
-		:show-mass-import="false"
-		:show-mass-export="false"
-		:show-mass-copy="false"
-		:show-mass-delete="false"
-		:view-mode="viewMode"
-		:add-label="t('opencatalogi', 'Add Publication')"
-		:add-disabled="!canAddPublication"
-		row-key="id"
-		:empty-text="t('opencatalogi', 'No publications found')"
+		:selectedIds="selectedPublicationIds"
+		:showViewToggle="true"
+		:showViewAction="false"
+		:showEditAction="false"
+		:showCopyAction="false"
+		:showDeleteAction="false"
+		:showMassImport="false"
+		:showMassExport="false"
+		:showMassCopy="false"
+		:showMassDelete="false"
+		:viewMode="viewMode"
+		:addLabel="t('opencatalogi', 'Add Publication')"
+		:addDisabled="!canAddPublication"
+		rowKey="id"
+		:emptyText="t('opencatalogi', 'No publications found')"
 		:refreshing="isRefreshing"
 		:actions="rowActions"
 		@add="addPublication"
 		@refresh="refreshPublications"
-		@page-changed="onPageChanged"
-		@page-size-changed="onPageSizeChanged"
-		@view-mode-change="viewMode = $event"
+		@pageChanged="onPageChanged"
+		@pageSizeChanged="onPageSizeChanged"
+		@viewModeChange="viewMode = $event"
 		@select="onSelect"
-		@row-click="toggleSelection">
+		@rowClick="toggleSelection">
 		<!-- Mass actions -->
 		<template #action-items>
 			<NcActionButton
-				close-after-click
+				closeAfterClick
 				:disabled="selectedPublicationIds.length === 0 || !canBulkDelete"
 				@click="bulkDeletePublications">
 				<template #icon>
@@ -66,7 +66,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ t('opencatalogi', 'Delete Selected') }}
 			</NcActionButton>
 			<NcActionButton
-				close-after-click
+				closeAfterClick
 				:disabled="selectedPublicationIds.length === 0 || !canBulkUpdate"
 				@click="bulkPublishPublications">
 				<template #icon>
@@ -75,7 +75,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ t('opencatalogi', 'Publish Selected') }}
 			</NcActionButton>
 			<NcActionButton
-				close-after-click
+				closeAfterClick
 				:disabled="selectedPublicationIds.length === 0 || !canBulkUpdate"
 				@click="bulkDepublishPublications">
 				<template #icon>
@@ -141,24 +141,24 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import { NcActionButton, NcCounterBubble } from '@nextcloud/vue'
 import { CnIndexPage, CnRowActions } from '@conduction/nextcloud-vue'
-import getValidISOstring from '../../services/getValidISOstring.js'
-import {
-	isPublished,
-	getPublicationStatus,
-} from '../../services/publicationStatus.js'
-import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
-import Eye from 'vue-material-design-icons/Eye.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
+import { NcActionButton, NcCounterBubble } from '@nextcloud/vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import Eye from 'vue-material-design-icons/Eye.vue'
+import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
-import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
-import PublishedIcon from '../../components/PublishedIcon.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import PublicationCard from '../../components/PublicationCard.vue'
+import PublishedIcon from '../../components/PublishedIcon.vue'
+import getValidISOstring from '../../services/getValidISOstring.js'
+import {
+	getPublicationStatus,
+	isPublished,
+} from '../../services/publicationStatus.js'
+import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 
 export default {
 	name: 'PublicationTable',
@@ -173,6 +173,7 @@ export default {
 		PublishedIcon,
 		PublicationCard,
 	},
+
 	data() {
 		return {
 			viewMode: 'table',
@@ -180,6 +181,7 @@ export default {
 			currentUserGroups: null,
 		}
 	},
+
 	computed: {
 		tableColumns() {
 			return [
@@ -197,9 +199,11 @@ export default {
 				},
 			]
 		},
+
 		filteredPublications() {
 			return objectStore.getCollection('publication')?.results || []
 		},
+
 		currentPagination() {
 			return (
 				catalogStore.publicationPagination || {
@@ -210,6 +214,7 @@ export default {
 				}
 			)
 		},
+
 		canBulkDelete() {
 			if (this.currentUserGroups === null) return true
 			const selected = this.filteredPublications.filter((pub) =>
@@ -222,6 +227,7 @@ export default {
 				)
 			)
 		},
+
 		canBulkUpdate() {
 			if (this.currentUserGroups === null) return true
 			const selected = this.filteredPublications.filter((pub) =>
@@ -234,6 +240,7 @@ export default {
 				)
 			)
 		},
+
 		canAddPublication() {
 			// While groups are loading keep the button enabled
 			if (this.currentUserGroups === null) return true
@@ -256,11 +263,13 @@ export default {
 				return schema ? this.hasSchemaActionRight(schema, 'create') : false
 			})
 		},
+
 		selectedPublicationIds() {
 			return (objectStore.selectedObjects || [])
 				.map((obj) => obj.id || obj['@self']?.id)
 				.filter(Boolean)
 		},
+
 		rowActions() {
 			return [
 				{
@@ -304,6 +313,7 @@ export default {
 							this.getSchemaForRow(row),
 							'update',
 						),
+
 					title: (row) =>
 						schemaHasPublicationDateFields(row)
 							? undefined
@@ -323,6 +333,7 @@ export default {
 							this.getSchemaForRow(row),
 							'update',
 						),
+
 					title: (row) =>
 						schemaHasPublicationDateFields(row)
 							? undefined
@@ -355,6 +366,7 @@ export default {
 			]
 		},
 	},
+
 	mounted() {
 		catalogStore.fetchPublications({}, this.$route.params.catalogSlug)
 		fetch('/ocs/v1.php/cloud/user?format=json', {
@@ -371,6 +383,7 @@ export default {
 				/* keep null — button stays enabled on error */
 			})
 	},
+
 	methods: {
 		getFilesCount(publication) {
 			const countFromSelf =
@@ -383,11 +396,13 @@ export default {
 			if (filesProp) return 1
 			return 0
 		},
+
 		formatDate(dateString) {
 			if (!dateString) return 'N/A'
 			if (!getValidISOstring(dateString)) return dateString
 			return new Date(dateString).toLocaleString()
 		},
+
 		onSelect(ids) {
 			// Map IDs back to full objects for the store
 			const selectedObjects = this.filteredPublications
@@ -395,21 +410,25 @@ export default {
 				.map((pub) => ({ ...pub, id: pub['@self']?.id || pub.id }))
 			objectStore.setSelectedObjects(selectedObjects)
 		},
+
 		onPageChanged(page) {
 			catalogStore.fetchPublications(
 				{ page, limit: this.currentPagination.limit || 20 },
 				this.$route.params.catalogSlug,
 			)
 		},
+
 		onPageSizeChanged(pageSize) {
 			catalogStore.fetchPublications(
 				{ page: 1, limit: pageSize },
 				this.$route.params.catalogSlug,
 			)
 		},
+
 		hasSchemaReadRight(schema) {
 			return this.hasSchemaActionRight(schema, 'read')
 		},
+
 		hasSchemaActionRight(schema, action) {
 			if (this.currentUserGroups === null) return true
 			if (!schema) return true
@@ -439,6 +458,7 @@ export default {
 				return true
 			})
 		},
+
 		getSchemaForRow(row) {
 			const schemaRef = row?.['@self']?.schema
 			if (!schemaRef) return null
@@ -449,10 +469,12 @@ export default {
 				) || null
 			)
 		},
+
 		addPublication() {
 			objectStore.setActiveObject('publication', null)
 			navigationStore.setModal('viewObject')
 		},
+
 		async refreshPublications() {
 			this.isRefreshing = true
 			try {
@@ -465,10 +487,12 @@ export default {
 				this.isRefreshing = false
 			}
 		},
+
 		viewPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
 			navigationStore.setModal('viewObject')
 		},
+
 		copyPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
 			navigationStore.setDialog('copyObject', {
@@ -476,11 +500,13 @@ export default {
 				dialogTitle: 'Publication',
 			})
 		},
+
 		addAttachment(publication) {
 			objectStore.setActiveObject('publication', publication)
 			navigationStore.setTransferData({ initialTab: 'files' })
 			navigationStore.setModal('viewObject')
 		},
+
 		singleDeletePublication(publication) {
 			const publicationObject = {
 				...publication,
@@ -489,6 +515,7 @@ export default {
 			objectStore.setSelectedObjects([publicationObject])
 			navigationStore.setDialog('massDeleteObject')
 		},
+
 		singlePublishPublication(publication) {
 			const publicationObject = {
 				...publication,
@@ -497,6 +524,7 @@ export default {
 			objectStore.setSelectedObjects([publicationObject])
 			navigationStore.setDialog('massPublishObjects')
 		},
+
 		singleDepublishPublication(publication) {
 			const publicationObject = {
 				...publication,
@@ -505,18 +533,22 @@ export default {
 			objectStore.setSelectedObjects([publicationObject])
 			navigationStore.setDialog('massDepublishObjects')
 		},
+
 		bulkDeletePublications() {
 			if (this.selectedPublicationIds.length === 0) return
 			navigationStore.setDialog('massDeleteObject')
 		},
+
 		bulkPublishPublications() {
 			if (this.selectedPublicationIds.length === 0) return
 			navigationStore.setDialog('massPublishObjects')
 		},
+
 		bulkDepublishPublications() {
 			if (this.selectedPublicationIds.length === 0) return
 			navigationStore.setDialog('massDepublishObjects')
 		},
+
 		getValidISOstring,
 		getPublicationStatus,
 		toggleSelection(object) {

@@ -1,5 +1,6 @@
 /**
  * Organization entity class
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
@@ -9,14 +10,17 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { SafeParseReturnType, z } from 'zod'
-import { TOrganization } from './organization.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TOrganization } from './organization.types'
+
+import { z } from 'zod'
 
 /** @typedef {import('./organization.types').TOrganization} TOrganization */
 /** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
 
 /**
  * Organization class representing an organization in the system
+ *
  * @spec openspec/specs/entity-typescript-models/spec.md
  * @spec openspec/specs/entity-typescript-models/spec.md
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -69,6 +73,7 @@ export class Organization implements TOrganization {
 
 	/**
 	 * Creates a new Organization instance
+	 *
 	 * @param data - Organization data
 	 *
 	 * @spec openspec/specs/entity-typescript-models/spec.md
@@ -79,6 +84,7 @@ export class Organization implements TOrganization {
 
 	/**
 	 * Hydrates the organization instance with data
+	 *
 	 * @param data - Organization data to hydrate with
 	 * @private
 	 */
@@ -96,7 +102,8 @@ export class Organization implements TOrganization {
 
 	/**
 	 * Validates the organization data
-	 * @return {SafeParseReturnType<TOrganization, unknown>} SafeParseReturnType containing validation results
+	 *
+	 * @return SafeParseReturnType containing validation results
 	 */
 	public validate(): SafeParseReturnType<TOrganization, unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/ewlydzkylhygj-create-organization

@@ -1,25 +1,25 @@
 <script setup>
-/**
- * SearchSideBar — facet filter controls for the search view.
- *
- * @spec openspec/specs/search/spec.md
- */
-import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
-import { useSearchStore } from '../../store/modules/search.ts'
 import { t } from '@nextcloud/l10n'
 import {
 	NcAppSidebar,
 	NcAppSidebarTab,
 	NcButton,
-	NcSelect,
 	NcNoteCard,
+	NcSelect,
 } from '@nextcloud/vue'
-import Magnify from 'vue-material-design-icons/Magnify.vue'
+/**
+ * SearchSideBar — facet filter controls for the search view.
+ *
+ * @spec openspec/specs/search/spec.md
+ */
+import { computed, getCurrentInstance, onMounted, ref, watch } from 'vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import FormatListBulletedSquare from 'vue-material-design-icons/FormatListBulletedSquare.vue'
+import Magnify from 'vue-material-design-icons/Magnify.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue'
-import FormatListBulletedSquare from 'vue-material-design-icons/FormatListBulletedSquare.vue'
 import FacetComponent from '../../components/FacetComponent.vue'
+import { useSearchStore } from '../../store/modules/search.ts'
 
 // Define props for sidebar control
 const props = defineProps({
@@ -112,19 +112,30 @@ const hasActiveFilters = computed(() => {
 // Directory information is now handled via facets instead of separate sources
 
 // Methods
-const updateSidebarOpen = (open) => {
+/**
+ *
+ * @param open
+ */
+function updateSidebarOpen(open) {
 	emit('update:open', open)
 }
 
 // Search input is now handled by the watcher above
 
-const clearSearch = () => {
+/**
+ *
+ */
+function clearSearch() {
 	searchTerm.value = ''
 	searchStore.setSearchTerm('')
 	searchStore.searchPublications()
 }
 
-const handleSortChange = (option) => {
+/**
+ *
+ * @param option
+ */
+function handleSortChange(option) {
 	// Clear existing ordering
 	searchStore.clearOrdering()
 
@@ -136,16 +147,26 @@ const handleSortChange = (option) => {
 	searchStore.searchPublications()
 }
 
-const clearAllFilters = () => {
+/**
+ *
+ */
+function clearAllFilters() {
 	searchStore.clearAllFilters()
 	searchStore.searchPublications()
 }
 
-const refreshFacets = async () => {
+/**
+ *
+ */
+async function refreshFacets() {
 	await searchStore.discoverFacetableFields()
 }
 
-const formatFilterKey = (key) => {
+/**
+ *
+ * @param key
+ */
+function formatFilterKey(key) {
 	// Format filter keys for display
 	if (key.startsWith('@self.')) {
 		return key
@@ -156,7 +177,11 @@ const formatFilterKey = (key) => {
 	return key.replace(/[_-]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
-const formatFilterValue = (value) => {
+/**
+ *
+ * @param value
+ */
+function formatFilterValue(value) {
 	// Format filter values for display
 	if (Array.isArray(value)) {
 		return value.join(', ')
@@ -164,7 +189,11 @@ const formatFilterValue = (value) => {
 	return String(value)
 }
 
-const getFieldDisplayName = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function getFieldDisplayName(fieldName) {
 	// Format field names nicely for display
 	return fieldName
 		.replace(/[@._]/g, ' ')
@@ -172,7 +201,11 @@ const getFieldDisplayName = (fieldName) => {
 		.trim()
 }
 
-const getFacetOptions = (facetResult) => {
+/**
+ *
+ * @param facetResult
+ */
+function getFacetOptions(facetResult) {
 	// Convert facet buckets to dropdown options
 	if (!facetResult || (!facetResult.buckets && !Array.isArray(facetResult))) {
 		return []
@@ -185,7 +218,11 @@ const getFacetOptions = (facetResult) => {
 	}))
 }
 
-const getSelectedFilterValue = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function getSelectedFilterValue(fieldName) {
 	// Get the currently selected filter value for this field
 	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
 	const currentValue = searchStore.getFilters[filterKey]
@@ -201,7 +238,12 @@ const getSelectedFilterValue = (fieldName) => {
 	return selectedOption
 }
 
-const handleFilterSelect = (fieldName, option) => {
+/**
+ *
+ * @param fieldName
+ * @param option
+ */
+function handleFilterSelect(fieldName, option) {
 	// Handle filter selection from dropdown
 	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
 
@@ -249,6 +291,9 @@ watch(searchTerm, (newValue) => {
 const RESERVED = new Set(['q', 'sort', 'view'])
 const debounceTimer = ref(null)
 
+/**
+ *
+ */
 function buildQueryFromState() {
 	const q = {}
 	if (searchStore.getSearchTerm) q.q = searchStore.getSearchTerm
@@ -261,6 +306,10 @@ function buildQueryFromState() {
 	return q
 }
 
+/**
+ *
+ * @param routeQuery
+ */
 function applyQueryToState(routeQuery) {
 	const q = routeQuery || {}
 	searchStore.setSearchTerm(typeof q.q === 'string' ? q.q : '')
@@ -279,6 +328,11 @@ function applyQueryToState(routeQuery) {
 	if (Object.keys(filters).length) searchStore.setFilters(filters)
 }
 
+/**
+ *
+ * @param a
+ * @param b
+ */
 function shallowEqualQuery(a, b) {
 	const ak = Object.keys(a || {})
 	const bk = Object.keys(b || {})
@@ -289,6 +343,9 @@ function shallowEqualQuery(a, b) {
 	return true
 }
 
+/**
+ *
+ */
 function writeUrlFromStateIfChanged() {
 	if (!instance?.$route || instance.$route.path !== '/search') return
 	const nextQuery = buildQueryFromState()
@@ -405,7 +462,7 @@ watch(
 								)
 							}}</label>
 							<NcSelect
-								:model-value="getSelectedFilterValue(fieldName)"
+								:modelValue="getSelectedFilterValue(fieldName)"
 								:options="getFacetOptions(facetResult)"
 								label="label"
 								:aria-label-combobox="
@@ -433,13 +490,13 @@ watch(
 					<div class="filter-group">
 						<label>{{ t('opencatalogi', 'Sort by') }}</label>
 						<NcSelect
-							:model-value="currentSortOption"
+							:modelValue="currentSortOption"
 							:options="sortOptions"
 							label="label"
 							:aria-label-combobox="t('opencatalogi', 'Sort by')"
-							:label-outside="true"
+							:labelOutside="true"
 							:placeholder="t('opencatalogi', 'Choose sorting')"
-							@update:model-value="handleSortChange" />
+							@update:modelValue="handleSortChange" />
 					</div>
 
 					<!-- View mode toggle -->

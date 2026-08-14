@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO: double check this type for correct properties and optionals when stoplight updates - https://conduction.stoplight.io/docs/open-catalogi/fee989a9c8e3f-publication
 
-import { TCatalogi } from '../'
+import type { TCatalogi } from '../'
 
 export type TPublication = {
 	id: string

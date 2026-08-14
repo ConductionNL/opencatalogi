@@ -1,5 +1,7 @@
-import { SafeParseReturnType, z } from 'zod'
-import { TPublicationType } from './publicationType.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TPublicationType } from './publicationType.types'
+
+import { z } from 'zod'
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -78,7 +80,10 @@ export class PublicationType implements TPublicationType {
 
 	public source!: string
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TPublicationType) {
 		this.hydrate(data)
 	}
