@@ -764,7 +764,8 @@ class PublicationsControllerTest extends TestCase {
 		// argument.
 		$mockObj = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
 			->disableOriginalConstructor()
-			->addMethods(['getId', 'getSchema', 'getRegister'])
+			->onlyMethods(['getSchema', 'getRegister'])
+			->addMethods(['getId'])
 			->getMock();
 		$mockObj->method('getId')->willReturn($id);
 		$mockObj->method('getSchema')->willReturn($schema);

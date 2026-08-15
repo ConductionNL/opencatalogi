@@ -102,14 +102,50 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
 	}//end jsonSerialize()
 
 	/*
-	 * NOTE: getId() / getUuid() / getRegister() / getSchema() are deliberately NOT
-	 * declared here. The real OCA\OpenRegister\Db\ObjectEntity declares none of them
-	 * either — they are served by OCP\AppFramework\Db\Entity::__call (routed through
-	 * this stub's own __call above). Declaring them made the stub's method surface
-	 * diverge from the real class's, which silently changed how PHPUnit builds a
-	 * double: onlyMethods() succeeded here and threw CannotUseOnlyMethodsException in
-	 * CI, and addMethods() would do the reverse. Keep the magic surface magic.
+	 * NOTE: this stub's method surface must MIRROR the real
+	 * OCA\OpenRegister\Db\ObjectEntity exactly, because PHPUnit chooses between
+	 * addMethods() and onlyMethods() on whether the method exists. A divergence
+	 * is silent locally and fails only in CI, where the real class is installed:
+	 * onlyMethods() throws CannotUseOnlyMethodsException against a magic method,
+	 * and addMethods() throws CannotUseAddMethodsException against a real one.
+	 *
+	 * getUuid() / getRegister() / getSchema() became REAL methods on the real
+	 * class when OpenRegister published its ObjectService/ObjectEntity
+	 * interfaces, so they are declared below. getId() is still served by
+	 * OCP\AppFramework\Db\Entity::__call (routed through this stub's own __call
+	 * above) and so stays undeclared. When the real class moves again, move this
+	 * stub with it.
 	 */
+
+	/**
+	 * Stub for getUuid — a REAL method on the real class.
+	 *
+	 * @return string|null
+	 */
+	public function getUuid(): ?string {
+		$value = ($this->_props['uuid'] ?? null);
+		return ($value === null) ? null : (string) $value;
+	}//end getUuid()
+
+	/**
+	 * Stub for getRegister — a REAL method on the real class.
+	 *
+	 * @return string|null
+	 */
+	public function getRegister(): ?string {
+		$value = ($this->_props['register'] ?? null);
+		return ($value === null) ? null : (string) $value;
+	}//end getRegister()
+
+	/**
+	 * Stub for getSchema — a REAL method on the real class.
+	 *
+	 * @return string|null
+	 */
+	public function getSchema(): ?string {
+		$value = ($this->_props['schema'] ?? null);
+		return ($value === null) ? null : (string) $value;
+	}//end getSchema()
 
 	/**
 	 * Stub for getObject — a REAL method on the real class.
