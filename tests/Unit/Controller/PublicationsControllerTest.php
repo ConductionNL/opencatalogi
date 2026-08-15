@@ -754,22 +754,24 @@ class PublicationsControllerTest extends TestCase {
 	 * Helper to create an ObjectEntity mock that supports magic __call getters.
 	 */
 	private function createObjectEntityMock(int $id = 42, int $schema = 1, int $register = 1): \OCA\OpenRegister\Db\ObjectEntity {
-		// getId()/getSchema()/getRegister() are NOT declared on ObjectEntity — nor on
-		// its parent OCP\AppFramework\Db\Entity, which serves them through __call().
-		// onlyMethods() requires a really-declared method and throws
-		// CannotUseOnlyMethodsException for all three, so the magic surface has to be
-		// declared with addMethods(). addMethods() generates parameterless methods,
-		// which is correct here (and only here) because all three are zero-argument
-		// getters and no call site — in lib/ or in this file — ever passes them an
-		// argument.
+		// getSchema()/getRegister() became really-declared methods when OpenRegister
+		// published its ObjectService/ObjectEntity interfaces, so they need
+		// onlyMethods(). getId() is still served by OCP\AppFramework\Db\Entity::__call()
+		// and still needs addMethods(), which generates a parameterless method — correct
+		// here because no call site, in lib/ or in this file, passes it an argument.
+		//
+		// The two real getters are typed `?string`, so their return values are cast.
+		// The ids stay int parameters because every caller passes ints, but a double
+		// that returned them untyped would be looser than the class it stands for: the
+		// magic surface used to accept anything, and the tests leaned on that.
 		$mockObj = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
 			->disableOriginalConstructor()
 			->onlyMethods(['getSchema', 'getRegister'])
 			->addMethods(['getId'])
 			->getMock();
 		$mockObj->method('getId')->willReturn($id);
-		$mockObj->method('getSchema')->willReturn($schema);
-		$mockObj->method('getRegister')->willReturn($register);
+		$mockObj->method('getSchema')->willReturn((string) $schema);
+		$mockObj->method('getRegister')->willReturn((string) $register);
 		return $mockObj;
 	}
 
