@@ -36,18 +36,20 @@ class CatalogCacheEventListenerTest extends TestCase {
 		string $uuid = 'test-uuid',
 		?string $slug = 'test-slug',
 	): ObjectEntity&MockObject {
-		// ObjectEntity really declares jsonSerialize(). getUuid()/getRegister()/
-		// getSchema() are NOT declared anywhere on it — nor on its parent
-		// OCP\AppFramework\Db\Entity, which serves them through __call(). onlyMethods()
-		// requires a really-declared method and throws CannotUseOnlyMethodsException for
-		// the magic three, so the magic surface has to be declared with addMethods().
-		// addMethods() generates parameterless methods, which is correct here (and only
-		// here) because all three are zero-argument getters and no call site — in lib/
-		// or in this file — ever passes them an argument.
+		// ObjectEntity now REALLY DECLARES getUuid(), getRegister() and getSchema()
+		// alongside jsonSerialize(), so all four belong in onlyMethods().
+		//
+		// They used to be magic — served by OCP\AppFramework\Db\Entity::__call() —
+		// which is why this was addMethods(). addMethods() now throws
+		// CannotUseAddMethodsException for a method that exists.
+		//
+		// This is a test double pinned to a signature that moved. OpenRegister is
+		// installed from its own branch at CI time, unpinned, so this suite broke
+		// with no commit in this repository at all: the last green run on
+		// development simply predates the OpenRegister change.
 		$entity = $this->getMockBuilder(ObjectEntity::class)
 			->disableOriginalConstructor()
-			->onlyMethods(['jsonSerialize'])
-			->addMethods(['getUuid', 'getRegister', 'getSchema'])
+			->onlyMethods(['jsonSerialize', 'getUuid', 'getRegister', 'getSchema'])
 			->getMock();
 
 		$entity->method('getSchema')->willReturn($schema);

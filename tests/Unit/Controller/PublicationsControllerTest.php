@@ -754,17 +754,21 @@ class PublicationsControllerTest extends TestCase {
 	 * Helper to create an ObjectEntity mock that supports magic __call getters.
 	 */
 	private function createObjectEntityMock(int $id = 42, int $schema = 1, int $register = 1): \OCA\OpenRegister\Db\ObjectEntity {
-		// getId()/getSchema()/getRegister() are NOT declared on ObjectEntity — nor on
-		// its parent OCP\AppFramework\Db\Entity, which serves them through __call().
-		// onlyMethods() requires a really-declared method and throws
-		// CannotUseOnlyMethodsException for all three, so the magic surface has to be
-		// declared with addMethods(). addMethods() generates parameterless methods,
-		// which is correct here (and only here) because all three are zero-argument
-		// getters and no call site — in lib/ or in this file — ever passes them an
-		// argument.
+		// THE SPLIT MATTERS HERE, and it is the reason this helper does not look
+		// like the listener ones.
+		//
+		// getSchema() and getRegister() are now REALLY DECLARED on ObjectEntity, so
+		// they belong in onlyMethods() — addMethods() throws
+		// CannotUseAddMethodsException for a method that exists.
+		//
+		// getId() is STILL magic, served by OCP\AppFramework\Db\Entity::__call(), so
+		// it must stay in addMethods() — onlyMethods() would throw
+		// CannotUseOnlyMethodsException for it. Moving all three together is the
+		// obvious fix and it fails the other way.
 		$mockObj = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
 			->disableOriginalConstructor()
-			->addMethods(['getId', 'getSchema', 'getRegister'])
+			->onlyMethods(['getSchema', 'getRegister'])
+			->addMethods(['getId'])
 			->getMock();
 		$mockObj->method('getId')->willReturn($id);
 		$mockObj->method('getSchema')->willReturn($schema);

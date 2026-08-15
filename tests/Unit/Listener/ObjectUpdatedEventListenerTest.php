@@ -48,18 +48,13 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 			$jsonData['depublicationDate'] = $depublished->format('c');
 		}
 
-		// ObjectEntity really declares jsonSerialize(). getUuid()/getRegister()/
-		// getSchema() are NOT declared anywhere on it — nor on its parent
-		// OCP\AppFramework\Db\Entity, which serves them through __call(). onlyMethods()
-		// requires a really-declared method and throws CannotUseOnlyMethodsException for
-		// the magic three, so the magic surface has to be declared with addMethods().
-		// addMethods() generates parameterless methods, which is correct here (and only
-		// here) because all three are zero-argument getters and no call site — in lib/
-		// or in this file — ever passes them an argument.
+		// ObjectEntity now REALLY DECLARES getUuid(), getRegister() and getSchema()
+		// alongside jsonSerialize(), so all four belong in onlyMethods(). They used
+		// to be magic (Entity::__call()), which is why this was addMethods() —
+		// that now throws CannotUseAddMethodsException for a method that exists.
 		$entity = $this->getMockBuilder(ObjectEntity::class)
 			->disableOriginalConstructor()
-			->onlyMethods(['jsonSerialize'])
-			->addMethods(['getUuid', 'getRegister', 'getSchema'])
+			->onlyMethods(['jsonSerialize', 'getUuid', 'getRegister', 'getSchema'])
 			->getMock();
 
 		$entity->method('jsonSerialize')->willReturn($jsonData);
