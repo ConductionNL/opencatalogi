@@ -261,7 +261,6 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->fileService->method('createPdf')->willReturn($mpdf);
 
-		$this->fileService->expects($this->never())->method('updateFile');
 		$this->fileService->expects($this->never())->method('createFolder');
 		$this->fileService->expects($this->never())->method('createPublicShareLink');
 

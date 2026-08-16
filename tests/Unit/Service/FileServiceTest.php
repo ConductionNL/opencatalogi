@@ -768,149 +768,17 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase {
 
 	}//end testUploadFileGenericFileException()
 
-	/**
-	 * Overwrites an existing file and returns true.
-	 *
-	 * @return void
-	 */
-	public function testUpdateFileExistingFile(): void {
-		$userFolder = $this->setupUserFolder('admin');
-
-		$file = $this->createMock(File::class);
-		$file->expects($this->once())->method('putContent')->with('new content');
-		$userFolder->method('get')->with('path/file.txt')->willReturn($file);
-
-		$result = $this->fileService->updateFile(content: 'new content', filePath: '/path/file.txt/');
-		$this->assertTrue($result);
-
-	}//end testUpdateFileExistingFile()
-
-	/**
-	 * Creates a new file when createNew is true and file is missing.
-	 *
-	 * @return void
-	 */
-	public function testUpdateFileNewFileWithCreateNew(): void {
-		$userFolder = $this->setupUserFolder('admin');
-
-		$file = $this->createMock(File::class);
-		$file->expects($this->once())->method('putContent')->with('content');
-
-		$callCount = 0;
-		$userFolder->method('get')->willReturnCallback(
-			function () use ($file, &$callCount) {
-				$callCount++;
-				if ($callCount === 1) {
-					throw new NotFoundException();
-				}
-
-				return $file;
-			}
-		);
-
-		$userFolder->expects($this->once())->method('newFile');
-
-		$result = $this->fileService->updateFile(content: 'content', filePath: 'path/file.txt', createNew: true);
-		$this->assertTrue($result);
-
-	}//end testUpdateFileNewFileWithCreateNew()
-
-	/**
-	 * Returns false when file does not exist and createNew is false.
-	 *
-	 * @return void
-	 */
-	public function testUpdateFileNotFoundWithoutCreateNew(): void {
-		$userFolder = $this->setupUserFolder('admin');
-
-		$userFolder->method('get')
-			->willThrowException(new NotFoundException());
-
-		$this->logger->expects($this->once())
-			->method('warning')
-			->with($this->stringContains('already exists'));
-
-		$result = $this->fileService->updateFile(content: 'content', filePath: 'missing/file.txt', createNew: false);
-		$this->assertFalse($result);
-
-	}//end testUpdateFileNotFoundWithoutCreateNew()
-
-	/**
-	 * Throws Exception when writing is not permitted.
-	 *
-	 * @return void
-	 */
-	public function testUpdateFilePermissionError(): void {
-		$userFolder = $this->setupUserFolder('admin');
-
-		$file = $this->createMock(File::class);
-		$file->method('putContent')
-			->willThrowException(new NotPermittedException());
-		$userFolder->method('get')->willReturn($file);
-
-		$this->expectException(Exception::class);
-		$this->expectExceptionMessageMatches('/Can.*t write to file/');
-
-		$this->fileService->updateFile(content: 'content', filePath: 'locked/file.txt');
-
-	}//end testUpdateFilePermissionError()
-
-	/**
-	 * Removes an existing file and returns true.
-	 *
-	 * @return void
-	 */
-	public function testDeleteFileExists(): void {
-		$userFolder = $this->setupUserFolder('admin');
-
-		$file = $this->createMock(File::class);
-		$file->expects($this->once())->method('delete');
-		$userFolder->method('get')->with('path/file.txt')->willReturn($file);
-
-		$result = $this->fileService->deleteFile('/path/file.txt/');
-		$this->assertTrue($result);
-
-	}//end testDeleteFileExists()
-
-	/**
-	 * Returns false and logs warning when file does not exist.
-	 *
-	 * @return void
-	 */
-	public function testDeleteFileNotFound(): void {
-		$userFolder = $this->setupUserFolder('admin');
-
-		$userFolder->method('get')
-			->willThrowException(new NotFoundException());
-
-		$this->logger->expects($this->once())
-			->method('warning')
-			->with($this->stringContains('does not exist'));
-
-		$result = $this->fileService->deleteFile('missing/file.txt');
-		$this->assertFalse($result);
-
-	}//end testDeleteFileNotFound()
-
-	/**
-	 * Throws Exception when deletion is not permitted.
-	 *
-	 * @return void
-	 */
-	public function testDeleteFilePermissionError(): void {
-		$userFolder = $this->setupUserFolder('admin');
-
-		$file = $this->createMock(File::class);
-		$file->method('delete')
-			->willThrowException(new NotPermittedException());
-		$userFolder->method('get')->willReturn($file);
-
-		$this->expectException(Exception::class);
-		$this->expectExceptionMessageMatches('/Can.*t delete file/');
-
-		$this->fileService->deleteFile('restricted/file.txt');
-
-	}//end testDeleteFilePermissionError()
+	// The eight testUpdateFile* / testDeleteFile* cases that stood here were
+	// removed with the methods they called. `FileService::updateFile()` and
+	// `FileService::deleteFile()` are REMOVED requirements FIL-003 / FIL-004
+	// in openspec/specs/file-management/spec.md ("OR file service owns file
+	// updates/deletion"). Both had zero callers in lib/, and the live file
+	// paths resolve OpenRegister's FileService from the container instead.
+	//
+	// No coverage is lost: each case mocked `IRootFolder`/`File` and asserted
+	// that a pass-through called `putContent()` or `delete()` on the mock —
+	// it exercised the OCP file API through a wrapper, and asserted nothing
+	// about opencatalogi behaviour that survives the wrapper's removal.
 
 	/**
 	 * Uses Guest user folder when no user is authenticated.
@@ -1007,46 +875,6 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertTrue($result);
 
 	}//end testUploadFileGuestUser()
-
-	/**
-	 * Uses Guest user ID for update when no user is authenticated.
-	 *
-	 * @return void
-	 */
-	public function testUpdateFileGuestUser(): void {
-		$this->userSession->method('getUser')->willReturn(null);
-
-		$userFolder = $this->createMock(Folder::class);
-		$this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
-
-		$file = $this->createMock(File::class);
-		$file->expects($this->once())->method('putContent')->with('updated');
-		$userFolder->method('get')->willReturn($file);
-
-		$result = $this->fileService->updateFile(content: 'updated', filePath: 'path/file.txt');
-		$this->assertTrue($result);
-
-	}//end testUpdateFileGuestUser()
-
-	/**
-	 * Uses Guest user ID for delete when no user is authenticated.
-	 *
-	 * @return void
-	 */
-	public function testDeleteFileGuestUser(): void {
-		$this->userSession->method('getUser')->willReturn(null);
-
-		$userFolder = $this->createMock(Folder::class);
-		$this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
-
-		$file = $this->createMock(File::class);
-		$file->expects($this->once())->method('delete');
-		$userFolder->method('get')->willReturn($file);
-
-		$result = $this->fileService->deleteFile('path/file.txt');
-		$this->assertTrue($result);
-
-	}//end testDeleteFileGuestUser()
 
 	// The three testCreateZip* cases that stood here were removed with the
 	// methods they called. `FileService::createZip()` / `downloadZip()` are

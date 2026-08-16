@@ -43,7 +43,6 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Files\File;
 use OCP\Files\GenericFileException;
-use OCP\Files\InvalidPathException;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
@@ -182,7 +181,7 @@ class FileService {
 	 */
 	public function handleFile(IRequest $request, array $data): JSONResponse|array {
 		// Uploaded _file and downloadURL are mutually exclusive.
-		$uploadedFile = $this->checkUploadedFile($request);
+		$uploadedFile = $this->checkUploadedFile(request: $request);
 		if ($uploadedFile instanceof JSONResponse) {
 			return $uploadedFile;
 		}
@@ -397,107 +396,19 @@ class FileService {
 
 	}//end uploadFile()
 
-	/**
-	 * Overwrites an existing file in NextCloud.
+	/*
+	 * NO updateFile() / deleteFile() HERE — FIL-003 and FIL-004 ARE REMOVED.
 	 *
-	 * @param mixed $content The content of the file.
-	 * @param string $filePath Path (from root) where to save the file.
-	 *                         NOTE: include the name and extension of the file (example.pdf).
-	 * @param boolean $createNew Default = false. If set to true this function will create
-	 *                           a new file if it doesn't exist yet.
-	 *
-	 * @return boolean True if successful.
-	 * @throws Exception In case we can't write to file because it is not permitted.
-	 *
-	 * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
-	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 *
-	 * @spec openspec/specs/file-management/spec.md
+	 * `openspec/specs/file-management/spec.md` records both capabilities as
+	 * REMOVED: OpenRegister's `FileService` owns file update and deletion,
+	 * and every file surface in this app already resolves that service from
+	 * the container (`CatalogiService`, `DcatService`, `EventService`,
+	 * `PublicationService`, `SchemaOrgService`, `SitemapService`) or reaches
+	 * OR's routes from the frontend. The local pair had zero callers; both
+	 * took an arbitrary user-relative path and wrote or unlinked it with no
+	 * guard of their own, so wiring either one would have opened a second,
+	 * unguarded write path onto user storage. ADR-022.
 	 */
-	public function updateFile(mixed $content, string $filePath, bool $createNew = false): bool {
-		$filePath = trim(string: $filePath, characters: '/');
-
-		// Get the current user.
-		$currentUser = $this->userSession->getUser();
-		$userId = 'Guest';
-		if ($currentUser !== null) {
-			$userId = $currentUser->getUID();
-		}
-
-		$userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-
-		// Check if file exists and overwrite it if it does.
-		try {
-			try {
-				$file = $userFolder->get(path: $filePath);
-				$file->putContent($content);
-
-				return true;
-			} catch (NotFoundException $e) {
-				if ($createNew === true) {
-					$userFolder->newFile(path: $filePath);
-					$file = $userFolder->get(path: $filePath);
-					$file->putContent($content);
-
-					$this->logger->info("File $filePath did not exist, created a new file for it.");
-					return true;
-				}
-			}//end try
-
-			// File already exists.
-			$this->logger->warning("File $filePath already exists.");
-			return false;
-		} catch (NotPermittedException|GenericFileException|LockedException $e) {
-			$this->logger->error("Can't create file $filePath: " . $e->getMessage());
-
-			throw new Exception("Can't write to file $filePath");
-		}//end try
-
-	}//end updateFile()
-
-	/**
-	 * Deletes a file from NextCloud.
-	 *
-	 * @param string $filePath Path (from root) to the file you want to delete.
-	 *
-	 * @return boolean True if successful.
-	 * @throws Exception In case deleting the file is not permitted.
-	 *
-	 * @spec openspec/specs/file-management/spec.md
-	 */
-	public function deleteFile(string $filePath): bool {
-		$filePath = trim(string: $filePath, characters: '/');
-
-		// Get the current user.
-		$currentUser = $this->userSession->getUser();
-		$userId = 'Guest';
-		if ($currentUser !== null) {
-			$userId = $currentUser->getUID();
-		}
-
-		$userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-
-		// Check if file exists and delete it if it does.
-		try {
-			try {
-				$file = $userFolder->get(path: $filePath);
-				$file->delete();
-
-				return true;
-			} catch (NotFoundException $e) {
-				// File does not exist.
-				$this->logger->warning("File $filePath does not exist.");
-
-				return false;
-			}
-		} catch (NotPermittedException|InvalidPathException $e) {
-			$this->logger->error("Can't delete file $filePath: " . $e->getMessage());
-
-			throw new Exception("Can't delete file $filePath");
-		}
-
-	}//end deleteFile()
 
 	/**
 	 * Creates a pdf file in a /tmp folder using a twig template and given context.
