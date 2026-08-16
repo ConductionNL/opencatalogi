@@ -1,6 +1,8 @@
 /* eslint-disable n/no-missing-import */
-/* eslint-disable import/no-unresolved */
 /* eslint-disable import/extensions */
+// `import/no-unresolved` is NOT disabled here: the flat config does not
+// register it, so the disable comment was itself an error ("Definition for
+// rule 'import/no-unresolved' was not found").
 // fk these rules above here
 
 // The store script handles app wide variables (or state), for the use of these variables and there governing concepts read the design.md
