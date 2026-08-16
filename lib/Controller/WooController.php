@@ -83,6 +83,13 @@ class WooController extends Controller {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-weigeringsgronden-refusal-grounds
+	 *
+	 * @no-admin-idor-exempt Returns the WOO Art. 5.1/5.2 refusal-grounds catalogue from
+	 *   the `WooService::WEIGERINGSGRONDEN` class CONSTANT — published Dutch statute, the
+	 *   same rows for every caller. No storage is touched and the only parameter is a
+	 *   `search` substring filter over that constant, so there is no caller-supplied
+	 *   object id and nothing to scope. Verifiable by reading
+	 *   `WooService::getWeigeringsgronden()`: it iterates the constant and returns rows.
 	 */
 	public function weigeringsgronden(): JSONResponse {
 		if ($this->userSession->getUser() === null) {
