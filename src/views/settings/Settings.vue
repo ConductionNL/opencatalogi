@@ -771,17 +771,26 @@ export default defineComponent({
 								.find((s) => s.id.toString() === schemaId)
 						}
 
-						if (schema) {
-							this.configuration = {
-								...this.configuration,
-								[type]: {
-									...this.configuration[type],
-									schema: {
-										label: schema.title,
-										value: schema.id.toString(),
-									},
-								},
+						// The stored schema is configured but the register does not list it
+						// (an orphaned schema, see SettingsService::reconcileRegisterSchemaLinks).
+						// Surface it anyway: leaving the select empty makes saveAll() write an
+						// empty string back and silently destroy a working configuration.
+						if (!schema) {
+							schema = {
+								id: schemaId,
+								title: `Schema ${schemaId}`, // Fallback title, as in the ID branch above.
 							}
+						}
+
+						this.configuration = {
+							...this.configuration,
+							[type]: {
+								...this.configuration[type],
+								schema: {
+									label: schema.title,
+									value: schema.id.toString(),
+								},
+							},
 						}
 					}
 				}

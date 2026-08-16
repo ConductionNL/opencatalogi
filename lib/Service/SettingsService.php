@@ -139,12 +139,14 @@ class SettingsService {
 	 * @param ContainerInterface $container Container for dependency injection.
 	 * @param IAppManager $appManager App manager interface.
 	 * @param LoggerInterface $logger PSR logger for defensive fallback warnings.
+	 * @param RegisterSchemaLinkService $registerSchemaLink Repairs register-to-schema linkage after an import.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,
+		private readonly RegisterSchemaLinkService $registerSchemaLink,
 	) {
 		// Indulge in setting the application name for identification and configuration purposes.
 		$this->appName = 'opencatalogi';
@@ -929,6 +931,14 @@ class SettingsService {
 				}
 			}//end if
 
+			// ADR-037 guard: a fragment that declares a schema but forgets to list it
+			// under `components.registers.publication.schemas` gets the schema created
+			// and then orphaned — no register holds it, so no magic table is provisioned
+			// and the app's `{type}_register`/`{type}_schema` pair points at a register
+			// without that schema (how OOAPI course/program/offering broke). This
+			// pipeline only ever provisions one register, so attach the strays.
+			$data = self::attachOrphanSchemasToPublicationRegister($data);
+
 			// Calculate relative path from Nextcloud root for sourceUrl tracking.
 			// appPath is something like /var/www/html/apps-extra/opencatalogi
 			// We need to get the part after the Nextcloud root.
@@ -990,6 +1000,12 @@ class SettingsService {
 			// Update app configuration with imported schema and register IDs.
 			$this->updateObjectTypeConfiguration($result);
 
+			// OpenRegister's importRegister() version-gates the register update on
+			// `components.registers.publication.version` — unchanged since 0.1.0 — so a
+			// non-forced import silently skips it and schemas added by a newer fragment
+			// never get attached to the already-existing register. Reconcile additively.
+			$this->registerSchemaLink->reconcile($result);
+
 			// WOO-529: the seed data in publication_register.json creates the
 			// default "Publications" catalog with unset `registers`/`schemas`
 			// because the numeric IDs are only known AFTER importFromApp() has
@@ -1039,6 +1055,87 @@ class SettingsService {
 
 		return $base;
 	}//end deepMergeConfig()
+
+	/**
+	 * Attach every unreferenced `components.schemas` slug to the publication register.
+	 *
+	 * Runs on the fully merged payload (monolith + every register.d fragment). A slug
+	 * that no register in the payload declares is added to the publication register's
+	 * schema list, plus a magic-mapping/auto-create-table entry so its physical table is
+	 * provisioned like every other schema in that register.
+	 *
+	 * Idempotent, and never reorders or drops an existing declaration.
+	 *
+	 * @param array<mixed> $data The merged configuration payload.
+	 *
+	 * @return array<mixed> The payload with stray schemas attached.
+	 */
+	private static function attachOrphanSchemasToPublicationRegister(array $data): array {
+		$schemas = ($data['components']['schemas'] ?? null);
+		if (is_array($schemas) === false || $schemas === []) {
+			return $data;
+		}
+
+		// The publication register must already be declared (it lives in the monolith);
+		// without it there is nothing to attach to.
+		if (isset($data['components']['registers']['publication']) === false
+			|| is_array($data['components']['registers']['publication']) === false
+		) {
+			return $data;
+		}
+
+		// Every slug any register in this payload already declares.
+		$declared = self::collectDeclaredSchemaSlugs(($data['components']['registers'] ?? []));
+
+		$register = $data['components']['registers']['publication'];
+		foreach (array_keys($schemas) as $slug) {
+			if (is_string($slug) === false || isset($declared[$slug]) === true) {
+				continue;
+			}
+
+			$register['schemas'][] = $slug;
+
+			// Only supply the magic-mapping default when the fragment said nothing —
+			// an explicit `magicMapping: false` stays untouched.
+			if (isset($register['configuration']['schemas'][$slug]) === false) {
+				$register['configuration']['schemas'][$slug] = [
+					'magicMapping' => true,
+					'autoCreateTable' => true,
+					'comment' => 'Auto-attached: declared in components.schemas without a register reference.',
+				];
+			}
+		}
+
+		$data['components']['registers']['publication'] = $register;
+
+		return $data;
+	}//end attachOrphanSchemasToPublicationRegister()
+
+	/**
+	 * Collect every schema slug that any register in the payload already declares.
+	 *
+	 * @param array<mixed> $registers The `components.registers` map from the payload.
+	 *
+	 * @return array<string, boolean> Declared slugs, keyed by slug for O(1) lookup.
+	 *
+	 * @spec exclude Internal collection step of attachOrphanSchemasToPublicationRegister().
+	 */
+	private static function collectDeclaredSchemaSlugs(array $registers): array {
+		$declared = [];
+		foreach ($registers as $registerData) {
+			if (is_array($registerData) === false || is_array($registerData['schemas'] ?? null) === false) {
+				continue;
+			}
+
+			foreach ($registerData['schemas'] as $declaredSlug) {
+				if (is_string($declaredSlug) === true) {
+					$declared[$declaredSlug] = true;
+				}
+			}
+		}
+
+		return $declared;
+	}//end collectDeclaredSchemaSlugs()
 
 	/**
 	 * Update the app configuration with imported schema and register IDs.
