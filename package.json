@@ -4,7 +4,7 @@
   "license": "EUPL-1.2",
   "engines": {
     "node": "^22.14 || ^24 || >=26",
-    "npm": "^10.0.0"
+    "npm": "^11.0.0"
   },
   "scripts": {
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress",
@@ -37,7 +37,7 @@
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-xml": "^6.1.0",
-    "@conduction/nextcloud-vue": "2.2.0-vue3.16",
+    "@conduction/nextcloud-vue": "^2.3.0",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "6.6.0",
     "@fortawesome/free-regular-svg-icons": "6.6.0",
@@ -138,10 +138,7 @@
     "postcss": ">=8.4.47",
     "fast-xml-parser": ">=5.7.0",
     "markdown-it": ">=12.3.2",
-    "uuid": ">=14.0.0",
-    "@conduction/nextcloud-vue": {
-      "eslint": "$eslint"
-    }
+    "uuid": ">=14.0.0"
   },
   "prettier": "@nextcloud/prettier-config"
 }

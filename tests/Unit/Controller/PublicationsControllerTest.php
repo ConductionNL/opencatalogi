@@ -753,32 +753,25 @@ class PublicationsControllerTest extends TestCase {
 	/**
 	 * Helper to create an ObjectEntity mock that supports magic __call getters.
 	 */
-	private function createObjectEntityMock(int $id = 42, int|string $schema = '1', int|string $register = '1'): \OCA\OpenRegister\Db\ObjectEntity {
-		// TWO THINGS MOVED, not one, and the second only surfaces after the
-		// first is fixed.
+	private function createObjectEntityMock(int $id = 42, int $schema = 1, int $register = 1): \OCA\OpenRegister\Db\ObjectEntity {
+		// getSchema()/getRegister() became really-declared methods when OpenRegister
+		// published its ObjectService/ObjectEntity interfaces, so they need
+		// onlyMethods(). getId() is still served by OCP\AppFramework\Db\Entity::__call()
+		// and still needs addMethods(), which generates a parameterless method — correct
+		// here because no call site, in lib/ or in this file, passes it an argument.
 		//
-		// 1. WHERE they are declared. getSchema() and getRegister() are now
-		//    REALLY DECLARED on ObjectEntity, so they belong in onlyMethods();
-		//    addMethods() throws CannotUseAddMethodsException for a method that
-		//    exists. getId() is STILL magic (Entity::__call()) so it stays in
-		//    addMethods() — moving all three together fails the other way, with
-		//    CannotUseOnlyMethodsException.
-		//
-		// 2. WHAT they return. Being really declared means they now have a
-		//    declared return type, `?string`. Under addMethods() there was no
-		//    signature, so an int return was accepted; now PHPUnit refuses it
-		//    with IncompatibleReturnValueException. Callers pass ints, so the
-		//    values are cast here rather than editing sixteen call sites — the
-		//    ids are opaque identifiers in these tests and their type is not
-		//    what any of them is asserting.
+		// The two real getters are typed `?string`, so their return values are cast.
+		// The ids stay int parameters because every caller passes ints, but a double
+		// that returned them untyped would be looser than the class it stands for: the
+		// magic surface used to accept anything, and the tests leaned on that.
 		$mockObj = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
 			->disableOriginalConstructor()
 			->onlyMethods(['getSchema', 'getRegister'])
 			->addMethods(['getId'])
 			->getMock();
 		$mockObj->method('getId')->willReturn($id);
-		$mockObj->method('getSchema')->willReturn((string)$schema);
-		$mockObj->method('getRegister')->willReturn((string)$register);
+		$mockObj->method('getSchema')->willReturn((string) $schema);
+		$mockObj->method('getRegister')->willReturn((string) $register);
 		return $mockObj;
 	}
 

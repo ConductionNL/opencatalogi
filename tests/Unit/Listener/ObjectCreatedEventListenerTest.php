@@ -53,10 +53,13 @@ class ObjectCreatedEventListenerTest extends TestCase {
 			$jsonData['depublicationDate'] = $depublished->format('c');
 		}
 
-		// ObjectEntity now REALLY DECLARES getUuid(), getRegister() and getSchema()
-		// alongside jsonSerialize(), so all four belong in onlyMethods(). They used
-		// to be magic (Entity::__call()), which is why this was addMethods() —
-		// that now throws CannotUseAddMethodsException for a method that exists.
+		// ObjectEntity really declares jsonSerialize(), and — since OpenRegister
+		// published its ObjectService/ObjectEntity interfaces — getUuid(),
+		// getRegister() and getSchema() as well. They used to be magic, served by
+		// OCP\AppFramework\Db\Entity::__call(), and were doubled with addMethods();
+		// addMethods() now throws CannotUseAddMethodsException because the methods
+		// exist. Which builder is correct is decided by the real class, so this must
+		// move whenever it does.
 		$entity = $this->getMockBuilder(ObjectEntity::class)
 			->disableOriginalConstructor()
 			->onlyMethods(['jsonSerialize', 'getUuid', 'getRegister', 'getSchema'])
