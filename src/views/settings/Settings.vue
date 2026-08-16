@@ -366,7 +366,12 @@
 
 		<NcSettingsSection
 			:name="t('opencatalogi', 'Federation sync')"
-			:description="t('opencatalogi', 'Configure how often the app synchronizes with federation peers')">
+			:description="
+				t(
+					'opencatalogi',
+					'Configure how often the app synchronizes with federation peers',
+				)
+			">
 			<div v-if="!loadingSyncOptions" class="sync-options">
 				<div class="option-section">
 					<div class="sync-interval-row">
@@ -377,19 +382,36 @@
 							:max="syncOptions.maxMinutes"
 							:label="t('opencatalogi', 'Sync interval (minutes)')"
 							:disabled="savingSyncOptions" />
-						<span :title="t('opencatalogi', 'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.')"
+						<span
+							:title="
+								t(
+									'opencatalogi',
+									'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.',
+								)
+							"
 							class="sync-interval-info"
 							role="img"
-							:aria-label="t('opencatalogi', 'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.')">
+							:aria-label="
+								t(
+									'opencatalogi',
+									'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.',
+								)
+							">
 							<InformationOutline :size="20" />
 						</span>
 					</div>
 					<p class="option-description">
-						{{ t('opencatalogi', 'Allowed range: {min}–{max} minutes. Default: {default} minutes.', {
-							min: syncOptions.minMinutes,
-							max: syncOptions.maxMinutes,
-							default: syncOptions.defaultMinutes,
-						}) }}
+						{{
+							t(
+								'opencatalogi',
+								'Allowed range: {min}–{max} minutes. Default: {default} minutes.',
+								{
+									min: syncOptions.minMinutes,
+									max: syncOptions.maxMinutes,
+									default: syncOptions.defaultMinutes,
+								},
+							)
+						}}
 					</p>
 				</div>
 
@@ -419,7 +441,8 @@
 			</div>
 
 			<!-- Loading State -->
-			<NcLoadingIcon v-else
+			<NcLoadingIcon
+				v-else
 				class="loading-icon"
 				:size="64"
 				appearance="dark" />
@@ -1413,9 +1436,12 @@ export default defineComponent({
 		async loadSyncOptions() {
 			this.loadingSyncOptions = true
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings/sync', {
-					headers: { 'OCS-APIRequest': 'true' },
-				})
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/settings/sync',
+					{
+						headers: { 'OCS-APIRequest': 'true' },
+					},
+				)
 				const data = await response.json()
 
 				if (!data.error) {
@@ -1423,7 +1449,9 @@ export default defineComponent({
 						intervalMinutes: Math.round(data.sync_interval_seconds / 60),
 						minMinutes: Math.round(data.min_interval_seconds / 60),
 						maxMinutes: Math.round(data.max_interval_seconds / 60),
-						defaultMinutes: Math.round(data.default_interval_seconds / 60),
+						defaultMinutes: Math.round(
+							data.default_interval_seconds / 60,
+						),
 					}
 				}
 			} catch (error) {
@@ -1446,25 +1474,36 @@ export default defineComponent({
 			this.savingSyncOptions = true
 			try {
 				const minutes = Number.parseInt(this.syncOptions.intervalMinutes, 10)
-				const seconds = Number.isFinite(minutes) ? minutes * 60 : this.syncOptions.defaultMinutes * 60
+				const seconds = Number.isFinite(minutes)
+					? minutes * 60
+					: this.syncOptions.defaultMinutes * 60
 
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings/sync', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'OCS-APIRequest': 'true',
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/settings/sync',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'OCS-APIRequest': 'true',
+						},
+						body: JSON.stringify({ sync_interval_seconds: seconds }),
 					},
-					body: JSON.stringify({ sync_interval_seconds: seconds }),
-				})
+				)
 				const data = await response.json()
 
 				if (data.error) {
-					showError(this.t('opencatalogi', 'Failed to save sync options') + ': ' + data.error)
+					showError(
+						this.t('opencatalogi', 'Failed to save sync options')
+							+ ': '
+							+ data.error,
+					)
 					return
 				}
 
 				// Reflect the post-clamp value the backend actually persisted.
-				this.syncOptions.intervalMinutes = Math.round(data.sync_interval_seconds / 60)
+				this.syncOptions.intervalMinutes = Math.round(
+					data.sync_interval_seconds / 60,
+				)
 				showSuccess(this.t('opencatalogi', 'Sync options saved'))
 			} catch (error) {
 				console.error('Failed to save sync options:', error)
@@ -1487,32 +1526,49 @@ export default defineComponent({
 		async syncDirectoriesNow() {
 			this.syncingDirectories = true
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/listings/sync', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'OCS-APIRequest': 'true',
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/listings/sync',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'OCS-APIRequest': 'true',
+						},
 					},
-				})
+				)
 				const data = await response.json()
 
 				if (!response.ok || data.error) {
-					showError(this.t('opencatalogi', 'Failed to synchronize directories') + ': ' + (data.message || data.error || response.statusText))
+					showError(
+						this.t('opencatalogi', 'Failed to synchronize directories')
+							+ ': '
+							+ (data.message || data.error || response.statusText),
+					)
 					return
 				}
 
 				const synced = data.synced_directories ?? 0
 				const failed = data.failed_directories ?? 0
-				const total = data.total_directories ?? (synced + failed)
+				const total = data.total_directories ?? synced + failed
 
-				showSuccess(this.t('opencatalogi', 'Directories synchronized: {synced} of {total} succeeded, {failed} failed', {
-					synced,
-					total,
-					failed,
-				}))
+				showSuccess(
+					this.t(
+						'opencatalogi',
+						'Directories synchronized: {synced} of {total} succeeded, {failed} failed',
+						{
+							synced,
+							total,
+							failed,
+						},
+					),
+				)
 			} catch (error) {
 				console.error('Failed to synchronize directories:', error)
-				showError(this.t('opencatalogi', 'Failed to synchronize directories') + ': ' + error.message)
+				showError(
+					this.t('opencatalogi', 'Failed to synchronize directories')
+						+ ': '
+						+ error.message,
+				)
 			} finally {
 				this.syncingDirectories = false
 			}

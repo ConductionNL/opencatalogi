@@ -2,7 +2,9 @@
 	<CnIndexPage
 		ref="indexPage"
 		:title="t('opencatalogi', 'Catalogs')"
-		:description="t('opencatalogi', 'Manage your data catalogs and their configurations')"
+		:description="
+			t('opencatalogi', 'Manage your data catalogs and their configurations')
+		"
 		:show-title="true"
 		:schema="schema"
 		:objects="currentObjects"
@@ -41,14 +43,23 @@
 		@view="viewCatalog">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
-				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+				{{
+					t(
+						'opencatalogi',
+						'This page is read-only. Only administrators can create, edit, or delete entries here.',
+					)
+				}}
 			</NcNoteCard>
 		</template>
 
 		<!-- Custom column: visibility badge -->
 		<template #column-listed="{ row }">
 			<CnStatusBadge
-				:label="row.listed ? t('opencatalogi', 'Public') : t('opencatalogi', 'Private')"
+				:label="
+					row.listed
+						? t('opencatalogi', 'Public')
+						: t('opencatalogi', 'Private')
+				"
 				:color-map="visibilityColorMap" />
 		</template>
 
@@ -92,12 +103,33 @@ export default {
 	},
 	setup() {
 		const sidebarState = inject('sidebarState', null)
-		const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('catalog', {
+		const {
+			schema,
+			sortKey,
+			sortOrder,
+			visibleColumns,
+			onSort,
+			onPageChange,
+			onPageSizeChange,
+			refresh,
+		} = useListView('catalog', {
 			sidebarState,
 			objectStore,
 		})
 		const { isAdmin, loaded } = useIsAdmin()
-		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh, objectStore, isAdmin, loaded }
+		return {
+			schema,
+			sortKey,
+			sortOrder,
+			visibleColumns,
+			onSort,
+			onPageChange,
+			onPageSizeChange,
+			refresh,
+			objectStore,
+			isAdmin,
+			loaded,
+		}
 	},
 	data() {
 		return {
@@ -157,7 +189,11 @@ export default {
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
-				{ key: 'listed', label: t('opencatalogi', 'Status'), sortable: true },
+				{
+					key: 'listed',
+					label: t('opencatalogi', 'Status'),
+					sortable: true,
+				},
 				{ key: 'registers', label: t('opencatalogi', 'Registers') },
 				{ key: 'schemas', label: t('opencatalogi', 'Schemas') },
 				{ key: 'organization', label: t('opencatalogi', 'Organization') },
@@ -171,8 +207,14 @@ export default {
 			return collection?.results || []
 		},
 		currentPagination() {
-			return objectStore.getPagination('catalog')
-				|| { total: 0, page: 1, pages: 1, limit: 20 }
+			return (
+				objectStore.getPagination('catalog') || {
+					total: 0,
+					page: 1,
+					pages: 1,
+					limit: 20,
+				}
+			)
 		},
 	},
 	methods: {
@@ -208,7 +250,10 @@ export default {
 		onRowClick(row) {
 			const id = resolveObjectId(row)
 			if (id) {
-				this.$router.push({ name: 'CatalogDetail', params: { id: String(id) } })
+				this.$router.push({
+					name: 'CatalogDetail',
+					params: { id: String(id) },
+				})
 				return
 			}
 			// No id resolvable — log the row so misshapen payloads surface
@@ -226,11 +271,17 @@ export default {
 		viewCatalog(catalog) {
 			const id = resolveObjectId(catalog)
 			if (id) {
-				this.$router.push({ name: 'CatalogDetail', params: { id: String(id) } })
+				this.$router.push({
+					name: 'CatalogDetail',
+					params: { id: String(id) },
+				})
 				return
 			}
 			// eslint-disable-next-line no-console
-			console.warn('[opencatalogi] viewCatalog: no id resolvable from row', catalog)
+			console.warn(
+				'[opencatalogi] viewCatalog: no id resolvable from row',
+				catalog,
+			)
 		},
 		editCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
@@ -241,14 +292,23 @@ export default {
 		},
 		copyCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
-			navigationStore.setDialog('copyObject', { objectType: 'catalog', dialogTitle: 'Catalogus' })
+			navigationStore.setDialog('copyObject', {
+				objectType: 'catalog',
+				dialogTitle: 'Catalogus',
+			})
 		},
 		deleteCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
-			navigationStore.setDialog('deleteObject', { objectType: 'catalog', dialogTitle: 'Catalogus' })
+			navigationStore.setDialog('deleteObject', {
+				objectType: 'catalog',
+				dialogTitle: 'Catalogus',
+			})
 		},
 		getOrganizationName(organizationId) {
-			const organization = objectStore.getObject('organization', organizationId)
+			const organization = objectStore.getObject(
+				'organization',
+				organizationId,
+			)
 			return organization?.name || 'Unknown Organization'
 		},
 	},
