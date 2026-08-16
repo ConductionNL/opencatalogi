@@ -397,107 +397,25 @@ class FileService {
 
 	}//end uploadFile()
 
-	/**
-	 * Overwrites an existing file in NextCloud.
-	 *
-	 * @param mixed $content The content of the file.
-	 * @param string $filePath Path (from root) where to save the file.
-	 *                         NOTE: include the name and extension of the file (example.pdf).
-	 * @param boolean $createNew Default = false. If set to true this function will create
-	 *                           a new file if it doesn't exist yet.
-	 *
-	 * @return boolean True if successful.
-	 * @throws Exception In case we can't write to file because it is not permitted.
-	 *
-	 * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
-	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 *
-	 * @spec openspec/specs/file-management/spec.md
-	 */
-	public function updateFile(mixed $content, string $filePath, bool $createNew = false): bool {
-		$filePath = trim(string: $filePath, characters: '/');
-
-		// Get the current user.
-		$currentUser = $this->userSession->getUser();
-		$userId = 'Guest';
-		if ($currentUser !== null) {
-			$userId = $currentUser->getUID();
-		}
-
-		$userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-
-		// Check if file exists and overwrite it if it does.
-		try {
-			try {
-				$file = $userFolder->get(path: $filePath);
-				$file->putContent($content);
-
-				return true;
-			} catch (NotFoundException $e) {
-				if ($createNew === true) {
-					$userFolder->newFile(path: $filePath);
-					$file = $userFolder->get(path: $filePath);
-					$file->putContent($content);
-
-					$this->logger->info("File $filePath did not exist, created a new file for it.");
-					return true;
-				}
-			}//end try
-
-			// File already exists.
-			$this->logger->warning("File $filePath already exists.");
-			return false;
-		} catch (NotPermittedException|GenericFileException|LockedException $e) {
-			$this->logger->error("Can't create file $filePath: " . $e->getMessage());
-
-			throw new Exception("Can't write to file $filePath");
-		}//end try
-
-	}//end updateFile()
-
-	/**
-	 * Deletes a file from NextCloud.
-	 *
-	 * @param string $filePath Path (from root) to the file you want to delete.
-	 *
-	 * @return boolean True if successful.
-	 * @throws Exception In case deleting the file is not permitted.
-	 *
-	 * @spec openspec/specs/file-management/spec.md
-	 */
-	public function deleteFile(string $filePath): bool {
-		$filePath = trim(string: $filePath, characters: '/');
-
-		// Get the current user.
-		$currentUser = $this->userSession->getUser();
-		$userId = 'Guest';
-		if ($currentUser !== null) {
-			$userId = $currentUser->getUID();
-		}
-
-		$userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-
-		// Check if file exists and delete it if it does.
-		try {
-			try {
-				$file = $userFolder->get(path: $filePath);
-				$file->delete();
-
-				return true;
-			} catch (NotFoundException $e) {
-				// File does not exist.
-				$this->logger->warning("File $filePath does not exist.");
-
-				return false;
-			}
-		} catch (NotPermittedException|InvalidPathException $e) {
-			$this->logger->error("Can't delete file $filePath: " . $e->getMessage());
-
-			throw new Exception("Can't delete file $filePath");
-		}
-
-	}//end deleteFile()
+	// ⚠️ `updateFile()` and `deleteFile()` USED TO LIVE HERE. Removed 2026-08-16
+	// as orphaned write capability (gate-57): both overwrote or deleted an
+	// arbitrary path in the CALLER's user folder, and nothing in the app ever
+	// called either one. The only references anywhere were their own unit
+	// tests, which is the shape gate-57 exists to find — a write path that can
+	// be minted but not reached, so no route, no guard and no review ever
+	// applies to it, while the capability sits in the class waiting to be wired
+	// up by someone who assumes it was already vetted.
+	//
+	// Checked before deleting, not after: fleet-wide grep found no PHP caller
+	// outside `tests/`. The `deleteFile(...)` occurrences in
+	// `PublicationDetail.vue` and `ViewObject.vue` are LOCAL VUE METHODS of the
+	// same name calling the HTTP API — same word, different layer.
+	//
+	// The rest of this app already reaches OpenRegister's FileService for file
+	// work (see EventService, PublicationService, DcatService); only
+	// `DownloadService::createPdf` still uses this local one. Anything that
+	// needs to overwrite or delete a file should go through OpenRegister
+	// (ADR-022), where the write is authorised, not be revived here.
 
 	/**
 	 * Creates a pdf file in a /tmp folder using a twig template and given context.
