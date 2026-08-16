@@ -358,7 +358,8 @@ export default {
 
 		<!-- Always render — CnPagination hides itself when a single page fits.
 		     Mirrors the FederationSearch pattern for cross-page consistency. -->
-		<CnPagination v-if="!loading && !error"
+		<CnPagination
+			v-if="!loading && !error"
 			:current-page="page"
 			:total-pages="pages"
 			:total-items="total"
