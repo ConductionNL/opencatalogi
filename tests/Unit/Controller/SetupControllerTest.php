@@ -39,6 +39,25 @@ use Psr\Log\LoggerInterface;
  * Unit tests for SetupController.
  */
 class SetupControllerTest extends TestCase {
+
+	/**
+	 * The setup contract version, read from the controller rather than typed.
+	 *
+	 * These assertions used to hardcode `2`. This change bumped
+	 * SetupController::SETUP_VERSION to 3 and three literals in this file went
+	 * stale at once — one asserting the reported version, one seeding the
+	 * `onboarding_completed_version` short-circuit (which then no longer
+	 * matched, so a step silently reported "not done"), and one asserting the
+	 * value written back. Reading the constant means the next bump cannot
+	 * quietly invalidate the tests that are supposed to guard it.
+	 *
+	 * @return int
+	 */
+	private static function setupVersion(): int {
+		$constant = (new \ReflectionClass(SetupController::class))->getConstant('SETUP_VERSION');
+
+		return (int)$constant;
+	}//end setupVersion()
 	private IRequest|MockObject $request;
 	private IAppConfig|MockObject $config;
 	private SettingsService|MockObject $settingsService;
@@ -173,7 +192,7 @@ class SetupControllerTest extends TestCase {
 		$body = $response->getData();
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
-		$this->assertSame(2, $body['version']);
+		$this->assertSame(self::setupVersion(), $body['version']);
 		$this->assertTrue($body['steps']['config-check']['done']);
 		$this->assertTrue($body['steps']['catalog-scope']['done']);
 		$this->assertTrue($body['steps']['create-catalog']['done']);
@@ -196,7 +215,7 @@ class SetupControllerTest extends TestCase {
 	public function testStatusCreateCatalogDoneViaOnboardingFlag(): void {
 		$this->wireRegisters();
 		$this->configValues['default_catalog_scope'] = 'internal';
-		$this->configValues['onboarding_completed_version'] = '2';
+		$this->configValues['onboarding_completed_version'] = (string)self::setupVersion();
 		// No ObjectService needed — the onboarding flag short-circuits catalogExists().
 
 		$body = $this->controller->status()->getData();
@@ -257,7 +276,7 @@ class SetupControllerTest extends TestCase {
 		$body = $this->controller->action('create-first-catalog')->getData();
 
 		$this->assertTrue($body['success']);
-		$this->assertSame('2', $this->configValues['onboarding_completed_version']);
+		$this->assertSame((string)self::setupVersion(), $this->configValues['onboarding_completed_version']);
 	}
 
 	/**

@@ -5,8 +5,8 @@
 		"openregister"
 	],
 	"setup": {
-		"enabled": false,
-		"version": 2,
+		"enabled": true,
+		"version": 3,
 		"completionConfigKey": "onboarding_completed_version",
 		"steps": [
 			{
@@ -59,6 +59,13 @@
 				"action": "connect-federation",
 				"title": "Connect to the federated network",
 				"body": "OpenCatalogi is a federated network: instances share their published catalogs so they can be discovered together. Connect to the national directory now to see federated catalogs in your Directory — or skip this and it will sync automatically later."
+			},
+			{
+				"id": "sync-all-directories",
+				"type": "run-action",
+				"action": "sync-all-directories",
+				"title": "Sync all directories",
+				"body": "Now that at least one directory is registered, refresh every peer listing so the Directory page reflects the current state of the federation. Same as the 'Sync directories now' button in the admin settings — the periodic cron does this automatically over time, this step runs it once immediately."
 			},
 			{
 				"id": "done",

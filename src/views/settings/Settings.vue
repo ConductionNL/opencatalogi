@@ -363,11 +363,76 @@
 				:size="64"
 				appearance="dark" />
 		</NcSettingsSection>
+
+		<NcSettingsSection
+			:name="t('opencatalogi', 'Federation sync')"
+			:description="t('opencatalogi', 'Configure how often the app synchronizes with federation peers')">
+			<div v-if="!loadingSyncOptions" class="sync-options">
+				<div class="option-section">
+					<div class="sync-interval-row">
+						<NcTextField
+							v-model="syncOptions.intervalMinutes"
+							type="number"
+							:min="syncOptions.minMinutes"
+							:max="syncOptions.maxMinutes"
+							:label="t('opencatalogi', 'Sync interval (minutes)')"
+							:disabled="savingSyncOptions" />
+						<span :title="t('opencatalogi', 'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.')"
+							class="sync-interval-info"
+							role="img"
+							:aria-label="t('opencatalogi', 'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.')">
+							<InformationOutline :size="20" />
+						</span>
+					</div>
+					<p class="option-description">
+						{{ t('opencatalogi', 'Allowed range: {min}–{max} minutes. Default: {default} minutes.', {
+							min: syncOptions.minMinutes,
+							max: syncOptions.maxMinutes,
+							default: syncOptions.defaultMinutes,
+						}) }}
+					</p>
+				</div>
+
+				<div class="button-container sync-button-container">
+					<NcButton
+						variant="primary"
+						:disabled="savingSyncOptions"
+						@click="saveSyncOptions">
+						<template #icon>
+							<NcLoadingIcon v-if="savingSyncOptions" :size="20" />
+							<Save v-else :size="20" />
+						</template>
+						{{ t('opencatalogi', 'Save sync options') }}
+					</NcButton>
+
+					<NcButton
+						variant="secondary"
+						:disabled="syncingDirectories"
+						@click="syncDirectoriesNow">
+						<template #icon>
+							<NcLoadingIcon v-if="syncingDirectories" :size="20" />
+							<Sync v-else :size="20" />
+						</template>
+						{{ t('opencatalogi', 'Sync directories now') }}
+					</NcButton>
+				</div>
+			</div>
+
+			<!-- Loading State -->
+			<NcLoadingIcon v-else
+				class="loading-icon"
+				:size="64"
+				appearance="dark" />
+		</NcSettingsSection>
 	</CnAdminSettingsShell>
 </template>
 
 <script>
 import { CnAdminSettingsShell } from '@conduction/nextcloud-vue'
+import { showSuccess, showError } from '@nextcloud/dialogs'
+import '@nextcloud/dialogs/style.css'
+import Sync from 'vue-material-design-icons/Sync.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 // Every state-changing call below goes through @nextcloud/axios rather than a
 // bare fetch(). It attaches the `requesttoken` header Nextcloud's
 // SecurityMiddleware checks, which is what lets the settings write endpoints
@@ -423,9 +488,11 @@ export default defineComponent({
 		CnAdminSettingsShell,
 		Save,
 		Refresh,
+		Sync,
 		CheckCircle,
 		CloseCircle,
 		MinusCircle,
+		InformationOutline,
 	},
 
 	/**
@@ -476,6 +543,15 @@ export default defineComponent({
 			},
 
 			savingRegistration: false,
+			syncingDirectories: false,
+			loadingSyncOptions: true,
+			savingSyncOptions: false,
+			syncOptions: {
+				intervalMinutes: 60,
+				minMinutes: 15,
+				maxMinutes: 1440,
+				defaultMinutes: 60,
+			},
 		}
 	},
 
@@ -560,6 +636,7 @@ export default defineComponent({
 			this.loadSettings(),
 			this.loadVersionInfo(),
 			this.loadWooReadiness(),
+			this.loadSyncOptions(),
 		])
 	},
 
@@ -1325,6 +1402,121 @@ export default defineComponent({
 
 			return hints[reason] || reason
 		},
+
+		/**
+		 * Loads the current federation sync options (interval + bounds) from the backend.
+		 *
+		 * @async
+		 * @return {Promise<void>}
+		 */
+		/** @spec openspec/specs/admin-settings/spec.md */
+		async loadSyncOptions() {
+			this.loadingSyncOptions = true
+			try {
+				const response = await fetch('/index.php/apps/opencatalogi/api/settings/sync', {
+					headers: { 'OCS-APIRequest': 'true' },
+				})
+				const data = await response.json()
+
+				if (!data.error) {
+					this.syncOptions = {
+						intervalMinutes: Math.round(data.sync_interval_seconds / 60),
+						minMinutes: Math.round(data.min_interval_seconds / 60),
+						maxMinutes: Math.round(data.max_interval_seconds / 60),
+						defaultMinutes: Math.round(data.default_interval_seconds / 60),
+					}
+				}
+			} catch (error) {
+				console.error('Failed to load sync options:', error)
+			} finally {
+				this.loadingSyncOptions = false
+			}
+		},
+
+		/**
+		 * Persist the federation sync interval. The backend clamps the value to
+		 * [MIN, MAX] server-side, so a user-typed out-of-range number cannot
+		 * disable the guard.
+		 *
+		 * @async
+		 * @return {Promise<void>}
+		 */
+		/** @spec openspec/specs/admin-settings/spec.md */
+		async saveSyncOptions() {
+			this.savingSyncOptions = true
+			try {
+				const minutes = Number.parseInt(this.syncOptions.intervalMinutes, 10)
+				const seconds = Number.isFinite(minutes) ? minutes * 60 : this.syncOptions.defaultMinutes * 60
+
+				const response = await fetch('/index.php/apps/opencatalogi/api/settings/sync', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'OCS-APIRequest': 'true',
+					},
+					body: JSON.stringify({ sync_interval_seconds: seconds }),
+				})
+				const data = await response.json()
+
+				if (data.error) {
+					showError(this.t('opencatalogi', 'Failed to save sync options') + ': ' + data.error)
+					return
+				}
+
+				// Reflect the post-clamp value the backend actually persisted.
+				this.syncOptions.intervalMinutes = Math.round(data.sync_interval_seconds / 60)
+				showSuccess(this.t('opencatalogi', 'Sync options saved'))
+			} catch (error) {
+				console.error('Failed to save sync options:', error)
+				showError(this.t('opencatalogi', 'Failed to save sync options'))
+			} finally {
+				this.savingSyncOptions = false
+			}
+		},
+
+		/**
+		 * Manually trigger a synchronization of all known federation directories.
+		 *
+		 * Hits the existing admin-only `POST /api/listings/sync` endpoint which
+		 * routes to `DirectoryService::doCronSync()` when no id is provided.
+		 *
+		 * @async
+		 * @return {Promise<void>}
+		 */
+		/** @spec openspec/specs/admin-settings/spec.md */
+		async syncDirectoriesNow() {
+			this.syncingDirectories = true
+			try {
+				const response = await fetch('/index.php/apps/opencatalogi/api/listings/sync', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'OCS-APIRequest': 'true',
+					},
+				})
+				const data = await response.json()
+
+				if (!response.ok || data.error) {
+					showError(this.t('opencatalogi', 'Failed to synchronize directories') + ': ' + (data.message || data.error || response.statusText))
+					return
+				}
+
+				const synced = data.synced_directories ?? 0
+				const failed = data.failed_directories ?? 0
+				const total = data.total_directories ?? (synced + failed)
+
+				showSuccess(this.t('opencatalogi', 'Directories synchronized: {synced} of {total} succeeded, {failed} failed', {
+					synced,
+					total,
+					failed,
+				}))
+			} catch (error) {
+				console.error('Failed to synchronize directories:', error)
+				showError(this.t('opencatalogi', 'Failed to synchronize directories') + ': ' + error.message)
+			} finally {
+				this.syncingDirectories = false
+			}
+		},
 	},
 })
 </script>
@@ -1370,6 +1562,31 @@ export default defineComponent({
 
 .publishing-options {
 	max-width: 600px;
+}
+
+.sync-options {
+	max-width: 600px;
+}
+
+.sync-interval-row {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+	max-width: 400px;
+}
+
+.sync-interval-info {
+	display: inline-flex;
+	align-items: center;
+	color: var(--color-text-maxcontrast);
+	padding-bottom: 6px;
+	cursor: help;
+}
+
+.sync-button-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 }
 
 .option-section {

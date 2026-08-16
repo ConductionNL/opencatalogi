@@ -16,6 +16,7 @@ use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -45,6 +46,11 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	private IAppManager|MockObject $appManager;
 
 	/**
+	 * @var LoggerInterface|MockObject
+	 */
+	private LoggerInterface|MockObject $logger;
+
+	/**
 	 * @var SettingsService
 	 */
 	private SettingsService $service;
@@ -53,11 +59,17 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appManager = $this->createMock(IAppManager::class);
+		// Fourth constructor argument, added when the slug-fallback lookups
+		// gained warning logs. The test still built the service with three, so
+		// every case in this file died with ArgumentCountError before reaching
+		// its assertion — 88 of them.
+		$this->logger = $this->createMock(LoggerInterface::class);
 
 		$this->service = new SettingsService(
 			$this->config,
 			$this->container,
 			$this->appManager,
+			$this->logger,
 			$this->createMock(RegisterSchemaLinkService::class)
 		);
 
