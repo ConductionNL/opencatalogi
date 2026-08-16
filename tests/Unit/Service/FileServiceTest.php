@@ -768,17 +768,18 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase {
 
 	}//end testUploadFileGenericFileException()
 
-	// The eight testUpdateFile* / testDeleteFile* cases that stood here were
-	// removed with the methods they called. `FileService::updateFile()` and
-	// `FileService::deleteFile()` are REMOVED requirements FIL-003 / FIL-004
-	// in openspec/specs/file-management/spec.md ("OR file service owns file
-	// updates/deletion"). Both had zero callers in lib/, and the live file
-	// paths resolve OpenRegister's FileService from the container instead.
+	// The seven testUpdateFile* / testDeleteFile* cases that stood here were
+	// removed with the methods they called, exactly as the testCreateZip* note
+	// further down records. `FileService::updateFile()` / `deleteFile()` were
+	// orphaned write capability (gate-57): nothing in the app called either,
+	// and THESE TESTS WERE THE ONLY REFERENCES TO THEM ANYWHERE.
 	//
-	// No coverage is lost: each case mocked `IRootFolder`/`File` and asserted
-	// that a pass-through called `putContent()` or `delete()` on the mock —
-	// it exercised the OCP file API through a wrapper, and asserted nothing
-	// about opencatalogi behaviour that survives the wrapper's removal.
+	// That is worth naming rather than quietly deleting. A well-tested method
+	// with no caller does not read as dead code — it reads as a supported API,
+	// because the tests assert it works. The coverage was real and the
+	// capability was unreachable, and it is the second half that decides.
+	// Anything needing to overwrite or delete a file should go through
+	// OpenRegister's FileService (ADR-022), where the write is authorised.
 
 	/**
 	 * Uses Guest user folder when no user is authenticated.
@@ -875,6 +876,12 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertTrue($result);
 
 	}//end testUploadFileGuestUser()
+
+	// testUpdateFileGuestUser / testDeleteFileGuestUser removed with the same
+	// two methods — see the note above. The Guest-folder fallback they covered
+	// is still exercised by testUploadFileGuestUser, testCreateFolderGuestUser
+	// and testAddFileInfoToDataGuestUser, so the BEHAVIOUR keeps its coverage;
+	// only the two dead entry points into it are gone.
 
 	// The three testCreateZip* cases that stood here were removed with the
 	// methods they called. `FileService::createZip()` / `downloadZip()` are

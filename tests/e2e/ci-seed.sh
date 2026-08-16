@@ -144,6 +144,95 @@ verify "$SCH_BODY" schemas
 
 echo "[ci-seed] OpenCatalogi register + schemas provisioned."
 
+# ── 2b. Complete first-time setup, because this script has just performed it ─
+#
+# 🔴 THIS IS WHAT THE BUNDLE GATE BELOW CANNOT SEE. That gate exists because a
+# shell that never mounts produces "a wall of selector timeouts with a
+# misleading cause" — and on 2026-08-16 exactly that happened, from a cause the
+# gate is blind to: the bundle was fine and the shell still never rendered.
+#
+# `feat(setup): enable the first-time-setup wizard by default (ADR-042)` flipped
+# `manifest.setup.enabled` to true. CnAppRoot gates the shell behind a SETUP
+# PHASE and renders CnSetupWizard INSTEAD of CnAppNav until setup is complete.
+# That is correct product behaviour, and a fresh CI instance is by definition
+# first-run — so every UI spec began timing out on `[data-testid="cn-nav"]`
+# while the API-only specs (OOAPI, openapi-document) kept passing. 86 failed,
+# 21 passed, and the Playwright report's page snapshot named it outright:
+# `dialog "Set up this app"` exactly where the nav should be.
+#
+# ⚠️ COMPLETION IS COMPUTED FROM REAL STATE, NOT FROM A FLAG. The first version
+# of this block set `onboarding_completed_version` and called it done. Reading
+# `SetupController::status()` shows that would not have worked:
+#
+#     $completed = ($registersWired && $scopeChosen && $catalogReady);
+#
+# and `status()` never consults that key. It is only one of two ways to satisfy
+# `catalogReady`, while `default_catalog_scope` is a separate gate that nothing
+# sets automatically — so the wizard would have opened anyway and the "fix"
+# would have shipped, looked plausible, and changed nothing.
+#
+# So drive the app's OWN setup contract — the same two calls the wizard makes —
+# and then GUARD ON `status().completed`, which is the value CnAppRoot actually
+# reads. Asserting on the thing the code consults is the whole difference
+# between this working and the first attempt.
+#
+# This is not muting a dialog: the register and its schemas are provisioned and
+# verified above, so "setup is complete" is a true statement about the instance.
+# Teaching every spec to click through seven wizard steps would be the dishonest
+# fix, and would make each spec measure the wizard instead of its own subject.
+SETUP_ENABLED="$(python3 - "$(dirname "$0")/../../src/manifest.json" <<'PY'
+import json, sys
+try:
+    with open(sys.argv[1], encoding='utf-8') as fh:
+        setup = json.load(fh).get('setup') or {}
+except (OSError, json.JSONDecodeError):
+    setup = {}
+print('yes' if setup.get('enabled') is True else '')
+PY
+)"
+
+setup_completed () {
+	curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+		"${BASE}/index.php/apps/opencatalogi/api/setup/status" \
+		| python3 -c 'import json,sys
+try:
+    print("yes" if json.load(sys.stdin).get("completed") is True else "no")
+except Exception:
+    print("unreadable")' 2>/dev/null || echo "unreadable"
+}
+
+if [ -n "$SETUP_ENABLED" ]; then
+	# Step "catalog-scope": a `choice` step persisting one whitelisted key.
+	curl -sS -X POST -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+		-d 'default_catalog_scope=organisation' \
+		"${BASE}/index.php/apps/opencatalogi/api/setup/config" -o /dev/null || true
+
+	# Step "create-catalog": the privileged action. It also records
+	# `onboarding_completed_version`, which is what keeps the gate closed if the
+	# catalog is later removed.
+	curl -sS -X POST -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+		"${BASE}/index.php/apps/opencatalogi/api/setup/action/create-first-catalog" -o /dev/null || true
+
+	COMPLETED="$(setup_completed)"
+	if [ "$COMPLETED" = "yes" ]; then
+		echo "[ci-seed] first-time setup completed via the app's own contract."
+	else
+		# `unreadable` is deliberately a DIFFERENT value from `no`, and both
+		# fail. A status endpoint that cannot be parsed tells us nothing about
+		# the wizard, and treating "I could not tell" as "fine" is how a broken
+		# instance reaches the specs looking healthy.
+		echo "::error::First-time setup did not complete (status.completed=${COMPLETED})."
+		echo "::error::CnAppRoot renders CnSetupWizard instead of the app shell while setup is"
+		echo "::error::incomplete, so every UI spec will time out on [data-testid=\"cn-nav\"]"
+		echo "::error::and the page snapshot will show a 'Set up this app' dialog."
+		echo "::error::Check GET /index.php/apps/opencatalogi/api/setup/status — completion needs"
+		echo "::error::registers wired AND default_catalog_scope set AND a catalog present."
+		exit 1
+	fi
+else
+	echo "[ci-seed] manifest declares no enabled setup wizard — nothing to complete."
+fi
+
 # ── 3. Warm the SPA so the first spec doesn't pay the cold start ─────────────
 # The shared workflow serves Nextcloud with `php -S 0.0.0.0:8080` and does not
 # set PHP_CLI_SERVER_WORKERS, so the built-in server runs ONE worker: every

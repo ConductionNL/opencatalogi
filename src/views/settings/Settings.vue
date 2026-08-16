@@ -366,7 +366,12 @@
 
 		<NcSettingsSection
 			:name="t('opencatalogi', 'Federation sync')"
-			:description="t('opencatalogi', 'Configure how often the app synchronizes with federation peers')">
+			:description="
+				t(
+					'opencatalogi',
+					'Configure how often the app synchronizes with federation peers',
+				)
+			">
 			<div v-if="!loadingSyncOptions" class="sync-options">
 				<div class="option-section">
 					<div class="sync-interval-row">
@@ -377,19 +382,36 @@
 							:max="syncOptions.maxMinutes"
 							:label="t('opencatalogi', 'Sync interval (minutes)')"
 							:disabled="savingSyncOptions" />
-						<span :title="t('opencatalogi', 'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.')"
+						<span
+							:title="
+								t(
+									'opencatalogi',
+									'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.',
+								)
+							"
 							class="sync-interval-info"
 							role="img"
-							:aria-label="t('opencatalogi', 'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.')">
+							:aria-label="
+								t(
+									'opencatalogi',
+									'Recommended: 60 minutes. Lower values are only useful for debugging or fast-moving networks and put unnecessary load on peer directories.',
+								)
+							">
 							<InformationOutline :size="20" />
 						</span>
 					</div>
 					<p class="option-description">
-						{{ t('opencatalogi', 'Allowed range: {min}–{max} minutes. Default: {default} minutes.', {
-							min: syncOptions.minMinutes,
-							max: syncOptions.maxMinutes,
-							default: syncOptions.defaultMinutes,
-						}) }}
+						{{
+							t(
+								'opencatalogi',
+								'Allowed range: {min}–{max} minutes. Default: {default} minutes.',
+								{
+									min: syncOptions.minMinutes,
+									max: syncOptions.maxMinutes,
+									default: syncOptions.defaultMinutes,
+								},
+							)
+						}}
 					</p>
 				</div>
 
@@ -419,7 +441,8 @@
 			</div>
 
 			<!-- Loading State -->
-			<NcLoadingIcon v-else
+			<NcLoadingIcon
+				v-else
 				class="loading-icon"
 				:size="64"
 				appearance="dark" />
@@ -429,10 +452,6 @@
 
 <script>
 import { CnAdminSettingsShell } from '@conduction/nextcloud-vue'
-import { showSuccess, showError } from '@nextcloud/dialogs'
-import '@nextcloud/dialogs/style.css'
-import Sync from 'vue-material-design-icons/Sync.vue'
-import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 // Every state-changing call below goes through @nextcloud/axios rather than a
 // bare fetch(). It attaches the `requesttoken` header Nextcloud's
 // SecurityMiddleware checks, which is what lets the settings write endpoints
@@ -443,6 +462,7 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 // axios also rejects on a non-2xx status, which the previous `await fetch(...)`
 // calls did not check at all: a 403 or 500 was indistinguishable from a save.
 import axios from '@nextcloud/axios'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
@@ -457,8 +477,12 @@ import { defineComponent } from 'vue'
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
 import Save from 'vue-material-design-icons/ContentSave.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
+import Sync from 'vue-material-design-icons/Sync.vue'
+
+import '@nextcloud/dialogs/style.css'
 
 /**
  * @class Settings
@@ -705,6 +729,7 @@ export default defineComponent({
 
 				this.loading = false
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to load settings:', error)
 				this.loading = false
 			}
@@ -1046,6 +1071,7 @@ export default defineComponent({
 					configToSave,
 				)
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to save settings:', error)
 			} finally {
 				this.saving = false
@@ -1113,6 +1139,7 @@ export default defineComponent({
 				const result = response.data
 
 				if (result.error) {
+					// eslint-disable-next-line no-console
 					console.error('Failed to save publishing options:', result.error)
 				} else {
 					// Update local state with the response from the backend
@@ -1124,6 +1151,7 @@ export default defineComponent({
 					}
 				}
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to save publishing options:', error)
 			} finally {
 				this.saving = false
@@ -1147,11 +1175,13 @@ export default defineComponent({
 				if (!data.error) {
 					this.versionInfo = data
 				} else {
+					// eslint-disable-next-line no-console
 					console.error('Failed to load version info:', data.error)
 				}
 
 				this.loadingVersionInfo = false
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to load version info:', error)
 				this.loadingVersionInfo = false
 			}
@@ -1186,6 +1216,7 @@ export default defineComponent({
 					await Promise.all([this.loadVersionInfo(), this.loadSettings()])
 				}
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to perform manual import:', error)
 				this.importResult = {
 					success: false,
@@ -1213,6 +1244,7 @@ export default defineComponent({
 				const data = await response.json()
 				this.wooReadinessReport = data.report || null
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to load Woo readiness report:', error)
 			}
 		},
@@ -1251,6 +1283,7 @@ export default defineComponent({
 					return
 				}
 
+				// eslint-disable-next-line no-console
 				console.error('Failed to run Woo readiness check:', error)
 				this.wooReadinessError = this.t(
 					'opencatalogi',
@@ -1280,6 +1313,7 @@ export default defineComponent({
 					woo_index_registration_at: this.registration.registeredAt,
 				})
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to save Woo-index registration status:', error)
 			} finally {
 				this.savingRegistration = false
@@ -1413,9 +1447,12 @@ export default defineComponent({
 		async loadSyncOptions() {
 			this.loadingSyncOptions = true
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings/sync', {
-					headers: { 'OCS-APIRequest': 'true' },
-				})
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/settings/sync',
+					{
+						headers: { 'OCS-APIRequest': 'true' },
+					},
+				)
 				const data = await response.json()
 
 				if (!data.error) {
@@ -1423,10 +1460,13 @@ export default defineComponent({
 						intervalMinutes: Math.round(data.sync_interval_seconds / 60),
 						minMinutes: Math.round(data.min_interval_seconds / 60),
 						maxMinutes: Math.round(data.max_interval_seconds / 60),
-						defaultMinutes: Math.round(data.default_interval_seconds / 60),
+						defaultMinutes: Math.round(
+							data.default_interval_seconds / 60,
+						),
 					}
 				}
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to load sync options:', error)
 			} finally {
 				this.loadingSyncOptions = false
@@ -1446,27 +1486,39 @@ export default defineComponent({
 			this.savingSyncOptions = true
 			try {
 				const minutes = Number.parseInt(this.syncOptions.intervalMinutes, 10)
-				const seconds = Number.isFinite(minutes) ? minutes * 60 : this.syncOptions.defaultMinutes * 60
+				const seconds = Number.isFinite(minutes)
+					? minutes * 60
+					: this.syncOptions.defaultMinutes * 60
 
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings/sync', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'OCS-APIRequest': 'true',
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/settings/sync',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'OCS-APIRequest': 'true',
+						},
+						body: JSON.stringify({ sync_interval_seconds: seconds }),
 					},
-					body: JSON.stringify({ sync_interval_seconds: seconds }),
-				})
+				)
 				const data = await response.json()
 
 				if (data.error) {
-					showError(this.t('opencatalogi', 'Failed to save sync options') + ': ' + data.error)
+					showError(
+						this.t('opencatalogi', 'Failed to save sync options')
+							+ ': '
+							+ data.error,
+					)
 					return
 				}
 
 				// Reflect the post-clamp value the backend actually persisted.
-				this.syncOptions.intervalMinutes = Math.round(data.sync_interval_seconds / 60)
+				this.syncOptions.intervalMinutes = Math.round(
+					data.sync_interval_seconds / 60,
+				)
 				showSuccess(this.t('opencatalogi', 'Sync options saved'))
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to save sync options:', error)
 				showError(this.t('opencatalogi', 'Failed to save sync options'))
 			} finally {
@@ -1487,32 +1539,50 @@ export default defineComponent({
 		async syncDirectoriesNow() {
 			this.syncingDirectories = true
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/listings/sync', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'OCS-APIRequest': 'true',
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/listings/sync',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'OCS-APIRequest': 'true',
+						},
 					},
-				})
+				)
 				const data = await response.json()
 
 				if (!response.ok || data.error) {
-					showError(this.t('opencatalogi', 'Failed to synchronize directories') + ': ' + (data.message || data.error || response.statusText))
+					showError(
+						this.t('opencatalogi', 'Failed to synchronize directories')
+							+ ': '
+							+ (data.message || data.error || response.statusText),
+					)
 					return
 				}
 
 				const synced = data.synced_directories ?? 0
 				const failed = data.failed_directories ?? 0
-				const total = data.total_directories ?? (synced + failed)
+				const total = data.total_directories ?? synced + failed
 
-				showSuccess(this.t('opencatalogi', 'Directories synchronized: {synced} of {total} succeeded, {failed} failed', {
-					synced,
-					total,
-					failed,
-				}))
+				showSuccess(
+					this.t(
+						'opencatalogi',
+						'Directories synchronized: {synced} of {total} succeeded, {failed} failed',
+						{
+							synced,
+							total,
+							failed,
+						},
+					),
+				)
 			} catch (error) {
+				// eslint-disable-next-line no-console
 				console.error('Failed to synchronize directories:', error)
-				showError(this.t('opencatalogi', 'Failed to synchronize directories') + ': ' + error.message)
+				showError(
+					this.t('opencatalogi', 'Failed to synchronize directories')
+						+ ': '
+						+ error.message,
+				)
 			} finally {
 				this.syncingDirectories = false
 			}

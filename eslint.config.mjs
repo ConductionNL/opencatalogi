@@ -65,6 +65,7 @@
 // preset had to switch off because they are inverted under Vue 3 — are not
 // enabled at all, so there is nothing left to disable.
 import { recommended } from '@nextcloud/eslint-config'
+import vue from 'eslint-plugin-vue'
 import eslintConfigPrettier from 'eslint-config-prettier'
 
 export default [
@@ -231,6 +232,54 @@ export default [
 		name: 'conduction/prettier-jurisdiction',
 		rules: {
 			'@stylistic/exp-list-style': 'off',
+		},
+	},
+
+	{
+		// 🔴 THE PRESET'S v-on CASING IS WRONG AGAINST THIS COMPONENT LIBRARY.
+		//
+		// `@nextcloud/eslint-config@9` sets `vue/v-on-event-hyphenation` to
+		// `never`, i.e. `@pageChanged`. Vue 3 normalises PROP names between
+		// kebab and camel, but it does NOT normalise EVENT names: `@pageChanged`
+		// simply never fires for an `emit('page-changed')`.
+		//
+		// The components this app listens to emit kebab. Measured, not assumed —
+		// @conduction/nextcloud-vue's CnIndexPage declares:
+		//
+		//   emits: ['action','add','apply-view','columns-change','configure',
+		//           'copy','create','delete','filter-change','folder-change',
+		//           'folder-create','header-action','mass-copy','mass-delete',
+		//           'mass-export','mass-import','page-changed','page-size-changed',
+		//           'quick-filter-change','refresh','row-click','search','select',
+		//           'sort','sort-change','view','view-mode-change']
+		//
+		// So following the preset would lint clean and silently break every
+		// handler on the page — pagination, row clicks, view switching. `always`
+		// matches what the library emits.
+		//
+		// `autofix: false` because this rule's fixer rewrites the listener name
+		// with no knowledge of what the child emits; the casing has to follow the
+		// component, not a global preference.
+		files: ['**/*.vue'],
+		plugins: { vue },
+		rules: {
+			'vue/v-on-event-hyphenation': [
+				'error',
+				'never',
+				{
+					autofix: false,
+					// The four kebab events @conduction/nextcloud-vue actually emits.
+					// Everything else in this app listens to components that emit
+					// camelCase, and the preset's 'never' is right for those — 74 of
+					// them. Only these four must stay hyphenated.
+					ignore: [
+						'page-changed',
+						'page-size-changed',
+						'row-click',
+						'view-mode-change',
+					],
+				},
+			],
 		},
 	},
 ]

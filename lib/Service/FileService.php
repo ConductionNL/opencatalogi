@@ -43,6 +43,7 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Files\File;
 use OCP\Files\GenericFileException;
+use OCP\Files\InvalidPathException;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
@@ -181,7 +182,7 @@ class FileService {
 	 */
 	public function handleFile(IRequest $request, array $data): JSONResponse|array {
 		// Uploaded _file and downloadURL are mutually exclusive.
-		$uploadedFile = $this->checkUploadedFile(request: $request);
+		$uploadedFile = $this->checkUploadedFile($request);
 		if ($uploadedFile instanceof JSONResponse) {
 			return $uploadedFile;
 		}
@@ -396,19 +397,25 @@ class FileService {
 
 	}//end uploadFile()
 
-	/*
-	 * NO updateFile() / deleteFile() HERE — FIL-003 and FIL-004 ARE REMOVED.
-	 *
-	 * `openspec/specs/file-management/spec.md` records both capabilities as
-	 * REMOVED: OpenRegister's `FileService` owns file update and deletion,
-	 * and every file surface in this app already resolves that service from
-	 * the container (`CatalogiService`, `DcatService`, `EventService`,
-	 * `PublicationService`, `SchemaOrgService`, `SitemapService`) or reaches
-	 * OR's routes from the frontend. The local pair had zero callers; both
-	 * took an arbitrary user-relative path and wrote or unlinked it with no
-	 * guard of their own, so wiring either one would have opened a second,
-	 * unguarded write path onto user storage. ADR-022.
-	 */
+	// ⚠️ `updateFile()` and `deleteFile()` USED TO LIVE HERE. Removed 2026-08-16
+	// as orphaned write capability (gate-57): both overwrote or deleted an
+	// arbitrary path in the CALLER's user folder, and nothing in the app ever
+	// called either one. The only references anywhere were their own unit
+	// tests, which is the shape gate-57 exists to find — a write path that can
+	// be minted but not reached, so no route, no guard and no review ever
+	// applies to it, while the capability sits in the class waiting to be wired
+	// up by someone who assumes it was already vetted.
+	//
+	// Checked before deleting, not after: fleet-wide grep found no PHP caller
+	// outside `tests/`. The `deleteFile(...)` occurrences in
+	// `PublicationDetail.vue` and `ViewObject.vue` are LOCAL VUE METHODS of the
+	// same name calling the HTTP API — same word, different layer.
+	//
+	// The rest of this app already reaches OpenRegister's FileService for file
+	// work (see EventService, PublicationService, DcatService); only
+	// `DownloadService::createPdf` still uses this local one. Anything that
+	// needs to overwrite or delete a file should go through OpenRegister
+	// (ADR-022), where the write is authorised, not be revived here.
 
 	/**
 	 * Creates a pdf file in a /tmp folder using a twig template and given context.

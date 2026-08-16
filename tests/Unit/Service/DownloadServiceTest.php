@@ -261,6 +261,16 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->fileService->method('createPdf')->willReturn($mpdf);
 
+		// `updateFile` was listed here too until it was removed from FileService as
+		// orphaned write capability (gate-57). Its absence is a STRONGER guarantee
+		// than this assertion was: a method that does not exist cannot be called,
+		// whereas `expects($this->never())` only proves this one path avoids it.
+		// The requirement is still enforced by the two below, which are the
+		// remaining ways FileService can reach Nextcloud user storage.
+		//
+		// ⚠️ Keeping the line would not have failed loudly for the right reason —
+		// PHPUnit raises MethodCannotBeConfiguredException, which reads like a
+		// mock-setup mistake rather than "the method is gone".
 		$this->fileService->expects($this->never())->method('createFolder');
 		$this->fileService->expects($this->never())->method('createPublicShareLink');
 
