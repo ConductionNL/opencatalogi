@@ -8,10 +8,10 @@
 // on the empty state. Modal-open flags use a `federation…` prefix to
 // avoid colliding with the legacy AddDirectoryModal / EditListing keys.
 
+import { CnPagination } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcActionButton, NcActions, NcButton } from '@nextcloud/vue'
-import { CnPagination } from '@conduction/nextcloud-vue'
 import DeleteOutline from 'vue-material-design-icons/DeleteOutline.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import PencilOutline from 'vue-material-design-icons/PencilOutline.vue'
@@ -128,6 +128,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec exclude presentation-only pagination */
 		onPageChange(newPage) {
 			this.page = newPage

@@ -81,18 +81,18 @@
 </template>
 
 <script>
-import { inject } from 'vue'
+import { CnIndexPage, CnStatusBadge, useListView } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
-import { useListView, CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
-import { objectStore, navigationStore } from '../../store/store.js'
 import { NcNoteCard } from '@nextcloud/vue'
+import { inject } from 'vue'
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
+import Eye from 'vue-material-design-icons/Eye.vue'
+import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { resolveObjectId } from '../../services/resolveObjectId.js'
-import Eye from 'vue-material-design-icons/Eye.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
-import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
-import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 export default {
 	name: 'CatalogiIndex',
@@ -101,6 +101,7 @@ export default {
 		CnStatusBadge,
 		NcNoteCard,
 	},
+
 	setup() {
 		const sidebarState = inject('sidebarState', null)
 		const {
@@ -131,6 +132,7 @@ export default {
 			loaded,
 		}
 	},
+
 	data() {
 		return {
 			selectedIds: [],
@@ -142,6 +144,7 @@ export default {
 			},
 		}
 	},
+
 	computed: {
 		/**
 		 * Row actions as data rather than a #row-actions slot. CnIndexPage feeds
@@ -199,6 +202,7 @@ export default {
 				{ key: 'organization', label: t('opencatalogi', 'Organization') },
 			]
 		},
+
 		currentObjects() {
 			// useListView expects collections[type] to be an array;
 			// OpenCatalogi's store wraps it in { results: [] }
@@ -206,6 +210,7 @@ export default {
 			if (Array.isArray(collection)) return collection
 			return collection?.results || []
 		},
+
 		currentPagination() {
 			return (
 				objectStore.getPagination('catalog') || {
@@ -217,6 +222,7 @@ export default {
 			)
 		},
 	},
+
 	methods: {
 		/**
 		 * Refresh, driving the spinner via `isRefreshing`. CnIndexPage only
@@ -233,13 +239,16 @@ export default {
 				this.isRefreshing = false
 			}
 		},
+
 		onAdd() {
 			objectStore.clearActiveObject('catalog')
 			navigationStore.setModal('catalog')
 		},
+
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
+
 		/**
 		 * Open the clicked row's catalog detail page by route id.
 		 *
@@ -261,6 +270,7 @@ export default {
 			// eslint-disable-next-line no-console
 			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
+
 		/**
 		 * Open a catalog's detail page from the row action menu.
 		 *
@@ -283,13 +293,16 @@ export default {
 				catalog,
 			)
 		},
+
 		editCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
 			navigationStore.setModal('catalog')
 		},
+
 		openCatalog(catalog) {
 			this.$router.push(`/publications/${catalog?.slug}`)
 		},
+
 		copyCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
 			navigationStore.setDialog('copyObject', {
@@ -297,6 +310,7 @@ export default {
 				dialogTitle: 'Catalogus',
 			})
 		},
+
 		deleteCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
 			navigationStore.setDialog('deleteObject', {
@@ -304,6 +318,7 @@ export default {
 				dialogTitle: 'Catalogus',
 			})
 		},
+
 		getOrganizationName(organizationId) {
 			const organization = objectStore.getObject(
 				'organization',
