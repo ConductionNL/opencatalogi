@@ -1,5 +1,7 @@
-import { TConfiguration } from './configuration.types'
-import { SafeParseReturnType, z } from 'zod'
+import type { SafeParseReturnType } from 'zod'
+import type { TConfiguration } from './configuration.types'
+
+import { z } from 'zod'
 
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -7,11 +9,13 @@ import { SafeParseReturnType, z } from 'zod'
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Configuration implements TConfiguration {
-
 	public useElastic!: boolean
 	public useMongo!: boolean
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TConfiguration) {
 		this.hydrate(data)
 	}
@@ -36,5 +40,4 @@ export class Configuration implements TConfiguration {
 
 		return result
 	}
-
 }

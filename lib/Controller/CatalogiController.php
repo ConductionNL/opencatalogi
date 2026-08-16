@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -174,6 +175,11 @@ class CatalogiController extends Controller {
 	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
+	// Generous, as for every preflightedCors() in this app: the browser sends
+	// this OPTIONS request BEFORE each cross-origin call it makes. A ceiling
+	// tight enough to bite here would break ordinary cross-origin use rather
+	// than an attack.
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		$response = new Response();
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
@@ -197,6 +203,7 @@ class CatalogiController extends Controller {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
 		// Get catalog configuration from settings (resolved via OpenRegister; 503 if unconfigured).
 		try {
@@ -259,6 +266,7 @@ class CatalogiController extends Controller {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string|int $id): JSONResponse {
 		// Get all objects using the catalog's registers and schemas as filters.
 		$response = $this->catalogiService->index($id);

@@ -9,7 +9,6 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-/* eslint-disable no-console */
 import { Organization } from './organization'
 import { mockOrganizations } from './organization.mock'
 

@@ -1,36 +1,115 @@
 <script setup>
-import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcDialog
 		v-if="shouldShowDialog"
-		:name="isMultiple ? t('opencatalogi', 'Delete {type}s', { type: dialogTitle }) : t('opencatalogi', 'Delete {type}', { type: dialogTitle })"
-		:can-close="false">
-		<div v-if="objectStore.getState(objectType).success !== null || objectStore.getState(objectType).error">
-			<NcNoteCard v-if="objectStore.getState(objectType).success" type="success">
-				<p>{{ isMultiple ? t('opencatalogi', '{type}s successfully deleted', { type: dialogTitle }) : t('opencatalogi', '{type} successfully deleted', { type: dialogTitle }) }}</p>
+		:name="
+			isMultiple
+				? t('opencatalogi', 'Delete {type}s', { type: dialogTitle })
+				: t('opencatalogi', 'Delete {type}', { type: dialogTitle })
+		"
+		:canClose="false">
+		<div
+			v-if="
+				objectStore.getState(objectType).success !== null
+				|| objectStore.getState(objectType).error
+			">
+			<NcNoteCard
+				v-if="objectStore.getState(objectType).success"
+				type="success">
+				<p>
+					{{
+						isMultiple
+							? t('opencatalogi', '{type}s successfully deleted', {
+									type: dialogTitle,
+								})
+							: t('opencatalogi', '{type} successfully deleted', {
+									type: dialogTitle,
+								})
+					}}
+				</p>
 			</NcNoteCard>
-			<NcNoteCard v-if="!objectStore.getState(objectType).success && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
-				<p>{{ isMultiple ? t('opencatalogi', 'Something went wrong while deleting {type}s', { type: dialogTitle.toLowerCase() }) : t('opencatalogi', 'Something went wrong while deleting {type}', { type: dialogTitle.toLowerCase() }) }}</p>
+			<NcNoteCard
+				v-if="
+					!objectStore.getState(objectType).success
+					&& objectStore.getState(objectType).error
+						!== 'Invalid configuration for object type: publication'
+				"
+				type="error">
+				<p>
+					{{
+						isMultiple
+							? t(
+									'opencatalogi',
+									'Something went wrong while deleting {type}s',
+									{ type: dialogTitle.toLowerCase() },
+								)
+							: t(
+									'opencatalogi',
+									'Something went wrong while deleting {type}',
+									{ type: dialogTitle.toLowerCase() },
+								)
+					}}
+				</p>
 			</NcNoteCard>
-			<NcNoteCard v-if="objectStore.getState(objectType).error && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
+			<NcNoteCard
+				v-if="
+					objectStore.getState(objectType).error
+					&& objectStore.getState(objectType).error
+						!== 'Invalid configuration for object type: publication'
+				"
+				type="error">
 				<p>{{ objectStore.getState(objectType).error }}</p>
 			</NcNoteCard>
 		</div>
 		<div v-if="objectStore.isLoading(objectType)" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>{{ isMultiple ? t('opencatalogi', '{type}s are being deleted...', { type: dialogTitle }) : t('opencatalogi', '{type} is being deleted...', { type: dialogTitle }) }}</span>
+			<span>{{
+				isMultiple
+					? t('opencatalogi', '{type}s are being deleted...', {
+							type: dialogTitle,
+						})
+					: t('opencatalogi', '{type} is being deleted...', {
+							type: dialogTitle,
+						})
+			}}</span>
 		</div>
-		<p v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)">
+		<p
+			v-if="
+				objectStore.getState(objectType).success === null
+				&& !objectStore.isLoading(objectType)
+			">
 			<template v-if="isMultiple">
-				{{ t('opencatalogi', 'Do you want to delete the selected {type}s? This action cannot be undone.', { type: dialogTitle.toLowerCase() }) }}
+				{{
+					t(
+						'opencatalogi',
+						'Do you want to delete the selected {type}s? This action cannot be undone.',
+						{ type: dialogTitle.toLowerCase() },
+					)
+				}}
 			</template>
 			<template v-else>
-				{{ t('opencatalogi', 'Do you want to delete {name}? This action cannot be undone.', { name: objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }) }}
+				{{
+					t(
+						'opencatalogi',
+						'Do you want to delete {name}? This action cannot be undone.',
+						{
+							name:
+								objectStore.getActiveObject(objectType)?.name
+								|| objectStore.getActiveObject(objectType)?.title,
+						},
+					)
+				}}
 			</template>
 		</p>
-		<template v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)" #actions>
+		<template
+			v-if="
+				objectStore.getState(objectType).success === null
+				&& !objectStore.isLoading(objectType)
+			"
+			#actions>
 			<NcButton
 				:disabled="objectStore.isLoading(objectType)"
 				icon=""
@@ -54,9 +133,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 			</NcButton>
 		</template>
 		<template v-else #actions>
-			<NcButton
-				icon=""
-				@click="closeDialog()">
+			<NcButton icon="" @click="closeDialog()">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
@@ -67,7 +144,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
@@ -85,6 +162,7 @@ export default {
 		Cancel,
 		Delete,
 	},
+
 	data() {
 		return {
 			closeTimeout: null,
@@ -92,49 +170,66 @@ export default {
 			loading: false,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		dialogProperties() {
 			return navigationStore.dialogProperties
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		dialogTitle() {
 			return this.dialogProperties?.dialogTitle
 		},
+
 		isMultiple() {
 			return this.dialogProperties?.isMultiple ?? false
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		shouldShowDialog() {
 			return navigationStore.dialog === 'deleteObject'
 		},
 	},
+
 	watch: {
 		dialogProperties: {
 			immediate: true,
-			/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
+			/**
+			 * @param newProps
+			 * @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1
+			 */
 			handler(newProps) {
 				this.objectType = newProps?.objectType
 			},
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		deleteObject() {
 			this.loading = true
 			if (this.isMultiple) {
-				const selectedObjects = objectStore.getSelectedObjects(this.objectType)
+				const selectedObjects = objectStore.getSelectedObjects(
+					this.objectType,
+				)
 				if (!selectedObjects?.length) return
 
-				const deletePromises = selectedObjects.map(obj =>
-					objectStore.deleteObject(this.objectType, obj.id)
-						.catch(err => {
+				const deletePromises = selectedObjects.map((obj) =>
+					objectStore
+						.deleteObject(this.objectType, obj.id)
+						.catch((err) => {
 							if (
 								this.objectType === 'publication'
-              && typeof err.message === 'string'
-              && err.message.includes('Invalid configuration for object type: publication')
+								&& typeof err.message === 'string'
+								&& err.message.includes(
+									'Invalid configuration for object type: publication',
+								)
 							) {
-								objectStore.setState(this.objectType, { success: true, error: null })
+								objectStore.setState(this.objectType, {
+									success: true,
+									error: null,
+								})
 								return {}
 							}
 							return Promise.reject(err)
@@ -142,13 +237,13 @@ export default {
 				)
 
 				Promise.all(deletePromises)
-					.then(responses => {
+					.then((responses) => {
 						this.closeTimeout = setTimeout(() => {
 							this.closeDialog()
 						}, 2000)
 						this.loading = false
 					})
-					.catch(err => {
+					.catch((err) => {
 						console.error('Error deleting multiple objects:', err)
 						this.loading = false
 					})
@@ -157,7 +252,6 @@ export default {
 						this.closeDialog()
 						this.loading = false
 					})
-
 			} else {
 				const activeObject = objectStore.getActiveObject(this.objectType)
 				if (!activeObject?.id) return
@@ -167,49 +261,59 @@ export default {
 					register: activeObject['@self']?.register,
 				}
 
-				objectStore.deleteObject({
-					type: this.dialogProperties.objectType,
-					id: activeObject.id,
-					...publicationData,
-				})
-					.catch(err => {
+				objectStore
+					.deleteObject({
+						type: this.dialogProperties.objectType,
+						id: activeObject.id,
+						...publicationData,
+					})
+					.catch((err) => {
 						if (
 							this.objectType === 'publication'
-            && typeof err.message === 'string'
-            && err.message.includes('Invalid configuration for object type: publication')
+							&& typeof err.message === 'string'
+							&& err.message.includes(
+								'Invalid configuration for object type: publication',
+							)
 						) {
-							objectStore.setState(this.objectType, { success: true, error: null })
+							objectStore.setState(this.objectType, {
+								success: true,
+								error: null,
+							})
 							return {}
 						}
 						return Promise.reject(err)
 					})
-					.then(response => {
+					.then((response) => {
 						this.closeTimeout = setTimeout(() => {
 							this.closeDialog()
 						}, 2000)
 						this.loading = false
 					})
-					.catch(err => {
+					.catch((err) => {
 						console.error('Error deleting one object:', err)
 						this.loading = false
 					})
 					.finally(() => {
 						this.refreshObjectList(this.objectType)
 						this.closeDialog()
-
 					})
 			}
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
+
+		/**
+		 * @param objectType
+		 * @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1
+		 */
 		refreshObjectList(objectType) {
 			switch (objectType) {
-			case 'publication':
-				catalogStore.fetchPublications()
-				break
-			default:
-				objectStore.fetchCollection(objectType)
+				case 'publication':
+					catalogStore.fetchPublications()
+					break
+				default:
+					objectStore.fetchCollection(objectType)
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		closeDialog() {
 			if (this.closeTimeout) {
@@ -220,7 +324,6 @@ export default {
 			navigationStore.setDialog(false)
 			objectStore.setState(this.objectType, { success: null, error: null })
 		},
-
 	},
 }
 </script>

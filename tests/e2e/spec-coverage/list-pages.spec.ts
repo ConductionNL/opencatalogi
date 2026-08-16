@@ -27,78 +27,93 @@ import { test, expect } from '@playwright/test'
 import { bootApp, navTo, content, trackPageErrors, fatalErrors } from './_nav'
 
 const LIST_PAGES = [
-	'CatalogsMenu', 'OrganizationsMenu', 'ThemesMenu',
-	'GlossaryMenu', 'PagesMenu', 'MenusMenu',
+	'CatalogsMenu',
+	'OrganizationsMenu',
+	'ThemesMenu',
+	'GlossaryMenu',
+	'PagesMenu',
+	'MenusMenu',
 ]
 
 for (const menuId of LIST_PAGES) {
 	test.describe(`list-page ${menuId}`, () => {
-		test(
-			// @e2e content-management::generic-index-page-renders
-			`${menuId} — renders index page with Add CTA and a list/empty surface`,
-			async ({ page }) => {
-				const errors = trackPageErrors(page)
-				await bootApp(page)
-				await navTo(page, menuId, true)
+		test(// @e2e content-management::generic-index-page-renders
+		`${menuId} — renders index page with Add CTA and a list/empty surface`, async ({
+			page,
+		}) => {
+			const errors = trackPageErrors(page)
+			await bootApp(page)
+			await navTo(page, menuId, true)
 
-				// Genuine index surface mounted (not the dashboard, not blank).
-				await expect(page.locator('[data-testid="cn-index-page"]').first())
-					.toBeVisible({ timeout: 15000 })
+			// Genuine index surface mounted (not the dashboard, not blank).
+			await expect(
+				page.locator('[data-testid="cn-index-page"]').first(),
+			).toBeVisible({ timeout: 15000 })
 
-				// Primary Add CTA present (manifest showAdd:true for all of these).
-				await expect(page.locator('[data-testid="cn-cta-primary"]').first())
-					.toBeVisible({ timeout: 10000 })
+			// Primary Add CTA present (manifest showAdd:true for all of these).
+			await expect(
+				page.locator('[data-testid="cn-cta-primary"]').first(),
+			).toBeVisible({ timeout: 10000 })
 
-				// A real body: a data table, cards, or an empty-content state.
-				const body = content(page).locator(
+			// A real body: a data table, cards, or an empty-content state.
+			const body = content(page)
+				.locator(
 					'[data-testid="cn-object-list-table"], table, .cn-card-grid, '
-					+ '[data-testid="cn-object-list-empty"], .empty-content, [class*="empty-content"]',
-				).first()
-				await expect(body).toBeVisible({ timeout: 15000 })
+						+ '[data-testid="cn-object-list-empty"], .empty-content, [class*="empty-content"]',
+				)
+				.first()
+			await expect(body).toBeVisible({ timeout: 15000 })
 
-				expect(fatalErrors(errors)).toHaveLength(0)
-			},
-		)
+			expect(fatalErrors(errors)).toHaveLength(0)
+		})
 	})
 }
 
 test.describe('list-page Catalogs interactions', () => {
-	test(
-		// @e2e catalogs::open-the-create-catalog-modal
-		'Catalogs — Add CTA opens the create form modal, which renders a form and cancels',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await bootApp(page)
-			await navTo(page, 'CatalogsMenu', true)
+	test(// @e2e catalogs::open-the-create-catalog-modal
+	'Catalogs — Add CTA opens the create form modal, which renders a form and cancels', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await bootApp(page)
+		await navTo(page, 'CatalogsMenu', true)
 
-			await expect(page.locator('[data-testid="cn-index-page"]').first())
-				.toBeVisible({ timeout: 15000 })
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
 
-			const addCta = page.locator('[data-testid="cn-cta-primary"]').first()
-			await expect(addCta).toBeVisible({ timeout: 10000 })
-			await addCta.click()
+		const addCta = page.locator('[data-testid="cn-cta-primary"]').first()
+		await expect(addCta).toBeVisible({ timeout: 10000 })
+		await addCta.click()
 
-			// The create modal (CnFormDialog → NcDialog portal) must open with its
-			// create-form chrome: the heading and a submit/cancel button pair.
-			// (The schema form body may render async / empty, so we assert the
-			// dialog chrome rather than a specific input field.)
-			//
-			// CatalogModal names itself "Add Catalog" and labels its submit button
-			// "Add" — never "Create". The previous `/create/i` filter therefore
-			// matched NO dialog and failed with "element(s) not found" even though
-			// the modal opened correctly, on both the Vue 2 and Vue 3 builds.
-			const modal = page.locator('[role="dialog"]').filter({ hasText: /add catalog/i }).first()
-			await expect(modal).toBeVisible({ timeout: 10000 })
-			await expect(modal.getByRole('button', { name: /^add$/i }).first())
-				.toBeVisible({ timeout: 8000 })
-			await expect(modal.getByRole('button', { name: /cancel/i }).first())
-				.toBeVisible({ timeout: 8000 })
+		// The create modal (CnFormDialog → NcDialog portal) must open with its
+		// create-form chrome: the heading and a submit/cancel button pair.
+		// (The schema form body may render async / empty, so we assert the
+		// dialog chrome rather than a specific input field.)
+		//
+		// CatalogModal names itself "Add Catalog" and labels its submit button
+		// "Add" — never "Create". The previous `/create/i` filter therefore
+		// matched NO dialog and failed with "element(s) not found" even though
+		// the modal opened correctly, on both the Vue 2 and Vue 3 builds.
+		const modal = page
+			.locator('[role="dialog"]')
+			.filter({ hasText: /add catalog/i })
+			.first()
+		await expect(modal).toBeVisible({ timeout: 10000 })
+		await expect(
+			modal.getByRole('button', { name: /^add$/i }).first(),
+		).toBeVisible({ timeout: 8000 })
+		await expect(
+			modal.getByRole('button', { name: /cancel/i }).first(),
+		).toBeVisible({ timeout: 8000 })
 
-			// Close without creating anything (data-independent).
-			await modal.getByRole('button', { name: /cancel/i }).first().click()
-			await expect(modal).toBeHidden({ timeout: 8000 })
+		// Close without creating anything (data-independent).
+		await modal
+			.getByRole('button', { name: /cancel/i })
+			.first()
+			.click()
+		await expect(modal).toBeHidden({ timeout: 8000 })
 
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })

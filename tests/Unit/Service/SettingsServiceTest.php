@@ -144,6 +144,28 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 						return $schemaMock;
 					}
 				);
+
+			// enrichRegistersWithSchemas() resolves every referenced schema in one
+			// batched call rather than a find() per ID. Mirror the real mapper's
+			// contract: a map keyed by schema ID, with unknown IDs simply absent.
+			$mock->method('findMultipleOptimized')
+				->willReturnCallback(
+					function (array $ids) use ($schemaMap) {
+						$found = [];
+						foreach ($ids as $id) {
+							if (isset($schemaMap[(int)$id]) === false) {
+								continue;
+							}
+
+							$schemaMock = $this->createMock(Schema::class);
+							$schemaMock->method('jsonSerialize')
+								->willReturn($schemaMap[(int)$id]);
+							$found[(int)$id] = $schemaMock;
+						}
+
+						return $found;
+					}
+				);
 		}
 
 		return $mock;

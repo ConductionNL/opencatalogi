@@ -1,14 +1,7 @@
-/**
- * ViewDirectoryModal.vue
- * Modal component for viewing directory listing details
- * @category Modals
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license EUPL-1.2
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * ViewDirectoryModal.vue * Modal component for viewing directory listing details
+* @category Modals * @package opencatalogi * @author Ruben Linde * @copyright 2024 *
+@license EUPL-1.2 * @version 1.0.0 * @link
+https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
@@ -16,12 +9,19 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'viewDirectory'"
+	<NcModal
+		v-if="navigationStore.modal === 'viewDirectory'"
 		ref="modalRef"
-		label-id="viewDirectoryModal"
+		labelId="viewDirectoryModal"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ listing?.name || listing?.title || t('opencatalogi', 'Directory Listing') }}</h2>
+			<h2>
+				{{
+					listing?.name
+					|| listing?.title
+					|| t('opencatalogi', 'Directory Listing')
+				}}
+			</h2>
 
 			<div v-if="listing" class="directoryDetails">
 				<div class="detailSection">
@@ -41,7 +41,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						</div>
 						<div v-if="listing.organization" class="detailItem">
 							<strong>{{ t('opencatalogi', 'Organization') }}:</strong>
-							<span>{{ listing.organization.title || listing.organization }}</span>
+							<span>{{
+								listing.organization.title || listing.organization
+							}}</span>
 						</div>
 					</div>
 				</div>
@@ -49,11 +51,18 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="listing.publicationTypes?.length" class="detailSection">
 					<h3>{{ t('opencatalogi', 'Publication types') }}</h3>
 					<div class="publicationTypesList">
-						<div v-for="publicationType in listing.publicationTypes"
+						<div
+							v-for="publicationType in listing.publicationTypes"
 							:key="publicationType.id || publicationType"
 							class="publicationTypeItem">
-							<strong>{{ publicationType.title || publicationType.name || publicationType }}</strong>
-							<span v-if="publicationType.description" class="description">
+							<strong>{{
+								publicationType.title
+								|| publicationType.name
+								|| publicationType
+							}}</strong>
+							<span
+								v-if="publicationType.description"
+								class="description">
 								{{ publicationType.description }}
 							</span>
 						</div>
@@ -95,9 +104,11 @@ export default {
 		NcModal,
 		NcButton,
 	},
+
 	computed: {
 		/**
 		 * Get the currently active listing from the store
+		 *
 		 * @return {object|null} The active listing object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */
@@ -105,9 +116,11 @@ export default {
 			return objectStore.getActiveObject('listing')
 		},
 	},
+
 	methods: {
 		/**
 		 * Close the modal and clear the active object
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */

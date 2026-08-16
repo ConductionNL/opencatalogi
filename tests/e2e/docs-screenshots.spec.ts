@@ -40,21 +40,39 @@ import { test, expect, type Page } from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
 
-const SHOT_ROOT = path.resolve(__dirname, '..', '..', 'docs', 'static', 'screenshots', 'tutorials')
+const SHOT_ROOT = path.resolve(
+	__dirname,
+	'..',
+	'..',
+	'docs',
+	'static',
+	'screenshots',
+	'tutorials',
+)
 const APP = '/apps/opencatalogi'
 
-async function shoot(page: Page, track: 'user' | 'admin', file: string): Promise<void> {
+async function shoot(
+	page: Page,
+	track: 'user' | 'admin',
+	file: string,
+): Promise<void> {
 	const dir = path.join(SHOT_ROOT, track)
 	if (!fs.existsSync(dir)) {
 		fs.mkdirSync(dir, { recursive: true })
 	}
-	await page.screenshot({ path: path.join(dir, file), fullPage: false, type: 'png' })
+	await page.screenshot({
+		path: path.join(dir, file),
+		fullPage: false,
+		type: 'png',
+	})
 }
 
 async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
-		const close = wizard.getByRole('button', { name: /close|got it|finish|skip/i }).first()
+		const close = wizard
+			.getByRole('button', { name: /close|got it|finish|skip/i })
+			.first()
 		if (await close.isVisible().catch(() => false)) {
 			await close.click().catch(() => {})
 		} else {
@@ -63,32 +81,47 @@ async function dismissOverlays(page: Page): Promise<void> {
 		await wizard.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {})
 	}
 	const stray = page.locator('[role="dialog"]:not(#firstrunwizard)')
-	if (await stray.first().isVisible().catch(() => false)) {
+	if (
+		await stray
+			.first()
+			.isVisible()
+			.catch(() => false)
+	) {
 		await page.keyboard.press('Escape').catch(() => {})
 		await page.waitForTimeout(300)
 	}
 }
 
 async function go(page: Page, route: string): Promise<void> {
-	const url = route.startsWith('/apps/') || route.startsWith('/settings/')
-		? `/index.php${route}`
-		: `/index.php${APP}${route}`
+	const url =
+		route.startsWith('/apps/') || route.startsWith('/settings/')
+			? `/index.php${route}`
+			: `/index.php${APP}${route}`
 	// `domcontentloaded`, never `networkidle` (ADR-074 rule 4): Nextcloud's
 	// notification poll keeps the network permanently busy, so networkidle
 	// never settles and the .catch() just hides a full timeout burn.
-	await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => { /* tolerate a 404 — caller decides */ })
+	await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => {
+		/* tolerate a 404 — caller decides */
+	})
 	await dismissOverlays(page)
 	await page.waitForTimeout(900)
 }
 
-async function captureCreateDialog(page: Page, track: 'user' | 'admin', file: string, buttonRe: RegExp): Promise<boolean> {
+async function captureCreateDialog(
+	page: Page,
+	track: 'user' | 'admin',
+	file: string,
+	buttonRe: RegExp,
+): Promise<boolean> {
 	const addBtn = page.getByRole('button', { name: buttonRe }).first()
 	if (!(await addBtn.isVisible().catch(() => false))) {
 		return false
 	}
 	await addBtn.click().catch(() => {})
 	const dialog = page.locator('[role="dialog"]:not(#firstrunwizard)').first()
-	await dialog.waitFor({ state: 'visible', timeout: 5000 }).catch(() => { /* no dialog */ })
+	await dialog.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {
+		/* no dialog */
+	})
 	await page.waitForTimeout(500)
 	await shoot(page, track, file)
 	const cancel = dialog.getByRole('button', { name: /Cancel|Close/i }).first()
@@ -125,7 +158,9 @@ test.describe('docs: user track', () => {
 		// docs/tutorials/user/02-browse-catalogue.md
 		await go(page, '/catalogi')
 		await shoot(page, 'user', '02-browse-catalogue-01.png')
-		const firstCard = page.locator('.app-content a, .app-content .card a, table tbody tr').first()
+		const firstCard = page
+			.locator('.app-content a, .app-content .card a, table tbody tr')
+			.first()
 		if (await firstCard.isVisible().catch(() => false)) {
 			await firstCard.click().catch(() => {})
 			await page.waitForTimeout(1200)
@@ -167,7 +202,9 @@ test.describe('docs: user track', () => {
 		// docs/tutorials/user/04-search-across-catalogues.md
 		await go(page, '/search')
 		await shoot(page, 'user', '04-search-across-catalogues-01.png')
-		const searchInput = page.locator('input[type="search"], input[placeholder*="Search" i]').first()
+		const searchInput = page
+			.locator('input[type="search"], input[placeholder*="Search" i]')
+			.first()
 		if (await searchInput.isVisible().catch(() => false)) {
 			await searchInput.fill('open').catch(() => {})
 			await page.waitForTimeout(1000)
@@ -204,9 +241,19 @@ test.describe('docs: user track', () => {
 			await page.waitForTimeout(1200)
 			await dismissOverlays(page)
 		}
-		const had = await captureCreateDialog(page, 'user', '06-publish-an-item-01.png', /Add publication|Add Item|Add Publication/i)
+		const had = await captureCreateDialog(
+			page,
+			'user',
+			'06-publish-an-item-01.png',
+			/Add publication|Add Item|Add Publication/i,
+		)
 		if (had) {
-			await captureCreateDialog(page, 'user', '06-publish-an-item-02.png', /Add publication|Add Item|Add Publication/i)
+			await captureCreateDialog(
+				page,
+				'user',
+				'06-publish-an-item-02.png',
+				/Add publication|Add Item|Add Publication/i,
+			)
 		} else {
 			await shoot(page, 'user', '06-publish-an-item-01.png')
 			await shoot(page, 'user', '06-publish-an-item-02.png')
@@ -264,7 +311,12 @@ test.describe('docs: admin track', () => {
 	test('AN configure-catalogue', async ({ page }) => {
 		// docs/tutorials/admin/01-configure-catalogue.md
 		await go(page, '/catalogi')
-		const had = await captureCreateDialog(page, 'admin', '01-configure-catalogue-01.png', /Add Catalogue|Add Catalog|Add Item/i)
+		const had = await captureCreateDialog(
+			page,
+			'admin',
+			'01-configure-catalogue-01.png',
+			/Add Catalogue|Add Catalog|Add Item/i,
+		)
 		if (!had) {
 			await shoot(page, 'admin', '01-configure-catalogue-01.png')
 		}
@@ -286,7 +338,12 @@ test.describe('docs: admin track', () => {
 		// docs/tutorials/admin/02-manage-federation-sources.md
 		await go(page, '/directory')
 		await shoot(page, 'admin', '02-manage-federation-sources-01.png')
-		const had = await captureCreateDialog(page, 'admin', '02-manage-federation-sources-02.png', /Add source|Add Source|Add Item/i)
+		const had = await captureCreateDialog(
+			page,
+			'admin',
+			'02-manage-federation-sources-02.png',
+			/Add source|Add Source|Add Item/i,
+		)
 		if (!had) {
 			await shoot(page, 'admin', '02-manage-federation-sources-02.png')
 		}

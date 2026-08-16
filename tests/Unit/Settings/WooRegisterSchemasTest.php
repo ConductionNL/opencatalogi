@@ -58,7 +58,7 @@ class WooRegisterSchemasTest extends TestCase {
 		'deckAvailable',
 		'documents',
 		'decisionLetter',
-		'inventarislijst',
+		'inventoryList',
 		'documentSummary',
 		'publishedAt',
 		'publishedCount',

@@ -5,6 +5,9 @@ const isAdmin = ref(false)
 const loaded = ref(false)
 let pending = null
 
+/**
+ *
+ */
 function load() {
 	if (pending) return pending
 	pending = getCurrentUserGroups()

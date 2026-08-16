@@ -1,4 +1,7 @@
-/** @spec openspec/specs/generic-object-modals/spec.md */
+/**
+ * @param result
+ * @spec openspec/specs/generic-object-modals/spec.md
+ */
 export function createZodErrorHandler(result) {
 	const issues = result?.error?.issues || []
 
@@ -23,7 +26,9 @@ export function createZodErrorHandler(result) {
 	 */
 	const getError = (path) => {
 		const normalizedPath = normalizePath(path)
-		const error = issues.find((issue) => issue.path.join('.') === normalizedPath.join('.'))
+		const error = issues.find(
+			(issue) => issue.path.join('.') === normalizedPath.join('.'),
+		)
 		return error?.message
 	}
 
@@ -41,7 +46,9 @@ export function createZodErrorHandler(result) {
 	 */
 	const getErrors = (path) => {
 		const normalizedPath = normalizePath(path)
-		const errors = issues.filter((issue) => issue.path.join('.') === normalizedPath.join('.'))
+		const errors = issues.filter(
+			(issue) => issue.path.join('.') === normalizedPath.join('.'),
+		)
 		return errors.map((error) => error.message)
 	}
 
@@ -67,7 +74,9 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {string[]}
 		 */
-		flatErrorMessages: result?.error ? getFlatErrorMessages(result.error.issues) : [],
+		flatErrorMessages: result?.error
+			? getFlatErrorMessages(result.error.issues)
+			: [],
 
 		/**
 		 * A grouped list of errors by path.
@@ -83,7 +92,9 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		groupedErrorsByPath: result?.error ? getGroupedErrorsByPath(result.error.issues) : {},
+		groupedErrorsByPath: result?.error
+			? getGroupedErrorsByPath(result.error.issues)
+			: {},
 
 		/**
 		 * A nested list of errors by path.
@@ -103,7 +114,9 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		nestedFieldErrors: result?.error ? getNestedFieldErrors(result.error.issues) : {},
+		nestedFieldErrors: result?.error
+			? getNestedFieldErrors(result.error.issues)
+			: {},
 
 		/**
 		 * A list of errors with path, message, code and type.
@@ -128,7 +141,9 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		fieldSpecificErrors: result?.error ? getFieldSpecificErrors(result.error.issues) : [],
+		fieldSpecificErrors: result?.error
+			? getFieldSpecificErrors(result.error.issues)
+			: [],
 
 		/**
 		 * A summary of the errors.
@@ -160,12 +175,20 @@ const joinPath = (path) => path.join('.')
 // ERROR MAPPERS
 
 // Function to convert the issues array into error messages
-const getFlatErrorMessages = (issues) => {
+/**
+ *
+ * @param issues
+ */
+function getFlatErrorMessages(issues) {
 	return issues.map((issue) => `${joinPath(issue.path)}: ${issue.message}`) || []
 }
 
 // Function to get a grouped errors by path
-const getGroupedErrorsByPath = (issues) => {
+/**
+ *
+ * @param issues
+ */
+function getGroupedErrorsByPath(issues) {
 	const groupedErrors = {}
 
 	issues.forEach((issue) => {
@@ -178,7 +201,11 @@ const getGroupedErrorsByPath = (issues) => {
 }
 
 // Function to convert the issues array into field errors
-const getNestedFieldErrors = (issues) => {
+/**
+ *
+ * @param issues
+ */
+function getNestedFieldErrors(issues) {
 	const fieldErrors = {}
 
 	issues.forEach((issue) => {
@@ -205,7 +232,11 @@ const getNestedFieldErrors = (issues) => {
 }
 
 // Function to get a list of errors with path, message, code and type
-const getFieldSpecificErrors = (issues) => {
+/**
+ *
+ * @param issues
+ */
+function getFieldSpecificErrors(issues) {
 	return issues.map((issue) => ({
 		path: joinPath(issue.path),
 		message: issue.message,
@@ -215,7 +246,11 @@ const getFieldSpecificErrors = (issues) => {
 }
 
 // Function to get a summary of the errors as a number
-const getErrorSummary = (issues) => {
+/**
+ *
+ * @param issues
+ */
+function getErrorSummary(issues) {
 	const errorsByField = {}
 	const errorsByType = {}
 

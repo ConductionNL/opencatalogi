@@ -307,9 +307,6 @@ class SetupController extends Controller {
 		// problem that reload-settings is expected to surface — we still fall
 		// back to an unscoped catalog rather than aborting, so an admin can
 		// recover by attaching the register/schema later.
-		$publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
-		$publicationSchema = $this->config->getValueString($this->appName, 'publication_schema', '');
-
 		$scope = $this->config->getValueString($this->appName, 'default_catalog_scope', 'public');
 
 		$catalogObject = [
@@ -320,10 +317,15 @@ class SetupController extends Controller {
 			'listed' => ($scope === 'public'),
 			'status' => 'development',
 		];
+		// Read each key immediately above the check that handles its empty case.
+		// These two used to be read at the top of the method, thirteen lines up,
+		// which separated them from the only thing that makes an empty value safe.
+		$publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
 		if ($publicationRegister !== '') {
 			$catalogObject['registers'] = [$publicationRegister];
 		}
 
+		$publicationSchema = $this->config->getValueString($this->appName, 'publication_schema', '');
 		if ($publicationSchema !== '') {
 			$catalogObject['schemas'] = [$publicationSchema];
 		}

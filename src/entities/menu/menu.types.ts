@@ -1,26 +1,26 @@
 export type TMenuSubItem = {
-    id?: string
-    order: number
-    name: string
-    link: string
-    description?: string
-    icon?: string
-    groups?: string[]
-    hideAfterLogin?: boolean
-    hideBeforeLogin?: boolean
+	id?: string
+	order: number
+	name: string
+	link: string
+	description?: string
+	icon?: string
+	groups?: string[]
+	hideAfterLogin?: boolean
+	hideBeforeLogin?: boolean
 }
 
 export type TMenuItem = {
-    id?: string
-    order: number
-    name: string
-    link: string
-    description?: string
-    icon?: string
-    groups?: string[]
-    hideAfterLogin?: boolean
-    hideBeforeLogin?: boolean
-    items?: TMenuSubItem[]
+	id?: string
+	order: number
+	name: string
+	link: string
+	description?: string
+	icon?: string
+	groups?: string[]
+	hideAfterLogin?: boolean
+	hideBeforeLogin?: boolean
+	items?: TMenuSubItem[]
 }
 
 /**
@@ -35,7 +35,7 @@ export type TMenu = {
 	items: TMenuItem[] // Array of menu items
 	createdAt: string // Creation timestamp
 	updatedAt: string // Last update timestamp
-    groups?: string[]
-    hideAfterLogin?: boolean
-    hideBeforeLogin?: boolean
+	groups?: string[]
+	hideAfterLogin?: boolean
+	hideBeforeLogin?: boolean
 }

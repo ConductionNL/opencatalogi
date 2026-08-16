@@ -7,7 +7,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		v-if="navigationStore.modal === 'addPublicationTheme'"
 		ref="modalRef"
 		:name="t('opencatalogi', 'Add publication theme')"
-		label-id="addPublicationThemeModal"
+		labelId="addPublicationThemeModal"
 		@close="closeModal">
 		<div class="modal__content">
 			<NcNoteCard v-if="successState" type="success">
@@ -22,7 +22,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					v-model="selectedTheme"
 					:items="themeOptions"
 					label="Choose a theme"
-					:input-label="t('opencatalogi', 'Theme')"
+					:inputLabel="t('opencatalogi', 'Theme')"
 					:disabled="isSaving || !themeOptions.length" />
 			</div>
 
@@ -44,11 +44,11 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <script>
 import {
-	NcModal,
-	NcSelect,
 	NcButton,
 	NcLoadingIcon,
+	NcModal,
 	NcNoteCard,
+	NcSelect,
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 
@@ -67,6 +67,7 @@ export default {
 		NcNoteCard,
 		ContentSaveOutline,
 	},
+
 	data() {
 		return {
 			selectedTheme: null,
@@ -75,22 +76,25 @@ export default {
 			errorState: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		themes() {
 			return objectStore.getCollection('theme').results || []
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		themeOptions() {
 			const publication = objectStore.getActiveObject('publication')
 			return this.themes
-				.filter(t => !publication?.theme?.includes(t.id))
-				.map(t => ({
+				.filter((t) => !publication?.theme?.includes(t.id))
+				.map((t) => ({
 					value: t.id,
 					label: t.title || `#${t.id}`,
 				}))
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		closeModal() {
@@ -99,6 +103,7 @@ export default {
 			this.errorState = null
 			this.selectedTheme = null
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		async saveTheme() {
 			if (!this.selectedTheme) return
@@ -114,7 +119,11 @@ export default {
 					...publication,
 					theme: this.selectedTheme,
 				}
-				await objectStore.updateObject('publication', publication.id, updatedPublication)
+				await objectStore.updateObject(
+					'publication',
+					publication.id,
+					updatedPublication,
+				)
 				await objectStore.fetchCollection('theme')
 				this.successState = true
 				this.errorState = null

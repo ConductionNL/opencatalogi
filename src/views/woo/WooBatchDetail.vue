@@ -11,12 +11,12 @@
   - publish transition is gated by the OpenRegister approval-workflow chain).
   -->
 <script>
-import { translate as t } from '@nextcloud/l10n'
-import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { canMarkReadyForReview } from '../../services/wooHelpers.js'
+import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import WooRedactionView from './WooRedactionView.vue'
+import { canMarkReadyForReview } from '../../services/wooHelpers.js'
 
 export default {
 	name: 'WooBatchDetail',
@@ -27,6 +27,7 @@ export default {
 		NcNoteCard,
 		WooRedactionView,
 	},
+
 	data() {
 		return {
 			t,
@@ -36,28 +37,44 @@ export default {
 			activeDocument: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
 		batchId() {
 			return this.$route?.params?.id || ''
 		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf */
 		deckUnavailable() {
 			return this.batch && this.batch.deckAvailable === false
 		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
 		summary() {
-			return this.batch?.documentSummary || { counts: {}, total: 0, assessed: 0, progressLabel: '0/0' }
+			return (
+				this.batch?.documentSummary || {
+					counts: {},
+					total: 0,
+					assessed: 0,
+					progressLabel: '0/0',
+				}
+			)
 		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model */
 		canReview() {
-			return this.batch?.status === 'in_progress' && canMarkReadyForReview(this.summary)
+			return (
+				this.batch?.status === 'in_progress'
+				&& canMarkReadyForReview(this.summary)
+			)
 		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication */
 		canPublish() {
 			return this.batch?.status === 'ready_for_review'
 		},
 	},
+
 	watch: {
 		batchId: {
 			immediate: true,
@@ -69,6 +86,7 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		/**
 		 * Load the batch + derived document summary.
@@ -80,7 +98,11 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const { data } = await axios.get(generateUrl(`/apps/opencatalogi/api/woo/batches/${this.batchId}`))
+				const { data } = await axios.get(
+					generateUrl(
+						`/apps/opencatalogi/api/woo/batches/${this.batchId}`,
+					),
+				)
 				this.batch = data
 			} catch (err) {
 				this.error = err.response?.data?.error || err.message
@@ -88,6 +110,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Mark the batch ready for review (opens the approval gate).
 		 *
@@ -96,12 +119,17 @@ export default {
 		 */
 		async markReadyForReview() {
 			try {
-				await axios.post(generateUrl(`/apps/opencatalogi/api/woo/batches/${this.batchId}/ready-for-review`))
+				await axios.post(
+					generateUrl(
+						`/apps/opencatalogi/api/woo/batches/${this.batchId}/ready-for-review`,
+					),
+				)
 				await this.loadBatch()
 			} catch (err) {
 				this.error = err.response?.data?.error || err.message
 			}
 		},
+
 		/**
 		 * Publish the batch to the public reading room.
 		 *
@@ -110,12 +138,17 @@ export default {
 		 */
 		async publish() {
 			try {
-				const { data } = await axios.post(generateUrl(`/apps/opencatalogi/api/woo/batches/${this.batchId}/publish`))
+				const { data } = await axios.post(
+					generateUrl(
+						`/apps/opencatalogi/api/woo/batches/${this.batchId}/publish`,
+					),
+				)
 				this.batch = data
 			} catch (err) {
 				this.error = err.response?.data?.error || err.message
 			}
 		},
+
 		/**
 		 * Build the inventarislijst download URL (CSV by default).
 		 *
@@ -124,7 +157,9 @@ export default {
 		 * @return {string} The download URL.
 		 */
 		inventarislijstUrl(format) {
-			return generateUrl(`/apps/opencatalogi/api/woo/batches/${this.batchId}/inventarislijst?format=${format}`)
+			return generateUrl(
+				`/apps/opencatalogi/api/woo/batches/${this.batchId}/inventarislijst?format=${format}`,
+			)
 		},
 	},
 }
@@ -133,25 +168,45 @@ export default {
 <template>
 	<div class="woo-batch">
 		<NcLoadingIcon v-if="loading" :size="32" />
-		<NcEmptyContent v-else-if="!batch" :name="t('opencatalogi', 'Batch not found')" />
+		<NcEmptyContent
+			v-else-if="!batch"
+			:name="t('opencatalogi', 'Batch not found')" />
 		<div v-else>
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
 			<NcNoteCard v-if="deckUnavailable" type="warning">
-				{{ t('opencatalogi', 'Deck integration required for the WOO queue') }}
+				{{
+					t('opencatalogi', 'Deck integration required for the WOO queue')
+				}}
 			</NcNoteCard>
 
 			<h2>{{ t('opencatalogi', 'WOO batch') }} — {{ batch.caseReference }}</h2>
 			<p class="woo-batch__progress">
-				{{ t('opencatalogi', 'Assessed: {progress}', { progress: summary.progressLabel }) }}
+				{{
+					t('opencatalogi', 'Assessed: {progress}', {
+						progress: summary.progressLabel,
+					})
+				}}
 			</p>
 
 			<ul class="woo-batch__counts">
-				<li>{{ t('opencatalogi', 'Te beoordelen') }}: {{ summary.counts.te_beoordelen || 0 }}</li>
-				<li>{{ t('opencatalogi', 'Openbaar') }}: {{ summary.counts.openbaar || 0 }}</li>
-				<li>{{ t('opencatalogi', 'Deels openbaar') }}: {{ summary.counts.deels_openbaar || 0 }}</li>
-				<li>{{ t('opencatalogi', 'Niet openbaar') }}: {{ summary.counts.niet_openbaar || 0 }}</li>
+				<li>
+					{{ t('opencatalogi', 'Te beoordelen') }}:
+					{{ summary.counts.te_beoordelen || 0 }}
+				</li>
+				<li>
+					{{ t('opencatalogi', 'Openbaar') }}:
+					{{ summary.counts.openbaar || 0 }}
+				</li>
+				<li>
+					{{ t('opencatalogi', 'Deels openbaar') }}:
+					{{ summary.counts.deels_openbaar || 0 }}
+				</li>
+				<li>
+					{{ t('opencatalogi', 'Niet openbaar') }}:
+					{{ summary.counts.niet_openbaar || 0 }}
+				</li>
 			</ul>
 
 			<!-- The queue/board is the OpenRegister deck widget, surfaced via the
@@ -159,14 +214,19 @@ export default {
 			<section class="woo-batch__deck">
 				<h3>{{ t('opencatalogi', 'Document queue (Deck board)') }}</h3>
 				<p class="woo-batch__hint">
-					{{ t('opencatalogi', 'The document queue is rendered by the Deck board widget on this page.') }}
+					{{
+						t(
+							'opencatalogi',
+							'The document queue is rendered by the Deck board widget on this page.',
+						)
+					}}
 				</p>
 			</section>
 
 			<WooRedactionView
 				v-if="activeDocument"
-				:document-id="activeDocument.id"
-				:batch-id="batchId"
+				:documentId="activeDocument.id"
+				:batchId="batchId"
 				:entities="activeDocument.entities || []" />
 
 			<div class="woo-batch__actions">
@@ -176,7 +236,10 @@ export default {
 				<NcButton :href="inventarislijstUrl('html')">
 					{{ t('opencatalogi', 'Download inventarislijst (PDF/A)') }}
 				</NcButton>
-				<NcButton v-if="canReview" variant="secondary" @click="markReadyForReview">
+				<NcButton
+					v-if="canReview"
+					variant="secondary"
+					@click="markReadyForReview">
 					{{ t('opencatalogi', 'Mark ready for review') }}
 				</NcButton>
 				<NcButton v-if="canPublish" variant="primary" @click="publish">
@@ -184,8 +247,13 @@ export default {
 				</NcButton>
 			</div>
 
-			<p v-if="batch.wooPublication && batch.wooPublication.readingRoomUrl" class="woo-batch__published">
-				<a :href="batch.wooPublication.readingRoomUrl" target="_blank" rel="noopener noreferrer">
+			<p
+				v-if="batch.wooPublication && batch.wooPublication.readingRoomUrl"
+				class="woo-batch__published">
+				<a
+					:href="batch.wooPublication.readingRoomUrl"
+					target="_blank"
+					rel="noopener noreferrer">
 					{{ t('opencatalogi', 'Public reading room') }}
 				</a>
 			</p>

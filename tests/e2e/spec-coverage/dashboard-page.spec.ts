@@ -19,59 +19,79 @@ import { test, expect } from '@playwright/test'
 import { bootApp, content, trackPageErrors, fatalErrors } from './_nav'
 
 test.describe('dashboard-page', () => {
-	test(
-		// @e2e dashboard::dashboard-renders-stats-and-activity
-		'Dashboard — renders stat cards, category + activity sections and primary action',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await bootApp(page)
+	test(// @e2e dashboard::dashboard-renders-stats-and-activity
+	'Dashboard — renders stat cards, category + activity sections and primary action', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await bootApp(page)
 
-			// Dashboard is the default route — its CnDashboardPage shell must mount.
-			await expect(page.locator('[data-testid="cn-dashboard-page"]').first())
-				.toBeVisible({ timeout: 15000 })
+		// Dashboard is the default route — its CnDashboardPage shell must mount.
+		await expect(
+			page.locator('[data-testid="cn-dashboard-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
 
-			// The two analytics sections — distinctive Dashboard content that
-			// confirms DashboardView (not a generic page) rendered.
-			await expect(content(page).getByText(/Publications by Category/i).first())
-				.toBeVisible({ timeout: 15000 })
-			await expect(content(page).getByText(/Activity/i).first())
-				.toBeVisible({ timeout: 15000 })
+		// The two analytics sections — distinctive Dashboard content that
+		// confirms DashboardView (not a generic page) rendered.
+		await expect(
+			content(page)
+				.getByText(/Publications by Category/i)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
+		await expect(
+			content(page)
+				.getByText(/Activity/i)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
 
-			// The publication stat cards.
-			for (const label of [/Concept Publications/i, /Published/i, /Depublished/i]) {
-				await expect(content(page).getByText(label).first()).toBeVisible({ timeout: 15000 })
-			}
+		// The publication stat cards.
+		for (const label of [
+			/Concept Publications/i,
+			/Published/i,
+			/Depublished/i,
+		]) {
+			await expect(content(page).getByText(label).first()).toBeVisible({
+				timeout: 15000,
+			})
+		}
 
-			// Primary action button.
-			await expect(content(page).getByRole('button', { name: /New Publication/i }).first())
-				.toBeVisible({ timeout: 10000 })
+		// Primary action button.
+		await expect(
+			content(page)
+				.getByRole('button', { name: /New Publication/i })
+				.first(),
+		).toBeVisible({ timeout: 10000 })
 
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 
-	test(
-		// @e2e dashboard::refresh-reloads-dashboard-data
-		'Dashboard — Refresh action reloads the dashboard without a fatal error',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await bootApp(page)
-			await expect(page.locator('[data-testid="cn-dashboard-page"]').first())
-				.toBeVisible({ timeout: 15000 })
+	test(// @e2e dashboard::refresh-reloads-dashboard-data
+	'Dashboard — Refresh action reloads the dashboard without a fatal error', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await bootApp(page)
+		await expect(
+			page.locator('[data-testid="cn-dashboard-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
 
-			// The Refresh action (re-runs loadDashboardData) — a genuine,
-			// data-independent dashboard interaction.
-			const refresh = content(page).getByRole('button', { name: /Refresh dashboard|^Refresh$/i }).first()
-			await expect(refresh).toBeVisible({ timeout: 10000 })
-			await expect(refresh).toBeEnabled()
-			await refresh.click()
-			await page.waitForTimeout(1500)
+		// The Refresh action (re-runs loadDashboardData) — a genuine,
+		// data-independent dashboard interaction.
+		const refresh = content(page)
+			.getByRole('button', { name: /Refresh dashboard|^Refresh$/i })
+			.first()
+		await expect(refresh).toBeVisible({ timeout: 10000 })
+		await expect(refresh).toBeEnabled()
+		await refresh.click()
+		await page.waitForTimeout(1500)
 
-			// After reload the dashboard analytics section is still rendered.
-			await expect(content(page).getByText(/Publications by Category/i).first())
-				.toBeVisible({ timeout: 15000 })
+		// After reload the dashboard analytics section is still rendered.
+		await expect(
+			content(page)
+				.getByText(/Publications by Category/i)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
 
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })

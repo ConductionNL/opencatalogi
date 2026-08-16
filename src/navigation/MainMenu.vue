@@ -19,7 +19,10 @@
 				v-for="catalogus in catalogs"
 				:key="catalogus.id || catalogus.slug"
 				:name="catalogus.title"
-				:to="{ name: 'Publications', params: { catalogSlug: catalogus.slug } }">
+				:to="{
+					name: 'Publications',
+					params: { catalogSlug: catalogus.slug },
+				}">
 				<template #icon>
 					<DatabaseEyeOutline :size="20" />
 				</template>
@@ -110,21 +113,20 @@ import {
 	// NcAppNavigationNew,
 	NcAppNavigationSettings,
 } from '@nextcloud/vue'
-import { objectStore, navigationStore } from '../store/store.js'
-
+import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
+import Cog from 'vue-material-design-icons/Cog.vue'
+import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
+import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 // import Plus from 'vue-material-design-icons/Plus.vue'
 import Finance from 'vue-material-design-icons/Finance.vue'
-import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
-import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
-import LayersSearchOutline from 'vue-material-design-icons/LayersSearchOutline.vue'
+import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import LayersOutline from 'vue-material-design-icons/LayersOutline.vue'
-import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
+import LayersSearchOutline from 'vue-material-design-icons/LayersSearchOutline.vue'
+import MenuClose from 'vue-material-design-icons/MenuClose.vue'
 import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutline.vue'
 import ShapeOutline from 'vue-material-design-icons/ShapeOutline.vue'
 import Web from 'vue-material-design-icons/Web.vue'
-import MenuClose from 'vue-material-design-icons/MenuClose.vue'
-import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
-import Cog from 'vue-material-design-icons/Cog.vue'
+import { navigationStore, objectStore } from '../store/store.js'
 
 /**
  * MainMenu — in-app navigation menu.
@@ -152,22 +154,31 @@ export default {
 		FormatListBulleted,
 		Cog,
 	},
+
 	emits: ['open-settings'],
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		navigationStore() {
 			return navigationStore
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		catalogs() {
 			const collection = objectStore.getCollection('catalog')
-			const results = Array.isArray(collection) ? collection : collection?.results || []
+			const results = Array.isArray(collection)
+				? collection
+				: collection?.results || []
 			return results.filter((c) => c && c.slug)
 		},
 	},
+
 	methods: {
 		t,
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
+		/**
+		 * @param url
+		 * @param target
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3
+		 */
 		openLink(url, target) {
 			window.open(url, target)
 		},

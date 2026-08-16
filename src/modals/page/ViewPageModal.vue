@@ -1,14 +1,7 @@
-/**
- * ViewPageModal.vue
- * Modal component for viewing page details and content
- * @category Modals
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license EUPL-1.2
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * ViewPageModal.vue * Modal component for viewing page details and content *
+@category Modals * @package opencatalogi * @author Ruben Linde * @copyright 2024 *
+@license EUPL-1.2 * @version 1.0.0 * @link
+https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
@@ -16,40 +9,90 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog v-if="navigationStore.modal === 'viewPage'"
+	<NcDialog
+		v-if="navigationStore.modal === 'viewPage'"
 		:name="isAddMode ? t('opencatalogi', 'Add Page') : getModalTitle()"
 		size="large"
-		:can-close="true"
+		:canClose="true"
 		@update:open="handleDialogClose">
 		<div class="dialog__content">
 			<div class="pageDetails">
 				<!-- Content Items Tab -->
 				<div class="tabContainer">
-					<AppTabs v-model="tabIndex" content-class="mt-3" justified>
-						<AppTab v-if="!isAddMode" :title="t('opencatalogi', 'Content Items ({count})', { count: page.contents?.length || 0 })" active>
+					<AppTabs v-model="tabIndex" contentClass="mt-3" justified>
+						<AppTab
+							v-if="!isAddMode"
+							:title="
+								t('opencatalogi', 'Content Items ({count})', {
+									count: page.contents?.length || 0,
+								})
+							"
+							active>
 							<!-- Content Items tab only in edit mode -->
 							<div v-if="page.contents && page.contents.length">
 								<div class="contentItemsSection">
 									<h4 class="section-title">
-										{{ t('opencatalogi', 'Content Items ({count})', { count: page.contents?.length || 0 }) }}
+										{{
+											t(
+												'opencatalogi',
+												'Content Items ({count})',
+												{
+													count:
+														page.contents?.length || 0,
+												},
+											)
+										}}
 									</h4>
-									<div v-if="page.contents?.length" class="attached-list">
-										<div v-for="(content, index) in sortedContents"
+									<div
+										v-if="page.contents?.length"
+										class="attached-list">
+										<div
+											v-for="(
+												content, index
+											) in sortedContents"
 											:key="content.id || index"
 											class="attached-list-item">
 											<div class="object-info">
-												<strong>{{ content.title || content.name || t('opencatalogi', 'Content {n}', { n: index + 1 }) }}</strong>
-												<span v-if="content.type" class="object-type">{{ content.type }}</span>
-												<span v-if="content.order !== undefined" class="object-order">{{ t('opencatalogi', 'Order: {n}', { n: content.order }) }}</span>
+												<strong>{{
+													content.title
+													|| content.name
+													|| t(
+														'opencatalogi',
+														'Content {n}',
+														{ n: index + 1 },
+													)
+												}}</strong>
+												<span
+													v-if="content.type"
+													class="object-type"
+													>{{ content.type }}</span
+												>
+												<span
+													v-if="
+														content.order !== undefined
+													"
+													class="object-order"
+													>{{
+														t(
+															'opencatalogi',
+															'Order: {n}',
+															{ n: content.order },
+														)
+													}}</span
+												>
 											</div>
 											<div class="object-actions">
-												<NcButton variant="secondary" @click="editContent(content)">
+												<NcButton
+													variant="secondary"
+													@click="editContent(content)">
 													<template #icon>
 														<Pencil :size="18" />
 													</template>
 													{{ t('opencatalogi', 'Edit') }}
 												</NcButton>
-												<NcButton variant="error" @click="deleteContent(content)">
+												<NcButton
+													variant="error"
+													@click="deleteContent(content)">
 													<template #icon>
 														<Delete :size="18" />
 													</template>
@@ -59,14 +102,26 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										</div>
 									</div>
 									<div v-else class="emptyContentItems">
-										<p>{{ t('opencatalogi', 'No content items configured') }}</p>
+										<p>
+											{{
+												t(
+													'opencatalogi',
+													'No content items configured',
+												)
+											}}
+										</p>
 									</div>
 								</div>
 							</div>
 
 							<div v-else>
 								<p class="emptyContentItems">
-									{{ t('opencatalogi', 'No content items configured') }}
+									{{
+										t(
+											'opencatalogi',
+											'No content items configured',
+										)
+									}}
 								</p>
 							</div>
 						</AppTab>
@@ -75,12 +130,44 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<AppTab :title="t('opencatalogi', 'Configuration')">
 							<div>
 								<!-- Success/Error Messages -->
-								<div v-if="pageState.success !== null || pageState.error" class="messageContainer">
-									<NcNoteCard v-if="pageState.success" type="success">
-										<p>{{ isEdit ? t('opencatalogi', 'Page successfully edited') : t('opencatalogi', 'Page successfully added') }}</p>
+								<div
+									v-if="
+										pageState.success !== null || pageState.error
+									"
+									class="messageContainer">
+									<NcNoteCard
+										v-if="pageState.success"
+										type="success">
+										<p>
+											{{
+												isEdit
+													? t(
+															'opencatalogi',
+															'Page successfully edited',
+														)
+													: t(
+															'opencatalogi',
+															'Page successfully added',
+														)
+											}}
+										</p>
 									</NcNoteCard>
-									<NcNoteCard v-if="!pageState.success" type="error">
-										<p>{{ isEdit ? t('opencatalogi', 'Something went wrong while editing the page') : t('opencatalogi', 'Something went wrong while adding the page') }}</p>
+									<NcNoteCard
+										v-if="!pageState.success"
+										type="error">
+										<p>
+											{{
+												isEdit
+													? t(
+															'opencatalogi',
+															'Something went wrong while editing the page',
+														)
+													: t(
+															'opencatalogi',
+															'Something went wrong while adding the page',
+														)
+											}}
+										</p>
 									</NcNoteCard>
 									<NcNoteCard v-if="pageState.error" type="error">
 										<p>{{ pageState.error }}</p>
@@ -88,20 +175,34 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								</div>
 
 								<!-- Edit Form -->
-								<div v-if="pageState.success === null" class="formContainer">
+								<div
+									v-if="pageState.success === null"
+									class="formContainer">
 									<NcTextField
 										v-model="editForm.title"
 										:disabled="objectStore.isLoading('page')"
 										:label="t('opencatalogi', 'Title')"
-										:error="!!inputValidation.fieldErrors?.['title']"
-										:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
+										:error="
+											!!inputValidation.fieldErrors?.['title']
+										"
+										:helperText="
+											inputValidation.fieldErrors?.[
+												'title'
+											]?.[0]
+										" />
 
 									<NcTextField
 										v-model="editForm.slug"
 										:disabled="objectStore.isLoading('page')"
 										:label="t('opencatalogi', 'Slug')"
-										:error="!!inputValidation.fieldErrors?.['slug']"
-										:helper-text="inputValidation.fieldErrors?.['slug']?.[0]" />
+										:error="
+											!!inputValidation.fieldErrors?.['slug']
+										"
+										:helperText="
+											inputValidation.fieldErrors?.[
+												'slug'
+											]?.[0]
+										" />
 								</div>
 							</div>
 						</AppTab>
@@ -111,36 +212,75 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<div>
 								<!-- Groups Access Control -->
 								<div class="groups-section">
-									<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
+									<label class="groups-label">{{
+										t('opencatalogi', 'Groups Access')
+									}}</label>
 									<NcNoteCard type="info">
-										<p>{{ t('opencatalogi', 'When you add groups to a page, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the page will be visible to all users.') }}</p>
+										<p>
+											{{
+												t(
+													'opencatalogi',
+													'When you add groups to a page, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the page will be visible to all users.',
+												)
+											}}
+										</p>
 									</NcNoteCard>
 									<NcSelect
 										v-model="editForm.groups"
 										:options="groupsOptions.options"
-										:disabled="objectStore.isLoading('page') || groupsOptions.loading"
-										:input-label="t('opencatalogi', 'Select Groups')"
+										:disabled="
+											objectStore.isLoading('page')
+											|| groupsOptions.loading
+										"
+										:inputLabel="
+											t('opencatalogi', 'Select Groups')
+										"
 										multiple />
-									<p v-if="groupsOptions.loading" class="groups-loading">
+									<p
+										v-if="groupsOptions.loading"
+										class="groups-loading">
 										{{ t('opencatalogi', 'Loading groups...') }}
 									</p>
 								</div>
 								<div class="hide-after-login">
 									<NcNoteCard type="info">
-										<p>{{ t('opencatalogi', 'When checked, this page will be hidden after a user is logged in. This is useful for pages that should only be visible to guests, such as login pages or registration forms.') }}</p>
+										<p>
+											{{
+												t(
+													'opencatalogi',
+													'When checked, this page will be hidden after a user is logged in. This is useful for pages that should only be visible to guests, such as login pages or registration forms.',
+												)
+											}}
+										</p>
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
 										v-model="editForm.hideAfterLogin"
-										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('page')">
+										:disabled="
+											editForm.hideBeforeLogin
+											|| objectStore.isLoading('page')
+										">
 										{{ t('opencatalogi', 'Hide after login') }}
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
 										v-model="editForm.hideBeforeLogin"
-										:disabled="editForm.hideAfterLogin || objectStore.isLoading('page')">
+										:disabled="
+											editForm.hideAfterLogin
+											|| objectStore.isLoading('page')
+										">
 										{{ t('opencatalogi', 'Hide before login') }}
 									</NcCheckboxRadioSwitch>
-									<p v-if="editForm.hideAfterLogin && editForm.hideBeforeLogin" class="field-error">
-										{{ t('opencatalogi', "'Hide before login' and 'Hide after login' cannot both be selected.") }}
+									<p
+										v-if="
+											editForm.hideAfterLogin
+											&& editForm.hideBeforeLogin
+										"
+										class="field-error">
+										{{
+											t(
+												'opencatalogi',
+												"'Hide before login' and 'Hide after login' cannot both be selected.",
+											)
+										}}
 									</p>
 								</div>
 							</div>
@@ -157,7 +297,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 
 		<template #actions>
-			<NcButton v-if="!isAddMode" variant="secondary" @click="openAddContentModal">
+			<NcButton
+				v-if="!isAddMode"
+				variant="secondary"
+				@click="openAddContentModal">
 				<template #icon>
 					<Plus :size="20" />
 				</template>
@@ -187,15 +330,23 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcTextField, NcCheckboxRadioSwitch, NcNoteCard, NcLoadingIcon, NcSelect } from '@nextcloud/vue'
-import AppTabs from '../../components/tabs/AppTabs.vue'
-import AppTab from '../../components/tabs/AppTab.vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
+import ContentSave from 'vue-material-design-icons/ContentSave.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-import ContentSave from 'vue-material-design-icons/ContentSave.vue'
-import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
 import { Page } from '../../entities/index.js'
+import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 /**
  * ViewPageModal — read a page and its embedded content blocks.
@@ -219,6 +370,7 @@ export default {
 		Delete,
 		ContentSave,
 	},
+
 	data() {
 		return {
 			editForm: {
@@ -228,56 +380,72 @@ export default {
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
+
 			hasUpdated: false,
 			groupsOptions: {
 				options: [],
 				loading: false,
 			},
+
 			tabIndex: 0, // 0 = first visible tab (Content Items in edit, Configuration in add)
 		}
 	},
+
 	computed: {
 		/**
 		 * Get the currently active page from the store
+		 *
 		 * @return {object|null} The active page object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		page() {
 			return objectStore.getActiveObject('page')
 		},
+
 		/**
 		 * Check if we're in edit mode
+		 *
 		 * @return {boolean} True if editing an existing page
 		 */
 		isEdit() {
 			return !!this.page
 		},
+
 		/**
 		 * Check if we're in add mode
+		 *
 		 * @return {boolean} True if adding a new page
 		 */
 		isAddMode() {
 			return !(this.page && this.page.id)
 		},
+
 		/**
 		 * Get the page state from the store
+		 *
 		 * @return {object} The page state object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		pageState() {
 			return objectStore.getState('page')
 		},
+
 		/**
 		 * Get contents sorted by order field
+		 *
 		 * @return {Array} Sorted contents array
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		sortedContents() {
 			if (!this.page?.contents?.length) return []
-			return [...this.page.contents].sort((a, b) => (a.order || 0) - (b.order || 0))
+			return [...this.page.contents].sort(
+				(a, b) => (a.order || 0) - (b.order || 0),
+			)
 		},
+
 		/**
 		 * Validate the input form
+		 *
 		 * @return {object} Validation result
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -291,18 +459,27 @@ export default {
 
 			return {
 				success: result.success,
-				errorMessages: result?.error?.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`) || [],
+				errorMessages:
+					result?.error?.issues.map(
+						(issue) => `${issue.path.join('.')}: ${issue.message}`,
+					) || [],
+
 				fieldErrors: result?.error?.formErrors?.fieldErrors || {},
 			}
 		},
 	},
+
 	watch: {
 		/**
 		 * Watch for changes in the page data and update editForm accordingly
+		 *
 		 * @param {object} newPage - The new page data
 		 */
 		page: {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+			/**
+			 * @param newPage
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+			 */
 			handler(newPage) {
 				if (newPage && !this.isAddMode) {
 					// Initialize editForm with existing page data
@@ -316,39 +493,54 @@ export default {
 				} else if (this.isAddMode) {
 					// Reset form for add mode
 					this.editForm = {
-						title: '', slug: '', groups: [], hideAfterLogin: false, hideBeforeLogin: false,
+						title: '',
+						slug: '',
+						groups: [],
+						hideAfterLogin: false,
+						hideBeforeLogin: false,
 					}
 				}
 			},
+
 			immediate: true,
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 	mounted() {
 		// Fetch groups for the dropdown
 		this.fetchGroups()
 	},
+
 	methods: {
 		/**
 		 * Get the modal title
+		 *
 		 * @return {string} The modal title
 		 */
 		getModalTitle() {
 			return this.page?.title || 'Page'
 		},
+
 		/**
 		 * Handle dialog close event
+		 *
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+
 		/**
 		 * Close the modal and clear the active object
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -356,16 +548,20 @@ export default {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('page')
 		},
+
 		/**
 		 * Open the edit modal for the current page
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		openEditModal() {
 			navigationStore.setModal('viewPage')
 		},
+
 		/**
 		 * Open the add content modal
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -373,26 +569,38 @@ export default {
 			objectStore.setState('page', { success: null, error: null })
 			navigationStore.setModal('pageContentForm')
 		},
+
 		/**
 		 * Open edit modal for a specific content item
+		 *
 		 * @param {object} content - The content item to edit
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+		/**
+		 * @param content
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+		 */
 		editContent(content) {
 			objectStore.setActiveObject('pageContent', content)
 			navigationStore.setModal('pageContentForm')
 		},
+
 		/**
 		 * Open delete confirmation dialog for a specific content item
+		 *
 		 * @param {object} content - The content item to delete
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+		/**
+		 * @param content
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+		 */
 		deleteContent(content) {
 			objectStore.setActiveObject('pageContent', content)
 			navigationStore.setDialog('deletePageContent')
 		},
+
 		/**
 		 * Fetch groups from Nextcloud
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -409,8 +617,10 @@ export default {
 					this.groupsOptions.loading = false
 				})
 		},
+
 		/**
 		 * Save the page configuration
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
@@ -422,29 +632,30 @@ export default {
 			})
 
 			if (this.isEdit) {
-				objectStore.updateObject('page', pageItem.id, pageItem)
-					.then(() => {
-						// Wait for the user to read the feedback then close the modal
-						setTimeout(() => {
-							this.closeModal()
-						}, 2000)
-					})
+				objectStore.updateObject('page', pageItem.id, pageItem).then(() => {
+					// Wait for the user to read the feedback then close the modal
+					setTimeout(() => {
+						this.closeModal()
+					}, 2000)
+				})
 			} else {
-				objectStore.createObject('page', pageItem)
-					.then(() => {
-						this.tabIndex = 0 // Switch to Content Items tab
-						// Optionally show a success message
-					})
+				objectStore.createObject('page', pageItem).then(() => {
+					this.tabIndex = 0 // Switch to Content Items tab
+					// Optionally show a success message
+				})
 			}
 		},
+
 		/**
 		 * Delete the current page
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		deletePage() {
 			if (this.page && this.page.id) {
-				objectStore.deleteObject('page', this.page.id)
+				objectStore
+					.deleteObject('page', this.page.id)
 					.then(() => {
 						this.closeModal()
 					})
@@ -453,19 +664,27 @@ export default {
 					})
 			}
 		},
+
 		/**
 		 * Normalize groups array to ensure consistent format
+		 *
 		 * @param {Array} selected - Selected groups from NcSelect
 		 * @return {Array} Normalized groups array
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
+		/**
+		 * @param selected
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3
+		 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
-			return selected.map(item => {
-				if (typeof item === 'string') return item
-				if (item && typeof item === 'object') return item.value ?? String(item.label ?? '')
-				return ''
-			}).filter(Boolean)
+			return selected
+				.map((item) => {
+					if (typeof item === 'string') return item
+					if (item && typeof item === 'object')
+						return item.value ?? String(item.label ?? '')
+					return ''
+				})
+				.filter(Boolean)
 		},
 	},
 }
@@ -554,7 +773,8 @@ export default {
 	color: var(--color-main-text);
 }
 
-.object-type, .object-order {
+.object-type,
+.object-order {
 	display: inline-block;
 	margin-right: 12px;
 	color: var(--color-text-lighter);

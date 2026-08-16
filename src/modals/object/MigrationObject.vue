@@ -1,12 +1,22 @@
 <script setup>
-import { objectStore, navigationStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
+
 import '../../css/json-highlight.css'
 </script>
 
 <template>
-	<NcDialog :name="selectedObjects.length === 1 ? t('opencatalogi', 'Migrate {count} object', { count: selectedObjects.length }) : t('opencatalogi', 'Migrate {count} objects', { count: selectedObjects.length })"
+	<NcDialog
+		:name="
+			selectedObjects.length === 1
+				? t('opencatalogi', 'Migrate {count} object', {
+						count: selectedObjects.length,
+					})
+				: t('opencatalogi', 'Migrate {count} objects', {
+						count: selectedObjects.length,
+					})
+		"
 		size="large"
-		:can-close="false">
+		:canClose="false">
 		<!-- Source and Target Information -->
 		<div class="migration-overview">
 			<div class="source-info">
@@ -15,23 +25,33 @@ import '../../css/json-highlight.css'
 					<div class="card-item">
 						<div class="card-label-with-icon">
 							<DatabaseOutline :size="16" />
-							<span class="card-label">{{ t('opencatalogi', 'Register:') }}</span>
+							<span class="card-label">{{
+								t('opencatalogi', 'Register:')
+							}}</span>
 						</div>
-						<span class="card-value">{{ sourceRegister?.title || sourceRegister?.id || t('opencatalogi', 'Unknown') }}</span>
+						<span class="card-value">{{
+							sourceRegister?.title
+							|| sourceRegister?.id
+							|| t('opencatalogi', 'Unknown')
+						}}</span>
 					</div>
 					<div class="card-item">
 						<div class="card-label-with-icon">
 							<FileTreeOutline :size="16" />
-							<span class="card-label">{{ t('opencatalogi', 'Schema:') }}</span>
+							<span class="card-label">{{
+								t('opencatalogi', 'Schema:')
+							}}</span>
 						</div>
-						<span class="card-value">{{ sourceSchema?.title || sourceSchema?.id || t('opencatalogi', 'Unknown') }}</span>
+						<span class="card-value">{{
+							sourceSchema?.title
+							|| sourceSchema?.id
+							|| t('opencatalogi', 'Unknown')
+						}}</span>
 					</div>
 				</div>
 			</div>
 
-			<div class="migration-arrow">
-				→
-			</div>
+			<div class="migration-arrow">→</div>
 
 			<div class="source-info">
 				<h4>{{ t('opencatalogi', 'Target') }}</h4>
@@ -39,16 +59,25 @@ import '../../css/json-highlight.css'
 					<div class="card-item">
 						<div class="card-label-with-icon">
 							<DatabaseOutline :size="16" />
-							<span class="card-label">{{ t('opencatalogi', 'Register:') }}</span>
+							<span class="card-label">{{
+								t('opencatalogi', 'Register:')
+							}}</span>
 						</div>
-						<span class="card-value">{{ targetRegister?.title || t('opencatalogi', 'Not selected') }}</span>
+						<span class="card-value">{{
+							targetRegister?.title
+							|| t('opencatalogi', 'Not selected')
+						}}</span>
 					</div>
 					<div class="card-item">
 						<div class="card-label-with-icon">
 							<FileTreeOutline :size="16" />
-							<span class="card-label">{{ t('opencatalogi', 'Schema:') }}</span>
+							<span class="card-label">{{
+								t('opencatalogi', 'Schema:')
+							}}</span>
 						</div>
-						<span class="card-value">{{ targetSchema?.title || t('opencatalogi', 'Not selected') }}</span>
+						<span class="card-value">{{
+							targetSchema?.title || t('opencatalogi', 'Not selected')
+						}}</span>
 					</div>
 				</div>
 			</div>
@@ -61,24 +90,52 @@ import '../../css/json-highlight.css'
 			</h3>
 
 			<NcNoteCard type="info">
-				{{ t('opencatalogi', "Review the selected objects below. You can remove any objects you don't want to migrate by clicking the remove button.") }}
+				{{
+					t(
+						'opencatalogi',
+						"Review the selected objects below. You can remove any objects you don't want to migrate by clicking the remove button.",
+					)
+				}}
 			</NcNoteCard>
 
 			<div class="selected-objects-container">
-				<h4>{{ t('opencatalogi', 'Selected Objects ({count})', { count: selectedObjects.length }) }}</h4>
+				<h4>
+					{{
+						t('opencatalogi', 'Selected Objects ({count})', {
+							count: selectedObjects.length,
+						})
+					}}
+				</h4>
 
 				<div v-if="selectedObjects.length" class="selected-objects-list">
-					<div v-for="obj in selectedObjects"
+					<div
+						v-for="obj in selectedObjects"
 						:key="obj.id"
 						class="selected-object-item">
 						<div class="object-info">
-							<strong>{{ obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || t('opencatalogi', 'Unnamed Object') }}</strong>
+							<strong>{{
+								obj['@self']?.name
+								|| obj.name
+								|| obj.title
+								|| obj['@self']?.title
+								|| t('opencatalogi', 'Unnamed Object')
+							}}</strong>
 							<p class="object-id">
 								ID: {{ obj.id || obj['@self']?.id }}
 							</p>
 						</div>
-						<NcButton variant="tertiary"
-							:aria-label="t('opencatalogi', 'Remove {name}', { name: obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || obj.id })"
+						<NcButton
+							variant="tertiary"
+							:aria-label="
+								t('opencatalogi', 'Remove {name}', {
+									name:
+										obj['@self']?.name
+										|| obj.name
+										|| obj.title
+										|| obj['@self']?.title
+										|| obj.id,
+								})
+							"
 							@click="removeObject(obj.id)">
 							<template #icon>
 								<Close :size="20" />
@@ -87,9 +144,16 @@ import '../../css/json-highlight.css'
 					</div>
 				</div>
 
-				<NcEmptyContent v-else :name="t('opencatalogi', 'No objects selected')">
+				<NcEmptyContent
+					v-else
+					:name="t('opencatalogi', 'No objects selected')">
 					<template #description>
-						{{ t('opencatalogi', 'No objects are currently selected for migration.') }}
+						{{
+							t(
+								'opencatalogi',
+								'No objects are currently selected for migration.',
+							)
+						}}
 					</template>
 				</NcEmptyContent>
 			</div>
@@ -98,7 +162,21 @@ import '../../css/json-highlight.css'
 		<!-- Step 2: Select Target Register and Schema -->
 		<div v-if="step === 2" class="migration-step">
 			<h3>{{ t('opencatalogi', 'Select Target Register and Schema') }}</h3>
-			<p>{{ selectedObjects.length === 1 ? t('opencatalogi', 'Choose the destination register and schema for the {count} selected object', { count: selectedObjects.length }) : t('opencatalogi', 'Choose the destination register and schema for the {count} selected objects', { count: selectedObjects.length }) }}</p>
+			<p>
+				{{
+					selectedObjects.length === 1
+						? t(
+								'opencatalogi',
+								'Choose the destination register and schema for the {count} selected object',
+								{ count: selectedObjects.length },
+							)
+						: t(
+								'opencatalogi',
+								'Choose the destination register and schema for the {count} selected objects',
+								{ count: selectedObjects.length },
+							)
+				}}
+			</p>
 
 			<!-- Target Register Selection -->
 			<div class="selection-section">
@@ -107,10 +185,10 @@ import '../../css/json-highlight.css'
 					v-model="targetRegister"
 					:options="availableRegisters"
 					label="title"
-					track-by="id"
+					trackBy="id"
 					:aria-label-combobox="t('opencatalogi', 'Target Register')"
 					:placeholder="t('opencatalogi', 'Select a register...')"
-					@update:model-value="onRegisterChange" />
+					@update:modelValue="onRegisterChange" />
 			</div>
 
 			<!-- Target Schema Selection -->
@@ -120,20 +198,33 @@ import '../../css/json-highlight.css'
 					v-model="targetSchema"
 					:options="availableSchemas"
 					label="title"
-					track-by="id"
+					trackBy="id"
 					:aria-label-combobox="t('opencatalogi', 'Target Schema')"
 					:placeholder="t('opencatalogi', 'Select a schema...')"
-					@update:model-value="onSchemaChange" />
+					@update:modelValue="onSchemaChange" />
 			</div>
 		</div>
 
 		<!-- Step 3: Property Mapping -->
 		<div v-if="step === 3" class="migration-step">
 			<h3>{{ t('opencatalogi', 'Property Mapping') }}</h3>
-			<p>{{ t('opencatalogi', 'Map properties from the source schema to the target schema. Properties not mapped will be discarded.') }}</p>
+			<p>
+				{{
+					t(
+						'opencatalogi',
+						'Map properties from the source schema to the target schema. Properties not mapped will be discarded.',
+					)
+				}}
+			</p>
 
 			<NcNoteCard type="info">
-				{{ t('opencatalogi', 'Configure how properties should be mapped when migrating from source schema {source} to target schema {target}', { source: sourceSchema?.title, target: targetSchema?.title }) }}
+				{{
+					t(
+						'opencatalogi',
+						'Configure how properties should be mapped when migrating from source schema {source} to target schema {target}',
+						{ source: sourceSchema?.title, target: targetSchema?.title },
+					)
+				}}
 			</NcNoteCard>
 
 			<div class="mapping-container">
@@ -142,9 +233,7 @@ import '../../css/json-highlight.css'
 						<h4>{{ t('opencatalogi', 'Source Properties') }}</h4>
 						<span class="schema-name">{{ sourceSchema?.title }}</span>
 					</div>
-					<div class="arrow-header">
-						→
-					</div>
+					<div class="arrow-header">→</div>
 					<div class="target-header">
 						<h4>{{ t('opencatalogi', 'Target Properties') }}</h4>
 						<span class="schema-name">{{ targetSchema?.title }}</span>
@@ -152,26 +241,33 @@ import '../../css/json-highlight.css'
 				</div>
 
 				<div class="mapping-list">
-					<div v-for="sourceProperty in sourceProperties"
+					<div
+						v-for="sourceProperty in sourceProperties"
 						:key="sourceProperty.name"
 						class="mapping-row">
 						<div class="source-property">
-							<span class="property-name">{{ sourceProperty.name }}</span>
-							<span class="property-type">{{ sourceProperty.type }}</span>
+							<span class="property-name">{{
+								sourceProperty.name
+							}}</span>
+							<span class="property-type">{{
+								sourceProperty.type
+							}}</span>
 						</div>
-						<div class="mapping-arrow">
-							→
-						</div>
+						<div class="mapping-arrow">→</div>
 						<div class="target-property">
 							<NcSelect
 								v-model="uiMappings[sourceProperty.name]"
 								:options="targetPropertyOptions"
 								label="label"
-								track-by="value"
-								:input-label="t('opencatalogi', 'Target property')"
-								:placeholder="t('opencatalogi', 'Map to target property...')"
+								trackBy="value"
+								:inputLabel="t('opencatalogi', 'Target property')"
+								:placeholder="
+									t('opencatalogi', 'Map to target property...')
+								"
 								:clearable="true"
-								@update:model-value="updateMappingFromUI(sourceProperty.name)" />
+								@update:modelValue="
+									updateMappingFromUI(sourceProperty.name)
+								" />
 						</div>
 					</div>
 				</div>
@@ -187,8 +283,17 @@ import '../../css/json-highlight.css'
 			<NcNoteCard v-if="migrationResult?.success" type="success">
 				<p>{{ t('opencatalogi', 'Objects successfully migrated!') }}</p>
 			</NcNoteCard>
-			<NcNoteCard v-if="migrationResult && !migrationResult.success" type="error">
-				<p>{{ t('opencatalogi', 'Migration failed. Please check the details below.') }}</p>
+			<NcNoteCard
+				v-if="migrationResult && !migrationResult.success"
+				type="error">
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Migration failed. Please check the details below.',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 
 			<div v-if="migrationResult" class="migration-report">
@@ -199,14 +304,28 @@ import '../../css/json-highlight.css'
 						<div class="migration-detail">
 							<strong>{{ t('opencatalogi', 'Source:') }}</strong>
 							<div class="migration-meta">
-								<span>{{ sourceRegister?.title }} / {{ sourceSchema?.title }}</span>
-								<span class="object-count">{{ selectedObjects.length === 1 ? t('opencatalogi', '{count} object', { count: selectedObjects.length }) : t('opencatalogi', '{count} objects', { count: selectedObjects.length }) }}</span>
+								<span
+									>{{ sourceRegister?.title }} /
+									{{ sourceSchema?.title }}</span
+								>
+								<span class="object-count">{{
+									selectedObjects.length === 1
+										? t('opencatalogi', '{count} object', {
+												count: selectedObjects.length,
+											})
+										: t('opencatalogi', '{count} objects', {
+												count: selectedObjects.length,
+											})
+								}}</span>
 							</div>
 						</div>
 						<div class="migration-detail">
 							<strong>{{ t('opencatalogi', 'Target:') }}</strong>
 							<div class="migration-meta">
-								<span>{{ targetRegister?.title }} / {{ targetSchema?.title }}</span>
+								<span
+									>{{ targetRegister?.title }} /
+									{{ targetSchema?.title }}</span
+								>
 							</div>
 						</div>
 					</div>
@@ -216,10 +335,42 @@ import '../../css/json-highlight.css'
 				<div class="report-section">
 					<h4>{{ t('opencatalogi', 'Statistics') }}</h4>
 					<ul>
-						<li>{{ t('opencatalogi', 'Objects migrated: {count}', { count: migrationResult.statistics?.objectsMigrated || 0 }) }}</li>
-						<li>{{ t('opencatalogi', 'Objects failed: {count}', { count: migrationResult.statistics?.objectsFailed || 0 }) }}</li>
-						<li>{{ t('opencatalogi', 'Properties mapped: {count}', { count: migrationResult.statistics?.propertiesMapped || 0 }) }}</li>
-						<li>{{ t('opencatalogi', 'Properties discarded: {count}', { count: migrationResult.statistics?.propertiesDiscarded || 0 }) }}</li>
+						<li>
+							{{
+								t('opencatalogi', 'Objects migrated: {count}', {
+									count:
+										migrationResult.statistics?.objectsMigrated
+										|| 0,
+								})
+							}}
+						</li>
+						<li>
+							{{
+								t('opencatalogi', 'Objects failed: {count}', {
+									count:
+										migrationResult.statistics?.objectsFailed
+										|| 0,
+								})
+							}}
+						</li>
+						<li>
+							{{
+								t('opencatalogi', 'Properties mapped: {count}', {
+									count:
+										migrationResult.statistics?.propertiesMapped
+										|| 0,
+								})
+							}}
+						</li>
+						<li>
+							{{
+								t('opencatalogi', 'Properties discarded: {count}', {
+									count:
+										migrationResult.statistics
+											?.propertiesDiscarded || 0,
+								})
+							}}
+						</li>
 					</ul>
 				</div>
 
@@ -227,13 +378,22 @@ import '../../css/json-highlight.css'
 				<div v-if="migrationResult.details?.length" class="report-section">
 					<h4>{{ t('opencatalogi', 'Migration Details') }}</h4>
 					<div class="migration-details">
-						<div v-for="detail in migrationResult.details"
+						<div
+							v-for="detail in migrationResult.details"
 							:key="detail.objectId"
 							class="migration-detail-item">
 							<div class="detail-header">
-								<strong>{{ detail.objectTitle || detail.objectId }}</strong>
-								<span :class="['status', detail.success ? 'success' : 'error']">
-									{{ detail.success ? t('opencatalogi', 'Success') : t('opencatalogi', 'Failed') }}
+								<strong>{{
+									detail.objectTitle || detail.objectId
+								}}</strong>
+								<span
+									class="status"
+									:class="[detail.success ? 'success' : 'error']">
+									{{
+										detail.success
+											? t('opencatalogi', 'Success')
+											: t('opencatalogi', 'Failed')
+									}}
 								</span>
 							</div>
 							<div v-if="detail.error" class="detail-error">
@@ -247,7 +407,10 @@ import '../../css/json-highlight.css'
 				<div v-if="migrationResult.warnings?.length" class="report-section">
 					<h4>{{ t('opencatalogi', 'Warnings') }}</h4>
 					<ul>
-						<li v-for="warning in migrationResult.warnings" :key="warning" class="warning-text">
+						<li
+							v-for="warning in migrationResult.warnings"
+							:key="warning"
+							class="warning-text">
 							{{ warning }}
 						</li>
 					</ul>
@@ -257,7 +420,10 @@ import '../../css/json-highlight.css'
 				<div v-if="migrationResult.errors?.length" class="report-section">
 					<h4>{{ t('opencatalogi', 'Errors') }}</h4>
 					<ul>
-						<li v-for="error in migrationResult.errors" :key="error" class="error-text">
+						<li
+							v-for="error in migrationResult.errors"
+							:key="error"
+							class="error-text">
 							{{ error }}
 						</li>
 					</ul>
@@ -270,10 +436,15 @@ import '../../css/json-highlight.css'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ step === 4 ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+				{{
+					step === 4
+						? t('opencatalogi', 'Close')
+						: t('opencatalogi', 'Cancel')
+				}}
 			</NcButton>
 
-			<NcButton v-if="step === 1"
+			<NcButton
+				v-if="step === 1"
 				:disabled="selectedObjects.length === 0"
 				variant="primary"
 				@click="nextStep">
@@ -283,16 +454,15 @@ import '../../css/json-highlight.css'
 				{{ t('opencatalogi', 'Next') }}
 			</NcButton>
 
-			<NcButton v-if="step === 2"
-				variant="secondary"
-				@click="previousStep">
+			<NcButton v-if="step === 2" variant="secondary" @click="previousStep">
 				<template #icon>
 					<ArrowLeft :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
 
-			<NcButton v-if="step === 2"
+			<NcButton
+				v-if="step === 2"
 				:disabled="!targetRegister || !targetSchema"
 				variant="primary"
 				@click="nextStep">
@@ -302,16 +472,15 @@ import '../../css/json-highlight.css'
 				{{ t('opencatalogi', 'Next') }}
 			</NcButton>
 
-			<NcButton v-if="step === 3"
-				variant="secondary"
-				@click="previousStep">
+			<NcButton v-if="step === 3" variant="secondary" @click="previousStep">
 				<template #icon>
 					<ArrowLeft :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
 
-			<NcButton v-if="step === 3"
+			<NcButton
+				v-if="step === 3"
 				:disabled="loading || !canMigrate"
 				variant="primary"
 				@click="performMigration">
@@ -334,11 +503,10 @@ import {
 	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
-
+import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
+import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
 // Icons
 import Cancel from 'vue-material-design-icons/Cancel.vue'
-import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
-import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import DatabaseExport from 'vue-material-design-icons/DatabaseExport.vue'
 import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
@@ -382,6 +550,7 @@ export default {
 			migrationResult: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		sourceRegister() {
@@ -393,8 +562,14 @@ export default {
 				return register
 			}
 			// If it's just an ID, try to find it in available registers
-			return objectStore.availableRegisters.find(r => r.id === register) || { id: register, title: register }
+			return (
+				objectStore.availableRegisters.find((r) => r.id === register) || {
+					id: register,
+					title: register,
+				}
+			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		sourceSchema() {
 			// Get schema info from the first selected object
@@ -405,11 +580,17 @@ export default {
 				return schema
 			}
 			// If it's just an ID, try to find it in available schemas
-			return objectStore.availableSchemas.find(s => s.id === schema) || { id: schema, title: schema }
+			return (
+				objectStore.availableSchemas.find((s) => s.id === schema) || {
+					id: schema,
+					title: schema,
+				}
+			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		targetPropertyOptions() {
-			const options = this.targetProperties.map(prop => ({
+			const options = this.targetProperties.map((prop) => ({
 				label: `${prop.name} (${prop.type})`,
 				value: prop.name,
 			}))
@@ -421,16 +602,21 @@ export default {
 
 			return options
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		canMigrate() {
 			// Check if we have target register/schema and at least one property mapping
-			const hasValidMappings = Object.values(this.uiMappings).some(option => option && option.value)
+			const hasValidMappings = Object.values(this.uiMappings).some(
+				(option) => option && option.value,
+			)
 			return this.targetRegister && this.targetSchema && hasValidMappings
 		},
 	},
+
 	mounted() {
 		this.initializeMigration()
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		initializeMigration() {
@@ -442,11 +628,14 @@ export default {
 			}
 			this.loadAvailableRegisters()
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async loadAvailableRegisters() {
 			this.loading = true
 			try {
-				const response = await fetch('/index.php/apps/openregister/api/registers')
+				const response = await fetch(
+					'/index.php/apps/openregister/api/registers',
+				)
 				const data = await response.json()
 				this.availableRegisters = data.results || []
 			} catch (error) {
@@ -456,6 +645,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async onRegisterChange() {
 			if (!this.targetRegister) {
@@ -466,7 +656,9 @@ export default {
 
 			this.loading = true
 			try {
-				const response = await fetch(`/index.php/apps/openregister/api/schemas?register=${this.targetRegister.id}`)
+				const response = await fetch(
+					`/index.php/apps/openregister/api/schemas?register=${this.targetRegister.id}`,
+				)
 				const data = await response.json()
 				this.availableSchemas = data.results || []
 			} catch (error) {
@@ -476,6 +668,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async onSchemaChange() {
 			if (!this.targetSchema) {
@@ -483,13 +676,20 @@ export default {
 			}
 			await this.loadSchemaProperties()
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
+
+		/**
+		 * @param objectId
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7
+		 */
 		removeObject(objectId) {
-			this.selectedObjects = this.selectedObjects.filter(obj => obj.id !== objectId)
+			this.selectedObjects = this.selectedObjects.filter(
+				(obj) => obj.id !== objectId,
+			)
 			if (this.selectedObjects.length === 0) {
 				this.closeModal()
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		nextStep() {
 			if (this.step === 1 && this.selectedObjects.length > 0) {
@@ -498,12 +698,14 @@ export default {
 				this.step = 3
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		previousStep() {
 			if (this.step > 1) {
 				this.step--
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async loadSchemaProperties() {
 			if (!this.sourceSchema || !this.targetSchema) {
@@ -512,12 +714,17 @@ export default {
 
 			try {
 				// Load source schema properties
-				this.sourceProperties = this.extractSchemaProperties(this.sourceSchema)
+				this.sourceProperties = this.extractSchemaProperties(
+					this.sourceSchema,
+				)
 
 				// Load target schema properties
-				const response = await fetch(`/index.php/apps/openregister/api/schemas/${this.targetSchema.id}`)
+				const response = await fetch(
+					`/index.php/apps/openregister/api/schemas/${this.targetSchema.id}`,
+				)
 				const targetSchemaData = await response.json()
-				this.targetProperties = this.extractSchemaProperties(targetSchemaData)
+				this.targetProperties =
+					this.extractSchemaProperties(targetSchemaData)
 
 				// Initialize property mappings
 				this.initializePropertyMappings()
@@ -528,12 +735,16 @@ export default {
 				console.error('Error loading schema properties:', error)
 			}
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
+
+		/**
+		 * @param schema
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7
+		 */
 		extractSchemaProperties(schema) {
 			// Extract properties from schema definition
 			const properties = []
 			if (schema.properties) {
-				Object.keys(schema.properties).forEach(key => {
+				Object.keys(schema.properties).forEach((key) => {
 					properties.push({
 						name: key,
 						type: schema.properties[key].type || 'string',
@@ -543,28 +754,32 @@ export default {
 			}
 			return properties
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		initializePropertyMappings() {
 			this.mapping = {}
 			this.uiMappings = {}
 
 			// Auto-map properties with same names
-			this.sourceProperties.forEach(sourceProp => {
+			this.sourceProperties.forEach((sourceProp) => {
 				const matchingTarget = this.targetProperties.find(
-					targetProp => targetProp.name === sourceProp.name,
+					(targetProp) => targetProp.name === sourceProp.name,
 				)
 				if (matchingTarget) {
 					// Simple mapping: target property as key, source property as value
 					this.mapping[matchingTarget.name] = sourceProp.name
 
 					// Set up UI mapping
-					const targetOption = this.targetPropertyOptions.find(option => option.value === matchingTarget.name)
+					const targetOption = this.targetPropertyOptions.find(
+						(option) => option.value === matchingTarget.name,
+					)
 					if (targetOption) {
 						this.uiMappings[sourceProp.name] = targetOption
 					}
 				}
 			})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async performMigration() {
 			if (!this.canMigrate) {
@@ -576,20 +791,23 @@ export default {
 
 			this.loading = true
 			try {
-				const response = await fetch('/index.php/apps/openregister/api/migrate', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
+				const response = await fetch(
+					'/index.php/apps/openregister/api/migrate',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							sourceRegister: this.sourceRegister.id,
+							sourceSchema: this.sourceSchema.id,
+							targetRegister: this.targetRegister.id,
+							targetSchema: this.targetSchema.id,
+							objects: this.selectedObjects.map((obj) => obj.id),
+							mapping: this.mapping,
+						}),
 					},
-					body: JSON.stringify({
-						sourceRegister: this.sourceRegister.id,
-						sourceSchema: this.sourceSchema.id,
-						targetRegister: this.targetRegister.id,
-						targetSchema: this.targetSchema.id,
-						objects: this.selectedObjects.map(obj => obj.id),
-						mapping: this.mapping,
-					}),
-				})
+				)
 
 				if (!response.ok) {
 					throw new Error(`HTTP error! status: ${response.status}`)
@@ -600,7 +818,6 @@ export default {
 
 				// Refresh the object list
 				objectStore.refreshObjectList()
-
 			} catch (error) {
 				console.error('Error performing migration:', error)
 				this.migrationResult = {
@@ -612,33 +829,44 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		closeModal() {
 			navigationStore.setModal(false)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
+
+		/**
+		 * @param sourceProperty
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7
+		 */
 		updateMappingFromUI(sourceProperty) {
 			// Convert UI mappings to our simple mapping format
 			this.convertUIToMapping()
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		convertUIToMapping() {
 			// Convert from UI format (source -> target option) to our format (target -> source)
 			this.mapping = {}
 
-			for (const [sourceProp, targetOption] of Object.entries(this.uiMappings)) {
+			for (const [sourceProp, targetOption] of Object.entries(
+				this.uiMappings,
+			)) {
 				if (targetOption && targetOption.value) {
 					this.mapping[targetOption.value] = sourceProp
 				}
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		convertMappingToUI() {
 			// Convert from our format (target -> source) to UI format (source -> target option)
 			this.uiMappings = {}
 
 			for (const [targetProp, sourceProp] of Object.entries(this.mapping)) {
-				const targetOption = this.targetPropertyOptions.find(option => option.value === targetProp)
+				const targetOption = this.targetPropertyOptions.find(
+					(option) => option.value === targetProp,
+				)
 				if (targetOption) {
 					this.uiMappings[sourceProp] = targetOption
 				}

@@ -37,7 +37,12 @@
  */
 import { test, expect } from '@playwright/test'
 import { bootApp, navTo, trackPageErrors, fatalErrors } from '../spec-coverage/_nav'
-import { Fixtures, REG_PUBLICATION, SCHEMA_CATALOG, SCHEMA_PUBLICATION } from './_fixtures'
+import {
+	Fixtures,
+	REG_PUBLICATION,
+	SCHEMA_CATALOG,
+	SCHEMA_PUBLICATION,
+} from './_fixtures'
 import { waitIndexBody } from './_crud'
 
 const fx = new Fixtures()
@@ -52,50 +57,54 @@ test.afterAll(async () => {
 })
 
 test.describe('catalog CRUD persistence', () => {
-	test(
-		// @e2e catalogs::catalog-full-crud-persists-in-openregister
-		'Catalog — create → read → update → delete persists in OpenRegister (store API)',
-		async () => {
-			const title = fx.label('Catalog CRUD')
+	test(// @e2e catalogs::catalog-full-crud-persists-in-openregister
+	'Catalog — create → read → update → delete persists in OpenRegister (store API)', async () => {
+		const title = fx.label('Catalog CRUD')
 
-			// ---- CREATE -------------------------------------------------
-			const created = await fx.createCatalog('Catalog CRUD')
-			expect(created.id).toBeTruthy()
-			expect(created.title).toBe(title)
+		// ---- CREATE -------------------------------------------------
+		const created = await fx.createCatalog('Catalog CRUD')
+		expect(created.id).toBeTruthy()
+		expect(created.title).toBe(title)
 
-			// ---- READ (persisted) ---------------------------------------
-			let fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_CATALOG, created.id)
-			expect(fetched, 'catalog readable after create').toBeTruthy()
-			expect(fetched!.title).toBe(title)
-			// The catalog is wired to the publication register + schema.
-			expect(fetched!.registers).toEqual([REG_PUBLICATION])
-			expect(fetched!.schemas).toEqual([SCHEMA_PUBLICATION])
+		// ---- READ (persisted) ---------------------------------------
+		let fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_CATALOG, created.id)
+		expect(fetched, 'catalog readable after create').toBeTruthy()
+		expect(fetched!.title).toBe(title)
+		// The catalog is wired to the publication register + schema.
+		expect(fetched!.registers).toEqual([REG_PUBLICATION])
+		expect(fetched!.schemas).toEqual([SCHEMA_PUBLICATION])
 
-			// And it shows up in the collection (not an empty list).
-			const inList = (await fx.list(REG_PUBLICATION, SCHEMA_CATALOG, 500))
-				.some((c) => (c.id as string) === created.id)
-			expect(inList, 'catalog appears in the catalog collection').toBe(true)
+		// And it shows up in the collection (not an empty list).
+		const inList = (await fx.list(REG_PUBLICATION, SCHEMA_CATALOG, 500)).some(
+			(c) => (c.id as string) === created.id,
+		)
+		expect(inList, 'catalog appears in the catalog collection').toBe(true)
 
-			// ---- UPDATE (persisted) -------------------------------------
-			// OpenRegister enforces lifecycle fields (e.g. `status`) on update:
-			// a PUT must carry a valid, non-empty `status`. Preserve the value
-			// the object was created with so the partial edit stays valid.
-			const newTitle = `${title} EDITED`
-			const putRes = await fx.api.put(
-				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_CATALOG}/${created.id}`,
-				{ data: { title: newTitle, summary: 'edited summary', status: fetched!.status } },
-			)
-			expect(putRes.ok(), 'update request succeeds').toBe(true)
-			fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_CATALOG, created.id)
-			expect(fetched!.title, 'edited title persisted').toBe(newTitle)
-			expect(fetched!.summary, 'edited summary persisted').toBe('edited summary')
+		// ---- UPDATE (persisted) -------------------------------------
+		// OpenRegister enforces lifecycle fields (e.g. `status`) on update:
+		// a PUT must carry a valid, non-empty `status`. Preserve the value
+		// the object was created with so the partial edit stays valid.
+		const newTitle = `${title} EDITED`
+		const putRes = await fx.api.put(
+			`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_CATALOG}/${created.id}`,
+			{
+				data: {
+					title: newTitle,
+					summary: 'edited summary',
+					status: fetched!.status,
+				},
+			},
+		)
+		expect(putRes.ok(), 'update request succeeds').toBe(true)
+		fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_CATALOG, created.id)
+		expect(fetched!.title, 'edited title persisted').toBe(newTitle)
+		expect(fetched!.summary, 'edited summary persisted').toBe('edited summary')
 
-			// ---- DELETE (persisted) -------------------------------------
-			await fx.remove(REG_PUBLICATION, SCHEMA_CATALOG, created.id)
-			const gone = await fx.fetch(REG_PUBLICATION, SCHEMA_CATALOG, created.id)
-			expect(gone, 'catalog deleted from OpenRegister').toBeFalsy()
-		},
-	)
+		// ---- DELETE (persisted) -------------------------------------
+		await fx.remove(REG_PUBLICATION, SCHEMA_CATALOG, created.id)
+		const gone = await fx.fetch(REG_PUBLICATION, SCHEMA_CATALOG, created.id)
+		expect(gone, 'catalog deleted from OpenRegister').toBeFalsy()
+	})
 
 	// FIXED (2026-06-10, wave-3): the Catalogs CnIndexPage now resolves the
 	// @resolve:catalog_register / @resolve:catalog_schema sentinels. The app's
@@ -103,26 +112,29 @@ test.describe('catalog CRUD persistence', () => {
 	// @conduction/nextcloud-vue manifest resolver substitutes them synchronously
 	// (the runtime /api/configs fetch was shadowed by the catch-all catalog
 	// route). A catalog at 14/54 now renders as a real row.
-	test(
-		// @e2e catalogs::catalog-row-renders-in-index-ui
-		'Catalog — a created catalog renders as a row in the Catalogs index UI',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			const cat = await fx.createCatalog('Catalog UI Row')
+	test(// @e2e catalogs::catalog-row-renders-in-index-ui
+	'Catalog — a created catalog renders as a row in the Catalogs index UI', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		const cat = await fx.createCatalog('Catalog UI Row')
 
-			await bootApp(page)
-			await navTo(page, 'CatalogsMenu', true)
-			await expect(page.locator('[data-testid="cn-index-page"]').first())
-				.toBeVisible({ timeout: 15000 })
-			await waitIndexBody(page)
+		await bootApp(page)
+		await navTo(page, 'CatalogsMenu', true)
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+		await waitIndexBody(page)
 
-			// This is the assertion that fails today: the row never appears
-			// because the list fetch hits the unresolved @resolve endpoint.
-			await expect(
-				page.locator('[data-testid="cn-object-row"]').filter({ hasText: cat.title }).first(),
-			).toBeVisible({ timeout: 15000 })
+		// This is the assertion that fails today: the row never appears
+		// because the list fetch hits the unresolved @resolve endpoint.
+		await expect(
+			page
+				.locator('[data-testid="cn-object-row"]')
+				.filter({ hasText: cat.title })
+				.first(),
+		).toBeVisible({ timeout: 15000 })
 
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })

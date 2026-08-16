@@ -5,7 +5,7 @@
  * @return {string} The trailing path segment
  * @spec openspec/specs/content-management/spec.md
  */
-export const getPublicationTypeId = (url) => {
+export function getPublicationTypeId(url) {
 	const publicationTypeId = url.substring(url.lastIndexOf('/') + 1, url.length)
 	return publicationTypeId
 }

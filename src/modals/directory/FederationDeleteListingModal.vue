@@ -8,7 +8,7 @@
 
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { NcModal, NcButton, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
+import { NcButton, NcLoadingIcon, NcModal, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import { navigationStore } from '../../store/store.js'
@@ -22,6 +22,7 @@ export default {
 			default: null,
 		},
 	},
+
 	emits: ['deleted'],
 	data() {
 		return {
@@ -31,23 +32,34 @@ export default {
 			closeTimer: null,
 		}
 	},
+
 	computed: {
 		isOpen() {
 			return navigationStore.modal === 'federationDeleteListing'
 		},
+
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		listingName() {
-			return this.listing?.title || this.listing?.directory || t('opencatalogi', 'Unnamed instance')
+			return (
+				this.listing?.title
+				|| this.listing?.directory
+				|| t('opencatalogi', 'Unnamed instance')
+			)
 		},
 	},
+
 	watch: {
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+		/**
+		 * @param open
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		isOpen(open) {
 			if (open) {
 				this.reset()
 			}
 		},
 	},
+
 	/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 	beforeUnmount() {
 		// Prevent a delayed `close()` from firing after the component
@@ -57,6 +69,7 @@ export default {
 			this.closeTimer = null
 		}
 	},
+
 	methods: {
 		t,
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
@@ -71,6 +84,7 @@ export default {
 			this.success = null
 			this.error = null
 		},
+
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		close() {
 			if (this.closeTimer !== null) {
@@ -79,6 +93,7 @@ export default {
 			}
 			navigationStore.setModal(null)
 		},
+
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		async handleDelete() {
 			if (!this.listing) {
@@ -87,7 +102,9 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const endpoint = generateUrl(`/apps/opencatalogi/api/listings/${this.listing.id}`)
+				const endpoint = generateUrl(
+					`/apps/opencatalogi/api/listings/${this.listing.id}`,
+				)
 				const res = await fetch(endpoint, {
 					method: 'DELETE',
 					headers: {
@@ -97,7 +114,12 @@ export default {
 				})
 				if (!res.ok) {
 					const body = await res.json().catch(() => ({}))
-					throw new Error(body?.data?.error || body?.error || body?.message || `HTTP ${res.status}`)
+					throw new Error(
+						body?.data?.error
+							|| body?.error
+							|| body?.message
+							|| `HTTP ${res.status}`,
+					)
 				}
 				this.success = true
 				this.$emit('deleted', this.listing)
@@ -119,8 +141,9 @@ export default {
 </script>
 
 <template>
-	<NcModal v-if="isOpen && listing"
-		label-id="federationDeleteListingModal"
+	<NcModal
+		v-if="isOpen && listing"
+		labelId="federationDeleteListingModal"
 		:name="t('opencatalogi', 'Remove from directory')"
 		@close="close">
 		<div class="federation-delete-listing-modal">
@@ -137,7 +160,13 @@ export default {
 			</div>
 
 			<p v-if="success === null && !loading">
-				{{ t('opencatalogi', 'Remove {name} from the directory? This instance will stop syncing publications from {name}. {name} itself is not affected. This action cannot be undone.', { name: listingName }) }}
+				{{
+					t(
+						'opencatalogi',
+						'Remove {name} from the directory? This instance will stop syncing publications from {name}. {name} itself is not affected. This action cannot be undone.',
+						{ name: listingName },
+					)
+				}}
 			</p>
 
 			<div v-if="loading" class="federation-delete-listing-modal__loading">
@@ -150,9 +179,14 @@ export default {
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+					{{
+						success
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="success === null"
+				<NcButton
+					v-if="success === null"
 					variant="error"
 					:disabled="loading"
 					@click="handleDelete">

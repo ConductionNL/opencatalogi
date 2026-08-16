@@ -28,7 +28,7 @@
 	@visual exclude Unreachable: imported by nothing, in no route, absent from the shipped bundle; superseded by the manifest type:"detail" Publications page (CnDetailPage). Tracked in ConductionNL/opencatalogi#849.
 -->
 <script setup>
-import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -38,66 +38,110 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				{{ objectStore.getActiveObject('publication')?.title }}
 			</h1>
 
-			<NcActions :disabled="objectStore.isLoading('publication')"
+			<NcActions
+				:disabled="objectStore.isLoading('publication')"
 				:primary="true"
-				:menu-name="objectStore.isLoading('publication') ? t('opencatalogi', 'Loading...') : t('opencatalogi', 'Actions')"
+				:menuName="
+					objectStore.isLoading('publication')
+						? t('opencatalogi', 'Loading...')
+						: t('opencatalogi', 'Actions')
+				"
 				:inline="1"
-				:title="t('opencatalogi', 'Actions you can perform on this publication')">
+				:title="
+					t('opencatalogi', 'Actions you can perform on this publication')
+				">
 				<template #icon>
 					<span>
-						<NcLoadingIcon v-if="objectStore.isLoading('publication')" :size="20" appearance="dark" />
-						<DotsHorizontal v-if="!objectStore.isLoading('publication')" :size="20" />
+						<NcLoadingIcon
+							v-if="objectStore.isLoading('publication')"
+							:size="20"
+							appearance="dark" />
+						<DotsHorizontal
+							v-if="!objectStore.isLoading('publication')"
+							:size="20" />
 					</span>
 				</template>
-				<NcActionButton close-after-click
-					:title="t('opencatalogi', 'View the documentation about publications')"
-					@click="openLink('https://opencatalogi.conduction.nl/docs/Users/publicaties/', '_blank')">
+				<NcActionButton
+					closeAfterClick
+					:title="
+						t(
+							'opencatalogi',
+							'View the documentation about publications',
+						)
+					"
+					@click="
+						openLink(
+							'https://opencatalogi.conduction.nl/docs/Users/publicaties/',
+							'_blank',
+						)
+					">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Help') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="navigationStore.setModal('objectModal')">
+				<NcActionButton
+					closeAfterClick
+					@click="navigationStore.setModal('objectModal')">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="navigationStore.setDialog('copyPublication')">
+				<NcActionButton
+					closeAfterClick
+					@click="navigationStore.setDialog('copyPublication')">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton v-if="objectStore.getActiveObject('publication')['@self']?.published === null"
-					close-after-click
+				<NcActionButton
+					v-if="
+						objectStore.getActiveObject('publication')['@self']
+							?.published === null
+					"
+					closeAfterClick
 					@click="publishPublication('publish')">
 					<template #icon>
 						<Publish :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Publish') }}
 				</NcActionButton>
-				<NcActionButton v-if="objectStore.getActiveObject('publication')['@self']?.published"
-					close-after-click
+				<NcActionButton
+					v-if="
+						objectStore.getActiveObject('publication')['@self']
+							?.published
+					"
+					closeAfterClick
 					@click="publishPublication('depublish')">
 					<template #icon>
 						<PublishOff :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Depublish') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="navigationStore.setDialog('downloadPublication')">
+				<NcActionButton
+					closeAfterClick
+					@click="navigationStore.setDialog('downloadPublication')">
 					<template #icon>
 						<Download :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Download') }}
 				</NcActionButton>
-				<NcActionButton close-after-click disabled>
+				<NcActionButton closeAfterClick disabled>
 					<template #icon>
 						<FolderOutline :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Add attachment') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: 'Publicatie' })">
+				<NcActionButton
+					closeAfterClick
+					@click="
+						navigationStore.setDialog('deleteObject', {
+							objectType: 'publication',
+							dialogTitle: 'Publicatie',
+						})
+					">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
@@ -125,8 +169,11 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				</div>
 				<div v-if="publication.portal">
 					<b>{{ t('opencatalogi', 'Portal:') }}</b>
-					<span><a target="_blank" :href="publication.portal">{{
-						publication.portal || '-' }}</a></span>
+					<span
+						><a target="_blank" :href="publication.portal">{{
+							publication.portal || '-'
+						}}</a></span
+					>
 				</div>
 				<div v-if="publication.image">
 					<b>{{ t('opencatalogi', 'Image:') }}</b>
@@ -134,7 +181,11 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				</div>
 				<div v-if="publication.featured">
 					<b>{{ t('opencatalogi', 'Featured:') }}</b>
-					<span>{{ publication.featured ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') }}</span>
+					<span>{{
+						publication.featured
+							? t('opencatalogi', 'Yes')
+							: t('opencatalogi', 'No')
+					}}</span>
 				</div>
 				<div v-if="publication.license">
 					<b>{{ t('opencatalogi', 'License:') }}</b>
@@ -146,7 +197,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				</div>
 				<div v-if="publication.published">
 					<b>{{ t('opencatalogi', 'Published:') }}</b>
-					<span>{{ new Date(publication.published).toLocaleDateString() || '-' }}</span>
+					<span>{{
+						new Date(publication.published).toLocaleDateString() || '-'
+					}}</span>
 				</div>
 				<div v-if="publication.modified">
 					<b>{{ t('opencatalogi', 'Modified:') }}</b>
@@ -158,11 +211,18 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				</div>
 				<div v-if="publication.catalogi">
 					<b>{{ t('opencatalogi', 'Catalog:') }}</b>
-					<span v-if="catalogiLoading">{{ t('opencatalogi', 'Loading...') }}</span>
+					<span v-if="catalogiLoading">{{
+						t('opencatalogi', 'Loading...')
+					}}</span>
 					<div v-if="!catalogiLoading" class="buttonLinkContainer">
 						<span>{{ catalogi?.title }}</span>
 						<NcActions>
-							<NcActionLink :aria-label="t('opencatalogi', 'Go to {title}', { title: catalogi?.title })"
+							<NcActionLink
+								:aria-label="
+									t('opencatalogi', 'Go to {title}', {
+										title: catalogi?.title,
+									})
+								"
 								:name="catalogi?.title"
 								@click="goToCatalogi()">
 								<template #icon>
@@ -198,11 +258,12 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 			</div> -->
 		</div>
 		<div class="tabContainer">
-			<AppTabs content-class="mt-3" justified>
+			<AppTabs contentClass="mt-3" justified>
 				<AppTab :title="t('opencatalogi', 'Attachments')" active>
 					<div class="tabPanel">
 						<div class="buttonsContainer">
-							<NcButton variant="primary"
+							<NcButton
+								variant="primary"
 								class="fullWidthButton"
 								:aria-label="t('opencatalogi', 'Add attachment')"
 								@click="addAttachment">
@@ -211,162 +272,377 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								</template>
 								{{ t('opencatalogi', 'Add attachment') }}
 							</NcButton>
-							<NcButton variant="secondary"
+							<NcButton
+								variant="secondary"
 								:aria-label="t('opencatalogi', 'Open folder')"
 								@click="openFolder(publication?.['@self']?.folder)">
 								<template #icon>
 									<FolderOutline :size="20" />
 								</template>
 							</NcButton>
-							<NcActions :disabled="objectStore.isLoading('publicationAttachments')"
+							<NcActions
+								:disabled="
+									objectStore.isLoading('publicationAttachments')
+								"
 								:primary="true"
 								class="checkboxListActionButton"
-								:menu-name="objectStore.isLoading('publicationAttachments') ? t('opencatalogi', 'Loading...') : t('opencatalogi', 'Actions')"
+								:menuName="
+									objectStore.isLoading('publicationAttachments')
+										? t('opencatalogi', 'Loading...')
+										: t('opencatalogi', 'Actions')
+								"
 								:inline="0"
-								:title="t('opencatalogi', 'Actions you can perform on this publication')">
+								:title="
+									t(
+										'opencatalogi',
+										'Actions you can perform on this publication',
+									)
+								">
 								<template #icon>
 									<span>
-										<NcLoadingIcon v-if="objectStore.isLoading('publicationAttachments')" :size="20" appearance="dark" />
-										<DotsHorizontal v-if="!objectStore.isLoading('publicationAttachments')" :size="20" />
+										<NcLoadingIcon
+											v-if="
+												objectStore.isLoading(
+													'publicationAttachments',
+												)
+											"
+											:size="20"
+											appearance="dark" />
+										<DotsHorizontal
+											v-if="
+												!objectStore.isLoading(
+													'publicationAttachments',
+												)
+											"
+											:size="20" />
 									</span>
 								</template>
-								<NcActionButton close-after-click @click="selectAllAttachments('published')">
+								<NcActionButton
+									closeAfterClick
+									@click="selectAllAttachments('published')">
 									<template #icon>
-										<SelectAllIcon v-if="!allPublishedSelected" :size="20" />
+										<SelectAllIcon
+											v-if="!allPublishedSelected"
+											:size="20" />
 										<SelectRemove v-else :size="20" />
 									</template>
-									{{ !allPublishedSelected ? t('opencatalogi', 'Select all published attachments') : t('opencatalogi', 'Deselect all published attachments') }}
+									{{
+										!allPublishedSelected
+											? t(
+													'opencatalogi',
+													'Select all published attachments',
+												)
+											: t(
+													'opencatalogi',
+													'Deselect all published attachments',
+												)
+									}}
 								</NcActionButton>
-								<NcActionButton close-after-click @click="selectAllAttachments('unpublished')">
+								<NcActionButton
+									closeAfterClick
+									@click="selectAllAttachments('unpublished')">
 									<template #icon>
-										<SelectAllIcon v-if="!allUnpublishedSelected" :size="20" />
+										<SelectAllIcon
+											v-if="!allUnpublishedSelected"
+											:size="20" />
 										<SelectRemove v-else :size="20" />
 									</template>
-									{{ !allUnpublishedSelected ? t('opencatalogi', 'Select all unpublished attachments') : t('opencatalogi', 'Deselect all unpublished attachments') }}
+									{{
+										!allUnpublishedSelected
+											? t(
+													'opencatalogi',
+													'Select all unpublished attachments',
+												)
+											: t(
+													'opencatalogi',
+													'Deselect all unpublished attachments',
+												)
+									}}
 								</NcActionButton>
-								<NcActionButton v-if="selectedUnpublishedCount > 0" close-after-click @click="bulkPublish">
+								<NcActionButton
+									v-if="selectedUnpublishedCount > 0"
+									closeAfterClick
+									@click="bulkPublish">
 									<template #icon>
 										<Publish :size="20" />
 									</template>
-									{{ selectedUnpublishedCount === 1 ? t('opencatalogi', 'Publish {count} attachment', { count: selectedUnpublishedCount }) : t('opencatalogi', 'Publish {count} attachments', { count: selectedUnpublishedCount }) }}
+									{{
+										selectedUnpublishedCount === 1
+											? t(
+													'opencatalogi',
+													'Publish {count} attachment',
+													{
+														count: selectedUnpublishedCount,
+													},
+												)
+											: t(
+													'opencatalogi',
+													'Publish {count} attachments',
+													{
+														count: selectedUnpublishedCount,
+													},
+												)
+									}}
 								</NcActionButton>
-								<NcActionButton v-if="selectedPublishedCount > 0" close-after-click @click="bulkDepublish">
+								<NcActionButton
+									v-if="selectedPublishedCount > 0"
+									closeAfterClick
+									@click="bulkDepublish">
 									<template #icon>
 										<PublishOff :size="20" />
 									</template>
-									{{ selectedPublishedCount === 1 ? t('opencatalogi', 'Depublish {count} attachment', { count: selectedPublishedCount }) : t('opencatalogi', 'Depublish {count} attachments', { count: selectedPublishedCount }) }}
+									{{
+										selectedPublishedCount === 1
+											? t(
+													'opencatalogi',
+													'Depublish {count} attachment',
+													{
+														count: selectedPublishedCount,
+													},
+												)
+											: t(
+													'opencatalogi',
+													'Depublish {count} attachments',
+													{
+														count: selectedPublishedCount,
+													},
+												)
+									}}
 								</NcActionButton>
-								<NcActionButton v-if="selectedAttachments.length > 0" close-after-click @click="bulkDeleteAttachments">
+								<NcActionButton
+									v-if="selectedAttachments.length > 0"
+									closeAfterClick
+									@click="bulkDeleteAttachments">
 									<template #icon>
 										<Delete :size="20" />
 									</template>
-									{{ selectedAttachmentsEntities.length === 1 ? t('opencatalogi', 'Delete {count} attachment', { count: selectedAttachmentsEntities.length }) : t('opencatalogi', 'Delete {count} attachments', { count: selectedAttachmentsEntities.length }) }}
+									{{
+										selectedAttachmentsEntities.length === 1
+											? t(
+													'opencatalogi',
+													'Delete {count} attachment',
+													{
+														count: selectedAttachmentsEntities.length,
+													},
+												)
+											: t(
+													'opencatalogi',
+													'Delete {count} attachments',
+													{
+														count: selectedAttachmentsEntities.length,
+													},
+												)
+									}}
 								</NcActionButton>
 							</NcActions>
 						</div>
 
 						<div v-if="publicationAttachments?.length > 0">
-							<div v-for="(attachment, i) in pagedAttachments" :key="`${attachment}${i}`" class="checkedItem">
+							<div
+								v-for="(attachment, i) in pagedAttachments"
+								:key="`${attachment}${i}`"
+								class="checkedItem">
 								<NcCheckboxRadioSwitch
-									:aria-label="t('opencatalogi', 'Select attachment {title}', { title: attachment?.title })"
-									:model-value="selectedAttachments.includes(attachment.id)"
-									@update:model-value="toggleSelection(attachment)" />
+									:aria-label="
+										t(
+											'opencatalogi',
+											'Select attachment {title}',
+											{ title: attachment?.title },
+										)
+									"
+									:modelValue="
+										selectedAttachments.includes(attachment.id)
+									"
+									@update:modelValue="
+										toggleSelection(attachment)
+									" />
 
 								<NcListItem
 									:class="`${attachment?.title === editingTags ? 'editingTags' : ''}`"
 									:name="attachment?.title"
 									:bold="false"
-									:active="objectStore.getActiveObject('publicationAttachment')?.id === attachment.id"
-									:force-display-actions="true"
+									:active="
+										objectStore.getActiveObject(
+											'publicationAttachment',
+										)?.id === attachment.id
+									"
+									:forceDisplayActions="true"
 									@click="setActiveAttachment(attachment)">
 									<template #icon>
-										<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id) && (depublishLoading.includes(attachment.id) || publishLoading.includes(attachment.id) || saveTagsLoading.includes(attachment.id))" :size="44" />
-										<ExclamationThick v-else-if="!attachment.accessUrl || !attachment.downloadUrl" class="warningIcon" :size="44" />
-										<FileOutline v-else
+										<NcLoadingIcon
+											v-if="
+												fileIdsLoading.includes(
+													attachment.id,
+												)
+												&& (depublishLoading.includes(
+													attachment.id,
+												)
+													|| publishLoading.includes(
+														attachment.id,
+													)
+													|| saveTagsLoading.includes(
+														attachment.id,
+													))
+											"
+											:size="44" />
+										<ExclamationThick
+											v-else-if="
+												!attachment.accessUrl
+												|| !attachment.downloadUrl
+											"
+											class="warningIcon"
+											:size="44" />
+										<FileOutline
+											v-else
 											class="publishedIcon"
-											disable-menu
+											disableMenu
 											:size="44" />
 									</template>
 
 									<template #details>
-										<span>{{ formatFileSize(attachment?.size) }}</span>
+										<span>{{
+											formatFileSize(attachment?.size)
+										}}</span>
 									</template>
 									<template #indicator>
-										<div v-if="editingTags !== attachment.title" class="fileLabelsContainer">
-											<NcCounterBubble v-for="label of attachment.labels" :key="label">
+										<div
+											v-if="editingTags !== attachment.title"
+											class="fileLabelsContainer">
+											<NcCounterBubble
+												v-for="label of attachment.labels"
+												:key="label">
 												{{ label }}
 											</NcCounterBubble>
 										</div>
-										<div v-if="editingTags === attachment.title" class="editTagsContainer">
+										<div
+											v-if="editingTags === attachment.title"
+											class="editTagsContainer">
 											<NcSelect
 												v-model="editedTags"
 												class="editTagsSelect"
-												:disabled="saveTagsLoading.includes(attachment.id)"
+												:disabled="
+													saveTagsLoading.includes(
+														attachment.id,
+													)
+												"
 												:taggable="true"
 												:multiple="true"
-												:aria-label-combobox="labelOptionsEdit.inputLabel"
+												:aria-label-combobox="
+													labelOptionsEdit.inputLabel
+												"
 												:options="labelOptionsEdit.options"
 												@option:created="addNewTag" />
 											<NcButton
-												:title="t('opencatalogi', 'Save labels')"
+												:title="
+													t('opencatalogi', 'Save labels')
+												"
 												class="editTagsButton"
 												variant="primary"
-												:aria-label="t('opencatalogi', 'Save tags for {title}', { title: attachment.title })"
-												@click="saveTags(attachment, editedTags)">
+												:aria-label="
+													t(
+														'opencatalogi',
+														'Save tags for {title}',
+														{ title: attachment.title },
+													)
+												"
+												@click="
+													saveTags(attachment, editedTags)
+												">
 												<template #icon>
-													<ContentSaveOutline v-if="!saveTagsLoading.includes(attachment.id)" :size="20" />
-													<NcLoadingIcon v-if="saveTagsLoading.includes(attachment.id)" :size="20" />
+													<ContentSaveOutline
+														v-if="
+															!saveTagsLoading.includes(
+																attachment.id,
+															)
+														"
+														:size="20" />
+													<NcLoadingIcon
+														v-if="
+															saveTagsLoading.includes(
+																attachment.id,
+															)
+														"
+														:size="20" />
 												</template>
 											</NcButton>
 										</div>
 									</template>
 									<template #subname>
-										{{ attachment?.published ? new Date(attachment?.published).toLocaleDateString() : t('opencatalogi', 'Unpublished') }} - {{ attachment?.type || t('opencatalogi', 'No type') }}
+										{{
+											attachment?.published
+												? new Date(
+														attachment?.published,
+													).toLocaleDateString()
+												: t('opencatalogi', 'Unpublished')
+										}}
+										-
+										{{
+											attachment?.type
+											|| t('opencatalogi', 'No type')
+										}}
 									</template>
 									<template #actions>
-										<NcActionButton close-after-click @click="openFile(attachment)">
+										<NcActionButton
+											closeAfterClick
+											@click="openFile(attachment)">
 											<template #icon>
 												<OpenInNew :size="20" />
 											</template>
 											{{ t('opencatalogi', 'View file') }}
 										</NcActionButton>
-										<NcActionButton v-if="!attachment.published"
-											close-after-click
+										<NcActionButton
+											v-if="!attachment.published"
+											closeAfterClick
 											@click="publishFile(attachment)">
 											<template #icon>
 												<Publish :size="20" />
 											</template>
 											{{ t('opencatalogi', 'Publish') }}
 										</NcActionButton>
-										<NcActionButton v-if="attachment.published"
-											close-after-click
+										<NcActionButton
+											v-if="attachment.published"
+											closeAfterClick
 											@click="depublishFile(attachment)">
 											<template #icon>
 												<PublishOff :size="20" />
 											</template>
 											{{ t('opencatalogi', 'Depublish') }}
 										</NcActionButton>
-										<NcActionButton close-after-click @click="deleteFile(attachment)">
+										<NcActionButton
+											closeAfterClick
+											@click="deleteFile(attachment)">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
 											{{ t('opencatalogi', 'Delete') }}
 										</NcActionButton>
-										<NcActionButton v-if="editingTags !== attachment.title"
-											close-after-click
+										<NcActionButton
+											v-if="editingTags !== attachment.title"
+											closeAfterClick
 											@click="editTags(attachment)">
 											<template #icon>
 												<TagEdit :size="20" />
 											</template>
 											{{ t('opencatalogi', 'Edit tags') }}
 										</NcActionButton>
-										<NcActionButton v-if="editingTags === attachment.title"
-											close-after-click
-											@click="editingTags = null; editedTags = []">
+										<NcActionButton
+											v-if="editingTags === attachment.title"
+											closeAfterClick
+											@click="
+												() => {
+													editingTags = null
+													editedTags = []
+												}
+											">
 											<template #icon>
 												<TagOff :size="20" />
 											</template>
-											{{ t('opencatalogi', 'Stop editing tags') }}
+											{{
+												t(
+													'opencatalogi',
+													'Stop editing tags',
+												)
+											}}
 										</NcActionButton>
 									</template>
 								</NcListItem>
@@ -374,13 +650,15 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 
 							<div class="paginationContainer">
 								<CnPagination
-									:current-page="currentPage"
-									:total-pages="attachmentsTotalPages"
-									:total-items="attachmentsTotal"
-									:current-page-size="limit"
-									:page-size-options="pageSizeOptions"
-									@page-changed="onAttachmentsPageChanged"
-									@page-size-changed="onAttachmentsPageSizeChanged" />
+									:currentPage="currentPage"
+									:totalPages="attachmentsTotalPages"
+									:totalItems="attachmentsTotal"
+									:currentPageSize="limit"
+									:pageSizeOptions="pageSizeOptions"
+									@pageChanged="onAttachmentsPageChanged"
+									@pageSizeChanged="
+										onAttachmentsPageSizeChanged
+									" />
 							</div>
 						</div>
 
@@ -391,11 +669,17 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						</div>
 
 						<div
-							v-if="publicationAttachments?.length !== 0 && !publicationAttachments?.length > 0">
-							<NcLoadingIcon :size="64"
+							v-if="
+								publicationAttachments?.length !== 0
+								&& !publicationAttachments?.length > 0
+							">
+							<NcLoadingIcon
+								:size="64"
 								class="loadingIcon"
 								appearance="dark"
-								:name="t('opencatalogi', 'Attachments are loading')" />
+								:name="
+									t('opencatalogi', 'Attachments are loading')
+								" />
 						</div>
 					</div>
 				</AppTab>
@@ -485,69 +769,148 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<AppTab :title="t('opencatalogi', 'Themes')">
 					<div class="tabPanel">
 						<div class="buttonsContainer">
-							<NcButton variant="primary"
+							<NcButton
+								variant="primary"
 								class="fullWidthButton"
 								:aria-label="t('opencatalogi', 'Add theme')"
-								@click="navigationStore.setModal('addPublicationTheme')">
+								@click="
+									navigationStore.setModal('addPublicationTheme')
+								">
 								<template #icon>
 									<Plus :size="20" />
 								</template>
 								{{ t('opencatalogi', 'Add theme') }}
 							</NcButton>
-							<NcActions :disabled="objectStore.isLoading('themes')"
+							<NcActions
+								:disabled="objectStore.isLoading('themes')"
 								:primary="true"
 								class="checkboxListActionButton"
-								:menu-name="objectStore.isLoading('themes') ? t('opencatalogi', 'Loading...') : t('opencatalogi', 'Actions')"
+								:menuName="
+									objectStore.isLoading('themes')
+										? t('opencatalogi', 'Loading...')
+										: t('opencatalogi', 'Actions')
+								"
 								:inline="0"
-								:title="t('opencatalogi', 'Actions you can perform on this publication')">
+								:title="
+									t(
+										'opencatalogi',
+										'Actions you can perform on this publication',
+									)
+								">
 								<template #icon>
 									<span>
-										<NcLoadingIcon v-if="objectStore.isLoading('themes')" :size="20" appearance="dark" />
-										<DotsHorizontal v-if="!objectStore.isLoading('themes')" :size="20" />
+										<NcLoadingIcon
+											v-if="objectStore.isLoading('themes')"
+											:size="20"
+											appearance="dark" />
+										<DotsHorizontal
+											v-if="!objectStore.isLoading('themes')"
+											:size="20" />
 									</span>
 								</template>
-								<NcActionButton close-after-click @click="selectAllThemes()">
+								<NcActionButton
+									closeAfterClick
+									@click="selectAllThemes()">
 									<template #icon>
-										<SelectAllIcon v-if="!allThemesSelected" :size="20" />
+										<SelectAllIcon
+											v-if="!allThemesSelected"
+											:size="20" />
 										<SelectRemove v-else :size="20" />
 									</template>
-									{{ !allThemesSelected ? t('opencatalogi', 'Select all themes') : t('opencatalogi', 'Deselect all themes') }}
+									{{
+										!allThemesSelected
+											? t('opencatalogi', 'Select all themes')
+											: t(
+													'opencatalogi',
+													'Deselect all themes',
+												)
+									}}
 								</NcActionButton>
-								<NcActionButton close-after-click :disabled="selectedThemes.length === 0" @click="bulkDeleteThemes">
+								<NcActionButton
+									closeAfterClick
+									:disabled="selectedThemes.length === 0"
+									@click="bulkDeleteThemes">
 									<template #icon>
 										<Delete :size="20" />
 									</template>
-									{{ selectedThemes.length === 1 ? t('opencatalogi', 'Delete {count} theme', { count: selectedThemes.length }) : t('opencatalogi', 'Delete {count} themes', { count: selectedThemes.length }) }}
+									{{
+										selectedThemes.length === 1
+											? t(
+													'opencatalogi',
+													'Delete {count} theme',
+													{ count: selectedThemes.length },
+												)
+											: t(
+													'opencatalogi',
+													'Delete {count} themes',
+													{ count: selectedThemes.length },
+												)
+									}}
 								</NcActionButton>
 							</NcActions>
 						</div>
 						<div v-if="filteredThemes?.length || missingThemes?.length">
-							<div v-for="(value, key, i) in filteredThemes" :key="`${value.id}${i}`" class="checkedItem">
+							<div
+								v-for="(value, key, i) in filteredThemes"
+								:key="`${value.id}${i}`"
+								class="checkedItem">
 								<NcCheckboxRadioSwitch
-									:aria-label="t('opencatalogi', 'Select theme {title}', { title: value.title })"
-									:model-value="selectedThemes.includes(value.id)"
-									@update:model-value="toggleThemeSelection(value)" />
+									:aria-label="
+										t('opencatalogi', 'Select theme {title}', {
+											title: value.title,
+										})
+									"
+									:modelValue="selectedThemes.includes(value.id)"
+									@update:modelValue="
+										toggleThemeSelection(value)
+									" />
 								<NcListItem
 									:name="value.title"
 									:bold="false"
-									:force-display-actions="true">
+									:forceDisplayActions="true">
 									<template #icon>
 										<ShapeOutline
-											:class="objectStore.getActiveObject('theme')?.id === value.id && 'selectedZaakIcon'"
-											disable-menu
+											:class="
+												objectStore.getActiveObject('theme')
+													?.id === value.id
+												&& 'selectedZaakIcon'
+											"
+											disableMenu
 											:size="44" />
 									</template>
 									<template #subname>
 										{{ value.summary }}
 									</template>
 									<template #actions>
-										<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', value); $router.push('/themes')">
+										<NcActionButton
+											closeAfterClick
+											@click="
+												() => {
+													objectStore.setActiveObject(
+														'theme',
+														value,
+													)
+													$router.push('/themes')
+												}
+											">
 											<template #icon>
 												<OpenInApp :size="20" />
 											</template>
 											{{ t('opencatalogi', 'View') }}
 										</NcActionButton>
-										<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', value); navigationStore.setDialog('deletePublicationThemeDialog')">
+										<NcActionButton
+											closeAfterClick
+											@click="
+												() => {
+													objectStore.setActiveObject(
+														'theme',
+														value,
+													)
+													navigationStore.setDialog(
+														'deletePublicationThemeDialog',
+													)
+												}
+											">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -556,61 +919,106 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									</template>
 								</NcListItem>
 							</div>
-							<NcListItem v-for="(value, key, i) in missingThemes"
+							<NcListItem
+								v-for="(value, key, i) in missingThemes"
 								:key="`${value}${i}`"
-								:name="t('opencatalogi', 'Theme {name}', { name: value })"
+								:name="
+									t('opencatalogi', 'Theme {name}', {
+										name: value,
+									})
+								"
 								:bold="false"
-								:force-display-actions="true">
+								:forceDisplayActions="true">
 								<template #icon>
-									<Alert disable-menu
-										:size="44" />
+									<Alert disableMenu :size="44" />
 								</template>
 								<template #subname>
-									{{ t('opencatalogi', 'Theme {name} does not exist, it is recommended to delete it from this publication.', { name: value }) }}
+									{{
+										t(
+											'opencatalogi',
+											'Theme {name} does not exist, it is recommended to delete it from this publication.',
+											{ name: value },
+										)
+									}}
 								</template>
 								<template #actions>
-									<NcActionButton close-after-click :disabled="deleteThemeLoading" @click="deleteMissingTheme(value)">
+									<NcActionButton
+										closeAfterClick
+										:disabled="deleteThemeLoading"
+										@click="deleteMissingTheme(value)">
 										<template #icon>
 											<ShapeOutline
-												:class="themeStore.themeItem?.id === value.id && 'selectedZaakIcon'"
-												disable-menu
+												:class="
+													themeStore.themeItem?.id
+														=== value.id
+													&& 'selectedZaakIcon'
+												"
+												disableMenu
 												:size="44" />
 										</template>
 										<template #subname>
 											{{ value.summary }}
 										</template>
 										<template #actions>
-											<NcActionButton @click="themeStore.setThemeItem(value); $router.push('/themes')">
+											<NcActionButton
+												@click="
+													() => {
+														themeStore.setThemeItem(
+															value,
+														)
+														$router.push('/themes')
+													}
+												">
 												<template #icon>
 													<OpenInApp :size="20" />
 												</template>
 												{{ t('opencatalogi', 'View') }}
 											</NcActionButton>
-											<NcActionButton @click="themeStore.setThemeItem(value); navigationStore.setDialog('deletePublicationThemeDialog')">
+											<NcActionButton
+												@click="
+													() => {
+														themeStore.setThemeItem(
+															value,
+														)
+														navigationStore.setDialog(
+															'deletePublicationThemeDialog',
+														)
+													}
+												">
 												<template #icon>
 													<Delete :size="20" />
 												</template>
 												{{ t('opencatalogi', 'Delete') }}
 											</NcActionButton>
 										</template>
-									</ncactionbutton>
+									</NcActionButton>
 								</template>
 							</NcListItem>
 						</div>
-						<NcListItem v-for="(value, key, i) in missingThemes"
+						<NcListItem
+							v-for="(value, key, i) in missingThemes"
 							:key="`${value}${i}`"
-							:name="t('opencatalogi', 'Theme {name}', { name: value })"
+							:name="
+								t('opencatalogi', 'Theme {name}', { name: value })
+							"
 							:bold="false"
-							:force-display-actions="true">
+							:forceDisplayActions="true">
 							<template #icon>
-								<Alert disable-menu
-									:size="44" />
+								<Alert disableMenu :size="44" />
 							</template>
 							<template #subname>
-								{{ t('opencatalogi', 'Theme {name} does not exist, it is recommended to delete it from this publication.', { name: value }) }}
+								{{
+									t(
+										'opencatalogi',
+										'Theme {name} does not exist, it is recommended to delete it from this publication.',
+										{ name: value },
+									)
+								}}
 							</template>
 							<template #actions>
-								<NcActionButton :disabled="deleteThemeLoading" @click="deleteMissingTheme(value)">
+								<NcActionButton
+									:disabled="deleteThemeLoading"
+									@click="deleteMissingTheme(value)">
 									<template #icon>
 										<Delete :size="20" />
 									</template>
@@ -619,7 +1027,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							</template>
 						</NcListItem>
 					</div>
-					<div v-if="!filteredThemes?.length && !missingThemes?.length" class="tabPanel">
+					<div
+						v-if="!filteredThemes?.length && !missingThemes?.length"
+						class="tabPanel">
 						<b class="emptyStateMessage">
 							{{ t('opencatalogi', 'No themes found') }}
 						</b>
@@ -628,17 +1038,26 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<AppTab :title="t('opencatalogi', 'Logging')">
 					<table width="100%">
 						<tr>
-							<th scope="col"><b>{{ t('opencatalogi','Timestamp') }}</b></th>
-							<th scope="col"><b>{{ t('opencatalogi','User') }}</b></th>
-							<th scope="col"><b>{{ t('opencatalogi','Action') }}</b></th>
-							<th scope="col"><b>{{ t('opencatalogi','Details') }}</b></th>
+							<th scope="col">
+								<b>{{ t('opencatalogi', 'Timestamp') }}</b>
+							</th>
+							<th scope="col">
+								<b>{{ t('opencatalogi', 'User') }}</b>
+							</th>
+							<th scope="col">
+								<b>{{ t('opencatalogi', 'Action') }}</b>
+							</th>
+							<th scope="col">
+								<b>{{ t('opencatalogi', 'Details') }}</b>
+							</th>
 						</tr>
 						<tr>
 							<td>18-07-2024 11:55:21</td>
 							<td>Ruben van der Linde</td>
 							<td>{{ t('opencatalogi', 'Created') }}</td>
 							<td>
-								<NcButton @click="navigationStore.setDialog('viewLog')">
+								<NcButton
+									@click="navigationStore.setDialog('viewLog')">
 									<template #icon>
 										<TimelineQuestionOutline :size="20" />
 									</template>
@@ -660,23 +1079,42 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					-->
 					<dl class="accessPanel">
 						<div class="accessPanel__row">
-							<dt>{{ prive ? t('opencatalogi', 'This publication is NOT publicly accessible') : t('opencatalogi', 'This publication is publicly accessible') }}</dt>
+							<dt>
+								{{
+									prive
+										? t(
+												'opencatalogi',
+												'This publication is NOT publicly accessible',
+											)
+										: t(
+												'opencatalogi',
+												'This publication is publicly accessible',
+											)
+								}}
+							</dt>
 							<dd>
 								<NcButton @click="prive = !prive">
 									<template #icon>
-										<LockOpenVariantOutline v-if="!prive" :size="20" />
+										<LockOpenVariantOutline
+											v-if="!prive"
+											:size="20" />
 										<LockOutline v-if="prive" :size="20" />
 									</template>
-									<span v-if="!prive">{{ t('opencatalogi', 'Make private') }}</span>
-									<span v-if="prive">{{ t('opencatalogi', 'Make public') }}</span>
+									<span v-if="!prive">{{
+										t('opencatalogi', 'Make private')
+									}}</span>
+									<span v-if="prive">{{
+										t('opencatalogi', 'Make public')
+									}}</span>
 								</NcButton>
 							</dd>
 						</div>
 						<div v-if="prive" class="accessPanel__row">
 							<dt>{{ t('opencatalogi', 'User groups') }}</dt>
 							<dd>
-								<NcSelectTags v-model="userGroups"
-									:input-label="t('opencatalogi', 'user groups')"
+								<NcSelectTags
+									v-model="userGroups"
+									:inputLabel="t('opencatalogi', 'user groups')"
 									:multiple="true" />
 							</dd>
 						</div>
@@ -684,8 +1122,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				</AppTab>
 				<AppTab :title="t('opencatalogi', 'Statistics')">
 					<div class="tabPanel">
-						<PublicationStatsPanel v-if="publication && publication.id"
-							:publication-id="String(publication.id)" />
+						<PublicationStatsPanel
+							v-if="publication && publication.id"
+							:publicationId="String(publication.id)" />
 					</div>
 				</AppTab>
 			</AppTabs>
@@ -694,35 +1133,46 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import { NcActionButton, NcActions, NcButton, NcListItem, NcLoadingIcon, NcSelect, NcSelectTags, NcActionLink, NcCounterBubble, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { CnPagination } from '@conduction/nextcloud-vue'
-import AppTabs from '../../components/tabs/AppTabs.vue'
-import AppTab from '../../components/tabs/AppTab.vue'
+import {
+	NcActionButton,
+	NcActionLink,
+	NcActions,
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcCounterBubble,
+	NcListItem,
+	NcLoadingIcon,
+	NcSelect,
+	NcSelectTags,
+} from '@nextcloud/vue'
+import Alert from 'vue-material-design-icons/Alert.vue'
 // Icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
+import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Download from 'vue-material-design-icons/Download.vue'
+import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
+import FileOutline from 'vue-material-design-icons/FileOutline.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 import LockOpenVariantOutline from 'vue-material-design-icons/LockOpenVariantOutline.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
+import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
-import TimelineQuestionOutline from 'vue-material-design-icons/TimelineQuestionOutline.vue'
-import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
-import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
-import Alert from 'vue-material-design-icons/Alert.vue'
-import FileOutline from 'vue-material-design-icons/FileOutline.vue'
-import ShapeOutline from 'vue-material-design-icons/ShapeOutline.vue'
-import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import TagEdit from 'vue-material-design-icons/TagEdit.vue'
-import TagOff from 'vue-material-design-icons/TagOff.vue'
-import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import SelectAllIcon from 'vue-material-design-icons/SelectAll.vue'
 import SelectRemove from 'vue-material-design-icons/SelectRemove.vue'
+import ShapeOutline from 'vue-material-design-icons/ShapeOutline.vue'
+import TagEdit from 'vue-material-design-icons/TagEdit.vue'
+import TagOff from 'vue-material-design-icons/TagOff.vue'
+import TimelineQuestionOutline from 'vue-material-design-icons/TimelineQuestionOutline.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
 import PublicationStatsPanel from './PublicationStatsPanel.vue'
 
 export default {
@@ -743,6 +1193,7 @@ export default {
 		CnPagination,
 		PublicationStatsPanel,
 	},
+
 	data() {
 		return {
 			test: false,
@@ -771,9 +1222,11 @@ export default {
 				inputLabel: 'Labels',
 				multiple: true,
 			},
+
 			editingTags: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * All attachments of the active publication.
@@ -793,6 +1246,7 @@ export default {
 		publicationAttachments() {
 			return objectStore.getCollection('publicationAttachments').results || []
 		},
+
 		/**
 		 * Total number of attachments across all pages.
 		 *
@@ -806,6 +1260,7 @@ export default {
 		attachmentsTotal() {
 			return this.publicationAttachments.length
 		},
+
 		/**
 		 * Number of attachment pages at the current page size.
 		 *
@@ -815,6 +1270,7 @@ export default {
 		attachmentsTotalPages() {
 			return Math.max(1, Math.ceil(this.attachmentsTotal / this.limit))
 		},
+
 		/**
 		 * The attachments visible on the current page.
 		 *
@@ -825,6 +1281,7 @@ export default {
 			const start = (this.currentPage - 1) * this.limit
 			return this.publicationAttachments.slice(start, start + this.limit)
 		},
+
 		/**
 		 * Page-size choices for `CnPagination`, which expects `{ value, label }`
 		 * entries rather than the bare numbers held in `limitOptions`.
@@ -833,52 +1290,78 @@ export default {
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		pageSizeOptions() {
-			return this.limitOptions.options.map((size) => ({ value: size, label: String(size) }))
+			return this.limitOptions.options.map((size) => ({
+				value: size,
+				label: String(size),
+			}))
 		},
+
 		publication() {
 			return objectStore.getActiveObject('publication')
 		},
+
 		registerId() {
 			return this.publication['@self'].register
 		},
+
 		schemaId() {
 			return this.publication['@self'].schema
 		},
+
 		publicationId() {
 			return this.publication.id
 		},
+
 		filteredThemes() {
 			const themes = objectStore.getCollection('theme').results
-			return themes.filter((theme) => this.publication?.themes?.includes(theme.id))
+			return themes.filter((theme) =>
+				this.publication?.themes?.includes(theme.id),
+			)
 		},
-		missingThemes() { // themes (id's)- which are on the publication but do not exist on the themeList
+
+		missingThemes() {
+			// themes (id's)- which are on the publication but do not exist on the themeList
 			const themes = objectStore.getCollection('theme').results
 
-			return this.publication?.themes?.filter((themeId) => !themes.map((theme) => theme.id).includes(themeId))
+			return this.publication?.themes?.filter(
+				(themeId) => !themes.map((theme) => theme.id).includes(themeId),
+			)
 		},
+
 		allPublishedSelected() {
-			const published = this.publicationAttachments?.filter(item => !!item.published)
-				.map(item => item.id) || []
+			const published =
+				this.publicationAttachments
+					?.filter((item) => !!item.published)
+					.map((item) => item.id) || []
 
 			if (!published.length) {
 				return false
 			}
-			return published.every(pubId => this.selectedAttachments.includes(pubId))
+			return published.every((pubId) =>
+				this.selectedAttachments.includes(pubId),
+			)
 		},
+
 		allUnpublishedSelected() {
-			const unpublished = this.publicationAttachments?.filter(item => !item.published)
-				.map(item => item.id) || []
+			const unpublished =
+				this.publicationAttachments
+					?.filter((item) => !item.published)
+					.map((item) => item.id) || []
 
 			if (!unpublished.length) {
 				return false
 			}
-			return unpublished.every(unpubId => this.selectedAttachments.includes(unpubId))
+			return unpublished.every((unpubId) =>
+				this.selectedAttachments.includes(unpubId),
+			)
 		},
 	},
+
 	watch: {
 		// React to route id changes by delegating to a named method
 		'$route.params.id': 'onRouteIdChange',
 	},
+
 	mounted() {
 		// Ensure the active publication is loaded based on the router param, then load attachments
 		this.syncWithRoute()
@@ -886,13 +1369,18 @@ export default {
 			this.labelOptionsEdit.options = data
 		})
 	},
+
 	updated() {
 		const currentPublicationId = objectStore.getActiveObject('publication')?.id
-		if (currentPublicationId && currentPublicationId !== this.previousPublicationId) {
+		if (
+			currentPublicationId
+			&& currentPublicationId !== this.previousPublicationId
+		) {
 			this.previousPublicationId = currentPublicationId
 			catalogStore.getPublicationAttachments()
 		}
 	},
+
 	methods: {
 		/**
 		 * Move the attachment pager to another page.
@@ -907,8 +1395,12 @@ export default {
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		onAttachmentsPageChanged(page) {
-			this.currentPage = Math.min(Math.max(page, 1), this.attachmentsTotalPages)
+			this.currentPage = Math.min(
+				Math.max(page, 1),
+				this.attachmentsTotalPages,
+			)
 		},
+
 		/**
 		 * Change the attachment page size, keeping the pager in range.
 		 *
@@ -920,8 +1412,10 @@ export default {
 			this.limit = Number(size)
 			this.currentPage = 1
 		},
+
 		/**
 		 * Handle route id changes to load a different publication and its attachments
+		 *
 		 * @param {string} newId - New publication ID from the route
 		 * @param {string} oldId - Previous publication ID from the route
 		 * @return {void}
@@ -934,6 +1428,7 @@ export default {
 
 		/**
 		 * Ensure active publication is loaded from the current route and attachments are fetched
+		 *
 		 * @return {Promise<void>}
 		 */
 		async syncWithRoute() {
@@ -946,6 +1441,7 @@ export default {
 
 		/**
 		 * Load publication by id via store and set it as active (includes @self.schema and @self.register)
+		 *
 		 * @param {string} id - Publication ID
 		 * @return {Promise<void>}
 		 */
@@ -957,7 +1453,9 @@ export default {
 					return
 				}
 
-				await objectStore.fetchObject('publication', id, { _extend: '@self.schema,@self.register' })
+				await objectStore.fetchObject('publication', id, {
+					_extend: '@self.schema,@self.register',
+				})
 				const publication = objectStore.getObject('publication', id)
 				if (publication) {
 					await objectStore.setActiveObject('publication', publication)
@@ -967,61 +1465,84 @@ export default {
 				console.error('Failed to load publication from route:', e)
 			}
 		},
+
 		formatFileSize(size) {
 			if (size < 1024) return size + ' bytes'
 			if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB'
-			if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(2) + ' MB'
+			if (size < 1024 * 1024 * 1024)
+				return (size / (1024 * 1024)).toFixed(2) + ' MB'
 			return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
 		},
+
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
+
 		addAttachment() {
 			navigationStore.setModal('uploadFiles')
 		},
+
 		openFolder(folder) {
 			window.open(folder, '_blank')
 		},
+
 		selectedPublishedCount() {
 			return this.selectedAttachments.filter((a) => {
-				const found = this.publicationAttachments
-					?.find(item => item.id === a)
+				const found = this.publicationAttachments?.find(
+					(item) => item.id === a,
+				)
 				if (!found) return false
 
 				return !!found.published
 			}).length
 		},
+
 		selectedUnpublishedCount() {
 			return this.selectedAttachments.filter((a) => {
-				const found = this.publicationAttachments?.find(item => item.id === a)
+				const found = this.publicationAttachments?.find(
+					(item) => item.id === a,
+				)
 				if (!found) return false
 				return found.published === null
 			}).length
 		},
+
 		selectedAttachmentsEntities() {
-			return this.publicationAttachments?.filter(attach => this.selectedAttachments.includes(attach.id)) || []
+			return (
+				this.publicationAttachments?.filter((attach) =>
+					this.selectedAttachments.includes(attach.id),
+				) || []
+			)
 		},
+
 		editTags(attachment) {
 			this.editingTags = attachment.title
 			this.editedTags = attachment.labels
 		},
+
 		addNewTag(newTag) {
 			if (!newTag) return
-			if (!this.labelOptionsEdit.options || !Array.isArray(this.labelOptionsEdit.options)) {
+			if (
+				!this.labelOptionsEdit.options
+				|| !Array.isArray(this.labelOptionsEdit.options)
+			) {
 				this.labelOptionsEdit.options = []
 			}
 			if (!this.labelOptionsEdit.options.includes(newTag)) {
-				this.labelOptionsEdit.options = [...this.labelOptionsEdit.options, newTag]
+				this.labelOptionsEdit.options = [
+					...this.labelOptionsEdit.options,
+					newTag,
+				]
 			}
 			if (!this.editedTags?.includes(newTag)) {
 				this.editedTags = [...(this.editedTags || []), newTag]
 			}
 		},
+
 		async getTags() {
-			const response = await fetch(
-				'/index.php/apps/openregister/api/tags',
-				{ method: 'get' },
-			)
+			const response = await fetch('/index.php/apps/openregister/api/tags', {
+				method: 'get',
+			})
 			const data = await response.json()
 
 			// const filteredData = data.filter((tag) => !tag.startsWith('object:'))
@@ -1029,49 +1550,75 @@ export default {
 			// this.setTagsList(filteredData)
 			return { response, data }
 		},
+
 		async saveTags(attachment) {
 			this.saveTagsLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
 
 			const formData = new FormData()
-			this.editedTags && this.editedTags.forEach((tag) => {
-				formData.append('tags[]', tag)
-			})
+			this.editedTags
+				&& this.editedTags.forEach((tag) => {
+					formData.append('tags[]', tag)
+				})
 
 			const publication = objectStore.getActiveObject('publication')
 			const register = publication['@self'].register
 			const schema = publication['@self'].schema
 			const id = publication.id
 
-			await fetch(`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files/${attachment.id}`, {
-				method: 'PUT',
-				body: JSON.stringify({
-					tags: this.editedTags,
-				}),
-				headers: {
-					'Content-Type': 'application/json',
+			await fetch(
+				`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files/${attachment.id}`,
+				{
+					method: 'PUT',
+					body: JSON.stringify({
+						tags: this.editedTags,
+					}),
+					headers: {
+						'Content-Type': 'application/json',
+					},
 				},
-			}).then((response) => {
-				this.editingTags = null
-				this.editedTags = []
-			}).catch((err) => {
-				console.error(err)
-			}).finally(() => {
-				this.getTags().then(({ response, data }) => {
-					this.labelOptionsEdit.options = data
+			)
+				.then((response) => {
+					this.editingTags = null
+					this.editedTags = []
 				})
-				catalogStore.getPublicationAttachments({ page: this.currentPage, limit: this.limit }).finally(() => {
-					this.saveTagsLoading.splice(this.saveTagsLoading.indexOf(attachment.id), 1)
-					this.fileIdsLoading.splice(this.fileIdsLoading.indexOf(attachment.id), 1)
+				.catch((err) => {
+					console.error(err)
 				})
-			})
+				.finally(() => {
+					this.getTags().then(({ response, data }) => {
+						this.labelOptionsEdit.options = data
+					})
+					catalogStore
+						.getPublicationAttachments({
+							page: this.currentPage,
+							limit: this.limit,
+						})
+						.finally(() => {
+							this.saveTagsLoading.splice(
+								this.saveTagsLoading.indexOf(attachment.id),
+								1,
+							)
+							this.fileIdsLoading.splice(
+								this.fileIdsLoading.indexOf(attachment.id),
+								1,
+							)
+						})
+				})
 		},
 
 		toggleSelection(attachment) {
-			this.selectedAttachments = this.selectedAttachments.includes(attachment.id) ? this.selectedAttachments.filter(id => id !== attachment.id) : [...this.selectedAttachments, attachment.id]
+			this.selectedAttachments = this.selectedAttachments.includes(
+				attachment.id,
+			)
+				? this.selectedAttachments.filter((id) => id !== attachment.id)
+				: [...this.selectedAttachments, attachment.id]
 		},
+
 		selectAllPublicationData() {
-			const keys = this.publication?.data ? Object.keys(this.publication.data) : []
+			const keys = this.publication?.data
+				? Object.keys(this.publication.data)
+				: []
 			if (!keys.length) return
 
 			if (!this.allPublicationDataSelected) {
@@ -1080,53 +1627,88 @@ export default {
 				this.selectedPublicationData = []
 			}
 		},
+
 		allPublicationDataSelected() {
-			const keys = this.publication?.data ? Object.keys(this.publication.data) : []
+			const keys = this.publication?.data
+				? Object.keys(this.publication.data)
+				: []
 			if (!keys.length) return false
-			return keys.every(key => this.selectedPublicationData.includes(key))
+			return keys.every((key) => this.selectedPublicationData.includes(key))
 		},
+
 		publishPublication(mode) {
-			fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/${mode}`, {
-				method: 'POST',
-			}).then((response) => {
+			fetch(
+				`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/${mode}`,
+				{
+					method: 'POST',
+				},
+			).then((response) => {
 				catalogStore.fetchPublications()
 				response.json().then((data) => {
-					objectStore.setActiveObject('publication', { ...data, id: data.id || data['@self'].id })
+					objectStore.setActiveObject('publication', {
+						...data,
+						id: data.id || data['@self'].id,
+					})
 				})
 			})
 		},
+
 		publishFile(attachment) {
 			this.publishLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
 
-			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/publish`, {
-				method: 'POST',
-			}).catch((error) => {
-				console.error('Error publishing file:', error)
-			}).finally(() => {
-				catalogStore.getPublicationAttachments().finally(() => {
-					this.publishLoading.splice(this.publishLoading.indexOf(attachment.id), 1)
-					this.fileIdsLoading.splice(this.fileIdsLoading.indexOf(attachment.id), 1)
+			return fetch(
+				`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/publish`,
+				{
+					method: 'POST',
+				},
+			)
+				.catch((error) => {
+					console.error('Error publishing file:', error)
 				})
-				catalogStore.fetchPublications()
-			})
+				.finally(() => {
+					catalogStore.getPublicationAttachments().finally(() => {
+						this.publishLoading.splice(
+							this.publishLoading.indexOf(attachment.id),
+							1,
+						)
+						this.fileIdsLoading.splice(
+							this.fileIdsLoading.indexOf(attachment.id),
+							1,
+						)
+					})
+					catalogStore.fetchPublications()
+				})
 		},
+
 		depublishFile(attachment) {
 			this.depublishLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
 
-			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/depublish`, {
-				method: 'POST',
-			}).catch((error) => {
-				console.error('Error depublishing file:', error)
-			}).finally(() => {
-				catalogStore.getPublicationAttachments().finally(() => {
-					this.depublishLoading.splice(this.depublishLoading.indexOf(attachment.id), 1)
-					this.fileIdsLoading.splice(this.fileIdsLoading.indexOf(attachment.id), 1)
+			return fetch(
+				`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/depublish`,
+				{
+					method: 'POST',
+				},
+			)
+				.catch((error) => {
+					console.error('Error depublishing file:', error)
 				})
-				catalogStore.fetchPublications()
-			})
+				.finally(() => {
+					catalogStore.getPublicationAttachments().finally(() => {
+						this.depublishLoading.splice(
+							this.depublishLoading.indexOf(attachment.id),
+							1,
+						)
+						this.fileIdsLoading.splice(
+							this.fileIdsLoading.indexOf(attachment.id),
+							1,
+						)
+					})
+					catalogStore.fetchPublications()
+				})
 		},
+
 		deleteFile(attachment) {
 			objectStore.setActiveObject('publicationAttachment', attachment)
 			// publicationStore.setAttachmentItem(attachment)
@@ -1134,18 +1716,27 @@ export default {
 			// publicationStore.setLimit(this.limit)
 			navigationStore.setDialog('deleteAttachment')
 		},
-		setActiveAttachment(attachment) {
-			if (JSON.stringify(objectStore.getActiveObject('publicationAttachment')) === JSON.stringify(attachment)) {
-				objectStore.setActiveObject('publicationAttachment', false)
-			} else { objectStore.setActiveObject('publicationAttachment', attachment) }
-		},
-		bulkPublish() {
-			const unpublishedAttachments = this.publicationAttachments?.filter(
-				attachment =>
-					this.selectedAttachments.includes(attachment.id) && !attachment.published,
-			) || []
 
-			const promises = unpublishedAttachments.map(async attachment => {
+		setActiveAttachment(attachment) {
+			if (
+				JSON.stringify(objectStore.getActiveObject('publicationAttachment'))
+				=== JSON.stringify(attachment)
+			) {
+				objectStore.setActiveObject('publicationAttachment', false)
+			} else {
+				objectStore.setActiveObject('publicationAttachment', attachment)
+			}
+		},
+
+		bulkPublish() {
+			const unpublishedAttachments =
+				this.publicationAttachments?.filter(
+					(attachment) =>
+						this.selectedAttachments.includes(attachment.id)
+						&& !attachment.published,
+				) || []
+
+			const promises = unpublishedAttachments.map(async (attachment) => {
 				this.publishLoading.push(attachment.id)
 				return await this.publishFile(attachment)
 			})
@@ -1156,17 +1747,21 @@ export default {
 					limit: this.limit,
 				})
 				this.selectedAttachments = []
-				this.publishLoading = this.publishLoading.filter(id => id !== this.publication.id)
+				this.publishLoading = this.publishLoading.filter(
+					(id) => id !== this.publication.id,
+				)
 			})
 		},
+
 		bulkDepublish() {
-			const publishedAttachments = this.publicationAttachments?.results
-				?.filter(
-					attachment =>
-						this.selectedAttachments.includes(attachment.id) && attachment.published,
+			const publishedAttachments =
+				this.publicationAttachments?.results?.filter(
+					(attachment) =>
+						this.selectedAttachments.includes(attachment.id)
+						&& attachment.published,
 				) || []
 
-			const promises = publishedAttachments.map(async attachment => {
+			const promises = publishedAttachments.map(async (attachment) => {
 				this.depublishLoading.push(attachment.id)
 				return await this.depublishFile(attachment)
 			})
@@ -1177,9 +1772,12 @@ export default {
 					limit: this.limit,
 				})
 				this.selectedAttachments = []
-				this.depublishLoading = this.depublishLoading.filter(id => id !== this.publication.id)
+				this.depublishLoading = this.depublishLoading.filter(
+					(id) => id !== this.publication.id,
+				)
 			})
 		},
+
 		bulkDeleteEigenschappen() {
 			if (!this.selectedPublicationData.length) return
 			navigationStore.setDialog('deleteMultiplePublicationData')
@@ -1187,14 +1785,16 @@ export default {
 
 		togglePublicationDataSelection(key) {
 			if (this.selectedPublicationData.includes(key)) {
-				this.selectedPublicationData = this.selectedPublicationData.filter(k => k !== key)
+				this.selectedPublicationData = this.selectedPublicationData.filter(
+					(k) => k !== key,
+				)
 			} else {
 				this.selectedPublicationData.push(key)
 			}
 		},
 
 		selectAllThemes() {
-			const themes = this.filteredThemes?.map(theme => theme.id) || []
+			const themes = this.filteredThemes?.map((theme) => theme.id) || []
 			if (!themes.length) return
 
 			if (!this.allThemesSelected) {
@@ -1205,26 +1805,30 @@ export default {
 		},
 
 		allThemesSelected() {
-			const themes = this.filteredThemes?.map(theme => theme.id) || []
+			const themes = this.filteredThemes?.map((theme) => theme.id) || []
 			if (!themes.length) return false
-			return themes.every(themeId => this.selectedThemes.includes(themeId))
+			return themes.every((themeId) => this.selectedThemes.includes(themeId))
 		},
 
 		bulkDeleteThemes() {
 			if (!this.selectedThemes.length) return
 			navigationStore.setDialog('deleteMultipleThemes')
 		},
+
 		onBulkDeleteThemesDone() {
 			navigationStore.setDialog(false)
 			this.selectedThemes = []
 		},
+
 		onBulkDeleteThemesCancel() {
 			navigationStore.setDialog(false)
 		},
 
 		toggleThemeSelection(theme) {
 			if (this.selectedThemes.includes(theme.id)) {
-				this.selectedThemes = this.selectedThemes.filter(id => id !== theme.id)
+				this.selectedThemes = this.selectedThemes.filter(
+					(id) => id !== theme.id,
+				)
 			} else {
 				this.selectedThemes.push(theme.id)
 			}
@@ -1232,12 +1836,13 @@ export default {
 	},
 }
 </script>
-<style>
 
+<style>
 .editingTags > div > a {
 	height: auto !important;
 }
 </style>
+
 <style scoped>
 h4 {
 	font-weight: bold;
@@ -1320,7 +1925,7 @@ h4 {
 
 .editTagsSelect {
 	max-width: 400px;
-	margin: 0
+	margin: 0;
 }
 
 .editTagsButton {

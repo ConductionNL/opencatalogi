@@ -1,48 +1,89 @@
-import { SafeParseReturnType, z } from 'zod'
-import { TPublicationType } from './publicationType.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TPublicationType } from './publicationType.types'
+
+import { z } from 'zod'
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
  * @spec openspec/specs/entity-typescript-models/spec.md
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class PublicationType implements TPublicationType {
-
 	public id!: string
 	public title!: string
 	public description!: string
 	public summary!: string
 	public version!: string
 	public required!: string[]
-	public properties!: Record<string, {
-        title: string
-        description: string
-        type: 'string' | 'number' | 'integer' | 'object' | 'array' | 'boolean' | 'dictionary'
-        format: 'date' | 'time' | 'duration' | 'date-time' | 'url' | 'uri' | 'uuid' | 'email' | 'idn-email' | 'hostname' | 'idn-hostname' | 'ipv4' | 'ipv6' | 'uri-reference' | 'iri' | 'iri-reference' | 'uri-template' | 'json-pointer' | 'regex' | 'binary' | 'byte' | 'password' | 'rsin' | 'kvk' | 'bsn' | 'oidn' | 'telephone'
-        pattern: string
-        default: string
-        behavior: string
-        required: boolean
-        deprecated: boolean
-        minLength: number
-        maxLength: number
-        example: string
-        minimum: number
-        maximum: number
-        multipleOf: number
-        exclusiveMin: boolean
-        exclusiveMax: boolean
-        minItems: number
-        maxItems: number
-    }>
+	public properties!: Record<
+		string,
+		{
+			title: string
+			description: string
+			type:
+				| 'string'
+				| 'number'
+				| 'integer'
+				| 'object'
+				| 'array'
+				| 'boolean'
+				| 'dictionary'
+			format:
+				| 'date'
+				| 'time'
+				| 'duration'
+				| 'date-time'
+				| 'url'
+				| 'uri'
+				| 'uuid'
+				| 'email'
+				| 'idn-email'
+				| 'hostname'
+				| 'idn-hostname'
+				| 'ipv4'
+				| 'ipv6'
+				| 'uri-reference'
+				| 'iri'
+				| 'iri-reference'
+				| 'uri-template'
+				| 'json-pointer'
+				| 'regex'
+				| 'binary'
+				| 'byte'
+				| 'password'
+				| 'rsin'
+				| 'kvk'
+				| 'bsn'
+				| 'oidn'
+				| 'telephone'
+			pattern: string
+			default: string
+			behavior: string
+			required: boolean
+			deprecated: boolean
+			minLength: number
+			maxLength: number
+			example: string
+			minimum: number
+			maximum: number
+			multipleOf: number
+			exclusiveMin: boolean
+			exclusiveMax: boolean
+			minItems: number
+			maxItems: number
+		}
+	>
 
 	public archive!: {
-        valuation: 'b' | 'v' | 'n'
-        class: 1 | 2 | 3 | 4 | 5
-    }
+		valuation: 'b' | 'v' | 'n'
+		class: 1 | 2 | 3 | 4 | 5
+	}
 
 	public source!: string
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TPublicationType) {
 		this.hydrate(data)
 	}
@@ -56,7 +97,8 @@ export class PublicationType implements TPublicationType {
 		this.version = data?.version || ''
 		this.required = data?.required || []
 		// backend (PHP) doesn't know objects so it will return an array if empty
-		this.properties = (!Array.isArray(data?.properties) && data?.properties) || {}
+		this.properties =
+			(!Array.isArray(data?.properties) && data?.properties) || {}
 		this.archive = (!Array.isArray(data?.archive) && data?.archive) || {
 			valuation: 'n',
 			class: 1,
@@ -64,7 +106,7 @@ export class PublicationType implements TPublicationType {
 		this.source = data?.source || ''
 
 		// convert null's to the respective default value from predefined list of props
-		Object.keys(this.properties).forEach(obj => {
+		Object.keys(this.properties).forEach((obj) => {
 			const defaultPropertiesProps = {
 				minimum: 0,
 				maximum: 0,
@@ -73,9 +115,22 @@ export class PublicationType implements TPublicationType {
 				maxItems: 0,
 				minLength: 0,
 				maxLength: 0,
-			} as Pick<TPublicationType['properties'][0], 'minimum' | 'maximum' | 'multipleOf' | 'minItems' | 'maxItems' | 'minLength' | 'maxLength'>
+			} as Pick<
+				TPublicationType['properties'][0],
+				| 'minimum'
+				| 'maximum'
+				| 'multipleOf'
+				| 'minItems'
+				| 'maxItems'
+				| 'minLength'
+				| 'maxLength'
+			>
 
-			(Object.keys(defaultPropertiesProps) as Array<keyof typeof defaultPropertiesProps>).forEach((key) => {
+			;(
+				Object.keys(defaultPropertiesProps) as Array<
+					keyof typeof defaultPropertiesProps
+				>
+			).forEach((key) => {
 				if (this.properties[obj][key] === null) {
 					this.properties[obj][key] = defaultPropertiesProps[key]
 				}
@@ -89,9 +144,47 @@ export class PublicationType implements TPublicationType {
 		const propertiesDataSchema = z.object({
 			title: z.string().min(1, 'is verplicht'),
 			description: z.string(),
-			type: z.enum(['string', 'number', 'integer', 'object', 'array', 'boolean', 'dictionary']),
-			format: z.enum(['date', 'time', 'duration', 'date-time', 'url', 'uri', 'uuid', 'email', 'idn-email', 'hostname', 'idn-hostname', 'ipv4', 'ipv6', 'uri-reference', 'iri', 'iri-reference', 'uri-template', 'json-pointer', 'regex', 'binary', 'byte', 'password', 'rsin', 'kvk', 'bsn', 'oidn', 'telephone'])
-				.or(z.literal('')).or(z.null()), // in practice I have found this being able to be both '' and null
+			type: z.enum([
+				'string',
+				'number',
+				'integer',
+				'object',
+				'array',
+				'boolean',
+				'dictionary',
+			]),
+			format: z
+				.enum([
+					'date',
+					'time',
+					'duration',
+					'date-time',
+					'url',
+					'uri',
+					'uuid',
+					'email',
+					'idn-email',
+					'hostname',
+					'idn-hostname',
+					'ipv4',
+					'ipv6',
+					'uri-reference',
+					'iri',
+					'iri-reference',
+					'uri-template',
+					'json-pointer',
+					'regex',
+					'binary',
+					'byte',
+					'password',
+					'rsin',
+					'kvk',
+					'bsn',
+					'oidn',
+					'telephone',
+				])
+				.or(z.literal(''))
+				.or(z.null()), // in practice I have found this being able to be both '' and null
 			pattern: z.string(),
 			default: z.union([z.string(), z.boolean()]),
 			behavior: z.string(),
@@ -117,7 +210,9 @@ export class PublicationType implements TPublicationType {
 			required: z.string().array(),
 			properties: z.record(propertiesDataSchema), // z.record allows for any amount of any keys, with specific type for value validation
 			archive: z.object({
-				valuation: z.enum(['b', 'v', 'n'], { message: "kan alleen 'b', 'v', of 'n' zijn" }),
+				valuation: z.enum(['b', 'v', 'n'], {
+					message: "kan alleen 'b', 'v', of 'n' zijn",
+				}),
 				class: z.number().refine((data: number) => {
 					return [1, 2, 3, 4, 5].includes(data)
 				}, 'kan alleen 1, 2, 3, 4 of 5 zijn'),
@@ -131,5 +226,4 @@ export class PublicationType implements TPublicationType {
 
 		return result
 	}
-
 }

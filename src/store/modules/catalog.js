@@ -1,13 +1,14 @@
+import { buildHeaders } from '@conduction/nextcloud-vue'
 import { defineStore } from 'pinia'
 import { Catalogi } from '../../entities/catalogi/catalogi.ts'
 import { objectStore } from '../../store/store.js'
-import { buildHeaders } from '@conduction/nextcloud-vue'
 
 /** @typedef {import('../../entities/catalogi/catalogi.ts').Catalogi} CatalogEntity */
 /** @typedef {{id: string, title: string, [key: string]: any}} ObjectEntity */
 
 /**
  * Store for managing catalogs and their publications in OpenCatalogi.
+ *
  * @module Store
  * @package
  * @author Ruben Linde
@@ -62,9 +63,13 @@ export const useCatalogStore = defineStore('catalog', {
 	actions: {
 		/**
 		 * Set the view mode.
+		 *
 		 * @param {string} mode - The view mode to set ('cards' or 'table')
 		 */
-		/** @spec openspec/specs/catalogs/spec.md */
+		/**
+		 * @param mode
+		 * @spec openspec/specs/catalogs/spec.md
+		 */
 		setViewMode(mode) {
 			this.viewMode = mode
 			console.info('Catalog view mode set to:', mode)
@@ -72,10 +77,15 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Set pagination details.
+		 *
 		 * @param {number} page - The current page number for pagination
 		 * @param {number} limit - The number of items to display per page
 		 */
-		/** @spec openspec/specs/catalogs/spec.md */
+		/**
+		 * @param page
+		 * @param limit
+		 * @spec openspec/specs/catalogs/spec.md
+		 */
 		setPagination(page, limit = 20) {
 			this.pagination = { page, limit }
 			console.info('Catalog pagination set to', { page, limit })
@@ -83,6 +93,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Set the active catalog and fetch its publications
+		 *
 		 * @param {CatalogEntity} catalog The catalog to set as active
 		 * @return {Promise<void>}
 		 *
@@ -100,6 +111,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Set the active publication
+		 *
 		 * @param {ObjectEntity} publication The publication to set as active
 		 * @return {void}
 		 */
@@ -109,6 +121,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Clear the active publication
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/specs/catalogs/spec.md */
@@ -118,6 +131,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Fetch publications for a catalog
+		 *
 		 * @param {object} params - Optional parameters for pagination and filtering
 		 * @param {number} params.page - Page number (default: 1)
 		 * @param {number} params.limit - Items per page (default: 20)
@@ -127,9 +141,15 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @spec openspec/specs/catalogs/spec.md
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
-			const resolvedCatalogId = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id || this.lastCatalogId
+			const resolvedCatalogId =
+				catalogId
+				|| this.activeCatalog?.slug
+				|| this.activeCatalog?.id
+				|| this.lastCatalogId
 			if (!resolvedCatalogId) {
-				console.error('[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists')
+				console.error(
+					'[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists',
+				)
 				return
 			}
 
@@ -146,7 +166,7 @@ export const useCatalogStore = defineStore('catalog', {
 			}
 
 			// Add any additional parameters (excluding page and limit to avoid duplication)
-			Object.keys(params).forEach(key => {
+			Object.keys(params).forEach((key) => {
 				if (key !== 'page' && key !== 'limit') {
 					searchParams[key] = params[key]
 				}
@@ -159,7 +179,10 @@ export const useCatalogStore = defineStore('catalog', {
 
 				// Use the slug-based publications endpoint (GET /api/{catalogSlug})
 				const url = `/index.php/apps/opencatalogi/api/${catalogIdToUse}?${queryParams}`
-				const response = await fetch(url, { method: 'GET', headers: buildHeaders() })
+				const response = await fetch(url, {
+					method: 'GET',
+					headers: buildHeaders(),
+				})
 				const data = await response.json()
 
 				this.publications = {
@@ -184,23 +207,33 @@ export const useCatalogStore = defineStore('catalog', {
 				const schemasMap = data['@self']?.schemas || {}
 				const registersMap = data['@self']?.registers || {}
 				for (const publication of data.results || []) {
-					const schemaRef = publication['@self']?.schema ?? publication.schema
-					const registerRef = publication['@self']?.register ?? publication.register
+					const schemaRef =
+						publication['@self']?.schema ?? publication.schema
+					const registerRef =
+						publication['@self']?.register ?? publication.register
 					if (!schemaRef || !registerRef) continue
 
-					const schemaObj = typeof schemaRef === 'object'
-						? schemaRef
-						: schemasMap[String(schemaRef)] || schemasMap[Number(schemaRef)]
-					const registerObj = typeof registerRef === 'object'
-						? registerRef
-						: registersMap[String(registerRef)] || registersMap[Number(registerRef)]
+					const schemaObj =
+						typeof schemaRef === 'object'
+							? schemaRef
+							: schemasMap[String(schemaRef)]
+								|| schemasMap[Number(schemaRef)]
+					const registerObj =
+						typeof registerRef === 'object'
+							? registerRef
+							: registersMap[String(registerRef)]
+								|| registersMap[Number(registerRef)]
 
 					const slug = schemaObj?.slug
 					const schemaId = schemaObj?.id ?? schemaRef
 					const registerId = registerObj?.id ?? registerRef
 
 					if (slug && !this.registeredTypes.has(slug)) {
-						await objectStore.registerObjectType(slug, schemaId, registerId)
+						await objectStore.registerObjectType(
+							slug,
+							schemaId,
+							registerId,
+						)
 						this.registeredTypes.add(slug)
 					}
 				}
@@ -229,18 +262,20 @@ export const useCatalogStore = defineStore('catalog', {
 			const schema = publication['@self'].schema
 			const id = publication.id
 
-			const response = await fetch(`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files`)
+			const response = await fetch(
+				`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files`,
+			)
 			const data = await response.json()
 			objectStore.setCollection('publicationAttachments', data.results || [])
 		},
 
 		/**
 		 * Clear the active catalog and its publications
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/specs/catalogs/spec.md */
 		clearActiveCatalog() {
-
 			// Unregister all object types
 			for (const slug of this.registeredTypes) {
 				objectStore.unregisterObjectType(slug)
@@ -263,6 +298,7 @@ export const useCatalogStore = defineStore('catalog', {
 	getters: {
 		/**
 		 * Get the list of available registers from the active catalog
+		 *
 		 * @return {Array<string>} List of register IDs
 		 */
 		/** @spec openspec/specs/catalogs/spec.md */
@@ -272,6 +308,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get the list of available schemas from the active catalog
+		 *
 		 * @return {Array<string>} List of schema IDs
 		 */
 		/** @spec openspec/specs/catalogs/spec.md */
@@ -281,6 +318,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Check if a catalog is currently active
+		 *
 		 * @return {boolean} True if a catalog is active
 		 */
 		hasActiveCatalog() {
@@ -289,6 +327,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Check if a publication is currently active
+		 *
 		 * @return {boolean} True if a publication is active
 		 */
 		hasActivePublication() {
@@ -297,6 +336,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get the active publication
+		 *
 		 * @param {object} state - Store state
 		 * @return {object|null} The active publication
 		 */
@@ -304,6 +344,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get loading state for specific type
+		 *
 		 * @param {object} state - Store state
 		 * @return {boolean}
 		 */
@@ -311,6 +352,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get the publications collection
+		 *
 		 * @param {object} state - The store state
 		 * @return {object} The publications collection
 		 */
@@ -320,6 +362,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get pagination info for publications
+		 *
 		 * @param {object} state - The store state
 		 * @return {object} The pagination info
 		 */

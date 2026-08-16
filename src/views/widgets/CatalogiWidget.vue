@@ -4,13 +4,14 @@ import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<CnDataTable :rows="items"
+	<CnDataTable
+		:rows="items"
 		:columns="columns"
 		:loading="loading"
-		hide-header
+		hideHeader
 		borderless
-		row-icon="DatabaseOutline"
-		@row-click="onRowClick">
+		rowIcon="DatabaseOutline"
+		@rowClick="onRowClick">
 		<template #empty>
 			<NcEmptyContent :title="t('opencatalogi', 'No catalogs found')">
 				<template #icon>
@@ -24,13 +25,11 @@ import { objectStore } from '../../store/store.js'
 <script>
 // Components
 import { CnDataTable, registerIcons } from '@conduction/nextcloud-vue'
-import { NcEmptyContent } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
-
+import { NcEmptyContent } from '@nextcloud/vue'
+import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
-import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
-
 import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
 
 // The row's leading icon renders through CnDataTable's shared CnIcon
@@ -52,18 +51,21 @@ export default {
 		CnDataTable,
 		NcEmptyContent,
 	},
+
 	props: {
 		title: {
 			type: String,
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			loading: false,
 			columns: LIST_COLUMNS,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
@@ -75,25 +77,36 @@ export default {
 			}))
 		},
 	},
+
 	mounted() {
 		this.fetchData()
 	},
+
 	methods: {
 		/**
 		 * Open the clicked catalog's publications listing in the same tab.
+		 *
 		 * @param {object} row - The clicked row (a shaped catalog item).
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
+		/**
+		 * @param row
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3
+		 */
 		onRowClick(row) {
 			navigateTo(generateUrl(`/apps/opencatalogi/publications/${row.id}`))
 		},
+
 		/**
 		 * Fetch the catalog data
+		 *
 		 * @param {string|null} search - Optional search term
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
+		/**
+		 * @param search
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3
+		 */
 		async fetchData(search = null) {
 			this.loading = true
 			await objectStore.fetchCollection('catalog', search)
