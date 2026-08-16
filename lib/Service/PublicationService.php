@@ -254,10 +254,91 @@ class PublicationService {
 	}//end getFileService()
 
 	/**
+	 * Resolve the configured catalog register/schema pair, failing CLOSED.
+	 *
+	 * Both callers below derive the instance's entire publication visibility
+	 * scope from these two keys, so an unconfigured instance must refuse rather
+	 * than search. The read and the check that makes it safe sit adjacent on
+	 * purpose: separating them is what let both a reviewer and hydra gate-50
+	 * read the site as unguarded.
+	 *
+	 * WHY THE EMPTY DEFAULT IS NOT SELF-CORRECTING. `''` is not the same as
+	 * "absent". `MagicMapper` reads the pair with `??`, which only falls through
+	 * on null, so `''` is captured as a *present* filter, passes the
+	 * `!== null` guard, and is then cast — `find((int) '')` is `find(0)`, which
+	 * resolves nothing. Today that happens to bail out to an empty result, so
+	 * this is not a live data leak. But the refusal is BORROWED from another
+	 * app's mapper rather than stated here, and an empty string is strictly
+	 * worse than null on the paginated path, where the global-search fallbacks
+	 * are gated on `register === null && schema === null` and so are silently
+	 * suppressed by `''`. This method states the refusal locally instead.
+	 *
+	 * Empty arrays are the correct refusal rather than an exception, because
+	 * that is already the contract callers handle: setObjectServiceContext()
+	 * checks `empty($allowedRegisters) || empty($allowedSchemas)` and returns
+	 * without querying, explicitly to refuse a platform-wide scan.
+	 *
+	 * @return array{register: string, schema: string}|null The configured pair,
+	 *         or null when either key is unset — the caller must then refuse.
+	 *
+	 * @spec exclude Configuration plumbing — resolves and validates the two
+	 *       app-config keys that scope every publication query.
+	 */
+	private function resolveCatalogScope(): ?array {
+		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+		if ($schema === '' || $register === '') {
+			return null;
+		}
+
+		return [
+			'register' => $register,
+			'schema' => $schema,
+		];
+	}//end resolveCatalogScope()
+
+	/**
+	 * Collect the unique values of one array-valued property across catalogs.
+	 *
+	 * Extracted from getCatalogFilters() so the fail-closed guard added there
+	 * does not push that method over PHPMD's NPath threshold (measured: 320
+	 * against a limit of 200). Mirrors CatalogiService::collectUnique(), which
+	 * was extracted for the same reason when the same guard landed there.
+	 *
+	 * A baseline entry would have been the wrong repair: it is scoped to
+	 * (rule, file) and would licence every future violation of that rule in
+	 * this file, including ones nobody has looked at.
+	 *
+	 * @param array<int, mixed> $catalogs The catalog objects returned by the search.
+	 * @param string $property The array-valued property to collect ('registers' | 'schemas').
+	 *
+	 * @return array<int, mixed> The de-duplicated union of that property's values.
+	 *
+	 * @spec exclude Pure collection helper extracted from getCatalogFilters();
+	 *       carries no behaviour of its own.
+	 */
+	private function collectUnique(array $catalogs, string $property): array {
+		$collected = [];
+
+		foreach ($catalogs as $catalog) {
+			$catalog = $catalog->jsonSerialize();
+			if (isset($catalog[$property]) === true && is_array($catalog[$property]) === true) {
+				$collected = array_merge($collected, $catalog[$property]);
+			}
+		}
+
+		return array_unique($collected);
+	}//end collectUnique()
+
+	/**
 	 * Get register and schema combinations from catalogs.
 	 *
 	 * This method retrieves all catalogs (or a specific one if ID is provided),
 	 * extracts their registers and schemas, and stores them as general variables.
+	 *
+	 * When the catalog register/schema pair is unconfigured this returns empty
+	 * arrays without querying — see resolveCatalogScope() for why that refusal
+	 * is stated here rather than left to the mapper.
 	 *
 	 * @param string|integer|null $catalogId Optional ID of a specific catalog to filter by
 	 *
@@ -283,15 +364,22 @@ class PublicationService {
 			return $cached['result'];
 		}
 
-		// Establish the default schema and register.
-		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+		// FAIL CLOSED on an unconfigured catalog scope. See resolveCatalogScope().
+		$scope = $this->resolveCatalogScope();
+		if ($scope === null) {
+			$this->availableRegisters = [];
+			$this->availableSchemas = [];
+			return [
+				'registers' => [],
+				'schemas' => [],
+			];
+		}
 
 		// Setup the config array for searchObjects.
 		$query = [
 			'@self' => [
-				'register' => $register,
-				'schema' => $schema,
+				'register' => $scope['register'],
+				'schema' => $scope['schema'],
 			],
 		];
 
@@ -308,27 +396,9 @@ class PublicationService {
 			$catalogs = [$this->getObjectService()->find($catalogId)];
 		}
 
-		// Initialize arrays to store unique registers and schemas.
-		$uniqueRegisters = [];
-		$uniqueSchemas = [];
-
-		// Iterate over each catalog to extract registers and schemas.
-		foreach ($catalogs as $catalog) {
-			$catalog = $catalog->jsonSerialize();
-			// Check if 'registers' is an array and merge unique values.
-			if (isset($catalog['registers']) === true && is_array($catalog['registers']) === true) {
-				$uniqueRegisters = array_merge($uniqueRegisters, $catalog['registers']);
-			}
-
-			// Check if 'schemas' is an array and merge unique values.
-			if (isset($catalog['schemas']) === true && is_array($catalog['schemas']) === true) {
-				$uniqueSchemas = array_merge($uniqueSchemas, $catalog['schemas']);
-			}
-		}
-
 		// Remove duplicate values and assign to class properties.
-		$this->availableRegisters = array_unique($uniqueRegisters);
-		$this->availableSchemas = array_unique($uniqueSchemas);
+		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
+		$this->availableSchemas = $this->collectUnique(catalogs: $catalogs, property: 'schemas');
 
 		$result = [
 			'registers' => array_values($this->availableRegisters),
@@ -1968,9 +2038,24 @@ class PublicationService {
 		$page = (int)($queryParams['_page'] ?? $queryParams['page'] ?? 1);
 		$offset = (int)($queryParams['offset'] ?? (($page - 1) * $limit));
 
-		// Get minimal required config from cache or defaults.
-		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+		// FAIL CLOSED on an unconfigured catalog scope, exactly as
+		// getCatalogFilters() does — see resolveCatalogScope(). This is the fast
+		// path that deliberately bypasses getCatalogFilters(), so it has to carry
+		// the same refusal; without it the bypass is also a bypass of the guard.
+		$scope = $this->resolveCatalogScope();
+		if ($scope === null) {
+			return [
+				'results' => [],
+				'total' => 0,
+				'limit' => $limit,
+				'offset' => $offset,
+				'page' => $page,
+				'pages' => 1,
+			];
+		}
+
+		$schema = $scope['schema'];
+		$register = $scope['register'];
 
 		$timings['setup'] = ((microtime(true) - $setupStart) * 1000);
 
