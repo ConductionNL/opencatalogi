@@ -59,6 +59,37 @@ class PublicationServiceTest extends TestCase {
 		);
 	}
 
+	/**
+	 * Stub a CONFIGURED catalog scope — the normal state of a live instance.
+	 *
+	 * PublicationService now refuses to query when `catalog_register` or
+	 * `catalog_schema` is empty (hydra gate-50, fail closed). A fixture that
+	 * left both at '' while also stubbing searchObjects() to return a catalog
+	 * described a state OpenRegister cannot produce: an empty register/schema
+	 * is captured by `??` as a *present* filter, `find((int) '')` resolves
+	 * nothing, and MagicMapper returns an empty result — so the catalog those
+	 * fixtures handed back could never have been found. Configuring the scope
+	 * makes them model a reachable state instead.
+	 *
+	 * MUST be the FIRST getValueString stub registered on $this->config:
+	 * PHPUnit evaluates matchers in registration order and the first match
+	 * wins, so a later stub on the same method never fires.
+	 *
+	 * @return void
+	 */
+	private function mockConfiguredCatalogScope(): void {
+		$this->config->method('getValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $default = ''): string {
+					return match ($key) {
+						'catalog_register' => 'catalog-register-1',
+						'catalog_schema' => 'catalog-schema-1',
+						default => '',
+					};
+				}
+			);
+	}
+
 	// -----------------------------------------------------------------------
 	// Helper: create a mock ObjectService
 	// -----------------------------------------------------------------------
@@ -262,6 +293,58 @@ class PublicationServiceTest extends TestCase {
 		$this->assertContains('sch-x', $result['schemas']);
 		$this->assertContains('sch-y', $result['schemas']);
 		$this->assertContains('sch-z', $result['schemas']);
+	}
+
+	/**
+	 * The catalog register/schema pair scopes every publication query, so an
+	 * unconfigured instance must REFUSE rather than search.
+	 *
+	 * These three tests are the load-bearing proof for hydra gate-50: they set
+	 * the restrictive value and watch the restrictive branch be taken. The
+	 * assertion that carries the weight is `never()` on searchObjects() —
+	 * the permissive path reaches the object service, the refusing path
+	 * cannot. Asserting only the empty return would pass either way, because a
+	 * search that resolves nothing also returns empty.
+	 *
+	 * @dataProvider provideUnconfiguredCatalogScopes
+	 *
+	 * @param string $schema The configured catalog_schema value.
+	 * @param string $register The configured catalog_register value.
+	 *
+	 * @return void
+	 */
+	public function testGetCatalogFiltersRefusesWhenScopeUnconfigured(string $schema, string $register): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', $schema],
+				['opencatalogi', 'catalog_register', '', $register],
+			]);
+
+		// The refusal is the point: no query may be issued at all.
+		$objectService->expects($this->never())->method('searchObjects');
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$result = $this->service->getCatalogFilters();
+
+		$this->assertSame(['registers' => [], 'schemas' => []], $result);
+		$this->assertSame([], $this->service->getAvailableRegisters());
+		$this->assertSame([], $this->service->getAvailableSchemas());
+	}
+
+	/**
+	 * Every way the catalog scope can be incomplete.
+	 *
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public static function provideUnconfiguredCatalogScopes(): array {
+		return [
+			'neither configured' => ['', ''],
+			'register missing' => ['schema-1', ''],
+			'schema missing' => ['', 'register-1'],
+		];
 	}
 
 	public function testGetCatalogFiltersBySpecificCatalogId(): void {
@@ -505,6 +588,7 @@ class PublicationServiceTest extends TestCase {
 	// =======================================================================
 
 	public function testShowReturnsObjectWhenFound(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -529,6 +613,7 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	public function testShowReturns404WhenNotFound(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -552,6 +637,7 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	public function testShowWithExtendParameter(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -576,6 +662,7 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	public function testShowWithExtendAsString(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -597,6 +684,7 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	public function testShowFiltersNonSelfExtend(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -683,6 +771,7 @@ class PublicationServiceTest extends TestCase {
 	// =======================================================================
 
 	public function testAttachmentsReturnsFormattedFiles(): void {
+		$this->mockConfiguredCatalogScope();
 		// Need to set up both ObjectService and FileService via container
 		$objectService = $this->createObjectServiceMock();
 		$fileService = $this->createFileServiceMock();
@@ -768,6 +857,7 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	public function testAttachmentsReturns500OnGenericException(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$fileService = $this->createFileServiceMock();
 
@@ -841,6 +931,7 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	public function testDownloadReturns500OnGenericException(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$fileService = $this->createFileServiceMock();
 
@@ -881,6 +972,7 @@ class PublicationServiceTest extends TestCase {
 	// =======================================================================
 
 	public function testUsesReturnsEmptyWhenNoRelations(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -949,6 +1041,7 @@ class PublicationServiceTest extends TestCase {
 	 * the branch that runs when the object really is inside the configured catalogs.
 	 */
 	public function testUsesReturns404WhenObjectNotFound(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -992,6 +1085,7 @@ class PublicationServiceTest extends TestCase {
 	// =======================================================================
 
 	public function testUsedReturnsEmptyWhenNoRelations(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -1058,6 +1152,7 @@ class PublicationServiceTest extends TestCase {
 	 * used() answers 404 when an in-scope identifier resolves to nothing.
 	 */
 	public function testUsedReturns404WhenObjectNotFound(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -1199,7 +1294,7 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -1230,7 +1325,7 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -1413,6 +1508,7 @@ class PublicationServiceTest extends TestCase {
 	// =======================================================================
 
 	public function testGetFederatedPublicationFoundLocally(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -1438,7 +1534,7 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		$this->mockConfiguredCatalogScope();
 
 		$objectService->method('find')
 			->willReturn($this->createSerializableObject(['id' => 'pub-1', '@self' => ['title' => 'Local Pub']]));
@@ -2249,7 +2345,7 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1', 'reg-2'],
@@ -2509,6 +2605,7 @@ class PublicationServiceTest extends TestCase {
 	// =======================================================================
 
 	public function testShowWithUnderscoreExtendParameter(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
@@ -2618,7 +2715,7 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		$this->mockConfiguredCatalogScope();
 
 		$pubObj = $this->createSerializableObject([
 			'id' => 'pub-1',
@@ -2650,7 +2747,7 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		$this->mockConfiguredCatalogScope();
 
 		// used() now calls find() first to enforce the published predicate. Return a
 		// published object so the predicate check does not short-circuit the test.
@@ -2682,7 +2779,7 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['single-reg'],
@@ -3621,6 +3718,7 @@ class PublicationServiceTest extends TestCase {
 	// =======================================================================
 
 	public function testDownloadReturnsZipOnSuccess(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$fileService = $this->createFileServiceMock();
 
@@ -3688,6 +3786,7 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	public function testDownloadPropagatesMetadataPdfError(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$fileService = $this->createFileServiceMock();
 
@@ -3740,6 +3839,7 @@ class PublicationServiceTest extends TestCase {
 	// =======================================================================
 
 	public function testAttachmentsReturns404OnNotFoundException(): void {
+		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$fileService = $this->createFileServiceMock();
 
