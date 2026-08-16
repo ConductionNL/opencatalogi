@@ -360,10 +360,10 @@ export default {
 		     Mirrors the FederationSearch pattern for cross-page consistency. -->
 		<CnPagination
 			v-if="!loading && !error"
-			:current-page="page"
-			:total-pages="pages"
-			:total-items="total"
-			:current-page-size="limit"
+			:currentPage="page"
+			:totalPages="pages"
+			:totalItems="total"
+			:currentPageSize="limit"
 			@page-changed="onPageChange"
 			@page-size-changed="onPageSizeChange" />
 
