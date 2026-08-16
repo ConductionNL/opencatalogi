@@ -7,21 +7,32 @@ namespace Unit\Cron;
 use OCA\OpenCatalogi\Cron\DirectorySync;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 
 class DirectorySyncTest extends TestCase {
 	private DirectorySync $job;
 	private DirectoryService $directoryService;
 	private ITimeFactory $timeFactory;
+	private IAppConfig $config;
 
 	protected function setUp(): void {
 		parent::setUp();
 		$this->timeFactory = $this->createMock(ITimeFactory::class);
 		$this->directoryService = $this->createMock(DirectoryService::class);
+		// Third constructor argument, added when the sync interval became
+		// configurable. The test still built the job with two and every case in
+		// this file died with ArgumentCountError before reaching its assertion.
+		$this->config = $this->createMock(IAppConfig::class);
+		$this->config->method('getValueInt')
+			->willReturnCallback(
+				static fn (string $app, string $key, int $default = 0): int => $default
+			);
 
 		$this->job = new DirectorySync(
 			$this->timeFactory,
-			$this->directoryService
+			$this->directoryService,
+			$this->config
 		);
 	}
 

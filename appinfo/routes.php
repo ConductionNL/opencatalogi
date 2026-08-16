@@ -45,6 +45,8 @@ return [
 		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericPreferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 		['name' => 'settings#getPublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'GET'],
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
+		['name' => 'settings#getSyncOptions', 'url' => '/api/settings/sync', 'verb' => 'GET'],
+		['name' => 'settings#updateSyncOptions', 'url' => '/api/settings/sync', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
 		['name' => 'settings#manualImport', 'url' => '/api/settings/import', 'verb' => 'POST'],
 		// Retention lifecycle (publication-retention-lifecycle)

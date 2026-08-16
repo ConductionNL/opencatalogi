@@ -11,6 +11,7 @@
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcActionButton, NcActions, NcButton } from '@nextcloud/vue'
+import { CnPagination } from '@conduction/nextcloud-vue'
 import DeleteOutline from 'vue-material-design-icons/DeleteOutline.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import PencilOutline from 'vue-material-design-icons/PencilOutline.vue'
@@ -25,6 +26,7 @@ export default {
 		NcButton,
 		NcActions,
 		NcActionButton,
+		CnPagination,
 		PencilOutline,
 		DeleteOutline,
 		DotsHorizontal,
@@ -40,6 +42,12 @@ export default {
 			error: null,
 			editingListing: null,
 			deletingListing: null,
+			// Pagination state — mirrors FederationSearch shape so the same
+			// `<CnPagination>` bindings work here without divergence.
+			page: 1,
+			pages: 1,
+			total: 0,
+			limit: 20,
 		}
 	},
 
@@ -96,7 +104,8 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const url = generateUrl('/apps/opencatalogi/api/listings')
+				const base = generateUrl('/apps/opencatalogi/api/listings')
+				const url = `${base}?_page=${this.page}&_limit=${this.limit}`
 				const res = await fetch(url, {
 					headers: { Accept: 'application/json' },
 				})
@@ -105,12 +114,31 @@ export default {
 				}
 				const data = await res.json()
 				this.listings = data.results || []
+				// The API already returns page/pages/total/limit; keep them
+				// in sync so CnPagination reflects the server-side reality
+				// (and so a stale page number after a delete doesn't linger).
+				this.page = data.page || 1
+				this.pages = data.pages || 1
+				this.total = data.total || 0
+				this.limit = data.limit || 20
 			} catch (e) {
 				this.error = e.message || String(e)
 				this.listings = []
 			} finally {
 				this.loading = false
 			}
+		},
+		/** @spec exclude presentation-only pagination */
+		onPageChange(newPage) {
+			this.page = newPage
+			this.load()
+		},
+
+		/** @spec exclude presentation-only pagination */
+		onPageSizeChange(newSize) {
+			this.limit = newSize
+			this.page = 1
+			this.load()
 		},
 
 		/**
@@ -327,6 +355,16 @@ export default {
 				</div>
 			</li>
 		</ul>
+
+		<!-- Always render — CnPagination hides itself when a single page fits.
+		     Mirrors the FederationSearch pattern for cross-page consistency. -->
+		<CnPagination v-if="!loading && !error"
+			:current-page="page"
+			:total-pages="pages"
+			:total-items="total"
+			:current-page-size="limit"
+			@page-changed="onPageChange"
+			@page-size-changed="onPageSizeChange" />
 
 		<FederationAddDirectoryModal />
 		<FederationEditListingModal :listing="editingListing" />

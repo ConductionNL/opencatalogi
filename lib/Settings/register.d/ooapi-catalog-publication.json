@@ -1,5 +1,33 @@
 {
   "components": {
+    "registers": {
+      "publication": {
+        "schemas": [
+          "course",
+          "program",
+          "offering"
+        ],
+        "configuration": {
+          "schemas": {
+            "course": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "OOAPI 5.0 course materialized by OpenConnector's ooapi-catalog Synchronization - read on every /ooapi/v5/courses request, so it gets a dedicated SQL table"
+            },
+            "program": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "OOAPI 5.0 program materialized by OpenConnector's ooapi-catalog Synchronization - read on every /ooapi/v5/programs request, so it gets a dedicated SQL table"
+            },
+            "offering": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "OOAPI 5.0 offering (course/programme run) materialized by OpenConnector's ooapi-catalog Synchronization - read on every /ooapi/v5/offerings request, so it gets a dedicated SQL table"
+            }
+          }
+        }
+      }
+    },
     "schemas": {
       "organization": {
         "x-ooapi": {

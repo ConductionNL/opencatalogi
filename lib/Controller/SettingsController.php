@@ -248,6 +248,66 @@ class SettingsController extends Controller {
 	}//end updatePublishingOptions()
 
 	/**
+	 * Get the current federation sync options (interval + bounds).
+	 *
+	 * Admin-only: this surface controls how often the app hits federation peers.
+	 *
+	 * @return JSONResponse JSON response containing the sync options.
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function getSyncOptions(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$data = $this->settingsService->getSyncOptions();
+			return new JSONResponse($data);
+		} catch (\Exception $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+		}
+
+	}//end getSyncOptions()
+
+	/**
+	 * Update the federation sync options.
+	 *
+	 * Admin-only: mutating the sync interval changes how often the app hits
+	 * federation peers; a non-admin must not be able to lower it and drown
+	 * peer directories in requests.
+	 *
+	 * CSRF is ENFORCED here (no `@NoCSRFRequired`), for the same reason as
+	 * {@see update()}: the admin gate on this endpoint is carried by the
+	 * session cookie, which a browser attaches automatically, so exempting it
+	 * would let any page the admin happens to visit lower this instance's sync
+	 * interval cross-origin and point it at peer directories. The admin UI
+	 * calls it through @nextcloud/axios, which sends `requesttoken`.
+	 *
+	 * @return JSONResponse JSON response containing the persisted sync options (post-clamp).
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function updateSyncOptions(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$data = $this->request->getParams();
+			$result = $this->settingsService->updateSyncOptions($data);
+			return new JSONResponse($result);
+		} catch (\Exception $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+		}
+
+	}//end updateSyncOptions()
+
+	/**
 	 * Get version information for the app and configuration.
 	 *
 	 * @return JSONResponse JSON response containing version information.

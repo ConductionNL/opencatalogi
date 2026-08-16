@@ -179,22 +179,43 @@ export default {
 			} else if (catalogSource?.slug) {
 				catalogSlug = catalogSource.slug
 			} else {
-				// Fast-path shape: pluck the first catalog id off
-				// `@self.catalogs[]` and look up the slug in the store.
+				// Fast-path shape: pull the slug off `@self.catalogs[0]`
+				// directly when the response carries it (post-WOO-529 peers
+				// include slug on the enriched catalog stub). Fall back to
+				// looking the catalog id up in the local objectStore for the
+				// same-origin case where `catalogs[]` lacks a slug. Final
+				// fallback: slugify the catalog title — OpenCatalogi's
+				// default slug convention is `strtolower(title)` with spaces
+				// replaced by dashes (verified against canary's own catalog,
+				// slug='publications', title='Publications'), so this recovers
+				// click-through for legacy peers that pre-date the slug
+				// enrichment.
 				const catalogsList = result?.['@self']?.catalogs
-				const firstCatalogId =
-					Array.isArray(catalogsList) && catalogsList[0]?.id
-				if (firstCatalogId) {
+				const firstCatalog = Array.isArray(catalogsList)
+					? catalogsList[0]
+					: null
+				if (firstCatalog?.slug) {
+					// The deep link wants a slug; when the listing already carries
+					// one there is nothing to resolve.
+					catalogSlug = firstCatalog.slug
+				} else if (firstCatalog?.id) {
 					const collection = objectStore.getCollection('catalog')
 					const catalogs = Array.isArray(collection)
 						? collection
 						: collection?.results || []
 					const match = catalogs.find(
 						(c) =>
-							String(c.id) === String(firstCatalogId)
-							|| String(c?.['@self']?.id) === String(firstCatalogId),
+							String(c.id) === String(firstCatalog.id)
+							|| String(c?.['@self']?.id) === String(firstCatalog.id),
 					)
 					catalogSlug = match?.slug || match?.['@self']?.slug || null
+				}
+				if (!catalogSlug && firstCatalog?.title) {
+					catalogSlug = String(firstCatalog.title)
+						.trim()
+						.toLowerCase()
+						.replace(/[^a-z0-9]+/g, '-')
+						.replace(/^-+|-+$/g, '')
 				}
 			}
 			// Local publications carry directory === 'local' (see

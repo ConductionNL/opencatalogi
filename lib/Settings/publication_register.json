@@ -231,7 +231,8 @@
                 "published"
               ],
               "to": "archived",
-              "description": "Archive a publication on retention expiry — removes it from public surfaces while retaining it internally with full history (RET-006)."
+              "label": "Archive",
+              "description": "Archive"
             }
           }
         },
