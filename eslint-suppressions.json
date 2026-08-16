@@ -245,11 +245,6 @@
       "count": 1
     }
   },
-  "src/entities/index.js": {
-    "import/export": {
-      "count": 1
-    }
-  },
   "src/entities/listing/listing.mock.ts": {
     "import-extensions/extensions": {
       "count": 1
@@ -336,9 +331,6 @@
     }
   },
   "src/main.js": {
-    "no-undef": {
-      "count": 1
-    },
     "no-unused-vars": {
       "count": 1
     }
@@ -643,9 +635,6 @@
     "no-console": {
       "count": 1
     },
-    "preserve-caught-error": {
-      "count": 1
-    },
     "vue/prefer-define-options": {
       "count": 1
     },
@@ -866,9 +855,6 @@
     "import/extensions": {
       "count": 1
     },
-    "import/no-unresolved": {
-      "count": 1
-    },
     "n/no-missing-import": {
       "count": 1
     }
@@ -882,9 +868,6 @@
     }
   },
   "src/views/dashboard/Dashboard.vue": {
-    "import/named": {
-      "count": 1
-    },
     "jsdoc/require-param-type": {
       "count": 3
     },

@@ -412,7 +412,10 @@
 </template>
 
 <script>
-// eslint-disable-next-line import/named -- CnChartWidget available in local source; will be in next npm release
+// The `import/named` disable that used to sit here is gone: the flat config
+// does not register that rule, so the comment was itself an error. Its note is
+// worth keeping though — CnChartWidget exists in the local nc-vue source and
+// ships in a later npm release.
 import {
 	buildHeaders,
 	CnChartWidget,
