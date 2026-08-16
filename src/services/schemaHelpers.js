@@ -1,5 +1,9 @@
 import { objectStore } from '../store/store.js'
 
+/**
+ *
+ * @param publication
+ */
 function resolveSchema(publication) {
 	const ref = publication?.['@self']?.schema ?? publication?.schema
 	if (!ref) return null
@@ -14,11 +18,14 @@ function resolveSchema(publication) {
 	const schemas = objectStore?.availableSchemas
 	if (!Array.isArray(schemas)) return null
 
-	return schemas.find(s =>
-		String(s.id) === String(id)
-		|| String(s.uuid) === String(id)
-		|| String(s.slug) === String(id),
-	) || null
+	return (
+		schemas.find(
+			(s) =>
+				String(s.id) === String(id)
+				|| String(s.uuid) === String(id)
+				|| String(s.slug) === String(id),
+		) || null
+	)
 }
 
 /**

@@ -1,26 +1,19 @@
-/**
- * DeleteMenuItemModal.vue
- * Modal for deleting menu items
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license EUPL-1.2
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * DeleteMenuItemModal.vue * Modal for deleting menu items * @category Components
+* @package opencatalogi * @author Ruben Linde * @copyright 2024 * @license EUPL-1.2 *
+@version 1.0.0 * @link https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { computed, ref } from 'vue'
 import { EventBus } from '../../eventBus.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'deleteMenuItem'"
+	<NcModal
+		v-if="navigationStore.modal === 'deleteMenuItem'"
 		ref="modalRef"
 		class="deleteMenuItemModal"
-		label-id="deleteMenuItemModal"
+		labelId="deleteMenuItemModal"
 		:name="t('opencatalogi', 'Delete menu item')"
 		@close="handleCancel">
 		<div class="modal__content">
@@ -29,26 +22,44 @@ import { EventBus } from '../../eventBus.js'
 					<p>{{ t('opencatalogi', 'Menu item successfully deleted') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>{{ t('opencatalogi', 'Something went wrong while deleting the menu item') }}</p>
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Something went wrong while deleting the menu item',
+							)
+						}}
+					</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>{{ t('opencatalogi', 'Are you sure you want to delete the menu item {name}?', { name: menuItem.title || menuItem.name }) }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Are you sure you want to delete the menu item {name}?',
+							{ name: menuItem.title || menuItem.name },
+						)
+					}}
+				</p>
 			</div>
 
 			<div class="modalActions">
-				<NcButton
-					class="modalCloseButton"
-					@click="handleCancel">
+				<NcButton class="modalCloseButton" @click="handleCancel">
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+					{{
+						success
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="success === null"
+				<NcButton
+					v-if="success === null"
 					:disabled="loading"
 					variant="error"
 					@click="handleDelete">
@@ -66,38 +77,36 @@ import { EventBus } from '../../eventBus.js'
 </template>
 
 <script>
-import {
-	NcButton,
-	NcModal,
-	NcNoteCard,
-	NcLoadingIcon,
-} from '@nextcloud/vue'
-import { Menu } from '../../entities/index.js'
-
+import { NcButton, NcLoadingIcon, NcModal, NcNoteCard } from '@nextcloud/vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 // icons
 import Delete from 'vue-material-design-icons/Delete.vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
+import { Menu } from '../../entities/index.js'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Success state for the component
+ *
  * @type {import('vue').Ref<boolean|null>}
  */
 const success = ref(null)
 
 /**
  * Error state for the component
+ *
  * @type {import('vue').Ref<string|null>}
  */
 const error = ref(null)
 
 /**
  * Get the active menu item from the store
+ *
  * @return {object | null}
  */
 const menuItem = computed(() => objectStore.getActiveObject('menuItem') || {})
@@ -105,9 +114,10 @@ const menuItem = computed(() => objectStore.getActiveObject('menuItem') || {})
 /**
  * Handle delete action
  * Remove the item from the active menu and update the menu object
+ *
  * @return {Promise<void>}
  */
-const handleDelete = async () => {
+async function handleDelete() {
 	loading.value = true
 	try {
 		const menu = objectStore.getActiveObject('menu')
@@ -119,19 +129,30 @@ const handleDelete = async () => {
 		let itemIndex = -1
 
 		// Try to find by index first (most reliable)
-		if (activeMenuItem.index !== undefined && activeMenuItem.index >= 0 && activeMenuItem.index < menuItems.length) {
+		if (
+			activeMenuItem.index !== undefined
+			&& activeMenuItem.index >= 0
+			&& activeMenuItem.index < menuItems.length
+		) {
 			itemIndex = activeMenuItem.index
 		} else {
 			// Try to find by id
-			if (activeMenuItem.id && activeMenuItem.id !== null && activeMenuItem.id !== undefined) {
-				itemIndex = menuItems.findIndex(item => item.id === activeMenuItem.id)
+			if (
+				activeMenuItem.id
+				&& activeMenuItem.id !== null
+				&& activeMenuItem.id !== undefined
+			) {
+				itemIndex = menuItems.findIndex(
+					(item) => item.id === activeMenuItem.id,
+				)
 			}
 
 			// If still not found, try by name and order
 			if (itemIndex === -1) {
-				itemIndex = menuItems.findIndex(item =>
-					item.name === activeMenuItem.name
-					&& item.order === activeMenuItem.order,
+				itemIndex = menuItems.findIndex(
+					(item) =>
+						item.name === activeMenuItem.name
+						&& item.order === activeMenuItem.order,
 				)
 			}
 		}
@@ -162,9 +183,10 @@ const handleDelete = async () => {
 
 /**
  * Handle cancel action
+ *
  * @return {void}
  */
-const handleCancel = () => {
+function handleCancel() {
 	navigationStore.setModal(false)
 	objectStore.clearActiveObject('menuItem')
 }
@@ -183,6 +205,7 @@ export default {
 		NcLoadingIcon,
 		Cancel,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -190,6 +213,7 @@ export default {
 			error: null,
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		closeModal() {

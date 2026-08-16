@@ -9,10 +9,10 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-/* eslint-disable no-console */
+import type { TMenu } from './menu.types'
+
 import { Menu } from './menu'
 import { mockMenu, mockMinimalMenu } from './menu.mock'
-import { TMenu } from './menu.types'
 
 describe('Menu Store', () => {
 	it('create Menu entity with full data', () => {

@@ -336,6 +336,55 @@ class ListingsControllerTest extends TestCase {
 	}//end testIndexIgnoresCallerSuppliedRegisterAndSchemaFilters()
 
 	/**
+	 * The SAME widening, spelled `@self` — which the denylist above did not cover.
+	 *
+	 * The test above pins `filters[register]` and `filters[schema]`, and it passed
+	 * on every run while this hole was open, because the scope it protects does not
+	 * live at the top level: it lives under `@self`, and `$query[$key] = $value`
+	 * ASSIGNS rather than merges. So `filters[@self]` replaced the whole scope block
+	 * that index() had built four lines earlier, and /api/listings — a
+	 * `@NoAdminRequired` endpoint — became an arbitrary-register reader for any
+	 * authenticated user.
+	 *
+	 * The lesson worth keeping is about the older test, not this one: it asserted
+	 * the two key NAMES someone had thought of, so it could only ever catch the
+	 * spelling it already knew. This asserts the invariant instead — the scope
+	 * actually sent is the CONFIGURED one, whatever the caller wrote.
+	 *
+	 * @return void
+	 */
+	public function testIndexIgnoresACallerSuppliedSelfScopeFilter(): void {
+		$mockObjService = $this->mockObjectService();
+
+		$captured = null;
+		$mockObjService->method('searchObjectsPaginated')
+			->willReturnCallback(
+				function (array $query) use (&$captured) {
+					$captured = $query;
+					return ['results' => [], 'total' => 0];
+				}
+			);
+
+		$this->configureListingScope(register: '3', schema: '5');
+
+		$this->request->method('getParams')
+			->willReturn(
+				[
+					'filters' => [
+						'@self' => ['register' => '999', 'schema' => '888'],
+						'status' => 'active',
+					],
+				]
+			);
+
+		$this->controller->index();
+
+		$this->assertSame('3', $captured['@self']['register'], 'the configured register must survive a caller-supplied @self');
+		$this->assertSame('5', $captured['@self']['schema'], 'the configured schema must survive a caller-supplied @self');
+		$this->assertSame('active', $captured['status'], 'ordinary filters must still pass through');
+	}//end testIndexIgnoresACallerSuppliedSelfScopeFilter()
+
+	/**
 	 * Index() honours filters, limit and offset request parameters.
 	 *
 	 * @return void

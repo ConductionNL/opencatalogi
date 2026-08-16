@@ -1,12 +1,16 @@
 <script setup>
-import { objectStore, navigationStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<CnFormDialog
 		v-if="navigationStore.modal === 'menuItemForm'"
-		:dialog-title="isEdit ? t('opencatalogi', 'Edit Menu Item') : t('opencatalogi', 'Add Menu Item')"
+		:dialogTitle="
+			isEdit
+				? t('opencatalogi', 'Edit Menu Item')
+				: t('opencatalogi', 'Add Menu Item')
+		"
 		:fields="fields"
 		:item="dialogItem"
 		size="large"
@@ -28,7 +32,7 @@ import { buildMenuItemIconCatalogues } from './menuItemIconCatalogues.js'
  * back into the parent menu's `items` array.
  *
  * @category Components
- * @package opencatalogi
+ * @package
  * @author Ruben Linde
  * @license EUPL-1.2
  */
@@ -40,11 +44,40 @@ export default {
 		return {
 			isEdit: !!activeMenuItem,
 			fields: [
-				{ key: 'order', label: t('opencatalogi', 'Order'), widget: 'number' },
-				{ key: 'name', label: t('opencatalogi', 'Name'), widget: 'text', required: true },
-				{ key: 'link', label: t('opencatalogi', 'Link'), widget: 'text', description: t('opencatalogi', 'External link (https://…) or internal path (/login).') },
-				{ key: 'description', label: t('opencatalogi', 'Description'), widget: 'text' },
-				{ key: 'ariaLabel', label: t('opencatalogi', 'Aria Label'), widget: 'text', description: t('opencatalogi', 'Accessible name announced by screen readers.') },
+				{
+					key: 'order',
+					label: t('opencatalogi', 'Order'),
+					widget: 'number',
+				},
+				{
+					key: 'name',
+					label: t('opencatalogi', 'Name'),
+					widget: 'text',
+					required: true,
+				},
+				{
+					key: 'link',
+					label: t('opencatalogi', 'Link'),
+					widget: 'text',
+					description: t(
+						'opencatalogi',
+						'External link (https://…) or internal path (/login).',
+					),
+				},
+				{
+					key: 'description',
+					label: t('opencatalogi', 'Description'),
+					widget: 'text',
+				},
+				{
+					key: 'ariaLabel',
+					label: t('opencatalogi', 'Aria Label'),
+					widget: 'text',
+					description: t(
+						'opencatalogi',
+						'Accessible name announced by screen readers.',
+					),
+				},
 				{
 					key: 'icon',
 					label: t('opencatalogi', 'Icon'),
@@ -54,12 +87,36 @@ export default {
 					searchable: true,
 					allowCustomSvg: true,
 				},
-				{ key: 'groups', label: t('opencatalogi', 'Groups Access'), widget: 'multiselect', enum: async () => (await getNextcloudGroups()).map(g => ({ label: g.label, value: g.value, id: g.value })), description: t('opencatalogi', 'When set, the item only shows for users in one of these groups.') },
-				{ key: 'hideAfterLogin', label: t('opencatalogi', 'Hide after login'), widget: 'checkbox' },
-				{ key: 'hideBeforeLogin', label: t('opencatalogi', 'Hide before login'), widget: 'checkbox' },
+				{
+					key: 'groups',
+					label: t('opencatalogi', 'Groups Access'),
+					widget: 'multiselect',
+					enum: async () =>
+						(await getNextcloudGroups()).map((g) => ({
+							label: g.label,
+							value: g.value,
+							id: g.value,
+						})),
+
+					description: t(
+						'opencatalogi',
+						'When set, the item only shows for users in one of these groups.',
+					),
+				},
+				{
+					key: 'hideAfterLogin',
+					label: t('opencatalogi', 'Hide after login'),
+					widget: 'checkbox',
+				},
+				{
+					key: 'hideBeforeLogin',
+					label: t('opencatalogi', 'Hide before login'),
+					widget: 'checkbox',
+				},
 			],
 		}
 	},
+
 	computed: {
 		/**
 		 * @return {object|null} The active menu whose items are edited.
@@ -68,6 +125,7 @@ export default {
 		menuObject() {
 			return objectStore.getActiveObject('menu')
 		},
+
 		/**
 		 * @return {object|null} Flattened item for CnFormDialog (null in create mode).
 		 * @spec openspec/specs/retrofit-2026-05-26-menu-page-management/spec.md#requirement-menu-item-form-req-menu-002
@@ -90,6 +148,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		/**
 		 * Persist the confirmed form data back into the parent menu.
@@ -123,26 +182,43 @@ export default {
 
 			if (this.isEdit && activeMenuItem) {
 				let index = -1
-				if (activeMenuItem.index !== undefined && activeMenuItem.index >= 0 && activeMenuItem.index < menuClone.items.length) {
+				if (
+					activeMenuItem.index !== undefined
+					&& activeMenuItem.index >= 0
+					&& activeMenuItem.index < menuClone.items.length
+				) {
 					index = activeMenuItem.index
 				} else if (activeMenuItem.id) {
-					index = menuClone.items.findIndex(i => i.id === activeMenuItem.id)
+					index = menuClone.items.findIndex(
+						(i) => i.id === activeMenuItem.id,
+					)
 				}
 				if (index === -1) {
-					index = menuClone.items.findIndex(i => i.name === activeMenuItem.name && i.order === activeMenuItem.order)
+					index = menuClone.items.findIndex(
+						(i) =>
+							i.name === activeMenuItem.name
+							&& i.order === activeMenuItem.order,
+					)
 				}
 				if (index !== -1) {
-					menuClone.items[index] = { ...item, id: activeMenuItem.id || menuClone.items[index].id }
+					menuClone.items[index] = {
+						...item,
+						id: activeMenuItem.id || menuClone.items[index].id,
+					}
 				} else {
 					menuClone.items.push(item)
 				}
 			} else {
-				const maxOrder = Math.max(0, ...menuClone.items.map(i => i.order || 0))
+				const maxOrder = Math.max(
+					0,
+					...menuClone.items.map((i) => i.order || 0),
+				)
 				item.order = item.order || maxOrder + 1
 				menuClone.items.push(item)
 			}
 
-			objectStore.updateObject('menu', this.menuObject.id, new Menu(menuClone))
+			objectStore
+				.updateObject('menu', this.menuObject.id, new Menu(menuClone))
 				.then(() => {
 					navigationStore.setModal('viewMenu')
 					objectStore.clearActiveObject('menuItem')
@@ -152,6 +228,7 @@ export default {
 					console.error('Error saving menu item:', error)
 				})
 		},
+
 		/**
 		 * Normalize the groups multiselect value to an array of group ids.
 		 *
@@ -163,8 +240,15 @@ export default {
 			if (!Array.isArray(selected)) {
 				return []
 			}
-			return selected.map(item => (typeof item === 'string' ? item : (item.value ?? item.id ?? item.label))).filter(Boolean)
+			return selected
+				.map((item) =>
+					typeof item === 'string'
+						? item
+						: (item.value ?? item.id ?? item.label),
+				)
+				.filter(Boolean)
 		},
+
 		/**
 		 * Close the dialog and return to the parent menu view.
 		 *

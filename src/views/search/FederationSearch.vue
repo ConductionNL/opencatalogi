@@ -13,8 +13,8 @@
 //   - src/store/modules/search.ts — federation-aware store (uses `_search`,
 //     hits `/api/federation/publications`).
 
+import { CnPagination, CnSearchPage } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
-import { CnSearchPage, CnPagination } from '@conduction/nextcloud-vue'
 import { useSearchStore } from '../../store/modules/search.ts'
 import { objectStore } from '../../store/store.js'
 
@@ -27,6 +27,7 @@ export default {
 			localQuery: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * The federation search store's result rows, rendered as-is — no local
@@ -38,6 +39,7 @@ export default {
 		results() {
 			return this.searchStore.searchResults || []
 		},
+
 		/**
 		 * Total result count as reported by the federation endpoint's pagination
 		 * envelope — not counted locally.
@@ -48,6 +50,7 @@ export default {
 		totalCount() {
 			return this.searchStore.pagination?.total || 0
 		},
+
 		/**
 		 * Whether the federation search store has a request in flight.
 		 *
@@ -57,6 +60,7 @@ export default {
 		loading() {
 			return this.searchStore.loading
 		},
+
 		/**
 		 * Pagination state passed to CnPagination. Falls back to safe
 		 * defaults when the search-store hasn't populated pagination yet.
@@ -73,6 +77,7 @@ export default {
 			}
 		},
 	},
+
 	/**
 	 * Seed the query input from the store and load the initial result set
 	 * through the federation-aware search store.
@@ -84,6 +89,7 @@ export default {
 		this.localQuery = this.searchStore.searchTerm || ''
 		this.searchStore.loadInitialResults()
 	},
+
 	methods: {
 		t,
 		/**
@@ -96,10 +102,12 @@ export default {
 		 * @spec openspec/specs/search/spec.md#requirement-search-frontend-store-calls-the-federation-endpoint-sch-or-004
 		 */
 		onSearch(payload) {
-			const query = typeof payload === 'string' ? payload : (payload?.query ?? '')
+			const query =
+				typeof payload === 'string' ? payload : (payload?.query ?? '')
 			this.searchStore.setSearchTerm(query)
 			this.searchStore.searchPublications({ _page: 1 })
 		},
+
 		/**
 		 * Track the query input so the controlled `:query` prop stays in sync.
 		 *
@@ -110,6 +118,7 @@ export default {
 		onQueryChange(query) {
 			this.localQuery = query
 		},
+
 		/**
 		 * Refetch results for the newly-selected page. CnPagination emits
 		 * a 1-based page number.
@@ -121,6 +130,7 @@ export default {
 		onPageChange(newPage) {
 			this.searchStore.searchPublications({ _page: newPage })
 		},
+
 		/**
 		 * Refetch results with a new items-per-page value, resetting to
 		 * page 1 so the user doesn't land on an out-of-bounds page when
@@ -133,6 +143,7 @@ export default {
 		onPageSizeChange(newSize) {
 			this.searchStore.searchPublications({ _limit: newSize, _page: 1 })
 		},
+
 		/**
 		 * Navigate to a search result's detail. Federated results (carrying
 		 * `@self.directory`) open the source instance in a new tab so the
@@ -171,11 +182,18 @@ export default {
 				// Fast-path shape: pluck the first catalog id off
 				// `@self.catalogs[]` and look up the slug in the store.
 				const catalogsList = result?.['@self']?.catalogs
-				const firstCatalogId = Array.isArray(catalogsList) && catalogsList[0]?.id
+				const firstCatalogId =
+					Array.isArray(catalogsList) && catalogsList[0]?.id
 				if (firstCatalogId) {
 					const collection = objectStore.getCollection('catalog')
-					const catalogs = Array.isArray(collection) ? collection : (collection?.results || [])
-					const match = catalogs.find(c => String(c.id) === String(firstCatalogId) || String(c?.['@self']?.id) === String(firstCatalogId))
+					const catalogs = Array.isArray(collection)
+						? collection
+						: collection?.results || []
+					const match = catalogs.find(
+						(c) =>
+							String(c.id) === String(firstCatalogId)
+							|| String(c?.['@self']?.id) === String(firstCatalogId),
+					)
 					catalogSlug = match?.slug || match?.['@self']?.slug || null
 				}
 			}
@@ -222,9 +240,10 @@ export default {
 				// guessing a catalog slug (`publications`) would 404 on any
 				// peer that uses a different default and there is no way to
 				// verify the assumption from the payload alone.
-				const target = (catalogSlug && publicationId)
-					? `${peerRoot}/#/publications/${encodeURIComponent(catalogSlug)}/${encodeURIComponent(publicationId)}`
-					: `${peerRoot}/`
+				const target =
+					catalogSlug && publicationId
+						? `${peerRoot}/#/publications/${encodeURIComponent(catalogSlug)}/${encodeURIComponent(publicationId)}`
+						: `${peerRoot}/`
 				window.open(target, '_blank', 'noopener,noreferrer')
 				return
 			}
@@ -234,7 +253,10 @@ export default {
 			if (catalogSlug && publicationId) {
 				this.$router.push({
 					name: 'PublicationDetail',
-					params: { catalogSlug: String(catalogSlug), id: String(publicationId) },
+					params: {
+						catalogSlug: String(catalogSlug),
+						id: String(publicationId),
+					},
 				})
 			}
 		},
@@ -248,37 +270,53 @@ export default {
 			:title="t('opencatalogi', 'Search publications')"
 			:query="localQuery"
 			:results="results"
-			:total-count="totalCount"
+			:totalCount="totalCount"
 			:loading="loading"
 			:placeholder="t('opencatalogi', 'Search across the federated network…')"
-			:search-label="t('opencatalogi', 'Search')"
-			:empty-label="t('opencatalogi', 'No matching publications across the federation.')"
-			:idle-label="t('opencatalogi', 'Start typing to search publications across all connected instances.')"
-			:loading-label="t('opencatalogi', 'Searching the federated network…')"
+			:searchLabel="t('opencatalogi', 'Search')"
+			:emptyLabel="
+				t('opencatalogi', 'No matching publications across the federation.')
+			"
+			:idleLabel="
+				t(
+					'opencatalogi',
+					'Start typing to search publications across all connected instances.',
+				)
+			"
+			:loadingLabel="t('opencatalogi', 'Searching the federated network…')"
 			@search="onSearch"
-			@query-change="onQueryChange"
-			@result-click="onResultClick">
+			@queryChange="onQueryChange"
+			@resultClick="onResultClick">
 			<template #result="{ result }">
 				<div class="federation-search-result">
 					<h4 class="federation-search-result__title">
-						{{ result.title || result['@self']?.name || t('opencatalogi', 'Untitled publication') }}
+						{{
+							result.title
+							|| result['@self']?.name
+							|| t('opencatalogi', 'Untitled publication')
+						}}
 					</h4>
-					<p v-if="result.summary" class="federation-search-result__summary">
+					<p
+						v-if="result.summary"
+						class="federation-search-result__summary">
 						{{ result.summary }}
 					</p>
-					<p v-if="result['@self']?.directory" class="federation-search-result__source">
-						{{ t('opencatalogi', 'Source:') }} {{ result['@self'].directory }}
+					<p
+						v-if="result['@self']?.directory"
+						class="federation-search-result__source">
+						{{ t('opencatalogi', 'Source:') }}
+						{{ result['@self'].directory }}
 					</p>
 				</div>
 			</template>
 		</CnSearchPage>
 		<CnPagination
-			:current-page="paginationState.page"
-			:total-pages="paginationState.pages"
-			:total-items="paginationState.total"
-			:current-page-size="paginationState.limit"
-			@page-changed="onPageChange"
-			@page-size-changed="onPageSizeChange" />
+			:currentPage="paginationState.page"
+			:totalPages="paginationState.pages"
+			:totalItems="paginationState.total"
+			:currentPageSize="paginationState.limit"
+			@pageChanged="onPageChange"
+			@pageSizeChanged="onPageSizeChange" />
 	</div>
 </template>
 

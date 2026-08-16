@@ -44,11 +44,7 @@ const UNKNOWN_SLUG = 'definitely-not-a-catalog-slug'
  * advertise NOTHING — asserting only `/courses` would let a regression that
  * re-opened `/programs` or `/organizations` through unnoticed.
  */
-const OOAPI_COLLECTIONS = [
-	'organizations',
-	'programs',
-	'courses',
-]
+const OOAPI_COLLECTIONS = ['organizations', 'programs', 'courses']
 
 /** Anonymous context: an explicitly empty cookie jar. */
 let anon: APIRequestContext
@@ -69,41 +65,38 @@ test.afterAll(async () => {
 })
 
 test.describe('OOAPI 5.0 access control', () => {
-
 	/**
 	 * OOAPI-008. The endpoints carry consumer-credential auth; an anonymous
 	 * caller must never reach educational data.
 	 */
-	test(
-		// @e2e ooapi-catalog-publication::anonymous-request-is-rejected
-		'OOAPI — an anonymous request is rejected with 401',
-		async () => {
-			for (const collection of OOAPI_COLLECTIONS) {
-				const resp = await anon.get(`${APP}/api/catalogs/publications/ooapi/v5/${collection}`)
-				expect(
-					resp.status(),
-					`anonymous GET /ooapi/v5/${collection} must be refused, not served`,
-				).toBe(401)
-			}
-		},
-	)
+	test(// @e2e ooapi-catalog-publication::anonymous-request-is-rejected
+	'OOAPI — an anonymous request is rejected with 401', async () => {
+		for (const collection of OOAPI_COLLECTIONS) {
+			const resp = await anon.get(
+				`${APP}/api/catalogs/publications/ooapi/v5/${collection}`,
+			)
+			expect(
+				resp.status(),
+				`anonymous GET /ooapi/v5/${collection} must be refused, not served`,
+			).toBe(401)
+		}
+	})
 
 	/**
 	 * The auth gate must run BEFORE the catalog lookup. If it did not, an
 	 * anonymous caller would be able to tell an existing catalog from a
 	 * missing one by the status code — 404 vs 401 — which is a slug oracle.
 	 */
-	test(
-		// @e2e ooapi-catalog-publication::anonymous-request-is-rejected
-		'OOAPI — anonymous gets 401 for an unknown slug too, not a 404 oracle',
-		async () => {
-			const resp = await anon.get(`${APP}/api/catalogs/${UNKNOWN_SLUG}/ooapi/v5/courses`)
-			expect(
-				resp.status(),
-				'an anonymous caller must not be able to probe which catalog slugs exist',
-			).toBe(401)
-		},
-	)
+	test(// @e2e ooapi-catalog-publication::anonymous-request-is-rejected
+	'OOAPI — anonymous gets 401 for an unknown slug too, not a 404 oracle', async () => {
+		const resp = await anon.get(
+			`${APP}/api/catalogs/${UNKNOWN_SLUG}/ooapi/v5/courses`,
+		)
+		expect(
+			resp.status(),
+			'an anonymous caller must not be able to probe which catalog slugs exist',
+		).toBe(401)
+	})
 
 	/**
 	 * An authenticated, allowed consumer passes the credential gate. Asserted
@@ -111,79 +104,83 @@ test.describe('OOAPI 5.0 access control', () => {
 	 * depends on catalog configuration — conflating the two would make this
 	 * test fail for the wrong reason on an instance with no OOAPI catalog.
 	 */
-	test(
-		// @e2e ooapi-catalog-publication::authenticated-consumer-with-a-valid-credential-succeeds
-		'OOAPI — an authenticated allowed consumer passes the credential gate',
-		async ({ request: authed }) => {
-			const resp = await authed.get(`${APP}/api/catalogs/publications/ooapi/v5/courses`, {
+	test(// @e2e ooapi-catalog-publication::authenticated-consumer-with-a-valid-credential-succeeds
+	'OOAPI — an authenticated allowed consumer passes the credential gate', async ({
+		request: authed,
+	}) => {
+		const resp = await authed.get(
+			`${APP}/api/catalogs/publications/ooapi/v5/courses`,
+			{
 				headers: { 'OCS-APIRequest': 'true' },
-			})
-			expect(
-				[401, 403],
-				`an authenticated consumer must clear the credential gate (got ${resp.status()})`,
-			).not.toContain(resp.status())
-		},
-	)
+			},
+		)
+		expect(
+			[401, 403],
+			`an authenticated consumer must clear the credential gate (got ${resp.status()})`,
+		).not.toContain(resp.status())
+	})
 
-	test(
-		// @e2e ooapi-catalog-publication::unknown-catalog-slug-or-resource-id
-		'OOAPI — an unknown catalog slug is a 404 for an authenticated consumer',
-		async ({ request: authed }) => {
-			const resp = await authed.get(`${APP}/api/catalogs/${UNKNOWN_SLUG}/ooapi/v5/courses`, {
+	test(// @e2e ooapi-catalog-publication::unknown-catalog-slug-or-resource-id
+	'OOAPI — an unknown catalog slug is a 404 for an authenticated consumer', async ({
+		request: authed,
+	}) => {
+		const resp = await authed.get(
+			`${APP}/api/catalogs/${UNKNOWN_SLUG}/ooapi/v5/courses`,
+			{
 				headers: { 'OCS-APIRequest': 'true' },
-			})
-			expect(resp.status()).toBe(404)
-		},
-	)
+			},
+		)
+		expect(resp.status()).toBe(404)
+	})
 
-	test(
-		// @e2e ooapi-catalog-publication::unknown-catalog-slug-or-resource-id
-		'OOAPI — an unknown resource id inside a real catalog is a 404',
-		async ({ request: authed }) => {
-			const resp = await authed.get(
-				`${APP}/api/catalogs/publications/ooapi/v5/courses/00000000-0000-0000-0000-000000000000`,
-				{ headers: { 'OCS-APIRequest': 'true' } },
-			)
-			expect(resp.status()).toBe(404)
-		},
-	)
+	test(// @e2e ooapi-catalog-publication::unknown-catalog-slug-or-resource-id
+	'OOAPI — an unknown resource id inside a real catalog is a 404', async ({
+		request: authed,
+	}) => {
+		const resp = await authed.get(
+			`${APP}/api/catalogs/publications/ooapi/v5/courses/00000000-0000-0000-0000-000000000000`,
+			{ headers: { 'OCS-APIRequest': 'true' } },
+		)
+		expect(resp.status()).toBe(404)
+	})
 
 	/**
 	 * OOAPI is opt-in per catalog. A catalog that has not enabled it must not
 	 * serve OOAPI at all — this is the switch that keeps educational-data
 	 * endpoints closed on every catalog that never asked for them.
 	 */
-	test(
-		// @e2e ooapi-catalog-publication::ooapi-disabled-for-a-catalog
-		'OOAPI — a catalog without OOAPI enabled refuses with a named reason',
-		async ({ request: authed }) => {
-			const resp = await authed.get(`${APP}/api/catalogs/publications/ooapi/v5/courses`, {
+	test(// @e2e ooapi-catalog-publication::ooapi-disabled-for-a-catalog
+	'OOAPI — a catalog without OOAPI enabled refuses with a named reason', async ({
+		request: authed,
+	}) => {
+		const resp = await authed.get(
+			`${APP}/api/catalogs/publications/ooapi/v5/courses`,
+			{
 				headers: { 'OCS-APIRequest': 'true' },
-			})
+			},
+		)
 
-			expect(resp.status()).toBe(404)
-			const body = await resp.json()
-			// The REASON is asserted, not just the code. A 404 from a missing
-			// route and a 404 from "OOAPI is switched off" are the same byte,
-			// and only one of them means the feature gate is working.
-			expect(body.error).toContain('not enabled for this catalog')
-		},
-	)
+		expect(resp.status()).toBe(404)
+		const body = await resp.json()
+		// The REASON is asserted, not just the code. A 404 from a missing
+		// route and a 404 from "OOAPI is switched off" are the same byte,
+		// and only one of them means the feature gate is working.
+		expect(body.error).toContain('not enabled for this catalog')
+	})
 
-	test(
-		// @e2e ooapi-catalog-publication::disabled-catalog-advertises-nothing
-		'OOAPI — a disabled catalog advertises nothing on ANY collection',
-		async ({ request: authed }) => {
-			for (const collection of OOAPI_COLLECTIONS) {
-				const resp = await authed.get(
-					`${APP}/api/catalogs/publications/ooapi/v5/${collection}`,
-					{ headers: { 'OCS-APIRequest': 'true' } },
-				)
-				expect(
-					resp.status(),
-					`/ooapi/v5/${collection} must stay closed while OOAPI is disabled for the catalog`,
-				).toBe(404)
-			}
-		},
-	)
+	test(// @e2e ooapi-catalog-publication::disabled-catalog-advertises-nothing
+	'OOAPI — a disabled catalog advertises nothing on ANY collection', async ({
+		request: authed,
+	}) => {
+		for (const collection of OOAPI_COLLECTIONS) {
+			const resp = await authed.get(
+				`${APP}/api/catalogs/publications/ooapi/v5/${collection}`,
+				{ headers: { 'OCS-APIRequest': 'true' } },
+			)
+			expect(
+				resp.status(),
+				`/ooapi/v5/${collection} must stay closed while OOAPI is disabled for the catalog`,
+			).toBe(404)
+		}
+	})
 })

@@ -16,9 +16,24 @@ const failResult = {
 	success: false,
 	error: {
 		issues: [
-			{ path: ['items', 0, 'name'], message: 'naam is verplicht', code: 'too_small', type: 'string' },
-			{ path: ['items', 0, 'summary'], message: 'summary is verplicht', code: 'too_small', type: 'string' },
-			{ path: ['items', 0, 'name'], message: 'naam te kort', code: 'too_small', type: 'string' },
+			{
+				path: ['items', 0, 'name'],
+				message: 'naam is verplicht',
+				code: 'too_small',
+				type: 'string',
+			},
+			{
+				path: ['items', 0, 'summary'],
+				message: 'summary is verplicht',
+				code: 'too_small',
+				type: 'string',
+			},
+			{
+				path: ['items', 0, 'name'],
+				message: 'naam te kort',
+				code: 'too_small',
+				type: 'string',
+			},
 		],
 	},
 }
@@ -39,7 +54,10 @@ describe('createZodErrorHandler — getError / getErrors', () => {
 
 	it('getErrors returns ALL messages for a path', () => {
 		const h = createZodErrorHandler(failResult)
-		expect(h.getErrors('items.0.name')).toEqual(['naam is verplicht', 'naam te kort'])
+		expect(h.getErrors('items.0.name')).toEqual([
+			'naam is verplicht',
+			'naam te kort',
+		])
 		expect(h.getErrors('items.0.summary')).toEqual(['summary is verplicht'])
 		expect(h.getErrors('items.0.missing')).toEqual([])
 	})

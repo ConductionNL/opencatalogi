@@ -48,7 +48,9 @@ export const APP = '/index.php/apps/opencatalogi'
 export async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
-		const close = wizard.getByRole('button', { name: /close|got it|finish|skip/i }).first()
+		const close = wizard
+			.getByRole('button', { name: /close|got it|finish|skip/i })
+			.first()
 		if (await close.isVisible().catch(() => false)) {
 			await close.click().catch(() => {})
 		} else {
@@ -61,9 +63,11 @@ export async function dismissOverlays(page: Page): Promise<void> {
 	// lands one frame early sees nothing and a close click one frame early is
 	// swallowed by the same enter transition.
 	const support = page.locator('[data-testid-modal="cn-support-dialog"]').first()
-	for (let i = 0; i < 3 && await support.isVisible().catch(() => false); i++) {
+	for (let i = 0; i < 3 && (await support.isVisible().catch(() => false)); i++) {
 		const close = support
-			.locator('.modal-container__close, [aria-label="Close"], button:has-text("Close")')
+			.locator(
+				'.modal-container__close, [aria-label="Close"], button:has-text("Close")',
+			)
 			.first()
 		if (await close.isVisible().catch(() => false)) {
 			await close.click().catch(() => {})
@@ -74,7 +78,8 @@ export async function dismissOverlays(page: Page): Promise<void> {
 	}
 	// The mask outlives the dialog's own visibility by one transition; a click
 	// issued in that window is still intercepted. Wait for it to detach.
-	await page.locator('.cn-support-dialog.modal-mask')
+	await page
+		.locator('.cn-support-dialog.modal-mask')
 		.waitFor({ state: 'detached', timeout: 3000 })
 		.catch(() => {})
 
@@ -97,7 +102,9 @@ export async function bootApp(page: Page): Promise<void> {
 	await page.goto(`${APP}/`, { waitUntil: 'domcontentloaded' }).catch(() => {})
 	await dismissOverlays(page)
 	// CnAppNav rendered → shell is up.
-	await expect(page.locator('[data-testid="cn-nav"]').first()).toBeVisible({ timeout: 20000 })
+	await expect(page.locator('[data-testid="cn-nav"]').first()).toBeVisible({
+		timeout: 20000,
+	})
 }
 
 /**
@@ -113,24 +120,28 @@ export async function bootApp(page: Page): Promise<void> {
  */
 export async function openSettingsFoldout(page: Page): Promise<void> {
 	const container = page.locator('[data-testid="cn-nav-settings"]').first()
-	if (await container.count() > 0) {
+	if ((await container.count()) > 0) {
 		// Exactly one toggle button lives in the foldout header; it carries
 		// aria-expanded, which also tells us whether it is already open.
 		const toggle = container.locator('button[aria-expanded]').first()
-		if (await toggle.count() > 0) {
-			if (await toggle.getAttribute('aria-expanded') === 'true') return
+		if ((await toggle.count()) > 0) {
+			if ((await toggle.getAttribute('aria-expanded')) === 'true') return
 			await toggle.click().catch(() => {})
-			await expect(toggle).toHaveAttribute('aria-expanded', 'true', { timeout: 5000 })
+			await expect(toggle).toHaveAttribute('aria-expanded', 'true', {
+				timeout: 5000,
+			})
 			return
 		}
 	}
 
 	// Fallback: pre-v9 shells with stable settings-button class names.
-	const gear = page.locator(
-		'.app-navigation-entry__settings-button, button.settings-button, '
-		+ '.app-navigation__settings-button, .app-navigation-settings > button, '
-		+ '.app-navigation__settings button',
-	).first()
+	const gear = page
+		.locator(
+			'.app-navigation-entry__settings-button, button.settings-button, '
+				+ '.app-navigation__settings-button, .app-navigation-settings > button, '
+				+ '.app-navigation__settings button',
+		)
+		.first()
 	if (await gear.isVisible().catch(() => false)) {
 		await gear.click().catch(() => {})
 		await page.waitForTimeout(500)
@@ -159,9 +170,11 @@ export async function expandGroupFor(page: Page, menuId: string): Promise<void> 
 	if (await entry.isVisible().catch(() => false)) return
 
 	const group = page
-		.locator(`li.app-navigation-entry--collapsible:has([data-testid="cn-nav-entry-${menuId}"])`)
+		.locator(
+			`li.app-navigation-entry--collapsible:has([data-testid="cn-nav-entry-${menuId}"])`,
+		)
 		.first()
-	if (await group.count() === 0) return
+	if ((await group.count()) === 0) return
 
 	// The group's OWN link is the first `.app-navigation-entry-link` inside it;
 	// child links live deeper, inside `.app-navigation-entry__children`.
@@ -177,7 +190,11 @@ export async function expandGroupFor(page: Page, menuId: string): Promise<void> 
  * area to settle. `settings` opens the gear foldout first; grouped entries
  * additionally need their parent group expanded.
  */
-export async function navTo(page: Page, menuId: string, settings = false): Promise<void> {
+export async function navTo(
+	page: Page,
+	menuId: string,
+	settings = false,
+): Promise<void> {
 	if (settings) await openSettingsFoldout(page)
 	await expandGroupFor(page, menuId)
 	const entry = page.locator(`[data-testid="cn-nav-entry-${menuId}"]`).first()

@@ -25,10 +25,13 @@ import { type Page, expect } from '@playwright/test'
 /** Wait for the index body to settle into rows or the empty state. */
 export async function waitIndexBody(page: Page): Promise<void> {
 	const index = page.locator('[data-testid="cn-index-page"]').first()
-	const body = index.locator(
-		'[data-testid="cn-object-list-table"], table, .cn-card-grid, '
-		+ '[data-testid="cn-object-list-empty"], .empty-content, [class*="empty-content"]',
-	).filter({ visible: true }).first()
+	const body = index
+		.locator(
+			'[data-testid="cn-object-list-table"], table, .cn-card-grid, '
+				+ '[data-testid="cn-object-list-empty"], .empty-content, [class*="empty-content"]',
+		)
+		.filter({ visible: true })
+		.first()
 	await expect(body).toBeVisible({ timeout: 20000 })
 }
 
@@ -47,7 +50,10 @@ export async function createViaForm(
 	extra: Record<string, string> = {},
 ): Promise<void> {
 	await page.locator('[data-testid="cn-cta-primary"]').first().click()
-	const modal = page.locator('[role="dialog"]').filter({ hasText: /create/i }).first()
+	const modal = page
+		.locator('[role="dialog"]')
+		.filter({ hasText: /create/i })
+		.first()
 	await expect(modal).toBeVisible({ timeout: 10000 })
 
 	await fillField(modal, 'Title', title)
@@ -55,7 +61,10 @@ export async function createViaForm(
 		await fillField(modal, label, value).catch(() => {})
 	}
 
-	await modal.getByRole('button', { name: /^create$/i }).first().click()
+	await modal
+		.getByRole('button', { name: /^create$/i })
+		.first()
+		.click()
 	await expect(modal).toBeHidden({ timeout: 15000 })
 }
 
@@ -68,7 +77,10 @@ export async function fillField(
 	// NcTextField renders <label>Title</label> wired to an <input>. Target the
 	// input via the label's accessible name; fall back to nth text input.
 	const byLabel = scope.getByLabel(new RegExp(`^${label}\\s*\\*?$`, 'i')).first()
-	if (await byLabel.count() > 0 && await byLabel.isVisible().catch(() => false)) {
+	if (
+		(await byLabel.count()) > 0
+		&& (await byLabel.isVisible().catch(() => false))
+	) {
 		await byLabel.fill(value)
 		return
 	}
@@ -79,14 +91,25 @@ export async function fillField(
 
 /** Find the row whose text contains the given title. */
 export function rowByTitle(page: Page, title: string) {
-	return page.locator('[data-testid="cn-object-row"]').filter({ hasText: title }).first()
+	return page
+		.locator('[data-testid="cn-object-row"]')
+		.filter({ hasText: title })
+		.first()
 }
 
 /** Open a row's action menu and click an action (edit / delete). */
-export async function rowAction(page: Page, title: string, action: 'edit' | 'delete'): Promise<void> {
+export async function rowAction(
+	page: Page,
+	title: string,
+	action: 'edit' | 'delete',
+): Promise<void> {
 	const row = rowByTitle(page, title)
 	await expect(row).toBeVisible({ timeout: 10000 })
-	const trigger = row.locator('[data-testid="cn-row-actions"] button, [data-testid="cn-row-actions"]').first()
+	const trigger = row
+		.locator(
+			'[data-testid="cn-row-actions"] button, [data-testid="cn-row-actions"]',
+		)
+		.first()
 	await trigger.click()
 	// NcActions renders its menu in a portal; the item carries a stable testid.
 	const item = page.locator(`[data-testid="cn-action-item-${action}"]`).first()

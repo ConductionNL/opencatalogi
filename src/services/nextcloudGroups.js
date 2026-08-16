@@ -49,8 +49,8 @@
  * @see {@link https://docs.nextcloud.com/server/latest/developer_manual/client_apis/OCS/ocs-share-api.html}
  */
 
-import axios from '@nextcloud/axios'
 import { getCurrentUser } from '@nextcloud/auth'
+import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
 /**
@@ -67,9 +67,14 @@ export async function fetchNextcloudGroups() {
 
 		const response = await axios.get(generateUrl(workingEndpoint))
 
-		if (response.data && response.data.ocs && response.data.ocs.data && response.data.ocs.data.groups) {
+		if (
+			response.data
+			&& response.data.ocs
+			&& response.data.ocs.data
+			&& response.data.ocs.data.groups
+		) {
 			// Transform the groups into the format expected by the dropdown
-			return response.data.ocs.data.groups.map(group => ({
+			return response.data.ocs.data.groups.map((group) => ({
 				label: group,
 				value: group,
 			}))
@@ -112,7 +117,7 @@ export async function getNextcloudGroups() {
 	const now = Date.now()
 
 	// Return cached groups if they're still valid
-	if (cachedGroups && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
+	if (cachedGroups && cacheTimestamp && now - cacheTimestamp < CACHE_DURATION) {
 		return cachedGroups
 	}
 
@@ -142,7 +147,6 @@ export async function getNextcloudGroups() {
 		]
 		cacheTimestamp = now
 		return cachedGroups
-
 	} catch (error) {
 		// Return cached groups if available, even if expired
 		if (cachedGroups && cachedGroups.length > 0) {
@@ -198,7 +202,8 @@ export function isUserLoggedIn() {
 
 		// Fallback: check if we have any user-related data in localStorage
 		// This is not secure but provides a basic indication
-		const hasUserData = localStorage.getItem('nc_username')
+		const hasUserData =
+			localStorage.getItem('nc_username')
 			|| localStorage.getItem('opencatalogi_user')
 			|| sessionStorage.getItem('nc_username')
 

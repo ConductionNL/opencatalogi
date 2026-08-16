@@ -11,13 +11,20 @@
  *   concept     → no publicationDate OR publicationDate > now
  */
 
+/**
+ *
+ * @param value
+ */
 function toDate(value) {
 	if (!value) return null
 	const d = new Date(value)
 	return isNaN(d.getTime()) ? null : d
 }
 
-/** @spec openspec/specs/publications/spec.md */
+/**
+ * @param obj
+ * @spec openspec/specs/publications/spec.md
+ */
 export function isPublished(obj) {
 	const pub = toDate(obj?.publicationDate)
 	if (!pub) return false
@@ -27,7 +34,10 @@ export function isPublished(obj) {
 	return !depub || depub > now
 }
 
-/** @spec openspec/specs/publications/spec.md */
+/**
+ * @param obj
+ * @spec openspec/specs/publications/spec.md
+ */
 export function isDepublished(obj) {
 	const pub = toDate(obj?.publicationDate)
 	if (!pub) return false
@@ -37,7 +47,10 @@ export function isDepublished(obj) {
 	return !!(depub && depub <= now)
 }
 
-/** @spec openspec/specs/publications/spec.md */
+/**
+ * @param obj
+ * @spec openspec/specs/publications/spec.md
+ */
 export function isConcept(obj) {
 	const pub = toDate(obj?.publicationDate)
 	return !pub || pub > new Date()

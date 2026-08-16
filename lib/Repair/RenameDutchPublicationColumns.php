@@ -97,6 +97,8 @@ class RenameDutchPublicationColumns implements IRepairStep {
 		'publicatiedatum' => 'publication_date',
 		'depublicatiedatum' => 'depublication_date',
 		'besluit' => 'decision_letter',
+		// Fleet vocabulary batch.
+		'inventarislijst' => 'inventory_list',
 	];
 
 	/**

@@ -488,15 +488,48 @@ class SettingsService {
 				return $registers;
 			}
 
-			$enrichedRegisters = [];
-
+			// Normalise every register to its array form once, so the schema-ID
+			// sweep below and the enrichment pass agree on the same shape.
+			$registerArrays = [];
 			foreach ($registers as $register) {
-				// Convert register to array if it's an object.
 				$registerArray = (array)$register;
 				if (is_object($register) === true && method_exists($register, 'jsonSerialize') === true) {
 					$registerArray = $register->jsonSerialize();
 				}
 
+				$registerArrays[] = $registerArray;
+			}
+
+			// Collect the distinct numeric schema IDs referenced by ALL registers, then
+			// resolve them in ONE batched query. Resolving per-ID inside the register
+			// loop issued a `find()` per schema — on this instance that is 2,814 queries
+			// for 348 registers on every settings request, and dominated the ~11s the
+			// endpoint took to respond.
+			$idsToResolve = [];
+			foreach ($registerArrays as $registerArray) {
+				$schemaIds = $registerArray['schemas'] ?? [];
+				if (is_array($schemaIds) === false) {
+					continue;
+				}
+
+				foreach ($schemaIds as $schemaId) {
+					if (is_numeric($schemaId) === true) {
+						$idsToResolve[(int)$schemaId] = true;
+					}
+				}
+			}
+
+			// The batched lookup chunks its IN() list and returns a map keyed by
+			// schema ID. It reads the table directly, matching the _rbac: false /
+			// _multitenancy: false posture the per-ID find() call used here before.
+			$schemaMap = [];
+			if (empty($idsToResolve) === false) {
+				$schemaMap = $schemaMapper->findMultipleOptimized(ids: array_keys($idsToResolve));
+			}
+
+			$enrichedRegisters = [];
+
+			foreach ($registerArrays as $registerArray) {
 				// Get schema IDs from the register.
 				$schemaIds = $registerArray['schemas'] ?? [];
 
@@ -506,7 +539,7 @@ class SettingsService {
 					continue;
 				}
 
-				// Fetch full schema objects for each schema ID.
+				// Replace each schema ID with the full schema object from the batch.
 				$fullSchemas = [];
 				foreach ($schemaIds as $schemaId) {
 					// Skip if not a number (already an object).
@@ -515,21 +548,19 @@ class SettingsService {
 						continue;
 					}
 
-					try {
-						$schema = $schemaMapper->find((int)$schemaId, _rbac: false, _multitenancy: false);
-						if ($schema !== null) {
-							// Convert schema entity to array.
-							$schemaArray = (array)$schema;
-							if (is_object($schema) === true && method_exists($schema, 'jsonSerialize') === true) {
-								$schemaArray = $schema->jsonSerialize();
-							}
-
-							$fullSchemas[] = $schemaArray;
-						}
-					} catch (\Exception $e) {
-						// Schema not found, skip it.
+					// A schema ID with no row is silently dropped, as before.
+					$schema = $schemaMap[(int)$schemaId] ?? null;
+					if ($schema === null) {
 						continue;
 					}
+
+					// Convert schema entity to array.
+					$schemaArray = (array)$schema;
+					if (is_object($schema) === true && method_exists($schema, 'jsonSerialize') === true) {
+						$schemaArray = $schema->jsonSerialize();
+					}
+
+					$fullSchemas[] = $schemaArray;
 				}//end foreach
 
 				// Replace schema IDs with full schema objects.

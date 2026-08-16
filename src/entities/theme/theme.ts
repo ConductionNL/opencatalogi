@@ -1,5 +1,7 @@
-import { SafeParseReturnType, z } from 'zod'
-import { TTheme } from './theme.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TTheme } from './theme.types'
+
+import { z } from 'zod'
 
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -7,7 +9,6 @@ import { TTheme } from './theme.types'
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Theme implements TTheme {
-
 	public id!: string
 	public title!: string
 	public summary!: string
@@ -20,7 +21,10 @@ export class Theme implements TTheme {
 	public isExternal!: boolean
 	public sort!: number
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TTheme) {
 		this.hydrate(data)
 	}
@@ -62,5 +66,4 @@ export class Theme implements TTheme {
 
 		return result
 	}
-
 }

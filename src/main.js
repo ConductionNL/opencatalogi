@@ -1,54 +1,54 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-import { createApp, h } from 'vue'
-import { createRouter, createWebHashHistory } from 'vue-router'
-import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
-import { loadState } from '@nextcloud/initial-state'
 import {
-	CnPageRenderer,
-	defaultPageTypes,
-	registerIcons,
-	registerTranslations,
-	registerBuiltinDashboardWidgets,
 	buildManifest,
-	registerDashboardWidget,
 	CnFileManager,
+	CnPageRenderer,
 	CnRelationshipGraph,
 	CnTreeView,
+	defaultPageTypes,
+	registerBuiltinDashboardWidgets,
+	registerDashboardWidget,
+	registerIcons,
+	registerTranslations,
 } from '@conduction/nextcloud-vue'
+// Font Awesome setup
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { fab } from '@fortawesome/free-brands-svg-icons'
+import { far } from '@fortawesome/free-regular-svg-icons'
+import { fas } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import VueMarkdownEditor from '@kangc/v-md-editor'
+import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
+import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
+import { loadState } from '@nextcloud/initial-state'
+import {
+	loadTranslations,
+	translatePlural as n,
+	translate as t,
+} from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import hljs from 'highlight.js'
+import { createApp, h } from 'vue'
+import { createRouter, createWebHashHistory } from 'vue-router'
+import App from './App.vue'
+import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
+import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
+import appIcons from './icons.js'
+import bundledManifest from './manifest.json'
+import menuLayout from './menu-layout.json'
+import pinia from './pinia.js'
+import customComponents from './registry.js'
 
 // gridstack v12 sizes dashboard items with `width: var(--gs-column-width)`.
 // Without this stylesheet every dashboard item renders 0 px wide, with no
 // error and correct heights — the height comes from JS, the width from CSS.
 import 'gridstack/dist/gridstack.min.css'
-
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-
-import pinia from './pinia.js'
-import App from './App.vue'
-import bundledManifest from './manifest.json'
-import menuLayout from './menu-layout.json'
-import customComponents from './registry.js'
-import appIcons from './icons.js'
-import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
-import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
-
-import VueMarkdownEditor from '@kangc/v-md-editor'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
-import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
 import '@kangc/v-md-editor/lib/theme/style/github.css'
-import hljs from 'highlight.js'
-import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
-
-// Font Awesome setup
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { fas } from '@fortawesome/free-solid-svg-icons'
-import { fab } from '@fortawesome/free-brands-svg-icons'
-import { far } from '@fortawesome/free-regular-svg-icons'
 library.add(fas, fab, far)
 
 // The runtime public path is now set by webpack itself (`output.publicPath:
@@ -138,18 +138,27 @@ try {
 } catch (e) {
 	// Non-fatal — lib translations fall back to English source.
 	// eslint-disable-next-line no-console
-	console.warn('[opencatalogi] registerTranslations failed; falling back to English', e)
+	console.warn(
+		'[opencatalogi] registerTranslations failed; falling back to English',
+		e,
+	)
 }
 
 // Fire-and-forget translation load. Some Nextcloud installs only allow
 // the JS/CSS allowlist through Apache and rewrite everything else to
 // index.php — there's no route for /custom_apps/<app>/l10n/<locale>.json
 // so the request 404s. Boot MUST not depend on this resolving.
+/**
+ *
+ */
 function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('opencatalogi', () => {})
 		if (result && typeof result.then === 'function') {
-			result.then(() => {}, () => {})
+			result.then(
+				() => {},
+				() => {},
+			)
 		}
 	} catch {
 		// no-op
@@ -164,8 +173,17 @@ function tryLoadTranslations() {
 // component-options object without altering the lib's internals.
 const RoutePageRenderer = { ...CnPageRenderer }
 
+// `require.context` is a WEBPACK build-time API, not CommonJS `require`: the
+// bundler rewrites this call at compile time and no `require` exists at
+// runtime. eslint's browser globals therefore report `no-undef` correctly —
+// the code is right and the linter is right. Scoped to this one identifier so
+// a genuinely undefined name elsewhere in the file still fails.
+/* global require */
 const fragmentCtx = require.context('./manifest.d/', false, /\.json$/)
-const fragments = fragmentCtx.keys().sort().map((key) => fragmentCtx(key))
+const fragments = fragmentCtx
+	.keys()
+	.sort()
+	.map((key) => fragmentCtx(key))
 const mergedManifest = buildManifest(bundledManifest, fragments, menuLayout)
 
 /**
@@ -224,11 +242,14 @@ function resolveManifestSentinelsSync(manifest) {
 	const pages = Array.isArray(manifest.pages) ? manifest.pages : []
 	return {
 		...manifest,
-		pages: pages.map((page) => (
-			page && typeof page === 'object' && page.config && typeof page.config === 'object'
+		pages: pages.map((page) =>
+			page
+			&& typeof page === 'object'
+			&& page.config
+			&& typeof page.config === 'object'
 				? { ...page, config: substitute(page.config) }
-				: page
-		)),
+				: page,
+		),
 	}
 }
 
@@ -276,11 +297,12 @@ const pageTypesProp = { ...defaultPageTypes }
 const customComponentsProp = { ...customComponents }
 
 const app = createApp({
-	render: () => h(App, {
-		manifest: resolvedManifest,
-		customComponents: customComponentsProp,
-		pageTypes: pageTypesProp,
-	}),
+	render: () =>
+		h(App, {
+			manifest: resolvedManifest,
+			customComponents: customComponentsProp,
+			pageTypes: pageTypesProp,
+		}),
 })
 
 // Vue 3 has no `Vue.prototype`; per-app globals live on

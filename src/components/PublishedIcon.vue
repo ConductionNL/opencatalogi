@@ -1,32 +1,32 @@
-/**
- * @file PublishedIcon.vue
- * @module Components
- * @author Your Name
- * @copyright 2024 Your Organization
- * @license EUPL-1.2
- * @version 1.0.0
- */
+/** * @file PublishedIcon.vue * @module Components * @author Your Name * @copyright
+2024 Your Organization * @license EUPL-1.2 * @version 1.0.0 */
 
 <template>
-	<ListBoxOutline v-if="isPublished"
+	<ListBoxOutline
+		v-if="isPublished"
 		:title="publishedTooltip"
 		:size="size"
-		:class="['published-icon', iconClass]" />
-	<AlertOutline v-else-if="isDepublished"
+		class="published-icon"
+		:class="[iconClass]" />
+	<AlertOutline
+		v-else-if="isDepublished"
 		:title="depublishedTooltip"
 		:size="size"
-		:class="['depublished-icon', iconClass]" />
-	<Pencil v-else
+		class="depublished-icon"
+		:class="[iconClass]" />
+	<Pencil
+		v-else
 		:title="draftTooltip"
 		:size="size"
-		:class="['unpublished-icon', iconClass]" />
+		class="unpublished-icon"
+		:class="[iconClass]" />
 </template>
 
 <script>
+import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
-import { isPublished, isDepublished } from '../services/publicationStatus.js'
+import { isDepublished, isPublished } from '../services/publicationStatus.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -38,59 +38,78 @@ export default {
 		Pencil,
 		AlertOutline,
 	},
+
 	props: {
 		/**
 		 * The object to check publication status for
+		 *
 		 * @type {object}
 		 */
 		object: {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * Size of the icon
+		 *
 		 * @type {number}
 		 */
 		size: {
 			type: Number,
 			default: 20,
 		},
+
 		/**
 		 * Additional CSS class to apply to the icon
+		 *
 		 * @type {string}
 		 */
 		iconClass: {
 			type: String,
 			default: '',
 		},
+
 		/**
 		 * Custom tooltip for published state
+		 *
 		 * @type {string}
 		 */
 		publishedTooltip: {
 			type: String,
 			default: 'Published: This publication is live and publicly available',
 		},
+
 		/**
 		 * Custom tooltip for draft state
+		 *
 		 * @type {string}
 		 */
 		draftTooltip: {
 			type: String,
 			default: 'Draft: This publication is not yet published',
 		},
+
 		/**
 		 * Custom tooltip for depublished state
+		 *
 		 * @type {string}
 		 */
 		depublishedTooltip: {
 			type: String,
-			default: 'Depublished: This publication has been withdrawn from public access',
+			default:
+				'Depublished: This publication has been withdrawn from public access',
 		},
 	},
+
 	computed: {
-		isPublished() { return isPublished(this.object) },
-		isDepublished() { return isDepublished(this.object) },
+		isPublished() {
+			return isPublished(this.object)
+		},
+
+		isDepublished() {
+			return isDepublished(this.object)
+		},
 	},
 }
 </script>

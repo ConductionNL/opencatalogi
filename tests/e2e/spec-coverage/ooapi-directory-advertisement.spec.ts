@@ -63,15 +63,23 @@ let catalogObjects = ''
  * @param slug The slug to resolve.
  * @return The numeric id, as a string.
  */
-async function idFor(api: APIRequestContext, kind: 'registers' | 'schemas', slug: string): Promise<string> {
+async function idFor(
+	api: APIRequestContext,
+	kind: 'registers' | 'schemas',
+	slug: string,
+): Promise<string> {
 	const resp = await api.get(`${OR}/${kind}?_limit=200&limit=200`, {
 		headers: { 'OCS-APIRequest': 'true' },
 	})
 	expect(resp.status(), `GET ${OR}/${kind} must answer 200`).toBe(200)
 	const body = await resp.json()
-	const rows: Array<Record<string, unknown>> = body?.results ?? (Array.isArray(body) ? body : [])
+	const rows: Array<Record<string, unknown>> =
+		body?.results ?? (Array.isArray(body) ? body : [])
 	const hit = rows.find((r) => r.slug === slug)
-	expect(hit, `${kind.slice(0, -1)} "${slug}" must exist — the register import is a precondition`).toBeTruthy()
+	expect(
+		hit,
+		`${kind.slice(0, -1)} "${slug}" must exist — the register import is a precondition`,
+	).toBeTruthy()
 	return String(hit!.id)
 }
 
@@ -83,7 +91,11 @@ async function idFor(api: APIRequestContext, kind: 'registers' | 'schemas', slug
  * @param hasOoapi Whether OOAPI 5.0 publication is enabled for it.
  * @return The created catalog's id.
  */
-async function makeCatalog(api: APIRequestContext, slug: string, hasOoapi: boolean): Promise<string> {
+async function makeCatalog(
+	api: APIRequestContext,
+	slug: string,
+	hasOoapi: boolean,
+): Promise<string> {
 	const resp = await api.post(catalogObjects, {
 		headers: { 'OCS-APIRequest': 'true', 'Content-Type': 'application/json' },
 		data: {
@@ -95,7 +107,10 @@ async function makeCatalog(api: APIRequestContext, slug: string, hasOoapi: boole
 			hasOoapi,
 		},
 	})
-	expect(resp.status(), `creating catalog "${slug}" must succeed (got ${resp.status()})`).toBe(201)
+	expect(
+		resp.status(),
+		`creating catalog "${slug}" must succeed (got ${resp.status()})`,
+	).toBe(201)
 	const id = String((await resp.json()).id)
 	created.push(id)
 	return id
@@ -107,8 +122,12 @@ async function makeCatalog(api: APIRequestContext, slug: string, hasOoapi: boole
  * @param api An authenticated API request context.
  * @return The listing rows.
  */
-async function directoryListings(api: APIRequestContext): Promise<Array<Record<string, any>>> {
-	const resp = await api.get(`${APP}/api/directory`, { headers: { 'OCS-APIRequest': 'true' } })
+async function directoryListings(
+	api: APIRequestContext,
+): Promise<Array<Record<string, any>>> {
+	const resp = await api.get(`${APP}/api/directory`, {
+		headers: { 'OCS-APIRequest': 'true' },
+	})
 	expect(resp.status(), 'GET /api/directory must answer 200').toBe(200)
 	const body = await resp.json()
 	return body?.results ?? (Array.isArray(body) ? body : [])
@@ -121,7 +140,10 @@ async function directoryListings(api: APIRequestContext): Promise<Array<Record<s
  * @param id The catalog id.
  * @return The matching row, or undefined.
  */
-function listingFor(rows: Array<Record<string, any>>, id: string): Record<string, any> | undefined {
+function listingFor(
+	rows: Array<Record<string, any>>,
+	id: string,
+): Record<string, any> | undefined {
 	return rows.find((r) => String(r.catalog ?? r.id ?? '') === id)
 }
 
@@ -142,11 +164,13 @@ test.describe('OOAPI 5.0 federation directory advertisement', () => {
 		const readBack = await api.get(`${catalogObjects}/${enabledId}`, {
 			headers: { 'OCS-APIRequest': 'true' },
 		})
-		expect(readBack.status(), 'reading the fixture back must answer 200').toBe(200)
+		expect(readBack.status(), 'reading the fixture back must answer 200').toBe(
+			200,
+		)
 		expect(
 			(await readBack.json()).hasOoapi,
 			'PRECONDITION: the catalog schema must declare `hasOoapi` (#847). If this is not true, '
-			+ 'OpenRegister strips the key and nothing below is a statement about OOAPI-009.',
+				+ 'OpenRegister strips the key and nothing below is a statement about OOAPI-009.',
 		).toBe(true)
 
 		disabledId = await makeCatalog(api, DISABLED_SLUG, false)
@@ -156,39 +180,53 @@ test.describe('OOAPI 5.0 federation directory advertisement', () => {
 	test.afterAll(async ({ playwright, baseURL, storageState }) => {
 		const api = await playwright.request.newContext({ baseURL, storageState })
 		for (const id of created.reverse()) {
-			await api.delete(`${catalogObjects}/${id}`, { headers: { 'OCS-APIRequest': 'true' } })
+			await api.delete(`${catalogObjects}/${id}`, {
+				headers: { 'OCS-APIRequest': 'true' },
+			})
 		}
 		await api.dispose()
 	})
 
-	test(
-		// @e2e ooapi-catalog-publication::directory-entry-carries-the-ooapi-base-url
-		'OOAPI-009 — an OOAPI-enabled catalog advertises an absolute ooapiEndpoint, and an identical disabled one advertises none',
-		async ({ playwright, baseURL, storageState }) => {
-			const api = await playwright.request.newContext({ baseURL, storageState })
-			const rows = await directoryListings(api)
+	test(// @e2e ooapi-catalog-publication::directory-entry-carries-the-ooapi-base-url
+	'OOAPI-009 — an OOAPI-enabled catalog advertises an absolute ooapiEndpoint, and an identical disabled one advertises none', async ({
+		playwright,
+		baseURL,
+		storageState,
+	}) => {
+		const api = await playwright.request.newContext({ baseURL, storageState })
+		const rows = await directoryListings(api)
 
-			// Both fixtures must be IN the directory. Without this, "the disabled
-			// one has no ooapiEndpoint" would be satisfied by it simply being
-			// absent from the response.
-			const on = listingFor(rows, enabledId)
-			const off = listingFor(rows, disabledId)
-			expect(on, `the OOAPI-enabled fixture ${ENABLED_SLUG} must be listed in the directory`).toBeTruthy()
-			expect(off, `the disabled fixture ${DISABLED_SLUG} must ALSO be listed — the difference must be the endpoint, not the listing`).toBeTruthy()
+		// Both fixtures must be IN the directory. Without this, "the disabled
+		// one has no ooapiEndpoint" would be satisfied by it simply being
+		// absent from the response.
+		const on = listingFor(rows, enabledId)
+		const off = listingFor(rows, disabledId)
+		expect(
+			on,
+			`the OOAPI-enabled fixture ${ENABLED_SLUG} must be listed in the directory`,
+		).toBeTruthy()
+		expect(
+			off,
+			`the disabled fixture ${DISABLED_SLUG} must ALSO be listed — the difference must be the endpoint, not the listing`,
+		).toBeTruthy()
 
-			// The requirement: an ABSOLUTE base URL for that catalog's v5 resources.
-			expect(on!.ooapiEndpoint, 'the enabled catalog must advertise ooapiEndpoint').toBeTruthy()
-			expect(String(on!.ooapiEndpoint)).toMatch(/^https?:\/\//)
-			expect(String(on!.ooapiEndpoint)).toContain(`/api/catalogs/${ENABLED_SLUG}/ooapi/v5`)
+		// The requirement: an ABSOLUTE base URL for that catalog's v5 resources.
+		expect(
+			on!.ooapiEndpoint,
+			'the enabled catalog must advertise ooapiEndpoint',
+		).toBeTruthy()
+		expect(String(on!.ooapiEndpoint)).toMatch(/^https?:\/\//)
+		expect(String(on!.ooapiEndpoint)).toContain(
+			`/api/catalogs/${ENABLED_SLUG}/ooapi/v5`,
+		)
 
-			// The control: same response, same field, same accessor — the ONLY
-			// difference between the two catalogs is `hasOoapi`.
-			expect(
-				off!.ooapiEndpoint ?? null,
-				'a catalog with hasOoapi=false must advertise no OOAPI endpoint at all',
-			).toBeNull()
+		// The control: same response, same field, same accessor — the ONLY
+		// difference between the two catalogs is `hasOoapi`.
+		expect(
+			off!.ooapiEndpoint ?? null,
+			'a catalog with hasOoapi=false must advertise no OOAPI endpoint at all',
+		).toBeNull()
 
-			await api.dispose()
-		},
-	)
+		await api.dispose()
+	})
 })

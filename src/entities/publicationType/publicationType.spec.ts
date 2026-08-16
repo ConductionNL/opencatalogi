@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { PublicationType } from './publicationType'
 import { mockPublicationType } from './publicationType.mock'
 

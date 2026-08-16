@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Page } from './page'
 import { mockPage } from './page.mock'
 

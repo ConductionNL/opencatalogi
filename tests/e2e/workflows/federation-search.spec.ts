@@ -35,7 +35,13 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test workflows/federation-search
  */
-import { test, expect, type Locator, type Page, type Request } from '@playwright/test'
+import {
+	test,
+	expect,
+	type Locator,
+	type Page,
+	type Request,
+} from '@playwright/test'
 
 const APP = '/index.php/apps/opencatalogi'
 
@@ -54,7 +60,7 @@ const FORBIDDEN_DIRECT_ENDPOINT = 'zoeken-filteren'
  */
 async function dismissSupportDialog(page: Page): Promise<void> {
 	const dialog = page.locator('.cn-support-dialog, [class*="support-dialog"]')
-	if (await dialog.count() > 0) {
+	if ((await dialog.count()) > 0) {
 		await page.evaluate(() => {
 			document
 				.querySelectorAll('.cn-support-dialog, [class*="support-dialog"]')
@@ -78,8 +84,9 @@ function appSearchBox(page: Page): Locator {
 }
 
 test.describe('Federation search page', () => {
-
-	test('SCH-OR-004 — /search renders FederationSearch and queries the federation endpoint', async ({ page }) => {
+	test('SCH-OR-004 — /search renders FederationSearch and queries the federation endpoint', async ({
+		page,
+	}) => {
 		const searchRequests: string[] = []
 		const forbiddenRequests: string[] = []
 
@@ -99,8 +106,9 @@ test.describe('Federation search page', () => {
 		// The page must actually mount a search surface. Asserting on the
 		// search box rather than on any text keeps this from passing on an
 		// error page that happens to contain the word "search".
-		await expect(page.getByRole('heading', { name: 'Search publications' }))
-			.toBeVisible({ timeout: 30000 })
+		await expect(
+			page.getByRole('heading', { name: 'Search publications' }),
+		).toBeVisible({ timeout: 30000 })
 		await expect(appSearchBox(page)).toBeVisible({ timeout: 30000 })
 
 		// The page loads results on mount (loadInitialResults), so the
@@ -121,7 +129,9 @@ test.describe('Federation search page', () => {
 		).toEqual([])
 	})
 
-	test('SCH-OR-004 — typing a term sends it to the federation endpoint', async ({ page }) => {
+	test('SCH-OR-004 — typing a term sends it to the federation endpoint', async ({
+		page,
+	}) => {
 		const searchUrls: string[] = []
 		page.on('request', (req: Request) => {
 			if (req.url().includes(FEDERATION_ENDPOINT)) {

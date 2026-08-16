@@ -397,7 +397,7 @@ class WooService {
 			'deckAvailable' => $deckAvailable,
 			'documents' => array_map(static fn (array $r): string => (string)($r['id'] ?? ($r['uuid'] ?? '')), $assessmentRefs),
 			'decisionLetter' => '',
-			'inventarislijst' => '',
+			'inventoryList' => '',
 			'createdAt' => $now,
 			'updatedAt' => $now,
 			'createdBy' => $createdBy,
@@ -650,7 +650,7 @@ class WooService {
 		$batch = $this->getBatch($batchId);
 		$assessments = $this->loadAssessments($batch);
 		$rows = [];
-		$volgnummer = 1;
+		$sequenceNumber = 1;
 		foreach ($assessments as $assessment) {
 			$assessmentValue = (string)($assessment['assessment'] ?? 'te_beoordelen');
 			$grounds = ($assessment['weigeringsgronden'] ?? []);
@@ -659,13 +659,13 @@ class WooService {
 			}
 
 			$rows[] = [
-				'volgnummer' => (string)$volgnummer,
+				'volgnummer' => (string)$sequenceNumber,
 				'document' => (string)($assessment['fileName'] ?? ($assessment['documentReference'] ?? '')),
 				'datum' => substr((string)($assessment['assessedAt'] ?? ''), 0, 10),
 				'beoordeling' => (self::ASSESSMENTS[$assessmentValue] ?? $assessmentValue),
 				'weigeringsgronden' => implode('; ', array_map('strval', $grounds)),
 			];
-			$volgnummer++;
+			$sequenceNumber++;
 		}
 
 		return $rows;
@@ -878,7 +878,7 @@ class WooService {
 			'documentCount' => (int)($batch['documentSummary']['total'] ?? 0),
 			'publishedCount' => $publishedCount,
 			'decisionLetter' => (string)($batch['decisionLetter'] ?? ''),
-			'inventarislijst' => (string)($batch['inventarislijst'] ?? ''),
+			'inventoryList' => (string)($batch['inventoryList'] ?? ''),
 			'listings' => $listings,
 			'catalogType' => 'woo_reading_room',
 		];

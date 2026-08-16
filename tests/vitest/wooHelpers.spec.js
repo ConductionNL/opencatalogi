@@ -27,7 +27,12 @@ describe('buildRedactionInstructions', () => {
 		const grounds = { e1: { id: '5.1.2.e' }, e3: { id: '5.2.e' } }
 		const out = buildRedactionInstructions(entities, selected, grounds)
 		expect(out).toHaveLength(2)
-		expect(out[0]).toEqual({ entityId: 'e1', text: 'Jan', page: 1, weigeringsgrond: '5.1.2.e' })
+		expect(out[0]).toEqual({
+			entityId: 'e1',
+			text: 'Jan',
+			page: 1,
+			weigeringsgrond: '5.1.2.e',
+		})
 		expect(out[1].weigeringsgrond).toBe('5.2.e')
 	})
 
@@ -76,16 +81,24 @@ describe('deriveSummary', () => {
 
 describe('canMarkReadyForReview', () => {
 	it('true only when every document is assessed', () => {
-		expect(canMarkReadyForReview(deriveSummary([
-			{ assessment: 'openbaar' },
-			{ assessment: 'niet_openbaar' },
-		]))).toBe(true)
+		expect(
+			canMarkReadyForReview(
+				deriveSummary([
+					{ assessment: 'openbaar' },
+					{ assessment: 'niet_openbaar' },
+				]),
+			),
+		).toBe(true)
 	})
 	it('false when something is still te_beoordelen', () => {
-		expect(canMarkReadyForReview(deriveSummary([
-			{ assessment: 'openbaar' },
-			{ assessment: 'te_beoordelen' },
-		]))).toBe(false)
+		expect(
+			canMarkReadyForReview(
+				deriveSummary([
+					{ assessment: 'openbaar' },
+					{ assessment: 'te_beoordelen' },
+				]),
+			),
+		).toBe(false)
 	})
 	it('false for an empty batch', () => {
 		expect(canMarkReadyForReview(deriveSummary([]))).toBe(false)

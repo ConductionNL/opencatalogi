@@ -18,7 +18,7 @@
 
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { NcModal, NcButton, NcTextField, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcModal, NcNoteCard, NcTextField } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
 
 export default {
@@ -32,6 +32,7 @@ export default {
 			result: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * Whether the add-directory modal is the active navigation-store modal.
@@ -47,6 +48,7 @@ export default {
 			return navigationStore.modal === 'federationAddDirectory'
 		},
 	},
+
 	watch: {
 		/**
 		 * Reset the form whenever the modal transitions to open, so a previous
@@ -62,6 +64,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		t,
 		/**
@@ -76,6 +79,7 @@ export default {
 			this.error = null
 			this.result = null
 		},
+
 		/**
 		 * Close the modal on completion or cancel.
 		 *
@@ -85,6 +89,7 @@ export default {
 		close() {
 			navigationStore.setModal(null)
 		},
+
 		/**
 		 * POST the peer directory URL to /api/listings/add.
 		 *
@@ -125,13 +130,16 @@ export default {
 </script>
 
 <template>
-	<NcModal v-if="isOpen"
-		label-id="federationAddDirectoryModal"
-		@close="close">
+	<NcModal v-if="isOpen" labelId="federationAddDirectoryModal" @close="close">
 		<div class="federation-add-directory-modal">
 			<h2>{{ t('opencatalogi', 'Add directory') }}</h2>
 			<p class="federation-add-directory-modal__hint">
-				{{ t('opencatalogi', 'Enter the peer directory URL to sync catalogs and publications from that instance.') }}
+				{{
+					t(
+						'opencatalogi',
+						'Enter the peer directory URL to sync catalogs and publications from that instance.',
+					)
+				}}
 			</p>
 
 			<NcTextField
@@ -141,28 +149,46 @@ export default {
 				placeholder="https://peer.example.org/index.php/apps/opencatalogi/api/directory" />
 
 			<NcNoteCard v-if="error" type="error">
-				<p><strong>{{ t('opencatalogi', 'Failed to add directory') }}</strong></p>
+				<p>
+					<strong>{{
+						t('opencatalogi', 'Failed to add directory')
+					}}</strong>
+				</p>
 				<p>{{ error }}</p>
 			</NcNoteCard>
 
 			<NcNoteCard v-if="result" type="success">
-				<p><strong>{{ t('opencatalogi', 'Directory added') }}</strong></p>
 				<p>
-					{{ t('opencatalogi', 'New listings:') }} {{ result.listings_created }} ·
-					{{ t('opencatalogi', 'Updated listings:') }} {{ result.listings_updated }} ·
-					{{ t('opencatalogi', 'Failed listings:') }} {{ result.listings_failed }}
+					<strong>{{ t('opencatalogi', 'Directory added') }}</strong>
+				</p>
+				<p>
+					{{ t('opencatalogi', 'New listings:') }}
+					{{ result.listings_created }} ·
+					{{ t('opencatalogi', 'Updated listings:') }}
+					{{ result.listings_updated }} ·
+					{{ t('opencatalogi', 'Failed listings:') }}
+					{{ result.listings_failed }}
 				</p>
 			</NcNoteCard>
 
 			<div class="federation-add-directory-modal__actions">
 				<NcButton @click="close">
-					{{ result ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+					{{
+						result
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="!result"
+				<NcButton
+					v-if="!result"
 					variant="primary"
 					:disabled="!url.trim() || submitting"
 					@click="submit">
-					{{ submitting ? t('opencatalogi', 'Adding…') : t('opencatalogi', 'Add') }}
+					{{
+						submitting
+							? t('opencatalogi', 'Adding…')
+							: t('opencatalogi', 'Add')
+					}}
 				</NcButton>
 			</div>
 		</div>

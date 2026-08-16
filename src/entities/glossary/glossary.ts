@@ -1,5 +1,6 @@
 /**
  * Glossary entity class
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
@@ -9,8 +10,10 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { SafeParseReturnType, z } from 'zod'
-import { TGlossary } from './glossary.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TGlossary } from './glossary.types'
+
+import { z } from 'zod'
 
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -18,7 +21,6 @@ import { TGlossary } from './glossary.types'
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Glossary implements TGlossary {
-
 	public id!: string
 	public title!: string
 	public summary!: string
@@ -26,7 +28,10 @@ export class Glossary implements TGlossary {
 	public externalLink!: string
 	public keywords!: string[]
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TGlossary) {
 		this.hydrate(data)
 	}
@@ -42,15 +47,19 @@ export class Glossary implements TGlossary {
 
 	public validate(): SafeParseReturnType<TGlossary, unknown> {
 		const schema = z.object({
-			title: z.string()
+			title: z
+				.string()
 				.min(1, 'is verplicht')
 				.max(255, 'kan niet langer dan 255 zijn'),
 			summary: z.string().max(255, 'kan niet langer dan 255 zijn'),
 			description: z.string().max(2555, 'kan niet langer dan 2555 zijn'),
-			externalLink: z.string().max(255, 'kan niet langer dan 255 zijn').optional().refine(
-				(val) => !val || val === '' || /^https?:\/\/.+/.test(val),
-				{ message: 'moet een geldige URL zijn (optioneel)' },
-			),
+			externalLink: z
+				.string()
+				.max(255, 'kan niet langer dan 255 zijn')
+				.optional()
+				.refine((val) => !val || val === '' || /^https?:\/\/.+/.test(val), {
+					message: 'moet een geldige URL zijn (optioneel)',
+				}),
 			keywords: z.string().array(),
 		})
 
@@ -58,5 +67,4 @@ export class Glossary implements TGlossary {
 			...this,
 		})
 	}
-
 }

@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TCatalogi } from '../'
-import { TPublication } from './publication.types'
-import { SafeParseReturnType, z } from 'zod'
+import type { SafeParseReturnType } from 'zod'
+import type { TCatalogi } from '../'
+import type { TPublication } from './publication.types'
 
-type TStatus = 'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
+import { z } from 'zod'
+
+type TStatus =
+	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
 
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -11,7 +14,6 @@ type TStatus = 'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Publication implements TPublication {
-
 	public id!: string
 	public title!: string
 	public summary!: string
@@ -28,26 +30,32 @@ export class Publication implements TPublication {
 	public data!: Record<string, unknown>
 
 	public anonymization!: {
-        anonymized: boolean
-        results: string
-    }
+		anonymized: boolean
+		results: string
+	}
 
 	public language!: {
-        code: string
-        level: string
-    }
+		code: string
+		level: string
+	}
 
 	public published!: string | Date
 	public modified!: string | Date
 	public license!: string
 	public archive!: {
-        date: string | Date
-    }
+		date: string | Date
+	}
 
 	public geo!: {
-        type: 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon'
-        coordinates: [number, number]
-    }
+		type:
+			| 'Point'
+			| 'LineString'
+			| 'Polygon'
+			| 'MultiPoint'
+			| 'MultiLineString'
+			| 'MultiPolygon'
+		coordinates: [number, number]
+	}
 
 	public '@self'?: object
 
@@ -55,7 +63,10 @@ export class Publication implements TPublication {
 	public register!: number | null
 	public schema!: number | null
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TPublication) {
 		this.hydrate(data)
 	}
@@ -71,17 +82,19 @@ export class Publication implements TPublication {
 		this.organization = data.organization || ''
 		this.category = data.category || ''
 		this.portal = data.portal || ''
-		this.featured = (typeof data.featured === 'boolean' && data.featured)
-            // backend can send true and false back as "1" and "" (yes. not "0")
-            // FIXME: remove once bug is fixed
-            || (typeof data.featured === 'string' && !!parseInt(data.featured))
-            || false
+		this.featured =
+			(typeof data.featured === 'boolean' && data.featured)
+			// backend can send true and false back as "1" and "" (yes. not "0")
+			// FIXME: remove once bug is fixed
+			|| (typeof data.featured === 'string' && !!parseInt(data.featured))
+			|| false
 		this.source = data.source || ''
-		this.status = data.status as TStatus || 'Concept'
+		this.status = (data.status as TStatus) || 'Concept'
 		this.themes = data.themes || []
 		this.data = (!Array.isArray(data.data) && data.data) || {}
 
-		this.anonymization = (!Array.isArray(data.anonymization) && data.anonymization) || {
+		this.anonymization = (!Array.isArray(data.anonymization)
+			&& data.anonymization) || {
 			anonymized: false,
 			results: '',
 		}
@@ -124,7 +137,14 @@ export class Publication implements TPublication {
 			featured: z.boolean(),
 			source: z.string(),
 			organization: z.string(),
-			status: z.enum(['Concept', 'Published', 'Withdrawn', 'Archived', 'Revised', 'Rejected']),
+			status: z.enum([
+				'Concept',
+				'Published',
+				'Withdrawn',
+				'Archived',
+				'Revised',
+				'Rejected',
+			]),
 			themes: z.array(z.union([z.string(), z.number()])),
 			data: z.record(z.string(), z.any()),
 			anonymization: z.object({
@@ -133,11 +153,19 @@ export class Publication implements TPublication {
 			}),
 			language: z.object({
 				// this regex checks if the code has either 2 or 3 characters per group, and the -aaa after the first is optional
-				code: z.string()
-					.regex(/^([a-z]{2,3})(-[a-z]{2,3})?$/g, 'is niet een geldige ISO 639-1 code (e.g. en-us)')
+				code: z
+					.string()
+					.regex(
+						/^([a-z]{2,3})(-[a-z]{2,3})?$/g,
+						'is niet een geldige ISO 639-1 code (e.g. en-us)',
+					)
 					.or(z.literal('')),
-				level: z.string()
-					.regex(/^(A|B|C)(1|2)$/g, 'is niet een geldige CEFRL level (e.g. A1)')
+				level: z
+					.string()
+					.regex(
+						/^(A|B|C)(1|2)$/g,
+						'is niet een geldige CEFRL level (e.g. A1)',
+					)
 					.or(z.literal('')),
 			}),
 			published: z.string().datetime({ offset: true }).or(z.literal('')),
@@ -147,13 +175,24 @@ export class Publication implements TPublication {
 				date: z.string().datetime().or(z.literal('')),
 			}),
 			geo: z.object({
-				type: z.enum(['Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon']),
+				type: z.enum([
+					'Point',
+					'LineString',
+					'Polygon',
+					'MultiPoint',
+					'MultiLineString',
+					'MultiPolygon',
+				]),
 				coordinates: z.tuple([z.number(), z.number()]),
 			}),
 			'@self': z.object({}).optional(),
 			catalog: z.string().or(z.number()),
-			register: z.union([z.number(), z.string()]).refine((val) => val.toString().length > 0, 'register is verplicht'),
-			schema: z.union([z.number(), z.string()]).refine((val) => val.toString().length > 0, 'schema is verplicht'),
+			register: z
+				.union([z.number(), z.string()])
+				.refine((val) => val.toString().length > 0, 'register is verplicht'),
+			schema: z
+				.union([z.number(), z.string()])
+				.refine((val) => val.toString().length > 0, 'schema is verplicht'),
 		})
 
 		const result = schema.safeParse({
@@ -162,5 +201,4 @@ export class Publication implements TPublication {
 
 		return result
 	}
-
 }

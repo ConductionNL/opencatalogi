@@ -15,6 +15,10 @@
 
 const DEFAULT_WARNING_WINDOW_DAYS = 30
 
+/**
+ *
+ * @param value
+ */
 function toDate(value) {
 	if (!value) return null
 	const d = new Date(value)

@@ -8,11 +8,14 @@
 
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { NcModal, NcButton, NcSelect, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcModal, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
 
 // `value` = wire enum for ListingsController::UPDATABLE_LISTING_FIELDS;
 // `label` = the rendering also shown in the row's integrationLevel column.
+/**
+ *
+ */
 function buildIntegrationLevels() {
 	return [
 		{ value: 'search', label: t('opencatalogi', 'Federated search') },
@@ -30,6 +33,7 @@ export default {
 			default: null,
 		},
 	},
+
 	emits: ['saved'],
 	data() {
 		return {
@@ -39,6 +43,7 @@ export default {
 			integrationLevels: buildIntegrationLevels(),
 		}
 	},
+
 	computed: {
 		// Manifest-v2 uses a `federation…` prefix so the flag never collides
 		// with the legacy `EditListingModal` (which keys on `'editListing'`)
@@ -47,34 +52,47 @@ export default {
 			return navigationStore.modal === 'federationEditListing'
 		},
 	},
+
 	watch: {
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+		/**
+		 * @param open
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		isOpen(open) {
 			if (open) {
 				this.reset()
 			}
 		},
-		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+
+		/**
+		 * @param l
+		 * @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		 */
 		listing(l) {
-			this.integrationLevel = this.integrationLevels.find(
-				(o) => o.value === (l?.integrationLevel || 'search'),
-			) || this.integrationLevels[0]
+			this.integrationLevel =
+				this.integrationLevels.find(
+					(o) => o.value === (l?.integrationLevel || 'search'),
+				) || this.integrationLevels[0]
 		},
 	},
+
 	methods: {
 		t,
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		reset() {
 			this.error = null
 			this.submitting = false
-			this.integrationLevel = this.integrationLevels.find(
-				(o) => o.value === (this.listing?.integrationLevel || 'search'),
-			) || this.integrationLevels[0]
+			this.integrationLevel =
+				this.integrationLevels.find(
+					(o) => o.value === (this.listing?.integrationLevel || 'search'),
+				) || this.integrationLevels[0]
 		},
+
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		close() {
 			navigationStore.setModal(null)
 		},
+
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		async submit() {
 			if (!this.listing) {
@@ -83,7 +101,9 @@ export default {
 			this.submitting = true
 			this.error = null
 			try {
-				const endpoint = generateUrl(`/apps/opencatalogi/api/listings/${this.listing.id}`)
+				const endpoint = generateUrl(
+					`/apps/opencatalogi/api/listings/${this.listing.id}`,
+				)
 				const res = await fetch(endpoint, {
 					method: 'PUT',
 					headers: {
@@ -91,11 +111,18 @@ export default {
 						'Content-Type': 'application/json',
 						Accept: 'application/json',
 					},
-					body: JSON.stringify({ integrationLevel: this.integrationLevel?.value }),
+					body: JSON.stringify({
+						integrationLevel: this.integrationLevel?.value,
+					}),
 				})
 				const body = await res.json().catch(() => ({}))
 				if (!res.ok) {
-					throw new Error(body?.data?.error || body?.error || body?.message || `HTTP ${res.status}`)
+					throw new Error(
+						body?.data?.error
+							|| body?.error
+							|| body?.message
+							|| `HTTP ${res.status}`,
+					)
 				}
 				this.$emit('saved', body)
 				this.close()
@@ -110,8 +137,9 @@ export default {
 </script>
 
 <template>
-	<NcModal v-if="isOpen && listing"
-		label-id="federationEditListingModal"
+	<NcModal
+		v-if="isOpen && listing"
+		labelId="federationEditListingModal"
 		@close="close">
 		<div class="federation-edit-listing-modal">
 			<h2>{{ t('opencatalogi', 'Edit listing') }}</h2>
@@ -134,31 +162,42 @@ export default {
 				<label :for="'federationEditListingUrl-' + (listing.id || 'x')">
 					{{ t('opencatalogi', 'Directory URL') }}
 				</label>
-				<input :id="'federationEditListingUrl-' + (listing.id || 'x')"
+				<input
+					:id="'federationEditListingUrl-' + (listing.id || 'x')"
 					type="url"
 					:value="listing.directory"
 					readonly
-					class="federation-edit-listing-modal__readonly">
+					class="federation-edit-listing-modal__readonly" />
 				<span class="federation-edit-listing-modal__readonly-hint">
-					{{ t('opencatalogi', 'Directory URL is read-only. To point at a different peer, remove this listing and add the new URL — the cached sync-state belongs to the current peer identity.') }}
+					{{
+						t(
+							'opencatalogi',
+							'Directory URL is read-only. To point at a different peer, remove this listing and add the new URL — the cached sync-state belongs to the current peer identity.',
+						)
+					}}
 				</span>
 			</div>
 
 			<div class="federation-edit-listing-modal__field">
-				<label :for="'federationEditListingIntegration-' + (listing.id || 'x')">
+				<label
+					:for="'federationEditListingIntegration-' + (listing.id || 'x')">
 					{{ t('opencatalogi', 'Integration level') }}
 				</label>
 				<NcSelect
 					:id="'federationEditListingIntegration-' + (listing.id || 'x')"
 					v-model="integrationLevel"
 					:options="integrationLevels"
-					:input-label="t('opencatalogi', 'Integration level')"
+					:inputLabel="t('opencatalogi', 'Integration level')"
 					:reduce="(o) => o"
 					:clearable="false" />
 			</div>
 
 			<NcNoteCard v-if="error" type="error">
-				<p><strong>{{ t('opencatalogi', 'Failed to save listing') }}</strong></p>
+				<p>
+					<strong>{{
+						t('opencatalogi', 'Failed to save listing')
+					}}</strong>
+				</p>
 				<p>{{ error }}</p>
 			</NcNoteCard>
 
@@ -166,10 +205,12 @@ export default {
 				<NcButton @click="close">
 					{{ t('opencatalogi', 'Cancel') }}
 				</NcButton>
-				<NcButton variant="primary"
-					:disabled="submitting"
-					@click="submit">
-					{{ submitting ? t('opencatalogi', 'Saving…') : t('opencatalogi', 'Save') }}
+				<NcButton variant="primary" :disabled="submitting" @click="submit">
+					{{
+						submitting
+							? t('opencatalogi', 'Saving…')
+							: t('opencatalogi', 'Save')
+					}}
 				</NcButton>
 			</div>
 		</div>

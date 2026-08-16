@@ -1,12 +1,20 @@
 <script setup>
-import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog :name="t('opencatalogi', 'Delete attachment')"
-		:can-close="false">
+	<NcDialog :name="t('opencatalogi', 'Delete attachment')" :canClose="false">
 		<p v-if="!succes">
-			{{ t('opencatalogi', 'Do you want to delete {name}? This action cannot be undone.', { name: objectStore.getActiveObject('publicationAttachment')?.title }) }}
+			{{
+				t(
+					'opencatalogi',
+					'Do you want to delete {name}? This action cannot be undone.',
+					{
+						name: objectStore.getActiveObject('publicationAttachment')
+							?.title,
+					},
+				)
+			}}
 		</p>
 		<NcNoteCard v-if="succes" type="success">
 			<p>{{ t('opencatalogi', 'Attachment successfully deleted') }}</p>
@@ -22,7 +30,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ succes ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+				{{
+					succes ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel')
+				}}
 			</NcButton>
 			<NcButton
 				v-if="!succes"
@@ -41,8 +51,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
@@ -62,6 +71,7 @@ export default {
 		Cancel,
 		Delete,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -69,24 +79,32 @@ export default {
 			error: false,
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		DeleteAttachment() {
 			this.loading = true
 
-			fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${objectStore.getActiveObject('publicationAttachment').id}`, {
-				method: 'DELETE',
-			})
+			fetch(
+				`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${objectStore.getActiveObject('publicationAttachment').id}`,
+				{
+					method: 'DELETE',
+				},
+			)
 				.then((response) => {
 					this.loading = false
 					this.succes = response.status === 200
 
-					catalogStore.getPublicationAttachments(objectStore.getActiveObject('publication').id, { page: objectStore.currentPage, limit: objectStore.limit })
+					catalogStore.getPublicationAttachments(
+						objectStore.getActiveObject('publication').id,
+						{ page: objectStore.currentPage, limit: objectStore.limit },
+					)
 
 					setTimeout(() => {
 						navigationStore.setDialog(false)
 					}, 2000)
-				}).finally(() => {
+				})
+				.finally(() => {
 					this.loading = false
 				})
 		},

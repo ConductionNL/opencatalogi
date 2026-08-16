@@ -21,23 +21,24 @@ import { test, expect } from '@playwright/test'
 import { bootApp, navTo, content, trackPageErrors, fatalErrors } from './_nav'
 
 test.describe('features-roadmap-page', () => {
-	test(
-		// @e2e dashboard::features-roadmap-renders-content
-		'Features & roadmap — renders roadmap content (toggle / suggest CTA)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			await bootApp(page)
-			await navTo(page, 'FeaturesRoadmapMenu')
+	test(// @e2e dashboard::features-roadmap-renders-content
+	'Features & roadmap — renders roadmap content (toggle / suggest CTA)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		await bootApp(page)
+		await navTo(page, 'FeaturesRoadmapMenu')
 
-			// Genuine roadmap content rendered by CnFeaturesAndRoadmapView:
-			// the "Show roadmap" view-toggle and the "Suggest feature" CTA.
-			// Scoped to the router-view content so it cannot false-pass on
-			// the navigation list.
-			await expect(
-				content(page).getByText(/show roadmap|suggest feature|roadmap/i).first(),
-			).toBeVisible({ timeout: 15000 })
+		// Genuine roadmap content rendered by CnFeaturesAndRoadmapView:
+		// the "Show roadmap" view-toggle and the "Suggest feature" CTA.
+		// Scoped to the router-view content so it cannot false-pass on
+		// the navigation list.
+		await expect(
+			content(page)
+				.getByText(/show roadmap|suggest feature|roadmap/i)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
 
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })

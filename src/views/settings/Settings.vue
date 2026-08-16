@@ -1,13 +1,13 @@
 <template>
 	<CnAdminSettingsShell
-		app-id="opencatalogi"
-		app-name="OpenCatalogi"
-		doc-url="https://docs.opencatalogi.nl"
-		:app-version="versionInfo.appVersion"
-		:configured-version="versionInfo.configuredVersion"
-		:is-up-to-date="versionInfo.versionsMatch"
-		:show-update-button="versionInfo.needsUpdate"
-		:show-reimport="false">
+		appId="opencatalogi"
+		appName="OpenCatalogi"
+		docUrl="https://docs.opencatalogi.nl"
+		:appVersion="versionInfo.appVersion"
+		:configuredVersion="versionInfo.configuredVersion"
+		:isUpToDate="versionInfo.versionsMatch"
+		:showUpdateButton="versionInfo.needsUpdate"
+		:showReimport="false">
 		<template #actions>
 			<NcButton
 				variant="secondary"
@@ -17,7 +17,11 @@
 					<NcLoadingIcon v-if="importing" :size="20" />
 					<Refresh v-else :size="20" />
 				</template>
-				{{ versionInfo.needsUpdate ? t('opencatalogi', 'Update configuration') : t('opencatalogi', 'Reimport configuration') }}
+				{{
+					versionInfo.needsUpdate
+						? t('opencatalogi', 'Update configuration')
+						: t('opencatalogi', 'Reimport configuration')
+				}}
 			</NcButton>
 
 			<NcButton
@@ -34,51 +38,78 @@
 
 		<!-- Import Results -->
 		<div v-if="importResult" class="import-result">
-			<NcNoteCard
-				v-if="importResult.success"
-				type="success">
+			<NcNoteCard v-if="importResult.success" type="success">
 				{{ importResult.message }}
 			</NcNoteCard>
-			<NcNoteCard
-				v-else
-				type="error">
+			<NcNoteCard v-else type="error">
 				{{ importResult.message }}
 			</NcNoteCard>
 		</div>
 
 		<NcSettingsSection
 			:name="t('opencatalogi', 'Data storage')"
-			:description="t('opencatalogi', 'Configure where to store your publication data')">
+			:description="
+				t('opencatalogi', 'Configure where to store your publication data')
+			">
 			<div v-if="!loading">
 				<!-- Warning if OpenRegister is not installed -->
 				<NcNoteCard v-if="!settings.openRegisters" type="warning">
-					{{ t('opencatalogi', 'Open Register is not installed. Please install it to use the Open Catalogi app with full functionality.') }}
+					{{
+						t(
+							'opencatalogi',
+							'Open Register is not installed. Please install it to use the Open Catalogi app with full functionality.',
+						)
+					}}
 				</NcNoteCard>
 
 				<!-- Register Selection -->
 				<div class="register-selection">
 					<h3>{{ t('opencatalogi', 'Register') }}</h3>
-					<p>{{ t('opencatalogi', 'Select the register to store all your publication data') }}</p>
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Select the register to store all your publication data',
+							)
+						}}
+					</p>
 
 					<NcSelect
 						v-model="selectedRegister"
 						:options="registerOptions"
-						:input-label="t('opencatalogi', 'Register')"
+						:inputLabel="t('opencatalogi', 'Register')"
 						:disabled="loading || !settings.openRegisters"
-						@update:model-value="handleRegisterChange" />
+						@update:modelValue="handleRegisterChange" />
 				</div>
 
 				<!-- Warning if selected register has no schemas -->
 				<NcNoteCard v-if="selectedRegister && !hasSchemas" type="warning">
-					{{ t('opencatalogi', 'The selected register has no schemas. Please create schemas in this register or select a different register.') }}
+					{{
+						t(
+							'opencatalogi',
+							'The selected register has no schemas. Please create schemas in this register or select a different register.',
+						)
+					}}
 				</NcNoteCard>
 
 				<!-- Object Type Schema Configuration -->
-				<div v-if="selectedRegister && hasSchemas" class="schema-configuration">
+				<div
+					v-if="selectedRegister && hasSchemas"
+					class="schema-configuration">
 					<h3>{{ t('opencatalogi', 'Schema Configuration') }}</h3>
-					<p>{{ t('opencatalogi', 'Select which schema to use for each object type') }}</p>
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Select which schema to use for each object type',
+							)
+						}}
+					</p>
 
-					<div v-for="objectType in settings.objectTypes" :key="objectType" class="object-type-section">
+					<div
+						v-for="objectType in settings.objectTypes"
+						:key="objectType"
+						class="object-type-section">
 						<div class="object-type-header">
 							<h4>{{ formatTitle(objectType) }}</h4>
 						</div>
@@ -86,7 +117,7 @@
 						<NcSelect
 							v-model="configuration[objectType].schema"
 							:options="computedSchemaOptions"
-							:input-label="t('opencatalogi', 'Schema')"
+							:inputLabel="t('opencatalogi', 'Schema')"
 							:disabled="loading" />
 					</div>
 				</div>
@@ -95,7 +126,9 @@
 				<div class="button-container">
 					<NcButton
 						variant="primary"
-						:disabled="loading || saving || !selectedRegister || !hasSchemas"
+						:disabled="
+							loading || saving || !selectedRegister || !hasSchemas
+						"
 						@click="saveAll">
 						<template #icon>
 							<NcLoadingIcon v-if="saving" :size="20" />
@@ -107,7 +140,8 @@
 			</div>
 
 			<!-- Loading State -->
-			<NcLoadingIcon v-else
+			<NcLoadingIcon
+				v-else
 				class="loading-icon"
 				:size="64"
 				appearance="dark" />
@@ -115,32 +149,63 @@
 
 		<NcSettingsSection
 			:name="t('opencatalogi', 'Woo-index harvester readiness')"
-			:description="t('opencatalogi', 'Verify that the KOOP Woo-harvester can actually reach and ingest this instance, and track its Woo-index registration status')">
+			:description="
+				t(
+					'opencatalogi',
+					'Verify that the KOOP Woo-harvester can actually reach and ingest this instance, and track its Woo-index registration status',
+				)
+			">
 			<div class="woo-readiness">
 				<NcNoteCard v-if="wooReadinessError" type="error">
 					{{ wooReadinessError }}
 				</NcNoteCard>
 
 				<div v-if="wooReadinessReport" class="woo-readiness-summary">
-					<NcNoteCard :type="wooReadinessReport.verdict === 'ready' ? 'success' : 'warning'">
-						{{ wooReadinessReport.verdict === 'ready'
-							? t('opencatalogi', 'This instance is harvester-ready')
-							: t('opencatalogi', 'This instance is not yet harvester-ready') }}
+					<NcNoteCard
+						:type="
+							wooReadinessReport.verdict === 'ready'
+								? 'success'
+								: 'warning'
+						">
+						{{
+							wooReadinessReport.verdict === 'ready'
+								? t(
+										'opencatalogi',
+										'This instance is harvester-ready',
+									)
+								: t(
+										'opencatalogi',
+										'This instance is not yet harvester-ready',
+									)
+						}}
 					</NcNoteCard>
 					<p class="woo-readiness-meta">
-						{{ t('opencatalogi', 'Last checked') }}: {{ formatCheckedAt(wooReadinessReport.checkedAt) }}
+						{{ t('opencatalogi', 'Last checked') }}:
+						{{ formatCheckedAt(wooReadinessReport.checkedAt) }}
 					</p>
 
 					<ul class="woo-readiness-checks">
-						<li v-for="check in wooReadinessReport.checks"
+						<li
+							v-for="check in wooReadinessReport.checks"
 							:key="check.id"
 							class="woo-readiness-check">
-							<CheckCircle v-if="check.status === 'pass'" :size="20" fill-color="var(--color-success)" />
-							<CloseCircle v-else-if="check.status === 'fail'" :size="20" fill-color="var(--color-error)" />
-							<MinusCircle v-else :size="20" fill-color="var(--color-text-lighter)" />
+							<CheckCircle
+								v-if="check.status === 'pass'"
+								:size="20"
+								fillColor="var(--color-success)" />
+							<CloseCircle
+								v-else-if="check.status === 'fail'"
+								:size="20"
+								fillColor="var(--color-error)" />
+							<MinusCircle
+								v-else
+								:size="20"
+								fillColor="var(--color-text-lighter)" />
 							<div class="woo-readiness-check-body">
 								<strong>{{ check.id }}</strong>
-								<span v-if="check.reason" class="woo-readiness-check-reason">
+								<span
+									v-if="check.reason"
+									class="woo-readiness-check-reason">
 									{{ remediationHint(check.reason) }}
 								</span>
 							</div>
@@ -169,27 +234,36 @@
 					{{ t('opencatalogi', 'Woo-index registration status') }}
 				</h3>
 				<p class="option-description">
-					{{ t('opencatalogi', 'Track whether this instance is registered with the national Woo-index / Register van Overheidsorganisaties') }}
+					{{
+						t(
+							'opencatalogi',
+							'Track whether this instance is registered with the national Woo-index / Register van Overheidsorganisaties',
+						)
+					}}
 				</p>
 
 				<div class="woo-registration-fields">
 					<NcSelect
 						v-model="registration.status"
 						:options="registrationStatusOptions"
-						:input-label="t('opencatalogi', 'Registration status')"
+						:inputLabel="t('opencatalogi', 'Registration status')"
 						:disabled="savingRegistration" />
 
 					<NcTextField
-						:model-value="registration.registeredUrl"
+						:modelValue="registration.registeredUrl"
 						:label="t('opencatalogi', 'Registered URL')"
 						:disabled="savingRegistration"
-						@update:model-value="v => registration.registeredUrl = v" />
+						@update:modelValue="
+							(v) => (registration.registeredUrl = v)
+						" />
 
 					<NcTextField
-						:model-value="registration.registeredAt"
+						:modelValue="registration.registeredAt"
 						:label="t('opencatalogi', 'Registered on (date)')"
 						:disabled="savingRegistration"
-						@update:model-value="v => registration.registeredAt = v" />
+						@update:modelValue="
+							(v) => (registration.registeredAt = v)
+						" />
 				</div>
 
 				<div class="button-container">
@@ -209,7 +283,12 @@
 
 		<NcSettingsSection
 			:name="t('opencatalogi', 'Publishing Options')"
-			:description="t('opencatalogi', 'Configure automatic publishing behavior and interface preferences')">
+			:description="
+				t(
+					'opencatalogi',
+					'Configure automatic publishing behavior and interface preferences',
+				)
+			">
 			<div v-if="!loading" class="publishing-options">
 				<!-- Auto Publish Attachments -->
 				<div class="option-section">
@@ -219,7 +298,12 @@
 						{{ t('opencatalogi', 'Auto publish attachments') }}
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						{{ t('opencatalogi', 'When an object is published, automatically publish all its attachments as Nextcloud shares') }}
+						{{
+							t(
+								'opencatalogi',
+								'When an object is published, automatically publish all its attachments as Nextcloud shares',
+							)
+						}}
 					</p>
 				</div>
 
@@ -231,7 +315,12 @@
 						{{ t('opencatalogi', 'Auto publish objects') }}
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						{{ t('opencatalogi', 'When an object matching a catalog schema is created, automatically apply public read access via RBAC rules') }}
+						{{
+							t(
+								'opencatalogi',
+								'When an object matching a catalog schema is created, automatically apply public read access via RBAC rules',
+							)
+						}}
 					</p>
 				</div>
 
@@ -243,7 +332,12 @@
 						{{ t('opencatalogi', 'Use old style publishing view') }}
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						{{ t('opencatalogi', 'Use the legacy publishing interface instead of the new interface') }}
+						{{
+							t(
+								'opencatalogi',
+								'Use the legacy publishing interface instead of the new interface',
+							)
+						}}
 					</p>
 				</div>
 
@@ -263,7 +357,8 @@
 			</div>
 
 			<!-- Loading State -->
-			<NcLoadingIcon v-else
+			<NcLoadingIcon
+				v-else
 				class="loading-icon"
 				:size="64"
 				appearance="dark" />
@@ -272,22 +367,7 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue'
-import {
-	NcSettingsSection,
-	NcNoteCard,
-	NcSelect,
-	NcTextField,
-	NcButton,
-	NcLoadingIcon,
-	NcCheckboxRadioSwitch,
-} from '@nextcloud/vue'
 import { CnAdminSettingsShell } from '@conduction/nextcloud-vue'
-import Save from 'vue-material-design-icons/ContentSave.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
-import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
-import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 // Every state-changing call below goes through @nextcloud/axios rather than a
 // bare fetch(). It attaches the `requesttoken` header Nextcloud's
 // SecurityMiddleware checks, which is what lets the settings write endpoints
@@ -299,6 +379,21 @@ import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 // calls did not check at all: a 403 or 500 was indistinguishable from a save.
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+	NcSettingsSection,
+	NcTextField,
+} from '@nextcloud/vue'
+import { defineComponent } from 'vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
+import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
+import Save from 'vue-material-design-icons/ContentSave.vue'
+import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
 
 /**
  * @class Settings
@@ -352,6 +447,7 @@ export default defineComponent({
 				availableRegisters: [],
 				configuration: {},
 			},
+
 			selectedRegister: null,
 			configuration: {},
 			schemaOptions: [],
@@ -360,6 +456,7 @@ export default defineComponent({
 				autoPublishObjects: false,
 				useOldStylePublishingView: false,
 			},
+
 			versionInfo: {
 				appName: '',
 				appVersion: '',
@@ -367,6 +464,7 @@ export default defineComponent({
 				versionsMatch: false,
 				needsUpdate: false,
 			},
+
 			importResult: null,
 			wooReadinessReport: null,
 			wooReadinessError: null,
@@ -376,6 +474,7 @@ export default defineComponent({
 				registeredUrl: '',
 				registeredAt: '',
 			},
+
 			savingRegistration: false,
 		}
 	},
@@ -389,11 +488,15 @@ export default defineComponent({
 		/** @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md (Requirement: Woo-index registration status is tracked in configuration (WOO-HR-003)) */
 		registrationStatusOptions() {
 			return [
-				{ label: this.t('opencatalogi', 'Not registered'), value: 'not_registered' },
+				{
+					label: this.t('opencatalogi', 'Not registered'),
+					value: 'not_registered',
+				},
 				{ label: this.t('opencatalogi', 'Requested'), value: 'requested' },
 				{ label: this.t('opencatalogi', 'Registered'), value: 'registered' },
 			]
 		},
+
 		/**
 		 * Generates options for register selection dropdown
 		 *
@@ -401,7 +504,7 @@ export default defineComponent({
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		registerOptions() {
-			return this.settings.availableRegisters.map(register => ({
+			return this.settings.availableRegisters.map((register) => ({
 				label: register.title,
 				value: register.id.toString(),
 			}))
@@ -417,7 +520,7 @@ export default defineComponent({
 			if (!this.selectedRegister) return false
 
 			const register = this.settings.availableRegisters.find(
-				r => r.id.toString() === this.selectedRegister.value,
+				(r) => r.id.toString() === this.selectedRegister.value,
 			)
 
 			// Check if register has schemas - accept both array of IDs or array of schema objects.
@@ -426,9 +529,16 @@ export default defineComponent({
 			}
 
 			// Accept either array of integers (schema IDs) or array of schema objects.
-			return register.schemas.length > 0
-				&& (register.schemas.some(schema => typeof schema === 'number' || (schema && typeof schema === 'object' && schema.id)))
+			return (
+				register.schemas.length > 0
+				&& register.schemas.some(
+					(schema) =>
+						typeof schema === 'number'
+						|| (schema && typeof schema === 'object' && schema.id),
+				)
+			)
 		},
+
 		/**
 		 * Returns all available schema options (no filtering for reuse)
 		 *
@@ -464,19 +574,26 @@ export default defineComponent({
 		async loadSettings() {
 			try {
 				// Load main settings
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings')
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/settings',
+				)
 				const data = await response.json()
 				this.settings = data
 
 				// Load publishing options
-				const publishingResponse = await fetch('/index.php/apps/opencatalogi/api/settings/publishing')
+				const publishingResponse = await fetch(
+					'/index.php/apps/opencatalogi/api/settings/publishing',
+				)
 				const publishingData = await publishingResponse.json()
 
 				if (!publishingData.error) {
 					this.publishingOptions = {
-						autoPublishAttachments: publishingData.auto_publish_attachments,
+						autoPublishAttachments:
+							publishingData.auto_publish_attachments,
+
 						autoPublishObjects: publishingData.auto_publish_objects,
-						useOldStylePublishingView: publishingData.use_old_style_publishing_view,
+						useOldStylePublishingView:
+							publishingData.use_old_style_publishing_view,
 					}
 				}
 
@@ -488,11 +605,25 @@ export default defineComponent({
 
 				// Populate the Woo-index registration status editor from the same
 				// settings payload (WOO-HR-003 keys are part of `configuration`).
-				const registrationStatus = (data.configuration && data.configuration.woo_index_registration_status) || 'not_registered'
+				const registrationStatus =
+					(data.configuration
+						&& data.configuration.woo_index_registration_status)
+					|| 'not_registered'
 				this.registration = {
-					status: this.registrationStatusOptions.find(option => option.value === registrationStatus) || this.registrationStatusOptions[0],
-					registeredUrl: (data.configuration && data.configuration.woo_index_registration_url) || '',
-					registeredAt: (data.configuration && data.configuration.woo_index_registration_at) || '',
+					status:
+						this.registrationStatusOptions.find(
+							(option) => option.value === registrationStatus,
+						) || this.registrationStatusOptions[0],
+
+					registeredUrl:
+						(data.configuration
+							&& data.configuration.woo_index_registration_url)
+						|| '',
+
+					registeredAt:
+						(data.configuration
+							&& data.configuration.woo_index_registration_at)
+						|| '',
 				}
 
 				this.loading = false
@@ -508,8 +639,9 @@ export default defineComponent({
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		initializeConfiguration() {
 			// Create empty configuration for each object type
-			this.settings.objectTypes.forEach(type => {
-				const registerId = this.settings.configuration[`${type}_register`] || ''
+			this.settings.objectTypes.forEach((type) => {
+				const registerId =
+					this.settings.configuration[`${type}_register`] || ''
 				const schemaId = this.settings.configuration[`${type}_schema`] || ''
 
 				this.configuration = {
@@ -521,7 +653,9 @@ export default defineComponent({
 
 				// If we have existing configuration, use it to set the selected register
 				if (registerId && !this.selectedRegister) {
-					const register = this.settings.availableRegisters.find(r => r.id.toString() === registerId)
+					const register = this.settings.availableRegisters.find(
+						(r) => r.id.toString() === registerId,
+					)
 					if (register) {
 						this.selectedRegister = {
 							label: register.title,
@@ -534,12 +668,12 @@ export default defineComponent({
 				// If we have a schema configured, set it.
 				if (schemaId && this.selectedRegister) {
 					const register = this.settings.availableRegisters.find(
-						r => r.id.toString() === this.selectedRegister.value,
+						(r) => r.id.toString() === this.selectedRegister.value,
 					)
 					if (register && Array.isArray(register.schemas)) {
 						// Handle both schema IDs (numbers) and schema objects.
 						let schema = null
-						if (register.schemas.some(s => typeof s === 'number')) {
+						if (register.schemas.some((s) => typeof s === 'number')) {
 							// Schemas are just IDs, check if our schemaId is in the array.
 							if (register.schemas.includes(parseInt(schemaId))) {
 								schema = {
@@ -550,8 +684,14 @@ export default defineComponent({
 						} else {
 							// Schemas are objects, find the matching one.
 							schema = register.schemas
-								.filter(s => s && typeof s === 'object' && s.id && s.title)
-								.find(s => s.id.toString() === schemaId)
+								.filter(
+									(s) =>
+										s
+										&& typeof s === 'object'
+										&& s.id
+										&& s.title,
+								)
+								.find((s) => s.id.toString() === schemaId)
 						}
 
 						// The stored schema is configured but the register does not list it
@@ -578,7 +718,6 @@ export default defineComponent({
 					}
 				}
 			})
-
 		},
 
 		/**
@@ -588,7 +727,7 @@ export default defineComponent({
 		autoSelectOpenCatalogiRegister() {
 			// Look for a register with "opencatalogi" in the name.
 			const opencatalogiRegister = this.settings.availableRegisters.find(
-				register => register.title.toLowerCase().includes('publication'),
+				(register) => register.title.toLowerCase().includes('publication'),
 			)
 
 			if (opencatalogiRegister) {
@@ -599,14 +738,26 @@ export default defineComponent({
 				this.updateSchemaOptions(opencatalogiRegister.id.toString())
 
 				// Only try to auto-select schemas if the register has valid schemas.
-				if (Array.isArray(opencatalogiRegister.schemas) && opencatalogiRegister.schemas.length > 0) {
+				if (
+					Array.isArray(opencatalogiRegister.schemas)
+					&& opencatalogiRegister.schemas.length > 0
+				) {
 					// Check if schemas are objects or just IDs.
-					const hasSchemaObjects = opencatalogiRegister.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+					const hasSchemaObjects = opencatalogiRegister.schemas.some(
+						(schema) =>
+							schema
+							&& typeof schema === 'object'
+							&& schema.id
+							&& schema.title,
+					)
 					if (hasSchemaObjects) {
 						this.autoSelectMatchingSchemas(opencatalogiRegister)
 					}
 				}
-			} else if (this.settings.availableRegisters.length > 0 && !this.selectedRegister) {
+			} else if (
+				this.settings.availableRegisters.length > 0
+				&& !this.selectedRegister
+			) {
 				// If no Open Catalogi register but we have registers, select the first one.
 				const firstRegister = this.settings.availableRegisters[0]
 				this.selectedRegister = {
@@ -616,9 +767,18 @@ export default defineComponent({
 				this.updateSchemaOptions(firstRegister.id.toString())
 
 				// Only try to auto-select schemas if the register has valid schemas.
-				if (Array.isArray(firstRegister.schemas) && firstRegister.schemas.length > 0) {
+				if (
+					Array.isArray(firstRegister.schemas)
+					&& firstRegister.schemas.length > 0
+				) {
 					// Check if schemas are objects or just IDs.
-					const hasSchemaObjects = firstRegister.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+					const hasSchemaObjects = firstRegister.schemas.some(
+						(schema) =>
+							schema
+							&& typeof schema === 'object'
+							&& schema.id
+							&& schema.title,
+					)
 					if (hasSchemaObjects) {
 						this.autoSelectMatchingSchemas(firstRegister)
 					}
@@ -631,19 +791,31 @@ export default defineComponent({
 		 *
 		 * @param {object} register - The selected register object
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @param register
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 */
 		autoSelectMatchingSchemas(register) {
 			// Only proceed if register has schemas array
 			if (!register || !Array.isArray(register.schemas)) {
 				return
 			}
 
-			this.settings.objectTypes.forEach(type => {
+			this.settings.objectTypes.forEach((type) => {
 				// Look for a schema with the same name as the object type
 				// Filter out non-object schemas first
 				const matchingSchema = register.schemas
-					.filter(schema => schema && typeof schema === 'object' && schema.id && schema.title)
-					.find(schema => schema.title.toLowerCase() === type.toLowerCase())
+					.filter(
+						(schema) =>
+							schema
+							&& typeof schema === 'object'
+							&& schema.id
+							&& schema.title,
+					)
+					.find(
+						(schema) =>
+							schema.title.toLowerCase() === type.toLowerCase(),
+					)
 
 				if (matchingSchema) {
 					this.configuration = {
@@ -665,24 +837,34 @@ export default defineComponent({
 		 *
 		 * @param {string} registerId - The ID of the selected register
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @param registerId
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 */
 		updateSchemaOptions(registerId) {
-			const register = this.settings.availableRegisters.find(r => r.id.toString() === registerId)
+			const register = this.settings.availableRegisters.find(
+				(r) => r.id.toString() === registerId,
+			)
 			if (register && Array.isArray(register.schemas)) {
 				// Handle both schema IDs (numbers) and schema objects.
-				if (register.schemas.some(s => typeof s === 'number')) {
+				if (register.schemas.some((s) => typeof s === 'number')) {
 					// Schemas are just IDs, create options with ID as both label and value.
 					this.schemaOptions = register.schemas
-						.filter(schemaId => typeof schemaId === 'number')
-						.map(schemaId => ({
+						.filter((schemaId) => typeof schemaId === 'number')
+						.map((schemaId) => ({
 							label: `Schema ${schemaId}`,
 							value: schemaId.toString(),
 						}))
 				} else {
 					// Schemas are objects, filter out non-object schemas and only include valid schema objects.
-					const validSchemas = register.schemas
-						.filter(schema => schema && typeof schema === 'object' && schema.id && schema.title)
-					this.schemaOptions = validSchemas.map(schema => ({
+					const validSchemas = register.schemas.filter(
+						(schema) =>
+							schema
+							&& typeof schema === 'object'
+							&& schema.id
+							&& schema.title,
+					)
+					this.schemaOptions = validSchemas.map((schema) => ({
 						label: schema.title,
 						value: schema.id.toString(),
 					}))
@@ -698,7 +880,10 @@ export default defineComponent({
 		 * @param {string} objectType - The object type to format
 		 * @return {string} The formatted title
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @param objectType
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 */
 		formatTitle(objectType) {
 			return objectType.charAt(0).toUpperCase() + objectType.slice(1)
 		},
@@ -713,7 +898,7 @@ export default defineComponent({
 				this.updateSchemaOptions(this.selectedRegister.value)
 
 				// Reset all schema selections
-				this.settings.objectTypes.forEach(type => {
+				this.settings.objectTypes.forEach((type) => {
 					this.configuration = {
 						...this.configuration,
 						[type]: {
@@ -725,11 +910,21 @@ export default defineComponent({
 
 				// Auto-select matching schemas.
 				const register = this.settings.availableRegisters.find(
-					r => r.id.toString() === this.selectedRegister.value,
+					(r) => r.id.toString() === this.selectedRegister.value,
 				)
-				if (register && Array.isArray(register.schemas) && register.schemas.length > 0) {
+				if (
+					register
+					&& Array.isArray(register.schemas)
+					&& register.schemas.length > 0
+				) {
 					// Check if schemas are objects or just IDs.
-					const hasSchemaObjects = register.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+					const hasSchemaObjects = register.schemas.some(
+						(schema) =>
+							schema
+							&& typeof schema === 'object'
+							&& schema.id
+							&& schema.title,
+					)
 					if (hasSchemaObjects) {
 						this.autoSelectMatchingSchemas(register)
 					}
@@ -762,12 +957,17 @@ export default defineComponent({
 					configToSave[`${type}_register`] = this.selectedRegister.value
 
 					// Set the schema ID if selected
-					configToSave[`${type}_schema`] = config.schema ? config.schema.value : ''
+					configToSave[`${type}_schema`] = config.schema
+						? config.schema.value
+						: ''
 				})
 
 				// Send configuration to backend. PUT is the canonical settings
 				// write (`settings#update`); POST remains only as a legacy alias.
-				await axios.put(generateUrl('/apps/opencatalogi/api/settings'), configToSave)
+				await axios.put(
+					generateUrl('/apps/opencatalogi/api/settings'),
+					configToSave,
+				)
 			} catch (error) {
 				console.error('Failed to save settings:', error)
 			} finally {
@@ -787,7 +987,9 @@ export default defineComponent({
 			this.configurationResults = null
 
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings/load')
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/settings/load',
+				)
 				const data = await response.json()
 
 				if (data.error) {
@@ -798,7 +1000,9 @@ export default defineComponent({
 					await this.loadSettings()
 				}
 			} catch (error) {
-				this.configurationResults = { error: 'Failed to load configuration: ' + error.message }
+				this.configurationResults = {
+					error: 'Failed to load configuration: ' + error.message,
+				}
 			} finally {
 				this.loadingConfiguration = false
 			}
@@ -815,13 +1019,19 @@ export default defineComponent({
 			this.saving = true
 			try {
 				const configToSave = {
-					auto_publish_attachments: this.publishingOptions.autoPublishAttachments,
+					auto_publish_attachments:
+						this.publishingOptions.autoPublishAttachments,
+
 					auto_publish_objects: this.publishingOptions.autoPublishObjects,
-					use_old_style_publishing_view: this.publishingOptions.useOldStylePublishingView,
+					use_old_style_publishing_view:
+						this.publishingOptions.useOldStylePublishingView,
 				}
 
 				// Send configuration to backend using the dedicated publishing options endpoint
-				const response = await axios.post(generateUrl('/apps/opencatalogi/api/settings/publishing'), configToSave)
+				const response = await axios.post(
+					generateUrl('/apps/opencatalogi/api/settings/publishing'),
+					configToSave,
+				)
 
 				const result = response.data
 
@@ -832,7 +1042,8 @@ export default defineComponent({
 					this.publishingOptions = {
 						autoPublishAttachments: result.auto_publish_attachments,
 						autoPublishObjects: result.auto_publish_objects,
-						useOldStylePublishingView: result.use_old_style_publishing_view,
+						useOldStylePublishingView:
+							result.use_old_style_publishing_view,
 					}
 				}
 			} catch (error) {
@@ -851,7 +1062,9 @@ export default defineComponent({
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async loadVersionInfo() {
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings/version')
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/settings/version',
+				)
 				const data = await response.json()
 
 				if (!data.error) {
@@ -874,23 +1087,26 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @param force
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 */
 		async manualImport(force = false) {
 			this.importing = true
 			this.importResult = null
 
 			try {
-				const response = await axios.post(generateUrl('/apps/opencatalogi/api/settings/import'), { force })
+				const response = await axios.post(
+					generateUrl('/apps/opencatalogi/api/settings/import'),
+					{ force },
+				)
 
 				const result = response.data
 				this.importResult = result
 
 				// If successful, update version info and reload settings
 				if (result.success) {
-					await Promise.all([
-						this.loadVersionInfo(),
-						this.loadSettings(),
-					])
+					await Promise.all([this.loadVersionInfo(), this.loadSettings()])
 				}
 			} catch (error) {
 				console.error('Failed to perform manual import:', error)
@@ -914,7 +1130,9 @@ export default defineComponent({
 		/** @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md (Requirement: Readiness report is persisted and retrievable (WOO-HR-002)) */
 		async loadWooReadiness() {
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/woo/readiness')
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/woo/readiness',
+				)
 				const data = await response.json()
 				this.wooReadinessReport = data.report || null
 			} catch (error) {
@@ -934,7 +1152,9 @@ export default defineComponent({
 			this.wooReadinessError = null
 
 			try {
-				const response = await axios.post(generateUrl('/apps/opencatalogi/api/woo/readiness/run'))
+				const response = await axios.post(
+					generateUrl('/apps/opencatalogi/api/woo/readiness/run'),
+				)
 
 				this.wooReadinessReport = response.data
 			} catch (error) {
@@ -943,14 +1163,22 @@ export default defineComponent({
 				// now. The error body is still the server's JSON payload.
 				const data = error.response?.data
 				if (data !== undefined) {
-					this.wooReadinessError = data.error === 'not-configured'
-						? this.t('opencatalogi', 'No Woo-enabled catalog is configured yet — enable Woo sitemaps on a catalog first.')
-						: (data.error || this.t('opencatalogi', 'Readiness check failed.'))
+					this.wooReadinessError =
+						data.error === 'not-configured'
+							? this.t(
+									'opencatalogi',
+									'No Woo-enabled catalog is configured yet — enable Woo sitemaps on a catalog first.',
+								)
+							: data.error
+								|| this.t('opencatalogi', 'Readiness check failed.')
 					return
 				}
 
 				console.error('Failed to run Woo readiness check:', error)
-				this.wooReadinessError = this.t('opencatalogi', 'Readiness check failed.')
+				this.wooReadinessError = this.t(
+					'opencatalogi',
+					'Readiness check failed.',
+				)
 			} finally {
 				this.wooReadinessRunning = false
 			}
@@ -968,7 +1196,9 @@ export default defineComponent({
 
 			try {
 				await axios.put(generateUrl('/apps/opencatalogi/api/settings'), {
-					woo_index_registration_status: this.registration.status ? this.registration.status.value : 'not_registered',
+					woo_index_registration_status: this.registration.status
+						? this.registration.status.value
+						: 'not_registered',
 					woo_index_registration_url: this.registration.registeredUrl,
 					woo_index_registration_at: this.registration.registeredAt,
 				})
@@ -985,7 +1215,10 @@ export default defineComponent({
 		 * @param {string} checkedAt ISO 8601 timestamp.
 		 * @return {string} A locale-formatted date/time string.
 		 */
-		/** @spec exclude Display-formatting helper; no independent domain behavior. */
+		/**
+		 * @param checkedAt
+		 * @spec exclude Display-formatting helper; no independent domain behavior.
+		 */
 		formatCheckedAt(checkedAt) {
 			if (!checkedAt) {
 				return ''
@@ -1003,25 +1236,91 @@ export default defineComponent({
 		 * @param {string} reason The machine-readable reason code.
 		 * @return {string} A human-readable remediation hint.
 		 */
-		/** @spec exclude Display-copy lookup; no independent domain behavior. */
+		/**
+		 * @param reason
+		 * @spec exclude Display-copy lookup; no independent domain behavior.
+		 */
 		remediationHint(reason) {
 			const hints = {
-				'http-404': this.t('opencatalogi', 'Not found (404) — check webserver routing/rewrites for this URL.'),
-				'ssrf-blocked': this.t('opencatalogi', 'Blocked as an unsafe outbound target — check the configured public base URL.'),
-				'network-error': this.t('opencatalogi', 'Could not connect — check that this instance is reachable from the public internet.'),
-				'invalid-xml': this.t('opencatalogi', 'Response was not well-formed XML.'),
-				'no-diwoo-elements': this.t('opencatalogi', 'No DIWOO metadata elements found — the category sitemap may be empty.'),
-				'diwoo-xsd-invalid': this.t('opencatalogi', 'DIWOO metadata failed validation — see the DIWOO validation report for this catalog.'),
-				'diwoo-validation-error': this.t('opencatalogi', 'Could not run DIWOO validation for this catalog/category.'),
-				'missing-sitemap-reference': this.t('opencatalogi', 'robots.txt does not reference any Woo sitemap — check the robots.txt rewrite/proxy configuration.'),
-				'sitemapindex-unreachable': this.t('opencatalogi', 'Skipped — the sitemapindex for this catalog was not reachable.'),
-				'sitemapindex-invalid': this.t('opencatalogi', 'Skipped — the sitemapindex for this catalog was not well-formed.'),
-				'no-sitemap-pages': this.t('opencatalogi', 'Skipped — the sitemapindex has no sitemap pages to sample.'),
-				'no-publications-found': this.t('opencatalogi', 'Skipped — no publication URL was found to sample.'),
-				'request-cap-reached': this.t('opencatalogi', 'Skipped — the per-run outbound request cap was reached.'),
-				'not-registered': this.t('opencatalogi', 'Not yet registered with the Woo-index.'),
-				'registration-pending': this.t('opencatalogi', 'Registration requested but not yet confirmed.'),
-				'url-mismatch': this.t('opencatalogi', 'The registered URL does not match this instance\'s public base URL.'),
+				'http-404': this.t(
+					'opencatalogi',
+					'Not found (404) — check webserver routing/rewrites for this URL.',
+				),
+
+				'ssrf-blocked': this.t(
+					'opencatalogi',
+					'Blocked as an unsafe outbound target — check the configured public base URL.',
+				),
+
+				'network-error': this.t(
+					'opencatalogi',
+					'Could not connect — check that this instance is reachable from the public internet.',
+				),
+
+				'invalid-xml': this.t(
+					'opencatalogi',
+					'Response was not well-formed XML.',
+				),
+
+				'no-diwoo-elements': this.t(
+					'opencatalogi',
+					'No DIWOO metadata elements found — the category sitemap may be empty.',
+				),
+
+				'diwoo-xsd-invalid': this.t(
+					'opencatalogi',
+					'DIWOO metadata failed validation — see the DIWOO validation report for this catalog.',
+				),
+
+				'diwoo-validation-error': this.t(
+					'opencatalogi',
+					'Could not run DIWOO validation for this catalog/category.',
+				),
+
+				'missing-sitemap-reference': this.t(
+					'opencatalogi',
+					'robots.txt does not reference any Woo sitemap — check the robots.txt rewrite/proxy configuration.',
+				),
+
+				'sitemapindex-unreachable': this.t(
+					'opencatalogi',
+					'Skipped — the sitemapindex for this catalog was not reachable.',
+				),
+
+				'sitemapindex-invalid': this.t(
+					'opencatalogi',
+					'Skipped — the sitemapindex for this catalog was not well-formed.',
+				),
+
+				'no-sitemap-pages': this.t(
+					'opencatalogi',
+					'Skipped — the sitemapindex has no sitemap pages to sample.',
+				),
+
+				'no-publications-found': this.t(
+					'opencatalogi',
+					'Skipped — no publication URL was found to sample.',
+				),
+
+				'request-cap-reached': this.t(
+					'opencatalogi',
+					'Skipped — the per-run outbound request cap was reached.',
+				),
+
+				'not-registered': this.t(
+					'opencatalogi',
+					'Not yet registered with the Woo-index.',
+				),
+
+				'registration-pending': this.t(
+					'opencatalogi',
+					'Registration requested but not yet confirmed.',
+				),
+
+				'url-mismatch': this.t(
+					'opencatalogi',
+					"The registered URL does not match this instance's public base URL.",
+				),
 			}
 
 			return hints[reason] || reason

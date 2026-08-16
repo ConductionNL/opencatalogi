@@ -28,56 +28,87 @@ import { objectStore } from '../../store/store.js'
 				<h1 class="viewHeaderTitleIndented">
 					{{ t('opencatalogi', 'Search publications') }}
 				</h1>
-				<p>{{ t('opencatalogi', 'Search and explore publications across all catalogs') }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Search and explore publications across all catalogs',
+						)
+					}}
+				</p>
 			</div>
 
 			<!-- Actions Bar -->
 			<div class="viewActionsBar">
 				<div class="viewInfo">
 					<span class="viewTotalCount">
-						{{ t('opencatalogi', 'Showing {showing} of {total} publications', {
-							showing: searchStore.getSearchResults.length,
-							total: searchStore.getPagination.total || searchStore.getSearchResults.length
-						}) }}
+						{{
+							t(
+								'opencatalogi',
+								'Showing {showing} of {total} publications',
+								{
+									showing: searchStore.getSearchResults.length,
+									total:
+										searchStore.getPagination.total
+										|| searchStore.getSearchResults.length,
+								},
+							)
+						}}
 					</span>
-					<span v-if="searchStore.getSelectedPublications.length > 0" class="viewIndicator">
-						({{ t('opencatalogi', '{count} selected', { count: searchStore.getSelectedPublications.length }) }})
+					<span
+						v-if="searchStore.getSelectedPublications.length > 0"
+						class="viewIndicator">
+						({{
+							t('opencatalogi', '{count} selected', {
+								count: searchStore.getSelectedPublications.length,
+							})
+						}})
 					</span>
 				</div>
 				<div class="viewActions">
 					<div class="viewModeSwitchContainer">
 						<NcCheckboxRadioSwitch
 							:title="t('opencatalogi', 'See publications as cards')"
-							:model-value="searchStore.getViewMode"
-							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
+							:modelValue="searchStore.getViewMode"
+							:buttonVariant="true"
+							:class="{
+								'checkbox-radio-switch--checked':
+									viewMode === 'cards',
+							}"
 							value="cards"
 							name="publications_view_mode"
 							type="radio"
-							button-variant-grouped="horizontal"
-							@update:model-value="() => searchStore.setViewMode('cards')">
+							buttonVariantGrouped="horizontal"
+							@update:modelValue="
+								() => searchStore.setViewMode('cards')
+							">
 							{{ t('opencatalogi', 'Cards') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
 							:title="t('opencatalogi', 'See publications as a table')"
-							:model-value="searchStore.getViewMode"
-							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
+							:modelValue="searchStore.getViewMode"
+							:buttonVariant="true"
+							:class="{
+								'checkbox-radio-switch--checked':
+									viewMode === 'table',
+							}"
 							value="table"
 							name="publications_view_mode"
 							type="radio"
-							button-variant-grouped="horizontal"
-							@update:model-value="() => searchStore.setViewMode('table')">
+							buttonVariantGrouped="horizontal"
+							@update:modelValue="
+								() => searchStore.setViewMode('table')
+							">
 							{{ t('opencatalogi', 'Table') }}
 						</NcCheckboxRadioSwitch>
 					</div>
 
 					<NcActions
-						:force-name="true"
+						:forceName="true"
 						:inline="3"
-						:menu-name="t('opencatalogi', 'Actions')">
+						:menuName="t('opencatalogi', 'Actions')">
 						<NcActionButton
-							close-after-click
+							closeAfterClick
 							:disabled="searchStore.isLoading"
 							@click="performSearch">
 							<template #icon>
@@ -86,8 +117,15 @@ import { objectStore } from '../../store/store.js'
 							{{ t('opencatalogi', 'Refresh') }}
 						</NcActionButton>
 						<NcActionButton
-							:title="t('opencatalogi', 'View documentation about search')"
-							@click="openLink('https://opencatalogi.conduction.nl/docs/Users/zoeken/', '_blank')">
+							:title="
+								t('opencatalogi', 'View documentation about search')
+							"
+							@click="
+								openLink(
+									'https://opencatalogi.conduction.nl/docs/Users/zoeken/',
+									'_blank',
+								)
+							">
 							<template #icon>
 								<HelpCircleOutline :size="20" />
 							</template>
@@ -98,7 +136,8 @@ import { objectStore } from '../../store/store.js'
 			</div>
 
 			<!-- Error State -->
-			<NcEmptyContent v-if="searchStore.getError"
+			<NcEmptyContent
+				v-if="searchStore.getError"
 				:name="t('opencatalogi', 'Search error')"
 				:description="searchStore.getError">
 				<template #icon>
@@ -112,56 +151,98 @@ import { objectStore } from '../../store/store.js'
 			</NcEmptyContent>
 
 			<!-- Loading State -->
-			<NcEmptyContent v-else-if="searchStore.isLoading"
+			<NcEmptyContent
+				v-else-if="searchStore.isLoading"
 				:name="t('opencatalogi', 'Searching publications...')"
-				:description="t('opencatalogi', 'Please wait while we search for publications.')">
+				:description="
+					t(
+						'opencatalogi',
+						'Please wait while we search for publications.',
+					)
+				">
 				<template #icon>
 					<NcLoadingIcon :size="64" />
 				</template>
 			</NcEmptyContent>
 
 			<!-- No Results State -->
-			<NcEmptyContent v-else-if="!searchStore.getSearchResults.length && !searchStore.isLoading"
-				:name="searchStore.getSearchTerm ? t('opencatalogi', 'No publications found') : t('opencatalogi', 'No publications available')"
-				:description="searchStore.getSearchTerm ? t('opencatalogi', 'Try adjusting your search terms or filters in the sidebar') : t('opencatalogi', 'There are no publications available in the system')">
+			<NcEmptyContent
+				v-else-if="
+					!searchStore.getSearchResults.length && !searchStore.isLoading
+				"
+				:name="
+					searchStore.getSearchTerm
+						? t('opencatalogi', 'No publications found')
+						: t('opencatalogi', 'No publications available')
+				"
+				:description="
+					searchStore.getSearchTerm
+						? t(
+								'opencatalogi',
+								'Try adjusting your search terms or filters in the sidebar',
+							)
+						: t(
+								'opencatalogi',
+								'There are no publications available in the system',
+							)
+				">
 				<template #icon>
 					<FileDocumentOutline :size="64" />
 				</template>
 			</NcEmptyContent>
 
 			<!-- Search Results -->
-			<div v-else-if="searchStore.getSearchResults.length" class="searchResults">
+			<div
+				v-else-if="searchStore.getSearchResults.length"
+				class="searchResults">
 				<template v-if="searchStore.getViewMode === 'cards'">
 					<div class="cardGrid">
-						<div v-for="publication in searchStore.getSearchResults" :key="publication.id" class="card">
+						<div
+							v-for="publication in searchStore.getSearchResults"
+							:key="publication.id"
+							class="card">
 							<div class="cardHeader">
-								<h2 :title="publication.summary || publication.description">
+								<h2
+									:title="
+										publication.summary
+										|| publication.description
+									">
 									<FileDocumentOutline :size="20" />
 									{{ publication.title || publication.name }}
 								</h2>
-								<NcActions :primary="true" :menu-name="t('opencatalogi', 'Actions')">
+								<NcActions
+									:primary="true"
+									:menuName="t('opencatalogi', 'Actions')">
 									<template #icon>
 										<DotsHorizontal :size="20" />
 									</template>
-									<NcActionButton close-after-click @click="viewPublication(publication)">
+									<NcActionButton
+										closeAfterClick
+										@click="viewPublication(publication)">
 										<template #icon>
 											<Eye :size="20" />
 										</template>
 										{{ t('opencatalogi', 'View') }}
 									</NcActionButton>
-									<NcActionButton close-after-click @click="viewPublicationUses(publication)">
+									<NcActionButton
+										closeAfterClick
+										@click="viewPublicationUses(publication)">
 										<template #icon>
 											<LinkVariant :size="20" />
 										</template>
 										{{ t('opencatalogi', 'View uses') }}
 									</NcActionButton>
-									<NcActionButton close-after-click @click="viewPublicationUsed(publication)">
+									<NcActionButton
+										closeAfterClick
+										@click="viewPublicationUsed(publication)">
 										<template #icon>
 											<LinkVariantOff :size="20" />
 										</template>
 										{{ t('opencatalogi', 'View used by') }}
 									</NcActionButton>
-									<NcActionButton close-after-click @click="downloadPublication(publication)">
+									<NcActionButton
+										closeAfterClick
+										@click="downloadPublication(publication)">
 										<template #icon>
 											<Download :size="20" />
 										</template>
@@ -173,21 +254,42 @@ import { objectStore } from '../../store/store.js'
 							<table class="statisticsTable publicationStats">
 								<thead>
 									<tr>
-										<th scope="col">{{ t('opencatalogi','Property') }}</th>
-										<th scope="col">{{ t('opencatalogi','Value') }}</th>
-										<th scope="col">{{ t('opencatalogi','Status') }}</th>
+										<th scope="col">
+											{{ t('opencatalogi', 'Property') }}
+										</th>
+										<th scope="col">
+											{{ t('opencatalogi', 'Value') }}
+										</th>
+										<th scope="col">
+											{{ t('opencatalogi', 'Status') }}
+										</th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr v-if="publication.status">
 										<td>{{ t('opencatalogi', 'Status') }}</td>
 										<td>{{ publication.status }}</td>
-										<td>{{ publication.published ? t('opencatalogi', 'Published') : t('opencatalogi', 'Draft') }}</td>
+										<td>
+											{{
+												publication.published
+													? t('opencatalogi', 'Published')
+													: t('opencatalogi', 'Draft')
+											}}
+										</td>
 									</tr>
-									<tr v-if="publication.summary || publication.description">
-										<td>{{ t('opencatalogi', 'Description') }}</td>
+									<tr
+										v-if="
+											publication.summary
+											|| publication.description
+										">
+										<td>
+											{{ t('opencatalogi', 'Description') }}
+										</td>
 										<td class="truncatedText">
-											{{ publication.summary || publication.description }}
+											{{
+												publication.summary
+												|| publication.description
+											}}
 										</td>
 										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
@@ -202,8 +304,12 @@ import { objectStore } from '../../store/store.js'
 										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
 									<tr v-if="publication.modified">
-										<td>{{ t('opencatalogi', 'Last modified') }}</td>
-										<td>{{ formatDate(publication.modified) }}</td>
+										<td>
+											{{ t('opencatalogi', 'Last modified') }}
+										</td>
+										<td>
+											{{ formatDate(publication.modified) }}
+										</td>
 										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
 									<tr v-if="formatCatalogs(publication) !== '-'">
@@ -228,49 +334,107 @@ import { objectStore } from '../../store/store.js'
 								<tr>
 									<th scope="col" class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
-											:aria-label="t('opencatalogi', 'Select all publications on this page')"
-											:model-value="allSelected"
+											:aria-label="
+												t(
+													'opencatalogi',
+													'Select all publications on this page',
+												)
+											"
+											:modelValue="allSelected"
 											:indeterminate="someSelected"
-											@update:model-value="toggleSelectAll" />
+											@update:modelValue="toggleSelectAll" />
 									</th>
-									<th scope="col">{{ t('opencatalogi','Title') }}</th>
-									<th scope="col">{{ t('opencatalogi','Status') }}</th>
-									<th scope="col">{{ t('opencatalogi','License') }}</th>
-									<th scope="col">{{ t('opencatalogi','Version') }}</th>
-									<th scope="col">{{ t('opencatalogi','Catalogs') }}</th>
-									<th scope="col">{{ t('opencatalogi','Schema') }}</th>
-									<th scope="col">{{ t('opencatalogi','Modified') }}</th>
+									<th scope="col">
+										{{ t('opencatalogi', 'Title') }}
+									</th>
+									<th scope="col">
+										{{ t('opencatalogi', 'Status') }}
+									</th>
+									<th scope="col">
+										{{ t('opencatalogi', 'License') }}
+									</th>
+									<th scope="col">
+										{{ t('opencatalogi', 'Version') }}
+									</th>
+									<th scope="col">
+										{{ t('opencatalogi', 'Catalogs') }}
+									</th>
+									<th scope="col">
+										{{ t('opencatalogi', 'Schema') }}
+									</th>
+									<th scope="col">
+										{{ t('opencatalogi', 'Modified') }}
+									</th>
 									<th scope="col" class="tableColumnActions">
 										{{ t('opencatalogi', 'Actions') }}
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="publication in searchStore.getSearchResults"
+								<tr
+									v-for="publication in searchStore.getSearchResults"
 									:key="publication.id"
 									class="viewTableRow"
-									:class="{ viewTableRowSelected: searchStore.getSelectedPublications.includes(publication.id) }">
+									:class="{
+										viewTableRowSelected:
+											searchStore.getSelectedPublications.includes(
+												publication.id,
+											),
+									}">
 									<td class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
-											:aria-label="t('opencatalogi', 'Select {title}', { title: publication.title || publication.name })"
-											:model-value="searchStore.getSelectedPublications.includes(publication.id)"
-											@update:model-value="(checked) => searchStore.togglePublicationSelection(publication.id, checked)" />
+											:aria-label="
+												t('opencatalogi', 'Select {title}', {
+													title:
+														publication.title
+														|| publication.name,
+												})
+											"
+											:modelValue="
+												searchStore.getSelectedPublications.includes(
+													publication.id,
+												)
+											"
+											@update:modelValue="
+												(checked) =>
+													searchStore.togglePublicationSelection(
+														publication.id,
+														checked,
+													)
+											" />
 									</td>
 									<td class="tableColumnTitle">
 										<div class="titleContent">
-											<strong>{{ publication.title || publication.name }}</strong>
-											<span v-if="publication.summary || publication.description" class="textDescription textEllipsis">
-												{{ publication.summary || publication.description }}
+											<strong>{{
+												publication.title || publication.name
+											}}</strong>
+											<span
+												v-if="
+													publication.summary
+													|| publication.description
+												"
+												class="textDescription textEllipsis">
+												{{
+													publication.summary
+													|| publication.description
+												}}
 											</span>
 										</div>
 									</td>
-									<td>{{ publication.status || t('opencatalogi', 'Unknown') }}</td>
+									<td>
+										{{
+											publication.status
+											|| t('opencatalogi', 'Unknown')
+										}}
+									</td>
 									<td>{{ publication.license || '-' }}</td>
 									<td>{{ publication.version || '-' }}</td>
 									<td>{{ formatCatalogs(publication) }}</td>
 									<td>{{ formatSchema(publication) }}</td>
 									<td class="tableColumnConstrained">
-										<span v-if="publication.modified">{{ formatDate(publication.modified) }}</span>
+										<span v-if="publication.modified">{{
+											formatDate(publication.modified)
+										}}</span>
 										<span v-else>-</span>
 									</td>
 									<td class="tableColumnActions">
@@ -278,25 +442,43 @@ import { objectStore } from '../../store/store.js'
 											<template #icon>
 												<DotsHorizontal :size="20" />
 											</template>
-											<NcActionButton close-after-click @click="viewPublication(publication)">
+											<NcActionButton
+												closeAfterClick
+												@click="
+													viewPublication(publication)
+												">
 												<template #icon>
 													<Eye :size="20" />
 												</template>
 												{{ t('opencatalogi', 'View') }}
 											</NcActionButton>
-											<NcActionButton close-after-click @click="viewPublicationUses(publication)">
+											<NcActionButton
+												closeAfterClick
+												@click="
+													viewPublicationUses(publication)
+												">
 												<template #icon>
 													<LinkVariant :size="20" />
 												</template>
 												{{ t('opencatalogi', 'View uses') }}
 											</NcActionButton>
-											<NcActionButton close-after-click @click="viewPublicationUsed(publication)">
+											<NcActionButton
+												closeAfterClick
+												@click="
+													viewPublicationUsed(publication)
+												">
 												<template #icon>
 													<LinkVariantOff :size="20" />
 												</template>
-												{{ t('opencatalogi', 'View used by') }}
+												{{
+													t('opencatalogi', 'View used by')
+												}}
 											</NcActionButton>
-											<NcActionButton close-after-click @click="downloadPublication(publication)">
+											<NcActionButton
+												closeAfterClick
+												@click="
+													downloadPublication(publication)
+												">
 												<template #icon>
 													<Download :size="20" />
 												</template>
@@ -313,13 +495,16 @@ import { objectStore } from '../../store/store.js'
 				<!-- Pagination -->
 				<PaginationComponent
 					v-if="searchStore.getSearchResults.length"
-					:current-page="searchStore.getPagination.page || 1"
-					:total-pages="searchStore.getPagination.pages || 1"
-					:total-items="searchStore.getPagination.total || searchStore.getSearchResults.length"
-					:current-page-size="searchStore.getPagination.limit || 20"
-					:min-items-to-show="0"
-					@page-changed="onPageChanged"
-					@page-size-changed="onPageSizeChanged" />
+					:currentPage="searchStore.getPagination.page || 1"
+					:totalPages="searchStore.getPagination.pages || 1"
+					:totalItems="
+						searchStore.getPagination.total
+						|| searchStore.getSearchResults.length
+					"
+					:currentPageSize="searchStore.getPagination.limit || 20"
+					:minItemsToShow="0"
+					@pageChanged="onPageChanged"
+					@pageSizeChanged="onPageSizeChanged" />
 			</div>
 		</div>
 	</NcAppContent>
@@ -327,26 +512,24 @@ import { objectStore } from '../../store/store.js'
 
 <script>
 import {
+	NcActionButton,
+	NcActions,
 	NcAppContent,
+	NcButton,
+	NcCheckboxRadioSwitch,
 	NcEmptyContent,
 	NcLoadingIcon,
-	NcActions,
-	NcActionButton,
-	NcCheckboxRadioSwitch,
-	NcButton,
 } from '@nextcloud/vue'
-
+import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
+import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
+import Download from 'vue-material-design-icons/Download.vue'
+import Eye from 'vue-material-design-icons/Eye.vue'
 // Icons
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
-import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
-import Download from 'vue-material-design-icons/Download.vue'
+import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
-import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
-
 import PaginationComponent from '../../components/PaginationComponent.vue'
 
 export default {
@@ -370,20 +553,31 @@ export default {
 		AlertCircleOutline,
 		PaginationComponent,
 	},
+
 	data() {
 		return {
 			searchStore: useSearchStore(),
 		}
 	},
+
 	computed: {
 		allSelected() {
-			return this.searchStore.getSearchResults.length > 0
-				   && this.searchStore.getSearchResults.every(pub => this.searchStore.getSelectedPublications.includes(pub.id))
+			return (
+				this.searchStore.getSearchResults.length > 0
+				&& this.searchStore.getSearchResults.every((pub) =>
+					this.searchStore.getSelectedPublications.includes(pub.id),
+				)
+			)
 		},
+
 		someSelected() {
-			return this.searchStore.getSelectedPublications.length > 0 && !this.allSelected
+			return (
+				this.searchStore.getSelectedPublications.length > 0
+				&& !this.allSelected
+			)
 		},
 	},
+
 	mounted() {
 		console.info('SearchIndex mounted')
 		// Load initial results or perform search if there's already a search term
@@ -394,11 +588,16 @@ export default {
 			this.searchStore.loadInitialResults()
 		}
 	},
+
 	methods: {
 		async performSearch() {
-			console.info('Performing search with term:', this.searchStore.getSearchTerm)
+			console.info(
+				'Performing search with term:',
+				this.searchStore.getSearchTerm,
+			)
 			await this.searchStore.searchPublications()
 		},
+
 		toggleSelectAll(checked) {
 			if (checked) {
 				this.searchStore.selectAllPublications()
@@ -406,44 +605,58 @@ export default {
 				this.searchStore.clearAllSelections()
 			}
 		},
+
 		async onPageChanged(page) {
 			console.info('Page changed to:', page)
 			await this.searchStore.searchPublications({ _page: page })
 		},
+
 		async onPageSizeChanged(pageSize) {
 			console.info('Page size changed to:', pageSize)
 			await this.searchStore.searchPublications({ _page: 1, _limit: pageSize })
 		},
+
 		viewPublication(publication) {
 			console.info('Viewing publication:', publication)
 			// TODO: Implement publication detail view
 			// This could open a modal or navigate to a detail page
 		},
+
 		async viewPublicationUses(publication) {
 			console.info('Viewing publication uses:', publication)
 			try {
-				const uses = await this.searchStore.getPublicationUses(publication.id)
+				const uses = await this.searchStore.getPublicationUses(
+					publication.id,
+				)
 				// TODO: Display uses in a modal or separate view
 				console.info('Publication uses:', uses)
 			} catch (error) {
 				console.error('Failed to fetch publication uses:', error)
 			}
 		},
+
 		async viewPublicationUsed(publication) {
 			console.info('Viewing publication used by:', publication)
 			try {
-				const used = await this.searchStore.getPublicationUsed(publication.id)
+				const used = await this.searchStore.getPublicationUsed(
+					publication.id,
+				)
 				// TODO: Display used by in a modal or separate view
 				console.info('Publication used by:', used)
 			} catch (error) {
 				console.error('Failed to fetch publication used by:', error)
 			}
 		},
+
 		downloadPublication(publication) {
 			console.info('Downloading publication:', publication)
 			// Use federation endpoint for download
-			window.open(`/index.php/apps/opencatalogi/api/federation/publications/${publication.id}/download`, '_blank')
+			window.open(
+				`/index.php/apps/opencatalogi/api/federation/publications/${publication.id}/download`,
+				'_blank',
+			)
 		},
+
 		formatDate(dateString) {
 			if (!dateString) return '-'
 			try {
@@ -452,13 +665,23 @@ export default {
 				return dateString
 			}
 		},
+
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
+
 		formatCatalogs(publication) {
-			if (!publication['@self'] || !publication['@self'].catalogs || !Array.isArray(publication['@self'].catalogs)) return '-'
-			return publication['@self'].catalogs.map(catalog => catalog.title || catalog.name || 'Unknown').join(', ')
+			if (
+				!publication['@self']
+				|| !publication['@self'].catalogs
+				|| !Array.isArray(publication['@self'].catalogs)
+			)
+				return '-'
+			return publication['@self'].catalogs
+				.map((catalog) => catalog.title || catalog.name || 'Unknown')
+				.join(', ')
 		},
+
 		formatSchema(publication) {
 			const schema = publication['@self']?.schema
 			if (!schema) return '-'
@@ -467,7 +690,9 @@ export default {
 				return schema.title || schema.name || 'Unknown'
 			}
 
-			const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(schema))
+			const match = objectStore.availableSchemas.find(
+				(s) => Number(s.id) === Number(schema),
+			)
 			return match?.title || match?.name || String(schema)
 		},
 	},

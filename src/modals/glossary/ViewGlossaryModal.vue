@@ -1,14 +1,7 @@
-/**
- * ViewGlossaryModal.vue
- * Modal component for viewing glossary term details
- * @category Modals
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license EUPL-1.2
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * ViewGlossaryModal.vue * Modal component for viewing glossary term details *
+@category Modals * @package opencatalogi * @author Ruben Linde * @copyright 2024 *
+@license EUPL-1.2 * @version 1.0.0 * @link
+https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
@@ -16,10 +9,11 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'viewGlossary'"
+	<NcModal
+		v-if="navigationStore.modal === 'viewGlossary'"
 		ref="modalRef"
 		:name="term?.title || t('opencatalogi', 'Glossary Term')"
-		label-id="viewGlossaryModal"
+		labelId="viewGlossaryModal"
 		@close="closeModal">
 		<div class="modal__content">
 			<div v-if="term" class="glossaryDetails">
@@ -32,7 +26,11 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						</div>
 						<div class="detailItem">
 							<strong>{{ t('opencatalogi', 'Status') }}:</strong>
-							<span>{{ term.published ? t('opencatalogi', 'Published') : t('opencatalogi', 'Draft') }}</span>
+							<span>{{
+								term.published
+									? t('opencatalogi', 'Published')
+									: t('opencatalogi', 'Draft')
+							}}</span>
 						</div>
 						<div v-if="term.summary" class="detailItem">
 							<strong>{{ t('opencatalogi', 'Summary') }}:</strong>
@@ -43,9 +41,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<span>{{ term.description }}</span>
 						</div>
 						<div v-if="term.externalLink" class="detailItem">
-							<strong>{{ t('opencatalogi', 'External link') }}:</strong>
+							<strong
+								>{{ t('opencatalogi', 'External link') }}:</strong
+							>
 							<span>
-								<a :href="term.externalLink" target="_blank" rel="noopener noreferrer">
+								<a
+									:href="term.externalLink"
+									target="_blank"
+									rel="noopener noreferrer">
 									{{ term.externalLink }}
 								</a>
 							</span>
@@ -56,7 +59,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="term.keywords?.length" class="detailSection">
 					<h3>{{ t('opencatalogi', 'Keywords') }}</h3>
 					<div class="keywordsList">
-						<span v-for="keyword in term.keywords"
+						<span
+							v-for="keyword in term.keywords"
 							:key="keyword"
 							class="keywordTag">
 							{{ keyword }}
@@ -67,7 +71,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="term.relatedTerms?.length" class="detailSection">
 					<h3>{{ t('opencatalogi', 'Related terms') }}</h3>
 					<div class="relatedTermsList">
-						<NcButton v-for="relatedTerm in term.relatedTerms"
+						<NcButton
+							v-for="relatedTerm in term.relatedTerms"
 							:key="relatedTerm.id"
 							variant="secondary"
 							@click="selectTerm(relatedTerm)">
@@ -108,8 +113,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <script>
 import { NcButton, NcModal } from '@nextcloud/vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 
 /**
  * ViewGlossaryModal — read-only view of a glossary term.
@@ -124,9 +129,11 @@ export default {
 		Pencil,
 		Cancel,
 	},
+
 	computed: {
 		/**
 		 * Get the currently active glossary term from the store
+		 *
 		 * @return {object|null} The active glossary term object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
@@ -134,9 +141,11 @@ export default {
 			return objectStore.getActiveObject('glossary')
 		},
 	},
+
 	methods: {
 		/**
 		 * Close the modal and clear the active object
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
@@ -144,20 +153,27 @@ export default {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('glossary')
 		},
+
 		/**
 		 * Open the edit modal for the current term
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		openEditModal() {
 			navigationStore.setModal('glossary')
 		},
+
 		/**
 		 * Select a related term and view its details
+		 *
 		 * @param {object} term - The term to select
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
+		/**
+		 * @param term
+		 * @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2
+		 */
 		selectTerm(term) {
 			objectStore.setActiveObject('glossary', term)
 		},

@@ -1,5 +1,6 @@
 /**
  * Type definitions for Glossary entity
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
@@ -10,10 +11,10 @@
  */
 
 export type TGlossary = {
-    id: string
-    title: string
-    summary: string
-    description: string
-    externalLink: string
-    keywords: string[]
+	id: string
+	title: string
+	summary: string
+	description: string
+	externalLink: string
+	keywords: string[]
 }

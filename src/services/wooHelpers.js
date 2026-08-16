@@ -15,7 +15,12 @@
  *
  * @type {Array<string>}
  */
-export const ASSESSMENTS = ['te_beoordelen', 'openbaar', 'deels_openbaar', 'niet_openbaar']
+export const ASSESSMENTS = [
+	'te_beoordelen',
+	'openbaar',
+	'deels_openbaar',
+	'niet_openbaar',
+]
 
 /**
  * Build the redaction-instruction payload from the per-entity selection + grounds.
@@ -45,7 +50,9 @@ export function buildRedactionInstructions(entities, selected, grounds) {
  * @return {Array<number>} The ascending page numbers.
  */
 export function pagesWithEntities(entities) {
-	return [...new Set((entities || []).map((e) => e.page).filter(Boolean))].sort((a, b) => a - b)
+	return [...new Set((entities || []).map((e) => e.page).filter(Boolean))].sort(
+		(a, b) => a - b,
+	)
 }
 
 /**
@@ -57,9 +64,9 @@ export function pagesWithEntities(entities) {
  */
 export function deriveSummary(assessments) {
 	const counts = ASSESSMENTS.reduce((acc, key) => ({ ...acc, [key]: 0 }), {})
-	for (const a of (assessments || [])) {
+	for (const a of assessments || []) {
 		const status = a.assessment || 'te_beoordelen'
-		if (Object.prototype.hasOwnProperty.call(counts, status)) {
+		if (Object.hasOwn(counts, status)) {
 			counts[status]++
 		}
 	}

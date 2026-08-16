@@ -17,33 +17,40 @@
 	@visual exclude Unreachable: imported by nothing, in no route, tree-shaken out of the shipped bundle; superseded by the manifest type:"index" Publications page (CnIndexPage). Tracked in ConductionNL/opencatalogi#849.
 -->
 <script setup>
-import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcAppContentList>
 		<ul>
 			<div class="listHeader">
-				<NcTextField class="searchField"
-					:model-value="objectStore.getSearchTerm('publication')"
+				<NcTextField
+					class="searchField"
+					:modelValue="objectStore.getSearchTerm('publication')"
 					:label="t('opencatalogi', 'Search')"
-					trailing-button-icon="close"
-					:show-trailing-button="objectStore.getSearchTerm('publication') !== ''"
-					@update:model-value="objectStore.setSearchTerm('publication', $event)"
-					@trailing-button-click="objectStore.clearSearchTerm('publication')">
+					trailingButtonIcon="close"
+					:showTrailingButton="
+						objectStore.getSearchTerm('publication') !== ''
+					"
+					@update:modelValue="
+						objectStore.setSearchTerm('publication', $event)
+					"
+					@trailingButtonClick="
+						objectStore.clearSearchTerm('publication')
+					">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
 					<NcActionCaption :name="t('opencatalogi', 'Search')" />
 					<NcActionCheckbox
-						:model-value="conceptChecked"
-						:value="'concept'"
+						:modelValue="conceptChecked"
+						value="concept"
 						@change="handleCheckboxChange('concept', $event)">
 						{{ t('opencatalogi', 'Concept') }}
 					</NcActionCheckbox>
 					<NcActionCheckbox
-						:model-value="gepubliceerdChecked"
-						:value="'gepubliceerd'"
+						:modelValue="gepubliceerdChecked"
+						value="gepubliceerd"
 						@change="handleCheckboxChange('gepubliceerd', $event)">
 						{{ t('opencatalogi', 'Published') }}
 					</NcActionCheckbox>
@@ -52,7 +59,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<NcActionInput
 						v-model="sortField"
 						type="multiselect"
-						:input-label="t('opencatalogi', 'Property')"
+						:inputLabel="t('opencatalogi', 'Property')"
 						:options="['Title', 'Published date', 'Modified date']">
 						<template #icon>
 							<Pencil :size="20" />
@@ -60,36 +67,56 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						{{ t('opencatalogi', 'Choose a property') }}
 					</NcActionInput>
 					<NcActionRadio
-						:model-value="sortDirection"
+						:modelValue="sortDirection"
 						name="sortDirection"
 						value="asc"
-						@update:model-value="updateSortOrder('asc')">
+						@update:modelValue="updateSortOrder('asc')">
 						{{ t('opencatalogi', 'Ascending') }}
 					</NcActionRadio>
 					<NcActionRadio
-						:model-value="sortDirection"
+						:modelValue="sortDirection"
 						name="sortDirection"
 						value="desc"
-						@update:model-value="updateSortOrder('desc')">
+						@update:modelValue="updateSortOrder('desc')">
 						{{ t('opencatalogi', 'Descending') }}
 					</NcActionRadio>
 					<NcActionSeparator />
 					<NcActionCaption :name="t('opencatalogi', 'Actions')" />
 					<NcActionButton
-						:title="t('opencatalogi', 'View the documentation about publications')"
-						@click="openLink('https://opencatalogi.conduction.nl/docs/Users/publicaties/', '_blank')">
+						:title="
+							t(
+								'opencatalogi',
+								'View the documentation about publications',
+							)
+						"
+						@click="
+							openLink(
+								'https://opencatalogi.conduction.nl/docs/Users/publicaties/',
+								'_blank',
+							)
+						">
 						<template #icon>
 							<HelpCircleOutline :size="20" />
 						</template>
 						{{ t('opencatalogi', 'Help') }}
 					</NcActionButton>
-					<NcActionButton close-after-click :disabled="catalogStore.isLoading" @click="catalogStore.fetchPublications">
+					<NcActionButton
+						closeAfterClick
+						:disabled="catalogStore.isLoading"
+						@click="catalogStore.fetchPublications">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
 						{{ t('opencatalogi', 'Refresh') }}
 					</NcActionButton>
-					<NcActionButton close-after-click @click="objectStore.clearActiveObject('publication'); navigationStore.setModal('objectModal')">
+					<NcActionButton
+						closeAfterClick
+						@click="
+							() => {
+								objectStore.clearActiveObject('publication')
+								navigationStore.setModal('objectModal')
+							}
+						">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
@@ -97,12 +124,22 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					</NcActionButton>
 				</NcActions>
 			</div>
-			<div v-if="!catalogStore.isLoading || !objectStore.isLoading('publication')">
-				<NcListItem v-for="(publication, i) in publicationsResults"
+			<div
+				v-if="
+					!catalogStore.isLoading || !objectStore.isLoading('publication')
+				">
+				<NcListItem
+					v-for="(publication, i) in publicationsResults"
 					:key="`${publication}${i}`"
-					:name="publication.title || publication.name || publication.titel || publication.naam || publication.id"
+					:name="
+						publication.title
+						|| publication.name
+						|| publication.titel
+						|| publication.naam
+						|| publication.id
+					"
 					:bold="false"
-					:force-display-actions="true"
+					:forceDisplayActions="true"
 					:active="$route?.params?.id === publication.id"
 					:details="publication?.status"
 					@click="toggleActive(publication)">
@@ -113,37 +150,109 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						{{ publication?.summary }}
 					</template>
 					<template #actions>
-						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('objectModal')">
+						<NcActionButton
+							closeAfterClick
+							@click="
+								() => {
+									objectStore.setActiveObject(
+										'publication',
+										publication,
+									)
+									navigationStore.setModal('objectModal')
+								}
+							">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							{{ t('opencatalogi', 'Edit') }}
 						</NcActionButton>
-						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('copyObject', { objectType: 'publication', dialogTitle: 'Publication' })">
+						<NcActionButton
+							closeAfterClick
+							@click="
+								() => {
+									objectStore.setActiveObject(
+										'publication',
+										publication,
+									)
+									navigationStore.setDialog('copyObject', {
+										objectType: 'publication',
+										dialogTitle: 'Publication',
+									})
+								}
+							">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
 							{{ t('opencatalogi', 'Copy') }}
 						</NcActionButton>
-						<NcActionButton v-if="publication['@self'].published === null" close-after-click @click="objectStore.setActiveObject('publication', publication); publishPublication('publish')">
+						<NcActionButton
+							v-if="publication['@self'].published === null"
+							closeAfterClick
+							@click="
+								() => {
+									objectStore.setActiveObject(
+										'publication',
+										publication,
+									)
+									publishPublication('publish')
+								}
+							">
 							<template #icon>
 								<Publish :size="20" />
 							</template>
 							{{ t('opencatalogi', 'Publish') }}
 						</NcActionButton>
-						<NcActionButton v-if="publication['@self'].published" close-after-click @click="objectStore.setActiveObject('publication', publication); publishPublication('depublish')">
+						<NcActionButton
+							v-if="publication['@self'].published"
+							closeAfterClick
+							@click="
+								() => {
+									objectStore.setActiveObject(
+										'publication',
+										publication,
+									)
+									publishPublication('depublish')
+								}
+							">
 							<template #icon>
 								<PublishOff :size="20" />
 							</template>
 							{{ t('opencatalogi', 'Depublish') }}
 						</NcActionButton>
-						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setTransferData({ initialTab: 'files' }); navigationStore.setModal('viewObject')">
+						<NcActionButton
+							closeAfterClick
+							@click="
+								() => {
+									objectStore.setActiveObject(
+										'publication',
+										publication,
+									)
+									navigationStore.setTransferData({
+										initialTab: 'files',
+									})
+									navigationStore.setModal('viewObject')
+								}
+							">
 							<template #icon>
 								<FilePlusOutline :size="20" />
 							</template>
 							{{ t('opencatalogi', 'Add attachment') }}
 						</NcActionButton>
-						<NcActionButton close-after-click class="publicationsList-actionsDelete" @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: 'Publicatie' })">
+						<NcActionButton
+							closeAfterClick
+							class="publicationsList-actionsDelete"
+							@click="
+								() => {
+									objectStore.setActiveObject(
+										'publication',
+										publication,
+									)
+									navigationStore.setDialog('deleteObject', {
+										objectType: 'publication',
+										dialogTitle: 'Publicatie',
+									})
+								}
+							">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
@@ -153,7 +262,8 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				</NcListItem>
 			</div>
 
-			<NcLoadingIcon v-if="catalogStore.isLoading"
+			<NcLoadingIcon
+				v-if="catalogStore.isLoading"
 				:size="64"
 				class="loadingIcon"
 				appearance="dark"
@@ -165,21 +275,32 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 		</ul>
 	</NcAppContentList>
 </template>
-<script>
-import { NcListItem, NcActionButton, NcAppContentList, NcTextField, NcLoadingIcon, NcActionRadio, NcActionCheckbox, NcActionInput, NcActionCaption, NcActionSeparator, NcActions } from '@nextcloud/vue'
 
+<script>
+import {
+	NcActionButton,
+	NcActionCaption,
+	NcActionCheckbox,
+	NcActionInput,
+	NcActionRadio,
+	NcActions,
+	NcActionSeparator,
+	NcAppContentList,
+	NcListItem,
+	NcLoadingIcon,
+	NcTextField,
+} from '@nextcloud/vue'
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
+import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
+import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 // Icons
 import Magnify from 'vue-material-design-icons/Magnify.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-import PublishOff from 'vue-material-design-icons/PublishOff.vue'
-import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
-import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
-
+import PublishOff from 'vue-material-design-icons/PublishOff.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 
 export default {
@@ -208,6 +329,7 @@ export default {
 		// Components
 		PublishedIcon,
 	},
+
 	data() {
 		return {
 			sortField: '',
@@ -227,21 +349,32 @@ export default {
 		updateSortOrder(value) {
 			this.sortDirection = value
 		},
+
 		publishPublication(mode) {
 			const publication = objectStore.getActiveObject('publication')
-			fetch(`/index.php/apps/openregister/api/objects/${publication['@self'].register}/${publication['@self'].schema}/${publication.id}/${mode}`, {
-				method: 'POST',
-			}).then((response) => {
+			fetch(
+				`/index.php/apps/openregister/api/objects/${publication['@self'].register}/${publication['@self'].schema}/${publication.id}/${mode}`,
+				{
+					method: 'POST',
+				},
+			).then((response) => {
 				catalogStore.fetchPublications()
 				response.json().then((data) => {
-					objectStore.setActiveObject('publication', { ...data, id: data.id || data['@self'].id })
+					objectStore.setActiveObject('publication', {
+						...data,
+						id: data.id || data['@self'].id,
+					})
 				})
 			})
 		},
+
 		toggleActive(publication) {
 			objectStore.setActiveObject('publication', publication)
-			this.$router.push(`/publications/${this.$route?.params?.catalogSlug}/${publication.id}`)
+			this.$router.push(
+				`/publications/${this.$route?.params?.catalogSlug}/${publication.id}`,
+			)
 		},
+
 		handleCheckboxChange(key, event) {
 			const checked = event.target.checked
 
@@ -251,12 +384,14 @@ export default {
 				this.gepubliceerdChecked = checked
 			}
 		},
+
 		openLink(url, target) {
 			window.open(url, target)
 		},
 	},
 }
 </script>
+
 <style>
 .listHeader {
 	display: flex;

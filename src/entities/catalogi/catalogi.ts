@@ -1,5 +1,6 @@
 /**
  * Catalogi entity class
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
@@ -9,8 +10,10 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { SafeParseReturnType, z } from 'zod'
-import { CatalogStatus, TCatalogi } from './catalogi.types'
+import type { SafeParseReturnType } from 'zod'
+import type { CatalogStatus, TCatalogi } from './catalogi.types'
+
+import { z } from 'zod'
 
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -18,7 +21,6 @@ import { CatalogStatus, TCatalogi } from './catalogi.types'
  * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Catalogi implements TCatalogi {
-
 	public id!: string
 	public title!: string
 	public summary!: string
@@ -34,7 +36,10 @@ export class Catalogi implements TCatalogi {
 	public hasWooSitemap!: boolean
 	public hasOoapi!: boolean
 
-	/** @spec openspec/specs/entity-typescript-models/spec.md */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TCatalogi) {
 		this.hydrate(data)
 	}
@@ -61,7 +66,8 @@ export class Catalogi implements TCatalogi {
 	public validate(): SafeParseReturnType<TCatalogi, unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/l89lv7ocvq848-create-catalog
 		const schema = z.object({
-			title: z.string()
+			title: z
+				.string()
 				.min(1, 'is verplicht') // .min(1) on a string functionally works the same as a nonEmpty check (SHOULD NOT BE COMBINED WITH .OPTIONAL())
 				.max(255, 'kan niet langer dan 255 zijn'),
 			summary: z.string().max(255, 'kan niet langer dan 255 zijn'),
@@ -73,10 +79,14 @@ export class Catalogi implements TCatalogi {
 			registers: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
 			schemas: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
 			filters: z.record(z.unknown()),
-			slug: z.string()
+			slug: z
+				.string()
 				.min(1, 'is verplicht')
 				.max(255, 'kan niet langer dan 255 zijn')
-				.regex(/^[a-z0-9-]+$/, 'moet alleen kleine letters, cijfers en koppeltekens bevatten'),
+				.regex(
+					/^[a-z0-9-]+$/,
+					'moet alleen kleine letters, cijfers en koppeltekens bevatten',
+				),
 			hasWooSitemap: z.boolean(),
 			hasOoapi: z.boolean(),
 		})
@@ -87,5 +97,4 @@ export class Catalogi implements TCatalogi {
 
 		return result
 	}
-
 }

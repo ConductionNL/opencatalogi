@@ -8,9 +8,11 @@
 		:pickers="pickers"
 		:defaults="defaults"
 		:value="value"
-		:sample-title="sampleTitle"
-		:sample-body-text="sampleBodyText" />
-	<NcEmptyContent v-else :name="t('opencatalogi', 'No theme colours to preview yet')">
+		:sampleTitle="sampleTitle"
+		:sampleBodyText="sampleBodyText" />
+	<NcEmptyContent
+		v-else
+		:name="t('opencatalogi', 'No theme colours to preview yet')">
 		<template #icon>
 			<Web :size="20" />
 		</template>
@@ -19,9 +21,9 @@
 
 <script>
 import { CnThemePreview } from '@conduction/nextcloud-vue'
+import { translate as t } from '@nextcloud/l10n'
 import { NcEmptyContent } from '@nextcloud/vue'
 import Web from 'vue-material-design-icons/Web.vue'
-import { translate as t } from '@nextcloud/l10n'
 
 /**
  * ThemePreviewWidget — thin adapter that renders the library's CnThemePreview
@@ -47,20 +49,35 @@ export default {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
 	},
+
 	props: {
 		/** Catalog widget content blob (CnDetailPage body path). */
 		content: { type: Object, default: () => ({}) },
 	},
+
 	data() {
 		return {
 			/** Fallback colour-picker declarations used when the manifest supplies none. */
 			defaultPickers: [
-				{ key: 'primary', label: t('opencatalogi', 'Primary'), default: '#21468B' },
-				{ key: 'background', label: t('opencatalogi', 'Background'), default: '#FFFFFF' },
-				{ key: 'text', label: t('opencatalogi', 'Text'), default: '#1B1B1B' },
+				{
+					key: 'primary',
+					label: t('opencatalogi', 'Primary'),
+					default: '#21468B',
+				},
+				{
+					key: 'background',
+					label: t('opencatalogi', 'Background'),
+					default: '#FFFFFF',
+				},
+				{
+					key: 'text',
+					label: t('opencatalogi', 'Text'),
+					default: '#1B1B1B',
+				},
 			],
 		}
 	},
+
 	computed: {
 		/**
 		 * The resolved object-context bag from inject (either shape) or {}.
@@ -68,10 +85,14 @@ export default {
 		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
 		 */
 		ctx() {
-			const inj = this.cnObjectContext && (this.cnObjectContext.value || this.cnObjectContext)
-			const holder = this.cnDetailObjectContext && this.cnDetailObjectContext.value
+			const inj =
+				this.cnObjectContext
+				&& (this.cnObjectContext.value || this.cnObjectContext)
+			const holder =
+				this.cnDetailObjectContext && this.cnDetailObjectContext.value
 			return inj || holder || {}
 		},
+
 		/**
 		 * The current theme object, when the detail page has loaded one.
 		 *
@@ -80,6 +101,7 @@ export default {
 		theme() {
 			return (this.ctx && this.ctx.object) || {}
 		},
+
 		/**
 		 * Colour-picker declarations. Guarded so CnThemePreview never
 		 * receives `undefined` — falls back to a built-in default set
@@ -88,16 +110,24 @@ export default {
 		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
 		 */
 		pickers() {
-			const configured = this.content && Array.isArray(this.content.pickers) ? this.content.pickers : []
+			const configured =
+				this.content && Array.isArray(this.content.pickers)
+					? this.content.pickers
+					: []
 			return configured.length > 0 ? configured : this.defaultPickers
 		},
+
 		/**
 		 * Reset-button defaults map, derived from whichever picker set is active.
 		 *
 		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
 		 */
 		defaults() {
-			if (this.content && this.content.defaults && typeof this.content.defaults === 'object') {
+			if (
+				this.content
+				&& this.content.defaults
+				&& typeof this.content.defaults === 'object'
+			) {
 				return this.content.defaults
 			}
 			return this.pickers.reduce((acc, p) => {
@@ -105,32 +135,52 @@ export default {
 				return acc
 			}, {})
 		},
+
 		/**
 		 * Initial colour map, guarded to always be a plain object.
 		 *
 		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
 		 */
 		value() {
-			return (this.content && typeof this.content.value === 'object' && this.content.value) || {}
+			return (
+				(this.content
+					&& typeof this.content.value === 'object'
+					&& this.content.value)
+				|| {}
+			)
 		},
+
 		/**
 		 * Sample-preview title — prefers the loaded theme's own title.
 		 *
 		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
 		 */
 		sampleTitle() {
-			return this.theme.title || this.content.title || t('opencatalogi', 'Theme preview')
+			return (
+				this.theme.title
+				|| this.content.title
+				|| t('opencatalogi', 'Theme preview')
+			)
 		},
+
 		/**
 		 * Sample-preview body text — prefers the loaded theme's summary/description.
 		 *
 		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
 		 */
 		sampleBodyText() {
-			return this.theme.summary || this.theme.description || this.content.description
-				|| t('opencatalogi', 'This is how publications with this theme look.')
+			return (
+				this.theme.summary
+				|| this.theme.description
+				|| this.content.description
+				|| t(
+					'opencatalogi',
+					'This is how publications with this theme look.',
+				)
+			)
 		},
 	},
+
 	methods: { t },
 }
 </script>

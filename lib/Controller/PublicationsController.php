@@ -39,6 +39,7 @@ use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -395,6 +396,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		// Determine the origin via the same allowlist-aware resolver used elsewhere
 		// so we never reflect an arbitrary caller-supplied Origin (#735).
@@ -427,6 +429,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(string $catalogSlug): JSONResponse {
 		try {
 			// Get the catalog from cache or database.
@@ -558,6 +561,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string $catalogSlug, string $id): JSONResponse {
 		try {
 			// Get the catalog from cache or database.
@@ -841,6 +845,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function attachments(string $catalogSlug, string $id): JSONResponse {
 
 		try {
@@ -925,6 +930,9 @@ class PublicationsController extends Controller {
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	// Lower than the sibling reads: a download moves file bytes, so the cost of
+	// one call is materially higher than a metadata lookup.
+	#[AnonRateLimit(limit: 60, period: 60)]
 	public function download(string $catalogSlug, string $id): DataDownloadResponse|JSONResponse {
 		try {
 			// Get the catalog from cache or database.
@@ -1021,6 +1029,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function uses(string $catalogSlug, string $id): JSONResponse {
 		try {
 			$objectService = $this->getObjectService();
@@ -1125,6 +1134,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function used(string $catalogSlug, string $id): JSONResponse {
 		try {
 			$objectService = $this->getObjectService();

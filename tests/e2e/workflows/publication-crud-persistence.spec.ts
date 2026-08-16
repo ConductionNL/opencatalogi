@@ -31,7 +31,13 @@
  */
 import { test, expect } from '@playwright/test'
 import { Fixtures, REG_PUBLICATION, SCHEMA_PUBLICATION } from './_fixtures'
-import { bootApp, navTo, dismissOverlays, trackPageErrors, fatalErrors } from '../spec-coverage/_nav'
+import {
+	bootApp,
+	navTo,
+	dismissOverlays,
+	trackPageErrors,
+	fatalErrors,
+} from '../spec-coverage/_nav'
 
 const fx = new Fixtures()
 
@@ -45,50 +51,59 @@ test.afterAll(async () => {
 })
 
 test.describe('publication CRUD persistence', () => {
-	test(
-		// @e2e publications::publication-full-crud-persists-in-openregister
-		'Publication — create → read → update → delete persists in OpenRegister (store API)',
-		async () => {
-			const title = fx.label('Publication CRUD')
+	test(// @e2e publications::publication-full-crud-persists-in-openregister
+	'Publication — create → read → update → delete persists in OpenRegister (store API)', async () => {
+		const title = fx.label('Publication CRUD')
 
-			// ---- CREATE -------------------------------------------------
-			const created = await fx.createPublication('Publication CRUD', {
-				description: 'initial description',
-			})
-			expect(created.id).toBeTruthy()
-			expect(created.title).toBe(title)
+		// ---- CREATE -------------------------------------------------
+		const created = await fx.createPublication('Publication CRUD', {
+			description: 'initial description',
+		})
+		expect(created.id).toBeTruthy()
+		expect(created.title).toBe(title)
 
-			// ---- READ (persisted) ---------------------------------------
-			let fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, created.id)
-			expect(fetched, 'publication readable after create').toBeTruthy()
-			expect(fetched!.title).toBe(title)
-			expect(fetched!.description).toBe('initial description')
+		// ---- READ (persisted) ---------------------------------------
+		let fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, created.id)
+		expect(fetched, 'publication readable after create').toBeTruthy()
+		expect(fetched!.title).toBe(title)
+		expect(fetched!.description).toBe('initial description')
 
-			const inList = (await fx.list(REG_PUBLICATION, SCHEMA_PUBLICATION, 500))
-				.some((p) => (p.id as string) === created.id)
-			expect(inList, 'publication appears in the publication collection').toBe(true)
+		const inList = (
+			await fx.list(REG_PUBLICATION, SCHEMA_PUBLICATION, 500)
+		).some((p) => (p.id as string) === created.id)
+		expect(inList, 'publication appears in the publication collection').toBe(
+			true,
+		)
 
-			// ---- UPDATE (persisted) -------------------------------------
-			// OpenRegister enforces lifecycle fields (e.g. `status`) on update:
-			// a PUT must carry a valid, non-empty `status`. Preserve the value
-			// the object was created with so the partial edit stays valid.
-			const newTitle = `${title} EDITED`
-			const putRes = await fx.api.put(
-				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${created.id}`,
-				{ data: { title: newTitle, summary: 'edited summary', description: 'edited description', status: fetched!.status } },
-			)
-			expect(putRes.ok(), 'update request succeeds').toBe(true)
-			fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, created.id)
-			expect(fetched!.title, 'edited title persisted').toBe(newTitle)
-			expect(fetched!.summary, 'edited summary persisted').toBe('edited summary')
-			expect(fetched!.description, 'edited description persisted').toBe('edited description')
+		// ---- UPDATE (persisted) -------------------------------------
+		// OpenRegister enforces lifecycle fields (e.g. `status`) on update:
+		// a PUT must carry a valid, non-empty `status`. Preserve the value
+		// the object was created with so the partial edit stays valid.
+		const newTitle = `${title} EDITED`
+		const putRes = await fx.api.put(
+			`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${created.id}`,
+			{
+				data: {
+					title: newTitle,
+					summary: 'edited summary',
+					description: 'edited description',
+					status: fetched!.status,
+				},
+			},
+		)
+		expect(putRes.ok(), 'update request succeeds').toBe(true)
+		fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, created.id)
+		expect(fetched!.title, 'edited title persisted').toBe(newTitle)
+		expect(fetched!.summary, 'edited summary persisted').toBe('edited summary')
+		expect(fetched!.description, 'edited description persisted').toBe(
+			'edited description',
+		)
 
-			// ---- DELETE (persisted) -------------------------------------
-			await fx.remove(REG_PUBLICATION, SCHEMA_PUBLICATION, created.id)
-			const gone = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, created.id)
-			expect(gone, 'publication deleted from OpenRegister').toBeFalsy()
-		},
-	)
+		// ---- DELETE (persisted) -------------------------------------
+		await fx.remove(REG_PUBLICATION, SCHEMA_PUBLICATION, created.id)
+		const gone = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, created.id)
+		expect(gone, 'publication deleted from OpenRegister').toBeFalsy()
+	})
 
 	// PARTIALLY UNBLOCKED (2026-06-10, wave-3): the catalog-index @resolve bug is
 	// fixed (the Catalogs list now renders real rows — see
@@ -102,30 +117,35 @@ test.describe('publication CRUD persistence', () => {
 	// headlessly needs catalog-detail instrumentation that does not exist yet,
 	// so the row-rendering leg stays quarantined behind the entry path — NOT
 	// behind the (now fixed) data/@resolve blocker.
-	test.fixme(
-		// @e2e publications::publication-row-renders-in-index-ui
-		'Publication — a created publication renders as a row in the Publications index UI (BLOCKED: Publications-index entry is a bespoke catalog-detail UI flow, not a headless-driveable row click)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
-			const catalog = await fx.createCatalog('Publication UI Catalog')
-			const pub = await fx.createPublication('Publication UI Row')
+	test.fixme(// @e2e publications::publication-row-renders-in-index-ui
+	'Publication — a created publication renders as a row in the Publications index UI (BLOCKED: Publications-index entry is a bespoke catalog-detail UI flow, not a headless-driveable row click)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+		const catalog = await fx.createCatalog('Publication UI Catalog')
+		const pub = await fx.createPublication('Publication UI Row')
 
-			await bootApp(page)
-			await navTo(page, 'CatalogsMenu', true)
-			await expect(page.locator('[data-testid="cn-index-page"]').first())
-				.toBeVisible({ timeout: 15000 })
+		await bootApp(page)
+		await navTo(page, 'CatalogsMenu', true)
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
 
-			const catalogRow = page.locator('[data-testid="cn-object-row"]')
-				.filter({ hasText: catalog.title }).first()
-			await expect(catalogRow).toBeVisible({ timeout: 15000 })
-			await catalogRow.click()
-			await dismissOverlays(page)
+		const catalogRow = page
+			.locator('[data-testid="cn-object-row"]')
+			.filter({ hasText: catalog.title })
+			.first()
+		await expect(catalogRow).toBeVisible({ timeout: 15000 })
+		await catalogRow.click()
+		await dismissOverlays(page)
 
-			await expect(
-				page.locator('[data-testid="cn-object-row"]').filter({ hasText: pub.title }).first(),
-			).toBeVisible({ timeout: 15000 })
+		await expect(
+			page
+				.locator('[data-testid="cn-object-row"]')
+				.filter({ hasText: pub.title })
+				.first(),
+		).toBeVisible({ timeout: 15000 })
 
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })

@@ -31,6 +31,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -132,6 +133,7 @@ class SchemaOrgController extends Controller {
 	 *
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		$response = new Response();
 		foreach ($this->corsHeaders() as $name => $value) {
@@ -159,6 +161,7 @@ class SchemaOrgController extends Controller {
 	 *
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function catalog(string $catalogSlug): JSONResponse {
 		try {
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
