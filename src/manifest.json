@@ -681,9 +681,11 @@
 			"route": "/organizations",
 			"type": "index",
 			"title": "Organizations",
+			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "organization",
+				"rowClickToView": false,
 				"actionToggles": {
 					"showAdd": true,
 					"showEditAction": false,
@@ -902,9 +904,11 @@
 			"route": "/themes",
 			"type": "index",
 			"title": "Themes",
+			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "theme",
+				"rowClickToView": false,
 				"actionToggles": {
 					"showAdd": true,
 					"showEditAction": false,
@@ -1054,9 +1058,11 @@
 			"route": "/glossary",
 			"type": "index",
 			"title": "Glossary",
+			"_note": "CnPageRenderer auto-sets rowClickToView for a type='index' page whenever a detail page exists for the same register+schema (GlossaryDetail does), which makes a row-body click navigate instead of select. Pinned false in config so a click selects the row; the row's View action still opens the term.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "glossary",
+				"rowClickToView": false,
 				"actionToggles": {
 					"showAdd": true,
 					"showEditAction": false,
@@ -1141,9 +1147,11 @@
 			"route": "/pages",
 			"type": "index",
 			"title": "Pages",
+			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "page",
+				"rowClickToView": false,
 				"actionToggles": {
 					"showAdd": true,
 					"showEditAction": false,
@@ -1234,9 +1242,11 @@
 			"route": "/menus",
 			"type": "index",
 			"title": "Menus",
+			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "menu",
+				"rowClickToView": false,
 				"actionToggles": {
 					"showAdd": true,
 					"showEditAction": false,

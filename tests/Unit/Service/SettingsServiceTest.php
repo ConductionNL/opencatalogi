@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\RegisterSchemaLinkService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenRegister\Db\Register;
 use OCA\OpenRegister\Db\RegisterMapper;
@@ -56,7 +57,8 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->service = new SettingsService(
 			$this->config,
 			$this->container,
-			$this->appManager
+			$this->appManager,
+			$this->createMock(RegisterSchemaLinkService::class)
 		);
 
 	}//end setUp()

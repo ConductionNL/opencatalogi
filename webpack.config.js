@@ -209,6 +209,17 @@ webpackConfig.resolve.alias['vue-router$'] = path.resolve(
 	'node_modules/vue-router/dist/vue-router.mjs',
 )
 
+// With `@conduction/nextcloud-vue` aliased to ../nextcloud-vue/src, that source's
+// bare imports resolve relative to ITS directory — so Node walks up to
+// ../nextcloud-vue/node_modules and finds that checkout's OWN framework copies
+// (@nextcloud/vue / floating-vue / vue-router), which then coexist with this
+// app's. Put this app's node_modules first so one framework copy wins.
+// (Same fix openregister carries; see its webpack.config.js.)
+webpackConfig.resolve.modules = [
+	path.resolve(__dirname, 'node_modules'),
+	...(webpackConfig.resolve.modules || ['node_modules']),
+]
+
 // Share Vue + @nextcloud/vue + pinia + icons + @conduction/nextcloud-vue
 // across every entry-point so each widget bundle no longer inlines its own
 // ~3 MB framework copy. Stable filenames (no contenthash in the JS name)
