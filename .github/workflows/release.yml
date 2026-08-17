@@ -4,6 +4,39 @@ on:
   push:
     branches: [main, beta, development]
 
+# Node 24, not the shared workflow's default of 22, and the reason is npm.
+#
+# This repo's package-lock.json is authored by npm 11 and package.json says so:
+# `engines.npm: ^11.0.0`. quality.yml already builds it on Node 24 / npm 11.17
+# and `npm ci` there is green. release.yml's input defaults to Node 22, and
+# EVERY Node 22 release bundles npm 10 (22.23.2 ships 10.9.8), so the release
+# job was the one place in CI running npm 10 against an npm 11 lock.
+#
+# npm 10 does not read that lock the way npm 11 does. `@nextcloud/vue`'s nested
+# `vue-router` declares an OPTIONAL peer `pinia@^3.0.4 || ^4.0.2`; the tree
+# pins pinia 2.3.1 (root asks `^2.2.2`). npm 11 honours the optional flag and
+# leaves it. npm 10 tries to satisfy the peer, resolves pinia to 4.0.3 off the
+# registry, and then reports it as drift in OUR file:
+#
+#   npm error `npm ci` can only install packages when your package.json and
+#   package-lock.json are in sync.
+#   npm error Missing: pinia@4.0.3 from lock file
+#
+# That message names pinia@4.0.3, which appears in NEITHER file — package.json
+# asks for ^2.2.2 — so it reads as a lockfile that needs regenerating when
+# nothing is wrong with it. Regenerating under npm 10 would be the actual
+# damage: it would rewrite an npm 11 lock with npm 10 semantics and silently
+# disarm the `min-release-age` supply-chain cooldown in .npmrc, which is an
+# npm 11+ feature that npm 10 does not implement at all.
+#
+# Measured 2026-08-17 on bc9136c5, same bytes both ways:
+#   npm 10.9.8 / Node 22  -> EUSAGE, Missing: pinia@4.0.3
+#   npm 11.17.0 / Node 24 -> clean, 1929 packages
+# Removing .npmrc changes neither result, so the cooldown is not the cause.
+#
+# Keep this in step with quality.yml's node-version. If the shared workflow's
+# default moves to 24, these three lines become redundant rather than wrong.
+
 jobs:
   unstable:
     if: github.ref == 'refs/heads/development'
@@ -11,6 +44,7 @@ jobs:
     with:
       release-type: unstable
       app-name: opencatalogi
+      node-version: "24"
     secrets: inherit
 
   beta:
@@ -19,6 +53,7 @@ jobs:
     with:
       release-type: beta
       app-name: opencatalogi
+      node-version: "24"
     secrets: inherit
 
   stable:
@@ -27,4 +62,5 @@ jobs:
     with:
       release-type: stable
       app-name: opencatalogi
+      node-version: "24"
     secrets: inherit
