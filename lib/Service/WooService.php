@@ -328,7 +328,7 @@ class WooService {
 				'assessedAt' => '',
 			];
 			$saved = $this->normalise(
-				$this->save(
+				object: $this->save(
 					objectService: $objectService,
 					register: $register,
 					schema: $assessmentSchema,
@@ -367,7 +367,7 @@ class WooService {
 						registerId: $registerId,
 						data: [
 							'boardId' => $deckBoardId,
-							'stackId' => $this->resolveStackId($deckBoardId, 'te_beoordelen'),
+							'stackId' => $this->resolveStackId(boardId: $deckBoardId, assessment: 'te_beoordelen'),
 							'title' => $title,
 							'description' => 'WOO document — ' . $caseReference,
 						]
@@ -402,7 +402,7 @@ class WooService {
 			'updatedAt' => $now,
 			'createdBy' => $createdBy,
 		];
-		$savedBatch = $this->normalise($this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		$savedBatch = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 
 		$savedBatch['assessments'] = $assessmentRefs;
 		$savedBatch['deckLinks'] = $deckLinks;
@@ -502,7 +502,7 @@ class WooService {
 			throw new RuntimeException('Assessment not found: ' . $assessmentId);
 		}
 
-		$data = $this->normalise($object);
+		$data = $this->normalise(object: $object);
 		$user = $this->userSession->getUser();
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
@@ -523,11 +523,11 @@ class WooService {
 		$data['assessedBy'] = $assessedBy;
 		$data['assessedAt'] = $now;
 
-		$saved = $this->normalise($this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
+		$saved = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
 
 		// Move the linked Deck card to the matching stack via the leaf (best
 		// effort; the leaf owns the move + stack-driven status sync).
-		$this->moveCardToStack($assessmentId, $assessment);
+		$this->moveCardToStack(assessmentId: $assessmentId, assessment: $assessment);
 
 		return $saved;
 	}//end updateAssessment()
@@ -580,12 +580,12 @@ class WooService {
 		}
 
 		try {
-			$batch = $this->normalise($objectService->find($batchId));
+			$batch = $this->normalise(object: $objectService->find($batchId));
 		} catch (\Throwable $e) {
 			throw new RuntimeException('Batch not found: ' . $batchId);
 		}
 
-		$assessments = $this->loadAssessments($batch);
+		$assessments = $this->loadAssessments(batch: $batch);
 		$counts = array_fill_keys(array_keys(self::ASSESSMENTS), 0);
 		foreach ($assessments as $assessment) {
 			$status = (string)($assessment['assessment'] ?? 'te_beoordelen');
@@ -626,7 +626,7 @@ class WooService {
 
 		foreach ($refs as $ref) {
 			try {
-				$out[] = $this->normalise($objectService->find((string)$ref));
+				$out[] = $this->normalise(object: $objectService->find((string)$ref));
 			} catch (\Throwable $e) {
 				$this->logger->info('[WooService] assessment ' . $ref . ' not loadable: ' . $e->getMessage());
 			}
@@ -647,8 +647,8 @@ class WooService {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
 	 */
 	public function buildInventarislijst(string $batchId): array {
-		$batch = $this->getBatch($batchId);
-		$assessments = $this->loadAssessments($batch);
+		$batch = $this->getBatch(batchId: $batchId);
+		$assessments = $this->loadAssessments(batch: $batch);
 		$rows = [];
 		$sequenceNumber = 1;
 		foreach ($assessments as $assessment) {
@@ -758,7 +758,7 @@ class WooService {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
 	 */
 	public function canMarkReadyForReview(string $batchId): bool {
-		$batch = $this->getBatch($batchId);
+		$batch = $this->getBatch(batchId: $batchId);
 		$counts = ($batch['documentSummary']['counts'] ?? []);
 		return (int)($counts['te_beoordelen'] ?? 0) === 0 && (int)($batch['documentSummary']['total'] ?? 0) > 0;
 	}//end canMarkReadyForReview()
@@ -779,7 +779,7 @@ class WooService {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
 	 */
 	public function markReadyForReview(string $batchId): array {
-		if ($this->canMarkReadyForReview($batchId) === false) {
+		if ($this->canMarkReadyForReview(batchId: $batchId) === false) {
 			throw new RuntimeException('All documents must be assessed before review');
 		}
 
@@ -790,11 +790,11 @@ class WooService {
 			throw new RuntimeException('OpenRegister WOO register/schema unavailable');
 		}
 
-		$batch = $this->normalise($objectService->find($batchId));
+		$batch = $this->normalise(object: $objectService->find($batchId));
 		$batch['status'] = 'ready_for_review';
 		$batch['updatedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
-		return $this->normalise($this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		return $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 	}//end markReadyForReview()
 
 	/**
@@ -840,12 +840,12 @@ class WooService {
 			throw new RuntimeException('OpenRegister WOO register/schema unavailable');
 		}
 
-		$batch = $this->getBatch($batchId);
+		$batch = $this->getBatch(batchId: $batchId);
 		if ((string)($batch['status'] ?? '') !== 'ready_for_review') {
 			throw new RuntimeException('Batch must be ready_for_review (passed the approval gate) before publishing');
 		}
 
-		$assessments = $this->loadAssessments($batch);
+		$assessments = $this->loadAssessments(batch: $batch);
 		$publishable = array_values(
 			array_filter(
 				$assessments,
@@ -895,7 +895,7 @@ class WooService {
 		$batch['wooPublication'] = $publicationMeta;
 		unset($batch['documentSummary']);
 
-		$saved = $this->normalise($this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		$saved = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 		$saved['wooPublication'] = $publicationMeta;
 
 		return $saved;

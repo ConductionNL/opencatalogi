@@ -61,7 +61,7 @@ class FederationController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 
@@ -256,6 +256,8 @@ class FederationController extends Controller {
 		return $this->publicationService->attachments(id: $id);
 	}//end publicationAttachments()
 
+	// Lower than the sibling reads: a download moves file bytes, so the cost of
+	// one call is materially higher than a metadata lookup.
 	/**
 	 * Download all files of a publication as ZIP.
 	 *
@@ -270,8 +272,6 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	// Lower than the sibling reads: a download moves file bytes, so the cost of
-	// one call is materially higher than a metadata lookup.
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicationDownload(string $id): DataDownloadResponse|JSONResponse {
 		return $this->publicationService->download(id: $id);

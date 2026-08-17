@@ -71,7 +71,7 @@ class StatsController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 
@@ -99,7 +99,7 @@ class StatsController extends Controller {
 		// confirm the caller may read this publication under its own OR RBAC
 		// rule before returning any stats.
 		if ($this->requireAuthenticatedUser() === null
-			|| $this->canReadPublication($id) === false
+			|| $this->canReadPublication(id: $id) === false
 		) {
 			return new JSONResponse(
 				['error' => $this->l10n->t('You are not allowed to view statistics for this publication.')],
@@ -258,7 +258,7 @@ class StatsController extends Controller {
 
 		try {
 			$rows = $this->usageCounterService->getCountersForCatalog(catalog: $slug, from: $from, to: $to);
-			$csv = $this->buildCsv($rows);
+			$csv = $this->buildCsv(rows: $rows);
 			$name = 'usage-' . preg_replace('/[^a-z0-9-]/i', '-', $slug) . '.csv';
 			return new DataDownloadResponse($csv, $name, 'text/csv; charset=utf-8');
 		} catch (\Throwable $e) {

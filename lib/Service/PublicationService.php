@@ -499,7 +499,7 @@ class PublicationService {
 		}
 
 		// Get the context for the catalog.
-		$context = $this->getCatalogFilters($catalogId);
+		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
 		// Validate requested registers and schemas against the context.
 		$requestedRegisters = ($searchQuery['@self']['register'] ?? []);
@@ -577,7 +577,7 @@ class PublicationService {
 		// Visibility is governed entirely by OpenRegister RBAC (the schemas' conditional
 		// public-read rules with the $now variable), applied above via _rbac: true.
 		// Filter unwanted properties from results.
-		$result['results'] = $this->filterUnwantedProperties($result['results']);
+		$result['results'] = $this->filterUnwantedProperties(objects: $result['results']);
 
 		// Add virtual field facets if they were requested.
 		if (($reqDirFacets === true || $reqCatFacets === true) && isset($result['facets']) === true) {
@@ -1456,7 +1456,7 @@ class PublicationService {
 		// Note: @self.schema and @self.register are now provided at response @self level,
 		// not duplicated in each result. No need to add them to _extend.
 		// Get local publications first.
-		$localResponse = $this->index(null, $queryParams);
+		$localResponse = $this->index(catalogId: null, customParams: $queryParams);
 		$localData = json_decode($localResponse->render(), true);
 
 		// Add catalog and directory information to local publications
@@ -1540,10 +1540,13 @@ class PublicationService {
 		}//end if
 
 		if (isset($localData['facetable']) === true) {
-			$responseData['facetable'] = $this->mergeFacetableData($localData['facetable'], []);
+			$responseData['facetable'] = $this->mergeFacetableData(
+				localFacetable: $localData['facetable'],
+				federatedFacetable: []
+			);
 		} elseif ($shouldIncludeFacets === true) {
 			// If faceting is requested but no facetable data exists, create basic structure.
-			$responseData['facetable'] = $this->mergeFacetableData([], []);
+			$responseData['facetable'] = $this->mergeFacetableData(localFacetable: [], federatedFacetable: []);
 		}
 
 		try {
@@ -1596,7 +1599,7 @@ class PublicationService {
 			// Remove offset to start from beginning
 			// Get local results with modified parameters
 			// Pass the modified parameters directly to the service.
-			$allLocalResponse = $this->index(null, $localQueryParams);
+			$allLocalResponse = $this->index(catalogId: null, customParams: $localQueryParams);
 			$allLocalData = json_decode($allLocalResponse->render(), true);
 
 			// Add catalog and directory information to local publications
@@ -1692,7 +1695,7 @@ class PublicationService {
 			// This is crucial for aggregation because each source may have different ordering,
 			// so we need to re-sort the combined dataset according to the requested criteria
 			// Supports formats like: _order[@self.created]=DESC, _order[title]=ASC, etc.
-			$uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
+			$uniqueResults = $this->applyCumulativeOrdering(results: $uniqueResults, queryParams: $queryParams);
 
 			// Apply pagination to the merged results.
 			$totalPages = 1;
@@ -1741,7 +1744,7 @@ class PublicationService {
 					$federatedFacets = $federatedFacets['facets'];
 				}
 
-				$mergedFacets = $this->mergeFacetsData($localFacets, $federatedFacets);
+				$mergedFacets = $this->mergeFacetsData(localFacets: $localFacets, federatedFacets: $federatedFacets);
 
 				// Add virtual field facets if they were requested.
 				if ($reqDirFacets === true || $reqCatFacets === true) {
@@ -1764,11 +1767,11 @@ class PublicationService {
 
 			if (isset($allLocalData['facetable']) === true || isset($federationResult['facetable']) === true) {
 				$responseData['facetable'] = $this->mergeFacetableData(
-					($allLocalData['facetable'] ?? []),
-					($federationResult['facetable'] ?? [])
+					localFacetable: ($allLocalData['facetable'] ?? []),
+					federatedFacetable: ($federationResult['facetable'] ?? [])
 				);
 			} elseif ($shouldIncludeFacets === true) {
-				$responseData['facetable'] = $this->mergeFacetableData([], []);
+				$responseData['facetable'] = $this->mergeFacetableData(localFacetable: [], federatedFacetable: []);
 			}
 
 			// Performance monitoring for aggregated results.
@@ -1868,7 +1871,7 @@ class PublicationService {
 		$queryStart = microtime(true);
 
 		// Get local publications with a single optimized query.
-		$localResponse = $this->index(null, $queryParams);
+		$localResponse = $this->index(catalogId: null, customParams: $queryParams);
 		$localData = json_decode($localResponse->render(), true);
 
 		$timings['query'] = ((microtime(true) - $queryStart) * 1000);
@@ -2192,7 +2195,7 @@ class PublicationService {
 		$filteredResults = ($result['results'] ?? []);
 		if ($skipFiltering === false) {
 			// Filter unwanted properties from results (minimal processing).
-			$filteredResults = $this->filterUnwantedProperties($filteredResults);
+			$filteredResults = $this->filterUnwantedProperties(objects: $filteredResults);
 		}
 
 		// Calculate pagination info.
@@ -2488,11 +2491,11 @@ class PublicationService {
 					}
 
 					// Extract values for comparison.
-					$valueA = $this->extractFieldValue($a, $fieldName);
-					$valueB = $this->extractFieldValue($b, $fieldName);
+					$valueA = $this->extractFieldValue(result: $a, fieldPath: $fieldName);
+					$valueB = $this->extractFieldValue(result: $b, fieldPath: $fieldName);
 
 					// Compare values.
-					$comparison = $this->compareValues($valueA, $valueB);
+					$comparison = $this->compareValues(a: $valueA, b: $valueB);
 
 					if ($comparison !== 0) {
 						// Return result based on sort direction.

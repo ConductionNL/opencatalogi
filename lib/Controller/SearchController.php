@@ -107,6 +107,8 @@ class SearchController extends Controller {
 		throw new RuntimeException('OpenRegister service is not available.');
 	}//end getObjectService()
 
+	// Lower than a plain read: search is the most expensive query this app
+	// serves anonymously.
 	/**
 	 * Public, RBAC-filtered full-text search across publications and documents (WOO-506).
 	 *
@@ -133,8 +135,6 @@ class SearchController extends Controller {
 	 * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-3
 	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
 	 */
-	// Lower than a plain read: search is the most expensive query this app
-	// serves anonymously.
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function index(): JSONResponse {
 		try {

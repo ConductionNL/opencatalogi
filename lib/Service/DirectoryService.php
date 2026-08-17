@@ -196,7 +196,7 @@ class DirectoryService {
 			$syncPromises[] = new Promise(
 				function ($resolve) use ($directoryUrl) {
 					try {
-						$syncResult = $this->syncDirectory($directoryUrl);
+						$syncResult = $this->syncDirectory(directoryUrl: $directoryUrl);
 
 						// Directory sync completed successfully.
 						$resolve(
@@ -410,7 +410,7 @@ class DirectoryService {
 			}
 
 			// Skip self so cron doesn't sync our own /api/directory back to us.
-			if ($this->isSelfInstance($dir) === true) {
+			if ($this->isSelfInstance(url: $dir) === true) {
 				continue;
 			}
 
@@ -471,7 +471,7 @@ class DirectoryService {
 		// Prevent syncing with self. Host+port comparison via isSelfInstance() so
 		// alternate host-aliases (e.g. localhost:9081 vs. nc-fed-1 on a docker
 		// network) still resolve to "this instance" — WOO-516.
-		if ($this->isSelfInstance($directoryUrl) === true) {
+		if ($this->isSelfInstance(url: $directoryUrl) === true) {
 			throw new InvalidArgumentException('Cannot sync with current directory');
 		}
 
@@ -493,7 +493,7 @@ class DirectoryService {
 		// Restricts the scheme to http/https and rejects any host that resolves to a
 		// private, loopback, link-local, or cloud-metadata address. Throws
 		// InvalidArgumentException (mapped to HTTP 400) when the target is not safe.
-		$this->assertSafeOutboundUrl($directoryUrl);
+		$this->assertSafeOutboundUrl(url: $directoryUrl);
 
 		try {
 			// Fetch directory data with limit to get all listings.
@@ -505,7 +505,7 @@ class DirectoryService {
 			// older OpenCatalogi build ignore the query param and return their default
 			// filtered view (only own catalogs), so this stays backward-compatible.
 			$dirUrlWithLimit = $directoryUrl . '?_limit=10000&include-federated=1';
-			$response = $this->safeGet($dirUrlWithLimit);
+			$response = $this->safeGet(url: $dirUrlWithLimit);
 			$directoryData = json_decode($response->getBody()->getContents(), true);
 
 			if (json_last_error() !== JSON_ERROR_NONE) {
@@ -528,14 +528,14 @@ class DirectoryService {
 						// host+port matching + instance_aliases config so alternate
 						// host-aliases still resolve to self (WOO-516).
 						if (isset($listingData['directory']) === true
-							&& $this->isSelfInstance($listingData['directory']) === true
+							&& $this->isSelfInstance(url: $listingData['directory']) === true
 						) {
 							return false;
 						}
 
 						// Skip if listing has a local URL (localhost, .local, private IPs).
 						if (isset($listingData['directory']) === true
-							&& $this->isLocalUrl($listingData['directory']) === true
+							&& $this->isLocalUrl(url: $listingData['directory']) === true
 						) {
 							return false;
 						}
@@ -553,7 +553,7 @@ class DirectoryService {
 				foreach ($filteredListings as $listingData) {
 					$listingPromises[] = new Promise(
 						function ($resolve) use ($listingData, $directoryUrl) {
-							$resolve($this->syncListing($listingData, $directoryUrl));
+							$resolve($this->syncListing(listingData: $listingData, sourceDirectoryUrl: $directoryUrl));
 						}
 					);
 				}
@@ -612,7 +612,7 @@ class DirectoryService {
 				// Broadcast to the directory if it doesn't have our listings and our URL is not local.
 				// Skip broadcasting if this sync was triggered by a system broadcast to prevent infinite loops.
 				if ($hasOurListings === false
-					&& $this->isLocalUrl($ourDirectoryUrl) === false
+					&& $this->isLocalUrl(url: $ourDirectoryUrl) === false
 					&& $this->isSystemBroadcast() === false
 				) {
 					try {
@@ -635,7 +635,7 @@ class DirectoryService {
 					$errorCode = 500;
 				}
 
-				$this->updateDirectoryStatusOnError($directoryUrl, $errorCode);
+				$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: $errorCode);
 			} catch (\Exception $updateException) {
 				// Removed redundant logging.
 			}
@@ -667,7 +667,7 @@ class DirectoryService {
 
 			// Try to update existing listings with error status.
 			try {
-				$this->updateDirectoryStatusOnError($directoryUrl, 500);
+				$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: 500);
 			} catch (\Exception $updateException) {
 				// Removed redundant logging.
 			}
@@ -820,7 +820,7 @@ class DirectoryService {
 			// Detect or generate publication endpoint BEFORE we overwrite directory field.
 			// If not already extracted from relations, try to detect from available data.
 			if (empty($listingData['publications']) === true) {
-				$listingData['publications'] = $this->detectPublicationEndpoint($listingData);
+				$listingData['publications'] = $this->detectPublicationEndpoint(listingData: $listingData);
 			}
 
 			// Preserve the peer's own /api/directory URL in the `directory` field so cron
@@ -907,7 +907,7 @@ class DirectoryService {
 				// For updates, check for race conditions and data changes.
 				// (existingListing and existingListingData already retrieved above).
 				// Check for race condition: skip if incoming data is older than our last sync.
-				if ($this->isListingDataOutdated($listingData, $existingListingData) === true) {
+				if ($this->isListingDataOutdated(incomingData: $listingData, existingData: $existingListingData) === true) {
 					$result['action'] = 'skipped_outdated';
 					$result['success'] = true;
 					$result['reason'] = 'Incoming listing data is older than existing data';
@@ -1070,7 +1070,7 @@ class DirectoryService {
 
 			// Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
 			try {
-				$this->assertSafeOutboundUrl($directoryUrl);
+				$this->assertSafeOutboundUrl(url: $directoryUrl);
 			} catch (InvalidArgumentException $e) {
 				continue;
 			}
@@ -1192,7 +1192,7 @@ class DirectoryService {
 
 			// Aggregate facets if they exist.
 			if (empty($result['facets']) === false) {
-				$combinedFacets = $this->aggregateFacets($combinedFacets, $result['facets']);
+				$combinedFacets = $this->aggregateFacets(existingFacets: $combinedFacets, newFacets: $result['facets']);
 			}
 		}//end foreach
 
@@ -1372,8 +1372,8 @@ class DirectoryService {
 			}
 
 			// Get timestamps for comparison.
-			$incomingUpdated = $this->extractTimestamp($incomingData);
-			$existingUpdated = $this->extractTimestamp($existingObject);
+			$incomingUpdated = $this->extractTimestamp(data: $incomingData);
+			$existingUpdated = $this->extractTimestamp(data: $existingObject);
 
 			// If we can't determine timestamps, allow the update to be safe.
 			if ($incomingUpdated === null || $existingUpdated === null) {
@@ -1572,7 +1572,7 @@ class DirectoryService {
 	 *       requirement. Enforced by DirectoryServiceTest::testIsSelfInstance*.
 	 */
 	private function isSelfInstance(string $url): bool {
-		$targetPair = self::hostAndPortFromUrl(strtolower($url));
+		$targetPair = self::hostAndPortFromUrl(url: strtolower($url));
 		if ($targetPair === null) {
 			return false;
 		}
@@ -1580,7 +1580,7 @@ class DirectoryService {
 		[$targetHost, $targetPort] = $targetPair;
 
 		// 1. Canonical NC base.
-		$basePair = self::hostAndPortFromUrl(strtolower($this->urlGenerator->getBaseUrl()));
+		$basePair = self::hostAndPortFromUrl(url: strtolower($this->urlGenerator->getBaseUrl()));
 		if ($basePair !== null && $basePair[0] === $targetHost && $basePair[1] === $targetPort) {
 			return true;
 		}
@@ -1592,7 +1592,7 @@ class DirectoryService {
 		}
 
 		foreach (array_filter(array_map('trim', explode(',', strtolower($aliases)))) as $alias) {
-			$aliasPair = self::hostAndPortFromAlias($alias);
+			$aliasPair = self::hostAndPortFromAlias(alias: $alias);
 			if ($aliasPair === null || $aliasPair[0] !== $targetHost) {
 				continue;
 			}
@@ -1743,7 +1743,7 @@ class DirectoryService {
 		// Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
 		// two local instances on a private network can federate. Empty by default, so a
 		// production instance keeps the full SSRF protection below.
-		if ($this->isAllowlistedFederationHost($host) === true) {
+		if ($this->isAllowlistedFederationHost(host: $host) === true) {
 			return;
 		}
 
@@ -1797,7 +1797,7 @@ class DirectoryService {
 		}
 
 		foreach ($ipsToCheck as $ipAddress) {
-			if ($this->isBlockedIp($ipAddress) === true) {
+			if ($this->isBlockedIp(ipAddress: $ipAddress) === true) {
 				throw new InvalidArgumentException('Directory URL resolves to a disallowed (internal) address');
 			}
 		}
@@ -1821,7 +1821,7 @@ class DirectoryService {
 	 * @spec openspec/changes/harden-listings-admin-write-surface/tasks.md#task-1
 	 */
 	public function validateOutboundUrl(string $url): void {
-		$this->assertSafeOutboundUrl($url);
+		$this->assertSafeOutboundUrl(url: $url);
 
 	}//end validateOutboundUrl()
 
@@ -1868,7 +1868,7 @@ class DirectoryService {
 			return true;
 		}
 
-		if ($this->isBlockedIpv6Prefix($ipAddress) === true) {
+		if ($this->isBlockedIpv6Prefix(ipAddress: $ipAddress) === true) {
 			return true;
 		}
 
@@ -1961,7 +1961,7 @@ class DirectoryService {
 				$location = $scheme . '://' . $hostPart . $path;
 			}
 
-			$this->assertSafeOutboundUrl($location);
+			$this->assertSafeOutboundUrl(url: $location);
 			$current = $location;
 		}//end for
 
@@ -1992,7 +1992,7 @@ class DirectoryService {
 
 		// Dev-only: allowlisted hosts are treated as remote so their synced listings
 		// survive the local-URL filter. Empty allowlist by default keeps production behavior.
-		if ($this->isAllowlistedFederationHost($host) === true) {
+		if ($this->isAllowlistedFederationHost(host: $host) === true) {
 			return false;
 		}
 
@@ -2099,7 +2099,7 @@ class DirectoryService {
 
 			// Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
 			try {
-				$this->assertSafeOutboundUrl($directoryUrl);
+				$this->assertSafeOutboundUrl(url: $directoryUrl);
 			} catch (InvalidArgumentException $e) {
 				continue;
 			}
@@ -2262,7 +2262,7 @@ class DirectoryService {
 
 			// Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
 			try {
-				$this->assertSafeOutboundUrl($directoryUrl);
+				$this->assertSafeOutboundUrl(url: $directoryUrl);
 			} catch (InvalidArgumentException $e) {
 				continue;
 			}
@@ -2453,7 +2453,7 @@ class DirectoryService {
 						continue;
 					}
 
-					$listings[] = $this->filterListingProperties($listingData);
+					$listings[] = $this->filterListingProperties(listing: $listingData);
 				}//end foreach
 
 				$allResults = array_merge($allResults, $listings);
@@ -2499,8 +2499,8 @@ class DirectoryService {
 				// Convert catalog objects to listing format and expand schemas.
 				$catalogsAsListings = array_map(
 					function ($catalogObject) {
-						$listing = $this->convertCatalogToListing($catalogObject);
-						return $this->processSchemaExpansion($listing);
+						$listing = $this->convertCatalogToListing(catalogObject: $catalogObject);
+						return $this->processSchemaExpansion(data: $listing);
 					},
 					$catalogResult
 				);
@@ -2668,8 +2668,8 @@ class DirectoryService {
 	public function convertCatalogiToListings(array $catalogs): array {
 		return array_map(
 			function ($catalogObject) {
-				$listing = $this->convertCatalogToListing($catalogObject);
-				return $this->processSchemaExpansion($listing);
+				$listing = $this->convertCatalogToListing(catalogObject: $catalogObject);
+				return $this->processSchemaExpansion(data: $listing);
 			},
 			$catalogs
 		);
@@ -2739,7 +2739,7 @@ class DirectoryService {
 
 		// Expand schemas if they exist and are an array of IDs.
 		if (isset($objectData['schemas']) === true && is_array($objectData['schemas']) === true) {
-			$objectData['schemas'] = $this->expandSchemas($objectData['schemas']);
+			$objectData['schemas'] = $this->expandSchemas(schemaIds: $objectData['schemas']);
 		}
 
 		// If this was a nested object structure, maintain it.

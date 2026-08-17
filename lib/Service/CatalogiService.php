@@ -261,7 +261,7 @@ class CatalogiService {
 		if (isset($object['registers']) === true && is_array($object['registers']) === true) {
 			$rewrittenRegisters = array_map(
 				function ($register) {
-					if ($this->isNumericId($register) === true) {
+					if ($this->isNumericId(value: $register) === true) {
 						return $register;
 					}
 
@@ -282,7 +282,7 @@ class CatalogiService {
 		if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
 			$rewrittenSchemas = array_map(
 				function ($schema) {
-					if ($this->isNumericId($schema) === true) {
+					if ($this->isNumericId(value: $schema) === true) {
 						return $schema;
 					}
 
@@ -339,7 +339,7 @@ class CatalogiService {
 	 */
 	public function rewriteSchemasAndRegisters(ObjectEntity $objectEntity): bool {
 		$object = $objectEntity->getObject() ?? [];
-		$modified = $this->computeRewrittenRegistersAndSchemas($object);
+		$modified = $this->computeRewrittenRegistersAndSchemas(object: $object);
 
 		if ($modified === []) {
 			return false;
@@ -434,8 +434,8 @@ class CatalogiService {
 		$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
 		// Remove duplicate values and assign to class properties.
-		$this->availableRegisters = $this->collectUnique($catalogs, 'registers');
-		$this->availableSchemas = $this->collectUnique($catalogs, 'schemas');
+		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
+		$this->availableSchemas = $this->collectUnique(catalogs: $catalogs, property: 'schemas');
 
 		return [
 			'registers' => array_values($this->availableRegisters),
@@ -693,7 +693,7 @@ class CatalogiService {
 			$catalogData = $catalog->jsonSerialize();
 
 			if (isset($catalogData['slug']) === true) {
-				$this->invalidateCatalogCache($catalogData['slug']);
+				$this->invalidateCatalogCache(slug: $catalogData['slug']);
 			}
 		} catch (Exception $e) {
 			$this->logger->error(
@@ -722,8 +722,8 @@ class CatalogiService {
 	 */
 	public function warmupCatalogCache(string $slug): void {
 		// Force a fresh load from database and store in cache.
-		$this->invalidateCatalogCache($slug);
-		$this->getCatalogBySlug($slug);
+		$this->invalidateCatalogCache(slug: $slug);
+		$this->getCatalogBySlug(slug: $slug);
 		$this->logger->debug('Catalog cache warmed up', ['slug' => $slug]);
 
 	}//end warmupCatalogCache()
@@ -759,7 +759,7 @@ class CatalogiService {
 			$catalogData = $catalog->jsonSerialize();
 
 			if (isset($catalogData['slug']) === true) {
-				$this->warmupCatalogCache($catalogData['slug']);
+				$this->warmupCatalogCache(slug: $catalogData['slug']);
 			}
 		} catch (Exception $e) {
 			$this->logger->error(
@@ -798,7 +798,7 @@ class CatalogiService {
 		$config = $this->getConfig();
 
 		// Get the context for the catalog.
-		$context = $this->getCatalogFilters($catalogId);
+		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
 		$objectService = $this->getObjectService();
 

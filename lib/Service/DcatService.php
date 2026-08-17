@@ -225,12 +225,12 @@ class DcatService {
 	public function buildCatalogDocument(array $catalog, string $catalogSlug, int $page = 1, array &$violations = []): array {
 		$page = max(1, $page);
 
-		$registers = $this->idList(($catalog['registers'] ?? []));
-		$schemas = $this->idList(($catalog['schemas'] ?? []));
-		$defaults = $this->resolveDefaults($catalog);
+		$registers = $this->idList(raw: ($catalog['registers'] ?? []));
+		$schemas = $this->idList(raw: ($catalog['schemas'] ?? []));
+		$defaults = $this->resolveDefaults(catalog: $catalog);
 
-		$schemaMappings = $this->resolveSchemaMappings($schemas);
-		$schemaHvds = $this->resolveSchemaHvds($schemas);
+		$schemaMappings = $this->resolveSchemaMappings(schemaIds: $schemas);
+		$schemaHvds = $this->resolveSchemaHvds(schemaIds: $schemas);
 		$catalogHvdDefault = ($catalog['dcatHvdCategory'] ?? null);
 		if (is_string($catalogHvdDefault) === false) {
 			$catalogHvdDefault = null;
@@ -240,8 +240,8 @@ class DcatService {
 		$dqvExposure = filter_var(($catalog['dqvExposure'] ?? false), FILTER_VALIDATE_BOOLEAN);
 
 		$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
-		$searchQuery['@self']['register'] = $this->scalarOrList($registers);
-		$searchQuery['@self']['schema'] = $this->scalarOrList($schemas);
+		$searchQuery['@self']['register'] = $this->scalarOrList(ids: $registers);
+		$searchQuery['@self']['schema'] = $this->scalarOrList(ids: $schemas);
 		$searchQuery['_order']['updated'] = 'desc';
 
 		$objectService = $this->getObjectService();
@@ -259,12 +259,12 @@ class DcatService {
 
 		$fileService = $this->getFileService();
 
-		$catalogIri = $this->catalogEndpointUrl($catalogSlug);
+		$catalogIri = $this->catalogEndpointUrl(catalogSlug: $catalogSlug);
 		$datasets = [];
 		$datasetRefs = [];
 		$maxModified = 0;
 		foreach ($publications as $publication) {
-			$publication = $this->toArray($publication);
+			$publication = $this->toArray(item: $publication);
 
 			$schemaId = (int)($publication['@self']['schema'] ?? 0);
 			// Skip schemas that opted out of DCAT entirely.
@@ -275,7 +275,7 @@ class DcatService {
 			$mapping = ($schemaMappings[$schemaId] ?? DcatMappingService::DEFAULT_MAPPING);
 
 			$uuid = (string)($publication['@self']['uuid'] ?? $publication['id'] ?? '');
-			$datasetIri = $this->datasetIri($catalogSlug, $uuid);
+			$datasetIri = $this->datasetIri(catalogSlug: $catalogSlug, uuid: $uuid);
 
 			// Fetch published attachments (searchObjectsPaginated omits files), mirroring SitemapService.
 			$files = [];
@@ -389,10 +389,10 @@ class DcatService {
 			}
 
 			$graph[] = [
-				'@id' => $this->catalogEndpointUrl($slug),
+				'@id' => $this->catalogEndpointUrl(catalogSlug: $slug),
 				'@type' => 'dcat:Catalog',
 				'dct:title' => ($catalog['title'] ?? $slug),
-				'foaf:homepage' => ['@id' => $this->catalogEndpointUrl($slug)],
+				'foaf:homepage' => ['@id' => $this->catalogEndpointUrl(catalogSlug: $slug)],
 			];
 		}
 
@@ -401,7 +401,7 @@ class DcatService {
 		// configured, fall back to the first DCAT-enabled catalog's owning Organisation.
 		$organisation = null;
 		if ($catalogs !== []) {
-			$catDefaults = $this->resolveDefaults($catalogs[0]);
+			$catDefaults = $this->resolveDefaults(catalog: $catalogs[0]);
 			$organisation = ($catDefaults['organisation'] ?? null);
 		}
 
@@ -472,7 +472,7 @@ class DcatService {
 				continue;
 			}
 
-			$missing = $this->mandatoryViolations($node);
+			$missing = $this->mandatoryViolations(node: $node);
 			if (empty($missing) === false) {
 				$violations[] = [
 					'iri' => ($node['@id'] ?? ''),
@@ -526,7 +526,7 @@ class DcatService {
 				continue;
 			}
 
-			$missing = $this->mandatoryViolations($node);
+			$missing = $this->mandatoryViolations(node: $node);
 			if (empty($missing) === false) {
 				$violations[] = [
 					'iri' => ($node['@id'] ?? ''),
@@ -594,7 +594,7 @@ class DcatService {
 
 		$catalogs = [];
 		foreach (($result['results'] ?? []) as $catalog) {
-			$catalogs[] = $this->toArray($catalog);
+			$catalogs[] = $this->toArray(item: $catalog);
 		}
 
 		return $catalogs;

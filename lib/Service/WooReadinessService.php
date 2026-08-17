@@ -163,14 +163,14 @@ class WooReadinessService {
 		$checks[] = $this->checkRegistration(registration: $registration, baseUrl: $baseUrl);
 
 		$report = [
-			'verdict' => $this->computeVerdict($checks),
+			'verdict' => $this->computeVerdict(checks: $checks),
 			'checkedAt' => (new DateTime())->format(DATE_ATOM),
 			'baseUrl' => $baseUrl,
 			'checks' => $checks,
 			'registration' => $registration,
 		];
 
-		$this->persistReport($report);
+		$this->persistReport(report: $report);
 
 		return $report;
 	}//end runCheck()
@@ -277,7 +277,7 @@ class WooReadinessService {
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
 	 */
 	private function checkRobotsTxt(string $baseUrl, array &$checks): bool {
-		$response = $this->safeFetch("$baseUrl/robots.txt");
+		$response = $this->safeFetch(url: "$baseUrl/robots.txt");
 
 		if ($response['ok'] === false) {
 			$checks[] = $this->buildCheck(id: 'robots-txt', status: 'fail', reason: $response['reason']);
@@ -310,14 +310,14 @@ class WooReadinessService {
 		$sitemapIndexUrl = "$baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode";
 		$checkId = "sitemapindex:$slug";
 
-		$response = $this->safeFetch($sitemapIndexUrl);
+		$response = $this->safeFetch(url: $sitemapIndexUrl);
 		if ($response['ok'] === false) {
 			$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: $response['reason'], catalogSlug: $slug);
 			$this->skipDependentChecks(slug: $slug, checks: $checks, reason: 'sitemapindex-unreachable');
 			return;
 		}
 
-		if ($this->isWellFormedXml($response['body']) === false) {
+		if ($this->isWellFormedXml(xml: $response['body']) === false) {
 			$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: 'invalid-xml', catalogSlug: $slug);
 			$this->skipDependentChecks(slug: $slug, checks: $checks, reason: 'sitemapindex-invalid');
 			return;
@@ -325,7 +325,7 @@ class WooReadinessService {
 
 		$checks[] = $this->buildCheck(id: $checkId, status: 'pass', catalogSlug: $slug);
 
-		$pageUrls = array_slice($this->extractLocs($response['body']), 0, self::MAX_SAMPLED_PAGES);
+		$pageUrls = array_slice($this->extractLocs(xml: $response['body']), 0, self::MAX_SAMPLED_PAGES);
 		if (empty($pageUrls) === true) {
 			$this->skipDependentChecks(slug: $slug, checks: $checks, reason: 'no-sitemap-pages');
 			return;
@@ -354,14 +354,14 @@ class WooReadinessService {
 
 		foreach ($pageUrls as $index => $pageUrl) {
 			$pageCheckId = 'category-sitemap:' . $slug . ':' . ($index + 1);
-			$response = $this->safeFetch($pageUrl);
+			$response = $this->safeFetch(url: $pageUrl);
 
 			if ($response['ok'] === false) {
 				$checks[] = $this->buildCheck(id: $pageCheckId, status: 'fail', reason: $response['reason'], catalogSlug: $slug);
 				continue;
 			}
 
-			if ($this->isWellFormedXml($response['body']) === false) {
+			if ($this->isWellFormedXml(xml: $response['body']) === false) {
 				$checks[] = $this->buildCheck(id: $pageCheckId, status: 'fail', reason: 'invalid-xml', catalogSlug: $slug);
 				continue;
 			}
@@ -374,7 +374,7 @@ class WooReadinessService {
 			$checks[] = $this->buildCheck(id: $pageCheckId, status: 'pass', catalogSlug: $slug);
 
 			if ($firstDocumentUrl === null) {
-				$locs = $this->extractLocs($response['body']);
+				$locs = $this->extractLocs(xml: $response['body']);
 				$firstDocumentUrl = ($locs[0] ?? null);
 			}
 		}//end foreach
@@ -441,7 +441,7 @@ class WooReadinessService {
 			return;
 		}
 
-		$response = $this->safeFetch($publicationUrl);
+		$response = $this->safeFetch(url: $publicationUrl);
 		if ($response['ok'] === false) {
 			$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: $response['reason'], catalogSlug: $slug);
 			return;

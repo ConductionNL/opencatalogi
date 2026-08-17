@@ -91,7 +91,7 @@ class MenusController extends Controller {
 		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
 		int $corsMaxAge = 1728000,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 		$this->corsMethods = $corsMethods;
 		$this->corsAllowedHeaders = $corsAllowedHeaders;
 		$this->corsMaxAge = $corsMaxAge;
@@ -128,7 +128,7 @@ class MenusController extends Controller {
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
 	 */
 	private function getMenuConfiguration(): array {
-		return $this->resolveRegisterConfiguration('menu_register', 'menu_schema');
+		return $this->resolveRegisterConfiguration(registerKey: 'menu_register', schemaKey: 'menu_schema');
 	}//end getMenuConfiguration()
 
 	/**
@@ -204,7 +204,7 @@ class MenusController extends Controller {
 		try {
 			$menuConfig = $this->getMenuConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse($e);
+			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		// Get query parameters from request.

@@ -47,7 +47,7 @@ class UiController extends Controller {
 		string $appName,
 		IRequest $request,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 

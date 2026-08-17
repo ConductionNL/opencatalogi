@@ -154,10 +154,10 @@ class EventService {
 				try {
 					// Check if auto-publish objects is enabled and object should be published.
 					if ($publishingOptions['auto_publish_objects'] === true) {
-						$shouldPublish = $this->shouldAutoPublishObject($objectData);
+						$shouldPublish = $this->shouldAutoPublishObject(objectData: $objectData);
 						if ($shouldPublish === true) {
 							// Auto-publish the object.
-							$publishResult = $this->publishObject($objectData);
+							$publishResult = $this->publishObject(objectData: $objectData);
 							if ($publishResult['success'] === true) {
 								$objectResult['actions'][] = 'object_published';
 								$results['published']++;
@@ -171,9 +171,9 @@ class EventService {
 
 					// Check if auto-publish attachments is enabled and object has published status.
 					if ($publishingOptions['auto_publish_attachments'] === true
-						&& $this->isObjectPublished($objectData) === true
+						&& $this->isObjectPublished(objectData: $objectData) === true
 					) {
-						$attachmentResult = $this->publishObjectAttachments($objectData);
+						$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
 						$objectResult['actions'][] = 'attachments_processed';
 						$results['attachmentsPublished'] += $attachmentResult['published'];
 
@@ -235,9 +235,9 @@ class EventService {
 				try {
 					// Check if auto-publish attachments is enabled and object is published.
 					if ($publishingOptions['auto_publish_attachments'] === true
-						&& $this->isObjectPublished($objectData) === true
+						&& $this->isObjectPublished(objectData: $objectData) === true
 					) {
-						$attachmentResult = $this->publishObjectAttachments($objectData);
+						$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
 						$objectResult['actions'][] = 'attachments_processed';
 						$results['attachmentsPublished'] += $attachmentResult['published'];
 

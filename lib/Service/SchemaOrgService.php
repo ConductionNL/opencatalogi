@@ -173,7 +173,7 @@ class SchemaOrgService {
 
 		try {
 			$schema = $schemaMapper->find($schemaId);
-			$schemaData = $this->toArray($schema);
+			$schemaData = $this->toArray(item: $schema);
 			$marker = (string)($schemaData['x-schema-org'] ?? '');
 			if ($marker === '') {
 				return self::DEFAULT_TYPE;
@@ -343,9 +343,9 @@ class SchemaOrgService {
 		$uuid = (string)($object['@self']['uuid'] ?? $object['id'] ?? '');
 		$url = $this->dcatService->datasetIri($catalogSlug, $uuid);
 
-		$elected = $this->isDatasetElected($catalog);
+		$elected = $this->isDatasetElected(catalog: $catalog);
 		$schemaId = (int)($object['@self']['schema'] ?? 0);
-		$type = $this->markerTypeForSchema($schemaId);
+		$type = $this->markerTypeForSchema(schemaId: $schemaId);
 		if ($elected === true) {
 			$type = 'Dataset';
 		}
@@ -369,7 +369,7 @@ class SchemaOrgService {
 
 		$modified = ($object['@self']['updated'] ?? $object['publicationDate'] ?? null);
 		if ($modified !== null && $modified !== '') {
-			$node['dateModified'] = $this->isoDate((string)$modified);
+			$node['dateModified'] = $this->isoDate(value: (string)$modified);
 		}
 
 		$license = ($object['license'] ?? null);
@@ -389,20 +389,20 @@ class SchemaOrgService {
 			$node['keywords'] = array_values($strings);
 		}
 
-		$publisher = $this->buildPublisher($catalog);
+		$publisher = $this->buildPublisher(catalog: $catalog);
 		if ($publisher !== null) {
 			$node['publisher'] = $publisher;
 		}
 
 		if ($elected === true) {
-			$distributions = $this->buildDistributions($object);
+			$distributions = $this->buildDistributions(publication: $object);
 			if ($distributions !== []) {
 				$node['distribution'] = $distributions;
 			}
 
 			$node['includedInDataCatalog'] = [
 				'@type' => 'DataCatalog',
-				'@id' => $this->catalogNodeUrl($catalogSlug),
+				'@id' => $this->catalogNodeUrl(catalogSlug: $catalogSlug),
 				'name' => (string)($catalog['title'] ?? $catalogSlug),
 			];
 		}
@@ -422,7 +422,7 @@ class SchemaOrgService {
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
 	public function buildCatalogNode(array $catalog, string $catalogSlug): array {
-		$catalogUrl = $this->catalogNodeUrl($catalogSlug);
+		$catalogUrl = $this->catalogNodeUrl(catalogSlug: $catalogSlug);
 
 		$node = [
 			'@context' => self::CONTEXT,
@@ -436,12 +436,12 @@ class SchemaOrgService {
 			$node['description'] = (string)$catalog['description'];
 		}
 
-		$publisher = $this->buildPublisher($catalog);
+		$publisher = $this->buildPublisher(catalog: $catalog);
 		if ($publisher !== null) {
 			$node['publisher'] = $publisher;
 		}
 
-		$node['dataset'] = $this->listVisiblePublicationRefs($catalog, $catalogSlug);
+		$node['dataset'] = $this->listVisiblePublicationRefs(catalog: $catalog, catalogSlug: $catalogSlug);
 
 		return $node;
 	}//end buildCatalogNode()
@@ -465,8 +465,8 @@ class SchemaOrgService {
 			return [];
 		}
 
-		$registers = $this->normaliseIdList(($catalog['registers'] ?? []));
-		$schemas = $this->normaliseIdList(($catalog['schemas'] ?? []));
+		$registers = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
+		$schemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
 		if ($registers === [] || $schemas === []) {
 			return [];
 		}
@@ -503,7 +503,7 @@ class SchemaOrgService {
 
 		$refs = [];
 		foreach (($result['results'] ?? []) as $publication) {
-			$publication = $this->toArray($publication);
+			$publication = $this->toArray(item: $publication);
 			$uuid = (string)($publication['@self']['uuid'] ?? $publication['id'] ?? '');
 			if ($uuid === '') {
 				continue;

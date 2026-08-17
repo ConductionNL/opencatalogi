@@ -69,7 +69,7 @@ class OoapiMappingService {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
 	 */
 	public function resolveResourceType(?array $schema): ?string {
-		if ($this->isAnnotated($schema) === false) {
+		if ($this->isAnnotated(schema: $schema) === false) {
 			return null;
 		}
 
@@ -93,7 +93,7 @@ class OoapiMappingService {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
 	 */
 	public function resolveMapping(?array $schema): ?array {
-		if ($this->isAnnotated($schema) === false) {
+		if ($this->isAnnotated(schema: $schema) === false) {
 			return null;
 		}
 
@@ -127,7 +127,7 @@ class OoapiMappingService {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-rio-identifier-passthrough-when-present-ooapi-005
 	 */
 	public function buildResource(array $object, ?array $mapping, string $idField): array {
-		$resource = [$idField => $this->resolveId($object)];
+		$resource = [$idField => $this->resolveId(object: $object)];
 
 		if ($mapping === null) {
 			foreach ($object as $key => $value) {
@@ -140,7 +140,7 @@ class OoapiMappingService {
 					continue;
 				}
 
-				if ($this->isEmpty($value) === true) {
+				if ($this->isEmpty(value: $value) === true) {
 					continue;
 				}
 
@@ -151,12 +151,12 @@ class OoapiMappingService {
 		}
 
 		foreach ($mapping as $outputPath => $sourcePath) {
-			$value = $this->extractValue($object, $sourcePath);
-			if ($this->isEmpty($value) === true) {
+			$value = $this->extractValue(object: $object, path: $sourcePath);
+			if ($this->isEmpty(value: $value) === true) {
 				continue;
 			}
 
-			$this->setNested($resource, path: $outputPath, value: $value);
+			$this->setNested(target: $resource, path: $outputPath, value: $value);
 		}
 
 		return $resource;

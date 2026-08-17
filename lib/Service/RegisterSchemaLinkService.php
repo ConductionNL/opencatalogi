@@ -93,12 +93,12 @@ class RegisterSchemaLinkService
     public function reconcile(array $importResult): void
     {
         try {
-            $register = $this->findPublicationRegister($importResult);
+            $register = $this->findPublicationRegister(importResult: $importResult);
             if ($register === null) {
                 return;
             }
 
-            $heldIds       = $this->normaliseHeldSchemaIds($register->getSchemas());
+            $heldIds       = $this->normaliseHeldSchemaIds(storedIds: $register->getSchemas());
             $configuration = $register->getConfiguration();
 
             $missing = $this->collectUnlinkedSchemas(
@@ -118,7 +118,7 @@ class RegisterSchemaLinkService
             // The import's own table reconciliation already ran (inside importFromApp),
             // before these schemas belonged to the register, so provision them here or
             // the tables would not appear until the next import.
-            $this->provisionMagicTables($register, $missing);
+            $this->provisionMagicTables(register: $register, schemas: $missing);
         } catch (\Throwable) {
             // Never let linkage repair sink the settings import.
             return;
@@ -168,7 +168,7 @@ class RegisterSchemaLinkService
         $missing = [];
 
         foreach ($schemas as $schema) {
-            if ($this->isUsableSchema($schema) === false) {
+            if ($this->isUsableSchema(schema: $schema) === false) {
                 continue;
             }
 

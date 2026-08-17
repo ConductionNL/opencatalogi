@@ -84,7 +84,7 @@ class ListingsController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly ?LoggerInterface $logger = null,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 
@@ -118,7 +118,7 @@ class ListingsController extends Controller {
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
 	 */
 	private function getListingConfiguration(): array {
-		return $this->resolveRegisterConfiguration('listing_register', 'listing_schema');
+		return $this->resolveRegisterConfiguration(registerKey: 'listing_register', schemaKey: 'listing_schema');
 	}//end getListingConfiguration()
 
 	/**
@@ -220,7 +220,7 @@ class ListingsController extends Controller {
 		try {
 			$listingConfig = $this->getListingConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse($e);
+			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		$listingRegister = $listingConfig['register'];
@@ -291,7 +291,7 @@ class ListingsController extends Controller {
 		try {
 			$listingConfig = $this->getListingConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse($e);
+			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		$listingRegister = $listingConfig['register'];
@@ -370,7 +370,7 @@ class ListingsController extends Controller {
 		try {
 			$listingConfig = $this->getListingConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse($e);
+			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		$listingRegister = $listingConfig['register'];
@@ -451,7 +451,7 @@ class ListingsController extends Controller {
 		try {
 			$listingConfig = $this->getListingConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse($e);
+			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		$listingRegister = $listingConfig['register'];
@@ -602,7 +602,7 @@ class ListingsController extends Controller {
 				try {
 					$listingConfig = $this->getListingConfiguration();
 				} catch (\Throwable $e) {
-					return $this->registerConfigErrorResponse($e);
+					return $this->registerConfigErrorResponse(e: $e);
 				}
 
 				$listingRegister = $listingConfig['register'];

@@ -100,7 +100,7 @@ class GlossaryController extends Controller {
 		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
 		int $corsMaxAge = 1728000,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 		$this->corsMethods = $corsMethods;
 		$this->corsAllowedHeaders = $corsAllowedHeaders;
 		$this->corsMaxAge = $corsMaxAge;
@@ -136,7 +136,7 @@ class GlossaryController extends Controller {
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
 	 */
 	private function getGlossaryConfiguration(): array {
-		return $this->resolveRegisterConfiguration('glossary_register', 'glossary_schema');
+		return $this->resolveRegisterConfiguration(registerKey: 'glossary_register', schemaKey: 'glossary_schema');
 	}//end getGlossaryConfiguration()
 
 	/**
@@ -214,7 +214,7 @@ class GlossaryController extends Controller {
 		try {
 			$glossaryConfig = $this->getGlossaryConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse($e);
+			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		// Get query parameters from request.

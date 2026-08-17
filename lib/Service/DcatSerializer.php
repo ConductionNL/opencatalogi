@@ -117,9 +117,9 @@ class DcatSerializer {
 	 */
 	public function serialize(array $document, string $format): string {
 		return match ($format) {
-			'turtle' => $this->toTurtle($document),
-			'rdfxml' => $this->toRdfXml($document),
-			default => $this->toJsonLd($document),
+			'turtle' => $this->toTurtle(document: $document),
+			'rdfxml' => $this->toRdfXml(document: $document),
+			default => $this->toJsonLd(document: $document),
 		};
 
 	}//end serialize()
@@ -162,8 +162,8 @@ class DcatSerializer {
 
 		$lines[] = '';
 
-		foreach ($this->graphNodes($document) as $node) {
-			$lines[] = $this->turtleNode($node);
+		foreach ($this->graphNodes(document: $document) as $node) {
+			$lines[] = $this->turtleNode(node: $node);
 		}
 
 		return implode("\n", $lines) . "\n";
@@ -190,8 +190,8 @@ class DcatSerializer {
 		$out = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 		$out .= '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" ' . implode(' ', $xmlns) . '>' . "\n";
 
-		foreach ($this->graphNodes($document) as $node) {
-			$out .= $this->rdfXmlNode($node);
+		foreach ($this->graphNodes(document: $document) as $node) {
+			$out .= $this->rdfXmlNode(node: $node);
 		}
 
 		$out .= '</rdf:RDF>' . "\n";
@@ -239,8 +239,8 @@ class DcatSerializer {
 				continue;
 			}
 
-			$predicate = $this->turtlePredicate($key);
-			$preds[] = '    ' . $predicate . ' ' . $this->turtleValue($value) . ' ;';
+			$predicate = $this->turtlePredicate(key: $key);
+			$preds[] = '    ' . $predicate . ' ' . $this->turtleValue(value: $value) . ' ;';
 		}
 
 		if (empty($preds) === true) {
@@ -268,12 +268,12 @@ class DcatSerializer {
 			}
 
 			// Nested blank node (e.g. foaf:Agent / distribution).
-			if ($this->isAssoc($value) === true) {
-				return $this->turtleBlankNode($value);
+			if ($this->isAssoc(array: $value) === true) {
+				return $this->turtleBlankNode(node: $value);
 			}
 
 			// List of values.
-			$terms = array_map(fn ($entry) => $this->turtleValue($entry), $value);
+			$terms = array_map(fn ($entry) => $this->turtleValue(value: $entry), $value);
 			return implode(' , ', $terms);
 		}
 
@@ -317,8 +317,8 @@ class DcatSerializer {
 	private function turtleBlankNode(array $node): string {
 		$parts = [];
 		foreach ($node as $key => $value) {
-			$predicate = $this->turtlePredicate($key);
-			$parts[] = $predicate . ' ' . $this->turtleValue($value);
+			$predicate = $this->turtlePredicate(key: $key);
+			$parts[] = $predicate . ' ' . $this->turtleValue(value: $value);
 		}
 
 		return '[ ' . implode(' ; ', $parts) . ' ]';
@@ -343,8 +343,8 @@ class DcatSerializer {
 				continue;
 			}
 
-			$tag = $this->rdfXmlTag($key);
-			$out .= $this->rdfXmlProperty($tag, $value);
+			$tag = $this->rdfXmlTag(key: $key);
+			$out .= $this->rdfXmlProperty(tag: $tag, value: $value);
 		}
 
 		$out .= '  </rdf:Description>' . "\n";
@@ -361,10 +361,10 @@ class DcatSerializer {
 	 */
 	private function rdfXmlProperty(string $tag, mixed $value): string {
 		// Lists → repeat the element.
-		if (is_array($value) === true && $this->isAssoc($value) === false) {
+		if (is_array($value) === true && $this->isAssoc(array: $value) === false) {
 			$out = '';
 			foreach ($value as $entry) {
-				$out .= $this->rdfXmlProperty($tag, $entry);
+				$out .= $this->rdfXmlProperty(tag: $tag, value: $entry);
 			}
 
 			return $out;
@@ -378,8 +378,8 @@ class DcatSerializer {
 		if (is_array($value) === true) {
 			$inner = '';
 			foreach ($value as $k => $v) {
-				$innerTag = $this->rdfXmlTag((string)$k);
-				$inner .= '      ' . $this->rdfXmlProperty($innerTag, $v);
+				$innerTag = $this->rdfXmlTag(key: (string)$k);
+				$inner .= '      ' . $this->rdfXmlProperty(tag: $innerTag, value: $v);
 			}
 
 			return '    <' . $tag . '>' . "\n" . '    <rdf:Description>' . "\n" . $inner . '    </rdf:Description>' . "\n" . '    </' . $tag . '>' . "\n";

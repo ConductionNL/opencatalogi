@@ -304,8 +304,8 @@ class RetentionService {
 			}
 
 			$computed = $this->computeExpiry(
-				($publication['publicationDate'] ?? null),
-				$termMonths
+				publicationDate: ($publication['publicationDate'] ?? null),
+				termMonths: $termMonths
 			);
 			if ($computed !== null) {
 				$publication['retentionExpiresAt'] = $computed;
@@ -363,7 +363,7 @@ class RetentionService {
 		}
 
 		foreach ($objects as $object) {
-			$data = $this->normalise($object);
+			$data = $this->normalise(object: $object);
 
 			$expiresAt = ($data['retentionExpiresAt'] ?? null);
 			if ($expiresAt === null || $expiresAt === '') {
@@ -461,7 +461,7 @@ class RetentionService {
 		}
 
 		foreach ($objects as $object) {
-			$data = $this->normalise($object);
+			$data = $this->normalise(object: $object);
 			$status = (string)($data['status'] ?? '');
 			if ($status === 'archived') {
 				$summary['archived']++;
@@ -525,7 +525,7 @@ class RetentionService {
 			throw new RuntimeException('Publication not found: ' . $publicationId);
 		}
 
-		$data = $this->normalise($object);
+		$data = $this->normalise(object: $object);
 		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
 		switch ($decision) {
@@ -563,7 +563,7 @@ class RetentionService {
 		$this->recordDecision(data: $data, decision: $decision, note: $rationale);
 		$saved = $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
 
-		return $this->normalise($saved);
+		return $this->normalise(object: $saved);
 	}//end recordHumanDecision()
 
 	/**
@@ -604,7 +604,7 @@ class RetentionService {
 		}
 
 		foreach ($objects as $object) {
-			$data = $this->normalise($object);
+			$data = $this->normalise(object: $object);
 			$pubDate = (string)($data['publicationDate'] ?? '');
 
 			if ($catalogSlug !== null && $catalogSlug !== '' && (string)($data['catalog'] ?? '') !== $catalogSlug) {

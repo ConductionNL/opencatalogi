@@ -174,7 +174,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 		$ids = [];
 		try {
 			foreach ($schemaMapper->findAll() as $schema) {
-				$data = $this->normalise($schema);
+				$data = $this->normalise(object: $schema);
 				$title = (string)($data['title'] ?? '');
 				$id = ($data['id'] ?? null);
 				if ($id !== null && $title !== '' && stripos($title, $needle) !== false) {
@@ -205,7 +205,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 		$map = [];
 		try {
 			foreach ($registerMapper->findAll() as $register) {
-				$data = $this->normalise($register);
+				$data = $this->normalise(object: $register);
 				$registerId = ($data['id'] ?? null);
 				if ($registerId === null) {
 					continue;
@@ -254,7 +254,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			return [];
 		}
 
-		$schemaIds = $this->resolveSchemaIds($needle);
+		$schemaIds = $this->resolveSchemaIds(needle: $needle);
 		if ($schemaIds === []) {
 			return [];
 		}
@@ -289,7 +289,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 				}
 
 				foreach ($results as $result) {
-					$objects[] = $this->normalise($result);
+					$objects[] = $this->normalise(object: $result);
 				}
 			}//end foreach
 		}//end foreach
@@ -336,7 +336,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			name: 'catalogs_total',
 			type: 'gauge',
 			help: 'Total catalogs',
-			value: $this->countObjectsBySchemaNeedle('atalog')
+			value: $this->countObjectsBySchemaNeedle(needle: 'atalog')
 		);
 
 		// Listings total by status (with the historical zero fallback).
@@ -364,7 +364,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			name: 'directory_entries_total',
 			type: 'gauge',
 			help: 'Total federated directory entries',
-			value: $this->countObjectsBySchemaNeedle('irectory')
+			value: $this->countObjectsBySchemaNeedle(needle: 'irectory')
 		);
 
 		// Usage analytics — catalog-labelled view/download totals (ANA-008).
@@ -414,7 +414,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	 */
 	private function getPublicationCounts(): array {
 		$grouped = [];
-		foreach ($this->fetchObjectsBySchemaNeedle('ublicati') as $object) {
+		foreach ($this->fetchObjectsBySchemaNeedle(needle: 'ublicati') as $object) {
 			$status = (string)($object['status'] ?? '');
 			$catalog = (string)($object['catalog'] ?? '');
 			$key = $status . '|' . $catalog;
@@ -438,7 +438,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
 	 */
 	private function countObjectsBySchemaNeedle(string $needle): int {
-		return count($this->fetchObjectsBySchemaNeedle($needle));
+		return count($this->fetchObjectsBySchemaNeedle(needle: $needle));
 	}//end countObjectsBySchemaNeedle()
 
 	/**
@@ -450,7 +450,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	 */
 	private function getListingCounts(): array {
 		$grouped = [];
-		foreach ($this->fetchObjectsBySchemaNeedle('isting') as $object) {
+		foreach ($this->fetchObjectsBySchemaNeedle(needle: 'isting') as $object) {
 			$status = (string)($object['status'] ?? '');
 			if (isset($grouped[$status]) === false) {
 				$grouped[$status] = ['status' => $status, 'cnt' => 0];
@@ -477,7 +477,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	private function getUsageTotalsByCatalog(): array {
 		$out = ['view' => [], 'download' => []];
 
-		foreach ($this->fetchObjectsBySchemaNeedle('sageCounter') as $object) {
+		foreach ($this->fetchObjectsBySchemaNeedle(needle: 'sageCounter') as $object) {
 			$kind = (string)($object['kind'] ?? '');
 			if (isset($out[$kind]) === false) {
 				continue;

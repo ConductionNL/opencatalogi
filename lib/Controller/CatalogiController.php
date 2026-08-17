@@ -91,7 +91,7 @@ class CatalogiController extends Controller {
 		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
 		int $corsMaxAge = 1728000,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 		$this->corsMethods = $corsMethods;
 		$this->corsAllowedHeaders = $corsAllowedHeaders;
 		$this->corsMaxAge = $corsMaxAge;
@@ -128,7 +128,7 @@ class CatalogiController extends Controller {
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
 	 */
 	private function getCatalogConfiguration(): array {
-		return $this->resolveRegisterConfiguration('catalog_register', 'catalog_schema');
+		return $this->resolveRegisterConfiguration(registerKey: 'catalog_register', schemaKey: 'catalog_schema');
 	}//end getCatalogConfiguration()
 
 	/**
@@ -165,6 +165,10 @@ class CatalogiController extends Controller {
 		return ($allowlist[0] ?? '*');
 	}//end resolveAllowedOrigin()
 
+	// Generous, as for every preflightedCors() in this app: the browser sends
+	// this OPTIONS request BEFORE each cross-origin call it makes. A ceiling
+	// tight enough to bite here would break ordinary cross-origin use rather
+	// than an attack.
 	/**
 	 * Implements a preflighted CORS response for OPTIONS requests.
 	 *
@@ -175,10 +179,6 @@ class CatalogiController extends Controller {
 	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
-	// Generous, as for every preflightedCors() in this app: the browser sends
-	// this OPTIONS request BEFORE each cross-origin call it makes. A ceiling
-	// tight enough to bite here would break ordinary cross-origin use rather
-	// than an attack.
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		$response = new Response();
@@ -209,7 +209,7 @@ class CatalogiController extends Controller {
 		try {
 			$catalogConfig = $this->getCatalogConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse($e);
+			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		// Retrieve all request parameters.

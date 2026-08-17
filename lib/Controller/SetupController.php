@@ -110,7 +110,7 @@ class SetupController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 

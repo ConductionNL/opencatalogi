@@ -52,7 +52,7 @@ class DcatResponse extends Response {
 	 */
 	public function __construct(string $body = '', string $contentType = 'application/ld+json', int $status = 200, array $headers = []) {
 		// @phpstan-ignore argument.type
-		parent::__construct($status);
+		parent::__construct(status: $status);
 
 		$this->body = $body;
 

@@ -102,7 +102,7 @@ class ObjectUpdatedEventListener implements IEventListener {
 			$oldObjectEntity = $event->getOldObject();
 
 			// Convert ObjectEntity to array format expected by EventService.
-			$newObjectData = $this->convertObjectEntityToArray($newObjectEntity);
+			$newObjectData = $this->convertObjectEntityToArray(objectEntity: $newObjectEntity);
 
 			// Check if this update should trigger auto-publishing logic.
 			if ($this->shouldProcessUpdate(
@@ -173,7 +173,7 @@ class ObjectUpdatedEventListener implements IEventListener {
 	): bool {
 		// If auto-publish attachments is enabled, always process for published objects.
 		if ($publishingOptions['auto_publish_attachments'] === true) {
-			$isNewObjectPublished = $this->isObjectPublished($newObjectData);
+			$isNewObjectPublished = $this->isObjectPublished(objectData: $newObjectData);
 			if ($isNewObjectPublished === true) {
 				return true;
 			}
@@ -187,10 +187,10 @@ class ObjectUpdatedEventListener implements IEventListener {
 		// Check if publication status changed from unpublished to published.
 		$wasPublished = false;
 		if ($oldObjectEntity !== null) {
-			$wasPublished = $this->isObjectEntityPublished($oldObjectEntity);
+			$wasPublished = $this->isObjectEntityPublished(objectEntity: $oldObjectEntity);
 		}
 
-		$isPublished = $this->isObjectPublished($newObjectData);
+		$isPublished = $this->isObjectPublished(objectData: $newObjectData);
 
 		// Process if object became published.
 		if ($wasPublished === false && $isPublished === true) {
@@ -218,7 +218,7 @@ class ObjectUpdatedEventListener implements IEventListener {
 			return false;
 		}
 
-		return $this->isObjectPublished($objectData);
+		return $this->isObjectPublished(objectData: $objectData);
 	}//end isObjectEntityPublished()
 
 	/**

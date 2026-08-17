@@ -88,7 +88,7 @@ class OoapiController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 
@@ -195,11 +195,12 @@ class OoapiController extends Controller {
 	private function requireAuthenticatedConsumer(): ?JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
-			return $this->json(['error' => $this->l10n->t('Authentication required')], Http::STATUS_UNAUTHORIZED);
+			return $this->json(data: ['error' => $this->l10n->t('Authentication required')], status: Http::STATUS_UNAUTHORIZED);
 		}
 
 		if ($this->ooapiService->isConsumerAllowed($user->getUID()) === false) {
-			return $this->json(['error' => $this->l10n->t('This account is not an authorized OOAPI consumer')], Http::STATUS_FORBIDDEN);
+			$notAllowed = $this->l10n->t('This account is not an authorized OOAPI consumer');
+			return $this->json(data: ['error' => $notAllowed], status: Http::STATUS_FORBIDDEN);
 		}
 
 		return null;
@@ -217,12 +218,13 @@ class OoapiController extends Controller {
 	private function resolveEnabledCatalog(string $catalogSlug): array {
 		$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 		if ($catalog === null) {
-			return ['catalog' => null, 'error' => $this->json(['error' => $this->l10n->t('Catalog not found')], Http::STATUS_NOT_FOUND)];
+			$notFound = $this->l10n->t('Catalog not found');
+			return ['catalog' => null, 'error' => $this->json(data: ['error' => $notFound], status: Http::STATUS_NOT_FOUND)];
 		}
 
 		if ($this->ooapiService->isOoapiEnabled($catalog) === false) {
 			$notEnabled = $this->l10n->t('OOAPI 5.0 publication is not enabled for this catalog');
-			return ['catalog' => null, 'error' => $this->json(['error' => $notEnabled], Http::STATUS_NOT_FOUND)];
+			return ['catalog' => null, 'error' => $this->json(data: ['error' => $notEnabled], status: Http::STATUS_NOT_FOUND)];
 		}
 
 		return ['catalog' => $catalog, 'error' => null];
@@ -240,9 +242,9 @@ class OoapiController extends Controller {
 	 */
 	private function resolveContext(string $registerKey, string $schemaKey): array {
 		try {
-			return ['pair' => $this->resolveRegisterConfiguration($registerKey, $schemaKey), 'error' => null];
+			return ['pair' => $this->resolveRegisterConfiguration(registerKey: $registerKey, schemaKey: $schemaKey), 'error' => null];
 		} catch (\Throwable $e) {
-			return ['pair' => null, 'error' => $this->registerConfigErrorResponse($e)];
+			return ['pair' => null, 'error' => $this->registerConfigErrorResponse(e: $e)];
 		}
 
 	}//end resolveContext()
@@ -298,7 +300,7 @@ class OoapiController extends Controller {
 			return $action();
 		} catch (\Throwable $e) {
 			$this->logger->error('[OoapiController] Unhandled error', ['error' => $e->getMessage()]);
-			return $this->json(['error' => $this->l10n->t('Internal server error')], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->json(data: ['error' => $this->l10n->t('Internal server error')], status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 	}//end guard()
@@ -322,13 +324,13 @@ class OoapiController extends Controller {
 		}
 
 		return $this->guard(
-			function () use ($catalogSlug): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog($catalogSlug);
+			action: function () use ($catalogSlug): JSONResponse {
+				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
 				if ($resolved['error'] !== null) {
 					return $resolved['error'];
 				}
 
-				$context = $this->resolveContext('organization_register', 'organization_schema');
+				$context = $this->resolveContext(registerKey: 'organization_register', schemaKey: 'organization_schema');
 				if ($context['error'] !== null) {
 					return $context['error'];
 				}
@@ -378,13 +380,13 @@ class OoapiController extends Controller {
 		}
 
 		return $this->guard(
-			function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog($catalogSlug);
+			action: function () use ($catalogSlug, $id): JSONResponse {
+				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
 				if ($resolved['error'] !== null) {
 					return $resolved['error'];
 				}
 
-				$context = $this->resolveContext('organization_register', 'organization_schema');
+				$context = $this->resolveContext(registerKey: 'organization_register', schemaKey: 'organization_schema');
 				if ($context['error'] !== null) {
 					return $context['error'];
 				}
@@ -396,10 +398,10 @@ class OoapiController extends Controller {
 					organizationSchema: $context['pair']['schema']
 				);
 				if ($organization === null) {
-					return $this->json(['error' => $this->l10n->t('Organization not found')], Http::STATUS_NOT_FOUND);
+					return $this->json(data: ['error' => $this->l10n->t('Organization not found')], status: Http::STATUS_NOT_FOUND);
 				}
 
-				return $this->json($organization, Http::STATUS_OK);
+				return $this->json(data: $organization, status: Http::STATUS_OK);
 			}
 		);
 
@@ -424,13 +426,13 @@ class OoapiController extends Controller {
 		}
 
 		return $this->guard(
-			function () use ($catalogSlug): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog($catalogSlug);
+			action: function () use ($catalogSlug): JSONResponse {
+				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
 				if ($resolved['error'] !== null) {
 					return $resolved['error'];
 				}
 
-				$context = $this->resolveContext('ooapi_courses_register', 'ooapi_courses_schema');
+				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
 				if ($context['error'] !== null) {
 					return $context['error'];
 				}
@@ -444,7 +446,7 @@ class OoapiController extends Controller {
 					pageSize: $pagination['pageSize']
 				);
 
-				return $this->collectionResponse($result);
+				return $this->collectionResponse(result: $result);
 			}
 		);
 
@@ -470,13 +472,13 @@ class OoapiController extends Controller {
 		}
 
 		return $this->guard(
-			function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog($catalogSlug);
+			action: function () use ($catalogSlug, $id): JSONResponse {
+				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
 				if ($resolved['error'] !== null) {
 					return $resolved['error'];
 				}
 
-				$context = $this->resolveContext('ooapi_courses_register', 'ooapi_courses_schema');
+				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
 				if ($context['error'] !== null) {
 					return $context['error'];
 				}
@@ -489,10 +491,10 @@ class OoapiController extends Controller {
 					idField: 'courseId'
 				);
 				if ($course === null) {
-					return $this->json(['error' => $this->l10n->t('Course not found')], Http::STATUS_NOT_FOUND);
+					return $this->json(data: ['error' => $this->l10n->t('Course not found')], status: Http::STATUS_NOT_FOUND);
 				}
 
-				return $this->json($course, Http::STATUS_OK);
+				return $this->json(data: $course, status: Http::STATUS_OK);
 			}
 		);
 
@@ -517,13 +519,13 @@ class OoapiController extends Controller {
 		}
 
 		return $this->guard(
-			function () use ($catalogSlug): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog($catalogSlug);
+			action: function () use ($catalogSlug): JSONResponse {
+				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
 				if ($resolved['error'] !== null) {
 					return $resolved['error'];
 				}
 
-				$context = $this->resolveContext('ooapi_programs_register', 'ooapi_programs_schema');
+				$context = $this->resolveContext(registerKey: 'ooapi_programs_register', schemaKey: 'ooapi_programs_schema');
 				if ($context['error'] !== null) {
 					return $context['error'];
 				}
@@ -537,7 +539,7 @@ class OoapiController extends Controller {
 					pageSize: $pagination['pageSize']
 				);
 
-				return $this->collectionResponse($result);
+				return $this->collectionResponse(result: $result);
 			}
 		);
 
@@ -563,13 +565,13 @@ class OoapiController extends Controller {
 		}
 
 		return $this->guard(
-			function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog($catalogSlug);
+			action: function () use ($catalogSlug, $id): JSONResponse {
+				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
 				if ($resolved['error'] !== null) {
 					return $resolved['error'];
 				}
 
-				$context = $this->resolveContext('ooapi_programs_register', 'ooapi_programs_schema');
+				$context = $this->resolveContext(registerKey: 'ooapi_programs_register', schemaKey: 'ooapi_programs_schema');
 				if ($context['error'] !== null) {
 					return $context['error'];
 				}
@@ -582,10 +584,10 @@ class OoapiController extends Controller {
 					idField: 'programId'
 				);
 				if ($program === null) {
-					return $this->json(['error' => $this->l10n->t('Program not found')], Http::STATUS_NOT_FOUND);
+					return $this->json(data: ['error' => $this->l10n->t('Program not found')], status: Http::STATUS_NOT_FOUND);
 				}
 
-				return $this->json($program, Http::STATUS_OK);
+				return $this->json(data: $program, status: Http::STATUS_OK);
 			}
 		);
 
@@ -611,13 +613,13 @@ class OoapiController extends Controller {
 		}
 
 		return $this->guard(
-			function () use ($catalogSlug, $courseId): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog($catalogSlug);
+			action: function () use ($catalogSlug, $courseId): JSONResponse {
+				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
 				if ($resolved['error'] !== null) {
 					return $resolved['error'];
 				}
 
-				$context = $this->resolveContext('ooapi_offerings_register', 'ooapi_offerings_schema');
+				$context = $this->resolveContext(registerKey: 'ooapi_offerings_register', schemaKey: 'ooapi_offerings_schema');
 				if ($context['error'] !== null) {
 					return $context['error'];
 				}
@@ -632,7 +634,7 @@ class OoapiController extends Controller {
 					pageSize: $pagination['pageSize']
 				);
 
-				return $this->collectionResponse($result);
+				return $this->collectionResponse(result: $result);
 			}
 		);
 
@@ -658,13 +660,13 @@ class OoapiController extends Controller {
 		}
 
 		return $this->guard(
-			function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog($catalogSlug);
+			action: function () use ($catalogSlug, $id): JSONResponse {
+				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
 				if ($resolved['error'] !== null) {
 					return $resolved['error'];
 				}
 
-				$context = $this->resolveContext('ooapi_offerings_register', 'ooapi_offerings_schema');
+				$context = $this->resolveContext(registerKey: 'ooapi_offerings_register', schemaKey: 'ooapi_offerings_schema');
 				if ($context['error'] !== null) {
 					return $context['error'];
 				}
@@ -677,10 +679,10 @@ class OoapiController extends Controller {
 					idField: 'offeringId'
 				);
 				if ($offering === null) {
-					return $this->json(['error' => $this->l10n->t('Offering not found')], Http::STATUS_NOT_FOUND);
+					return $this->json(data: ['error' => $this->l10n->t('Offering not found')], status: Http::STATUS_NOT_FOUND);
 				}
 
-				return $this->json($offering, Http::STATUS_OK);
+				return $this->json(data: $offering, status: Http::STATUS_OK);
 			}
 		);
 
@@ -703,13 +705,13 @@ class OoapiController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function validate(string $catalogSlug): JSONResponse {
 		return $this->guard(
-			function () use ($catalogSlug): JSONResponse {
+			action: function () use ($catalogSlug): JSONResponse {
 				$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 				if ($catalog === null) {
-					return $this->json(['error' => $this->l10n->t('Catalog not found')], Http::STATUS_NOT_FOUND);
+					return $this->json(data: ['error' => $this->l10n->t('Catalog not found')], status: Http::STATUS_NOT_FOUND);
 				}
 
-				$context = $this->resolveContext('ooapi_courses_register', 'ooapi_courses_schema');
+				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
 				if ($context['error'] !== null) {
 					return $context['error'];
 				}

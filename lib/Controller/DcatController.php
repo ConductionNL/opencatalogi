@@ -72,7 +72,7 @@ class DcatController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 
@@ -171,7 +171,7 @@ class DcatController extends Controller {
 			}
 
 			$document = $this->dcatService->buildInstanceDocument();
-			return $this->respond($document, $format);
+			return $this->respond(document: $document, format: $format);
 		} catch (\Throwable $e) {
 			$this->logger->error('[DcatController::instance] Failed to build instance DCAT document', ['error' => $e->getMessage()]);
 			return new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500);
@@ -229,11 +229,11 @@ class DcatController extends Controller {
 					body: '',
 					contentType: DcatSerializer::FORMATS[$format],
 					status: 304,
-					headers: $this->cachingHeaders($document)
+					headers: $this->cachingHeaders(document: $document)
 				);
 			}
 
-			return $this->respond($document, $format);
+			return $this->respond(document: $document, format: $format);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'[DcatController::catalog] Failed to build catalog DCAT document',
@@ -328,7 +328,7 @@ class DcatController extends Controller {
 		unset($document['_meta']);
 
 		$body = $this->serializer->serialize($document, $format);
-		$headers = array_merge($this->corsHeaders(), $this->cachingHeaders(['_meta' => $meta]));
+		$headers = array_merge($this->corsHeaders(), $this->cachingHeaders(document: ['_meta' => $meta]));
 
 		return new DcatResponse(
 			body: $body,

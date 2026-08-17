@@ -106,11 +106,11 @@ class QualityService {
 	public function scoreDataset(array $node): array {
 		$missing = [];
 		$dimensions = [
-			'findability' => $this->scoreFindability($node, $missing),
-			'accessibility' => $this->scoreAccessibility($node, $missing),
-			'interoperability' => $this->scoreInteroperability($node, $missing),
-			'reusability' => $this->scoreReusability($node, $missing),
-			'contextuality' => $this->scoreContextuality($node, $missing),
+			'findability' => $this->scoreFindability(node: $node, missing: $missing),
+			'accessibility' => $this->scoreAccessibility(node: $node, missing: $missing),
+			'interoperability' => $this->scoreInteroperability(node: $node, missing: $missing),
+			'reusability' => $this->scoreReusability(node: $node, missing: $missing),
+			'contextuality' => $this->scoreContextuality(node: $node, missing: $missing),
 		];
 
 		$weights = $this->weights();
@@ -143,20 +143,20 @@ class QualityService {
 	 */
 	private function scoreFindability(array $node, array &$missing): int {
 		$score = 0;
-		if ($this->present($node, 'dct:title') === true) {
+		if ($this->present(node: $node, key: 'dct:title') === true) {
 			$score += 33;
 		} else {
 			$missing[] = 'dct:title';
 		}
 
-		if ($this->present($node, 'dcat:keyword') === true) {
+		if ($this->present(node: $node, key: 'dcat:keyword') === true) {
 			$score += 33;
 		} else {
 			$missing[] = 'dcat:keyword';
 		}
 
 		// Theme only counts when bound to an authority URI (@id), never a literal.
-		if ($this->isIdRef($node['dcat:theme'] ?? null) === true) {
+		if ($this->isIdRef(value: $node['dcat:theme'] ?? null) === true) {
 			$score += 34;
 		} else {
 			$missing[] = 'dcat:theme';
@@ -174,9 +174,9 @@ class QualityService {
 	 * @return int The 0–100 sub-score.
 	 */
 	private function scoreAccessibility(array $node, array &$missing): int {
-		foreach ($this->distributions($node) as $distribution) {
-			if ($this->isIdRef($distribution['dcat:downloadURL'] ?? null) === true
-				|| $this->isIdRef($distribution['dcat:accessURL'] ?? null) === true
+		foreach ($this->distributions(node: $node) as $distribution) {
+			if ($this->isIdRef(value: $distribution['dcat:downloadURL'] ?? null) === true
+				|| $this->isIdRef(value: $distribution['dcat:accessURL'] ?? null) === true
 			) {
 				return 100;
 			}
@@ -195,7 +195,7 @@ class QualityService {
 	 * @return int The 0–100 sub-score.
 	 */
 	private function scoreInteroperability(array $node, array &$missing): int {
-		$distributions = $this->distributions($node);
+		$distributions = $this->distributions(node: $node);
 		if ($distributions === []) {
 			$missing[] = 'dct:format';
 			return 0;
@@ -212,7 +212,7 @@ class QualityService {
 				$score += 30;
 			}
 
-			if ($this->isOpenFormat($distribution) === true) {
+			if ($this->isOpenFormat(distribution: $distribution) === true) {
 				$score += 30;
 			}
 
@@ -236,13 +236,13 @@ class QualityService {
 	 */
 	private function scoreReusability(array $node, array &$missing): int {
 		$score = 0;
-		if ($this->present($node, 'dct:license') === true) {
+		if ($this->present(node: $node, key: 'dct:license') === true) {
 			$score += 50;
 		} else {
 			$missing[] = 'dct:license';
 		}
 
-		if ($this->present($node, 'dct:publisher') === true) {
+		if ($this->present(node: $node, key: 'dct:publisher') === true) {
 			$score += 50;
 		} else {
 			$missing[] = 'dct:publisher';
@@ -261,13 +261,13 @@ class QualityService {
 	 */
 	private function scoreContextuality(array $node, array &$missing): int {
 		$score = 0;
-		if ($this->present($node, 'dct:modified') === true || $this->present($node, 'dct:issued') === true) {
+		if ($this->present(node: $node, key: 'dct:modified') === true || $this->present(node: $node, key: 'dct:issued') === true) {
 			$score += 50;
 		} else {
 			$missing[] = 'dct:modified';
 		}
 
-		if ($this->present($node, 'dct:identifier') === true || $this->isIdRef($node['dcat:landingPage'] ?? null) === true) {
+		if ($this->present(node: $node, key: 'dct:identifier') === true || $this->isIdRef(value: $node['dcat:landingPage'] ?? null) === true) {
 			$score += 50;
 		} else {
 			$missing[] = 'dct:identifier';
@@ -293,7 +293,7 @@ class QualityService {
 		$missingBreakdown = [];
 
 		foreach ($nodes as $node) {
-			$score = $this->scoreDataset($node);
+			$score = $this->scoreDataset(node: $node);
 			$entry = [
 				'iri' => ($node['@id'] ?? ''),
 				'total' => $score['total'],
@@ -303,7 +303,7 @@ class QualityService {
 			$scored[] = $entry;
 			$sum += $score['total'];
 
-			$distribution[$this->band($score['total'])]++;
+			$distribution[$this->band(total: $score['total'])]++;
 			foreach ($score['missing'] as $property) {
 				$missingBreakdown[$property] = (($missingBreakdown[$property] ?? 0) + 1);
 			}

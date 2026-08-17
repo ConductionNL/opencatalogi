@@ -81,7 +81,7 @@ class Application extends App implements IBootstrap {
 	 * @psalm-suppress PossiblyUnusedMethod
 	 */
 	public function __construct() {
-		parent::__construct(self::APP_ID);
+		parent::__construct(appName: self::APP_ID);
 
 	}//end __construct()
 
