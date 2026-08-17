@@ -182,7 +182,7 @@ class FileService {
 	 */
 	public function handleFile(IRequest $request, array $data): JSONResponse|array {
 		// Uploaded _file and downloadURL are mutually exclusive.
-		$uploadedFile = $this->checkUploadedFile($request);
+		$uploadedFile = $this->checkUploadedFile(request: $request);
 		if ($uploadedFile instanceof JSONResponse) {
 			return $uploadedFile;
 		}

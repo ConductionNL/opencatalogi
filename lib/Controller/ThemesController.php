@@ -95,7 +95,7 @@ class ThemesController extends Controller {
 		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
 		int $corsMaxAge = 1728000,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 		$this->corsMethods = $corsMethods;
 		$this->corsAllowedHeaders = $corsAllowedHeaders;
 		$this->corsMaxAge = $corsMaxAge;
@@ -132,7 +132,7 @@ class ThemesController extends Controller {
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
 	 */
 	private function getThemeConfiguration(): array {
-		return $this->resolveRegisterConfiguration('theme_register', 'theme_schema');
+		return $this->resolveRegisterConfiguration(registerKey: 'theme_register', schemaKey: 'theme_schema');
 	}//end getThemeConfiguration()
 
 	/**
@@ -211,7 +211,7 @@ class ThemesController extends Controller {
 		try {
 			$themeConfig = $this->getThemeConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse($e);
+			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		// Get query parameters from request.
@@ -307,7 +307,7 @@ class ThemesController extends Controller {
 		try {
 			$themeConfig = $this->getThemeConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse($e);
+			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		// Scope the lookup to the theme register/schema. Without them, find() falls back

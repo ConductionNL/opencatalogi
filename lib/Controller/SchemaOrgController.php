@@ -67,7 +67,7 @@ class SchemaOrgController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 

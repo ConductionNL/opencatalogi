@@ -64,7 +64,7 @@ class XMLResponse extends Response {
 	 */
 	public function __construct($data = [], int $status = 200, array $headers = [], ?string $path = null) {
 		// @phpstan-ignore argument.type
-		parent::__construct($status);
+		parent::__construct(status: $status);
 
 		// Set response data.
 		$this->data = ['content' => $data];
@@ -74,18 +74,18 @@ class XMLResponse extends Response {
 
 		// Set headers.
 		foreach ($headers as $name => $value) {
-			$this->addHeader($name, $value);
+			$this->addHeader(name: $name, value: $value);
 		}
 
 		// Set content type header.
-		$this->addHeader('Content-Type', 'application/xml; charset=utf-8');
+		$this->addHeader(name: 'Content-Type', value: 'application/xml; charset=utf-8');
 
 		// Only add Content-Disposition header if path ends with .xml.
 		if ($path !== null
 			&& str_ends_with($path, '.xml') === true
 			&& isset($this->getHeaders()['Content-Disposition']) === false
 		) {
-			$this->addHeader('Content-Disposition', 'attachment; filename="export.xml"');
+			$this->addHeader(name: 'Content-Disposition', value: 'attachment; filename="export.xml"');
 		}
 
 	}//end __construct()
@@ -127,11 +127,11 @@ class XMLResponse extends Response {
 
 		// Check if data contains an @root key and use it directly.
 		if (isset($data['@root']) === true) {
-			return $this->arrayToXml($data);
+			return $this->arrayToXml(data: $data);
 		}
 
 		// Use default root tag.
-		return $this->arrayToXml(['value' => $data], 'response');
+		return $this->arrayToXml(data: ['value' => $data], rootTag: 'response');
 	}//end render()
 
 	/**
@@ -276,7 +276,7 @@ class XMLResponse extends Response {
 
 		// Handle objects that might not be convertible to string directly.
 		if (is_object($data) === true) {
-			$data = $this->convertObjectToString($data);
+			$data = $this->convertObjectToString(data: $data);
 		}
 
 		$childElement->appendChild($this->createSafeTextNode(dom: $dom, text: (string)$data));

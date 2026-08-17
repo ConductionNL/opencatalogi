@@ -81,7 +81,7 @@ class CatalogSchemaEventListener implements IEventListener {
 		}
 
 		try {
-			$objectEntity = $this->getEntityFromEvent($event);
+			$objectEntity = $this->getEntityFromEvent(event: $event);
 			if ($objectEntity === null) {
 				return;
 			}

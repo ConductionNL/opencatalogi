@@ -102,7 +102,7 @@ class DownloadService {
 		}
 
 		// Get publication data if not provided (DWN-OR-005 returns 404 when unresolvable).
-		$publication = ($options['publication'] ?? $this->getPublicationData($id, $objectService));
+		$publication = ($options['publication'] ?? $this->getPublicationData(id: $id, objectService: $objectService));
 		if ($publication instanceof JSONResponse) {
 			return $publication;
 		}

@@ -201,7 +201,7 @@ class CleanupOrphanDirectoryListings implements IRepairStep
         ];
 
         try {
-            $rows = $this->fetchOrphanRows($tableName);
+            $rows = $this->fetchOrphanRows(tableName: $tableName);
         } catch (\Throwable $e) {
             $output->warning(sprintf('Failed to scan %s: %s', $tableName, $e->getMessage()));
             return $tally;
@@ -235,7 +235,7 @@ class CleanupOrphanDirectoryListings implements IRepairStep
             }
         }//end foreach
 
-        $tally['kept'] = $this->countValidRows($tableName);
+        $tally['kept'] = $this->countValidRows(tableName: $tableName);
 
         return $tally;
 

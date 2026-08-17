@@ -99,7 +99,7 @@ class ObjectCreatedEventListener implements IEventListener {
 			$objectEntity = $event->getObject();
 
 			// Convert ObjectEntity to array format expected by EventService.
-			$objectData = $this->convertObjectEntityToArray($objectEntity);
+			$objectData = $this->convertObjectEntityToArray(objectEntity: $objectEntity);
 
 			// Process the object creation event through EventService.
 			$result = $eventService->handleObjectCreateEvents([$objectData]);

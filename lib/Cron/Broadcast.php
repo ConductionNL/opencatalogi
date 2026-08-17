@@ -53,16 +53,16 @@ class Broadcast extends TimedJob {
 		private readonly BroadcastService $broadcastService,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct($time);
+		parent::__construct(time: $time);
 
 		// Set interval to 4 hours (14400 seconds).
-		$this->setInterval(14400);
+		$this->setInterval(seconds: 14400);
 
 		// Set job to run during low-load times.
-		$this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
 		// Prevent parallel runs to avoid duplicate broadcasts.
-		$this->setAllowParallelRuns(false);
+		$this->setAllowParallelRuns(allow: false);
 
 	}//end __construct()
 

@@ -357,12 +357,12 @@ class CMSTool implements ToolInterface {
 
 		try {
 			return match ($functionName) {
-				'cms_create_page' => $this->createPage($parameters),
-				'cms_list_pages' => $this->listPages($parameters),
-				'cms_create_menu' => $this->createMenu($parameters),
+				'cms_create_page' => $this->createPage(parameters: $parameters),
+				'cms_list_pages' => $this->listPages(parameters: $parameters),
+				'cms_create_menu' => $this->createMenu(parameters: $parameters),
 				'cms_list_menus' => $this->listMenus(),
-				'cms_add_menu_item' => $this->addMenuItem($parameters),
-				default => $this->errorResponse('Unknown function: ' . $functionName, 404)
+				'cms_add_menu_item' => $this->addMenuItem(parameters: $parameters),
+				default => $this->errorResponse(message: 'Unknown function: ' . $functionName, code: 404)
 			};
 		} catch (\Exception $e) {
 			$this->logger->error(
@@ -374,7 +374,7 @@ class CMSTool implements ToolInterface {
 				]
 			);
 
-			return $this->errorResponse($e->getMessage());
+			return $this->errorResponse(message: $e->getMessage());
 		}//end try
 
 	}//end executeFunction()
@@ -395,7 +395,7 @@ class CMSTool implements ToolInterface {
 		}
 
 		// Generate slug if not provided.
-		$slug = ($parameters['slug'] ?? $this->generateSlug($parameters['title']));
+		$slug = ($parameters['slug'] ?? $this->generateSlug(title: $parameters['title']));
 
 		// Create page object.
 		$pageData = [
@@ -697,7 +697,7 @@ class CMSTool implements ToolInterface {
 		}
 
 		if ($param->hasType() === true) {
-			return $this->castParameterValue($param, $value);
+			return $this->castParameterValue(param: $param, value: $value);
 		}
 
 		return $value;
@@ -724,7 +724,7 @@ class CMSTool implements ToolInterface {
 			'float' => (float)$value,
 			'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
 			'string' => (string)$value,
-			'array' => $this->castToArray($value),
+			'array' => $this->castToArray(value: $value),
 			default => $value,
 		};
 
@@ -825,7 +825,7 @@ class CMSTool implements ToolInterface {
 				}
 
 				// Handle string 'null' from LLM.
-				$value = $this->resolveParameterValue($param, $value);
+				$value = $this->resolveParameterValue(param: $param, value: $value);
 
 				$typedArguments[] = $value;
 			}//end foreach

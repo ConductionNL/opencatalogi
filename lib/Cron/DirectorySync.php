@@ -75,7 +75,7 @@ class DirectorySync extends TimedJob {
 		private readonly DirectoryService $directoryService,
 		IAppConfig $config,
 	) {
-		parent::__construct($time);
+		parent::__construct(time: $time);
 
 		// Read interval from IAppConfig, clamped to [MIN_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS].
 		// A gewijzigde waarde is direct actief bij de volgende scheduling-tick omdat Nextcloud
@@ -87,13 +87,13 @@ class DirectorySync extends TimedJob {
 		);
 		$interval = max(self::MIN_INTERVAL_SECONDS, min(self::MAX_INTERVAL_SECONDS, $configured));
 
-		$this->setInterval($interval);
+		$this->setInterval(seconds: $interval);
 
 		// Delay until low-load time.
-		$this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
 		// Only run one instance of this job at a time.
-		$this->setAllowParallelRuns(false);
+		$this->setAllowParallelRuns(allow: false);
 
 	}//end __construct()
 

@@ -217,7 +217,7 @@ class SitemapService {
 
 		if (empty($firstPage['results']) === true) {
 			return new XMLResponse(
-				[
+				data: [
 					'@root' => 'sitemapindex',
 					'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
 					'sitemap' => [],
@@ -274,7 +274,7 @@ class SitemapService {
 		}//end while
 
 		return new XMLResponse(
-			[
+			data: [
 				'@root' => 'sitemapindex',
 				'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
 				'sitemap' => $sitemaps,
@@ -370,7 +370,7 @@ class SitemapService {
 			'diwoo:Document' => $xmlDiwooDocuments,
 		];
 
-		return new XMLResponse($xmlContent);
+		return new XMLResponse(data: $xmlContent);
 	}//end buildSitemap()
 
 	/**
@@ -408,7 +408,7 @@ class SitemapService {
 		$settings = $this->settingsService->getSettings();
 
 		if (isset($settings['availableRegisters']) === false) {
-			return new XMLResponse('Could net fetch settings', 500);
+			return new XMLResponse(data: 'Could net fetch settings', status: 500);
 		}
 
 		$schemas = [];
@@ -420,7 +420,7 @@ class SitemapService {
 		}
 
 		if (isset($this::INFO_CAT[$categoryCode]) === false) {
-			return new XMLResponse('Invalid category code', 400);
+			return new XMLResponse(data: 'Invalid category code', status: 400);
 		}
 
 		// Off case because our schema does not follow the woo category precisely.
@@ -471,12 +471,12 @@ class SitemapService {
 		$catalog = ($catalogResult['results'][0] ?? []);
 
 		if (empty($catalog) === true) {
-			return new XMLResponse('Invalid Woo catalog', 400);
+			return new XMLResponse(data: 'Invalid Woo catalog', status: 400);
 		}
 
 		// Check if schema in catalog.
 		if (in_array(needle: $schemaId, haystack: $catalog->getObject()['schemas']) === false) {
-			return new XMLResponse('Schema not configured in catalog', 400);
+			return new XMLResponse(data: 'Schema not configured in catalog', status: 400);
 		}
 
 		return true;
@@ -529,11 +529,11 @@ class SitemapService {
 
 		// Publisher: bind @resource to a valid TOOI organisatie URI, or omit it.
 		$publisher = ['#text' => $owner];
-		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->resolveOrganisationTooiIdentifier($publication));
+		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->resolveOrganisationTooiIdentifier(publication: $publication));
 		if ($orgUri !== null) {
 			$publisher['@resource'] = $orgUri;
 		} else {
-			$this->addViolation($violations, loc: $loc, axis: 'publisher', reason: 'organisation has no TOOI identifier');
+			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no TOOI identifier');
 		}
 
 		$diwoo['diwoo:publisher'] = $publisher;
@@ -545,7 +545,7 @@ class SitemapService {
 
 		// Informatiecategorie: bind to an official TOOI category URI, or omit.
 		$categoryRaw = ($publication['category'] ?? $publication['tooiCategorieUri'] ?? $publication['tooiCategorieNaam'] ?? null);
-		$category = $this->tooiVocabulary->resolveInformatiecategorie($this->stringOrNull($categoryRaw));
+		$category = $this->tooiVocabulary->resolveInformatiecategorie($this->stringOrNull(value: $categoryRaw));
 		if ($category !== null) {
 			$diwoo['diwoo:classificatiecollectie'] = [
 				'diwoo:informatiecategorieen' => [
@@ -556,11 +556,16 @@ class SitemapService {
 				],
 			];
 		} else {
-			$this->addViolation($violations, loc: $loc, axis: 'informatiecategorie', reason: 'category does not resolve to a TOOI value-list member');
+			$this->addViolation(
+				violations: $violations,
+				loc: $loc,
+				axis: 'informatiecategorie',
+				reason: 'category does not resolve to a TOOI value-list member'
+			);
 		}
 
 		// SoortHandeling: resolve through the DiWoo value list (default: ontvangst).
-		$handling = $this->tooiVocabulary->resolveSoortHandeling($this->stringOrNull($publication['soortHandeling'] ?? null));
+		$handling = $this->tooiVocabulary->resolveSoortHandeling($this->stringOrNull(value: $publication['soortHandeling'] ?? null));
 		if ($handling !== null) {
 			$diwoo['diwoo:documenthandelingen'] = [
 				'diwoo:documenthandeling' => [
@@ -573,7 +578,7 @@ class SitemapService {
 			];
 		} else {
 			$this->addViolation(
-				$violations,
+				violations: $violations,
 				loc: $loc,
 				axis: 'soortHandeling',
 				reason: 'handling type does not resolve to a DiWoo value-list member'
@@ -651,7 +656,7 @@ class SitemapService {
 			return $this->orgTooiCache[$organisation];
 		}
 
-		$identifier = $this->fetchOrganisationTooiIdentifier($organisation);
+		$identifier = $this->fetchOrganisationTooiIdentifier(organisation: $organisation);
 		$this->orgTooiCache[$organisation] = $identifier;
 		return $identifier;
 	}//end resolveOrganisationTooiIdentifier()
@@ -689,7 +694,7 @@ class SitemapService {
 			$orgData = $org->jsonSerialize();
 		}
 
-		return $this->stringOrNull($orgData['tooiIdentifier'] ?? null);
+		return $this->stringOrNull(value: $orgData['tooiIdentifier'] ?? null);
 	}//end fetchOrganisationTooiIdentifier()
 
 	/**
@@ -786,7 +791,7 @@ class SitemapService {
 			$publications[] = $publication;
 		}
 
-		$violations = $this->collectDiwooViolations($publications);
+		$violations = $this->collectDiwooViolations(publications: $publications);
 
 		return [
 			'catalogSlug' => $catalogSlug,

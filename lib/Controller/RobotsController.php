@@ -77,6 +77,8 @@ class RobotsController extends Controller {
 
 	}//end __construct()
 
+	// Generous: robots.txt is fetched by every crawler that visits, and a
+	// ceiling that trips here blocks indexing rather than abuse.
 	/**
 	 * Generate robots.txt with sitemap references.
 	 *
@@ -87,8 +89,6 @@ class RobotsController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	// Generous: robots.txt is fetched by every crawler that visits, and a
-	// ceiling that trips here blocks indexing rather than abuse.
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function index(): TextResponse {
 		$settings = $this->settingsService->getSettings();

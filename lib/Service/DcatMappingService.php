@@ -188,7 +188,7 @@ class DcatMappingService {
 		];
 
 		foreach ($mapping as $dcatProperty => $sourcePath) {
-			$value = $this->extractValue($publication, $sourcePath);
+			$value = $this->extractValue(object: $publication, path: $sourcePath);
 			if ($value === null || $value === '' || $value === []) {
 				continue;
 			}
@@ -217,7 +217,7 @@ class DcatMappingService {
 			// free-text literal (DCAT-NPF-003). Prefer an authority URI already on the
 			// object, else resolve the source value through the MDR data-theme list.
 			if ($dcatProperty === 'dcat:theme') {
-				$themeUri = $this->resolveThemeUri($publication, $value);
+				$themeUri = $this->resolveThemeUri(publication: $publication, sourceValue: $value);
 				if ($themeUri !== null) {
 					$dataset['dcat:theme'] = ['@id' => $themeUri];
 				} else {
@@ -248,7 +248,7 @@ class DcatMappingService {
 		// object's own publicationDate — the removed @self.published is gone).
 		$modified = ($publication['@self']['updated'] ?? $publication['publicationDate'] ?? null);
 		if ($modified !== null) {
-			$dataset['dct:modified'] = $this->isoDate((string)$modified);
+			$dataset['dct:modified'] = $this->isoDate(value: (string)$modified);
 		}
 
 		// Mandatory: dcat:landingPage → the canonical dataset URL.
@@ -265,7 +265,7 @@ class DcatMappingService {
 		$defaultLicense = ($publication['license'] ?? $defaults['license'] ?? null);
 		$distributions = [];
 		foreach ($files as $file) {
-			$distribution = $this->mapDistribution($file, $defaultLicense);
+			$distribution = $this->mapDistribution(file: $file, defaultLicense: $defaultLicense);
 			if ($distribution !== null) {
 				$distributions[] = $distribution;
 			}
@@ -323,7 +323,7 @@ class DcatMappingService {
 	private function resolveHvdCategory(array $publication, ?array $hvd, ?string $catalogHvdDefault): ?array {
 		$categoryValue = null;
 		if (is_array($hvd) === true && isset($hvd['categoryProperty']) === true) {
-			$extracted = $this->extractValue($publication, (string)$hvd['categoryProperty']);
+			$extracted = $this->extractValue(object: $publication, path: (string)$hvd['categoryProperty']);
 			if (is_scalar($extracted) === true) {
 				$categoryValue = (string)$extracted;
 			}
@@ -360,7 +360,7 @@ class DcatMappingService {
 		}
 
 		$extension = strtolower((string)($file['extension'] ?? ''));
-		$mediaType = $this->mediaTypeFor($extension, ($file['mimetype'] ?? $file['mimeType'] ?? null));
+		$mediaType = $this->mediaTypeFor(extension: $extension, mimetype: ($file['mimetype'] ?? $file['mimeType'] ?? null));
 
 		$distribution = [
 			// IRI is the stable public download URL → harvesters dedupe across runs.
@@ -377,7 +377,7 @@ class DcatMappingService {
 
 		if ($mediaType !== null) {
 			$distribution['dcat:mediaType'] = $mediaType;
-			$distribution['dct:format'] = $this->formatUriFor($extension);
+			$distribution['dct:format'] = $this->formatUriFor(extension: $extension);
 		}
 
 		if (isset($file['size']) === true && is_numeric($file['size']) === true) {
@@ -434,7 +434,7 @@ class DcatMappingService {
 	private function completePublisher(array $dataset, array $publication, array $defaults): array {
 		$objectPublisher = ($publication['publisher'] ?? $publication['organisation'] ?? null);
 		if (is_array($objectPublisher) === true) {
-			$agent = $this->buildPublisher($objectPublisher, $defaults);
+			$agent = $this->buildPublisher(organisation: $objectPublisher, defaults: $defaults);
 			if ($agent !== null) {
 				$dataset['dct:publisher'] = $agent;
 				return $dataset;
@@ -447,7 +447,7 @@ class DcatMappingService {
 			return $dataset;
 		}
 
-		$agent = $this->buildPublisher(($defaults['organisation'] ?? null), $defaults);
+		$agent = $this->buildPublisher(organisation: ($defaults['organisation'] ?? null), defaults: $defaults);
 		if ($agent !== null) {
 			$dataset['dct:publisher'] = $agent;
 		}

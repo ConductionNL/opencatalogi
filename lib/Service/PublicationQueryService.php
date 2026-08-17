@@ -177,9 +177,9 @@ class PublicationQueryService {
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
 	public function assemblePublicSearchResults(array $queryParams, object $objectService): array {
-		$registerId = $this->resolveConfiguredId('publication_register');
-		$publicationSchemaId = $this->resolveConfiguredId('publication_schema');
-		$documentSchemaId = $this->resolveConfiguredId('document_schema');
+		$registerId = $this->resolveConfiguredId(configKey: 'publication_register');
+		$publicationSchemaId = $this->resolveConfiguredId(configKey: 'publication_schema');
+		$documentSchemaId = $this->resolveConfiguredId(configKey: 'document_schema');
 
 		if ($registerId === null || $publicationSchemaId === null || $documentSchemaId === null) {
 			// Configuration not (yet) loaded — fail closed to an empty envelope rather
@@ -291,7 +291,7 @@ class PublicationQueryService {
 				continue;
 			}
 
-			$schemaId = $this->extractSchemaId($rowArray);
+			$schemaId = $this->extractSchemaId(rowArray: $rowArray);
 			$schemaSlug = ($schemaSlugById[$schemaId] ?? null);
 			if ($schemaSlug === null) {
 				continue;
@@ -339,7 +339,7 @@ class PublicationQueryService {
 				$rowArray['publication'] = $publicationSummary['summary'];
 			}//end if
 
-			if ($this->isObjectPublic($rowArray) === false) {
+			if ($this->isObjectPublic(objectData: $rowArray) === false) {
 				continue;
 			}
 
@@ -478,7 +478,7 @@ class PublicationQueryService {
 				'slug' => (string)($publication['@self']['slug'] ?? $slug),
 				'title' => (string)($publication['title'] ?? ''),
 			],
-			'public' => $this->isObjectPublic($publication),
+			'public' => $this->isObjectPublic(objectData: $publication),
 		];
 
 		$cache[$slug] = $summary;

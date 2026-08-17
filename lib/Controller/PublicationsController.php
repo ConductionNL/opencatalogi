@@ -131,7 +131,7 @@ class PublicationsController extends Controller {
 		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
 		int $corsMaxAge = 1728000,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 		$this->corsMethods = $corsMethods;
 		$this->corsAllowedHeaders = $corsAllowedHeaders;
 		$this->corsMaxAge = $corsMaxAge;
@@ -453,7 +453,7 @@ class PublicationsController extends Controller {
 					$rawExtend = [$rawExtend];
 				}
 
-				$safeExtend = $this->sanitizePublicExtend($rawExtend);
+				$safeExtend = $this->sanitizePublicExtend(extend: $rawExtend);
 				unset($requestParams['extend'], $requestParams['_extend']);
 				$requestParams['_extend'] = $safeExtend;
 			}
@@ -518,7 +518,7 @@ class PublicationsController extends Controller {
 
 			// Add CORS headers for public API access.
 			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders($response);
+			$this->addCorsHeaders(response: $response);
 
 			return $response;
 		} catch (\Exception $e) {
@@ -594,11 +594,11 @@ class PublicationsController extends Controller {
 				$extend = [$extend];
 			}
 
-			$extend = $this->sanitizePublicExtend($extend);
+			$extend = $this->sanitizePublicExtend(extend: $extend);
 
 			// Resolve catalog scope (parse JSON strings if needed).
-			$catalogRegisters = $this->normaliseIdList($catalog['registers'] ?? []);
-			$catalogSchemas = $this->normaliseIdList($catalog['schemas'] ?? []);
+			$catalogRegisters = $this->normaliseIdList(raw: $catalog['registers'] ?? []);
+			$catalogSchemas = $this->normaliseIdList(raw: $catalog['schemas'] ?? []);
 
 			// Debug logging.
 			$this->logger->debug(
@@ -779,14 +779,14 @@ class PublicationsController extends Controller {
 				);
 				$response = new JSONResponse($node, 200);
 				$response->addHeader('Content-Type', 'application/ld+json');
-				$this->addCorsHeaders($response);
+				$this->addCorsHeaders(response: $response);
 				$this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
 				return $response;
 			}
 
 			// Add CORS headers for public API access.
 			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders($response);
+			$this->addCorsHeaders(response: $response);
 
 			// ANA-001: count this successful public detail view, fire-and-forget.
 			// HEAD requests, non-2xx, and back-office reads never reach this seam
@@ -916,6 +916,8 @@ class PublicationsController extends Controller {
 
 	}//end attachments()
 
+	// Lower than the sibling reads: a download moves file bytes, so the cost of
+	// one call is materially higher than a metadata lookup.
 	/**
 	 * Download a publication file.
 	 *
@@ -930,8 +932,6 @@ class PublicationsController extends Controller {
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
-	// Lower than the sibling reads: a download moves file bytes, so the cost of
-	// one call is materially higher than a metadata lookup.
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function download(string $catalogSlug, string $id): DataDownloadResponse|JSONResponse {
 		try {
@@ -1045,8 +1045,8 @@ class PublicationsController extends Controller {
 			// A catalog with no configured scope has no namespace to serve from, which is
 			// the same C-1 policy attachments() and download() have carried since wave-7.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			$catalogRegisters = $this->normaliseIdList(($catalog['registers'] ?? []));
-			$catalogSchemas = $this->normaliseIdList(($catalog['schemas'] ?? []));
+			$catalogRegisters = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
+			$catalogSchemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
 			if (empty($catalogRegisters) === true || empty($catalogSchemas) === true) {
 				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
 			}
@@ -1097,7 +1097,7 @@ class PublicationsController extends Controller {
 
 			// Add CORS headers for public API access.
 			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders($response);
+			$this->addCorsHeaders(response: $response);
 
 			return $response;
 		} catch (\Exception $e) {
@@ -1150,8 +1150,8 @@ class PublicationsController extends Controller {
 			// A catalog with no configured scope has no namespace to serve from, which is
 			// the same C-1 policy attachments() and download() have carried since wave-7.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			$catalogRegisters = $this->normaliseIdList(($catalog['registers'] ?? []));
-			$catalogSchemas = $this->normaliseIdList(($catalog['schemas'] ?? []));
+			$catalogRegisters = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
+			$catalogSchemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
 			if (empty($catalogRegisters) === true || empty($catalogSchemas) === true) {
 				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
 			}
@@ -1202,7 +1202,7 @@ class PublicationsController extends Controller {
 
 			// Add CORS headers for public API access.
 			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders($response);
+			$this->addCorsHeaders(response: $response);
 
 			return $response;
 		} catch (\Exception $e) {

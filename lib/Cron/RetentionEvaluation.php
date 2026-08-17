@@ -55,16 +55,16 @@ class RetentionEvaluation extends TimedJob {
 		private readonly RetentionService $retentionService,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct($time);
+		parent::__construct(time: $time);
 
 		// Run once a day (86400 seconds).
-		$this->setInterval(86400);
+		$this->setInterval(seconds: 86400);
 
 		// Defer to low-load time.
-		$this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
 		// Only one instance at a time.
-		$this->setAllowParallelRuns(false);
+		$this->setAllowParallelRuns(allow: false);
 
 	}//end __construct()
 

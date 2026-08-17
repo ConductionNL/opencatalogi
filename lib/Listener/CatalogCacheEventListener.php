@@ -108,7 +108,7 @@ class CatalogCacheEventListener implements IEventListener {
 			$logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
 
 			// Get the object from the event based on event type.
-			$objectEntity = $this->extractObjectFromEvent($event);
+			$objectEntity = $this->extractObjectFromEvent(event: $event);
 			if ($objectEntity === null) {
 				return;
 			}

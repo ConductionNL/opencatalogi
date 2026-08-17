@@ -229,7 +229,7 @@ class UsageCounterService {
 			}
 
 			// Best-effort bot filtering — evaluated in memory, UA discarded (ANA-003).
-			if ($this->isCrawler($userAgent) === true) {
+			if ($this->isCrawler(userAgent: $userAgent) === true) {
 				return false;
 			}
 
@@ -256,7 +256,7 @@ class UsageCounterService {
 			);
 
 			if ($existing !== null) {
-				$data = $this->normaliseCounter($existing);
+				$data = $this->normaliseCounter(row: $existing);
 				$data['count'] = ((int)($data['count'] ?? 0) + 1);
 				$objectService->saveObject(
 					object: $data,
@@ -442,7 +442,7 @@ class UsageCounterService {
 	 */
 	public function getPublicationStats(string $publicationId, ?string $from = null, ?string $to = null): array {
 		$rows = $this->getCountersForPublication(publicationId: $publicationId, from: $from, to: $to);
-		return $this->aggregateSeries($rows);
+		return $this->aggregateSeries(rows: $rows);
 	}//end getPublicationStats()
 
 	/**
@@ -459,7 +459,7 @@ class UsageCounterService {
 	 */
 	public function getCatalogStats(string $catalog, ?string $from = null, ?string $to = null, int $top = 10): array {
 		$rows = $this->getCountersForCatalog(catalog: $catalog, from: $from, to: $to);
-		return $this->aggregateCatalog($rows, $top);
+		return $this->aggregateCatalog(rows: $rows, top: $top);
 	}//end getCatalogStats()
 
 	/**
@@ -481,7 +481,7 @@ class UsageCounterService {
 		$countingStart = null;
 
 		foreach ($rows as $row) {
-			$row = $this->normaliseCounter($row);
+			$row = $this->normaliseCounter(row: $row);
 			$date = (string)($row['date'] ?? '');
 			$kind = (string)($row['kind'] ?? '');
 			$count = max(0, (int)($row['count'] ?? 0));
@@ -537,7 +537,7 @@ class UsageCounterService {
 		$totalDownl = 0;
 
 		foreach ($rows as $row) {
-			$row = $this->normaliseCounter($row);
+			$row = $this->normaliseCounter(row: $row);
 			$pub = (string)($row['publication'] ?? '');
 			$kind = (string)($row['kind'] ?? '');
 			$count = max(0, (int)($row['count'] ?? 0));
@@ -590,7 +590,7 @@ class UsageCounterService {
 	private function filterByRange(array $rows, ?string $from, ?string $to): array {
 		$out = [];
 		foreach ($rows as $row) {
-			$row = $this->normaliseCounter($row);
+			$row = $this->normaliseCounter(row: $row);
 			$date = (string)($row['date'] ?? '');
 			if ($date === '') {
 				continue;

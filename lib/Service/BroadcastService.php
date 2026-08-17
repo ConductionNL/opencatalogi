@@ -445,7 +445,7 @@ class BroadcastService {
 			// Validate the outbound URL and deliver via the enqueueBroadcast adapter
 			// (SSRF pre-flight guard, then the synchronous retry loop).
 			try {
-				$results[$targetUrl] = $this->enqueueBroadcast($targetUrl, $directoryUrl)->isSuccessful();
+				$results[$targetUrl] = $this->enqueueBroadcast(url: $targetUrl, directoryUrl: $directoryUrl)->isSuccessful();
 			} catch (InvalidArgumentException $e) {
 				$this->logger->warning("Skipping unsafe broadcast target: {$targetUrl}");
 				$results[$targetUrl] = false;
@@ -486,13 +486,18 @@ class BroadcastService {
 	public function enqueueBroadcast(string $url, string $directoryUrl): BroadcastResult {
 		// Pre-flight SSRF guard runs before any delivery attempt — see spec scenario
 		// "pre-flight SSRF guard short-circuits before delegation".
-		$this->assertSafeOutboundUrl($url);
+		$this->assertSafeOutboundUrl(url: $url);
 
-		$delivered = $this->sendBroadcastRequest($url, $directoryUrl);
+		$delivered = $this->sendBroadcastRequest(url: $url, directoryUrl: $directoryUrl);
+
+		$status = BroadcastResult::STATUS_FAILED;
+		if ($delivered === true) {
+			$status = BroadcastResult::STATUS_DELIVERED;
+		}
 
 		return new BroadcastResult(
 			url: $url,
-			status: $delivered === true ? BroadcastResult::STATUS_DELIVERED : BroadcastResult::STATUS_FAILED,
+			status: $status,
 		);
 	}//end enqueueBroadcast()
 
@@ -551,7 +556,7 @@ class BroadcastService {
 		// Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
 		// two local instances on a private network can federate. Empty by default, so a
 		// production instance keeps the full SSRF protection below.
-		if ($this->isAllowlistedFederationHost($host) === true) {
+		if ($this->isAllowlistedFederationHost(host: $host) === true) {
 			return;
 		}
 
@@ -602,7 +607,7 @@ class BroadcastService {
 		}
 
 		foreach ($ipsToCheck as $ipAddress) {
-			if ($this->isBlockedIp($ipAddress) === true) {
+			if ($this->isBlockedIp(ipAddress: $ipAddress) === true) {
 				throw new InvalidArgumentException('Broadcast URL resolves to a disallowed (internal) address');
 			}
 		}
@@ -631,7 +636,7 @@ class BroadcastService {
 		];
 
 		foreach ($blockedRanges as $range) {
-			if ($this->ipInRange($ipAddress, $range) === true) {
+			if ($this->ipInRange(ipAddress: $ipAddress, range: $range) === true) {
 				return true;
 			}
 		}

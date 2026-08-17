@@ -272,9 +272,9 @@ class OoapiService {
 			return null;
 		}
 
-		$organisation = $this->toArray($object);
+		$organisation = $this->toArray(item: $object);
 
-		$mapping = $this->resolveSchemaMapping($organizationSchema);
+		$mapping = $this->resolveSchemaMapping(schemaId: $organizationSchema);
 		if ($mapping['resource'] === null) {
 			// Unannotated schema — never offered as an OOAPI resource (OOAPI-004).
 			return null;
@@ -315,7 +315,7 @@ class OoapiService {
 		$page = max(1, $page);
 		$pageSize = max(1, min($pageSize, self::MAX_PAGE_SIZE));
 
-		$mapping = $this->resolveSchemaMapping($schema);
+		$mapping = $this->resolveSchemaMapping(schemaId: $schema);
 		if ($mapping['resource'] === null) {
 			// Unannotated schema — never offered as an OOAPI resource (OOAPI-004).
 			return ['items' => [], 'pageNumber' => $page, 'pageSize' => $pageSize, 'hasNext' => false];
@@ -341,7 +341,7 @@ class OoapiService {
 
 		$items = [];
 		foreach (($result['results'] ?? []) as $object) {
-			$items[] = $this->mappingService->buildResource(object: $this->toArray($object), mapping: $mapping['mapping'], idField: $idField);
+			$items[] = $this->mappingService->buildResource(object: $this->toArray(item: $object), mapping: $mapping['mapping'], idField: $idField);
 		}
 
 		return [
@@ -463,7 +463,7 @@ class OoapiService {
 			return null;
 		}
 
-		$data = $this->toArray($object);
+		$data = $this->toArray(item: $object);
 
 		// Scoped to this catalog (D6 addendum) — an archived/foreign-catalog object 404s.
 		if (($data['catalog'] ?? null) !== ($catalog['id'] ?? null)) {
@@ -475,7 +475,7 @@ class OoapiService {
 			return null;
 		}
 
-		$mapping = $this->resolveSchemaMapping($schema);
+		$mapping = $this->resolveSchemaMapping(schemaId: $schema);
 		if ($mapping['resource'] === null) {
 			return null;
 		}
@@ -501,7 +501,7 @@ class OoapiService {
 		$page = 1;
 		do {
 			$result = $this->listCourses(
-				$catalog,
+				catalog: $catalog,
 				register: $courseRegister,
 				schema: $courseSchema,
 				page: $page,

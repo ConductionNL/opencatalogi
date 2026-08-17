@@ -205,7 +205,7 @@ class SettingsService {
 	 */
 	public function installOrUpdateOpenRegister(?string $minVersion = self::MIN_OPENREGISTER_VERSION): bool {
 		try {
-			if ($this->isOpenRegisterInstalled($minVersion) === false) {
+			if ($this->isOpenRegisterInstalled(minVersion: $minVersion) === false) {
 				// Removed problematic download functionality
 				// Then install the downloaded app.
 				if (OC_App::installApp(self::OPENREGISTER_APP_ID) === false) {
@@ -218,7 +218,7 @@ class SettingsService {
 				}
 			}
 
-			if ($this->isOpenRegisterInstalled($minVersion) === true && $minVersion !== null) {
+			if ($this->isOpenRegisterInstalled(minVersion: $minVersion) === true && $minVersion !== null) {
 				// Check if update is needed.
 				$currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
 				if (version_compare(version1: $currentVersion, version2: $minVersion, operator: '<') === true) {
@@ -327,8 +327,8 @@ class SettingsService {
 
 		try {
 			// Check and install/update OpenRegister.
-			if ($this->isOpenRegisterInstalled($minORVersion) === false) {
-				$this->installOrUpdateOpenRegister($minORVersion);
+			if ($this->isOpenRegisterInstalled(minVersion: $minORVersion) === false) {
+				$this->installOrUpdateOpenRegister(minVersion: $minORVersion);
 			}
 
 			$results['openRegister'] = true;
@@ -336,7 +336,7 @@ class SettingsService {
 			// Auto-configure registers and schemas.
 			$configuration = $this->autoConfigure();
 			if (empty($configuration) === false) {
-				$this->updateSettings($configuration);
+				$this->updateSettings(data: $configuration);
 				$results['autoConfigured'] = true;
 			}
 
@@ -462,7 +462,7 @@ class SettingsService {
 				);
 
 				// Enrich registers with full schema objects instead of just IDs.
-				$data['availableRegisters'] = $this->enrichRegistersWithSchemas($registers);
+				$data['availableRegisters'] = $this->enrichRegistersWithSchemas(registers: $registers);
 			}
 		} catch (\RuntimeException $e) {
 			// Service not available, continue with default values.
@@ -927,7 +927,7 @@ class SettingsService {
 						continue;
 					}
 
-					$data = self::deepMergeConfig($data, $fragmentData);
+					$data = self::deepMergeConfig(base: $data, overlay: $fragmentData);
 				}
 			}//end if
 
@@ -937,7 +937,7 @@ class SettingsService {
 			// and the app's `{type}_register`/`{type}_schema` pair points at a register
 			// without that schema (how OOAPI course/program/offering broke). This
 			// pipeline only ever provisions one register, so attach the strays.
-			$data = self::attachOrphanSchemasToPublicationRegister($data);
+			$data = self::attachOrphanSchemasToPublicationRegister(data: $data);
 
 			// Calculate relative path from Nextcloud root for sourceUrl tracking.
 			// appPath is something like /var/www/html/apps-extra/opencatalogi
@@ -998,7 +998,7 @@ class SettingsService {
 			);
 
 			// Update app configuration with imported schema and register IDs.
-			$this->updateObjectTypeConfiguration($result);
+			$this->updateObjectTypeConfiguration(importResult: $result);
 
 			// OpenRegister's importRegister() version-gates the register update on
 			// `components.registers.publication.version` — unchanged since 0.1.0 — so a
@@ -1046,7 +1046,7 @@ class SettingsService {
 				if ($baseIsList === true && $overlayIsList === true) {
 					$base[$key] = array_merge($base[$key], $value);
 				} else {
-					$base[$key] = self::deepMergeConfig($base[$key], $value);
+					$base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
 				}
 			} else {
 				$base[$key] = $value;
@@ -1085,7 +1085,7 @@ class SettingsService {
 		}
 
 		// Every slug any register in this payload already declares.
-		$declared = self::collectDeclaredSchemaSlugs(($data['components']['registers'] ?? []));
+		$declared = self::collectDeclaredSchemaSlugs(registers: ($data['components']['registers'] ?? []));
 
 		$register = $data['components']['registers']['publication'];
 		foreach (array_keys($schemas) as $slug) {
@@ -1573,7 +1573,7 @@ class SettingsService {
 			}
 
 			// Perform the import.
-			$importResult = $this->loadSettings($forceImport);
+			$importResult = $this->loadSettings(force: $forceImport);
 
 			// Get updated version info.
 			$updatedVersionInfo = $this->getVersionInfo();
