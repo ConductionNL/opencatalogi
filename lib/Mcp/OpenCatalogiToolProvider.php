@@ -87,6 +87,8 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	public const TOOL_DESCRIPTORS = [
 		[
 			'id' => 'opencatalogi.searchCatalog',
+			'subject' => 'catalog',
+			'action' => 'search',
 			'name' => 'Search catalog',
 			'description' => 'Full-text search across published publications; optionally scoped to one catalog.',
 			'inputSchema' => [
@@ -114,6 +116,8 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 		],
 		[
 			'id' => 'opencatalogi.getPublication',
+			'subject' => 'publication',
+			'action' => 'get',
 			'name' => 'Get publication',
 			'description' => 'Fetch one publication by id, uuid or slug, with metadata and its attachment list.',
 			'inputSchema' => [

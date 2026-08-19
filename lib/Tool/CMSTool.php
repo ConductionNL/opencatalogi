@@ -173,6 +173,8 @@ class CMSTool implements ToolInterface {
 			// Page functions.
 			[
 				'name' => 'cms_create_page',
+				'subject' => 'page',
+				'action' => 'create',
 				'description' => 'Create a new page with title and content. Returns the page UUID.',
 				'parameters' => [
 					'type' => 'object',
@@ -199,6 +201,8 @@ class CMSTool implements ToolInterface {
 			],
 			[
 				'name' => 'cms_list_pages',
+				'subject' => 'page',
+				'action' => 'list',
 				'description' => 'List all pages. Returns array of pages with title, slug, and UUID.',
 				'parameters' => [
 					'type' => 'object',
@@ -215,6 +219,8 @@ class CMSTool implements ToolInterface {
 			// Menu functions.
 			[
 				'name' => 'cms_create_menu',
+				'subject' => 'menu',
+				'action' => 'create',
 				'description' => 'Create a new menu with items including position, names, links, order, and access groups.',
 				'parameters' => [
 					'type' => 'object',
@@ -286,6 +292,8 @@ class CMSTool implements ToolInterface {
 			],
 			[
 				'name' => 'cms_list_menus',
+				'subject' => 'menu',
+				'action' => 'list',
 				'description' => 'List all menus. Returns array of menus with name and UUID.',
 				'parameters' => [
 					'type' => 'object',
@@ -297,6 +305,8 @@ class CMSTool implements ToolInterface {
 			// Menu item functions.
 			[
 				'name' => 'cms_add_menu_item',
+				'subject' => 'menuItem',
+				'action' => 'create',
 				'description' => 'Add an item to a menu. Can link to a page or external URL.',
 				'parameters' => [
 					'type' => 'object',
