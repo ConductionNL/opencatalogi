@@ -498,7 +498,8 @@
 								"publicationDate",
 								"depublicationDate",
 								"status"
-							]
+							],
+							"overrides": { "status": { "editable": false } }
 						}
 					},
 					{
@@ -557,7 +558,8 @@
 								"retentionExpiresAt",
 								"retentionNote",
 								"retentionLastEvaluatedAt"
-							]
+							],
+							"overrides": { "retentionExpiresAt": { "editable": false }, "retentionLastEvaluatedAt": { "editable": false } }
 						}
 					},
 					{
