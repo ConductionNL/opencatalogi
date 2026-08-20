@@ -75,18 +75,17 @@ Manuals for end users who use Open Catalogi daily for example:
 
 ## Key Features
 
-- 📚 **Component Catalog**: Create and maintain a comprehensive catalog of software components, APIs, and services
-- 📄 **PublicCode.yml Support**: Automatic extraction and validation of PublicCode.yml metadata from repositories
-- 🏢 **Organization Profiles**: Showcase organizations and their digital offerings in a standardized format
-- 🔄 **GitHub/GitLab Integration**: Automatically index and catalog repositories from GitHub and GitLab organizations
-- ☁️ **Nextcloud Integration**: Seamless integration with Nextcloud for secure storage and access control
-- 🌐 **Open Standards**: Built on open standards like PublicCode.yml, EUPL, and Common Ground principles
-- ✅ **Compliance Support**: Help organizations comply with transparency requirements (WOO) and reuse policies
-- 🔗 **Component Relationships**: Visualize dependencies and relationships between components
-- 🌍 **Multilingual Support**: Interface and content available in multiple languages
-- 📱 **Responsive Design**: User-friendly interface that works on desktop and mobile devices
-- 🔍 **Faceted Search**: Advanced search capabilities with filtering by various metadata fields
-- 🔌 **API Access**: RESTful API for programmatic access to catalog data
+- 📚 **Catalogs & Publications**: Organize publications, software, and datasets into catalogs, each with its own access scope
+- 🌐 **Federated Directory**: Synchronize and discover catalogues across Nextcloud instances via the directory sync background job
+- 🏷️ **DCAT-AP & DIWOO Export**: Publications are harvested as DCAT-AP metadata and mapped to the DIWOO XML schema for data.overheid.nl
+- ⚖️ **Woo (Wet open overheid) Compliance**: Sitemap and robots.txt generation for all 17 mandatory Woo information categories, with audit trail
+- 🗓️ **Retention Lifecycle**: Daily background evaluation of publication retention terms, with a review-queue dashboard widget
+- 🗂️ **Content Management**: Glossary, themes, pages, and menus for building the public-facing catalogue site
+- 🏢 **Organization Profiles**: Publisher organizations with government identifiers (OIN/TOOI/RSIN/PKI)
+- ☁️ **Nextcloud & OpenRegister Integration**: Every catalogue entry is a typed OpenRegister object with RBAC-governed access
+- 🤖 **AI Chat Companion (MCP)**: Read-only MCP tools expose catalogue search and publication lookup to compatible LLM assistants
+- 🔍 **Faceted Search**: Full-text search across publications with filtering by metadata fields
+- 🔌 **API Access**: RESTful API for programmatic access to catalog data, with CORS support
 
 ## Benefits of Open Catalogi
 
@@ -129,10 +128,15 @@ timeline
             : Automatic metadata extraction
             : Version control for documents
     section 2025
-        Q1 : New Dashboarding
-            : Customizable dashboards
-            : Advanced analytics
-            : Visual reporting tools
+        Q1 : Dashboard Widgets
+            : Catalog stats, most-viewed publications
+            : Unpublished-items and retention review queues
+    section 2026
+        Q2 : Woo/DIWOO Compliance
+            : DIWOO sitemaps for all 17 Woo categories
+            : Retention lifecycle background job
+        Q3 : AI Integration
+            : MCP tool provider for AI Chat Companion
 ```
 
 ### Key Milestones
@@ -146,8 +150,11 @@ The introduction of a new Search API dramatically improved the discoverability o
 #### Q4 2024: Improved Document Handling
 Document handling capabilities were substantially enhanced with support for additional formats, automatic metadata extraction, and version control. These improvements streamlined the process of publishing and managing documents within catalogs.
 
-#### Q1 2025: New Dashboarding (Planned)
-The upcoming dashboarding features will provide users with customizable views, advanced analytics, and visual reporting tools. These enhancements will enable better insights into catalog usage and content, supporting data-driven decision making.
+#### Q1 2025: Dashboard Widgets
+Dashboard widgets now surface catalog stats, most-viewed publications, unpublished publications/attachments, and the retention review queue — each linking directly into the relevant filtered list.
+
+#### 2026: Woo/DIWOO Compliance and AI Integration
+OpenCatalogi added DIWOO sitemap and robots.txt generation for all 17 mandatory Woo (Wet open overheid) information categories, a daily retention-evaluation background job, and a read-only MCP tool provider that exposes catalogue search and publication lookup to the Nextcloud AI Chat Companion.
 
 ## Getting Started
 

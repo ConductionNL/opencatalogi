@@ -1,26 +1,57 @@
 <script setup>
-import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog :name="dialogTitle"
-		:can-close="true"
+	<NcDialog
+		:name="dialogTitle"
+		:canClose="true"
 		size="normal"
 		class="mass-action-dialog"
 		@update:open="handleDialogClose">
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="delete-step">
 			<NcNoteCard type="info">
-				{{ t('opencatalogi', 'Publications will be soft deleted and moved to the') }} <a href="#" class="deleted-link" @click.prevent="navigateToDeleted">{{ t('opencatalogi', 'deleted publications section') }}</a>{{ t('opencatalogi', '. They will be retained according to their schema\'s configured retention period and automatically permanently deleted after wards.') }}
+				{{
+					t(
+						'opencatalogi',
+						'Publications will be soft deleted and moved to the',
+					)
+				}}
+				<a
+					href="#"
+					class="deleted-link"
+					@click.prevent="navigateToDeleted"
+					>{{ t('opencatalogi', 'deleted publications section') }}</a
+				>{{
+					t(
+						'opencatalogi',
+						". They will be retained according to their schema's configured retention period and automatically permanently deleted after wards.",
+					)
+				}}
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="(objectStore.selectedObjects?.length || 0) === 1 ? t('opencatalogi', 'Publication to Delete') : t('opencatalogi', 'Selected Publications')"
-				:show-remove="true" />
+				:title="
+					(objectStore.selectedObjects?.length || 0) === 1
+						? t('opencatalogi', 'Publication to Delete')
+						: t('opencatalogi', 'Selected Publications')
+				"
+				:showRemove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>{{ originalSelectedCount > 1 ? t('opencatalogi', '{type}s successfully deleted', { type: t('opencatalogi', 'Publication') }) : t('opencatalogi', '{type} successfully deleted', { type: t('opencatalogi', 'Publication') }) }}</p>
+			<p>
+				{{
+					originalSelectedCount > 1
+						? t('opencatalogi', '{type}s successfully deleted', {
+								type: t('opencatalogi', 'Publication'),
+							})
+						: t('opencatalogi', '{type} successfully deleted', {
+								type: t('opencatalogi', 'Publication'),
+							})
+				}}
+			</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -31,11 +62,18 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
+				{{
+					success === null
+						? t('opencatalogi', 'Cancel')
+						: t('opencatalogi', 'Close')
+				}}
 			</NcButton>
-			<NcButton v-if="success === null"
-				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
-				type="error"
+			<NcButton
+				v-if="success === null"
+				:disabled="
+					loading || (objectStore.selectedObjects?.length || 0) === 0
+				"
+				variant="error"
 				@click="deleteObject()">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
@@ -48,19 +86,13 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import {
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-} from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-2
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'MassDeleteObject',
@@ -93,6 +125,7 @@ export default {
 	computed: {
 		/**
 		 * Get the objects to operate on from selected objects
+		 *
 		 * @return {Array<object>} Array of objects to delete
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
@@ -102,6 +135,7 @@ export default {
 
 		/**
 		 * Get the dialog title based on number of objects
+		 *
 		 * @return {string} Dialog title
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
@@ -117,12 +151,14 @@ export default {
 	mounted() {
 		this.initializeSelection()
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		initializeSelection() {
 			// Store the original count for success message
 			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
@@ -132,6 +168,7 @@ export default {
 			}
 			navigationStore.setDialog(false)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		navigateToDeleted() {
 			// Close the dialog first
@@ -139,6 +176,7 @@ export default {
 			// Navigate to the deleted objects section
 			this.$router.push('/deleted')
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		async deleteObject() {
 			this.loading = true
@@ -148,7 +186,8 @@ export default {
 				const objectsToProcess = [...(objectStore.selectedObjects || [])]
 
 				// Use the store's mass delete method
-				const { successful, failed } = await objectStore.massDeleteObjects(objectsToProcess)
+				const { successful, failed } =
+					await objectStore.massDeleteObjects(objectsToProcess)
 
 				if (successful.length > 0) {
 					this.success = true
@@ -166,15 +205,19 @@ export default {
 				if (failed.length > 0) {
 					this.error = `Failed to delete ${failed.length} object${failed.length > 1 ? 's' : ''}`
 				}
-
 			} catch (error) {
 				this.success = false
-				this.error = error.message || 'An error occurred while deleting objects'
+				this.error =
+					error.message || 'An error occurred while deleting objects'
 			} finally {
 				this.loading = false
 			}
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
+
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()

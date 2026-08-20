@@ -40,6 +40,32 @@
         <include>
             <directory suffix=".php">lib/</directory>
         </include>
+        <exclude>
+            <!--
+                FIRST coverage exclusion in this repo, so it is spelled out.
+
+                This repair step's body is ALTER TABLE / UPDATE against shard
+                tables resolved at runtime, and it cannot be unit-tested here:
+                mocking IDBConnection requires doctrine/dbal, which this app does
+                not install, and OCP's IQueryBuilder references
+                Doctrine\DBAL\ParameterType, so createMock() throws before any
+                assertion runs. run()/shardTables()/columnsOf()/exec() therefore
+                have no reachable unit path and would sit permanently uncovered,
+                dragging the ratchet down for every future change to this file.
+
+                Excluded from MEASUREMENT only. The decision logic IS tested —
+                tests/Unit/Repair/RenameDutchPublicationColumnsTest.php pins the
+                schema-suffix match, the openregister-marker requirement, that
+                `publicatiedatum` is in the map at all (ORI feed visibility is
+                governed by `publicatiedatum <= now`), and the map invariants.
+                Those tests still run on every job.
+
+                Sibling apps openbuild and decidesk already exclude lib/Migration/
+                for the same reason: DDL against a live database is integration
+                territory, not unit territory.
+            -->
+            <file>lib/Repair/RenameDutchPublicationColumns.php</file>
+        </exclude>
     </source>
 
     <coverage>

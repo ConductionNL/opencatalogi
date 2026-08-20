@@ -1,0 +1,8 @@
+{
+  "spec_slug": "download-service",
+  "title": "Download Service",
+  "app": "opencatalogi",
+  "repo": "https://github.com/ConductionNL/opencatalogi",
+  "depends_on": [],
+  "issue": null
+}

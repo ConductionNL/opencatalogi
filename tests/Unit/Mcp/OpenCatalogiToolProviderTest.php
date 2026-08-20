@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Unit tests for OpenCatalogiToolProvider.
  *
@@ -27,128 +28,121 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests the MVP skeleton behaviour of OpenCatalogiToolProvider.
  */
-class OpenCatalogiToolProviderTest extends TestCase
-{
+class OpenCatalogiToolProviderTest extends TestCase {
 
-    /**
-     * The provider under test.
-     *
-     * @var OpenCatalogiToolProvider
-     */
-    private OpenCatalogiToolProvider $provider;
+	/**
+	 * The provider under test.
+	 *
+	 * @var OpenCatalogiToolProvider
+	 */
+	private OpenCatalogiToolProvider $provider;
 
-    /**
-     * Set up the provider with mocked dependencies.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up the provider with mocked dependencies.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $publicationService = $this->createMock(PublicationService::class);
-        $userSession        = $this->createMock(IUserSession::class);
-        $logger             = $this->createMock(LoggerInterface::class);
+		$publicationService = $this->createMock(PublicationService::class);
+		$userSession = $this->createMock(IUserSession::class);
+		$logger = $this->createMock(LoggerInterface::class);
 
-        $this->provider = new OpenCatalogiToolProvider(
-            publicationService: $publicationService,
-            userSession: $userSession,
-            logger: $logger
-        );
+		$this->provider = new OpenCatalogiToolProvider(
+			publicationService: $publicationService,
+			userSession: $userSession,
+			logger: $logger
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * getAppId() returns the opencatalogi app slug.
-     *
-     * @return void
-     */
-    public function testGetAppId(): void
-    {
-        $this->assertSame('opencatalogi', $this->provider->getAppId());
+	/**
+	 * getAppId() returns the opencatalogi app slug.
+	 *
+	 * @return void
+	 */
+	public function testGetAppId(): void {
+		$this->assertSame('opencatalogi', $this->provider->getAppId());
 
-    }//end testGetAppId()
+	}//end testGetAppId()
 
-    /**
-     * getTools() returns exactly 2 well-formed descriptors.
-     *
-     * @return void
-     */
-    public function testGetToolsReturnsTwoDescriptors(): void
-    {
-        $tools = $this->provider->getTools();
+	/**
+	 * getTools() returns exactly 2 well-formed descriptors.
+	 *
+	 * @return void
+	 */
+	public function testGetToolsReturnsTwoDescriptors(): void {
+		$tools = $this->provider->getTools();
 
-        $this->assertCount(2, $tools);
+		$this->assertCount(2, $tools);
 
-        $ids = [];
-        foreach ($tools as $tool) {
-            $this->assertIsArray($tool);
-            $this->assertArrayHasKey('id', $tool);
-            $this->assertArrayHasKey('name', $tool);
-            $this->assertArrayHasKey('description', $tool);
-            $this->assertArrayHasKey('inputSchema', $tool);
+		$ids = [];
+		foreach ($tools as $tool) {
+			$this->assertIsArray($tool);
+			$this->assertArrayHasKey('id', $tool);
+			$this->assertArrayHasKey('name', $tool);
+			$this->assertArrayHasKey('description', $tool);
+			$this->assertArrayHasKey('inputSchema', $tool);
 
-            $this->assertIsString($tool['id']);
-            $this->assertStringStartsWith('opencatalogi.', $tool['id']);
-            $this->assertNotEmpty($tool['description']);
+			$this->assertIsString($tool['id']);
+			$this->assertStringStartsWith('opencatalogi.', $tool['id']);
+			$this->assertNotEmpty($tool['description']);
 
-            $this->assertIsArray($tool['inputSchema']);
-            $this->assertSame('object', $tool['inputSchema']['type']);
-            $this->assertArrayHasKey('properties', $tool['inputSchema']);
-            $this->assertIsArray($tool['inputSchema']['properties']);
+			$this->assertIsArray($tool['inputSchema']);
+			$this->assertSame('object', $tool['inputSchema']['type']);
+			$this->assertArrayHasKey('properties', $tool['inputSchema']);
+			$this->assertIsArray($tool['inputSchema']['properties']);
 
-            $ids[] = $tool['id'];
-        }
+			$ids[] = $tool['id'];
+		}
 
-        $this->assertContains('opencatalogi.searchCatalog', $ids);
-        $this->assertContains('opencatalogi.getPublication', $ids);
+		$this->assertContains('opencatalogi.searchCatalog', $ids);
+		$this->assertContains('opencatalogi.getPublication', $ids);
 
-    }//end testGetToolsReturnsTwoDescriptors()
+	}//end testGetToolsReturnsTwoDescriptors()
 
-    /**
-     * invokeTool() with an unknown tool id returns an error array without throwing.
-     *
-     * @return void
-     */
-    public function testInvokeUnknownToolReturnsErrorArray(): void
-    {
-        $result = $this->provider->invokeTool(toolId: 'opencatalogi.bogus', arguments: []);
+	/**
+	 * invokeTool() with an unknown tool id returns an error array without throwing.
+	 *
+	 * @return void
+	 */
+	public function testInvokeUnknownToolReturnsErrorArray(): void {
+		$result = $this->provider->invokeTool(toolId: 'opencatalogi.bogus', arguments: []);
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('error', $result);
-        $this->assertIsArray($result['error']);
-        $this->assertSame('unknown_tool', $result['error']['code']);
-        $this->assertNotEmpty($result['error']['message']);
+		$this->assertIsArray($result);
+		$this->assertArrayHasKey('error', $result);
+		$this->assertIsArray($result['error']);
+		$this->assertSame('unknown_tool', $result['error']['code']);
+		$this->assertNotEmpty($result['error']['message']);
 
-    }//end testInvokeUnknownToolReturnsErrorArray()
+	}//end testInvokeUnknownToolReturnsErrorArray()
 
-    /**
-     * searchCatalog with a missing/empty query returns an invalid_arguments error.
-     *
-     * @return void
-     */
-    public function testSearchCatalogRejectsMissingQuery(): void
-    {
-        $result = $this->provider->invokeTool(toolId: 'opencatalogi.searchCatalog', arguments: []);
+	/**
+	 * searchCatalog with a missing/empty query returns an invalid_arguments error.
+	 *
+	 * @return void
+	 */
+	public function testSearchCatalogRejectsMissingQuery(): void {
+		$result = $this->provider->invokeTool(toolId: 'opencatalogi.searchCatalog', arguments: []);
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('error', $result);
-        $this->assertSame('invalid_arguments', $result['error']['code']);
+		$this->assertIsArray($result);
+		$this->assertArrayHasKey('error', $result);
+		$this->assertSame('invalid_arguments', $result['error']['code']);
 
-    }//end testSearchCatalogRejectsMissingQuery()
+	}//end testSearchCatalogRejectsMissingQuery()
 
-    /**
-     * getPublication with a missing/empty id returns an invalid_arguments error.
-     *
-     * @return void
-     */
-    public function testGetPublicationRejectsMissingId(): void
-    {
-        $result = $this->provider->invokeTool(toolId: 'opencatalogi.getPublication', arguments: ['id' => '   ']);
+	/**
+	 * getPublication with a missing/empty id returns an invalid_arguments error.
+	 *
+	 * @return void
+	 */
+	public function testGetPublicationRejectsMissingId(): void {
+		$result = $this->provider->invokeTool(toolId: 'opencatalogi.getPublication', arguments: ['id' => '   ']);
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('error', $result);
-        $this->assertSame('invalid_arguments', $result['error']['code']);
+		$this->assertIsArray($result);
+		$this->assertArrayHasKey('error', $result);
+		$this->assertSame('invalid_arguments', $result['error']['code']);
 
-    }//end testGetPublicationRejectsMissingId()
+	}//end testGetPublicationRejectsMissingId()
 }//end class

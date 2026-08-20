@@ -1,12 +1,20 @@
 <template>
 	<div
 		class="publication-card"
-		:class="[`publication-card--${status}`, { 'publication-card--selected': selected }]"
-		@click="$emit('click', object)">
+		:class="[
+			`publication-card--${status}`,
+			{ 'publication-card--selected': selected },
+		]"
+		role="button"
+		tabindex="0"
+		@click="$emit('click', object)"
+		@keydown.enter="$emit('click', object)"
+		@keydown.space.prevent="$emit('click', object)">
 		<div v-if="selectable" class="publication-card__checkbox" @click.stop>
 			<NcCheckboxRadioSwitch
-				:checked="selected"
-				@update:checked="$emit('select', object)" />
+				:aria-label="t('opencatalogi', 'Select {title}', { title })"
+				:modelValue="selected"
+				@update:modelValue="$emit('select', object)" />
 		</div>
 
 		<div class="publication-card__content">
@@ -25,16 +33,19 @@
 			<div class="publication-card__metadata">
 				<div class="publication-card__status">
 					<template v-if="status === 'concept'">
-						<span v-if="object.publicatiedatum">
-							{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(object.publicatiedatum) }}
+						<span v-if="object.publicationDate">
+							{{ t('opencatalogi', 'Scheduled for') }}
+							{{ formatDate(object.publicationDate) }}
 						</span>
 						<span v-else>{{ t('opencatalogi', 'Concept') }}</span>
 					</template>
 					<template v-else-if="status === 'published'">
-						{{ t('opencatalogi', 'Published on') }} {{ formatDate(object.publicatiedatum) }}
+						{{ t('opencatalogi', 'Published on') }}
+						{{ formatDate(object.publicationDate) }}
 					</template>
 					<template v-else>
-						{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(object.depublicatiedatum) }}
+						{{ t('opencatalogi', 'Depublished on') }}
+						{{ formatDate(object.depublicationDate) }}
 					</template>
 				</div>
 
@@ -45,7 +56,7 @@
 			</div>
 		</div>
 
-		<div v-if="$scopedSlots.actions" class="publication-card__actions" @click.stop>
+		<div v-if="!!$slots.actions" class="publication-card__actions" @click.stop>
 			<slot name="actions" :object="object" />
 		</div>
 	</div>
@@ -55,12 +66,12 @@
 import { translate as t } from '@nextcloud/l10n'
 import { NcCheckboxRadioSwitch, NcCounterBubble } from '@nextcloud/vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
-import { getPublicationStatus } from '../services/publicationStatus.js'
 import PublishedIcon from './PublishedIcon.vue'
 import getValidISOstring from '../services/getValidISOstring.js'
+import { getPublicationStatus } from '../services/publicationStatus.js'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'PublicationCard',
@@ -70,42 +81,62 @@ export default {
 		Paperclip,
 		PublishedIcon,
 	},
+
 	props: {
 		object: {
 			type: Object,
 			required: true,
 		},
+
 		selected: {
 			type: Boolean,
 			default: false,
 		},
+
 		selectable: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
+	// Vue 3 merges $listeners into $attrs: without declaring `click` here a
+	// parent's @click would both fall through to the root <div> natively AND
+	// be re-emitted by the handler below, firing the parent twice.
+	emits: ['click', 'select'],
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		status() {
 			return getPublicationStatus(this.object)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		title() {
-			return this.object['@self']?.name || this.object.title || this.object.name || this.object.id || '—'
+			return (
+				this.object['@self']?.name
+				|| this.object.title
+				|| this.object.name
+				|| this.object.id
+				|| '—'
+			)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		summary() {
 			return this.object.summary || null
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		truncatedSummary() {
 			if (!this.summary) return null
-			if (this.summary.length > 120) return this.summary.substring(0, 120) + '...'
+			if (this.summary.length > 120)
+				return this.summary.substring(0, 120) + '...'
 			return this.summary
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		filesCount() {
-			const countFromSelf = this.object?.['@self']?.filesCount
+			const countFromSelf =
+				this.object?.['@self']?.filesCount
 				|| this.object?.['@self']?.attachmentsCount
 				|| this.object?.['@self']?.attachmentCount
 			if (typeof countFromSelf === 'number') return countFromSelf
@@ -115,9 +146,13 @@ export default {
 			return 0
 		},
 	},
+
 	methods: {
 		t,
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
+		/**
+		 * @param dateString
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3
+		 */
 		formatDate(dateString) {
 			if (!dateString) return 'N/A'
 			if (!getValidISOstring(dateString)) return dateString
@@ -137,7 +172,17 @@ export default {
 	border-left: 4px solid var(--color-border);
 	border-radius: var(--border-radius-large, 10px);
 	cursor: pointer;
-	transition: box-shadow 0.2s ease, border-color 0.2s ease;
+	transition:
+		box-shadow 0.2s ease,
+		border-color 0.2s ease;
+}
+
+/* WCAG 2.3.3. Decorative hover/selection feedback only; the resulting
+   box-shadow and border colour still apply, just without the tween. */
+@media (prefers-reduced-motion: reduce) {
+	.publication-card {
+		transition: none;
+	}
 }
 
 .publication-card:hover {

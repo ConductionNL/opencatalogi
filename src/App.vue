@@ -1,29 +1,45 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <template>
-	<CnAppRoot
-		:manifest="manifest"
-		:custom-components="customComponents"
-		:page-types="pageTypes"
-		app-id="opencatalogi"
-		:translate="translateForApp"
-		:permissions="permissions" />
+	<div>
+		<CnAppRoot
+			:aiCompanion="true"
+			:manifest="manifest"
+			:customComponents="customComponents"
+			:pageTypes="pageTypes"
+			appId="opencatalogi"
+			:translate="translateForApp"
+			:permissions="permissions" />
+		<!-- WOO-525: Modals.vue and Dialogs.vue were previously mounted by
+		     the legacy shell but got dropped in the manifest-v2 CnAppRoot
+		     migration. Custom pages (Dashboard, Publications, Directory,
+		     Catalogi, Menus, Pages, Organizations, …) still dispatch via
+		     `navigationStore.setModal(...)` / `setDialog(...)` and expect
+		     these mount-points to exist. Re-mount as siblings of CnAppRoot
+		     so those dispatches keep opening their modals / dialogs. -->
+		<Modals />
+		<Dialogs />
+	</div>
 </template>
 
 <script>
-import Vue from 'vue'
-import { translate as ncT } from '@nextcloud/l10n'
 import { CnAppRoot } from '@conduction/nextcloud-vue'
+import { translate as ncT } from '@nextcloud/l10n'
+import { reactive } from 'vue'
+import Dialogs from './dialogs/Dialogs.vue'
+import Modals from './modals/Modals.vue'
 import { objectStore } from './store/store.js'
 
 /**
  * App — manifest-driven CnAppRoot SPA shell for opencatalogi.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-1
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'App',
 	components: {
 		CnAppRoot,
+		Modals,
+		Dialogs,
 	},
 
 	/** @spec exclude Vue provide()/inject() DI channel wiring, no business logic */
@@ -44,10 +60,12 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		customComponents: {
 			type: Object,
 			default: () => ({}),
 		},
+
 		pageTypes: {
 			type: Object,
 			default: () => ({}),
@@ -56,7 +74,7 @@ export default {
 
 	data() {
 		return {
-			objectSidebarState: Vue.observable({
+			objectSidebarState: reactive({
 				active: false,
 				open: true,
 				schema: null,
@@ -78,9 +96,10 @@ export default {
 			// CnAppNav's permission filter is an array-includes check; Nextcloud
 			// does not put the boolean admin flag into the permissions array, so
 			// we inject it here for manifest entries gated on permission: "admin".
-			const isAdmin = typeof window.OC?.isUserAdmin === 'function'
-				? window.OC.isUserAdmin()
-				: false
+			const isAdmin =
+				typeof window.OC?.isUserAdmin === 'function'
+					? window.OC.isUserAdmin()
+					: false
 			return isAdmin ? [...base, 'admin'] : base
 		},
 	},
@@ -102,7 +121,10 @@ export default {
 		 * @param {string} key Translation key.
 		 * @return {string} Translated string (or the key on miss).
 		 */
-		/** @spec exclude i18n wrapper delegating to Nextcloud translate() */
+		/**
+		 * @param key
+		 * @spec exclude i18n wrapper delegating to Nextcloud translate()
+		 */
 		translateForApp(key) {
 			return ncT('opencatalogi', key)
 		},

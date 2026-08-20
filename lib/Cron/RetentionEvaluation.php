@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Retention evaluation cron job.
  *
@@ -25,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
  */
 
 namespace OCA\OpenCatalogi\Cron;
@@ -41,58 +42,56 @@ use Psr\Log\LoggerInterface;
  *
  * @see https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
  */
-class RetentionEvaluation extends TimedJob
-{
-    /**
-     * Constructor.
-     *
-     * @param ITimeFactory     $time             Time factory for scheduling.
-     * @param RetentionService $retentionService The retention service.
-     * @param LoggerInterface  $logger           Logger.
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private readonly RetentionService $retentionService,
-        private readonly LoggerInterface $logger
-    ) {
-        parent::__construct($time);
+class RetentionEvaluation extends TimedJob {
+	/**
+	 * Constructor.
+	 *
+	 * @param ITimeFactory $time Time factory for scheduling.
+	 * @param RetentionService $retentionService The retention service.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private readonly RetentionService $retentionService,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
 
-        // Run once a day (86400 seconds).
-        $this->setInterval(86400);
+		// Run once a day (86400 seconds).
+		$this->setInterval(seconds: 86400);
 
-        // Defer to low-load time.
-        $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+		// Defer to low-load time.
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
-        // Only one instance at a time.
-        $this->setAllowParallelRuns(false);
+		// Only one instance at a time.
+		$this->setAllowParallelRuns(allow: false);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Execute the daily retention evaluation.
-     *
-     * @param array $argument Arguments passed to the job.
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
-     */
-    protected function run($argument): void
-    {
-        try {
-            $counts = $this->retentionService->evaluate();
-            $this->logger->info(
-                '[RetentionEvaluation] retention pass complete',
-                $counts
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                '[RetentionEvaluation] retention pass failed: '.$e->getMessage(),
-                ['exception' => $e]
-            );
-        }//end try
+	/**
+	 * Execute the daily retention evaluation.
+	 *
+	 * @param array $argument Arguments passed to the job.
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+	 */
+	protected function run($argument): void {
+		try {
+			$counts = $this->retentionService->evaluate();
+			$this->logger->info(
+				'[RetentionEvaluation] retention pass complete',
+				$counts
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'[RetentionEvaluation] retention pass failed: ' . $e->getMessage(),
+				['exception' => $e]
+			);
+		}//end try
 
-    }//end run()
+	}//end run()
 }//end class

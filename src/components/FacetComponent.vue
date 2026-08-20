@@ -20,80 +20,163 @@
 			</h4>
 
 			<!-- Metadata facets (@self) -->
-			<div v-if="Object.keys(searchStore.availableMetadataFacets).length > 0" class="facet-category">
+			<div
+				v-if="Object.keys(searchStore.availableMetadataFacets).length > 0"
+				class="facet-category">
 				<h5 class="facet-category-title">
 					{{ t('opencatalogi', 'Metadata facets') }}
 				</h5>
 				<div class="facet-controls">
 					<div
-						v-for="(fieldInfo, fieldName) in searchStore.availableMetadataFacets"
+						v-for="(
+							fieldInfo, fieldName
+						) in searchStore.availableMetadataFacets"
 						:key="`meta-${fieldName}`"
 						class="facet-control">
 						<NcCheckboxRadioSwitch
-							:checked="isActiveFacet(`@self.${fieldName}`)"
-							:title="fieldInfo.description || `Filter by ${fieldName}`"
-							@update:checked="(enabled) => toggleFacet(`@self.${fieldName}`, fieldInfo, enabled)">
+							:modelValue="isActiveFacet(`@self.${fieldName}`)"
+							:title="
+								fieldInfo.description || `Filter by ${fieldName}`
+							"
+							@update:modelValue="
+								(enabled) =>
+									toggleFacet(
+										`@self.${fieldName}`,
+										fieldInfo,
+										enabled,
+									)
+							">
 							{{ getFieldDisplayName(fieldName, fieldInfo) }}
-							<span v-if="fieldInfo.has_labels" class="facet-badge">{{ t('opencatalogi', 'With labels') }}</span>
+							<span v-if="fieldInfo.has_labels" class="facet-badge">{{
+								t('opencatalogi', 'With labels')
+							}}</span>
 						</NcCheckboxRadioSwitch>
 
 						<!-- Facet type selection for multi-type fields -->
-						<div v-if="isActiveFacet(`@self.${fieldName}`) && fieldInfo.facet_types && fieldInfo.facet_types.length > 1"
+						<div
+							v-if="
+								isActiveFacet(`@self.${fieldName}`)
+								&& fieldInfo.facet_types
+								&& fieldInfo.facet_types.length > 1
+							"
 							class="facet-type-selector">
 							<NcSelect
-								:value="getActiveFacetType(`@self.${fieldName}`)"
+								:modelValue="
+									getActiveFacetTypeOption(
+										`@self.${fieldName}`,
+										fieldInfo.facet_types,
+									)
+								"
 								:options="getFacetTypeOptions(fieldInfo.facet_types)"
 								label="label"
-								:input-label="t('opencatalogi', 'Facet type')"
+								:inputLabel="t('opencatalogi', 'Facet type')"
 								:placeholder="t('opencatalogi', 'Select facet type')"
-								@update:value="(option) => updateFacetType(`@self.${fieldName}`, option.value, fieldInfo)" />
+								@update:modelValue="
+									(option) =>
+										option
+										&& updateFacetType(
+											`@self.${fieldName}`,
+											option.value,
+											fieldInfo,
+										)
+								" />
 						</div>
 
 						<!-- Date histogram interval selection -->
-						<div v-if="isActiveFacet(`@self.${fieldName}`) && getActiveFacetType(`@self.${fieldName}`) === 'date_histogram'"
+						<div
+							v-if="
+								isActiveFacet(`@self.${fieldName}`)
+								&& getActiveFacetType(`@self.${fieldName}`)
+									=== 'date_histogram'
+							"
 							class="facet-config">
 							<NcSelect
-								:value="getActiveFacetInterval(`@self.${fieldName}`)"
+								:modelValue="
+									getActiveFacetIntervalOption(
+										`@self.${fieldName}`,
+										fieldInfo.intervals,
+									)
+								"
 								:options="getIntervalOptions(fieldInfo.intervals)"
 								label="label"
-								:input-label="t('opencatalogi', 'Date histogram interval')"
+								:inputLabel="
+									t('opencatalogi', 'Date histogram interval')
+								"
 								:placeholder="t('opencatalogi', 'Select interval')"
-								@update:value="(option) => updateFacetInterval(`@self.${fieldName}`, option.value)" />
+								@update:modelValue="
+									(option) =>
+										option
+										&& updateFacetInterval(
+											`@self.${fieldName}`,
+											option.value,
+										)
+								" />
 						</div>
 					</div>
 				</div>
 			</div>
 
 			<!-- Object field facets -->
-			<div v-if="Object.keys(searchStore.availableObjectFieldFacets).length > 0" class="facet-category">
+			<div
+				v-if="Object.keys(searchStore.availableObjectFieldFacets).length > 0"
+				class="facet-category">
 				<h5 class="facet-category-title">
 					{{ t('opencatalogi', 'Content facets') }}
 				</h5>
 				<div class="facet-controls">
 					<div
-						v-for="(fieldInfo, fieldName) in searchStore.availableObjectFieldFacets"
+						v-for="(
+							fieldInfo, fieldName
+						) in searchStore.availableObjectFieldFacets"
 						:key="`obj-${fieldName}`"
 						class="facet-control">
 						<NcCheckboxRadioSwitch
-							:checked="isActiveFacet(fieldName)"
-							:title="fieldInfo.description || `Filter by ${fieldName}`"
-							@update:checked="(enabled) => toggleFacet(fieldName, fieldInfo, enabled)">
+							:modelValue="isActiveFacet(fieldName)"
+							:title="
+								fieldInfo.description || `Filter by ${fieldName}`
+							"
+							@update:modelValue="
+								(enabled) =>
+									toggleFacet(fieldName, fieldInfo, enabled)
+							">
 							{{ getFieldDisplayName(fieldName, fieldInfo) }}
 							<span class="facet-info">
-								({{ t('opencatalogi', '{count} items', { count: fieldInfo.appearance_rate }) }})
+								({{
+									t('opencatalogi', '{count} items', {
+										count: fieldInfo.appearance_rate,
+									})
+								}})
 							</span>
 						</NcCheckboxRadioSwitch>
 
 						<!-- Facet type selection for multi-type fields -->
-						<div v-if="isActiveFacet(fieldName) && fieldInfo.facet_types && fieldInfo.facet_types.length > 1"
+						<div
+							v-if="
+								isActiveFacet(fieldName)
+								&& fieldInfo.facet_types
+								&& fieldInfo.facet_types.length > 1
+							"
 							class="facet-type-selector">
 							<NcSelect
-								:value="getActiveFacetType(fieldName)"
+								:modelValue="
+									getActiveFacetTypeOption(
+										fieldName,
+										fieldInfo.facet_types,
+									)
+								"
 								:options="getFacetTypeOptions(fieldInfo.facet_types)"
 								label="label"
-								:input-label="t('opencatalogi', 'Facet type')"
+								:inputLabel="t('opencatalogi', 'Facet type')"
 								:placeholder="t('opencatalogi', 'Select facet type')"
-								@update:value="(option) => updateFacetType(fieldName, option.value, fieldInfo)" />
+								@update:modelValue="
+									(option) =>
+										option
+										&& updateFacetType(
+											fieldName,
+											option.value,
+											fieldInfo,
+										)
+								" />
 						</div>
 					</div>
 				</div>
@@ -104,7 +187,7 @@
 				<h5 class="facet-category-title">
 					{{ t('opencatalogi', 'Active facets') }}
 					<NcButton
-						type="tertiary"
+						variant="tertiary"
 						:aria-label="t('opencatalogi', 'Clear all facets')"
 						@click="clearAllFacets">
 						<template #icon>
@@ -114,13 +197,20 @@
 					</NcButton>
 				</h5>
 				<div class="active-facets-list">
-					<div v-for="(facetConfig, fieldName) in searchStore.getActiveFacets"
+					<div
+						v-for="(
+							facetConfig, fieldName
+						) in searchStore.getActiveFacets"
 						:key="`active-${fieldName}`"
 						class="active-facet-item">
-						<span class="active-facet-name">{{ getFieldDisplayName(fieldName.replace('@self.', ''), {}) }}</span>
-						<span class="active-facet-type">({{ facetConfig.type }})</span>
+						<span class="active-facet-name">{{
+							getFieldDisplayName(fieldName.replace('@self.', ''), {})
+						}}</span>
+						<span class="active-facet-type"
+							>({{ facetConfig.type }})</span
+						>
 						<NcButton
-							type="tertiary-no-background"
+							variant="tertiary-no-background"
 							:aria-label="t('opencatalogi', 'Remove facet')"
 							@click="removeFacet(fieldName)">
 							<template #icon>
@@ -135,41 +225,59 @@
 </template>
 
 <script setup>
+import { t } from '@nextcloud/l10n'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+} from '@nextcloud/vue'
+import Close from 'vue-material-design-icons/Close.vue'
 /**
  * FacetComponent — renders and toggles an individual facet filter.
  *
- * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3
+ * @spec openspec/specs/search/spec.md
  */
 import { useSearchStore } from '../store/modules/search.ts'
-import { t } from '@nextcloud/l10n'
-import {
-	NcCheckboxRadioSwitch,
-	NcButton,
-	NcSelect,
-	NcNoteCard,
-	NcLoadingIcon,
-} from '@nextcloud/vue'
-import Close from 'vue-material-design-icons/Close.vue'
 
 // Store
 const searchStore = useSearchStore()
 
 // Methods
-const isActiveFacet = (fieldName) => {
-	return Object.prototype.hasOwnProperty.call(searchStore.getActiveFacets, fieldName)
+/**
+ *
+ * @param fieldName
+ */
+function isActiveFacet(fieldName) {
+	return Object.hasOwn(searchStore.getActiveFacets, fieldName)
 }
 
-const getActiveFacetType = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function getActiveFacetType(fieldName) {
 	const facetConfig = searchStore.getActiveFacets[fieldName]
 	return facetConfig ? facetConfig.type : null
 }
 
-const getActiveFacetInterval = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function getActiveFacetInterval(fieldName) {
 	const facetConfig = searchStore.getActiveFacets[fieldName]
 	return facetConfig?.config?.interval || 'month'
 }
 
-const toggleFacet = (fieldName, fieldInfo, enabled) => {
+/**
+ *
+ * @param fieldName
+ * @param fieldInfo
+ * @param enabled
+ */
+function toggleFacet(fieldName, fieldInfo, enabled) {
 	if (enabled) {
 		// Determine default facet type
 		const defaultType = fieldInfo.facet_types?.[0] || 'terms'
@@ -188,7 +296,13 @@ const toggleFacet = (fieldName, fieldInfo, enabled) => {
 	// Don't trigger search here - the store method already does it
 }
 
-const updateFacetType = (fieldName, newType, fieldInfo) => {
+/**
+ *
+ * @param fieldName
+ * @param newType
+ * @param fieldInfo
+ */
+function updateFacetType(fieldName, newType, fieldInfo) {
 	const config = {}
 
 	// Add type-specific configuration
@@ -201,7 +315,12 @@ const updateFacetType = (fieldName, newType, fieldInfo) => {
 	// Don't trigger search here - the store method already does it
 }
 
-const updateFacetInterval = (fieldName, interval) => {
+/**
+ *
+ * @param fieldName
+ * @param interval
+ */
+function updateFacetInterval(fieldName, interval) {
 	const currentConfig = searchStore.getActiveFacets[fieldName]
 	if (currentConfig) {
 		const newConfig = { ...currentConfig.config, interval }
@@ -211,36 +330,90 @@ const updateFacetInterval = (fieldName, interval) => {
 	}
 }
 
-const removeFacet = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function removeFacet(fieldName) {
 	searchStore.toggleActiveFacet(fieldName, '', false)
 
 	// Don't trigger search here - the store method already does it
 }
 
-const clearAllFacets = () => {
+/**
+ *
+ */
+function clearAllFacets() {
 	searchStore.clearAllActiveFacets()
 
 	// Don't trigger search here - the store method already does it
 }
 
-const getFacetTypeOptions = (facetTypes) => {
-	return facetTypes.map(type => ({
+/**
+ *
+ * @param facetTypes
+ */
+function getFacetTypeOptions(facetTypes) {
+	return facetTypes.map((type) => ({
 		value: type,
-		label: type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+		label: type.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
 	}))
 }
 
-const getIntervalOptions = (intervals) => {
+/**
+ *
+ * @param intervals
+ */
+function getIntervalOptions(intervals) {
 	const defaultIntervals = ['day', 'week', 'month', 'year']
 	const availableIntervals = intervals || defaultIntervals
 
-	return availableIntervals.map(interval => ({
+	return availableIntervals.map((interval) => ({
 		value: interval,
 		label: interval.charAt(0).toUpperCase() + interval.slice(1),
 	}))
 }
 
-const getFieldDisplayName = (fieldName, fieldInfo) => {
+/**
+ * NcSelect v9 is modelled on the whole option object, not on the option's
+ * `value`. Passing the bare type string (what the store holds) makes
+ * vue-select render `String(selected['label'])` → the literal word "undefined".
+ * This maps the stored facet type back onto its option object.
+ *
+ * @param {string} fieldName - The facet field name, e.g. `@self.register`.
+ * @param {Array<string>} facetTypes - The facet types declared for the field.
+ * @return {object|null} The matching option object, or null when none is active.
+ */
+function getActiveFacetTypeOption(fieldName, facetTypes) {
+	const current = getActiveFacetType(fieldName)
+	return (
+		getFacetTypeOptions(facetTypes || []).find(
+			(option) => option.value === current,
+		) || null
+	)
+}
+
+/**
+ * Same mapping as `getActiveFacetTypeOption`, for the date-histogram interval.
+ *
+ * @param {string} fieldName - The facet field name.
+ * @param {Array<string>} intervals - The intervals declared for the field.
+ * @return {object|null} The matching option object, or null when none matches.
+ */
+function getActiveFacetIntervalOption(fieldName, intervals) {
+	const current = getActiveFacetInterval(fieldName)
+	return (
+		getIntervalOptions(intervals).find((option) => option.value === current)
+		|| null
+	)
+}
+
+/**
+ *
+ * @param fieldName
+ * @param fieldInfo
+ */
+function getFieldDisplayName(fieldName, fieldInfo) {
 	// Use description if available, otherwise format field name
 	if (fieldInfo.description) {
 		return fieldInfo.description
@@ -249,10 +422,9 @@ const getFieldDisplayName = (fieldName, fieldInfo) => {
 	// Format field names nicely
 	return fieldName
 		.replace(/[@._]/g, ' ')
-		.replace(/\b\w/g, l => l.toUpperCase())
+		.replace(/\b\w/g, (l) => l.toUpperCase())
 		.trim()
 }
-
 </script>
 
 <style scoped>

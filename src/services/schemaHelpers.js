@@ -1,5 +1,9 @@
 import { objectStore } from '../store/store.js'
 
+/**
+ *
+ * @param publication
+ */
 function resolveSchema(publication) {
 	const ref = publication?.['@self']?.schema ?? publication?.schema
 	if (!ref) return null
@@ -14,16 +18,19 @@ function resolveSchema(publication) {
 	const schemas = objectStore?.availableSchemas
 	if (!Array.isArray(schemas)) return null
 
-	return schemas.find(s =>
-		String(s.id) === String(id)
-		|| String(s.uuid) === String(id)
-		|| String(s.slug) === String(id),
-	) || null
+	return (
+		schemas.find(
+			(s) =>
+				String(s.id) === String(id)
+				|| String(s.uuid) === String(id)
+				|| String(s.slug) === String(id),
+		) || null
+	)
 }
 
 /**
- * Check if a publication's schema declares both `publicatiedatum` and
- * `depublicatiedatum` properties — the two fields the publish/depublish
+ * Check if a publication's schema declares both `publicationDate` and
+ * `depublicationDate` properties — the two fields the publish/depublish
  * flows write to. Returns false (fail closed) when the schema can't be
  * resolved, so UI gates disable the action rather than silently saving
  * to a schema that doesn't model these fields.
@@ -31,11 +38,11 @@ function resolveSchema(publication) {
  * @param {object} publication - The publication object.
  * @return {boolean} true when both fields are declared on the schema.
  *
- * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-1
+ * @spec openspec/specs/publications/spec.md
  */
 export function schemaHasPublicationDateFields(publication) {
 	const schema = resolveSchema(publication)
 	const props = schema?.properties
 	if (!props || typeof props !== 'object') return false
-	return Boolean(props.publicatiedatum) && Boolean(props.depublicatiedatum)
+	return Boolean(props.publicationDate) && Boolean(props.depublicationDate)
 }

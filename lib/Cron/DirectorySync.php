@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Directory sync cron job.
  *
@@ -16,60 +17,99 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
+ * @spec openspec/specs/dashboard/spec.md
  */
 
 namespace OCA\OpenCatalogi\Cron;
 
 use OCA\OpenCatalogi\Service\DirectoryService;
-use OCP\BackgroundJob\TimedJob;
+use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
+use OCP\BackgroundJob\TimedJob;
+use OCP\IAppConfig;
 
 /**
  * Background job for periodic directory synchronization.
  *
  * @see https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
  */
-class DirectorySync extends TimedJob
-{
-    /**
-     * Constructor.
-     *
-     * @param ITimeFactory     $time             Time factory for scheduling.
-     * @param DirectoryService $directoryService The directory service.
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private readonly DirectoryService $directoryService
-    ) {
-        parent::__construct($time);
+class DirectorySync extends TimedJob {
+	/**
+	 * Minimum allowed interval in seconds (15 minutes).
+	 *
+	 * The bounds live on SettingsService, which is what publishes them through
+	 * getSyncOptions() and clamps a submitted value in updateSyncOptions().
+	 * They were defined here and read from there, which both coupled a service
+	 * to a cron class and left the same clamp expressed in two places. These
+	 * aliases keep `DirectorySync::MIN_INTERVAL_SECONDS` working for any
+	 * existing caller.
+	 *
+	 * @var integer
+	 */
+	public const MIN_INTERVAL_SECONDS = SettingsService::MIN_INTERVAL_SECONDS;
 
-        // Run every hour.
-        $this->setInterval(3600);
+	/**
+	 * Maximum allowed interval in seconds (24 hours).
+	 *
+	 * @var integer
+	 */
+	public const MAX_INTERVAL_SECONDS = SettingsService::MAX_INTERVAL_SECONDS;
 
-        // Delay until low-load time.
-        $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+	/**
+	 * Default interval in seconds (1 hour).
+	 *
+	 * @var integer
+	 */
+	public const DEFAULT_INTERVAL_SECONDS = SettingsService::DEFAULT_INTERVAL_SECONDS;
 
-        // Only run one instance of this job at a time.
-        $this->setAllowParallelRuns(false);
+	/**
+	 * Constructor.
+	 *
+	 * @param ITimeFactory $time Time factory for scheduling.
+	 * @param DirectoryService $directoryService The directory service.
+	 * @param IAppConfig $config App config for reading the sync interval.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private readonly DirectoryService $directoryService,
+		IAppConfig $config,
+	) {
+		parent::__construct(time: $time);
 
-    }//end __construct()
+		// Read interval from IAppConfig, clamped to [MIN_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS].
+		// A gewijzigde waarde is direct actief bij de volgende scheduling-tick omdat Nextcloud
+		// per tick een nieuwe TimedJob instantieert.
+		$configured = (int)$config->getValueInt(
+			'opencatalogi',
+			'sync_interval_seconds',
+			self::DEFAULT_INTERVAL_SECONDS
+		);
+		$interval = max(self::MIN_INTERVAL_SECONDS, min(self::MAX_INTERVAL_SECONDS, $configured));
 
-    /**
-     * Run the cron sync.
-     *
-     * @param array $argument Arguments passed to the job.
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
-     */
-    protected function run($argument): void
-    {
-        $this->directoryService->doCronSync();
+		$this->setInterval(seconds: $interval);
 
-    }//end run()
+		// Delay until low-load time.
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+
+		// Only run one instance of this job at a time.
+		$this->setAllowParallelRuns(allow: false);
+
+	}//end __construct()
+
+	/**
+	 * Run the cron sync.
+	 *
+	 * @param array $argument Arguments passed to the job.
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	protected function run($argument): void {
+		$this->directoryService->doCronSync();
+
+	}//end run()
 }//end class

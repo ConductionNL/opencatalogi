@@ -1,11 +1,5 @@
-/**
- * @file SelectAttachmentsList.vue
- * @module Components
- * @author Your Name
- * @copyright 2024 Your Organization
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- */
+/** * @file SelectAttachmentsList.vue * @module Components * @author Your Name *
+@copyright 2024 Your Organization * @license EUPL-1.2 * @version 1.0.0 */
 
 <script setup>
 import { objectStore } from '../store/store.js'
@@ -17,7 +11,8 @@ import { objectStore } from '../store/store.js'
 
 		<div v-if="selectedAttachments.length" class="selected-objects-list">
 			<TransitionGroup name="list" tag="div">
-				<div v-for="attachment in selectedAttachments"
+				<div
+					v-for="attachment in selectedAttachments"
 					:key="attachment.id"
 					class="selected-object-item"
 					:class="{ 'has-error': getObjectError(attachment) }">
@@ -31,9 +26,14 @@ import { objectStore } from '../store/store.js'
 							{{ getObjectError(attachment) }}
 						</p>
 					</div>
-					<NcButton v-if="showRemove"
-						type="tertiary"
-						:aria-label="t('opencatalogi', 'Remove {name}', { name: getObjectName(attachment) })"
+					<NcButton
+						v-if="showRemove"
+						variant="tertiary"
+						:aria-label="
+							t('opencatalogi', 'Remove {name}', {
+								name: getObjectName(attachment),
+							})
+						"
 						@click="removeObject(attachment.id)">
 						<template #icon>
 							<Close :size="20" />
@@ -52,16 +52,12 @@ import { objectStore } from '../store/store.js'
 </template>
 
 <script>
-import {
-	NcButton,
-	NcEmptyContent,
-} from '@nextcloud/vue'
-
-import Close from 'vue-material-design-icons/Close.vue'
+import { NcButton, NcEmptyContent } from '@nextcloud/vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import Close from 'vue-material-design-icons/Close.vue'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'SelectAttachmentsList',
@@ -71,6 +67,7 @@ export default {
 		Close,
 		AlertCircle,
 	},
+
 	props: {
 		/**
 		 * Title for the selected objects section
@@ -79,6 +76,7 @@ export default {
 			type: String,
 			default: 'Selected Attachments',
 		},
+
 		/**
 		 * Title to show when no objects are selected
 		 */
@@ -86,6 +84,7 @@ export default {
 			type: String,
 			default: 'No attachments selected',
 		},
+
 		/**
 		 * Description to show when no objects are selected
 		 */
@@ -93,6 +92,7 @@ export default {
 			type: String,
 			default: 'No attachments are currently selected.',
 		},
+
 		/**
 		 * Array of attachment IDs to display (optional, if not provided uses selected attachments from store)
 		 */
@@ -100,6 +100,7 @@ export default {
 			type: Array,
 			default: null,
 		},
+
 		/**
 		 * Whether to show remove buttons
 		 */
@@ -108,17 +109,26 @@ export default {
 			default: true,
 		},
 	},
+
 	computed: {
 		/**
 		 * Get selected attachment IDs (either from props or from store)
+		 *
 		 * @return {Array<string|number>} Array of attachment IDs
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		selectedAttachmentIds() {
-			return this.attachments || (Array.isArray(objectStore.selectedAttachments) ? objectStore.selectedAttachments : [])
+			return (
+				this.attachments
+				|| (Array.isArray(objectStore.selectedAttachments)
+					? objectStore.selectedAttachments
+					: [])
+			)
 		},
+
 		/**
 		 * Map selected IDs to detailed attachment objects from the active publication files
+		 *
 		 * @return {Array<object>} attachments with id, name/title, size
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
@@ -127,21 +137,28 @@ export default {
 			if (!currentPublication) return []
 			const filesData = objectStore.getRelatedData('publication', 'files')
 			const files = filesData?.results || []
-			return this.selectedAttachmentIds.map(id => {
-				const file = files.find(f => f.id === id)
+			return this.selectedAttachmentIds.map((id) => {
+				const file = files.find((f) => f.id === id)
 				return file || { id, name: `#${id}`, size: null }
 			})
 		},
 	},
+
 	methods: {
 		/**
 		 * Remove attachment ID from selected attachments in the store
+		 *
 		 * @param {string|number} attachmentId - The attachment ID to remove
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param attachmentId
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		removeObject(attachmentId) {
-			const currentSelected = Array.isArray(objectStore.selectedAttachments) ? [...objectStore.selectedAttachments] : []
-			const index = currentSelected.findIndex(id => id === attachmentId)
+			const currentSelected = Array.isArray(objectStore.selectedAttachments)
+				? [...objectStore.selectedAttachments]
+				: []
+			const index = currentSelected.findIndex((id) => id === attachmentId)
 			if (index > -1) {
 				currentSelected.splice(index, 1)
 				objectStore.setSelectedAttachments(currentSelected)
@@ -150,6 +167,7 @@ export default {
 
 		/**
 		 * Get display name for an attachment
+		 *
 		 * @param {object} attachment - The attachment object
 		 * @return {string}
 		 */
@@ -159,10 +177,14 @@ export default {
 
 		/**
 		 * Get formatted size for an attachment
+		 *
 		 * @param {object} attachment - The attachment object
 		 * @return {string}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param attachment
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		getAttachmentSize(attachment) {
 			if (!attachment || typeof attachment.size !== 'number') return ''
 			return this.formatFileSize(attachment.size)
@@ -170,21 +192,31 @@ export default {
 
 		/**
 		 * Get error message for an item (kept for compatibility; returns null for attachments by default)
+		 *
 		 * @param {object} obj - The object to get error for
 		 * @return {string|null}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param obj
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		getObjectError(obj) {
 			const objectId = obj?.id || obj?.['@self']?.id
-			return objectStore.getObjectError ? objectStore.getObjectError(objectId) : null
+			return objectStore.getObjectError
+				? objectStore.getObjectError(objectId)
+				: null
 		},
 
 		/**
 		 * Format file size (bytes to human-readable)
+		 *
 		 * @param {number} bytes - File size in bytes to format
 		 * @return {string}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
+		/**
+		 * @param bytes
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7
+		 */
 		formatFileSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
 			if (!bytes || bytes <= 0) return 'n/a'
@@ -266,5 +298,23 @@ export default {
 	position: absolute;
 	right: 0;
 	left: 0;
+}
+
+/* WCAG 2.3.3. Same two decorative motions as SelectedObjectsList: the per-item
+   hover transition and the <transition-group> 30px horizontal slide. The
+   transform is dropped along with the tween; the opacity fade is kept so
+   additions and removals stay perceivable. */
+@media (prefers-reduced-motion: reduce) {
+	.selected-object-item,
+	.list-move,
+	.list-enter-active,
+	.list-leave-active {
+		transition: none;
+	}
+
+	.list-enter-from,
+	.list-leave-to {
+		transform: none;
+	}
 }
 </style>

@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { SafeParseReturnType, z } from 'zod'
-import { TPage, TPageContent } from './page.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TPage, TPageContent } from './page.types'
+
+import { z } from 'zod'
 
 /** @typedef {import('./page.types').TPage} TPage */
 /** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
@@ -8,12 +9,12 @@ import { TPage, TPageContent } from './page.types'
 /**
  * Page class representing a page entity with validation
  * Implements the TPage interface for type safety
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ *
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Page implements TPage {
-
 	public id!: string
 	public title!: string
 	public slug!: string
@@ -25,9 +26,10 @@ export class Page implements TPage {
 
 	/**
 	 * Creates a new Page instance
+	 *
 	 * @param data Initial page data conforming to TPage interface
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+	 * @spec openspec/specs/entity-typescript-models/spec.md
 	 */
 	constructor(data: TPage) {
 		this.hydrate(data)
@@ -36,13 +38,17 @@ export class Page implements TPage {
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	/**
 	 * Hydrates the page object with provided data
+	 *
 	 * @param data Page data to populate the instance
 	 */
 	private hydrate(data: TPage) {
 		this.id = data?.id?.toString() || ''
 		this.title = data?.title || ''
 		this.slug = data?.slug || ''
-		this.contents = Array.isArray(data?.contents) && data.contents.length > 0 ? data.contents : null
+		this.contents =
+			Array.isArray(data?.contents) && data.contents.length > 0
+				? data.contents
+				: null
 		this.groups = data?.groups || []
 
 		this.hideAfterLogin = data?.hideAfterLogin || false
@@ -53,25 +59,32 @@ export class Page implements TPage {
 	/* istanbul ignore next */
 	/**
 	 * Validates the page data against a schema
-	 * @return {SafeParseReturnType<TPage, unknown>} containing validation result
+	 *
+	 * @return containing validation result
 	 */
 	public validate(): SafeParseReturnType<TPage, unknown> {
 		// Schema validation for page data
 		const schema = z.object({
 			title: z.string().min(1, 'title is verplicht'),
-			slug: z.string()
+			slug: z
+				.string()
 				.min(1, 'slug is verplicht')
-				.regex(/^[a-z0-9-]+$/g, 'een slug mag alleen kleine letters, cijfers en streepjes bevatten'),
-			contents: z.array(
-				z.object({
-					type: z.string().min(1, 'type is verplicht'),
-					id: z.string(),
-					data: z.record(z.string(), z.any()),
-					groups: z.array(z.string()).optional(),
-					hideAfterLogin: z.boolean().optional(),
-					hideBeforeLogin: z.boolean().optional(),
-				}),
-			).nullable(),
+				.regex(
+					/^[a-z0-9-]+$/g,
+					'een slug mag alleen kleine letters, cijfers en streepjes bevatten',
+				),
+			contents: z
+				.array(
+					z.object({
+						type: z.string().min(1, 'type is verplicht'),
+						id: z.string(),
+						data: z.record(z.string(), z.any()),
+						groups: z.array(z.string()).optional(),
+						hideAfterLogin: z.boolean().optional(),
+						hideBeforeLogin: z.boolean().optional(),
+					}),
+				)
+				.nullable(),
 			groups: z.array(z.string()).optional(),
 			hideAfterLogin: z.boolean().optional(),
 			hideBeforeLogin: z.boolean().optional(),
@@ -83,5 +96,4 @@ export class Page implements TPage {
 
 		return result
 	}
-
 }

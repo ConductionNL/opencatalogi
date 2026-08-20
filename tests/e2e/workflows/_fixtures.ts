@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * Seeded-fixture helpers for the DEEP, data-dependent OpenCatalogi e2e
  * workflow suite.
@@ -39,8 +39,13 @@
  * never call a non-existent `saveObject`/`publish` REST verb here.
  */
 import { request, type APIRequestContext } from '@playwright/test'
+import { BASE_URL } from '../base-url'
 
-export const BASE = process.env.NEXTCLOUD_URL || 'http://localhost:8080'
+// ⚠️ This module CREATES AND DELETES catalogs and publications. Its previous
+// `|| 'http://localhost:8080'` fallback aimed those writes at the SHARED dev
+// container whenever NEXTCLOUD_URL was unset — which is the default. There is
+// deliberately no default now; see tests/e2e/base-url.ts.
+export const BASE = BASE_URL
 export const ADMIN_USER = process.env.NC_ADMIN_USER || 'admin'
 export const ADMIN_PASS = process.env.NC_ADMIN_PASS || 'admin'
 
@@ -59,10 +64,16 @@ export let REG_PUBLICATION: number | string = 14
 export let SCHEMA_PUBLICATION: number | string = 53
 export let SCHEMA_CATALOG: number | string = 54
 export let SCHEMA_ORGANIZATION: number | string = 47
+export let SCHEMA_DOCUMENT: number | string = 55
 
 /** Stable slugs the OpenCatalogi register import uses (slug -> resolved id). */
 const REGISTER_SLUG = 'publication'
-const SCHEMA_SLUGS = { publication: 'publication', catalog: 'catalog', organization: 'organization' }
+const SCHEMA_SLUGS = {
+	publication: 'publication',
+	catalog: 'catalog',
+	organization: 'organization',
+	document: 'document',
+}
 
 const OBJ = (reg: number | string, schema: number | string, id?: string) =>
 	`/index.php/apps/openregister/api/objects/${reg}/${schema}${id ? `/${id}` : ''}`
@@ -84,7 +95,11 @@ export class Fixtures {
 	readonly runId: string
 	readonly prefix: string
 	private ctx!: APIRequestContext
-	private created: Array<{ register: number | string; schema: number | string; id: string }> = []
+	private created: Array<{
+		register: number | string
+		schema: number | string
+		id: string
+	}> = []
 
 	constructor(runId = newRunId()) {
 		this.runId = runId
@@ -96,7 +111,10 @@ export class Fixtures {
 		this.ctx = await request.newContext({
 			baseURL: BASE,
 			httpCredentials: { username: ADMIN_USER, password: ADMIN_PASS },
-			extraHTTPHeaders: { 'OCS-APIRequest': 'true', 'Content-Type': 'application/json' },
+			extraHTTPHeaders: {
+				'OCS-APIRequest': 'true',
+				'Content-Type': 'application/json',
+			},
 		})
 		await this.resolveRegisterAndSchemas()
 	}
@@ -110,22 +128,36 @@ export class Fixtures {
 	 */
 	private async resolveRegisterAndSchemas(): Promise<void> {
 		try {
-			const regRes = await this.ctx.get('/index.php/apps/openregister/api/registers?_limit=300')
+			const regRes = await this.ctx.get(
+				'/index.php/apps/openregister/api/registers?_limit=300',
+			)
 			if (regRes.ok()) {
 				const body = await regRes.json()
-				const list = Array.isArray(body) ? body : (body.results || [])
-				const reg = list.find((r: Record<string, unknown>) => r.slug === REGISTER_SLUG)
-				if (reg && (reg.id || reg.id === 0)) REG_PUBLICATION = reg.id as number | string
+				const list = Array.isArray(body) ? body : body.results || []
+				const reg = list.find(
+					(r: Record<string, unknown>) => r.slug === REGISTER_SLUG,
+				)
+				if (reg && (reg.id || reg.id === 0))
+					REG_PUBLICATION = reg.id as number | string
 			}
-			const schRes = await this.ctx.get('/index.php/apps/openregister/api/schemas?_limit=1000')
+			const schRes = await this.ctx.get(
+				'/index.php/apps/openregister/api/schemas?_limit=1000',
+			)
 			if (schRes.ok()) {
 				const body = await schRes.json()
-				const list = Array.isArray(body) ? body : (body.results || [])
+				const list = Array.isArray(body) ? body : body.results || []
 				const bySlug = new Map<string, number | string>()
-				for (const s of list) if (s && s.slug) bySlug.set(s.slug as string, s.id as number | string)
-				if (bySlug.has(SCHEMA_SLUGS.publication)) SCHEMA_PUBLICATION = bySlug.get(SCHEMA_SLUGS.publication)!
-				if (bySlug.has(SCHEMA_SLUGS.catalog)) SCHEMA_CATALOG = bySlug.get(SCHEMA_SLUGS.catalog)!
-				if (bySlug.has(SCHEMA_SLUGS.organization)) SCHEMA_ORGANIZATION = bySlug.get(SCHEMA_SLUGS.organization)!
+				for (const s of list)
+					if (s && s.slug)
+						bySlug.set(s.slug as string, s.id as number | string)
+				if (bySlug.has(SCHEMA_SLUGS.publication))
+					SCHEMA_PUBLICATION = bySlug.get(SCHEMA_SLUGS.publication)!
+				if (bySlug.has(SCHEMA_SLUGS.catalog))
+					SCHEMA_CATALOG = bySlug.get(SCHEMA_SLUGS.catalog)!
+				if (bySlug.has(SCHEMA_SLUGS.organization))
+					SCHEMA_ORGANIZATION = bySlug.get(SCHEMA_SLUGS.organization)!
+				if (bySlug.has(SCHEMA_SLUGS.document))
+					SCHEMA_DOCUMENT = bySlug.get(SCHEMA_SLUGS.document)!
 			}
 		} catch {
 			/* keep dev-box seed ids on any resolution failure */
@@ -136,7 +168,10 @@ export class Fixtures {
 		return this.ctx
 	}
 
-	/** Label every fixture with the run prefix so a sweep can find it. */
+	/**
+	 * Label every fixture with the run prefix so a sweep can find it.
+	 * @param name
+	 */
 	label(name: string): string {
 		return `${this.prefix} ${name}`
 	}
@@ -148,11 +183,16 @@ export class Fixtures {
 	): Promise<SeededObject> {
 		const res = await this.ctx.post(OBJ(register, schema), { data })
 		if (!res.ok()) {
-			throw new Error(`create ${register}/${schema} failed: ${res.status()} ${await res.text()}`)
+			throw new Error(
+				`create ${register}/${schema} failed: ${res.status()} ${await res.text()}`,
+			)
 		}
 		const body = await res.json()
 		const id = (body.id as string) || (body['@self']?.id as string)
-		if (!id) throw new Error(`create ${register}/${schema} returned no id: ${JSON.stringify(body)}`)
+		if (!id)
+			throw new Error(
+				`create ${register}/${schema} returned no id: ${JSON.stringify(body)}`,
+			)
 		this.created.push({ register, schema, id })
 		return {
 			id,
@@ -163,7 +203,12 @@ export class Fixtures {
 		}
 	}
 
-	/** GET one object back (used to assert backend persistence). */
+	/**
+	 * GET one object back (used to assert backend persistence).
+	 * @param register
+	 * @param schema
+	 * @param id
+	 */
 	async fetch(
 		register: number | string,
 		schema: number | string,
@@ -174,7 +219,12 @@ export class Fixtures {
 		return res.json()
 	}
 
-	/** List objects, optionally limited. */
+	/**
+	 * List objects, optionally limited.
+	 * @param register
+	 * @param schema
+	 * @param limit
+	 */
 	async list(
 		register: number | string,
 		schema: number | string,
@@ -186,8 +236,15 @@ export class Fixtures {
 		return (body.results as Array<Record<string, unknown>>) ?? []
 	}
 
-	/** Create a Catalog wired to the publication register+schema. */
-	async createCatalog(name: string, extra: Record<string, unknown> = {}): Promise<SeededObject> {
+	/**
+	 * Create a Catalog wired to the publication register+schema.
+	 * @param name
+	 * @param extra
+	 */
+	async createCatalog(
+		name: string,
+		extra: Record<string, unknown> = {},
+	): Promise<SeededObject> {
 		const title = this.label(name)
 		return this.create(REG_PUBLICATION, SCHEMA_CATALOG, {
 			title,
@@ -203,8 +260,15 @@ export class Fixtures {
 		})
 	}
 
-	/** Create a Publication (in draft — no publish action applied). */
-	async createPublication(name: string, extra: Record<string, unknown> = {}): Promise<SeededObject> {
+	/**
+	 * Create a Publication (in draft — no publish action applied).
+	 * @param name
+	 * @param extra
+	 */
+	async createPublication(
+		name: string,
+		extra: Record<string, unknown> = {},
+	): Promise<SeededObject> {
 		const title = this.label(name)
 		return this.create(REG_PUBLICATION, SCHEMA_PUBLICATION, {
 			title,
@@ -214,8 +278,15 @@ export class Fixtures {
 		})
 	}
 
-	/** Create an Organization. */
-	async createOrganization(name: string, extra: Record<string, unknown> = {}): Promise<SeededObject> {
+	/**
+	 * Create an Organization.
+	 * @param name
+	 * @param extra
+	 */
+	async createOrganization(
+		name: string,
+		extra: Record<string, unknown> = {},
+	): Promise<SeededObject> {
 		const title = this.label(name)
 		return this.create(REG_PUBLICATION, SCHEMA_ORGANIZATION, {
 			title,
@@ -224,8 +295,118 @@ export class Fixtures {
 		})
 	}
 
-	/** Delete a single created object (by id) and forget it. */
-	async remove(register: number | string, schema: number | string, id: string): Promise<void> {
+	/**
+	 * Create a Document linked to a publication (WOO-517 content-search fixture).
+	 * `publication` carries the `{slug, title}` summary
+	 * `PublicationQueryService::resolveDocumentPublicationSummary()` resolves by
+	 * slug — the UUID is filled in server-side once the link is followed.
+	 * @param name
+	 * @param publication
+	 * @param publication.slug
+	 * @param publication.title
+	 * @param extra
+	 */
+	async createDocument(
+		name: string,
+		publication: { slug: string; title: string },
+		extra: Record<string, unknown> = {},
+	): Promise<SeededObject> {
+		const title = this.label(name)
+		return this.create(REG_PUBLICATION, SCHEMA_DOCUMENT, {
+			title,
+			summary: `Fixture document for ${this.prefix}`,
+			publication,
+			...extra,
+		})
+	}
+
+	/**
+	 * Attach a small text file to an already-created object via OpenRegister's
+	 * generic file-attach endpoint (`POST .../objects/{register}/{schema}/{id}/files`).
+	 * Returns the Nextcloud file id (`formatFile()`'s `id` field), needed to
+	 * force-trigger extraction via {@see extractFile}.
+	 * @param register
+	 * @param schema
+	 * @param id
+	 * @param fileName
+	 * @param content
+	 */
+	async attachFile(
+		register: number | string,
+		schema: number | string,
+		id: string,
+		fileName: string,
+		content: string,
+	): Promise<number> {
+		const res = await this.ctx.post(`${OBJ(register, schema, id)}/files`, {
+			data: { name: fileName, content },
+		})
+		if (!res.ok()) {
+			throw new Error(
+				`attachFile ${register}/${schema}/${id} failed: ${res.status()} ${await res.text()}`,
+			)
+		}
+		const body = await res.json()
+		const fileId = body.id as number
+		if (!fileId)
+			throw new Error(
+				`attachFile returned no file id: ${JSON.stringify(body)}`,
+			)
+		return fileId
+	}
+
+	/**
+	 * Force-trigger OR's text-extraction for one file rather than waiting for the
+	 * lazy `FileTextExtractionJob` cron (`POST /apps/openregister/api/files/{id}/extract`).
+	 *
+	 * Distinguishes hard failures (404 endpoint moved, 401/403 auth broken) from
+	 * transient hiccups. On a hard failure the fixture throws immediately so the
+	 * test fails fast with the real root cause, not a misleading "marker did not
+	 * surface" 10-second poll timeout. Transient statuses (409 already-running,
+	 * 5xx) are logged and swallowed so the poll loop downstream can still succeed
+	 * if the extraction was already scheduled.
+	 * @param fileId
+	 */
+	async extractFile(fileId: number): Promise<void> {
+		let res
+		try {
+			res = await this.ctx.post(
+				`/index.php/apps/openregister/api/files/${fileId}/extract`,
+				{ data: { forceReExtract: true } },
+			)
+		} catch (err) {
+			throw new Error(
+				`extractFile ${fileId}: network failure — ${(err as Error).message}`,
+			)
+		}
+		if (res.ok()) {
+			return
+		}
+		const status = res.status()
+		if (status === 404 || status === 401 || status === 403) {
+			const body = await res.text().catch(() => '')
+			throw new Error(
+				`extractFile ${fileId}: hard failure (${status}) — endpoint moved or auth broken. Body: ${body.slice(0, 200)}`,
+			)
+		}
+		// 409 (already running), 5xx (transient) — log and let the poll loop decide.
+		const body = await res.text().catch(() => '')
+		console.warn(
+			`[fixtures] extractFile ${fileId}: transient status ${status}, continuing. Body: ${body.slice(0, 200)}`,
+		)
+	}
+
+	/**
+	 * Delete a single created object (by id) and forget it.
+	 * @param register
+	 * @param schema
+	 * @param id
+	 */
+	async remove(
+		register: number | string,
+		schema: number | string,
+		id: string,
+	): Promise<void> {
 		await this.ctx.delete(OBJ(register, schema, id)).catch(() => {})
 		this.created = this.created.filter((c) => !(c.id === id))
 	}
@@ -241,14 +422,27 @@ export class Fixtures {
 		}
 		this.created = []
 
-		// Prefix sweep across the three fixture schemas (catches UI-created rows).
-		for (const schema of [SCHEMA_PUBLICATION, SCHEMA_CATALOG, SCHEMA_ORGANIZATION]) {
+		// Prefix sweep across the fixture schemas (catches UI-created rows).
+		for (const schema of [
+			SCHEMA_PUBLICATION,
+			SCHEMA_CATALOG,
+			SCHEMA_ORGANIZATION,
+			SCHEMA_DOCUMENT,
+		]) {
 			const rows = await this.list(REG_PUBLICATION, schema, 500)
 			for (const row of rows) {
-				const title = (row.title as string) ?? (row['@self'] as Record<string, unknown>)?.name ?? ''
+				const title =
+					(row.title as string)
+					?? (row['@self'] as Record<string, unknown>)?.name
+					?? ''
 				if (typeof title === 'string' && title.startsWith(this.prefix)) {
-					const id = (row.id as string) || ((row['@self'] as Record<string, unknown>)?.id as string)
-					if (id) await this.ctx.delete(OBJ(REG_PUBLICATION, schema, id)).catch(() => {})
+					const id =
+						(row.id as string)
+						|| ((row['@self'] as Record<string, unknown>)?.id as string)
+					if (id)
+						await this.ctx
+							.delete(OBJ(REG_PUBLICATION, schema, id))
+							.catch(() => {})
 				}
 			}
 		}

@@ -1,13 +1,14 @@
-import { SafeParseReturnType, z } from 'zod'
-import { TTheme } from './theme.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TTheme } from './theme.types'
+
+import { z } from 'zod'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Theme implements TTheme {
-
 	public id!: string
 	public title!: string
 	public summary!: string
@@ -20,7 +21,10 @@ export class Theme implements TTheme {
 	public isExternal!: boolean
 	public sort!: number
 
-	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TTheme) {
 		this.hydrate(data)
 	}
@@ -62,5 +66,4 @@ export class Theme implements TTheme {
 
 		return result
 	}
-
 }

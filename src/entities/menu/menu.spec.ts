@@ -4,15 +4,15 @@
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-/* eslint-disable no-console */
+import type { TMenu } from './menu.types'
+
 import { Menu } from './menu'
 import { mockMenu, mockMinimalMenu } from './menu.mock'
-import { TMenu } from './menu.types'
 
 describe('Menu Store', () => {
 	it('create Menu entity with full data', () => {

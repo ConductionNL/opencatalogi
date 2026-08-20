@@ -10,11 +10,15 @@
  *   expired        → retentionExpiresAt < now (any action), not archived
  *   archived       → status = archived
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
  */
 
 const DEFAULT_WARNING_WINDOW_DAYS = 30
 
+/**
+ *
+ * @param value
+ */
 function toDate(value) {
 	if (!value) return null
 	const d = new Date(value)
@@ -28,7 +32,7 @@ function toDate(value) {
  * @param {number} termMonths      Retention term in months.
  * @return {string|null} ISO-8601 expiry, or null when not computable.
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-metadata-on-the-publication-schema-ret-003
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-metadata-on-the-publication-schema-ret-003
  */
 export function computeExpiry(publicationDate, termMonths) {
 	const base = toDate(publicationDate)
@@ -45,7 +49,7 @@ export function computeExpiry(publicationDate, termMonths) {
  * @param {object} obj Publication object.
  * @return {boolean} Whether archived.
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-archived-state-semantics-ret-006
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-archived-state-semantics-ret-006
  */
 export function isArchived(obj) {
 	return obj?.status === 'archived'
@@ -58,7 +62,7 @@ export function isArchived(obj) {
  * @param {number} windowDays Warning window in days.
  * @return {boolean} Whether expiring soon.
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
  */
 export function isExpiringSoon(obj, windowDays = DEFAULT_WARNING_WINDOW_DAYS) {
 	if (isArchived(obj)) return false
@@ -76,7 +80,7 @@ export function isExpiringSoon(obj, windowDays = DEFAULT_WARNING_WINDOW_DAYS) {
  * @param {object} obj Publication object.
  * @return {boolean} Whether review is required.
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
  */
 export function isReviewRequired(obj) {
 	if (isArchived(obj)) return false
@@ -92,7 +96,7 @@ export function isReviewRequired(obj) {
  * @param {number} windowDays Warning window in days.
  * @return {string} One of: archived, review-required, expiring-soon, ok.
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
  */
 export function getRetentionStatus(obj, windowDays = DEFAULT_WARNING_WINDOW_DAYS) {
 	if (isArchived(obj)) return 'archived'

@@ -1,13 +1,13 @@
-import { defineStore } from 'pinia'
 import {
-	createObjectStore,
 	auditTrailsPlugin,
+	createObjectStore,
 	filesPlugin,
 	lifecyclePlugin,
 	liveUpdatesPlugin,
 	relationsPlugin,
 	selectionPlugin,
 } from '@conduction/nextcloud-vue'
+import { defineStore } from 'pinia'
 
 /**
  * @typedef {object} Schema
@@ -54,6 +54,15 @@ const useInnerObjectStore = createObjectStore('opencatalogi-objects-inner', {
 		relationsPlugin(),
 		lifecyclePlugin(),
 		selectionPlugin(),
+		// Live updates: as of nextcloud-vue beta.212 this plugin is default-on
+		// in createObjectStore (lazy until the first subscribe(); the explicit
+		// instance below wins the by-name dedupe). NOTE: no opencatalogi view
+		// subscribes yet — views read the OUTER 'object' store, and the
+		// plugin's refetch hints re-run fetchCollection/fetchObject on THIS
+		// inner store only. Wiring subscribe() in a view therefore needs an
+		// outer↔inner refetch bridge first; without it the subscription would
+		// refresh state no view reads. Until that bridge exists the plugin
+		// stays inert (zero transport activity — laziness guarantee).
 		liveUpdatesPlugin(),
 	],
 })
@@ -73,7 +82,7 @@ const useInnerObjectStore = createObjectStore('opencatalogi-objects-inner', {
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 2.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
@@ -115,28 +124,138 @@ export const useObjectStore = defineStore('object', {
 		objectErrors: {},
 		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
 		metadata: {
-			name: { label: 'Name', key: 'name', description: 'Display name of the object', enabled: true },
-			description: { label: 'Description', key: 'description', description: 'Description of the object', enabled: false },
-			objectId: { label: 'ID', key: 'id', description: 'Unique identifier of the object', enabled: false },
-			uri: { label: 'URI', key: 'uri', description: 'URI of the object', enabled: false },
-			version: { label: 'Version', key: 'version', description: 'Version of the object', enabled: false },
-			register: { label: 'Register', key: 'register', description: 'Register of the object', enabled: false },
-			schema: { label: 'Schema', key: 'schema', description: 'Schema of the object', enabled: false },
-			files: { label: 'Files', key: 'files', description: 'Attached files count', enabled: true },
-			locked: { label: 'Locked', key: 'locked', description: 'Whether the object is locked', enabled: false },
-			organization: { label: 'Organization', key: 'organization', description: 'Organization owning the object', enabled: false },
-			validation: { label: 'Validation', key: 'validation', description: 'Validation status of the object', enabled: false },
-			owner: { label: 'Owner', key: 'owner', description: 'Owner of the object', enabled: false },
-			application: { label: 'Application', key: 'application', description: 'Application of the object', enabled: false },
-			folder: { label: 'Folder', key: 'folder', description: 'Folder of the object', enabled: false },
-			geo: { label: 'Geo', key: 'geo', description: 'Geographic information', enabled: false },
-			retention: { label: 'Retention', key: 'retention', description: 'Retention policy', enabled: false },
-			size: { label: 'Size', key: 'size', description: 'Size of the object', enabled: false },
-			published: { label: 'Published', key: 'published', description: 'Publication date', enabled: false },
-			depublished: { label: 'Depublished', key: 'depublished', description: 'Depublication date', enabled: false },
-			deleted: { label: 'Deleted', key: 'deleted', description: 'Deletion date', enabled: false },
-			created: { label: 'Created', key: 'created', description: 'Creation date and time', enabled: false },
-			updated: { label: 'Updated', key: 'updated', description: 'Last update date and time', enabled: false },
+			name: {
+				label: 'Name',
+				key: 'name',
+				description: 'Display name of the object',
+				enabled: true,
+			},
+			description: {
+				label: 'Description',
+				key: 'description',
+				description: 'Description of the object',
+				enabled: false,
+			},
+			objectId: {
+				label: 'ID',
+				key: 'id',
+				description: 'Unique identifier of the object',
+				enabled: false,
+			},
+			uri: {
+				label: 'URI',
+				key: 'uri',
+				description: 'URI of the object',
+				enabled: false,
+			},
+			version: {
+				label: 'Version',
+				key: 'version',
+				description: 'Version of the object',
+				enabled: false,
+			},
+			register: {
+				label: 'Register',
+				key: 'register',
+				description: 'Register of the object',
+				enabled: false,
+			},
+			schema: {
+				label: 'Schema',
+				key: 'schema',
+				description: 'Schema of the object',
+				enabled: false,
+			},
+			files: {
+				label: 'Files',
+				key: 'files',
+				description: 'Attached files count',
+				enabled: true,
+			},
+			locked: {
+				label: 'Locked',
+				key: 'locked',
+				description: 'Whether the object is locked',
+				enabled: false,
+			},
+			organization: {
+				label: 'Organization',
+				key: 'organization',
+				description: 'Organization owning the object',
+				enabled: false,
+			},
+			validation: {
+				label: 'Validation',
+				key: 'validation',
+				description: 'Validation status of the object',
+				enabled: false,
+			},
+			owner: {
+				label: 'Owner',
+				key: 'owner',
+				description: 'Owner of the object',
+				enabled: false,
+			},
+			application: {
+				label: 'Application',
+				key: 'application',
+				description: 'Application of the object',
+				enabled: false,
+			},
+			folder: {
+				label: 'Folder',
+				key: 'folder',
+				description: 'Folder of the object',
+				enabled: false,
+			},
+			geo: {
+				label: 'Geo',
+				key: 'geo',
+				description: 'Geographic information',
+				enabled: false,
+			},
+			retention: {
+				label: 'Retention',
+				key: 'retention',
+				description: 'Retention policy',
+				enabled: false,
+			},
+			size: {
+				label: 'Size',
+				key: 'size',
+				description: 'Size of the object',
+				enabled: false,
+			},
+			published: {
+				label: 'Published',
+				key: 'published',
+				description: 'Publication date',
+				enabled: false,
+			},
+			depublished: {
+				label: 'Depublished',
+				key: 'depublished',
+				description: 'Depublication date',
+				enabled: false,
+			},
+			deleted: {
+				label: 'Deleted',
+				key: 'deleted',
+				description: 'Deletion date',
+				enabled: false,
+			},
+			created: {
+				label: 'Created',
+				key: 'created',
+				description: 'Creation date and time',
+				enabled: false,
+			},
+			updated: {
+				label: 'Updated',
+				key: 'updated',
+				description: 'Last update date and time',
+				enabled: false,
+			},
 		},
 		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
 		properties: {},
@@ -147,6 +266,7 @@ export const useObjectStore = defineStore('object', {
 	getters: {
 		/**
 		 * Get object types from settings
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<string>}
 		 */
@@ -154,6 +274,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get available registers from settings
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, title: string, schemas: Array<{id: string, title: string}>}>}
 		 */
@@ -161,13 +282,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get available schemas from settings
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, title: string, registerId: string, registerTitle: string}>}
 		 */
 		availableSchemas: (state) => {
 			if (!state.settings?.availableRegisters) return []
-			return state.settings.availableRegisters.flatMap(register =>
-				register.schemas.map(schema => ({
+			return state.settings.availableRegisters.flatMap((register) =>
+				register.schemas.map((schema) => ({
 					...schema,
 					registerId: register.id,
 					registerTitle: register.title,
@@ -177,6 +299,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get loading state for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => boolean}
 		 */
@@ -184,6 +307,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get error for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => string|null}
 		 */
@@ -192,6 +316,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Get collection for specific type — preserves the historical
 		 * `{ results: [...] }` shape used by all opencatalogi Vue files.
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {results: Array<any>}}
 		 */
@@ -201,6 +326,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get search term for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => string}
 		 */
@@ -208,6 +334,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get single object
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string, id: string) => object | null}
 		 */
@@ -215,6 +342,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get active object for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => object | null}
 		 */
@@ -222,13 +350,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get related data for active object
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string, dataType: string) => object | null}
 		 */
-		getRelatedData: (state) => (type, dataType) => state.relatedData[type]?.[dataType] || null,
+		getRelatedData: (state) => (type, dataType) =>
+			state.relatedData[type]?.[dataType] || null,
 
 		/**
 		 * Get pagination info for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {total: number, page: number, pages: number, limit: number}}
 		 */
@@ -243,26 +374,33 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Check if there are more pages to load for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => boolean}
 		 */
 		hasMorePages: (state) => (type) => {
 			const pagination = state.pagination[type]
-			return pagination ? (pagination.next !== null || pagination.page < pagination.pages) : false
+			return pagination
+				? pagination.next !== null || pagination.page < pagination.pages
+				: false
 		},
 
 		/**
 		 * Check if there are previous pages available
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => boolean}
 		 */
 		hasPreviousPages: (state) => (type) => {
 			const pagination = state.pagination[type]
-			return pagination ? (pagination.prev !== null || pagination.page > 1) : false
+			return pagination
+				? pagination.prev !== null || pagination.page > 1
+				: false
 		},
 
 		/**
 		 * Get audit trails for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => Array<any>}
 		 */
@@ -270,6 +408,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get state for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {success: boolean|null, error: string|null}}
 		 */
@@ -280,6 +419,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get object type configuration for a schema slug
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(slug: string) => {schema: string, register: string}|null}
 		 */
@@ -287,6 +427,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Check if an object type exists
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(slug: string) => boolean}
 		 */
@@ -294,6 +435,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get enabled metadata columns
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, label: string, key: string, description: string}>}
 		 */
@@ -305,6 +447,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get enabled property columns
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, label: string, key: string, description: string}>}
 		 */
@@ -316,6 +459,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get all enabled columns (metadata + properties)
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, label: string, key: string, description: string}>}
 		 */
@@ -333,13 +477,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Check if all objects are selected
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {boolean}
 		 */
 		isAllSelected: (state) => {
 			const publicationCollection = state.collections.publication
 			if (!publicationCollection?.results?.length) return false
-			return publicationCollection.results.every(pub =>
+			return publicationCollection.results.every((pub) =>
 				state.selectedObjects.includes(pub['@self']?.id || pub.id),
 			)
 		},
@@ -350,10 +495,11 @@ export const useObjectStore = defineStore('object', {
 		 * Lazily resolve the inner lib store. The inner store is a Pinia
 		 * composable; calling it without an explicit Pinia instance picks up
 		 * the active one (which is the same one the outer store uses).
+		 *
 		 * @return {object} The inner store instance
 		 * @private
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		_inner() {
 			return useInnerObjectStore()
 		},
@@ -361,10 +507,14 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Mirror an object type registration into the inner store so its
 		 * CRUD calls know which register/schema to target. Idempotent.
+		 *
 		 * @param {string} type - The type slug
 		 * @private
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		_ensureInnerType(type) {
 			const inner = this._inner()
 			if (inner.objectTypeRegistry?.[type]) return
@@ -384,16 +534,26 @@ export const useObjectStore = defineStore('object', {
 				}
 			}
 			if (!config?.schema || !config?.register) return
-			inner.registerObjectType(type, String(config.schema), String(config.register))
+			inner.registerObjectType(
+				type,
+				String(config.schema),
+				String(config.register),
+			)
 		},
 
 		/**
 		 * Set collection for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {Array} results - Collection results
 		 * @param {boolean} append - Whether to append results to existing collection
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param results
+		 * @param append
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setCollection(type, results, append = false) {
 			// Initialize if needed
 			if (!this.collections[type] || !append) {
@@ -426,6 +586,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set loading state for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {boolean} isLoading - Loading state
 		 */
@@ -435,10 +596,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set error for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {string|null} error - Error message
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param error
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setError(type, error) {
 			this.errors = { ...this.errors, [type]: error }
 			if (error) {
@@ -448,11 +614,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set active object for type and fetch related data
+		 *
 		 * @param {string} type - Object type
 		 * @param {object} object - Object to set as active
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param object
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async setActiveObject(type, object) {
 			// Update using reactive assignment
 			this.activeObjects = { ...this.activeObjects, [type]: object }
@@ -488,7 +659,15 @@ export const useObjectStore = defineStore('object', {
 				for (const dataType of dataTypes) {
 					if (!this.relatedData[type][dataType]) {
 						const defaultLimit = dataType === 'files' ? 500 : 20
-						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
+						fetchPromises.push(
+							this.fetchRelatedData(
+								type,
+								object.id,
+								dataType,
+								{ _limit: defaultLimit, _page: 1 },
+								publicationData,
+							),
+						)
 					}
 				}
 				await Promise.all(fetchPromises)
@@ -497,9 +676,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Clear active object for type
+		 *
 		 * @param {string} type - Object type
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		clearActiveObject(type) {
 			this.activeObjects = { ...this.activeObjects, [type]: null }
 			this.relatedData = {
@@ -510,12 +693,18 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Register a new object type
+		 *
 		 * @param {string} slug - The schema slug to use as type identifier
 		 * @param {string} schema - The schema ID
 		 * @param {string} register - The register ID
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param slug
+		 * @param schema
+		 * @param register
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async registerObjectType(slug, schema, register) {
 			if (this.objectTypeRegistry[slug]) {
 				return
@@ -545,10 +734,14 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Fetch and cache the JSON Schema for a registered object type.
 		 * Required by useListView composable for CnIndexSidebar integration.
+		 *
 		 * @param {string} type - The object type slug
 		 * @return {Promise<object|null>} The schema object or null on failure
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async fetchSchema(type) {
 			if (this.schemas[type]) {
 				return this.schemas[type]
@@ -571,9 +764,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Unregister an object type
+		 *
 		 * @param {string} slug - The schema slug to unregister
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param slug
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		unregisterObjectType(slug) {
 			if (!this.objectTypeRegistry[slug]) {
 				return
@@ -608,11 +805,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get schema configuration for object type
+		 *
 		 * @param {string} objectType - Type of object
 		 * @return {{source: string, schema: string, register: string}}
 		 * @throws {Error} If settings not found or invalid configuration
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objectType
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		getSchemaConfig(objectType) {
 			// First check if this is a registered object type
 			let objectTypeConfig = this.objectTypeRegistry[objectType]
@@ -648,7 +849,9 @@ export const useObjectStore = defineStore('object', {
 			const register = config[`${objectType}_register`]
 
 			if (!source || !schema || !register) {
-				throw new Error(`Invalid configuration for object type: ${objectType}`)
+				throw new Error(
+					`Invalid configuration for object type: ${objectType}`,
+				)
 			}
 
 			return { source, schema, register }
@@ -671,8 +874,21 @@ export const useObjectStore = defineStore('object', {
 		 * @return {string} The constructed URL
 		 * @private
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
-		_constructApiUrl(type, id = null, action = null, params = {}, publicationData = null) {
+		/**
+		 * @param type
+		 * @param id
+		 * @param action
+		 * @param params
+		 * @param publicationData
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		_constructApiUrl(
+			type,
+			id = null,
+			action = null,
+			params = {},
+			publicationData = null,
+		) {
 			let config = null
 			if (publicationData) {
 				config = publicationData
@@ -682,8 +898,14 @@ export const useObjectStore = defineStore('object', {
 			const baseUrl = '/index.php/apps/openregister/api/objects'
 
 			// Ensure register and schema are strings (extract id if they're objects)
-			const registerId = typeof config.register === 'object' ? config.register?.id || config.register?.uuid : config.register
-			const schemaId = typeof config.schema === 'object' ? config.schema?.id || config.schema?.uuid : config.schema
+			const registerId =
+				typeof config.register === 'object'
+					? config.register?.id || config.register?.uuid
+					: config.register
+			const schemaId =
+				typeof config.schema === 'object'
+					? config.schema?.id || config.schema?.uuid
+					: config.schema
 
 			// Construct the path with register and schema
 			let url = `${baseUrl}/${registerId}/${schemaId}`
@@ -726,7 +948,12 @@ export const useObjectStore = defineStore('object', {
 		 * @param {boolean} append - Whether to append results to existing collection
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param params
+		 * @param append
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async fetchCollection(type, params = {}, append = false) {
 			this.setLoading(type, true)
 			this.setState(type, { success: null, error: null })
@@ -743,13 +970,32 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				// Add _source=database for types that aren't indexed in Solr
-				const nonIndexedTypes = ['menu', 'page', 'glossary', 'theme', 'organization', 'listing', 'catalog', 'audit-trails', 'uses', 'used', 'files']
-				if (nonIndexedTypes.includes(type) && !params?._source && !params?.source) {
+				const nonIndexedTypes = [
+					'menu',
+					'page',
+					'glossary',
+					'theme',
+					'organization',
+					'listing',
+					'catalog',
+					'audit-trails',
+					'uses',
+					'used',
+					'files',
+				]
+				if (
+					nonIndexedTypes.includes(type)
+					&& !params?._source
+					&& !params?.source
+				) {
 					queryParams._source = 'database'
 				}
 
-				const response = await fetch(this._constructApiUrl(type, null, null, queryParams))
-				if (!response.ok) throw new Error(`Failed to fetch ${type} collection`)
+				const response = await fetch(
+					this._constructApiUrl(type, null, null, queryParams),
+				)
+				if (!response.ok)
+					throw new Error(`Failed to fetch ${type} collection`)
 
 				const data = await response.json()
 
@@ -757,7 +1003,11 @@ export const useObjectStore = defineStore('object', {
 				const paginationInfo = {
 					total: data.total || 0,
 					page: data.page || 1,
-					pages: data.pages || (data.next ? Math.ceil((data.total || 0) / (data.limit || 20)) : 1),
+					pages:
+						data.pages
+						|| (data.next
+							? Math.ceil((data.total || 0) / (data.limit || 20))
+							: 1),
 					limit: data.limit || 20,
 					next: data.next || null,
 					prev: data.prev || null,
@@ -772,7 +1022,10 @@ export const useObjectStore = defineStore('object', {
 				try {
 					this._ensureInnerType(type)
 					const inner = this._inner()
-					inner.collections = { ...inner.collections, [type]: data.results || [] }
+					inner.collections = {
+						...inner.collections,
+						[type]: data.results || [],
+					}
 					inner.pagination = {
 						...inner.pagination,
 						[type]: {
@@ -801,14 +1054,17 @@ export const useObjectStore = defineStore('object', {
 				} catch (mirrorErr) {
 					// Mirror errors are non-blocking — the outer store is the
 					// source of truth for opencatalogi's Vue files.
-					console.warn(`Inner-store mirror skipped for ${type}:`, mirrorErr.message)
+					console.warn(
+						`Inner-store mirror skipped for ${type}:`,
+						mirrorErr.message,
+					)
 				}
 
 				// Update outer per-id objects cache with extended data
 				if (!this.objects[type]) {
 					this.objects[type] = {}
 				}
-				data.results.forEach(item => {
+				data.results.forEach((item) => {
 					this.objects[type][item.id] = { ...item }
 				})
 			} catch (error) {
@@ -830,7 +1086,12 @@ export const useObjectStore = defineStore('object', {
 		 * @param {object} params - Query parameters (currently unused; lib does not accept query params)
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param id
+		 * @param params
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async fetchObject(type, id, params = {}) {
 			this.setLoading(`${type}_${id}`, true)
 			this.setState(type, { success: null, error: null })
@@ -853,7 +1114,9 @@ export const useObjectStore = defineStore('object', {
 				} else {
 					// fetchObject returns null on error and stores error on inner
 					const innerErr = this._inner().getError(type)
-					throw new Error(innerErr?.message || `Failed to fetch ${type} object`)
+					throw new Error(
+						innerErr?.message || `Failed to fetch ${type} object`,
+					)
 				}
 			} catch (error) {
 				console.error(`Error fetching ${type} object:`, error)
@@ -867,6 +1130,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Fetch related data for object
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID
 		 * @param {string} dataType - Type of related data (logs, uses, used, files)
@@ -874,8 +1138,21 @@ export const useObjectStore = defineStore('object', {
 		 * @param {object|null} publicationData - Publication data with schema and register info (optional)
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
-		async fetchRelatedData(type, id, dataType, params = {}, publicationData = null) {
+		/**
+		 * @param type
+		 * @param id
+		 * @param dataType
+		 * @param params
+		 * @param publicationData
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async fetchRelatedData(
+			type,
+			id,
+			dataType,
+			params = {},
+			publicationData = null,
+		) {
 			this.setLoading(`${type}_${id}_${dataType}`, true)
 			this.setState(type, { success: null, error: null })
 
@@ -886,11 +1163,27 @@ export const useObjectStore = defineStore('object', {
 
 				const queryParams = {
 					...params,
-					...(dataType === 'uses' || dataType === 'used' ? { _extend: params._extend || params.extend || '@self.schema' } : {}),
+					...(dataType === 'uses' || dataType === 'used'
+						? {
+								_extend:
+									params._extend
+									|| params.extend
+									|| '@self.schema',
+							}
+						: {}),
 				}
 
-				const response = await fetch(this._constructApiUrl(type, id, dataType, queryParams, publicationData))
-				if (!response.ok) throw new Error(`Failed to fetch ${dataType} for ${type}`)
+				const response = await fetch(
+					this._constructApiUrl(
+						type,
+						id,
+						dataType,
+						queryParams,
+						publicationData,
+					),
+				)
+				if (!response.ok)
+					throw new Error(`Failed to fetch ${dataType} for ${type}`)
 
 				const data = await response.json()
 				if (!this.relatedData[type]) {
@@ -902,11 +1195,15 @@ export const useObjectStore = defineStore('object', {
 					const paginationKey = `${type}_${dataType}`
 					const requestedLimit = params._limit || params.limit
 					const apiLimit = data.limit ? parseInt(data.limit, 10) : null
-					const actualLimit = apiLimit || requestedLimit || (dataType === 'files' ? 500 : 20)
+					const actualLimit =
+						apiLimit
+						|| requestedLimit
+						|| (dataType === 'files' ? 500 : 20)
 					const paginationInfo = {
 						total: data.total || 0,
 						page: data.page || 1,
-						pages: data.pages || Math.ceil((data.total || 0) / actualLimit),
+						pages:
+							data.pages || Math.ceil((data.total || 0) / actualLimit),
 						limit: actualLimit,
 						next: data.next || null,
 						prev: data.prev || null,
@@ -931,12 +1228,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Fetch and update settings
+		 *
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		async fetchSettings() {
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings')
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/settings',
+				)
 				if (!response.ok) throw new Error('Failed to fetch settings')
 				this.settings = await response.json()
 				// Register types immediately so useListView.fetchSchema works
@@ -949,12 +1249,18 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Create new object
+		 *
 		 * @param {string} type - Object type
 		 * @param {object} data - Object data
 		 * @param {object|null} publicationData - Optional override with explicit { register, schema } so copies/creates target the source's actual schema instead of the type's default config
 		 * @return {Promise<object>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param data
+		 * @param publicationData
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async createObject(type, data, publicationData = null) {
 			this.setLoading(`${type}_create`, true)
 			this.setError(`${type}_create`, null)
@@ -1010,7 +1316,13 @@ export const useObjectStore = defineStore('object', {
 		 * @param {{register: string|object, schema: string|object}} options - Register/schema config
 		 * @return {Promise<{response: Response, data: object}>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objectItem
+		 * @param root0
+		 * @param root0.register
+		 * @param root0.schema
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async saveObject(objectItem, { register, schema }) {
 			if (!objectItem || !register || !schema) {
 				throw new Error('Object item, register and schema are required')
@@ -1044,7 +1356,9 @@ export const useObjectStore = defineStore('object', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to save object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to save object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const data = await response.json()
@@ -1057,12 +1371,18 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Update existing object
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID
 		 * @param {object} data - Updated object data
 		 * @return {Promise<object>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param id
+		 * @param data
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async updateObject(type, id, data) {
 			this.setLoading(`${type}_${id}`, true)
 			this.setError(`${type}_${id}`, null)
@@ -1073,14 +1393,11 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				const response = await fetch(
-					this._constructApiUrl(type, id),
-					{
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(data),
-					},
-				)
+				const response = await fetch(this._constructApiUrl(type, id), {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(data),
+				})
 				if (!response.ok) throw new Error(`Failed to update ${type} object`)
 
 				const updatedObject = await response.json()
@@ -1108,10 +1425,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Extract ID from a value that can be either a primitive or an object
+		 *
 		 * @param {string|number|object} value - The value to extract ID from
 		 * @return {string|number} The extracted ID
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param value
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		extractId(value) {
 			if (value === null || value === undefined) {
 				return value
@@ -1125,18 +1446,50 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
-		 * Delete object
-		 * @param {object} objectItem - Object to delete
-		 * @return {Promise<void>}
+		 * Delete object.
+		 *
+		 * Accepts either the object itself, or the legacy `(type, id)` pair. Four
+		 * call sites still use the legacy form — DirectorySideBar
+		 * (`deleteObject('publication_type', id)`), DeleteMultipleCategoriesDialog,
+		 * ViewMenuModal and ViewPageModal — and since the signature changed to take
+		 * an object, every one of those delete buttons threw
+		 * "Object must have id, register, and schema information" before issuing a
+		 * request: a bare type STRING has no `.id` and no `@self`. It went unnoticed
+		 * because this store's spec could not run at all (the suite failed to load
+		 * on an unrelated jest/playwright config problem).
+		 *
+		 * Resolving the legacy pair here fixes all four call sites at once, and
+		 * matters because some of them only ever hold an id — DirectorySideBar
+		 * derives its id from a URL and never has the object to pass.
+		 *
+		 * @param {object|string} objectItem - Object to delete, or the legacy type.
+		 * @param {string} [legacyId] - Object id, when called as (type, id).
+		 * @return {Promise<boolean>} True once the object is deleted.
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
-		async deleteObject(objectItem) {
-			const objectId = objectItem.id || objectItem['@self']?.id
-			const register = objectItem['@self']?.register || objectItem.register
-			const schema = objectItem['@self']?.schema || objectItem.schema
+		/**
+		 * @param objectItem
+		 * @param legacyId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async deleteObject(objectItem, legacyId = undefined) {
+			if (typeof objectItem === 'string') {
+				const resolved = this.objects[objectItem]?.[legacyId]
+				if (!resolved) {
+					throw new Error(
+						`Cannot delete ${objectItem} ${legacyId}: object not loaded in the store`,
+					)
+				}
+				objectItem = resolved
+			}
+
+			const objectId = objectItem?.id || objectItem?.['@self']?.id
+			const register = objectItem?.['@self']?.register || objectItem?.register
+			const schema = objectItem?.['@self']?.schema || objectItem?.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
 			const registerId = this.extractId(register)
@@ -1155,15 +1508,17 @@ export const useObjectStore = defineStore('object', {
 				const response = await fetch(endpoint, { method: 'DELETE' })
 
 				if (!response.ok) {
-					throw new Error(`Failed to delete object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to delete object: ${response.status} ${response.statusText}`,
+					)
 				}
 
-				const isSelected = this.selectedObjects.some(obj =>
-					(obj.id || obj['@self']?.id) === objectId,
+				const isSelected = this.selectedObjects.some(
+					(obj) => (obj.id || obj['@self']?.id) === objectId,
 				)
 				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(obj =>
-						(obj.id || obj['@self']?.id) !== objectId,
+					const remainingSelected = this.selectedObjects.filter(
+						(obj) => (obj.id || obj['@self']?.id) !== objectId,
 					)
 					this.setSelectedObjects(remainingSelected)
 				}
@@ -1180,10 +1535,11 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Publish object
+		 *
 		 * @param {object} objectItem - Object to publish
 		 * @return {Promise<object>} The updated object
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-1
+		 * @spec openspec/specs/publications/spec.md
 		 */
 		async publishObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1191,7 +1547,9 @@ export const useObjectStore = defineStore('object', {
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
 			const registerId = this.extractId(register)
@@ -1210,25 +1568,31 @@ export const useObjectStore = defineStore('object', {
 				const response = await fetch(endpoint, { method: 'POST' })
 
 				if (!response.ok) {
-					throw new Error(`Failed to publish object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to publish object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const updatedObject = await response.json()
 
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: updatedObject,
 					}
 				}
 
-				const isSelected = this.selectedObjects.some(obj =>
-					(obj.id || obj['@self']?.id) === objectId,
+				const isSelected = this.selectedObjects.some(
+					(obj) => (obj.id || obj['@self']?.id) === objectId,
 				)
 				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(obj =>
-						(obj.id || obj['@self']?.id) !== objectId,
+					const remainingSelected = this.selectedObjects.filter(
+						(obj) => (obj.id || obj['@self']?.id) !== objectId,
 					)
 					this.setSelectedObjects(remainingSelected)
 				}
@@ -1245,10 +1609,11 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Depublish object
+		 *
 		 * @param {object} objectItem - Object to depublish
 		 * @return {Promise<object>} The updated object
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-2
+		 * @spec openspec/specs/publications/spec.md
 		 */
 		async depublishObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1256,7 +1621,9 @@ export const useObjectStore = defineStore('object', {
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
 			const registerId = this.extractId(register)
@@ -1275,25 +1642,31 @@ export const useObjectStore = defineStore('object', {
 				const response = await fetch(endpoint, { method: 'POST' })
 
 				if (!response.ok) {
-					throw new Error(`Failed to depublish object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to depublish object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const updatedObject = await response.json()
 
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: updatedObject,
 					}
 				}
 
-				const isSelected = this.selectedObjects.some(obj =>
-					(obj.id || obj['@self']?.id) === objectId,
+				const isSelected = this.selectedObjects.some(
+					(obj) => (obj.id || obj['@self']?.id) === objectId,
 				)
 				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(obj =>
-						(obj.id || obj['@self']?.id) !== objectId,
+					const remainingSelected = this.selectedObjects.filter(
+						(obj) => (obj.id || obj['@self']?.id) !== objectId,
 					)
 					this.setSelectedObjects(remainingSelected)
 				}
@@ -1310,17 +1683,23 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Validate object by saving it without modifications
+		 *
 		 * @param {object} objectItem - Object to validate
 		 * @return {Promise<object>} The validated object
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objectItem
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async validateObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
 			const register = objectItem['@self']?.register || objectItem.register
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
 			const registerId = this.extractId(register)
@@ -1340,7 +1719,11 @@ export const useObjectStore = defineStore('object', {
 				})
 
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: result.data,
@@ -1359,19 +1742,27 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Lock object
+		 *
 		 * @param {object} objectItem - Object to lock
 		 * @param {string} process - Process name (optional)
 		 * @param {number} duration - Duration in seconds (optional)
 		 * @return {Promise<object>} The updated object
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objectItem
+		 * @param process
+		 * @param duration
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async lockObject(objectItem, process = null, duration = null) {
 			const objectId = objectItem.id || objectItem['@self']?.id
 			const register = objectItem['@self']?.register || objectItem.register
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
 			const registerId = this.extractId(register)
@@ -1393,18 +1784,30 @@ export const useObjectStore = defineStore('object', {
 
 				const response = await fetch(endpoint, {
 					method: 'POST',
-					headers: Object.keys(body).length > 0 ? { 'Content-Type': 'application/json' } : undefined,
-					body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
+					headers:
+						Object.keys(body).length > 0
+							? { 'Content-Type': 'application/json' }
+							: undefined,
+					body:
+						Object.keys(body).length > 0
+							? JSON.stringify(body)
+							: undefined,
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to lock object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to lock object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const updatedObject = await response.json()
 
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: updatedObject,
@@ -1423,17 +1826,23 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Unlock object
+		 *
 		 * @param {object} objectItem - Object to unlock
 		 * @return {Promise<object>} The updated object
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objectItem
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async unlockObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
 			const register = objectItem['@self']?.register || objectItem.register
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
 			const registerId = this.extractId(register)
@@ -1452,13 +1861,19 @@ export const useObjectStore = defineStore('object', {
 				const response = await fetch(endpoint, { method: 'POST' })
 
 				if (!response.ok) {
-					throw new Error(`Failed to unlock object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to unlock object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const updatedObject = await response.json()
 
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: updatedObject,
@@ -1477,10 +1892,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set search term for type — debounces 500ms then fetches.
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} term - Search term
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param term
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setSearchTerm(type, term) {
 			if (!this.searchTerms[type]) {
 				this.searchTerms = { ...this.searchTerms, [type]: '' }
@@ -1502,9 +1922,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Clear search term for type
+		 *
 		 * @param {string} type - Object type
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		clearSearchTerm(type) {
 			this.searchTerms = { ...this.searchTerms, [type]: '' }
 
@@ -1521,6 +1945,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set pagination info for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {{total: number, page: number, pages: number, limit: number}} pagination - Pagination info
 		 */
@@ -1530,10 +1955,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Load next page of results
+		 *
 		 * @param {string} type - Object type
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async loadMore(type) {
 			const pagination = this.getPagination(type)
 
@@ -1542,19 +1971,27 @@ export const useObjectStore = defineStore('object', {
 				const params = Object.fromEntries(url.searchParams)
 				await this.fetchCollection(type, params, true)
 			} else if (pagination.page < pagination.pages) {
-				await this.fetchCollection(type, {
-					_page: pagination.page + 1,
-					_limit: pagination.limit,
-				}, true)
+				await this.fetchCollection(
+					type,
+					{
+						_page: pagination.page + 1,
+						_limit: pagination.limit,
+					},
+					true,
+				)
 			}
 		},
 
 		/**
 		 * Load previous page of results
+		 *
 		 * @param {string} type - Object type
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async loadPrevious(type) {
 			const pagination = this.getPagination(type)
 
@@ -1563,18 +2000,23 @@ export const useObjectStore = defineStore('object', {
 				const params = Object.fromEntries(url.searchParams)
 				await this.fetchCollection(type, params, false)
 			} else if (pagination.page > 1) {
-				await this.fetchCollection(type, {
-					_page: pagination.page - 1,
-					_limit: pagination.limit,
-				}, false)
+				await this.fetchCollection(
+					type,
+					{
+						_page: pagination.page - 1,
+						_limit: pagination.limit,
+					},
+					false,
+				)
 			}
 		},
 
 		/**
 		 * Preload collections for all available schemas
+		 *
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		async preloadCollections() {
 			try {
 				if (!this.settings) {
@@ -1590,7 +2032,10 @@ export const useObjectStore = defineStore('object', {
 						try {
 							await this.fetchCollection(type)
 						} catch (error) {
-							console.warn(`Failed to preload collection for type ${type}:`, error)
+							console.warn(
+								`Failed to preload collection for type ${type}:`,
+								error,
+							)
 						}
 					}),
 				)
@@ -1601,9 +2046,10 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Register object types from settings into objectTypeRegistry.
+		 *
 		 * @private
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		_registerTypesFromSettings() {
 			if (!this.settings) return
 
@@ -1655,10 +2101,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set state for specific type
+		 *
 		 * @param {string} type - Object type
 		 * @param {{success: boolean|null, error: string|null}} state - State to set
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param root0
+		 * @param root0.success
+		 * @param root0.error
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setState(type, { success, error }) {
 			if (success !== undefined) {
 				this.success = { ...this.success, [type]: success }
@@ -1670,6 +2123,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Copy an existing object
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID to copy
 		 * @param {string|null} nameFieldPath - Optional dot-notation path of the schema's
@@ -1678,7 +2132,12 @@ export const useObjectStore = defineStore('object', {
 		 *   Twig templates (e.g. "{{ voornaam }} {{ achternaam }}") are not supported.
 		 * @return {Promise<object>} The newly created copy
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param type
+		 * @param id
+		 * @param nameFieldPath
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async copyObject(type, id, nameFieldPath = null) {
 			this.setLoading(`${type}_${id}_copy`, true)
 			this.setError(`${type}_${id}_copy`, null)
@@ -1703,7 +2162,8 @@ export const useObjectStore = defineStore('object', {
 					}
 				}
 
-				const useConfiguredField = typeof nameFieldPath === 'string'
+				const useConfiguredField =
+					typeof nameFieldPath === 'string'
 					&& nameFieldPath.length > 0
 					&& !nameFieldPath.includes('{{')
 				let prefixed = false
@@ -1712,13 +2172,21 @@ export const useObjectStore = defineStore('object', {
 					const leaf = segments.pop()
 					let cursor = objectData
 					for (const seg of segments) {
-						if (cursor[seg] === undefined || cursor[seg] === null || typeof cursor[seg] !== 'object') {
+						if (
+							cursor[seg] === undefined
+							|| cursor[seg] === null
+							|| typeof cursor[seg] !== 'object'
+						) {
 							cursor = null
 							break
 						}
 						cursor = cursor[seg]
 					}
-					if (cursor && typeof cursor[leaf] === 'string' && cursor[leaf].length > 0) {
+					if (
+						cursor
+						&& typeof cursor[leaf] === 'string'
+						&& cursor[leaf].length > 0
+					) {
 						cursor[leaf] = `Kopie van ${cursor[leaf]}`
 						prefixed = true
 					}
@@ -1736,11 +2204,20 @@ export const useObjectStore = defineStore('object', {
 				// schema. Without this override, createObject would POST to the
 				// wrong register/schema endpoint and the server would silently drop
 				// any properties not defined on the default schema.
-				const publicationData = self && (self.register || self.schema)
-					? { source: 'openregister', register: self.register, schema: self.schema }
-					: null
+				const publicationData =
+					self && (self.register || self.schema)
+						? {
+								source: 'openregister',
+								register: self.register,
+								schema: self.schema,
+							}
+						: null
 
-				const newObject = await this.createObject(type, objectData, publicationData)
+				const newObject = await this.createObject(
+					type,
+					objectData,
+					publicationData,
+				)
 
 				this.setState(type, { success: true, error: null })
 
@@ -1757,6 +2234,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set selected objects
+		 *
 		 * @param {Array<string>} objects - Array of object IDs
 		 */
 		setSelectedObjects(objects) {
@@ -1765,6 +2243,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set selected attachments
+		 *
 		 * @param {Array<string>} attachments - Array of attachment IDs
 		 */
 		setSelectedAttachments(attachments) {
@@ -1773,6 +2252,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set error for a specific object
+		 *
 		 * @param {string} objectId - The object ID
 		 * @param {string} error - The error message
 		 */
@@ -1782,9 +2262,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Clear error for a specific object
+		 *
 		 * @param {string} objectId - The object ID
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objectId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		clearObjectError(objectId) {
 			delete this.objectErrors[objectId]
 		},
@@ -1792,13 +2276,14 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Clear all object errors
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		clearAllObjectErrors() {
 			this.objectErrors = {}
 		},
 
 		/**
 		 * Get error for a specific object
+		 *
 		 * @param {string} objectId - The object ID
 		 * @return {string|null} The error message or null if no error
 		 */
@@ -1809,7 +2294,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Toggle selection of all objects
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		toggleSelectAllObjects() {
 			const publicationCollection = this.collections.publication
 			if (!publicationCollection?.results?.length) return
@@ -1817,18 +2302,23 @@ export const useObjectStore = defineStore('object', {
 			if (this.isAllSelected) {
 				this.selectedObjects = []
 			} else {
-				this.selectedObjects = publicationCollection.results.map(pub =>
-					pub['@self']?.id || pub.id,
+				this.selectedObjects = publicationCollection.results.map(
+					(pub) => pub['@self']?.id || pub.id,
 				)
 			}
 		},
 
 		/**
 		 * Update column filter
+		 *
 		 * @param {string} id - Column ID
 		 * @param {boolean} enabled - Whether the column is enabled
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param id
+		 * @param enabled
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		updateColumnFilter(id, enabled) {
 			this.columnFilters = { ...this.columnFilters, [id]: enabled }
 
@@ -1847,9 +2337,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Initialize properties from schema
+		 *
 		 * @param {object} schema - Schema object
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param schema
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		initializeProperties(schema) {
 			if (!schema?.properties) {
 				this.properties = {}
@@ -1872,15 +2366,15 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Initialize column filters
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		initializeColumnFilters() {
 			const filters = {}
 
-			Object.keys(this.metadata).forEach(key => {
+			Object.keys(this.metadata).forEach((key) => {
 				filters[`meta_${key}`] = this.metadata[key].enabled
 			})
 
-			Object.keys(this.properties).forEach(key => {
+			Object.keys(this.properties).forEach((key) => {
 				filters[`prop_${key}`] = this.properties[key].enabled
 			})
 
@@ -1889,19 +2383,28 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass delete objects
+		 *
 		 * @param {Array<object|string>} objects - Array of objects or object IDs to delete
 		 * @param {Function} onProgress - Callback function called after each deletion (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massDeleteObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
 			const results = await Promise.allSettled(
 				objects.map(async (obj) => {
 					try {
-						const objectId = typeof obj === 'string' ? obj : (obj.id || obj['@self']?.id)
-						const objectToDelete = typeof obj === 'string' ? { id: obj } : obj
+						const objectId =
+							typeof obj === 'string'
+								? obj
+								: obj.id || obj['@self']?.id
+						const objectToDelete =
+							typeof obj === 'string' ? { id: obj } : obj
 
 						await this.deleteObject(objectToDelete)
 
@@ -1920,17 +2423,32 @@ export const useObjectStore = defineStore('object', {
 
 						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -1939,11 +2457,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass publish objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to publish
 		 * @param {Function} onProgress - Callback function called after each publication (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massPublishObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
@@ -1969,17 +2492,32 @@ export const useObjectStore = defineStore('object', {
 
 						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -1988,11 +2526,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass depublish objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to depublish
 		 * @param {Function} onProgress - Callback function called after each depublication (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massDepublishObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
@@ -2012,23 +2555,41 @@ export const useObjectStore = defineStore('object', {
 						const objectId = obj.id || obj['@self']?.id
 						const errorMessage = error.message || 'Unknown error'
 
-						console.error(`Failed to depublish object ${objectId}:`, error)
+						console.error(
+							`Failed to depublish object ${objectId}:`,
+							error,
+						)
 
 						this.setObjectError(objectId, errorMessage)
 
 						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2037,11 +2598,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass validate objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to validate
 		 * @param {Function} onProgress - Callback function called after each validation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massValidateObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
@@ -2061,23 +2627,41 @@ export const useObjectStore = defineStore('object', {
 						const objectId = obj.id || obj['@self']?.id
 						const errorMessage = error.message || 'Unknown error'
 
-						console.error(`Failed to validate object ${objectId}:`, error)
+						console.error(
+							`Failed to validate object ${objectId}:`,
+							error,
+						)
 
 						this.setObjectError(objectId, errorMessage)
 
 						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2086,14 +2670,26 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass lock objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to lock
 		 * @param {string} process - Process name (optional)
 		 * @param {number} duration - Duration in seconds (optional)
 		 * @param {Function} onProgress - Callback function called after each lock operation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
-		async massLockObjects(objects, process = null, duration = null, onProgress = null) {
+		/**
+		 * @param objects
+		 * @param process
+		 * @param duration
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async massLockObjects(
+			objects,
+			process = null,
+			duration = null,
+			onProgress = null,
+		) {
 			this.clearAllObjectErrors()
 
 			const results = await Promise.allSettled(
@@ -2118,17 +2714,32 @@ export const useObjectStore = defineStore('object', {
 
 						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2137,11 +2748,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass unlock objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to unlock
 		 * @param {Function} onProgress - Callback function called after each unlock operation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massUnlockObjects(objects, onProgress = null) {
 			this.clearAllObjectErrors()
 
@@ -2167,17 +2783,32 @@ export const useObjectStore = defineStore('object', {
 
 						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2186,12 +2817,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Refresh files (attachments) for the active publication
+		 *
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		async refreshActivePublicationFiles() {
 			const activePublication = this.activeObjects?.publication
-			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
+			if (
+				!activePublication?.id
+				|| !activePublication['@self']?.register
+				|| !activePublication['@self']?.schema
+			) {
 				return
 			}
 			const publicationData = {
@@ -2199,19 +2835,35 @@ export const useObjectStore = defineStore('object', {
 				schema: this.extractId(activePublication['@self'].schema),
 				register: this.extractId(activePublication['@self'].register),
 			}
-			await this.fetchRelatedData('publication', activePublication.id, 'files', {}, publicationData)
+			await this.fetchRelatedData(
+				'publication',
+				activePublication.id,
+				'files',
+				{},
+				publicationData,
+			)
 		},
 
 		/**
 		 * Publish a single attachment (file) for the active publication
+		 *
 		 * @param {string|number} fileId - Attachment ID
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param fileId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async publishAttachment(fileId) {
 			const activePublication = this.activeObjects?.publication
-			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
-				throw new Error('Active publication is not set or missing register/schema')
+			if (
+				!activePublication?.id
+				|| !activePublication['@self']?.register
+				|| !activePublication['@self']?.schema
+			) {
+				throw new Error(
+					'Active publication is not set or missing register/schema',
+				)
 			}
 
 			const registerId = this.extractId(activePublication['@self'].register)
@@ -2225,7 +2877,9 @@ export const useObjectStore = defineStore('object', {
 				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/publish`
 				const response = await fetch(endpoint, { method: 'POST' })
 				if (!response.ok) {
-					throw new Error(`Failed to publish file ${fileId}: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to publish file ${fileId}: ${response.status} ${response.statusText}`,
+					)
 				}
 				await this.refreshActivePublicationFiles()
 				return true
@@ -2240,14 +2894,24 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Depublish a single attachment (file) for the active publication
+		 *
 		 * @param {string|number} fileId - Attachment ID
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param fileId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async depublishAttachment(fileId) {
 			const activePublication = this.activeObjects?.publication
-			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
-				throw new Error('Active publication is not set or missing register/schema')
+			if (
+				!activePublication?.id
+				|| !activePublication['@self']?.register
+				|| !activePublication['@self']?.schema
+			) {
+				throw new Error(
+					'Active publication is not set or missing register/schema',
+				)
 			}
 
 			const registerId = this.extractId(activePublication['@self'].register)
@@ -2261,7 +2925,9 @@ export const useObjectStore = defineStore('object', {
 				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/depublish`
 				const response = await fetch(endpoint, { method: 'POST' })
 				if (!response.ok) {
-					throw new Error(`Failed to depublish file ${fileId}: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to depublish file ${fileId}: ${response.status} ${response.statusText}`,
+					)
 				}
 				await this.refreshActivePublicationFiles()
 				return true
@@ -2276,11 +2942,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass publish attachments for the active publication
+		 *
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
 		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param fileIds
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massPublishAttachments(fileIds, onProgress = null) {
 			if (!Array.isArray(fileIds) || fileIds.length === 0) {
 				return { successful: [], failed: [] }
@@ -2299,12 +2970,22 @@ export const useObjectStore = defineStore('object', {
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = (this.selectedAttachments || []).filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = (this.selectedAttachments || []).filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedAttachments(remainingSelected)
 			}
 
@@ -2313,11 +2994,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass depublish attachments for the active publication
+		 *
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
 		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param fileIds
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massDepublishAttachments(fileIds, onProgress = null) {
 			if (!Array.isArray(fileIds) || fileIds.length === 0) {
 				return { successful: [], failed: [] }
@@ -2336,12 +3022,22 @@ export const useObjectStore = defineStore('object', {
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = (this.selectedAttachments || []).filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = (this.selectedAttachments || []).filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedAttachments(remainingSelected)
 			}
 

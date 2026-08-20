@@ -182,6 +182,21 @@ required keys before first use.
 | `glossary_schema` | string | `""` | Yes | OpenRegister schema ID for glossary objects |
 | `publications_register` | string | `""` | Yes | OpenRegister register ID for publication objects |
 | `publications_schema` | string | `""` | Yes | OpenRegister schema ID for publication objects |
+| `ooapi_courses_source` | string | `"openregister"` | Yes | Always "openregister". See [ooapi-catalog-publication spec](../../changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md) (OOAPI-010). |
+| `ooapi_courses_register` | string | `""` | Yes | OpenRegister register ID for materialized `course` objects (OOAPI-003). |
+| `ooapi_courses_schema` | string | `""` | Yes | OpenRegister schema ID for materialized `course` objects. |
+| `ooapi_programs_source` | string | `"openregister"` | Yes | Always "openregister". |
+| `ooapi_programs_register` | string | `""` | Yes | OpenRegister register ID for materialized `program` objects. |
+| `ooapi_programs_schema` | string | `""` | Yes | OpenRegister schema ID for materialized `program` objects. |
+| `ooapi_offerings_source` | string | `"openregister"` | Yes | Always "openregister". |
+| `ooapi_offerings_register` | string | `""` | Yes | OpenRegister register ID for materialized `offering` objects. |
+| `ooapi_offerings_schema` | string | `""` | Yes | OpenRegister schema ID for materialized `offering` objects. |
+
+### OOAPI 5.0 Catalog Publication
+
+| Key | Type | Default | Required | Description |
+|-----|------|---------|----------|-------------|
+| `ooapi_consumers` | string | `""` | No | Comma-separated Nextcloud usernames allowed to read OOAPI 5.0 feeds (OOAPI-008). Empty (default) allows any authenticated Nextcloud user — the underlying "credential" is that account's own Nextcloud app-password, no bespoke token store. Per-catalog scoping is NOT implemented; the allowlist is instance-wide. |
 
 ### Publishing Options
 
@@ -204,6 +219,19 @@ required keys before first use.
 |-----|------|---------|----------|-------------|
 | `sitemap_max_per_page` | int | `1000` | No | Maximum entries per sitemap page. Previously `SitemapService::MAX_PER_PAGE = 1000`. |
 
+### Metadata-Quality Scoring (MQA/FAIR)
+
+| Key | Type | Default | Required | Description |
+|-----|------|---------|----------|-------------|
+| `quality_weight_findability` | int | `25` | No | MQA dimension weight for findability (PQM-001). |
+| `quality_weight_accessibility` | int | `25` | No | MQA dimension weight for accessibility (PQM-001). |
+| `quality_weight_interoperability` | int | `20` | No | MQA dimension weight for interoperability (PQM-001). |
+| `quality_weight_reusability` | int | `20` | No | MQA dimension weight for reusability (PQM-001). |
+| `quality_weight_contextuality` | int | `10` | No | MQA dimension weight for contextuality (PQM-001). |
+
+> The per-catalog DQV exposure toggle (PQM-002) is a `dqvExposure` field on the
+> `catalog` object (not an `IAppConfig` key), mirroring `hasDcat` — it defaults off.
+
 ### Version Tracking
 
 | Key | Type | Default | Required | Description |
@@ -223,7 +251,8 @@ required keys before first use.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/settings` | Get current settings (authenticated) |
-| POST | `/api/settings` | Update settings (admin only) |
+| PUT | `/api/settings` | Update settings — canonical write, OR AppHost dialect (admin only) |
+| POST | `/api/settings` | Update settings — legacy alias for `PUT`, delegates to it (admin only) |
 | GET | `/api/settings/load` | Load settings from publication_register.json (admin only) |
 | GET | `/api/settings/publishing` | Get publishing options (authenticated) |
 | POST | `/api/settings/publishing` | Update publishing options (admin only) |

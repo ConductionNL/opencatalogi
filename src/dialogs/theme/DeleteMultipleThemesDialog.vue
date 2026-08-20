@@ -6,13 +6,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcDialog
 		v-if="navigationStore.dialog === 'deleteMultipleThemes'"
 		:name="t('opencatalogi', 'Delete Themes')"
-		:can-close="false">
-		<div v-if="objectStore.getState('theme').success !== null || objectStore.getState('theme').error">
+		:canClose="false">
+		<div
+			v-if="
+				objectStore.getState('theme').success !== null
+				|| objectStore.getState('theme').error
+			">
 			<NcNoteCard v-if="objectStore.getState('theme').success" type="success">
 				<p>{{ t('opencatalogi', 'Themes successfully deleted') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('theme').success" type="error">
-				<p>{{ t('opencatalogi', 'Something went wrong while deleting the themes') }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Something went wrong while deleting the themes',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('theme').error" type="error">
 				<p>{{ objectStore.getState('theme').error }}</p>
@@ -22,10 +33,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcLoadingIcon :size="20" />
 			<span>{{ t('opencatalogi', 'Themes are being deleted...') }}</span>
 		</div>
-		<p v-if="objectStore.getState('theme').success === null && !objectStore.isLoading('theme')">
-			{{ t('opencatalogi', 'Do you want to delete the selected themes? This action cannot be undone.') }}
+		<p
+			v-if="
+				objectStore.getState('theme').success === null
+				&& !objectStore.isLoading('theme')
+			">
+			{{
+				t(
+					'opencatalogi',
+					'Do you want to delete the selected themes? This action cannot be undone.',
+				)
+			}}
 		</p>
-		<template v-if="objectStore.getState('theme').success === null && !objectStore.isLoading('theme')" #actions>
+		<template
+			v-if="
+				objectStore.getState('theme').success === null
+				&& !objectStore.isLoading('theme')
+			"
+			#actions>
 			<NcButton
 				:disabled="objectStore.isLoading('theme')"
 				icon=""
@@ -38,7 +63,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcButton
 				:disabled="objectStore.isLoading('theme')"
 				icon="Delete"
-				type="error"
+				variant="error"
 				@click="deleteThemes()">
 				<template #icon>
 					<Delete :size="20" />
@@ -47,9 +72,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</NcButton>
 		</template>
 		<template v-else #actions>
-			<NcButton
-				icon=""
-				@click="navigationStore.setDialog(false)">
+			<NcButton icon="" @click="navigationStore.setDialog(false)">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
@@ -60,25 +83,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
 /**
  * Delete Multiple Themes Dialog Component
+ *
  * @module Dialogs
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 /**
  * DeleteMultipleThemesDialog — bulk-delete selected themes via deleteObject.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-3
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'DeleteMultipleThemesDialog',
@@ -91,6 +114,7 @@ export default {
 		Cancel,
 		Delete,
 	},
+
 	methods: {
 		/**
 		 * Delete the selected themes
@@ -102,16 +126,17 @@ export default {
 			const selectedThemes = objectStore.getSelectedObjects('theme')
 			if (!selectedThemes?.length) return
 
-			Promise.all(selectedThemes.map(theme =>
-				objectStore.deleteObject('theme', theme.id),
-			))
-				.then(() => {
-					// Wait for the user to read the feedback then close the dialog
-					setTimeout(() => {
-						objectStore.setState('theme', { success: null, error: null })
-						navigationStore.setDialog(false)
-					}, 2000)
-				})
+			Promise.all(
+				selectedThemes.map((theme) =>
+					objectStore.deleteObject('theme', theme.id),
+				),
+			).then(() => {
+				// Wait for the user to read the feedback then close the dialog
+				setTimeout(() => {
+					objectStore.setState('theme', { success: null, error: null })
+					navigationStore.setDialog(false)
+				}, 2000)
+			})
 		},
 	},
 }

@@ -1,15 +1,17 @@
-import { TAttachment } from './attachment.types'
-import { SafeParseReturnType, z } from 'zod'
+import type { SafeParseReturnType } from 'zod'
+import type { TAttachment } from './attachment.types'
 
-type TStatus = 'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
+import { z } from 'zod'
+
+type TStatus =
+	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Attachment implements TAttachment {
-
 	public id!: string
 	public reference!: string
 	public title!: string
@@ -23,14 +25,14 @@ export class Attachment implements TAttachment {
 	public extension!: string
 	public size!: string
 	public anonymization!: {
-        anonymized: boolean
-        results: string
-    }
+		anonymized: boolean
+		results: string
+	}
 
 	public language!: {
-        code: string
-        level: string
-    }
+		code: string
+		level: string
+	}
 
 	public versionOf!: string
 	public hash!: string
@@ -38,7 +40,10 @@ export class Attachment implements TAttachment {
 	public modified!: string | Date
 	public license!: string
 
-	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TAttachment) {
 		this.hydrate(data)
 	}
@@ -53,11 +58,12 @@ export class Attachment implements TAttachment {
 		this.labels = data.labels || []
 		this.accessUrl = data.accessUrl || ''
 		this.downloadUrl = data.downloadUrl || ''
-		this.status = data.status as TStatus || 'Concept'
+		this.status = (data.status as TStatus) || 'Concept'
 		this.type = data.type || ''
 		this.extension = data.extension || ''
 		this.size = data.size || ''
-		this.anonymization = (!Array.isArray(data.anonymization) && data.anonymization) || {
+		this.anonymization = (!Array.isArray(data.anonymization)
+			&& data.anonymization) || {
 			anonymized: false,
 			results: '',
 		}
@@ -85,7 +91,14 @@ export class Attachment implements TAttachment {
 			labels: z.string().array(),
 			accessUrl: z.string().url('is niet een url').or(z.literal('')),
 			downloadUrl: z.string().url('is niet een url').or(z.literal('')),
-			status: z.enum(['Concept', 'Published', 'Withdrawn', 'Archived', 'Revised', 'Rejected']),
+			status: z.enum([
+				'Concept',
+				'Published',
+				'Withdrawn',
+				'Archived',
+				'Revised',
+				'Rejected',
+			]),
 			type: z.string(),
 			anonymization: z.object({
 				anonymized: z.boolean().or(z.enum(['true', 'false'])), // because the backend turns booleans into strings for some stupid reason
@@ -93,15 +106,26 @@ export class Attachment implements TAttachment {
 			}),
 			language: z.object({
 				// this regex checks if the code has either 2 or 3 characters per group, and the -aaa after the first is optional
-				code: z.string()
-					.regex(/^([a-z]{2,3})(-[a-z]{2,3})?$/g, 'is niet een geldige ISO 639-1 code (e.g. en-us)')
+				code: z
+					.string()
+					.regex(
+						/^([a-z]{2,3})(-[a-z]{2,3})?$/g,
+						'is niet een geldige ISO 639-1 code (e.g. en-us)',
+					)
 					.or(z.literal('')),
-				level: z.string()
-					.regex(/^(A|B|C)(1|2)$/g, 'is niet een geldige CEFRL level (e.g. A1)')
+				level: z
+					.string()
+					.regex(
+						/^(A|B|C)(1|2)$/g,
+						'is niet een geldige CEFRL level (e.g. A1)',
+					)
 					.or(z.literal('')),
 			}),
 			versionOf: z.string(),
-			published: z.string().datetime({ offset: true, message: 'is niet een geldige date-time' }).or(z.null()),
+			published: z
+				.string()
+				.datetime({ offset: true, message: 'is niet een geldige date-time' })
+				.or(z.null()),
 			license: z.string(),
 		})
 
@@ -111,5 +135,4 @@ export class Attachment implements TAttachment {
 
 		return result
 	}
-
 }

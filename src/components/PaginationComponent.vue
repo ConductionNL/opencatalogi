@@ -3,16 +3,19 @@
 		<!-- Page info first -->
 		<div class="viewPaginationInfo">
 			<span class="viewPageInfo">
-				{{ t('opencatalogi', 'Page {current} of {total}', { current: currentPage, total: totalPages }) }}
+				{{
+					t('opencatalogi', 'Page {current} of {total}', {
+						current: currentPage,
+						total: totalPages,
+					})
+				}}
 			</span>
 		</div>
 
 		<!-- Page navigation in middle -->
 		<div v-if="totalPages > 1" class="viewPaginationNav">
 			<!-- First page button -->
-			<NcButton
-				:disabled="currentPage === 1"
-				@click="changePage(1)">
+			<NcButton :disabled="currentPage === 1" @click="changePage(1)">
 				{{ t('opencatalogi', 'First') }}
 			</NcButton>
 
@@ -25,12 +28,15 @@
 
 			<!-- Page number buttons -->
 			<div class="viewPaginationNumbers">
-				<template v-for="page in visiblePages">
-					<span v-if="page === '...'" :key="'ellipsis-' + page" class="viewPaginationEllipsis">...</span>
+				<template
+					v-for="(page, index) in visiblePages"
+					:key="`page-${index}`">
+					<span v-if="page === '...'" class="viewPaginationEllipsis"
+						>...</span
+					>
 					<NcButton
 						v-else
-						:key="page"
-						:type="page === currentPage ? 'primary' : 'secondary'"
+						:variant="page === currentPage ? 'primary' : 'secondary'"
 						:disabled="page === currentPage"
 						@click="changePage(page)">
 						{{ page }}
@@ -59,11 +65,11 @@
 			<NcSelect
 				id="pageSize"
 				class="pagination-page-size-select"
-				:value="currentPageSizeOption"
+				:modelValue="currentPageSizeOption"
 				:options="pageSizeOptions"
 				:clearable="false"
-				:input-label="t('opencatalogi', 'Items per page')"
-				:label-outside="true"
+				:inputLabel="t('opencatalogi', 'Items per page')"
+				:labelOutside="true"
 				@option:selected="changePageSize" />
 		</div>
 	</div>
@@ -80,7 +86,7 @@ import { NcButton, NcSelect } from '@nextcloud/vue'
  * @copyright 2024 Conduction B.V.
  * @license EUPL-1.2
  * @version 1.0.0
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'PaginationComponent',
@@ -88,9 +94,11 @@ export default {
 		NcButton,
 		NcSelect,
 	},
+
 	props: {
 		/**
 		 * Current page number
+		 *
 		 * @type {number}
 		 * @default 1
 		 */
@@ -98,8 +106,10 @@ export default {
 			type: Number,
 			default: 1,
 		},
+
 		/**
 		 * Total number of pages
+		 *
 		 * @type {number}
 		 * @default 1
 		 */
@@ -107,8 +117,10 @@ export default {
 			type: Number,
 			default: 1,
 		},
+
 		/**
 		 * Total number of items
+		 *
 		 * @type {number}
 		 * @default 0
 		 */
@@ -116,8 +128,10 @@ export default {
 			type: Number,
 			default: 0,
 		},
+
 		/**
 		 * Current page size/limit
+		 *
 		 * @type {number}
 		 * @default 20
 		 */
@@ -125,8 +139,10 @@ export default {
 			type: Number,
 			default: 20,
 		},
+
 		/**
 		 * Available page size options
+		 *
 		 * @type {Array<object>}
 		 * @default Standard options array
 		 */
@@ -142,8 +158,10 @@ export default {
 				{ value: 1000, label: '1000' },
 			],
 		},
+
 		/**
 		 * Minimum items needed to show pagination
+		 *
 		 * @type {number}
 		 * @default 10
 		 */
@@ -152,17 +170,26 @@ export default {
 			default: 10,
 		},
 	},
+
+	emits: ['page-changed', 'page-size-changed'],
 	computed: {
 		/**
 		 * Get current page size option object
+		 *
 		 * @return {object} Current page size option object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
 		currentPageSizeOption() {
-			return this.pageSizeOptions.find(option => option.value === this.currentPageSize) || this.pageSizeOptions[1]
+			return (
+				this.pageSizeOptions.find(
+					(option) => option.value === this.currentPageSize,
+				) || this.pageSizeOptions[1]
+			)
 		},
+
 		/**
 		 * Calculate visible page numbers for pagination
+		 *
 		 * @return {Array} Array of page numbers and ellipsis
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
@@ -207,33 +234,45 @@ export default {
 			return pages
 		},
 	},
+
 	methods: {
 		/**
 		 * Change to a specific page
+		 *
 		 * @param {number} page - The page number to change to
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
+		/**
+		 * @param page
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2
+		 */
 		changePage(page) {
 			if (page !== this.currentPage && page >= 1 && page <= this.totalPages) {
 				/**
 				 * Emitted when page changes
+				 *
 				 * @event page-changed
 				 * @type {number} The new page number
 				 */
 				this.$emit('page-changed', page)
 			}
 		},
+
 		/**
 		 * Change page size
+		 *
 		 * @param {object} option - Selected page size option
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
+		/**
+		 * @param option
+		 * @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2
+		 */
 		changePageSize(option) {
 			if (option.value !== this.currentPageSize) {
 				/**
 				 * Emitted when page size changes
+				 *
 				 * @event page-size-changed
 				 * @type {number} The new page size
 				 */

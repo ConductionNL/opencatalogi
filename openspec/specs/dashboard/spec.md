@@ -22,7 +22,7 @@ retrofit_extensions:
 
 ## Purpose
 
-@e2e exclude retrofit spec — listing/directory CRUD, SPA-serving, CSP, bootstrap registration, and aggregation data-sourcing are backend/HTTP-contract behaviours covered by Newman API tests and PHPUnit, not browser-UI observable; the frontend shell/views named here are already real-UI covered by the dedicated dashboard SPA e2e scenarios.
+@e2e exclude retrofit spec — listing/directory CRUD *data-shape* behaviours, SPA-serving, CSP, bootstrap registration, and aggregation data-sourcing are backend/HTTP-contract behaviours covered by Newman API tests and PHPUnit, not browser-UI observable; the frontend shell/views named here are already real-UI covered by the dedicated dashboard SPA e2e scenarios. The admin-vs-non-admin authorization boundary on listing writes is NOT implied by this exclusion — it is covered separately by the non-admin-rejection Newman requests added in `e2e-verify-listings-admin-gates` (Phase 4: Listing CRUD, requests 4.7/4.8).
 
 The dashboard provides the main entry point for the OpenCatalogi Nextcloud app,
 serving the Vue SPA for all internal views. The directory system manages the
@@ -98,9 +98,10 @@ HTTP requests).
 ### Requirement: Application.php bootstrap registers dashboard widgets (DSH-005)
 Application.php bootstrap MUST register dashboard widgets (CatalogWidget,
 UnpublishedPublicationsWidget, UnpublishedAttachmentsWidget). Each widget
-MUST source its aggregate counts from OR schema aggregations (DSH-OR-001).
+SHOULD source its aggregate counts from OR schema aggregations (DSH-OR-001)
+once attachments are modeled as a first-class OR-backed schema (see DSH-011).
 
-**Priority:** Must **Status:** Implemented (aggregation citation added by Phase 7)
+**Priority:** Must **Status:** Widgets registered (Implemented); aggregation-sourcing for the two Unpublished* widgets NOT yet implemented — see DSH-011
 
 #### Scenario: dashboard widgets are registered at bootstrap
 - GIVEN the app is bootstrapped via Application.php
@@ -157,35 +158,86 @@ The system MUST get a single listing by ID (public endpoint).
 - WHEN an unauthenticated GET request is made to `/api/listings/{id}`
 - THEN the response MUST return that listing without requiring authentication
 
-### Requirement: Create a new listing (LST-003)
-The system MUST allow creating a new listing.
+### Requirement: Create a new listing (admin-only, allow-listed) (LST-003)
+The system MUST allow creating a new listing. Creating a listing is a
+federation-topology change: the endpoint MUST be admin-gated via
+`#[AuthorizedAdminSetting]` (delegated-admin auditable), and the payload MUST
+be filtered through a `CREATABLE_LISTING_FIELDS` allow-list so server-managed
+sync state (`statusCode`, `lastSync`, `available`) can never be set by the
+caller. When the payload contains a `directory` URL, the URL MUST pass the
+same outbound-safety validation (`FILTER_VALIDATE_URL` +
+`assertSafeOutboundUrl`) that `syncDirectory()` applies, and the request MUST
+be rejected with `400` when it does not.
 
 **Priority:** Must **Status:** Implemented
 
-#### Scenario: create a listing
-- GIVEN an authenticated user with listing data
+#### Scenario: admin creates a listing
+- GIVEN an authenticated admin with allow-listed listing data
 - WHEN a POST request is made to `/api/listings`
 - THEN a new listing MUST be created and returned
 
+#### Scenario: non-admin creation is rejected
+- GIVEN an authenticated non-admin user
+- WHEN a POST request is made to `/api/listings`
+- THEN the request MUST be rejected by the admin guard
+- AND no listing MUST be created
+
+#### Scenario: off-list fields are dropped
+- GIVEN an authenticated admin
+- WHEN a POST request is made to `/api/listings` including `statusCode`, `lastSync` or `available`
+- THEN those fields MUST NOT be persisted on the created listing
+
+#### Scenario: unsafe directory URL is rejected
+- GIVEN an authenticated admin
+- WHEN a POST request is made to `/api/listings` with a `directory` URL that resolves to a private, loopback, link-local or metadata address
+- THEN the response MUST be `400`
+- AND no listing MUST be created
+
 ### Requirement: Update an existing listing (LST-004)
-The system MUST allow updating an existing listing.
+The system MUST allow updating an existing listing. Updating a listing is
+admin-gated via `#[AuthorizedAdminSetting]` (SB1/WF1 SSRF hardening,
+wave-12); this is enforced by Nextcloud's AppFramework middleware before the
+controller body runs, and is verified end-to-end (not just via PHPUnit
+direct-call tests, which bypass that middleware) by the non-admin-rejection
+Newman requests added in `e2e-verify-listings-admin-gates`.
 
 **Priority:** Must **Status:** Implemented
 
 #### Scenario: update a listing
 - GIVEN an existing listing
-- WHEN an authenticated PUT request is made to `/api/listings/{id}` with changed fields
+- AND an authenticated admin session
+- WHEN a PUT request is made to `/api/listings/{id}` with changed fields
 - THEN the listing MUST be updated and the updated representation returned
 
+#### Scenario: non-admin update is rejected
+- GIVEN an existing listing
+- AND an authenticated non-admin session
+- WHEN a PUT request is made to `/api/listings/{id}` with changed fields
+- THEN the response MUST be `403`
+- AND the listing's stored fields MUST remain unchanged
+
 ### Requirement: Delete a listing (LST-005)
-The system MUST allow deleting a listing.
+The system MUST allow deleting a listing. Deleting a listing is admin-gated
+via `#[AuthorizedAdminSetting]` (SB1/WF1 SSRF hardening, wave-12); this is
+enforced by Nextcloud's AppFramework middleware before the controller body
+runs, and is verified end-to-end (not just via PHPUnit direct-call tests,
+which bypass that middleware) by the non-admin-rejection Newman requests
+added in `e2e-verify-listings-admin-gates`.
 
 **Priority:** Must **Status:** Implemented
 
 #### Scenario: delete a listing
 - GIVEN an existing listing
-- WHEN an authenticated DELETE request is made to `/api/listings/{id}`
+- AND an authenticated admin session
+- WHEN a DELETE request is made to `/api/listings/{id}`
 - THEN the listing MUST be removed and no longer appear in the listings collection
+
+#### Scenario: non-admin delete is rejected
+- GIVEN an existing listing
+- AND an authenticated non-admin session
+- WHEN a DELETE request is made to `/api/listings/{id}`
+- THEN the response MUST be `403`
+- AND the listing MUST still exist afterward
 
 ### Requirement: Listing configuration stored in IAppConfig (LST-006)
 Listing configuration MUST be stored in IAppConfig as `listing_schema` and
@@ -220,15 +272,27 @@ parameter).
 - WHEN a POST request is made to `/api/directory` with the directory parameter
 - THEN the system MUST synchronize listings from that external directory
 
-### Requirement: Synchronize a specific listing's directory (DIR-003)
-The system MUST synchronize a specific listing's directory.
+### Requirement: Synchronize a specific listing's directory (admin-only) (DIR-003)
+The system MUST allow synchronising a specific listing's directory (or all
+directories when no id is given) via `POST /api/listings/sync`. On-demand
+synchronisation triggers outbound HTTP fetches and MUST be admin-gated via
+`#[AuthorizedAdminSetting]`; scheduled synchronisation for all users is
+provided by the hourly cron (DIR-004), which does not pass through this
+endpoint.
 
 **Priority:** Must **Status:** Implemented
 
-#### Scenario: synchronize a single listing's directory
-- GIVEN a listing referencing an external directory
-- WHEN a directory sync is triggered for that listing
-- THEN the system MUST synchronize only that listing's directory
+#### Scenario: admin syncs a listing's directory
+- GIVEN an existing listing with a directory URL
+- AND an authenticated admin session
+- WHEN a POST request is made to `/api/listings/sync` with the listing id
+- THEN that directory MUST be synchronised and the results returned
+
+#### Scenario: non-admin sync is rejected
+- GIVEN an authenticated non-admin session
+- WHEN a POST request is made to `/api/listings/sync`
+- THEN the request MUST be rejected by the admin guard
+- AND no outbound fetch MUST be made
 
 ### Requirement: Synchronize all directories via cron (every hour) (DIR-004)
 The system MUST synchronize all directories via cron (every hour).
@@ -240,15 +304,40 @@ The system MUST synchronize all directories via cron (every hour).
 - WHEN the hourly schedule fires
 - THEN all directories MUST be synchronized
 
-### Requirement: Add a new listing from a URL (public endpoint) (DIR-005)
-The system MUST allow adding a new listing from a URL (public endpoint).
+### Requirement: Add a new listing from a URL (admin-only) (DIR-005)
+The system MUST allow an authenticated admin to add a new listing from a URL.
+The admin requirement MUST be enforced by the controller via
+`#[AuthorizedAdminSetting]` — a session-only guard (any authenticated user) is
+NOT sufficient.
 
 **Priority:** Must **Status:** Implemented
 
-#### Scenario: add a listing from a URL
+Anonymous / unauthenticated requests MUST be rejected with `403` — federation
+peer-registration must not be anonymous (SB1 / WF1 SSRF hardening, wave-12,
+tightened via `ListingsController::add()` dropping `@PublicPage` and adding an
+explicit auth guard). The cross-instance broadcast-receive path uses the
+separate `POST /api/directory` endpoint (see DIR-008), which is public because
+that's the federation gossip channel — do not merge the two.
+
+#### Scenario: admin adds a listing from a URL
 - GIVEN a directory or publications URL
-- WHEN an unauthenticated POST request is made to `/api/listings/add` with that URL
+- AND an authenticated admin session
+- WHEN a POST request is made to `/api/listings/add` with that URL
 - THEN a listing MUST be created from the URL
+
+#### Scenario: non-admin caller is rejected
+- GIVEN a directory or publications URL
+- AND an authenticated non-admin session
+- WHEN a POST request is made to `/api/listings/add` with that URL
+- THEN the request MUST be rejected by the admin guard
+- AND no listing MUST be created
+
+#### Scenario: unauthenticated caller is rejected
+- GIVEN a directory or publications URL
+- AND no user session
+- WHEN a POST request is made to `/api/listings/add` with that URL
+- THEN the response MUST be `403 Forbidden`
+- AND no listing MUST be created
 
 ### Requirement: Anti-loop protection during broadcast sync cycles (DIR-006)
 The system MUST provide anti-loop protection during broadcast sync cycles.
@@ -325,27 +414,46 @@ components, page types, a per-app translate closure, and a computed
 
 ### Requirement: Dashboard overview view (DSH-010)
 The system SHALL provide a `Dashboard.vue` overview. The total publication
-count MUST be sourced from OR's `x-openregister-aggregations` declaration on
-the publications schema (see DSH-OR-001), NOT from a bespoke count query.
+count MUST be sourced from OR's generic ad-hoc aggregation endpoint
+(`GET /api/objects/aggregations/{register}/{schema}/value?metric=count`), NOT
+from a bespoke, page-capped count query — landed via
+`dashboard-consume-or-aggregations`.
 
-**Priority:** Should **Status:** Implemented (aggregation citation added by Phase 7)
+The three status-breakdown KPIs (concept/published/depublished) remain
+list-derived from a bounded publication fetch: that status is COMPUTED from a
+date comparison against "now" (`publicatiedatum`/`depublicatiedatum`), not a
+stored field, so it cannot be grouped by via OR's field-based aggregation
+without either a materialized status field or confirmed null-safe date-range
+filter support (unconfirmed — see the implementation note in
+`openspec/changes/dashboard-consume-or-aggregations/tasks.md`). This is a
+known, tracked gap, not an oversight.
+
+**Priority:** Should **Status:** Partially implemented — total count fixed via ad-hoc aggregation; status-breakdown KPIs remain list-derived (tracked gap)
 
 #### Scenario: dashboard overview shows the publication count
 - GIVEN `Dashboard.vue` renders the overview
 - WHEN it displays the total publication count
-- THEN the count MUST be sourced from OR's `x-openregister-aggregations` declaration, not a bespoke count query
+- THEN the count MUST be sourced from OR's ad-hoc aggregation `value` endpoint, not a bespoke `_limit`-capped count query
 
 ### Requirement: Unpublished-content dashboard widgets (DSH-011)
 The system SHALL provide two Nextcloud dashboard widgets —
 `UnpublishedAttachmentsWidget` and `UnpublishedPublicationsWidget`. Counts
-MUST come from OR schema aggregations (DSH-OR-001).
+SHOULD come from OR schema aggregations (DSH-OR-001) once attachments are
+modeled as a first-class OR-backed schema.
 
-**Priority:** Should **Status:** Implemented (aggregation citation added by Phase 7)
+**Priority:** Should **Status:** Not implemented — blocked; `objectStore.fetchCollection('attachment')`
+has no corresponding OR register/schema anywhere in `lib/Settings/`.
+Attachments are Nextcloud Files metadata reached per-publication via
+`PublicationsController::attachments()`, not an OR object collection, so
+there is no schema to declare `x-openregister-aggregations` on. Needs a
+design decision (promote attachments to a real OR schema, or redesign these
+widgets around the Files-metadata model) before this requirement can be
+implemented; tracked in `dashboard-consume-or-aggregations`.
 
 #### Scenario: unpublished widgets render their counts
 - GIVEN the Nextcloud dashboard shows the opencatalogi widgets
 - WHEN `UnpublishedAttachmentsWidget` and `UnpublishedPublicationsWidget` render
-- THEN their counts MUST be sourced from OR schema aggregations
+- THEN their counts MUST be sourced from OR schema aggregations, once attachments are modeled as an OR-backed schema
 
 ### Requirement: Directory management UI (DIR-012)
 The system SHALL provide a directory management frontend: a `DirectorySideBar`,
@@ -414,10 +522,10 @@ a `DeleteListingDialog`.
 | GET | `/api/listings` | List all listings (authenticated) |
 | POST | `/api/listings` | Create new listing (authenticated) |
 | POST | `/api/listings/sync` | Synchronize directories (authenticated) |
-| POST | `/api/listings/add` | Add listing from URL (public) |
+| POST | `/api/listings/add` | Add listing from URL (admin-only) |
 | GET | `/api/listings/{id}` | Get listing by ID (public) |
-| PUT | `/api/listings/{id}` | Update listing (authenticated) |
-| DELETE | `/api/listings/{id}` | Delete listing (authenticated) |
+| PUT | `/api/listings/{id}` | Update listing (admin-only, allow-listed fields) |
+| DELETE | `/api/listings/{id}` | Delete listing (admin-only) |
 
 ### Directory
 

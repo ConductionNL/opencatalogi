@@ -1,5 +1,7 @@
-import { SafeParseReturnType, z } from 'zod'
-import { TMenu, TMenuItem } from './menu.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TMenu, TMenuItem } from './menu.types'
+
+import { z } from 'zod'
 
 /** @typedef {import('./menu.types').TMenu} TMenu */
 /** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
@@ -7,12 +9,12 @@ import { TMenu, TMenuItem } from './menu.types'
 /**
  * Menu class representing a navigation menu entity with validation
  * Implements the TMenu interface for type safety
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ *
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Menu implements TMenu {
-
 	public id!: string
 	public uuid!: string
 	public title!: string
@@ -27,9 +29,10 @@ export class Menu implements TMenu {
 
 	/**
 	 * Creates a new Menu instance
+	 *
 	 * @param data Initial menu data conforming to TMenu interface
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+	 * @spec openspec/specs/entity-typescript-models/spec.md
 	 */
 	constructor(data: TMenu) {
 		this.hydrate(data)
@@ -38,7 +41,8 @@ export class Menu implements TMenu {
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	/**
 	 * Hydrates the menu object with provided data
-	 * @param {TMenu} data Menu data to populate the instance
+	 *
+	 * @param data Menu data to populate the instance
 	 */
 	private hydrate(data: TMenu) {
 		const items = (data?.items || []).map((item) => ({
@@ -62,24 +66,16 @@ export class Menu implements TMenu {
 	/* istanbul ignore next */
 	/**
 	 * Validates the menu data against a schema
-	 * @return {SafeParseReturnType<TMenu, unknown>} SafeParseReturnType containing validation result
+	 *
+	 * @return SafeParseReturnType containing validation result
 	 */
 	public validate(): SafeParseReturnType<TMenu, unknown> {
 		// Schema validation for menu data
 		const schema = z.object({
 			title: z.string().min(1, 'title is verplicht'),
 			position: z.number().min(0, 'positie moet 0 of hoger zijn'),
-			items: z.array(z.object({
-				id: z.string().optional(),
-				order: z.number().min(0, 'order moet 0 of hoger zijn'),
-				name: z.string().min(1, 'name is verplicht'),
-				link: z.string().min(1, 'link is verplicht'),
-				description: z.string().optional(),
-				icon: z.string().optional(),
-				groups: z.array(z.string()).optional(),
-
-				hideBeforeLogin: z.boolean().optional(),
-				items: z.array(z.object({
+			items: z.array(
+				z.object({
 					id: z.string().optional(),
 					order: z.number().min(0, 'order moet 0 of hoger zijn'),
 					name: z.string().min(1, 'name is verplicht'),
@@ -87,10 +83,23 @@ export class Menu implements TMenu {
 					description: z.string().optional(),
 					icon: z.string().optional(),
 					groups: z.array(z.string()).optional(),
-					hideAfterLogin: z.boolean().optional(),
+
 					hideBeforeLogin: z.boolean().optional(),
-				})),
-			})), // At least '[]'
+					items: z.array(
+						z.object({
+							id: z.string().optional(),
+							order: z.number().min(0, 'order moet 0 of hoger zijn'),
+							name: z.string().min(1, 'name is verplicht'),
+							link: z.string().min(1, 'link is verplicht'),
+							description: z.string().optional(),
+							icon: z.string().optional(),
+							groups: z.array(z.string()).optional(),
+							hideAfterLogin: z.boolean().optional(),
+							hideBeforeLogin: z.boolean().optional(),
+						}),
+					),
+				}),
+			), // At least '[]'
 			groups: z.array(z.string()).optional(),
 			hideAfterLogin: z.boolean().optional(),
 			hideBeforeLogin: z.boolean().optional(),
@@ -102,5 +111,4 @@ export class Menu implements TMenu {
 
 		return result
 	}
-
 }

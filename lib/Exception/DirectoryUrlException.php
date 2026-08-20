@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Exception for directory URL validation errors.
  *
@@ -24,18 +25,16 @@ use Exception;
 /**
  * Exception thrown when a directory URL is invalid.
  */
-class DirectoryUrlException extends Exception
-{
-    /**
-     * Set the exception message.
-     *
-     * @param string $message The error message to set.
-     *
-     * @return void
-     */
-    public function setMessage(string $message): void
-    {
-        $this->message = $message;
+class DirectoryUrlException extends Exception {
+	/**
+	 * Set the exception message.
+	 *
+	 * @param string $message The error message to set.
+	 *
+	 * @return void
+	 */
+	public function setMessage(string $message): void {
+		$this->message = $message;
 
-    }//end setMessage()
+	}//end setMessage()
 }//end class

@@ -274,6 +274,12 @@ block persists the whole page via `objectStore.updateObject('page', id, page)`, 
 removed. Modals/dialogs are toggled through the navigation store (`page` modal,
 `deletePageContent` dialog).
 
+The FAQ item list and content-block item list in `PageContentForm` MUST provide a
+keyboard-and-screen-reader-operable way to reorder items ("Move up"/"Move down" buttons),
+in addition to the existing pointer-only `vue-draggable-plus` drag handle. Reordering MUST
+NOT depend solely on a drag gesture (WCAG 2.1 AA, Success Criterion 2.1.1 — landed via
+`keyboard-operable-reorder-controls`).
+
 **Priority:** Should **Status:** Implemented
 
 #### Scenario: Add or edit a page content block
@@ -285,6 +291,21 @@ removed. Modals/dialogs are toggled through the navigation store (`page` modal,
 - GIVEN a content block on a page
 - WHEN the delete-page-content dialog confirms removal
 - THEN the page MUST be updated with the block removed via `updateObject('page', ...)`
+
+#### Scenario: Keyboard user reorders a FAQ item or content block
+- GIVEN a page with 2 or more FAQ items or content blocks in the content form
+- WHEN a keyboard-only user tabs to an item's "Move up" or "Move down" button and activates
+  it with Enter or Space
+- THEN the item MUST swap position with its neighbor
+- AND the "Move up" button on the first item, and the "Move down" button on the last item,
+  MUST be disabled
+
+#### Scenario: Drag handle is keyboard-discoverable
+- GIVEN a keyboard user tabs through a FAQ or content-block row
+- WHEN focus reaches the drag handle
+- THEN the handle MUST receive visible focus and expose an accessible name that identifies
+  it as a reorder control and directs the user to the move buttons as the keyboard-operable
+  alternative
 
 ### Requirement: Menu management UI with embedded menu items (CMS-037)
 The system SHALL provide a menu management frontend comprising a `ViewMenuModal` (read a

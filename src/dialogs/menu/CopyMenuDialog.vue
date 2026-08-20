@@ -1,25 +1,18 @@
-/**
- * CopyMenuDialog.vue
- * Dialog for copying menus
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * CopyMenuDialog.vue * Dialog for copying menus * @category Components * @package
+opencatalogi * @author Ruben Linde * @copyright 2024 * @license EUPL-1.2 * @version
+1.0.0 * @link https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { computed, ref } from 'vue'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog v-if="navigationStore.dialog === 'copyMenu'"
+	<NcDialog
+		v-if="navigationStore.dialog === 'copyMenu'"
 		ref="dialogRef"
 		class="copyMenuDialog"
-		label-id="copyMenuDialog"
+		labelId="copyMenuDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
 			<h2>{{ t('opencatalogi', 'Copy Menu') }}</h2>
@@ -28,24 +21,41 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					<p>{{ t('opencatalogi', 'Menu successfully copied') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>{{ t('opencatalogi', 'Something went wrong while copying the menu') }}</p>
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Something went wrong while copying the menu',
+							)
+						}}
+					</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>{{ t('opencatalogi', 'Do you want to copy the menu {name}?', { name: menu.title }) }}</p>
+				<p>
+					{{
+						t('opencatalogi', 'Do you want to copy the menu {name}?', {
+							name: menu.title,
+						})
+					}}
+				</p>
 			</div>
 
 			<span class="buttonContainer">
-				<NcButton
-					@click="navigationStore.setDialog(false)">
-					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+				<NcButton @click="navigationStore.setDialog(false)">
+					{{
+						success
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="success === null"
+				<NcButton
+					v-if="success === null"
 					:disabled="loading"
-					type="primary"
+					variant="primary"
 					@click="handleCopy">
 					<template #icon>
 						<span>
@@ -61,45 +71,44 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import {
-	NcButton,
-	NcDialog,
-	NcNoteCard,
-	NcLoadingIcon,
-} from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 // icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Success state for the component
+ *
  * @type {import('vue').Ref<boolean|null>}
  */
 const success = ref(null)
 
 /**
  * Error state for the component
+ *
  * @type {import('vue').Ref<string|null>}
  */
 const error = ref(null)
 
 /**
  * Get the active menu from the store
+ *
  * @return {object | null}
  */
 const menu = computed(() => objectStore.getActiveObject('menu'))
 
 /**
  * Handle copy action
+ *
  * @return {Promise<void>}
  */
-const handleCopy = async () => {
+async function handleCopy() {
 	loading.value = true
 	try {
 		const newMenu = {
@@ -121,7 +130,7 @@ const handleCopy = async () => {
 /**
  * CopyMenuDialog — clone the active menu with a "(kopie)" title.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'CopyMenuDialog',
@@ -131,6 +140,7 @@ export default {
 		NcNoteCard,
 		NcLoadingIcon,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -138,6 +148,7 @@ export default {
 			error: null,
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-5 */
 		closeDialog() {

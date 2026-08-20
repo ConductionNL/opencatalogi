@@ -5,12 +5,12 @@
  * Represents individual content blocks within a page
  */
 export type TPageContent = {
-    type: string
-    id: string
-    data: Record<string, any>
-    groups?: string[]
-    hideAfterLogin?: boolean
-    hideBeforeLogin?: boolean
+	type: string
+	id: string
+	data: Record<string, any>
+	groups?: string[]
+	hideAfterLogin?: boolean
+	hideBeforeLogin?: boolean
 }
 
 /**
@@ -20,9 +20,9 @@ export type TPageContent = {
 export type TPage = {
 	id: string
 	title: string
-    contents: TPageContent[] | null
+	contents: TPageContent[] | null
 	slug: string
-    groups?: string[]
-    hideAfterLogin?: boolean
-    hideBeforeLogin?: boolean
+	groups?: string[]
+	hideAfterLogin?: boolean
+	hideBeforeLogin?: boolean
 }

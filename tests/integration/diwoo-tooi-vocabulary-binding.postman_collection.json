@@ -1,0 +1,95 @@
+{
+	"info": {
+		"_postman_id": "opencatalogi-diwoo-tooi-vocabulary-binding",
+		"name": "OpenCatalogi - DIWOO TOOI/DiWoo Vocabulary Binding",
+		"description": "API-only contract tests for the DIWOO value-list binding (diwoo-tooi-vocabulary-binding change, WOO-TOOI-001..004). Asserts that the DIWOO sitemap binds informatiecategorie / publisher / soortHandeling to official TOOI/DiWoo URIs, omits (never leaks) an unresolved axis, and that the admin 'Validate DIWOO output' action reports unresolved axes while the sitemap still serves. Per the Playwright-UI-only / Newman-API convention this backend surface is asserted here.\n\nVariables:\n- baseUrl: instance base URL (default http://localhost:8080)\n- catalogSlug: a WOO catalog slug with DIWOO publications (set per environment)\n- categoryCode: a DIWOO category code, e.g. sitemapindex-diwoo-infocat014.xml\n- adminAuth: Basic auth header value for an admin (for the validate action)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+		{ "key": "catalogSlug", "value": "woo-besluiten", "type": "string" },
+		{ "key": "categoryCode", "value": "sitemapindex-diwoo-infocat014.xml", "type": "string" },
+		{ "key": "adminAuth", "value": "Basic YWRtaW46YWRtaW4=", "type": "string" }
+	],
+	"item": [
+		{
+			"name": "WOO-TOOI-001/002/003 DIWOO sitemap binds official TOOI URIs (or omits)",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/xml" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/{{catalogSlug}}/sitemaps/{{categoryCode}}/publications", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "{{catalogSlug}}", "sitemaps", "{{categoryCode}}", "publications"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 404', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const xml = pm.response.text();",
+							"  // WOO-TOOI-001: any emitted informatiecategorie @resource MUST be an official TOOI kern URI.",
+							"  const infocat = xml.match(/informatiecategorie[^>]*resource=\"([^\"]+)\"/g) || [];",
+							"  pm.test('informatiecategorie @resource is an official TOOI kern URI', () => infocat.every(m => m.includes('identifier.overheid.nl/tooi/def/thes/kern/c_')));",
+							"  // WOO-TOOI-002: any emitted publisher @resource MUST be a TOOI organisatie id URI (never an OR UUID).",
+							"  const pub = xml.match(/publisher[^>]*resource=\"([^\"]+)\"/g) || [];",
+							"  pm.test('publisher @resource (when present) is a TOOI organisatie URI', () => pub.every(m => m.includes('identifier.overheid.nl/tooi/id/')));",
+							"  // WOO-TOOI-003: soortHandeling @resource MUST be an official TOOI kern URI.",
+							"  const sh = xml.match(/soortHandeling[^>]*resource=\"([^\"]+)\"/g) || [];",
+							"  pm.test('soortHandeling @resource is an official TOOI kern URI', () => sh.every(m => m.includes('identifier.overheid.nl/tooi/def/thes/kern/c_')));",
+							"  // Fail-safe: no legacy PLACEHOLDER literals leak into the feed.",
+							"  pm.test('no PLACEHOLDER literal leaks', () => !xml.includes('PLACEHOLDER'));",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "WOO-TOOI-004 Validate DIWOO output reports unresolved axes (admin)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{adminAuth}}" }
+				],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/{{catalogSlug}}/sitemaps/{{categoryCode}}/validate", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "{{catalogSlug}}", "sitemaps", "{{categoryCode}}", "validate"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 (admin) or 401/403 (unauthorized)', () => [200, 401, 403].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const doc = pm.response.json();",
+							"  pm.test('report has valid flag + violations array', () => typeof doc.valid === 'boolean' && Array.isArray(doc.violations));",
+							"  pm.test('each violation names a document + axis', () => doc.violations.every(v => typeof v.documentLoc === 'string' && ['publisher','informatiecategorie','soortHandeling'].includes(v.axis)));",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "WOO-TOOI-004 Validator is advisory — sitemap still serves",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/xml" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/{{catalogSlug}}/sitemaps/{{categoryCode}}/publications", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "{{catalogSlug}}", "sitemaps", "{{categoryCode}}", "publications"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('sitemap is served regardless of validator findings', () => [200, 404].includes(pm.response.code));"
+						]
+					}
+				}
+			]
+		}
+	]
+}

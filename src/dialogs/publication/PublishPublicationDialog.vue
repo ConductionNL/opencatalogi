@@ -1,39 +1,67 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { computed, ref } from 'vue'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog v-if="navigationStore.dialog === 'publishPublication'"
+	<NcDialog
+		v-if="navigationStore.dialog === 'publishPublication'"
 		ref="dialogRef"
 		class="publishPublicationDialog"
-		label-id="publishPublicationDialog"
+		labelId="publishPublicationDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
-			<h2>{{ publication.status === 'Published' ? t('opencatalogi', 'Depublish publication') : t('opencatalogi', 'Publish publication') }}: {{ publication.title }}</h2>
+			<h2>
+				{{
+					publication.status === 'Published'
+						? t('opencatalogi', 'Depublish publication')
+						: t('opencatalogi', 'Publish publication')
+				}}: {{ publication.title }}
+			</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>{{ t('opencatalogi', 'Publication successfully published') }}</p>
+					<p>
+						{{ t('opencatalogi', 'Publication successfully published') }}
+					</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>{{ t('opencatalogi', 'Something went wrong while publishing the publication') }}</p>
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Something went wrong while publishing the publication',
+							)
+						}}
+					</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>{{ t('opencatalogi', 'Do you want to publish the publication {name}?', { name: publication.title }) }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Do you want to publish the publication {name}?',
+							{ name: publication.title },
+						)
+					}}
+				</p>
 			</div>
 
 			<span class="buttonContainer">
-				<NcButton
-					@click="navigationStore.setDialog(false)">
-					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+				<NcButton @click="navigationStore.setDialog(false)">
+					{{
+						success
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
 				</NcButton>
-				<NcButton v-if="success === null"
+				<NcButton
+					v-if="success === null"
 					:disabled="loading"
-					type="primary"
+					variant="primary"
 					@click="handleCopy">
 					<template #icon>
 						<span>
@@ -52,47 +80,46 @@ import { objectStore, navigationStore } from '../../store/store.js'
 /**
  * PublishPublicationDialog — confirmation dialog for publishing/depublishing a publication.
  *
- * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-3
+ * @spec openspec/specs/publications/spec.md
  */
-import {
-	NcButton,
-	NcDialog,
-	NcNoteCard,
-	NcLoadingIcon,
-} from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 // icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Success state for the component
+ *
  * @type {import('vue').Ref<boolean|null>}
  */
 const success = ref(null)
 
 /**
  * Error state for the component
+ *
  * @type {import('vue').Ref<string|null>}
  */
 const error = ref(null)
 
 /**
  * Get the active menu from the store
+ *
  * @return {object | null}
  */
 const menu = computed(() => objectStore.getActiveObject('menu'))
 
 /**
  * Handle copy action
+ *
  * @return {Promise<void>}
  */
-const handleCopy = async () => {
+async function handleCopy() {
 	loading.value = true
 	try {
 		const newMenu = {
@@ -119,6 +146,7 @@ export default {
 		NcNoteCard,
 		NcLoadingIcon,
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -126,12 +154,14 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-3 */
 		publication() {
 			return objectStore.getActiveObject('publication')
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-3 */
 		closeDialog() {
