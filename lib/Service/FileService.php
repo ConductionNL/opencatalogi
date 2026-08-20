@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Service for handling file operations in OpenCatalogi.
  *
@@ -15,23 +16,24 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-88
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-92
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-93
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-94
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-95
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-96
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-97
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-98
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-99
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-100
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-101
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-3
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-4
  */
 
 namespace OCA\OpenCatalogi\Service;
+
 ini_set('memory_limit', '2048M');
 
 use Exception;
@@ -50,15 +52,12 @@ use OCP\IUserSession;
 use OCP\Lock\LockedException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use RuntimeException;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 use Twig\Loader\FilesystemLoader;
-use ZipArchive;
 
 /**
  * Service for handling file operations in OpenCatalogi.
@@ -75,575 +74,386 @@ use ZipArchive;
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-4
  */
 
-class FileService
-{
-    /**
-     * Constructor for FileService
-     *
-     * @param IUserSession       $userSession The user session
-     * @param LoggerInterface    $logger      The logger interface
-     * @param IRootFolder        $rootFolder  The root folder interface
-     * @param IAppManager        $appManager  The app manager interface
-     * @param ContainerInterface $container   The DI container
-     */
-    public function __construct(
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-        private readonly IRootFolder $rootFolder,
-        private readonly IAppManager $appManager,
-        private readonly ContainerInterface $container
-    ) {
-
-    }//end __construct()
-
-    /**
-     * Get the name for the folder used for storing files of the given publication.
-     *
-     * @param string $publicationId    The id of the Publication.
-     * @param string $publicationTitle The title of the Publication.
-     *
-     * @return string The name the folder for this publication should have.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-88
-     */
-    public function getPublicationFolderName(string $publicationId, string $publicationTitle): string
-    {
-        return "($publicationId) $publicationTitle";
-
-    }//end getPublicationFolderName()
-
-    /**
-     * Retrieves the OpenRegister FileService from the DI container.
-     *
-     * @return \OCA\OpenRegister\Service\FileService The OR FileService.
-     * @throws RuntimeException When OpenRegister is not installed.
-     *
-     * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
-     */
-    private function getOrFileService(): \OCA\OpenRegister\Service\FileService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Service\FileService');
-        }
-
-        throw new RuntimeException('Sharing integration required: OpenRegister is not available.');
-
-    }//end getOrFileService()
-
-    /**
-     * Creates a public share link for an attachment file via the OpenRegister shares leaf.
-     *
-     * Thin adapter (ADR-022): resolves the user-relative path to an absolute NC path,
-     * then delegates to the OR FileService — the single owner of share creation, lookup,
-     * and URL resolution for files attached to OR objects (FIL-005 / FIL-006 / FIL-007).
-     * Degrades gracefully when OR is not installed.
-     *
-     * @param string $relativePath User-relative path to the file (e.g. Publicaties/folder/file.pdf).
-     *
-     * @return string The public share URL, or an empty string when the leaf is unavailable.
-     *
-     * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
-     * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-3
-     * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-4
-     */
-    public function createPublicShareLink(string $relativePath): string
-    {
-        $relativePath = trim(string: $relativePath, characters: '/');
-
-        $currentUser = $this->userSession->getUser();
-        $userId      = 'Guest';
-        if ($currentUser !== null) {
-            $userId = $currentUser->getUID();
-        }
-
-        try {
-            $userFolder   = $this->rootFolder->getUserFolder(userId: $userId);
-            $node         = $userFolder->get($relativePath);
-            $absolutePath = $node->getPath();
-
-            return $this->getOrFileService()->createShareLink(path: $absolutePath);
-        } catch (NotFoundException $e) {
-            $this->logger->warning("File not found for sharing at $relativePath: ".$e->getMessage());
-            return '';
-        } catch (RuntimeException $e) {
-            $this->logger->warning('Sharing integration required: '.$e->getMessage());
-            return '';
-        } catch (NotPermittedException $e) {
-            $this->logger->error("Can't create share link for $relativePath: ".$e->getMessage());
-            return "User folder couldn't be found";
-        }
-
-    }//end createPublicShareLink()
-
-    /**
-     * Handles file upload and creates the necessary folder structure in NextCloud.
-     *
-     * @param IRequest $request The request object containing the uploaded file.
-     * @param array    $data    The data array containing all parameters from the request.
-     *
-     * @return JSONResponse|array An error response if creating the file in NextCloud failed
-     *                            or the updated data array containing info about the created file.
-     * @throws Exception In case creating a folder or new file fails.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-92
-     */
-    public function handleFile(IRequest $request, array $data): JSONResponse|array
-    {
-        // Uploaded _file and downloadURL are mutually exclusive.
-        $uploadedFile = $this->checkUploadedFile($request);
-        if ($uploadedFile instanceof JSONResponse) {
-            return $uploadedFile;
-        }
-
-        // Get the publication folder name.
-        $publicationFolder = $this->getPublicationFolderName(
-            publicationId: $request->getHeader('Publication-Id'),
-            publicationTitle: $request->getHeader('Publication-Title')
-        );
-
-        // Create the Publicaties folder, the publication-specific folder and the Bijlagen folder within it.
-        $this->createFolder(folderPath: 'Publicaties');
-        $this->createFolder(folderPath: "Publicaties/$publicationFolder");
-        $this->createFolder(folderPath: "Publicaties/$publicationFolder/Bijlagen");
-
-        // Construct the file path.
-        $filePath = "Publicaties/$publicationFolder/Bijlagen/".$uploadedFile['name'];
-
-        // Upload the file.
-        $created = $this->uploadFile(
-            content: file_get_contents(filename: $uploadedFile['tmp_name']),
-            filePath: $filePath
-        );
-
-        // Check if the file was created successfully.
-        if ($created === false) {
-            return new JSONResponse(
-                data: ['error' => "Failed to upload file. This file: $filePath might already exist"],
-                statusCode: 400
-            );
-        }
-
-        // Update the data array with file info, to create Attachment with.
-        return $this->addFileInfoToData(
-            data: $data,
-            uploadedFile: $uploadedFile,
-            filePath: $filePath
-        );
-
-    }//end handleFile()
-
-    /**
-     * Gets info about the uploaded file from the request body, looks specifically for the field '_file'.
-     * If there is no file or there is an error loading it this will return an error response.
-     *
-     * @param IRequest $request The request object containing the uploaded file.
-     *
-     * @return JSONResponse|array An error response or an array containing the info about the uploaded file.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-93
-     */
-    private function checkUploadedFile(IRequest $request): JSONResponse|array
-    {
-        // Get the uploaded file from the request.
-        $uploadedFile = $request->getUploadedFile(key: '_file');
-
-        // Check if a file was uploaded.
-        if (empty($uploadedFile) === true) {
-            return new JSONResponse(
-                data: ['error' => 'Please upload a file using key "_file" or give a "downloadUrl"'],
-                statusCode: 400
-            );
-        }
-
-        // Check for upload errors.
-        if ($uploadedFile['error'] !== UPLOAD_ERR_OK) {
-            return new JSONResponse(data: ['error' => 'File upload error: '.$uploadedFile['error']], statusCode: 400);
-        }
-
-        return $uploadedFile;
-
-    }//end checkUploadedFile()
-
-    /**
-     * Creates a new folder in NextCloud, unless it already exists.
-     *
-     * @param string $folderPath Path (from root) to where you want to
-     *                           create a folder, include the name of
-     *                           the folder. (/Media/exampleFolder)
-     *
-     * @return boolean True if successfully created a new folder.
-     * @throws Exception In case we can't create the folder because it is not permitted.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-94
-     */
-    public function createFolder(string $folderPath): bool
-    {
-        $folderPath = trim(string: $folderPath, characters: '/');
-
-        // Get the current user.
-        $currentUser = $this->userSession->getUser();
-        $userId      = 'Guest';
-        if ($currentUser !== null) {
-            $userId = $currentUser->getUID();
-        }
-
-        $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-
-        // Check if folder exists and if not create it.
-        try {
-            try {
-                $userFolder->get(path: $folderPath);
-            } catch (NotFoundException $e) {
-                $userFolder->newFolder(path: $folderPath);
-
-                return true;
-            }
-
-            // Folder already exists.
-            $this->logger->info("This folder already exits $folderPath");
-            return false;
-        } catch (NotPermittedException $e) {
-            $this->logger->error("Can't create folder $folderPath: ".$e->getMessage());
-
-            throw new Exception("Can\'t create folder $folderPath");
-        }
-
-    }//end createFolder()
-
-    /**
-     * Adds information about the uploaded file to the appropriate Attachment fields. Inclusive share link.
-     *
-     * @param array  $data         The form-data fields and their
-     *                             values (/request body) that we are
-     *                             going to update before posting the
-     *                             Attachment.
-     * @param array  $uploadedFile Information about the uploaded
-     *                             file from the request body.
-     * @param string $filePath     The full file path to where the
-     *                             file is stored in NextCloud.
-     *
-     * @return array The updated $data array
-     * @throws Exception In case creating the share(link) fails.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-95
-     */
-    public function addFileInfoToData(array $data, array $uploadedFile, string $filePath): array
-    {
-        // Get the current user.
-        $currentUser = $this->userSession->getUser();
-        $userId      = 'Guest';
-        if ($currentUser !== null) {
-            $userId = $currentUser->getUID();
-        }
-
-        // Update Attachment data.
-        $data['reference'] = "$userId/$filePath";
-        $data['type']      = $uploadedFile['type'];
-        $data['size']      = $uploadedFile['size'];
-        $explodedName      = explode(separator: '.', string: $uploadedFile['name']);
-        $data['title']     = $explodedName[0];
-        $data['extension'] = end(array: $explodedName);
-
-        // Request public share via the OpenRegister shares leaf (ADR-022 / FIL-005).
-        $shareLink = $this->createPublicShareLink(relativePath: $filePath);
-
-        // Set accessUrl if not already set.
-        if (empty($data['accessUrl']) === true) {
-            $data['accessUrl'] = $shareLink;
-        }
-
-        // Set downloadUrl if not already set.
-        if (empty($data['downloadUrl']) === true) {
-            $data['downloadUrl'] = "$shareLink/download";
-        }
-
-        return $data;
-
-    }//end addFileInfoToData()
-
-    /**
-     * Uploads a file to NextCloud. Will create a new file if it doesn't exist yet.
-     *
-     * @param mixed  $content  The content of the file.
-     * @param string $filePath Path (from root) where to save the file.
-     *                         NOTE: include the name and extension of the file (example.pdf).
-     *
-     * @return boolean True if successful.
-     * @throws Exception In case we can't write to file because it is not permitted.
-     *
-     * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-96
-     */
-    public function uploadFile(mixed $content, string $filePath): bool
-    {
-        $filePath = trim(string: $filePath, characters: '/');
-
-        // Get the current user.
-        $currentUser = $this->userSession->getUser();
-        $userId      = 'Guest';
-        if ($currentUser !== null) {
-            $userId = $currentUser->getUID();
-        }
-
-        $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-
-        // Check if file exists and create it if not.
-        try {
-            try {
-                $userFolder->get(path: $filePath);
-            } catch (NotFoundException $e) {
-                $userFolder->newFile(path: $filePath);
-                $file = $userFolder->get(path: $filePath);
-                $file->putContent($content);
-
-                return true;
-            }
-
-            // File already exists.
-            $this->logger->warning("File $filePath already exists.");
-            return false;
-        } catch (NotPermittedException | GenericFileException | LockedException $e) {
-            $this->logger->error("Can't create file $filePath: ".$e->getMessage());
-
-            throw new Exception("Can't write to file $filePath");
-        }//end try
-
-    }//end uploadFile()
-
-    /**
-     * Overwrites an existing file in NextCloud.
-     *
-     * @param mixed   $content   The content of the file.
-     * @param string  $filePath  Path (from root) where to save the file.
-     *                           NOTE: include the name and extension of the file (example.pdf).
-     * @param boolean $createNew Default = false. If set to true this function will create
-     *                           a new file if it doesn't exist yet.
-     *
-     * @return boolean True if successful.
-     * @throws Exception In case we can't write to file because it is not permitted.
-     *
-     * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
-     *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-97
-     */
-    public function updateFile(mixed $content, string $filePath, bool $createNew=false): bool
-    {
-        $filePath = trim(string: $filePath, characters: '/');
-
-        // Get the current user.
-        $currentUser = $this->userSession->getUser();
-        $userId      = 'Guest';
-        if ($currentUser !== null) {
-            $userId = $currentUser->getUID();
-        }
-
-        $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-
-        // Check if file exists and overwrite it if it does.
-        try {
-            try {
-                $file = $userFolder->get(path: $filePath);
-                $file->putContent($content);
-
-                return true;
-            } catch (NotFoundException $e) {
-                if ($createNew === true) {
-                    $userFolder->newFile(path: $filePath);
-                    $file = $userFolder->get(path: $filePath);
-                    $file->putContent($content);
-
-                    $this->logger->info("File $filePath did not exist, created a new file for it.");
-                    return true;
-                }
-            }//end try
-
-            // File already exists.
-            $this->logger->warning("File $filePath already exists.");
-            return false;
-        } catch (NotPermittedException | GenericFileException | LockedException $e) {
-            $this->logger->error("Can't create file $filePath: ".$e->getMessage());
-
-            throw new Exception("Can't write to file $filePath");
-        }//end try
-
-    }//end updateFile()
-
-    /**
-     * Deletes a file from NextCloud.
-     *
-     * @param string $filePath Path (from root) to the file you want to delete.
-     *
-     * @return boolean True if successful.
-     * @throws Exception In case deleting the file is not permitted.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-98
-     */
-    public function deleteFile(string $filePath): bool
-    {
-        $filePath = trim(string: $filePath, characters: '/');
-
-        // Get the current user.
-        $currentUser = $this->userSession->getUser();
-        $userId      = 'Guest';
-        if ($currentUser !== null) {
-            $userId = $currentUser->getUID();
-        }
-
-        $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-
-        // Check if file exists and delete it if it does.
-        try {
-            try {
-                $file = $userFolder->get(path: $filePath);
-                $file->delete();
-
-                return true;
-            } catch (NotFoundException $e) {
-                // File does not exist.
-                $this->logger->warning("File $filePath does not exist.");
-
-                return false;
-            }
-        } catch (NotPermittedException | InvalidPathException $e) {
-            $this->logger->error("Can't delete file $filePath: ".$e->getMessage());
-
-            throw new Exception("Can't delete file $filePath");
-        }
-
-    }//end deleteFile()
-
-    /**
-     * Creates a pdf file in a /tmp folder using a twig template and given context.
-     *
-     * @param string $twigTemplate The path and filename of the twig template to use in the folder "lib/Templates".
-     * @param array  $context      The context to pass along while rendering the pdf with the given twig template.
-     *
-     * @return Mpdf A Mpdf object.
-     * Use "$mpdf->Output(name: $filename, dest: Destination::FILE)"
-     * to create the actual file or use one of the other
-     * Destination::X options.
-     * Please use the "rmdir(directory: '/tmp/mpdf');" function after this to clean up temporary files.
-     * @throws MpdfException|LoaderError|RuntimeError|SyntaxError
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-99
-     */
-    public function createPdf(string $twigTemplate, array $context): Mpdf
-    {
-        // Initialize Twig.
-        $loader = new FilesystemLoader(paths: 'lib/Templates', rootPath: __DIR__.'/../../');
-        $twig   = new Environment($loader);
-
-        // Render the Twig template.
-        $html = $twig->render(name: $twigTemplate, context: $context);
-
-        // Check if the directory exists, if not, create it.
-        if (file_exists(filename: '/tmp/mpdf') === false) {
-            mkdir(directory: '/tmp/mpdf', recursive: true);
-        }
-
-        // Set permissions for the directory (ensure it's writable).
-        chmod(filename: '/tmp/mpdf', permissions: 0777);
-
-        // Initialize mPDF.
-        $mpdf = new Mpdf(config: ['tempDir' => '/tmp/mpdf']);
-
-        // Write HTML to PDF.
-        $mpdf->WriteHTML(html: $html);
-
-        return $mpdf;
-
-    }//end createPdf()
-
-    /**
-     * Creates a ZIP archive at the $tempZip location using the
-     * $tempFolder location as input for the ZIP archive.
-     * Please use "unlink(filename: $tempZip);" or the downloadZip()
-     * function after calling this function to clean up temporary files.
-     *
-     * @param string $inputFolder The (tmp) location used as input for creating the ZIP archive.
-     * @param string $tempZip     The tmp location where the ZIP will
-     *                            be saved. Please start this with
-     *                            '/tmp/..' and end with
-     *                            '../zipName.zip'.
-     *
-     * @return string|null Returns null if created successfully and a string in case of an error.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-100
-     */
-    public function createZip(string $inputFolder, string $tempZip): ?string
-    {
-        // Create ZIP archive.
-        $zip = new ZipArchive();
-        if ($zip->open(filename: $tempZip, flags: (ZipArchive::CREATE | ZipArchive::OVERWRITE)) !== true) {
-            return "failed to create ZIP archive";
-        }
-
-        $files = new RecursiveIteratorIterator(
-            iterator: new RecursiveDirectoryIterator($inputFolder),
-            mode: RecursiveIteratorIterator::LEAVES_ONLY
-        );
-
-        foreach ($files as $file) {
-            // Skip directories (they would be added automatically).
-            if ($file->isDir() === false) {
-                $filePath     = $file->getRealPath();
-                $relativePath = substr(string: $filePath, offset: (strlen(string: $inputFolder) + 1));
-
-                // Add file to zip.
-                $zip->addFile(filepath: $filePath, entryname: $relativePath);
-            }
-        }
-
-        $zip->close();
-
-        return null;
-
-    }//end createZip()
-
-    /**
-     * A function that outputs a downloadable ZIP to the response body of the current api request.
-     * Can best be used after creating a ZIP archive with the createZip() function.
-     *
-     * @param string      $tempZip     The tmp location where the ZIP is saved.
-     *                                 Note that "unlink(filename: $tempZip);"
-     *                                 will be called at the end of this
-     *                                 function.                    function.
-     * @param string|null $inputFolder The tmp location used as input
-     *                                 for creating the ZIP archive.
-     *                                 Will unlink all files in this
-     *                                 folder and remove this folder at
-     *                                 the end of this function.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-101
-     */
-    public function downloadZip(string $tempZip, ?string $inputFolder=null): void
-    {
-        // Send the ZIP file to the client for download.
-        header(header: 'Content-Type: application/zip');
-        header(header: 'Content-disposition: attachment; filename='.basename($tempZip));
-        header(header: 'Content-Length: '.filesize($tempZip));
-        readfile(filename: $tempZip);
-
-        // Cleanup temporary files.
-        if ($inputFolder !== null) {
-            $globResult = glob("$inputFolder/*.*");
-            if ($globResult === false) {
-                $globResult = [];
-            }
-
-            foreach ($globResult as $file) {
-                unlink($file);
-            }
-
-            rmdir(directory: $inputFolder);
-        }
-
-        unlink(filename: $tempZip);
-
-    }//end downloadZip()
+class FileService {
+	/**
+	 * Constructor for FileService
+	 *
+	 * @param IUserSession $userSession The user session
+	 * @param LoggerInterface $logger The logger interface
+	 * @param IRootFolder $rootFolder The root folder interface
+	 * @param IAppManager $appManager The app manager interface
+	 * @param ContainerInterface $container The DI container
+	 */
+	public function __construct(
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+		private readonly IRootFolder $rootFolder,
+		private readonly IAppManager $appManager,
+		private readonly ContainerInterface $container,
+	) {
+
+	}//end __construct()
+
+	/**
+	 * Get the name for the folder used for storing files of the given publication.
+	 *
+	 * @param string $publicationId The id of the Publication.
+	 * @param string $publicationTitle The title of the Publication.
+	 *
+	 * @return string The name the folder for this publication should have.
+	 *
+	 * @spec openspec/specs/file-management/spec.md
+	 */
+	public function getPublicationFolderName(string $publicationId, string $publicationTitle): string {
+		return "($publicationId) $publicationTitle";
+	}//end getPublicationFolderName()
+
+	/**
+	 * Retrieves the OpenRegister FileService from the DI container.
+	 *
+	 * @return \OCA\OpenRegister\Service\FileService The OR FileService.
+	 * @throws RuntimeException When OpenRegister is not installed.
+	 *
+	 * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
+	 */
+	private function getOrFileService(): \OCA\OpenRegister\Service\FileService {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			return $this->container->get('OCA\OpenRegister\Service\FileService');
+		}
+
+		throw new RuntimeException('Sharing integration required: OpenRegister is not available.');
+	}//end getOrFileService()
+
+	/**
+	 * Creates a public share link for an attachment file via the OpenRegister shares leaf.
+	 *
+	 * Thin adapter (ADR-022): resolves the user-relative path to an absolute NC path,
+	 * then delegates to the OR FileService — the single owner of share creation, lookup,
+	 * and URL resolution for files attached to OR objects (FIL-005 / FIL-006 / FIL-007).
+	 * Degrades gracefully when OR is not installed.
+	 *
+	 * @param string $relativePath User-relative path to the file (e.g. Publicaties/folder/file.pdf).
+	 *
+	 * @return string The public share URL, or an empty string when the leaf is unavailable.
+	 *
+	 * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
+	 * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-3
+	 * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-4
+	 */
+	public function createPublicShareLink(string $relativePath): string {
+		$relativePath = trim(string: $relativePath, characters: '/');
+
+		$currentUser = $this->userSession->getUser();
+		$userId = 'Guest';
+		if ($currentUser !== null) {
+			$userId = $currentUser->getUID();
+		}
+
+		try {
+			$userFolder = $this->rootFolder->getUserFolder(userId: $userId);
+			$node = $userFolder->get($relativePath);
+			$absolutePath = $node->getPath();
+
+			return $this->getOrFileService()->createShareLink(path: $absolutePath);
+		} catch (NotFoundException $e) {
+			$this->logger->warning("File not found for sharing at $relativePath: " . $e->getMessage());
+			return '';
+		} catch (RuntimeException $e) {
+			$this->logger->warning('Sharing integration required: ' . $e->getMessage());
+			return '';
+		} catch (NotPermittedException $e) {
+			$this->logger->error("Can't create share link for $relativePath: " . $e->getMessage());
+			return "User folder couldn't be found";
+		}
+
+	}//end createPublicShareLink()
+
+	/**
+	 * Handles file upload and creates the necessary folder structure in NextCloud.
+	 *
+	 * @param IRequest $request The request object containing the uploaded file.
+	 * @param array $data The data array containing all parameters from the request.
+	 *
+	 * @return JSONResponse|array An error response if creating the file in NextCloud failed
+	 *                            or the updated data array containing info about the created file.
+	 * @throws Exception In case creating a folder or new file fails.
+	 *
+	 * @spec openspec/specs/file-management/spec.md
+	 */
+	public function handleFile(IRequest $request, array $data): JSONResponse|array {
+		// Uploaded _file and downloadURL are mutually exclusive.
+		$uploadedFile = $this->checkUploadedFile(request: $request);
+		if ($uploadedFile instanceof JSONResponse) {
+			return $uploadedFile;
+		}
+
+		// Get the publication folder name.
+		$publicationFolder = $this->getPublicationFolderName(
+			publicationId: $request->getHeader('Publication-Id'),
+			publicationTitle: $request->getHeader('Publication-Title')
+		);
+
+		// Create the Publicaties folder, the publication-specific folder and the Bijlagen folder within it.
+		$this->createFolder(folderPath: 'Publicaties');
+		$this->createFolder(folderPath: "Publicaties/$publicationFolder");
+		$this->createFolder(folderPath: "Publicaties/$publicationFolder/Bijlagen");
+
+		// Construct the file path.
+		$filePath = "Publicaties/$publicationFolder/Bijlagen/" . $uploadedFile['name'];
+
+		// Upload the file.
+		$created = $this->uploadFile(
+			content: file_get_contents(filename: $uploadedFile['tmp_name']),
+			filePath: $filePath
+		);
+
+		// Check if the file was created successfully.
+		if ($created === false) {
+			return new JSONResponse(
+				data: ['error' => "Failed to upload file. This file: $filePath might already exist"],
+				statusCode: 400
+			);
+		}
+
+		// Update the data array with file info, to create Attachment with.
+		return $this->addFileInfoToData(
+			data: $data,
+			uploadedFile: $uploadedFile,
+			filePath: $filePath
+		);
+
+	}//end handleFile()
+
+	/**
+	 * Gets info about the uploaded file from the request body, looks specifically for the field '_file'.
+	 * If there is no file or there is an error loading it this will return an error response.
+	 *
+	 * @param IRequest $request The request object containing the uploaded file.
+	 *
+	 * @return JSONResponse|array An error response or an array containing the info about the uploaded file.
+	 *
+	 * @spec openspec/specs/file-management/spec.md
+	 */
+	private function checkUploadedFile(IRequest $request): JSONResponse|array {
+		// Get the uploaded file from the request.
+		$uploadedFile = $request->getUploadedFile(key: '_file');
+
+		// Check if a file was uploaded.
+		if (empty($uploadedFile) === true) {
+			return new JSONResponse(
+				data: ['error' => 'Please upload a file using key "_file" or give a "downloadUrl"'],
+				statusCode: 400
+			);
+		}
+
+		// Check for upload errors.
+		if ($uploadedFile['error'] !== UPLOAD_ERR_OK) {
+			return new JSONResponse(data: ['error' => 'File upload error: ' . $uploadedFile['error']], statusCode: 400);
+		}
+
+		return $uploadedFile;
+	}//end checkUploadedFile()
+
+	/**
+	 * Creates a new folder in NextCloud, unless it already exists.
+	 *
+	 * @param string $folderPath Path (from root) to where you want to
+	 *                           create a folder, include the name of
+	 *                           the folder. (/Media/exampleFolder)
+	 *
+	 * @return boolean True if successfully created a new folder.
+	 * @throws Exception In case we can't create the folder because it is not permitted.
+	 *
+	 * @spec openspec/specs/file-management/spec.md
+	 */
+	public function createFolder(string $folderPath): bool {
+		$folderPath = trim(string: $folderPath, characters: '/');
+
+		// Get the current user.
+		$currentUser = $this->userSession->getUser();
+		$userId = 'Guest';
+		if ($currentUser !== null) {
+			$userId = $currentUser->getUID();
+		}
+
+		$userFolder = $this->rootFolder->getUserFolder(userId: $userId);
+
+		// Check if folder exists and if not create it.
+		try {
+			try {
+				$userFolder->get(path: $folderPath);
+			} catch (NotFoundException $e) {
+				$userFolder->newFolder(path: $folderPath);
+
+				return true;
+			}
+
+			// Folder already exists.
+			$this->logger->info("This folder already exits $folderPath");
+			return false;
+		} catch (NotPermittedException $e) {
+			$this->logger->error("Can't create folder $folderPath: " . $e->getMessage());
+
+			throw new Exception("Can\'t create folder $folderPath");
+		}
+
+	}//end createFolder()
+
+	/**
+	 * Adds information about the uploaded file to the appropriate Attachment fields. Inclusive share link.
+	 *
+	 * @param array $data The form-data fields and their
+	 *                    values (/request body) that we are
+	 *                    going to update before posting the
+	 *                    Attachment.
+	 * @param array $uploadedFile Information about the uploaded
+	 *                            file from the request body.
+	 * @param string $filePath The full file path to where the
+	 *                         file is stored in NextCloud.
+	 *
+	 * @return array The updated $data array
+	 * @throws Exception In case creating the share(link) fails.
+	 *
+	 * @spec openspec/specs/file-management/spec.md
+	 */
+	public function addFileInfoToData(array $data, array $uploadedFile, string $filePath): array {
+		// Get the current user.
+		$currentUser = $this->userSession->getUser();
+		$userId = 'Guest';
+		if ($currentUser !== null) {
+			$userId = $currentUser->getUID();
+		}
+
+		// Update Attachment data.
+		$data['reference'] = "$userId/$filePath";
+		$data['type'] = $uploadedFile['type'];
+		$data['size'] = $uploadedFile['size'];
+		$explodedName = explode(separator: '.', string: $uploadedFile['name']);
+		$data['title'] = $explodedName[0];
+		$data['extension'] = end(array: $explodedName);
+
+		// Request public share via the OpenRegister shares leaf (ADR-022 / FIL-005).
+		$shareLink = $this->createPublicShareLink(relativePath: $filePath);
+
+		// Set accessUrl if not already set.
+		if (empty($data['accessUrl']) === true) {
+			$data['accessUrl'] = $shareLink;
+		}
+
+		// Set downloadUrl if not already set.
+		if (empty($data['downloadUrl']) === true) {
+			$data['downloadUrl'] = "$shareLink/download";
+		}
+
+		return $data;
+	}//end addFileInfoToData()
+
+	/**
+	 * Uploads a file to NextCloud. Will create a new file if it doesn't exist yet.
+	 *
+	 * @param mixed $content The content of the file.
+	 * @param string $filePath Path (from root) where to save the file.
+	 *                         NOTE: include the name and extension of the file (example.pdf).
+	 *
+	 * @return boolean True if successful.
+	 * @throws Exception In case we can't write to file because it is not permitted.
+	 *
+	 * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
+	 *
+	 * @spec openspec/specs/file-management/spec.md
+	 */
+	public function uploadFile(mixed $content, string $filePath): bool {
+		$filePath = trim(string: $filePath, characters: '/');
+
+		// Get the current user.
+		$currentUser = $this->userSession->getUser();
+		$userId = 'Guest';
+		if ($currentUser !== null) {
+			$userId = $currentUser->getUID();
+		}
+
+		$userFolder = $this->rootFolder->getUserFolder(userId: $userId);
+
+		// Check if file exists and create it if not.
+		try {
+			try {
+				$userFolder->get(path: $filePath);
+			} catch (NotFoundException $e) {
+				$userFolder->newFile(path: $filePath);
+				$file = $userFolder->get(path: $filePath);
+				$file->putContent($content);
+
+				return true;
+			}
+
+			// File already exists.
+			$this->logger->warning("File $filePath already exists.");
+			return false;
+		} catch (NotPermittedException|GenericFileException|LockedException $e) {
+			$this->logger->error("Can't create file $filePath: " . $e->getMessage());
+
+			throw new Exception("Can't write to file $filePath");
+		}//end try
+
+	}//end uploadFile()
+
+	// ⚠️ `updateFile()` and `deleteFile()` USED TO LIVE HERE. Removed 2026-08-16
+	// as orphaned write capability (gate-57): both overwrote or deleted an
+	// arbitrary path in the CALLER's user folder, and nothing in the app ever
+	// called either one. The only references anywhere were their own unit
+	// tests, which is the shape gate-57 exists to find — a write path that can
+	// be minted but not reached, so no route, no guard and no review ever
+	// applies to it, while the capability sits in the class waiting to be wired
+	// up by someone who assumes it was already vetted.
+	//
+	// Checked before deleting, not after: fleet-wide grep found no PHP caller
+	// outside `tests/`. The `deleteFile(...)` occurrences in
+	// `PublicationDetail.vue` and `ViewObject.vue` are LOCAL VUE METHODS of the
+	// same name calling the HTTP API — same word, different layer.
+	//
+	// The rest of this app already reaches OpenRegister's FileService for file
+	// work (see EventService, PublicationService, DcatService); only
+	// `DownloadService::createPdf` still uses this local one. Anything that
+	// needs to overwrite or delete a file should go through OpenRegister
+	// (ADR-022), where the write is authorised, not be revived here.
+
+	/**
+	 * Creates a pdf file in a /tmp folder using a twig template and given context.
+	 *
+	 * @param string $twigTemplate The path and filename of the twig template to use in the folder "lib/Templates".
+	 * @param array $context The context to pass along while rendering the pdf with the given twig template.
+	 *
+	 * @return Mpdf A Mpdf object.
+	 *              Use "$mpdf->Output(name: $filename, dest: Destination::FILE)"
+	 *              to create the actual file or use one of the other
+	 *              Destination::X options.
+	 *              Please use the "rmdir(directory: '/tmp/mpdf');" function after this to clean up temporary files.
+	 * @throws MpdfException|LoaderError|RuntimeError|SyntaxError
+	 *
+	 * @spec openspec/specs/file-management/spec.md
+	 */
+	public function createPdf(string $twigTemplate, array $context): Mpdf {
+		// Initialize Twig.
+		$loader = new FilesystemLoader(paths: 'lib/Templates', rootPath: __DIR__ . '/../../');
+		$twig = new Environment($loader);
+
+		// Render the Twig template.
+		$html = $twig->render(name: $twigTemplate, context: $context);
+
+		// Check if the directory exists, if not, create it.
+		if (file_exists(filename: '/tmp/mpdf') === false) {
+			mkdir(directory: '/tmp/mpdf', recursive: true);
+		}
+
+		// Set permissions for the directory (ensure it's writable).
+		chmod(filename: '/tmp/mpdf', permissions: 0777);
+
+		// Initialize mPDF.
+		$mpdf = new Mpdf(config: ['tempDir' => '/tmp/mpdf']);
+
+		// Write HTML to PDF.
+		$mpdf->WriteHTML(html: $html);
+
+		return $mpdf;
+	}//end createPdf()
 }//end class

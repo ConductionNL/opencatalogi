@@ -1,195 +1,468 @@
 <script setup>
-import { objectStore, navigationStore } from '../../store/store.js'
-import { getTheme } from '../../services/getTheme.js'
 import { EventBus } from '../../eventBus.js'
+import { getTheme } from '../../services/getTheme.js'
 import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcDialog
-		:name="isEdit ? t('opencatalogi', 'Content edit of {type}', { type: _.upperFirst(contentsItem.type) }) : t('opencatalogi', 'Add Content to {title}', { title: pageItem.title })"
+		:name="
+			isEdit
+				? t('opencatalogi', 'Content edit of {type}', {
+						type: upperFirst(contentsItem.type),
+					})
+				: t('opencatalogi', 'Add Content to {title}', {
+						title: pageItem.title,
+					})
+		"
 		size="large"
-		:can-close="true"
+		:canClose="true"
 		@update:open="handleDialogClose">
 		<div class="dialog__content">
-			<div v-if="objectStore.getState('page').success !== null || objectStore.getState('page').error">
-				<NcNoteCard v-if="objectStore.getState('page').success" type="success">
+			<div
+				v-if="
+					objectStore.getState('page').success !== null
+					|| objectStore.getState('page').error
+				">
+				<NcNoteCard
+					v-if="objectStore.getState('page').success"
+					type="success">
 					<p>{{ t('opencatalogi', 'Content successfully added') }}</p>
 				</NcNoteCard>
-				<NcNoteCard v-if="!objectStore.getState('page').success" type="error">
-					<p>{{ t('opencatalogi', 'Something went wrong while adding content') }}</p>
+				<NcNoteCard
+					v-if="!objectStore.getState('page').success"
+					type="error">
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Something went wrong while adding content',
+							)
+						}}
+					</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('page').error" type="error">
 					<p>{{ objectStore.getState('page').error }}</p>
 				</NcNoteCard>
 			</div>
 
-			<div v-if="objectStore.getState('page').success === null" class="tabContainer">
-				<BTabs content-class="mt-3" justified>
+			<div
+				v-if="objectStore.getState('page').success === null"
+				class="tabContainer">
+				<AppTabs contentClass="mt-3" justified>
 					<!-- Configuration Tab -->
-					<BTab :title="t('opencatalogi', 'Configuration')" active>
+					<AppTab :title="t('opencatalogi', 'Configuration')" active>
 						<div class="form-group">
 							<p>
-								{{ t('opencatalogi', 'The order in which you add contents makes a difference, so pay attention to the order.') }}
+								{{
+									t(
+										'opencatalogi',
+										'The order in which you add contents makes a difference, so pay attention to the order.',
+									)
+								}}
 							</p>
 
 							<NcSelect
 								v-if="!isEdit"
 								v-bind="typeOptions"
 								v-model="contentsItem.type"
-								:input-label="t('opencatalogi', 'Content type')"
+								:inputLabel="t('opencatalogi', 'Content type')"
 								required />
 
 							<!-- Order -->
 							<NcTextField
+								v-model="contentsItem.order"
 								:disabled="objectStore.isLoading('page')"
 								:label="t('opencatalogi', 'Order')"
 								type="number"
 								min="0"
-								:value.sync="contentsItem.order"
 								required />
 
 							<!-- text (plain text) -->
-							<div v-if="contentsItem.type === 'text'" class="form-group">
-								<label for="text-content">{{ t('opencatalogi', 'Text Content') }}</label>
+							<div
+								v-if="contentsItem.type === 'text'"
+								class="form-group">
+								<label for="text-content">{{
+									t('opencatalogi', 'Text Content')
+								}}</label>
 								<textarea
 									id="text-content"
 									v-model="contentsItem.textData"
 									class="text-content-textarea"
 									:disabled="objectStore.isLoading('page')"
 									rows="10"
-									:placeholder="t('opencatalogi', 'Enter your text content here...')" />
+									:placeholder="
+										t(
+											'opencatalogi',
+											'Enter your text content here...',
+										)
+									" />
 							</div>
 
 							<!-- RichText -->
-							<div v-if="contentsItem.type === 'RichText'" class="editor-container">
-								<label>{{ t('opencatalogi', 'Rich Text Content') }}</label>
-								<v-md-editor
-									:initial-value="contentsItem.richTextData"
+							<div
+								v-if="contentsItem.type === 'RichText'"
+								class="editor-container">
+								<label>{{
+									t('opencatalogi', 'Rich Text Content')
+								}}</label>
+								<!--
+									`@toast-ui/vue-editor` is Vue-2-only (peerDependency
+									`vue: ^2.5.0`) and was removed. ToastUiEditor wraps the
+									framework-agnostic `@toast-ui/editor` core directly.
+									`v-model` now carries the HTML, so `richTextData` stays
+									current without reading back off the instance; `@load` is
+									kept so the existing `getHTML()` save path still works.
+								-->
+								<ToastUiEditor
+									v-model="contentsItem.richTextData"
 									:options="editorOptions"
-									initial-edit-type="wysiwyg"
-									preview-style="tab"
+									initialEditType="wysiwyg"
+									previewStyle="tab"
 									height="300px"
-									@load="(editor) => richTextEditor = editor" />
+									@load="(editor) => (richTextEditor = editor)" />
 							</div>
 
 							<!-- Image -->
-							<div v-if="contentsItem.type === 'Image'" class="form-group">
+							<div
+								v-if="contentsItem.type === 'Image'"
+								class="form-group">
 								<NcTextField
+									v-model="contentsItem.imageUrl"
 									:disabled="objectStore.isLoading('page')"
 									:label="t('opencatalogi', 'Image URL')"
-									:value.sync="contentsItem.imageUrl"
 									placeholder="https://example.com/image.jpg" />
 								<NcTextField
+									v-model="contentsItem.imageSrcset"
 									:disabled="objectStore.isLoading('page')"
-									:label="t('opencatalogi', 'Srcset (optional, responsive images)')"
-									:value.sync="contentsItem.imageSrcset"
+									:label="
+										t(
+											'opencatalogi',
+											'Srcset (optional, responsive images)',
+										)
+									"
 									placeholder="image-480w.jpg 480w, image-800w.jpg 800w" />
 							</div>
 
 							<!-- Faq -->
 							<div v-if="contentsItem.type === 'Faq'">
-								<VueDraggable v-model="contentsItem.faqData" easing="ease-in-out" draggable="div:not(:last-child)">
-									<div v-for="item in contentsItem.faqData" :key="item.id" class="draggable-item-container">
-										<div :class="`draggable-form-item ${getTheme()}`">
-											<Drag class="drag-handle" :size="40" />
-											<NcTextField :label="t('opencatalogi', 'Question')" :value.sync="item.question" />
-											<NcTextField :label="t('opencatalogi', 'Answer')" :value.sync="item.answer" />
+								<VueDraggable
+									v-model="contentsItem.faqData"
+									easing="ease-in-out"
+									draggable="div:not(:last-child)">
+									<div
+										v-for="(item, index) in contentsItem.faqData"
+										:key="item.id"
+										class="draggable-item-container">
+										<div
+											:class="`draggable-form-item ${getTheme()}`">
+											<Drag
+												class="drag-handle"
+												:size="40"
+												tabindex="0"
+												role="button"
+												:aria-label="
+													t(
+														'opencatalogi',
+														'Drag to reorder, or use the move up/down buttons',
+													)
+												"
+												@keydown.enter.prevent
+												@keydown.space.prevent />
+											<div class="reorder-buttons">
+												<NcButton
+													variant="tertiary"
+													:aria-label="
+														moveButtonLabel(
+															'up',
+															item.question,
+															index,
+														)
+													"
+													:disabled="index === 0"
+													@click="moveFaqItem(index, -1)">
+													<template #icon>
+														<ArrowUp :size="20" />
+													</template>
+												</NcButton>
+												<NcButton
+													variant="tertiary"
+													:aria-label="
+														moveButtonLabel(
+															'down',
+															item.question,
+															index,
+														)
+													"
+													:disabled="
+														index
+														=== contentsItem.faqData
+															.length
+															- 1
+													"
+													@click="moveFaqItem(index, 1)">
+													<template #icon>
+														<ArrowDown :size="20" />
+													</template>
+												</NcButton>
+											</div>
+											<NcTextField
+												v-model="item.question"
+												:label="
+													t('opencatalogi', 'Question')
+												" />
+											<NcTextField
+												v-model="item.answer"
+												:label="
+													t('opencatalogi', 'Answer')
+												" />
 										</div>
 									</div>
 								</VueDraggable>
 							</div>
 
 							<!-- Quote -->
-							<div v-if="contentsItem.type === 'Quote'" class="form-group">
+							<div
+								v-if="contentsItem.type === 'Quote'"
+								class="form-group">
 								<NcTextField
+									v-model="contentsItem.quoteTitle"
 									:disabled="objectStore.isLoading('page')"
 									:label="t('opencatalogi', 'Title (bold text)')"
-									:value.sync="contentsItem.quoteTitle"
-									:placeholder="t('opencatalogi', 'Enter the main quote text...')" />
+									:placeholder="
+										t(
+											'opencatalogi',
+											'Enter the main quote text...',
+										)
+									" />
 								<NcTextField
+									v-model="contentsItem.quoteSubtitle"
 									:disabled="objectStore.isLoading('page')"
 									:label="t('opencatalogi', 'Subtitle')"
-									:value.sync="contentsItem.quoteSubtitle"
-									:placeholder="t('opencatalogi', 'Enter the subtitle text...')" />
+									:placeholder="
+										t(
+											'opencatalogi',
+											'Enter the subtitle text...',
+										)
+									" />
 							</div>
 
 							<!-- ContentBlocks -->
 							<div v-if="contentsItem.type === 'ContentBlocks'">
 								<p class="content-blocks-help">
-									{{ t('opencatalogi', 'Add up to 3 content blocks. Each block has an icon, title, description, and link.') }}
+									{{
+										t(
+											'opencatalogi',
+											'Add up to 3 content blocks. Each block has an icon, title, description, and link.',
+										)
+									}}
 								</p>
-								<VueDraggable v-model="contentsItem.contentBlocksData" easing="ease-in-out" draggable="div:not(:last-child)">
-									<div v-for="item in contentsItem.contentBlocksData" :key="item.id" class="draggable-item-container">
-										<div :class="`draggable-form-item draggable-form-item--vertical ${getTheme()}`">
+								<VueDraggable
+									v-model="contentsItem.contentBlocksData"
+									easing="ease-in-out"
+									draggable="div:not(:last-child)">
+									<div
+										v-for="(
+											item, index
+										) in contentsItem.contentBlocksData"
+										:key="item.id"
+										class="draggable-item-container">
+										<div
+											:class="`draggable-form-item draggable-form-item--vertical ${getTheme()}`">
 											<div class="draggable-form-item__header">
-												<Drag class="drag-handle" :size="40" />
+												<Drag
+													class="drag-handle"
+													:size="40"
+													tabindex="0"
+													role="button"
+													:aria-label="
+														t(
+															'opencatalogi',
+															'Drag to reorder, or use the move up/down buttons',
+														)
+													"
+													@keydown.enter.prevent
+													@keydown.space.prevent />
+												<div class="reorder-buttons">
+													<NcButton
+														variant="tertiary"
+														:aria-label="
+															moveButtonLabel(
+																'up',
+																item.title,
+																index,
+															)
+														"
+														:disabled="index === 0"
+														@click="
+															moveContentBlock(
+																index,
+																-1,
+															)
+														">
+														<template #icon>
+															<ArrowUp :size="20" />
+														</template>
+													</NcButton>
+													<NcButton
+														variant="tertiary"
+														:aria-label="
+															moveButtonLabel(
+																'down',
+																item.title,
+																index,
+															)
+														"
+														:disabled="
+															index
+															=== contentsItem
+																.contentBlocksData
+																.length
+																- 1
+														"
+														@click="
+															moveContentBlock(
+																index,
+																1,
+															)
+														">
+														<template #icon>
+															<ArrowDown :size="20" />
+														</template>
+													</NcButton>
+												</div>
 												<NcSelect
 													v-bind="iconOptions"
 													v-model="item.icon"
-													:input-label="t('opencatalogi', 'Icon')"
-													style="min-width: 160px;" />
+													:inputLabel="
+														t('opencatalogi', 'Icon')
+													"
+													style="min-width: 160px" />
 											</div>
-											<NcTextField :label="t('opencatalogi', 'Title')" :value.sync="item.title" />
-											<NcTextField :label="t('opencatalogi', 'Description')" :value.sync="item.text" />
-											<NcTextField :label="t('opencatalogi', 'Link URL')" :value.sync="item.linkUrl" placeholder="/zoeken" />
-											<NcTextField :label="t('opencatalogi', 'Link text')" :value.sync="item.linkTitle" :placeholder="t('opencatalogi', 'More information')" />
+											<NcTextField
+												v-model="item.title"
+												:label="
+													t('opencatalogi', 'Title')
+												" />
+											<NcTextField
+												v-model="item.text"
+												:label="
+													t('opencatalogi', 'Description')
+												" />
+											<NcTextField
+												v-model="item.linkUrl"
+												:label="
+													t('opencatalogi', 'Link URL')
+												"
+												placeholder="/zoeken" />
+											<NcTextField
+												v-model="item.linkTitle"
+												:label="
+													t('opencatalogi', 'Link text')
+												"
+												:placeholder="
+													t(
+														'opencatalogi',
+														'More information',
+													)
+												" />
 										</div>
 									</div>
 								</VueDraggable>
 							</div>
 						</div>
-					</BTab>
+					</AppTab>
 
 					<!-- Security Tab -->
-					<BTab :title="t('opencatalogi', 'Security')">
+					<AppTab :title="t('opencatalogi', 'Security')">
 						<div class="form-group">
 							<div class="groups-section">
-								<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
+								<label class="groups-label">{{
+									t('opencatalogi', 'Groups Access')
+								}}</label>
 								<NcNoteCard type="info">
-									<p>{{ t('opencatalogi', 'When you add groups to a content block, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the content will be visible to all users.') }}</p>
+									<p>
+										{{
+											t(
+												'opencatalogi',
+												'When you add groups to a content block, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the content will be visible to all users.',
+											)
+										}}
+									</p>
 								</NcNoteCard>
 								<NcSelect
 									v-model="contentsItem.groups"
 									:options="groupsOptions.options"
-									:disabled="objectStore.isLoading('page') || groupsOptions.loading"
-									:input-label="t('opencatalogi', 'Select Groups')"
+									:disabled="
+										objectStore.isLoading('page')
+										|| groupsOptions.loading
+									"
+									:inputLabel="t('opencatalogi', 'Select Groups')"
 									multiple />
-								<p v-if="groupsOptions.loading" class="groups-loading">
+								<p
+									v-if="groupsOptions.loading"
+									class="groups-loading">
 									{{ t('opencatalogi', 'Loading groups...') }}
 								</p>
 							</div>
 							<div class="hide-after-login">
 								<NcNoteCard type="info">
-									<p>{{ t('opencatalogi', 'When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.') }}</p>
+									<p>
+										{{
+											t(
+												'opencatalogi',
+												'When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.',
+											)
+										}}
+									</p>
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
-									:checked.sync="contentsItem.hideAfterLogin"
-									:disabled="contentsItem.hideBeforeLogin || objectStore.isLoading('page')">
+									v-model="contentsItem.hideAfterLogin"
+									:disabled="
+										contentsItem.hideBeforeLogin
+										|| objectStore.isLoading('page')
+									">
 									{{ t('opencatalogi', 'Hide after login') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									:checked.sync="contentsItem.hideBeforeLogin"
-									:disabled="contentsItem.hideAfterLogin || objectStore.isLoading('page')">
+									v-model="contentsItem.hideBeforeLogin"
+									:disabled="
+										contentsItem.hideAfterLogin
+										|| objectStore.isLoading('page')
+									">
 									{{ t('opencatalogi', 'Hide before login') }}
 								</NcCheckboxRadioSwitch>
-								<p v-if="contentsItem.hideAfterLogin && contentsItem.hideBeforeLogin" class="field-error">
-									{{ t('opencatalogi', "'Hide before login' and 'Hide after login' cannot both be selected.") }}
+								<p
+									v-if="
+										contentsItem.hideAfterLogin
+										&& contentsItem.hideBeforeLogin
+									"
+									class="field-error">
+									{{
+										t(
+											'opencatalogi',
+											"'Hide before login' and 'Hide after login' cannot both be selected.",
+										)
+									}}
 								</p>
 							</div>
 						</div>
-					</BTab>
-				</BTabs>
+					</AppTab>
+				</AppTabs>
 			</div>
 		</div>
 
 		<template #actions>
 			<NcButton @click="closeModal">
-				{{ isEdit ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
+				{{
+					isEdit ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel')
+				}}
 			</NcButton>
-			<NcButton v-if="objectStore.getState('page').success === null"
+			<NcButton
+				v-if="objectStore.getState('page').success === null"
 				:disabled="!contentsItem.type || objectStore.isLoading('page')"
-				type="primary"
+				variant="primary"
 				@click="addPageContent">
 				<template #icon>
 					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
@@ -203,24 +476,35 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect, NcTextField, NcCheckboxRadioSwitch } from '@nextcloud/vue'
-import { BTabs, BTab } from 'bootstrap-vue'
-import { VueDraggable } from 'vue-draggable-plus'
-import _ from 'lodash'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
 import DOMPurify from 'dompurify'
-import { Editor as vMdEditor } from '@toast-ui/vue-editor'
-import '@toast-ui/editor/dist/toastui-editor.css'
-
-import Plus from 'vue-material-design-icons/Plus.vue'
+import cloneDeep from 'lodash/cloneDeep'
+import upperFirst from 'lodash/upperFirst'
+import { VueDraggable } from 'vue-draggable-plus'
+import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
+import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
-
+import Plus from 'vue-material-design-icons/Plus.vue'
+import ToastUiEditor from '../../components/editor/ToastUiEditor.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
 import { Page } from '../../entities/index.js'
+
+import '@toast-ui/editor/dist/toastui-editor.css'
 
 /**
  * PageContentForm — add/edit a page content block (persists the parent page).
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'PageContentForm',
@@ -230,17 +514,20 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
-		BTabs,
-		BTab,
+		AppTabs,
+		AppTab,
 		VueDraggable,
 		NcTextField,
 		NcCheckboxRadioSwitch,
-		vMdEditor,
+		ToastUiEditor,
 		// Icons
 		Plus,
 		ContentSave,
 		Drag,
+		ArrowUp,
+		ArrowDown,
 	},
+
 	data() {
 		return {
 			isEdit: !!objectStore.getActiveObject('pageContent')?.id,
@@ -261,6 +548,7 @@ export default {
 						answer: '',
 					},
 				],
+
 				contentBlocksData: [
 					{
 						id: Math.random().toString(36).substring(2, 12),
@@ -271,16 +559,56 @@ export default {
 						linkTitle: '',
 					},
 				],
+
 				groups: [],
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
+
 			typeOptions: {
-				options: ['text', 'RichText', 'Image', 'Faq', 'Quote', 'ContentBlocks'],
+				options: [
+					'text',
+					'RichText',
+					'Image',
+					'Faq',
+					'Quote',
+					'ContentBlocks',
+				],
 			},
+
+			// The ContentBlocks icon set — the SECOND legal icon dialect under
+			// ADR-077, and the only place it is authored. These lowercase names
+			// are stored in page/register data and drawn by the PUBLIC
+			// Softwarecatalogus website with its own glyphs, not by CnIcon, which
+			// is why they are not MDI PascalCase names.
+			//
+			// This list is a published contract: it is documented for end users in
+			// Softwarecatalogus `website/docs/Handleidingen/pagina-beheer.md`, so
+			// renaming an entry breaks the public site AND the documentation.
+			//
+			// Hydra's gate-60 validates every lowercase icon value against a
+			// mirror of this list (`contentBlockIcons` in
+			// scripts/schemas/semantic-icons.json). Adding a name here means
+			// updating that mirror, the user documentation, and the public site's
+			// glyph mapping — all three, deliberately.
 			iconOptions: {
-				options: ['search', 'cubes', 'cube', 'users', 'building', 'document', 'gear', 'link', 'world', 'truck', 'scroll', 'themes', 'house'],
+				options: [
+					'search',
+					'cubes',
+					'cube',
+					'users',
+					'building',
+					'document',
+					'gear',
+					'link',
+					'world',
+					'truck',
+					'scroll',
+					'themes',
+					'house',
+				],
 			},
+
 			success: null,
 			error: false,
 			errorCode: '',
@@ -289,6 +617,7 @@ export default {
 				options: [],
 				loading: false,
 			},
+
 			textEditor: null,
 			richTextEditor: null,
 			editorOptions: {
@@ -302,24 +631,33 @@ export default {
 					['table', 'image', 'link'],
 					['code', 'codeblock'],
 				],
+
 				initialEditType: 'wysiwyg',
 			},
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		pageItem() {
 			return objectStore.getActiveObject('page')
 		},
 	},
+
 	watch: {
 		'contentsItem.faqData': {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
+			/**
+			 * @param newVal
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4
+			 */
 			handler(newVal) {
 				const currentFaqLength = newVal.length
 
 				// check if last item is full, then add a new one to the list
-				if (newVal[currentFaqLength - 1].question !== '' && newVal[currentFaqLength - 1].answer !== '') {
+				if (
+					newVal[currentFaqLength - 1].question !== ''
+					&& newVal[currentFaqLength - 1].answer !== ''
+				) {
 					newVal.push({
 						id: Math.random().toString(36).substring(2, 12),
 						question: '',
@@ -336,10 +674,15 @@ export default {
 					}
 				}
 			},
+
 			deep: true,
 		},
+
 		'contentsItem.contentBlocksData': {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
+			/**
+			 * @param newVal
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4
+			 */
 			handler(newVal) {
 				const len = newVal.length
 				const last = newVal[len - 1]
@@ -365,16 +708,21 @@ export default {
 					}
 				}
 			},
+
 			deep: true,
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 	mounted() {
 		// Fetch groups for the dropdown.
 		this.fetchGroups()
 
 		if (this.isEdit) {
-			const contentItem = this.pageItem.contents.find((content) => content.id === objectStore.getActiveObject('pageContent').id)
+			const contentItem = this.pageItem.contents.find(
+				(content) =>
+					content.id === objectStore.getActiveObject('pageContent').id,
+			)
 
 			// Put in all data that does not require special handling.
 			this.contentsItem = {
@@ -390,7 +738,8 @@ export default {
 			// Handle different content formats.
 			// Legacy "text" format: data.html and data.text
 			if (contentItem.type === 'text') {
-				this.contentsItem.textData = contentItem.data.html || contentItem.data.text || ''
+				this.contentsItem.textData =
+					contentItem.data.html || contentItem.data.text || ''
 			} else if (contentItem.type === 'RichText') {
 				this.contentsItem.richTextData = contentItem.data.content || ''
 			} else if (contentItem.type === 'Image') {
@@ -401,54 +750,138 @@ export default {
 				this.contentsItem.quoteSubtitle = contentItem.data.subtitle || ''
 			} else if (contentItem.type === 'ContentBlocks') {
 				if (contentItem.data.blocks && contentItem.data.blocks.length > 0) {
-					this.contentsItem.contentBlocksData = contentItem.data.blocks.map((block) => ({
-						id: Math.random().toString(36).substring(2, 12),
-						icon: block.icon || '',
-						title: block.title || '',
-						text: block.text || '',
-						linkUrl: block.linkUrl || '',
-						linkTitle: block.linkTitle || '',
-					})).concat(this.contentsItem.contentBlocksData)
+					this.contentsItem.contentBlocksData = contentItem.data.blocks
+						.map((block) => ({
+							id: Math.random().toString(36).substring(2, 12),
+							icon: block.icon || '',
+							title: block.title || '',
+							text: block.text || '',
+							linkUrl: block.linkUrl || '',
+							linkTitle: block.linkTitle || '',
+						}))
+						.concat(this.contentsItem.contentBlocksData)
 				}
 			}
 
 			// If faqs are present, prepend them to the contentsItem.
 			if (contentItem.data.faqs && contentItem.data.faqs.length > 0) {
-				this.contentsItem.faqData = contentItem.data.faqs.map((faq) => ({
-					id: Math.random().toString(36).substring(2, 12),
-					question: faq.question,
-					answer: faq.answer,
-				})).concat(this.contentsItem.faqData)
+				this.contentsItem.faqData = contentItem.data.faqs
+					.map((faq) => ({
+						id: Math.random().toString(36).substring(2, 12),
+						question: faq.question,
+						answer: faq.answer,
+					}))
+					.concat(this.contentsItem.faqData)
 			}
 		}
 	},
+
 	methods: {
 		/**
 		 * Handle dialog close event
+		 *
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('pageContent')
 			objectStore.setState('page', { success: null, error: null })
 		},
+
+		/**
+		 * Build an accessible name for a move button that identifies both the
+		 * action and the target item (WCAG 2.1 AA 4.1.2 — screen-reader users
+		 * tabbing between several rows' move buttons need to distinguish them).
+		 * Falls back to a 1-based position when the item has no title/question
+		 * text yet (e.g. a freshly-added empty row).
+		 *
+		 * @param {'up'|'down'} direction - Which direction the button moves the item.
+		 * @param {string} itemLabel - The item's own text (question / block title), if any.
+		 * @param {number} index - The item's zero-based index, used as a fallback label.
+		 * @return {string} The composed aria-label.
+		 * @spec openspec/changes/keyboard-operable-reorder-controls/tasks.md#task-1
+		 */
+		moveButtonLabel(direction, itemLabel, index) {
+			const action =
+				direction === 'up'
+					? t('opencatalogi', 'Move up')
+					: t('opencatalogi', 'Move down')
+			const target =
+				itemLabel
+				|| t('opencatalogi', 'item {position}', { position: index + 1 })
+			return `${action}: ${target}`
+		},
+
+		/**
+		 * Keyboard- and screen-reader-operable alternative to the pointer-only
+		 * drag handle for reordering FAQ items (WCAG 2.1 AA 2.1.1 — CMS-036).
+		 * Swaps `contentsItem.faqData[index]` with its neighbor at `index + direction`.
+		 *
+		 * @param {number} index - The index of the item to move.
+		 * @param {number} direction - `-1` to move up, `1` to move down.
+		 * @return {void}
+		 * @spec openspec/changes/keyboard-operable-reorder-controls/tasks.md#task-1
+		 */
+		moveFaqItem(index, direction) {
+			const target = index + direction
+			if (target < 0 || target >= this.contentsItem.faqData.length) {
+				return
+			}
+			const items = this.contentsItem.faqData
+			const [moved] = items.splice(index, 1)
+			items.splice(target, 0, moved)
+		},
+
+		/**
+		 * Keyboard- and screen-reader-operable alternative to the pointer-only
+		 * drag handle for reordering content blocks (WCAG 2.1 AA 2.1.1 — CMS-036).
+		 * Swaps `contentsItem.contentBlocksData[index]` with its neighbor at
+		 * `index + direction`.
+		 *
+		 * @param {number} index - The index of the item to move.
+		 * @param {number} direction - `-1` to move up, `1` to move down.
+		 * @return {void}
+		 * @spec openspec/changes/keyboard-operable-reorder-controls/tasks.md#task-2
+		 */
+		moveContentBlock(index, direction) {
+			const target = index + direction
+			if (target < 0 || target >= this.contentsItem.contentBlocksData.length) {
+				return
+			}
+			const items = this.contentsItem.contentBlocksData
+			const [moved] = items.splice(index, 1)
+			items.splice(target, 0, moved)
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		addPageContent() {
-			objectStore.setState('page', { success: null, error: null, loading: true })
+			objectStore.setState('page', {
+				success: null,
+				error: null,
+				loading: true,
+			})
 
-			const pageItemClone = _.cloneDeep(this.pageItem)
+			const pageItemClone = cloneDeep(this.pageItem)
 
 			// Read content from editor instances (Toast UI editor uses initial-value, not v-model).
-			const textContent = this.textEditor ? this.textEditor.getHTML() : this.contentsItem.textData
-			const richTextContent = this.richTextEditor ? this.richTextEditor.getHTML() : this.contentsItem.richTextData
+			const textContent = this.textEditor
+				? this.textEditor.getHTML()
+				: this.contentsItem.textData
+			const richTextContent = this.richTextEditor
+				? this.richTextEditor.getHTML()
+				: this.contentsItem.richTextData
 
 			// Create the content item.
 			// A different data format is needed for the type of content.
@@ -457,11 +890,18 @@ export default {
 				contentItem = {
 					type: this.contentsItem.type,
 					order: this.contentsItem.order || 0,
-					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					id:
+						this.contentsItem.id
+						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						html: textContent,
-						text: DOMPurify.sanitize(textContent, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
+						text: DOMPurify.sanitize(textContent, {
+							ALLOWED_TAGS: [],
+							ALLOWED_ATTR: [],
+						}),
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -470,10 +910,14 @@ export default {
 				contentItem = {
 					type: this.contentsItem.type,
 					order: this.contentsItem.order || 0,
-					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					id:
+						this.contentsItem.id
+						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						content: richTextContent,
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -482,11 +926,15 @@ export default {
 				contentItem = {
 					type: this.contentsItem.type,
 					order: this.contentsItem.order || 0,
-					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					id:
+						this.contentsItem.id
+						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						url: this.contentsItem.imageUrl,
 						srcset: this.contentsItem.imageSrcset || undefined,
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -495,7 +943,10 @@ export default {
 				contentItem = {
 					type: this.contentsItem.type,
 					order: this.contentsItem.order || 0,
-					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					id:
+						this.contentsItem.id
+						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						// Remove the last item since it's a placeholder and is always empty no matter what.
 						faqs: this.contentsItem.faqData.slice(0, -1).map((faq) => ({
@@ -503,6 +954,7 @@ export default {
 							answer: faq.answer,
 						})),
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -511,11 +963,15 @@ export default {
 				contentItem = {
 					type: this.contentsItem.type,
 					order: this.contentsItem.order || 0,
-					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					id:
+						this.contentsItem.id
+						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						title: this.contentsItem.quoteTitle,
 						subtitle: this.contentsItem.quoteSubtitle,
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -524,17 +980,23 @@ export default {
 				contentItem = {
 					type: this.contentsItem.type,
 					order: this.contentsItem.order || 0,
-					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					id:
+						this.contentsItem.id
+						|| Math.random().toString(36).substring(2, 12),
+
 					data: {
 						// Remove the last item since it's a placeholder.
-						blocks: this.contentsItem.contentBlocksData.slice(0, -1).map((block) => ({
-							icon: block.icon,
-							title: block.title,
-							text: block.text,
-							linkUrl: block.linkUrl,
-							linkTitle: block.linkTitle,
-						})),
+						blocks: this.contentsItem.contentBlocksData
+							.slice(0, -1)
+							.map((block) => ({
+								icon: block.icon,
+								title: block.title,
+								text: block.text,
+								linkUrl: block.linkUrl,
+								linkTitle: block.linkTitle,
+							})),
 					},
+
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
@@ -547,7 +1009,10 @@ export default {
 
 			// Check if it's an edit modal by checking if contentId exists.
 			if (objectStore.getActiveObject('pageContent')?.id) {
-				const index = pageItemClone.contents.findIndex(content => content.id === objectStore.getActiveObject('pageContent').id)
+				const index = pageItemClone.contents.findIndex(
+					(content) =>
+						content.id === objectStore.getActiveObject('pageContent').id,
+				)
 				if (index !== -1) {
 					pageItemClone.contents[index] = contentItem
 				}
@@ -557,7 +1022,8 @@ export default {
 
 			const newPageItem = new Page(pageItemClone)
 
-			objectStore.updateObject('page', this.pageItem.id, newPageItem)
+			objectStore
+				.updateObject('page', this.pageItem.id, newPageItem)
 				.then(() => {
 					objectStore.setState('page', { success: true })
 					// Wait for the user to read the feedback then return to parent dialog.
@@ -577,6 +1043,7 @@ export default {
 					objectStore.setState('page', { loading: false })
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
@@ -591,19 +1058,27 @@ export default {
 					this.groupsOptions.loading = false
 				})
 		},
+
 		/**
 		 * Normalize groups array to ensure consistent format
+		 *
 		 * @param {Array} selected - Selected groups from NcSelect
 		 * @return {Array} Normalized groups array
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
+		/**
+		 * @param selected
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4
+		 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
-			return selected.map(item => {
-				if (typeof item === 'string') return item
-				if (item && typeof item === 'object') return item.value ?? String(item.label ?? '')
-				return ''
-			}).filter(Boolean)
+			return selected
+				.map((item) => {
+					if (typeof item === 'string') return item
+					if (item && typeof item === 'object')
+						return item.value ?? String(item.label ?? '')
+					return ''
+				})
+				.filter(Boolean)
 		},
 	},
 }
@@ -667,6 +1142,13 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.reorder-buttons {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
 }
 
 .content-blocks-help {

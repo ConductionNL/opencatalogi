@@ -1,27 +1,22 @@
 import { useDropZone, useFileDialog } from '@vueuse/core'
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { objectStore } from './../store/store.js'
 
 /**
  * File selection composable
+ *
  * @param {Array} options
  *
  * Special thanks to Github user adamreisnz for creating most of this file
  * https://github.com/adamreisnz
  * https://github.com/vueuse/vueuse/issues/4085
  *
- * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-4
+ * @spec openspec/specs/file-management/spec.md
  */
 export function useFileSelection(options) {
-
 	// Extract options
-	const {
-		dropzone,
-		allowMultiple,
-		allowedFileTypes,
-		onFileDrop,
-		onFileSelect,
-	} = options
+	const { dropzone, allowMultiple, allowedFileTypes, onFileDrop, onFileSelect } =
+		options
 
 	// Data types computed ref
 	const dataTypes = computed(() => {
@@ -61,24 +56,36 @@ export function useFileSelection(options) {
 	//   - collections.publicationAttachments is what PublicationDetail / a prior
 	//     upload populates
 	const getExistingNames = () => {
-		const queued = Array.isArray(filesList.value) ? filesList.value.map(f => f.name) : []
+		const queued = Array.isArray(filesList.value)
+			? filesList.value.map((f) => f.name)
+			: []
 		const attached = []
 		try {
-			const related = objectStore.getRelatedData && objectStore.getRelatedData('publication', 'files')
-			const relatedResults = Array.isArray(related?.results) ? related.results : []
+			const related =
+				objectStore.getRelatedData
+				&& objectStore.getRelatedData('publication', 'files')
+			const relatedResults = Array.isArray(related?.results)
+				? related.results
+				: []
 			for (const f of relatedResults) {
 				if (f?.name) attached.push(f.name)
 				else if (f?.title) attached.push(f.title)
 			}
-		} catch (_) { /* ignore */ }
+		} catch (_) {
+			/* ignore */
+		}
 		try {
-			const attCol = objectStore.getCollection && objectStore.getCollection('publicationAttachments')
+			const attCol =
+				objectStore.getCollection
+				&& objectStore.getCollection('publicationAttachments')
 			const colResults = Array.isArray(attCol?.results) ? attCol.results : []
 			for (const f of colResults) {
 				if (f?.name) attached.push(f.name)
 				else if (f?.title) attached.push(f.title)
 			}
-		} catch (_) { /* ignore */ }
+		} catch (_) {
+			/* ignore */
+		}
 		return new Set([...queued, ...attached])
 	}
 
@@ -102,7 +109,7 @@ export function useFileSelection(options) {
 	}
 
 	// Handling of files drop
-	const onDrop = files => {
+	const onDrop = (files) => {
 		if (!files || files.length === 0) {
 			return
 		}
@@ -136,7 +143,11 @@ export function useFileSelection(options) {
 
 		const wrapped = accepted.map(wrapFile)
 
-		if (allowMultiple && Array.isArray(filesList.value) && filesList.value.length > 0) {
+		if (
+			allowMultiple
+			&& Array.isArray(filesList.value)
+			&& filesList.value.length > 0
+		) {
 			filesList.value = [...filesList.value, ...wrapped]
 		} else {
 			filesList.value = wrapped.length > 0 ? wrapped : filesList.value
@@ -148,7 +159,10 @@ export function useFileSelection(options) {
 
 	const reset = (name = null) => {
 		if (name) {
-			filesList.value = filesList.value.filter(file => file.name !== name).length > 0 ? filesList.value.filter(file => file.name !== name) : null
+			filesList.value =
+				filesList.value.filter((file) => file.name !== name).length > 0
+					? filesList.value.filter((file) => file.name !== name)
+					: null
 		} else {
 			filesList.value = null
 		}
@@ -160,7 +174,11 @@ export function useFileSelection(options) {
 
 	// Setup dropzone and file dialog composables
 	const { isOverDropZone } = useDropZone(dropzone, { dataTypes: null, onDrop })
-	const { onChange, open, reset: resetFileDialog } = useFileDialog({
+	const {
+		onChange,
+		open,
+		reset: resetFileDialog,
+	} = useFileDialog({
 		accept: accept.value,
 		multiple: allowMultiple,
 		// Required so picking the same filename twice in a row still fires
@@ -174,9 +192,13 @@ export function useFileSelection(options) {
 	// Use onChange handler. After consuming the FileList, also clear the
 	// underlying input so the same filename can be re-selected later (covers
 	// the duplicate-warning re-trigger case).
-	onChange(fileList => {
+	onChange((fileList) => {
 		onDrop(fileList)
-		try { resetFileDialog && resetFileDialog() } catch (_) { /* ignore */ }
+		try {
+			resetFileDialog && resetFileDialog()
+		} catch (_) {
+			/* ignore */
+		}
 	})
 
 	// Expose interface

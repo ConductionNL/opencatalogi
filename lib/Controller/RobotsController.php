@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi Robots Controller.
  *
@@ -18,7 +19,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
+ * @spec openspec/specs/woo-compliance/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -26,13 +27,14 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Http\TextResponse;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\App\IAppManager;
 use OCP\IURLGenerator;
-use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use RuntimeException;
 
@@ -42,122 +44,120 @@ use RuntimeException;
  * @psalm-suppress                                 UnusedClass
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class RobotsController extends Controller
-{
+class RobotsController extends Controller {
 
-    /**
-     * The object service instance.
-     *
-     * @var object|null
-     */
-    private ?object $objectService = null;
+	/**
+	 * The object service instance.
+	 *
+	 * @var object|null
+	 */
+	private ?object $objectService = null;
 
-    /**
-     * RobotsController constructor.
-     *
-     * @param string             $appName         The name of the app.
-     * @param IRequest           $request         The request object.
-     * @param SettingsService    $settingsService The settings service.
-     * @param ContainerInterface $container       The container for DI.
-     * @param IAppManager        $appManager      The app manager.
-     * @param IURLGenerator      $urlGenerator    The URL generator.
-     * @param IL10N              $l10n            The localization service.
-     */
-    public function __construct(
-        $appName,
-        IRequest $request,
-        private readonly SettingsService $settingsService,
-        private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager,
-        private readonly IURLGenerator $urlGenerator,
-        private readonly IL10N $l10n,
-    ) {
-        parent::__construct(appName: $appName, request: $request);
+	/**
+	 * RobotsController constructor.
+	 *
+	 * @param string $appName The name of the app.
+	 * @param IRequest $request The request object.
+	 * @param SettingsService $settingsService The settings service.
+	 * @param ContainerInterface $container The container for DI.
+	 * @param IAppManager $appManager The app manager.
+	 * @param IURLGenerator $urlGenerator The URL generator.
+	 * @param IL10N $l10n The localization service.
+	 */
+	public function __construct(
+		$appName,
+		IRequest $request,
+		private readonly SettingsService $settingsService,
+		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
+		private readonly IURLGenerator $urlGenerator,
+		private readonly IL10N $l10n,
+	) {
+		parent::__construct(appName: $appName, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Generate robots.txt with sitemap references.
-     *
-     * @return TextResponse The robots.txt response.
-     *
-     * @NoCSRFRequired
-     * @PublicPage
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
-     */
-    public function index(): TextResponse
-    {
-        $settings = $this->settingsService->getSettings();
+	// Generous: robots.txt is fetched by every crawler that visits, and a
+	// ceiling that trips here blocks indexing rather than abuse.
+	/**
+	 * Generate robots.txt with sitemap references.
+	 *
+	 * @return TextResponse The robots.txt response.
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
+	public function index(): TextResponse {
+		$settings = $this->settingsService->getSettings();
 
-        if (isset($settings['configuration']['catalog_register']) === false
-            || isset($settings['configuration']['catalog_schema']) === false
-        ) {
-            return new TextResponse(
-                text: $this->l10n->t('Could not fetch settings'),
-                status: 500
-            );
-        }
+		if (isset($settings['configuration']['catalog_register']) === false
+			|| isset($settings['configuration']['catalog_schema']) === false
+		) {
+			return new TextResponse(
+				text: $this->l10n->t('Could not fetch settings'),
+				status: 500
+			);
+		}
 
-        $searchQuery = [];
-        $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
-        $searchQuery['@self']['schema']   = $settings['configuration']['catalog_schema'];
+		$searchQuery = [];
+		$searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
+		$searchQuery['@self']['schema'] = $settings['configuration']['catalog_schema'];
 
-        // Rbac=true enforces schema authorization; multi=false for public robots.txt.
-        $catalogResult = $this->getObjectService()->searchObjectsPaginated(
-            query: $searchQuery,
-            _rbac: true,
-            _multitenancy: false,
-            deleted: false
-        );
+		// Rbac=true enforces schema authorization; multi=false for public robots.txt.
+		$catalogResult = $this->getObjectService()->searchObjectsPaginated(
+			query: $searchQuery,
+			_rbac: true,
+			_multitenancy: false,
+			deleted: false
+		);
 
-        // Visibility governed by RBAC on the search above (_rbac: true) — robots.txt
-        // references only catalogs the public group may read.
-        $catalogs = ($catalogResult['results'] ?? []);
+		// Visibility governed by RBAC on the search above (_rbac: true) — robots.txt
+		// references only catalogs the public group may read.
+		$catalogs = ($catalogResult['results'] ?? []);
 
-        $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
+		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
-        $text  = '';
-        $count = 0;
-        foreach ($catalogs as $catalog) {
-            if ($catalog->getSlug() === false) {
-                continue;
-            }
+		$text = '';
+		$count = 0;
+		foreach ($catalogs as $catalog) {
+			if ($catalog->getSlug() === false) {
+				continue;
+			}
 
-            if ($count > 0) {
-                $text .= '\n';
-            }
+			if ($count > 0) {
+				$text .= '\n';
+			}
 
-            foreach (array_keys(SitemapService::INFO_CAT) as $categoryCode) {
-                $text .= "Sitemap: $baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode\n";
-            }
+			foreach (array_keys(SitemapService::INFO_CAT) as $categoryCode) {
+				$text .= "Sitemap: $baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode\n";
+			}
 
-            $count++;
-        }
+			$count++;
+		}
 
-        return new TextResponse(text: $text);
+		return new TextResponse(text: $text);
+	}//end index()
 
-    }//end index()
+	/**
+	 * Attempts to retrieve the OpenRegister service from the container.
+	 *
+	 * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+	 *       ObjectService from the container; pure framework plumbing, no domain behavior.
+	 */
+	public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-    /**
-     * Attempts to retrieve the OpenRegister service from the container.
-     *
-     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       ObjectService from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            $this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			return $this->objectService;
+		}
 
-            return $this->objectService;
-        }
-
-        throw new RuntimeException('OpenRegister service is not available.');
-
-    }//end getObjectService()
+		throw new RuntimeException('OpenRegister service is not available.');
+	}//end getObjectService()
 }//end class

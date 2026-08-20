@@ -9,4 +9,4 @@ Util::addStyle($appId, 'main');
 
 ?>
 
-<div id="settings"></div>
+<div id="opencatalogi-settings"></div>

@@ -1,0 +1,177 @@
+{
+  "$comment": "publiccode.yml as an OpenRegister schema. Harvested from forge repositories by the publiccode-harvest flow and searched by OpenCatalogi like any other object — no bespoke integration, because a harvested component IS an ordinary OpenRegister object. Field names and semantics follow the publiccode.yml standard (https://yml.publiccode.tools) v0.4; the x-publiccode key on each property records the source path so the mapping stays checkable against the standard rather than against our memory of it.",
+  "components": {
+    "registers": {
+      "publication": {
+        "$comment": "List arrays are CONCATENATED by deepMergeConfig, so this attaches publiccode to the publication register without restating the other schemas. Defining the schema without this line would leave it valid but unattached — present in components.schemas and absent from every register, which reads as 'the import did nothing'.",
+        "schemas": ["publiccode"]
+      }
+    },
+    "schemas": {
+      "publiccode": {
+        "slug": "publiccode",
+        "title": "Public code component",
+        "version": "0.1.0",
+        "published": true,
+        "summary": "A software component described by a publiccode.yml file",
+        "description": "One harvested publiccode.yml. The identity of a component is its repository URL, not its name: names collide across forges and change on rebrand, while the URL is what the harvest actually dereferenced. `slug` is derived from the repository full name so a re-harvest UPDATES rather than duplicates — the flow engine has no synchronisation contracts yet, so idempotency has to come from a deterministic identifier.",
+        "icon": "PackageVariantClosed",
+        "searchable": true,
+        "hardValidation": false,
+        "required": ["name", "url"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the software component, as declared in publiccode.yml.",
+            "x-publiccode": "name",
+            "facetable": false
+          },
+          "applicationSuite": {
+            "type": "string",
+            "title": "Application suite",
+            "description": "The suite this component belongs to, when it is part of one.",
+            "x-publiccode": "applicationSuite",
+            "facetable": true
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "title": "Repository URL",
+            "description": "Canonical repository URL. This is the component's IDENTITY — see the schema description.",
+            "x-publiccode": "url"
+          },
+          "landingURL": {
+            "type": "string",
+            "format": "uri",
+            "title": "Landing page",
+            "description": "Public landing page for the software — the human-readable page a prospective user should be sent to. Deliberately separate from `url`: publiccode.yml treats the repository as the identity and the landing page as the front door, and for many components they are different sites.",
+            "x-publiccode": "landingURL"
+          },
+          "softwareVersion": {
+            "type": "string",
+            "title": "Version",
+            "description": "Latest released version, as the maintainer numbers it. Kept as a free-form string rather than parsed: publiccode.yml records whatever the project publishes, and forcing it into semver would silently rewrite versions that are dates or build numbers.",
+            "x-publiccode": "softwareVersion"
+          },
+          "releaseDate": {
+            "type": "string",
+            "format": "date",
+            "title": "Release date",
+            "description": "Date the version in `softwareVersion` was released (YYYY-MM-DD). Read together with that field this is what separates a maintained component from an abandoned one, so it is the main signal behind any recency facet.",
+            "x-publiccode": "releaseDate"
+          },
+          "logo": {
+            "type": "string",
+            "title": "Logo",
+            "description": "Path or URL to the logo. Left as declared: publiccode.yml permits a repository-relative path, and resolving it to an absolute URL is the harvest's job, not the schema's.",
+            "x-publiccode": "logo"
+          },
+          "platforms": {
+            "type": "array",
+            "title": "Platforms",
+            "description": "Platforms the software runs on. publiccode.yml reserves the values `web`, `windows`, `mac`, `linux`, `ios` and `android`, and allows free text for anything else — which is why this is not an enum: constraining it would reject valid harvested documents.",
+            "items": { "type": "string" },
+            "x-publiccode": "platforms",
+            "facetable": true
+          },
+          "categories": {
+            "type": "array",
+            "title": "Categories",
+            "items": { "type": "string" },
+            "description": "publiccode.yml's controlled category vocabulary.",
+            "x-publiccode": "categories",
+            "facetable": true
+          },
+          "developmentStatus": {
+            "type": "string",
+            "title": "Development status",
+            "description": "One of: concept, development, beta, stable, obsolete.",
+            "x-publiccode": "developmentStatus",
+            "facetable": true
+          },
+          "softwareType": {
+            "type": "string",
+            "title": "Software type",
+            "description": "One of: standalone/mobile, standalone/iot, standalone/desktop, standalone/web, standalone/backend, standalone/other, addon, library, configurationFiles.",
+            "x-publiccode": "softwareType",
+            "facetable": true
+          },
+          "description": {
+            "type": "object",
+            "title": "Descriptions by language",
+            "description": "publiccode.yml nests descriptions per language code (description.en.shortDescription, …). Kept nested rather than flattened to one language: flattening would silently discard every other translation on write.",
+            "x-publiccode": "description"
+          },
+          "maintenanceType": {
+            "type": "string",
+            "title": "Maintenance type",
+            "description": "One of: internal, contract, community, none.",
+            "x-publiccode": "maintenance.type",
+            "facetable": true
+          },
+          "maintainers": {
+            "type": "array",
+            "title": "Maintainers",
+            "description": "Who to contact about this component. Flattened from two separate publiccode.yml lists — `maintenance.contractors` (organisations under contract) and `maintenance.contacts` (named people) — because a catalogue reader is asking one question, not two. The distinction survives in each entry's own fields.",
+            "items": { "type": "object" },
+            "x-publiccode": "maintenance.contractors + maintenance.contacts"
+          },
+          "legalLicense": {
+            "type": "string",
+            "title": "Licence",
+            "description": "SPDX identifier, as declared in legal.license.",
+            "x-publiccode": "legal.license",
+            "facetable": true
+          },
+          "legalRepoOwner": {
+            "type": "string",
+            "title": "Repository owner",
+            "description": "Legal entity that owns the repository. Not the same question as who publishes or maintains the component — this is the party that can relicense or transfer it, which is what a reuse decision actually turns on.",
+            "x-publiccode": "legal.repoOwner"
+          },
+          "localisationAvailableLanguages": {
+            "type": "array",
+            "title": "Available languages",
+            "description": "Languages the interface is already available in, as BCP 47 tags. Distinct from publiccode.yml's `localisation.localisationReady`, which only claims that translating it is possible — an empty list here with `localisationReady: true` means nobody has translated it yet.",
+            "items": { "type": "string" },
+            "x-publiccode": "localisation.availableLanguages",
+            "facetable": true
+          },
+          "itConformsTo": {
+            "type": "array",
+            "title": "Standards conformed to",
+            "items": { "type": "string" },
+            "description": "country-specific extensions, e.g. it.conformsTo / nl.conformsTo.",
+            "x-publiccode": "*.conformsTo",
+            "facetable": true
+          },
+          "publiccodeYmlVersion": {
+            "type": "string",
+            "title": "publiccode.yml version",
+            "description": "Which version of the standard the harvested file declared. Recorded because the mapping is version-sensitive: a v0.2 file and a v0.4 file put maintainers in different places.",
+            "x-publiccode": "publiccodeYmlVersion",
+            "facetable": true
+          },
+          "harvestedFrom": {
+            "type": "string",
+            "title": "Harvested from",
+            "description": "The forge host the file came from (github.com, gitlab.com, codeberg.org). Recorded so a harvest can be re-run per forge, and so a component that disappears from one forge is not confused with one that never existed.",
+            "facetable": true
+          },
+          "harvestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Harvested at",
+            "description": "When this object was last written by a harvest. A component whose harvestedAt stops advancing is one the harvest no longer finds — which is information, not an error."
+          },
+          "rawPubliccode": {
+            "type": "object",
+            "title": "Raw publiccode.yml",
+            "description": "The decoded file as harvested. Kept because the mapping above is lossy by construction: any field the standard adds, or any country extension we do not model, would otherwise be discarded silently at harvest time and be unrecoverable without re-fetching."
+          }
+        }
+      }
+    }
+  }
+}

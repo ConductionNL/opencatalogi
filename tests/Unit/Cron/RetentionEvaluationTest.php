@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Unit tests for the RetentionEvaluation cron job.
  *
@@ -25,60 +26,53 @@ use Psr\Log\LoggerInterface;
 /**
  * @covers \OCA\OpenCatalogi\Cron\RetentionEvaluation
  */
-class RetentionEvaluationTest extends TestCase
-{
+class RetentionEvaluationTest extends TestCase {
 
-    private RetentionEvaluation $job;
+	private RetentionEvaluation $job;
 
-    private RetentionService $retentionService;
+	private RetentionService $retentionService;
 
-    private LoggerInterface $logger;
+	private LoggerInterface $logger;
 
-    private ITimeFactory $timeFactory;
+	private ITimeFactory $timeFactory;
 
+	protected function setUp(): void {
+		parent::setUp();
+		$this->timeFactory = $this->createMock(ITimeFactory::class);
+		$this->retentionService = $this->createMock(RetentionService::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->timeFactory      = $this->createMock(ITimeFactory::class);
-        $this->retentionService = $this->createMock(RetentionService::class);
-        $this->logger           = $this->createMock(LoggerInterface::class);
+		$this->job = new RetentionEvaluation(
+			$this->timeFactory,
+			$this->retentionService,
+			$this->logger
+		);
 
-        $this->job = new RetentionEvaluation(
-            $this->timeFactory,
-            $this->retentionService,
-            $this->logger
-        );
+	}//end setUp()
 
-    }//end setUp()
+	public function testRunInvokesEvaluate(): void {
+		$this->retentionService->expects($this->once())
+			->method('evaluate')
+			->willReturn(['expiringSoon' => 1, 'reviewRequired' => 0, 'depublished' => 2, 'archived' => 0]);
 
+		$this->logger->expects($this->once())->method('info');
 
-    public function testRunInvokesEvaluate(): void
-    {
-        $this->retentionService->expects($this->once())
-            ->method('evaluate')
-            ->willReturn(['expiringSoon' => 1, 'reviewRequired' => 0, 'depublished' => 2, 'archived' => 0]);
+		$method = new \ReflectionMethod(RetentionEvaluation::class, 'run');
+		$method->setAccessible(true);
+		$method->invoke($this->job, []);
 
-        $this->logger->expects($this->once())->method('info');
+	}//end testRunInvokesEvaluate()
 
-        $method = new \ReflectionMethod(RetentionEvaluation::class, 'run');
-        $method->setAccessible(true);
-        $method->invoke($this->job, []);
+	public function testRunSwallowsAndLogsExceptions(): void {
+		$this->retentionService->method('evaluate')
+			->willThrowException(new \RuntimeException('boom'));
 
-    }//end testRunInvokesEvaluate()
+		$this->logger->expects($this->once())->method('error');
 
+		$method = new \ReflectionMethod(RetentionEvaluation::class, 'run');
+		$method->setAccessible(true);
+		// Must not throw — failures are swallowed and logged.
+		$method->invoke($this->job, []);
 
-    public function testRunSwallowsAndLogsExceptions(): void
-    {
-        $this->retentionService->method('evaluate')
-            ->willThrowException(new \RuntimeException('boom'));
-
-        $this->logger->expects($this->once())->method('error');
-
-        $method = new \ReflectionMethod(RetentionEvaluation::class, 'run');
-        $method->setAccessible(true);
-        // Must not throw — failures are swallowed and logged.
-        $method->invoke($this->job, []);
-
-    }//end testRunSwallowsAndLogsExceptions()
+	}//end testRunSwallowsAndLogsExceptions()
 }//end class

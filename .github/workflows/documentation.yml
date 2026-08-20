@@ -6,11 +6,12 @@ on:
   pull_request:
     branches: [documentation]
 
-permissions:
-  contents: read
+# The callee's deploy job needs `contents: write` (gh-pages) and its fallback
+# image job needs `packages: write`; a caller capped at `contents: read`
+# makes the call unsatisfiable.
 
 jobs:
   deploy:
-    uses: Conduction/.github/.github/workflows/documentation.yml@main
+    uses: ConductionNL/.github/.github/workflows/documentation.yml@main
     with:
       cname: opencatalogi.conduction.nl

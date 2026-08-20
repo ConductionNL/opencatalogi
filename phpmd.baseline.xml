@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!--
+  PHPMD baseline — RETAINED, not deleted, and DELIBERATELY SMALLER.
+
+  Part of the fleet suppression audit (ConductionNL/.github#155). Measured with
+  PHPMD 2.15.0 / PHP 8.4.22, exit code read directly:
+
+      reported with this baseline      0
+      baseline deleted, before the PR  99   (what the 56 old entries hid)
+      baseline deleted, after the PR   65
+
+  The 34 findings that are gone were FIXED (all MissingImport), not
+  re-baselined; their seven entries are removed below, so the gate genuinely
+  covers those files again. Deleting an entry whose finding no longer exists is
+  the point: a file-scoped entry (one with no `method` attribute) suppresses
+  EVERY future finding of that rule in that file, so a stale entry is a dead
+  gate, not a harmless leftover. That is also why 56 entries were hiding 99
+  findings rather than 56.
+
+  Separately, 32 UnusedFormalParameter findings in lib/Migration are no longer
+  suppressed by four blanket @SuppressWarnings docblocks but by
+  phpmd-unusedparams.xml, a second ruleset holding that ONE rule with a
+  TOP-LEVEL exclude-pattern. Those 32 are interface-mandated:
+  OCP\Migration\IMigrationStep fixes the changeSchema / preSchemaChange /
+  postSchemaChange signatures, so a step that needs none of the parameters
+  still cannot drop them. The exclusion is deliberately NOT applied to the main
+  ruleset - that would drop lib/Migration from every rule and swallow the real
+  ExcessiveMethodLength finding in Version6Date20241011085015.
+
+  WHAT REMAINS (65 findings, 49 entries) and why the file is still here:
+
+  * 21 ElseExpression, 11 CyclomaticComplexity, 6 NPathComplexity,
+    6 ExcessiveMethodLength, 5 ExcessiveClassComplexity, 2 StaticAccess,
+    2 LongVariable, 2 ErrorControlOperator, 2 CouplingBetweenObjects,
+    1 ExcessiveParameterList, 1 ExcessiveClassLength — genuine, fixable debt.
+  * 6 UnusedFormalParameter OUTSIDE lib/Migration (WooController, OoapiService,
+    WooService) — NOT interface-mandated, and not covered by the Migration
+    exclusion. Genuine debt.
+
+  Each remaining fix is a behaviour-bearing refactor. This repo's unit suite
+  needs a Nextcloud server tree plus openregister to run, so those refactors
+  need CI to verify them and were out of scope for this pass.
+
+  Deleting this file today would redden `development` for everyone with 65 real
+  findings, which helps nobody. It stays until the remainder is burned down.
+
+  This baseline is a RATCHET: any NEW violation outside these entries fails the
+  gate. Do NOT regenerate it to silence a new finding, and do NOT re-add an
+  entry that a fix has retired.
+-->
+<phpmd-baseline>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/AppInfo/Application.php" method="register"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="lib/Controller/GlossaryController.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Controller/ListingsController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Controller/ListingsController.php"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="lib/Controller/MenusController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Controller/PublicationsController.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Controller/SetupController.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="lib/Controller/SetupController.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Controller/SetupController.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="lib/Controller/WooController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\StaticAccess" file="lib/Observability/OpenCatalogiMetricsProvider.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/CatalogiService.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/DcatMappingService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/DcatMappingService.php" method="resolveHvdCategory"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/DirectoryService.php" method="isSelfInstance"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="lib/Service/OoapiService.php"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/PublicationQueryService.php" method="assemblePublicSearchResults"/>
+  <violation rule="PHPMD\Rule\Naming\LongVariable" file="lib/Service/PublicationQueryService.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/PublicationQueryService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/PublicationService.php" method="getCatalogFilters"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/QualityService.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Service/RetentionService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="applyDefaults"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/RetentionService.php" method="applyDefaults"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="evaluate"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/RetentionService.php" method="evaluate"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="getQueueSummary"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/RetentionService.php" method="getQueueSummary"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="recordHumanDecision"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="buildReport"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/RetentionService.php" method="buildReport"/>
+  <violation rule="PHPMD\Rule\Design\LongClass" file="lib/Service/SettingsService.php"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/SettingsService.php" method="loadSettings"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/SettingsService.php"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/SettingsService.php" method="updateObjectTypeConfiguration"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/SettingsService.php" method="backfillCatalogScopes"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/SettingsService.php" method="backfillCatalogScopes"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/SitemapService.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Service/UsageCounterService.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="lib/Service/WooReadinessService.php" method="isWellFormedXml"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="lib/Service/WooReadinessService.php" method="extractLocs"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Service/WooService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/WooService.php" method="createBatch"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/WooService.php" method="createBatch"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/WooService.php" method="createBatch"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="lib/Service/WooService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/WooService.php" method="updateAssessment"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/WooService.php" method="updateAssessment"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/WooService.php"/>
+</phpmd-baseline>

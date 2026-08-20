@@ -1,6 +1,23 @@
+<!--
+	UNREACHABLE COMPONENT — no visual baseline is possible.
+
+	Nothing imports this file: `src/registry.js` is the only place page
+	components are handed to CnAppRoot, and it does not list it. Every
+	`*Detail` route in `src/manifest.json` (`OrganizationDetail`, `ThemeDetail`,
+	`GlossaryDetail`, `PageDetail`, `MenuDetail`, `PublicationDetail`) is a
+	manifest `type: "detail"` page rendered by nc-vue's generic CnDetailPage, so
+	this shared view is superseded migration debris. Confirmed by grepping the
+	built bundle: its `name: 'EntityDetailPage'` option occurs 0 times in
+	`js/opencatalogi-main.js`, while the six wired views each occur once —
+	webpack tree-shakes it out entirely.
+
+	See src/views/directory/DirectoryIndex.vue for the full rationale.
+
+	@visual exclude Unreachable: imported by nothing, in no route, tree-shaken out of the shipped bundle; superseded by the manifest type:"detail" pages (CnDetailPage). Tracked in ConductionNL/opencatalogi#849.
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -9,19 +26,22 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:description="entity?.summary || ''"
 		:icon="icon"
 		:loading="loading"
-		:loading-label="t('opencatalogi', 'Loading...')"
+		:loadingLabel="t('opencatalogi', 'Loading...')"
 		:empty="!entity && !loading"
-		:empty-label="t('opencatalogi', '{type} not found', { type: entityLabel })"
+		:emptyLabel="t('opencatalogi', '{type} not found', { type: entityLabel })"
 		:error="!!error"
-		:error-message="error"
-		:on-retry="loadEntity"
+		:errorMessage="error"
+		:onRetry="loadEntity"
 		:layout="detailLayout"
 		:widgets="widgetDefs"
 		:sidebar="!!entity"
-		:sidebar-open="sidebarOpen"
-		:object-type="entityType"
-		:object-id="entityId"
-		:sidebar-props="{ register: String(entity?.['@self']?.register || ''), schema: String(entity?.['@self']?.schema || '') }">
+		:sidebarOpen="sidebarOpen"
+		:objectType="entityType"
+		:objectId="entityId"
+		:sidebarProps="{
+			register: String(entity?.['@self']?.register || ''),
+			schema: String(entity?.['@self']?.schema || ''),
+		}">
 		<!-- Header actions -->
 		<template #actions>
 			<NcButton @click="goBack">
@@ -30,7 +50,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				</template>
 				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
-			<NcButton type="primary" @click="editEntity">
+			<NcButton variant="primary" @click="editEntity">
 				<template #icon>
 					<Pencil :size="20" />
 				</template>
@@ -40,7 +60,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<DotsHorizontal :size="20" />
 				</template>
-				<NcActionButton close-after-click @click="deleteEntity">
+				<NcActionButton closeAfterClick @click="deleteEntity">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -51,9 +71,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 		<!-- Metadata widget -->
 		<template #widget-metadata>
-			<CnDetailGrid
-				:items="metadataItems"
-				layout="horizontal" />
+			<CnDetailGrid :items="metadataItems" layout="horizontal" />
 		</template>
 
 		<!-- Description widget -->
@@ -73,29 +91,55 @@ import { objectStore, navigationStore } from '../../store/store.js'
 			<CnJsonViewer
 				:value="JSON.stringify(entity, null, 2)"
 				language="json"
-				:read-only="true"
-				:height="300" />
+				:readOnly="true"
+				height="300px" />
 		</template>
 	</CnDetailPage>
 </template>
 
 <script>
+import {
+	buildHeaders,
+	CnDetailGrid,
+	CnDetailPage,
+	CnJsonViewer,
+} from '@conduction/nextcloud-vue'
 import { generateUrl } from '@nextcloud/router'
-import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
-import { CnDetailPage, CnDetailGrid, CnJsonViewer, buildHeaders } from '@conduction/nextcloud-vue'
+import { NcActionButton, NcActions, NcButton } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 const DETAIL_LAYOUT = [
-	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 12, gridHeight: 4 },
-	{ id: 2, widgetId: 'description', gridX: 0, gridY: 4, gridWidth: 12, gridHeight: 2 },
-	{ id: 3, widgetId: 'raw-data', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 4 },
+	{
+		id: 1,
+		widgetId: 'metadata',
+		gridX: 0,
+		gridY: 0,
+		gridWidth: 12,
+		gridHeight: 4,
+	},
+	{
+		id: 2,
+		widgetId: 'description',
+		gridX: 0,
+		gridY: 4,
+		gridWidth: 12,
+		gridHeight: 2,
+	},
+	{
+		id: 3,
+		widgetId: 'raw-data',
+		gridX: 0,
+		gridY: 6,
+		gridWidth: 12,
+		gridHeight: 4,
+	},
 ]
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'EntityDetailPage',
@@ -111,43 +155,51 @@ export default {
 		DotsHorizontal,
 		TrashCanOutline,
 	},
+
 	props: {
 		/** Entity type slug (e.g., 'glossary', 'theme', 'page', 'menu') */
 		entityType: {
 			type: String,
 			required: true,
 		},
+
 		/** Human-readable label for the entity type */
 		entityLabel: {
 			type: String,
 			required: true,
 		},
+
 		/** MDI icon name */
 		icon: {
 			type: String,
 			default: 'InformationOutline',
 		},
+
 		/** API path segment (e.g., 'glossary', 'themes', 'pages', 'menus') */
 		apiPath: {
 			type: String,
 			required: true,
 		},
+
 		/** Route name to go back to */
 		backRoute: {
 			type: String,
 			required: true,
 		},
+
 		/** Modal name to open for editing */
 		editModal: {
 			type: String,
 			required: true,
 		},
+
 		/** Extra metadata items to display (beyond title/summary/dates) */
 		extraMetadata: {
 			type: Function,
 			default: () => [],
 		},
 	},
+
 	data() {
 		return {
 			entity: null,
@@ -157,35 +209,66 @@ export default {
 			detailLayout: [...DETAIL_LAYOUT],
 		}
 	},
+
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		entityId() {
 			return this.$route.params.id
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		metadataItems() {
 			if (!this.entity) return []
 			const self = this.entity['@self'] || {}
 			const base = [
-				{ label: t('opencatalogi', 'Title'), value: this.entity.title || this.entity.name || '-' },
-				{ label: t('opencatalogi', 'Summary'), value: this.entity.summary || '-' },
+				{
+					label: t('opencatalogi', 'Title'),
+					value: this.entity.title || this.entity.name || '-',
+				},
+				{
+					label: t('opencatalogi', 'Summary'),
+					value: this.entity.summary || '-',
+				},
 				...this.extraMetadata(this.entity),
-				{ label: t('opencatalogi', 'Created'), value: self.created ? new Date(self.created).toLocaleString() : '-' },
-				{ label: t('opencatalogi', 'Updated'), value: self.updated ? new Date(self.updated).toLocaleString() : '-' },
+				{
+					label: t('opencatalogi', 'Created'),
+					value: self.created
+						? new Date(self.created).toLocaleString()
+						: '-',
+				},
+				{
+					label: t('opencatalogi', 'Updated'),
+					value: self.updated
+						? new Date(self.updated).toLocaleString()
+						: '-',
+				},
 				{ label: t('opencatalogi', 'Owner'), value: self.owner || '-' },
-				{ label: t('opencatalogi', 'ID'), value: self.id || this.entity.id || '-' },
+				{
+					label: t('opencatalogi', 'ID'),
+					value: self.id || this.entity.id || '-',
+				},
 			]
 			return base
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		widgetDefs() {
 			return [
-				{ id: 'metadata', title: t('opencatalogi', 'Metadata'), type: 'custom' },
-				{ id: 'description', title: t('opencatalogi', 'Description'), type: 'custom' },
+				{
+					id: 'metadata',
+					title: t('opencatalogi', 'Metadata'),
+					type: 'custom',
+				},
+				{
+					id: 'description',
+					title: t('opencatalogi', 'Description'),
+					type: 'custom',
+				},
 				{ id: 'raw-data', title: t('opencatalogi', 'Data'), type: 'custom' },
 			]
 		},
 	},
+
 	watch: {
 		entityId: {
 			immediate: true,
@@ -197,6 +280,7 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		async loadEntity() {
@@ -204,10 +288,15 @@ export default {
 			this.error = null
 			try {
 				const response = await fetch(
-					generateUrl(`/apps/opencatalogi/api/${this.apiPath}/${this.entityId}`),
+					generateUrl(
+						`/apps/opencatalogi/api/${this.apiPath}/${this.entityId}`,
+					),
 					{ method: 'GET', headers: buildHeaders() },
 				)
-				if (!response.ok) throw new Error(`Failed to load ${this.entityLabel} (${response.status})`)
+				if (!response.ok)
+					throw new Error(
+						`Failed to load ${this.entityLabel} (${response.status})`,
+					)
 				this.entity = await response.json()
 				objectStore.setActiveObject(this.entityType, this.entity)
 			} catch (err) {
@@ -216,19 +305,25 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		goBack() {
 			this.$router.push({ name: this.backRoute })
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		editEntity() {
 			objectStore.setActiveObject(this.entityType, this.entity)
 			navigationStore.setModal(this.editModal)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		deleteEntity() {
 			objectStore.setActiveObject(this.entityType, this.entity)
-			navigationStore.setDialog('deleteObject', { objectType: this.entityType, dialogTitle: this.entityLabel })
+			navigationStore.setDialog('deleteObject', {
+				objectType: this.entityType,
+				dialogTitle: this.entityLabel,
+			})
 		},
 	},
 }

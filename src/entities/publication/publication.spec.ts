@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Publication } from './publication'
 import { mockPublications } from './publication.mock'
 

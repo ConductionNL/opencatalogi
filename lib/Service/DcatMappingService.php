@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi DCAT mapping service.
  *
@@ -38,422 +39,525 @@ namespace OCA\OpenCatalogi\Service;
  *
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-2-dcat-mapping-layer-x-dcat-defaults
  */
-class DcatMappingService
-{
+class DcatMappingService {
 
-    /**
-     * The conservative default property map used when a schema carries no
-     * `x-dcat` annotation. Keys are DCAT-AP-NL property IRIs (CURIE form),
-     * values are dot/bracket paths into the publication object.
-     *
-     * @var array<string, string>
-     */
-    public const DEFAULT_MAPPING = [
-        'dct:title'       => 'title',
-        'dct:description' => 'description',
-        'dcat:keyword'    => 'tags[]',
-        'dcat:theme'      => 'category',
-        'dct:license'     => 'license',
-    ];
+	/**
+	 * The conservative default property map used when a schema carries no
+	 * `x-dcat` annotation. Keys are DCAT-AP-NL property IRIs (CURIE form),
+	 * values are dot/bracket paths into the publication object.
+	 *
+	 * @var array<string, string>
+	 */
+	public const DEFAULT_MAPPING = [
+		'dct:title' => 'title',
+		'dct:description' => 'description',
+		'dcat:keyword' => 'tags[]',
+		'dcat:theme' => 'category',
+		'dct:license' => 'license',
+	];
 
-    /**
-     * Build the DCAT-AP-NL JSON-LD `@context` shared by every emitted document.
-     *
-     * @return array<string, string> The JSON-LD context prefixes.
-     *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
-     */
-    public function context(): array
-    {
-        return [
-            'dcat'    => 'http://www.w3.org/ns/dcat#',
-            'dct'     => 'http://purl.org/dc/terms/',
-            'foaf'    => 'http://xmlns.com/foaf/0.1/',
-            'vcard'   => 'http://www.w3.org/2006/vcard/ns#',
-            'hydra'   => 'http://www.w3.org/ns/hydra/core#',
-            'profile' => 'https://data.overheid.nl/dcat-ap-nl/3.0',
-        ];
+	/**
+	 * Constructor.
+	 *
+	 * @param DcatVocabularyService $vocabulary The HVD-category / data-theme resolver.
+	 */
+	public function __construct(
+		private readonly DcatVocabularyService $vocabulary,
+	) {
 
-    }//end context()
+	}//end __construct()
 
-    /**
-     * Resolve the effective DCAT mapping for a schema.
-     *
-     * Reads the schema's `x-dcat` annotation. When the annotation is the literal
-     * boolean `false` the schema is opted out (returns null). When absent or
-     * lacking a `mapping` key the built-in default mapping is returned.
-     *
-     * @param array<string, mixed>|null $schema The OpenRegister schema array (jsonSerialize shape).
-     *
-     * @return array<string, string>|null The property map (DCAT CURIE => object path),
-     *                                     or null when the schema opted out.
-     *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
-     */
-    public function resolveMapping(?array $schema): ?array
-    {
-        $annotation = ($schema['x-dcat'] ?? null);
+	/**
+	 * Build the DCAT-AP-NL JSON-LD `@context` shared by every emitted document.
+	 *
+	 * @return array<string, string> The JSON-LD context prefixes.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+	 */
+	public function context(): array {
+		return [
+			'dcat' => 'http://www.w3.org/ns/dcat#',
+			'dcatap' => 'http://data.europa.eu/r5r/',
+			'dct' => 'http://purl.org/dc/terms/',
+			'dqv' => 'http://www.w3.org/ns/dqv#',
+			'foaf' => 'http://xmlns.com/foaf/0.1/',
+			'vcard' => 'http://www.w3.org/2006/vcard/ns#',
+			'hydra' => 'http://www.w3.org/ns/hydra/core#',
+			'profile' => 'https://data.overheid.nl/dcat-ap-nl/3.0',
+		];
 
-        // Explicit opt-out.
-        if ($annotation === false) {
-            return null;
-        }
+	}//end context()
 
-        if (is_array($annotation) === true && isset($annotation['mapping']) === true
-            && is_array($annotation['mapping']) === true
-            && empty($annotation['mapping']) === false
-        ) {
-            return $annotation['mapping'];
-        }
+	/**
+	 * Resolve the optional `x-dcat.hvd` block from a schema annotation.
+	 *
+	 * @param array<string, mixed>|null $schema The OpenRegister schema array.
+	 *
+	 * @return array{categoryProperty?: string, legislation?: string}|null The HVD config, or null.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md
+	 */
+	public function resolveHvd(?array $schema): ?array {
+		$annotation = ($schema['x-dcat'] ?? null);
+		if (is_array($annotation) === false) {
+			return null;
+		}
 
-        // Unannotated (or malformed) schema → conservative default.
-        return self::DEFAULT_MAPPING;
+		$hvd = ($annotation['hvd'] ?? null);
+		if (is_array($hvd) === false || $hvd === []) {
+			return null;
+		}
 
-    }//end resolveMapping()
+		return $hvd;
+	}//end resolveHvd()
 
-    /**
-     * Map a single publication object to a `dcat:Dataset` graph fragment.
-     *
-     * Applies the resolved mapping, then completes DCAT-AP-NL mandatory
-     * properties from the catalog-level defaults and finally the owning
-     * Organisation. Distributions are derived from the publication's published
-     * file attachments. IRIs are taken verbatim from the supplied canonical
-     * URLs so harvesters dedupe on a stable identifier across runs.
-     *
-     * @param array<string, mixed>  $publication The publication object (jsonSerialize shape).
-     * @param array<string, string> $mapping     The resolved DCAT property map.
-     * @param array<int, array>     $files       Published file attachments (formatFiles shape).
-     * @param string                $datasetIri  The canonical public dataset IRI (PUB-002 URL).
-     * @param array<string, mixed>  $defaults    Catalog-level publisher/license/contactPoint defaults.
-     *
-     * @return array<string, mixed> The `dcat:Dataset` node.
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-dcat-ap-nl-mandatory-property-completion-dcat-005
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
-     */
-    public function mapDataset(
-        array $publication,
-        array $mapping,
-        array $files,
-        string $datasetIri,
-        array $defaults
-    ): array {
-        $dataset = [
-            '@id'   => $datasetIri,
-            '@type' => 'dcat:Dataset',
-        ];
+	/**
+	 * Resolve the effective DCAT mapping for a schema.
+	 *
+	 * Reads the schema's `x-dcat` annotation. When the annotation is the literal
+	 * boolean `false` the schema is opted out (returns null). When absent or
+	 * lacking a `mapping` key the built-in default mapping is returned.
+	 *
+	 * @param array<string, mixed>|null $schema The OpenRegister schema array (jsonSerialize shape).
+	 *
+	 * @return array<string, string>|null The property map (DCAT CURIE => object path),
+	 *                                    or null when the schema opted out.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
+	 */
+	public function resolveMapping(?array $schema): ?array {
+		$annotation = ($schema['x-dcat'] ?? null);
 
-        foreach ($mapping as $dcatProperty => $sourcePath) {
-            $value = $this->extractValue($publication, $sourcePath);
-            if ($value === null || $value === '' || $value === []) {
-                continue;
-            }
+		// Explicit opt-out.
+		if ($annotation === false) {
+			return null;
+		}
 
-            // `tags[]`-style paths produce a list → emit each element separately.
-            if (str_ends_with($sourcePath, '[]') === true && is_array($value) === true) {
-                $dataset[$dcatProperty] = array_values(
-                    array_filter(
-                        array_map(
-                            static function ($entry) {
-                                if (is_scalar($entry) === true) {
-                                    return (string) $entry;
-                                }
+		if (is_array($annotation) === true && isset($annotation['mapping']) === true
+			&& is_array($annotation['mapping']) === true
+			&& empty($annotation['mapping']) === false
+		) {
+			return $annotation['mapping'];
+		}
 
-                                return null;
-                            },
-                            $value
-                        ),
-                        static fn($entry) => $entry !== null && $entry !== ''
-                    )
-                );
-                continue;
-            }
+		// Unannotated (or malformed) schema → conservative default.
+		return self::DEFAULT_MAPPING;
+	}//end resolveMapping()
 
-            // Theme: emit a TOOI/overheid-thema URI when one is supplied on the object.
-            if ($dcatProperty === 'dcat:theme') {
-                $themeUri = ($publication['tooiThemaUri'] ?? $publication['themeUri'] ?? null);
-                if (is_string($themeUri) === true && $themeUri !== '') {
-                    $dataset['dcat:theme'] = ['@id' => $themeUri];
-                    continue;
-                }
-            }
+	/**
+	 * Map a single publication object to a `dcat:Dataset` graph fragment.
+	 *
+	 * Applies the resolved mapping, then completes DCAT-AP-NL mandatory
+	 * properties from the catalog-level defaults and finally the owning
+	 * Organisation. Distributions are derived from the publication's published
+	 * file attachments. IRIs are taken verbatim from the supplied canonical
+	 * URLs so harvesters dedupe on a stable identifier across runs.
+	 *
+	 * @param array<string, mixed> $publication The publication object (jsonSerialize shape).
+	 * @param array<string, string> $mapping The resolved DCAT property map.
+	 * @param array<int, array> $files Published file attachments (formatFiles shape).
+	 * @param string $datasetIri The canonical public dataset IRI (PUB-002 URL).
+	 * @param array<string, mixed> $defaults Catalog-level publisher/license/contactPoint defaults.
+	 * @param array<string, mixed>|null $hvd The schema `x-dcat.hvd` block, or null (DCAT-NPF-002).
+	 * @param string|null $catalogHvdDefault The catalog default HVD category, or null.
+	 * @param array<int, array<string, mixed>> $violations Controlled-theme violations collected here (by reference).
+	 *
+	 * @return array<string, mixed> The `dcat:Dataset` node.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-dcat-ap-nl-mandatory-property-completion-dcat-005
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
+	 */
+	public function mapDataset(
+		array $publication,
+		array $mapping,
+		array $files,
+		string $datasetIri,
+		array $defaults,
+		?array $hvd = null,
+		?string $catalogHvdDefault = null,
+		array &$violations = [],
+	): array {
+		$dataset = [
+			'@id' => $datasetIri,
+			'@type' => 'dcat:Dataset',
+		];
 
-            $dataset[$dcatProperty] = $value;
-        }//end foreach
+		foreach ($mapping as $dcatProperty => $sourcePath) {
+			$value = $this->extractValue(object: $publication, path: $sourcePath);
+			if ($value === null || $value === '' || $value === []) {
+				continue;
+			}
 
-        // Mandatory: dct:modified (from @self.updated, falling back to the
-        // object's own publicatiedatum — the removed @self.published is gone).
-        $modified = ($publication['@self']['updated'] ?? $publication['publicatiedatum'] ?? null);
-        if ($modified !== null) {
-            $dataset['dct:modified'] = $this->isoDate((string) $modified);
-        }
+			// `tags[]`-style paths produce a list → emit each element separately.
+			if (str_ends_with($sourcePath, '[]') === true && is_array($value) === true) {
+				$dataset[$dcatProperty] = array_values(
+					array_filter(
+						array_map(
+							static function ($entry) {
+								if (is_scalar($entry) === true) {
+									return (string)$entry;
+								}
 
-        // Mandatory: dcat:landingPage → the canonical dataset URL.
-        $dataset['dcat:landingPage'] = ['@id' => $datasetIri];
+								return null;
+							},
+							$value
+						),
+						static fn ($entry) => $entry !== null && $entry !== ''
+					)
+				);
+				continue;
+			}
 
-        // Mandatory: dct:identifier.
-        $dataset['dct:identifier'] = ($publication['id'] ?? $datasetIri);
+			// Theme: MUST bind to a controlled authority URI or be omitted — never a
+			// free-text literal (DCAT-NPF-003). Prefer an authority URI already on the
+			// object, else resolve the source value through the MDR data-theme list.
+			if ($dcatProperty === 'dcat:theme') {
+				$themeUri = $this->resolveThemeUri(publication: $publication, sourceValue: $value);
+				if ($themeUri !== null) {
+					$dataset['dcat:theme'] = ['@id' => $themeUri];
+				} else {
+					$violations[] = [
+						'iri' => $datasetIri,
+						'axis' => 'dcat:theme',
+						'reason' => 'theme does not resolve to a controlled data-theme authority URI',
+					];
+				}
 
-        // Mandatory-property completion chain: object → catalog defaults → Organisation.
-        $dataset = $this->completePublisher(dataset: $dataset, publication: $publication, defaults: $defaults);
-        $dataset = $this->completeContactPoint(dataset: $dataset, publication: $publication, defaults: $defaults);
+				continue;
+			}
 
-        // Distributions from published attachments.
-        $defaultLicense = ($publication['license'] ?? $defaults['license'] ?? null);
-        $distributions  = [];
-        foreach ($files as $file) {
-            $distribution = $this->mapDistribution($file, $defaultLicense);
-            if ($distribution !== null) {
-                $distributions[] = $distribution;
-            }
-        }
+			$dataset[$dcatProperty] = $value;
+		}//end foreach
 
-        if (empty($distributions) === false) {
-            $dataset['dcat:distribution'] = $distributions;
-        }
+		// HVD classification (DCAT-NPF-002): opt-in, declarative. Resolve the HVD
+		// category from the object property named by the schema's x-dcat.hvd block,
+		// or the catalog default. Emit both HVD triples only when it resolves.
+		$hvdCategory = $this->resolveHvdCategory(publication: $publication, hvd: $hvd, catalogHvdDefault: $catalogHvdDefault);
+		if ($hvdCategory !== null) {
+			$dataset['dcatap:hvdCategory'] = ['@id' => $hvdCategory['uri']];
+			$legislation = ($hvd['legislation'] ?? DcatVocabularyService::HVD_LEGISLATION);
+			$dataset['dcatap:applicableLegislation'] = ['@id' => $legislation];
+		}
 
-        return $dataset;
+		// Mandatory: dct:modified (from @self.updated, falling back to the
+		// object's own publicationDate — the removed @self.published is gone).
+		$modified = ($publication['@self']['updated'] ?? $publication['publicationDate'] ?? null);
+		if ($modified !== null) {
+			$dataset['dct:modified'] = $this->isoDate(value: (string)$modified);
+		}
 
-    }//end mapDataset()
+		// Mandatory: dcat:landingPage → the canonical dataset URL.
+		$dataset['dcat:landingPage'] = ['@id' => $datasetIri];
 
-    /**
-     * Map a single published file attachment to a `dcat:Distribution`.
-     *
-     * @param array<string, mixed> $file           A formatFiles-shape file entry.
-     * @param string|null          $defaultLicense Fallback license URI for the distribution.
-     *
-     * @return array<string, mixed>|null The distribution node, or null when the
-     *                                    file has no public download URL.
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
-     */
-    public function mapDistribution(array $file, ?string $defaultLicense): ?array
-    {
-        $downloadUrl = ($file['downloadUrl'] ?? $file['accessUrl'] ?? null);
-        if (is_string($downloadUrl) === false || $downloadUrl === '') {
-            return null;
-        }
+		// Mandatory: dct:identifier.
+		$dataset['dct:identifier'] = ($publication['id'] ?? $datasetIri);
 
-        $extension = strtolower((string) ($file['extension'] ?? ''));
-        $mediaType = $this->mediaTypeFor($extension, ($file['mimetype'] ?? $file['mimeType'] ?? null));
+		// Mandatory-property completion chain: object → catalog defaults → Organisation.
+		$dataset = $this->completePublisher(dataset: $dataset, publication: $publication, defaults: $defaults);
+		$dataset = $this->completeContactPoint(dataset: $dataset, publication: $publication, defaults: $defaults);
 
-        $distribution = [
-            // IRI is the stable public download URL → harvesters dedupe across runs.
-            '@id'              => $downloadUrl,
-            '@type'            => 'dcat:Distribution',
-            'dcat:downloadURL' => ['@id' => $downloadUrl],
-            'dcat:accessURL'   => ['@id' => (string) ($file['accessUrl'] ?? $downloadUrl)],
-        ];
+		// Distributions from published attachments.
+		$defaultLicense = ($publication['license'] ?? $defaults['license'] ?? null);
+		$distributions = [];
+		foreach ($files as $file) {
+			$distribution = $this->mapDistribution(file: $file, defaultLicense: $defaultLicense);
+			if ($distribution !== null) {
+				$distributions[] = $distribution;
+			}
+		}
 
-        $title = ($file['title'] ?? $file['name'] ?? null);
-        if ($title !== null && $title !== '') {
-            $distribution['dct:title'] = (string) $title;
-        }
+		if (empty($distributions) === false) {
+			$dataset['dcat:distribution'] = $distributions;
+		}
 
-        if ($mediaType !== null) {
-            $distribution['dcat:mediaType'] = $mediaType;
-            $distribution['dct:format']     = $this->formatUriFor($extension);
-        }
+		return $dataset;
+	}//end mapDataset()
 
-        if (isset($file['size']) === true && is_numeric($file['size']) === true) {
-            $distribution['dcat:byteSize'] = (int) $file['size'];
-        }
+	/**
+	 * Resolve a controlled `dcat:theme` authority URI for a publication.
+	 *
+	 * Accepts an authority URI already carried on the object (`tooiThemaUri` /
+	 * `themeUri`) verbatim, otherwise resolves the mapped source value through the
+	 * EU MDR data-theme value list. Returns null when nothing resolves.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 * @param mixed $sourceValue The mapped source theme value.
+	 *
+	 * @return string|null The controlled authority URI, or null.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md
+	 */
+	private function resolveThemeUri(array $publication, mixed $sourceValue): ?string {
+		$onObject = ($publication['tooiThemaUri'] ?? $publication['themeUri'] ?? null);
+		if (is_string($onObject) === true
+			&& (str_starts_with($onObject, 'http://') === true || str_starts_with($onObject, 'https://') === true)
+		) {
+			return $onObject;
+		}
 
-        if ($defaultLicense !== null && $defaultLicense !== '') {
-            $distribution['dct:license'] = ['@id' => $defaultLicense];
-        }
+		$candidate = null;
+		if (is_scalar($sourceValue) === true) {
+			$candidate = (string)$sourceValue;
+		}
 
-        return $distribution;
+		return $this->vocabulary->resolveDataTheme($candidate);
+	}//end resolveThemeUri()
 
-    }//end mapDistribution()
+	/**
+	 * Resolve the HVD category for a publication from its schema `x-dcat.hvd` block
+	 * or the catalog default.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 * @param array{categoryProperty?: string}|null $hvd The schema HVD config.
+	 * @param string|null $catalogHvdDefault The catalog default HVD category.
+	 *
+	 * @return array{uri: string, label: string}|null The resolved category, or null.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md
+	 */
+	private function resolveHvdCategory(array $publication, ?array $hvd, ?string $catalogHvdDefault): ?array {
+		$categoryValue = null;
+		if (is_array($hvd) === true && isset($hvd['categoryProperty']) === true) {
+			$extracted = $this->extractValue(object: $publication, path: (string)$hvd['categoryProperty']);
+			if (is_scalar($extracted) === true) {
+				$categoryValue = (string)$extracted;
+			}
+		}
 
-    /**
-     * Build the publisher `foaf:Agent` for a catalog/instance from an Organisation.
-     *
-     * @param array<string, mixed>|null $organisation The owning Organisation object.
-     * @param array<string, mixed>      $defaults     Catalog-level defaults (publisher name/uri).
-     *
-     * @return array<string, mixed>|null The `foaf:Agent`, or null when nothing resolves.
-     *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-dcat-ap-nl-mandatory-property-completion-dcat-005
-     */
-    public function buildPublisher(?array $organisation, array $defaults): ?array
-    {
-        $name = ($organisation['title'] ?? $organisation['name'] ?? $defaults['publisherName'] ?? null);
-        $uri  = ($organisation['oin'] ?? $organisation['tooiUri'] ?? $organisation['uri'] ?? $defaults['publisherUri'] ?? null);
+		if (($categoryValue === null || $categoryValue === '') && $catalogHvdDefault !== null && $catalogHvdDefault !== '') {
+			$categoryValue = $catalogHvdDefault;
+		}
 
-        if (($name === null || $name === '') && ($uri === null || $uri === '')) {
-            return null;
-        }
+		if ($categoryValue === null || $categoryValue === '') {
+			return null;
+		}
 
-        $agent = ['@type' => 'foaf:Agent'];
-        if ($uri !== null && $uri !== '') {
-            $agent['@id'] = (string) $uri;
-        }
+		return $this->vocabulary->resolveHvdCategory($categoryValue);
+	}//end resolveHvdCategory()
 
-        if ($name !== null && $name !== '') {
-            $agent['foaf:name'] = (string) $name;
-        }
+	/**
+	 * Map a single published file attachment to a `dcat:Distribution`.
+	 *
+	 * @param array<string, mixed> $file A formatFiles-shape file entry.
+	 * @param string|null $defaultLicense Fallback license URI for the distribution.
+	 *
+	 * @return array<string, mixed>|null The distribution node, or null when the
+	 *                                   file has no public download URL.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
+	 */
+	public function mapDistribution(array $file, ?string $defaultLicense): ?array {
+		$downloadUrl = ($file['downloadUrl'] ?? $file['accessUrl'] ?? null);
+		if (is_string($downloadUrl) === false || $downloadUrl === '') {
+			return null;
+		}
 
-        return $agent;
+		$extension = strtolower((string)($file['extension'] ?? ''));
+		$mediaType = $this->mediaTypeFor(extension: $extension, mimetype: ($file['mimetype'] ?? $file['mimeType'] ?? null));
 
-    }//end buildPublisher()
+		$distribution = [
+			// IRI is the stable public download URL → harvesters dedupe across runs.
+			'@id' => $downloadUrl,
+			'@type' => 'dcat:Distribution',
+			'dcat:downloadURL' => ['@id' => $downloadUrl],
+			'dcat:accessURL' => ['@id' => (string)($file['accessUrl'] ?? $downloadUrl)],
+		];
 
-    /**
-     * Complete `dct:publisher` from the object, then catalog defaults, then Organisation.
-     *
-     * @param array<string, mixed> $dataset     The dataset under construction.
-     * @param array<string, mixed> $publication The source publication object.
-     * @param array<string, mixed> $defaults    Catalog-level defaults incl. an optional `organisation` object.
-     *
-     * @return array<string, mixed> The dataset with `dct:publisher` populated when resolvable.
-     */
-    private function completePublisher(array $dataset, array $publication, array $defaults): array
-    {
-        $objectPublisher = ($publication['publisher'] ?? $publication['organisation'] ?? null);
-        if (is_array($objectPublisher) === true) {
-            $agent = $this->buildPublisher($objectPublisher, $defaults);
-            if ($agent !== null) {
-                $dataset['dct:publisher'] = $agent;
-                return $dataset;
-            }
-        } else if (is_string($objectPublisher) === true && $objectPublisher !== '') {
-            $dataset['dct:publisher'] = [
-                '@type'     => 'foaf:Agent',
-                'foaf:name' => $objectPublisher,
-            ];
-            return $dataset;
-        }
+		$title = ($file['title'] ?? $file['name'] ?? null);
+		if ($title !== null && $title !== '') {
+			$distribution['dct:title'] = (string)$title;
+		}
 
-        $agent = $this->buildPublisher(($defaults['organisation'] ?? null), $defaults);
-        if ($agent !== null) {
-            $dataset['dct:publisher'] = $agent;
-        }
+		if ($mediaType !== null) {
+			$distribution['dcat:mediaType'] = $mediaType;
+			$distribution['dct:format'] = $this->formatUriFor(extension: $extension);
+		}
 
-        return $dataset;
+		if (isset($file['size']) === true && is_numeric($file['size']) === true) {
+			$distribution['dcat:byteSize'] = (int)$file['size'];
+		}
 
-    }//end completePublisher()
+		if ($defaultLicense !== null && $defaultLicense !== '') {
+			$distribution['dct:license'] = ['@id' => $defaultLicense];
+		}
 
-    /**
-     * Complete `dcat:contactPoint` from catalog defaults when the object lacks one.
-     *
-     * @param array<string, mixed> $dataset     The dataset under construction.
-     * @param array<string, mixed> $publication The source publication object.
-     * @param array<string, mixed> $defaults    Catalog-level defaults.
-     *
-     * @return array<string, mixed> The dataset with `dcat:contactPoint` populated when resolvable.
-     */
-    private function completeContactPoint(array $dataset, array $publication, array $defaults): array
-    {
-        $email = ($publication['contactEmail'] ?? $defaults['contactPoint'] ?? null);
-        if (is_string($email) === true && $email !== '') {
-            $dataset['dcat:contactPoint'] = [
-                '@type'          => 'vcard:Organization',
-                'vcard:hasEmail' => ['@id' => 'mailto:'.ltrim($email, 'mailto:')],
-            ];
-        }
+		return $distribution;
+	}//end mapDistribution()
 
-        return $dataset;
+	/**
+	 * Build the publisher `foaf:Agent` for a catalog/instance from an Organisation.
+	 *
+	 * @param array<string, mixed>|null $organisation The owning Organisation object.
+	 * @param array<string, mixed> $defaults Catalog-level defaults (publisher name/uri).
+	 *
+	 * @return array<string, mixed>|null The `foaf:Agent`, or null when nothing resolves.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-dcat-ap-nl-mandatory-property-completion-dcat-005
+	 */
+	public function buildPublisher(?array $organisation, array $defaults): ?array {
+		$name = ($organisation['title'] ?? $organisation['name'] ?? $defaults['publisherName'] ?? null);
+		$uri = ($organisation['oin'] ?? $organisation['tooiUri'] ?? $organisation['uri'] ?? $defaults['publisherUri'] ?? null);
 
-    }//end completeContactPoint()
+		if (($name === null || $name === '') && ($uri === null || $uri === '')) {
+			return null;
+		}
 
-    /**
-     * Extract a value from a publication object by a dot/bracket source path.
-     *
-     * Supports `a.b.c` nesting and a trailing `[]` denoting a list-valued field.
-     *
-     * @param array<string, mixed> $object The source object.
-     * @param string               $path   The source path (e.g. `title`, `meta.summary`, `tags[]`).
-     *
-     * @return mixed The resolved value or null when absent.
-     */
-    private function extractValue(array $object, string $path): mixed
-    {
-        $path     = rtrim($path, '[]');
-        $segments = explode('.', $path);
-        $cursor   = $object;
-        foreach ($segments as $segment) {
-            if (is_array($cursor) === false || array_key_exists($segment, $cursor) === false) {
-                return null;
-            }
+		$agent = ['@type' => 'foaf:Agent'];
+		if ($uri !== null && $uri !== '') {
+			$agent['@id'] = (string)$uri;
+		}
 
-            $cursor = $cursor[$segment];
-        }
+		if ($name !== null && $name !== '') {
+			$agent['foaf:name'] = (string)$name;
+		}
 
-        return $cursor;
+		return $agent;
+	}//end buildPublisher()
 
-    }//end extractValue()
+	/**
+	 * Complete `dct:publisher` from the object, then catalog defaults, then Organisation.
+	 *
+	 * @param array<string, mixed> $dataset The dataset under construction.
+	 * @param array<string, mixed> $publication The source publication object.
+	 * @param array<string, mixed> $defaults Catalog-level defaults incl. an optional `organisation` object.
+	 *
+	 * @return array<string, mixed> The dataset with `dct:publisher` populated when resolvable.
+	 */
+	private function completePublisher(array $dataset, array $publication, array $defaults): array {
+		$objectPublisher = ($publication['publisher'] ?? $publication['organisation'] ?? null);
+		if (is_array($objectPublisher) === true) {
+			$agent = $this->buildPublisher(organisation: $objectPublisher, defaults: $defaults);
+			if ($agent !== null) {
+				$dataset['dct:publisher'] = $agent;
+				return $dataset;
+			}
+		} elseif (is_string($objectPublisher) === true && $objectPublisher !== '') {
+			$dataset['dct:publisher'] = [
+				'@type' => 'foaf:Agent',
+				'foaf:name' => $objectPublisher,
+			];
+			return $dataset;
+		}
 
-    /**
-     * Normalise an arbitrary date string to ISO-8601 (DCAT `dct:modified` shape).
-     *
-     * @param string $value The source date string.
-     *
-     * @return string The ISO-8601 representation (falls back to the input on parse failure).
-     */
-    private function isoDate(string $value): string
-    {
-        $timestamp = strtotime($value);
-        if ($timestamp === false) {
-            return $value;
-        }
+		$agent = $this->buildPublisher(organisation: ($defaults['organisation'] ?? null), defaults: $defaults);
+		if ($agent !== null) {
+			$dataset['dct:publisher'] = $agent;
+		}
 
-        return date('c', $timestamp);
+		return $dataset;
+	}//end completePublisher()
 
-    }//end isoDate()
+	/**
+	 * Complete `dcat:contactPoint` from catalog defaults when the object lacks one.
+	 *
+	 * @param array<string, mixed> $dataset The dataset under construction.
+	 * @param array<string, mixed> $publication The source publication object.
+	 * @param array<string, mixed> $defaults Catalog-level defaults.
+	 *
+	 * @return array<string, mixed> The dataset with `dcat:contactPoint` populated when resolvable.
+	 */
+	private function completeContactPoint(array $dataset, array $publication, array $defaults): array {
+		$email = ($publication['contactEmail'] ?? $defaults['contactPoint'] ?? null);
+		if (is_string($email) === true && $email !== '') {
+			$dataset['dcat:contactPoint'] = [
+				'@type' => 'vcard:Organization',
+				'vcard:hasEmail' => ['@id' => 'mailto:' . ltrim($email, 'mailto:')],
+			];
+		}
 
-    /**
-     * Resolve a media type for a file from its extension or supplied mimetype.
-     *
-     * @param string      $extension The lowercase file extension.
-     * @param string|null $mimetype  An explicit mimetype when available.
-     *
-     * @return string|null The IANA media type, or null when unknown.
-     */
-    private function mediaTypeFor(string $extension, ?string $mimetype): ?string
-    {
-        if (is_string($mimetype) === true && $mimetype !== '') {
-            return $mimetype;
-        }
+		return $dataset;
+	}//end completeContactPoint()
 
-        $map = [
-            'pdf'  => 'application/pdf',
-            'csv'  => 'text/csv',
-            'json' => 'application/json',
-            'xml'  => 'application/xml',
-            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'zip'  => 'application/zip',
-            'txt'  => 'text/plain',
-            'html' => 'text/html',
-            'odt'  => 'application/vnd.oasis.opendocument.text',
-            'ods'  => 'application/vnd.oasis.opendocument.spreadsheet',
-        ];
+	/**
+	 * Extract a value from a publication object by a dot/bracket source path.
+	 *
+	 * Supports `a.b.c` nesting and a trailing `[]` denoting a list-valued field.
+	 *
+	 * @param array<string, mixed> $object The source object.
+	 * @param string $path The source path (e.g. `title`, `meta.summary`, `tags[]`).
+	 *
+	 * @return mixed The resolved value or null when absent.
+	 */
+	private function extractValue(array $object, string $path): mixed {
+		$path = rtrim($path, '[]');
+		$segments = explode('.', $path);
+		$cursor = $object;
+		foreach ($segments as $segment) {
+			if (is_array($cursor) === false || array_key_exists($segment, $cursor) === false) {
+				return null;
+			}
 
-        return ($map[$extension] ?? null);
+			$cursor = $cursor[$segment];
+		}
 
-    }//end mediaTypeFor()
+		return $cursor;
+	}//end extractValue()
 
-    /**
-     * Build the EU file-type authority URI for an extension (DCAT `dct:format`).
-     *
-     * @param string $extension The lowercase file extension.
-     *
-     * @return array<string, string> A `dct:format` node referencing the EU authority.
-     */
-    private function formatUriFor(string $extension): array
-    {
-        return [
-            '@id' => 'http://publications.europa.eu/resource/authority/file-type/'.strtoupper($extension),
-        ];
+	/**
+	 * Normalise an arbitrary date string to ISO-8601 (DCAT `dct:modified` shape).
+	 *
+	 * @param string $value The source date string.
+	 *
+	 * @return string The ISO-8601 representation (falls back to the input on parse failure).
+	 */
+	private function isoDate(string $value): string {
+		$timestamp = strtotime($value);
+		if ($timestamp === false) {
+			return $value;
+		}
 
-    }//end formatUriFor()
+		return date('c', $timestamp);
+	}//end isoDate()
+
+	/**
+	 * Resolve a media type for a file from its extension or supplied mimetype.
+	 *
+	 * @param string $extension The lowercase file extension.
+	 * @param string|null $mimetype An explicit mimetype when available.
+	 *
+	 * @return string|null The IANA media type, or null when unknown.
+	 */
+	private function mediaTypeFor(string $extension, ?string $mimetype): ?string {
+		if (is_string($mimetype) === true && $mimetype !== '') {
+			return $mimetype;
+		}
+
+		$map = [
+			'pdf' => 'application/pdf',
+			'csv' => 'text/csv',
+			'json' => 'application/json',
+			'xml' => 'application/xml',
+			'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			'zip' => 'application/zip',
+			'txt' => 'text/plain',
+			'html' => 'text/html',
+			'odt' => 'application/vnd.oasis.opendocument.text',
+			'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
+		];
+
+		return ($map[$extension] ?? null);
+	}//end mediaTypeFor()
+
+	/**
+	 * Build the EU file-type authority URI for an extension (DCAT `dct:format`).
+	 *
+	 * @param string $extension The lowercase file extension.
+	 *
+	 * @return array<string, string> A `dct:format` node referencing the EU authority.
+	 */
+	private function formatUriFor(string $extension): array {
+		return [
+			'@id' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($extension),
+		];
+
+	}//end formatUriFor()
 }//end class

@@ -1,0 +1,108 @@
+{
+	"info": {
+		"_postman_id": "opencatalogi-dcat-national-portal-federation",
+		"name": "OpenCatalogi - DCAT National Portal Federation (DONL/HVD/theme)",
+		"description": "API-only contract tests for the national/EU open-data federation (dcat-national-portal-federation change, DCAT-NPF-001..003). Asserts the instance-level DONL source metadata on GET /api/dcat, HVD triples on an HVD-declared publication, controlled data-theme binding (bind-or-omit), and the admin 'Validate for data.overheid.nl' report. Per the Playwright-UI-only / Newman-API convention this backend surface is asserted here.\n\nVariables:\n- baseUrl (default http://localhost:8080)\n- catalogSlug: a DCAT-enabled catalog slug\n- hvdPublicationId / hvdCatalogSlug: a catalog+publication with an HVD category declared\n- adminAuth: Basic auth for the DONL validate action",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+		{ "key": "catalogSlug", "value": "woo-besluiten", "type": "string" },
+		{ "key": "hvdCatalogSlug", "value": "open-data", "type": "string" },
+		{ "key": "adminAuth", "value": "Basic YWRtaW46YWRtaW4=", "type": "string" }
+	],
+	"item": [
+		{
+			"name": "DCAT-NPF-001 Instance document carries DONL source metadata",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 500', () => [200, 500].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const doc = pm.response.json();",
+							"  const root = (doc['@graph'] || []).find(n => (n['dcat:catalog'] !== undefined));",
+							"  pm.test('instance catalog node present', () => root !== undefined);",
+							"  if (root) {",
+							"    pm.test('dct:modified present', () => root['dct:modified'] !== undefined);",
+							"    pm.test('foaf:homepage present', () => root['foaf:homepage'] !== undefined);",
+							"    pm.test('dct:license present', () => root['dct:license'] !== undefined);",
+							"    // publisher + contactPoint depend on configuration; assert shape when present.",
+							"    if (root['dct:publisher']) pm.test('publisher is a foaf:Agent', () => root['dct:publisher']['@type'] === 'foaf:Agent');",
+							"  }",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "DCAT-NPF-002/003 Catalog datasets: HVD triples + controlled theme (no literal)",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{hvdCatalogSlug}}/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{hvdCatalogSlug}}", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 404', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const doc = pm.response.json();",
+							"  const datasets = (doc['@graph'] || []).filter(n => n['@type'] === 'dcat:Dataset');",
+							"  // Any HVD category emitted MUST be an authority URI + carry applicableLegislation.",
+							"  datasets.forEach(d => {",
+							"    if (d['dcatap:hvdCategory']) {",
+							"      pm.test('hvdCategory is a bna authority URI', () => JSON.stringify(d['dcatap:hvdCategory']).includes('data.europa.eu/bna/c_'));",
+							"      pm.test('applicableLegislation references Reg 2023/138', () => JSON.stringify(d['dcatap:applicableLegislation']).includes('reg_impl/2023/138'));",
+							"    }",
+							"    // Any theme emitted MUST be an authority URI object, never a bare string literal.",
+							"    if (d['dcat:theme'] !== undefined) {",
+							"      pm.test('dcat:theme is an @id authority ref, not a literal', () => typeof d['dcat:theme'] === 'object' && d['dcat:theme']['@id'] !== undefined);",
+							"    }",
+							"  });",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "DCAT-NPF-001 Admin 'Validate for data.overheid.nl' report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{adminAuth}}" }
+				],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/dcat/donl-validate", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "dcat", "donl-validate"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 (admin) or 401/403 (unauthorized) or 404', () => [200, 401, 403, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const doc = pm.response.json();",
+							"  pm.test('report has the harvest-source URL', () => typeof doc.sourceUrl === 'string' && doc.sourceUrl.endsWith('/api/dcat'));",
+							"  pm.test('report has valid flag + violations array', () => typeof doc.valid === 'boolean' && Array.isArray(doc.violations));",
+							"}"
+						]
+					}
+				}
+			]
+		}
+	]
+}

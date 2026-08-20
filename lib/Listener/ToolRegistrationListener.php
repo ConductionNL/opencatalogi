@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi Tool Registration Listener.
  *
@@ -18,13 +19,13 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-57
+ * @spec openspec/specs/cms-tool/spec.md
  */
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCA\OpenCatalogi\Tool\CMSTool;
+use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
@@ -38,53 +39,50 @@ use OCP\EventDispatcher\IEventListener;
  *
  * @template-implements IEventListener<Event>
  */
-class ToolRegistrationListener implements IEventListener
-{
+class ToolRegistrationListener implements IEventListener {
 
-    /**
-     * CMS tool.
-     *
-     * @var CMSTool
-     */
-    private CMSTool $cmsTool;
+	/**
+	 * CMS tool.
+	 *
+	 * @var CMSTool
+	 */
+	private CMSTool $cmsTool;
 
-    /**
-     * Constructor.
-     *
-     * @param CMSTool $cmsTool CMS tool.
-     */
-    public function __construct(CMSTool $cmsTool)
-    {
-        $this->cmsTool = $cmsTool;
+	/**
+	 * Constructor.
+	 *
+	 * @param CMSTool $cmsTool CMS tool.
+	 */
+	public function __construct(CMSTool $cmsTool) {
+		$this->cmsTool = $cmsTool;
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle the event.
-     *
-     * @param Event $event The event.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-57
-     */
-    public function handle(Event $event): void
-    {
-        if (($event instanceof ToolRegistrationEvent) === false) {
-            return;
-        }
+	/**
+	 * Handle the event.
+	 *
+	 * @param Event $event The event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	public function handle(Event $event): void {
+		if (($event instanceof ToolRegistrationEvent) === false) {
+			return;
+		}
 
-        // Register OpenCatalogi CMS tool.
-        $event->registerTool(
-            id: 'opencatalogi.cms',
-            tool: $this->cmsTool,
-            metadata: [
-                'name'        => $this->cmsTool->getName(),
-                'description' => $this->cmsTool->getDescription(),
-                'icon'        => 'icon-category-office',
-                'app'         => 'opencatalogi',
-            ]
-        );
+		// Register OpenCatalogi CMS tool.
+		$event->registerTool(
+			id: 'opencatalogi.cms',
+			tool: $this->cmsTool,
+			metadata: [
+				'name' => $this->cmsTool->getName(),
+				'description' => $this->cmsTool->getDescription(),
+				'icon' => 'icon-category-office',
+				'app' => 'opencatalogi',
+			]
+		);
 
-    }//end handle()
+	}//end handle()
 }//end class

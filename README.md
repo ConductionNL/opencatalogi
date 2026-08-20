@@ -59,8 +59,8 @@ It connects to a federated directory of other OpenCatalogi instances, enabling c
 ### Search & Discovery
 
 - **Faceted Search** — Filter publications by category, organization, catalog, date range, and custom metadata fields
-- **Full-Text Search** — Search across publication content and attached documents
-- **ElasticSearch Support** — Optional ElasticSearch backend for high-performance search at scale
+- **Full-Text Search** — Search across publication metadata (SQL full-text by default). Searching across attached document content is *planned* — tracked by the `add-public-fulltext-search` change, not yet shipped
+- **SOLR Support** — Optional OpenRegister SOLR backend for high-performance search at scale
 - **Public Search API** — RESTful endpoints for external frontends and third-party integrations
 
 ### Content Management
@@ -93,7 +93,7 @@ graph TD
     C --> D[(PostgreSQL JSON store)]
     B --> E[Federation Directory]
     E -->|sync| F[External OpenCatalogi Instances]
-    B --> G[ElasticSearch — optional]
+    B --> G[OpenRegister SOLR — optional]
     H[Public Frontend — Tilburg WOO UI] -->|Public API| B
     B --> I[Nextcloud Activity]
 ```
@@ -104,6 +104,7 @@ graph TD
 | ------------ | ---------------------------------------------------------------------------------- | ----------------------- |
 | Publication  | Core metadata wrapper for published information — title, summary, category, status | DCAT-AP                 |
 | Attachment   | File or document linked to a publication with its own metadata                     | DCAT Distribution       |
+| Document     | Schema-discoverable summary of a publication's file (title, filename, MIME type) — surfaced alongside publications by the public search endpoint (`GET /apps/opencatalogi/api/search`) | DCAT Distribution |
 | Catalogue    | A named collection of publications with its own slug, organization, and settings   | DCAT Catalog            |
 | Organisation | The publishing organization with contact info, logo, and branding                  | Schema.org Organization |
 | Listing      | A subscription to an external catalog from the federated directory                 | —                       |
@@ -229,7 +230,7 @@ CI runs `composer check:strict` (lint + phpcs + phpmd + psalm + phpstan) on ever
 | Build     | Webpack 5, @nextcloud/webpack-vue-config                    |
 | Backend   | PHP 8.1+, Nextcloud App Framework                           |
 | Data      | OpenRegister (PostgreSQL JSON objects)                      |
-| Search    | ElasticSearch 8 (optional), SQL full-text (default)         |
+| Search    | OpenRegister SOLR (optional), SQL full-text (default)       |
 | PDF       | mPDF for document generation                                |
 | Templates | Twig for content rendering                                  |
 | Quality   | PHPCS, PHPMD, Psalm, PHPStan, phpmetrics, ESLint, Stylelint |

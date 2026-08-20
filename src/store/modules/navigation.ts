@@ -2,59 +2,91 @@
 import { defineStore } from 'pinia'
 
 interface DialogProperties {
-    objectType?: string;
-    dialogName?: string;
-    displayName?: string;
-    isMultiple?: boolean;
-    operation?: 'publish' | 'depublish';
-    attachments?: Array<any>;
+	objectType?: string
+	dialogName?: string
+	displayName?: string
+	isMultiple?: boolean
+	operation?: 'publish' | 'depublish'
+	attachments?: Array<any>
 }
 
 interface NavigationStoreState {
-    selected: 'dashboard' | 'publication' | 'catalogi' | 'publicationType' | 'organizations' | 'themes' | 'search' | 'directory' | 'pages' | 'menus' | 'glossary' | 'uploadFiles';
-    selectedCatalogus: string | null;
-    modal: string | null;
-    dialog: string | null;
-    dialogProperties: DialogProperties | null;
-    transferData: string | null;
+	selected:
+		| 'dashboard'
+		| 'publication'
+		| 'catalogi'
+		| 'publicationType'
+		| 'organizations'
+		| 'themes'
+		| 'search'
+		| 'directory'
+		| 'pages'
+		| 'menus'
+		| 'glossary'
+		| 'uploadFiles'
+	selectedCatalogus: string | null
+	modal: string | null
+	dialog: string | null
+	dialogProperties: DialogProperties | null
+	transferData: string | null
 }
 
 export const useNavigationStore = defineStore('ui', {
-	state: () => ({
-		// The currently active menu item, defaults to '' which triggers the dashboard
-		selected: 'dashboard',
-		// The currently selected catalogi within 'publications'
-		selectedCatalogus: null,
-		// The currently active modal, managed trough the state to ensure that only one modal can be active at the same time
-		modal: null,
-		// The currently active dialog
-		dialog: null,
-		// Properties for the active dialog
-		dialogProperties: null,
-		// Any data needed in various models, dialogs, views which cannot be transferred through normal means or without writing crappy/excessive code
-		transferData: null,
-	} as NavigationStoreState),
+	state: () =>
+		({
+			// The currently active menu item, defaults to '' which triggers the dashboard
+			selected: 'dashboard',
+			// The currently selected catalogi within 'publications'
+			selectedCatalogus: null,
+			// The currently active modal, managed trough the state to ensure that only one modal can be active at the same time
+			modal: null,
+			// The currently active dialog
+			dialog: null,
+			// Properties for the active dialog
+			dialogProperties: null,
+			// Any data needed in various models, dialogs, views which cannot be transferred through normal means or without writing crappy/excessive code
+			transferData: null,
+		}) as NavigationStoreState,
 	actions: {
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param selected
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setSelected(selected: NavigationStoreState['selected']) {
 			this.selected = selected
 			console.log('Active menu item set to ' + selected)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param selectedCatalogus
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setSelectedCatalogus(selectedCatalogus: string) {
 			this.selectedCatalogus = selectedCatalogus
 			console.log('Active catalogus menu set to ' + selectedCatalogus)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
+		/**
+		 * @param modal
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setModal(modal: NavigationStoreState['modal']) {
 			this.modal = modal
 			console.log('Active modal set to ' + modal)
 		},
-		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
-		setDialog(dialog: NavigationStoreState['dialog'], properties?: DialogProperties) {
+		/**
+		 * @param dialog
+		 * @param properties
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		setDialog(
+			dialog: NavigationStoreState['dialog'],
+			properties?: DialogProperties,
+		) {
 			this.dialog = dialog
 			this.dialogProperties = properties || null
-			console.log('Active dialog set to ' + dialog, properties ? 'with properties' : '')
+			console.log(
+				'Active dialog set to ' + dialog,
+				properties ? 'with properties' : '',
+			)
 		},
 		setTransferData(transferData: NavigationStoreState['transferData']) {
 			this.transferData = transferData

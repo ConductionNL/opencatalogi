@@ -1,0 +1,8 @@
+{
+  "spec_slug": "nora-architectuur-publishing",
+  "title": "NORA-architectuur publishing",
+  "app": "opencatalogi",
+  "repo": "https://github.com/ConductionNL/opencatalogi",
+  "depends_on": [],
+  "issue": null
+}

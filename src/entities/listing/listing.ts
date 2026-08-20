@@ -1,30 +1,33 @@
 /**
  * Listing entity class
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TOrganization } from '../organization'
-import { TListing } from './listing.types'
-import { SafeParseReturnType, z } from 'zod'
+import type { SafeParseReturnType } from 'zod'
+import type { TOrganization } from '../organization'
+import type { TListing } from './listing.types'
+
+import { z } from 'zod'
 
 /** @typedef {import('./listing.types').TListing} TListing */
 /** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
 
 /**
  * Listing class representing a catalog listing in the system
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ *
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Listing implements TListing {
-
 	public id!: string
 	public catalogusId!: string
 	public title!: string
@@ -44,9 +47,10 @@ export class Listing implements TListing {
 
 	/**
 	 * Creates a new Listing instance
+	 *
 	 * @param data - Listing data
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+	 * @spec openspec/specs/entity-typescript-models/spec.md
 	 */
 	constructor(data: TListing) {
 		this.hydrate(data)
@@ -54,6 +58,7 @@ export class Listing implements TListing {
 
 	/**
 	 * Hydrates the listing instance with data
+	 *
 	 * @param data - Listing data to hydrate with
 	 * @private
 	 */
@@ -78,7 +83,8 @@ export class Listing implements TListing {
 
 	/**
 	 * Validates the listing data
-	 * @return {SafeParseReturnType<TListing, unknown>} SafeParseReturnType containing validation results
+	 *
+	 * @return SafeParseReturnType containing validation results
 	 */
 	public validate(): SafeParseReturnType<TListing, unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/8azwyic71djee-create-listing
@@ -102,5 +108,4 @@ export class Listing implements TListing {
 			...this,
 		})
 	}
-
 }

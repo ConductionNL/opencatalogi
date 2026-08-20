@@ -7,50 +7,77 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:name="t('opencatalogi', 'Quick start')"
 		class="dashboardSidebar"
 		:subname="t('opencatalogi', 'Quickly switch to where you need to be')">
-		<NcAppSidebarTab id="search-tab" :name="t('opencatalogi', 'Search')" :order="1">
+		<NcAppSidebarTab
+			id="search-tab"
+			:name="t('opencatalogi', 'Search')"
+			:order="1">
 			<template #icon>
 				<Magnify :size="20" />
 			</template>
 			{{ t('opencatalogi', 'Search in the federative network') }}
-			<NcTextField class="searchField"
-				:value="objectStore.getSearchTerm('search')"
-				:label="t('opencatalogi', 'Search')" />
+			<!-- `:value` is NOT a prop on Nc v9's NcTextField: it wraps NcInputField,
+			     which declares `modelValue` as REQUIRED. A plain `:value` therefore
+			     leaves `modelValue` undefined, the required-prop check throws, and
+			     the component renders NO `<input>` at all while the surrounding
+			     sidebar still looks fine. Bind `:model-value` and write back through
+			     `@update:model-value`, matching PublicationList.vue. -->
+			<NcTextField
+				class="searchField"
+				:modelValue="objectStore.getSearchTerm('search')"
+				:label="t('opencatalogi', 'Search')"
+				@update:modelValue="objectStore.setSearchTerm('search', $event)" />
 			<NcNoteCard v-if="objectStore.getError('search')" type="error">
 				<p>{{ objectStore.getError('search') }}</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
 
-		<NcAppSidebarTab id="publication-creation-tab" :name="t('opencatalogi', 'Create Publication')" :order="2">
+		<NcAppSidebarTab
+			id="publication-creation-tab"
+			:name="t('opencatalogi', 'Create Publication')"
+			:order="2">
 			<template #icon>
 				<Plus :size="20" />
 			</template>
-			<h3 style="margin-top: 0;">
+			<h3 style="margin-top: 0">
 				{{ t('opencatalogi', 'Create a quick publication') }}
 			</h3>
 
 			<div class="formContainer">
-				<NcSelect v-bind="catalogi"
+				<NcSelect
+					v-bind="catalogi"
 					v-model="catalogi.value"
-					style="min-width: unset; width: 100%;"
-					:input-label="t('opencatalogi', 'Catalog*')"
+					style="min-width: unset; width: 100%"
+					:inputLabel="t('opencatalogi', 'Catalog*')"
 					:loading="catalogiLoading"
 					:disabled="catalogiLoading || loading" />
-				<NcSelect v-bind="filteredPublicationTypeOptions"
+				<NcSelect
+					v-bind="filteredPublicationTypeOptions"
 					v-model="publicationType.value"
-					style="min-width: unset; width: 100%;"
-					:input-label="t('opencatalogi', 'Publication type*')"
+					style="min-width: unset; width: 100%"
+					:inputLabel="t('opencatalogi', 'Publication type*')"
 					:loading="publicationTypeLoading"
-					:disabled="publicationTypeLoading || loading || !catalogi.value?.id" />
-				<NcTextField :disabled="loading"
-					:label="t('opencatalogi', 'Title*')"
-					:value.sync="publicationItem.title" />
-				<NcTextField :disabled="loading"
-					:label="t('opencatalogi', 'Summary*')"
-					:value.sync="publicationItem.summary" />
+					:disabled="
+						publicationTypeLoading || loading || !catalogi.value?.id
+					" />
+				<NcTextField
+					v-model="publicationItem.title"
+					:disabled="loading"
+					:label="t('opencatalogi', 'Title*')" />
+				<NcTextField
+					v-model="publicationItem.summary"
+					:disabled="loading"
+					:label="t('opencatalogi', 'Summary*')" />
 			</div>
-			<NcButton :disabled="!publicationItem.title || !publicationItem.summary || !catalogi.value?.id || !publicationType.value?.id || loading"
-				style="margin-top: 0.5rem;"
-				type="primary"
+			<NcButton
+				:disabled="
+					!publicationItem.title
+					|| !publicationItem.summary
+					|| !catalogi.value?.id
+					|| !publicationType.value?.id
+					|| loading
+				"
+				style="margin-top: 0.5rem"
+				variant="primary"
 				class="addButton"
 				@click="addPublication()">
 				<template #icon>
@@ -65,7 +92,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<p>{{ t('opencatalogi', 'Publication successfully added') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>{{ t('opencatalogi', 'Something went wrong while adding the publication') }}</p>
+					<p>
+						{{
+							t(
+								'opencatalogi',
+								'Something went wrong while adding the publication',
+							)
+						}}
+					</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
@@ -73,46 +107,90 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</div>
 		</NcAppSidebarTab>
 
-		<NcAppSidebarTab id="settings-tab" :name="t('opencatalogi', 'Publications')" :order="3">
+		<NcAppSidebarTab
+			id="settings-tab"
+			:name="t('opencatalogi', 'Publications')"
+			:order="3">
 			<template #icon>
 				<ListBoxOutline :size="20" />
 			</template>
 			{{ t('opencatalogi', 'Which publications require your attention?') }}
-			<NcListItem v-for="(publication, i) in objectStore.getCollection('publication').results"
+			<NcListItem
+				v-for="(publication, i) in objectStore.getCollection('publication')
+					.results"
 				:key="`${publication}${i}`"
 				:name="publication.title"
 				:bold="false"
-				:force-display-actions="true"
-				:active="objectStore.getActiveObject('publication')?.id === publication?.id"
+				:forceDisplayActions="true"
+				:active="
+					objectStore.getActiveObject('publication')?.id
+					=== publication?.id
+				"
 				:details="publication?.status">
 				<template #icon>
-					<ListBoxOutline :class="objectStore.getActiveObject('publication')?.id === publication?.id && 'selectedZaakIcon'"
-						disable-menu
+					<ListBoxOutline
+						:class="
+							objectStore.getActiveObject('publication')?.id
+								=== publication?.id && 'selectedZaakIcon'
+						"
+						disableMenu
 						:size="44" />
 				</template>
 				<template #subname>
 					{{ publication?.description }}
 				</template>
 				<template #actions>
-					<NcActionButton close-after-click @click="handleViewPublication(publication)">
+					<NcActionButton
+						closeAfterClick
+						@click="handleViewPublication(publication)">
 						<template #icon>
 							<ListBoxOutline :size="20" />
 						</template>
 						{{ t('opencatalogi', 'View') }}
 					</NcActionButton>
-					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('editPublication')">
+					<NcActionButton
+						closeAfterClick
+						@click="
+							() => {
+								objectStore.setActiveObject(
+									'publication',
+									publication,
+								)
+								navigationStore.setModal('editPublication')
+							}
+						">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
 						{{ t('opencatalogi', 'Edit') }}
 					</NcActionButton>
-					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('publishPublication')">
+					<NcActionButton
+						closeAfterClick
+						@click="
+							() => {
+								objectStore.setActiveObject(
+									'publication',
+									publication,
+								)
+								navigationStore.setDialog('publishPublication')
+							}
+						">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
 						{{ t('opencatalogi', 'Publish') }}
 					</NcActionButton>
-					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deletePublication')">
+					<NcActionButton
+						closeAfterClick
+						@click="
+							() => {
+								objectStore.setActiveObject(
+									'publication',
+									publication,
+								)
+								navigationStore.setDialog('deletePublication')
+							}
+						">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
@@ -120,45 +198,86 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</NcActionButton>
 				</template>
 			</NcListItem>
-			<NcNoteCard v-if="!objectStore.getCollection('publication').results?.length > 0" type="success">
-				<p>{{ t('opencatalogi', 'There are no publications that require your attention at the moment') }}</p>
+			<NcNoteCard
+				v-if="!objectStore.getCollection('publication').results?.length > 0"
+				type="success">
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'There are no publications that require your attention at the moment',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
 
-		<NcAppSidebarTab id="share-tab" :name="t('opencatalogi', 'Attachments')" :order="4">
+		<NcAppSidebarTab
+			id="share-tab"
+			:name="t('opencatalogi', 'Attachments')"
+			:order="4">
 			<template #icon>
 				<FileOutline :size="20" />
 			</template>
 			{{ t('opencatalogi', 'Which attachments require your attention?') }}
-			<NcListItem v-for="(attachment, i) in objectStore.getCollection('attachment').results"
+			<NcListItem
+				v-for="(attachment, i) in objectStore.getCollection('attachment')
+					.results"
 				:key="`${attachment}${i}`"
 				:name="attachment.title"
 				:bold="false"
-				:force-display-actions="true"
-				:active="objectStore.getActiveObject('attachment')?.id === attachment?.id"
+				:forceDisplayActions="true"
+				:active="
+					objectStore.getActiveObject('attachment')?.id === attachment?.id
+				"
 				:details="attachment?.status">
 				<template #icon>
-					<ListBoxOutline :class="objectStore.getActiveObject('attachment')?.id === attachment.id && 'selectedZaakIcon'"
-						disable-menu
+					<ListBoxOutline
+						:class="
+							objectStore.getActiveObject('attachment')?.id
+								=== attachment.id && 'selectedZaakIcon'
+						"
+						disableMenu
 						:size="44" />
 				</template>
 				<template #subname>
 					{{ attachment?.description }}
 				</template>
 				<template #actions>
-					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setModal('editAttachment')">
+					<NcActionButton
+						closeAfterClick
+						@click="
+							() => {
+								objectStore.setActiveObject('attachment', attachment)
+								navigationStore.setModal('editAttachment')
+							}
+						">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
 						{{ t('opencatalogi', 'Edit') }}
 					</NcActionButton>
-					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('publishAttachment')">
+					<NcActionButton
+						closeAfterClick
+						@click="
+							() => {
+								objectStore.setActiveObject('attachment', attachment)
+								navigationStore.setDialog('publishAttachment')
+							}
+						">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
 						{{ t('opencatalogi', 'Publish') }}
 					</NcActionButton>
-					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('deleteAttachment')">
+					<NcActionButton
+						closeAfterClick
+						@click="
+							() => {
+								objectStore.setActiveObject('attachment', attachment)
+								navigationStore.setDialog('deleteAttachment')
+							}
+						">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
@@ -166,46 +285,56 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</NcActionButton>
 				</template>
 			</NcListItem>
-			<NcNoteCard v-if="!objectStore.getCollection('attachment').results?.length > 0" type="success">
-				<p>{{ t('opencatalogi', 'There are no attachments that require your attention at the moment') }}</p>
+			<NcNoteCard
+				v-if="!objectStore.getCollection('attachment').results?.length > 0"
+				type="success">
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'There are no attachments that require your attention at the moment',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
 	</NcAppSidebar>
 </template>
-<script>
 
+<script>
 import {
+	NcActionButton,
 	NcAppSidebar,
 	NcAppSidebarTab,
-	NcLoadingIcon,
-	NcTextField,
-	NcNoteCard,
-	NcListItem,
-	NcActionButton,
-	NcSelect,
 	NcButton,
+	NcListItem,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
 } from '@nextcloud/vue'
-import Magnify from 'vue-material-design-icons/Magnify.vue'
-import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import FileOutline from 'vue-material-design-icons/FileOutline.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
-import Publish from 'vue-material-design-icons/Publish.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-
-import { useFileSelection } from '../../composables/UseFileSelection.js'
-import { ref } from 'vue'
 import axios from 'axios'
-
+import { ref } from 'vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
+import FileOutline from 'vue-material-design-icons/FileOutline.vue'
+import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
+import Magnify from 'vue-material-design-icons/Magnify.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Publish from 'vue-material-design-icons/Publish.vue'
+import { useFileSelection } from '../../composables/UseFileSelection.js'
 import { Publication } from '../../entities/index.js'
 
 const dropZoneRef = ref()
-const { files, reset } = useFileSelection({ allowMultiple: false, dropzone: dropZoneRef })
+const { files, reset } = useFileSelection({
+	allowMultiple: false,
+	dropzone: dropZoneRef,
+})
 
 /**
  * DashboardSideBar — sidebar accompanying the dashboard overview.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-2
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'DashboardSideBar',
@@ -224,6 +353,7 @@ export default {
 		Publish,
 		Delete,
 	},
+
 	data() {
 		return {
 			publications: false,
@@ -236,12 +366,14 @@ export default {
 				portal: '',
 				license: '',
 			},
+
 			catalogiLoading: false,
 			catalogiList: [],
 			catalogi: {
 				options: [],
 				value: null,
 			},
+
 			publicationTypeLoading: false,
 			publicationTypeList: [], // this is the entire dataset of publicationType
 			publicationType: {},
@@ -250,6 +382,7 @@ export default {
 			success: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * Filters publicationType (Now known as Publication Type) based on the catalogi
@@ -261,14 +394,22 @@ export default {
 			if (!this.publicationTypeList?.length) return {}
 
 			// step 1: get the selected catalogus from the catalogi dropdown
-			const selectedCatalogus = objectStore.getCollection('catalogus').results
-				.find((catalogus) =>
-					(catalogus.id?.toString() || Symbol('catalogusId')) === (this.catalogi?.value.id?.toString() || Symbol('catalogiId')),
+			const selectedCatalogus = objectStore
+				.getCollection('catalogus')
+				.results.find(
+					(catalogus) =>
+						(catalogus.id?.toString() || Symbol('catalogusId'))
+						=== (this.catalogi?.value.id?.toString()
+							|| Symbol('catalogiId')),
 				)
 
 			// step 2: get the full publicationType's from the publicationTypeIds
-			const filteredPublicationType = this.publicationTypeList
-				.filter((publicationType) => selectedCatalogus.publicationTypes.map(String).includes(publicationType.id.toString()))
+			const filteredPublicationType = this.publicationTypeList.filter(
+				(publicationType) =>
+					selectedCatalogus.publicationTypes
+						.map(String)
+						.includes(publicationType.id.toString()),
+			)
 
 			return {
 				options: filteredPublicationType.map((publicationType) => ({
@@ -279,6 +420,7 @@ export default {
 			}
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 	mounted() {
 		objectStore.fetchCollection('publication')
@@ -286,17 +428,27 @@ export default {
 		this.fetchCatalogi()
 		this.fetchPublicationType()
 	},
+
 	methods: {
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+		/**
+		 * @param publication
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2
+		 */
 		handleViewPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
 			const catalogId = publication?.catalog?.id || publication?.catalog
 			const catalogs = objectStore.getCollection('catalogus')?.results || []
-			const matchedCatalog = catalogs.find((c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''))
-			const slug = matchedCatalog?.slug || publication?.catalog?.slug || this.$route?.params?.catalogSlug
+			const matchedCatalog = catalogs.find(
+				(c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''),
+			)
+			const slug =
+				matchedCatalog?.slug
+				|| publication?.catalog?.slug
+				|| this.$route?.params?.catalogSlug
 			if (!slug || !publication?.id) return
 			this.$router.push(`/publications/${slug}/${publication.id}`)
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		cleanup() {
 			if (this.success === true) {
@@ -313,11 +465,13 @@ export default {
 			}
 			this.error = null
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		fetchCatalogi() {
 			this.catalogiLoading = true
 
-			objectStore.fetchCollection('catalogus')
+			objectStore
+				.fetchCollection('catalogus')
 				.then(({ response, data }) => {
 					this.catalogiList = data
 					this.catalogi.options = this.catalogiList.map((catalog) => ({
@@ -332,11 +486,13 @@ export default {
 					this.catalogiLoading = false
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		fetchPublicationType() {
 			this.publicationTypeLoading = true
 
-			objectStore.fetchCollection('publication_type')
+			objectStore
+				.fetchCollection('publication_type')
 				.then(({ response, data }) => {
 					this.publicationTypeList = data.results
 					this.publicationTypeLoading = false
@@ -346,31 +502,34 @@ export default {
 					this.publicationTypeLoading = false
 				})
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		addPublication() {
 			this.loading = true
 			this.error = false
 
 			// create the publication
-			objectStore.createObject('publication', {
-				...this.publicationItem,
-				catalog: this.catalogi.value.id,
-				publicationType: this.publicationType.value.id,
-			})
+			objectStore
+				.createObject('publication', {
+					...this.publicationItem,
+					catalog: this.catalogi.value.id,
+					publicationType: this.publicationType.value.id,
+				})
 				.then(async (response) => {
 					this.loading = false
 					this.success = response.ok
 
 					// if response is ok, and files exist, we add the attachment
 					const publicationItem = new Publication(await response.json())
-					if (response.ok && files.value) this.addAttachment(publicationItem)
+					if (response.ok && files.value)
+						this.addAttachment(publicationItem)
 
 					// Let's refresh the publicationList
 					objectStore.fetchCollection('publication')
 					// Wait for the user to read the feedback then close the model
 					setTimeout(this.cleanup, 2000)
 					if (!files.value && files.value?.length === 0) {
-						setTimeout(this.success = null, 2000)
+						setTimeout((this.success = null), 2000)
 					}
 				})
 				.catch((err) => {
@@ -379,59 +538,72 @@ export default {
 					this.hasUpdated = false
 				})
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+
+		/**
+		 * @param publicationItem
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2
+		 */
 		addAttachment(publicationItem) {
 			this.loading = true
 			this.errorMessage = false
 
-			axios.post('/index.php/apps/opencatalogi/api/attachments', {
-				published: null,
-				summary: '',
-				license: '',
-				_file: files.value ? files.value[0] : '',
-			}, {
-				headers: {
-					'Content-Type': 'multipart/form-data',
-					// These headers are used to pass along some publication info to use as name for a Folder,
-					// to store (attachments/) files in for that specific publication,
-					'Publication-Id': publicationItem.id,
-					'Publication-Title': publicationItem.title,
-				},
-			}).then((response) => {
-				this.success = response.status
-				reset()
-				// Let's refresh the attachment list
+			axios
+				.post(
+					'/index.php/apps/opencatalogi/api/attachments',
+					{
+						published: null,
+						summary: '',
+						license: '',
+						_file: files.value ? files.value[0] : '',
+					},
+					{
+						headers: {
+							'Content-Type': 'multipart/form-data',
+							// These headers are used to pass along some publication info to use as name for a Folder,
+							// to store (attachments/) files in for that specific publication,
+							'Publication-Id': publicationItem.id,
+							'Publication-Title': publicationItem.title,
+						},
+					},
+				)
+				.then((response) => {
+					this.success = response.status
+					reset()
+					// Let's refresh the attachment list
 
-				objectStore.fetchCollection('attachment')
+					objectStore.fetchCollection('attachment')
 
-				objectStore.updateObject('publication', publicationItem.id, {
-					...publicationItem,
-					attachments: [...publicationItem.attachments, response.data.id],
-				})
-					.then((response) => {
-						this.success = response.ok
-						this.loading = false
+					objectStore
+						.updateObject('publication', publicationItem.id, {
+							...publicationItem,
+							attachments: [
+								...publicationItem.attachments,
+								response.data.id,
+							],
+						})
+						.then((response) => {
+							this.success = response.ok
+							this.loading = false
 
-						// Let's refresh the publicationList
-						objectStore.fetchCollection('publication')
-						response.json().then((data) => {
-							objectStore.setActiveObject('publication', data)
+							// Let's refresh the publicationList
+							objectStore.fetchCollection('publication')
+							response.json().then((data) => {
+								objectStore.setActiveObject('publication', data)
+							})
+						})
+						.catch((err) => {
+							this.error = err
+							this.loading = false
 						})
 
-					})
-					.catch((err) => {
-						this.error = err
-						this.loading = false
-					})
+					objectStore.setActiveObject('attachment', response)
 
-				objectStore.setActiveObject('attachment', response)
-
-				// Wait for the user to read the feedback then close the model
-				const self = this
-				setTimeout(function() {
-					self.success = null
-				}, 2000)
-			})
+					// Wait for the user to read the feedback then close the model
+					const self = this
+					setTimeout(function () {
+						self.success = null
+					}, 2000)
+				})
 				.catch((err) => {
 					this.error = err.response?.data?.error ?? err
 					this.loading = false
@@ -442,14 +614,15 @@ export default {
 </script>
 
 <style lang="css">
-.dashboardSidebar .addFileContainer{
+.dashboardSidebar .addFileContainer {
 	margin-block: var(--OC-margin-20);
 }
 
-.dashboardSidebar .filesListDragDropNoticeWrapper{
+.dashboardSidebar .filesListDragDropNoticeWrapper {
 	padding-block: 2rem;
 }
 </style>
+
 <style scoped>
 .addButton {
 	margin-block-start: 10px;

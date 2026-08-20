@@ -1,40 +1,34 @@
-/**
- * EditListingModal.vue
- * Modal for editing a directory listing
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-5
- */
+/** * EditListingModal.vue * Modal for editing a directory listing * @category
+Components * @package opencatalogi * @author Ruben Linde * @copyright 2024 * @license
+EUPL-1.2 * @version 1.0.0 * @link https://github.com/opencatalogi/opencatalogi * *
+@spec openspec/specs/dashboard/spec.md */
 
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { ref, computed } from 'vue'
-import { objectStore, navigationStore } from '../../store/store.js'
 import { NcButton, NcInputField } from '@nextcloud/vue'
+import { computed, ref } from 'vue'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 /**
  * Loading state for the component
+ *
  * @type {import('vue').Ref<boolean>}
  */
 const loading = ref(false)
 
 /**
  * Get the active listing from the store
+ *
  * @return {object | null}
  */
 const listing = computed(() => objectStore.getActiveObject('listing'))
 
 /**
  * Handle save action
+ *
  * @return {Promise<void>}
  */
-const handleSave = async () => {
+async function handleSave() {
 	loading.value = true
 	try {
 		await objectStore.updateObject('listing', listing.value.id, listing.value)
@@ -49,9 +43,10 @@ const handleSave = async () => {
 
 /**
  * Handle cancel action
+ *
  * @return {void}
  */
-const handleCancel = () => {
+function handleCancel() {
 	navigationStore.setModal(false)
 }
 </script>
@@ -59,18 +54,18 @@ const handleCancel = () => {
 <template>
 	<div class="edit-listing-modal">
 		<NcInputField
-			:value.sync="listing.title"
+			v-model="listing.title"
 			:label="t('opencatalogi', 'Title')"
 			:disabled="loading" />
 		<NcInputField
-			:value.sync="listing.description"
+			v-model="listing.description"
 			:label="t('opencatalogi', 'Description')"
 			:disabled="loading" />
 		<div class="edit-listing-modal__actions">
 			<NcButton :disabled="loading" @click="handleCancel">
 				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
-			<NcButton type="primary" :disabled="loading" @click="handleSave">
+			<NcButton variant="primary" :disabled="loading" @click="handleSave">
 				{{ t('opencatalogi', 'Save') }}
 			</NcButton>
 		</div>

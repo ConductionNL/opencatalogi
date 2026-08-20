@@ -15,7 +15,12 @@
  *
  * @type {Array<string>}
  */
-export const ASSESSMENTS = ['te_beoordelen', 'openbaar', 'deels_openbaar', 'niet_openbaar']
+export const ASSESSMENTS = [
+	'te_beoordelen',
+	'openbaar',
+	'deels_openbaar',
+	'niet_openbaar',
+]
 
 /**
  * Build the redaction-instruction payload from the per-entity selection + grounds.
@@ -23,7 +28,7 @@ export const ASSESSMENTS = ['te_beoordelen', 'openbaar', 'deels_openbaar', 'niet
  * @param {Array<object>} entities The detected entities: [{ id, text, page }].
  * @param {object} selected Map of entityId -> boolean (marked for redaction).
  * @param {object} grounds Map of entityId -> { id } (selected weigeringsgrond).
- * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
+ * @spec openspec/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
  * @return {Array<object>} The redaction instructions.
  */
 export function buildRedactionInstructions(entities, selected, grounds) {
@@ -41,25 +46,27 @@ export function buildRedactionInstructions(entities, selected, grounds) {
  * Derive the sorted, unique list of pages that carry detected entities.
  *
  * @param {Array<object>} entities The detected entities: [{ page }].
- * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
+ * @spec openspec/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
  * @return {Array<number>} The ascending page numbers.
  */
 export function pagesWithEntities(entities) {
-	return [...new Set((entities || []).map((e) => e.page).filter(Boolean))].sort((a, b) => a - b)
+	return [...new Set((entities || []).map((e) => e.page).filter(Boolean))].sort(
+		(a, b) => a - b,
+	)
 }
 
 /**
  * Derive a per-status document summary from a list of assessment objects.
  *
  * @param {Array<object>} assessments The assessment objects: [{ assessment }].
- * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+ * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
  * @return {object} { counts, total, assessed, progressLabel }.
  */
 export function deriveSummary(assessments) {
 	const counts = ASSESSMENTS.reduce((acc, key) => ({ ...acc, [key]: 0 }), {})
-	for (const a of (assessments || [])) {
+	for (const a of assessments || []) {
 		const status = a.assessment || 'te_beoordelen'
-		if (Object.prototype.hasOwnProperty.call(counts, status)) {
+		if (Object.hasOwn(counts, status)) {
 			counts[status]++
 		}
 	}
@@ -73,7 +80,7 @@ export function deriveSummary(assessments) {
  * left in "te_beoordelen".
  *
  * @param {object} summary The summary from {@link deriveSummary}.
- * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
+ * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
  * @return {boolean} True when reviewable.
  */
 export function canMarkReadyForReview(summary) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Migration to create pages table.
  *
@@ -26,121 +27,114 @@ use OCP\Migration\SimpleMigrationStep;
 
 /**
  * Migration to create the pages table.
- *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
-class Version6Date20241129151236 extends SimpleMigrationStep
-{
-    /**
-     * Pre-schema change hook.
-     *
-     * @param IOutput                  $output        The output handler.
-     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                    $options       Migration options.
-     *
-     * @return void
-     */
-    public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
-    {
+class Version6Date20241129151236 extends SimpleMigrationStep {
+	/**
+	 * Pre-schema change hook.
+	 *
+	 * @param IOutput $output The output handler.
+	 * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+	 * @param array $options Migration options.
+	 *
+	 * @return void
+	 */
+	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
 
-    }//end preSchemaChange()
+	}//end preSchemaChange()
 
-    /**
-     * Apply schema changes.
-     *
-     * @param IOutput                  $output        The output handler.
-     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                    $options       Migration options.
-     *
-     * @return null|ISchemaWrapper
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+	/**
+	 * Apply schema changes.
+	 *
+	 * @param IOutput $output The output handler.
+	 * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+	 * @param array $options Migration options.
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable(tableName: 'ocat_pages') === false) {
-            $table = $schema->createTable(tableName: 'ocat_pages');
+		if ($schema->hasTable(tableName: 'ocat_pages') === false) {
+			$table = $schema->createTable(tableName: 'ocat_pages');
 
-            // Primary key and identifier columns.
-            $table->addColumn(
-                name: 'id',
-                typeName: Types::BIGINT,
-                options: [
-                    'autoincrement' => true,
-                    'notnull'       => true,
-                    'length'        => 4,
-                ]
-            );
-            $table->addColumn(
-                name: 'uuid',
-                typeName: Types::STRING,
-                options: ['notnull' => true, 'length' => 255]
-            );
-            $table->addColumn(
-                name: 'version',
-                typeName: Types::STRING,
-                options: [
-                    'notnull' => true,
-                    'length'  => 255,
-                    'default' => '0.0.1',
-                ]
-            );
+			// Primary key and identifier columns.
+			$table->addColumn(
+				name: 'id',
+				typeName: Types::BIGINT,
+				options: [
+					'autoincrement' => true,
+					'notnull' => true,
+					'length' => 4,
+				]
+			);
+			$table->addColumn(
+				name: 'uuid',
+				typeName: Types::STRING,
+				options: ['notnull' => true, 'length' => 255]
+			);
+			$table->addColumn(
+				name: 'version',
+				typeName: Types::STRING,
+				options: [
+					'notnull' => true,
+					'length' => 255,
+					'default' => '0.0.1',
+				]
+			);
 
-            // Meta columns.
-            $table->addColumn(
-                name: 'name',
-                typeName: Types::STRING,
-                options: ['notnull' => true, 'length' => 255]
-            );
-            $table->addColumn(
-                name: 'slug',
-                typeName: Types::STRING,
-                options: ['notnull' => true, 'length' => 255]
-            );
-            $table->addColumn(
-                name: 'contents',
-                typeName: Types::JSON,
-                options: ['notnull' => false]
-            );
-            $table->addColumn(
-                name: 'updated',
-                typeName: Types::DATETIME,
-                options: [
-                    'notnull' => true,
-                    'default' => 'CURRENT_TIMESTAMP',
-                ]
-            );
-            $table->addColumn(
-                name: 'created',
-                typeName: Types::DATETIME,
-                options: [
-                    'notnull' => true,
-                    'default' => 'CURRENT_TIMESTAMP',
-                ]
-            );
+			// Meta columns.
+			$table->addColumn(
+				name: 'name',
+				typeName: Types::STRING,
+				options: ['notnull' => true, 'length' => 255]
+			);
+			$table->addColumn(
+				name: 'slug',
+				typeName: Types::STRING,
+				options: ['notnull' => true, 'length' => 255]
+			);
+			$table->addColumn(
+				name: 'contents',
+				typeName: Types::JSON,
+				options: ['notnull' => false]
+			);
+			$table->addColumn(
+				name: 'updated',
+				typeName: Types::DATETIME,
+				options: [
+					'notnull' => true,
+					'default' => 'CURRENT_TIMESTAMP',
+				]
+			);
+			$table->addColumn(
+				name: 'created',
+				typeName: Types::DATETIME,
+				options: [
+					'notnull' => true,
+					'default' => 'CURRENT_TIMESTAMP',
+				]
+			);
 
-            // Keys and indexes.
-            $table->setPrimaryKey(columnNames: ['id']);
-            $table->addIndex(['uuid'], 'ocat_pages_uuid_index');
-            $table->addIndex(['slug'], 'ocat_pages_slug_index');
-        }//end if
+			// Keys and indexes.
+			$table->setPrimaryKey(columnNames: ['id']);
+			$table->addIndex(['uuid'], 'ocat_pages_uuid_index');
+			$table->addIndex(['slug'], 'ocat_pages_slug_index');
+		}//end if
 
-        return $schema;
+		return $schema;
+	}//end changeSchema()
 
-    }//end changeSchema()
+	/**
+	 * Post-schema change hook.
+	 *
+	 * @param IOutput $output The output handler.
+	 * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+	 * @param array $options Migration options.
+	 *
+	 * @return void
+	 */
+	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
 
-    /**
-     * Post-schema change hook.
-     *
-     * @param IOutput                  $output        The output handler.
-     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                    $options       Migration options.
-     *
-     * @return void
-     */
-    public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
-    {
-
-    }//end postSchemaChange()
+	}//end postSchemaChange()
 }//end class

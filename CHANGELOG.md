@@ -1,3 +1,23 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.7.54] - 2026-07-16
+
+### Added
+
+- **Public full-text search endpoint** (`GET /apps/opencatalogi/api/search`) — anonymous-reachable, RBAC-filtered, returns publications **and** documents in a flat mixed envelope discriminated by `@self.schema`. Document rows carry an embedded `publication: { id, slug, title }` summary; documents with no linked publication are suppressed. Post-scoring `isObjectPublic()` visibility gate + transitive publication-visibility gate applied uniformly to all callers (WOO-506, spec `SCH-PFTS-001..007`, change archived at `openspec/changes/archive/2026-07-16-add-public-fulltext-search/`).
+- Bundled `document` schema in `lib/Settings/publication_register.json` — schema-discoverable dedicated type for public-endpoint document rows.
+- `SettingsService` now provisions `document_source` / `document_schema` / `document_register` app-config keys on fresh install so the search assembly resolves the document schema without manual setup (WOO-519).
+
+### Fixed
+
+- `PublicationQueryService::resolveDocumentPublicationSummary()` now addresses the linked publication via the nested `@self` metadata block instead of a bare `slug` schema-property filter. The bug silently dropped every document row from the mixed envelope; the endpoint returned only publications on a correctly-seeded env (WOO-530, PR #134).
+- `MagicMapper::buildUnionSelectPart()` metadata-column CAST is now dialect-aware (`CAST(col AS CHAR)` on MariaDB, `col::text` on PostgreSQL). Previous PostgreSQL-only `::text` cast crashed the multi-schema search on MariaDB backends with `SQLSTATE[42000]` (WOO-520, openregister-side).
+
 # Version: 0.0.1-featuredimoc279workflowforrele.1134.97c61c3
 
 

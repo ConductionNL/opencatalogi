@@ -1,10 +1,11 @@
 <?php
+
 /**
  * Service for managing download-related operations.
  *
- * Provides functionality to create and manage publication files and archives, including
- * generating PDFs and ZIP files containing metadata and attachments, and storing files
- * in NextCloud.
+ * Renders the publication metadata PDF that is piped into the download ZIP and
+ * enumerates a publication's attachments. Per DWN-OR-003 the rendered PDF is an
+ * on-demand artefact — it is never saved to Nextcloud user storage by this service.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -20,259 +21,213 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-77
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-78
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-79
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-80
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-81
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-82
+ * @spec openspec/specs/download-service/spec.md
+ * @spec openspec/specs/download-service/spec.md
+ * @spec openspec/specs/download-service/spec.md
+ * @spec openspec/specs/download-service/spec.md
+ * @spec openspec/specs/download-service/spec.md
+ * @spec openspec/specs/download-service/spec.md
  */
 
 namespace OCA\OpenCatalogi\Service;
 
+use Exception;
+use Mpdf\MpdfException;
+use Mpdf\Output\Destination;
+use OCA\OpenRegister\Service\ObjectService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
-use OCA\OpenCatalogi\Service\FileService;
-use OCA\OpenRegister\Service\ObjectService;
-use Mpdf\Mpdf;
-use Mpdf\Output\Destination;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
-use Mpdf\MpdfException;
-use Exception;
 
 /**
  * Service for managing download-related operations.
  *
- * Provides functionality to create and manage publication files and archives, including
- * generating PDFs and ZIP files containing metadata and attachments, and storing files
- * in NextCloud.
+ * Renders the publication metadata PDF that is piped into the download ZIP and
+ * enumerates a publication's attachments. Per DWN-OR-003 the rendered PDF is an
+ * on-demand artefact — it is never saved to Nextcloud user storage by this service.
  *
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
  */
-class DownloadService
-{
-    /**
-     * Constructor for DownloadService.
-     *
-     * @param FileService $fileService The file service for handling file operations
-     */
-    public function __construct(
-        private readonly FileService $fileService
-    ) {
+class DownloadService {
+	/**
+	 * Constructor for DownloadService.
+	 *
+	 * @param FileService $fileService The file service for handling file operations
+	 */
+	public function __construct(
+		private readonly FileService $fileService,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Creates a pdf file containing all metadata of the given publication.
-     *
-     * @param ObjectService  $objectService The ObjectService for database access.
-     * @param string|integer $id            The id of the Publication to create a pdf for.
-     * @param array|null     $options       Options for this function.
-     *                                      "download" and "saveToNextCloud" cannot both be false.
-     *                                      "download" = return a download response (true default).
-     *                                      "saveToNextCloud" = save file in NextCloud (true default).
-     *                                      "publication" = pre-fetched publication body.
-     *
-     * @return JSONResponse A download response, download URL, or error response.
-     * @throws LoaderError|RuntimeError|SyntaxError|MpdfException|Exception
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-77
-     */
-    public function createPublicationFile(
-        ObjectService $objectService,
-        string|int $id,
-        ?array $options=[
-            'download'        => true,
-            'saveToNextCloud' => true,
-            'publication'     => null,
-        ]
-    ): JSONResponse {
-        // Validate options.
-        if ($options['download'] === false && $options['saveToNextCloud'] === false) {
-            return new JSONResponse(
-                data: ['error' => 'Options "download" and "saveToNextCloud" should not both be false'],
-                statusCode: 500
-            );
-        }
+	/**
+	 * Renders the publication metadata PDF and returns it as an in-memory artefact.
+	 *
+	 * The PDF is written to a temporary location, read back, and the temporary file
+	 * is deleted before returning — it is never saved to Nextcloud user storage
+	 * (DWN-OR-003). Callers pipe the returned bytes into the download ZIP.
+	 *
+	 * @param ObjectService $objectService The ObjectService for database access.
+	 * @param string|integer $id The id of the Publication to create a pdf for.
+	 * @param array|null $options Options for this function.
+	 *                            "download" = produce the artefact (true default);
+	 *                            when false there is no output option left enabled
+	 *                            and the service returns 400 without rendering.
+	 *                            "publication" = pre-fetched publication body.
+	 *
+	 * @return array|JSONResponse ['filename' => string, 'content' => string] or an error response.
+	 * @throws LoaderError|RuntimeError|SyntaxError|MpdfException|Exception
+	 *
+	 * @spec openspec/specs/download-service/spec.md
+	 */
+	public function createPublicationFile(
+		ObjectService $objectService,
+		string|int $id,
+		?array $options = [
+			'download' => true,
+			'publication' => null,
+		],
+	): array|JSONResponse {
+		// Validate options before generating any file content (DWN-OR-004).
+		if (($options['download'] ?? true) === false) {
+			return new JSONResponse(
+				data: ['error' => 'At least one output option must be enabled; "download" was false'],
+				statusCode: 400
+			);
+		}
 
-        // Get publication data if not provided.
-        $publication = ($options['publication'] ?? $this->getPublicationData($id, $objectService));
-        if ($publication instanceof JSONResponse) {
-            return $publication;
-        }
+		// Get publication data if not provided (DWN-OR-005 returns 404 when unresolvable).
+		$publication = ($options['publication'] ?? $this->getPublicationData(id: $id, objectService: $objectService));
+		if ($publication instanceof JSONResponse) {
+			return $publication;
+		}
 
-        // Create the PDF file using a twig template and publication data.
-        $mpdf = $this->fileService->createPdf('publication.html.twig', ['publication' => $publication]);
+		// Create the PDF file using a twig template and publication data.
+		$mpdf = $this->fileService->createPdf('publication.html.twig', ['publication' => $publication]);
 
-        $filename = "{$publication['title']}.pdf";
+		// A publication without a title still gets a usable entry name — an undefined
+		// key here would surface as a PHP warning on an anonymous-reachable path.
+		$title = ($publication['title'] ?? 'publication');
+		$filename = "$title.pdf";
 
-        // Save to NextCloud if option is set.
-        $shareLink = null;
-        if ($options['saveToNextCloud'] ?? true) {
-            $mpdf->Output($filename, Destination::FILE);
-            $shareLink = $this->saveFileToNextCloud($filename, $publication);
-            if ($shareLink instanceof JSONResponse) {
-                return $shareLink;
-            }
-        }
+		// Render to a temporary location, read it back, and remove the temporary file.
+		// The metadata PDF is an on-demand artefact — it MUST NOT be written to
+		// Nextcloud user storage by this service (DWN-OR-003).
+		$tempDir = sys_get_temp_dir() . '/mpdf';
+		if (is_dir($tempDir) === false) {
+			mkdir(directory: $tempDir, permissions: 0777, recursive: true);
+		}
 
-        // Download if option is set.
-        if ($options['download'] ?? true) {
-            $mpdf->Output($filename, Destination::DOWNLOAD);
-        }
+		$tempPath = $tempDir . '/' . bin2hex(random_bytes(16)) . '.pdf';
 
-        // Clean up temporary files.
-        rmdir('/tmp/mpdf');
+		try {
+			$mpdf->Output($tempPath, Destination::FILE);
+			$content = file_get_contents($tempPath);
+		} finally {
+			if (file_exists($tempPath) === true) {
+				unlink($tempPath);
+			}
+		}
 
-        // Return download URL if saved to NextCloud.
-        if ($options['saveToNextCloud'] ?? true) {
-            return new JSONResponse(
-                [
-                    'downloadUrl' => "$shareLink/download",
-                    'filename'    => $filename,
-                ],
-                200
-            );
-        }
+		if ($content === false) {
+			return new JSONResponse(
+				data: ['error' => 'Failed to read the rendered publication metadata PDF'],
+				statusCode: 500
+			);
+		}
 
-        return new JSONResponse([], 200);
+		return [
+			'filename' => $filename,
+			'content' => $content,
+		];
 
-    }//end createPublicationFile()
+	}//end createPublicationFile()
 
-    /**
-     * Gets a publication and returns it as serialized array.
-     *
-     * @param string|integer $id            The id of a publication.
-     * @param ObjectService  $objectService The objectService.
-     *
-     * @return array|JSONResponse The publication found as array or an error JSONResponse.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-78
-     */
-    private function getPublicationData(string|int $id, ObjectService $objectService): array|JSONResponse
-    {
-        try {
-            $entity = $objectService->find($id);
-            if ($entity !== null) {
-                return $entity->jsonSerialize();
-            }
+	/**
+	 * Gets a publication and returns it as serialized array.
+	 *
+	 * @param string|integer $id The id of a publication.
+	 * @param ObjectService $objectService The objectService.
+	 *
+	 * @return array|JSONResponse The publication found as array or an error JSONResponse.
+	 *
+	 * @spec openspec/specs/download-service/spec.md
+	 */
+	private function getPublicationData(string|int $id, ObjectService $objectService): array|JSONResponse {
+		try {
+			$entity = $objectService->find($id);
+			if ($entity !== null) {
+				return $entity->jsonSerialize();
+			}
 
-            return new JSONResponse(
-                data: ['error' => 'Publication not found'],
-                statusCode: 404
-            );
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException $e) {
-            return new JSONResponse(
-                data: ['error' => $e->getMessage()],
-                statusCode: 500
-            );
-        } catch (ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(
-                data: ['error' => $e->getMessage()],
-                statusCode: 500
-            );
-        }//end try
+			return new JSONResponse(
+				data: ['error' => 'Publication not found'],
+				statusCode: 404
+			);
+		} catch (NotFoundExceptionInterface|MultipleObjectsReturnedException $e) {
+			return new JSONResponse(
+				data: ['error' => $e->getMessage()],
+				statusCode: 500
+			);
+		} catch (ContainerExceptionInterface|DoesNotExistException $e) {
+			return new JSONResponse(
+				data: ['error' => $e->getMessage()],
+				statusCode: 500
+			);
+		}//end try
 
-    }//end getPublicationData()
+	}//end getPublicationData()
 
-    /**
-     * Store a publication metadata file in NextCloud and return its share link.
-     *
-     * @param string $filename    The filename of the file to store in NextCloud
-     * @param array  $publication The publication data for folder creation
-     *
-     * @return string|JSONResponse A share link url or an error JSONResponse
-     * @throws Exception When reading or writing to NextCloud files fails
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-79
-     */
-    public function saveFileToNextCloud(string $filename, array $publication): string|JSONResponse
-    {
-        // Create the Publicaties folder and the Publication specific folder.
-        $this->fileService->createFolder(folderPath: 'Publicaties');
-        $publicationFolder = $this->fileService->getPublicationFolderName(
-            publicationId: $publication['id'],
-            publicationTitle: $publication['title']
-        );
-        $this->fileService->createFolder(folderPath: "Publicaties/$publicationFolder");
+	/**
+	 * Gets all attachments for a publication.
+	 *
+	 * @param string|integer $id The id of a publication.
+	 * @param ObjectService $objectService The objectService.
+	 *
+	 * @return array|JSONResponse All attachments for the publication or an error JSONResponse.
+	 *
+	 * @spec openspec/specs/download-service/spec.md
+	 */
+	public function publicationAttachments(string|int $id, ObjectService $objectService): array|JSONResponse {
+		// Fetch attachment objects.
+		try {
+			// Fetch the publication object by its ID.
+			$entity = $objectService->find($id);
+			$object = null;
+			if ($entity !== null) {
+				$object = $entity->jsonSerialize();
+			}
 
-        // Save the file to NextCloud.
-        $filePath = "Publicaties/$publicationFolder/$filename";
-        $created  = $this->fileService->updateFile(
-            content: file_get_contents(filename: $filename),
-            filePath: $filePath,
-            createNew: true
-        );
+			if ($object === null) {
+				return new JSONResponse(data: ['error' => 'Publication not found'], statusCode: 500);
+			}
 
-        // Check if file creation was successful.
-        if ($created === false) {
-            return new JSONResponse(
-                data: ['error' => "Failed to upload this file: $filePath to NextCloud"],
-                statusCode: 500
-            );
-        }
+			// Fetch attachment objects by their IDs.
+			$attachments = [];
+			foreach (($object['attachments'] ?? []) as $attId) {
+				$attEntity = $objectService->find($attId);
+				if ($attEntity !== null) {
+					$attachments[] = $attEntity->jsonSerialize();
+				}
+			}
 
-        // Request public share via the OpenRegister shares leaf (ADR-022 / FIL-005).
-        $shareLink = $this->fileService->createPublicShareLink(relativePath: $filePath);
+			return $attachments;
+		} catch (NotFoundExceptionInterface|MultipleObjectsReturnedException $e) {
+			return new JSONResponse(
+				data: ['error' => $e->getMessage()],
+				statusCode: 500
+			);
+		} catch (ContainerExceptionInterface|DoesNotExistException $e) {
+			return new JSONResponse(
+				data: ['error' => $e->getMessage()],
+				statusCode: 500
+			);
+		}//end try
 
-        return $shareLink;
-
-    }//end saveFileToNextCloud()
-
-    /**
-     * Gets all attachments for a publication.
-     *
-     * @param string|integer $id            The id of a publication.
-     * @param ObjectService  $objectService The objectService.
-     *
-     * @return array|JSONResponse All attachments for the publication or an error JSONResponse.
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-82
-     */
-    public function publicationAttachments(string|int $id, ObjectService $objectService): array|JSONResponse
-    {
-        // Fetch attachment objects.
-        try {
-            // Fetch the publication object by its ID.
-            $entity = $objectService->find($id);
-            $object = null;
-            if ($entity !== null) {
-                $object = $entity->jsonSerialize();
-            }
-
-            if ($object === null) {
-                return new JSONResponse(data: ['error' => 'Publication not found'], statusCode: 500);
-            }
-
-            // Fetch attachment objects by their IDs.
-            $attachments = [];
-            foreach (($object['attachments'] ?? []) as $attId) {
-                $attEntity = $objectService->find($attId);
-                if ($attEntity !== null) {
-                    $attachments[] = $attEntity->jsonSerialize();
-                }
-            }
-
-            return $attachments;
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException $e) {
-            return new JSONResponse(
-                data: ['error' => $e->getMessage()],
-                statusCode: 500
-            );
-        } catch (ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(
-                data: ['error' => $e->getMessage()],
-                statusCode: 500
-            );
-        }//end try
-
-    }//end publicationAttachments()
+	}//end publicationAttachments()
 }//end class

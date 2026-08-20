@@ -5,22 +5,25 @@
 			:widgets="widgetDefs"
 			:layout="dashboardLayout"
 			:loading="globalLoading && !hasData"
-			:empty-label="t('opencatalogi', 'No widgets configured')"
-			:unavailable-label="t('opencatalogi', 'Widget not available')"
-			@layout-change="onLayoutChange">
+			:emptyLabel="t('opencatalogi', 'No widgets configured')"
+			:unavailableLabel="t('opencatalogi', 'Widget not available')"
+			@layoutChange="onLayoutChange">
 			<!-- Header actions -->
 			<template #actions>
-				<NcButton type="primary" @click="createPublication">
+				<NcButton variant="primary" @click="createPublication">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
 					{{ t('opencatalogi', 'New Publication') }}
 				</NcButton>
-				<NcButton :disabled="globalLoading"
+				<NcButton
+					:disabled="globalLoading"
 					:aria-label="t('opencatalogi', 'Refresh dashboard')"
 					@click="loadDashboardData">
 					<template #icon>
-						<Refresh :size="20" :class="{ 'icon-spinning': globalLoading }" />
+						<Refresh
+							:size="20"
+							:class="{ 'icon-spinning': globalLoading }" />
 					</template>
 				</NcButton>
 			</template>
@@ -34,11 +37,36 @@
 					:labels="publicationsByCategoryData.labels"
 					:height="360"
 					:options="{
-						colors: ['#0082C9', '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2', '#DB2777'],
-						legend: { position: 'bottom', fontSize: '13px', itemMargin: { horizontal: 8, vertical: 4 } },
-						plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: t('opencatalogi', 'Total'), fontSize: '14px', fontWeight: 600 }, value: { fontSize: '28px', fontWeight: 700 } } } } },
+						colors: categoricalChartColors,
+						legend: {
+							position: 'bottom',
+							fontSize: '13px',
+							itemMargin: { horizontal: 8, vertical: 4 },
+						},
+						plotOptions: {
+							pie: {
+								donut: {
+									size: '65%',
+									labels: {
+										show: true,
+										total: {
+											show: true,
+											label: t('opencatalogi', 'Total'),
+											fontSize: '14px',
+											fontWeight: 600,
+										},
+										value: { fontSize: '28px', fontWeight: 700 },
+									},
+								},
+							},
+						},
 						dataLabels: { enabled: false },
-						tooltip: { y: { formatter: (val) => val + ' ' + t('opencatalogi', 'publications') } }
+						tooltip: {
+							y: {
+								formatter: (val) =>
+									val + ' ' + t('opencatalogi', 'publications'),
+							},
+						},
 					}" />
 				<div v-else class="widget-empty">
 					<DatabaseEyeOutline :size="40" class="widget-empty-icon" />
@@ -51,11 +79,12 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Publications')"
 					:count="kpis.publicationCount"
-					:count-label="t('opencatalogi', 'publications')"
+					:countLabel="t('opencatalogi', 'publications')"
 					:icon="DatabaseEyeOutline"
 					variant="primary"
 					horizontal
-					:route="{ name: 'Catalogs' }" />
+					:clickable="true"
+					@click="navigateToPublications()" />
 			</template>
 
 			<!-- Concept Publications count widget -->
@@ -63,11 +92,12 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Concept Publications')"
 					:count="kpis.conceptPublicationCount"
-					:count-label="t('opencatalogi', 'concept')"
+					:countLabel="t('opencatalogi', 'concept')"
 					:icon="FileDocumentEditOutline"
 					variant="warning"
 					horizontal
-					:route="{ name: 'Catalogs' }" />
+					:clickable="true"
+					@click="navigateToPublications()" />
 			</template>
 
 			<!-- Published Publications count widget -->
@@ -75,11 +105,12 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Published')"
 					:count="kpis.publishedPublicationCount"
-					:count-label="t('opencatalogi', 'published')"
+					:countLabel="t('opencatalogi', 'published')"
 					:icon="FileDocumentCheckOutline"
 					variant="success"
 					horizontal
-					:route="{ name: 'Catalogs' }" />
+					:clickable="true"
+					@click="navigateToPublications()" />
 			</template>
 
 			<!-- Depublished Publications count widget -->
@@ -87,11 +118,12 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Depublished')"
 					:count="kpis.depublishedPublicationCount"
-					:count-label="t('opencatalogi', 'depublished')"
+					:countLabel="t('opencatalogi', 'depublished')"
 					:icon="AlertOutline"
 					variant="error"
 					horizontal
-					:route="{ name: 'Catalogs' }" />
+					:clickable="true"
+					@click="navigateToPublications()" />
 			</template>
 
 			<!-- Concept Attachments count widget -->
@@ -119,12 +151,27 @@
 					:height="280"
 					:options="{
 						stroke: { curve: 'smooth', width: 2 },
-						fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
-						xaxis: { labels: { rotate: -30, style: { fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+						fill: {
+							type: 'gradient',
+							gradient: {
+								shadeIntensity: 1,
+								opacityFrom: 0.4,
+								opacityTo: 0.05,
+								stops: [0, 90, 100],
+							},
+						},
+						xaxis: {
+							labels: { rotate: -30, style: { fontSize: '11px' } },
+							axisBorder: { show: false },
+							axisTicks: { show: false },
+						},
 						yaxis: { labels: { style: { fontSize: '11px' } } },
-						grid: { borderColor: 'var(--color-border, #e0e0e0)', strokeDashArray: 4 },
+						grid: {
+							borderColor: 'var(--color-border, #e0e0e0)',
+							strokeDashArray: 4,
+						},
 						dataLabels: { enabled: false },
-						tooltip: { shared: true, intersect: false }
+						tooltip: { shared: true, intersect: false },
 					}" />
 				<div v-else class="widget-empty">
 					<ChartAreaspline :size="40" class="widget-empty-icon" />
@@ -142,13 +189,28 @@
 					:height="280"
 					:options="{
 						stroke: { curve: 'smooth', width: 2 },
-						colors: ['#079cff'],
-						fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
-						xaxis: { labels: { rotate: -30, style: { fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+						colors: accentChartColor,
+						fill: {
+							type: 'gradient',
+							gradient: {
+								shadeIntensity: 1,
+								opacityFrom: 0.4,
+								opacityTo: 0.05,
+								stops: [0, 90, 100],
+							},
+						},
+						xaxis: {
+							labels: { rotate: -30, style: { fontSize: '11px' } },
+							axisBorder: { show: false },
+							axisTicks: { show: false },
+						},
 						yaxis: { labels: { style: { fontSize: '11px' } } },
-						grid: { borderColor: 'var(--color-border, #e0e0e0)', strokeDashArray: 4 },
+						grid: {
+							borderColor: 'var(--color-border, #e0e0e0)',
+							strokeDashArray: 4,
+						},
 						dataLabels: { enabled: false },
-						tooltip: { shared: true, intersect: false }
+						tooltip: { shared: true, intersect: false },
 					}" />
 				<div v-else class="widget-empty">
 					<ChartAreaspline :size="40" class="widget-empty-icon" />
@@ -181,7 +243,9 @@
 			</template>
 			<template #widget-concept-publications>
 				<div class="concept-widget-content" tabindex="0">
-					<div v-if="conceptPublications.length === 0" class="widget-empty">
+					<div
+						v-if="conceptPublications.length === 0"
+						class="widget-empty">
 						{{ t('opencatalogi', 'No concept publications') }}
 					</div>
 					<div v-else class="concept-list">
@@ -189,12 +253,26 @@
 							v-for="publication in conceptPublications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
-							@click="openPublication(publication)">
+							role="button"
+							tabindex="0"
+							@click="openPublication(publication)"
+							@keydown.enter="openPublication(publication)"
+							@keydown.space.prevent="openPublication(publication)">
 							<div class="concept-item-content">
-								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
-								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
+								<span class="concept-item-title">{{
+									publication.title
+									|| publication.name
+									|| publication.titel
+									|| publication.naam
+									|| publication.id
+								}}</span>
+								<span class="concept-item-schema">{{
+									resolveSchemaName(publication)
+								}}</span>
 							</div>
-							<span class="concept-item-status">{{ t('opencatalogi', 'Concept') }}</span>
+							<span class="concept-item-status">{{
+								t('opencatalogi', 'Concept')
+							}}</span>
 						</div>
 					</div>
 				</div>
@@ -232,7 +310,9 @@
 			</template>
 			<template #widget-published-publications>
 				<div class="concept-widget-content" tabindex="0">
-					<div v-if="publishedPublications.length === 0" class="widget-empty">
+					<div
+						v-if="publishedPublications.length === 0"
+						class="widget-empty">
 						{{ t('opencatalogi', 'No published publications') }}
 					</div>
 					<div v-else class="concept-list">
@@ -240,12 +320,26 @@
 							v-for="publication in publishedPublications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
-							@click="openPublication(publication)">
+							role="button"
+							tabindex="0"
+							@click="openPublication(publication)"
+							@keydown.enter="openPublication(publication)"
+							@keydown.space.prevent="openPublication(publication)">
 							<div class="concept-item-content">
-								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
-								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
+								<span class="concept-item-title">{{
+									publication.title
+									|| publication.name
+									|| publication.titel
+									|| publication.naam
+									|| publication.id
+								}}</span>
+								<span class="concept-item-schema">{{
+									resolveSchemaName(publication)
+								}}</span>
 							</div>
-							<span class="published-item-status">{{ t('opencatalogi', 'Published') }}</span>
+							<span class="published-item-status">{{
+								t('opencatalogi', 'Published')
+							}}</span>
 						</div>
 					</div>
 				</div>
@@ -257,7 +351,9 @@
 			</template>
 			<template #widget-depublished-publications>
 				<div class="concept-widget-content" tabindex="0">
-					<div v-if="depublishedPublications.length === 0" class="widget-empty">
+					<div
+						v-if="depublishedPublications.length === 0"
+						class="widget-empty">
 						{{ t('opencatalogi', 'No depublished publications') }}
 					</div>
 					<div v-else class="concept-list">
@@ -265,12 +361,26 @@
 							v-for="publication in depublishedPublications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
-							@click="openPublication(publication)">
+							role="button"
+							tabindex="0"
+							@click="openPublication(publication)"
+							@keydown.enter="openPublication(publication)"
+							@keydown.space.prevent="openPublication(publication)">
 							<div class="concept-item-content">
-								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
-								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
+								<span class="concept-item-title">{{
+									publication.title
+									|| publication.name
+									|| publication.titel
+									|| publication.naam
+									|| publication.id
+								}}</span>
+								<span class="concept-item-schema">{{
+									resolveSchemaName(publication)
+								}}</span>
 							</div>
-							<span class="depublished-item-status">{{ t('opencatalogi', 'Depublished') }}</span>
+							<span class="depublished-item-status">{{
+								t('opencatalogi', 'Depublished')
+							}}</span>
 						</div>
 					</div>
 				</div>
@@ -280,7 +390,12 @@
 			<template #empty>
 				<div class="welcome-message">
 					<p>
-						{{ t('opencatalogi', 'Welcome to OpenCatalogi! Your dashboard will show an overview of your catalogs, publications, and attachments.') }}
+						{{
+							t(
+								'opencatalogi',
+								'Welcome to OpenCatalogi! Your dashboard will show an overview of your catalogs, publications, and attachments.',
+							)
+						}}
 					</p>
 				</div>
 			</template>
@@ -297,21 +412,45 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
-// eslint-disable-next-line import/named -- CnChartWidget available in local source; will be in next npm release
-import { CnDashboardPage, CnStatsBlock, CnChartWidget, buildHeaders } from '@conduction/nextcloud-vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
-import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
-import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
-import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
-import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue'
+// The `import/named` disable that used to sit here is gone: the flat config
+// does not register that rule, so the comment was itself an error. Its note is
+// worth keeping though — CnChartWidget exists in the local nc-vue source and
+// ships in a later npm release.
+import {
+	buildHeaders,
+	CnChartWidget,
+	CnDashboardPage,
+	CnStatsBlock,
+} from '@conduction/nextcloud-vue'
 // TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 // import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 // import PaperclipOff from 'vue-material-design-icons/PaperclipOff.vue'
-import { objectStore, navigationStore } from '../../store/store.js'
-import { isPublished, isDepublished, isConcept } from '../../services/publicationStatus.js'
+import { loadState } from '@nextcloud/initial-state'
+import { NcButton } from '@nextcloud/vue'
+import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
+import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue'
+import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
+import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
+import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
+import {
+	useAccentChartColor,
+	useCategoricalChartColors,
+} from '../../composables/useChartColors.js'
+import {
+	isConcept,
+	isDepublished,
+	isPublished,
+} from '../../services/publicationStatus.js'
+import { navigationStore, objectStore } from '../../store/store.js'
+
+// Register/schema ids for the `publication` schema, surfaced as initial state by
+// UiController::MANIFEST_CONFIG_KEYS (same zero-network resolution AddDirectoryModal.vue
+// uses for `default_directory_url`). Needed to address OR's generic ad-hoc aggregation
+// endpoint, which is scoped per (register, schema) and does not know app-specific slugs.
+const PUBLICATION_REGISTER = loadState('opencatalogi', 'publication_register', '')
+const PUBLICATION_SCHEMA = loadState('opencatalogi', 'publication_schema', '')
 
 /**
  * Default dashboard layout:
@@ -321,19 +460,100 @@ import { isPublished, isDepublished, isConcept } from '../../services/publicatio
  * - Three publication lists (each 4 cols, rows 11-15)
  */
 const DEFAULT_LAYOUT = [
-	{ id: 1, widgetId: 'count-publications', gridX: 0, gridY: 0, gridWidth: 3, gridHeight: 3, showTitle: false },
-	{ id: 2, widgetId: 'count-concept-publications', gridX: 3, gridY: 0, gridWidth: 3, gridHeight: 3, showTitle: false },
-	{ id: 3, widgetId: 'count-published-publications', gridX: 0, gridY: 3, gridWidth: 3, gridHeight: 3, showTitle: false },
-	{ id: 9, widgetId: 'count-depublished-publications', gridX: 3, gridY: 3, gridWidth: 3, gridHeight: 3, showTitle: false },
+	{
+		id: 1,
+		widgetId: 'count-publications',
+		gridX: 0,
+		gridY: 0,
+		gridWidth: 3,
+		gridHeight: 3,
+		showTitle: false,
+	},
+	{
+		id: 2,
+		widgetId: 'count-concept-publications',
+		gridX: 3,
+		gridY: 0,
+		gridWidth: 3,
+		gridHeight: 3,
+		showTitle: false,
+	},
+	{
+		id: 3,
+		widgetId: 'count-published-publications',
+		gridX: 0,
+		gridY: 3,
+		gridWidth: 3,
+		gridHeight: 3,
+		showTitle: false,
+	},
+	{
+		id: 9,
+		widgetId: 'count-depublished-publications',
+		gridX: 3,
+		gridY: 3,
+		gridWidth: 3,
+		gridHeight: 3,
+		showTitle: false,
+	},
 	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 	// { id: x, widgetId: 'count-concept-attachments', ... },
-	{ id: 4, widgetId: 'publications-by-category', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 6 },
-	{ id: 5, widgetId: 'activity', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 5 },
-	{ id: 11, widgetId: 'traffic', gridX: 0, gridY: 11, gridWidth: 8, gridHeight: 5 },
-	{ id: 12, widgetId: 'popular-searches', gridX: 8, gridY: 11, gridWidth: 4, gridHeight: 5 },
-	{ id: 6, widgetId: 'concept-publications', gridX: 0, gridY: 16, gridWidth: 4, gridHeight: 5 },
-	{ id: 8, widgetId: 'published-publications', gridX: 4, gridY: 16, gridWidth: 4, gridHeight: 5 },
-	{ id: 10, widgetId: 'depublished-publications', gridX: 8, gridY: 16, gridWidth: 4, gridHeight: 5 },
+	{
+		id: 4,
+		widgetId: 'publications-by-category',
+		gridX: 6,
+		gridY: 0,
+		gridWidth: 6,
+		gridHeight: 6,
+	},
+	{
+		id: 5,
+		widgetId: 'activity',
+		gridX: 0,
+		gridY: 6,
+		gridWidth: 12,
+		gridHeight: 5,
+	},
+	{
+		id: 11,
+		widgetId: 'traffic',
+		gridX: 0,
+		gridY: 11,
+		gridWidth: 8,
+		gridHeight: 5,
+	},
+	{
+		id: 12,
+		widgetId: 'popular-searches',
+		gridX: 8,
+		gridY: 11,
+		gridWidth: 4,
+		gridHeight: 5,
+	},
+	{
+		id: 6,
+		widgetId: 'concept-publications',
+		gridX: 0,
+		gridY: 16,
+		gridWidth: 4,
+		gridHeight: 5,
+	},
+	{
+		id: 8,
+		widgetId: 'published-publications',
+		gridX: 4,
+		gridY: 16,
+		gridWidth: 4,
+		gridHeight: 5,
+	},
+	{
+		id: 10,
+		widgetId: 'depublished-publications',
+		gridX: 8,
+		gridY: 16,
+		gridWidth: 4,
+		gridHeight: 5,
+	},
 	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 	// { id: 7, widgetId: 'concept-attachments', ... },
 ]
@@ -341,7 +561,7 @@ const DEFAULT_LAYOUT = [
 /**
  * Dashboard — overview view: catalogs, publication totals, activity chart.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-2
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'Dashboard',
@@ -360,6 +580,7 @@ export default {
 		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 		// Paperclip,
 	},
+
 	data() {
 		return {
 			// Icon components for CnStatsBlock :icon prop
@@ -381,27 +602,52 @@ export default {
 			// attachmentsList: [],
 		}
 	},
+
 	computed: {
+		/**
+		 * Theme-aware donut-chart palette, resolved from NC CSS variables instead
+		 * of hardcoded hex literals (ADR-004 / ADR-010 NL Design).
+		 *
+		 * @spec openspec/changes/nc-css-vars-color-cleanup/tasks.md#task-1
+		 */
+		categoricalChartColors() {
+			return useCategoricalChartColors()
+		},
+
+		/**
+		 * Theme-aware accent color for the traffic chart.
+		 *
+		 * @spec openspec/changes/nc-css-vars-color-cleanup/tasks.md#task-1
+		 */
+		accentChartColor() {
+			return useAccentChartColor()
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		catalogs() {
 			return objectStore.getCollection('catalog').results || []
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		allPublications() {
 			return objectStore.getCollection('publication').results || []
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		conceptPublications() {
 			return this.allPublications.filter((p) => isConcept(p))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		publishedPublications() {
 			return this.allPublications.filter((p) => isPublished(p))
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		depublishedPublications() {
 			return this.allPublications.filter((p) => isDepublished(p))
 		},
+
 		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 		// allAttachments() { return this.attachmentsList },
 		// conceptAttachments() {
@@ -411,7 +657,9 @@ export default {
 		kpis() {
 			return {
 				catalogCount: this.catalogs.length,
-				publicationCount: this.publicationTotal || this.allPublications.length,
+				publicationCount:
+					this.publicationTotal || this.allPublications.length,
+
 				conceptPublicationCount: this.conceptPublications.length,
 				publishedPublicationCount: this.publishedPublications.length,
 				depublishedPublicationCount: this.depublishedPublications.length,
@@ -419,6 +667,7 @@ export default {
 				// conceptAttachmentCount: this.conceptAttachments.length,
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		publicationsByCategoryData() {
 			const counts = {}
@@ -426,9 +675,14 @@ export default {
 				const schemaRef = pub['@self']?.schema
 				let name
 				if (typeof schemaRef === 'object' && schemaRef) {
-					name = schemaRef.title || schemaRef.name || t('opencatalogi', 'Unknown')
+					name =
+						schemaRef.title
+						|| schemaRef.name
+						|| t('opencatalogi', 'Unknown')
 				} else if (schemaRef) {
-					const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(schemaRef))
+					const match = objectStore.availableSchemas.find(
+						(s) => Number(s.id) === Number(schemaRef),
+					)
 					name = match?.title || match?.name || String(schemaRef)
 				} else {
 					name = t('opencatalogi', 'Unknown')
@@ -440,46 +694,112 @@ export default {
 				series: Object.values(counts),
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		hasData() {
-			return this.catalogs.length > 0
-				|| this.allPublications.length > 0
+			return this.catalogs.length > 0 || this.allPublications.length > 0
 		},
+
+		/**
+		 * First catalog slug available in the store, used for Publications route navigation.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
+		 */
+		firstCatalogSlug() {
+			return this.catalogs[0]?.slug || null
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		widgetDefs() {
 			return [
-				{ id: 'count-publications', title: t('opencatalogi', 'Publications'), type: 'custom' },
-				{ id: 'count-concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
-				{ id: 'count-published-publications', title: t('opencatalogi', 'Published Publications'), type: 'custom' },
-				{ id: 'count-depublished-publications', title: t('opencatalogi', 'Depublished Publications'), type: 'custom' },
+				{
+					id: 'count-publications',
+					title: t('opencatalogi', 'Publications'),
+					type: 'custom',
+				},
+				{
+					id: 'count-concept-publications',
+					title: t('opencatalogi', 'Concept Publications'),
+					type: 'custom',
+				},
+				{
+					id: 'count-published-publications',
+					title: t('opencatalogi', 'Published Publications'),
+					type: 'custom',
+				},
+				{
+					id: 'count-depublished-publications',
+					title: t('opencatalogi', 'Depublished Publications'),
+					type: 'custom',
+				},
 				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 				// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
-				{ id: 'publications-by-category', title: t('opencatalogi', 'Publications by Category'), type: 'custom' },
-				{ id: 'activity', title: t('opencatalogi', 'Activity'), type: 'custom' },
-				{ id: 'traffic', title: t('opencatalogi', 'Traffic'), type: 'custom' },
-				{ id: 'popular-searches', title: t('opencatalogi', 'Popular Search Terms'), type: 'custom' },
-				{ id: 'concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-warning)' },
-				{ id: 'published-publications', title: t('opencatalogi', 'Published Publications'), type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-success)' },
-				{ id: 'depublished-publications', title: t('opencatalogi', 'Depublished Publications'), type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-error)' },
+				{
+					id: 'publications-by-category',
+					title: t('opencatalogi', 'Publications by Category'),
+					type: 'custom',
+				},
+				{
+					id: 'activity',
+					title: t('opencatalogi', 'Activity'),
+					type: 'custom',
+				},
+				{
+					id: 'traffic',
+					title: t('opencatalogi', 'Traffic'),
+					type: 'custom',
+				},
+				{
+					id: 'popular-searches',
+					title: t('opencatalogi', 'Popular Search Terms'),
+					type: 'custom',
+				},
+				{
+					id: 'concept-publications',
+					title: t('opencatalogi', 'Concept Publications'),
+					type: 'custom',
+					titleIconPosition: 'left',
+					titleIconColor: 'var(--color-warning)',
+				},
+				{
+					id: 'published-publications',
+					title: t('opencatalogi', 'Published Publications'),
+					type: 'custom',
+					titleIconPosition: 'left',
+					titleIconColor: 'var(--color-success)',
+				},
+				{
+					id: 'depublished-publications',
+					title: t('opencatalogi', 'Depublished Publications'),
+					type: 'custom',
+					titleIconPosition: 'left',
+					titleIconColor: 'var(--color-error)',
+				},
 				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 				// { id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
 			]
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 	async mounted() {
 		await this.loadDashboardData()
-		this.refreshTimer = setInterval(() => {
-			this.loadDashboardData()
-		}, 5 * 60 * 1000)
+		this.refreshTimer = setInterval(
+			() => {
+				this.loadDashboardData()
+			},
+			5 * 60 * 1000,
+		)
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.refreshTimer) {
 			clearInterval(this.refreshTimer)
 			this.refreshTimer = null
 		}
 	},
+
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		async loadDashboardData() {
@@ -489,30 +809,97 @@ export default {
 			try {
 				await Promise.allSettled([
 					objectStore.fetchCollection('catalog'),
+					this.fetchPublicationAggregations(),
 					this.fetchAllPublications(),
 					this.fetchActivityChart(),
 					this.fetchTrafficChart(),
 					this.fetchPopularSearchTerms(),
 				])
 			} catch (err) {
-				this.error = err.message || t('opencatalogi', 'Failed to load dashboard data')
+				this.error =
+					err.message || t('opencatalogi', 'Failed to load dashboard data')
 				console.error('Dashboard fetch error:', err)
 			} finally {
 				this.globalLoading = false
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
+		/**
+		 * Source the total publication count from OR's generic ad-hoc aggregation
+		 * endpoint (`GET /api/objects/aggregations/{register}/{schema}/value`) instead
+		 * of the `_limit=1000`-capped `fetchAllPublications()` response (DSH-010 /
+		 * dashboard-consume-or-aggregations). This endpoint requires no schema-level
+		 * `x-openregister-aggregations` declaration — it is OR's always-available
+		 * ad-hoc count/sum/avg entry point — so it is correct for any catalog size,
+		 * unlike the previous truncated-at-1000 total.
+		 *
+		 * `conceptPublicationCount` / `publishedPublicationCount` /
+		 * `depublishedPublicationCount` remain client-computed from
+		 * `fetchAllPublications()`'s (bounded, not 1000-capped-as-a-total-source)
+		 * result: those three states are DERIVED from a date comparison against "now"
+		 * (`publicationDate` / `depublicationDate` — see `publicationStatus.js`), not a
+		 * stored field, so grouping by them via OR's field-based `groupBy` aggregation
+		 * is not possible without either (a) a materialized status field written on
+		 * save, or (b) confirmed null-safe date-range filter support in OR's ad-hoc
+		 * aggregation filter DSL (unconfirmed at authoring time — see
+		 * openspec/changes/dashboard-consume-or-aggregations/tasks.md). Tracked as a
+		 * follow-up; not silently guessed here to avoid shipping confidently-wrong
+		 * counts.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
+		 */
+		async fetchPublicationAggregations() {
+			if (!PUBLICATION_REGISTER || !PUBLICATION_SCHEMA) {
+				return
+			}
+
+			try {
+				const prefix = window.location.pathname.includes('/index.php')
+					? '/index.php'
+					: ''
+				const response = await fetch(
+					`${prefix}/apps/openregister/api/objects/aggregations/${PUBLICATION_REGISTER}/${PUBLICATION_SCHEMA}/value?metric=count`,
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (response.ok) {
+					const data = await response.json()
+					if (typeof data.value === 'number') {
+						this.publicationTotal = data.value
+					}
+				}
+			} catch (err) {
+				console.warn('Failed to load publication count aggregation:', err)
+			}
+		},
+
+		/**
+		 * Fetch a bounded page of publication objects to power the concept /
+		 * published / depublished side-panel lists and their (client-computed)
+		 * counts. `publicationTotal` (the headline KPI) is sourced separately by
+		 * `fetchPublicationAggregations()`, so this fetch no longer needs to
+		 * masquerade as the count source — see that method's docblock for why the
+		 * three sub-status counts remain list-derived rather than aggregation-derived.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
 		async fetchAllPublications() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const prefix = window.location.pathname.includes('/index.php')
+					? '/index.php'
+					: ''
 				const response = await fetch(
 					`${prefix}/apps/opencatalogi/api/publications?_page=1&_limit=1000&_extend=@self.schema,@self.register`,
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (response.ok) {
 					const data = await response.json()
-					this.publicationTotal = data.total || 0
+					// Fall back to the (possibly truncated) page total only when the
+					// aggregation call above didn't resolve (e.g. register/schema not
+					// yet configured on a fresh install).
+					if (!this.publicationTotal) {
+						this.publicationTotal = data.total || 0
+					}
 					objectStore.setCollection('publication', data.results || [])
 				}
 			} catch (err) {
@@ -543,7 +930,9 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		async fetchActivityChart() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const prefix = window.location.pathname.includes('/index.php')
+					? '/index.php'
+					: ''
 				const response = await fetch(
 					`${prefix}/apps/openregister/api/dashboard/charts/audit-trail-actions`,
 					{ method: 'GET', headers: buildHeaders() },
@@ -552,7 +941,10 @@ export default {
 					const data = await response.json()
 					this.activityChartData = {
 						labels: data.labels || [],
-						series: (data.series || []).map((s) => ({ ...s, name: t('opencatalogi', s.name) })),
+						series: (data.series || []).map((s) => ({
+							...s,
+							name: t('opencatalogi', s.name),
+						})),
 					}
 				}
 			} catch (err) {
@@ -563,11 +955,14 @@ export default {
 		/**
 		 * Fetch API read-request volume over time (traffic graph).
 		 * Filters the audit-trail-actions chart to the "Read" series.
+		 *
 		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
 		 */
 		async fetchTrafficChart() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const prefix = window.location.pathname.includes('/index.php')
+					? '/index.php'
+					: ''
 				const response = await fetch(
 					`${prefix}/apps/openregister/api/dashboard/charts/audit-trail-actions`,
 					{ method: 'GET', headers: buildHeaders() },
@@ -578,9 +973,16 @@ export default {
 					const readSeries = allSeries.filter((s) => s.name === 'Read')
 					this.trafficChartData = {
 						labels: data.labels || [],
-						series: readSeries.length > 0
-							? readSeries.map((s) => ({ ...s, name: t('opencatalogi', 'Requests') }))
-							: allSeries.map((s) => ({ ...s, name: t('opencatalogi', s.name) })),
+						series:
+							readSeries.length > 0
+								? readSeries.map((s) => ({
+										...s,
+										name: t('opencatalogi', 'Requests'),
+									}))
+								: allSeries.map((s) => ({
+										...s,
+										name: t('opencatalogi', s.name),
+									})),
 					}
 				}
 			} catch (err) {
@@ -590,11 +992,14 @@ export default {
 
 		/**
 		 * Fetch the most popular search terms from OpenRegister search trails.
+		 *
 		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
 		 */
 		async fetchPopularSearchTerms() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const prefix = window.location.pathname.includes('/index.php')
+					? '/index.php'
+					: ''
 				const response = await fetch(
 					`${prefix}/apps/openregister/api/search-trails/popular-terms?limit=10`,
 					{ method: 'GET', headers: buildHeaders() },
@@ -611,14 +1016,19 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
+		/**
+		 * @param publication
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
 		resolveSchemaName(publication) {
 			const schemaRef = publication['@self']?.schema
 			if (!schemaRef) return ''
 			if (typeof schemaRef === 'object') {
 				return schemaRef.title || schemaRef.name || ''
 			}
-			const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(schemaRef))
+			const match = objectStore.availableSchemas.find(
+				(s) => Number(s.id) === Number(schemaRef),
+			)
 			return match?.title || match?.name || ''
 		},
 
@@ -628,17 +1038,71 @@ export default {
 			navigationStore.setModal('viewObject')
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
+		/**
+		 * @param publication
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
 		openPublication(publication) {
-			objectStore.setActiveObject('publication', publication)
-			navigationStore.setModal('viewObject')
+			const catalogSlug = this.catalogSlugById(publication?.catalog)
+			const pubId = publication?.id || publication?.['@self']?.id
+			if (catalogSlug && pubId) {
+				this.$router.push({
+					name: 'PublicationDetail',
+					params: { catalogSlug, id: String(pubId) },
+				})
+			} else if (catalogSlug) {
+				this.$router.push({ name: 'Publications', params: { catalogSlug } })
+			} else {
+				this.$router.push({ name: 'Catalogs' })
+			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
+		/**
+		 * Navigate to the Publications index for the first available catalog,
+		 * or fall back to the Catalogs list if no catalog slug is known yet.
+		 * Status-based filtering is intentionally omitted: publication status is
+		 * derived from date fields (publicationDate / depublicationDate), not a
+		 * simple status query parameter.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
+		 */
+		navigateToPublications() {
+			if (this.firstCatalogSlug) {
+				this.$router.push({
+					name: 'Publications',
+					params: { catalogSlug: this.firstCatalogSlug },
+				})
+			} else {
+				this.$router.push({ name: 'Catalogs' })
+			}
+		},
+
+		/**
+		 * Resolve a catalog slug from a catalog ID reference on a publication.
+		 *
+		 * @param {string|number|object|null} catalogRef - catalog field value from a publication
+		 * @return {string|null}
+		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
+		 */
+		catalogSlugById(catalogRef) {
+			if (!catalogRef) return this.firstCatalogSlug
+			const refId =
+				typeof catalogRef === 'object'
+					? (catalogRef?.id ?? catalogRef?.slug)
+					: catalogRef
+			const found = this.catalogs.find(
+				(c) => String(c.id) === String(refId) || c.slug === String(refId),
+			)
+			return found?.slug || this.firstCatalogSlug
+		},
+
+		/**
+		 * @param newLayout
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
 		onLayoutChange(newLayout) {
 			this.dashboardLayout = newLayout
 		},
-
 	},
 }
 </script>
@@ -743,6 +1207,7 @@ export default {
 .concept-item-schema {
 	font-size: 11px;
 	font-weight: 600;
+	/* stylelint-disable-next-line color-no-hex -- var() fallback, see stylelint.config.js */
 	color: var(--color-primary-element, #0082c9);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -757,6 +1222,7 @@ export default {
 	font-size: 11px;
 	font-weight: 600;
 	background: var(--color-warning-hover, rgba(233, 163, 0, 0.1));
+	/* stylelint-disable-next-line color-no-hex -- var() fallback, see stylelint.config.js */
 	color: var(--color-warning-text, #7a5700);
 	flex-shrink: 0;
 }
@@ -768,6 +1234,7 @@ export default {
 	font-size: 11px;
 	font-weight: 600;
 	background: var(--color-success-hover, rgba(233, 163, 0, 0.1));
+	/* stylelint-disable-next-line color-no-hex -- var() fallback, see stylelint.config.js */
 	color: var(--color-success-text, #7a5700);
 	flex-shrink: 0;
 }
@@ -784,6 +1251,7 @@ export default {
 	font-size: 11px;
 	font-weight: 600;
 	background: var(--color-error-hover, rgba(211, 47, 47, 0.1));
+	/* stylelint-disable-next-line color-no-hex -- var() fallback, see stylelint.config.js */
 	color: var(--color-error-text, #7a1515);
 	flex-shrink: 0;
 }
@@ -819,8 +1287,23 @@ export default {
 	animation: spin 1s linear infinite;
 }
 
+/* WCAG 2.3.3. The spinner is a status indicator, not decoration: stopping it
+   outright would hide the fact that something is still loading. It is slowed
+   to a near-static rate instead, which removes the vestibular trigger while
+   keeping the "busy" signal. The clickable publication rows below carry no
+   motion of their own, so nothing else in this component needs a fallback. */
+@media (prefers-reduced-motion: reduce) {
+	.icon-spinning {
+		animation-duration: 6s;
+	}
+}
+
 @keyframes spin {
-	from { transform: rotate(0deg); }
-	to { transform: rotate(360deg); }
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
 }
 </style>

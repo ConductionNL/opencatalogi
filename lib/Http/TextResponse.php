@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Text response for plain text output.
  *
@@ -26,48 +27,44 @@ use OCP\AppFramework\Http\Response;
  *
  * @psalm-suppress MissingTemplateParam
  */
-class TextResponse extends Response
-{
+class TextResponse extends Response {
 
-    /**
-     * The text to be returned.
-     *
-     * @var string
-     */
-    protected string $text;
+	/**
+	 * The text to be returned.
+	 *
+	 * @var string
+	 */
+	protected string $text;
 
-    /**
-     * Constructor for TextResponse.
-     *
-     * @param string                $text    The text to return.
-     * @param integer               $status  HTTP status code, defaults to 200.
-     * @param array<string, string> $headers Additional headers.
-     */
-    public function __construct(string $text='', int $status=200, array $headers=[])
-    {
-        // @phpstan-ignore argument.type
-        parent::__construct($status);
+	/**
+	 * Constructor for TextResponse.
+	 *
+	 * @param string $text The text to return.
+	 * @param integer $status HTTP status code, defaults to 200.
+	 * @param array<string, string> $headers Additional headers.
+	 */
+	public function __construct(string $text = '', int $status = 200, array $headers = []) {
+		// @phpstan-ignore argument.type
+		parent::__construct(status: $status);
 
-        $this->text = $text;
+		$this->text = $text;
 
-        // Add custom headers.
-        foreach ($headers as $name => $value) {
-            $this->addHeader(name: $name, value: $value);
-        }
+		// Add custom headers.
+		foreach ($headers as $name => $value) {
+			$this->addHeader(name: $name, value: $value);
+		}
 
-        // Set content type header.
-        $this->addHeader(name: 'Content-Type', value: 'text/plain; charset=utf-8');
+		// Set content type header.
+		$this->addHeader(name: 'Content-Type', value: 'text/plain; charset=utf-8');
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Returns the rendered text.
-     *
-     * @return string
-     */
-    public function render(): string
-    {
-        return $this->text;
-
-    }//end render()
+	/**
+	 * Returns the rendered text.
+	 *
+	 * @return string
+	 */
+	public function render(): string {
+		return $this->text;
+	}//end render()
 }//end class

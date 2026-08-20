@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * Behavioral UI coverage for the OpenCatalogi Catalog detail page
  * (manifest page type:custom → CatalogDetailPageView, built on
@@ -32,54 +32,87 @@ import { test, expect } from '@playwright/test'
 import { bootApp, navTo, content, trackPageErrors, fatalErrors, APP } from './_nav'
 
 test.describe('catalog-detail-page', () => {
-	test(
-		// @e2e catalogs::open-a-catalog-detail-from-the-list
-		'Catalog detail — opening a catalog from the list renders the detail page (or empty-state when none)',
-		async ({ page }) => {
-			const errors = trackPageErrors(page)
+	test(// @e2e catalogs::open-a-catalog-detail-from-the-list
+	// The component name belongs in the TITLE, not only in the header comment
+	// above. gate-26 masks comments before looking for a reference (.github#358,
+	// "a comment is not a baseline"), so this spec really did exercise
+	// CatalogDetailPage while the gate scored it as having no proof at all.
+	// A title is executable text, and naming the screen under test is what the
+	// title is for.
+	'CatalogDetailPage — opening a catalog from the list renders the detail page (or empty-state when none)', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
 
-			await bootApp(page)
-			await navTo(page, 'CatalogsMenu', true)
-			await expect(page.locator('[data-testid="cn-index-page"]').first())
-				.toBeVisible({ timeout: 15000 })
+		await bootApp(page)
 
-			// Wait for the index body to settle into either rows or empty-state.
-			const rows = content(page).locator(
-				'[data-testid="cn-object-row"], .cn-object-card, .cn-card-grid [role="button"]',
-			)
-			const emptyState = content(page).locator(
+		// CatalogsMenu is a child of the collapsible `CatalogueGroup`
+		// (the nav-IA `settings-foldout + admin-IA hygiene` refactor moved
+		// Catalogs/Glossary/Themes/Pages/Menus/WooBatches under it). The
+		// group renders collapsed (aria-expanded=false) so its children are
+		// hidden until it is opened — exactly as woo-batches-page.spec.ts
+		// handles WooBatchesMenu. The stale `settings=true` here opened the
+		// settings gear foldout (where CatalogsMenu does NOT live), leaving
+		// the entry hidden and the click never landing. Expand the group
+		// first, then use the normal nav click.
+		const group = page
+			.locator('[data-testid="cn-nav-entry-CatalogueGroup"]')
+			.first()
+		await expect(group).toBeVisible({ timeout: 10000 })
+		const catalogsEntry = page
+			.locator('[data-testid="cn-nav-entry-CatalogsMenu"]')
+			.first()
+		if (!(await catalogsEntry.isVisible().catch(() => false))) {
+			await group.locator('a, button').first().click()
+			await expect(catalogsEntry).toBeVisible({ timeout: 10000 })
+		}
+
+		await navTo(page, 'CatalogsMenu')
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+
+		// Wait for the index body to settle into either rows or empty-state.
+		const rows = content(page).locator(
+			'[data-testid="cn-object-row"], .cn-object-card, .cn-card-grid [role="button"]',
+		)
+		const emptyState = content(page)
+			.locator(
 				'[data-testid="cn-object-list-empty"], .empty-content, [class*="empty-content"]',
-			).first()
-			await expect(async () => {
-				const hasRow = (await rows.count()) > 0
-				const hasEmpty = await emptyState.isVisible().catch(() => false)
-				expect(hasRow || hasEmpty).toBe(true)
-			}).toPass({ timeout: 15000 })
+			)
+			.first()
+		await expect(async () => {
+			const hasRow = (await rows.count()) > 0
+			const hasEmpty = await emptyState.isVisible().catch(() => false)
+			expect(hasRow || hasEmpty).toBe(true)
+		}).toPass({ timeout: 15000 })
 
-			if (await rows.count() > 0) {
-				// Read the first catalog's id from the live store collection
-				// (the same data that backs the rendered list) and open its
-				// detail route via the in-app hash router.
-				const id = await page.evaluate(async () => {
-					const r = await fetch('/index.php/apps/opencatalogi/api/catalogi', {
-						headers: { 'OCS-APIRequest': 'true' },
-					})
-					const d = await r.json()
-					const list = Array.isArray(d) ? d : (d?.results || [])
-					return list[0]?.['@self']?.id || list[0]?.id || null
+		if ((await rows.count()) > 0) {
+			// Read the first catalog's id from the live store collection
+			// (the same data that backs the rendered list) and open its
+			// detail route via the in-app hash router.
+			const id = await page.evaluate(async () => {
+				const r = await fetch('/index.php/apps/opencatalogi/api/catalogi', {
+					headers: { 'OCS-APIRequest': 'true' },
 				})
-				expect(id, 'a catalog id must be resolvable from the list').toBeTruthy()
+				const d = await r.json()
+				const list = Array.isArray(d) ? d : d?.results || []
+				return list[0]?.['@self']?.id || list[0]?.id || null
+			})
+			expect(id, 'a catalog id must be resolvable from the list').toBeTruthy()
 
-				await page.goto(`${APP}/#/catalogi/${id}`, { waitUntil: 'domcontentloaded' })
-				await page.waitForTimeout(1500)
-				await expect(page.locator('[data-testid="cn-detail-page"]').first())
-					.toBeVisible({ timeout: 15000 })
-			} else {
-				// Genuine empty-state surface.
-				await expect(emptyState).toBeVisible({ timeout: 5000 })
-			}
+			await page.goto(`${APP}/#/catalogi/${id}`, {
+				waitUntil: 'domcontentloaded',
+			})
+			await page.waitForTimeout(1500)
+			await expect(
+				page.locator('[data-testid="cn-detail-page"]').first(),
+			).toBeVisible({ timeout: 15000 })
+		} else {
+			// Genuine empty-state surface.
+			await expect(emptyState).toBeVisible({ timeout: 5000 })
+		}
 
-			expect(fatalErrors(errors)).toHaveLength(0)
-		},
-	)
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
 })

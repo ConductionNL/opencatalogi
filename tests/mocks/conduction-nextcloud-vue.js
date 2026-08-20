@@ -19,6 +19,7 @@
  * extend the file rather than reaching for transformIgnorePatterns.
  */
 const { defineStore } = require('pinia')
+const { h } = require('vue')
 
 const baseUrl = '/index.php/apps/openregister/api/objects'
 
@@ -63,7 +64,10 @@ function createObjectStore(id, options = {}) {
 				const config = this.objectTypeRegistry[type]
 				if (!config) return null
 				if (this.schemas[type]) return this.schemas[type]
-				const response = await fetch(`/apps/openregister/api/schemas/${config.schema}`, { method: 'GET' })
+				const response = await fetch(
+					`/apps/openregister/api/schemas/${config.schema}`,
+					{ method: 'GET' },
+				)
 				if (!response.ok) return null
 				const data = await response.json()
 				this.schemas = { ...this.schemas, [type]: data }
@@ -76,11 +80,83 @@ function createObjectStore(id, options = {}) {
 	})
 }
 
-const noopPlugin = () => ({ name: 'noop', state: () => ({}), getters: {}, actions: {} })
+const noopPlugin = () => ({
+	name: 'noop',
+	state: () => ({}),
+	getters: {},
+	actions: {},
+})
+
+// Faithful-enough stub of the real CnThemePreview (mirrors its `pickers`
+// required-prop + `buildInitialModel`/`previewStyle` logic) so component
+// tests that mount it exercise the same crash surface the real library
+// component has — a required, non-defaulted `pickers` array iterated in
+// `buildInitialModel()`, feeding a `previewStyle` computed that runs
+// `Object.entries()` over the resulting model.
+const CnThemePreview = {
+	name: 'CnThemePreview',
+	props: {
+		pickers: {
+			type: Array,
+			required: true,
+			validator: (v) =>
+				Array.isArray(v)
+				&& v.length > 0
+				&& v.every(
+					(p) =>
+						p
+						&& typeof p.key === 'string'
+						&& typeof p.label === 'string',
+				),
+		},
+		value: { type: Object, default: () => ({}) },
+		defaults: { type: Object, default: null },
+		sampleTitle: { type: String, default: 'My app' },
+		sampleBodyText: { type: String, default: '' },
+	},
+	data() {
+		return { model: this.buildInitialModel() }
+	},
+	computed: {
+		previewStyle() {
+			const out = {}
+			for (const [k, v] of Object.entries(this.model)) {
+				out[`--${k}`] = v
+			}
+			return out
+		},
+	},
+	methods: {
+		buildInitialModel() {
+			const out = {}
+			for (const p of this.pickers) {
+				if (this.value && this.value[p.key] !== undefined) {
+					out[p.key] = this.value[p.key]
+				} else if (p.default !== undefined) {
+					out[p.key] = p.default
+				} else {
+					out[p.key] = '#000000'
+				}
+			}
+			return out
+		},
+	},
+	// ⚠️ Vue 3 calls `render()` with NO `h` argument — `h` is imported from
+	// 'vue' instead. The Vue 2 spelling `render(h)` leaves `h` undefined and
+	// throws `h is not a function` on first paint.
+	render() {
+		return h(
+			'div',
+			{ class: 'cn-theme-preview-stub', style: this.previewStyle },
+			[this.sampleTitle],
+		)
+	},
+}
 
 module.exports = {
 	createObjectStore,
 	useObjectStore: createObjectStore('conduction-objects'),
+	CnThemePreview,
 	auditTrailsPlugin: noopPlugin,
 	filesPlugin: noopPlugin,
 	lifecyclePlugin: noopPlugin,

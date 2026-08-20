@@ -1,14 +1,7 @@
-/**
- * ViewMenuModal.vue
- * Modal component for viewing menu details and menu items
- * @category Modals
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
+/** * ViewMenuModal.vue * Modal component for viewing menu details and menu items *
+@category Modals * @package opencatalogi * @author Ruben Linde * @copyright 2024 *
+@license EUPL-1.2 * @version 1.0.0 * @link
+https://github.com/opencatalogi/opencatalogi */
 
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
@@ -16,37 +9,110 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog v-if="navigationStore.modal === 'viewMenu'"
+	<NcDialog
+		v-if="navigationStore.modal === 'viewMenu'"
 		:name="isAddMode ? t('opencatalogi', 'Add Menu') : getModalTitle()"
 		size="large"
-		:can-close="true"
+		:canClose="true"
 		@update:open="handleDialogClose">
 		<div class="modal__content">
 			<div v-if="menu || isAddMode" class="menuDetails">
 				<!-- Menu Items Tab -->
 				<div class="tabContainer">
-					<BTabs v-model="tabIndex" content-class="mt-3" justified>
-						<BTab v-if="!isAddMode" :title="t('opencatalogi', 'Menu Items ({count})', { count: editForm.items?.length || 0 })" active>
+					<AppTabs v-model="tabIndex" contentClass="mt-3" justified>
+						<AppTab
+							v-if="!isAddMode"
+							:title="
+								t('opencatalogi', 'Menu Items ({count})', {
+									count: editForm.items?.length || 0,
+								})
+							"
+							active>
 							<div v-if="editForm.items && editForm.items.length">
 								<div class="menuItemsSection">
-									<div v-if="editForm.items?.length" class="attached-list">
-										<div v-for="(item, index) in editForm.items"
+									<div
+										v-if="editForm.items?.length"
+										class="attached-list">
+										<div
+											v-for="(item, index) in editForm.items"
 											:key="item.id || index"
 											class="attached-list-item">
 											<div class="object-info">
-												<strong>{{ item.title || item.name || t('opencatalogi', 'Item {n}', { n: index + 1 }) }}</strong>
-												<span v-if="item.order !== undefined" class="object-order">{{ t('opencatalogi', 'Order: {n}', { n: item.order }) }}</span>
-												<span v-if="item.groups && item.groups.length > 0" class="object-groups">{{ t('opencatalogi', 'Groups: {groups}', { groups: item.groups.join(', ') }) }}</span>
-												<span v-if="item.hideAfterLogin !== undefined" class="object-hide-after-login">{{ t('opencatalogi', 'Hide After Login: {value}', { value: item.hideAfterLogin ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') }) }}</span>
+												<strong>{{
+													item.title
+													|| item.name
+													|| t(
+														'opencatalogi',
+														'Item {n}',
+														{ n: index + 1 },
+													)
+												}}</strong>
+												<span
+													v-if="item.order !== undefined"
+													class="object-order"
+													>{{
+														t(
+															'opencatalogi',
+															'Order: {n}',
+															{ n: item.order },
+														)
+													}}</span
+												>
+												<span
+													v-if="
+														item.groups
+														&& item.groups.length > 0
+													"
+													class="object-groups"
+													>{{
+														t(
+															'opencatalogi',
+															'Groups: {groups}',
+															{
+																groups: item.groups.join(
+																	', ',
+																),
+															},
+														)
+													}}</span
+												>
+												<span
+													v-if="
+														item.hideAfterLogin
+														!== undefined
+													"
+													class="object-hide-after-login"
+													>{{
+														t(
+															'opencatalogi',
+															'Hide After Login: {value}',
+															{
+																value: item.hideAfterLogin
+																	? t(
+																			'opencatalogi',
+																			'Yes',
+																		)
+																	: t(
+																			'opencatalogi',
+																			'No',
+																		),
+															},
+														)
+													}}</span
+												>
 											</div>
 											<div class="object-actions">
-												<NcButton type="secondary" @click="editItem(item, index)">
+												<NcButton
+													variant="secondary"
+													@click="editItem(item, index)">
 													<template #icon>
 														<Pencil :size="18" />
 													</template>
 													{{ t('opencatalogi', 'Edit') }}
 												</NcButton>
-												<NcButton type="error" @click="deleteItem(item, index)">
+												<NcButton
+													variant="error"
+													@click="deleteItem(item, index)">
 													<template #icon>
 														<Delete :size="18" />
 													</template>
@@ -56,28 +122,69 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										</div>
 									</div>
 									<div v-else class="emptyMenuItems">
-										<p>{{ t('opencatalogi', 'No menu items configured') }}</p>
+										<p>
+											{{
+												t(
+													'opencatalogi',
+													'No menu items configured',
+												)
+											}}
+										</p>
 									</div>
 								</div>
 							</div>
 
 							<div v-else>
 								<p class="emptyMenuItems">
-									{{ t('opencatalogi', 'No menu items configured') }}
+									{{
+										t('opencatalogi', 'No menu items configured')
+									}}
 								</p>
 							</div>
-						</BTab>
+						</AppTab>
 
 						<!-- Configuration Tab -->
-						<BTab :title="t('opencatalogi', 'Configuration')">
+						<AppTab :title="t('opencatalogi', 'Configuration')">
 							<div>
 								<!-- Success/Error Messages -->
-								<div v-if="menuState.success !== null || menuState.error" class="messageContainer">
-									<NcNoteCard v-if="menuState.success" type="success">
-										<p>{{ isEdit ? t('opencatalogi', 'Menu successfully edited') : t('opencatalogi', 'Menu successfully added') }}</p>
+								<div
+									v-if="
+										menuState.success !== null || menuState.error
+									"
+									class="messageContainer">
+									<NcNoteCard
+										v-if="menuState.success"
+										type="success">
+										<p>
+											{{
+												isEdit
+													? t(
+															'opencatalogi',
+															'Menu successfully edited',
+														)
+													: t(
+															'opencatalogi',
+															'Menu successfully added',
+														)
+											}}
+										</p>
 									</NcNoteCard>
-									<NcNoteCard v-if="!menuState.success" type="error">
-										<p>{{ isEdit ? t('opencatalogi', 'Something went wrong while editing the menu') : t('opencatalogi', 'Something went wrong while adding the menu') }}</p>
+									<NcNoteCard
+										v-if="!menuState.success"
+										type="error">
+										<p>
+											{{
+												isEdit
+													? t(
+															'opencatalogi',
+															'Something went wrong while editing the menu',
+														)
+													: t(
+															'opencatalogi',
+															'Something went wrong while adding the menu',
+														)
+											}}
+										</p>
 									</NcNoteCard>
 									<NcNoteCard v-if="menuState.error" type="error">
 										<p>{{ menuState.error }}</p>
@@ -85,95 +192,211 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								</div>
 
 								<!-- Edit Form -->
-								<div v-if="menuState.success === null && !objectStore.isLoading('menu')" class="form-group">
-									<NcTextField :disabled="objectStore.isLoading('menu')"
+								<div
+									v-if="
+										menuState.success === null
+										&& !objectStore.isLoading('menu')
+									"
+									class="form-group">
+									<NcTextField
+										v-model="editForm.title"
+										:disabled="objectStore.isLoading('menu')"
 										:label="t('opencatalogi', 'Title*')"
 										maxlength="255"
-										:value.sync="editForm.title"
-										:error="!!inputValidation.fieldErrors?.['title']"
-										:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
+										:error="
+											!!inputValidation.fieldErrors?.['title']
+										"
+										:helperText="
+											inputValidation.fieldErrors?.[
+												'title'
+											]?.[0]
+										" />
 
-									<NcTextField :disabled="objectStore.isLoading('menu')"
+									<NcTextField
+										v-model="editForm.description"
+										:disabled="objectStore.isLoading('menu')"
 										:label="t('opencatalogi', 'Description')"
 										maxlength="255"
-										:value.sync="editForm.description"
-										:error="!!inputValidation.fieldErrors?.['description']"
-										:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
+										:error="
+											!!inputValidation.fieldErrors?.[
+												'description'
+											]
+										"
+										:helperText="
+											inputValidation.fieldErrors?.[
+												'description'
+											]?.[0]
+										" />
 
-									<NcTextField :disabled="objectStore.isLoading('menu')"
+									<NcTextField
+										v-model="editForm.icon"
+										:disabled="objectStore.isLoading('menu')"
 										:label="t('opencatalogi', 'Icon')"
 										maxlength="255"
-										:value.sync="editForm.icon"
-										:error="!!inputValidation.fieldErrors?.['icon']"
-										:helper-text="inputValidation.fieldErrors?.['icon']?.[0]" />
+										:error="
+											!!inputValidation.fieldErrors?.['icon']
+										"
+										:helperText="
+											inputValidation.fieldErrors?.[
+												'icon'
+											]?.[0]
+										" />
 
-									<NcTextField :disabled="objectStore.isLoading('menu')"
+									<!-- Kept as an explicit prop/listener pair (not `v-model`) because
+									     `handlePositionUpdate` coerces the raw string to a number. -->
+									<NcTextField
+										:disabled="objectStore.isLoading('menu')"
 										:label="t('opencatalogi', 'Position')"
 										type="number"
 										min="0"
-										:value="editForm.position"
-										:error="!!inputValidation.fieldErrors?.['position']"
-										:helper-text="inputValidation.fieldErrors?.['position']?.[0]"
-										@update:value="handlePositionUpdate" />
+										:modelValue="editForm.position"
+										:error="
+											!!inputValidation.fieldErrors?.[
+												'position'
+											]
+										"
+										:helperText="
+											inputValidation.fieldErrors?.[
+												'position'
+											]?.[0]
+										"
+										@update:modelValue="handlePositionUpdate" />
 
 									<div class="position-info">
-										<p>{{ t('opencatalogi', '1 - top right') }}</p>
-										<p>{{ t('opencatalogi', '2 - navigation') }}</p>
-										<p>{{ t('opencatalogi', '3 - footer left') }}</p>
-										<p>{{ t('opencatalogi', '4 - footer center') }}</p>
-										<p>{{ t('opencatalogi', '5 - footer right') }}</p>
-										<p>{{ t('opencatalogi', '6 - footer bottom') }}</p>
+										<p>
+											{{ t('opencatalogi', '1 - top right') }}
+										</p>
+										<p>
+											{{ t('opencatalogi', '2 - navigation') }}
+										</p>
+										<p>
+											{{
+												t('opencatalogi', '3 - footer left')
+											}}
+										</p>
+										<p>
+											{{
+												t(
+													'opencatalogi',
+													'4 - footer center',
+												)
+											}}
+										</p>
+										<p>
+											{{
+												t('opencatalogi', '5 - footer right')
+											}}
+										</p>
+										<p>
+											{{
+												t(
+													'opencatalogi',
+													'6 - footer bottom',
+												)
+											}}
+										</p>
 										<p>{{ t('opencatalogi', '7 - admin') }}</p>
 									</div>
 								</div>
 
-								<div v-if="objectStore.isLoading('menu')" class="loading-status">
+								<div
+									v-if="objectStore.isLoading('menu')"
+									class="loading-status">
 									<NcLoadingIcon :size="20" />
-									<span>{{ isEdit ? t('opencatalogi', 'Menu is being edited...') : t('opencatalogi', 'Menu is being added...') }}</span>
+									<span>{{
+										isEdit
+											? t(
+													'opencatalogi',
+													'Menu is being edited...',
+												)
+											: t(
+													'opencatalogi',
+													'Menu is being added...',
+												)
+									}}</span>
 								</div>
 							</div>
-						</BTab>
+						</AppTab>
 
 						<!-- Security Tab -->
-						<BTab :title="t('opencatalogi', 'Security')">
+						<AppTab :title="t('opencatalogi', 'Security')">
 							<div>
 								<!-- Groups Access Control -->
 								<div class="groups-section">
-									<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
+									<label class="groups-label">{{
+										t('opencatalogi', 'Groups Access')
+									}}</label>
 									<NcNoteCard type="info">
-										<p>{{ t('opencatalogi', 'When you add groups to a menu, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the menu will be visible to all users.') }}</p>
+										<p>
+											{{
+												t(
+													'opencatalogi',
+													'When you add groups to a menu, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the menu will be visible to all users.',
+												)
+											}}
+										</p>
 									</NcNoteCard>
 									<NcSelect
 										v-model="editForm.groups"
 										:options="groupsOptions?.options || []"
-										:disabled="objectStore.isLoading('menu') || groupsOptions?.loading"
-										:input-label="t('opencatalogi', 'Select Groups')"
+										:disabled="
+											objectStore.isLoading('menu')
+											|| groupsOptions?.loading
+										"
+										:inputLabel="
+											t('opencatalogi', 'Select Groups')
+										"
 										multiple />
-									<p v-if="groupsOptions?.loading" class="groups-loading">
+									<p
+										v-if="groupsOptions?.loading"
+										class="groups-loading">
 										{{ t('opencatalogi', 'Loading groups...') }}
 									</p>
 								</div>
 								<div class="hide-after-login">
 									<NcNoteCard type="info">
-										<p>{{ t('opencatalogi', 'When checked, this menu will be hidden after a user is logged in. This is useful for menus that should only be visible to guests, such as login or registration links.') }}</p>
+										<p>
+											{{
+												t(
+													'opencatalogi',
+													'When checked, this menu will be hidden after a user is logged in. This is useful for menus that should only be visible to guests, such as login or registration links.',
+												)
+											}}
+										</p>
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hideAfterLogin"
-										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('menu')">
+										v-model="editForm.hideAfterLogin"
+										:disabled="
+											editForm.hideBeforeLogin
+											|| objectStore.isLoading('menu')
+										">
 										{{ t('opencatalogi', 'Hide after login') }}
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hideBeforeLogin"
-										:disabled="editForm.hideAfterLogin || objectStore.isLoading('menu')">
+										v-model="editForm.hideBeforeLogin"
+										:disabled="
+											editForm.hideAfterLogin
+											|| objectStore.isLoading('menu')
+										">
 										{{ t('opencatalogi', 'Hide before login') }}
 									</NcCheckboxRadioSwitch>
-									<p v-if="editForm.hideAfterLogin && editForm.hideBeforeLogin" class="field-error">
-										{{ t('opencatalogi', "'Hide before login' and 'Hide after login' cannot both be selected.") }}
+									<p
+										v-if="
+											editForm.hideAfterLogin
+											&& editForm.hideBeforeLogin
+										"
+										class="field-error">
+										{{
+											t(
+												'opencatalogi',
+												"'Hide before login' and 'Hide after login' cannot both be selected.",
+											)
+										}}
 									</p>
 								</div>
 							</div>
-						</BTab>
-					</BTabs>
+						</AppTab>
+					</AppTabs>
 				</div>
 
 				<div v-if="menu && menu.metadata">
@@ -189,7 +412,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 
 		<template #actions>
-			<NcButton v-if="!isAddMode" type="secondary" @click="openAddItemModal">
+			<NcButton
+				v-if="!isAddMode"
+				variant="secondary"
+				@click="openAddItemModal">
 				<template #icon>
 					<Plus :size="20" />
 				</template>
@@ -198,7 +424,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcButton @click="closeModal">
 				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
-			<NcButton v-if="!isAddMode" type="error" @click="deleteMenu">
+			<NcButton v-if="!isAddMode" variant="error" @click="deleteMenu">
 				<template #icon>
 					<Delete :size="20" />
 				</template>
@@ -206,7 +432,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</NcButton>
 			<NcButton
 				v-if="isAddMode"
-				type="primary"
+				variant="primary"
 				:disabled="!inputValidation.success || objectStore.isLoading('menu')"
 				@click="saveMenu">
 				<template #icon>
@@ -216,7 +442,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</NcButton>
 			<NcButton
 				v-else
-				type="primary"
+				variant="primary"
 				:disabled="!inputValidation.success || objectStore.isLoading('menu')"
 				@click="saveMenu">
 				<template #icon>
@@ -230,19 +456,27 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcTextField, NcNoteCard, NcLoadingIcon, NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue'
-import { BTabs, BTab } from 'bootstrap-vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
+import ContentSave from 'vue-material-design-icons/ContentSave.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-import ContentSave from 'vue-material-design-icons/ContentSave.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
 import { Menu } from '../../entities/index.js'
-import _ from 'lodash'
 
 /**
  * ViewMenuModal — read a menu and its embedded items.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'ViewMenuModal',
@@ -254,13 +488,14 @@ export default {
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
 		NcSelect,
-		BTabs,
-		BTab,
+		AppTabs,
+		AppTab,
 		Pencil,
 		Plus,
 		Delete,
 		ContentSave,
 	},
+
 	data() {
 		return {
 			editForm: {
@@ -275,47 +510,59 @@ export default {
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
+
 			hasUpdated: false,
 			groupsOptions: {
 				options: [],
 				loading: false,
 			},
+
 			tabIndex: 1, // 1 = Configuration by default for add, 0 = Menu Items
 		}
 	},
+
 	computed: {
 		/**
 		 * Get the currently active menu from the store
+		 *
 		 * @return {object|null} The active menu object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		menu() {
 			return objectStore.getActiveObject('menu')
 		},
+
 		/**
 		 * Check if we're in edit mode
+		 *
 		 * @return {boolean} True if editing an existing menu
 		 */
 		isEdit() {
 			return !!this.menu
 		},
+
 		/**
 		 * Check if we're in add mode
+		 *
 		 * @return {boolean} True if adding a new menu
 		 */
 		isAddMode() {
 			return !(this.menu && this.menu.id)
 		},
+
 		/**
 		 * Get the menu state from the store
+		 *
 		 * @return {object} The menu state object
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		menuState() {
 			return objectStore.getState('menu')
 		},
+
 		/**
 		 * Validate the input form
+		 *
 		 * @return {object} Validation result
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
@@ -325,42 +572,57 @@ export default {
 
 			return {
 				success: result.success,
-				errorMessages: result?.error?.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`) || [],
+				errorMessages:
+					result?.error?.issues.map(
+						(issue) => `${issue.path.join('.')}: ${issue.message}`,
+					) || [],
+
 				fieldErrors: result?.error?.formErrors?.fieldErrors || {},
 			}
 		},
 	},
+
 	watch: {
-		'menuState.success'(val) {
+		'menuState.success': function (val) {
 			if (val === true) {
 				setTimeout(() => {
 					objectStore.setState('menu', { success: null })
 				}, 2000)
 			}
 		},
+
 		/**
 		 * Watch for changes in the menu data and update editForm accordingly
+		 *
 		 * @param {object} newMenu - The new menu data
 		 */
 		menu: {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+			/**
+			 * @param newMenu
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+			 */
 			handler(newMenu) {
 				if (newMenu && !this.isAddMode) {
 					this.editForm = {
 						...this.editForm,
-						..._.cloneDeep(newMenu),
+						...structuredClone(newMenu),
 					}
 					this.tabIndex = 0 // Menu Items tab for edit mode
 				} else if (this.isAddMode) {
 					this.resetComponentState()
 				}
 			},
+
 			immediate: true,
 		},
 
 		// Add watcher for modal state to handle cleanup
 		'navigationStore.modal': {
-			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+			/**
+			 * @param newModal
+			 * @param oldModal
+			 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+			 */
 			handler(newModal, oldModal) {
 				if (oldModal === 'viewMenu' && newModal !== 'viewMenu') {
 					// Modal was closed, ensure cleanup
@@ -372,12 +634,14 @@ export default {
 			},
 		},
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 	mounted() {
 		// Initialize form when component mounts
 		// Fetch groups for the dropdown
 		this.fetchGroups && this.fetchGroups()
 	},
+
 	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 	beforeUnmount() {
 		// Clean up any pending timeouts or intervals
@@ -389,35 +653,46 @@ export default {
 			objectStore.setState('menu', { success: null, error: null })
 		}
 	},
+
 	methods: {
 		/**
 		 * Get the modal title
+		 *
 		 * @return {string} The modal title
 		 */
 		getModalTitle() {
 			return this.menu?.title || 'Menu'
 		},
+
 		/**
 		 * Handle dialog close event
+		 *
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+
 		/**
 		 * Open the edit modal for the current menu
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		openEditModal() {
 			navigationStore.setModal('viewMenu')
 		},
+
 		/**
 		 * Open the add menu item modal
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
@@ -425,36 +700,55 @@ export default {
 			objectStore.setState('menu', { success: null, error: null })
 			navigationStore.setModal('menuItemForm')
 		},
+
 		/**
 		 * Open the edit modal for a specific menu item
+		 *
 		 * @param {object} item - The menu item to edit
 		 * @param {number} index - The index of the menu item
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+		/**
+		 * @param item
+		 * @param index
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+		 */
 		editItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })
 			navigationStore.setModal('menuItemForm')
 		},
+
 		/**
 		 * Open the delete modal for a specific menu item
+		 *
 		 * @param {object} item - The menu item to delete
 		 * @param {number} index - The index of the menu item in the items array
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+		/**
+		 * @param item
+		 * @param index
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+		 */
 		deleteItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })
 			navigationStore.setModal('deleteMenuItem')
 		},
+
 		/**
 		 * Handle position update
+		 *
 		 * @param {number} value - The new position value
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
+		/**
+		 * @param value
+		 * @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1
+		 */
 		handlePositionUpdate(value) {
 			this.editForm.position = parseInt(value, 10) || 0
 		},
+
 		/**
 		 * Reset all component data to initial state
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
@@ -481,6 +775,7 @@ export default {
 
 		/**
 		 * Close the modal and clear all state
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
@@ -505,29 +800,30 @@ export default {
 			})
 
 			if (this.isEdit) {
-				objectStore.updateObject('menu', menuItem.id, menuItem)
-					.then(() => {
-						setTimeout(() => {
-							this.closeModal()
-						}, 2000)
-					})
+				objectStore.updateObject('menu', menuItem.id, menuItem).then(() => {
+					setTimeout(() => {
+						this.closeModal()
+					}, 2000)
+				})
 			} else {
-				objectStore.createObject('menu', menuItem)
-					.then((createdMenu) => {
-						// Set the newly created menu as active to switch to edit mode
-						objectStore.setActiveObject('menu', createdMenu)
-						this.tabIndex = 0 // Switch to Menu Items tab
-					})
+				objectStore.createObject('menu', menuItem).then((createdMenu) => {
+					// Set the newly created menu as active to switch to edit mode
+					objectStore.setActiveObject('menu', createdMenu)
+					this.tabIndex = 0 // Switch to Menu Items tab
+				})
 			}
 		},
+
 		/**
 		 * Delete the current menu
+		 *
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		deleteMenu() {
 			if (this.menu && this.menu.id) {
-				objectStore.deleteObject('menu', this.menu.id)
+				objectStore
+					.deleteObject('menu', this.menu.id)
 					.then(() => {
 						this.closeModal()
 					})
@@ -536,21 +832,24 @@ export default {
 					})
 			}
 		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
-			import('../../services/nextcloudGroups.js').then(({ getNextcloudGroups }) => {
-				getNextcloudGroups()
-					.then((groups) => {
-						this.groupsOptions.options = groups
-					})
-					.catch((err) => {
-						console.error('Error fetching groups:', err)
-					})
-					.finally(() => {
-						this.groupsOptions.loading = false
-					})
-			})
+			import('../../services/nextcloudGroups.js').then(
+				({ getNextcloudGroups }) => {
+					getNextcloudGroups()
+						.then((groups) => {
+							this.groupsOptions.options = groups
+						})
+						.catch((err) => {
+							console.error('Error fetching groups:', err)
+						})
+						.finally(() => {
+							this.groupsOptions.loading = false
+						})
+				},
+			)
 		},
 	},
 }
@@ -822,7 +1121,9 @@ export default {
 	color: var(--color-main-text);
 }
 
-.object-order, .object-groups, .object-hide-after-login {
+.object-order,
+.object-groups,
+.object-hide-after-login {
 	display: inline-block;
 	margin-right: 12px;
 	color: var(--color-text-lighter);

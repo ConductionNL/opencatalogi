@@ -1,3 +1,4 @@
+import axios from '@nextcloud/axios'
 /**
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -11,7 +12,6 @@
  * officers do not misread the numbers (ANA-002 honest-limitation requirement).
  */
 import { generateUrl } from '@nextcloud/router'
-import axios from '@nextcloud/axios'
 
 /**
  * Fetch usage statistics for a single publication.
@@ -50,7 +50,9 @@ export async function fetchCatalogStats(slug, opts = {}) {
  * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export function catalogExportUrl(slug, opts = {}) {
-	const base = generateUrl('/apps/opencatalogi/api/catalogs/{slug}/stats/export', { slug })
+	const base = generateUrl('/apps/opencatalogi/api/catalogs/{slug}/stats/export', {
+		slug,
+	})
 	const params = new URLSearchParams()
 	if (opts.from) params.set('from', opts.from)
 	if (opts.to) params.set('to', opts.to)
@@ -86,8 +88,12 @@ export function deriveTrend(series, metric = 'views') {
 		return 'flat'
 	}
 	const mid = Math.floor(series.length / 2)
-	const older = series.slice(0, mid).reduce((sum, d) => sum + (Number(d[metric]) || 0), 0)
-	const recent = series.slice(mid).reduce((sum, d) => sum + (Number(d[metric]) || 0), 0)
+	const older = series
+		.slice(0, mid)
+		.reduce((sum, d) => sum + (Number(d[metric]) || 0), 0)
+	const recent = series
+		.slice(mid)
+		.reduce((sum, d) => sum + (Number(d[metric]) || 0), 0)
 	if (recent > older) return 'up'
 	if (recent < older) return 'down'
 	return 'flat'
@@ -105,5 +111,9 @@ export function countingStartNote(countingStart, t) {
 	if (!countingStart) {
 		return t('opencatalogi', 'No usage has been measured yet.')
 	}
-	return t('opencatalogi', 'Counting started on {date}. Earlier reach is not measured.', { date: countingStart })
+	return t(
+		'opencatalogi',
+		'Counting started on {date}. Earlier reach is not measured.',
+		{ date: countingStart },
+	)
 }

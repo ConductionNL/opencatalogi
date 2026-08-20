@@ -1,25 +1,25 @@
 <script setup>
-/**
- * SearchSideBar — facet filter controls for the search view.
- *
- * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3
- */
-import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
-import { useSearchStore } from '../../store/modules/search.ts'
 import { t } from '@nextcloud/l10n'
 import {
 	NcAppSidebar,
 	NcAppSidebarTab,
 	NcButton,
-	NcSelect,
 	NcNoteCard,
+	NcSelect,
 } from '@nextcloud/vue'
-import Magnify from 'vue-material-design-icons/Magnify.vue'
+/**
+ * SearchSideBar — facet filter controls for the search view.
+ *
+ * @spec openspec/specs/search/spec.md
+ */
+import { computed, getCurrentInstance, onMounted, ref, watch } from 'vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import FormatListBulletedSquare from 'vue-material-design-icons/FormatListBulletedSquare.vue'
+import Magnify from 'vue-material-design-icons/Magnify.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue'
-import FormatListBulletedSquare from 'vue-material-design-icons/FormatListBulletedSquare.vue'
 import FacetComponent from '../../components/FacetComponent.vue'
+import { useSearchStore } from '../../store/modules/search.ts'
 
 // Define props for sidebar control
 const props = defineProps({
@@ -55,19 +55,54 @@ const currentSortOption = computed(() => {
 	if (!firstOrder) return null
 
 	const [field, direction] = firstOrder
-	return sortOptions.value.find(option =>
-		option.field === field && option.direction === direction,
+	return sortOptions.value.find(
+		(option) => option.field === field && option.direction === direction,
 	)
 })
 
 const sortOptions = computed(() => [
-	{ value: 'relevance', label: t('opencatalogi', 'Relevance'), field: null, direction: null },
-	{ value: 'title-asc', label: t('opencatalogi', 'Title A-Z'), field: 'title', direction: 'ASC' },
-	{ value: 'title-desc', label: t('opencatalogi', 'Title Z-A'), field: 'title', direction: 'DESC' },
-	{ value: 'modified-desc', label: t('opencatalogi', 'Recently modified'), field: '@self.updated', direction: 'DESC' },
-	{ value: 'modified-asc', label: t('opencatalogi', 'Oldest first'), field: '@self.updated', direction: 'ASC' },
-	{ value: 'created-desc', label: t('opencatalogi', 'Recently created'), field: '@self.created', direction: 'DESC' },
-	{ value: 'created-asc', label: t('opencatalogi', 'Oldest created'), field: '@self.created', direction: 'ASC' },
+	{
+		value: 'relevance',
+		label: t('opencatalogi', 'Relevance'),
+		field: null,
+		direction: null,
+	},
+	{
+		value: 'title-asc',
+		label: t('opencatalogi', 'Title A-Z'),
+		field: 'title',
+		direction: 'ASC',
+	},
+	{
+		value: 'title-desc',
+		label: t('opencatalogi', 'Title Z-A'),
+		field: 'title',
+		direction: 'DESC',
+	},
+	{
+		value: 'modified-desc',
+		label: t('opencatalogi', 'Recently modified'),
+		field: '@self.updated',
+		direction: 'DESC',
+	},
+	{
+		value: 'modified-asc',
+		label: t('opencatalogi', 'Oldest first'),
+		field: '@self.updated',
+		direction: 'ASC',
+	},
+	{
+		value: 'created-desc',
+		label: t('opencatalogi', 'Recently created'),
+		field: '@self.created',
+		direction: 'DESC',
+	},
+	{
+		value: 'created-asc',
+		label: t('opencatalogi', 'Oldest created'),
+		field: '@self.created',
+		direction: 'ASC',
+	},
 ])
 
 const hasActiveFilters = computed(() => {
@@ -77,19 +112,30 @@ const hasActiveFilters = computed(() => {
 // Directory information is now handled via facets instead of separate sources
 
 // Methods
-const updateSidebarOpen = (open) => {
+/**
+ *
+ * @param open
+ */
+function updateSidebarOpen(open) {
 	emit('update:open', open)
 }
 
 // Search input is now handled by the watcher above
 
-const clearSearch = () => {
+/**
+ *
+ */
+function clearSearch() {
 	searchTerm.value = ''
 	searchStore.setSearchTerm('')
 	searchStore.searchPublications()
 }
 
-const handleSortChange = (option) => {
+/**
+ *
+ * @param option
+ */
+function handleSortChange(option) {
 	// Clear existing ordering
 	searchStore.clearOrdering()
 
@@ -101,24 +147,41 @@ const handleSortChange = (option) => {
 	searchStore.searchPublications()
 }
 
-const clearAllFilters = () => {
+/**
+ *
+ */
+function clearAllFilters() {
 	searchStore.clearAllFilters()
 	searchStore.searchPublications()
 }
 
-const refreshFacets = async () => {
+/**
+ *
+ */
+async function refreshFacets() {
 	await searchStore.discoverFacetableFields()
 }
 
-const formatFilterKey = (key) => {
+/**
+ *
+ * @param key
+ */
+function formatFilterKey(key) {
 	// Format filter keys for display
 	if (key.startsWith('@self.')) {
-		return key.replace('@self.', '').replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+		return key
+			.replace('@self.', '')
+			.replace(/[_-]/g, ' ')
+			.replace(/\b\w/g, (l) => l.toUpperCase())
 	}
-	return key.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+	return key.replace(/[_-]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
-const formatFilterValue = (value) => {
+/**
+ *
+ * @param value
+ */
+function formatFilterValue(value) {
 	// Format filter values for display
 	if (Array.isArray(value)) {
 		return value.join(', ')
@@ -126,28 +189,40 @@ const formatFilterValue = (value) => {
 	return String(value)
 }
 
-const getFieldDisplayName = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function getFieldDisplayName(fieldName) {
 	// Format field names nicely for display
 	return fieldName
 		.replace(/[@._]/g, ' ')
-		.replace(/\b\w/g, l => l.toUpperCase())
+		.replace(/\b\w/g, (l) => l.toUpperCase())
 		.trim()
 }
 
-const getFacetOptions = (facetResult) => {
+/**
+ *
+ * @param facetResult
+ */
+function getFacetOptions(facetResult) {
 	// Convert facet buckets to dropdown options
 	if (!facetResult || (!facetResult.buckets && !Array.isArray(facetResult))) {
 		return []
 	}
 
 	const buckets = facetResult.buckets || facetResult
-	return buckets.map(bucket => ({
+	return buckets.map((bucket) => ({
 		value: bucket._id || bucket.key || bucket.value,
 		label: `${bucket._id || bucket.key || bucket.value} (${bucket.count || bucket.results || bucket.doc_count || 0})`,
 	}))
 }
 
-const getSelectedFilterValue = (fieldName) => {
+/**
+ *
+ * @param fieldName
+ */
+function getSelectedFilterValue(fieldName) {
 	// Get the currently selected filter value for this field
 	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
 	const currentValue = searchStore.getFilters[filterKey]
@@ -157,12 +232,18 @@ const getSelectedFilterValue = (fieldName) => {
 	// Find the option that matches the current filter value
 	const facetResult = searchStore.currentFacets[fieldName]
 	const options = getFacetOptions(facetResult)
-	const selectedOption = options.find(option => option.value === currentValue) || null
+	const selectedOption =
+		options.find((option) => option.value === currentValue) || null
 
 	return selectedOption
 }
 
-const handleFilterSelect = (fieldName, option) => {
+/**
+ *
+ * @param fieldName
+ * @param option
+ */
+function handleFilterSelect(fieldName, option) {
 	// Handle filter selection from dropdown
 	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
 
@@ -179,16 +260,21 @@ const handleFilterSelect = (fieldName, option) => {
 }
 
 // Watchers
-watch(() => searchStore.getSearchTerm, (newTerm) => {
-	if (newTerm !== searchTerm.value) {
-		searchTerm.value = typeof newTerm === 'string' ? newTerm : String(newTerm || '')
-	}
-})
+watch(
+	() => searchStore.getSearchTerm,
+	(newTerm) => {
+		if (newTerm !== searchTerm.value) {
+			searchTerm.value =
+				typeof newTerm === 'string' ? newTerm : String(newTerm || '')
+		}
+	},
+)
 
 // Watch for changes to searchTerm and debounce the search
 watch(searchTerm, (newValue) => {
 	// Ensure we have a string value, not an event object
-	const searchValue = typeof newValue === 'string' ? newValue : String(newValue || '')
+	const searchValue =
+		typeof newValue === 'string' ? newValue : String(newValue || '')
 
 	// Debounce search input
 	if (searchTimeout.value) {
@@ -205,6 +291,9 @@ watch(searchTerm, (newValue) => {
 const RESERVED = new Set(['q', 'sort', 'view'])
 const debounceTimer = ref(null)
 
+/**
+ *
+ */
 function buildQueryFromState() {
 	const q = {}
 	if (searchStore.getSearchTerm) q.q = searchStore.getSearchTerm
@@ -217,6 +306,10 @@ function buildQueryFromState() {
 	return q
 }
 
+/**
+ *
+ * @param routeQuery
+ */
 function applyQueryToState(routeQuery) {
 	const q = routeQuery || {}
 	searchStore.setSearchTerm(typeof q.q === 'string' ? q.q : '')
@@ -228,12 +321,18 @@ function applyQueryToState(routeQuery) {
 	if (q.view === 'cards' || q.view === 'table') searchStore.setViewMode(q.view)
 	const filters = {}
 	Object.entries(q).forEach(([k, v]) => {
-		if (!RESERVED.has(k) && typeof v !== 'undefined' && v !== null && v !== '') filters[k] = String(v)
+		if (!RESERVED.has(k) && typeof v !== 'undefined' && v !== null && v !== '')
+			filters[k] = String(v)
 	})
 	searchStore.clearAllFilters()
 	if (Object.keys(filters).length) searchStore.setFilters(filters)
 }
 
+/**
+ *
+ * @param a
+ * @param b
+ */
 function shallowEqualQuery(a, b) {
 	const ak = Object.keys(a || {})
 	const bk = Object.keys(b || {})
@@ -244,6 +343,9 @@ function shallowEqualQuery(a, b) {
 	return true
 }
 
+/**
+ *
+ */
 function writeUrlFromStateIfChanged() {
 	if (!instance?.$route || instance.$route.path !== '/search') return
 	const nextQuery = buildQueryFromState()
@@ -267,24 +369,30 @@ onMounted(async () => {
 })
 
 // Watch route changes -> apply to state
-watch(() => instance?.$route?.fullPath, () => {
-	if (!instance?.$route) return
-	if (instance.$route.path !== '/search') return
-	applyQueryToState(instance.$route.query || {})
-})
+watch(
+	() => instance?.$route?.fullPath,
+	() => {
+		if (!instance?.$route) return
+		if (instance.$route.path !== '/search') return
+		applyQueryToState(instance.$route.query || {})
+	},
+)
 
 // Watch state changes -> write to URL (debounced)
-watch([
-	() => searchStore.getSearchTerm,
-	() => searchStore.getViewMode,
-	() => searchStore.getOrdering,
-	() => searchStore.getFilters,
-], () => {
-	if (debounceTimer.value) clearTimeout(debounceTimer.value)
-	debounceTimer.value = setTimeout(() => {
-		writeUrlFromStateIfChanged()
-	}, 400)
-})
+watch(
+	[
+		() => searchStore.getSearchTerm,
+		() => searchStore.getViewMode,
+		() => searchStore.getOrdering,
+		() => searchStore.getFilters,
+	],
+	() => {
+		if (debounceTimer.value) clearTimeout(debounceTimer.value)
+		debounceTimer.value = setTimeout(() => {
+			writeUrlFromStateIfChanged()
+		}, 400)
+	},
+)
 </script>
 
 <template>
@@ -295,7 +403,10 @@ watch([
 		subname="Across all federated catalogs"
 		:open="sidebarOpen"
 		@update:open="(e) => updateSidebarOpen(e)">
-		<NcAppSidebarTab id="search-tab" :name="t('opencatalogi', 'Search')" :order="1">
+		<NcAppSidebarTab
+			id="search-tab"
+			:name="t('opencatalogi', 'Search')"
+			:order="1">
 			<template #icon>
 				<Magnify :size="20" />
 			</template>
@@ -309,13 +420,15 @@ watch([
 					<input
 						v-model="searchTerm"
 						type="search"
-						:placeholder="t('opencatalogi', 'Type to search publications...')"
+						:placeholder="
+							t('opencatalogi', 'Type to search publications...')
+						"
 						class="search-input"
-						:aria-label="t('opencatalogi', 'Search publications')">
+						:aria-label="t('opencatalogi', 'Search publications')" />
 
 					<NcButton
 						v-if="searchTerm"
-						type="tertiary"
+						variant="tertiary"
 						:aria-label="t('opencatalogi', 'Clear search')"
 						@click="clearSearch">
 						<template #icon>
@@ -326,23 +439,45 @@ watch([
 				</div>
 
 				<!-- Filter Results Section -->
-				<div v-if="searchStore.hasFacetResults && Object.keys(searchStore.getActiveFacets).length > 0" class="filter-results-section">
+				<div
+					v-if="
+						searchStore.hasFacetResults
+						&& Object.keys(searchStore.getActiveFacets).length > 0
+					"
+					class="filter-results-section">
 					<h4>{{ t('opencatalogi', 'Filter results') }}</h4>
 
 					<div class="filter-results-list">
-						<div v-for="(facetResult, fieldName) in searchStore.currentFacets"
+						<div
+							v-for="(
+								facetResult, fieldName
+							) in searchStore.currentFacets"
 							:key="`filter-${fieldName}`"
 							class="filter-result-item">
-							<label>{{ getFieldDisplayName(fieldName.replace('@self.', '').replace('@self', 'metadata')) }}</label>
+							<label>{{
+								getFieldDisplayName(
+									fieldName
+										.replace('@self.', '')
+										.replace('@self', 'metadata'),
+								)
+							}}</label>
 							<NcSelect
-								:value="getSelectedFilterValue(fieldName)"
+								:modelValue="getSelectedFilterValue(fieldName)"
 								:options="getFacetOptions(facetResult)"
 								label="label"
-								:aria-label-combobox="t('opencatalogi', 'Filter results')"
-								:placeholder="t('opencatalogi', 'Select a filter...')"
+								:aria-label-combobox="
+									t('opencatalogi', 'Filter results')
+								"
+								:placeholder="
+									t('opencatalogi', 'Select a filter...')
+								"
 								:clearable="true"
-								@option:selected="(option) => handleFilterSelect(fieldName, option)"
-								@option:deselected="() => handleFilterSelect(fieldName, null)" />
+								@option:selected="
+									(option) => handleFilterSelect(fieldName, option)
+								"
+								@option:deselected="
+									() => handleFilterSelect(fieldName, null)
+								" />
 						</div>
 					</div>
 				</div>
@@ -355,13 +490,13 @@ watch([
 					<div class="filter-group">
 						<label>{{ t('opencatalogi', 'Sort by') }}</label>
 						<NcSelect
-							:value="currentSortOption"
+							:modelValue="currentSortOption"
 							:options="sortOptions"
 							label="label"
 							:aria-label-combobox="t('opencatalogi', 'Sort by')"
-							:label-outside="true"
+							:labelOutside="true"
 							:placeholder="t('opencatalogi', 'Choose sorting')"
-							@update:value="handleSortChange" />
+							@update:modelValue="handleSortChange" />
 					</div>
 
 					<!-- View mode toggle -->
@@ -369,7 +504,11 @@ watch([
 						<label>{{ t('opencatalogi', 'View mode') }}</label>
 						<div class="view-mode-toggle">
 							<NcButton
-								:type="searchStore.getViewMode === 'cards' ? 'primary' : 'tertiary'"
+								:variant="
+									searchStore.getViewMode === 'cards'
+										? 'primary'
+										: 'tertiary'
+								"
 								:aria-label="t('opencatalogi', 'Card view')"
 								@click="searchStore.setViewMode('cards')">
 								<template #icon>
@@ -378,7 +517,11 @@ watch([
 								{{ t('opencatalogi', 'Cards') }}
 							</NcButton>
 							<NcButton
-								:type="searchStore.getViewMode === 'table' ? 'primary' : 'tertiary'"
+								:variant="
+									searchStore.getViewMode === 'table'
+										? 'primary'
+										: 'tertiary'
+								"
 								:aria-label="t('opencatalogi', 'Table view')"
 								@click="searchStore.setViewMode('table')">
 								<template #icon>
@@ -394,13 +537,18 @@ watch([
 				<div v-if="hasActiveFilters" class="active-filters">
 					<h4>{{ t('opencatalogi', 'Active filters') }}</h4>
 					<div class="active-filters-list">
-						<div v-for="(value, key) in searchStore.getFilters"
+						<div
+							v-for="(value, key) in searchStore.getFilters"
 							:key="`filter-${key}`"
 							class="active-filter-item">
-							<span class="filter-key">{{ formatFilterKey(key) }}:</span>
-							<span class="filter-value">{{ formatFilterValue(value) }}</span>
+							<span class="filter-key"
+								>{{ formatFilterKey(key) }}:</span
+							>
+							<span class="filter-value">{{
+								formatFilterValue(value)
+							}}</span>
 							<NcButton
-								type="tertiary-no-background"
+								variant="tertiary-no-background"
 								:aria-label="t('opencatalogi', 'Remove filter')"
 								@click="searchStore.clearFilter(key)">
 								<template #icon>
@@ -410,7 +558,7 @@ watch([
 						</div>
 					</div>
 					<NcButton
-						type="tertiary"
+						variant="tertiary"
 						:aria-label="t('opencatalogi', 'Clear all filters')"
 						@click="clearAllFilters">
 						{{ t('opencatalogi', 'Clear all filters') }}
@@ -422,7 +570,7 @@ watch([
 					<div class="facets-header">
 						<h3>{{ t('opencatalogi', 'Faceted filtering') }}</h3>
 						<NcButton
-							type="tertiary"
+							variant="tertiary"
 							:disabled="searchStore.isFacetsLoading"
 							:aria-label="t('opencatalogi', 'Refresh facets')"
 							@click="refreshFacets">
@@ -434,7 +582,12 @@ watch([
 					</div>
 
 					<NcNoteCard type="info" class="facets-info">
-						{{ t('opencatalogi', 'Facets help you filter results by different criteria. Enable facets below to see available filter options.') }}
+						{{
+							t(
+								'opencatalogi',
+								'Facets help you filter results by different criteria. Enable facets below to see available filter options.',
+							)
+						}}
 					</NcNoteCard>
 
 					<!-- Facet component -->

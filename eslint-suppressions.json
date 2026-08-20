@@ -1,0 +1,991 @@
+{
+  "src/App.vue": {
+    "jsdoc/require-param-type": {
+      "count": 1
+    }
+  },
+  "src/components/FacetComponent.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 16
+    }
+  },
+  "src/components/GenericObjectTable.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 17
+    },
+    "no-console": {
+      "count": 4
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/components/MarkdownEditor.vue": {
+    "jsdoc/require-param-type": {
+      "count": 2
+    }
+  },
+  "src/components/PaginationComponent.vue": {
+    "jsdoc/require-param-type": {
+      "count": 2
+    },
+    "vue/custom-event-name-casing": {
+      "count": 2
+    }
+  },
+  "src/components/PropertiesPanel.vue": {
+    "vue/custom-event-name-casing": {
+      "count": 3
+    }
+  },
+  "src/components/PublicationCard.vue": {
+    "jsdoc/require-param-type": {
+      "count": 1
+    }
+  },
+  "src/components/SelectAttachmentsList.vue": {
+    "jsdoc/require-param-type": {
+      "count": 4
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/components/SelectedObjectsList.vue": {
+    "eqeqeq": {
+      "count": 2
+    },
+    "jsdoc/require-param-type": {
+      "count": 6
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/composables/UseFileSelection.js": {
+    "no-unused-vars": {
+      "count": 3
+    },
+    "no-use-before-define": {
+      "count": 13
+    }
+  },
+  "src/dialogs/Dialogs.vue": {
+    "vue/multi-word-component-names": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/attachment/DeleteAttachmentDialog.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/attachment/MassAttachmentModal.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/category/DeleteCategoryDialog.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/category/DeleteMultipleCategoriesDialog.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/generic/CopyObjectDialog.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 2
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/generic/DeleteObjectDialog.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 2
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "jsdoc/require-param-type": {
+      "count": 2
+    },
+    "no-console": {
+      "count": 2
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/listing/DeleteListingDialog.vue": {
+    "no-console": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/logs/ViewLogDialog.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/menu/CopyMenuDialog.vue": {
+    "no-console": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/page/DeletePageContentDialog.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/publication/PublishPublicationDialog.vue": {
+    "no-console": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/dialogs/theme/DeleteMultipleThemesDialog.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/entities/attachment/attachment.mock.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/attachment/attachment.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/catalogi/catalogi.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/configuration/configuration.mock.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/configuration/configuration.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/glossary/glossary.mock.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/glossary/glossary.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/listing/listing.mock.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/listing/listing.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/listing/listing.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/listing/listing.types.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/menu/menu.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/organization/organization.mock.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/organization/organization.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/page/page.mock.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/page/page.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/publication/publication.mock.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/publication/publication.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/publication/publication.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/publication/publication.types.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/publicationType/publicationType.mock.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/publicationType/publicationType.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/theme/theme.mock.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/entities/theme/theme.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/main.js": {
+    "no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/modals/Modals.vue": {
+    "vue/multi-word-component-names": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/attachment/EditAttachmentModal.vue": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "src/modals/catalog/CatalogModal.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 2
+    },
+    "@typescript-eslint/no-this-alias": {
+      "count": 2
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/catalog/ViewCatalogi.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 2
+    },
+    "no-console": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/directory/AddDirectoryModal.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 2
+    },
+    "no-console": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/directory/EditListingModal.vue": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "src/modals/directory/FederationDeleteListingModal.vue": {
+    "jsdoc/require-param-type": {
+      "count": 1
+    }
+  },
+  "src/modals/directory/FederationEditListingModal.vue": {
+    "jsdoc/require-param-type": {
+      "count": 2
+    }
+  },
+  "src/modals/directory/ViewDirectoryModal.vue": {
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/generic/UploadFiles.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 12
+    },
+    "jsdoc/require-param-type": {
+      "count": 16
+    },
+    "no-console": {
+      "count": 4
+    },
+    "no-empty": {
+      "count": 8
+    },
+    "vue/custom-event-name-casing": {
+      "count": 8
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/glossary/ViewGlossaryModal.vue": {
+    "jsdoc/require-param-type": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/listing/EditListingModal.vue": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "src/modals/menu/ViewMenuModal.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 3
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 9
+    },
+    "no-console": {
+      "count": 2
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/menuItem/DeleteMenuItemModal.vue": {
+    "no-console": {
+      "count": 1
+    },
+    "vue/custom-event-name-casing": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/menuItem/MenuItemForm.vue": {
+    "no-console": {
+      "count": 1
+    },
+    "vue/custom-event-name-casing": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/DownloadObject.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    },
+    "vue/prefer-separate-static-class": {
+      "count": 1
+    }
+  },
+  "src/modals/object/LockObject.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/MassDeleteObject.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/MassDepublishObjects.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "eqeqeq": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 5
+    },
+    "no-console": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/MassLockObjects.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/MassPublishObjects.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "eqeqeq": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 6
+    },
+    "no-console": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/MassUnlockObjects.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/MassValidateObjects.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/MergeObject.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 2
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 10
+    },
+    "no-console": {
+      "count": 3
+    },
+    "no-useless-assignment": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/MigrationObject.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 3
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 3
+    },
+    "no-console": {
+      "count": 4
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/object/ObjectModal.vue": {
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 4
+    },
+    "jsdoc/require-param-type": {
+      "count": 7
+    },
+    "no-console": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    },
+    "vue/prefer-separate-static-class": {
+      "count": 1
+    }
+  },
+  "src/modals/object/UploadObject.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    },
+    "vue/prefer-separate-static-class": {
+      "count": 1
+    }
+  },
+  "src/modals/object/ViewObject.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 7
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 4
+    },
+    "eqeqeq": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 55
+    },
+    "no-console": {
+      "count": 12
+    },
+    "no-useless-assignment": {
+      "count": 3
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    },
+    "vue/prefer-separate-static-class": {
+      "count": 1
+    }
+  },
+  "src/modals/page/ViewPageModal.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 5
+    },
+    "no-console": {
+      "count": 2
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/pageContents/PageContentForm.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 4
+    },
+    "@nextcloud/no-deprecated-library-props": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 4
+    },
+    "no-console": {
+      "count": 1
+    },
+    "vue/custom-event-name-casing": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    },
+    "vue/prefer-separate-static-class": {
+      "count": 2
+    }
+  },
+  "src/modals/theme/AddPublicationThemeModal.vue": {
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/modals/theme/ViewThemeModal.vue": {
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/navigation/MainMenu.vue": {
+    "jsdoc/require-param-type": {
+      "count": 2
+    },
+    "vue/custom-event-name-casing": {
+      "count": 1
+    }
+  },
+  "src/services/nextcloudGroups.js": {
+    "no-console": {
+      "count": 2
+    },
+    "no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/services/schemaHelpers.js": {
+    "eqeqeq": {
+      "count": 1
+    }
+  },
+  "src/sidebars/SideBars.vue": {
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/sidebars/dashboard/DashboardSideBar.vue": {
+    "@typescript-eslint/no-this-alias": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "jsdoc/require-param-type": {
+      "count": 2
+    },
+    "no-console": {
+      "count": 2
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/sidebars/directory/DirectorySideBar.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 11
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/sidebars/search/SearchSideBar.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 2
+    },
+    "@typescript-eslint/no-use-before-define": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 12
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "src/store/modules/catalog.js": {
+    "no-console": {
+      "count": 4
+    }
+  },
+  "src/store/modules/navigation.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/store/modules/navigation.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/store/modules/object.js": {
+    "no-console": {
+      "count": 26
+    },
+    "no-unused-vars": {
+      "count": 10
+    },
+    "no-useless-assignment": {
+      "count": 1
+    }
+  },
+  "src/store/modules/search.js": {
+    "no-console": {
+      "count": 8
+    }
+  },
+  "src/store/modules/search.spec.ts": {
+    "import-extensions/extensions": {
+      "count": 1
+    }
+  },
+  "src/store/store.js": {
+    "import-extensions/extensions": {
+      "count": 4
+    },
+    "import/extensions": {
+      "count": 1
+    },
+    "n/no-missing-import": {
+      "count": 1
+    }
+  },
+  "src/views/catalogi/CatalogDetailPage.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/views/dashboard/Dashboard.vue": {
+    "jsdoc/require-param-type": {
+      "count": 3
+    },
+    "no-console": {
+      "count": 6
+    },
+    "vue/multi-word-component-names": {
+      "count": 1
+    }
+  },
+  "src/views/directory/FederationDirectory.vue": {
+    "jsdoc/require-param-type": {
+      "count": 8
+    }
+  },
+  "src/views/publications/PublicationDetail.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unused-expressions": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    },
+    "no-console": {
+      "count": 4
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/views/publications/PublicationList.vue": {
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/views/publications/PublicationStatsPanel.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 1
+    }
+  },
+  "src/views/publications/PublicationTable.vue": {
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/views/search/SearchIndex.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 12
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/views/settings/Settings.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 6
+    },
+    "vue/multi-word-component-names": {
+      "count": 1
+    }
+  },
+  "src/views/shared/EntityDetailPage.vue": {
+    "@nextcloud/l10n-enforce-ellipsis": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/views/widgets/CatalogiWidget.vue": {
+    "jsdoc/require-param-type": {
+      "count": 2
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/views/widgets/MostViewedPublicationsWidget.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 1
+    }
+  },
+  "src/views/widgets/RetentionWidget.vue": {
+    "no-console": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/views/widgets/UnpublishedAttachmentsWidget.vue": {
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  },
+  "src/views/widgets/UnpublishedPublicationsWidget.vue": {
+    "jsdoc/require-param-type": {
+      "count": 1
+    },
+    "vue/prefer-define-options": {
+      "count": 1
+    }
+  }
+}
