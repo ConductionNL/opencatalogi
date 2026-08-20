@@ -456,11 +456,14 @@ check "the portal resolves and has a title" "$PORTAL_TOTAL"
 # A RESOLVING PORTAL IS NOT A RENDERING PAGE, and the difference is invisible
 # from the check above.
 #
+# Checked at /zoeken rather than /: the landing page is a hero and a section,
+# and search moved to its own route to match the reference.
+#
 # The portal resolved, had a title, served its own header and footer — and
 # rendered "Pagina niet gevonden" in between, because the seeded page
 # referenced its portal by UUID while CmsReader scopes content by SLUG. Every
 # object involved existed and was published. Only opening the page showed it.
-PAGE_WIDGET=$(curl -s "http://localhost:${MAIN_PORT}/index.php/apps/portaliq/api/content/page?route=/" |
+PAGE_WIDGET=$(curl -s "http://localhost:${MAIN_PORT}/index.php/apps/portaliq/api/content/page?route=/zoeken" |
 	python3 -c '
 import sys, json
 try:
@@ -471,7 +474,33 @@ except Exception:
 widgets = ((body.get("body") or {}).get("widgets") or [])
 print(next((w.get("widgetKey") for w in widgets if w.get("widgetKey")), ""))
 ' 2>/dev/null || echo '')
-check "the page at / renders and carries the search widget" "$PAGE_WIDGET"
+check "the search page at /zoeken carries the search widget" "$PAGE_WIDGET"
+
+HOME_WIDGET=$(curl -s "http://localhost:${MAIN_PORT}/index.php/apps/portaliq/api/content/page?route=/" |
+	python3 -c '
+import sys, json
+try:
+    body = json.load(sys.stdin)
+except Exception:
+    print("")
+    sys.exit(0)
+widgets = ((body.get("body") or {}).get("widgets") or [])
+print(next((w.get("widgetKey") for w in widgets if w.get("widgetKey")), ""))
+' 2>/dev/null || echo '')
+check "the landing page at / carries the hero" "$HOME_WIDGET"
+
+DETAIL_WIDGET=$(curl -s "http://localhost:${MAIN_PORT}/index.php/apps/portaliq/api/content/page?route=/publicatie" |
+	python3 -c '
+import sys, json
+try:
+    body = json.load(sys.stdin)
+except Exception:
+    print("")
+    sys.exit(0)
+widgets = ((body.get("body") or {}).get("widgets") or [])
+print(next((w.get("widgetKey") for w in widgets if w.get("widgetKey")), ""))
+' 2>/dev/null || echo '')
+check "the detail page at /publicatie carries the detail block" "$DETAIL_WIDGET"
 
 SEARCH_TOTAL=$(curl -s "http://localhost:${MAIN_PORT}/index.php/apps/opencatalogi/api/federation/publications?_limit=1" |
 	python3 -c 'import sys,json; print(json.load(sys.stdin).get("total",0))' 2>/dev/null || echo 0)
