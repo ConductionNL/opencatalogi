@@ -206,21 +206,26 @@ an endorsement by, or an affiliation with, the Gemeente Rotterdam.
 These are measured on the rig above, not theoretical. Each one is a thing you
 will notice and should not spend time debugging.
 
-### Facets do not cover federated results
+### Facet buckets cover local publications only
 
-The same facet request returns buckets locally and nothing across the
-federation:
+The federated request *does* return facets. They are the **local** facets:
 
-| Request | Results | Facet buckets |
-| --- | ---: | ---: |
-| `?_facets[themes][type]=terms&_aggregate=false` | 4 | **3** |
-| `?_facets[themes][type]=terms` | 11 | **0** |
+| Request | Results | Buckets |
+| --- | ---: | --- |
+| `?_facets[themes][type]=terms&_aggregate=false` | 4 | `bestuur=2, openbaarheid=1, financien=1` |
+| `?_facets[themes][type]=terms` | 11 | `bestuur=2, openbaarheid=1, financien=1` |
 
-Federated *results* aggregate; federated *facets* are dropped. The portal
-renders no facet column when it receives no buckets, which is the correct
-response to the data it is given — so on a federated portal there is currently
-no facet column at all. `provision.sh` prints this on every run rather than
-letting the rig imply otherwise.
+Identical buckets, different totals. The seven federated publications carry
+themes of their own — `vergunningen`, `ruimte`, `verkeer` — and appear in no
+bucket at all.
+
+So a visitor filtering by theme is filtering a corpus that is not the one they
+are searching. Counting buckets hides this completely: three buckets come back
+either way, and the feature looks like it works. `provision.sh` compares the two
+bucket *sets* and prints the finding on every run.
+
+If your instance has no local publications carrying themes, you will see no
+facet column at all — same cause, different symptom.
 
 ### There is no filter on the source catalogue
 

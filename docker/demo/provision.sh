@@ -497,42 +497,58 @@ for row in rows:
         break
 ' 2>/dev/null || echo '')
 
-buckets_for() {
+facet_state() {
 	curl -s "http://localhost:${MAIN_PORT}/index.php/apps/opencatalogi/api/federation/publications?_limit=1&_facets%5Bthemes%5D%5Btype%5D=terms$1" |
 		python3 -c '
 import sys, json
 try:
-    facets = json.load(sys.stdin).get("facets") or {}
+    body = json.load(sys.stdin)
 except Exception:
-    facets = {}
-facet = facets.get("themes") or {}
-print(len((facet.get("data") or {}).get("buckets") or facet.get("buckets") or []))
-' 2>/dev/null || echo 0
+    print("0|")
+    sys.exit(0)
+facet = (body.get("facets") or {}).get("themes") or {}
+buckets = (facet.get("data") or {}).get("buckets") or facet.get("buckets") or []
+signature = ",".join(sorted(
+    "%s=%s" % (b.get("value") or b.get("key"), b.get("count") or b.get("results"))
+    for b in buckets
+))
+print("%d|%s" % (len(buckets), signature))
+' 2>/dev/null || echo "0|"
 }
 
-# ASSERTED ON THE LOCAL PATH, because that is the path that works.
-check "the theme facet returns buckets on the local path" "$(buckets_for '&_aggregate=false')"
+LOCAL_FACETS=$(facet_state '&_aggregate=false')
+FEDERATED_FACETS=$(facet_state '')
 
-# NOT ASSERTED, REPORTED — and the difference is the point.
+check "the theme facet returns buckets on the local path" "${LOCAL_FACETS%%|*}"
+
+# COMPARED, NOT COUNTED — and that distinction is the whole finding.
 #
-# Measured on this rig: the SAME facet request returns buckets with
-# `_aggregate=false` (4 local rows, 3 buckets) and NOTHING with aggregation
-# on (11 rows, 0 buckets). Federated results aggregate; federated facets are
-# dropped.
+# Counting buckets says facets "work" on the federated request: it returns
+# three of them. Comparing the buckets to the LOCAL-only ones shows they are
+# byte-identical while the result totals are not:
 #
-# This is a defect in OpenCatalogi's aggregated path, not in the portal: the
-# block renders no facet column when it receives no buckets, which is the
-# correct response to the data it is given. Failing the rig on it would make
-# every demo run red for a fault the demo cannot fix, and passing silently
-# would let the rig imply the facets span both catalogues. So it is printed,
-# with its numbers, on every run.
-AGGREGATED_BUCKETS=$(buckets_for '')
-if [ "${AGGREGATED_BUCKETS:-0}" = "0" ]; then
-	printf '\033[33m  KNOWN  facets are dropped when results are federated — 0 buckets over %s results.\033[0m\n' "$SEARCH_TOTAL"
-	printf '\033[33m         The portal therefore shows no facet column here. Tracked in\033[0m\n'
-	printf '\033[33m         docs/tutorials/rotterdam-demo-portal.md.\033[0m\n'
+#   _aggregate=false   4 results   bestuur=2, openbaarheid=1, financien=1
+#   (federated)       11 results   bestuur=2, openbaarheid=1, financien=1
+#
+# Seven federated publications carrying themes of their own — vergunningen,
+# ruimte, verkeer — appear in NO bucket. So facets are computed over local
+# rows only, and a visitor filtering by theme filters a corpus that is not the
+# one they are searching.
+#
+# An earlier version of this script counted buckets and reported this as
+# "facets survive aggregation". It also reported "facets are dropped" on a rig
+# whose local rows happened to have no themes at all. Both readings came from
+# asking how MANY rather than which.
+if [ "${LOCAL_FACETS#*|}" = "${FEDERATED_FACETS#*|}" ] && [ "${LOCAL_FACETS%%|*}" != "0" ]; then
+	printf '\033[33m  KNOWN  facet buckets are LOCAL-ONLY: identical to the _aggregate=false buckets\033[0m\n'
+	printf '\033[33m         while the result count differs (%s federated vs %s local). Federated\033[0m\n' \
+		"$SEARCH_TOTAL" "$(curl -s "http://localhost:${MAIN_PORT}/index.php/apps/opencatalogi/api/federation/publications?_limit=1&_aggregate=false" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("total",0))' 2>/dev/null || echo '?')"
+	printf '\033[33m         rows are searchable but do not contribute to any bucket. See\033[0m\n'
+	printf '\033[33m         docs/tutorials/admin/04-rotterdam-demo-portal.md.\033[0m\n'
+elif [ "${FEDERATED_FACETS%%|*}" = "0" ]; then
+	printf '\033[33m  KNOWN  no facet buckets on the federated request at all (%s results).\033[0m\n' "$SEARCH_TOTAL"
 else
-	green "  ok   facets now survive aggregation ($AGGREGATED_BUCKETS buckets) — the known defect is fixed"
+	green "  ok   federated facets differ from local ones — buckets now span the federation"
 fi
 
 if [ -n "$PEER_SOURCE" ] && [ "$PEER_SOURCE" != "local" ]; then
