@@ -4297,4 +4297,104 @@ class DirectoryServiceTest extends TestCase {
 		$this->assertSame([], $this->service->getKnownDirectoryUrls());
 
 	}//end testGetKnownDirectoryUrlsAbsorbsASearchFailure()
+
+	/**
+	 * A private address is refused while the allowance is OFF.
+	 *
+	 * This is the default and it is the whole point of the guard: the same code
+	 * path on an internet-facing instance is a request-forgery primitive.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testPrivateAddressIsRefusedByDefault(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('disallowed (internal) address');
+
+		$this->service->validateOutboundUrl('http://127.0.0.1/apps/opencatalogi/api/directory');
+
+	}//end testPrivateAddressIsRefusedByDefault()
+
+
+	/**
+	 * With the allowance ON, a private address is permitted.
+	 *
+	 * Two containers on a Docker bridge are all RFC1918, which is why
+	 * docker-compose.federation.yml could never sync a directory: every peer it
+	 * can reach is refused by the default.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testPrivateAddressIsAllowedWhenExplicitlyEnabled(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = ''): string {
+				return ($key === 'allow_internal_directories' ? 'yes' : $default);
+			}
+		);
+
+		$this->service->validateOutboundUrl('http://10.0.0.5/apps/opencatalogi/api/directory');
+
+		// No exception is the assertion; state it so the test cannot pass by
+		// being empty.
+		$this->addToAssertionCount(1);
+
+	}//end testPrivateAddressIsAllowedWhenExplicitlyEnabled()
+
+
+	/**
+	 * THE CLOUD-METADATA ENDPOINT STAYS BLOCKED, ALLOWANCE OR NOT.
+	 *
+	 * 169.254.169.254 is the single most valuable SSRF target on a hosted
+	 * instance, and it sits in a link-local range that a naive "allow internal"
+	 * switch would open along with everything else. The exact-match refusal is
+	 * checked BEFORE the allowance for precisely this reason, so this test is
+	 * what makes that ordering load-bearing rather than incidental.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testMetadataEndpointIsRefusedEvenWithTheAllowanceOn(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = ''): string {
+				return ($key === 'allow_internal_directories' ? 'yes' : $default);
+			}
+		);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('disallowed (internal) address');
+
+		$this->service->validateOutboundUrl('http://169.254.169.254/latest/meta-data/');
+
+	}//end testMetadataEndpointIsRefusedEvenWithTheAllowanceOn()
+
+
+	/**
+	 * Loopback IPv6 stays blocked with the allowance on, for the same reason.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testIpv6LoopbackIsRefusedEvenWithTheAllowanceOn(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = ''): string {
+				return ($key === 'allow_internal_directories' ? 'yes' : $default);
+			}
+		);
+
+		$this->expectException(\InvalidArgumentException::class);
+
+		$this->service->validateOutboundUrl('http://[::1]/apps/opencatalogi/api/directory');
+
+	}//end testIpv6LoopbackIsRefusedEvenWithTheAllowanceOn()
+
+
 }
