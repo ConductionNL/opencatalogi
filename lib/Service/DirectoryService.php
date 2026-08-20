@@ -50,6 +50,7 @@ use OCP\IURLGenerator;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
 use React\Promise\Promise;
 use RuntimeException;
 
@@ -119,6 +120,7 @@ class DirectoryService {
 	 * @param IAppManager $appManager App manager for checking installed apps
 	 * @param BroadcastService $broadcastService Broadcast service for notifying other directories
 	 * @param IRequest $request Request interface for accessing HTTP headers
+	 * @param LoggerInterface|null $logger PSR-3 logger for the SSRF-allowance warning
 	 */
 	public function __construct(
 		private readonly IURLGenerator $urlGenerator,
@@ -127,6 +129,12 @@ class DirectoryService {
 		private readonly IAppManager $appManager,
 		private readonly BroadcastService $broadcastService,
 		private readonly IRequest $request,
+		// Nullable and last so every existing construction site — including
+		// the unit tests that build this service by hand — keeps working
+		// without being touched. The only thing it carries today is the
+		// SSRF-allowance warning, and a missing logger must not be the reason
+		// directory sync stops working.
+		private readonly ?LoggerInterface $logger = null,
 	) {
 		$this->appName = 'opencatalogi';
 		$this->client = new Client([]);
@@ -1844,20 +1852,11 @@ class DirectoryService {
 			return true;
 		}
 
-		// FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE returns false for
-		// private (RFC1918), loopback, link-local, and reserved ranges (IPv4 + IPv6).
-		$isPublic = filter_var(
-			value: $ipAddress,
-			filter: FILTER_VALIDATE_IP,
-			options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
-		);
-
-		if ($isPublic === false) {
-			return true;
-		}
-
-		// Explicit belt-and-braces checks for the cloud-metadata endpoint and
-		// IPv6 forms that some PHP builds do not flag via the range flags above.
+		// NEVER ALLOWED, whatever the configuration says. These are checked
+		// FIRST so the private-range allowance below cannot reach them: the
+		// cloud-metadata endpoint is the single most valuable SSRF target on a
+		// hosted instance, and it lives in a link-local range that a naive
+		// "allow internal" switch would open along with everything else.
 		$blockedExact = [
 			'169.254.169.254',
 			'::1',
@@ -1872,8 +1871,66 @@ class DirectoryService {
 			return true;
 		}
 
+		// FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE returns false for
+		// private (RFC1918), loopback, link-local, and reserved ranges (IPv4 + IPv6).
+		$isPublic = filter_var(
+			value: $ipAddress,
+			filter: FILTER_VALIDATE_IP,
+			options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
+		);
+
+		if ($isPublic !== false) {
+			return false;
+		}
+
+		// A PRIVATE ADDRESS, AND THE ONLY PLACE THE ALLOWANCE APPLIES.
+		//
+		// Federating two instances on one Docker network is not an exotic
+		// case — it is the ONLY way to exercise directory sync without two
+		// publicly-routable hosts, and this guard makes it impossible by
+		// default. docker-compose.federation.yml has always described itself
+		// as a federation test rig and has never been able to sync a
+		// directory, because every peer it can reach is RFC1918.
+		//
+		// So the allowance exists, and it is deliberately awkward: OFF unless
+		// an operator sets it, scoped to private ranges only, never reaching
+		// the exact addresses refused above, and logged at WARNING every time
+		// it lets something through. An SSRF bypass that is quiet is one
+		// nobody remembers is on.
+		if ($this->allowsInternalDirectories() === false) {
+			return true;
+		}
+
+		$this->logger?->warning(
+			'[OpenCatalogi] SSRF guard bypassed for a private address — '
+			. 'allow_internal_directories is ON. This must never be set on an '
+			. 'internet-facing instance.',
+			['ip' => $ipAddress]
+		);
+
 		return false;
 	}//end isBlockedIp()
+
+
+	/**
+	 * Whether this instance may federate with directories on private addresses.
+	 *
+	 * Defaults to OFF. Enabled with:
+	 *
+	 *     occ config:app:set opencatalogi allow_internal_directories --value yes
+	 *
+	 * Intended for a test or demo rig where the peer is another container. The
+	 * default is the safe one, so an instance that never touches this setting
+	 * keeps exactly the behaviour it had before the setting existed.
+	 *
+	 * @return boolean True when private-address directories are permitted.
+	 *
+	 * @spec exclude Configuration read for the SSRF allowance; the behaviour it
+	 *       gates is specified on isBlockedIp().
+	 */
+	private function allowsInternalDirectories(): bool {
+		return $this->config->getValueString($this->appName, 'allow_internal_directories', 'no') === 'yes';
+	}//end allowsInternalDirectories()
 
 	/**
 	 * Determine whether an IPv6 address matches a blocked prefix range.
