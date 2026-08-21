@@ -386,7 +386,9 @@ class SchemaOrgService {
 				}
 			}
 
-			$node['keywords'] = array_values($strings);
+			// No array_values(): $strings is built by `$strings[] = …` in the
+			// loop above, so it is already a list with sequential keys.
+			$node['keywords'] = $strings;
 		}
 
 		$publisher = $this->buildPublisher(catalog: $catalog);

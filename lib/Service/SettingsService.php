@@ -1305,7 +1305,10 @@ class SettingsService {
 			$this->config->setValueString($this->appName, "{$type}_source", 'openregister');
 
 			// Set schema ID if found in the import result.
-			if (isset($schemaMap[$type]) === true && $schemaMap[$type] !== null) {
+			// `isset()` is already false for a null value, so a following
+			// `!== null` can never be false. PHPStan 2 reports it as
+			// notIdentical.alwaysTrue.
+			if (isset($schemaMap[$type]) === true) {
 				$this->config->setValueString($this->appName, "{$type}_schema", (string)$schemaMap[$type]);
 			}
 
@@ -1320,7 +1323,7 @@ class SettingsService {
 		foreach ($ooapiTypeMap as $configPrefix => $schemaSlug) {
 			$this->config->setValueString($this->appName, "{$configPrefix}_source", 'openregister');
 
-			if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, "{$configPrefix}_schema", (string)$schemaMap[$schemaSlug]);
 			}
 
@@ -1337,7 +1340,7 @@ class SettingsService {
 		}
 
 		foreach ($wooSchemaMap as $configKey => $schemaSlug) {
-			if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
 			}
 		}
