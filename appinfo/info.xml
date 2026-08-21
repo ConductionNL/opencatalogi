@@ -56,7 +56,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl. Voor een Service Level Agreement (SLA), neem contact op via sales@conduction.nl.
     ]]></description>
-	<version>1.0.9-unstable.20260820203913</version>
+	<version>1.0.9-unstable.20260821054429</version>
 	<licence>EUPL-1.2</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
@@ -68,12 +68,25 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
     </documentation>
     <category>integration</category>
     <website>https://opencatalogi.conduction.nl/</website>
-	<bugs>https://codeberg.org/Conduction/opencatalogi/issues</bugs>
-    <repository type="git">https://codeberg.org/Conduction/opencatalogi.git</repository>
+    <!--
+        GitHub, not Codeberg. The fleet dropped Forgejo/Codeberg on
+        2026-08-19 and GitHub is the only forge again.
 
-	<screenshot>https://codeberg.org/Conduction/opencatalogi/raw/branch/main/img/screenshot-dashboard.png</screenshot>
-	<screenshot>https://codeberg.org/Conduction/opencatalogi/raw/branch/main/img/screenshot-catalog.png</screenshot>
-    <screenshot>https://codeberg.org/Conduction/opencatalogi/raw/branch/main/img/screenshot-publications.png</screenshot>
+        `website` is left alone deliberately — it points at the product
+        site, which is still correct and is not a forge link.
+
+        The URLs below all still answered 200 from a stale mirror, which is
+        why this lasted: a dead link gets found, a live link to an issue
+        tracker nobody reads does not. Each screenshot was checked on the
+        new host before being swapped — all three answer 200 image/png from
+        raw.githubusercontent on `main`.
+    -->
+    <bugs>https://github.com/ConductionNL/opencatalogi/issues</bugs>
+    <repository type="git">https://github.com/ConductionNL/opencatalogi.git</repository>
+
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/main/img/screenshot-dashboard.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/main/img/screenshot-catalog.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/main/img/screenshot-publications.png</screenshot>
 
    	<dependencies>
         <!--
