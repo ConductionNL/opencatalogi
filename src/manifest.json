@@ -207,10 +207,11 @@
 						"sinceVersion": "2.4.0",
 						"placement": "center",
 						"title": "You're publishing",
-						"body": "That's the full loop: catalog → publication → schema-RBAC publishing → discovery. Externally, your published catalogs are harvested as DCAT-AP, so registers and portals can find and re-list your publications automatically.",
+						"body": "That is the full loop: catalog, publication, schema-RBAC publishing, discovery. Published catalogs are harvested as DCAT-AP, so registers and portals re-list them automatically.",
+						"task": "Open the documentation to keep going",
 						"target": {
-							"kind": "page",
-							"ref": "Directory"
+							"kind": "nav-item",
+							"ref": "Documentation"
 						},
 						"advanceOn": {
 							"type": "manual"
