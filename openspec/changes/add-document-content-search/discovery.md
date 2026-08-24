@@ -39,7 +39,7 @@ Read-only exploration of `~/woo506-test/openregister/` — no code changes. Focu
 ### Chunk store + index (present, complete)
 
 - **Table `openregister_chunks`** — columns include `text_content` (TEXT), `source_type` (`'file'` or `'object'`), `source_id`, plus language metadata.
-- **PostgreSQL functional GIN index** on `to_tsvector('simple', text_content)` shipped by migration `Version1Date20260706101000` under the merged [`hybrid-document-search`](https://codeberg.org/Conduction/openregister/src/branch/development/openspec/changes/hybrid-document-search) change.
+- **PostgreSQL functional GIN index** on `to_tsvector('simple', text_content)` shipped by migration `Version1Date20260706101000` under the merged [`hybrid-document-search`](https://github.com/ConductionNL/openregister/tree/development/openspec/changes/hybrid-document-search) change.
 - **Query API present**: `ChunkMapper::searchByKeyword()` uses `ts_rank` scoring and returns chunk hits with `source_type` + `source_id` — exactly the shape needed to join back to the owning document.
 
 ### Missing wire (the only OR-side gap)
