@@ -62,6 +62,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 	<repair-steps>
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<step>OCA\OpenCatalogi\Repair\WOO536RepairReadRules</step>
 		</post-migration>
 	</repair-steps>
 
