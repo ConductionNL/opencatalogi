@@ -99,11 +99,11 @@ The `boot()` method is intentionally empty. Initialization is handled by the `In
 
 ## Broadcast Cron Job Registration Bug (Gap 12)
 
-The `Broadcast` cron job class exists at `lib/Cron/Broadcast.php` and is fully implemented (extends `TimedJob`, runs every 4 hours, calls `BroadcastService::broadcast(null)`). However, it is **NOT registered** in `info.xml`:
+The `Broadcast` cron job class exists at `lib/BackgroundJob/Broadcast.php` and is fully implemented (extends `TimedJob`, runs every 4 hours, calls `BroadcastService::broadcast(null)`). However, it is **NOT registered** in `info.xml`:
 
 ```xml
 <background-jobs>
-    <job>OCA\OpenCatalogi\Cron\DirectorySync</job>
+    <job>OCA\OpenCatalogi\BackgroundJob\DirectorySync</job>
     <!-- Broadcast is MISSING from this list -->
 </background-jobs>
 ```

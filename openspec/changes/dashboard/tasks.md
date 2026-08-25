@@ -8,9 +8,9 @@
 
 ## 2. Bug Fix — Broadcast Cron Not Registered (DIR-007 / Gap 12)
 
-- [ ] 2.1 Open `appinfo/info.xml` and add `<job>OCA\OpenCatalogi\Cron\Broadcast</job>` inside the `<background-jobs>` block alongside `DirectorySync`
-- [ ] 2.2 Verify `lib/Cron/Broadcast.php` exists, extends `TimedJob`, and calls `BroadcastService::broadcast(null)` (no code change expected)
-- [ ] 2.3 Smoke test: confirm Nextcloud lists `OCA\OpenCatalogi\Cron\Broadcast` in the background job table after app reload
+- [ ] 2.1 Open `appinfo/info.xml` and add `<job>OCA\OpenCatalogi\BackgroundJob\Broadcast</job>` inside the `<background-jobs>` block alongside `DirectorySync`
+- [ ] 2.2 Verify `lib/BackgroundJob/Broadcast.php` exists, extends `TimedJob`, and calls `BroadcastService::broadcast(null)` (no code change expected)
+- [ ] 2.3 Smoke test: confirm Nextcloud lists `OCA\OpenCatalogi\BackgroundJob\Broadcast` in the background job table after app reload
 
 ## 3. Dashboard Bootstrap Verification (DSH-005..008)
 

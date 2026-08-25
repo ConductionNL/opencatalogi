@@ -15,16 +15,16 @@
 
 declare(strict_types=1);
 
-namespace Unit\Cron;
+namespace Unit\BackgroundJob;
 
-use OCA\OpenCatalogi\Cron\RetentionEvaluation;
+use OCA\OpenCatalogi\BackgroundJob\RetentionEvaluation;
 use OCA\OpenCatalogi\Service\RetentionService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * @covers \OCA\OpenCatalogi\Cron\RetentionEvaluation
+ * @covers \OCA\OpenCatalogi\BackgroundJob\RetentionEvaluation
  */
 class RetentionEvaluationTest extends TestCase {
 

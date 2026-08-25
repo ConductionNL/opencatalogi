@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Unit\Cron;
+namespace Unit\BackgroundJob;
 
-use OCA\OpenCatalogi\Cron\Broadcast;
+use OCA\OpenCatalogi\BackgroundJob\Broadcast;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;
