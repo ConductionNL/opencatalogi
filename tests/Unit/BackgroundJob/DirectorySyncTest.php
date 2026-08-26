@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Unit\Cron;
+namespace Unit\BackgroundJob;
 
-use OCA\OpenCatalogi\Cron\DirectorySync;
+use OCA\OpenCatalogi\BackgroundJob\DirectorySync;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;

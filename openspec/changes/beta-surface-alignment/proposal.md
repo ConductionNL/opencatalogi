@@ -39,8 +39,8 @@ Fleet-wide beta-readiness audit (2026-07-07) found:
 |---|---|---|
 | DCAT-AP export | Verified — kept | `lib/Controller/DcatController.php`, `DcatService`/`DcatSerializer` |
 | Woo / DIWOO compliance, 17 categories | Verified, count corrected (was "eleven") | `openspec/specs/woo-compliance/spec.md` WOO-003, `WooController`, `SitemapController` |
-| Federated directory sync | Verified — kept | `lib/Cron/DirectorySync.php`, `DirectoryController` |
-| Retention lifecycle + dashboard widget | Verified — kept | `lib/Cron/RetentionEvaluation.php`, `src/views/widgets/RetentionWidget.vue` |
+| Federated directory sync | Verified — kept | `lib/BackgroundJob/DirectorySync.php`, `DirectoryController` |
+| Retention lifecycle + dashboard widget | Verified — kept | `lib/BackgroundJob/RetentionEvaluation.php`, `src/views/widgets/RetentionWidget.vue` |
 | AI Chat Companion / LLM support | Verified but overclaimed — narrowed | `lib/Mcp/OpenCatalogiToolProvider.php` exposes 2 read-only MCP tools, not open-ended "ask in plain language" semantic search |
 | XWiki wiki-macro integration | **Removed — no code** | `grep -rli xwiki` across lib/src: zero hits |
 | Mail/Files sidebar integration | **Removed — no code** | No `FilesPlugin`/`MailPlugin`/sidebar-search controller or component exists |

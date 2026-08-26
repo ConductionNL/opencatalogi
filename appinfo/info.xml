@@ -134,8 +134,8 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	</dependencies>
 
 	<background-jobs>
-		<job>OCA\OpenCatalogi\Cron\DirectorySync</job>
-		<job>OCA\OpenCatalogi\Cron\RetentionEvaluation</job>
+		<job>OCA\OpenCatalogi\BackgroundJob\DirectorySync</job>
+		<job>OCA\OpenCatalogi\BackgroundJob\RetentionEvaluation</job>
 	</background-jobs>
 
 	<repair-steps>

@@ -13,7 +13,7 @@
  * that previously left fleet jobs never running).
  *
  * @category Cron
- * @package  OCA\OpenCatalogi\Cron
+ * @package  OCA\OpenCatalogi\BackgroundJob
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
@@ -29,7 +29,7 @@
  * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
  */
 
-namespace OCA\OpenCatalogi\Cron;
+namespace OCA\OpenCatalogi\BackgroundJob;
 
 use OCA\OpenCatalogi\Service\RetentionService;
 use OCP\AppFramework\Utility\ITimeFactory;

@@ -12,7 +12,7 @@ OpenCatalogi is a government transparency publication platform deployed by Dutch
 
 **Known gaps addressed by this spec:**
 - **DSH-004 / Gap 17**: `DashboardController::index()` was deleted but the `dashboard#index` GET route remains in `routes.php`, causing a runtime error on `GET /index`.
-- **DIR-007 / Gap 12**: `lib/Cron/Broadcast.php` is fully implemented but not listed in `appinfo/info.xml`, so automatic broadcasting never runs.
+- **DIR-007 / Gap 12**: `lib/BackgroundJob/Broadcast.php` is fully implemented but not listed in `appinfo/info.xml`, so automatic broadcasting never runs.
 
 **Relation to existing specs:**
 - `auto-publishing` spec: `ObjectCreatedEventListener` and `ObjectUpdatedEventListener` (registered in `Application.php`) implement auto-publishing behaviour.
@@ -242,7 +242,7 @@ The `DirectorySync` background job MUST be registered in `appinfo/info.xml` and 
 The `Broadcast` background job MUST be declared in `appinfo/info.xml` under `<background-jobs>`.
 
 #### Scenario: Broadcast job registered in info.xml
-- GIVEN `OCA\OpenCatalogi\Cron\Broadcast` is listed in `appinfo/info.xml`
+- GIVEN `OCA\OpenCatalogi\BackgroundJob\Broadcast` is listed in `appinfo/info.xml`
 - WHEN the Nextcloud background job system discovers jobs
 - THEN the `Broadcast` job MUST be discovered and scheduled
 - AND `BroadcastService::broadcast(null)` MUST be called every 4 hours

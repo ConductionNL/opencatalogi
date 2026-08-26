@@ -4,7 +4,7 @@
  * Directory sync cron job.
  *
  * @category Cron
- * @package  OCA\OpenCatalogi\Cron
+ * @package  OCA\OpenCatalogi\BackgroundJob
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
  * @spec openspec/specs/dashboard/spec.md
  */
 
-namespace OCA\OpenCatalogi\Cron;
+namespace OCA\OpenCatalogi\BackgroundJob;
 
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;

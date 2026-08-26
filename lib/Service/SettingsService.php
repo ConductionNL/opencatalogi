@@ -55,7 +55,7 @@ use RuntimeException;
  * CouplingBetweenObjects is suppressed at 13 (threshold is "under 13"), and
  * this is the one finding in this change I could not close honestly.
  *
- * What was closed: the class also referenced OCA\OpenCatalogi\Cron\DirectorySync
+ * What was closed: the class also referenced OCA\OpenCatalogi\BackgroundJob\DirectorySync
  * purely to read three interval constants, which took it to 14. Those constants
  * now live here — on the class that publishes them via getSyncOptions() and
  * enforces them in updateSyncOptions() — and DirectorySync aliases them. That
