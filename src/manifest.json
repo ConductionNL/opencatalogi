@@ -15,7 +15,7 @@
 				"action": "install-demo-data",
 				"title": "Demo data (optional)",
 				"required": false,
-				"body": "Load a small example catalog \u2014 publications, listings and organisations \u2014 so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install."
+				"body": "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install."
 			},
 			{
 				"id": "welcome",
