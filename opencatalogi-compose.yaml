@@ -80,7 +80,7 @@ services:
     image: alpine:3.20
     restart: "no"
     environment:
-      OPENREGISTER_VERSION: ${OPENREGISTER_VERSION:-1.1.5}
+      OPENREGISTER_VERSION: ${OPENREGISTER_VERSION:-1.1.6}
       OPENCATALOGI_VERSION: ${OPENCATALOGI_VERSION:-1.0.9}
       PORTALIQ_VERSION: ${PORTALIQ_VERSION:-0.1.4}
     volumes:
