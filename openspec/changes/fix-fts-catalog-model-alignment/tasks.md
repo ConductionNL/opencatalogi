@@ -6,38 +6,38 @@
 
 ## 2. Stap 1 — Enable RBAC with public-endpoint context
 
-- [ ] 2.1 In `PublicationQueryService::assemblePublicSearchResults()`, replace `_rbac: false` (or absent) with `_rbac: true` AND `_rbac_as_public: true` on every `searchObjectsPaginated()` call. Add docblock comment referencing SCH-PFTS-001, RBA-PUBLIC-001, and WOO-536.
+- [x] 2.1 In `PublicationQueryService::assemblePublicSearchResults()`, replace `_rbac: false` (or absent) with `_rbac: true` AND `_rbac_as_public: true` on every `searchObjectsPaginated()` call. Add docblock comment referencing SCH-PFTS-001, RBA-PUBLIC-001, and WOO-536.
 
 ## 3. Stap 2 — Catalog-derived scope
 
-- [ ] 3.1 Remove the three `resolveConfiguredId()` calls (`publication_register`, `publication_schema`, `document_schema`) from `assemblePublicSearchResults()`.
-- [ ] 3.2 Accept optional `_catalog` (string) and `_catalogi[]` (array) from the incoming `$searchQuery`; strip them before forwarding to OR (they are OC-level params, not OR filter params).
-- [ ] 3.3 When `_catalog` or `_catalogi[]` is provided, call `buildCatalogSearchQuery()` to resolve catalog objects, then `resolveSchemaAndRegisterObjects()` to get the register/schema scope.
-- [ ] 3.4 When neither param is provided, resolve scope as the union of all catalogs where `listed: true` and the catalog is published (same helper calls, filtering catalogs by `listed: true` + published predicate).
+- [x] 3.1 Remove the three `resolveConfiguredId()` calls (`publication_register`, `publication_schema`, `document_schema`) from `assemblePublicSearchResults()`.
+- [x] 3.2 Accept optional `_catalog` (string) and `_catalogi[]` (array) from the incoming `$searchQuery`; strip them before forwarding to OR (they are OC-level params, not OR filter params).
+- [x] 3.3 When `_catalog` or `_catalogi[]` is provided, call `buildCatalogSearchQuery()` to resolve catalog objects, then `resolveSchemaAndRegisterObjects()` to get the register/schema scope.
+- [x] 3.4 When neither param is provided, resolve scope as the union of all catalogs where `listed: true` and the catalog is published (same helper calls, filtering catalogs by `listed: true` + published predicate).
 - [ ] 3.5 Add guard: if resolved scope contains a schema with no `read` authorization config (bypass = true under `_rbac_as_public`), log a `$this->logger->warning()` with the schema ID/slug and exclude it from the anonymous scope.
 
 ## 4. Stap 3 — Dynamic schema discriminator
 
-- [ ] 4.1 Replace the two-element `$schemaSlugById` map with a `SchemaMapper` lookup, injected via DI and cached per request.
-- [ ] 4.2 In the result-assembly loop, use the `SchemaMapper` to resolve `@self.schema` slug for every result row, regardless of which schema the row came from.
+- [x] 4.1 Replace the two-element `$schemaSlugById` map with a `SchemaMapper` lookup, injected via DI and cached per request.
+- [x] 4.2 In the result-assembly loop, use the `SchemaMapper` to resolve `@self.schema` slug for every result row, regardless of which schema the row came from.
 
 ## 5. Stap 4 — Remove PHP post-filter + restore totals/facets
 
-- [ ] 5.1 Remove the `isObjectPublic()` post-filter loop from `assemblePublicSearchResults()`.
-- [ ] 5.2 Remove the per-page `total` undercount workaround (the adjustment to subtract non-public rows).
-- [ ] 5.3 Remove the conditional stripping of `facets` and `facetable` for anonymous callers.
-- [ ] 5.4 Return OR's `total`, `facets`, and `facetable` directly in the response envelope.
+- [x] 5.1 Remove the `isObjectPublic()` post-filter loop from `assemblePublicSearchResults()`.
+- [x] 5.2 Remove the per-page `total` undercount workaround (the adjustment to subtract non-public rows).
+- [x] 5.3 Remove the conditional stripping of `facets` and `facetable` for anonymous callers.
+- [x] 5.4 Return OR's `total`, `facets`, and `facetable` directly in the response envelope.
 
 ## 6. Stap 5a — Relations-based document→publication link
 
-- [ ] 6.1 In `resolveDocumentPublicationSummary()`, replace the denormalised `publication.slug` lookup with a per-document `_relations_contains` call on the single-schema path (`ObjectService::searchObjectsPaginated()` or equivalent single-schema query). Pass `_rbac_as_public: true` on this lookup too.
+- [x] 6.1 In `resolveDocumentPublicationSummary()`, replace the denormalised `publication.slug` lookup with a per-document `_relations_contains` call on the single-schema path (`ObjectService::searchObjectsPaginated()` or equivalent single-schema query). Pass `_rbac_as_public: true` on this lookup too.
 - [ ] 6.2 Generalise the helper to accept the document's `_relations` array and look up the source object in the referenced schema — not hard-coded to publication.
-- [ ] 6.3 N4a: when `_relations_contains` returns 0 results, set `publication: null` on the document envelope row and log `$this->logger->warning()` with the document UUID.
-- [ ] 6.4 N4b: when `_relations_contains` returns multiple results, select first-hit (ordered by `@self.created`); add inline comment referencing this design decision and WOO-536 plan N4b.
+- [x] 6.3 N4a: when `_relations_contains` returns 0 results, set `publication: null` on the document envelope row and log `$this->logger->warning()` with the document UUID.
+- [x] 6.4 N4b: when `_relations_contains` returns multiple results, select first-hit (ordered by `@self.created`); add inline comment referencing this design decision and WOO-536 plan N4b.
 
 ## 7. Stap 7 — Docblock fixes + spec refs
 
-- [ ] 7.1 In `PublicationQueryService.php`, replace all three broken docblock refs to `openspec/changes/add-public-fulltext-search/tasks.md`, `design.md`, and `spec.md#SCH-PFTS-002` with refs to `openspec/changes/fix-fts-catalog-model-alignment/tasks.md` and `openspec/specs/search/spec.md` (SCH-PFTS-CAT-* headings).
+- [x] 7.1 In `PublicationQueryService.php`, replace all three broken docblock refs to `openspec/changes/add-public-fulltext-search/tasks.md`, `design.md`, and `spec.md#SCH-PFTS-002` with refs to `openspec/changes/fix-fts-catalog-model-alignment/tasks.md` and `openspec/specs/search/spec.md` (SCH-PFTS-CAT-* headings).
 
 ## 8. Tests
 

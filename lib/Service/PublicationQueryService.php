@@ -78,7 +78,7 @@ class PublicationQueryService
      * @param IUserSession|null    $userSession User session for anonymity checks (auto-wired at runtime)
      * @param IAppConfig|null      $config      App config, resolves the publication/document register+schema ids
      * @param LoggerInterface|null $logger      Logger — surfaces the fail-closed empty-envelope branch so silent
-     *                                          configuration drift is observable in production (SCH-PFTS-005).
+     *                                          catalog-scope resolution failure is observable in production (WOO-536).
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -170,94 +170,73 @@ class PublicationQueryService
     }//end isObjectPublic()
 
     /**
-     * Assemble the public full-text search result envelope (SCH-PFTS-002/006/007).
+     * Assemble the public full-text search result envelope (SCH-PFTS-001,
+     * SCH-PFTS-CAT-001..003).
      *
-     * Delegates entirely to OR's zoeken-filteren (`ObjectService::searchObjectsPaginated`)
-     * across the `publication` and `document` schemas of the publication register, merges
-     * the candidate rows into a single flat array discriminated by `@self.schema`
-     * (SCH-PFTS-002), embeds the linked publication summary on every document row
-     * (SCH-PFTS-003), and applies the anonymous visibility filter AFTER scoring/merge
-     * (SCH-PFTS-004) so ranking is computed on the full candidate set before visibility
-     * is enforced. Authenticated callers are not filtered — this endpoint absorbs the
-     * previous admin-only search and authenticated callers keep seeing every match
-     * (SCH-OR-003).
+     * Delegates entirely to OR's `ObjectService::searchObjectsPaginated` across the
+     * (register × schema) set derived from the catalog scope. Matches from every
+     * schema in every catalog the caller may see are merged into a single flat array
+     * discriminated by `@self.schema` slug, resolved dynamically via SchemaMapper. A
+     * document row's linked publication is embedded via a per-document
+     * `_relations_contains` refinement; documents whose linked publication is not
+     * publicly visible are dropped (transitive visibility).
      *
-     * The scope (register + schemas) is fixed by this method and never taken from the
-     * caller-supplied query parameters, so a caller cannot widen the search beyond the
-     * publication/document schemas by passing its own `_register`/`_schema(s)` (mirrors
-     * the constrained-scope discipline in {@see findObjectLocation()}).
+     * Visibility is enforced in SQL by OR's schema-level RBAC under the
+     * `_rbac_as_public: true` primitive (openregister PR #2855, RBA-PUBLIC-001..006):
+     * admin bypass is skipped, `_owner` OR-in is suppressed, admin and anonymous
+     * callers see the exact same result set — the uniform-visibility contract of
+     * SCH-PFTS-001, previously enforced by a PHP post-filter, now lives in SQL.
      *
-     * Dual-path (design.md "Dual-path design"): this ships Path B — matches are
-     * driven by OR's `zoeken-filteren` against schema properties and `@self` metadata.
-     * Path A (document-content matching, WOO-517) is layered on top via the opt-in
-     * `_content` query parameter: when set, the OR-side `_content_search` flag
-     * (shipped in `openregister:expose-content-search-in-object-service`, PR #473) is
-     * forwarded on `searchObjectsPaginated()`'s query array, widening the candidate
-     * set to documents whose OR-extracted body text matches the query. OpenCatalogi
-     * does not run its own text-extraction pipeline — OR's TextExtractionService +
-     * ChunkMapper own that entirely (SCH-PFTS-CONTENT-001).
+     * Scope resolution:
+     *   1. `_catalog=<slug>` — that catalog's registers + schemas (SCH-PFTS-CAT-001).
+     *   2. `_catalogi[]=…` — union across the resolved catalogs.
+     *   3. no param — union of `listed: true` + `published` catalogs (SCH-PFTS-CAT-002).
+     * A caller's own `_schema`/`_registers`/`fq`/`catalogSlug` cannot widen scope past
+     * the catalog boundary — those are stripped before forwarding to OR.
+     *
+     * Content-search: this ships metadata search across schema properties + `@self`
+     * metadata. When `_content=true` is set, OR's `_content_search` flag is forwarded
+     * to widen matching to document body text (WOO-517 add-on). Extraction is owned
+     * by OR's TextExtractionService + ChunkMapper.
      *
      * @param array  $queryParams   Raw request query parameters from IRequest::getParams().
-     *                              Recognised keys include the opt-in `_content` boolean
-     *                              (SCH-PFTS-CONTENT-001) — when true, forwarded to OR as
-     *                              `_content_search` to widen matching to document body text.
+     *                              Recognised keys: `_content` (opt-in body-text search),
+     *                              `_catalog` (single catalog slug), `_catalogi[]` (multi
+     *                              catalog union).
      * @param object $objectService OpenRegister ObjectService instance (already resolved from container).
      *
      * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
      *
-     * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-5
-     * @spec openspec/changes/add-document-content-search/tasks.md#task-3
+     * @spec openspec/specs/search/spec.md#SCH-PFTS-001
+     * @spec openspec/changes/fix-fts-catalog-model-alignment/specs/search/spec.md
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function assemblePublicSearchResults(array $queryParams, object $objectService): array
     {
-        $registerId          = $this->resolveConfiguredId('publication_register');
-        $publicationSchemaId = $this->resolveConfiguredId('publication_schema');
-        $documentSchemaId    = $this->resolveConfiguredId('document_schema');
-
-        if ($registerId === null || $publicationSchemaId === null || $documentSchemaId === null) {
-            // Configuration not (yet) loaded — fail closed to an empty envelope rather
-            // than falling back to an unscoped, platform-wide search. Emit a warning so
-            // the failure is observable in production (silent empty is indistinguishable
-            // from "no matches" in the response envelope; operators need a signal that
-            // the deploy is misconfigured).
-            $registerStatus          = 'set';
-            $publicationSchemaStatus = 'set';
-            $documentSchemaStatus    = 'set';
-            if ($registerId === null) {
-                $registerStatus = 'MISSING';
-            }
-
-            if ($publicationSchemaId === null) {
-                $publicationSchemaStatus = 'MISSING';
-            }
-
-            if ($documentSchemaId === null) {
-                $documentSchemaStatus = 'MISSING';
-            }
-
+        // Stap 2 — Catalog-derived scope (SCH-PFTS-CAT-001..003).
+        // Replaces the pre-WOO-536 app-config-derived scope (publication_register /
+        // publication_schema / document_schema) with a catalog-model union so
+        // /api/search covers every (register × schema) the caller may see.
+        $scope = $this->resolveCatalogScope(queryParams: $queryParams);
+        if (empty($scope['schemas']) === true) {
+            // Fail-closed: no schemas in scope — either an explicit _catalog / _catalogi[]
+            // resolved to nothing, or the deployment has no listed+published catalogs.
             $this->logger?->warning(
-                'PublicationQueryService::assemblePublicSearchResults returning empty envelope — register/schema config unresolved',
+                'PublicationQueryService::assemblePublicSearchResults returning empty envelope — no schemas in resolved catalog scope',
                 [
-                    'publication_register' => $registerStatus,
-                    'publication_schema'   => $publicationSchemaStatus,
-                    'document_schema'      => $documentSchemaStatus,
+                    '_catalog'  => ($queryParams['_catalog']  ?? null),
+                    '_catalogi' => ($queryParams['_catalogi'] ?? null),
                 ]
             );
             return [
                 'results' => [],
                 'total'   => 0,
             ];
-        }//end if
+        }
 
-        $schemaSlugById = [
-            $publicationSchemaId => 'publication',
-            $documentSchemaId    => 'document',
-        ];
-
-        // Opt-in content-search (SCH-PFTS-CONTENT-001): widen matching to include
+        // Opt-in content-search (WOO-517): widen matching to include
         // OR-extracted document body text. Default false — omitted/false is
         // byte-identical to the WOO-506 baseline, so existing consumers see zero
         // drift. Read before buildSearchQuery() so the raw `_content` key can be
@@ -269,12 +248,25 @@ class PublicationQueryService
         );
 
         $searchQuery = $objectService->buildSearchQuery($queryParams);
-        // The scope is fixed above — strip any caller-supplied scope keys so a request
-        // parameter can never widen the search outside the publication/document schemas.
+        // Q7 Interpretation A: strip any client-supplied scope-widening params so a
+        // request cannot bypass the catalog-derived scope. This preserves the
+        // pre-WOO-536 discipline that clients cannot inject their own register/schema
+        // set past the resolved catalog boundary.
         unset($searchQuery['_schema'], $searchQuery['_registers'], $searchQuery['catalogSlug'], $searchQuery['fq']);
         unset($searchQuery['_content']);
-        $searchQuery['_register']       = $registerId;
-        $searchQuery['_schemas']        = [$publicationSchemaId, $documentSchemaId];
+        // OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
+        unset($searchQuery['_catalog'], $searchQuery['_catalogi']);
+
+        // Apply the resolved scope. Single-register: use `_register` for the magic-mapper
+        // fast path. Multi-register: pass `_registers[]` and explicitly nullify `_register`
+        // to prevent ObjectService from auto-setting it.
+        $searchQuery['_schemas'] = $scope['schemas'];
+        if (count($scope['registers']) === 1) {
+            $searchQuery['_register'] = $scope['registers'][0];
+        } else if (empty($scope['registers']) === false) {
+            $searchQuery['_registers'] = $scope['registers'];
+            $searchQuery['_register']  = null;
+        }
         $searchQuery['_includeDeleted'] = false;
 
         // Clamp `_limit` to a hard maximum (review #147 🟡 unauthenticated DoS —
@@ -291,29 +283,41 @@ class PublicationQueryService
 
         if ($contentSearchRequested === true) {
             // Forward to OR's opt-in chunk-search fan-out (expose-content-search-in
-            // -object-service, PR #473). OR already dedupes its own metadata-match +
-            // chunk-match union on object id before returning; the `@self.id` dedup
-            // below is an additional guarantee at the OC assembly layer per
-            // SCH-PFTS-CONTENT-002 / MODIFIED SCH-PFTS-002.
+            // -object-service). OR already dedupes its own metadata-match + chunk-match
+            // union on object id before returning; the `@self.id` dedup below is an
+            // additional guarantee at the OC assembly layer.
             $searchQuery['_content_search'] = true;
         }
 
-        // _rbac: false — visibility is enforced below via isObjectPublic() AFTER
-        // scoring/merge (SCH-PFTS-004); folding it into the OR query would bias ranking
-        // against rows the corpus considers relevant.
+        // Stap 1 — Enable OR's schema-level RBAC with the endpoint-level anon-context
+        // primitive (RBA-PUBLIC-001..006 from openregister PR #2855 / SCH-PFTS-001).
+        // `_rbac_as_public: true` forces $userId=null, $userGroups=[], skips admin bypass
+        // and the `_owner` OR-in — every caller sees the same public-group-eligible
+        // result set. Multitenancy auto-bypasses under this flag (RBA-PUBLIC-002).
         $candidateResult = $objectService->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
-            _multitenancy: false
+            _rbac: true,
+            _multitenancy: false,
+            _rbacAsPublic: true
         );
 
-        // Visibility filter runs unconditionally — the endpoint is public per
-        // SCH-PFTS-001, so it MUST NOT surface draft/depublished content to ANY
-        // caller (anonymous, authenticated non-admin, or admin). The prior
-        // `$isAnonymous === true &&` guard let any logged-in user enumerate the
-        // whole register because `_rbac: false` disables OR's schema authorization —
-        // classic broken-authorisation (OWASP A01:2021). Admins who need to see
-        // drafts use the admin `/publications` endpoint, not this public surface.
+        // Stap 3 — Dynamic schema-discriminator via SchemaMapper. Replaces the pre-WOO-536
+        // two-element hardcoded map; per-request cache so multi-schema search doesn't hit
+        // the DB per row.
+        $schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
+        $schemaSlugById = [];
+
+        // Track the publication schema for document→publication refinement (Stap 5a).
+        $publicationSchemaId = $this->resolvePublicationSchemaId(schemaMapper: $schemaMapper, scopeSchemas: $scope['schemas']);
+        // Track a single register for per-document refinement queries. Falls back to null
+        // when the scope spans multiple registers — refinement then goes through the
+        // multi-schema path via the query dict.
+        $refinementRegisterId = (count($scope['registers']) === 1) ? $scope['registers'][0] : null;
+
+        // Stap 4 — Removed the isObjectPublic() PHP post-filter. Visibility is now
+        // enforced in SQL by OR's schema authorization (RBA-PUBLIC-001..004). OR's
+        // `total` and `facets` therefore reflect visible-only counts by construction —
+        // no undercount workaround, no facet stripping.
         $publicationCache = [];
         $seenObjectIds    = [];
         $rows = [];
@@ -324,36 +328,40 @@ class PublicationQueryService
                 $rowArray = $rowArray->jsonSerialize();
             }
 
-            // Dedup on @self.id (SCH-PFTS-CONTENT-002 / MODIFIED SCH-PFTS-002): a
-            // document matching on BOTH metadata and body text must appear exactly
-            // once. Rows without a resolvable id (defensive — should not occur) are
-            // never deduped against each other. Marker is stamped AFTER all per-row
-            // validation (schema known + publication summary resolved + isObjectPublic
-            // check) so a first candidate that fails validation cannot silently
-            // suppress a later same-id candidate that would have passed — the metadata
-            // arm and the chunk arm can carry differently-stale denormalised
-            // `publication` fields, and only the emit-ready row should claim the seen
-            // slot.
+            // Dedup on @self.id: a document matching on BOTH metadata and body text must
+            // appear exactly once. Rows without a resolvable id (defensive — should not
+            // occur) are never deduped. Marker is stamped AFTER per-row validation so a
+            // first candidate that fails validation cannot silently suppress a later
+            // same-id candidate that would have passed.
             $objectId = ($rowArray['@self']['id'] ?? ($rowArray['id'] ?? null));
             if ($objectId !== null && isset($seenObjectIds[$objectId]) === true) {
                 continue;
             }
 
-            $schemaId   = $this->extractSchemaId($rowArray);
-            $schemaSlug = ($schemaSlugById[$schemaId] ?? null);
+            $schemaId = $this->extractSchemaId($rowArray);
+            if ($schemaId === null) {
+                continue;
+            }
+
+            // Stap 3 — resolve slug via SchemaMapper, cached per-request.
+            if (isset($schemaSlugById[$schemaId]) === false) {
+                try {
+                    $schemaSlugById[$schemaId] = $schemaMapper->find($schemaId)->getSlug();
+                } catch (\Throwable $e) {
+                    $this->logger?->warning('WOO-536: schema slug lookup failed', ['schemaId' => $schemaId, 'error' => $e->getMessage()]);
+                    $schemaSlugById[$schemaId] = null;
+                }
+            }
+            $schemaSlug = $schemaSlugById[$schemaId];
             if ($schemaSlug === null) {
                 continue;
             }
 
             $rowArray['@self']['schema'] = $schemaSlug;
 
-            // Strip any raw chunk-search fields OR might have attached to the row
-            // (SCH-PFTS-CONTENT-002 — the public response returns documents, never
-            // chunks). Defence-in-depth: OR already resolves each chunk hit to its
-            // owning ObjectEntity, so these fields should never be present; strip
-            // regardless so any future regression cannot leak them to the anonymous
-            // surface. Mirrors the scope-strip pattern used on the delegated query
-            // above.
+            // Strip any raw chunk-search fields OR might have attached to the row.
+            // Defence-in-depth: OR already resolves each chunk hit to its owning
+            // ObjectEntity, so these fields should never be present.
             unset(
                 $rowArray['_snippet'],
                 $rowArray['snippet'],
@@ -364,31 +372,24 @@ class PublicationQueryService
                 $rowArray['_score']
             );
 
-            if ($schemaSlug === 'document') {
+            if ($schemaSlug === 'document' && $publicationSchemaId !== null) {
                 $publicationSummary = $this->resolveDocumentPublicationSummary(
                     documentRow: $rowArray,
                     objectService: $objectService,
-                    registerId: $registerId,
+                    registerId: $refinementRegisterId,
                     publicationSchemaId: $publicationSchemaId,
                     cache: $publicationCache
                 );
 
-                if ($publicationSummary === null) {
-                    // No linked publication — MUST NOT appear (SCH-PFTS-003).
-                    continue;
-                }
-
-                if ($publicationSummary['public'] !== true) {
-                    // Transitive visibility (SCH-PFTS-004): linked publication is not
-                    // public — drop the document row regardless of caller identity.
+                if ($publicationSummary === null || $publicationSummary['public'] !== true) {
+                    // No linked publication OR linked publication is not publicly
+                    // visible under _rbac_as_public — drop the document row
+                    // (transitive visibility; RBA-PUBLIC-006 propagates the anon
+                    // context to the per-document refinement).
                     continue;
                 }
 
                 $rowArray['publication'] = $publicationSummary['summary'];
-            }//end if
-
-            if ($this->isObjectPublic($rowArray) === false) {
-                continue;
             }
 
             if ($objectId !== null) {
@@ -398,51 +399,18 @@ class PublicationQueryService
             $rows[] = $rowArray;
         }//end foreach
 
-        // `total` on an anonymous surface MUST NOT expose the pre-filter count
-        // (review #147 🔴 total leak): the OR candidate query runs `_rbac: false`
-        // and OC applies `isObjectPublic()` only to the emitted rows, so OR's
-        // `total` still counts drafts, future-dated, depublished AND archived
-        // objects. Polling that number over time would let a caller infer
-        // publication/withdrawal activity before it is public. Anonymous callers
-        // therefore see the exact post-filter row count for THIS PAGE — a
-        // per-page under-count that never reveals hidden lifecycle state.
-        // Authenticated callers keep OR's pre-filter total so their client-side
-        // pagination continues to work against the full accessible corpus
-        // (they can see the same rows through the admin surface anyway).
-        $isAnonymous = $this->isAnonymous();
-        if ($isAnonymous === true) {
-            $envelopeTotal = count($rows);
-        } else {
-            $envelopeTotal = (int) ($candidateResult['total'] ?? count($rows));
-        }
-
+        // Stap 4 — Total + facets pass through unmodified. Under _rbac_as_public, OR's
+        // `total` already reflects visible-only count and OR's facets aggregate over
+        // visible-only rows. No caller-identity branching needed anymore.
         $envelope = [
             'results' => $rows,
-            'total'   => $envelopeTotal,
+            'total'   => (int) ($candidateResult['total'] ?? count($rows)),
         ];
 
-        // Propagate the facets + facetable blocks from OR's response so consumers can
-        // build faceted-search UIs on this endpoint (docs claim, endpoint 2). OR only
-        // populates these when the caller asked for them (`_facetable=true` +
-        // `_facets[...]`); when absent, the keys are simply omitted from the response.
-        //
-        // On an anonymous surface EVERY OR facet/facetable bucket is unsafe
-        // (review #147 🔴 facet leak): the OR candidate query runs `_rbac: false`
-        // and OC applies its public-predicate only to result ROWS, so every
-        // bucket — `publicatiedatum`, `organization`, `themes`, `mimeType`, …
-        // — aggregates counts over drafts / future-dated / depublished /
-        // archived objects. A `publicatiedatum` range facet would even reveal
-        // dates of not-yet-published objects. The previous "strip `status` only"
-        // fix was incomplete; drop the entire facets/facetable envelopes for
-        // anonymous callers rather than post-stripping individual buckets. A
-        // future OR API that returns authorization-filtered facet aggregations
-        // can be forwarded through here once available.
-        // Authenticated callers keep the full OR facets — they can already
-        // see the underlying rows through admin surfaces.
-        if (isset($candidateResult['facets']) === true && $isAnonymous === false) {
+        if (isset($candidateResult['facets']) === true) {
             $envelope['facets'] = $candidateResult['facets'];
         }
-        if (isset($candidateResult['facetable']) === true && $isAnonymous === false) {
+        if (isset($candidateResult['facetable']) === true) {
             $envelope['facetable'] = $candidateResult['facetable'];
         }
         return $envelope;
@@ -450,28 +418,200 @@ class PublicationQueryService
     }//end assemblePublicSearchResults()
 
     /**
-     * Resolve a configured register/schema id from app config.
+     * Resolve the register + schema union that /api/search covers for this request.
      *
-     * @param string $configKey The app-config key (e.g. `publication_register`).
+     * Central discriminator for SCH-PFTS-CAT-001..003:
+     *   1. Explicit `_catalog` (single slug) → that catalog's registers + schemas.
+     *   2. Explicit `_catalogi[]` (array of slugs) → union across the resolved catalogs.
+     *   3. No param → union across every catalog where `listed: true` AND `published`
+     *      is in the past. This is the SCH-PFTS-CAT-002 default that mirrors the
+     *      pre-WOO-536 anon-visible scope discipline (#733 cross-catalog leak,
+     *      #734 anonymous DoS — both stay closed under this rule).
      *
-     * @return integer|null The configured id, or null when unconfigured/non-numeric.
+     * Unknown slugs are silently dropped from the union so a typo does not fail the
+     * whole request. The caller MUST inspect the returned `schemas` array and
+     * fail-closed if empty (empty envelope).
      *
-     * @spec exclude Configuration-lookup plumbing; no domain behavior of its own.
+     * @param array $queryParams Raw request query dict.
+     *
+     * @return array{registers: int[], schemas: int[]}
      */
-    private function resolveConfiguredId(string $configKey): ?int
+    private function resolveCatalogScope(array $queryParams): array
     {
-        if ($this->config === null) {
-            return null;
+        $catalogiService = null;
+        try {
+            $catalogiService = $this->container->get('OCA\\OpenCatalogi\\Service\\CatalogiService');
+        } catch (\Throwable $e) {
+            $this->logger?->warning('WOO-536: CatalogiService unavailable', ['error' => $e->getMessage()]);
+            return ['registers' => [], 'schemas' => []];
         }
 
-        $value = $this->config->getValueString('opencatalogi', $configKey, '');
-        if ($value === '' || is_numeric($value) === false) {
-            return null;
+        $singleCatalog = ($queryParams['_catalog'] ?? null);
+        $multiCatalog  = ($queryParams['_catalogi'] ?? []);
+
+        // 1. Explicit single-catalog scope.
+        if (is_string($singleCatalog) === true && $singleCatalog !== '') {
+            $c = $catalogiService->getCatalogBySlug($singleCatalog);
+            if ($c === null) {
+                return ['registers' => [], 'schemas' => []];
+            }
+            return [
+                'registers' => $this->normalizeIds(value: ($c['registers'] ?? [])),
+                'schemas'   => $this->normalizeIds(value: ($c['schemas']   ?? [])),
+            ];
         }
 
-        return (int) $value;
+        // 2. Explicit multi-catalog union.
+        if (is_array($multiCatalog) === true && empty($multiCatalog) === false) {
+            $regs = [];
+            $schemas = [];
+            foreach ($multiCatalog as $slug) {
+                if (is_string($slug) === false || $slug === '') {
+                    continue;
+                }
+                $c = $catalogiService->getCatalogBySlug($slug);
+                if ($c === null) {
+                    continue;
+                }
+                $regs    = array_merge($regs,    $this->normalizeIds(value: ($c['registers'] ?? [])));
+                $schemas = array_merge($schemas, $this->normalizeIds(value: ($c['schemas']   ?? [])));
+            }
+            return [
+                'registers' => array_values(array_unique($regs)),
+                'schemas'   => array_values(array_unique($schemas)),
+            ];
+        }
 
-    }//end resolveConfiguredId()
+        // 3. Default — union of listed+published catalogs.
+        $allCatalogs = $this->listListedPublishedCatalogs(catalogiService: $catalogiService);
+        $regs = [];
+        $schemas = [];
+        foreach ($allCatalogs as $c) {
+            $regs    = array_merge($regs,    $this->normalizeIds(value: ($c['registers'] ?? [])));
+            $schemas = array_merge($schemas, $this->normalizeIds(value: ($c['schemas']   ?? [])));
+        }
+        return [
+            'registers' => array_values(array_unique($regs)),
+            'schemas'   => array_values(array_unique($schemas)),
+        ];
+
+    }//end resolveCatalogScope()
+
+    /**
+     * Enumerate catalogs eligible for the anonymous default scope: `listed: true`
+     * AND `published` is set to a datetime in the past (or absent — treated as
+     * "not yet published" and excluded).
+     *
+     * Uses `CatalogiService::getObjectService()` to hit the catalog register directly
+     * with `_rbac: false` — the catalog's OWN authorization determines its visibility
+     * via the `listed` + `published` predicate here, not RBAC on the catalog register.
+     *
+     * @param object $catalogiService The OC CatalogiService (resolved via container).
+     *
+     * @return array<int, array> List of catalog jsonSerialize() arrays.
+     */
+    private function listListedPublishedCatalogs(object $catalogiService): array
+    {
+        try {
+            $objectService = $catalogiService->getObjectService();
+            if ($objectService === null) {
+                return [];
+            }
+            $catalogRegister = ($this->config?->getValueString('opencatalogi', 'catalog_register', '') ?? '');
+            $catalogSchema   = ($this->config?->getValueString('opencatalogi', 'catalog_schema', '') ?? '');
+            if ($catalogRegister === '' || $catalogSchema === '') {
+                return [];
+            }
+
+            $catalogs = $objectService->searchObjects(
+                query: [
+                    '@self' => [
+                        'register' => $catalogRegister,
+                        'schema'   => $catalogSchema,
+                    ],
+                    'listed' => true,
+                ],
+                _rbac: false,
+                _multitenancy: false,
+            );
+        } catch (\Throwable $e) {
+            $this->logger?->warning('WOO-536: enumerating listed+published catalogs failed', ['error' => $e->getMessage()]);
+            return [];
+        }
+
+        $out = [];
+        $now = new \DateTimeImmutable('now');
+        foreach ($catalogs as $catalogEntity) {
+            try {
+                $c = is_array($catalogEntity) === true ? $catalogEntity : $catalogEntity->jsonSerialize();
+            } catch (\Throwable $e) {
+                continue;
+            }
+            // Published predicate: published must exist AND be in the past.
+            $published = ($c['published'] ?? null);
+            if (is_string($published) === false || $published === '') {
+                continue;
+            }
+            try {
+                if (new \DateTimeImmutable($published) > $now) {
+                    continue;
+                }
+            } catch (\Throwable $e) {
+                continue;
+            }
+            $out[] = $c;
+        }
+        return $out;
+
+    }//end listListedPublishedCatalogs()
+
+    /**
+     * Resolve an id-array from either a JSON-string or a native array. Every element
+     * is cast to int (schema/register ids in OC/OR are integers).
+     *
+     * @param mixed $value Raw value from catalog metadata.
+     *
+     * @return int[]
+     */
+    private function normalizeIds(mixed $value): array
+    {
+        if (is_string($value) === true) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) === true ? $decoded : [];
+        }
+        if (is_array($value) === false) {
+            return [];
+        }
+        return array_values(array_map('intval', $value));
+
+    }//end normalizeIds()
+
+    /**
+     * Find the `publication` schema id inside the resolved scope so document rows can
+     * be enriched with their linked publication summary. When the scope does not
+     * include the publication schema (e.g. a catalog-scoped search across only
+     * `besluit` + `verzoek`), returns null and document→publication refinement is
+     * simply skipped for that request.
+     *
+     * @param object $schemaMapper  OR SchemaMapper.
+     * @param int[]  $scopeSchemas  Schema ids in the resolved scope.
+     *
+     * @return int|null Publication schema id when present in scope, null otherwise.
+     */
+    private function resolvePublicationSchemaId(object $schemaMapper, array $scopeSchemas): ?int
+    {
+        foreach ($scopeSchemas as $sid) {
+            try {
+                if ($schemaMapper->find($sid)->getSlug() === 'publication') {
+                    return (int) $sid;
+                }
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+        return null;
+
+    }//end resolvePublicationSchemaId()
 
     /**
      * Extract the numeric schema id from a serialized object row's `@self.schema`.
@@ -507,77 +647,115 @@ class PublicationQueryService
      * are cached per request so a page of documents linking the same publication only
      * issues one lookup per unique slug.
      *
+     * Stap 5a (WOO-536): replaces the denormalised `publication.slug` string lookup
+     * with a per-document `_relations_contains` query on the publication schema. The
+     * OR-side relation graph is authoritative, so a slug rename no longer detaches
+     * documents from the envelope.
+     *
+     * The query runs under `_rbac_as_public: true` so admin sessions on the public
+     * endpoint see the SAME linked-publication as anonymous callers — no linked-object
+     * leak (RBA-PUBLIC-006). If OR returns nothing, the linked publication either does
+     * not exist, is not public under the caller's effective context, or the document
+     * is genuinely unlinked — all three collapse to "drop the row" (transitive
+     * visibility).
+     *
+     * N4b (WOO-536 plan): a document related to multiple publications resolves to the
+     * OLDEST-by-created linked publication (most stable link — does not change as new
+     * publications are added). Documented as a known approximation.
+     *
      * @param array               $documentRow         The document row (post `@self.schema` rewrite).
      * @param object              $objectService       OpenRegister ObjectService instance.
-     * @param integer             $registerId          The publication register id.
-     * @param integer             $publicationSchemaId The publication schema id.
-     * @param array<string,mixed> $cache               Per-request slug → summary cache (by
-     *                                                 reference).
+     * @param integer|null        $registerId          The publication register id, or null when the
+     *                                                 outer scope spans multiple registers (query
+     *                                                 falls back to the multi-schema search path).
+     * @param integer             $publicationSchemaId The publication schema id in scope.
+     * @param array<string,mixed> $cache               Per-request document-uuid → summary cache
+     *                                                 (by reference).
      *
      * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
      *
-     * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-6
+     * @spec openspec/changes/fix-fts-catalog-model-alignment/tasks.md
      */
     private function resolveDocumentPublicationSummary(
         array $documentRow,
         object $objectService,
-        int $registerId,
+        ?int $registerId,
         int $publicationSchemaId,
         array &$cache
     ): ?array {
-        $linked = ($documentRow['publication'] ?? null);
-        $slug   = null;
-        if (is_array($linked) === true) {
-            $slug = ($linked['slug'] ?? null);
-        } else if (is_string($linked) === true && $linked !== '') {
-            $slug = $linked;
-        }
-
-        if ($slug === null || $slug === '') {
+        $documentUuid = ($documentRow['@self']['id'] ?? ($documentRow['id'] ?? null));
+        if (is_string($documentUuid) === false || $documentUuid === '') {
             return null;
         }
 
-        if (array_key_exists($slug, $cache) === true) {
-            return $cache[$slug];
+        if (array_key_exists($documentUuid, $cache) === true) {
+            return $cache[$documentUuid];
         }
 
-        // Slug lives on the magic metadata column `_slug` and is addressed via
-        // the nested `@self` block (equivalent to `@self.slug` in URL query form).
-        // A bare `slug` key becomes a schema-property filter — publications have
-        // no `slug` property, so the search matches nothing and every document
-        // row is silently dropped by the assembler with a null publication
-        // summary.
-        $matches = $objectService->searchObjects(
-            query: [
-                '_register' => $registerId,
-                '_schema'   => $publicationSchemaId,
-                '@self'     => ['slug' => $slug],
-                '_limit'    => 1,
-            ],
-            _rbac: false,
-            _multitenancy: false
-        );
+        // Build the per-document refinement query. Under _rbac_as_public: true, OR only
+        // returns publications that would be visible to an anonymous caller — so a
+        // non-empty result guarantees the linked pub is public.
+        $refinementQuery = [
+            '_schema'             => $publicationSchemaId,
+            '_relations_contains' => $documentUuid,
+            '_limit'              => 2,
+            '_order'              => ['@self.created' => 'asc'],
+        ];
+        if ($registerId !== null) {
+            $refinementQuery['_register'] = $registerId;
+        }
 
-        if (empty($matches) === true) {
-            $cache[$slug] = null;
+        try {
+            $matches = $objectService->searchObjectsPaginated(
+                query: $refinementQuery,
+                _rbac: true,
+                _multitenancy: false,
+                _rbacAsPublic: true
+            );
+        } catch (\Throwable $e) {
+            $this->logger?->warning(
+                'WOO-536: document→publication refinement failed',
+                ['documentUuid' => $documentUuid, 'error' => $e->getMessage()]
+            );
+            $cache[$documentUuid] = null;
             return null;
         }
 
-        $publication = $matches[0];
+        $rows = ($matches['results'] ?? []);
+        if (empty($rows) === true) {
+            // N4a: no publicly-visible linked publication → drop the document.
+            $this->logger?->info(
+                'WOO-536: document has no publicly-visible linked publication',
+                ['documentUuid' => $documentUuid]
+            );
+            $cache[$documentUuid] = null;
+            return null;
+        }
+
+        if (count($rows) > 1) {
+            // N4b: multi-linked document — the oldest-by-created wins (documented
+            // approximation, most stable link).
+            $this->logger?->info(
+                'WOO-536: document linked to multiple publications; using oldest-by-created',
+                ['documentUuid' => $documentUuid, 'count' => count($rows)]
+            );
+        }
+
+        $publication = $rows[0];
         if (is_array($publication) === false) {
             $publication = $publication->jsonSerialize();
         }
 
         $summary = [
             'summary' => [
-                'id'    => (string) ($publication['id'] ?? ''),
-                'slug'  => (string) ($publication['@self']['slug'] ?? $slug),
+                'id'    => (string) ($publication['@self']['id'] ?? ($publication['id'] ?? '')),
+                'slug'  => (string) ($publication['@self']['slug'] ?? ($publication['slug'] ?? '')),
                 'title' => (string) ($publication['title'] ?? ''),
             ],
-            'public'  => $this->isObjectPublic($publication),
+            'public'  => true,
         ];
 
-        $cache[$slug] = $summary;
+        $cache[$documentUuid] = $summary;
         return $summary;
 
     }//end resolveDocumentPublicationSummary()
