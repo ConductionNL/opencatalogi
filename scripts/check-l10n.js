@@ -252,6 +252,77 @@ function printSection(title, color, body) {
 	console.log('')
 }
 
+/**
+ * Every user-visible string the manifest declares, as translation keys.
+ *
+ * Scanning .vue/.js/.ts finds `t('opencatalogi', '...')` calls and nothing
+ * else. The manifest is not source the extractor reads; it is data the
+ * renderer walks. CnAppNav translates `menu[].label`, CnPageHeader a page's
+ * `title` and `description`, CnWalkthrough a step's `title` / `body` / `task`
+ * — each through the app's own translate function, each looking up a key this
+ * checker could not see.
+ *
+ * Without this, a live manifest string reads as an ORPHAN and gets deleted as
+ * dead weight. That is not hypothetical: "Menu items" is declared by the
+ * manifest and was reported unused by this very check.
+ *
+ * src/manifest.d/*.json counts too — those fragments are merged at runtime via
+ * require.context, so reading only src/manifest.json is blind to them.
+ * Underscore-prefixed blocks are skipped: `_meta` is per-fragment provenance,
+ * never rendered.
+ *
+ * @return {Set<string>} every user-visible manifest string
+ */
+function manifestStrings() {
+	const FIELDS = new Set([
+		'title', 'body', 'task', 'label', 'description',
+		'emptyText', 'placeholder', 'subtitle', 'helpText',
+	])
+	const out = new Set()
+	const visit = (node) => {
+		if (Array.isArray(node)) {
+			node.forEach(visit)
+			return
+		}
+		if (node === null || typeof node !== 'object') {
+			return
+		}
+		for (const [key, value] of Object.entries(node)) {
+			if (key.startsWith('_')) {
+				continue
+			}
+			if (FIELDS.has(key) && typeof value === 'string' && value.trim()) {
+				out.add(value)
+			} else {
+				visit(value)
+			}
+		}
+	}
+	const candidates = [path.join(SRC_DIR, 'manifest.json')]
+	const fragmentDir = path.join(SRC_DIR, 'manifest.d')
+	if (fs.existsSync(fragmentDir)) {
+		for (const name of fs.readdirSync(fragmentDir).sort()) {
+			if (name.endsWith('.json')) {
+				candidates.push(path.join(fragmentDir, name))
+			}
+		}
+	}
+	for (const file of candidates) {
+		if (!fs.existsSync(file)) {
+			continue
+		}
+		try {
+			visit(JSON.parse(fs.readFileSync(file, 'utf8')))
+		} catch (e) {
+			// An unparseable manifest is check:manifest's finding, not this
+			// script's. Say so rather than reporting a translation verdict over
+			// a file that was never read.
+			console.error(`[check-l10n] SKIP ${file}: unreadable (${e.message})`)
+		}
+	}
+	return out
+}
+
 function main() {
 	const { app, translations } = loadJsTranslations(L10N_FILE)
 	const keys = new Set(Object.keys(translations))
@@ -260,6 +331,9 @@ function main() {
 
 	const { found, unanalyzable } = extractTCalls(files, app)
 	const usedKeys = new Set(found.keys())
+	for (const key of manifestStrings()) {
+		usedKeys.add(key)
+	}
 
 	const missing = [...usedKeys].filter((k) => !keys.has(k)).sort()
 	const unused = [...keys].filter((k) => !usedKeys.has(k)).sort()
@@ -274,10 +348,17 @@ function main() {
 	if (missing.length) {
 		const body = missing
 			.map((k) => {
-				const locs = found
-					.get(k)
-					.map((l) => `${DIM}${rel(l.file)}:${l.line}${RESET}`)
-					.join(', ')
+				// A key can reach `missing` from two places: a t() call the
+				// extractor found, or a manifest field. Only the first has an
+				// entry in `found`, so dereferencing it unguarded crashes on
+				// every manifest string — which is exactly what happened when
+				// manifest awareness was first added here.
+				const hits = found.get(k)
+				const locs = hits === undefined
+					? `${DIM}declared in src/manifest.json or src/manifest.d/${RESET}`
+					: hits
+						.map((l) => `${DIM}${rel(l.file)}:${l.line}${RESET}`)
+						.join(', ')
 				return `  ${RED}•${RESET} ${JSON.stringify(k)}\n    ${locs}`
 			})
 			.join('\n')
