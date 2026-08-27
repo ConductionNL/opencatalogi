@@ -26,6 +26,23 @@ const ROOT = path.resolve(__dirname, '..')
 const SRC_DIR = path.join(ROOT, 'src')
 const L10N_FILE = path.join(ROOT, 'l10n', 'en.js')
 
+// The BACKEND also translates, and this check used to be blind to it.
+//
+// PHP calls `$l->t('String')` — the app id is bound in the IL10N instance, not
+// passed as the first argument the way the JS `t('opencatalogi', 'String')`
+// form does. So the JS regex could never match a PHP call, and every key used
+// only from PHP was reported UNUSED. Measured on 2026-08-27: of 113 keys
+// reported unused, 20 were live `->t()` calls in lib/ — deleting them on this
+// check's word would have untranslated 20 real backend strings.
+//
+// These directories are scanned to SUPPRESS false unused reports only. PHP
+// strings are deliberately NOT folded into the MISSING set: that would make
+// the gate stricter as a side effect of fixing a false positive, and the two
+// deserve separate decisions.
+const PHP_DIRS = ['lib', 'templates', 'appinfo']
+	.map((d) => path.join(ROOT, d))
+	.filter((d) => fs.existsSync(d))
+
 const RED = '\x1b[31m'
 const YELLOW = '\x1b[33m'
 const GREEN = '\x1b[32m'
@@ -252,17 +269,49 @@ function printSection(title, color, body) {
 	console.log('')
 }
 
+/**
+ * Keys passed to PHP's `$l->t('String')` / `$this->l10n->t("String")`.
+ *
+ * Only the first argument is read, and only when it is a plain quoted literal
+ * — a concatenation or a variable cannot be resolved statically, and guessing
+ * would be worse than the false positive this exists to remove.
+ *
+ * @param {Array<string>} files PHP files to scan.
+ * @return {Set<string>} The literal strings handed to a backend t() call.
+ */
+function extractPhpTCalls(files) {
+	const keys = new Set()
+	const re = /->t\(\s*(['"])((?:\\.|(?!\1)[^\\])*)\1/g
+
+	for (const file of files) {
+		const text = fs.readFileSync(file, 'utf8')
+		let m
+		re.lastIndex = 0
+		while ((m = re.exec(text)) !== null) {
+			const raw = m[2]
+			keys.add(raw.replace(/\\(['"\\])/g, '$1'))
+		}
+	}
+
+	return keys
+}
+
 function main() {
 	const { app, translations } = loadJsTranslations(L10N_FILE)
 	const keys = new Set(Object.keys(translations))
 	const files = walk(SRC_DIR, ['.vue', '.js', '.ts'])
 	const vueFiles = files.filter((f) => f.endsWith('.vue'))
+	const phpFiles = PHP_DIRS.flatMap((d) => walk(d, ['.php']))
 
 	const { found, unanalyzable } = extractTCalls(files, app)
 	const usedKeys = new Set(found.keys())
+	const phpKeys = extractPhpTCalls(phpFiles)
 
 	const missing = [...usedKeys].filter((k) => !keys.has(k)).sort()
-	const unused = [...keys].filter((k) => !usedKeys.has(k)).sort()
+	// A key the BACKEND uses is used, even though no .vue file mentions it.
+	const unused = [...keys]
+		.filter((k) => !usedKeys.has(k) && !phpKeys.has(k))
+		.sort()
 	const unwrapped = findUnwrapped(vueFiles, keys)
 
 	console.log(`${BOLD}${CYAN}${app} l10n check${RESET}`)
