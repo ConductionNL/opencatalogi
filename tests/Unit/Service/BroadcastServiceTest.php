@@ -11,6 +11,7 @@ use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
 use OCA\OpenCatalogi\Service\BroadcastService;
+use OCA\OpenCatalogi\Service\Federation\FederationHostPolicy;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -97,12 +98,17 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 				static fn (string $app, string $key, int $default = 0): int => $default
 			);
 
+		// The host policy is a pure decision object over the same IAppConfig the
+		// service already holds, so the real one is used rather than a mock: a
+		// mocked policy would assert our own expectation of "is this local?"
+		// instead of the rule the production path actually applies.
 		$this->broadcastService = new BroadcastService(
 			$this->urlGeneratorMock,
 			$this->containerMock,
 			$this->appManagerMock,
 			$this->loggerMock,
-			$this->configMock
+			$this->configMock,
+			new FederationHostPolicy($this->configMock)
 		);
 
 		// Replace the private $client with a mock via reflection.
@@ -866,5 +872,64 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->broadcastService->enqueueBroadcast('http://169.254.169.254/latest/meta-data', 'https://self.example.com/api/directory');
 
 	}//end testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery()
+
+
+	/**
+	 * A localhost instance must not advertise itself to a real directory.
+	 *
+	 * The SSRF pre-flight cannot catch this: it validates the TARGET, and the
+	 * target here is a perfectly reachable public directory. It is the PAYLOAD —
+	 * our own address — that no peer could resolve. Without the guard this call
+	 * POSTs `http://localhost/...` into a production directory.
+	 */
+	public function testBroadcastRefusesWhenThisInstanceAdvertisesALocalAddress(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('http://localhost/apps/opencatalogi/api/directory');
+
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$results = $this->broadcastService->broadcast('https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
+
+		$this->assertSame([], $results);
+
+	}//end testBroadcastRefusesWhenThisInstanceAdvertisesALocalAddress()
+
+
+	/**
+	 * The `local_federation_hosts` allowlist re-enables a local docker rig.
+	 *
+	 * Two instances on a private network must still be able to federate, which is
+	 * what the allowlist exists for. Same local address as the test above, so the
+	 * only difference is the allowlist — that is what makes this a control.
+	 */
+	public function testBroadcastProceedsWhenTheLocalHostIsAllowlisted(): void {
+		$allowlistingConfig = $this->createMock(IAppConfig::class);
+		$allowlistingConfig->method('getValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $default = '') {
+					return match ($key) {
+						'listing_schema' => 'listing',
+						'listing_register' => 'directory',
+						'local_federation_hosts' => 'localhost',
+						default => $default,
+					};
+				}
+			);
+
+		$policy = new FederationHostPolicy($allowlistingConfig);
+
+		$this->assertFalse(
+			$policy->isLocalUrl('http://localhost/apps/opencatalogi/api/directory'),
+			'An allowlisted host must be treated as remote so a docker rig can federate.'
+		);
+		$this->assertTrue(
+			$policy->isLocalUrl('http://127.0.0.1/apps/opencatalogi/api/directory'),
+			'Allowlisting one host must not blanket-allow every local address.'
+		);
+
+	}//end testBroadcastProceedsWhenTheLocalHostIsAllowlisted()
 
 }//end class

@@ -32,6 +32,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
+use OCA\OpenCatalogi\Service\Federation\FederationHostPolicy;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -131,6 +132,7 @@ class BroadcastService {
 		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,
 		private readonly IAppConfig $config,
+		private readonly FederationHostPolicy $hostPolicy,
 	) {
 		// Initialize HTTP client; the per-request timeout is operator-tunable.
 		$this->client = new Client(
@@ -414,6 +416,31 @@ class BroadcastService {
 		// Initialize results array to track success and failure per URL.
 		$results = [];
 
+		// NEVER ADVERTISE AN ADDRESS NO PEER CAN REACH.
+		//
+		// The payload of a broadcast is OUR OWN url, and a peer stores it as a
+		// listing and syncs it back later. On a development or air-gapped
+		// instance `overwrite.cli.url` is typically `http://localhost`, so an
+		// unguarded broadcast writes `http://localhost/apps/opencatalogi/api/directory`
+		// into a PRODUCTION directory, where it is unresolvable for everyone.
+		//
+		// DirectoryService already refuses its automatic broadcast for this
+		// reason, but the guard lived only there — and the first-time-setup
+		// `connect-federation` action calls this method DIRECTLY, bypassing it.
+		// Measured 2026-08-27 on a fresh localhost instance: pressing "connect to
+		// federation" in the wizard would have POSTed a localhost address to
+		// directory.opencatalogi.nl. The SSRF pre-flight does not catch this — it
+		// validates the TARGET, and the target (the national directory) is
+		// perfectly safe. It is the payload that is unroutable.
+		if ($this->hostPolicy->isLocalUrl(url: $directoryUrl) === true) {
+			$this->logger->warning(
+				'Refusing to broadcast: this instance advertises a local address (' . $directoryUrl
+				. '). Set overwrite.cli.url to a URL peers can resolve, or add the host to '
+				. 'the opencatalogi `local_federation_hosts` allowlist for a local rig.'
+			);
+			return $results;
+		}
+
 		// Determine target URLs for broadcasting.
 		$targetUrls = $this->getDirectoryUrls();
 		if ($url !== null) {
@@ -515,14 +542,7 @@ class BroadcastService {
 	 * @return boolean True when the host is explicitly allowlisted for local federation.
 	 */
 	private function isAllowlistedFederationHost(string $host): bool {
-		$allowlist = $this->config->getValueString($this->appName, 'local_federation_hosts', '');
-		if ($allowlist === '') {
-			return false;
-		}
-
-		$allowedHosts = array_filter(array_map('trim', explode(',', strtolower($allowlist))));
-
-		return in_array($host, $allowedHosts, true);
+		return $this->hostPolicy->isAllowlistedFederationHost(host: $host);
 	}//end isAllowlistedFederationHost()
 
 	/**
