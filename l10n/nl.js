@@ -915,7 +915,8 @@ OC.L10N.register(
         "Glossary term": "Begrip",
         "Content blocks": "Inhoudsblokken",
         "Menu": "Menu",
-        "Flow": "Flow"
+        "Flow": "Flow",
+        "Menu items": "Menu-items"
     },
     "nplurals=2; plural=(n != 1);"
 )
