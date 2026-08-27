@@ -74,10 +74,12 @@ test.describe('demo environment', () => {
 	test.skip(
 		!IS_DEMO_RIG,
 		'Not a Connext demo rig. Set CONNEXT_DEMO=1 and point NEXTCLOUD_URL at one '
-		+ '(the compose serves http://localhost:8600) to run these.',
+			+ '(the compose serves http://localhost:8600) to run these.',
 	)
 
-	test('the seeded portal resolves and renders its own identity', async ({ page }) => {
+	test('the seeded portal resolves and renders its own identity', async ({
+		page,
+	}) => {
 		await page.goto(`${BASE_URL}/apps/portaliq/site?portal=demo`)
 
 		// The portal's OWN title, not Nextcloud's. When PortalResolver returns
@@ -85,7 +87,9 @@ test.describe('demo environment', () => {
 		// shell — so asserting the seeded name is what separates "resolved" from
 		// "rendered the fallback".
 		await expect(page).toHaveTitle(/Open Catalogi/i)
-		await expect(page.getByRole('heading', { name: 'Open Catalogi', level: 1 })).toBeVisible()
+		await expect(
+			page.getByRole('heading', { name: 'Open Catalogi', level: 1 }),
+		).toBeVisible()
 
 		// The search hero is the portal's reason to exist.
 		await expect(page.getByRole('search')).toBeVisible()
@@ -96,8 +100,12 @@ test.describe('demo environment', () => {
 		await expect(page.getByRole('link', { name: 'Privacy' })).toBeVisible()
 	})
 
-	test('the content API serves the seeded portal, its menus and its pages', async ({ request }) => {
-		const site = await request.get(`${BASE_URL}/apps/portaliq/api/content/site?portal=demo`)
+	test('the content API serves the seeded portal, its menus and its pages', async ({
+		request,
+	}) => {
+		const site = await request.get(
+			`${BASE_URL}/apps/portaliq/api/content/site?portal=demo`,
+		)
 		expect(site.status()).toBe(200)
 		const siteBody = await site.json()
 		// `{"error":"not_found"}` also arrives as a JSON body, so assert the shape
@@ -105,7 +113,9 @@ test.describe('demo environment', () => {
 		expect(siteBody).toMatchObject({ slug: 'demo', title: 'Open Catalogi' })
 		expect(siteBody.theme).toBe('opencatalogi')
 
-		const pages = await request.get(`${BASE_URL}/apps/portaliq/api/content/pages?portal=demo`)
+		const pages = await request.get(
+			`${BASE_URL}/apps/portaliq/api/content/pages?portal=demo`,
+		)
 		expect(pages.status()).toBe(200)
 		const pageBody = await pages.json()
 		expect(Array.isArray(pageBody.pages)).toBe(true)
@@ -113,21 +123,27 @@ test.describe('demo environment', () => {
 		expect(pageBody.pages.length).toBeGreaterThan(0)
 		expect(pageBody.pages.map((p: { route: string }) => p.route)).toContain('/')
 
-		const menus = await request.get(`${BASE_URL}/apps/portaliq/api/content/menus?portal=demo`)
+		const menus = await request.get(
+			`${BASE_URL}/apps/portaliq/api/content/menus?portal=demo`,
+		)
 		expect(menus.status()).toBe(200)
 		const menuBody = await menus.json()
 		expect(Array.isArray(menuBody.menus)).toBe(true)
 		expect(menuBody.menus.length).toBeGreaterThan(0)
 	})
 
-	test('OpenCatalogi imported its register configuration on install', async ({ request }) => {
+	test('OpenCatalogi imported its register configuration on install', async ({
+		request,
+	}) => {
 		// THE ASSERTION THAT CATCHES THE SILENT INSTALL FAILURE.
 		//
 		// This endpoint answers 200 with `{"results":[],"total":0}` both when the
 		// instance genuinely has no catalogs AND when the register was never
 		// created. Only the non-empty case proves the install actually configured
 		// the app, which is why the count — not the status — is the assertion.
-		const directory = await request.get(`${BASE_URL}/apps/opencatalogi/api/directory`)
+		const directory = await request.get(
+			`${BASE_URL}/apps/opencatalogi/api/directory`,
+		)
 		expect(directory.status()).toBe(200)
 
 		const body = await directory.json()
@@ -135,7 +151,7 @@ test.describe('demo environment', () => {
 		expect(
 			body.results.length,
 			'the directory is empty — on a fresh instance this means the register '
-			+ 'configuration was never imported, not that there are no peers',
+				+ 'configuration was never imported, not that there are no peers',
 		).toBeGreaterThan(0)
 
 		// The seeded catalog carries schemas; a catalog with none is the
@@ -146,7 +162,9 @@ test.describe('demo environment', () => {
 		expect(catalog.schemas.length).toBeGreaterThan(0)
 	})
 
-	test('the instance refuses to advertise its local address to the directory', async ({ request }) => {
+	test('the instance refuses to advertise its local address to the directory', async ({
+		request,
+	}) => {
 		// A demo runs on localhost, and a localhost URL is unroutable for every
 		// peer. The instance must still SERVE its own directory endpoint — that is
 		// how a peer on the same docker network federates with it — while
