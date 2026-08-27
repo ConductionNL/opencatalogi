@@ -24,10 +24,7 @@ const { loadJsTranslations, walk } = require('./lib/l10n.js')
 
 const ROOT = path.resolve(__dirname, '..')
 const SRC_DIR = path.join(ROOT, 'src')
-const PHP_DIRS = [
-	path.join(ROOT, 'lib'),
-	path.join(ROOT, 'appinfo'),
-]
+const PHP_DIRS = [path.join(ROOT, 'lib'), path.join(ROOT, 'appinfo')]
 const L10N_FILE = path.join(ROOT, 'l10n', 'en.js')
 
 const RED = '\x1b[31m'
@@ -59,10 +56,9 @@ function extractTCalls(files, app, callRe = null) {
 	// Callers pass their own opener and the string parser below is shared, so
 	// both dialects get identical escape handling rather than two half-copies
 	// of the same logic drifting apart.
-	const tCallRe = callRe || new RegExp(
-		`\\bt\\s*\\(\\s*(['"])${escapeRegex(app)}\\1\\s*,\\s*`,
-		'g',
-	)
+	const tCallRe =
+		callRe
+		|| new RegExp(`\\bt\\s*\\(\\s*(['"])${escapeRegex(app)}\\1\\s*,\\s*`, 'g')
 
 	for (const file of files) {
 		const text = fs.readFileSync(file, 'utf8')
