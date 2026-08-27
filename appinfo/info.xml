@@ -164,6 +164,28 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				post-migration only: a fresh install has no rows to remove, and
 				the step is idempotent either way.
 			-->
+			<!-- WRITTEN BUT NEVER REGISTERED until now, so it never ran anywhere.
+			     gate-98 (repair-step-registration) found it.
+			
+			     One-shot cleanup for the getUniqueDirectories() publications-URL
+			     bug: older builds fed `publications` URLs into syncDirectory() as
+			     if they were directory URLs, so every publication the peer
+			     returned was saved as a `listing` row carrying the wrong
+			     `directory`. Those rows never sync again once the bug is fixed and
+			     simply sit as stale garbage.
+			
+			     THIS STEP DELETES ROWS, which is why it is worth stating what it
+			     will and will not touch: it removes a listing only when its
+			     `directory` is empty or does not contain `/api/directory`. A real
+			     listing always carries such a URL, so a correctly-synced store is
+			     untouched and a re-run is a no-op.
+			
+			     Register/schema discovery goes through SchemaMapper/RegisterMapper
+			     rather than the `listing_register` app-config key, because some
+			     environments hold a corrupt value there (the literal string
+			     "Array") and a config-driven lookup would silently skip the
+			     cleanup rather than fail. -->
+			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
 			<step>OCA\OpenCatalogi\Repair\RemoveRetiredCronJobs</step>
 		</post-migration>
 		<!--
