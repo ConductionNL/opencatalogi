@@ -165,6 +165,27 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				the step is idempotent either way.
 			-->
 			<step>OCA\OpenCatalogi\Repair\RemoveRetiredCronJobs</step>
+			<!--
+				Written but never registered, so it had never run once: a class that
+				exists is not a class that runs. gate-98 found it.
+
+				It removes directory listings whose `directory` field is empty or does
+				not point at an `/api/directory` endpoint — rows a since-fixed bug
+				created by storing the federation *publications* URL as a listing.
+				Those rows never sync again and just sit as stale garbage.
+
+				The delete is RECOVERABLE: it goes through OpenRegister's
+				ObjectService::deleteObject(), which soft-deletes — the scan itself
+				filters on `_deleted IS NULL`, so an already-removed row is skipped
+				rather than touched again. Idempotent by the same property: once the
+				store is clean it is a no-op. Listings are a cache of remote
+				directories, not authored content, so a wrongly-removed row comes back
+				on the next sync.
+
+				post-migration only: a fresh install has no stale rows to clean, and
+				the step is idempotent either way.
+			-->
+			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
 		</post-migration>
 		<!--
 			Nextcloud runs migrateSchemaOnly() on a FIRST install, so NEITHER
