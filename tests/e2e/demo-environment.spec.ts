@@ -49,7 +49,34 @@ import { BASE_URL } from './base-url'
  */
 test.use({ storageState: { cookies: [], origins: [] } })
 
+/**
+ * OPT-IN, AND DELIBERATELY NOT AUTO-DETECTED.
+ *
+ * These assertions describe a rig that OpenCatalogi's CI does not build: the
+ * portal ones need Portaliq installed and its demo portal seeded, and
+ * `ci-seed.sh` installs neither. Running them there would fail for a reason
+ * that has nothing to do with the change under test.
+ *
+ * The obvious alternative — probe for the portal and skip when it is absent —
+ * is worse, because a skip cannot tell "this rig was never meant to have a
+ * portal" from "the seeder should have produced one and did not". The second is
+ * a real regression and it would be reported as a pass.
+ *
+ * So the gate is an explicit environment variable. Absent, the suite states
+ * plainly that it is not looking. Present, a missing portal is a FAILURE.
+ *
+ *   CONNEXT_DEMO=1 NEXTCLOUD_URL=http://localhost:8600 \
+ *     npx playwright test --config tests/e2e/playwright.config.ts demo-environment
+ */
+const IS_DEMO_RIG = process.env.CONNEXT_DEMO === '1'
+
 test.describe('demo environment', () => {
+	test.skip(
+		!IS_DEMO_RIG,
+		'Not a Connext demo rig. Set CONNEXT_DEMO=1 and point NEXTCLOUD_URL at one '
+		+ '(the compose serves http://localhost:8600) to run these.',
+	)
+
 	test('the seeded portal resolves and renders its own identity', async ({ page }) => {
 		await page.goto(`${BASE_URL}/apps/portaliq/site?portal=demo`)
 
