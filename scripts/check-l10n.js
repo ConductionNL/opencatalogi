@@ -252,6 +252,61 @@ function printSection(title, color, body) {
 	console.log('')
 }
 
+/**
+ * Strings the SERVER translates, harvested from PHP `$l->t()` / `$l->n()`.
+ *
+ * WHY THIS IS NOT OPTIONAL.
+ *
+ * `l10n/<locale>.js` is GENERATED from `l10n/<locale>.json` by
+ * build-l10n-js.js, and the .json is the catalogue PHP reads. So a key that
+ * only PHP uses is necessarily present in the .js too — and this check, which
+ * scanned nothing but src/, reported every one of them as an orphan.
+ *
+ * That made the two checks mutually unsatisfiable: `check:l10n` demanded those
+ * keys be stripped from the .js, and `check:l10n-js` regenerated the .js from
+ * the .json and put them straight back. Measured 2026-08-27 on opencatalogi:
+ * 24 keys sat in exactly that trap, including "Not logged in" and
+ * "Publication not found".
+ *
+ * Deleting them from the .json instead would have been worse — the server
+ * would have rendered them untranslated, silently, in every locale.
+ *
+ * @return {Set<string>} Strings passed to a server-side translate call.
+ */
+function collectPhpTranslated() {
+	const dirs = [
+		path.join(ROOT, 'lib'),
+		path.join(ROOT, 'templates'),
+		path.join(ROOT, 'appinfo'),
+	]
+	const used = new Set()
+
+	for (const dir of dirs) {
+		if (!fs.existsSync(dir)) {
+			continue
+		}
+
+		for (const file of walk(dir, ['.php'])) {
+			const source = fs.readFileSync(file, 'utf8')
+			// ->t('…') / ->n('…') and their double-quoted forms. Escapes are
+			// honoured so a string containing a quote is captured whole rather
+			// than truncated at it.
+			const patterns = [
+				/->[tn]\(\s*'((?:\\.|[^'\\])*)'/g,
+				/->[tn]\(\s*"((?:\\.|[^"\\])*)"/g,
+			]
+			for (const re of patterns) {
+				let m
+				while ((m = re.exec(source)) !== null) {
+					used.add(m[1].replace(/\\(['"\\])/g, '$1'))
+				}
+			}
+		}
+	}
+
+	return used
+}
+
 function main() {
 	const { app, translations } = loadJsTranslations(L10N_FILE)
 	const keys = new Set(Object.keys(translations))
@@ -260,14 +315,19 @@ function main() {
 
 	const { found, unanalyzable } = extractTCalls(files, app)
 	const usedKeys = new Set(found.keys())
+	const phpKeys = collectPhpTranslated()
 
 	const missing = [...usedKeys].filter((k) => !keys.has(k)).sort()
-	const unused = [...keys].filter((k) => !usedKeys.has(k)).sort()
+	// A key the SERVER translates is not an orphan, even though nothing in src/
+	// references it — see collectPhpTranslated().
+	const unused = [...keys]
+		.filter((k) => !usedKeys.has(k) && !phpKeys.has(k))
+		.sort()
 	const unwrapped = findUnwrapped(vueFiles, keys)
 
 	console.log(`${BOLD}${CYAN}${app} l10n check${RESET}`)
 	console.log(
-		`${DIM}Scanned ${files.length} files (${vueFiles.length} .vue), ${keys.size} keys in en.js${RESET}`,
+		`${DIM}Scanned ${files.length} files (${vueFiles.length} .vue), ${keys.size} keys in en.js; ${phpKeys.size} strings also translated server-side${RESET}`,
 	)
 	console.log('')
 
