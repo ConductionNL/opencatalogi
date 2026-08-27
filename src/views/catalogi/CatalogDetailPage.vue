@@ -33,7 +33,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</template>
 				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
-			<NcButton variant="primary" @click="editCatalog">
+			<NcButton v-if="isAdmin" variant="primary" @click="editCatalog">
 				<template #icon>
 					<Pencil :size="20" />
 				</template>
@@ -86,6 +86,7 @@ import { NcButton } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 
 const DETAIL_LAYOUT = [
 	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
@@ -130,6 +131,13 @@ export default {
 		ArrowLeft,
 		Pencil,
 		OpenInApp,
+	},
+
+	setup() {
+		// Editing a catalog is an admin action, so the control that starts it is
+		// admin-only — see the `v-if` on the Edit button in the template.
+		const { isAdmin } = useIsAdmin()
+		return { isAdmin }
 	},
 
 	data() {
