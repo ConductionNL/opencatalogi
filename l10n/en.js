@@ -920,7 +920,10 @@ OC.L10N.register(
         "WOO Sitemap": "WOO Sitemap",
         "Woo-index harvester readiness": "Woo-index harvester readiness",
         "Woo-index registration status": "Woo-index registration status",
-        "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.": "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first."
+        "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.": "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.",
+        "Where the automation lives": "Where the automation lives",
+        "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them — nothing to build now.": "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them — nothing to build now.",
+        "Open Flows in the menu": "Open Flows in the menu"
     },
     "nplurals=2; plural=(n != 1);"
 )
