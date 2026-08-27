@@ -145,17 +145,29 @@ configs:
     content: |
       #!/bin/sh
       set -eu
-      apk add --no-cache curl tar >/dev/null
+      apk add --no-cache curl tar jq >/dev/null
 
-      # Portaliq publishes prereleases as well as stable builds, and the GitHub
-      # "latest release" endpoint EXCLUDES prereleases — it answers 404 for a
-      # repository that has only ever shipped prereleases, which reads exactly
-      # like "no such app". When no version is pinned, ask the releases LIST
-      # for the newest entry instead, which includes them.
+      # RESOLVING "NEWEST" TAKES TWO CORRECTIONS, NOT ONE.
+      #
+      # 1. The GitHub "latest release" endpoint EXCLUDES prereleases and answers
+      #    404 for a repository that has only ever shipped them — which reads
+      #    exactly like "no such app". Ask the releases LIST instead.
+      #
+      # 2. THE LIST IS NOT ORDERED BY CREATION DATE. Taking the first entry looks
+      #    correct and is not. Measured 2026-08-27 on openregister:
+      #
+      #      v1.1.6                          created 10:17:45   <- returned first
+      #      v1.1.6-unstable.20260827110807  created 11:09:37   <- actually newest
+      #
+      #    Taking the first entry installs an OLDER build than intended, and the
+      #    failure surfaces far from the cause — as a missing CLASS in a
+      #    different app, not as a version complaint.
+      #
+      # Sorting by created_at explicitly is the fix; jq is here for that.
       resolve_latest() {
-        curl -fsSL "https://api.github.com/repos/ConductionNL/$$1/releases?per_page=1" \
-          | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"v\{0,1\}\([^"]*\)".*/\1/p' \
-          | head -n1
+        curl -fsSL "https://api.github.com/repos/ConductionNL/$$1/releases?per_page=50" \
+          | jq -r '[.[] | select(.draft | not)] | sort_by(.created_at) | last | .tag_name // empty' \
+          | sed 's/^v//'
       }
 
       install_app() {
