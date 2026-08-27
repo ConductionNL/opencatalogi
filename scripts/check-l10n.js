@@ -275,8 +275,15 @@ function printSection(title, color, body) {
  */
 function manifestStrings() {
 	const FIELDS = new Set([
-		'title', 'body', 'task', 'label', 'description',
-		'emptyText', 'placeholder', 'subtitle', 'helpText',
+		'title',
+		'body',
+		'task',
+		'label',
+		'description',
+		'emptyText',
+		'placeholder',
+		'subtitle',
+		'helpText',
 	])
 	const out = new Set()
 	const visit = (node) => {
@@ -354,11 +361,12 @@ function main() {
 				// every manifest string — which is exactly what happened when
 				// manifest awareness was first added here.
 				const hits = found.get(k)
-				const locs = hits === undefined
-					? `${DIM}declared in src/manifest.json or src/manifest.d/${RESET}`
-					: hits
-						.map((l) => `${DIM}${rel(l.file)}:${l.line}${RESET}`)
-						.join(', ')
+				const locs =
+					hits === undefined
+						? `${DIM}declared in src/manifest.json or src/manifest.d/${RESET}`
+						: hits
+								.map((l) => `${DIM}${rel(l.file)}:${l.line}${RESET}`)
+								.join(', ')
 				return `  ${RED}•${RESET} ${JSON.stringify(k)}\n    ${locs}`
 			})
 			.join('\n')
