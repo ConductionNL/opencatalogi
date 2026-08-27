@@ -56,9 +56,9 @@ curl -s http://localhost:8600/status.php
 
 | What | Where |
 | --- | --- |
-| **Public portal** | <http://localhost:8600/apps/portaliq/site?portal=demo> |
-| Admin interface | <http://localhost:8600> — `admin` / `admin` |
-| Directory API | <http://localhost:8600/apps/opencatalogi/api/directory> |
+| **Public portal** | [http://localhost:8600/apps/portaliq/site?portal=demo](http://localhost:8600/apps/portaliq/site?portal=demo) |
+| Admin interface | [http://localhost:8600](http://localhost:8600) — `admin` / `admin` |
+| Directory API | [http://localhost:8600/apps/opencatalogi/api/directory](http://localhost:8600/apps/opencatalogi/api/directory) |
 
 The portal is the thing to look at. It is public: no login, and signing in as admin would show you a different (and more permissive) view than a visitor gets.
 
