@@ -417,6 +417,12 @@ class PublicationQueryService {
 	 * @param integer $publicationSchemaId The publication schema id.
 	 * @param array<string,mixed> $cache Per-request slug → summary cache (by
 	 *                                   reference).
+	 * @param-out array<int|string,mixed> $cache The key type WIDENS on write, and
+	 *        that is PHP, not sloppiness: `$slug` is a non-empty string, but PHP
+	 *        coerces a CANONICAL NUMERIC string array key to an integer, so a
+	 *        publication slug of "2024" lands under the int key 2024. Lookups by
+	 *        the same string coerce identically, so `array_key_exists()` still
+	 *        works; only code testing `is_string()` on the key would be misled.
 	 *
 	 * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
 	 *

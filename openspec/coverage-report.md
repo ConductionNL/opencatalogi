@@ -140,8 +140,8 @@ Grouped by capability, then file. Confidence ≥ 0.85 unless flagged `NEEDS-REVI
 | lib/Controller/ListingsController.php | destroy | LST-005 | 0.95 | DELETE /api/listings/{id} |
 | lib/Controller/ListingsController.php | synchronise | DIR-002/003/004 | 0.92 | POST /api/listings/sync — both single & all |
 | lib/Controller/ListingsController.php | add | DIR-005/008 | 0.95 | POST /api/listings/add (PublicPage) |
-| lib/Cron/Broadcast.php | run | DIR-007 | 0.9 | Method exists; spec acknowledges info.xml registration BUG |
-| lib/Cron/DirectorySync.php | run | DIR-004 | 0.95 | Hourly cron → doCronSync |
+| lib/BackgroundJob/Broadcast.php | run | DIR-007 | 0.9 | Method exists; spec acknowledges info.xml registration BUG |
+| lib/BackgroundJob/DirectorySync.php | run | DIR-004 | 0.95 | Hourly cron → doCronSync |
 | lib/Dashboard/CatalogWidget.php | load | DSH-005 | 0.9 | Widget asset registration |
 | lib/Dashboard/UnpublishedAttachmentsWidget.php | load | DSH-005 | 0.9 | Widget asset registration |
 | lib/Dashboard/UnpublishedPublicationsWidget.php | load | DSH-005 | 0.9 | Widget asset registration |

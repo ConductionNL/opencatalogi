@@ -2,7 +2,7 @@
 
 ## Current State
 
-No OpenCatalogi database schema state is relevant to this change. The chunk store the feature reads from — `openregister_chunks` (with `text_content` column + PostgreSQL `tsvector` GIN index) — already exists in OpenRegister via the merged [`hybrid-document-search`](https://codeberg.org/Conduction/openregister/src/branch/development/openspec/changes/hybrid-document-search) change (migration `Version1Date20260706101000`). No prior OpenCatalogi table, column, or index is touched by this feature.
+No OpenCatalogi database schema state is relevant to this change. The chunk store the feature reads from — `openregister_chunks` (with `text_content` column + PostgreSQL `tsvector` GIN index) — already exists in OpenRegister via the merged [`hybrid-document-search`](https://github.com/ConductionNL/openregister/tree/development/openspec/changes/hybrid-document-search) change (migration `Version1Date20260706101000`). No prior OpenCatalogi table, column, or index is touched by this feature.
 
 ## Target State
 

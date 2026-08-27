@@ -49,7 +49,7 @@ A content-matched document row is **byte-shape-identical** to a metadata-matched
 
 ## Database Changes
 
-**None on the OpenCatalogi side.** The chunk store (`openregister_chunks`) + PostgreSQL `tsvector` GIN index already exist in OpenRegister via the merged [`hybrid-document-search`](https://codeberg.org/Conduction/openregister/src/branch/development/openspec/changes/hybrid-document-search) change (migration `Version1Date20260706101000`). No new tables, columns, or migrations required by WOO-517.
+**None on the OpenCatalogi side.** The chunk store (`openregister_chunks`) + PostgreSQL `tsvector` GIN index already exist in OpenRegister via the merged [`hybrid-document-search`](https://github.com/ConductionNL/openregister/tree/development/openspec/changes/hybrid-document-search) change (migration `Version1Date20260706101000`). No new tables, columns, or migrations required by WOO-517.
 
 ## Nextcloud Integration
 

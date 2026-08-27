@@ -50,7 +50,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\Common\Exception\NotFoundException;
 use OCP\IAppConfig;
 use OCP\IRequest;
-use OCP\IServerContainer;
 use OCP\IUserSession;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
@@ -120,7 +119,7 @@ class PublicationService {
 	 *
 	 * @param IAppConfig $config App configuration interface
 	 * @param IRequest $request Request interface
-	 * @param IServerContainer $container Server container for dependency injection
+	 * @param ContainerInterface $container Server container for dependency injection
 	 * @param IAppManager $appManager App manager for checking installed apps
 	 * @param DirectoryService $directoryService Directory service for federation
 	 * @param DownloadService $downloadService Renders the publication metadata PDF that is

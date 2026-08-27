@@ -10,7 +10,7 @@ The app metadata (`appinfo/info.xml`), the product page (`conduction.nl/apps/ope
 
 #### Scenario: marketing claims map to shipped code
 - GIVEN a claim on the product page (e.g. an integration, a standard, a compliance regime)
-- WHEN the claim is checked against `lib/Controller/*`, `lib/Mcp/*`, `lib/Cron/*`, and `src/manifest.json`
+- WHEN the claim is checked against `lib/Controller/*`, `lib/Mcp/*`, `lib/BackgroundJob/*`, and `src/manifest.json`
 - THEN there MUST exist a corresponding controller, cron job, MCP tool provider, or manifest entry; otherwise the claim MUST be removed or corrected
 
 #### Scenario: quantitative claims are verified against the spec/code

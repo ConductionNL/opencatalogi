@@ -13,7 +13,7 @@
 				"id": "welcome",
 				"type": "info",
 				"title": "Welcome to OpenCatalogi",
-				"body": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications — let's create your first catalog and connect you to the federated network."
+				"body": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications. Let's create your first catalog and connect you to the federated network."
 			},
 			{
 				"id": "config-check",
@@ -21,7 +21,7 @@
 				"action": "reload-settings",
 				"title": "Publishing prerequisites",
 				"required": true,
-				"body": "OpenCatalogi publishes from OpenRegister. The catalog, publication and listing registers are configured automatically on install — this just verifies them. If OpenRegister was enabled after OpenCatalogi, running this re-imports the configuration."
+				"body": "OpenCatalogi publishes from OpenRegister. The catalog, publication and listing registers are configured automatically on install, so this step just verifies them. If OpenRegister was enabled after OpenCatalogi, running this re-imports the configuration."
 			},
 			{
 				"id": "catalog-scope",
@@ -29,7 +29,7 @@
 				"title": "Default catalog scope",
 				"required": true,
 				"configKey": "default_catalog_scope",
-				"body": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create — you can still tighten or widen it later.",
+				"body": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create. You can still tighten or widen it later.",
 				"options": [
 					{
 						"value": "public",
@@ -51,21 +51,21 @@
 				"action": "create-first-catalog",
 				"title": "Create your first catalog",
 				"required": true,
-				"body": "A catalog is the container your publications live in. We'll create your first one using the scope you just chose — you can rename it and add publications afterwards."
+				"body": "A catalog is the container your publications live in. We'll create your first one using the scope you just chose. You can rename it and add publications afterwards."
 			},
 			{
 				"id": "connect-federation",
 				"type": "run-action",
 				"action": "connect-federation",
 				"title": "Connect to the federated network",
-				"body": "OpenCatalogi is a federated network: instances share their published catalogs so they can be discovered together. Connect to the national directory now to see federated catalogs in your Directory — or skip this and it will sync automatically later."
+				"body": "OpenCatalogi is a federated network: instances share their published catalogs so they can be discovered together. Connect to the national directory now to see federated catalogs in your Directory, or skip this and it will sync automatically later."
 			},
 			{
 				"id": "sync-all-directories",
 				"type": "run-action",
 				"action": "sync-all-directories",
 				"title": "Sync all directories",
-				"body": "Now that at least one directory is registered, refresh every peer listing so the Directory page reflects the current state of the federation. Same as the 'Sync directories now' button in the admin settings — the periodic cron does this automatically over time, this step runs it once immediately."
+				"body": "Now that at least one directory is registered, refresh every peer listing so the Directory page reflects the current state of the federation. Same as the 'Sync directories now' button in the admin settings. A scheduled job does this over time; this step runs it once, now."
 			},
 			{
 				"id": "done",
@@ -92,7 +92,7 @@
 						"placement": "center",
 						"sinceVersion": "2.4.0",
 						"title": "Welcome to OpenCatalogi",
-						"body": "Let's walk the publishing journey together — from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.",
+						"body": "Let's walk the publishing journey together, from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.",
 						"target": {
 							"kind": "page",
 							"ref": "Catalogs"
@@ -121,7 +121,7 @@
 						"sinceVersion": "2.4.0",
 						"placement": "bottom",
 						"allowManualNext": true,
-						"body": "Create your first catalog — it's the container your publications will live in.",
+						"body": "Create your first catalog. It's the container your publications will live in.",
 						"task": "Create your first catalog",
 						"target": {
 							"kind": "element",
@@ -141,7 +141,7 @@
 						"sinceVersion": "2.4.0",
 						"placement": "bottom",
 						"allowManualNext": true,
-						"body": "Open the catalog you just created to manage what it publishes — its publications open inside it.",
+						"body": "Open the catalog you just created to manage what it publishes. Its publications open inside it.",
 						"task": "Open your catalog and view its Publications",
 						"target": {
 							"kind": "page",
@@ -157,7 +157,7 @@
 						"sinceVersion": "2.4.0",
 						"placement": "bottom",
 						"allowManualNext": true,
-						"body": "A publication is a single thing you make open — a document, dataset or record. Add your first one.",
+						"body": "A publication is a single thing you make open: a document, dataset or record. Add your first one.",
 						"task": "Add a publication",
 						"target": {
 							"kind": "element",
@@ -178,7 +178,7 @@
 						"placement": "auto",
 						"allowManualNext": true,
 						"title": "Publishing is access-controlled",
-						"body": "OpenCatalogi has no separate 'publish' switch — visibility is governed by schema-RBAC and the catalog's scope. Grant the public (or a group) read access on the publication schema, within the catalog scope you chose, and the publication becomes discoverable.",
+						"body": "OpenCatalogi has no separate 'publish' switch. Visibility is governed by schema-RBAC and the catalog's scope. Grant the public (or a group) read access on the publication schema, within the catalog scope you chose, and the publication becomes discoverable.",
 						"target": {
 							"kind": "page",
 							"ref": "Publications"
@@ -191,7 +191,7 @@
 						"id": "discover",
 						"sinceVersion": "2.4.0",
 						"placement": "right",
-						"body": "Published catalogs are found through the Directory — your own and federated ones. Open it to see the discovery side.",
+						"body": "Published catalogs are found through the Directory, both your own and federated ones. Open it to see the discovery side.",
 						"task": "Open the Directory",
 						"target": {
 							"kind": "nav-item",
@@ -207,10 +207,11 @@
 						"sinceVersion": "2.4.0",
 						"placement": "center",
 						"title": "You're publishing",
-						"body": "That's the full loop: catalog → publication → schema-RBAC publishing → discovery. Externally, your published catalogs are harvested as DCAT-AP, so registers and portals can find and re-list your publications automatically.",
+						"body": "That is the full loop: catalog, publication, schema-RBAC publishing, discovery. Published catalogs are harvested as DCAT-AP, so registers and portals re-list them automatically.",
+						"task": "Open the documentation to keep going",
 						"target": {
-							"kind": "page",
-							"ref": "Directory"
+							"kind": "nav-item",
+							"ref": "Documentation"
 						},
 						"advanceOn": {
 							"type": "manual"
@@ -380,6 +381,14 @@
 			"tourId": "opencatalogi:getting-started",
 			"section": "footer",
 			"order": 3
+		},
+		{
+			"id": "FlowsMenu",
+			"label": "Flows",
+			"icon": "Sitemap",
+			"route": "Flows",
+			"section": "settings",
+			"order": 96
 		}
 	],
 	"pages": [
@@ -1361,6 +1370,22 @@
 			"config": {
 				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
+		},
+		{
+			"id": "Flows",
+			"route": "/flows",
+			"type": "flows",
+			"title": "Flows",
+			"config": { "app": "opencatalogi" },
+			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. Rendered by the shared CnFlowsPage page type over OpenRegister's one native flow store (ADR-065), scoped to this app."
+		},
+		{
+			"id": "FlowDetail",
+			"route": "/flows/:id",
+			"type": "flow-detail",
+			"title": "Flow",
+			"config": { "app": "opencatalogi" },
+			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar so the canvas keeps full width."
 		}
 	]
 }

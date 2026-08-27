@@ -913,25 +913,6 @@
       "count": 1
     }
   },
-  "src/views/publications/PublicationTable.vue": {
-    "vue/prefer-define-options": {
-      "count": 1
-    }
-  },
-  "src/views/search/SearchIndex.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
-    "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    },
-    "no-console": {
-      "count": 12
-    },
-    "vue/prefer-define-options": {
-      "count": 1
-    }
-  },
   "src/views/settings/Settings.vue": {
     "@typescript-eslint/no-unused-vars": {
       "count": 1
@@ -940,14 +921,6 @@
       "count": 6
     },
     "vue/multi-word-component-names": {
-      "count": 1
-    }
-  },
-  "src/views/shared/EntityDetailPage.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
-    "vue/prefer-define-options": {
       "count": 1
     }
   },

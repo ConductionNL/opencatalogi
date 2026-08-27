@@ -6,7 +6,7 @@ OpenCatalogi's main entry point is `DashboardController::page()` which renders t
 
 **Known gaps to address:**
 - **Gap 17 (DSH-004)**: `DashboardController::index()` was deleted but the `dashboard#index` GET route still exists in `routes.php`. Any call to `/apps/opencatalogi/index` results in a method-not-found runtime error.
-- **Gap 12 (DIR-007)**: `lib/Cron/Broadcast.php` is a fully implemented `TimedJob` (runs every 4 hours, calls `BroadcastService::broadcast(null)`) but is not listed under `<background-jobs>` in `appinfo/info.xml`. Nextcloud only discovers background jobs declared there, so broadcasting never runs.
+- **Gap 12 (DIR-007)**: `lib/BackgroundJob/Broadcast.php` is a fully implemented `TimedJob` (runs every 4 hours, calls `BroadcastService::broadcast(null)`) but is not listed under `<background-jobs>` in `appinfo/info.xml`. Nextcloud only discovers background jobs declared there, so broadcasting never runs.
 - **Gap 21 (DSH-005..008)**: `Application.php` bootstrap registers widgets, event listeners, and vendor autoload — documented here for traceability, no code change expected.
 
 **Constraints:**
@@ -151,7 +151,7 @@ Stored in OpenRegister (register resolved from `IAppConfig:listing_register`, sc
 | File | Change |
 |------|--------|
 | `appinfo/routes.php` | Remove dead `['name' => 'dashboard#index', ...]` route entry |
-| `appinfo/info.xml` | Add `<job>OCA\OpenCatalogi\Cron\Broadcast</job>` under `<background-jobs>` |
+| `appinfo/info.xml` | Add `<job>OCA\OpenCatalogi\BackgroundJob\Broadcast</job>` under `<background-jobs>` |
 | `lib/AppInfo/Application.php` | Verify widget + event listener registrations (no code change expected) |
 | `lib/Controller/ListingController.php` | Verify CRUD methods, CORS, and auth annotations |
 | `lib/Controller/DirectoryController.php` | Verify sync endpoints and CORS |

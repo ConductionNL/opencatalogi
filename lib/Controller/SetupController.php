@@ -422,7 +422,7 @@ class SetupController extends Controller {
 	 * this step brings them all up to date in one go — the wizard equivalent
 	 * of the admin-settings "Sync directories now" button, which routes to
 	 * the same `DirectoryService::doCronSync()` used by the periodic cron
-	 * (`Cron\DirectorySync`).
+	 * (`BackgroundJob\DirectorySync`).
 	 *
 	 * Non-fatal by design: a peer that is briefly offline should not block
 	 * setup completion. The message surfaces the succeeded / failed split so

@@ -61,3 +61,27 @@ tests/e2e/test-results/
 # look: server/apps/<app>/playwright-report/ and .../test-results/.
 /playwright-report/
 /test-results/
+
+# `.hydra` — a LOCAL tool directory, never a submodule.
+#
+# It was committed as a gitlink (mode 160000) by 6366bcb on 2026-07-05
+# ("chore: preserve WIP before development sync") without a `.gitmodules`
+# entry, and this repository has never had a `.gitmodules` at all. A gitlink
+# with no URL cannot be cloned, so the entry pointed at a commit
+# (017108c) that is unreachable from anywhere.
+#
+# The visible symptom was in every CI checkout, in the post-job cleanup:
+#     fatal: No url found for submodule path '.hydra' in .gitmodules
+#     The process '/usr/bin/git' failed with exit code 128
+# — a hard `fatal` on every run of every workflow, attached to no failing
+# step, which is why it read as background noise for six weeks.
+#
+# Ignored as well as removed on purpose. Deleting the gitlink alone leaves
+# the trap armed: the next `git add -A` in a tree that has this directory
+# re-commits exactly the same broken entry.
+/.hydra/
+
+# Agent/test scratch and tool caches — generated, never source.
+# Added by the 2026-08-25 fleet hygiene sweep (ADR-100 Decision 2).
+.stale/
+/.e2e-state/
