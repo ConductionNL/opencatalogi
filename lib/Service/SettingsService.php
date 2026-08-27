@@ -55,7 +55,7 @@ use RuntimeException;
  * CouplingBetweenObjects is suppressed at 13 (threshold is "under 13"), and
  * this is the one finding in this change I could not close honestly.
  *
- * What was closed: the class also referenced OCA\OpenCatalogi\Cron\DirectorySync
+ * What was closed: the class also referenced OCA\OpenCatalogi\BackgroundJob\DirectorySync
  * purely to read three interval constants, which took it to 14. Those constants
  * now live here — on the class that publishes them via getSyncOptions() and
  * enforces them in updateSyncOptions() — and DirectorySync aliases them. That
@@ -1305,7 +1305,10 @@ class SettingsService {
 			$this->config->setValueString($this->appName, "{$type}_source", 'openregister');
 
 			// Set schema ID if found in the import result.
-			if (isset($schemaMap[$type]) === true && $schemaMap[$type] !== null) {
+			// `isset()` is already false for a null value, so a following
+			// `!== null` can never be false. PHPStan 2 reports it as
+			// notIdentical.alwaysTrue.
+			if (isset($schemaMap[$type]) === true) {
 				$this->config->setValueString($this->appName, "{$type}_schema", (string)$schemaMap[$type]);
 			}
 
@@ -1320,7 +1323,7 @@ class SettingsService {
 		foreach ($ooapiTypeMap as $configPrefix => $schemaSlug) {
 			$this->config->setValueString($this->appName, "{$configPrefix}_source", 'openregister');
 
-			if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, "{$configPrefix}_schema", (string)$schemaMap[$schemaSlug]);
 			}
 
@@ -1337,7 +1340,7 @@ class SettingsService {
 		}
 
 		foreach ($wooSchemaMap as $configKey => $schemaSlug) {
-			if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
 			}
 		}

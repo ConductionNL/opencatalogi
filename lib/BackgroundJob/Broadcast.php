@@ -1,0 +1,110 @@
+<?php
+
+/**
+ * Broadcast Cron Job.
+ *
+ * This background job handles the periodic broadcasting of this OpenCatalogi directory
+ * to other instances in the network. It runs every 4 hours to notify external
+ * directories about this instance.
+ *
+ * @category Cron
+ * @package  OCA\OpenCatalogi\BackgroundJob
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/specs/dashboard/spec.md
+ */
+
+namespace OCA\OpenCatalogi\BackgroundJob;
+
+use OCA\OpenCatalogi\Service\BroadcastService;
+use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\BackgroundJob\IJob;
+use OCP\BackgroundJob\TimedJob;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Broadcast Background Job.
+ *
+ * Handles periodic broadcasting of this OpenCatalogi directory to other instances.
+ * This job runs every 4 hours to maintain directory synchronization across the network.
+ *
+ * @see https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
+ */
+class Broadcast extends TimedJob {
+	/**
+	 * Constructor for Broadcast cron job.
+	 *
+	 * @param ITimeFactory $time Time factory for scheduling.
+	 * @param BroadcastService $broadcastService Service for handling broadcasts.
+	 * @param LoggerInterface $logger Logger for recording broadcast activities.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private readonly BroadcastService $broadcastService,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+
+		// Set interval to 4 hours (14400 seconds).
+		$this->setInterval(seconds: 14400);
+
+		// Set job to run during low-load times.
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+
+		// Prevent parallel runs to avoid duplicate broadcasts.
+		$this->setAllowParallelRuns(allow: false);
+
+	}//end __construct()
+
+	/**
+	 * Execute the broadcast job.
+	 *
+	 * This method is called by the Nextcloud background job system every 4 hours.
+	 * It broadcasts this directory to all known external OpenCatalogi instances.
+	 *
+	 * @param array $argument Arguments passed to the job.
+	 *
+	 * @return void
+	 *
+	 * @throws \Exception When broadcasting fails critically.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	protected function run($argument): void {
+		try {
+			// Log the start of the broadcast process.
+			$this->logger->info('Starting scheduled broadcast of OpenCatalogi directory');
+
+			// Perform the broadcast to all known directories.
+			$this->broadcastService->broadcast(null);
+
+			// Log successful completion.
+			$this->logger->info('Successfully completed scheduled broadcast of OpenCatalogi directory');
+		} catch (\Exception $e) {
+			// Log the error for debugging purposes.
+			$this->logger->error(
+				message: 'Failed to complete scheduled broadcast: ' . $e->getMessage(),
+				context: [
+					'exception' => $e,
+					'trace' => $e->getTraceAsString(),
+				]
+			);
+
+			// Re-throw the exception to mark the job as failed.
+			throw $e;
+		}//end try
+
+	}//end run()
+}//end class

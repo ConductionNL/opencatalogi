@@ -71,8 +71,8 @@
       {"file": "lib/Controller/UiController.php", "method": "pages", "reason": "single-line-SPA-template-delegation"},
       {"file": "lib/Controller/UiController.php", "method": "menus", "reason": "single-line-SPA-template-delegation"},
       {"file": "lib/Controller/UiController.php", "method": "directory", "reason": "single-line-SPA-template-delegation"},
-      {"file": "lib/Cron/Broadcast.php", "method": "__construct", "reason": "TimedJob-setup-boilerplate"},
-      {"file": "lib/Cron/DirectorySync.php", "method": "__construct", "reason": "TimedJob-setup-boilerplate"},
+      {"file": "lib/BackgroundJob/Broadcast.php", "method": "__construct", "reason": "TimedJob-setup-boilerplate"},
+      {"file": "lib/BackgroundJob/DirectorySync.php", "method": "__construct", "reason": "TimedJob-setup-boilerplate"},
       {"file": "lib/Dashboard/CatalogWidget.php", "method": "__construct", "reason": "constructor"},
       {"file": "lib/Dashboard/CatalogWidget.php", "method": "getId", "reason": "IWidget-getter"},
       {"file": "lib/Dashboard/CatalogWidget.php", "method": "getTitle", "reason": "IWidget-getter"},
@@ -206,8 +206,8 @@
       {"file": "lib/Controller/SitemapController.php", "method": "sitemap", "capability": "woo-compliance", "req_id": "WOO-002/005/006/009/010", "confidence": 0.95, "needs_review": false, "signal": "GET /api/{catalogSlug}/sitemaps/{categoryCode}/publications via sitemapService.buildSitemap; paginated"},
       {"file": "lib/Controller/ThemesController.php", "method": "index", "capability": "content-management", "req_id": "CMS-020/022/023/024", "confidence": 0.95, "needs_review": false, "signal": "GET /api/themes with pagination and facets; CORS"},
       {"file": "lib/Controller/ThemesController.php", "method": "show", "capability": "content-management", "req_id": "CMS-021/024", "confidence": 0.95, "needs_review": false, "signal": "GET /api/themes/{id}"},
-      {"file": "lib/Cron/Broadcast.php", "method": "run", "capability": "dashboard", "req_id": "DIR-007", "confidence": 0.9, "needs_review": false, "signal": "TimedJob run() body — spec explicitly notes DIR-007 is 'Bug (Not Registered)' because info.xml lacks this class; the run() method itself implements the contract"},
-      {"file": "lib/Cron/DirectorySync.php", "method": "run", "capability": "dashboard", "req_id": "DIR-004", "confidence": 0.95, "needs_review": false, "signal": "TimedJob run() body — calls DirectoryService::doCronSync hourly"},
+      {"file": "lib/BackgroundJob/Broadcast.php", "method": "run", "capability": "dashboard", "req_id": "DIR-007", "confidence": 0.9, "needs_review": false, "signal": "TimedJob run() body — spec explicitly notes DIR-007 is 'Bug (Not Registered)' because info.xml lacks this class; the run() method itself implements the contract"},
+      {"file": "lib/BackgroundJob/DirectorySync.php", "method": "run", "capability": "dashboard", "req_id": "DIR-004", "confidence": 0.95, "needs_review": false, "signal": "TimedJob run() body — calls DirectoryService::doCronSync hourly"},
       {"file": "lib/Dashboard/CatalogWidget.php", "method": "load", "capability": "dashboard", "req_id": "DSH-005", "confidence": 0.9, "needs_review": false, "signal": "IWidget::load() — registers CatalogWidget JS+CSS"},
       {"file": "lib/Dashboard/UnpublishedAttachmentsWidget.php", "method": "load", "capability": "dashboard", "req_id": "DSH-005", "confidence": 0.9, "needs_review": false, "signal": "IWidget::load() — registers widget JS+CSS"},
       {"file": "lib/Dashboard/UnpublishedPublicationsWidget.php", "method": "load", "capability": "dashboard", "req_id": "DSH-005", "confidence": 0.9, "needs_review": false, "signal": "IWidget::load() — registers widget JS+CSS"},
@@ -507,7 +507,7 @@
         {"file": "lib/Service/FileService.php", "note": "Spec notes a `use Mpdf\\MpMpdfdf;` typo. Worth a quick fix even though code works because it references the class directly."}
       ],
       "broadcast-cron-not-registered": [
-        {"file": "appinfo/info.xml", "note": "Spec WOO-008 & DIR-007 both flag this: Broadcast cron class exists at lib/Cron/Broadcast.php but is not listed under <background-jobs>. Either register it or delete the class. (Out of opsx-coverage-scan scope but surfaced for human triage.)"}
+        {"file": "appinfo/info.xml", "note": "Spec WOO-008 & DIR-007 both flag this: Broadcast cron class exists at lib/BackgroundJob/Broadcast.php but is not listed under <background-jobs>. Either register it or delete the class. (Out of opsx-coverage-scan scope but surfaced for human triage.)"}
       ],
       "robots-controller-misses-haswoosite-check": [
         {"file": "lib/Controller/RobotsController.php", "note": "Spec WOO-008 (Must) is implemented as 'Bug' — robots.txt emits sitemap URLs for every catalog with a slug regardless of `hasWooSitemap`. SitemapService::isValidSitemapRequest does the right check; controller should mirror."}

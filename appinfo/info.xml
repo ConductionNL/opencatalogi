@@ -134,8 +134,8 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	</dependencies>
 
 	<background-jobs>
-		<job>OCA\OpenCatalogi\Cron\DirectorySync</job>
-		<job>OCA\OpenCatalogi\Cron\RetentionEvaluation</job>
+		<job>OCA\OpenCatalogi\BackgroundJob\DirectorySync</job>
+		<job>OCA\OpenCatalogi\BackgroundJob\RetentionEvaluation</job>
 	</background-jobs>
 
 	<repair-steps>
@@ -147,6 +147,24 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				non-destructive; safe to re-run.
 			-->
 			<step>OCA\OpenCatalogi\Repair\RenameDutchPublicationColumns</step>
+			<!--
+				The background jobs moved from OCA\OpenCatalogi\Cron to
+				OCA\OpenCatalogi\BackgroundJob in #1119. The <job> entries above
+				are a REGISTRATION instruction, not a description of state: on
+				upgrade Nextcloud ADDS a job it does not have, but never removes
+				one whose class disappeared — it cannot tell a renamed class
+				from one merely unavailable this boot.
+
+				Measured on a live instance carrying that merge: oc_jobs still
+				held OCA\OpenCatalogi\Cron\DirectorySync and
+				...\Cron\RetentionEvaluation next to their replacements. A row
+				naming a missing class fails to build on every cron tick, and
+				logs rather than raises.
+
+				post-migration only: a fresh install has no rows to remove, and
+				the step is idempotent either way.
+			-->
+			<step>OCA\OpenCatalogi\Repair\RemoveRetiredCronJobs</step>
 		</post-migration>
 		<!--
 			Nextcloud runs migrateSchemaOnly() on a FIRST install, so NEITHER
