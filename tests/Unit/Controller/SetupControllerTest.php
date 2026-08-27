@@ -22,6 +22,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\SetupController;
 use OCA\OpenCatalogi\Service\BroadcastService;
+use OCA\OpenCatalogi\Service\DemoDataService;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\AppFramework\Http;
@@ -117,6 +118,11 @@ class SetupControllerTest extends TestCase {
 			$this->request,
 			$this->config,
 			$this->settingsService,
+			// Positional: DemoDataService sits between $settingsService and
+			// $directoryService (ADR-111 rule 4). Omitting it shifts every later
+			// argument by one — PHPUnit reports that as a type error on the
+			// NEXT argument, which is what it did on buildiq.
+			$this->createMock(DemoDataService::class),
 			$this->directoryService,
 			$this->broadcastService,
 			$this->container,
@@ -134,6 +140,11 @@ class SetupControllerTest extends TestCase {
 			$this->request,
 			$this->config,
 			$this->settingsService,
+			// Positional: DemoDataService sits between $settingsService and
+			// $directoryService (ADR-111 rule 4). Omitting it shifts every later
+			// argument by one — PHPUnit reports that as a type error on the
+			// NEXT argument, which is what it did on buildiq.
+			$this->createMock(DemoDataService::class),
 			$this->directoryService,
 			$this->broadcastService,
 			$this->container,
