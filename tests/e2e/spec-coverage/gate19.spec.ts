@@ -22,16 +22,19 @@
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test gate19
  */
 
-import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import type {APIRequestContext, Page} from '@playwright/test';
+
+import { expect, test } from '@playwright/test'
 import {
 	APP,
 	bootApp,
-	navTo,
 	content,
 	dismissOverlays,
+	fatalErrors,
+	navTo,
+	navToRoute,
 	openSettingsFoldout,
 	trackPageErrors,
-	fatalErrors,
 } from './_nav'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -39,21 +42,22 @@ import {
 const RUN_ID = `oc-${Date.now()}`
 
 /**
- * Expand the collapsible "Catalogue" nav group so its children
- * (Catalogs/Glossary/Themes/Pages/Menus/WOO) become clickable, then click
- * the requested entry. Mirrors catalog-detail-page.spec.ts / woo-batches.
+ * Click a top-level catalogue nav entry.
+ *
+ * This used to expand the collapsible "Catalogue" group first, because
+ * Catalogs sat inside it alongside Glossary/Themes/Pages/Menus/WOO. Those
+ * five are retired from the nav (`src/menu-layout.json#removals`) and
+ * Catalogs is relocated to the top level, so the group has no children left
+ * and `applyMenuRelocations` drops the empty shell. Waiting on
+ * `cn-nav-entry-CatalogueGroup` now times out against an element that is
+ * correctly absent, so the expand step is gone rather than made tolerant —
+ * a helper that shrugs at a missing group would also shrug at a genuinely
+ * broken one.
  *
  * @param page The Playwright page.
- * @param menuId The manifest menu id of the Catalogue-group child entry.
+ * @param menuId The manifest menu id of the top-level entry.
  */
 async function openCatalogueEntry(page: Page, menuId: string): Promise<void> {
-	const group = page.locator('[data-testid="cn-nav-entry-CatalogueGroup"]').first()
-	await expect(group).toBeVisible({ timeout: 10000 })
-	const entry = page.locator(`[data-testid="cn-nav-entry-${menuId}"]`).first()
-	if (!(await entry.isVisible().catch(() => false))) {
-		await group.locator('a, button').first().click()
-		await expect(entry).toBeVisible({ timeout: 10000 })
-	}
 	await navTo(page, menuId)
 }
 
@@ -66,6 +70,25 @@ async function openCatalogueEntry(page: Page, menuId: string): Promise<void> {
 async function openIndexPage(page: Page, menuId: string): Promise<void> {
 	await bootApp(page)
 	await openCatalogueEntry(page, menuId)
+	await expect(page.locator('[data-testid="cn-index-page"]').first()).toBeVisible({
+		timeout: 15000,
+	})
+}
+
+/**
+ * Boot the app straight at an index page's ROUTE and assert its genuine surface.
+ *
+ * Pages, Menus, Themes and Glossary lost their nav entries in
+ * `src/menu-layout.json#removals` — the concepts belong to Portaliq
+ * (ADR-086), which already ships all four. `removals` retires the MENU ENTRY
+ * and keeps the PAGE on the router exactly so coverage like this keeps
+ * asserting the same surface; there is just no entry left to click.
+ *
+ * @param page The Playwright page.
+ * @param route The in-app route (e.g. '/pages').
+ */
+async function openIndexRoute(page: Page, route: string): Promise<void> {
+	await navToRoute(page, route)
 	await expect(page.locator('[data-testid="cn-index-page"]').first()).toBeVisible({
 		timeout: 15000,
 	})
@@ -705,7 +728,7 @@ test.describe('content-management', () => {
 	'CMS-036 — Pages index renders with Add CTA and list/empty surface', async ({
 		page,
 	}) => {
-		await openIndexPage(page, 'PagesMenu')
+		await openIndexRoute(page, '/pages')
 		await expect(
 			page.locator('[data-testid="cn-cta-primary"]').first(),
 		).toBeVisible({ timeout: 10000 })
@@ -722,7 +745,7 @@ test.describe('content-management', () => {
 		page,
 	}) => {
 		const errors = trackPageErrors(page)
-		await openIndexPage(page, 'PagesMenu')
+		await openIndexRoute(page, '/pages')
 		expect(fatalErrors(errors)).toHaveLength(0)
 	})
 
@@ -736,7 +759,7 @@ test.describe('content-management', () => {
 	'CMS-037 — Menus index renders with Add CTA and list/empty surface', async ({
 		page,
 	}) => {
-		await openIndexPage(page, 'MenusMenu')
+		await openIndexRoute(page, '/menus')
 		await expect(
 			page.locator('[data-testid="cn-cta-primary"]').first(),
 		).toBeVisible({ timeout: 10000 })
@@ -753,7 +776,7 @@ test.describe('content-management', () => {
 		page,
 	}) => {
 		const errors = trackPageErrors(page)
-		await openIndexPage(page, 'MenusMenu')
+		await openIndexRoute(page, '/menus')
 		expect(fatalErrors(errors)).toHaveLength(0)
 	})
 
@@ -767,7 +790,7 @@ test.describe('content-management', () => {
 	'CMS-038 — Themes index renders with Add CTA and list/empty surface', async ({
 		page,
 	}) => {
-		await openIndexPage(page, 'ThemesMenu')
+		await openIndexRoute(page, '/themes')
 		await expect(
 			page.locator('[data-testid="cn-cta-primary"]').first(),
 		).toBeVisible({ timeout: 10000 })
@@ -784,7 +807,7 @@ test.describe('content-management', () => {
 		page,
 	}) => {
 		const errors = trackPageErrors(page)
-		await openIndexPage(page, 'ThemesMenu')
+		await openIndexRoute(page, '/themes')
 		expect(fatalErrors(errors)).toHaveLength(0)
 	})
 
@@ -798,7 +821,7 @@ test.describe('content-management', () => {
 	'CMS-039 — Glossary index renders with Add CTA and list/empty surface', async ({
 		page,
 	}) => {
-		await openIndexPage(page, 'GlossaryMenu')
+		await openIndexRoute(page, '/glossary')
 		await expect(
 			page.locator('[data-testid="cn-cta-primary"]').first(),
 		).toBeVisible({ timeout: 10000 })
