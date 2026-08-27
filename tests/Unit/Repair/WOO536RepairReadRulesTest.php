@@ -49,11 +49,11 @@ class WOO536RepairReadRulesTest extends TestCase
 
     public function testSkipsWhenOpenRegisterNotInstalled(): void
     {
-        $this->appManager->method('getInstalledApps')->willReturn(['files', 'calendar']);
+        $this->appManager->method('isEnabledForAnyone')->willReturn(false);
 
         $output = $this->createMock(IOutput::class);
         $output->expects($this->once())->method('warning')->with(
-            $this->stringContains('OpenRegister app is not installed')
+            $this->stringContains('OpenRegister app is not enabled')
         );
 
         $this->step->run($output);
@@ -61,7 +61,9 @@ class WOO536RepairReadRulesTest extends TestCase
 
     public function testUpgradesSingleRuleShapeToTwoRule(): void
     {
-        $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+        $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
+            fn (string $appId) => $appId === 'openregister'
+        );
 
         // Fake OR schema with the pre-fix single-rule shape.
         $fakeSchema = $this->createMock(FakeSchema::class);
@@ -107,7 +109,9 @@ class WOO536RepairReadRulesTest extends TestCase
 
     public function testIsIdempotentOnTwoRuleShape(): void
     {
-        $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+        $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
+            fn (string $appId) => $appId === 'openregister'
+        );
 
         // Already on two-rule shape.
         $fakeSchema = $this->createMock(FakeSchema::class);
@@ -140,7 +144,9 @@ class WOO536RepairReadRulesTest extends TestCase
 
     public function testPreservesAdminCustomisedShape(): void
     {
-        $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+        $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
+            fn (string $appId) => $appId === 'openregister'
+        );
 
         // Admin has added an extra field to the match — leave alone.
         $fakeSchema = $this->createMock(FakeSchema::class);
@@ -168,7 +174,9 @@ class WOO536RepairReadRulesTest extends TestCase
 
     public function testSkipsSchemaThatDoesNotExist(): void
     {
-        $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+        $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
+            fn (string $appId) => $appId === 'openregister'
+        );
 
         $fakeMapper = $this->createMock(FakeSchemaMapper::class);
         $fakeMapper->method('findAll')->willReturn([]);

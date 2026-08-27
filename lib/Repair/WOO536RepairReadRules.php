@@ -9,6 +9,9 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
@@ -92,9 +95,11 @@ class WOO536RepairReadRules implements IRepairStep
      */
     public function run(IOutput $output): void
     {
-        // Guard 1: OR must be installed (schema authorization lives in OR).
-        if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
-            $output->warning('OpenRegister app is not installed - skipping WOO-536 read-rule backfill');
+        // Guard 1: OR must be enabled (schema authorization lives in OR).
+        // `isEnabledForAnyone()` replaces the deprecated `getInstalledApps()`
+        // membership check in NC 30+.
+        if ($this->appManager->isEnabledForAnyone('openregister') === false) {
+            $output->warning('OpenRegister app is not enabled - skipping WOO-536 read-rule backfill');
             return;
         }
 

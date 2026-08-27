@@ -24,7 +24,6 @@ namespace OCA\OpenCatalogi\Service;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
-use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -74,100 +73,18 @@ class PublicationQueryService
     /**
      * Constructor.
      *
-     * @param ContainerInterface   $container   DI container
-     * @param IUserSession|null    $userSession User session for anonymity checks (auto-wired at runtime)
-     * @param IAppConfig|null      $config      App config, resolves the publication/document register+schema ids
-     * @param LoggerInterface|null $logger      Logger — surfaces the fail-closed empty-envelope branch so silent
-     *                                          catalog-scope resolution failure is observable in production (WOO-536).
+     * @param ContainerInterface   $container DI container
+     * @param IAppConfig|null      $config    App config; used by the catalog-enumeration path to locate the catalog register/schema.
+     * @param LoggerInterface|null $logger    Logger — surfaces the fail-closed empty-envelope branch so silent
+     *                                        catalog-scope resolution failure is observable in production (WOO-536).
      */
     public function __construct(
         private readonly ContainerInterface $container,
-        private readonly ?IUserSession $userSession=null,
         private readonly ?IAppConfig $config=null,
         private readonly ?LoggerInterface $logger=null,
     ) {
 
     }//end __construct()
-
-    /**
-     * Determine whether the current request is made by an anonymous (logged-out) caller.
-     *
-     * Used by the published-predicate guard on the public per-catalog relation endpoints
-     * (PublicationsController::uses/used) so an anonymous caller cannot enumerate the
-     * relation graph of an unpublished object by guessing its UUID.
-     *
-     * @return boolean True when there is no authenticated user on the session.
-     *
-     * @spec exclude Visibility helper for the public-endpoint published-predicate guard.
-     */
-    public function isAnonymous(): bool
-    {
-        if ($this->userSession === null) {
-            // Fail closed: when the session is unavailable, treat the caller as anonymous
-            // so the published-predicate guard applies the stricter visibility rule.
-            return true;
-        }
-
-        return $this->userSession->getUser() === null;
-
-    }//end isAnonymous()
-
-    /**
-     * Determine whether an object is publicly visible (published and not depublished).
-     *
-     * Mirrors the live OpenRegister RBAC visibility model (APB-006), the same rule
-     * the public publications API and the frontend `publicationStatus` helpers use:
-     * an object is public when its `status` is not a terminal-hidden state (e.g.
-     * `archived`, RET-006), its own `publicatiedatum` field is set and is at or
-     * before "now", and it either carries no `depublicatiedatum` or one still in
-     * the future. The removed object-level `@self.published` predicate is not
-     * consulted.
-     *
-     * @param array $objectData The serialized object data (own fields + `@self` envelope).
-     *
-     * @return boolean True when the object is currently published.
-     *
-     * @spec openspec/specs/auto-publishing/spec.md#APB-006
-     */
-    public function isObjectPublic(array $objectData): bool
-    {
-        // RET-006: `archived` is a terminal-hidden state that must never appear
-        // on a public surface, regardless of publish/depublish dates. Enforced
-        // here as belt-and-braces alongside the OR schema authorization contract.
-        if (($objectData['status'] ?? null) === 'archived') {
-            return false;
-        }
-
-        $publicatiedatum   = ($objectData['publicatiedatum'] ?? null);
-        $depublicatiedatum = ($objectData['depublicatiedatum'] ?? null);
-
-        if ($publicatiedatum === null || $publicatiedatum === '') {
-            return false;
-        }
-
-        $now           = time();
-        $publishedTime = strtotime((string) $publicatiedatum);
-        if ($publishedTime === false || $publishedTime > $now) {
-            return false;
-        }
-
-        if ($depublicatiedatum === null || $depublicatiedatum === '') {
-            return true;
-        }
-
-        // Fail closed on an unparseable `depublicatiedatum` — a withdrawn object
-        // whose depublish date does not round-trip through strtotime() MUST NOT
-        // stay publicly visible on the strength of a parse failure (review #147
-        // 🟡 fail-open). Return false instead of the previous
-        // `false || > now` shape.
-        $depublishedTime = strtotime((string) $depublicatiedatum);
-        if ($depublishedTime === false) {
-            return false;
-        }
-
-        return ($depublishedTime > $now);
-
-    }//end isObjectPublic()
 
     /**
      * Assemble the public full-text search result envelope (SCH-PFTS-001,
@@ -207,7 +124,6 @@ class PublicationQueryService
      *
      * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
      *
-     * @spec openspec/specs/search/spec.md#SCH-PFTS-001
      * @spec openspec/changes/fix-fts-catalog-model-alignment/specs/search/spec.md
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
@@ -308,7 +224,13 @@ class PublicationQueryService
         $schemaSlugById = [];
 
         // Track the publication schema for document→publication refinement (Stap 5a).
-        $publicationSchemaId = $this->resolvePublicationSchemaId(schemaMapper: $schemaMapper, scopeSchemas: $scope['schemas']);
+        // Shares the outer $schemaSlugById cache so the pre-loop scan doubles as a
+        // warm-up for the row-loop lookups (M3 — no duplicate mapper hits).
+        $publicationSchemaId = $this->resolvePublicationSchemaId(
+            schemaMapper: $schemaMapper,
+            scopeSchemas: $scope['schemas'],
+            schemaSlugById: $schemaSlugById
+        );
         // Track a single register for per-document refinement queries. Falls back to null
         // when the scope spans multiple registers — refinement then goes through the
         // multi-schema path via the query dict.
@@ -358,6 +280,17 @@ class PublicationQueryService
             }
 
             $rowArray['@self']['schema'] = $schemaSlug;
+
+            // RET-006 belt-and-braces: `status: 'archived'` is a terminal-hidden state
+            // that MUST NOT appear on any public surface, regardless of publish/depublish
+            // dates. The schema-level SQL RBAC does not include a status-check (would need
+            // a `status: {$ne: archived}` clause on the read-rules; that clause interacts
+            // badly with legacy rows where `status` is NULL — SQL treats `NULL != x` as
+            // unknown, which would silently drop pre-status-migration rows). Enforcing here
+            // in PHP is deterministic and safe for legacy data.
+            if (($rowArray['status'] ?? null) === 'archived') {
+                continue;
+            }
 
             // Strip any raw chunk-search fields OR might have attached to the row.
             // Defence-in-depth: OR already resolves each chunk hit to its owning
@@ -452,7 +385,11 @@ class PublicationQueryService
         // 1. Explicit single-catalog scope.
         if (is_string($singleCatalog) === true && $singleCatalog !== '') {
             $c = $catalogiService->getCatalogBySlug($singleCatalog);
-            if ($c === null) {
+            // C2: an unpublished catalog must be indistinguishable from a
+            // non-existent one on the public endpoint — else anonymous callers
+            // could probe for drafts by slug-guessing. `getCatalogBySlug` uses
+            // `_rbac:false`, so we re-apply the published predicate in PHP.
+            if ($c === null || $this->isCatalogPubliclyAvailable(catalog: $c) === false) {
                 return ['registers' => [], 'schemas' => []];
             }
             return [
@@ -470,7 +407,9 @@ class PublicationQueryService
                     continue;
                 }
                 $c = $catalogiService->getCatalogBySlug($slug);
-                if ($c === null) {
+                // Same C2 guard as the single-catalog branch — drop unpublished
+                // catalogs silently from the union rather than leak their scope.
+                if ($c === null || $this->isCatalogPubliclyAvailable(catalog: $c) === false) {
                     continue;
                 }
                 $regs    = array_merge($regs,    $this->normalizeIds(value: ($c['registers'] ?? [])));
@@ -520,9 +459,18 @@ class PublicationQueryService
             $catalogRegister = ($this->config?->getValueString('opencatalogi', 'catalog_register', '') ?? '');
             $catalogSchema   = ($this->config?->getValueString('opencatalogi', 'catalog_schema', '') ?? '');
             if ($catalogRegister === '' || $catalogSchema === '') {
+                $this->logger?->warning(
+                    'WOO-536: catalog_register or catalog_schema app-config is not set — /api/search default scope will be empty',
+                    ['catalog_register' => $catalogRegister, 'catalog_schema' => $catalogSchema]
+                );
                 return [];
             }
 
+            // Note: `searchObjects` does not accept `_rbacAsPublic` (only the
+            // paginated variant does); the PHP `published <= now` check below
+            // covers the visibility branch that RBAC would otherwise encode.
+            // `listed:true` is a business-scope filter not carried by the schema
+            // read-rules, so the query needs it explicitly.
             $catalogs = $objectService->searchObjects(
                 query: [
                     '@self' => [
@@ -540,23 +488,13 @@ class PublicationQueryService
         }
 
         $out = [];
-        $now = new \DateTimeImmutable('now');
         foreach ($catalogs as $catalogEntity) {
             try {
                 $c = is_array($catalogEntity) === true ? $catalogEntity : $catalogEntity->jsonSerialize();
             } catch (\Throwable $e) {
                 continue;
             }
-            // Published predicate: published must exist AND be in the past.
-            $published = ($c['published'] ?? null);
-            if (is_string($published) === false || $published === '') {
-                continue;
-            }
-            try {
-                if (new \DateTimeImmutable($published) > $now) {
-                    continue;
-                }
-            } catch (\Throwable $e) {
+            if ($this->isCatalogPubliclyAvailable(catalog: $c) === false) {
                 continue;
             }
             $out[] = $c;
@@ -564,6 +502,30 @@ class PublicationQueryService
         return $out;
 
     }//end listListedPublishedCatalogs()
+
+    /**
+     * Predicate: a catalog is publicly available when its `published` field
+     * exists AND parses AND is on or before "now". Extracted so the explicit-slug
+     * paths in {@see resolveCatalogScope()} and the default-scope enumeration in
+     * {@see listListedPublishedCatalogs()} apply the same rule.
+     *
+     * @param array $catalog The catalog jsonSerialize()d array.
+     *
+     * @return bool True when the catalog is publicly available (published in past).
+     */
+    private function isCatalogPubliclyAvailable(array $catalog): bool
+    {
+        $published = ($catalog['published'] ?? null);
+        if (is_string($published) === false || $published === '') {
+            return false;
+        }
+        try {
+            return new \DateTimeImmutable($published) <= new \DateTimeImmutable('now');
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+    }//end isCatalogPubliclyAvailable()
 
     /**
      * Resolve an id-array from either a JSON-string or a native array. Every element
@@ -593,23 +555,37 @@ class PublicationQueryService
      * `besluit` + `verzoek`), returns null and document→publication refinement is
      * simply skipped for that request.
      *
-     * @param object $schemaMapper  OR SchemaMapper.
-     * @param int[]  $scopeSchemas  Schema ids in the resolved scope.
+     * Populates `$schemaSlugById` for every scope schema visited (even after the
+     * `publication` match is found), so the row-loop's later slug lookups reuse
+     * the same per-request cache instead of re-hitting the mapper (M3).
+     *
+     * @param object                    $schemaMapper   OR SchemaMapper.
+     * @param int[]                     $scopeSchemas   Schema ids in the resolved scope.
+     * @param array<int, string|null>   $schemaSlugById Per-request slug cache (by reference).
      *
      * @return int|null Publication schema id when present in scope, null otherwise.
      */
-    private function resolvePublicationSchemaId(object $schemaMapper, array $scopeSchemas): ?int
+    private function resolvePublicationSchemaId(object $schemaMapper, array $scopeSchemas, array &$schemaSlugById): ?int
     {
+        $publicationSchemaId = null;
         foreach ($scopeSchemas as $sid) {
-            try {
-                if ($schemaMapper->find($sid)->getSlug() === 'publication') {
-                    return (int) $sid;
+            $sidInt = (int) $sid;
+            if (array_key_exists($sidInt, $schemaSlugById) === true) {
+                $slug = $schemaSlugById[$sidInt];
+            } else {
+                try {
+                    $slug = $schemaMapper->find($sidInt)->getSlug();
+                } catch (\Throwable $e) {
+                    $schemaSlugById[$sidInt] = null;
+                    continue;
                 }
-            } catch (\Throwable $e) {
-                continue;
+                $schemaSlugById[$sidInt] = $slug;
+            }
+            if ($slug === 'publication' && $publicationSchemaId === null) {
+                $publicationSchemaId = $sidInt;
             }
         }
-        return null;
+        return $publicationSchemaId;
 
     }//end resolvePublicationSchemaId()
 
@@ -692,6 +668,28 @@ class PublicationQueryService
             return $cache[$documentUuid];
         }
 
+        // M1 fast-path: if the document row already carries a resolvable
+        // `publication.id`, verify it points at a publicly-visible publication
+        // via a targeted find() rather than fanning out into a relations query
+        // per row. This eliminates the N+1 for well-formed documents seeded
+        // with a denormalised publication summary. On any miss (missing id,
+        // find() fails, or find() returns a non-public row), fall through to
+        // the `_relations_contains` path below — the authoritative relation
+        // graph remains the source of truth for divergent cases.
+        $carriedPublicationId = ($documentRow['publication']['id'] ?? null);
+        if (is_string($carriedPublicationId) === true && $carriedPublicationId !== '') {
+            $fastPath = $this->tryFastPathPublicationLookup(
+                publicationId: $carriedPublicationId,
+                objectService: $objectService,
+                registerId: $registerId,
+                publicationSchemaId: $publicationSchemaId
+            );
+            if ($fastPath !== null) {
+                $cache[$documentUuid] = $fastPath;
+                return $fastPath;
+            }
+        }
+
         // Build the per-document refinement query. Under _rbac_as_public: true, OR only
         // returns publications that would be visible to an anonymous caller — so a
         // non-empty result guarantees the linked pub is public.
@@ -734,8 +732,9 @@ class PublicationQueryService
 
         if (count($rows) > 1) {
             // N4b: multi-linked document — the oldest-by-created wins (documented
-            // approximation, most stable link).
-            $this->logger?->info(
+            // approximation, most stable link). Fires on every hit-per-page, so
+            // debug (not info) keeps log volume sane on hot public deployments.
+            $this->logger?->debug(
                 'WOO-536: document linked to multiple publications; using oldest-by-created',
                 ['documentUuid' => $documentUuid, 'count' => count($rows)]
             );
@@ -759,6 +758,68 @@ class PublicationQueryService
         return $summary;
 
     }//end resolveDocumentPublicationSummary()
+
+    /**
+     * Fast-path publication lookup — verify that a carried publication id resolves
+     * to a publicly-visible publication row via a single {@see ObjectService::find()}
+     * call, avoiding the per-row `_relations_contains` fan-out.
+     *
+     * Under `_rbac: true`, `_rbacAsPublic: true`, `find()` throws or returns null
+     * when the publication is not publicly visible (draft, depublished, archived
+     * under the schema RBAC), so a non-null return guarantees the caller may
+     * embed the summary. On any failure the method returns null and the caller
+     * falls back to the relations-based path — authoritative but slower.
+     *
+     * @param string      $publicationId       The UUID from the document row's carried summary.
+     * @param object      $objectService       OpenRegister ObjectService instance.
+     * @param integer|null $registerId         Optional register scope hint.
+     * @param integer     $publicationSchemaId The publication schema id.
+     *
+     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
+     */
+    private function tryFastPathPublicationLookup(
+        string $publicationId,
+        object $objectService,
+        ?int $registerId,
+        int $publicationSchemaId
+    ): ?array {
+        try {
+            $publication = $objectService->find(
+                id: $publicationId,
+                _extend: [],
+                files: false,
+                register: $registerId,
+                schema: $publicationSchemaId,
+                _rbac: true,
+                _multitenancy: false,
+                _rbacAsPublic: true
+            );
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if ($publication === null) {
+            return null;
+        }
+
+        $publicationArray = is_array($publication) === true ? $publication : $publication->jsonSerialize();
+
+        // Guard: RET-006 archived rows must never surface even if RBAC lets them through
+        // (see B1 in the row loop above — same rule applies to the linked publication).
+        if (($publicationArray['status'] ?? null) === 'archived') {
+            return null;
+        }
+
+        return [
+            'summary' => [
+                'id'    => (string) ($publicationArray['@self']['id'] ?? ($publicationArray['id'] ?? '')),
+                'slug'  => (string) ($publicationArray['@self']['slug'] ?? ($publicationArray['slug'] ?? '')),
+                'title' => (string) ($publicationArray['title'] ?? ''),
+            ],
+            'public' => true,
+        ];
+
+    }//end tryFastPathPublicationLookup()
 
     /**
      * Find the register and schema IDs for an object UUID within a constrained scope.
