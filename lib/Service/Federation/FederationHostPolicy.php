@@ -77,6 +77,9 @@ class FederationHostPolicy {
 	 * @param string $host The lower-cased hostname, without port.
 	 *
 	 * @return boolean True when the host is allowlisted.
+	 *
+	 * @spec exclude Dev-only allowlist read, extracted verbatim from the two services that
+	 *       each held a private copy; no new domain behaviour.
 	 */
 	public function isAllowlistedFederationHost(string $host): bool {
 		$allowlist = $this->config->getValueString(Application::APP_ID, self::CONFIG_ALLOWLIST, '');
@@ -99,6 +102,8 @@ class FederationHostPolicy {
 	 * @param string $url The URL to classify.
 	 *
 	 * @return boolean True when the URL is local, private, or unparseable.
+	 *
+	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function isLocalUrl(string $url): bool {
 		$parsedUrl = parse_url($url);

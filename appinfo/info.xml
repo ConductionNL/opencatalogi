@@ -165,6 +165,25 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				the step is idempotent either way.
 			-->
 			<step>OCA\OpenCatalogi\Repair\RemoveRetiredCronJobs</step>
+			<!--
+				A REPAIR STEP NOTHING NAMES HERE HAS NEVER RUN.
+
+				CleanupOrphanDirectoryListings was written and registered nowhere, so
+				the rows it exists to remove are still sitting on every instance that
+				ever hit the bug it cleans up after.
+
+				That bug: older builds of DirectoryService::getUniqueDirectories()
+				gathered `publications` URLs and fed them to syncDirectory() as if
+				they were directory URLs, so syncListing() saved every publication the
+				peer returned as a new "listing" row whose `directory` field carries a
+				publications URL. Those rows never sync again once the bug is fixed —
+				they are inert garbage that still counts towards, and shows up in, the
+				directory listing surface.
+
+				post-migration only, like its siblings: a fresh install has no orphans
+				to remove. The step is idempotent, so a re-run is a no-op.
+			-->
+			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
 		</post-migration>
 		<!--
 			Nextcloud runs migrateSchemaOnly() on a FIRST install, so NEITHER

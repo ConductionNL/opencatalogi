@@ -125,6 +125,7 @@ class BroadcastService {
 	 * @param IAppManager $appManager App manager for checking installed apps
 	 * @param LoggerInterface $logger Logger for recording broadcast activities
 	 * @param IAppConfig $config App configuration (local-federation allowlist)
+	 * @param FederationHostPolicy $hostPolicy Decides whether a federation URL is reachable by a peer
 	 */
 	public function __construct(
 		private readonly IURLGenerator $urlGenerator,

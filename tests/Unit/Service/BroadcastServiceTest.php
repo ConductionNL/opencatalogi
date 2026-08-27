@@ -783,7 +783,8 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 			$this->containerMock,
 			$this->appManagerMock,
 			$this->loggerMock,
-			$config
+			$config,
+			new FederationHostPolicy($config)
 		);
 
 		$this->assertSame(7, $this->invokePrivateMethod($service, 'getMaxRetries'));
@@ -807,7 +808,8 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 			$this->containerMock,
 			$this->appManagerMock,
 			$this->loggerMock,
-			$config
+			$config,
+			new FederationHostPolicy($config)
 		);
 
 		$this->assertSame(1, $this->invokePrivateMethod($service, 'getMaxRetries'));
