@@ -273,72 +273,6 @@ function printSection(title, color, body) {
  *
  * @return {Set<string>} Strings passed to a server-side translate call.
  */
-/**
- * Strings the MANIFEST puts on screen, harvested from `src/manifest.json`.
- *
- * WHY THIS IS NOT OPTIONAL — the same trap `collectPhpTranslated()` documents,
- * from a different source.
- *
- * The manifest renderer translates what it renders: menu labels, page titles,
- * setup-wizard step copy, walkthrough coachmark title/body/task. None of that
- * is a `t()` call in `src/`, so this check — which scanned only `src/` — called
- * every one of them an orphan, while `check:l10n-js` regenerated them from the
- * .json and put them straight back. Two checks, mutually unsatisfiable.
- *
- * Measured 2026-08-27 on the Flows walkthrough stop: three strings the tour
- * shows a user were reported UNUSED the moment they were translated.
- *
- * Deleting them from the .json would be worse: the tour would render
- * untranslated in every locale, silently — which is what it did before.
- *
- * Keys are harvested by NAME rather than by walking every string, so a schema
- * slug or a route id can never masquerade as a translated label.
- *
- * @return {Set<string>} Strings the manifest renders through the host t().
- */
-function collectManifestTranslated() {
-	const used = new Set()
-	const manifest = path.join(SRC_DIR, 'manifest.json')
-	if (!fs.existsSync(manifest)) {
-		return used
-	}
-
-	let parsed
-	try {
-		parsed = JSON.parse(fs.readFileSync(manifest, 'utf8'))
-	} catch (e) {
-		// A manifest that does not parse is check:manifest's finding, not this
-		// one. Returning empty here would resurrect the orphan reports, so say
-		// so rather than fail quietly.
-		console.error(`[check-l10n] WARNING: ${manifest} did not parse (${e.message}); manifest-rendered strings are NOT covered by this run.`)
-		return used
-	}
-
-	// User-facing keys only. `title` covers pages, tours and setup steps;
-	// `label` covers menu entries and actions; `body`/`task`/`description` are
-	// coachmark and step copy.
-	const TEXT_KEYS = new Set(['label', 'title', 'body', 'task', 'description', 'summary', 'placeholder', 'emptyText', 'emptyDescription'])
-
-	const visit = (node) => {
-		if (Array.isArray(node)) {
-			node.forEach(visit)
-			return
-		}
-		if (!node || typeof node !== 'object') {
-			return
-		}
-		for (const [k, v] of Object.entries(node)) {
-			if (typeof v === 'string' && TEXT_KEYS.has(k) && v !== '') {
-				used.add(v)
-			} else {
-				visit(v)
-			}
-		}
-	}
-	visit(parsed)
-	return used
-}
-
 function collectPhpTranslated() {
 	const dirs = [
 		path.join(ROOT, 'lib'),
@@ -373,6 +307,79 @@ function collectPhpTranslated() {
 	return used
 }
 
+/**
+ * Every user-visible string the MANIFEST declares.
+ *
+ * The same shape as collectPhpTranslated(): a source of used keys that lives
+ * outside the src/ scan, so a key it covers is not an orphan.
+ *
+ * Scanning .vue/.js/.ts finds t() calls and nothing else. The manifest is not
+ * source the extractor reads; it is data the renderer walks. CnAppNav
+ * translates `menu[].label`, CnPageHeader a page's `title` and `description`,
+ * CnWalkthrough a step's `title` / `body` / `task` — each through the app's own
+ * translate function, each looking up a key this checker could not see.
+ *
+ * Without this a LIVE manifest string reads as dead weight and gets deleted:
+ * "Menu items" is declared by the manifest and was reported unused by this very
+ * check, on a list of 113 keys proposed for removal.
+ *
+ * src/manifest.d/*.json counts too — merged at runtime via require.context, so
+ * reading only src/manifest.json is blind to it. `_meta` is skipped: it is
+ * per-fragment provenance, never rendered.
+ *
+ * @return {Set<string>} the manifest's user-visible strings
+ */
+function collectManifestStrings() {
+	const FIELDS = new Set([
+		'title',
+		'body',
+		'task',
+		'label',
+		'description',
+		'emptyText',
+		'placeholder',
+		'subtitle',
+		'helpText',
+	])
+	const out = new Set()
+	const visit = (node) => {
+		if (Array.isArray(node)) {
+			node.forEach(visit)
+			return
+		}
+		if (node === null || typeof node !== 'object') return
+		for (const [key, value] of Object.entries(node)) {
+			if (key.startsWith('_')) continue
+			if (FIELDS.has(key) && typeof value === 'string' && value.trim()) {
+				out.add(value)
+			} else {
+				visit(value)
+			}
+		}
+	}
+	const candidates = [path.join(SRC_DIR, 'manifest.json')]
+	const fragmentDir = path.join(SRC_DIR, 'manifest.d')
+	if (fs.existsSync(fragmentDir)) {
+		for (const name of fs.readdirSync(fragmentDir).sort()) {
+			if (name.endsWith('.json')) candidates.push(path.join(fragmentDir, name))
+		}
+	}
+	for (const file of candidates) {
+		if (!fs.existsSync(file)) continue
+		try {
+			visit(JSON.parse(fs.readFileSync(file, 'utf8')))
+		} catch (e) {
+			// An unparseable manifest is check:manifest's finding, not this
+			// script's. Say so rather than reporting a translation verdict over a
+			// file that was never read.
+			console.error(
+				`[check-l10n] SKIP ${rel(file)}: unreadable (${e.message})`,
+			)
+		}
+	}
+	return out
+}
+
 function main() {
 	const { app, translations } = loadJsTranslations(L10N_FILE)
 	const keys = new Set(Object.keys(translations))
@@ -382,12 +389,12 @@ function main() {
 	const { found, unanalyzable } = extractTCalls(files, app)
 	const usedKeys = new Set(found.keys())
 	const phpKeys = collectPhpTranslated()
-	const manifestKeys = collectManifestTranslated()
+	const manifestKeys = collectManifestStrings()
 
-	const missing = [...usedKeys].filter((k) => !keys.has(k)).sort()
-	// A key the SERVER translates, or one the MANIFEST renders, is not an
-	// orphan even though nothing in src/ references it — see
-	// collectPhpTranslated() / collectManifestTranslated().
+	const missing = [...usedKeys, ...manifestKeys].filter((k) => !keys.has(k)).sort()
+	// A key the SERVER translates is not an orphan, even though nothing in src/
+	// references it — see collectPhpTranslated(). The same is true of a string
+	// the MANIFEST declares — see collectManifestStrings().
 	const unused = [...keys]
 		.filter((k) => !usedKeys.has(k) && !phpKeys.has(k) && !manifestKeys.has(k))
 		.sort()
@@ -395,17 +402,23 @@ function main() {
 
 	console.log(`${BOLD}${CYAN}${app} l10n check${RESET}`)
 	console.log(
-		`${DIM}Scanned ${files.length} files (${vueFiles.length} .vue), ${keys.size} keys in en.js; ${phpKeys.size} strings also translated server-side, ${manifestKeys.size} rendered from the manifest${RESET}`,
+		`${DIM}Scanned ${files.length} files (${vueFiles.length} .vue), ${keys.size} keys in en.js; ${phpKeys.size} strings also translated server-side${RESET}`,
 	)
 	console.log('')
 
 	if (missing.length) {
 		const body = missing
 			.map((k) => {
-				const locs = found
-					.get(k)
-					.map((l) => `${DIM}${rel(l.file)}:${l.line}${RESET}`)
-					.join(', ')
+				// A key reaches MISSING from a t() call the extractor found, or
+				// from a manifest field. Only the first has an entry in `found`,
+				// so dereferencing it unguarded throws on every manifest string.
+				const hits = found.get(k)
+				const locs =
+					hits === undefined
+						? `${DIM}declared in src/manifest.json or src/manifest.d/${RESET}`
+						: hits
+								.map((l) => `${DIM}${rel(l.file)}:${l.line}${RESET}`)
+								.join(', ')
 				return `  ${RED}•${RESET} ${JSON.stringify(k)}\n    ${locs}`
 			})
 			.join('\n')
