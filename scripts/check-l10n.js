@@ -24,6 +24,10 @@ const { loadJsTranslations, walk } = require('./lib/l10n.js')
 
 const ROOT = path.resolve(__dirname, '..')
 const SRC_DIR = path.join(ROOT, 'src')
+const PHP_DIRS = [
+	path.join(ROOT, 'lib'),
+	path.join(ROOT, 'appinfo'),
+]
 const L10N_FILE = path.join(ROOT, 'l10n', 'en.js')
 
 const RED = '\x1b[31m'
@@ -47,11 +51,15 @@ function escapeRegex(s) {
  * Captures simple string-literal args (single or double quotes, with escapes).
  * Returns { found: Map<key, [{file,line}]>, unanalyzable: [{file,line,snippet}] }.
  */
-function extractTCalls(files, app) {
+function extractTCalls(files, app, callRe = null) {
 	const found = new Map()
 	const unanalyzable = []
 
-	const tCallRe = new RegExp(
+	// The JS form carries the app id as the first argument; PHP's does not.
+	// Callers pass their own opener and the string parser below is shared, so
+	// both dialects get identical escape handling rather than two half-copies
+	// of the same logic drifting apart.
+	const tCallRe = callRe || new RegExp(
 		`\\bt\\s*\\(\\s*(['"])${escapeRegex(app)}\\1\\s*,\\s*`,
 		'g',
 	)
@@ -261,13 +269,35 @@ function main() {
 	const { found, unanalyzable } = extractTCalls(files, app)
 	const usedKeys = new Set(found.keys())
 
+	// PHP COUNTS AS USAGE. The .json catalogues are read server-side by
+	// `$l->t()`, but this check only ever walked src/ — so a string translated
+	// only in a controller or service was reported as an orphan. Measured on
+	// this app: 20 of 113 "unused" keys were live `$l->t()` calls, and acting
+	// on that verdict would have dropped their server-side translation while
+	// every check stayed green.
+	//
+	// PHP's call carries no app id (`$this->l10n->t('...')`), so it needs its
+	// own opener; the string parser is shared.
+	const phpFiles = PHP_DIRS.filter((d) => fs.existsSync(d)).flatMap((d) =>
+		walk(d, ['.php']),
+	)
+	const { found: phpFound } = extractTCalls(phpFiles, app, /->t\s*\(\s*/g)
+	// Merge the LOCATIONS, not just the keys: the missing-key report prints
+	// where each one is called from, and a key present in the set but absent
+	// from the map crashes it.
+	for (const [key, locs] of phpFound) {
+		if (!found.has(key)) found.set(key, [])
+		found.get(key).push(...locs)
+		usedKeys.add(key)
+	}
+
 	const missing = [...usedKeys].filter((k) => !keys.has(k)).sort()
 	const unused = [...keys].filter((k) => !usedKeys.has(k)).sort()
 	const unwrapped = findUnwrapped(vueFiles, keys)
 
 	console.log(`${BOLD}${CYAN}${app} l10n check${RESET}`)
 	console.log(
-		`${DIM}Scanned ${files.length} files (${vueFiles.length} .vue), ${keys.size} keys in en.js${RESET}`,
+		`${DIM}Scanned ${files.length} frontend files (${vueFiles.length} .vue) + ${phpFiles.length} PHP, ${keys.size} keys in en.js${RESET}`,
 	)
 	console.log('')
 
