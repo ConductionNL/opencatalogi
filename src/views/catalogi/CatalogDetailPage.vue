@@ -1,6 +1,18 @@
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { navigationStore, objectStore } from '../../store/store.js'
+
+// Editing a catalog is an admin action, so the control that starts it is
+// admin-only — see the `v-if` on the Edit button below.
+//
+// This lives in <script setup> rather than a `setup()` option because this
+// component has BOTH blocks, and Vue forbids a `setup()` option in the
+// companion <script> when <script setup> is present. Putting it there compiled
+// but produced a component that rendered nothing at all — the e2e caught it as
+// `[data-testid="cn-detail-page"]` never appearing, which looks like a routing
+// failure rather than a script-block conflict.
+const { isAdmin } = useIsAdmin()
 </script>
 
 <template>
@@ -86,7 +98,6 @@ import { NcButton } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import { useIsAdmin } from '../../composables/useIsAdmin.js'
 
 const DETAIL_LAYOUT = [
 	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
@@ -131,13 +142,6 @@ export default {
 		ArrowLeft,
 		Pencil,
 		OpenInApp,
-	},
-
-	setup() {
-		// Editing a catalog is an admin action, so the control that starts it is
-		// admin-only — see the `v-if` on the Edit button in the template.
-		const { isAdmin } = useIsAdmin()
-		return { isAdmin }
 	},
 
 	data() {
