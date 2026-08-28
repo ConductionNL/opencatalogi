@@ -915,7 +915,10 @@ OC.L10N.register(
         "Glossary term": "Begrip",
         "Content blocks": "Inhoudsblokken",
         "Menu": "Menu",
-        "Flow": "Flow"
+        "Flow": "Flow",
+        "Demo data (optional)": "Demodata (optioneel)",
+        "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.": "Laad een kleine voorbeeldcatalogus met publicaties, aanbiedingen en organisaties, zodat lijsten, zoeken en de publicatiedetailpagina's meteen een werkend product tonen. Optioneel en veilig om vaker uit te voeren. Sla dit over bij een productie-installatie.",
+        "Menu items": "Menu-items"
     },
     "nplurals=2; plural=(n != 1);"
 )

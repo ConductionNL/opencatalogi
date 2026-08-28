@@ -919,7 +919,10 @@
         "WOO Sitemap": "WOO Sitemap",
         "Woo-index harvester readiness": "Woo-index harvester readiness",
         "Woo-index registration status": "Woo-index registration status",
-        "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.": "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first."
+        "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.": "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.",
+        "Demo data (optional)": "Demo data (optional)",
+        "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.": "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.",
+        "Menu items": "Menu items"
     },
     "plurals": {}
 }
