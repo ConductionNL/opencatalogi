@@ -979,7 +979,9 @@ OC.L10N.register(
         "WOO": "WOO",
         "WOO batches": "WOO batches",
         "Welcome to OpenCatalogi": "Welcome to OpenCatalogi",
-        "You're publishing": "You're publishing"
+        "You're publishing": "You're publishing",
+        "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.": "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.",
+        "Demo data (optional)": "Demo data (optional)"
     },
     "nplurals=2; plural=(n != 1);"
 )
