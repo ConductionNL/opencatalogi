@@ -59,6 +59,8 @@ class SetupControllerTest extends TestCase {
 
 		return (int)$constant;
 	}//end setupVersion()
+	private $demoDataService;
+
 	private IRequest|MockObject $request;
 	private IAppConfig|MockObject $config;
 	private SettingsService|MockObject $settingsService;
@@ -110,6 +112,8 @@ class SetupControllerTest extends TestCase {
 				}
 			);
 
+		$this->demoDataService = $this->createMock(DemoDataService::class);
+
 		$this->directoryService->method('getDefaultDirectoryUrl')
 			->willReturn('https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
 
@@ -122,7 +126,7 @@ class SetupControllerTest extends TestCase {
 			// $directoryService (ADR-111 rule 4). Omitting it shifts every later
 			// argument by one — PHPUnit reports that as a type error on the
 			// NEXT argument, which is what it did on buildiq.
-			$this->createMock(DemoDataService::class),
+			$this->demoDataService,
 			$this->directoryService,
 			$this->broadcastService,
 			$this->container,
@@ -430,6 +434,63 @@ class SetupControllerTest extends TestCase {
 		// Non-fatal: success=false but HTTP 200 so the optional step stays skippable.
 		$this->assertFalse($body['success']);
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}
+
+	/**
+	 * The happy path, and the numbers reach the operator.
+	 *
+	 * 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be told
+	 * apart from an import that wrote nothing — which is exactly the defect the
+	 * openregister side of this programme shipped and had to fix.
+	 */
+	public function testInstallDemoDataReportsWhatLandedAndRecordsTheDecision(): void {
+		$this->demoDataService->expects($this->once())
+			->method('install')
+			->willReturn(['objects' => 48, 'schemas' => 16]);
+
+		$body = $this->controller->action('install-demo-data')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertStringContainsString('48', $body['message']);
+		$this->assertStringContainsString('16', $body['message']);
+		$this->assertSame(['objects' => 48, 'schemas' => 16], $body['detail']);
+		$this->assertSame('installed', $this->configValues['demo_data_decided']);
+	}
+
+	/**
+	 * 🔴 A FAILED INSTALL MUST NOT RECORD THE DECISION.
+	 *
+	 * The controller marks the step decided only AFTER the import returns. Doing
+	 * it first would let a failed install present as a finished step — the wizard
+	 * would never offer it again, and the operator would never learn the demo
+	 * data is absent.
+	 */
+	public function testAFailedInstallIsReportedAndLeavesTheStepUndecided(): void {
+		$this->demoDataService->method('install')
+			->willThrowException(new \RuntimeException('openregister is not installed'));
+
+		$body = $this->controller->action('install-demo-data')->getData();
+
+		$this->assertFalse($body['success']);
+		$this->assertStringContainsString('openregister', $body['message']);
+		$this->assertArrayNotHasKey(
+			'demo_data_decided',
+			$this->configValues,
+			'a failed install must leave the step undecided so it is offered again'
+		);
+	}
+
+	/**
+	 * Skipping is a DECISION, not an absence of one: it records `skipped` so the
+	 * optional wizard stops offering the step, without importing anything.
+	 */
+	public function testSkipDemoDataRecordsTheDecisionWithoutImporting(): void {
+		$this->demoDataService->expects($this->never())->method('install');
+
+		$body = $this->controller->action('skip-demo-data')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertSame('skipped', $this->configValues['demo_data_decided']);
 	}
 
 	public function testUnknownActionReturnsBadRequest(): void {
