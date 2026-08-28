@@ -1,33 +1,45 @@
 /**
  * Catalogi entity class
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { SafeParseReturnType, z } from 'zod'
-import { CatalogStatus, TCatalogi } from './catalogi.types'
+import type { SafeParseReturnType } from 'zod'
+import type { CatalogStatus, TCatalogi } from './catalogi.types'
 
+import { z } from 'zod'
+
+/**
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ */
 export class Catalogi implements TCatalogi {
+	public id!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public image!: string
+	public listed!: boolean
+	public status!: CatalogStatus
+	public organization!: string
+	public registers!: string[]
+	public schemas!: string[]
+	public filters!: Record<string, unknown>
+	public slug!: string
+	public hasWooSitemap!: boolean
+	public hasOoapi!: boolean
 
-	public id: string
-	public title: string
-	public summary: string
-	public description: string
-	public image: string
-	public listed: boolean
-	public status: CatalogStatus
-	public organization: string
-	public registers: string[]
-	public schemas: string[]
-	public filters: Record<string, unknown>
-	public slug: string
-	public hasWooSitemap: boolean
-
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TCatalogi) {
 		this.hydrate(data)
 	}
@@ -47,13 +59,15 @@ export class Catalogi implements TCatalogi {
 		this.filters = data.filters || {}
 		this.slug = data?.slug || ''
 		this.hasWooSitemap = data?.hasWooSitemap || false
+		this.hasOoapi = data?.hasOoapi || false
 	}
 
 	/* istanbul ignore next */
 	public validate(): SafeParseReturnType<TCatalogi, unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/l89lv7ocvq848-create-catalog
 		const schema = z.object({
-			title: z.string()
+			title: z
+				.string()
 				.min(1, 'is verplicht') // .min(1) on a string functionally works the same as a nonEmpty check (SHOULD NOT BE COMBINED WITH .OPTIONAL())
 				.max(255, 'kan niet langer dan 255 zijn'),
 			summary: z.string().max(255, 'kan niet langer dan 255 zijn'),
@@ -65,11 +79,16 @@ export class Catalogi implements TCatalogi {
 			registers: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
 			schemas: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
 			filters: z.record(z.unknown()),
-			slug: z.string()
+			slug: z
+				.string()
 				.min(1, 'is verplicht')
 				.max(255, 'kan niet langer dan 255 zijn')
-				.regex(/^[a-z0-9-]+$/, 'moet alleen kleine letters, cijfers en koppeltekens bevatten'),
+				.regex(
+					/^[a-z0-9-]+$/,
+					'moet alleen kleine letters, cijfers en koppeltekens bevatten',
+				),
 			hasWooSitemap: z.boolean(),
+			hasOoapi: z.boolean(),
 		})
 
 		const result = schema.safeParse({
@@ -78,5 +97,4 @@ export class Catalogi implements TCatalogi {
 
 		return result
 	}
-
 }

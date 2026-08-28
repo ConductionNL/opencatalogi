@@ -1,0 +1,8 @@
+{
+  "spec_slug": "dcat-oai-pmh-harvesting",
+  "title": "DCAT + OAI-PMH harvesting",
+  "app": "opencatalogi",
+  "repo": "https://github.com/ConductionNL/opencatalogi",
+  "depends_on": [],
+  "issue": null
+}

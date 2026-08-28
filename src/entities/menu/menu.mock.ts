@@ -1,15 +1,16 @@
 /**
  * Menu mock data
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { TMenuItem, TMenu } from './menu.types'
+import type { TMenu, TMenuItem } from './menu.types'
 
 /**
  * Mock menu item data

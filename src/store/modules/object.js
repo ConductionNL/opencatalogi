@@ -1,4 +1,12 @@
-import { generateUrl } from '@nextcloud/router'
+import {
+	auditTrailsPlugin,
+	createObjectStore,
+	filesPlugin,
+	lifecyclePlugin,
+	liveUpdatesPlugin,
+	relationsPlugin,
+	selectionPlugin,
+} from '@conduction/nextcloud-vue'
 import { defineStore } from 'pinia'
 
 /**
@@ -28,13 +36,54 @@ import { defineStore } from 'pinia'
  */
 
 /**
+ * Inner Pinia store, configured with the canonical CRUD layer + lib plugins.
+ *
+ * The outer `useObjectStore` (id: 'object') keeps every public method, getter,
+ * and state-shape that opencatalogi's 697 callsites already depend on — it
+ * delegates a small set of CRUD operations to this inner store so the lib's
+ * `fetchObject`, plugin surface, and live-update machinery become available
+ * without touching any Vue file.
+ *
+ * The inner store id MUST differ from the outer id, otherwise Pinia raises a
+ * "store id collision" error at runtime.
+ */
+const useInnerObjectStore = createObjectStore('opencatalogi-objects-inner', {
+	plugins: [
+		filesPlugin(),
+		auditTrailsPlugin(),
+		relationsPlugin(),
+		lifecyclePlugin(),
+		selectionPlugin(),
+		// Live updates: as of nextcloud-vue beta.212 this plugin is default-on
+		// in createObjectStore (lazy until the first subscribe(); the explicit
+		// instance below wins the by-name dedupe). NOTE: no opencatalogi view
+		// subscribes yet — views read the OUTER 'object' store, and the
+		// plugin's refetch hints re-run fetchCollection/fetchObject on THIS
+		// inner store only. Wiring subscribe() in a view therefore needs an
+		// outer↔inner refetch bridge first; without it the subscription would
+		// refresh state no view reads. Until that bridge exists the plugin
+		// stays inert (zero transport activity — laziness guarantee).
+		liveUpdatesPlugin(),
+	],
+})
+
+/**
  * Store for managing objects in OpenCatalogi.
+ *
+ * This store is a thin wrapper around `@conduction/nextcloud-vue`'s
+ * `useObjectStore`. CRUD operations delegate to the inner lib store; all
+ * opencatalogi-specific behaviour (active-object map, related-data fan-out,
+ * settings + dynamic type registration, columnFilters, mass operations,
+ * attachment publish/depublish, per-object errors, search debounce, lifecycle
+ * signature shims, cross-schema createObject override) lives in the outer
+ * wrapper because the lib does not cover it.
+ *
  * @module Store
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
+ * @license EUPL-1.2
+ * @version 2.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 export const useObjectStore = defineStore('object', {
@@ -217,6 +266,7 @@ export const useObjectStore = defineStore('object', {
 	getters: {
 		/**
 		 * Get object types from settings
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<string>}
 		 */
@@ -224,6 +274,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get available registers from settings
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, title: string, schemas: Array<{id: string, title: string}>}>}
 		 */
@@ -231,13 +282,14 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get available schemas from settings
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, title: string, registerId: string, registerTitle: string}>}
 		 */
 		availableSchemas: (state) => {
 			if (!state.settings?.availableRegisters) return []
-			return state.settings.availableRegisters.flatMap(register =>
-				register.schemas.map(schema => ({
+			return state.settings.availableRegisters.flatMap((register) =>
+				register.schemas.map((schema) => ({
 					...schema,
 					registerId: register.id,
 					registerTitle: register.title,
@@ -247,6 +299,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get loading state for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => boolean}
 		 */
@@ -254,27 +307,26 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get error for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => string|null}
 		 */
 		getError: (state) => (type) => state.errors[type] || null,
 
 		/**
-		 * Get collection for specific type
+		 * Get collection for specific type — preserves the historical
+		 * `{ results: [...] }` shape used by all opencatalogi Vue files.
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {results: Array<any>}}
 		 */
 		getCollection: (state) => (type) => {
-			console.info('getCollection called for type:', type, {
-				collection: state.collections[type],
-				collectionType: typeof state.collections[type],
-				hasResults: state.collections[type]?.results?.length > 0,
-			})
 			return state.collections[type] || { results: [] }
 		},
 
 		/**
 		 * Get search term for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => string}
 		 */
@@ -282,6 +334,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get single object
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string, id: string) => object | null}
 		 */
@@ -289,6 +342,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get active object for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => object | null}
 		 */
@@ -296,13 +350,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get related data for active object
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string, dataType: string) => object | null}
 		 */
-		getRelatedData: (state) => (type, dataType) => state.relatedData[type]?.[dataType] || null,
+		getRelatedData: (state) => (type, dataType) =>
+			state.relatedData[type]?.[dataType] || null,
 
 		/**
 		 * Get pagination info for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {total: number, page: number, pages: number, limit: number}}
 		 */
@@ -317,26 +374,33 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Check if there are more pages to load for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => boolean}
 		 */
 		hasMorePages: (state) => (type) => {
 			const pagination = state.pagination[type]
-			return pagination ? (pagination.next !== null || pagination.page < pagination.pages) : false
+			return pagination
+				? pagination.next !== null || pagination.page < pagination.pages
+				: false
 		},
 
 		/**
 		 * Check if there are previous pages available
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => boolean}
 		 */
 		hasPreviousPages: (state) => (type) => {
 			const pagination = state.pagination[type]
-			return pagination ? (pagination.prev !== null || pagination.page > 1) : false
+			return pagination
+				? pagination.prev !== null || pagination.page > 1
+				: false
 		},
 
 		/**
 		 * Get audit trails for type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => Array<any>}
 		 */
@@ -344,6 +408,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get state for specific type
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {success: boolean|null, error: string|null}}
 		 */
@@ -354,6 +419,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get object type configuration for a schema slug
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(slug: string) => {schema: string, register: string}|null}
 		 */
@@ -361,6 +427,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Check if an object type exists
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {(slug: string) => boolean}
 		 */
@@ -368,66 +435,56 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Get enabled metadata columns
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, label: string, key: string, description: string}>}
 		 */
 		enabledMetadata: (state) => {
 			return Object.entries(state.metadata)
 				.filter(([_, meta]) => meta.enabled)
-				.map(([id, meta]) => ({
-					id: `meta_${id}`,
-					...meta,
-				}))
+				.map(([id, meta]) => ({ id: `meta_${id}`, ...meta }))
 		},
 
 		/**
 		 * Get enabled property columns
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, label: string, key: string, description: string}>}
 		 */
 		enabledProperties: (state) => {
 			return Object.entries(state.properties)
 				.filter(([_, prop]) => prop.enabled)
-				.map(([key, prop]) => ({
-					id: `prop_${key}`,
-					key,
-					...prop,
-				}))
+				.map(([key, prop]) => ({ id: `prop_${key}`, key, ...prop }))
 		},
 
 		/**
 		 * Get all enabled columns (metadata + properties)
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {Array<{id: string, label: string, key: string, description: string}>}
 		 */
 		enabledColumns: (state) => {
 			const metadata = Object.entries(state.metadata)
 				.filter(([_, meta]) => meta.enabled)
-				.map(([id, meta]) => ({
-					id: `meta_${id}`,
-					...meta,
-				}))
+				.map(([id, meta]) => ({ id: `meta_${id}`, ...meta }))
 
 			const properties = Object.entries(state.properties)
 				.filter(([_, prop]) => prop.enabled)
-				.map(([key, prop]) => ({
-					id: `prop_${key}`,
-					key,
-					...prop,
-				}))
+				.map(([key, prop]) => ({ id: `prop_${key}`, key, ...prop }))
 
 			return [...metadata, ...properties]
 		},
 
 		/**
 		 * Check if all objects are selected
+		 *
 		 * @param {ObjectState} state - Store state
 		 * @return {boolean}
 		 */
 		isAllSelected: (state) => {
 			const publicationCollection = state.collections.publication
 			if (!publicationCollection?.results?.length) return false
-			return publicationCollection.results.every(pub =>
+			return publicationCollection.results.every((pub) =>
 				state.selectedObjects.includes(pub['@self']?.id || pub.id),
 			)
 		},
@@ -435,23 +492,71 @@ export const useObjectStore = defineStore('object', {
 
 	actions: {
 		/**
+		 * Lazily resolve the inner lib store. The inner store is a Pinia
+		 * composable; calling it without an explicit Pinia instance picks up
+		 * the active one (which is the same one the outer store uses).
+		 *
+		 * @return {object} The inner store instance
+		 * @private
+		 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
+		_inner() {
+			return useInnerObjectStore()
+		},
+
+		/**
+		 * Mirror an object type registration into the inner store so its
+		 * CRUD calls know which register/schema to target. Idempotent.
+		 *
+		 * @param {string} type - The type slug
+		 * @private
+		 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		_ensureInnerType(type) {
+			const inner = this._inner()
+			if (inner.objectTypeRegistry?.[type]) return
+
+			// Resolve register/schema from outer registry first; fall back to
+			// `getSchemaConfig` so apps that drive type configuration purely
+			// through `settings.configuration` (without `availableRegisters`)
+			// still wire the inner store correctly.
+			let config = this.objectTypeRegistry[type]
+			if (!config?.schema || !config?.register) {
+				try {
+					config = this.getSchemaConfig(type)
+				} catch {
+					// settings not loaded yet, or no config — caller will
+					// retry once settings are fetched
+					return
+				}
+			}
+			if (!config?.schema || !config?.register) return
+			inner.registerObjectType(
+				type,
+				String(config.schema),
+				String(config.register),
+			)
+		},
+
+		/**
 		 * Set collection for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {Array} results - Collection results
 		 * @param {boolean} append - Whether to append results to existing collection
 		 */
+		/**
+		 * @param type
+		 * @param results
+		 * @param append
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setCollection(type, results, append = false) {
-			console.info('setCollection called with:', {
-				type,
-				resultsLength: results?.length,
-				append,
-				currentCollection: this.collections[type],
-				currentCollectionType: typeof this.collections[type],
-			})
-
 			// Initialize if needed
 			if (!this.collections[type] || !append) {
-				console.info('Initializing collection for type:', type)
 				this.collections[type] = { results: [] }
 			}
 
@@ -460,17 +565,9 @@ export const useObjectStore = defineStore('object', {
 				? [...(this.collections[type].results || []), ...results]
 				: results
 
-			console.info('Setting new results:', {
-				newResultsLength: newResults?.length,
-				firstItem: newResults?.[0],
-			})
-
-			// Use reactive assignment for collections
 			this.collections = {
 				...this.collections,
-				[type]: {
-					results: newResults,
-				},
+				[type]: { results: newResults },
 			}
 
 			// Mirror results into the per-id objects cache so lookups like
@@ -485,37 +582,31 @@ export const useObjectStore = defineStore('object', {
 					this.objects[type][itemId] = { ...item }
 				}
 			}
-
-			console.info('Collection after update:', {
-				type,
-				collection: this.collections[type],
-				length: this.collections[type]?.results?.length,
-			})
 		},
 
 		/**
 		 * Set loading state for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {boolean} isLoading - Loading state
 		 */
 		setLoading(type, isLoading) {
-			this.loading = {
-				...this.loading,
-				[type]: isLoading,
-			}
-			console.info('Loading state set:', { type, isLoading })
+			this.loading = { ...this.loading, [type]: isLoading }
 		},
 
 		/**
 		 * Set error for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {string|null} error - Error message
 		 */
+		/**
+		 * @param type
+		 * @param error
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setError(type, error) {
-			this.errors = {
-				...this.errors,
-				[type]: error,
-			}
+			this.errors = { ...this.errors, [type]: error }
 			if (error) {
 				console.error('Error set for type:', type, error)
 			}
@@ -523,48 +614,36 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set active object for type and fetch related data
+		 *
 		 * @param {string} type - Object type
 		 * @param {object} object - Object to set as active
 		 * @return {Promise<void>}
 		 */
+		/**
+		 * @param type
+		 * @param object
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async setActiveObject(type, object) {
-			console.info('setActiveObject called with:', { type, object })
-			// Log the current state before update
-			console.info('Current activeObjects state:', { ...this.activeObjects })
 			// Update using reactive assignment
-			this.activeObjects = {
-				...this.activeObjects,
-				[type]: object,
-			}
-			// Log the state after update
-			console.info('Updated activeObjects state:', { ...this.activeObjects })
+			this.activeObjects = { ...this.activeObjects, [type]: object }
 
 			// List of virtual types that don't have API schemas and should not fetch related data
 			const virtualTypes = ['pageContent']
 
 			// Skip fetching related data for virtual types
 			if (virtualTypes.includes(type)) {
-				console.info('Skipping related data fetch for virtual type:', type)
-				console.info('setActiveObject completed')
 				return
 			}
 
 			// Initialize related data structure if not exists
-			console.info('Initializing relatedData for type:', type)
 			this.relatedData = {
 				...this.relatedData,
-				[type]: {
-					logs: null,
-					uses: null,
-					used: null,
-					files: null,
-				},
+				[type]: { logs: null, uses: null, used: null, files: null },
 			}
 
 			// Fetch related data in parallel
 			if (object?.id) {
-				console.info('Fetching related data for:', { type, objectId: object.id })
-
 				// For publications, extract schema and register info from the object itself
 				let publicationData = null
 				if (type === 'publication' && object['@self']) {
@@ -573,56 +652,61 @@ export const useObjectStore = defineStore('object', {
 						schema: object['@self'].schema,
 						register: object['@self'].register,
 					}
-					console.info('Using publication-specific config:', publicationData)
 				}
 
 				const fetchPromises = []
 				const dataTypes = ['logs', 'uses', 'used', 'files']
 				for (const dataType of dataTypes) {
 					if (!this.relatedData[type][dataType]) {
-					// Set default limit to 500 for files, 20 for other data types
 						const defaultLimit = dataType === 'files' ? 500 : 20
-						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
+						fetchPromises.push(
+							this.fetchRelatedData(
+								type,
+								object.id,
+								dataType,
+								{ _limit: defaultLimit, _page: 1 },
+								publicationData,
+							),
+						)
 					}
 				}
 				await Promise.all(fetchPromises)
-				console.info('Finished fetching related data')
-			} else {
-				console.info('No object ID provided, skipping related data fetch')
 			}
-			console.info('setActiveObject completed')
 		},
 
 		/**
 		 * Clear active object for type
+		 *
 		 * @param {string} type - Object type
 		 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		clearActiveObject(type) {
-			this.activeObjects = {
-				...this.activeObjects,
-				[type]: null,
-			}
+			this.activeObjects = { ...this.activeObjects, [type]: null }
 			this.relatedData = {
 				...this.relatedData,
-				[type]: {
-					logs: null,
-					uses: null,
-					used: null,
-					files: null,
-				},
+				[type]: { logs: null, uses: null, used: null, files: null },
 			}
 		},
 
 		/**
 		 * Register a new object type
+		 *
 		 * @param {string} slug - The schema slug to use as type identifier
 		 * @param {string} schema - The schema ID
 		 * @param {string} register - The register ID
 		 * @return {Promise<void>}
 		 */
+		/**
+		 * @param slug
+		 * @param schema
+		 * @param register
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async registerObjectType(slug, schema, register) {
 			if (this.objectTypeRegistry[slug]) {
-				console.info(`Object type ${slug} already registered`)
 				return
 			}
 
@@ -640,6 +724,9 @@ export const useObjectStore = defineStore('object', {
 				}
 			}
 
+			// Mirror into inner store
+			this._ensureInnerType(slug)
+
 			// Fetch the initial collection
 			await this.fetchCollection(slug)
 		},
@@ -647,8 +734,13 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Fetch and cache the JSON Schema for a registered object type.
 		 * Required by useListView composable for CnIndexSidebar integration.
+		 *
 		 * @param {string} type - The object type slug
 		 * @return {Promise<object|null>} The schema object or null on failure
+		 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async fetchSchema(type) {
 			if (this.schemas[type]) {
@@ -662,23 +754,22 @@ export const useObjectStore = defineStore('object', {
 			if (!config?.schema) {
 				return null
 			}
-			try {
-				const response = await fetch(
-					generateUrl(`/apps/openregister/api/schemas/${config.schema}`),
-					{ method: 'GET', headers: { 'Content-Type': 'application/json' } },
-				)
-				if (!response.ok) return null
-				const schema = await response.json()
+			this._ensureInnerType(type)
+			const schema = await this._inner().fetchSchema(type)
+			if (schema) {
 				this.schemas = { ...this.schemas, [type]: schema }
-				return schema
-			} catch {
-				return null
 			}
+			return schema
 		},
 
 		/**
 		 * Unregister an object type
+		 *
 		 * @param {string} slug - The schema slug to unregister
+		 */
+		/**
+		 * @param slug
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		unregisterObjectType(slug) {
 			if (!this.objectTypeRegistry[slug]) {
@@ -691,26 +782,37 @@ export const useObjectStore = defineStore('object', {
 
 			// Clear associated data
 			if (this.collections[slug]) {
-				const { [slug]: _, ...remainingCollections } = this.collections
+				const { [slug]: _c, ...remainingCollections } = this.collections
 				this.collections = remainingCollections
 			}
 
 			if (this.activeObjects[slug]) {
-				const { [slug]: _, ...remainingActiveObjects } = this.activeObjects
+				const { [slug]: _a, ...remainingActiveObjects } = this.activeObjects
 				this.activeObjects = remainingActiveObjects
 			}
 
 			if (this.relatedData[slug]) {
-				const { [slug]: _, ...remainingRelatedData } = this.relatedData
+				const { [slug]: _r, ...remainingRelatedData } = this.relatedData
 				this.relatedData = remainingRelatedData
+			}
+
+			// Mirror unregister into inner store
+			const inner = this._inner()
+			if (inner.objectTypeRegistry?.[slug]) {
+				inner.unregisterObjectType(slug)
 			}
 		},
 
 		/**
 		 * Get schema configuration for object type
+		 *
 		 * @param {string} objectType - Type of object
 		 * @return {{source: string, schema: string, register: string}}
 		 * @throws {Error} If settings not found or invalid configuration
+		 */
+		/**
+		 * @param objectType
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		getSchemaConfig(objectType) {
 			// First check if this is a registered object type
@@ -747,14 +849,23 @@ export const useObjectStore = defineStore('object', {
 			const register = config[`${objectType}_register`]
 
 			if (!source || !schema || !register) {
-				throw new Error(`Invalid configuration for object type: ${objectType}`)
+				throw new Error(
+					`Invalid configuration for object type: ${objectType}`,
+				)
 			}
 
 			return { source, schema, register }
 		},
 
 		/**
-		 * Constructs the API endpoint URL for objects
+		 * Constructs the API endpoint URL for objects.
+		 *
+		 * Kept local because opencatalogi exposes related-data endpoints
+		 * (logs/audit-trails, uses, used, files) under the same base URL,
+		 * and supports a `publicationData` override + `_source=database`
+		 * for non-Solr-indexed types. The lib's URL builder doesn't model
+		 * this surface.
+		 *
 		 * @param {string} type - Object type
 		 * @param {string|null} id - Object ID (optional)
 		 * @param {string|null} action - Additional action (e.g., 'logs', 'uses') (optional)
@@ -763,7 +874,21 @@ export const useObjectStore = defineStore('object', {
 		 * @return {string} The constructed URL
 		 * @private
 		 */
-		_constructApiUrl(type, id = null, action = null, params = {}, publicationData = null) {
+		/**
+		 * @param type
+		 * @param id
+		 * @param action
+		 * @param params
+		 * @param publicationData
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		_constructApiUrl(
+			type,
+			id = null,
+			action = null,
+			params = {},
+			publicationData = null,
+		) {
 			let config = null
 			if (publicationData) {
 				config = publicationData
@@ -773,8 +898,14 @@ export const useObjectStore = defineStore('object', {
 			const baseUrl = '/index.php/apps/openregister/api/objects'
 
 			// Ensure register and schema are strings (extract id if they're objects)
-			const registerId = typeof config.register === 'object' ? config.register?.id || config.register?.uuid : config.register
-			const schemaId = typeof config.schema === 'object' ? config.schema?.id || config.schema?.uuid : config.schema
+			const registerId =
+				typeof config.register === 'object'
+					? config.register?.id || config.register?.uuid
+					: config.register
+			const schemaId =
+				typeof config.schema === 'object'
+					? config.schema?.id || config.schema?.uuid
+					: config.schema
 
 			// Construct the path with register and schema
 			let url = `${baseUrl}/${registerId}/${schemaId}`
@@ -783,7 +914,6 @@ export const useObjectStore = defineStore('object', {
 			if (id) {
 				url += `/${id}`
 				if (action) {
-					// Special case for audit trails
 					if (action === 'logs') {
 						url += '/audit-trails'
 					} else {
@@ -792,7 +922,6 @@ export const useObjectStore = defineStore('object', {
 				}
 			}
 
-			// Add pagination and other query parameters
 			const queryParams = new URLSearchParams({
 				_limit: params._limit || 20,
 				_page: params._page || 1,
@@ -800,25 +929,32 @@ export const useObjectStore = defineStore('object', {
 				...params,
 			})
 
-			// Remove schema and register from query params as they're now in the URL
-			// Note: Keep _source parameter as it's needed for database queries
 			queryParams.delete('_schema')
 			queryParams.delete('_register')
-			// Remove the old extend parameter to avoid duplication
 			queryParams.delete('extend')
 
 			return `${url}?${queryParams}`
 		},
 
 		/**
-		 * Fetch collection of objects
+		 * Fetch collection of objects.
+		 *
+		 * Delegates to the inner lib store via `_inner().fetchCollection`,
+		 * then mirrors results back into the outer store's
+		 * `{ results: [...] }` shape and full pagination object.
+		 *
 		 * @param {string} type - Object type
 		 * @param {object} params - Query parameters
 		 * @param {boolean} append - Whether to append results to existing collection
 		 * @return {Promise<void>}
 		 */
+		/**
+		 * @param type
+		 * @param params
+		 * @param append
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async fetchCollection(type, params = {}, append = false) {
-			console.info('fetchCollection started:', { type, params, append })
 			this.setLoading(type, true)
 			this.setState(type, { success: null, error: null })
 
@@ -828,38 +964,107 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				// Add _extend parameter if not explicitly set
 				const queryParams = {
 					...params,
 					_extend: params?._extend || params?.extend || '@self.schema',
 				}
 
-				const response = await fetch(this._constructApiUrl(type, null, null, queryParams))
-				if (!response.ok) throw new Error(`Failed to fetch ${type} collection`)
+				// Add _source=database for types that aren't indexed in Solr
+				const nonIndexedTypes = [
+					'menu',
+					'page',
+					'glossary',
+					'theme',
+					'organization',
+					'listing',
+					'catalog',
+					'audit-trails',
+					'uses',
+					'used',
+					'files',
+				]
+				if (
+					nonIndexedTypes.includes(type)
+					&& !params?._source
+					&& !params?.source
+				) {
+					queryParams._source = 'database'
+				}
+
+				const response = await fetch(
+					this._constructApiUrl(type, null, null, queryParams),
+				)
+				if (!response.ok)
+					throw new Error(`Failed to fetch ${type} collection`)
 
 				const data = await response.json()
-				console.info('API Response:', data)
 
-				// Update pagination info - handle both pagination formats
+				// Update pagination info — keep the legacy 7-field shape
 				const paginationInfo = {
 					total: data.total || 0,
 					page: data.page || 1,
-					pages: data.pages || (data.next ? Math.ceil((data.total || 0) / (data.limit || 20)) : 1),
+					pages:
+						data.pages
+						|| (data.next
+							? Math.ceil((data.total || 0) / (data.limit || 20))
+							: 1),
 					limit: data.limit || 20,
 					next: data.next || null,
 					prev: data.prev || null,
 				}
-
 				this.setPagination(type, paginationInfo)
 
-				// Set the collection using the new method
+				// Set the collection using the existing mutator (preserves shape)
 				this.setCollection(type, data.results, append)
 
-				// Update objects cache with extended data
+				// Mirror the same data into the inner store so any lib-aware
+				// component that reads inner.collections sees the latest set.
+				try {
+					this._ensureInnerType(type)
+					const inner = this._inner()
+					inner.collections = {
+						...inner.collections,
+						[type]: data.results || [],
+					}
+					inner.pagination = {
+						...inner.pagination,
+						[type]: {
+							total: paginationInfo.total,
+							page: paginationInfo.page,
+							pages: paginationInfo.pages,
+							limit: paginationInfo.limit,
+						},
+					}
+					if (data.facets) {
+						const transformed = {}
+						for (const [key, facet] of Object.entries(data.facets)) {
+							if (facet.buckets || facet.data?.buckets) {
+								const buckets = facet.buckets || facet.data.buckets
+								transformed[key] = {
+									values: buckets.map((b) => ({
+										value: b.key ?? b.value,
+										count: b.count || 0,
+									})),
+								}
+							}
+						}
+						inner.facets = { ...inner.facets, [type]: transformed }
+						this.facets = { ...this.facets, [type]: transformed }
+					}
+				} catch (mirrorErr) {
+					// Mirror errors are non-blocking — the outer store is the
+					// source of truth for opencatalogi's Vue files.
+					console.warn(
+						`Inner-store mirror skipped for ${type}:`,
+						mirrorErr.message,
+					)
+				}
+
+				// Update outer per-id objects cache with extended data
 				if (!this.objects[type]) {
 					this.objects[type] = {}
 				}
-				data.results.forEach(item => {
+				data.results.forEach((item) => {
 					this.objects[type][item.id] = { ...item }
 				})
 			} catch (error) {
@@ -872,38 +1077,46 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
-		 * Fetch single object
+		 * Fetch single object — delegates to the inner lib store
+		 * (the same `fetchObject` that decidesk #162 was missing) and
+		 * mirrors the result into the outer cache.
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID
-		 * @param {object} params - Query parameters
+		 * @param {object} params - Query parameters (currently unused; lib does not accept query params)
 		 * @return {Promise<void>}
+		 */
+		/**
+		 * @param type
+		 * @param id
+		 * @param params
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async fetchObject(type, id, params = {}) {
 			this.setLoading(`${type}_${id}`, true)
 			this.setState(type, { success: null, error: null })
 
 			try {
-				// Ensure settings are loaded first
 				if (!this.settings) {
 					await this.fetchSettings()
 				}
 
-				// Add _extend parameter if not explicitly set
-				const queryParams = {
-					...params,
-					_extend: params._extend || params.extend || '@self.schema',
-				}
+				this._ensureInnerType(type)
+				const data = await this._inner().fetchObject(type, id)
 
-				const response = await fetch(this._constructApiUrl(type, id, null, queryParams))
-				if (!response.ok) throw new Error(`Failed to fetch ${type} object`)
+				if (data) {
+					if (!this.objects[type]) this.objects[type] = {}
+					this.objects[type][id] = data
 
-				const data = await response.json()
-				if (!this.objects[type]) this.objects[type] = {}
-				this.objects[type][id] = data
-
-				// If this object is currently active, update it and its related data
-				if (this.activeObjects[type]?.id === id) {
-					await this.setActiveObject(type, data)
+					if (this.activeObjects[type]?.id === id) {
+						await this.setActiveObject(type, data)
+					}
+				} else {
+					// fetchObject returns null on error and stores error on inner
+					const innerErr = this._inner().getError(type)
+					throw new Error(
+						innerErr?.message || `Failed to fetch ${type} object`,
+					)
 				}
 			} catch (error) {
 				console.error(`Error fetching ${type} object:`, error)
@@ -912,10 +1125,12 @@ export const useObjectStore = defineStore('object', {
 			} finally {
 				this.setLoading(`${type}_${id}`, false)
 			}
+			return this.objects[type]?.[id]
 		},
 
 		/**
 		 * Fetch related data for object
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID
 		 * @param {string} dataType - Type of related data (logs, uses, used, files)
@@ -923,24 +1138,52 @@ export const useObjectStore = defineStore('object', {
 		 * @param {object|null} publicationData - Publication data with schema and register info (optional)
 		 * @return {Promise<void>}
 		 */
-		async fetchRelatedData(type, id, dataType, params = {}, publicationData = null) {
+		/**
+		 * @param type
+		 * @param id
+		 * @param dataType
+		 * @param params
+		 * @param publicationData
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async fetchRelatedData(
+			type,
+			id,
+			dataType,
+			params = {},
+			publicationData = null,
+		) {
 			this.setLoading(`${type}_${id}_${dataType}`, true)
 			this.setState(type, { success: null, error: null })
 
 			try {
-				// Ensure settings are loaded first
 				if (!this.settings) {
 					await this.fetchSettings()
 				}
 
-				// Add _extend parameter for 'uses' and 'used' data types
 				const queryParams = {
 					...params,
-					...(dataType === 'uses' || dataType === 'used' ? { _extend: params._extend || params.extend || '@self.schema' } : {}),
+					...(dataType === 'uses' || dataType === 'used'
+						? {
+								_extend:
+									params._extend
+									|| params.extend
+									|| '@self.schema',
+							}
+						: {}),
 				}
 
-				const response = await fetch(this._constructApiUrl(type, id, dataType, queryParams, publicationData))
-				if (!response.ok) throw new Error(`Failed to fetch ${dataType} for ${type}`)
+				const response = await fetch(
+					this._constructApiUrl(
+						type,
+						id,
+						dataType,
+						queryParams,
+						publicationData,
+					),
+				)
+				if (!response.ok)
+					throw new Error(`Failed to fetch ${dataType} for ${type}`)
 
 				const data = await response.json()
 				if (!this.relatedData[type]) {
@@ -950,15 +1193,17 @@ export const useObjectStore = defineStore('object', {
 				// Update pagination info for related data
 				if (data.total !== undefined || data.page !== undefined) {
 					const paginationKey = `${type}_${dataType}`
-					// Use the limit from the request params if the API doesn't return it
 					const requestedLimit = params._limit || params.limit
-					// Convert string limits to numbers and provide fallbacks
 					const apiLimit = data.limit ? parseInt(data.limit, 10) : null
-					const actualLimit = apiLimit || requestedLimit || (dataType === 'files' ? 500 : 20)
+					const actualLimit =
+						apiLimit
+						|| requestedLimit
+						|| (dataType === 'files' ? 500 : 20)
 					const paginationInfo = {
 						total: data.total || 0,
 						page: data.page || 1,
-						pages: data.pages || Math.ceil((data.total || 0) / actualLimit),
+						pages:
+							data.pages || Math.ceil((data.total || 0) / actualLimit),
 						limit: actualLimit,
 						next: data.next || null,
 						prev: data.prev || null,
@@ -983,11 +1228,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Fetch and update settings
+		 *
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		async fetchSettings() {
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings')
+				const response = await fetch(
+					'/index.php/apps/opencatalogi/api/settings',
+				)
 				if (!response.ok) throw new Error('Failed to fetch settings')
 				this.settings = await response.json()
 				// Register types immediately so useListView.fetchSchema works
@@ -1000,10 +1249,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Create new object
+		 *
 		 * @param {string} type - Object type
 		 * @param {object} data - Object data
 		 * @param {object|null} publicationData - Optional override with explicit { register, schema } so copies/creates target the source's actual schema instead of the type's default config
 		 * @return {Promise<object>}
+		 */
+		/**
+		 * @param type
+		 * @param data
+		 * @param publicationData
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async createObject(type, data, publicationData = null) {
 			this.setLoading(`${type}_create`, true)
@@ -1011,7 +1267,6 @@ export const useObjectStore = defineStore('object', {
 			this.setState(type, { success: null, error: null })
 
 			try {
-				// Ensure settings are loaded first
 				if (!this.settings) {
 					await this.fetchSettings()
 				}
@@ -1033,16 +1288,11 @@ export const useObjectStore = defineStore('object', {
 				// Refresh the collection to ensure it's up to date.
 				// Publications are not loaded via fetchCollection — they use the
 				// catalog-aware /api/{catalogSlug} endpoint via catalogStore.fetchPublications().
-				// Hitting fetchCollection here would overwrite the table with results
-				// from the wrong (default) schema, so callers refresh publications themselves.
 				if (type !== 'publication') {
 					await this.fetchCollection(type)
 				}
 
-				// Set the active object
 				this.setActiveObject(type, newObject)
-
-				// Set success state
 				this.setState(type, { success: true, error: null })
 
 				return newObject
@@ -1056,12 +1306,28 @@ export const useObjectStore = defineStore('object', {
 			}
 		},
 
+		/**
+		 * Save (create or update) an arbitrary object that carries its own
+		 * register/schema in `@self`. Distinct signature from the lib's
+		 * `saveObject(type, data)` — kept verbatim because Vue files rely
+		 * on `objectStore.saveObject(item, { register, schema })`.
+		 *
+		 * @param {object} objectItem - The object to save
+		 * @param {{register: string|object, schema: string|object}} options - Register/schema config
+		 * @return {Promise<{response: Response, data: object}>}
+		 */
+		/**
+		 * @param objectItem
+		 * @param root0
+		 * @param root0.register
+		 * @param root0.schema
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async saveObject(objectItem, { register, schema }) {
 			if (!objectItem || !register || !schema) {
 				throw new Error('Object item, register and schema are required')
 			}
 
-			// Extract IDs from register and schema in case they are objects
 			const registerId = this.extractId(register)
 			const schemaId = this.extractId(schema)
 
@@ -1072,13 +1338,11 @@ export const useObjectStore = defineStore('object', {
 			const isNewObject = !objectItem['@self']?.id
 			const objectId = objectItem['@self']?.id
 
-			// Build endpoint URL
 			let endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}`
 			if (!isNewObject && objectId) {
 				endpoint += `/${objectId}`
 			}
 
-			// Update timestamp
 			if (!objectItem['@self']) {
 				objectItem['@self'] = {}
 			}
@@ -1092,7 +1356,9 @@ export const useObjectStore = defineStore('object', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to save object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to save object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const data = await response.json()
@@ -1105,10 +1371,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Update existing object
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID
 		 * @param {object} data - Updated object data
 		 * @return {Promise<object>}
+		 */
+		/**
+		 * @param type
+		 * @param id
+		 * @param data
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async updateObject(type, id, data) {
 			this.setLoading(`${type}_${id}`, true)
@@ -1116,34 +1389,27 @@ export const useObjectStore = defineStore('object', {
 			this.setState(type, { success: null, error: null })
 
 			try {
-				// Ensure settings are loaded first
 				if (!this.settings) {
 					await this.fetchSettings()
 				}
 
-				const response = await fetch(
-					this._constructApiUrl(type, id),
-					{
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(data),
-					},
-				)
+				const response = await fetch(this._constructApiUrl(type, id), {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(data),
+				})
 				if (!response.ok) throw new Error(`Failed to update ${type} object`)
 
 				const updatedObject = await response.json()
 				if (!this.objects[type]) this.objects[type] = {}
 				this.objects[type][id] = updatedObject
 
-				// Refresh the collection to ensure it's up to date
 				await this.fetchCollection(type)
 
-				// If this is the active object, update it
 				if (this.activeObjects[type]?.id === id) {
 					this.activeObjects[type] = updatedObject
 				}
 
-				// Set success state
 				this.setState(type, { success: true, error: null })
 
 				return updatedObject
@@ -1159,38 +1425,73 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Extract ID from a value that can be either a primitive or an object
+		 *
 		 * @param {string|number|object} value - The value to extract ID from
 		 * @return {string|number} The extracted ID
+		 */
+		/**
+		 * @param value
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		extractId(value) {
 			if (value === null || value === undefined) {
 				return value
 			}
 
-			// If it's an object, try to get id property
 			if (typeof value === 'object') {
 				return value.id || value.uuid || value._id
 			}
 
-			// If it's a primitive, return as-is
 			return value
 		},
 
 		/**
-		 * Delete object
-		 * @param {object} objectItem - Object to delete
-		 * @return {Promise<void>}
+		 * Delete object.
+		 *
+		 * Accepts either the object itself, or the legacy `(type, id)` pair. Four
+		 * call sites still use the legacy form — DirectorySideBar
+		 * (`deleteObject('publication_type', id)`), DeleteMultipleCategoriesDialog,
+		 * ViewMenuModal and ViewPageModal — and since the signature changed to take
+		 * an object, every one of those delete buttons threw
+		 * "Object must have id, register, and schema information" before issuing a
+		 * request: a bare type STRING has no `.id` and no `@self`. It went unnoticed
+		 * because this store's spec could not run at all (the suite failed to load
+		 * on an unrelated jest/playwright config problem).
+		 *
+		 * Resolving the legacy pair here fixes all four call sites at once, and
+		 * matters because some of them only ever hold an id — DirectorySideBar
+		 * derives its id from a URL and never has the object to pass.
+		 *
+		 * @param {object|string} objectItem - Object to delete, or the legacy type.
+		 * @param {string} [legacyId] - Object id, when called as (type, id).
+		 * @return {Promise<boolean>} True once the object is deleted.
 		 */
-		async deleteObject(objectItem) {
-			const objectId = objectItem.id || objectItem['@self']?.id
-			const register = objectItem['@self']?.register || objectItem.register
-			const schema = objectItem['@self']?.schema || objectItem.schema
-
-			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+		/**
+		 * @param objectItem
+		 * @param legacyId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async deleteObject(objectItem, legacyId = undefined) {
+			if (typeof objectItem === 'string') {
+				const resolved = this.objects[objectItem]?.[legacyId]
+				if (!resolved) {
+					throw new Error(
+						`Cannot delete ${objectItem} ${legacyId}: object not loaded in the store`,
+					)
+				}
+				objectItem = resolved
 			}
 
-			// Extract IDs from register and schema in case they are objects
+			const objectId = objectItem?.id || objectItem?.['@self']?.id
+			const register = objectItem?.['@self']?.register || objectItem?.register
+			const schema = objectItem?.['@self']?.schema || objectItem?.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
+			}
+
 			const registerId = this.extractId(register)
 			const schemaId = this.extractId(schema)
 
@@ -1204,21 +1505,20 @@ export const useObjectStore = defineStore('object', {
 			try {
 				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
 
-				const response = await fetch(endpoint, {
-					method: 'DELETE',
-				})
+				const response = await fetch(endpoint, { method: 'DELETE' })
 
 				if (!response.ok) {
-					throw new Error(`Failed to delete object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to delete object: ${response.status} ${response.statusText}`,
+					)
 				}
 
-				// Remove from selection if it's currently selected
-				const isSelected = this.selectedObjects.some(obj =>
-					(obj.id || obj['@self']?.id) === objectId,
+				const isSelected = this.selectedObjects.some(
+					(obj) => (obj.id || obj['@self']?.id) === objectId,
 				)
 				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(obj =>
-						(obj.id || obj['@self']?.id) !== objectId,
+					const remainingSelected = this.selectedObjects.filter(
+						(obj) => (obj.id || obj['@self']?.id) !== objectId,
 					)
 					this.setSelectedObjects(remainingSelected)
 				}
@@ -1235,8 +1535,11 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Publish object
+		 *
 		 * @param {object} objectItem - Object to publish
 		 * @return {Promise<object>} The updated object
+		 *
+		 * @spec openspec/specs/publications/spec.md
 		 */
 		async publishObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1244,10 +1547,11 @@ export const useObjectStore = defineStore('object', {
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
-			// Extract IDs from register and schema in case they are objects
 			const registerId = this.extractId(register)
 			const schemaId = this.extractId(schema)
 
@@ -1261,32 +1565,34 @@ export const useObjectStore = defineStore('object', {
 			try {
 				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/publish`
 
-				const response = await fetch(endpoint, {
-					method: 'POST',
-				})
+				const response = await fetch(endpoint, { method: 'POST' })
 
 				if (!response.ok) {
-					throw new Error(`Failed to publish object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to publish object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const updatedObject = await response.json()
 
-				// Update active object if it matches the published object
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: updatedObject,
 					}
 				}
 
-				// Remove from selection if it's currently selected
-				const isSelected = this.selectedObjects.some(obj =>
-					(obj.id || obj['@self']?.id) === objectId,
+				const isSelected = this.selectedObjects.some(
+					(obj) => (obj.id || obj['@self']?.id) === objectId,
 				)
 				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(obj =>
-						(obj.id || obj['@self']?.id) !== objectId,
+					const remainingSelected = this.selectedObjects.filter(
+						(obj) => (obj.id || obj['@self']?.id) !== objectId,
 					)
 					this.setSelectedObjects(remainingSelected)
 				}
@@ -1303,8 +1609,11 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Depublish object
+		 *
 		 * @param {object} objectItem - Object to depublish
 		 * @return {Promise<object>} The updated object
+		 *
+		 * @spec openspec/specs/publications/spec.md
 		 */
 		async depublishObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1312,10 +1621,11 @@ export const useObjectStore = defineStore('object', {
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
-			// Extract IDs from register and schema in case they are objects
 			const registerId = this.extractId(register)
 			const schemaId = this.extractId(schema)
 
@@ -1329,32 +1639,34 @@ export const useObjectStore = defineStore('object', {
 			try {
 				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/depublish`
 
-				const response = await fetch(endpoint, {
-					method: 'POST',
-				})
+				const response = await fetch(endpoint, { method: 'POST' })
 
 				if (!response.ok) {
-					throw new Error(`Failed to depublish object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to depublish object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const updatedObject = await response.json()
 
-				// Update active object if it matches the depublished object
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: updatedObject,
 					}
 				}
 
-				// Remove from selection if it's currently selected
-				const isSelected = this.selectedObjects.some(obj =>
-					(obj.id || obj['@self']?.id) === objectId,
+				const isSelected = this.selectedObjects.some(
+					(obj) => (obj.id || obj['@self']?.id) === objectId,
 				)
 				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(obj =>
-						(obj.id || obj['@self']?.id) !== objectId,
+					const remainingSelected = this.selectedObjects.filter(
+						(obj) => (obj.id || obj['@self']?.id) !== objectId,
 					)
 					this.setSelectedObjects(remainingSelected)
 				}
@@ -1371,8 +1683,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Validate object by saving it without modifications
+		 *
 		 * @param {object} objectItem - Object to validate
 		 * @return {Promise<object>} The validated object
+		 */
+		/**
+		 * @param objectItem
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async validateObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1380,10 +1697,11 @@ export const useObjectStore = defineStore('object', {
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
-			// Extract IDs from register and schema in case they are objects
 			const registerId = this.extractId(register)
 			const schemaId = this.extractId(schema)
 
@@ -1395,15 +1713,17 @@ export const useObjectStore = defineStore('object', {
 			this.setError(`validate_${objectId}`, null)
 
 			try {
-				// Save the object as-is to trigger validation and enrichment
 				const result = await this.saveObject(objectItem, {
 					register: registerId,
 					schema: schemaId,
 				})
 
-				// Update active object if it matches the validated object
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: result.data,
@@ -1422,10 +1742,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Lock object
+		 *
 		 * @param {object} objectItem - Object to lock
 		 * @param {string} process - Process name (optional)
 		 * @param {number} duration - Duration in seconds (optional)
 		 * @return {Promise<object>} The updated object
+		 */
+		/**
+		 * @param objectItem
+		 * @param process
+		 * @param duration
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async lockObject(objectItem, process = null, duration = null) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1433,10 +1760,11 @@ export const useObjectStore = defineStore('object', {
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
-			// Extract IDs from register and schema in case they are objects
 			const registerId = this.extractId(register)
 			const schemaId = this.extractId(schema)
 
@@ -1456,19 +1784,30 @@ export const useObjectStore = defineStore('object', {
 
 				const response = await fetch(endpoint, {
 					method: 'POST',
-					headers: Object.keys(body).length > 0 ? { 'Content-Type': 'application/json' } : undefined,
-					body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
+					headers:
+						Object.keys(body).length > 0
+							? { 'Content-Type': 'application/json' }
+							: undefined,
+					body:
+						Object.keys(body).length > 0
+							? JSON.stringify(body)
+							: undefined,
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to lock object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to lock object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const updatedObject = await response.json()
 
-				// Update active object if it matches the locked object
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: updatedObject,
@@ -1487,8 +1826,13 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Unlock object
+		 *
 		 * @param {object} objectItem - Object to unlock
 		 * @return {Promise<object>} The updated object
+		 */
+		/**
+		 * @param objectItem
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async unlockObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1496,10 +1840,11 @@ export const useObjectStore = defineStore('object', {
 			const schema = objectItem['@self']?.schema || objectItem.schema
 
 			if (!objectId || !register || !schema) {
-				throw new Error('Object must have id, register, and schema information')
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
 			}
 
-			// Extract IDs from register and schema in case they are objects
 			const registerId = this.extractId(register)
 			const schemaId = this.extractId(schema)
 
@@ -1513,19 +1858,22 @@ export const useObjectStore = defineStore('object', {
 			try {
 				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/unlock`
 
-				const response = await fetch(endpoint, {
-					method: 'POST',
-				})
+				const response = await fetch(endpoint, { method: 'POST' })
 
 				if (!response.ok) {
-					throw new Error(`Failed to unlock object: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to unlock object: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				const updatedObject = await response.json()
 
-				// Update active object if it matches the unlocked object
 				const activePublication = this.activeObjects.publication
-				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+				if (
+					activePublication
+					&& (activePublication.id === objectId
+						|| activePublication['@self']?.id === objectId)
+				) {
 					this.activeObjects = {
 						...this.activeObjects,
 						publication: updatedObject,
@@ -1543,31 +1891,27 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
-		 * Set search term for type
+		 * Set search term for type — debounces 500ms then fetches.
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} term - Search term
 		 */
+		/**
+		 * @param type
+		 * @param term
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setSearchTerm(type, term) {
-			// Initialize search term if it doesn't exist
 			if (!this.searchTerms[type]) {
-				this.searchTerms = {
-					...this.searchTerms,
-					[type]: '',
-				}
+				this.searchTerms = { ...this.searchTerms, [type]: '' }
 			}
 
-			// Update search term with reactive assignment
-			this.searchTerms = {
-				...this.searchTerms,
-				[type]: term,
-			}
+			this.searchTerms = { ...this.searchTerms, [type]: term }
 
-			// Clear existing debounce timer
 			if (this.searchDebounceTimers[type]) {
 				clearTimeout(this.searchDebounceTimers[type])
 			}
 
-			// Set new debounce timer
 			this.searchDebounceTimers = {
 				...this.searchDebounceTimers,
 				[type]: setTimeout(() => {
@@ -1578,16 +1922,16 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Clear search term for type
+		 *
 		 * @param {string} type - Object type
 		 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		clearSearchTerm(type) {
-			// Clear the search term
-			this.searchTerms = {
-				...this.searchTerms,
-				[type]: '',
-			}
+			this.searchTerms = { ...this.searchTerms, [type]: '' }
 
-			// Clear any existing debounce timer
 			if (this.searchDebounceTimers[type]) {
 				clearTimeout(this.searchDebounceTimers[type])
 				this.searchDebounceTimers = {
@@ -1596,120 +1940,146 @@ export const useObjectStore = defineStore('object', {
 				}
 			}
 
-			// Fetch collection without search term
 			this.fetchCollection(type)
 		},
 
 		/**
 		 * Set pagination info for type
+		 *
 		 * @param {string} type - Object type
 		 * @param {{total: number, page: number, pages: number, limit: number}} pagination - Pagination info
 		 */
 		setPagination(type, pagination) {
-			this.pagination = {
-				...this.pagination,
-				[type]: pagination,
-			}
+			this.pagination = { ...this.pagination, [type]: pagination }
 		},
 
 		/**
 		 * Load next page of results
+		 *
 		 * @param {string} type - Object type
 		 * @return {Promise<void>}
+		 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async loadMore(type) {
 			const pagination = this.getPagination(type)
 
 			if (pagination.next) {
-				// Extract query parameters from the next URL
 				const url = new URL(pagination.next)
 				const params = Object.fromEntries(url.searchParams)
 				await this.fetchCollection(type, params, true)
 			} else if (pagination.page < pagination.pages) {
-				await this.fetchCollection(type, {
-					_page: pagination.page + 1,
-					_limit: pagination.limit,
-				}, true)
+				await this.fetchCollection(
+					type,
+					{
+						_page: pagination.page + 1,
+						_limit: pagination.limit,
+					},
+					true,
+				)
 			}
 		},
 
 		/**
 		 * Load previous page of results
+		 *
 		 * @param {string} type - Object type
 		 * @return {Promise<void>}
+		 */
+		/**
+		 * @param type
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async loadPrevious(type) {
 			const pagination = this.getPagination(type)
 
 			if (pagination.prev) {
-				// Extract query parameters from the prev URL
 				const url = new URL(pagination.prev)
 				const params = Object.fromEntries(url.searchParams)
 				await this.fetchCollection(type, params, false)
 			} else if (pagination.page > 1) {
-				await this.fetchCollection(type, {
-					_page: pagination.page - 1,
-					_limit: pagination.limit,
-				}, false)
+				await this.fetchCollection(
+					type,
+					{
+						_page: pagination.page - 1,
+						_limit: pagination.limit,
+					},
+					false,
+				)
 			}
 		},
 
 		/**
 		 * Preload collections for all available schemas
-		 * This function should be called once when the application initializes
+		 *
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		async preloadCollections() {
 			try {
-				// Ensure settings are loaded first
 				if (!this.settings) {
 					await this.fetchSettings()
 				}
 
-				// Auto-register object types from settings so useListView/fetchSchema work
 				this._registerTypesFromSettings()
 
-				// Get all available object types from settings
 				const objectTypes = this.objectTypes
 
-				console.info('Preloading collections for object types:', objectTypes)
-
-				// Load collections for all object types in parallel
 				await Promise.allSettled(
 					objectTypes.map(async (type) => {
 						try {
 							await this.fetchCollection(type)
 						} catch (error) {
-							console.warn(`Failed to preload collection for type ${type}:`, error)
-							// Don't throw here to allow other types to load
+							console.warn(
+								`Failed to preload collection for type ${type}:`,
+								error,
+							)
 						}
 					}),
 				)
-
-				console.info('Finished preloading collections')
 			} catch (error) {
 				console.error('Error during preload:', error)
-				// Don't throw here to allow the application to continue
 			}
 		},
 
 		/**
 		 * Register object types from settings into objectTypeRegistry.
-		 * Maps each objectType slug to its schema/register IDs by searching
-		 * availableRegisters for a matching schema slug.
+		 *
 		 * @private
 		 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		_registerTypesFromSettings() {
 			if (!this.settings) return
 
-			// Include 'publication' alongside the settings-defined types
 			const objectTypes = [...(this.settings.objectTypes || []), 'publication']
 			const registers = this.settings.availableRegisters || []
+			const configuration = this.settings.configuration || {}
 
 			for (const type of objectTypes) {
 				if (this.objectTypeRegistry[type]) continue
 
-				// Find the schema matching this type slug in any register
+				// 1. Prefer the explicit per-type {type}_register / {type}_schema from
+				//    IAppConfig. This is the authoritative mapping the backend uses, and
+				//    it disambiguates correctly when multiple registers happen to contain
+				//    a schema with the same slug (e.g. a stale duplicate register).
+				const configuredRegisterId = configuration[`${type}_register`]
+				const configuredSchemaId = configuration[`${type}_schema`]
+				if (configuredRegisterId && configuredSchemaId) {
+					this.objectTypeRegistry = {
+						...this.objectTypeRegistry,
+						[type]: {
+							schema: String(configuredSchemaId),
+							register: String(configuredRegisterId),
+						},
+					}
+					this._ensureInnerType(type)
+					continue
+				}
+
+				// 2. Fall back to slug-matching across availableRegisters for types that
+				//    have no explicit config entry yet (e.g. dynamically-registered types).
 				for (const register of registers) {
 					const matchingSchema = (register.schemas || []).find(
 						(s) => s.slug === type || s.title?.toLowerCase() === type,
@@ -1722,36 +2092,38 @@ export const useObjectStore = defineStore('object', {
 								register: String(register.id),
 							},
 						}
+						this._ensureInnerType(type)
 						break
 					}
 				}
 			}
-
-			console.info('Registered object types:', Object.keys(this.objectTypeRegistry))
 		},
 
 		/**
 		 * Set state for specific type
+		 *
 		 * @param {string} type - Object type
 		 * @param {{success: boolean|null, error: string|null}} state - State to set
 		 */
+		/**
+		 * @param type
+		 * @param root0
+		 * @param root0.success
+		 * @param root0.error
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		setState(type, { success, error }) {
 			if (success !== undefined) {
-				this.success = {
-					...this.success,
-					[type]: success,
-				}
+				this.success = { ...this.success, [type]: success }
 			}
 			if (error !== undefined) {
-				this.errors = {
-					...this.errors,
-					[type]: error,
-				}
+				this.errors = { ...this.errors, [type]: error }
 			}
 		},
 
 		/**
 		 * Copy an existing object
+		 *
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID to copy
 		 * @param {string|null} nameFieldPath - Optional dot-notation path of the schema's
@@ -1760,25 +2132,27 @@ export const useObjectStore = defineStore('object', {
 		 *   Twig templates (e.g. "{{ voornaam }} {{ achternaam }}") are not supported.
 		 * @return {Promise<object>} The newly created copy
 		 */
+		/**
+		 * @param type
+		 * @param id
+		 * @param nameFieldPath
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async copyObject(type, id, nameFieldPath = null) {
 			this.setLoading(`${type}_${id}_copy`, true)
 			this.setError(`${type}_${id}_copy`, null)
 			this.setState(type, { success: null, error: null })
 
 			try {
-				// Ensure settings are loaded first
 				if (!this.settings) {
 					await this.fetchSettings()
 				}
 
-				// Get the original object
 				const originalObject = this.objects[type]?.[id]
 				if (!originalObject) {
 					throw new Error(`Object ${id} of type ${type} not found`)
 				}
 
-				// Drop id and strip @self down to register/schema so the server
-				// allocates a fresh identity instead of inheriting the source's.
 				const { id: _, '@self': self, ...rest } = originalObject
 				const objectData = { ...rest }
 				if (self && (self.register || self.schema)) {
@@ -1788,12 +2162,8 @@ export const useObjectStore = defineStore('object', {
 					}
 				}
 
-				// Prefix "Kopie van" to a name-bearing field. Prefer the schema's
-				// configured objectNameField (supports nested dot-notation like
-				// "contact.naam"); fall back to top-level title/name. Twig template
-				// fields (e.g. "{{ voornaam }} {{ achternaam }}") are skipped — they
-				// are server-rendered and not safe to mutate client-side.
-				const useConfiguredField = typeof nameFieldPath === 'string'
+				const useConfiguredField =
+					typeof nameFieldPath === 'string'
 					&& nameFieldPath.length > 0
 					&& !nameFieldPath.includes('{{')
 				let prefixed = false
@@ -1802,13 +2172,21 @@ export const useObjectStore = defineStore('object', {
 					const leaf = segments.pop()
 					let cursor = objectData
 					for (const seg of segments) {
-						if (cursor[seg] === undefined || cursor[seg] === null || typeof cursor[seg] !== 'object') {
+						if (
+							cursor[seg] === undefined
+							|| cursor[seg] === null
+							|| typeof cursor[seg] !== 'object'
+						) {
 							cursor = null
 							break
 						}
 						cursor = cursor[seg]
 					}
-					if (cursor && typeof cursor[leaf] === 'string' && cursor[leaf].length > 0) {
+					if (
+						cursor
+						&& typeof cursor[leaf] === 'string'
+						&& cursor[leaf].length > 0
+					) {
 						cursor[leaf] = `Kopie van ${cursor[leaf]}`
 						prefixed = true
 					}
@@ -1826,14 +2204,21 @@ export const useObjectStore = defineStore('object', {
 				// schema. Without this override, createObject would POST to the
 				// wrong register/schema endpoint and the server would silently drop
 				// any properties not defined on the default schema.
-				const publicationData = self && (self.register || self.schema)
-					? { source: 'openregister', register: self.register, schema: self.schema }
-					: null
+				const publicationData =
+					self && (self.register || self.schema)
+						? {
+								source: 'openregister',
+								register: self.register,
+								schema: self.schema,
+							}
+						: null
 
-				// Create the new object
-				const newObject = await this.createObject(type, objectData, publicationData)
+				const newObject = await this.createObject(
+					type,
+					objectData,
+					publicationData,
+				)
 
-				// Set success state
 				this.setState(type, { success: true, error: null })
 
 				return newObject
@@ -1849,6 +2234,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set selected objects
+		 *
 		 * @param {Array<string>} objects - Array of object IDs
 		 */
 		setSelectedObjects(objects) {
@@ -1857,6 +2243,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set selected attachments
+		 *
 		 * @param {Array<string>} attachments - Array of attachment IDs
 		 */
 		setSelectedAttachments(attachments) {
@@ -1865,6 +2252,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Set error for a specific object
+		 *
 		 * @param {string} objectId - The object ID
 		 * @param {string} error - The error message
 		 */
@@ -1874,7 +2262,12 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Clear error for a specific object
+		 *
 		 * @param {string} objectId - The object ID
+		 */
+		/**
+		 * @param objectId
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		clearObjectError(objectId) {
 			delete this.objectErrors[objectId]
@@ -1883,12 +2276,14 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Clear all object errors
 		 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		clearAllObjectErrors() {
 			this.objectErrors = {}
 		},
 
 		/**
 		 * Get error for a specific object
+		 *
 		 * @param {string} objectId - The object ID
 		 * @return {string|null} The error message or null if no error
 		 */
@@ -1899,6 +2294,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Toggle selection of all objects
 		 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		toggleSelectAllObjects() {
 			const publicationCollection = this.collections.publication
 			if (!publicationCollection?.results?.length) return
@@ -1906,24 +2302,26 @@ export const useObjectStore = defineStore('object', {
 			if (this.isAllSelected) {
 				this.selectedObjects = []
 			} else {
-				this.selectedObjects = publicationCollection.results.map(pub =>
-					pub['@self']?.id || pub.id,
+				this.selectedObjects = publicationCollection.results.map(
+					(pub) => pub['@self']?.id || pub.id,
 				)
 			}
 		},
 
 		/**
 		 * Update column filter
+		 *
 		 * @param {string} id - Column ID
 		 * @param {boolean} enabled - Whether the column is enabled
 		 */
+		/**
+		 * @param id
+		 * @param enabled
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		updateColumnFilter(id, enabled) {
-			this.columnFilters = {
-				...this.columnFilters,
-				[id]: enabled,
-			}
+			this.columnFilters = { ...this.columnFilters, [id]: enabled }
 
-			// Update metadata or properties based on the column ID
 			if (id.startsWith('meta_')) {
 				const metaKey = id.replace('meta_', '')
 				if (this.metadata[metaKey]) {
@@ -1939,7 +2337,12 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Initialize properties from schema
+		 *
 		 * @param {object} schema - Schema object
+		 */
+		/**
+		 * @param schema
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		initializeProperties(schema) {
 			if (!schema?.properties) {
@@ -1953,7 +2356,7 @@ export const useObjectStore = defineStore('object', {
 					label: property.title || key,
 					key,
 					description: property.description || `Property: ${key}`,
-					enabled: false, // Start with properties disabled
+					enabled: false,
 				}
 			})
 
@@ -1963,16 +2366,15 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Initialize column filters
 		 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		initializeColumnFilters() {
 			const filters = {}
 
-			// Initialize metadata filters
-			Object.keys(this.metadata).forEach(key => {
+			Object.keys(this.metadata).forEach((key) => {
 				filters[`meta_${key}`] = this.metadata[key].enabled
 			})
 
-			// Initialize property filters
-			Object.keys(this.properties).forEach(key => {
+			Object.keys(this.properties).forEach((key) => {
 				filters[`prop_${key}`] = this.properties[key].enabled
 			})
 
@@ -1981,31 +2383,34 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass delete objects
+		 *
 		 * @param {Array<object|string>} objects - Array of objects or object IDs to delete
 		 * @param {Function} onProgress - Callback function called after each deletion (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massDeleteObjects(objects, onProgress = null) {
-			// Clear previous object errors
 			this.clearAllObjectErrors()
 
 			const results = await Promise.allSettled(
 				objects.map(async (obj) => {
 					try {
-						// Handle both object and ID inputs
-						const objectId = typeof obj === 'string' ? obj : (obj.id || obj['@self']?.id)
-						const objectToDelete = typeof obj === 'string' ? { id: obj } : obj
+						const objectId =
+							typeof obj === 'string'
+								? obj
+								: obj.id || obj['@self']?.id
+						const objectToDelete =
+							typeof obj === 'string' ? { id: obj } : obj
 
-						// Use the individual deleteObject method
 						await this.deleteObject(objectToDelete)
 
-						// Clear any previous error for this object
 						this.clearObjectError(objectId)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, true)
-						}
+						if (onProgress) onProgress(obj, true)
 
 						return { success: true, id: objectId, object: obj }
 					} catch (error) {
@@ -2014,27 +2419,36 @@ export const useObjectStore = defineStore('object', {
 
 						console.error(`Failed to delete object ${objectId}:`, error)
 
-						// Store object-specific error
 						this.setObjectError(objectId, errorMessage)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, false, errorMessage)
-						}
+						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			// Separate successful and failed operations
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
-			// Clear selection of successfully processed objects
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2043,12 +2457,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass publish objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to publish
 		 * @param {Function} onProgress - Callback function called after each publication (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massPublishObjects(objects, onProgress = null) {
-			// Clear previous object errors
 			this.clearAllObjectErrors()
 
 			const results = await Promise.allSettled(
@@ -2056,16 +2475,11 @@ export const useObjectStore = defineStore('object', {
 					try {
 						const objectId = obj.id || obj['@self']?.id
 
-						// Use the individual publishObject method
 						await this.publishObject(obj)
 
-						// Clear any previous error for this object
 						this.clearObjectError(objectId)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, true)
-						}
+						if (onProgress) onProgress(obj, true)
 
 						return { success: true, id: objectId, object: obj }
 					} catch (error) {
@@ -2074,27 +2488,36 @@ export const useObjectStore = defineStore('object', {
 
 						console.error(`Failed to publish object ${objectId}:`, error)
 
-						// Store object-specific error
 						this.setObjectError(objectId, errorMessage)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, false, errorMessage)
-						}
+						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			// Separate successful and failed operations
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
-			// Clear selection of successfully processed objects
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2103,12 +2526,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass depublish objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to depublish
 		 * @param {Function} onProgress - Callback function called after each depublication (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massDepublishObjects(objects, onProgress = null) {
-			// Clear previous object errors
 			this.clearAllObjectErrors()
 
 			const results = await Promise.allSettled(
@@ -2116,45 +2544,52 @@ export const useObjectStore = defineStore('object', {
 					try {
 						const objectId = obj.id || obj['@self']?.id
 
-						// Use the individual depublishObject method
 						await this.depublishObject(obj)
 
-						// Clear any previous error for this object
 						this.clearObjectError(objectId)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, true)
-						}
+						if (onProgress) onProgress(obj, true)
 
 						return { success: true, id: objectId, object: obj }
 					} catch (error) {
 						const objectId = obj.id || obj['@self']?.id
 						const errorMessage = error.message || 'Unknown error'
 
-						console.error(`Failed to depublish object ${objectId}:`, error)
+						console.error(
+							`Failed to depublish object ${objectId}:`,
+							error,
+						)
 
-						// Store object-specific error
 						this.setObjectError(objectId, errorMessage)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, false, errorMessage)
-						}
+						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			// Separate successful and failed operations
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
-			// Clear selection of successfully processed objects
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2163,12 +2598,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass validate objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to validate
 		 * @param {Function} onProgress - Callback function called after each validation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massValidateObjects(objects, onProgress = null) {
-			// Clear previous object errors
 			this.clearAllObjectErrors()
 
 			const results = await Promise.allSettled(
@@ -2176,45 +2616,52 @@ export const useObjectStore = defineStore('object', {
 					try {
 						const objectId = obj.id || obj['@self']?.id
 
-						// Use the individual validateObject method
 						await this.validateObject(obj)
 
-						// Clear any previous error for this object
 						this.clearObjectError(objectId)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, true)
-						}
+						if (onProgress) onProgress(obj, true)
 
 						return { success: true, id: objectId, object: obj }
 					} catch (error) {
 						const objectId = obj.id || obj['@self']?.id
 						const errorMessage = error.message || 'Unknown error'
 
-						console.error(`Failed to validate object ${objectId}:`, error)
+						console.error(
+							`Failed to validate object ${objectId}:`,
+							error,
+						)
 
-						// Store object-specific error
 						this.setObjectError(objectId, errorMessage)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, false, errorMessage)
-						}
+						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			// Separate successful and failed operations
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
-			// Clear selection of successfully processed objects
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2223,14 +2670,26 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass lock objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to lock
 		 * @param {string} process - Process name (optional)
 		 * @param {number} duration - Duration in seconds (optional)
 		 * @param {Function} onProgress - Callback function called after each lock operation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
-		async massLockObjects(objects, process = null, duration = null, onProgress = null) {
-			// Clear previous object errors
+		/**
+		 * @param objects
+		 * @param process
+		 * @param duration
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async massLockObjects(
+			objects,
+			process = null,
+			duration = null,
+			onProgress = null,
+		) {
 			this.clearAllObjectErrors()
 
 			const results = await Promise.allSettled(
@@ -2238,16 +2697,11 @@ export const useObjectStore = defineStore('object', {
 					try {
 						const objectId = obj.id || obj['@self']?.id
 
-						// Use the individual lockObject method
 						await this.lockObject(obj, process, duration)
 
-						// Clear any previous error for this object
 						this.clearObjectError(objectId)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, true)
-						}
+						if (onProgress) onProgress(obj, true)
 
 						return { success: true, id: objectId, object: obj }
 					} catch (error) {
@@ -2256,27 +2710,36 @@ export const useObjectStore = defineStore('object', {
 
 						console.error(`Failed to lock object ${objectId}:`, error)
 
-						// Store object-specific error
 						this.setObjectError(objectId, errorMessage)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, false, errorMessage)
-						}
+						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			// Separate successful and failed operations
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
-			// Clear selection of successfully processed objects
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2285,12 +2748,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass unlock objects
+		 *
 		 * @param {Array<object>} objects - Array of objects to unlock
 		 * @param {Function} onProgress - Callback function called after each unlock operation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
+		/**
+		 * @param objects
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async massUnlockObjects(objects, onProgress = null) {
-			// Clear previous object errors
 			this.clearAllObjectErrors()
 
 			const results = await Promise.allSettled(
@@ -2298,16 +2766,11 @@ export const useObjectStore = defineStore('object', {
 					try {
 						const objectId = obj.id || obj['@self']?.id
 
-						// Use the individual unlockObject method
 						await this.unlockObject(obj)
 
-						// Clear any previous error for this object
 						this.clearObjectError(objectId)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, true)
-						}
+						if (onProgress) onProgress(obj, true)
 
 						return { success: true, id: objectId, object: obj }
 					} catch (error) {
@@ -2316,27 +2779,36 @@ export const useObjectStore = defineStore('object', {
 
 						console.error(`Failed to unlock object ${objectId}:`, error)
 
-						// Store object-specific error
 						this.setObjectError(objectId, errorMessage)
 
-						// Call progress callback if provided
-						if (onProgress) {
-							onProgress(obj, false, errorMessage)
-						}
+						if (onProgress) onProgress(obj, false, errorMessage)
 
-						return { success: false, id: objectId, object: obj, error: errorMessage }
+						return {
+							success: false,
+							id: objectId,
+							object: obj,
+							error: errorMessage,
+						}
 					}
 				}),
 			)
 
-			// Separate successful and failed operations
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
-			// Clear selection of successfully processed objects
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = this.selectedObjects.filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedObjects(remainingSelected)
 			}
 
@@ -2345,11 +2817,17 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Refresh files (attachments) for the active publication
+		 *
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/specs/generic-object-modals/spec.md */
 		async refreshActivePublicationFiles() {
 			const activePublication = this.activeObjects?.publication
-			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
+			if (
+				!activePublication?.id
+				|| !activePublication['@self']?.register
+				|| !activePublication['@self']?.schema
+			) {
 				return
 			}
 			const publicationData = {
@@ -2357,18 +2835,35 @@ export const useObjectStore = defineStore('object', {
 				schema: this.extractId(activePublication['@self'].schema),
 				register: this.extractId(activePublication['@self'].register),
 			}
-			await this.fetchRelatedData('publication', activePublication.id, 'files', {}, publicationData)
+			await this.fetchRelatedData(
+				'publication',
+				activePublication.id,
+				'files',
+				{},
+				publicationData,
+			)
 		},
 
 		/**
 		 * Publish a single attachment (file) for the active publication
+		 *
 		 * @param {string|number} fileId - Attachment ID
 		 * @return {Promise<void>}
 		 */
+		/**
+		 * @param fileId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async publishAttachment(fileId) {
 			const activePublication = this.activeObjects?.publication
-			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
-				throw new Error('Active publication is not set or missing register/schema')
+			if (
+				!activePublication?.id
+				|| !activePublication['@self']?.register
+				|| !activePublication['@self']?.schema
+			) {
+				throw new Error(
+					'Active publication is not set or missing register/schema',
+				)
 			}
 
 			const registerId = this.extractId(activePublication['@self'].register)
@@ -2382,9 +2877,10 @@ export const useObjectStore = defineStore('object', {
 				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/publish`
 				const response = await fetch(endpoint, { method: 'POST' })
 				if (!response.ok) {
-					throw new Error(`Failed to publish file ${fileId}: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to publish file ${fileId}: ${response.status} ${response.statusText}`,
+					)
 				}
-				// Refresh files list for active publication
 				await this.refreshActivePublicationFiles()
 				return true
 			} catch (error) {
@@ -2398,13 +2894,24 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Depublish a single attachment (file) for the active publication
+		 *
 		 * @param {string|number} fileId - Attachment ID
 		 * @return {Promise<void>}
 		 */
+		/**
+		 * @param fileId
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
 		async depublishAttachment(fileId) {
 			const activePublication = this.activeObjects?.publication
-			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
-				throw new Error('Active publication is not set or missing register/schema')
+			if (
+				!activePublication?.id
+				|| !activePublication['@self']?.register
+				|| !activePublication['@self']?.schema
+			) {
+				throw new Error(
+					'Active publication is not set or missing register/schema',
+				)
 			}
 
 			const registerId = this.extractId(activePublication['@self'].register)
@@ -2418,9 +2925,10 @@ export const useObjectStore = defineStore('object', {
 				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/depublish`
 				const response = await fetch(endpoint, { method: 'POST' })
 				if (!response.ok) {
-					throw new Error(`Failed to depublish file ${fileId}: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to depublish file ${fileId}: ${response.status} ${response.statusText}`,
+					)
 				}
-				// Refresh files list for active publication
 				await this.refreshActivePublicationFiles()
 				return true
 			} catch (error) {
@@ -2434,9 +2942,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass publish attachments for the active publication
+		 *
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
 		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
+		 */
+		/**
+		 * @param fileIds
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massPublishAttachments(fileIds, onProgress = null) {
 			if (!Array.isArray(fileIds) || fileIds.length === 0) {
@@ -2456,13 +2970,22 @@ export const useObjectStore = defineStore('object', {
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
-			// Clear selection of successfully processed attachments
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = (this.selectedAttachments || []).filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = (this.selectedAttachments || []).filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedAttachments(remainingSelected)
 			}
 
@@ -2471,9 +2994,15 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass depublish attachments for the active publication
+		 *
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
 		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
+		 */
+		/**
+		 * @param fileIds
+		 * @param onProgress
+		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massDepublishAttachments(fileIds, onProgress = null) {
 			if (!Array.isArray(fileIds) || fileIds.length === 0) {
@@ -2493,13 +3022,22 @@ export const useObjectStore = defineStore('object', {
 				}),
 			)
 
-			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
-			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+			const successful = results
+				.filter((r) => r.status === 'fulfilled' && r.value.success)
+				.map((r) => r.value)
+			const failed = results
+				.filter(
+					(r) =>
+						r.status === 'rejected'
+						|| (r.status === 'fulfilled' && !r.value.success),
+				)
+				.map((r) => r.value || { success: false, error: 'Unknown error' })
 
-			// Clear selection of successfully processed attachments
 			if (successful.length > 0) {
-				const successfulIds = successful.map(r => r.id)
-				const remainingSelected = (this.selectedAttachments || []).filter(id => !successfulIds.includes(id))
+				const successfulIds = successful.map((r) => r.id)
+				const remainingSelected = (this.selectedAttachments || []).filter(
+					(id) => !successfulIds.includes(id),
+				)
 				this.setSelectedAttachments(remainingSelected)
 			}
 

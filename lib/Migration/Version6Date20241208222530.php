@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Migration to add URI columns to tables.
  *
@@ -26,138 +27,131 @@ use OCP\Migration\SimpleMigrationStep;
 
 /**
  * Migration to add URI columns to all tables and create missing tables.
- *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
-class Version6Date20241208222530 extends SimpleMigrationStep
-{
-    /**
-     * Pre-schema change hook.
-     *
-     * @param IOutput                  $output        The output handler.
-     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                    $options       Migration options.
-     *
-     * @return void
-     */
-    public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
-    {
+class Version6Date20241208222530 extends SimpleMigrationStep {
+	/**
+	 * Pre-schema change hook.
+	 *
+	 * @param IOutput $output The output handler.
+	 * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+	 * @param array $options Migration options.
+	 *
+	 * @return void
+	 */
+	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
 
-    }//end preSchemaChange()
+	}//end preSchemaChange()
 
-    /**
-     * Apply schema changes.
-     *
-     * @param IOutput                  $output        The output handler.
-     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                    $options       Migration options.
-     *
-     * @return null|ISchemaWrapper
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+	/**
+	 * Apply schema changes.
+	 *
+	 * @param IOutput $output The output handler.
+	 * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+	 * @param array $options Migration options.
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        // Update the ocat_attachments table.
-        $table = $schema->getTable('ocat_attachments');
-        if ($table->hasColumn('uri') === false) {
-            $table->addColumn(
-                name: 'uri',
-                typeName: Types::STRING,
-                options: [
-                    'notnull' => true,
-                    'length'  => 255,
-                ]
-            )->setDefault('');
-        }
+		// Update the ocat_attachments table.
+		$table = $schema->getTable('ocat_attachments');
+		if ($table->hasColumn('uri') === false) {
+			$table->addColumn(
+				name: 'uri',
+				typeName: Types::STRING,
+				options: [
+					'notnull' => true,
+					'length' => 255,
+				]
+			)->setDefault('');
+		}
 
-        // Update catalogi table.
-        $table = $schema->getTable('ocat_catalogi');
-        if ($table->hasColumn('uri') === false) {
-            $table->addColumn(
-                name: 'uri',
-                typeName: Types::STRING,
-                options: [
-                    'notnull' => true,
-                    'length'  => 255,
-                ]
-            )->setDefault('');
-        }
+		// Update catalogi table.
+		$table = $schema->getTable('ocat_catalogi');
+		if ($table->hasColumn('uri') === false) {
+			$table->addColumn(
+				name: 'uri',
+				typeName: Types::STRING,
+				options: [
+					'notnull' => true,
+					'length' => 255,
+				]
+			)->setDefault('');
+		}
 
-        // Update organizations table.
-        $table = $schema->getTable('ocat_organizations');
-        if ($table->hasColumn('uri') === false) {
-            $table->addColumn(
-                name: 'uri',
-                typeName: Types::STRING,
-                options: [
-                    'notnull' => true,
-                    'length'  => 255,
-                ]
-            )->setDefault('');
-        }
+		// Update organizations table.
+		$table = $schema->getTable('ocat_organizations');
+		if ($table->hasColumn('uri') === false) {
+			$table->addColumn(
+				name: 'uri',
+				typeName: Types::STRING,
+				options: [
+					'notnull' => true,
+					'length' => 255,
+				]
+			)->setDefault('');
+		}
 
-        // Update publications table.
-        $table = $schema->getTable('ocat_publications');
-        if ($table->hasColumn('uri') === false) {
-            $table->addColumn(
-                name: 'uri',
-                typeName: Types::STRING,
-                options: [
-                    'notnull' => true,
-                    'length'  => 255,
-                ]
-            )->setDefault('');
-        }
+		// Update publications table.
+		$table = $schema->getTable('ocat_publications');
+		if ($table->hasColumn('uri') === false) {
+			$table->addColumn(
+				name: 'uri',
+				typeName: Types::STRING,
+				options: [
+					'notnull' => true,
+					'length' => 255,
+				]
+			)->setDefault('');
+		}
 
-        // Update publication types table.
-        $table = $schema->getTable('ocat_publication_types');
-        if ($table->hasColumn('uri') === false) {
-            $table->addColumn(
-                name: 'uri',
-                typeName: Types::STRING,
-                options: [
-                    'notnull' => true,
-                    'length'  => 255,
-                ]
-            )->setDefault('');
-            if ($table->hasIndex('ocat_publication_uuid_index') === false) {
-                $table->addIndex(['uuid'], 'ocat_publication_uuid_index');
-            }
-        }
+		// Update publication types table.
+		$table = $schema->getTable('ocat_publication_types');
+		if ($table->hasColumn('uri') === false) {
+			$table->addColumn(
+				name: 'uri',
+				typeName: Types::STRING,
+				options: [
+					'notnull' => true,
+					'length' => 255,
+				]
+			)->setDefault('');
+			if ($table->hasIndex('ocat_publication_uuid_index') === false) {
+				$table->addIndex(['uuid'], 'ocat_publication_uuid_index');
+			}
+		}
 
-        // Update themes table.
-        $table = $schema->getTable('ocat_themes');
-        if ($table->hasColumn('uri') === false) {
-            $table->addColumn(
-                name: 'uri',
-                typeName: Types::STRING,
-                options: [
-                    'notnull' => true,
-                    'length'  => 255,
-                ]
-            )->setDefault('');
-            if ($table->hasIndex('ocat_themes_uuid_index') === false) {
-                $table->addIndex(['uuid'], 'ocat_themes_uuid_index');
-            }
-        }
+		// Update themes table.
+		$table = $schema->getTable('ocat_themes');
+		if ($table->hasColumn('uri') === false) {
+			$table->addColumn(
+				name: 'uri',
+				typeName: Types::STRING,
+				options: [
+					'notnull' => true,
+					'length' => 255,
+				]
+			)->setDefault('');
+			if ($table->hasIndex('ocat_themes_uuid_index') === false) {
+				$table->addIndex(['uuid'], 'ocat_themes_uuid_index');
+			}
+		}
 
-        return $schema;
+		return $schema;
+	}//end changeSchema()
 
-    }//end changeSchema()
+	/**
+	 * Post-schema change hook.
+	 *
+	 * @param IOutput $output The output handler.
+	 * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+	 * @param array $options Migration options.
+	 *
+	 * @return void
+	 */
+	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
 
-    /**
-     * Post-schema change hook.
-     *
-     * @param IOutput                  $output        The output handler.
-     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                    $options       Migration options.
-     *
-     * @return void
-     */
-    public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
-    {
-
-    }//end postSchemaChange()
+	}//end postSchemaChange()
 }//end class

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Listing } from './listing'
 import { mockListings } from './listing.mock'
 

@@ -6,13 +6,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcDialog
 		v-if="navigationStore.dialog === 'viewLog'"
 		:name="t('opencatalogi', 'View Log')"
-		:can-close="false">
-		<div v-if="objectStore.getState('log').success !== null || objectStore.getState('log').error">
+		:canClose="false">
+		<div
+			v-if="
+				objectStore.getState('log').success !== null
+				|| objectStore.getState('log').error
+			">
 			<NcNoteCard v-if="objectStore.getState('log').success" type="success">
 				<p>{{ t('opencatalogi', 'Log successfully viewed') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('log').success" type="error">
-				<p>{{ t('opencatalogi', 'Something went wrong while viewing the log') }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Something went wrong while viewing the log',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('log').error" type="error">
 				<p>{{ objectStore.getState('log').error }}</p>
@@ -22,13 +33,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcLoadingIcon :size="20" />
 			<span>{{ t('opencatalogi', 'Log is being loaded...') }}</span>
 		</div>
-		<div v-if="objectStore.getState('log').success === null && !objectStore.isLoading('log')" class="log-content">
+		<div
+			v-if="
+				objectStore.getState('log').success === null
+				&& !objectStore.isLoading('log')
+			"
+			class="log-content">
 			<pre>{{ objectStore.getActiveObject('log')?.content }}</pre>
 		</div>
 		<template #actions>
-			<NcButton
-				icon=""
-				@click="navigationStore.setDialog(false)">
+			<NcButton icon="" @click="navigationStore.setDialog(false)">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
@@ -39,19 +53,20 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 /**
  * View Log Dialog Component
+ *
  * @module Dialogs
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'ViewLogDialog',
@@ -67,39 +82,38 @@ export default {
 </script>
 
 <style>
-
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .success {
-    color: green;
+	color: green;
 }
 
 .loading-status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin: 1rem 0;
-    color: var(--color-text-lighter);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	margin: 1rem 0;
+	color: var(--color-text-lighter);
 }
 
 .log-content {
-    text-align: left;
-    margin: 1rem 0;
-    padding: 1rem;
-    background-color: var(--color-background-dark);
-    border-radius: var(--border-radius);
-    max-height: 60vh;
-    overflow: auto;
+	text-align: left;
+	margin: 1rem 0;
+	padding: 1rem;
+	background-color: var(--color-background-dark);
+	border-radius: var(--border-radius);
+	max-height: 60vh;
+	overflow: auto;
 }
 
 .log-content pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+	margin: 0;
+	white-space: pre-wrap;
+	word-wrap: break-word;
 }
 </style>

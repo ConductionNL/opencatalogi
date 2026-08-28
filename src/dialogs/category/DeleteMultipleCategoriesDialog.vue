@@ -6,13 +6,28 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcDialog
 		v-if="navigationStore.dialog === 'deleteMultipleCategories'"
 		:name="t('opencatalogi', 'Delete Categories')"
-		:can-close="false">
-		<div v-if="objectStore.getState('category').success !== null || objectStore.getState('category').error">
-			<NcNoteCard v-if="objectStore.getState('category').success" type="success">
+		:canClose="false">
+		<div
+			v-if="
+				objectStore.getState('category').success !== null
+				|| objectStore.getState('category').error
+			">
+			<NcNoteCard
+				v-if="objectStore.getState('category').success"
+				type="success">
 				<p>{{ t('opencatalogi', 'Categories successfully deleted') }}</p>
 			</NcNoteCard>
-			<NcNoteCard v-if="!objectStore.getState('category').success" type="error">
-				<p>{{ t('opencatalogi', 'Something went wrong while deleting the categories') }}</p>
+			<NcNoteCard
+				v-if="!objectStore.getState('category').success"
+				type="error">
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'Something went wrong while deleting the categories',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('category').error" type="error">
 				<p>{{ objectStore.getState('category').error }}</p>
@@ -22,10 +37,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcLoadingIcon :size="20" />
 			<span>{{ t('opencatalogi', 'Categories are being deleted...') }}</span>
 		</div>
-		<p v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')">
-			{{ t('opencatalogi', 'Do you want to delete the selected categories? This action cannot be undone.') }}
+		<p
+			v-if="
+				objectStore.getState('category').success === null
+				&& !objectStore.isLoading('category')
+			">
+			{{
+				t(
+					'opencatalogi',
+					'Do you want to delete the selected categories? This action cannot be undone.',
+				)
+			}}
 		</p>
-		<template v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')" #actions>
+		<template
+			v-if="
+				objectStore.getState('category').success === null
+				&& !objectStore.isLoading('category')
+			"
+			#actions>
 			<NcButton
 				:disabled="objectStore.isLoading('category')"
 				icon=""
@@ -38,7 +67,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcButton
 				:disabled="objectStore.isLoading('category')"
 				icon="Delete"
-				type="error"
+				variant="error"
 				@click="deleteCategories()">
 				<template #icon>
 					<Delete :size="20" />
@@ -47,9 +76,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</NcButton>
 		</template>
 		<template v-else #actions>
-			<NcButton
-				icon=""
-				@click="navigationStore.setDialog(false)">
+			<NcButton icon="" @click="navigationStore.setDialog(false)">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
@@ -60,20 +87,21 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
-
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
 /**
  * Delete Multiple Categories Dialog Component
+ *
  * @module Dialogs
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'DeleteMultipleCategoriesDialog',
@@ -86,26 +114,29 @@ export default {
 		Cancel,
 		Delete,
 	},
+
 	methods: {
 		/**
 		 * Delete the selected categories
 		 *
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		deleteCategories() {
 			const selectedCategories = objectStore.getSelectedObjects('category')
 			if (!selectedCategories?.length) return
 
-			Promise.all(selectedCategories.map(category =>
-				objectStore.deleteObject('category', category.id),
-			))
-				.then(() => {
-					// Wait for the user to read the feedback then close the dialog
-					setTimeout(() => {
-						objectStore.setState('category', { success: null, error: null })
-						navigationStore.setDialog(false)
-					}, 2000)
-				})
+			Promise.all(
+				selectedCategories.map((category) =>
+					objectStore.deleteObject('category', category.id),
+				),
+			).then(() => {
+				// Wait for the user to read the feedback then close the dialog
+				setTimeout(() => {
+					objectStore.setState('category', { success: null, error: null })
+					navigationStore.setDialog(false)
+				}, 2000)
+			})
 		},
 	},
 }
@@ -113,21 +144,21 @@ export default {
 
 <style>
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .success {
-    color: green;
+	color: green;
 }
 
 .loading-status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin: 1rem 0;
-    color: var(--color-text-lighter);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	margin: 1rem 0;
+	color: var(--color-text-lighter);
 }
 </style>

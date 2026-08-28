@@ -1,8 +1,14 @@
 <?php
+
 /**
  * OpenCatalogi Object Updated Event Listener.
  *
- * This file contains the listener class for handling object update events from OpenRegister.
+ * Handles OR ObjectUpdatedEvent and triggers the OpenCatalogi-specific
+ * auto-publishing side effect only (catalogue-membership + WOO publishing
+ * policy). The per-publication activity feed is consumed from the OR activity
+ * leaf (ADR-022 / APB-ACT-001), not reimplemented here. See
+ * openspec/changes/migrate-activity-to-activity-leaf/design.md for the
+ * keep/migrate split rationale.
  *
  * @category Listener
  * @package  OCA\OpenCatalogi\Listener
@@ -11,271 +17,274 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * @version GIT: <git_id>
- *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/specs/auto-publishing/spec.md
+ * @spec openspec/specs/auto-publishing/spec.md
+ * @spec openspec/specs/auto-publishing/spec.md
+ * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenCatalogi\Service\EventService;
-use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Psr\Log\LoggerInterface;
 
 /**
  * Event listener for object update events from OpenRegister.
  *
- * Listens to ObjectUpdatedEvent and applies auto-publishing logic
- * based on OpenCatalogi configuration settings.
+ * Listens to ObjectUpdatedEvent and applies the auto-publishing side effect
+ * based on OpenCatalogi configuration settings. Scope is limited to the
+ * auto-publishing side effect only (catalogue-membership + WOO publishing
+ * policy); the activity feed is consumed from the OR activity leaf per
+ * ADR-022 / APB-ACT-001 and NOT reimplemented here.
  *
  * @template-implements IEventListener<Event>
+ *
+ * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
  */
-class ObjectUpdatedEventListener implements IEventListener
-{
-    /**
-     * ObjectUpdatedEventListener constructor.
-     */
-    public function __construct()
-    {
+class ObjectUpdatedEventListener implements IEventListener {
+	/**
+	 * ObjectUpdatedEventListener constructor.
+	 */
+	public function __construct() {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle the event when an object is updated.
-     *
-     * This method checks if auto-publishing features are enabled and processes
-     * the updated object accordingly.
-     *
-     * @param Event $event The event object containing the updated ObjectEntity.
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     */
-    public function handle(Event $event): void
-    {
-        try {
-            // Get logger first for all logging.
-            $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
+	/**
+	 * Handle the event when an object is updated.
+	 *
+	 * This method checks if auto-publishing features are enabled and processes
+	 * the updated object accordingly.
+	 *
+	 * @param Event $event The event object containing the updated ObjectEntity.
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
+	 */
+	public function handle(Event $event): void {
+		// Verify this is the correct event type.
+		if ($event instanceof ObjectUpdatedEvent === false) {
+			return;
+		}
 
-            // Test logging to verify listener works.
-            $logger->debug("OPENCATALOGI_EVENT_LISTENER_CALLED_AT_".date('Y-m-d_H:i:s'));
-            $logger->debug("OPENCATALOGI_EVENT_CLASS: ".get_class($event));
+		try {
+			// Get services from the server container.
+			$logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
+			$settingsService = \OC::$server->get(
+				\OCA\OpenCatalogi\Service\SettingsService::class
+			);
+			$eventService = \OC::$server->get(
+				\OCA\OpenCatalogi\Service\EventService::class
+			);
 
-            // Verify this is the correct event type.
-            if ($event instanceof ObjectUpdatedEvent === false) {
-                $logger->debug("OPENCATALOGI_NOT_OBJECTUPDATEDEVENT_SKIPPING");
-                return;
-            }
+			// Check if any auto-publishing features are enabled.
+			$publishingOptions = $settingsService->getPublishingOptions();
 
-            $logger->debug("OPENCATALOGI_CONFIRMED_OBJECTUPDATEDEVENT_PROCESSING");
+			// Skip if no auto-publishing features are enabled.
+			if ($publishingOptions['auto_publish_objects'] === false
+				&& $publishingOptions['auto_publish_attachments'] === false
+			) {
+				return;
+			}
 
-            // Get services from the server container.
-            $settingsService = \OC::$server->get(
-                \OCA\OpenCatalogi\Service\SettingsService::class
-            );
-            $eventService    = \OC::$server->get(
-                \OCA\OpenCatalogi\Service\EventService::class
-            );
+			// Get the updated object from the event.
+			$newObjectEntity = $event->getNewObject();
+			$oldObjectEntity = $event->getOldObject();
 
-            // Check if any auto-publishing features are enabled.
-            $publishingOptions = $settingsService->getPublishingOptions();
+			// Convert ObjectEntity to array format expected by EventService.
+			$newObjectData = $this->convertObjectEntityToArray(objectEntity: $newObjectEntity);
 
-            // Skip if no auto-publishing features are enabled.
-            if ($publishingOptions['auto_publish_objects'] === false
-                && $publishingOptions['auto_publish_attachments'] === false
-            ) {
-                return;
-            }
+			// Check if this update should trigger auto-publishing logic.
+			if ($this->shouldProcessUpdate(
+				newObjectData: $newObjectData,
+				oldObjectEntity: $oldObjectEntity,
+				publishingOptions: $publishingOptions
+			) === false
+			) {
+				return;
+			}
 
-            // Get the updated object from the event.
-            $newObjectEntity = $event->getNewObject();
-            $oldObjectEntity = $event->getOldObject();
+			// Process the object update event through EventService.
+			$result = $eventService->handleObjectUpdateEvents([$newObjectData]);
 
-            // Convert ObjectEntity to array format expected by EventService.
-            $newObjectData = $this->convertObjectEntityToArray($newObjectEntity);
+			// Log successful processing for monitoring.
+			if ($result['processed'] > 0) {
+				$logger->info(
+					message: 'OpenCatalogi: Processed object update event',
+					context: [
+						'objectId' => ($newObjectData['@self']['id'] ?? 'unknown'),
+						'published' => $result['published'],
+						'attachmentsPublished' => $result['attachmentsPublished'],
+					]
+				);
+			}
 
-            // Check if this update should trigger auto-publishing logic.
-            if ($this->shouldProcessUpdate(
-                newObjectData: $newObjectData,
-                oldObjectEntity: $oldObjectEntity,
-                publishingOptions: $publishingOptions
-            ) === false
-            ) {
-                return;
-            }
+			// Log any errors that occurred during processing.
+			if (empty($result['errors']) === false) {
+				foreach ($result['errors'] as $error) {
+					$logger->error(
+						message: 'OpenCatalogi: Error processing object update event',
+						context: [
+							'error' => $error,
+							'objectId' => ($newObjectData['@self']['id'] ?? 'unknown'),
+						]
+					);
+				}
+			}
+		} catch (\Exception $e) {
+			// Log unexpected errors and continue gracefully.
+			if (isset($logger) === false) {
+				$logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
+			}
 
-            // Process the object update event through EventService.
-            $result = $eventService->handleObjectUpdateEvents([$newObjectData]);
+			$logger->error(
+				message: 'OpenCatalogi: Exception in object update event listener: ' . $e->getMessage(),
+				context: ['exception' => $e]
+			);
+		}//end try
 
-            // Log successful processing for monitoring.
-            if ($result['processed'] > 0) {
-                $logger->info(
-                    message: 'OpenCatalogi: Processed object update event',
-                    context: [
-                        'objectId'             => ($newObjectData['@self']['id'] ?? 'unknown'),
-                        'published'            => $result['published'],
-                        'attachmentsPublished' => $result['attachmentsPublished'],
-                    ]
-                );
-            }
+	}//end handle()
 
-            // Log any errors that occurred during processing.
-            if (empty($result['errors']) === false) {
-                foreach ($result['errors'] as $error) {
-                    $logger->error(
-                        message: 'OpenCatalogi: Error processing object update event',
-                        context: [
-                            'error'    => $error,
-                            'objectId' => ($newObjectData['@self']['id'] ?? 'unknown'),
-                        ]
-                    );
-                }
-            }
-        } catch (\Exception $e) {
-            // Log unexpected errors and continue gracefully.
-            if (isset($logger) === false) {
-                $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
-            }
+	/**
+	 * Determine if an object update should trigger auto-publishing logic.
+	 *
+	 * @param array $newObjectData The updated object data.
+	 * @param \OCA\OpenRegister\Db\ObjectEntity|null $oldObjectEntity The original object entity.
+	 * @param array $publishingOptions The publishing configuration.
+	 *
+	 * @return boolean True if the update should be processed, false otherwise.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function shouldProcessUpdate(
+		array $newObjectData,
+		?\OCA\OpenRegister\Db\ObjectEntity $oldObjectEntity,
+		array $publishingOptions,
+	): bool {
+		// If auto-publish attachments is enabled, always process for published objects.
+		if ($publishingOptions['auto_publish_attachments'] === true) {
+			$isNewObjectPublished = $this->isObjectPublished(objectData: $newObjectData);
+			if ($isNewObjectPublished === true) {
+				return true;
+			}
+		}
 
-            $logger->error(
-                message: 'OpenCatalogi: Exception in object update event listener: '.$e->getMessage(),
-                context: ['exception' => $e]
-            );
-        }//end try
+		// If auto-publish objects is not enabled, no further processing needed.
+		if ($publishingOptions['auto_publish_objects'] === false) {
+			return false;
+		}
 
-    }//end handle()
+		// Check if publication status changed from unpublished to published.
+		$wasPublished = false;
+		if ($oldObjectEntity !== null) {
+			$wasPublished = $this->isObjectEntityPublished(objectEntity: $oldObjectEntity);
+		}
 
-    /**
-     * Determine if an object update should trigger auto-publishing logic.
-     *
-     * @param array                                  $newObjectData     The updated object data.
-     * @param \OCA\OpenRegister\Db\ObjectEntity|null $oldObjectEntity   The original object entity.
-     * @param array                                  $publishingOptions The publishing configuration.
-     *
-     * @return boolean True if the update should be processed, false otherwise.
-     */
-    private function shouldProcessUpdate(
-        array $newObjectData,
-        ?\OCA\OpenRegister\Db\ObjectEntity $oldObjectEntity,
-        array $publishingOptions
-    ): bool {
-        // If auto-publish attachments is enabled, always process for published objects.
-        if ($publishingOptions['auto_publish_attachments'] === true) {
-            $isNewObjectPublished = $this->isObjectPublished($newObjectData);
-            if ($isNewObjectPublished === true) {
-                return true;
-            }
-        }
+		$isPublished = $this->isObjectPublished(objectData: $newObjectData);
 
-        // If auto-publish objects is not enabled, no further processing needed.
-        if ($publishingOptions['auto_publish_objects'] === false) {
-            return false;
-        }
+		// Process if object became published.
+		if ($wasPublished === false && $isPublished === true) {
+			return true;
+		}
 
-        // Check if publication status changed from unpublished to published.
-        $wasPublished = false;
-        if ($oldObjectEntity !== null) {
-            $wasPublished = $this->isObjectEntityPublished($oldObjectEntity);
-        }
+		return false;
+	}//end shouldProcessUpdate()
 
-        $isPublished = $this->isObjectPublished($newObjectData);
+	/**
+	 * Check if an ObjectEntity is currently published.
+	 *
+	 * @param \OCA\OpenRegister\Db\ObjectEntity $objectEntity The object entity to check.
+	 *
+	 * @return boolean True if the object is published, false otherwise.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function isObjectEntityPublished(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): bool {
+		// Visibility is governed by the object's own publicationDate/depublicationDate
+		// fields under the live OpenRegister RBAC model (APB-006); the removed
+		// object-level @self.published getters no longer exist.
+		$objectData = $objectEntity->jsonSerialize();
+		if (is_array($objectData) === false) {
+			return false;
+		}
 
-        // Process if object became published.
-        if ($wasPublished === false && $isPublished === true) {
-            return true;
-        }
+		return $this->isObjectPublished(objectData: $objectData);
+	}//end isObjectEntityPublished()
 
-        return false;
+	/**
+	 * Check if an object data array represents a published object.
+	 *
+	 * @param array $objectData The object data to check.
+	 *
+	 * @return boolean True if the object is published, false otherwise.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function isObjectPublished(array $objectData): bool {
+		// Live OpenRegister RBAC visibility model (APB-006): published iff the
+		// object's own publicationDate is set and reached, and any
+		// depublicationDate is still in the future. The removed object-level
+		// @self.published predicate is no longer consulted.
+		$publicationDate = ($objectData['publicationDate'] ?? null);
+		$depublicationDate = ($objectData['depublicationDate'] ?? null);
 
-    }//end shouldProcessUpdate()
+		if ($publicationDate === null || $publicationDate === '') {
+			return false;
+		}
 
-    /**
-     * Check if an ObjectEntity is currently published.
-     *
-     * @param \OCA\OpenRegister\Db\ObjectEntity $objectEntity The object entity to check.
-     *
-     * @return boolean True if the object is published, false otherwise.
-     */
-    private function isObjectEntityPublished(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): bool
-    {
-        $published   = $objectEntity->getPublished();
-        $depublished = $objectEntity->getDepublished();
+		$now = time();
+		$publishedTime = strtotime((string)$publicationDate);
+		if ($publishedTime === false || $publishedTime > $now) {
+			return false;
+		}
 
-        // Object is published if it has a published date and no depublished date.
-        if ($published !== null && $depublished === null) {
-            return true;
-        }
+		if ($depublicationDate === null || $depublicationDate === '') {
+			return true;
+		}
 
-        // Object is published if published date is after depublished date.
-        if ($published !== null && $depublished !== null) {
-            return $published > $depublished;
-        }
+		$depublishedTime = strtotime((string)$depublicationDate);
+		return ($depublishedTime === false || $depublishedTime > $now);
+	}//end isObjectPublished()
 
-        return false;
+	/**
+	 * Convert ObjectEntity to array format for EventService.
+	 *
+	 * @param \OCA\OpenRegister\Db\ObjectEntity $objectEntity The object entity to convert.
+	 *
+	 * @return array The object data in array format.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array {
+		// Use the ObjectEntity's jsonSerialize method to get array representation.
+		$objectData = $objectEntity->jsonSerialize();
 
-    }//end isObjectEntityPublished()
+		// Ensure the @self metadata is properly structured.
+		if (isset($objectData['@self']) === false) {
+			$objectData['@self'] = [];
+		}
 
-    /**
-     * Check if an object data array represents a published object.
-     *
-     * @param array $objectData The object data to check.
-     *
-     * @return boolean True if the object is published, false otherwise.
-     */
-    private function isObjectPublished(array $objectData): bool
-    {
-        $published   = $objectData['@self']['published'] ?? null;
-        $depublished = $objectData['@self']['depublished'] ?? null;
+		// Add essential metadata for event processing.
+		$objectData['@self']['id'] = $objectEntity->getUuid();
+		$objectData['@self']['uuid'] = $objectEntity->getUuid();
+		$objectData['@self']['register'] = $objectEntity->getRegister();
+		$objectData['@self']['schema'] = $objectEntity->getSchema();
+		// Visibility is governed by the object's own publicationDate/depublicationDate
+		// fields (already present via jsonSerialize) under the live OpenRegister RBAC
+		// model (APB-006). The removed object-level @self.published is no longer set.
+		// Don't fetch files to avoid infinite recursion.
+		$objectData['@self']['files'] = [];
 
-        // Object is published if it has a published date and no depublished date.
-        if ($published !== null && $depublished === null) {
-            return true;
-        }
-
-        // Object is published if published date is after depublished date.
-        if ($published !== null && $depublished !== null) {
-            $publishedTime   = strtotime($published);
-            $depublishedTime = strtotime($depublished);
-            return $publishedTime > $depublishedTime;
-        }
-
-        return false;
-
-    }//end isObjectPublished()
-
-    /**
-     * Convert ObjectEntity to array format for EventService.
-     *
-     * @param \OCA\OpenRegister\Db\ObjectEntity $objectEntity The object entity to convert.
-     *
-     * @return array The object data in array format.
-     */
-    private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array
-    {
-        // Use the ObjectEntity's jsonSerialize method to get array representation.
-        $objectData = $objectEntity->jsonSerialize();
-
-        // Ensure the @self metadata is properly structured.
-        if (isset($objectData['@self']) === false) {
-            $objectData['@self'] = [];
-        }
-
-        // Add essential metadata for event processing.
-        $objectData['@self']['id']          = $objectEntity->getUuid();
-        $objectData['@self']['uuid']        = $objectEntity->getUuid();
-        $objectData['@self']['register']    = $objectEntity->getRegister();
-        $objectData['@self']['schema']      = $objectEntity->getSchema();
-        $objectData['@self']['published']   = $objectEntity->getPublished()?->format('c');
-        $objectData['@self']['depublished'] = $objectEntity->getDepublished()?->format('c');
-
-        // Don't fetch files to avoid infinite recursion.
-        $objectData['@self']['files'] = [];
-
-        return $objectData;
-
-    }//end convertObjectEntityToArray()
+		return $objectData;
+	}//end convertObjectEntityToArray()
 }//end class

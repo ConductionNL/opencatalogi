@@ -10,14 +10,11 @@ on:
         type: boolean
         default: true
 
-permissions:
-  contents: read
+# The callee needs `issues: write`; a caller capped at `contents: read` makes
+# the call unsatisfiable.
 
 jobs:
   triage:
-    # @main, not @feature/openspec-project-sync — that branch no longer exists
-    # on ConductionNL/.github, so GitHub could not resolve the callee and the
-    # run failed before any job was created.
     uses: ConductionNL/.github/.github/workflows/issue-triage.yml@main
     with:
       app-name: opencatalogi

@@ -1,73 +1,82 @@
 /**
  * Organization entity class
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { SafeParseReturnType, z } from 'zod'
-import { TOrganization } from './organization.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TOrganization } from './organization.types'
+
+import { z } from 'zod'
 
 /** @typedef {import('./organization.types').TOrganization} TOrganization */
 /** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
 
 /**
  * Organization class representing an organization in the system
+ *
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Organization implements TOrganization {
-
 	/**
 	 * Unique identifier of the organization
 	 */
-	public id: string
+	public id!: string
 
 	/**
 	 * Name of the organization
 	 */
-	public name: string
+	public name!: string
 
 	/**
 	 * Brief summary of the organization
 	 */
-	public summary: string
+	public summary!: string
 
 	/**
 	 * Detailed description of the organization
 	 */
-	public description: string
+	public description!: string
 
 	/**
 	 * Organization Identification Number (OIN)
 	 */
-	public oin: string
+	public oin!: string
 
 	/**
 	 * TOOI identifier for the organization
 	 */
-	public tooi: string
+	public tooi!: string
 
 	/**
 	 * RSIN number for tax identification
 	 */
-	public rsin: string
+	public rsin!: string
 
 	/**
 	 * PKI certificate information
 	 */
-	public pki: string
+	public pki!: string
 
 	/**
 	 * URL to the organization's logo or image
 	 */
-	public image: string
+	public image!: string
 
 	/**
 	 * Creates a new Organization instance
+	 *
 	 * @param data - Organization data
+	 *
+	 * @spec openspec/specs/entity-typescript-models/spec.md
 	 */
 	constructor(data: TOrganization) {
 		this.hydrate(data)
@@ -75,6 +84,7 @@ export class Organization implements TOrganization {
 
 	/**
 	 * Hydrates the organization instance with data
+	 *
 	 * @param data - Organization data to hydrate with
 	 * @private
 	 */
@@ -92,7 +102,8 @@ export class Organization implements TOrganization {
 
 	/**
 	 * Validates the organization data
-	 * @return {SafeParseReturnType<TOrganization, unknown>} SafeParseReturnType containing validation results
+	 *
+	 * @return SafeParseReturnType containing validation results
 	 */
 	public validate(): SafeParseReturnType<TOrganization, unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/ewlydzkylhygj-create-organization
@@ -101,10 +112,22 @@ export class Organization implements TOrganization {
 			summary: z.string().min(1, 'is verplicht'),
 			description: z.string(),
 			// Regex could be wrong since there is no clear public information on the format of any of these.
-			oin: z.string().regex(/^0000000\d{10}000$/, 'is niet een geldige OIN nummer').or(z.literal('')),
-			tooi: z.string().regex(/^\w{2,}\d{4}$/, 'is niet een geldige TOOI nummer').or(z.literal('')),
-			rsin: z.string().regex(/^\d{9}$/, 'is niet een geldige RSIN nummer').or(z.literal('')),
-			pki: z.string().regex(/^\d{1,}$/, 'is niet een geldige PKI nummer').or(z.literal('')),
+			oin: z
+				.string()
+				.regex(/^0000000\d{10}000$/, 'is niet een geldige OIN nummer')
+				.or(z.literal('')),
+			tooi: z
+				.string()
+				.regex(/^\w{2,}\d{4}$/, 'is niet een geldige TOOI nummer')
+				.or(z.literal('')),
+			rsin: z
+				.string()
+				.regex(/^\d{9}$/, 'is niet een geldige RSIN nummer')
+				.or(z.literal('')),
+			pki: z
+				.string()
+				.regex(/^\d{1,}$/, 'is niet een geldige PKI nummer')
+				.or(z.literal('')),
 			image: z.string(),
 		})
 
@@ -114,5 +137,4 @@ export class Organization implements TOrganization {
 
 		return result
 	}
-
 }

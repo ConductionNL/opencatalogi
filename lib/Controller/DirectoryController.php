@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi Directory Controller.
  *
@@ -11,9 +12,15 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -23,239 +30,284 @@ use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
+use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling directory-related operations.
  */
-class DirectoryController extends Controller
-{
+class DirectoryController extends Controller {
 
-    /**
-     * Allowed CORS methods.
-     *
-     * @var string
-     */
-    private string $corsMethods;
+	/**
+	 * Allowed CORS methods.
+	 *
+	 * @var string
+	 */
+	private string $corsMethods;
 
-    /**
-     * Allowed CORS headers.
-     *
-     * @var string
-     */
-    private string $corsAllowedHeaders;
+	/**
+	 * Allowed CORS headers.
+	 *
+	 * @var string
+	 */
+	private string $corsAllowedHeaders;
 
-    /**
-     * CORS max age.
-     *
-     * @var integer
-     */
-    private int $corsMaxAge;
+	/**
+	 * CORS max age.
+	 *
+	 * @var integer
+	 */
+	private int $corsMaxAge;
 
-    /**
-     * DirectoryController constructor.
-     *
-     * @param string           $appName            The name of the app.
-     * @param IRequest         $request            The request object.
-     * @param DirectoryService $directoryService   The directory service.
-     * @param IL10N            $l10n               The localization service.
-     * @param string           $corsMethods        Allowed CORS methods.
-     * @param string           $corsAllowedHeaders Allowed CORS headers.
-     * @param integer          $corsMaxAge         CORS max age.
-     */
-    public function __construct(
-        $appName,
-        IRequest $request,
-        private readonly DirectoryService $directoryService,
-        private readonly IL10N $l10n,
-        string $corsMethods='PUT, POST, GET, DELETE, PATCH',
-        string $corsAllowedHeaders='Authorization, Content-Type, Accept',
-        int $corsMaxAge=1728000
-    ) {
-        parent::__construct($appName, $request);
-        $this->corsMethods        = $corsMethods;
-        $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge         = $corsMaxAge;
+	/**
+	 * DirectoryController constructor.
+	 *
+	 * @param string $appName The name of the app.
+	 * @param IRequest $request The request object.
+	 * @param DirectoryService $directoryService The directory service.
+	 * @param IL10N $l10n The localization service.
+	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param IAppConfig|null $config App config for CORS allowlist (optional).
+	 * @param string $corsMethods Allowed CORS methods.
+	 * @param string $corsAllowedHeaders Allowed CORS headers.
+	 * @param integer $corsMaxAge CORS max age.
+	 */
+	public function __construct(
+		$appName,
+		IRequest $request,
+		private readonly DirectoryService $directoryService,
+		private readonly IL10N $l10n,
+		private readonly ?LoggerInterface $logger = null,
+		private readonly ?IAppConfig $config = null,
+		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		int $corsMaxAge = 1728000,
+	) {
+		parent::__construct(appName: $appName, request: $request);
+		$this->corsMethods = $corsMethods;
+		$this->corsAllowedHeaders = $corsAllowedHeaders;
+		$this->corsMaxAge = $corsMaxAge;
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Implements a preflighted CORS response for OPTIONS requests.
-     *
-     * @return Response The CORS response.
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     * @PublicPage
-     */
-    public function preflightedCors(): Response
-    {
-        // Determine the origin.
-        $origin = $this->request->getHeader('Origin');
-        if ($origin === '') {
-            $origin = '*';
-        }
+	/**
+	 * Resolve the Access-Control-Allow-Origin header value for the current request.
+	 *
+	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
+	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
+	 * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
+	 *
+	 * @return string The header value to use for Access-Control-Allow-Origin.
+	 *
+	 * @spec exclude CORS-policy plumbing; reads IAppConfig allowlist, no Origin reflection.
+	 */
+	private function resolveAllowedOrigin(): string {
+		$configured = '*';
+		if ($this->config !== null) {
+			$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
+		}
 
-        // Create and configure the response.
-        $response = new Response();
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
-        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-        $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
-        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-        $response->addHeader('Access-Control-Allow-Credentials', 'false');
+		if ($configured === '' || $configured === '*') {
+			return '*';
+		}
 
-        return $response;
+		$allowlist = array_filter(
+			array_map('trim', explode(',', $configured)),
+			static fn (string $entry): bool => $entry !== ''
+		);
 
-    }//end preflightedCors()
+		$callerOrigin = $this->request->getHeader('Origin');
+		if ($callerOrigin === '') {
+			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
+		}
 
-    /**
-     * Retrieve all directories.
-     *
-     * @return JSONResponse The JSON response containing all directories.
-     *
-     * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     * @PublicPage
-     */
-    public function index(): JSONResponse
-    {
-        try {
-            // Retrieve all request parameters.
-            $requestParams = $this->request->getParams();
+		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
+			return $callerOrigin;
+		}
 
-            // Use the directory service to get combined directory data.
-            $data = $this->directoryService->getDirectory($requestParams);
+		return ($allowlist[0] ?? '*');
+	}//end resolveAllowedOrigin()
 
-            // Create JSON response with CORS headers.
-            $response = new JSONResponse($data);
-            $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
+	/**
+	 * Implements a preflighted CORS response for OPTIONS requests.
+	 *
+	 * @return Response The CORS response.
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
+	public function preflightedCors(): Response {
+		$response = new Response();
+		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
+		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
-            $response->addHeader('Access-Control-Allow-Origin', $origin);
-            $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-            $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		return $response;
+	}//end preflightedCors()
 
-            return $response;
-        } catch (\Exception $e) {
-            // Handle errors gracefully with CORS headers.
-            $response = new JSONResponse(
-                data: [
-                    'message' => $this->l10n->t('Failed to retrieve directory data'),
-                    'error'   => $e->getMessage(),
-                ],
-                statusCode: 500
-            );
-            $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
+	/**
+	 * Retrieve all directories.
+	 *
+	 * @return JSONResponse The JSON response containing all directories.
+	 *
+	 * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
+	public function index(): JSONResponse {
+		try {
+			// Retrieve all request parameters.
+			$requestParams = $this->request->getParams();
 
-            $response->addHeader('Access-Control-Allow-Origin', $origin);
-            $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-            $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+			// Use the directory service to get combined directory data.
+			$data = $this->directoryService->getDirectory($requestParams);
 
-            return $response;
-        }//end try
+			// Create JSON response with CORS headers (#735 — never reflect Origin).
+			$response = new JSONResponse($data);
+			$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+			$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+			$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
-    }//end index()
+			return $response;
+		} catch (\Exception $e) {
+			// Public endpoint — log details server-side, return generic body (#735).
+			$this->logger?->error(
+				'[DirectoryController::index] Failed to retrieve directory data',
+				[
+					'error' => $e->getMessage(),
+					'trace' => $e->getTraceAsString(),
+				]
+			);
+			$response = new JSONResponse(
+				data: ['error' => $this->l10n->t('Internal server error')],
+				statusCode: 500
+			);
+			$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+			$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+			$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
-    /**
-     * Synchronize with an external directory.
-     *
-     * Synchronizes listings from a specific external directory URL.
-     * Accepts a 'directory' parameter containing the URL to sync with.
-     *
-     * @return JSONResponse The JSON response containing the synchronization result.
-     *
-     * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
-     * @throws GuzzleException
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     * @PublicPage
-     */
-    public function update(): JSONResponse
-    {
-        // Get the directory URL from the request parameters.
-        $directoryUrl = $this->request->getParam('directory');
+			return $response;
+		}//end try
 
-        // Validate that directory URL is provided.
-        if (empty($directoryUrl) === true) {
-            $response = new JSONResponse(
-                data: [
-                    'message' => $this->l10n->t('Property "directory" is required'),
-                    'error'   => $this->l10n->t('Missing directory URL parameter'),
-                ],
-                statusCode: 400
-            );
+	}//end index()
 
-            // Add CORS headers for public API access.
-            $origin = $this->request->getHeader('Origin');
-            if ($origin === '') {
-                $origin = '*';
-            }
+	/**
+	 * Sync with an external directory — federation broadcast-receive endpoint.
+	 *
+	 * Public + no-CSRF because peers POST here (via `BroadcastService`) to notify
+	 * us of their existence. **Admin UIs must not call this** — they should hit
+	 * `POST /api/listings/add` (admin-only, CSRF-protected — WOO-513 migrated the
+	 * two remaining callers). Response wrap here is `{message, data: $result}`
+	 * whereas `/api/listings/add` returns `$result` bare; `AddDirectoryModal.vue`
+	 * handles both via `response.data.data ?? response.data`.
+	 *
+	 * @return JSONResponse The JSON response containing the synchronization result.
+	 *
+	 * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
+	 * @throws GuzzleException
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	#[AnonRateLimit(limit: 30, period: 60)]
+	public function update(): JSONResponse {
+		// Get the directory URL from the request parameters.
+		$directoryUrl = $this->request->getParam('directory');
 
-            $response->addHeader('Access-Control-Allow-Origin', $origin);
-            $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-            $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		// Validate that directory URL is provided.
+		if (empty($directoryUrl) === true) {
+			$response = new JSONResponse(
+				data: [
+					'message' => $this->l10n->t('Property "directory" is required'),
+					'error' => $this->l10n->t('Missing directory URL parameter'),
+				],
+				statusCode: 400
+			);
 
-            return $response;
-        }//end if
+			// Add CORS headers for public API access (#735 — never reflect Origin).
+			$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+			$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+			$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
-        // Sync the directory with the provided URL.
-        try {
-            $data = $this->directoryService->syncDirectory($directoryUrl);
+			return $response;
+		}//end if
 
-            // Return success response with sync results.
-            $response = new JSONResponse(
-                [
-                    'message' => $this->l10n->t('Directory synchronized successfully'),
-                    'data'    => $data,
-                ]
-            );
-        } catch (\InvalidArgumentException $e) {
-            // Handle validation errors (invalid URL, etc.).
-            $response = new JSONResponse(
-                data: [
-                    'message' => $this->l10n->t('Invalid directory URL'),
-                    'error'   => $e->getMessage(),
-                ],
-                statusCode: 400
-            );
-        } catch (GuzzleException $e) {
-            // Handle HTTP/network errors.
-            $response = new JSONResponse(
-                data: [
-                    'message' => $this->l10n->t('Failed to fetch directory data'),
-                    'error'   => $e->getMessage(),
-                ],
-                statusCode: 502
-            );
-        } catch (\Exception $e) {
-            // Handle other unexpected errors.
-            $response = new JSONResponse(
-                data: [
-                    'message' => $this->l10n->t('Directory synchronization failed'),
-                    'error'   => $e->getMessage(),
-                ],
-                statusCode: 500
-            );
-        }//end try
+		// Sync the directory with the provided URL.
+		try {
+			$data = $this->directoryService->syncDirectory($directoryUrl);
 
-        // Add CORS headers for public API access.
-        $origin = $this->request->getHeader('Origin');
-        if ($origin === '') {
-            $origin = '*';
-        }
+			// Return success response with sync results.
+			$response = new JSONResponse(
+				[
+					'message' => $this->l10n->t('Directory synchronized successfully'),
+					'data' => $data,
+				]
+			);
+		} catch (\InvalidArgumentException $e) {
+			// Handle validation errors (invalid URL, etc.). The raw message here is
+			// safe because it's the caller's own input being echoed back.
+			$response = new JSONResponse(
+				data: [
+					'message' => $this->l10n->t('Invalid directory URL'),
+					'error' => $e->getMessage(),
+				],
+				statusCode: 400
+			);
+		} catch (GuzzleException $e) {
+			// Handle HTTP/network errors. Do NOT reflect the upstream response body
+			// (it may contain internal content from an SSRF-style probe). Log details
+			// server-side instead and return a generic message to the caller.
+			$this->logger?->warning(
+				'[DirectoryController::update] Upstream fetch failed',
+				['error' => $e->getMessage()]
+			);
+			$response = new JSONResponse(
+				data: [
+					'message' => $this->l10n->t('Failed to fetch directory data'),
+					'error' => $this->l10n->t('Unable to reach the requested directory'),
+				],
+				statusCode: 502
+			);
+		} catch (\Exception $e) {
+			// Handle other unexpected errors. Public endpoint — log server-side, return
+			// a generic body so internal details (paths, SQL fragments) do not leak (#735).
+			$this->logger?->error(
+				'[DirectoryController::update] Directory synchronization failed',
+				[
+					'error' => $e->getMessage(),
+					'trace' => $e->getTraceAsString(),
+				]
+			);
+			$response = new JSONResponse(
+				data: ['error' => $this->l10n->t('Internal server error')],
+				statusCode: 500
+			);
+		}//end try
 
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
-        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		// Add CORS headers for public API access (#735 — never reflect Origin).
+		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
-        return $response;
-
-    }//end update()
+		return $response;
+	}//end update()
 }//end class

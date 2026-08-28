@@ -1,23 +1,23 @@
 <script setup>
-import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog v-if="navigationStore.modal === 'viewObject'"
+	<NcDialog
+		v-if="navigationStore.modal === 'viewObject'"
 		:name="getModalTitle()"
 		size="large"
-		:can-close="true"
+		:canClose="true"
 		@update:open="handleDialogClose">
 		<template #name>
 			<div class="dialog__name">
-				<PublishedIcon v-if="shouldShowPublishedIcon"
+				<PublishedIcon
+					v-if="shouldShowPublishedIcon"
 					:object="currentObject"
 					:size="30"
 					class="status-icon draft-icon" />
-				<Pencil v-else
-					:size="30"
-					class="status-icon draft-icon" />
+				<Pencil v-else :size="30" class="status-icon draft-icon" />
 				<span>{{ getModalTitle() }}</span>
 			</div>
 		</template>
@@ -25,50 +25,102 @@ import { EventBus } from '../../eventBus.js'
 			<!-- Display Object -->
 			<div v-if="objectStore.getActiveObject('publication') || isNewObject">
 				<!-- For new objects, show catalog/register/schema selection first -->
-				<div v-if="isNewObject && !hasSelectedSchema" class="selectionContainer">
+				<div
+					v-if="isNewObject && !hasSelectedSchema"
+					class="selectionContainer">
 					<NcEmptyContent
 						v-if="catalogOptions.length === 0"
 						:name="t('opencatalogi', 'No catalogs available')"
-						:description="t('opencatalogi', 'You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.')">
+						:description="
+							t(
+								'opencatalogi',
+								'You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.',
+							)
+						">
 						<template #icon>
 							<FolderOutline :size="64" />
 						</template>
 					</NcEmptyContent>
-					<div v-if="catalogOptions.length > 1 && !isLockedCatalog" class="selectionStep">
+					<!-- Single catalog auto-selected but no register/schema reachable — this
+					     happens when the catalog has no `registers`/`schemas` configured,
+					     which otherwise leaves the modal body completely blank. -->
+					<NcEmptyContent
+						v-else-if="selectionStalled"
+						:name="
+							t(
+								'opencatalogi',
+								'Catalog is not configured for publications',
+							)
+						"
+						:description="selectionStalledReason">
+						<template #icon>
+							<FolderOutline :size="64" />
+						</template>
+					</NcEmptyContent>
+					<div
+						v-if="catalogOptions.length > 1 && !isLockedCatalog"
+						class="selectionStep">
 						<h3>{{ t('opencatalogi', 'Select Catalog') }}</h3>
-						<p>{{ t('opencatalogi', 'Choose the catalog where this publication will be stored.') }}</p>
+						<p>
+							{{
+								t(
+									'opencatalogi',
+									'Choose the catalog where this publication will be stored.',
+								)
+							}}
+						</p>
 						<NcSelect
 							v-model="selectedCatalog"
 							:options="catalogOptions"
-							:input-label="t('opencatalogi', 'Catalog')"
+							:inputLabel="t('opencatalogi', 'Catalog')"
 							:placeholder="t('opencatalogi', 'Select a catalog...')"
 							:disabled="catalogStore.isLoading" />
 					</div>
 
-					<div v-if="selectedCatalog && registerOptions.length > 1" class="selectionStep">
+					<div
+						v-if="selectedCatalog && registerOptions.length > 1"
+						class="selectionStep">
 						<h3>{{ t('opencatalogi', 'Select Register') }}</h3>
-						<p>{{ t('opencatalogi', 'Choose the register that will store this publication.') }}</p>
+						<p>
+							{{
+								t(
+									'opencatalogi',
+									'Choose the register that will store this publication.',
+								)
+							}}
+						</p>
 						<NcSelect
 							v-model="selectedRegister"
 							:options="registerOptions"
-							:input-label="t('opencatalogi', 'Register')"
+							:inputLabel="t('opencatalogi', 'Register')"
 							:placeholder="t('opencatalogi', 'Select a register...')"
 							:disabled="catalogStore.isLoading" />
 					</div>
 
-					<div v-if="selectedRegister && schemaOptions.length > 1" class="selectionStep">
+					<div
+						v-if="selectedRegister && schemaOptions.length > 1"
+						class="selectionStep">
 						<h3>{{ t('opencatalogi', 'Select Schema') }}</h3>
-						<p>{{ t('opencatalogi', 'Choose the schema that defines the structure of this publication.') }}</p>
+						<p>
+							{{
+								t(
+									'opencatalogi',
+									'Choose the schema that defines the structure of this publication.',
+								)
+							}}
+						</p>
 						<NcSelect
 							v-model="selectedSchema"
 							:options="schemaOptions"
-							:input-label="t('opencatalogi', 'Schema')"
+							:inputLabel="t('opencatalogi', 'Schema')"
 							:placeholder="t('opencatalogi', 'Select a schema...')"
 							:disabled="catalogStore.isLoading" />
 					</div>
 
-					<div v-if="hasSelectedSchema && !allSelectionsComplete" class="selectionStep">
-						<NcButton type="primary" @click="proceedToProperties">
+					<div
+						v-if="hasSelectedSchema && !allSelectionsComplete"
+						class="selectionStep">
+						<NcButton variant="primary" @click="proceedToProperties">
 							<template #icon>
 								<ArrowRight :size="20" />
 							</template>
@@ -78,16 +130,31 @@ import { EventBus } from '../../eventBus.js'
 				</div>
 
 				<!-- For new objects with schema selected, show properties table -->
-				<template v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)">
-					<NcNoteCard v-if="showRequiredFieldError && hasMissingRequired"
+				<template
+					v-else-if="
+						isNewObject && (hasSelectedSchema || allSelectionsComplete)
+					">
+					<NcNoteCard
+						v-if="showRequiredFieldError && hasMissingRequired"
 						type="error"
 						class="required-field-error">
-						{{ t('opencatalogi', 'Please fill in the required fields: {fields}.', { fields: missingRequiredLabels.join(', ') }) }}
+						{{
+							t(
+								'opencatalogi',
+								'Please fill in the required fields: {fields}.',
+								{ fields: missingRequiredLabels.join(', ') },
+							)
+						}}
 					</NcNoteCard>
-					<NcNoteCard v-if="showRequiredFieldError && hasFieldErrors"
+					<NcNoteCard
+						v-if="showRequiredFieldError && hasFieldErrors"
 						type="error"
 						class="required-field-error">
-						<p>{{ t('opencatalogi', 'Some fields have invalid values:') }}</p>
+						<p>
+							{{
+								t('opencatalogi', 'Some fields have invalid values:')
+							}}
+						</p>
 						<ul>
 							<li v-for="err in fieldErrors" :key="err.key">
 								<strong>{{ err.label }}:</strong> {{ err.error }}
@@ -96,44 +163,81 @@ import { EventBus } from '../../eventBus.js'
 					</NcNoteCard>
 					<PropertiesPanel
 						v-bind="propertiesPanelBindings"
-						@update:selected-property="selectedProperty = $event"
-						@update:property-value="onPropertyValueUpdate"
-						@drop-property="dropProperty" />
+						@update:selectedProperty="selectedProperty = $event"
+						@update:propertyValue="onPropertyValueUpdate"
+						@dropProperty="dropProperty" />
 				</template>
 
 				<!-- For existing objects, show tabs -->
 				<div v-else class="tabContainer">
-					<BTabs v-model="activeTab" content-class="mt-3" justified>
-						<BTab :title="t('opencatalogi', 'Properties')" active>
+					<AppTabs v-model="activeTab" contentClass="mt-3" justified>
+						<AppTab :title="t('opencatalogi', 'Properties')" active>
 							<PropertiesPanel
 								v-bind="propertiesPanelBindings"
-								@update:selected-property="selectedProperty = $event"
-								@update:property-value="onPropertyValueUpdate"
-								@drop-property="dropProperty" />
-						</BTab>
-						<BTab :title="t('opencatalogi', 'Metadata')">
+								@update:selectedProperty="selectedProperty = $event"
+								@update:propertyValue="onPropertyValueUpdate"
+								@dropProperty="dropProperty" />
+						</AppTab>
+						<AppTab :title="t('opencatalogi', 'Metadata')">
 							<CnMetadataTab
 								:item="currentObject"
-								:replace-rows="true"
-								:extra-rows="metadataExtraRows" />
-						</BTab>
-						<BTab>
+								:replaceRows="true"
+								:extraRows="metadataExtraRows" />
+						</AppTab>
+						<AppTab>
 							<template #title>
 								<div class="tab-title">
 									<span>{{ t('opencatalogi', 'Files') }}</span>
-									<NcLoadingIcon v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)" :size="16" />
-									<NcCounterBubble v-else :count="filesTotalItems" />
+									<NcLoadingIcon
+										v-if="
+											currentObject
+											&& objectStore.isLoading(
+												`publication_${currentObject.id}_files`,
+											)
+										"
+										:size="16" />
+									<NcCounterBubble
+										v-else
+										:count="filesTotalItems" />
 								</div>
 							</template>
 							<!-- Info box for new objects -->
-							<NcNoteCard v-if="isNewObject" type="info" class="files-info-card">
-								<p><strong>{{ t('opencatalogi', 'Files can be added after the publication is created.') }}</strong></p>
-								<p>{{ t('opencatalogi', "Save the publication first, then you'll be able to upload and manage files.") }}</p>
+							<NcNoteCard
+								v-if="isNewObject"
+								type="info"
+								class="files-info-card">
+								<p>
+									<strong>{{
+										t(
+											'opencatalogi',
+											'Files can be added after the publication is created.',
+										)
+									}}</strong>
+								</p>
+								<p>
+									{{
+										t(
+											'opencatalogi',
+											"Save the publication first, then you'll be able to upload and manage files.",
+										)
+									}}
+								</p>
 							</NcNoteCard>
 
-							<NcEmptyContent v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)"
+							<NcEmptyContent
+								v-if="
+									currentObject
+									&& objectStore.isLoading(
+										`publication_${currentObject.id}_files`,
+									)
+								"
 								:title="t('opencatalogi', 'Loading files...')"
-								:description="t('opencatalogi', 'Loading files for this publication...')">
+								:description="
+									t(
+										'opencatalogi',
+										'Loading files for this publication...',
+									)
+								">
 								<template #icon>
 									<NcLoadingIcon :size="64" />
 								</template>
@@ -141,42 +245,128 @@ import { EventBus } from '../../eventBus.js'
 							<template v-else-if="paginatedFiles.length > 0">
 								<div class="multi-actions-container">
 									<NcActions
-										:force-name="true"
+										:forceName="true"
 										:disabled="selectedAttachments.length === 0"
-										:title="selectedAttachments.length === 0 ? t('opencatalogi', 'Select one or more files to use mass actions') : t('opencatalogi', 'Mass actions ({count} selected)', { count: selectedAttachments.length })"
-										:menu-name="t('opencatalogi', 'Mass Actions ({count})', { count: selectedAttachments.length })">
+										:title="
+											selectedAttachments.length === 0
+												? t(
+														'opencatalogi',
+														'Select one or more files to use mass actions',
+													)
+												: t(
+														'opencatalogi',
+														'Mass actions ({count} selected)',
+														{
+															count: selectedAttachments.length,
+														},
+													)
+										"
+										:menuName="
+											t(
+												'opencatalogi',
+												'Mass Actions ({count})',
+												{
+													count: selectedAttachments.length,
+												},
+											)
+										">
 										<template #icon>
 											<FormatListChecks :size="20" />
 										</template>
 										<NcActionButton
-											:disabled="publishLoading.length > 0 || publishableCount === 0 || !canUpdateCurrentObject"
-											close-after-click
+											:disabled="
+												publishLoading.length > 0
+												|| publishableCount === 0
+											"
+											closeAfterClick
 											@click="publishSelectedFiles">
 											<template #icon>
-												<NcLoadingIcon v-if="publishLoading.length > 0" :size="20" />
+												<NcLoadingIcon
+													v-if="publishLoading.length > 0"
+													:size="20" />
 												<FileOutline v-else :size="20" />
 											</template>
-											{{ publishableCount === 1 ? t('opencatalogi', 'Publish {count} attachment', { count: publishableCount }) : t('opencatalogi', 'Publish {count} attachments', { count: publishableCount }) }}
+											{{
+												publishableCount === 1
+													? t(
+															'opencatalogi',
+															'Publish {count} attachment',
+															{
+																count: publishableCount,
+															},
+														)
+													: t(
+															'opencatalogi',
+															'Publish {count} attachments',
+															{
+																count: publishableCount,
+															},
+														)
+											}}
 										</NcActionButton>
 										<NcActionButton
-											:disabled="depublishLoading.length > 0 || depublishableCount === 0 || !canUpdateCurrentObject"
-											close-after-click
+											:disabled="
+												depublishLoading.length > 0
+												|| depublishableCount === 0
+											"
+											closeAfterClick
 											@click="depublishSelectedFiles">
 											<template #icon>
-												<NcLoadingIcon v-if="depublishLoading.length > 0" :size="20" />
+												<NcLoadingIcon
+													v-if="
+														depublishLoading.length > 0
+													"
+													:size="20" />
 												<LockOutline v-else :size="20" />
 											</template>
-											{{ depublishableCount === 1 ? t('opencatalogi', 'Depublish {count} attachment', { count: depublishableCount }) : t('opencatalogi', 'Depublish {count} attachments', { count: depublishableCount }) }}
+											{{
+												depublishableCount === 1
+													? t(
+															'opencatalogi',
+															'Depublish {count} attachment',
+															{
+																count: depublishableCount,
+															},
+														)
+													: t(
+															'opencatalogi',
+															'Depublish {count} attachments',
+															{
+																count: depublishableCount,
+															},
+														)
+											}}
 										</NcActionButton>
 										<NcActionButton
-											:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0 || !canUpdateCurrentObject"
-											close-after-click
+											:disabled="
+												fileIdsLoading.length > 0
+												|| selectedAttachments.length === 0
+											"
+											closeAfterClick
 											@click="deleteSelectedFiles">
 											<template #icon>
-												<NcLoadingIcon v-if="fileIdsLoading.length > 0" :size="20" />
+												<NcLoadingIcon
+													v-if="fileIdsLoading.length > 0"
+													:size="20" />
 												<Delete v-else :size="20" />
 											</template>
-											{{ selectedAttachments.length === 1 ? t('opencatalogi', 'Delete {count} attachment', { count: selectedAttachments.length }) : t('opencatalogi', 'Delete {count} attachments', { count: selectedAttachments.length }) }}
+											{{
+												selectedAttachments.length === 1
+													? t(
+															'opencatalogi',
+															'Delete {count} attachment',
+															{
+																count: selectedAttachments.length,
+															},
+														)
+													: t(
+															'opencatalogi',
+															'Delete {count} attachments',
+															{
+																count: selectedAttachments.length,
+															},
+														)
+											}}
 										</NcActionButton>
 									</NcActions>
 								</div>
@@ -184,105 +374,284 @@ import { EventBus } from '../../eventBus.js'
 									<table class="viewTable">
 										<thead>
 											<tr class="viewTableRow">
-												<th class="tableColumnCheckbox">
+												<th
+													scope="col"
+													class="tableColumnCheckbox">
 													<NcCheckboxRadioSwitch
-														:checked="allFilesSelected"
-														:indeterminate="someFilesSelected"
-														@update:checked="toggleSelectAllFiles" />
+														:aria-label="
+															t(
+																'opencatalogi',
+																'Select all files on this page',
+															)
+														"
+														:modelValue="
+															allFilesSelected
+														"
+														:indeterminate="
+															someFilesSelected
+														"
+														@update:modelValue="
+															toggleSelectAllFiles
+														" />
 												</th>
-												<th class="tableColumnExpanded table-row-title">
+												<th
+													scope="col"
+													class="tableColumnExpanded table-row-title">
 													{{ t('opencatalogi', 'Name') }}
 												</th>
-												<th class="tableColumnConstrained short-column">
+												<th
+													scope="col"
+													class="tableColumnConstrained short-column">
 													{{ t('opencatalogi', 'Size') }}
 												</th>
-												<th class="tableColumnConstrained table-row-type">
+												<th
+													scope="col"
+													class="tableColumnConstrained table-row-type">
 													{{ t('opencatalogi', 'Type') }}
 												</th>
-												<th :class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
+												<th
+													scope="col"
+													:class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
 													{{ t('opencatalogi', 'Labels') }}
 												</th>
-												<th class="table-row-actions" />
+												<th
+													scope="col"
+													class="table-row-actions">
+													<span class="hidden-visually">{{
+														t('opencatalogi', 'Actions')
+													}}</span>
+												</th>
 											</tr>
 										</thead>
 										<tbody>
-											<tr v-for="(attachment, i) in paginatedFiles"
+											<tr
+												v-for="(
+													attachment, i
+												) in paginatedFiles"
 												:key="`${attachment.id}${i}`"
-												:class="{ 'active': activeAttachment === attachment.id }"
+												:class="{
+													active:
+														activeAttachment
+														=== attachment.id,
+												}"
 												class="viewTableRow"
-												@click="() => {
-													if (activeAttachment === attachment.id) activeAttachment = null
-													else activeAttachment = attachment.id
-												}">
+												@click="
+													() => {
+														if (
+															activeAttachment
+															=== attachment.id
+														)
+															activeAttachment = null
+														else
+															activeAttachment =
+																attachment.id
+													}
+												">
 												<td class="tableColumnCheckbox">
+													<!-- v9 NcCheckboxRadioSwitch has no `checked` prop and emits no
+													     `update:checked`; both are `modelValue`. -->
 													<NcCheckboxRadioSwitch
-														:checked="objectStore.selectedAttachments.includes(attachment.id)"
-														@update:checked="(checked) => toggleFileSelection(attachment.id, checked)" />
+														:aria-label="
+															t(
+																'opencatalogi',
+																'Select file {name}',
+																{
+																	name:
+																		attachment.name
+																		?? attachment?.title
+																		?? attachment.id,
+																},
+															)
+														"
+														:modelValue="
+															objectStore.selectedAttachments.includes(
+																attachment.id,
+															)
+														"
+														@update:modelValue="
+															(checked) =>
+																toggleFileSelection(
+																	attachment.id,
+																	checked,
+																)
+														" />
 												</td>
-												<td class="tableColumnExpanded table-row-title">
+												<td
+													class="tableColumnExpanded table-row-title">
 													<div class="file-name-container">
-														<div class="file-status-icons">
+														<div
+															class="file-status-icons">
 															<!-- Show warning icon if file is not shared -->
-															<ExclamationThick v-if="!attachment.accessUrl && !attachment.downloadUrl"
-																v-tooltip="t('opencatalogi', 'Not shared')"
+															<!-- `v-tooltip` no longer exists in @nextcloud/vue@9
+															     (the only directives shipped are Focus and Linkify),
+															     so an unregistered directive would silently no-op in
+															     production. Bound `title` keeps the hint. -->
+															<ExclamationThick
+																v-if="
+																	!attachment.accessUrl
+																	&& !attachment.downloadUrl
+																"
+																:title="
+																	t(
+																		'opencatalogi',
+																		'Not shared',
+																	)
+																"
 																class="warningIcon"
 																:size="20" />
 															<!-- Show published icon if file is shared -->
-															<FileOutline v-else class="publishedIcon" :size="20" />
+															<FileOutline
+																v-else
+																class="publishedIcon"
+																:size="20" />
 														</div>
-														<span class="file-name">{{ attachment.name ?? attachment?.title }}</span>
+														<span class="file-name">{{
+															attachment.name
+															?? attachment?.title
+														}}</span>
 													</div>
 												</td>
-												<td class="tableColumnConstrained short-column">
-													{{ formatFileSize(attachment?.size) }}
+												<td
+													class="tableColumnConstrained short-column">
+													{{
+														formatFileSize(
+															attachment?.size,
+														)
+													}}
 												</td>
-												<td class="tableColumnConstrained table-row-type">
-													{{ attachment?.type || t('opencatalogi', 'No type') }}
+												<td
+													class="tableColumnConstrained table-row-type">
+													{{
+														attachment?.type
+														|| t(
+															'opencatalogi',
+															'No type',
+														)
+													}}
 												</td>
-												<td class="tableColumnConstrained td-labels">
+												<td
+													class="tableColumnConstrained td-labels">
 													<div class="fileLabelsContainer">
-														<span v-if="editingTags !== attachment.id"
+														<span
+															v-if="
+																editingTags
+																!== attachment.id
+															"
 															class="files-list__row-action--inline files-list__row-action-system-tags">
-															<ul v-if="attachment.labels && attachment.labels.length > 0" class="files-list__system-tags" :aria-label="t('opencatalogi', 'Assigned collaborative tags')">
-																<li v-for="label of attachment.labels"
+															<ul
+																v-if="
+																	attachment.labels
+																	&& attachment
+																		.labels
+																		.length > 0
+																"
+																class="files-list__system-tags"
+																:aria-label="
+																	t(
+																		'opencatalogi',
+																		'Assigned collaborative tags',
+																	)
+																">
+																<li
+																	v-for="label of attachment.labels"
 																	:key="label"
 																	class="files-list__system-tag"
 																	:title="label">
 																	{{ label }}
 																</li>
 															</ul>
-															<span v-if="!attachment.labels || attachment.labels.length === 0">
-																{{ t('opencatalogi', 'No labels') }}
+															<span
+																v-if="
+																	!attachment.labels
+																	|| attachment
+																		.labels
+																		.length === 0
+																">
+																{{
+																	t(
+																		'opencatalogi',
+																		'No labels',
+																	)
+																}}
 															</span>
 														</span>
-														<div v-if="editingTags === attachment.id" class="label-edit-container">
+														<div
+															v-if="
+																editingTags
+																=== attachment.id
+															"
+															class="label-edit-container">
 															<NcSelect
 																v-model="editedTags"
-																:disabled="tagsLoading"
-																:loading="tagsLoading"
+																:disabled="
+																	tagsLoading
+																"
+																:loading="
+																	tagsLoading
+																"
 																:taggable="true"
 																:multiple="true"
-																:aria-label-combobox="labelOptionsEdit.inputLabel"
-																:options="labelOptionsEdit.options"
+																:aria-label-combobox="
+																	labelOptionsEdit.inputLabel
+																"
+																:options="
+																	labelOptionsEdit.options
+																"
 																@tag="addNewTag" />
 															<NcButton
-																v-tooltip="t('opencatalogi', 'Save labels')"
-																type="primary"
+																:title="
+																	t(
+																		'opencatalogi',
+																		'Save labels',
+																	)
+																"
+																variant="primary"
 																size="small"
-																:aria-label="t('opencatalogi', 'Save labels for {name}', { name: attachment.name ?? attachment?.title ?? 'file' })"
+																:aria-label="
+																	t(
+																		'opencatalogi',
+																		'Save labels for {name}',
+																		{
+																			name:
+																				attachment.name
+																				?? attachment?.title
+																				?? 'file',
+																		},
+																	)
+																"
 																class="editTagsButton"
-																@click="saveTags(attachment, editedTags)">
+																@click="
+																	saveTags(
+																		attachment,
+																		editedTags,
+																	)
+																">
 																<template #icon>
-																	<ContentSaveOutline :size="20" />
+																	<ContentSaveOutline
+																		:size="20" />
 																</template>
 															</NcButton>
 															<NcButton
-																v-tooltip="t('opencatalogi', 'Cancel')"
-																type="secondary"
+																:aria-label="
+																	t(
+																		'opencatalogi',
+																		'Cancel',
+																	)
+																"
+																:title="
+																	t(
+																		'opencatalogi',
+																		'Cancel',
+																	)
+																"
+																variant="secondary"
 																size="small"
-																@click="cancelFileLabelEditing">
+																@click="
+																	cancelFileLabelEditing
+																">
 																<template #icon>
-																	<Cancel :size="20" />
+																	<Cancel
+																		:size="20" />
 																</template>
 															</NcButton>
 														</div>
@@ -290,50 +659,153 @@ import { EventBus } from '../../eventBus.js'
 												</td>
 												<td class="table-row-actions">
 													<NcActions
-														v-if="editingTags !== attachment.id"
-														:aria-label="t('opencatalogi', 'Actions for {name}', { name: attachment.name ?? attachment?.title ?? 'file' })">
-														<NcActionButton @click="openFile(attachment)">
+														v-if="
+															editingTags
+															!== attachment.id
+														"
+														:aria-label="
+															t(
+																'opencatalogi',
+																'Actions for {name}',
+																{
+																	name:
+																		attachment.name
+																		?? attachment?.title
+																		?? 'file',
+																},
+															)
+														">
+														<NcActionButton
+															@click="
+																openFile(attachment)
+															">
 															<template #icon>
-																<OpenInNew :size="20" />
+																<OpenInNew
+																	:size="20" />
 															</template>
-															{{ t('opencatalogi', 'View') }}
+															{{
+																t(
+																	'opencatalogi',
+																	'View',
+																)
+															}}
 														</NcActionButton>
 														<NcActionButton
-															:disabled="editingTags && editingTags !== attachment.id || tagsLoading || !canUpdateCurrentObject"
-															@click="editFileLabels(attachment)">
+															:disabled="
+																(editingTags
+																	&& editingTags
+																		!== attachment.id)
+																|| tagsLoading
+															"
+															@click="
+																editFileLabels(
+																	attachment,
+																)
+															">
 															<template #icon>
 																<Tag :size="20" />
 															</template>
-															{{ t('opencatalogi', 'Edit Labels') }}
+															{{
+																t(
+																	'opencatalogi',
+																	'Edit Labels',
+																)
+															}}
 														</NcActionButton>
 														<NcActionButton
-															v-if="!attachment.accessUrl && !attachment.downloadUrl"
-															:disabled="publishLoading.includes(attachment.id) || !canUpdateCurrentObject"
-															@click="publishFile(attachment)">
+															v-if="
+																!attachment.accessUrl
+																&& !attachment.downloadUrl
+															"
+															:disabled="
+																publishLoading.includes(
+																	attachment.id,
+																)
+															"
+															@click="
+																publishFile(
+																	attachment,
+																)
+															">
 															<template #icon>
-																<NcLoadingIcon v-if="publishLoading.includes(attachment.id)" :size="20" />
-																<FileOutline v-else :size="20" />
+																<NcLoadingIcon
+																	v-if="
+																		publishLoading.includes(
+																			attachment.id,
+																		)
+																	"
+																	:size="20" />
+																<FileOutline
+																	v-else
+																	:size="20" />
 															</template>
-															{{ t('opencatalogi', 'Publish') }}
+															{{
+																t(
+																	'opencatalogi',
+																	'Publish',
+																)
+															}}
 														</NcActionButton>
 														<NcActionButton
 															v-else
-															:disabled="depublishLoading.includes(attachment.id) || !canUpdateCurrentObject"
-															@click="depublishFile(attachment)">
+															:disabled="
+																depublishLoading.includes(
+																	attachment.id,
+																)
+															"
+															@click="
+																depublishFile(
+																	attachment,
+																)
+															">
 															<template #icon>
-																<NcLoadingIcon v-if="depublishLoading.includes(attachment.id)" :size="20" />
-																<LockOutline v-else :size="20" />
+																<NcLoadingIcon
+																	v-if="
+																		depublishLoading.includes(
+																			attachment.id,
+																		)
+																	"
+																	:size="20" />
+																<LockOutline
+																	v-else
+																	:size="20" />
 															</template>
-															{{ t('opencatalogi', 'Depublish') }}
+															{{
+																t(
+																	'opencatalogi',
+																	'Depublish',
+																)
+															}}
 														</NcActionButton>
 														<NcActionButton
-															:disabled="fileIdsLoading.includes(attachment.id) || !canUpdateCurrentObject"
-															@click="deleteFile(attachment)">
+															:disabled="
+																fileIdsLoading.includes(
+																	attachment.id,
+																)
+															"
+															@click="
+																deleteFile(
+																	attachment,
+																)
+															">
 															<template #icon>
-																<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id)" :size="20" />
-																<Delete v-else :size="20" />
+																<NcLoadingIcon
+																	v-if="
+																		fileIdsLoading.includes(
+																			attachment.id,
+																		)
+																	"
+																	:size="20" />
+																<Delete
+																	v-else
+																	:size="20" />
 															</template>
-															{{ t('opencatalogi', 'Delete') }}
+															{{
+																t(
+																	'opencatalogi',
+																	'Delete',
+																)
+															}}
 														</NcActionButton>
 													</NcActions>
 												</td>
@@ -342,9 +814,15 @@ import { EventBus } from '../../eventBus.js'
 									</table>
 								</div>
 							</template>
-							<NcEmptyContent v-else-if="!isNewObject"
+							<NcEmptyContent
+								v-else-if="!isNewObject"
 								:name="t('opencatalogi', 'No files attached')"
-								:description="t('opencatalogi', 'No files have been attached to this object')">
+								:description="
+									t(
+										'opencatalogi',
+										'No files have been attached to this object',
+									)
+								">
 								<template #icon>
 									<FileOutline :size="64" />
 								</template>
@@ -353,16 +831,19 @@ import { EventBus } from '../../eventBus.js'
 							<!-- Files Pagination -->
 							<PaginationComponent
 								v-if="filesTotalItems > 10"
-								:current-page="objectStore.getPagination('publication_files').page"
-								:total-pages="filesTotalPages"
-								:total-items="filesTotalItems"
-								:current-page-size="filesCurrentPageSize"
-								:page-size-options="pageSizeOptions"
-								:min-items-to-show="5"
-								@page-changed="onFilesPageChanged"
-								@page-size-changed="onFilesPageSizeChanged" />
-						</BTab>
-					</BTabs>
+								:currentPage="
+									objectStore.getPagination('publication_files')
+										.page
+								"
+								:totalPages="filesTotalPages"
+								:totalItems="filesTotalItems"
+								:currentPageSize="filesCurrentPageSize"
+								:pageSizeOptions="pageSizeOptions"
+								:minItemsToShow="5"
+								@pageChanged="onFilesPageChanged"
+								@pageSizeChanged="onFilesPageSizeChanged" />
+						</AppTab>
+					</AppTabs>
 				</div>
 			</div>
 		</div>
@@ -374,36 +855,39 @@ import { EventBus } from '../../eventBus.js'
 				</template>
 				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
-			<NcButton v-if="!isNewObject && canUpdateCurrentObject" @click="uploadFiles">
+			<NcButton v-if="!isNewObject" @click="uploadFiles">
 				<template #icon>
 					<Upload :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Add File') }}
 			</NcButton>
-			<NcButton v-if="shouldShowPublishAction(currentObject) && canUpdateCurrentObject"
+			<NcButton
+				v-if="shouldShowPublishAction(currentObject)"
 				@click="singlePublishObject">
 				<template #icon>
 					<Publish :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Publish') }}
 			</NcButton>
-			<NcButton v-if="shouldShowDepublishAction(currentObject) && canUpdateCurrentObject"
+			<NcButton
+				v-if="shouldShowDepublishAction(currentObject)"
 				@click="singleDepublishObject">
 				<template #icon>
 					<PublishOff :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Depublish') }}
 			</NcButton>
-			<NcButton v-if="!isNewObject && canDeleteCurrentObject"
-				type="error"
+			<NcButton
+				v-if="!isNewObject"
+				variant="error"
 				@click="singleDeleteObject">
 				<template #icon>
 					<Delete :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
-			<NcButton v-if="isNewObject ? canCreateCurrentObject : canUpdateCurrentObject"
-				type="primary"
+			<NcButton
+				variant="primary"
 				:title="saveButtonTooltip"
 				:disabled="isSaving || !canSave"
 				@click="saveObject">
@@ -411,49 +895,61 @@ import { EventBus } from '../../eventBus.js'
 					<NcLoadingIcon v-if="isSaving" :size="20" />
 					<ContentSave v-else :size="20" />
 				</template>
-				{{ isSaving ? (isNewObject ? t('opencatalogi', 'Creating...') : t('opencatalogi', 'Saving...')) : (isNewObject ? t('opencatalogi', 'Create') : t('opencatalogi', 'Save')) }}
+				{{
+					isSaving
+						? isNewObject
+							? t('opencatalogi', 'Creating...')
+							: t('opencatalogi', 'Saving...')
+						: isNewObject
+							? t('opencatalogi', 'Create')
+							: t('opencatalogi', 'Save')
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>
 </template>
 
 <script>
+import { CnMetadataTab, validateValue } from '@conduction/nextcloud-vue'
 import {
-	NcDialog,
-	NcButton,
-	NcActions,
 	NcActionButton,
-	NcNoteCard,
-	NcCounterBubble,
+	NcActions,
+	NcButton,
 	NcCheckboxRadioSwitch,
-	NcLoadingIcon,
+	NcCounterBubble,
+	NcDialog,
 	NcEmptyContent,
+	NcLoadingIcon,
+	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
-import { CnMetadataTab, validateValue } from '@conduction/nextcloud-vue'
-import { BTabs, BTab } from 'bootstrap-vue'
-import '@toast-ui/editor/dist/toastui-editor.css'
+import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
-import FileOutline from 'vue-material-design-icons/FileOutline.vue'
-import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
-import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-import Upload from 'vue-material-design-icons/Upload.vue'
-
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
-import LockOutline from 'vue-material-design-icons/LockOutline.vue'
-import Tag from 'vue-material-design-icons/Tag.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
+import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
+import FileOutline from 'vue-material-design-icons/FileOutline.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
+import LockOutline from 'vue-material-design-icons/LockOutline.vue'
+import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
-import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
-import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
+import Tag from 'vue-material-design-icons/Tag.vue'
+import Upload from 'vue-material-design-icons/Upload.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
-import PublishedIcon from '../../components/PublishedIcon.vue'
 import PropertiesPanel from '../../components/PropertiesPanel.vue'
+import PublishedIcon from '../../components/PublishedIcon.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
 
+import '@toast-ui/editor/dist/toastui-editor.css'
+
+/**
+ * @spec openspec/specs/generic-object-modals/spec.md
+ */
 export default {
 	name: 'ViewObject',
 	components: {
@@ -468,8 +964,8 @@ export default {
 		NcEmptyContent,
 		NcSelect,
 		CnMetadataTab,
-		BTabs,
-		BTab,
+		AppTabs,
+		AppTab,
 		Cancel,
 		FileOutline,
 		FolderOutline,
@@ -490,6 +986,7 @@ export default {
 		PublishedIcon,
 		PropertiesPanel,
 	},
+
 	data() {
 		return {
 			activeTab: 0,
@@ -517,6 +1014,7 @@ export default {
 				{ value: 500, label: '500' },
 				{ value: 1000, label: '1000' },
 			],
+
 			// Selection flow properties
 			selectedCatalog: null,
 			selectedRegister: null,
@@ -531,29 +1029,39 @@ export default {
 			editingTags: null,
 			editedTags: [],
 			labelOptionsEdit: {
-				inputLabel: t('opencatalogi', 'Labels'),
+				inputLabel: 'Labels',
 				multiple: true,
 				options: [],
 			},
+
 			tagsLoading: false,
 		}
 	},
+
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		currentObject() {
 			return objectStore.getActiveObject('publication')
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		isNewObject() {
 			const obj = objectStore.getActiveObject('publication')
 			return !obj || !obj?.['@self']?.id
 		},
+
 		/**
 		 * Full JSON schema selected for the current/new object. Sourced from objectStore.availableSchemas.
 		 * Returns null when no schema is resolvable yet.
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		resolvedSchema() {
 			if (this.isNewObject && this.selectedSchema) {
-				return objectStore.availableSchemas.find(schema => schema.id === this.selectedSchema.id) || null
+				return (
+					objectStore.availableSchemas.find(
+						(schema) => schema.id === this.selectedSchema.id,
+					) || null
+				)
 			}
 			const schemaRef = this.currentObject?.['@self']?.schema
 			if (!schemaRef) return null
@@ -568,19 +1076,28 @@ export default {
 			// in @self.schema arrives as a string (e.g. "1") while
 			// availableSchemas[i].id is a number — match on both id and uuid
 			// using loose comparison, plus slug as a last resort.
-			const schemaId = typeof schemaRef === 'object' ? (schemaRef.id ?? schemaRef.uuid ?? schemaRef.slug) : schemaRef
-			if (schemaId === null || schemaId === undefined || schemaId === '') return null
+			const schemaId =
+				typeof schemaRef === 'object'
+					? (schemaRef.id ?? schemaRef.uuid ?? schemaRef.slug)
+					: schemaRef
+			if (schemaId === null || schemaId === undefined || schemaId === '')
+				return null
 			const idStr = String(schemaId)
-			return objectStore.availableSchemas.find(schema =>
-				String(schema.id) === idStr
-				|| String(schema.uuid) === idStr
-				|| String(schema.slug) === idStr,
-			) || null
+			return (
+				objectStore.availableSchemas.find(
+					(schema) =>
+						String(schema.id) === idStr
+						|| String(schema.uuid) === idStr
+						|| String(schema.slug) === idStr,
+				) || null
+			)
 		},
+
 		/**
 		 * Per-property cell-config overrides forwarded into CnPropertiesTab → CnPropertyValueCell.
 		 * Only properties that need runtime-driven options (e.g. `themes` from objectStore) need entries here.
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		propertyOverrides() {
 			return {
 				themes: {
@@ -590,64 +1107,80 @@ export default {
 				},
 			}
 		},
+
 		/**
 		 * Publication-specific metadata rows for CnMetadataTab.
 		 * Includes the standard ID/Created/Updated rows plus version/register/schema/locked/published/depublished.
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		metadataExtraRows() {
 			if (!this.currentObject) return []
 			const obj = this.currentObject
 
 			const register = obj['@self']?.register
-			let registerDisplay = t('opencatalogi', 'Not set')
+			let registerDisplay = 'Not set'
 			if (register) {
 				if (typeof register === 'object') {
-					registerDisplay = register.title || register.name || register.id || register
+					registerDisplay =
+						register.title || register.name || register.id || register
 				} else {
-					const availableRegister = objectStore.availableRegisters.find(r => r.id === register)
+					const availableRegister = objectStore.availableRegisters.find(
+						(r) => r.id === register,
+					)
 					registerDisplay = availableRegister?.title || register
 				}
 			}
 
 			const schema = obj['@self']?.schema
-			let schemaDisplay = t('opencatalogi', 'Not set')
+			let schemaDisplay = 'Not set'
 			if (schema) {
 				if (typeof schema === 'object') {
-					schemaDisplay = schema.title || schema.name || schema.id || schema
+					schemaDisplay =
+						schema.title || schema.name || schema.id || schema
 				} else {
-					const availableSchema = objectStore.availableSchemas.find(s => s.id === schema)
+					const availableSchema = objectStore.availableSchemas.find(
+						(s) => s.id === schema,
+					)
 					schemaDisplay = availableSchema?.title || schema
 				}
 			}
 
 			const locked = obj['@self']?.locked
-			let lockedDisplay = t('opencatalogi', 'Not locked')
+			let lockedDisplay = 'Not locked'
 			if (locked) {
 				if (typeof locked === 'object') {
-					const lockedBy = locked.lockedBy || t('opencatalogi', 'Unknown user')
-					const lockedAt = locked.lockedAt ? new Date(locked.lockedAt).toLocaleString() : t('opencatalogi', 'Unknown time')
+					const lockedBy = locked.lockedBy || 'Unknown user'
+					const lockedAt = locked.lockedAt
+						? new Date(locked.lockedAt).toLocaleString()
+						: 'Unknown time'
 					const proc = locked.process ? ` (${locked.process})` : ''
-					lockedDisplay = t('opencatalogi', 'Locked by {lockedBy} at {lockedAt}{proc}', { lockedBy, lockedAt, proc })
+					lockedDisplay = `Locked by ${lockedBy} at ${lockedAt}${proc}`
 				} else {
-					lockedDisplay = t('opencatalogi', 'Locked')
+					lockedDisplay = 'Locked'
 				}
 			}
 
-			const fmtDate = (v, fallback) => v ? new Date(v).toLocaleString() : fallback
+			const fmtDate = (v, fallback) =>
+				v ? new Date(v).toLocaleString() : fallback
 
 			return [
-				[t('opencatalogi', 'ID'), obj.id || t('opencatalogi', 'Not set')],
-				[t('opencatalogi', 'Version'), obj['@self']?.version || t('opencatalogi', 'Not set')],
-				[t('opencatalogi', 'Register'), registerDisplay],
-				[t('opencatalogi', 'Schema'), schemaDisplay],
-				[t('opencatalogi', 'Locked'), lockedDisplay],
-				[t('opencatalogi', 'Created'), fmtDate(obj['@self']?.created, t('opencatalogi', 'Not set'))],
-				[t('opencatalogi', 'Updated'), fmtDate(obj['@self']?.updated, t('opencatalogi', 'Not set'))],
-				[t('opencatalogi', 'Published'), fmtDate(obj['@self']?.published, t('opencatalogi', 'Not published'))],
-				[t('opencatalogi', 'Depublished'), fmtDate(obj['@self']?.depublished, t('opencatalogi', 'Not depublished'))],
+				['ID', obj.id || 'Not set'],
+				['Version', obj['@self']?.version || 'Not set'],
+				['Register', registerDisplay],
+				['Schema', schemaDisplay],
+				['Locked', lockedDisplay],
+				['Created', fmtDate(obj['@self']?.created, 'Not set')],
+				['Updated', fmtDate(obj['@self']?.updated, 'Not set')],
+				['Published', fmtDate(obj['@self']?.published, 'Not published')],
+				[
+					'Depublished',
+					fmtDate(obj['@self']?.depublished, 'Not depublished'),
+				],
 			]
 		},
+
 		// Files tab computed properties
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		paginatedFiles() {
 			const filesData = objectStore.getRelatedData('publication', 'files')
 			const files = filesData?.results || []
@@ -658,110 +1191,240 @@ export default {
 			}
 			return files
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		selectedAttachments() {
 			return objectStore.selectedAttachments
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		filesTotalPages() {
 			const filesPagination = objectStore.getPagination('publication_files')
 			return filesPagination.pages
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		filesTotalItems() {
 			const filesPagination = objectStore.getPagination('publication_files')
 			return filesPagination.total
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		filesCurrentPageSize() {
 			const filesPagination = objectStore.getPagination('publication_files')
 			return filesPagination.limit
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		allFilesSelected() {
-			return this.paginatedFiles.length > 0 && this.paginatedFiles.every(file => objectStore.selectedAttachments.includes(file.id))
+			return (
+				this.paginatedFiles.length > 0
+				&& this.paginatedFiles.every((file) =>
+					objectStore.selectedAttachments.includes(file.id),
+				)
+			)
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		someFilesSelected() {
-			return objectStore.selectedAttachments.length > 0 && !this.allFilesSelected
+			return (
+				objectStore.selectedAttachments.length > 0 && !this.allFilesSelected
+			)
 		},
+
 		isLockedCatalog() {
-			return !!(this.$route?.params?.catalogSlug)
+			return !!this.$route?.params?.catalogSlug
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		catalogOptions() {
-			return objectStore.getCollection('catalog').results.map(catalog => ({
+			return objectStore.getCollection('catalog').results.map((catalog) => ({
 				id: catalog.id,
 				label: catalog.title,
 			}))
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		registerOptions() {
 			if (!this.selectedCatalog) {
 				return []
 			}
 
-			const fullCatalog = objectStore.getCollection('catalog').results.find(catalog => catalog.id === this.selectedCatalog.id)
+			const fullCatalog = objectStore
+				.getCollection('catalog')
+				.results.find(
+					(catalog) =>
+						String(catalog.id) === String(this.selectedCatalog.id),
+				)
 			if (!fullCatalog) {
 				return []
 			}
 
-			const selectedCatalogRegisterIds = fullCatalog.registers || []
+			// Catalog.registers arrives as a string array (`["1"]`) while
+			// `register.id` from OpenRegister is numeric — `.includes` uses
+			// strict equality so the raw check would drop every match and
+			// leave the modal stalled on the empty-state (WOO-527 followup).
+			const selectedCatalogRegisterIds = (fullCatalog.registers || []).map(
+				String,
+			)
 
 			return objectStore.availableRegisters
-				.filter(register => selectedCatalogRegisterIds.includes(register.id))
-				.map(register => ({
+				.filter((register) =>
+					selectedCatalogRegisterIds.includes(String(register.id)),
+				)
+				.map((register) => ({
 					id: register.id,
 					label: register.title,
 				}))
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		schemaOptions() {
 			if (!this.selectedRegister || !this.selectedCatalog) {
 				return []
 			}
 
-			const register = objectStore.availableRegisters.find(register => register.id === this.selectedRegister.id)
-			const catalog = objectStore.getCollection('catalog').results.find(catalog => catalog.id === this.selectedCatalog.id)
+			const register = objectStore.availableRegisters.find(
+				(register) =>
+					String(register.id) === String(this.selectedRegister.id),
+			)
+			const catalog = objectStore
+				.getCollection('catalog')
+				.results.find(
+					(catalog) =>
+						String(catalog.id) === String(this.selectedCatalog.id),
+				)
 
 			if (!register || !catalog) {
 				return []
 			}
 
-			const registerSchemaIds = register.schemas?.map(schema => schema.id) || []
-			const catalogSchemaIds = catalog.schemas || []
+			// Same numeric/string-id mismatch guard as registerOptions above:
+			// register.schemas[].id is int, catalog.schemas is string[].
+			const registerSchemaIds = (register.schemas || []).map((schema) =>
+				String(schema.id),
+			)
+			const catalogSchemaIds = (catalog.schemas || []).map(String)
 
 			// only get schema ids where the id is in both registerSchemaIds and catalogSchemaIds
-			const validSchemaIds = registerSchemaIds.filter(id => catalogSchemaIds.includes(id))
+			const validSchemaIds = registerSchemaIds.filter((id) =>
+				catalogSchemaIds.includes(id),
+			)
 
+			// `objectStore.availableSchemas` is a `.flatMap()` across every
+			// register in settings — the SAME schema id appears once per
+			// register it is attached to. Without a dedupe step the dropdown
+			// renders duplicate entries for schemas that live in multiple
+			// registers (WOO-529: on a fresh install `Publication` showed up
+			// twice because schema #1 is bound to both the `publication`
+			// register AND the `opencatalogi` magic-mapper register). Keep
+			// the first match per id.
+			const seenIds = new Set()
 			return objectStore.availableSchemas
-				.filter(schema => validSchemaIds.includes(schema.id))
-				.filter(schema => this.hasSchemaActionRight(schema, 'create'))
-				.map(schema => ({
+				.filter((schema) => validSchemaIds.includes(String(schema.id)))
+				.filter((schema) => this.hasSchemaReadRight(schema))
+				.filter((schema) => {
+					const key = String(schema.id)
+					if (seenIds.has(key)) return false
+					seenIds.add(key)
+					return true
+				})
+				.map((schema) => ({
 					id: schema.id,
 					label: schema.title,
 				}))
 		},
+
 		hasSelectedSchema() {
 			return this.selectedSchema !== null && this.showProperties
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		allSelectionsComplete() {
-			return this.selectedCatalog && this.selectedRegister && this.selectedSchema
+			return (
+				this.selectedCatalog && this.selectedRegister && this.selectedSchema
+			)
 		},
 
+		/**
+		 * True when we cannot progress past the selection stage: a catalog is
+		 * available and (auto-)selected, but the derived register / schema
+		 * options are empty. Without this guard the template renders nothing
+		 * because every selection block is gated on `.length > 1` (the auto-
+		 * select case hides the widget) — the observable result is a blank
+		 * modal body (WOO-527).
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
+		 */
+		selectionStalled() {
+			if (this.isLockedCatalog) return false
+			if (this.catalogOptions.length === 0) return false
+			if (!this.isNewObject) return false
+			if (this.hasSelectedSchema || this.allSelectionsComplete) return false
+			// One catalog auto-selected but no compatible register.
+			if (this.selectedCatalog && this.registerOptions.length === 0)
+				return true
+			// Register selected but no schema in scope.
+			if (this.selectedRegister && this.schemaOptions.length === 0) return true
+			return false
+		},
+
+		/**
+		 * Human-readable reason for the stalled state — surfaced in the empty-content card.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
+		 */
+		selectionStalledReason() {
+			if (this.selectedCatalog && this.registerOptions.length === 0) {
+				return t(
+					'opencatalogi',
+					'This catalog has no registers configured. Ask an administrator to attach a register that contains a publication schema to it.',
+				)
+			}
+			if (this.selectedRegister && this.schemaOptions.length === 0) {
+				return t(
+					'opencatalogi',
+					'The selected register does not expose any schema you can create in this catalog.',
+				)
+			}
+			return ''
+		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		shouldShowPublishedIcon() {
 			return this.currentObject && this.currentObject['@self']
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		themeOptions() {
 			const themes = objectStore.getCollection('theme').results || []
-			return themes.map(theme => ({
+			return themes.map((theme) => ({
 				id: theme.id,
 				label: theme.title || `#${theme.id}`,
 			}))
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		publishableCount() {
 			const selected = objectStore.selectedAttachments || []
 			if (selected.length === 0) return 0
 			const files = this.paginatedFiles || []
-			return files.filter(f => selected.includes(f.id)).filter(f => !f.accessUrl && !f.downloadUrl).length
+			return files
+				.filter((f) => selected.includes(f.id))
+				.filter((f) => !f.accessUrl && !f.downloadUrl).length
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		depublishableCount() {
 			const selected = objectStore.selectedAttachments || []
 			if (selected.length === 0) return 0
 			const files = this.paginatedFiles || []
-			return files.filter(f => selected.includes(f.id)).filter(f => (f.accessUrl || f.downloadUrl)).length
+			return files
+				.filter((f) => selected.includes(f.id))
+				.filter((f) => f.accessUrl || f.downloadUrl).length
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		propertiesPanelBindings() {
 			return {
 				resolvedSchema: this.resolvedSchema,
@@ -779,6 +1442,7 @@ export default {
 		 * Keys of all schema-required properties (top-level `required` array
 		 * plus per-property `required: true`), excluding metadata keys.
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		requiredPropertyKeys() {
 			const schema = this.resolvedSchema
 			if (!schema) return []
@@ -796,11 +1460,12 @@ export default {
 		 * Required keys whose effective value (formData override or current object value)
 		 * is empty. Used to disable Save and surface an inline error.
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		missingRequiredKeys() {
 			const result = []
 			const obj = this.currentObject || {}
 			for (const key of this.requiredPropertyKeys) {
-				const value = Object.prototype.hasOwnProperty.call(this.formData, key)
+				const value = Object.hasOwn(this.formData, key)
 					? this.formData[key]
 					: obj[key]
 				if (value === null || value === undefined || value === '') {
@@ -815,6 +1480,7 @@ export default {
 		},
 
 		/** Human-readable labels for the missing required keys. */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		missingRequiredLabels() {
 			const props = this.resolvedSchema?.properties || {}
 			return this.missingRequiredKeys.map((key) => props[key]?.title || key)
@@ -831,6 +1497,7 @@ export default {
 		 *
 		 * @return {Array<{ key: string, label: string, error: string }>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		fieldErrors() {
 			const schema = this.resolvedSchema
 			if (!schema) return []
@@ -840,7 +1507,7 @@ export default {
 			for (const [key, prop] of Object.entries(props)) {
 				if (!prop || prop.hideOnForm === true) continue
 				if (key === '@self' || key === 'id') continue
-				const value = Object.prototype.hasOwnProperty.call(this.formData, key)
+				const value = Object.hasOwn(this.formData, key)
 					? this.formData[key]
 					: obj[key]
 				if (value === null || value === undefined || value === '') continue
@@ -860,40 +1527,43 @@ export default {
 			return this.fieldErrors.length > 0
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		canSave() {
 			return !this.hasMissingRequired && !this.hasFieldErrors
 		},
 
-		canCreateCurrentObject() {
-			return this.hasSchemaActionRight(this.resolvedSchema, 'create')
-		},
-		canUpdateCurrentObject() {
-			return this.hasSchemaActionRight(this.resolvedSchema, 'update')
-		},
-		canDeleteCurrentObject() {
-			return this.hasSchemaActionRight(this.resolvedSchema, 'delete')
-		},
-
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		saveButtonTooltip() {
 			if (this.hasMissingRequired) {
-				return t('opencatalogi', 'Required fields missing: {fields}', { fields: this.missingRequiredLabels.join(', ') })
+				return `Required fields missing: ${this.missingRequiredLabels.join(', ')}`
 			}
 			if (this.hasFieldErrors) {
-				return t('opencatalogi', 'Invalid fields: {fields}', { fields: this.fieldErrors.map((e) => e.label).join(', ') })
+				return `Invalid fields: ${this.fieldErrors.map((e) => e.label).join(', ')}`
 			}
 			return ''
 		},
 	},
+
 	watch: {
 		currentObject: {
+			/**
+			 * @param newValue
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+			 */
 			handler(newValue) {
 				if (newValue) {
 					this.initializeData()
 				}
 			},
+
 			deep: true,
 		},
+
 		selectedCatalog: {
+			/**
+			 * @param newCatalog
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+			 */
 			handler(newCatalog) {
 				// Auto-select register if there's only one
 				if (newCatalog && this.registerOptions.length === 1) {
@@ -905,7 +1575,12 @@ export default {
 				}
 			},
 		},
+
 		selectedRegister: {
+			/**
+			 * @param newRegister
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+			 */
 			handler(newRegister) {
 				// Auto-select schema if there's only one
 				if (newRegister && this.schemaOptions.length === 1) {
@@ -916,15 +1591,50 @@ export default {
 				}
 			},
 		},
+
 		schemaOptions: {
+			/**
+			 * @param newOptions
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+			 */
 			handler(newOptions) {
 				// Auto-select schema when rights filtering reduces the options to exactly one
-				if (this.selectedRegister && newOptions.length === 1 && !this.selectedSchema) {
+				if (
+					this.selectedRegister
+					&& newOptions.length === 1
+					&& !this.selectedSchema
+				) {
 					this.selectedSchema = newOptions[0]
 				}
 			},
 		},
+
+		catalogOptions: {
+			/**
+			 * The catalog collection loads asynchronously via
+			 * `objectStore.preloadCollections()` in App.vue's `created()`. If
+			 * that promise has not resolved when the modal opens, the initial
+			 * `initializeData()` runs against an empty list and never
+			 * auto-selects the sole catalog — leaving the modal blank until
+			 * the user closes and re-opens it. Re-run the seed step as soon
+			 * as catalogs arrive (WOO-527).
+			 *
+			 * @param newOptions
+			 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
+			 */
+			handler(newOptions) {
+				if (!this.isNewObject) return
+				if (this.selectedCatalog) return
+				if (newOptions.length === 0) return
+				this.initializeData()
+			},
+		},
+
 		selectedSchema: {
+			/**
+			 * @param newSchema
+			 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+			 */
 			handler(newSchema) {
 				if (!newSchema) {
 					this.showProperties = false
@@ -940,10 +1650,17 @@ export default {
 				}
 			},
 		},
+
+		/**
+		 * @param ok
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		canSave(ok) {
 			if (ok) this.showRequiredFieldError = false
 		},
 	},
+
+	/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 	mounted() {
 		this.initializeData()
 		this.applyInitialTabFromTransferData()
@@ -957,17 +1674,23 @@ export default {
 		EventBus.$on('upload-files:uploaded', this.onUploadFilesUploaded)
 		// Fetch current user's groups for schema rights filtering.
 		// Only apply filtering when we receive real group data; keep null on any failure so all schemas remain visible.
-		fetch('/ocs/v1.php/cloud/user?format=json', { headers: { 'OCS-APIREQUEST': 'true' } })
-			.then(r => r.json())
-			.then(data => {
+		fetch('/ocs/v1.php/cloud/user?format=json', {
+			headers: { 'OCS-APIREQUEST': 'true' },
+		})
+			.then((r) => r.json())
+			.then((data) => {
 				const groups = data?.ocs?.data?.groups
 				if (Array.isArray(groups)) {
 					this.currentUserGroups = groups
 				}
 			})
-			.catch(() => { /* keep null — no filtering on error */ })
+			.catch(() => {
+				/* keep null — no filtering on error */
+			})
 	},
-	destroyed() {
+
+	/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
+	unmounted() {
 		try {
 			EventBus.$off('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
 			EventBus.$off('upload-files:closed', this.onUploadFilesClosed)
@@ -976,35 +1699,74 @@ export default {
 			// ignore
 		}
 	},
+
 	methods: {
+		/**
+		 * @param payload
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		onUploadFilesTagsUpdated(payload) {
 			try {
-				const tags = Array.isArray(payload && payload.tags) ? payload.tags : []
-				const newTags = Array.isArray(payload && payload.newTags) ? payload.newTags : []
-				console.info('>>> [VIEWOBJECT] RECEIVED TAGS-UPDATED FROM UPLOADFILES', {
-					total: tags.length,
-					newTags,
-				})
+				const tags = Array.isArray(payload && payload.tags)
+					? payload.tags
+					: []
+				const newTags = Array.isArray(payload && payload.newTags)
+					? payload.newTags
+					: []
+				console.info(
+					'>>> [VIEWOBJECT] RECEIVED TAGS-UPDATED FROM UPLOADFILES',
+					{
+						total: tags.length,
+						newTags,
+					},
+				)
 				if (!this.labelOptionsEdit) {
-					this.labelOptionsEdit = { inputLabel: t('opencatalogi', 'Labels'), multiple: true, options: [] }
+					this.labelOptionsEdit = {
+						inputLabel: 'Labels',
+						multiple: true,
+						options: [],
+					}
 				}
 				this.labelOptionsEdit.options = [...tags]
 			} catch (e) {
 				console.error('Failed to apply updated tags from UploadFiles', e)
 			}
 		},
+
+		/**
+		 * @param payload
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		onUploadFilesUploaded(payload) {
 			if (!this.currentObject) return
-			if (payload?.publicationId && payload.publicationId !== this.currentObject.id) return
-			this.refreshFiles({ _page: this.filesCurrentPage, _limit: this.filesCurrentPageSize })
+			if (
+				payload?.publicationId
+				&& payload.publicationId !== this.currentObject.id
+			)
+				return
+			this.refreshFiles({
+				_page: this.filesCurrentPage,
+				_limit: this.filesCurrentPageSize,
+			})
 		},
+
+		/**
+		 * @param payload
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		onUploadFilesClosed(payload) {
 			try {
 				// prefer payload tags
-				const tagsFromPayload = Array.isArray(payload && payload.tags) ? payload.tags : null
+				const tagsFromPayload = Array.isArray(payload && payload.tags)
+					? payload.tags
+					: null
 				if (tagsFromPayload) {
 					if (!this.labelOptionsEdit) {
-						this.labelOptionsEdit = { inputLabel: t('opencatalogi', 'Labels'), multiple: true, options: [] }
+						this.labelOptionsEdit = {
+							inputLabel: 'Labels',
+							multiple: true,
+							options: [],
+						}
 					}
 					this.labelOptionsEdit.options = [...tagsFromPayload]
 					return
@@ -1013,7 +1775,11 @@ export default {
 				const stored = objectStore.getCollection('tags')
 				if (Array.isArray(stored)) {
 					if (!this.labelOptionsEdit) {
-						this.labelOptionsEdit = { inputLabel: t('opencatalogi', 'Labels'), multiple: true, options: [] }
+						this.labelOptionsEdit = {
+							inputLabel: 'Labels',
+							multiple: true,
+							options: [],
+						}
 					}
 					this.labelOptionsEdit.options = [...stored]
 				} else {
@@ -1023,37 +1789,45 @@ export default {
 				console.error('Failed to handle UploadFiles closed', e)
 			}
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		getModalTitle() {
 			// For new objects, show "Create Publication"
 			if (this.isNewObject) {
-				return t('opencatalogi', 'Create Publication')
+				return 'Create Publication'
 			}
 
-			if (!this.currentObject) return t('opencatalogi', 'View Object')
+			if (!this.currentObject) return 'View Object'
 
-			const name = this.currentObject['@self']?.name
+			const name =
+				this.currentObject['@self']?.name
 				|| this.currentObject.name
 				|| this.currentObject.title
 				|| this.currentObject.id
-				|| t('opencatalogi', 'Untitled')
+				|| 'Untitled'
 
 			// Try to get schema name from the object itself
-			let schemaName = t('opencatalogi', 'Publication')
-			const rawSchema = this.currentObject.schema ?? this.currentObject['@self']?.schema
+			let schemaName = 'Publication'
+			const rawSchema =
+				this.currentObject.schema ?? this.currentObject['@self']?.schema
 
 			if (rawSchema && typeof rawSchema === 'object') {
-				schemaName = rawSchema.title
+				schemaName =
+					rawSchema.title
 					|| rawSchema.name
 					|| rawSchema.id
-					|| t('opencatalogi', 'Publication')
+					|| 'Publication'
 			} else if (rawSchema != null && rawSchema !== '') {
-				const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(rawSchema))
+				const match = objectStore.availableSchemas.find(
+					(s) => Number(s.id) === Number(rawSchema),
+				)
 				schemaName = match?.title || match?.name || String(rawSchema)
 			}
 
 			return `${name} (${schemaName})`
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		closeModal() {
 			// Clear state first
 			this.activeTab = 0
@@ -1079,48 +1853,71 @@ export default {
 			// Close modal
 			navigationStore.setModal(null)
 		},
+
+		/**
+		 * @param isOpen
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		proceedToProperties() {
 			this.showProperties = true
 		},
-		hasSchemaActionRight(schema, action) {
-			if (this.currentUserGroups === null) return true
-			if (!schema) return true
-			const auth = schema.authorization
-			if (!auth) return true
-			if (!auth[action] || !Array.isArray(auth[action]) || auth[action].length === 0) {
-				// For write actions: if the schema has any auth rules, deny by default so that
-				// a user with only 'read' access cannot create/update/delete.
-				if (action !== 'read') {
-					const hasAnyRules = Object.values(auth).some(v => Array.isArray(v) && v.length > 0)
-					if (hasAnyRules) return this.currentUserGroups.includes('admin')
-				}
+
+		/**
+		 * @param schema
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
+		hasSchemaReadRight(schema) {
+			// While user groups are still loading, show all schemas
+			if (this.currentUserGroups === null) {
 				return true
 			}
-			if (this.currentUserGroups.includes('admin')) return true
-			return auth[action].some(entry => {
-				if (typeof entry === 'string') return this.currentUserGroups.includes(entry)
-				if (entry && typeof entry === 'object' && entry.group) return this.currentUserGroups.includes(entry.group)
+			const auth = schema.authorization
+			// No authorization rules means everyone has access
+			if (
+				!auth
+				|| !auth.read
+				|| !Array.isArray(auth.read)
+				|| auth.read.length === 0
+			) {
+				return true
+			}
+			// Admin group always has full access
+			if (this.currentUserGroups.includes('admin')) {
+				return true
+			}
+			// Check if user belongs to any group that has read permission
+			return auth.read.some((entry) => {
+				if (typeof entry === 'string') {
+					return this.currentUserGroups.includes(entry)
+				}
+				// Complex entry with match conditions — check group membership only
+				if (entry && typeof entry === 'object' && entry.group) {
+					return this.currentUserGroups.includes(entry.group)
+				}
 				return true
 			})
 		},
-		hasSchemaReadRight(schema) {
-			return this.hasSchemaActionRight(schema, 'read')
-		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		applyInitialTabFromTransferData() {
 			const data = navigationStore.getTransferData()
 			if (data && typeof data === 'object' && data.initialTab === 'files') {
-				// Defer until BTabs has finished its own mount-time activation,
+				// Defer until AppTabs has finished its own mount-time activation,
 				// otherwise the `active` attribute on the Properties tab wins.
 				this.$nextTick(() => {
 					this.activeTab = 2
 				})
 			}
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		async initializeData() {
 			if (!this.currentObject) {
 				// For new objects, initialize with empty form data and auto-select if possible
@@ -1132,7 +1929,9 @@ export default {
 				const catalogSlug = this.$route.params.catalogSlug
 				if (catalogSlug) {
 					// Find catalog by slug
-					const matchingCatalog = catalogs.find(catalog => catalog.slug === catalogSlug)
+					const matchingCatalog = catalogs.find(
+						(catalog) => catalog.slug === catalogSlug,
+					)
 					if (matchingCatalog) {
 						this.selectedCatalog = {
 							id: matchingCatalog.id,
@@ -1195,11 +1994,13 @@ export default {
 			// Ensure themes are properly initialized as an array of IDs
 			if (this.formData.themes && Array.isArray(this.formData.themes)) {
 				// Convert any theme objects back to IDs if needed
-				this.formData.themes = this.formData.themes.map(theme =>
+				this.formData.themes = this.formData.themes.map((theme) =>
 					typeof theme === 'object' ? theme.id : theme,
 				)
 			}
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		async saveObject() {
 			// Block saving while required schema fields are still empty,
 			// or any populated field has an active validation error.
@@ -1214,7 +2015,12 @@ export default {
 				const isCreating = this.isNewObject
 
 				// For new objects, validate we have the required selections
-				if (isCreating && (!this.selectedSchema || !this.selectedRegister || !this.selectedCatalog)) {
+				if (
+					isCreating
+					&& (!this.selectedSchema
+						|| !this.selectedRegister
+						|| !this.selectedCatalog)
+				) {
 					return
 				}
 
@@ -1233,8 +2039,11 @@ export default {
 					// For existing objects, merge current object with all schema properties
 					objectData = this.buildCompleteObjectData()
 					// Get register and schema info from the current object
-					const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
-					const objectId = this.currentObject['@self']?.id || this.currentObject.id
+					const { registerId, schemaId } = this.getRegisterSchemaIds(
+						this.currentObject,
+					)
+					const objectId =
+						this.currentObject['@self']?.id || this.currentObject.id
 					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
 					method = 'PUT'
 				}
@@ -1249,13 +2058,20 @@ export default {
 
 				if (!response.ok) {
 					const errorText = await response.text()
-					throw new Error(`Failed to ${isCreating ? 'create' : 'update'} publication: ${response.status} ${response.statusText} - ${errorText}`)
+					throw new Error(
+						`Failed to ${isCreating ? 'create' : 'update'} publication: ${response.status} ${response.statusText} - ${errorText}`,
+					)
 				}
 
 				const result = await response.json()
-				const schema = objectStore.availableSchemas.find(schema => schema.id === Number(result['@self'].schema))
+				const schema = objectStore.availableSchemas.find(
+					(schema) => schema.id === Number(result['@self'].schema),
+				)
 				// Set the newly created/updated object as active in the object store
-				objectStore.setActiveObject('publication', { ...result, '@self': { ...result['@self'], schema } })
+				objectStore.setActiveObject('publication', {
+					...result,
+					'@self': { ...result['@self'], schema },
+				})
 
 				// Clear form data since we now have the saved object
 				this.formData = {}
@@ -1275,12 +2091,17 @@ export default {
 				this.isSaving = false
 			}
 		},
+
 		// Property validation and editing methods
+		/**
+		 * @param key
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		getPropertyDisplayName(key) {
 			// Ensure we always have a valid key
 			if (!key || typeof key !== 'string') {
 				console.warn('Invalid key passed to getPropertyDisplayName:', key)
-				return t('opencatalogi', 'Unknown Property')
+				return 'Unknown Property'
 			}
 
 			const schemaProperties = this.getSchemaProperties()
@@ -1288,12 +2109,22 @@ export default {
 
 			// Return the title if it exists and is not empty or just "new" (placeholder)
 			const title = schemaProperty?.title
-			if (title && typeof title === 'string' && title.trim() !== '' && title.trim().toLowerCase() !== 'new') {
+			if (
+				title
+				&& typeof title === 'string'
+				&& title.trim() !== ''
+				&& title.trim().toLowerCase() !== 'new'
+			) {
 				return title
 			}
 
 			return key
 		},
+
+		/**
+		 * @param key
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		getMarkdownEditorOptions(key) {
 			return {
 				placeholder: this.getPropertyDisplayName(key),
@@ -1307,12 +2138,14 @@ export default {
 					['table', 'image', 'link'],
 					['code', 'codeblock'],
 				],
+
 				viewer: true, // Enable WYSIWYG mode
 				initialEditType: 'wysiwyg', // Start in WYSIWYG mode
 				// Hook into the editor events to remove borders after initialization
 				hooks: {
 					addImageBlobHook: () => false, // Disable image uploads
 				},
+
 				events: {
 					load: (editor) => {
 						// Remove borders after the editor is fully loaded
@@ -1320,6 +2153,7 @@ export default {
 							this.removeBordersFromEditor(editor)
 						})
 					},
+
 					changeMode: (editor) => {
 						// Remove borders when mode changes
 						this.$nextTick(() => {
@@ -1329,6 +2163,11 @@ export default {
 				},
 			}
 		},
+
+		/**
+		 * @param editor
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		removeBordersFromEditor(editor) {
 			try {
 				// Get the editor container
@@ -1336,7 +2175,7 @@ export default {
 				if (editorEl) {
 					// Remove borders from all nested elements
 					const allElements = editorEl.querySelectorAll('*')
-					allElements.forEach(el => {
+					allElements.forEach((el) => {
 						el.style.border = 'none'
 						el.style.borderWidth = '0'
 						el.style.borderStyle = 'none'
@@ -1357,10 +2196,16 @@ export default {
 				console.warn('Could not remove borders from editor:', error)
 			}
 		},
+
 		// Files tab methods
 		/**
 		 * Open a file in the Nextcloud Files app
+		 *
 		 * @param {object} file - The file object to open
+		 */
+		/**
+		 * @param file
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		openFile(file) {
 			const dirPath = file.path.substring(0, file.path.lastIndexOf('/'))
@@ -1368,10 +2213,16 @@ export default {
 			const filesAppUrl = `/index.php/apps/files/files/${file.id}?dir=${encodeURIComponent(cleanPath)}&openfile=true`
 			window.open(filesAppUrl, '_blank')
 		},
+
 		/**
 		 * Format file size for display
+		 *
 		 * @param {number} bytes - The file size in bytes
 		 * @return {string} The formatted file size
+		 */
+		/**
+		 * @param bytes
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		formatFileSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
@@ -1381,76 +2232,136 @@ export default {
 			if (i === 0) return bytes + ' ' + sizes[i]
 			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
 		},
+
+		/**
+		 * @param checked
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		toggleSelectAllFiles(checked) {
 			if (checked) {
 				// Add all current page files to selection
-				this.paginatedFiles.forEach(file => {
+				this.paginatedFiles.forEach((file) => {
 					if (!objectStore.selectedAttachments.includes(file.id)) {
 						objectStore.selectedAttachments.push(file.id)
 					}
 				})
 			} else {
 				// Remove all current page files from selection
-				const currentPageIds = this.paginatedFiles.map(file => file.id)
-				objectStore.selectedAttachments = objectStore.selectedAttachments.filter(id => !currentPageIds.includes(id))
+				const currentPageIds = this.paginatedFiles.map((file) => file.id)
+				objectStore.selectedAttachments =
+					objectStore.selectedAttachments.filter(
+						(id) => !currentPageIds.includes(id),
+					)
 			}
 		},
+
+		/**
+		 * @param fileId
+		 * @param checked
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		toggleFileSelection(fileId, checked) {
 			if (checked) {
 				if (!objectStore.selectedAttachments.includes(fileId)) {
 					objectStore.selectedAttachments.push(fileId)
 				}
 			} else {
-				objectStore.selectedAttachments = objectStore.selectedAttachments.filter(id => id !== fileId)
+				objectStore.selectedAttachments =
+					objectStore.selectedAttachments.filter((id) => id !== fileId)
 			}
 		},
+
+		/**
+		 * @param page
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		onFilesPageChanged(page) {
 			if (!this.currentObject) return
-			return this.refreshFiles({ _page: page, _limit: this.filesCurrentPageSize })
+			return this.refreshFiles({
+				_page: page,
+				_limit: this.filesCurrentPageSize,
+			})
 		},
+
+		/**
+		 * @param pageSize
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		onFilesPageSizeChanged(pageSize) {
 			if (!this.currentObject) return
 			return this.refreshFiles({ _page: 1, _limit: pageSize })
 		},
+
+		/**
+		 * @param params
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		async refreshFiles(params = {}) {
-			const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
-			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', params, {
-				source: 'openregister',
-				schema: schemaId,
-				register: registerId,
-			})
+			const { registerId, schemaId } = this.getRegisterSchemaIds(
+				this.currentObject,
+			)
+			await objectStore.fetchRelatedData(
+				'publication',
+				this.currentObject.id,
+				'files',
+				params,
+				{
+					source: 'openregister',
+					schema: schemaId,
+					register: registerId,
+				},
+			)
 		},
+
+		/**
+		 * @param operation
+		 * @param predicate
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		massSelectedFiles(operation, predicate) {
 			const selected = objectStore.selectedAttachments || []
 			if (selected.length === 0) return
 			const ids = (this.paginatedFiles || [])
-				.filter(f => selected.includes(f.id) && predicate(f))
-				.map(f => f.id)
+				.filter((f) => selected.includes(f.id) && predicate(f))
+				.map((f) => f.id)
 			if (ids.length === 0) return
-			navigationStore.setDialog('massAttachment', { operation, attachments: ids })
+			navigationStore.setDialog('massAttachment', {
+				operation,
+				attachments: ids,
+			})
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		publishSelectedFiles() {
-			this.massSelectedFiles('publish', f => !f.accessUrl && !f.downloadUrl)
+			this.massSelectedFiles('publish', (f) => !f.accessUrl && !f.downloadUrl)
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		depublishSelectedFiles() {
-			this.massSelectedFiles('depublish', f => f.accessUrl || f.downloadUrl)
+			this.massSelectedFiles('depublish', (f) => f.accessUrl || f.downloadUrl)
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		async deleteSelectedFiles() {
 			if (objectStore.selectedAttachments.length === 0) return
 
 			try {
 				this.fileIdsLoading = [...objectStore.selectedAttachments]
 
-				const selectedFiles = this.paginatedFiles.filter(item =>
+				const selectedFiles = this.paginatedFiles.filter((item) =>
 					objectStore.selectedAttachments.includes(item.id),
 				)
-				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
+				const { registerId, schemaId } = this.getRegisterSchemaIds(
+					this.currentObject,
+				)
 
 				for (const file of selectedFiles) {
 					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${this.currentObject.id}/files/${file.id}`
 					const response = await fetch(endpoint, { method: 'DELETE' })
 					if (!response.ok) {
-						throw new Error(`Failed to delete file ${file.title || file.name}: ${response.statusText}`)
+						throw new Error(
+							`Failed to delete file ${file.title || file.name}: ${response.statusText}`,
+						)
 					}
 				}
 
@@ -1463,44 +2374,96 @@ export default {
 				this.fileIdsLoading = []
 			}
 		},
+
 		// action: 'publish' | 'depublish' | 'delete'
+		/**
+		 * @param file
+		 * @param action
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		async runFileAction(file, action) {
-			const loadingList = action === 'delete' ? 'fileIdsLoading' : `${action}Loading`
+			const loadingList =
+				action === 'delete' ? 'fileIdsLoading' : `${action}Loading`
 			try {
 				this[loadingList].push(file.id)
-				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
+				const { registerId, schemaId } = this.getRegisterSchemaIds(
+					this.currentObject,
+				)
 				const base = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${this.currentObject.id}/files/${file.id}`
 				const endpoint = action === 'delete' ? base : `${base}/${action}`
-				const response = await fetch(endpoint, { method: action === 'delete' ? 'DELETE' : 'POST' })
+				const response = await fetch(endpoint, {
+					method: action === 'delete' ? 'DELETE' : 'POST',
+				})
 				if (!response.ok) {
-					throw new Error(`Failed to ${action} file: ${response.statusText}`)
+					throw new Error(
+						`Failed to ${action} file: ${response.statusText}`,
+					)
 				}
 				await this.refreshFiles()
 				catalogStore.fetchPublications()
 			} catch (error) {
 				console.error(`Failed to ${action} file:`, error)
 			} finally {
-				this[loadingList] = this[loadingList].filter(id => id !== file.id)
+				this[loadingList] = this[loadingList].filter((id) => id !== file.id)
 			}
 		},
-		publishFile(file) { return this.runFileAction(file, 'publish') },
-		depublishFile(file) { return this.runFileAction(file, 'depublish') },
-		deleteFile(file) { return this.runFileAction(file, 'delete') },
+
+		/**
+		 * @param file
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
+		publishFile(file) {
+			return this.runFileAction(file, 'publish')
+		},
+
+		/**
+		 * @param file
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
+		depublishFile(file) {
+			return this.runFileAction(file, 'depublish')
+		},
+
+		/**
+		 * @param file
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
+		deleteFile(file) {
+			return this.runFileAction(file, 'delete')
+		},
+
+		/**
+		 * @param file
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		editFileLabels(file) {
 			this.editingTags = file.id
 			this.editedTags = file.labels || []
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		cancelFileLabelEditing() {
 			this.editingTags = null
 			this.editedTags = []
 		},
+
+		/**
+		 * @param newTag
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		addNewTag(newTag) {
 			if (!newTag) return
-			if (!this.labelOptionsEdit.options || !Array.isArray(this.labelOptionsEdit.options)) {
+			if (
+				!this.labelOptionsEdit.options
+				|| !Array.isArray(this.labelOptionsEdit.options)
+			) {
 				this.labelOptionsEdit.options = []
 			}
 			if (!this.labelOptionsEdit.options.includes(newTag)) {
-				this.labelOptionsEdit.options = [...this.labelOptionsEdit.options, newTag]
+				this.labelOptionsEdit.options = [
+					...this.labelOptionsEdit.options,
+					newTag,
+				]
 			}
 			if (!this.editedTags || !Array.isArray(this.editedTags)) {
 				this.editedTags = []
@@ -1509,6 +2472,8 @@ export default {
 				this.editedTags = [...this.editedTags, newTag]
 			}
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		async getAllTags() {
 			this.tagsLoading = true
 			try {
@@ -1529,10 +2494,17 @@ export default {
 				this.tagsLoading = false
 			}
 		},
+
+		/**
+		 * @param file
+		 * @param editedTags
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		async saveTags(file, editedTags) {
 			try {
 				const publication = this.currentObject
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const { registerId, schemaId } =
+					this.getRegisterSchemaIds(publication)
 
 				// Update file tags using the same approach as PublicationDetail.vue
 				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
@@ -1548,7 +2520,9 @@ export default {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to update file tags: ${response.statusText}`)
+					throw new Error(
+						`Failed to update file tags: ${response.statusText}`,
+					)
 				}
 
 				// Refresh files list with publication data
@@ -1557,7 +2531,13 @@ export default {
 					schema: schemaId,
 					register: registerId,
 				}
-				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				await objectStore.fetchRelatedData(
+					'publication',
+					this.currentObject.id,
+					'files',
+					{},
+					publicationData,
+				)
 
 				this.editingTags = null
 				this.editedTags = []
@@ -1565,61 +2545,117 @@ export default {
 				console.error('Error saving tags:', error)
 			}
 		},
+
 		// Utility method to get register and schema IDs from publication object
+		/**
+		 * @param publication
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		getRegisterSchemaIds(publication) {
-			const registerId = typeof publication['@self'].register === 'object'
-				? publication['@self'].register?.id || publication['@self'].register?.uuid
-				: publication['@self'].register
-			const schemaId = typeof publication['@self'].schema === 'object'
-				? publication['@self'].schema?.id || publication['@self'].schema?.uuid
-				: publication['@self'].schema
+			const registerId =
+				typeof publication['@self'].register === 'object'
+					? publication['@self'].register?.id
+						|| publication['@self'].register?.uuid
+					: publication['@self'].register
+			const schemaId =
+				typeof publication['@self'].schema === 'object'
+					? publication['@self'].schema?.id
+						|| publication['@self'].schema?.uuid
+					: publication['@self'].schema
 			return { registerId, schemaId }
 		},
+
 		// Action button methods
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		uploadFiles() {
 			// Open the upload files modal (same as in PublicationDetail.vue)
 			navigationStore.setDialog('uploadFiles')
 		},
+
+		/**
+		 * @param object
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		shouldShowPublishAction(object) {
 			if (!object) return false
 			const now = new Date()
-			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
-			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+			const published = object.publicationDate
+				? new Date(object.publicationDate)
+				: null
+			const depublished = object.depublicationDate
+				? new Date(object.depublicationDate)
+				: null
 
 			if (depublished && depublished < now) return true // currently depublished
 			if (!published && !depublished) return true // never published
 			if (!depublished && published && published > now) return true // scheduled but not yet live
 			return false
 		},
+
+		/**
+		 * @param object
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		shouldShowDepublishAction(object) {
 			if (!object) return false
 			const now = new Date()
-			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
-			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+			const published = object.publicationDate
+				? new Date(object.publicationDate)
+				: null
+			const depublished = object.depublicationDate
+				? new Date(object.depublicationDate)
+				: null
 
 			// Currently live: published in the past and not yet depublished
-			return !!(published && published <= now && (!depublished || depublished > now))
+			return !!(
+				published
+				&& published <= now
+				&& (!depublished || depublished > now)
+			)
 		},
+
+		/**
+		 * @param dialog
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		openSingleObjectDialog(dialog) {
 			if (!this.currentObject) return
-			objectStore.setSelectedObjects([{
-				...this.currentObject,
-				id: this.currentObject['@self']?.id || this.currentObject.id,
-			}])
+			objectStore.setSelectedObjects([
+				{
+					...this.currentObject,
+					id: this.currentObject['@self']?.id || this.currentObject.id,
+				},
+			])
 			navigationStore.setDialog(dialog)
 		},
-		singlePublishObject() { this.openSingleObjectDialog('massPublishObjects') },
-		singleDepublishObject() { this.openSingleObjectDialog('massDepublishObjects') },
-		singleDeleteObject() { this.openSingleObjectDialog('massDeleteObject') },
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
+		singlePublishObject() {
+			this.openSingleObjectDialog('massPublishObjects')
+		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
+		singleDepublishObject() {
+			this.openSingleObjectDialog('massDepublishObjects')
+		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
+		singleDeleteObject() {
+			this.openSingleObjectDialog('massDeleteObject')
+		},
+
 		// Schema handling methods
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		getSchemaProperties() {
 			let properties = {}
 
-			const findSchema = (schemaId) => objectStore.availableSchemas.find(
-				schema => String(schema.id) === String(schemaId)
-					|| schema.uuid === schemaId
-					|| schema.slug === schemaId,
-			)
+			const findSchema = (schemaId) =>
+				objectStore.availableSchemas.find(
+					(schema) =>
+						String(schema.id) === String(schemaId)
+						|| schema.uuid === schemaId
+						|| schema.slug === schemaId,
+				)
 
 			// For new objects, use the selected schema
 			if (this.isNewObject && this.selectedSchema) {
@@ -1630,15 +2666,20 @@ export default {
 				const schemaRef = this.currentObject['@self'].schema
 
 				// If schema is already an extended object, use its properties directly
-				if (typeof schemaRef === 'object' && schemaRef !== null && schemaRef.properties) {
+				if (
+					typeof schemaRef === 'object'
+					&& schemaRef !== null
+					&& schemaRef.properties
+				) {
 					return schemaRef.properties
 				}
 
 				// Handle both object and string schema references
 				// @self.schema can be a UUID string, numeric ID, or slug — match against all
-				const schemaId = typeof schemaRef === 'object' && schemaRef !== null
-					? (schemaRef.id || schemaRef.uuid)
-					: schemaRef
+				const schemaId =
+					typeof schemaRef === 'object' && schemaRef !== null
+						? schemaRef.id || schemaRef.uuid
+						: schemaRef
 
 				if (schemaId) {
 					const fullSchema = findSchema(schemaId)
@@ -1650,7 +2691,12 @@ export default {
 
 			return properties
 		},
+
 		// Helper method to rebuild object with schema properties after API operations
+		/**
+		 * @param apiResult
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		rebuildObjectWithSchemaProperties(apiResult) {
 			// Start with the API result merged with current object
 			const mergedObject = {
@@ -1667,28 +2713,28 @@ export default {
 
 			// Add missing schema properties with default values
 			for (const [key, schemaProperty] of Object.entries(schemaProperties)) {
-				if (!Object.prototype.hasOwnProperty.call(mergedObject, key)) {
+				if (!Object.hasOwn(mergedObject, key)) {
 					// Add with appropriate default value based on type
 					let defaultValue = ''
 					switch (schemaProperty.type) {
-					case 'string':
-						defaultValue = schemaProperty.const || ''
-						break
-					case 'number':
-					case 'integer':
-						defaultValue = 0
-						break
-					case 'boolean':
-						defaultValue = false
-						break
-					case 'array':
-						defaultValue = []
-						break
-					case 'object':
-						defaultValue = {}
-						break
-					default:
-						defaultValue = ''
+						case 'string':
+							defaultValue = schemaProperty.const || ''
+							break
+						case 'number':
+						case 'integer':
+							defaultValue = 0
+							break
+						case 'boolean':
+							defaultValue = false
+							break
+						case 'array':
+							defaultValue = []
+							break
+						case 'object':
+							defaultValue = {}
+							break
+						default:
+							defaultValue = ''
 					}
 					mergedObject[key] = defaultValue
 				}
@@ -1699,8 +2745,10 @@ export default {
 
 		/**
 		 * Clean formData to ensure it's a proper object with correct property keys
+		 *
 		 * @return {object} Cleaned form data object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		cleanFormData() {
 			const cleaned = {}
 
@@ -1717,11 +2765,13 @@ export default {
 				// - Must not be empty
 				// - Must not be purely numeric (array indices)
 				// - Must not be special Vue/internal keys
-				if (typeof key === 'string'
+				if (
+					typeof key === 'string'
 					&& key.length > 0
 					&& !/^\d+$/.test(key)
 					&& !key.startsWith('_')
-					&& !key.startsWith('$')) {
+					&& !key.startsWith('$')
+				) {
 					cleaned[key] = value
 				}
 			}
@@ -1731,8 +2781,10 @@ export default {
 
 		/**
 		 * Build complete object data including all schema properties
+		 *
 		 * @return {object} Complete object with all properties from schema and current object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		buildCompleteObjectData() {
 			const schemaProperties = this.getSchemaProperties()
 			const cleanedFormData = this.cleanFormData()
@@ -1747,8 +2799,10 @@ export default {
 			}
 
 			// Add all schema properties with appropriate values
-			for (const [propertyKey, schemaProperty] of Object.entries(schemaProperties)) {
-				if (Object.prototype.hasOwnProperty.call(cleanedFormData, propertyKey)) {
+			for (const [propertyKey, schemaProperty] of Object.entries(
+				schemaProperties,
+			)) {
+				if (Object.hasOwn(cleanedFormData, propertyKey)) {
 					// Check if property was marked for deletion (undefined)
 					if (cleanedFormData[propertyKey] === undefined) {
 						// For schema properties, don't include undefined values - let backend handle defaults
@@ -1762,7 +2816,9 @@ export default {
 							if (Array.isArray(formValue)) {
 								normalized = formValue
 							} else if (typeof formValue === 'string') {
-								normalized = formValue.split(/ *, */g).filter(Boolean)
+								normalized = formValue
+									.split(/ *, */g)
+									.filter(Boolean)
 							} else if (formValue === null) {
 								normalized = null
 							} else if (formValue === false) {
@@ -1776,7 +2832,7 @@ export default {
 							objectData[propertyKey] = formValue
 						}
 					}
-				} else if (Object.prototype.hasOwnProperty.call(currentObjectData, propertyKey)) {
+				} else if (Object.hasOwn(currentObjectData, propertyKey)) {
 					// Keep existing value from current object
 					objectData[propertyKey] = currentObjectData[propertyKey]
 				} else {
@@ -1785,24 +2841,24 @@ export default {
 
 					// Only set non-null defaults for specific cases
 					switch (schemaProperty.type) {
-					case 'string':
-						defaultValue = schemaProperty.const || null
-						break
-					case 'number':
-					case 'integer':
-						defaultValue = null // Let backend handle defaults
-						break
-					case 'boolean':
-						defaultValue = null // Let backend handle defaults
-						break
-					case 'array':
-						defaultValue = null // Let backend handle defaults
-						break
-					case 'object':
-						defaultValue = null // Let backend handle defaults
-						break
-					default:
-						defaultValue = null
+						case 'string':
+							defaultValue = schemaProperty.const || null
+							break
+						case 'number':
+						case 'integer':
+							defaultValue = null // Let backend handle defaults
+							break
+						case 'boolean':
+							defaultValue = null // Let backend handle defaults
+							break
+						case 'array':
+							defaultValue = null // Let backend handle defaults
+							break
+						case 'object':
+							defaultValue = null // Let backend handle defaults
+							break
+						default:
+							defaultValue = null
 					}
 
 					objectData[propertyKey] = defaultValue
@@ -1812,11 +2868,14 @@ export default {
 			// Also include any edited properties that might not be in the schema
 			// But only include valid property names (not numeric indices) and not undefined values
 			for (const [key, value] of Object.entries(cleanedFormData)) {
-				if (!Object.prototype.hasOwnProperty.call(schemaProperties, key)
+				if (
+					!Object.hasOwn(schemaProperties, key)
 					&& typeof key === 'string'
 					&& key.length > 0
 					&& !/^\d+$/.test(key)
-					&& value !== undefined) { // Don't include properties marked for deletion
+					&& value !== undefined
+				) {
+					// Don't include properties marked for deletion
 					objectData[key] = value
 				}
 			}
@@ -1825,6 +2884,11 @@ export default {
 		},
 
 		// Property dropping methods
+		/**
+		 * @param key
+		 * @param value
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		canDropProperty(key, value) {
 			// Don't show drop button for metadata properties
 			if (key === '@self' || key === 'id') {
@@ -1839,18 +2903,26 @@ export default {
 			// Hide the X when there's effectively nothing to clear. Use the
 			// resolved value (formData override falls back to the persisted
 			// object value) so a property cleared in the form drops the X.
-			const resolved = Object.prototype.hasOwnProperty.call(this.formData, key)
+			const resolved = Object.hasOwn(this.formData, key)
 				? this.formData[key]
-				: (this.currentObject && this.currentObject[key])
-			if (resolved === null || resolved === undefined || resolved === '') return false
+				: this.currentObject && this.currentObject[key]
+			if (resolved === null || resolved === undefined || resolved === '')
+				return false
 			if (Array.isArray(resolved) && resolved.length === 0) return false
-			if (typeof resolved === 'object' && Object.keys(resolved).length === 0) return false
+			if (typeof resolved === 'object' && Object.keys(resolved).length === 0)
+				return false
 			return true
 		},
+
 		/**
 		 * Check if a property is constant or immutable
+		 *
 		 * @param {string} key - Property key
 		 * @return {boolean} True if property is constant or immutable
+		 */
+		/**
+		 * @param key
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		isConstantOrImmutable(key) {
 			const schemaProperties = this.getSchemaProperties()
@@ -1858,13 +2930,15 @@ export default {
 
 			// Check by property name patterns (case insensitive)
 			const immutablePatterns = ['immutable', 'readonly', 'constant']
-			const isImmutableByName = immutablePatterns.some(pattern =>
+			const isImmutableByName = immutablePatterns.some((pattern) =>
 				key.toLowerCase().includes(pattern),
 			)
 
 			if (schemaProperty) {
 				const isConstant = schemaProperty.const !== undefined
-				const isImmutable = schemaProperty.readOnly === true || schemaProperty.immutable === true
+				const isImmutable =
+					schemaProperty.readOnly === true
+					|| schemaProperty.immutable === true
 
 				// Debug: Log all detection methods
 				if (process.env.NODE_ENV === 'development') {
@@ -1883,20 +2957,28 @@ export default {
 			return isImmutableByName
 		},
 
+		/**
+		 * @param key
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		getDropPropertyTooltip(key) {
 			const schemaProperties = this.getSchemaProperties()
-			const isSchemaProperty = Object.prototype.hasOwnProperty.call(schemaProperties, key)
+			const isSchemaProperty = Object.hasOwn(schemaProperties, key)
 
 			if (isSchemaProperty) {
-				return t('opencatalogi', "Reset '{property}' to empty value", { property: this.getPropertyDisplayName(key) })
+				return `Reset '${this.getPropertyDisplayName(key)}' to empty value`
 			} else {
-				return t('opencatalogi', "Remove '{property}' property completely", { property: this.getPropertyDisplayName(key) })
+				return `Remove '${this.getPropertyDisplayName(key)}' property completely`
 			}
 		},
 
+		/**
+		 * @param key
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		dropProperty(key) {
 			const schemaProperties = this.getSchemaProperties()
-			const isSchemaProperty = Object.prototype.hasOwnProperty.call(schemaProperties, key)
+			const isSchemaProperty = Object.hasOwn(schemaProperties, key)
 
 			if (isSchemaProperty) {
 				// Clear the value: null for primitives, empty container for
@@ -1906,21 +2988,26 @@ export default {
 				const schemaProperty = schemaProperties[key]
 				let cleared = null
 				switch (schemaProperty.type) {
-				case 'array': cleared = []; break
-				case 'object': cleared = {}; break
-				default: cleared = null
+					case 'array':
+						cleared = []
+						break
+					case 'object':
+						cleared = {}
+						break
+					default:
+						cleared = null
 				}
-				this.$set(this.formData, key, cleared)
+				this.formData[key] = cleared
 			} else {
 				// For non-schema properties, remove completely from formData
 				if (this.formData[key] !== undefined) {
-					this.$delete(this.formData, key)
+					delete this.formData[key]
 				}
 
 				// If it was in the original object, we need to track its removal
 				// We'll set it to a special marker that indicates deletion
-				if (this.currentObject && Object.prototype.hasOwnProperty.call(this.currentObject, key)) {
-					this.$set(this.formData, key, undefined)
+				if (this.currentObject && Object.hasOwn(this.currentObject, key)) {
+					this.formData[key] = undefined
 				}
 			}
 
@@ -1934,60 +3021,97 @@ export default {
 
 		/**
 		 * Bridge between CnPropertiesTab's `update:property-value` event and `formData`.
+		 *
 		 * @param {{ key: string, value: * }} payload - The property key and its new value.
+		 */
+		/**
+		 * @param root0
+		 * @param root0.key
+		 * @param root0.value
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		onPropertyValueUpdate({ key, value }) {
 			if (!this.formData || Array.isArray(this.formData)) {
 				this.formData = {}
 			}
-			this.$set(this.formData, key, value)
+			this.formData[key] = value
 		},
 
 		/**
 		 * Pre-fill formData with schema `default` / `const` values for properties
 		 * the user hasn't already touched. Called when a schema is selected for
 		 * a new object so visible inputs aren't empty.
+		 *
 		 * @param {object} schema - The schema whose properties to seed from.
+		 */
+		/**
+		 * @param schema
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		applySchemaDefaults(schema) {
 			const props = schema?.properties || {}
 			for (const [key, prop] of Object.entries(props)) {
 				if (!prop) continue
 				if (prop.hideOnForm === true) continue
-				if (Object.prototype.hasOwnProperty.call(this.formData, key)) continue
+				if (Object.hasOwn(this.formData, key)) continue
 				if (prop.default !== undefined) {
-					this.$set(this.formData, key, prop.default)
+					this.formData[key] = prop.default
 				} else if (prop.const !== undefined) {
-					this.$set(this.formData, key, prop.const)
+					this.formData[key] = prop.const
 				}
 			}
 		},
 
+		/**
+		 * @param root0
+		 * @param root0.propertyKey
+		 * @param root0.editor
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		onEditorLoad({ propertyKey, editor }) {
 			this.markdownEditors[propertyKey] = editor
 		},
 
+		/**
+		 * @param root0
+		 * @param root0.propertyKey
+		 * @param root0.onUpdate
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		onEditorBlur({ propertyKey, onUpdate }) {
 			onUpdate(this.getMarkdownContent(this.markdownEditors[propertyKey]))
 		},
 
 		/**
 		 * Whether a schema property should render with the Toast UI markdown editor.
+		 *
 		 * @param {object} schemaProp - The JSON-schema entry for the property.
 		 * @return {boolean}
 		 */
 		isMarkdownProperty(schemaProp) {
-			return !!(schemaProp && schemaProp.type === 'string' && schemaProp.format === 'markdown')
+			return !!(
+				schemaProp
+				&& schemaProp.type === 'string'
+				&& schemaProp.format === 'markdown'
+			)
 		},
 
 		/**
 		 * Extract the current content from a Toast UI Editor instance, preferring markdown.
+		 *
 		 * @param {object} editorInstance - The Toast UI Editor instance from `@load`.
 		 * @return {string}
 		 */
+		/**
+		 * @param editorInstance
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 */
 		getMarkdownContent(editorInstance) {
 			try {
-				if (editorInstance && typeof editorInstance.getMarkdown === 'function') {
+				if (
+					editorInstance
+					&& typeof editorInstance.getMarkdown === 'function'
+				) {
 					return editorInstance.getMarkdown()
 				}
 				if (editorInstance && typeof editorInstance.getHTML === 'function') {
@@ -2029,6 +3153,16 @@ export default {
 .viewTableRow {
 	cursor: pointer;
 	transition: background-color 0.2s ease;
+}
+
+/* WCAG 2.3.3. Both transitions in this component are decorative hover feedback
+   (row highlight, and the drop-property button fading from 0.3 to 1 opacity).
+   The end states still apply, so no affordance is lost. */
+@media (prefers-reduced-motion: reduce) {
+	.viewTableRow,
+	.drop-property-btn {
+		transition: none !important;
+	}
 }
 
 .viewTableRow:hover {
@@ -2081,16 +3215,20 @@ export default {
 	justify-content: space-between;
 	text-align: left;
 	width: 100%;
+	flex-wrap: wrap;
 }
 
 .value-input-container {
 	flex: 1;
 	text-align: left;
+	padding: 0;
+	margin: 0;
+	width: 100%;
 }
 
 .drop-property-btn {
 	opacity: 0.3 !important;
-	transition: .2s ease !important;
+	transition: 0.2s ease !important;
 	margin-left: auto;
 	flex-shrink: 0;
 }
@@ -2134,14 +3272,6 @@ export default {
 .value-cell {
 	position: relative;
 	text-align: left;
-}
-
-.value-input-container {
-	flex: 1;
-	text-align: left;
-	padding: 0;
-	margin: 0;
-	width: 100%;
 }
 
 .value-input-container .text-field {
@@ -2479,14 +3609,10 @@ export default {
 	word-break: unset;
 }
 
-.value-cell-content {
-	flex-wrap: wrap;
-}
-
 .viewObjectDialog .viewTable td.table-row-type {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	word-break: unset !important;
 }
 
@@ -2501,17 +3627,17 @@ export default {
 }
 
 .short-column {
-    width: 100px;
-    max-width: 100px;
-    overflow: hidden;
+	width: 100px;
+	max-width: 100px;
+	overflow: hidden;
 	text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .table-row-title {
-    width: 100%;
-    max-width: initial;
+	width: 100%;
+	max-width: initial;
 	white-space: normal;
 	word-break: break-word;
 }
@@ -2543,6 +3669,6 @@ export default {
 
 .viewObjectDialog .viewTable th.table-row-title,
 .viewObjectDialog .viewTable td.table-row-title {
-    width: 100%;
+	width: 100%;
 }
 </style>

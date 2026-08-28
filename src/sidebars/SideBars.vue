@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { objectStore, navigationStore } from '../store/store.js'
 import SearchSideBar from './search/SearchSideBar.vue'
+import { navigationStore, objectStore } from '../store/store.js'
 </script>
 
 <template>
@@ -10,7 +10,7 @@ import SearchSideBar from './search/SearchSideBar.vue'
 		<SearchSideBar
 			v-if="isSearchPage"
 			:open="isSidebarOpen"
-			@update:open="(e) => isSidebarOpen = e" />
+			@update:open="(e) => (isSidebarOpen = e)" />
 
 		<!-- Directory Sidebar -->
 		<NcAppSidebar v-if="directory" :title="directory.title">
@@ -18,7 +18,9 @@ import SearchSideBar from './search/SearchSideBar.vue'
 				{{ directory.description }}
 			</template>
 			<template #actions>
-				<NcButton type="primary" @click="navigationStore.setModal('editDirectory')">
+				<NcButton
+					variant="primary"
+					@click="navigationStore.setModal('editDirectory')">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
@@ -33,7 +35,9 @@ import SearchSideBar from './search/SearchSideBar.vue'
 				{{ listing.description }}
 			</template>
 			<template #actions>
-				<NcButton type="primary" @click="navigationStore.setModal('editListing')">
+				<NcButton
+					variant="primary"
+					@click="navigationStore.setModal('editListing')">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
@@ -53,18 +57,21 @@ const isSidebarOpen = ref(true)
 
 /**
  * Get the active directory from the store
+ *
  * @return {object | null}
  */
 const directory = computed(() => objectStore.getActiveObject('directory'))
 
 /**
  * Get the active listing from the store
+ *
  * @return {object | null}
  */
 const listing = computed(() => objectStore.getActiveObject('listing'))
 
 /**
  * Check if we're on the search page
+ *
  * @return {boolean}
  */
 const isSearchPage = computed(() => this.$route.path === '/search')

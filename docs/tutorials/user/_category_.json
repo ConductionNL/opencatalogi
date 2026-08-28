@@ -1,0 +1,8 @@
+{
+	"label": "User track",
+	"position": 1,
+	"link": {
+		"type": "generated-index",
+		"description": "Day-to-day walkthroughs for anyone using OpenCatalogi: open a catalogue, find components and publications, search across federated catalogues, subscribe to remote sources, and publish items."
+	}
+}

@@ -1,0 +1,21 @@
+/*
+ * vue-select-dialog-z-fix
+ *
+ * `NcSelect` teleports its dropdown to `<body>` via vue-select's default
+ * append-to-body behaviour and applies `z-index: 9999`. `NcDialog` renders
+ * its modal at `z-index: 10005`. Any `NcSelect` opened *inside* a dialog
+ * (e.g. the setup-wizard catalog-scope step) therefore renders BEHIND the
+ * dialog that spawned it — the middle option lands on the dialog surface
+ * and the bottom one escapes below it, both visually unreachable.
+ *
+ * This is an upstream stacking-order bug in `@nextcloud/vue` — the two
+ * libraries independently picked z-index constants without coordinating.
+ * Fix by pinning the dropdown above the highest dialog z-index we've
+ * observed in NC 32-35 (10005) with a small buffer. Applying globally
+ * because ANY NcSelect-in-dialog is affected, not just the setup wizard
+ * (add-directory modal, publication-scope pickers, etc.).
+ */
+.vs__dropdown-menu,
+.v-select__dropdown-menu {
+	z-index: 10010 !important;
+}

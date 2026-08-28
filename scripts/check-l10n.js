@@ -51,7 +51,10 @@ function extractTCalls(files, app) {
 	const found = new Map()
 	const unanalyzable = []
 
-	const tCallRe = new RegExp(`\\bt\\s*\\(\\s*(['"])${escapeRegex(app)}\\1\\s*,\\s*`, 'g')
+	const tCallRe = new RegExp(
+		`\\bt\\s*\\(\\s*(['"])${escapeRegex(app)}\\1\\s*,\\s*`,
+		'g',
+	)
 
 	for (const file of files) {
 		const text = fs.readFileSync(file, 'utf8')
@@ -60,7 +63,8 @@ function extractTCalls(files, app) {
 			if (text.charCodeAt(i) === 10) lineStarts.push(i + 1)
 		}
 		const posToLine = (pos) => {
-			let lo = 0; let hi = lineStarts.length - 1
+			let lo = 0
+			let hi = lineStarts.length - 1
 			while (lo < hi) {
 				const mid = (lo + hi + 1) >> 1
 				if (lineStarts[mid] <= pos) lo = mid
@@ -75,7 +79,7 @@ function extractTCalls(files, app) {
 			const argStart = tCallRe.lastIndex
 			const line = posToLine(m.index)
 			const ch = text[argStart]
-			if (ch === '\'' || ch === '"') {
+			if (ch === "'" || ch === '"') {
 				let i = argStart + 1
 				let value = ''
 				let closed = false
@@ -90,14 +94,18 @@ function extractTCalls(files, app) {
 						i += 2
 						continue
 					}
-					if (c === ch) { closed = true; break }
+					if (c === ch) {
+						closed = true
+						break
+					}
 					if (c === '\n') break
 					value += c
 					i++
 				}
 				if (closed) {
 					let j = i + 1
-					while (j < text.length && (text[j] === ' ' || text[j] === '\t')) j++
+					while (j < text.length && (text[j] === ' ' || text[j] === '\t'))
+						j++
 					const next = text[j]
 					if (next === ',' || next === ')') {
 						if (!found.has(value)) found.set(value, [])
@@ -105,9 +113,21 @@ function extractTCalls(files, app) {
 						continue
 					}
 				}
-				unanalyzable.push({ file, line, snippet: text.slice(m.index, Math.min(m.index + 80, text.length)).replace(/\n/g, ' ') })
+				unanalyzable.push({
+					file,
+					line,
+					snippet: text
+						.slice(m.index, Math.min(m.index + 80, text.length))
+						.replace(/\n/g, ' '),
+				})
 			} else {
-				unanalyzable.push({ file, line, snippet: text.slice(m.index, Math.min(m.index + 80, text.length)).replace(/\n/g, ' ') })
+				unanalyzable.push({
+					file,
+					line,
+					snippet: text
+						.slice(m.index, Math.min(m.index + 80, text.length))
+						.replace(/\n/g, ' '),
+				})
 			}
 		}
 	}
@@ -131,6 +151,22 @@ function extractTCalls(files, app) {
 // match an l10n key but must NOT be wrapped in t().
 const NON_DISPLAY_ATTRS = new Set([
 	'back-route', // Vue Router route name passed to $router.push({ name })
+	// Form/DOM plumbing. `value` is the one that bit: eslint's
+	// `vue/no-useless-v-bind` rewrites `:value="'concept'"` to the equivalent
+	// static `value="concept"`, and the static form then looks exactly like a
+	// display attribute to this scanner. The rendered markup is identical, so a
+	// checker that passes before the rewrite and fails after it is reporting the
+	// spelling, not the string. A form value is an identifier submitted to the
+	// server — translating it would BREAK the filter it drives.
+	'value',
+	'name',
+	'id',
+	'key',
+	'type',
+	'href',
+	'src',
+	'for',
+	'role',
 ])
 
 function findUnwrapped(vueFiles, keys) {
@@ -147,7 +183,8 @@ function findUnwrapped(vueFiles, keys) {
 			if (text.charCodeAt(i) === 10) lineStarts.push(i + 1)
 		}
 		const posToLine = (pos) => {
-			let lo = 0; let hi = lineStarts.length - 1
+			let lo = 0
+			let hi = lineStarts.length - 1
 			while (lo < hi) {
 				const mid = (lo + hi + 1) >> 1
 				if (lineStarts[mid] <= pos) lo = mid
@@ -164,7 +201,12 @@ function findUnwrapped(vueFiles, keys) {
 			if (!trimmed) continue
 			if (keys.has(trimmed)) {
 				const absPos = tplOffset + tm.index + 1 + raw.indexOf(trimmed)
-				hits.push({ file, line: posToLine(absPos), key: trimmed, context: 'text' })
+				hits.push({
+					file,
+					line: posToLine(absPos),
+					key: trimmed,
+					context: 'text',
+				})
 			}
 		}
 
@@ -173,11 +215,17 @@ function findUnwrapped(vueFiles, keys) {
 		while ((tag = tagRe.exec(tpl)) !== null) {
 			const tagText = tag[0]
 			const tagAbs = tplOffset + tag.index
-			const attrRe = /(\s)([:@]?[a-zA-Z_][\w-]*|v-[\w:.-]+)\s*=\s*("([^"]*)"|'([^']*)')/g
+			const attrRe =
+				/(\s)([:@]?[a-zA-Z_][\w-]*|v-[\w:.-]+)\s*=\s*("([^"]*)"|'([^']*)')/g
 			let am
 			while ((am = attrRe.exec(tagText)) !== null) {
 				const name = am[2]
-				if (name.startsWith(':') || name.startsWith('@') || name.startsWith('v-')) continue
+				if (
+					name.startsWith(':')
+					|| name.startsWith('@')
+					|| name.startsWith('v-')
+				)
+					continue
 				if (NON_DISPLAY_ATTRS.has(name.toLowerCase())) continue
 				const value = am[4] !== undefined ? am[4] : am[5]
 				const trimmed = value.trim()
@@ -185,7 +233,12 @@ function findUnwrapped(vueFiles, keys) {
 				if (keys.has(trimmed)) {
 					const valueOffsetInTag = am.index + am[0].indexOf(am[3]) + 1
 					const absPos = tagAbs + valueOffsetInTag
-					hits.push({ file, line: posToLine(absPos), key: trimmed, context: `attr ${name}` })
+					hits.push({
+						file,
+						line: posToLine(absPos),
+						key: trimmed,
+						context: `attr ${name}`,
+					})
 				}
 			}
 		}
@@ -199,54 +252,222 @@ function printSection(title, color, body) {
 	console.log('')
 }
 
+/**
+ * Strings the SERVER translates, harvested from PHP `$l->t()` / `$l->n()`.
+ *
+ * WHY THIS IS NOT OPTIONAL.
+ *
+ * `l10n/<locale>.js` is GENERATED from `l10n/<locale>.json` by
+ * build-l10n-js.js, and the .json is the catalogue PHP reads. So a key that
+ * only PHP uses is necessarily present in the .js too — and this check, which
+ * scanned nothing but src/, reported every one of them as an orphan.
+ *
+ * That made the two checks mutually unsatisfiable: `check:l10n` demanded those
+ * keys be stripped from the .js, and `check:l10n-js` regenerated the .js from
+ * the .json and put them straight back. Measured 2026-08-27 on opencatalogi:
+ * 24 keys sat in exactly that trap, including "Not logged in" and
+ * "Publication not found".
+ *
+ * Deleting them from the .json instead would have been worse — the server
+ * would have rendered them untranslated, silently, in every locale.
+ *
+ * @return {Set<string>} Strings passed to a server-side translate call.
+ */
+function collectPhpTranslated() {
+	const dirs = [
+		path.join(ROOT, 'lib'),
+		path.join(ROOT, 'templates'),
+		path.join(ROOT, 'appinfo'),
+	]
+	const used = new Set()
+
+	for (const dir of dirs) {
+		if (!fs.existsSync(dir)) {
+			continue
+		}
+
+		for (const file of walk(dir, ['.php'])) {
+			const source = fs.readFileSync(file, 'utf8')
+			// ->t('…') / ->n('…') and their double-quoted forms. Escapes are
+			// honoured so a string containing a quote is captured whole rather
+			// than truncated at it.
+			const patterns = [
+				/->[tn]\(\s*'((?:\\.|[^'\\])*)'/g,
+				/->[tn]\(\s*"((?:\\.|[^"\\])*)"/g,
+			]
+			for (const re of patterns) {
+				let m
+				while ((m = re.exec(source)) !== null) {
+					used.add(m[1].replace(/\\(['"\\])/g, '$1'))
+				}
+			}
+		}
+	}
+
+	return used
+}
+
+/**
+ * Every user-visible string the MANIFEST declares.
+ *
+ * The same shape as collectPhpTranslated(): a source of used keys that lives
+ * outside the src/ scan, so a key it covers is not an orphan.
+ *
+ * Scanning .vue/.js/.ts finds t() calls and nothing else. The manifest is not
+ * source the extractor reads; it is data the renderer walks. CnAppNav
+ * translates `menu[].label`, CnPageHeader a page's `title` and `description`,
+ * CnWalkthrough a step's `title` / `body` / `task` — each through the app's own
+ * translate function, each looking up a key this checker could not see.
+ *
+ * Without this a LIVE manifest string reads as dead weight and gets deleted:
+ * "Menu items" is declared by the manifest and was reported unused by this very
+ * check, on a list of 113 keys proposed for removal.
+ *
+ * src/manifest.d/*.json counts too — merged at runtime via require.context, so
+ * reading only src/manifest.json is blind to it. `_meta` is skipped: it is
+ * per-fragment provenance, never rendered.
+ *
+ * @return {Set<string>} the manifest's user-visible strings
+ */
+function collectManifestStrings() {
+	const FIELDS = new Set([
+		'title',
+		'body',
+		'task',
+		'label',
+		'description',
+		'emptyText',
+		'placeholder',
+		'subtitle',
+		'helpText',
+	])
+	const out = new Set()
+	const visit = (node) => {
+		if (Array.isArray(node)) {
+			node.forEach(visit)
+			return
+		}
+		if (node === null || typeof node !== 'object') return
+		for (const [key, value] of Object.entries(node)) {
+			if (key.startsWith('_')) continue
+			if (FIELDS.has(key) && typeof value === 'string' && value.trim()) {
+				out.add(value)
+			} else {
+				visit(value)
+			}
+		}
+	}
+	const candidates = [path.join(SRC_DIR, 'manifest.json')]
+	const fragmentDir = path.join(SRC_DIR, 'manifest.d')
+	if (fs.existsSync(fragmentDir)) {
+		for (const name of fs.readdirSync(fragmentDir).sort()) {
+			if (name.endsWith('.json')) candidates.push(path.join(fragmentDir, name))
+		}
+	}
+	for (const file of candidates) {
+		if (!fs.existsSync(file)) continue
+		try {
+			visit(JSON.parse(fs.readFileSync(file, 'utf8')))
+		} catch (e) {
+			// An unparseable manifest is check:manifest's finding, not this
+			// script's. Say so rather than reporting a translation verdict over a
+			// file that was never read.
+			console.error(
+				`[check-l10n] SKIP ${rel(file)}: unreadable (${e.message})`,
+			)
+		}
+	}
+	return out
+}
+
 function main() {
 	const { app, translations } = loadJsTranslations(L10N_FILE)
 	const keys = new Set(Object.keys(translations))
 	const files = walk(SRC_DIR, ['.vue', '.js', '.ts'])
-	const vueFiles = files.filter(f => f.endsWith('.vue'))
+	const vueFiles = files.filter((f) => f.endsWith('.vue'))
 
 	const { found, unanalyzable } = extractTCalls(files, app)
 	const usedKeys = new Set(found.keys())
+	const phpKeys = collectPhpTranslated()
+	const manifestKeys = collectManifestStrings()
 
-	const missing = [...usedKeys].filter(k => !keys.has(k)).sort()
-	const unused = [...keys].filter(k => !usedKeys.has(k)).sort()
+	const missing = [...usedKeys, ...manifestKeys].filter((k) => !keys.has(k)).sort()
+	// A key the SERVER translates is not an orphan, even though nothing in src/
+	// references it — see collectPhpTranslated(). The same is true of a string
+	// the MANIFEST declares — see collectManifestStrings().
+	const unused = [...keys]
+		.filter((k) => !usedKeys.has(k) && !phpKeys.has(k) && !manifestKeys.has(k))
+		.sort()
 	const unwrapped = findUnwrapped(vueFiles, keys)
 
 	console.log(`${BOLD}${CYAN}${app} l10n check${RESET}`)
-	console.log(`${DIM}Scanned ${files.length} files (${vueFiles.length} .vue), ${keys.size} keys in en.js${RESET}`)
+	console.log(
+		`${DIM}Scanned ${files.length} files (${vueFiles.length} .vue), ${keys.size} keys in en.js; ${phpKeys.size} strings also translated server-side${RESET}`,
+	)
 	console.log('')
 
 	if (missing.length) {
-		const body = missing.map(k => {
-			const locs = found.get(k).map(l => `${DIM}${rel(l.file)}:${l.line}${RESET}`).join(', ')
-			return `  ${RED}•${RESET} ${JSON.stringify(k)}\n    ${locs}`
-		}).join('\n')
+		const body = missing
+			.map((k) => {
+				// A key reaches MISSING from a t() call the extractor found, or
+				// from a manifest field. Only the first has an entry in `found`,
+				// so dereferencing it unguarded throws on every manifest string.
+				const hits = found.get(k)
+				const locs =
+					hits === undefined
+						? `${DIM}declared in src/manifest.json or src/manifest.d/${RESET}`
+						: hits
+								.map((l) => `${DIM}${rel(l.file)}:${l.line}${RESET}`)
+								.join(', ')
+				return `  ${RED}•${RESET} ${JSON.stringify(k)}\n    ${locs}`
+			})
+			.join('\n')
 		printSection(`MISSING from l10n/en.js (${missing.length})`, RED, body)
 	} else {
 		printSection('MISSING from l10n/en.js (0)', GREEN, '  ✓ none')
 	}
 
 	if (unused.length) {
-		const body = unused.map(k => `  ${YELLOW}•${RESET} ${JSON.stringify(k)}`).join('\n')
+		const body = unused
+			.map((k) => `  ${YELLOW}•${RESET} ${JSON.stringify(k)}`)
+			.join('\n')
 		printSection(`UNUSED keys in l10n/en.js (${unused.length})`, YELLOW, body)
 	} else {
 		printSection('UNUSED keys in l10n/en.js (0)', GREEN, '  ✓ none')
 	}
 
 	if (unwrapped.length) {
-		const body = unwrapped.map(h =>
-			`  ${YELLOW}•${RESET} ${JSON.stringify(h.key)} ${DIM}[${h.context}]${RESET}\n    ${DIM}${rel(h.file)}:${h.line}${RESET}`,
-		).join('\n')
-		printSection(`UNWRAPPED literals matching an l10n key (${unwrapped.length})`, YELLOW, body)
+		const body = unwrapped
+			.map(
+				(h) =>
+					`  ${YELLOW}•${RESET} ${JSON.stringify(h.key)} ${DIM}[${h.context}]${RESET}\n    ${DIM}${rel(h.file)}:${h.line}${RESET}`,
+			)
+			.join('\n')
+		printSection(
+			`UNWRAPPED literals matching an l10n key (${unwrapped.length})`,
+			YELLOW,
+			body,
+		)
 	} else {
-		printSection('UNWRAPPED literals matching an l10n key (0)', GREEN, '  ✓ none')
+		printSection(
+			'UNWRAPPED literals matching an l10n key (0)',
+			GREEN,
+			'  ✓ none',
+		)
 	}
 
 	if (unanalyzable.length) {
-		const body = unanalyzable.map(u =>
-			`  ${DIM}•${RESET} ${rel(u.file)}:${u.line}\n    ${DIM}${u.snippet}...${RESET}`,
-		).join('\n')
-		printSection(`Unanalyzable t() calls — dynamic args, skipped (${unanalyzable.length})`, DIM, body)
+		const body = unanalyzable
+			.map(
+				(u) =>
+					`  ${DIM}•${RESET} ${rel(u.file)}:${u.line}\n    ${DIM}${u.snippet}...${RESET}`,
+			)
+			.join('\n')
+		printSection(
+			`Unanalyzable t() calls — dynamic args, skipped (${unanalyzable.length})`,
+			DIM,
+			body,
+		)
 	}
 
 	const total = missing.length + unused.length + unwrapped.length

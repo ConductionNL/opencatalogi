@@ -1,0 +1,143 @@
+{
+	"info": {
+		"_postman_id": "opencatalogi-structured-data-discoverability",
+		"name": "OpenCatalogi - schema.org Structured-Data Discoverability",
+		"description": "API-only contract tests for the schema.org JSON-LD discoverability surface (schema-org-dataset-discoverability change, SDD-001..004). Covers the content-negotiated publication representation (Accept: application/ld+json and ?format=schema), the catalog DataCatalog node, the elected schema:Dataset shape with DataDownload distributions + includedInDataCatalog, and the single-document / CORS embedding contract. Per the Playwright-UI-only / Newman-API convention this surface has no browser UI of OpenCatalogi's own (the embedding frontend is external) and is asserted here.\n\nVariables:\n- baseUrl: instance base URL (default http://localhost:8080)\n- catalogSlug: a public catalog slug (set per environment)\n- publicationId: a publicly visible publication UUID in that catalog\n- electedCatalogSlug: a catalog that elects schema:Dataset (schemaOrgDataset=true)\n- electedPublicationId: a visible publication with >=1 attachment in the elected catalog",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+		{ "key": "catalogSlug", "value": "woo-besluiten", "type": "string" },
+		{ "key": "publicationId", "value": "", "type": "string" },
+		{ "key": "electedCatalogSlug", "value": "open-data", "type": "string" },
+		{ "key": "electedPublicationId", "value": "", "type": "string" }
+	],
+	"item": [
+		{
+			"name": "SDD-001 Publication as schema.org JSON-LD (Accept header)",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/{{catalogSlug}}/{{publicationId}}", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "{{catalogSlug}}", "{{publicationId}}"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 (visible) or 404 (not found)', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  pm.test('Content-Type is JSON-LD', () => pm.response.headers.get('Content-Type').includes('application/ld+json'));",
+							"  const doc = pm.response.json();",
+							"  pm.test('@context is schema.org', () => doc['@context'] === 'https://schema.org');",
+							"  pm.test('@type derived from x-schema-org marker', () => typeof doc['@type'] === 'string' && doc['@type'].length > 0);",
+							"  pm.test('carries name, url, dateModified', () => doc.name !== undefined && doc.url !== undefined && doc.dateModified !== undefined);",
+							"  pm.test('single document (no result envelope)', () => doc.results === undefined && doc.total === undefined);",
+							"  pm.test('CORS allow-origin present', () => pm.response.headers.has('Access-Control-Allow-Origin'));",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "SDD-001 Publication as schema.org JSON-LD (?format=schema fallback)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/{{catalogSlug}}/{{publicationId}}?format=schema", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "{{catalogSlug}}", "{{publicationId}}"], "query": [{ "key": "format", "value": "schema" }] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 404', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const doc = pm.response.json();",
+							"  pm.test('@context is schema.org', () => doc['@context'] === 'https://schema.org');",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "SDD-002 Catalog as schema.org DataCatalog",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/schema", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "schema"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 (known) or 404 (unknown)', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  pm.test('Content-Type is JSON-LD', () => pm.response.headers.get('Content-Type').includes('application/ld+json'));",
+							"  const doc = pm.response.json();",
+							"  pm.test('@type is DataCatalog', () => doc['@type'] === 'DataCatalog');",
+							"  pm.test('@context is schema.org', () => doc['@context'] === 'https://schema.org');",
+							"  pm.test('dataset is an array of refs', () => Array.isArray(doc.dataset));",
+							"  pm.test('every dataset entry has an @id URL', () => doc.dataset.every(d => typeof d['@id'] === 'string'));",
+							"  pm.test('CORS allow-origin present', () => pm.response.headers.has('Access-Control-Allow-Origin'));",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "SDD-003 Elected publication carries Dataset + DataDownload + includedInDataCatalog",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/{{electedCatalogSlug}}/{{electedPublicationId}}", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "{{electedCatalogSlug}}", "{{electedPublicationId}}"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 404', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const doc = pm.response.json();",
+							"  pm.test('@type is Dataset (elected)', () => doc['@type'] === 'Dataset');",
+							"  pm.test('Google Dataset Search required: name + description', () => typeof doc.name === 'string' && typeof doc.description === 'string');",
+							"  pm.test('>=1 distribution typed DataDownload with contentUrl', () => Array.isArray(doc.distribution) && doc.distribution.length >= 1 && doc.distribution[0]['@type'] === 'DataDownload' && typeof doc.distribution[0].contentUrl === 'string');",
+							"  pm.test('includedInDataCatalog backlink present', () => doc.includedInDataCatalog && doc.includedInDataCatalog['@type'] === 'DataCatalog');",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "SDD-004 Preflight CORS on the catalog schema endpoint",
+			"request": {
+				"method": "OPTIONS",
+				"header": [{ "key": "Origin", "value": "https://woo-frontend.example" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/schema", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "schema"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('preflight succeeds', () => [200, 204].includes(pm.response.code));",
+							"pm.test('CORS allow-origin present', () => pm.response.headers.has('Access-Control-Allow-Origin'));",
+							"pm.test('CORS allow-methods advertises GET', () => (pm.response.headers.get('Access-Control-Allow-Methods') || '').includes('GET'));"
+						]
+					}
+				}
+			]
+		}
+	]
+}

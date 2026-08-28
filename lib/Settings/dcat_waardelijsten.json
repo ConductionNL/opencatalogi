@@ -1,0 +1,20 @@
+{
+    "$comment": "Bundled DCAT controlled value lists for OpenCatalogi national/EU open-data federation (DCAT-NPF-002/003). Reference data only — the render-time resolver is lib/Service/DcatVocabularyService.php, the authoritative source. HVD categories from the EU high-value-dataset-category authority (Reg (EU) 2023/138); themes from the EU MDR data-theme authority. No real municipality data.",
+    "kind": "reference-data",
+    "hvdCategories": {
+        "base": "http://data.europa.eu/bna/",
+        "legislation": "http://data.europa.eu/eli/reg_impl/2023/138/oj",
+        "members": {
+            "c_ac64a52d": "Geospatial",
+            "c_dd313021": "Earth observation and environment",
+            "c_164e0bf5": "Meteorological",
+            "c_e1da4e07": "Statistics",
+            "c_a9135398": "Companies and company ownership",
+            "c_b79e35eb": "Mobility"
+        }
+    },
+    "dataThemes": {
+        "base": "http://publications.europa.eu/resource/authority/data-theme/",
+        "members": ["AGRI", "ECON", "EDUC", "ENER", "ENVI", "GOVE", "HEAL", "INTR", "JUST", "REGI", "SOCI", "TECH", "TRAN", "OP_DATPRO"]
+    }
+}

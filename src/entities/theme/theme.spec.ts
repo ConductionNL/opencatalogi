@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Theme } from './theme'
 import { mockTheme } from './theme.mock'
 

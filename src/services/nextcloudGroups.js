@@ -8,7 +8,7 @@
  * @package
  * @author OpenCatalogi Development Team
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  *
@@ -49,14 +49,16 @@
  * @see {@link https://docs.nextcloud.com/server/latest/developer_manual/client_apis/OCS/ocs-share-api.html}
  */
 
-import axios from '@nextcloud/axios'
 import { getCurrentUser } from '@nextcloud/auth'
+import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
 /**
  * Fetch all available groups from the Nextcloud instance
  *
  * @return {Promise<Array<{label: string, value: string}>>} Array of group objects with label and value
+ *
+ * @spec openspec/specs/content-management/spec.md
  */
 export async function fetchNextcloudGroups() {
 	try {
@@ -65,9 +67,14 @@ export async function fetchNextcloudGroups() {
 
 		const response = await axios.get(generateUrl(workingEndpoint))
 
-		if (response.data && response.data.ocs && response.data.ocs.data && response.data.ocs.data.groups) {
+		if (
+			response.data
+			&& response.data.ocs
+			&& response.data.ocs.data
+			&& response.data.ocs.data.groups
+		) {
 			// Transform the groups into the format expected by the dropdown
-			return response.data.ocs.data.groups.map(group => ({
+			return response.data.ocs.data.groups.map((group) => ({
 				label: group,
 				value: group,
 			}))
@@ -105,11 +112,12 @@ let cachedGroups = null
 let cacheTimestamp = null
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
+/** @spec openspec/specs/content-management/spec.md */
 export async function getNextcloudGroups() {
 	const now = Date.now()
 
 	// Return cached groups if they're still valid
-	if (cachedGroups && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
+	if (cachedGroups && cacheTimestamp && now - cacheTimestamp < CACHE_DURATION) {
 		return cachedGroups
 	}
 
@@ -139,7 +147,6 @@ export async function getNextcloudGroups() {
 		]
 		cacheTimestamp = now
 		return cachedGroups
-
 	} catch (error) {
 		// Return cached groups if available, even if expired
 		if (cachedGroups && cachedGroups.length > 0) {
@@ -167,6 +174,8 @@ export async function getNextcloudGroups() {
  * Clear the groups cache to force a fresh fetch
  *
  * @return {void}
+ *
+ * @spec openspec/specs/content-management/spec.md
  */
 export function clearGroupsCache() {
 	cachedGroups = null
@@ -177,6 +186,8 @@ export function clearGroupsCache() {
  * Check if the current user is logged in
  *
  * @return {boolean} True if user is logged in, false otherwise
+ *
+ * @spec openspec/specs/content-management/spec.md
  */
 export function isUserLoggedIn() {
 	// Check if we have user information in the Nextcloud context
@@ -191,7 +202,8 @@ export function isUserLoggedIn() {
 
 		// Fallback: check if we have any user-related data in localStorage
 		// This is not secure but provides a basic indication
-		const hasUserData = localStorage.getItem('nc_username')
+		const hasUserData =
+			localStorage.getItem('nc_username')
 			|| localStorage.getItem('opencatalogi_user')
 			|| sessionStorage.getItem('nc_username')
 
@@ -205,6 +217,8 @@ export function isUserLoggedIn() {
  * Get the current user's groups
  *
  * @return {Promise<Array<string>>} Array of group names the current user belongs to
+ *
+ * @spec openspec/specs/content-management/spec.md
  */
 export async function getCurrentUserGroups() {
 	try {

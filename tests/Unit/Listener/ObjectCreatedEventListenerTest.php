@@ -20,282 +20,290 @@ use Psr\Log\LoggerInterface;
  * Uses \OC::$server to register mock services, then calls handle() to test
  * the full handle() logic including auto-publishing and error branches.
  */
-class ObjectCreatedEventListenerTest extends TestCase
-{
-    private ObjectCreatedEventListener $listener;
+class ObjectCreatedEventListenerTest extends TestCase {
+	private ObjectCreatedEventListener $listener;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->listener = new ObjectCreatedEventListener();
-    }
+	protected function setUp(): void {
+		parent::setUp();
+		$this->listener = new ObjectCreatedEventListener();
+	}
 
-    /**
-     * Create a mock ObjectEntity with magic method support.
-     * ObjectEntity uses __call for getters (getUuid, getRegister, etc.),
-     * so we must use addMethods for all magic-method getters.
-     */
-    private function createObjectEntityMock(
-        string $uuid = 'test-uuid',
-        string $register = 'reg-1',
-        string $schema = 'schema-1',
-        ?\DateTime $published = null,
-        ?\DateTime $depublished = null,
-        array $jsonData = []
-    ): ObjectEntity&MockObject {
-        $entity = $this->getMockBuilder(ObjectEntity::class)
-            ->disableOriginalConstructor()
-            ->addMethods(['getUuid', 'getRegister', 'getSchema', 'getPublished', 'getDepublished'])
-            ->onlyMethods(['jsonSerialize'])
-            ->getMock();
+	/**
+	 * Create a mock ObjectEntity with magic method support.
+	 * ObjectEntity uses __call for getters (getUuid, getRegister, etc.),
+	 * so we must use addMethods for all magic-method getters.
+	 */
+	private function createObjectEntityMock(
+		string $uuid = 'test-uuid',
+		string $register = 'reg-1',
+		string $schema = 'schema-1',
+		?\DateTime $published = null,
+		?\DateTime $depublished = null,
+		array $jsonData = [],
+	): ObjectEntity&MockObject {
+		// The removed object-level @self.published predicate is gone from OR core,
+		// so the listener no longer calls getPublished()/getDepublished(). Visibility
+		// is governed by the object's own publicationDate/depublicationDate fields,
+		// which arrive via jsonSerialize().
+		if ($published !== null) {
+			$jsonData['publicationDate'] = $published->format('c');
+		}
 
-        $entity->method('jsonSerialize')->willReturn($jsonData);
-        $entity->method('getUuid')->willReturn($uuid);
-        $entity->method('getRegister')->willReturn($register);
-        $entity->method('getSchema')->willReturn($schema);
-        $entity->method('getPublished')->willReturn($published);
-        $entity->method('getDepublished')->willReturn($depublished);
+		if ($depublished !== null) {
+			$jsonData['depublicationDate'] = $depublished->format('c');
+		}
 
-        return $entity;
-    }
+		// ObjectEntity really declares jsonSerialize(), and — since OpenRegister
+		// published its ObjectService/ObjectEntity interfaces — getUuid(),
+		// getRegister() and getSchema() as well. They used to be magic, served by
+		// OCP\AppFramework\Db\Entity::__call(), and were doubled with addMethods();
+		// addMethods() now throws CannotUseAddMethodsException because the methods
+		// exist. Which builder is correct is decided by the real class, so this must
+		// move whenever it does.
+		$entity = $this->getMockBuilder(ObjectEntity::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['jsonSerialize', 'getUuid', 'getRegister', 'getSchema'])
+			->getMock();
 
-    public function testHandleIgnoresNonObjectCreatedEvent(): void
-    {
-        $event = $this->createMock(Event::class);
+		$entity->method('jsonSerialize')->willReturn($jsonData);
+		$entity->method('getUuid')->willReturn($uuid);
+		$entity->method('getRegister')->willReturn($register);
+		$entity->method('getSchema')->willReturn($schema);
 
-        // Should return early without accessing \OC::$server.
-        $this->listener->handle($event);
-        $this->assertTrue(true);
-    }
+		return $entity;
+	}
 
-    /**
-     * Test convertObjectEntityToArray via reflection.
-     */
-    public function testConvertObjectEntityToArrayViaReflection(): void
-    {
-        $entity = $this->createObjectEntityMock(
-            uuid: 'test-uuid-123',
-            register: 'reg-1',
-            schema: 'schema-1',
-            jsonData: [
-                'title' => 'Test Object',
-                '@self' => ['existingKey' => 'existingValue'],
-            ]
-        );
+	public function testHandleIgnoresNonObjectCreatedEvent(): void {
+		$event = $this->createMock(Event::class);
 
-        $method = new \ReflectionMethod(ObjectCreatedEventListener::class, 'convertObjectEntityToArray');
-        $method->setAccessible(true);
+		// Should return early without accessing \OC::$server.
+		$this->listener->handle($event);
+		$this->assertTrue(true);
+	}
 
-        $result = $method->invoke($this->listener, $entity);
+	/**
+	 * Test convertObjectEntityToArray via reflection.
+	 */
+	public function testConvertObjectEntityToArrayViaReflection(): void {
+		$entity = $this->createObjectEntityMock(
+			uuid: 'test-uuid-123',
+			register: 'reg-1',
+			schema: 'schema-1',
+			jsonData: [
+				'title' => 'Test Object',
+				'@self' => ['existingKey' => 'existingValue'],
+			]
+		);
 
-        $this->assertIsArray($result);
-        $this->assertSame('test-uuid-123', $result['@self']['id']);
-        $this->assertSame('test-uuid-123', $result['@self']['uuid']);
-        $this->assertSame('reg-1', $result['@self']['register']);
-        $this->assertSame('schema-1', $result['@self']['schema']);
-        $this->assertNull($result['@self']['published']);
-        $this->assertNull($result['@self']['depublished']);
-        $this->assertSame('Test Object', $result['title']);
-    }
+		$method = new \ReflectionMethod(ObjectCreatedEventListener::class, 'convertObjectEntityToArray');
+		$method->setAccessible(true);
 
-    /**
-     * Test convertObjectEntityToArray when jsonSerialize does not include @self.
-     */
-    public function testConvertObjectEntityToArrayWithoutSelfMetadata(): void
-    {
-        $entity = $this->createObjectEntityMock(
-            uuid: 'uuid-no-self',
-            register: 'reg-2',
-            schema: 'schema-2',
-            jsonData: ['title' => 'No Self']
-        );
+		$result = $method->invoke($this->listener, $entity);
 
-        $method = new \ReflectionMethod(ObjectCreatedEventListener::class, 'convertObjectEntityToArray');
-        $method->setAccessible(true);
+		$this->assertIsArray($result);
+		$this->assertSame('test-uuid-123', $result['@self']['id']);
+		$this->assertSame('test-uuid-123', $result['@self']['uuid']);
+		$this->assertSame('reg-1', $result['@self']['register']);
+		$this->assertSame('schema-1', $result['@self']['schema']);
+		// The dead @self.published/@self.depublished envelope keys are no longer set.
+		$this->assertArrayNotHasKey('published', $result['@self']);
+		$this->assertArrayNotHasKey('depublished', $result['@self']);
+		$this->assertSame('Test Object', $result['title']);
+	}
 
-        $result = $method->invoke($this->listener, $entity);
+	/**
+	 * Test convertObjectEntityToArray when jsonSerialize does not include @self.
+	 */
+	public function testConvertObjectEntityToArrayWithoutSelfMetadata(): void {
+		$entity = $this->createObjectEntityMock(
+			uuid: 'uuid-no-self',
+			register: 'reg-2',
+			schema: 'schema-2',
+			jsonData: ['title' => 'No Self']
+		);
 
-        $this->assertArrayHasKey('@self', $result);
-        $this->assertSame('uuid-no-self', $result['@self']['id']);
-    }
+		$method = new \ReflectionMethod(ObjectCreatedEventListener::class, 'convertObjectEntityToArray');
+		$method->setAccessible(true);
 
-    /**
-     * Test convertObjectEntityToArray with published and depublished dates.
-     */
-    public function testConvertObjectEntityToArrayWithDates(): void
-    {
-        $published = new \DateTime('2025-06-01T12:00:00+00:00');
-        $depublished = new \DateTime('2025-12-01T12:00:00+00:00');
+		$result = $method->invoke($this->listener, $entity);
 
-        $entity = $this->createObjectEntityMock(
-            uuid: 'uuid-dated',
-            register: 'reg-3',
-            schema: 'schema-3',
-            published: $published,
-            depublished: $depublished
-        );
+		$this->assertArrayHasKey('@self', $result);
+		$this->assertSame('uuid-no-self', $result['@self']['id']);
+	}
 
-        $method = new \ReflectionMethod(ObjectCreatedEventListener::class, 'convertObjectEntityToArray');
-        $method->setAccessible(true);
+	/**
+	 * Test convertObjectEntityToArray carries the object's own publicationDate /
+	 * depublicationDate fields (RBAC model) and never the dead @self.published envelope.
+	 */
+	public function testConvertObjectEntityToArrayWithDates(): void {
+		$published = new \DateTime('2025-06-01T12:00:00+00:00');
+		$depublished = new \DateTime('2025-12-01T12:00:00+00:00');
 
-        $result = $method->invoke($this->listener, $entity);
+		$entity = $this->createObjectEntityMock(
+			uuid: 'uuid-dated',
+			register: 'reg-3',
+			schema: 'schema-3',
+			published: $published,
+			depublished: $depublished
+		);
 
-        $this->assertSame($published->format('c'), $result['@self']['published']);
-        $this->assertSame($depublished->format('c'), $result['@self']['depublished']);
-    }
+		$method = new \ReflectionMethod(ObjectCreatedEventListener::class, 'convertObjectEntityToArray');
+		$method->setAccessible(true);
 
-    /**
-     * Test handle() when auto-publishing is disabled (both options false).
-     */
-    public function testHandleReturnsEarlyWhenAutoPublishingDisabled(): void
-    {
-        $settingsService = $this->createMock(SettingsService::class);
-        $settingsService->method('getPublishingOptions')->willReturn([
-            'auto_publish_objects'     => false,
-            'auto_publish_attachments' => false,
-        ]);
+		$result = $method->invoke($this->listener, $entity);
 
-        $eventService = $this->createMock(EventService::class);
-        $eventService->expects($this->never())->method('handleObjectCreateEvents');
+		$this->assertSame($published->format('c'), $result['publicationDate']);
+		$this->assertSame($depublished->format('c'), $result['depublicationDate']);
+		$this->assertArrayNotHasKey('published', $result['@self']);
+	}
 
-        $logger = $this->createMock(LoggerInterface::class);
+	/**
+	 * Test handle() when auto-publishing is disabled (both options false).
+	 */
+	public function testHandleReturnsEarlyWhenAutoPublishingDisabled(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')->willReturn([
+			'auto_publish_objects' => false,
+			'auto_publish_attachments' => false,
+		]);
 
-        \OC::$server->registerService(SettingsService::class, fn() => $settingsService);
-        \OC::$server->registerService(EventService::class, fn() => $eventService);
-        \OC::$server->registerService(LoggerInterface::class, fn() => $logger);
+		$eventService = $this->createMock(EventService::class);
+		$eventService->expects($this->never())->method('handleObjectCreateEvents');
 
-        $entity = $this->createObjectEntityMock();
-        $event = new ObjectCreatedEvent($entity);
-        $this->listener->handle($event);
+		$logger = $this->createMock(LoggerInterface::class);
 
-        $this->assertTrue(true);
-    }
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(EventService::class, fn () => $eventService);
+		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
 
-    /**
-     * Test handle() when auto-publish objects is enabled and processing succeeds.
-     */
-    public function testHandleProcessesObjectWhenAutoPublishEnabled(): void
-    {
-        $settingsService = $this->createMock(SettingsService::class);
-        $settingsService->method('getPublishingOptions')->willReturn([
-            'auto_publish_objects'     => true,
-            'auto_publish_attachments' => false,
-        ]);
+		$entity = $this->createObjectEntityMock();
+		$event = new ObjectCreatedEvent($entity);
+		$this->listener->handle($event);
 
-        $eventService = $this->createMock(EventService::class);
-        $eventService->expects($this->once())
-            ->method('handleObjectCreateEvents')
-            ->willReturn([
-                'processed'            => 1,
-                'published'            => 1,
-                'attachmentsPublished' => 0,
-                'errors'               => [],
-            ]);
+		$this->assertTrue(true);
+	}
 
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->once())
-            ->method('info')
-            ->with($this->stringContains('Processed object creation event'));
+	/**
+	 * Test handle() when auto-publish objects is enabled and processing succeeds.
+	 */
+	public function testHandleProcessesObjectWhenAutoPublishEnabled(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')->willReturn([
+			'auto_publish_objects' => true,
+			'auto_publish_attachments' => false,
+		]);
 
-        \OC::$server->registerService(SettingsService::class, fn() => $settingsService);
-        \OC::$server->registerService(EventService::class, fn() => $eventService);
-        \OC::$server->registerService(LoggerInterface::class, fn() => $logger);
+		$eventService = $this->createMock(EventService::class);
+		$eventService->expects($this->once())
+			->method('handleObjectCreateEvents')
+			->willReturn([
+				'processed' => 1,
+				'published' => 1,
+				'attachmentsPublished' => 0,
+				'errors' => [],
+			]);
 
-        $entity = $this->createObjectEntityMock(
-            uuid: 'pub-uuid',
-            published: new \DateTime()
-        );
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('info')
+			->with($this->stringContains('Processed object creation event'));
 
-        $event = new ObjectCreatedEvent($entity);
-        $this->listener->handle($event);
-    }
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(EventService::class, fn () => $eventService);
+		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
 
-    /**
-     * Test handle() when processing returns errors.
-     */
-    public function testHandleLogsErrorsFromEventService(): void
-    {
-        $settingsService = $this->createMock(SettingsService::class);
-        $settingsService->method('getPublishingOptions')->willReturn([
-            'auto_publish_objects'     => true,
-            'auto_publish_attachments' => false,
-        ]);
+		$entity = $this->createObjectEntityMock(
+			uuid: 'pub-uuid',
+			published: new \DateTime()
+		);
 
-        $eventService = $this->createMock(EventService::class);
-        $eventService->method('handleObjectCreateEvents')
-            ->willReturn([
-                'processed'            => 0,
-                'published'            => 0,
-                'attachmentsPublished' => 0,
-                'errors'               => ['Something went wrong'],
-            ]);
+		$event = new ObjectCreatedEvent($entity);
+		$this->listener->handle($event);
+	}
 
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->once())
-            ->method('error')
-            ->with($this->stringContains('Error processing object creation event'));
+	/**
+	 * Test handle() when processing returns errors.
+	 */
+	public function testHandleLogsErrorsFromEventService(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')->willReturn([
+			'auto_publish_objects' => true,
+			'auto_publish_attachments' => false,
+		]);
 
-        \OC::$server->registerService(SettingsService::class, fn() => $settingsService);
-        \OC::$server->registerService(EventService::class, fn() => $eventService);
-        \OC::$server->registerService(LoggerInterface::class, fn() => $logger);
+		$eventService = $this->createMock(EventService::class);
+		$eventService->method('handleObjectCreateEvents')
+			->willReturn([
+				'processed' => 0,
+				'published' => 0,
+				'attachmentsPublished' => 0,
+				'errors' => ['Something went wrong'],
+			]);
 
-        $entity = $this->createObjectEntityMock(uuid: 'err-uuid');
-        $event = new ObjectCreatedEvent($entity);
-        $this->listener->handle($event);
-    }
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('error')
+			->with($this->stringContains('Error processing object creation event'));
 
-    /**
-     * Test handle() when an exception is thrown during processing.
-     */
-    public function testHandleCatchesExceptionAndLogs(): void
-    {
-        $settingsService = $this->createMock(SettingsService::class);
-        $settingsService->method('getPublishingOptions')
-            ->willThrowException(new \RuntimeException('Settings broken'));
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(EventService::class, fn () => $eventService);
+		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
 
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->once())
-            ->method('error')
-            ->with($this->stringContains('Exception in object creation event listener'));
+		$entity = $this->createObjectEntityMock(uuid: 'err-uuid');
+		$event = new ObjectCreatedEvent($entity);
+		$this->listener->handle($event);
+	}
 
-        \OC::$server->registerService(SettingsService::class, fn() => $settingsService);
-        \OC::$server->registerService(LoggerInterface::class, fn() => $logger);
+	/**
+	 * Test handle() when an exception is thrown during processing.
+	 */
+	public function testHandleCatchesExceptionAndLogs(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')
+			->willThrowException(new \RuntimeException('Settings broken'));
 
-        $entity = $this->createObjectEntityMock();
-        $event = new ObjectCreatedEvent($entity);
-        $this->listener->handle($event);
-    }
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('error')
+			->with($this->stringContains('Exception in object creation event listener'));
 
-    /**
-     * Test handle() when processed is 0 but no errors (info should not be logged).
-     */
-    public function testHandleDoesNotLogInfoWhenNothingProcessed(): void
-    {
-        $settingsService = $this->createMock(SettingsService::class);
-        $settingsService->method('getPublishingOptions')->willReturn([
-            'auto_publish_objects'     => true,
-            'auto_publish_attachments' => false,
-        ]);
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
 
-        $eventService = $this->createMock(EventService::class);
-        $eventService->method('handleObjectCreateEvents')
-            ->willReturn([
-                'processed'            => 0,
-                'published'            => 0,
-                'attachmentsPublished' => 0,
-                'errors'               => [],
-            ]);
+		$entity = $this->createObjectEntityMock();
+		$event = new ObjectCreatedEvent($entity);
+		$this->listener->handle($event);
+	}
 
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->never())->method('info');
-        $logger->expects($this->never())->method('error');
+	/**
+	 * Test handle() when processed is 0 but no errors (info should not be logged).
+	 */
+	public function testHandleDoesNotLogInfoWhenNothingProcessed(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')->willReturn([
+			'auto_publish_objects' => true,
+			'auto_publish_attachments' => false,
+		]);
 
-        \OC::$server->registerService(SettingsService::class, fn() => $settingsService);
-        \OC::$server->registerService(EventService::class, fn() => $eventService);
-        \OC::$server->registerService(LoggerInterface::class, fn() => $logger);
+		$eventService = $this->createMock(EventService::class);
+		$eventService->method('handleObjectCreateEvents')
+			->willReturn([
+				'processed' => 0,
+				'published' => 0,
+				'attachmentsPublished' => 0,
+				'errors' => [],
+			]);
 
-        $entity = $this->createObjectEntityMock(uuid: 'no-proc-uuid');
-        $event = new ObjectCreatedEvent($entity);
-        $this->listener->handle($event);
-    }
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method('info');
+		$logger->expects($this->never())->method('error');
+
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(EventService::class, fn () => $eventService);
+		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+
+		$entity = $this->createObjectEntityMock(uuid: 'no-proc-uuid');
+		$event = new ObjectCreatedEvent($entity);
+		$this->listener->handle($event);
+	}
 }

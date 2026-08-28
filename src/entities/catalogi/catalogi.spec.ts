@@ -4,12 +4,11 @@
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-/* eslint-disable no-console */
 import { Catalogi } from './catalogi'
 import { mockCatalogi, mockCatalogiList } from './catalogi.mock'
 
@@ -47,6 +46,7 @@ describe('Catalogi Store', () => {
 			status: 'development',
 			slug: '',
 			hasWooSitemap: false,
+			hasOoapi: false,
 		})
 
 		expect(catalogi).toBeInstanceOf(Catalogi)

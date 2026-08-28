@@ -1,4 +1,5 @@
-/* eslint-disable import/export */
+// No `eslint-disable import/export`: the flat config does not register that
+// rule, so the comment was ITSELF the error.
 export * from './attachment/index.js'
 export * from './catalogi/index.js'
 export * from './configuration/index.js'

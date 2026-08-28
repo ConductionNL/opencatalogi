@@ -1,15 +1,16 @@
 /**
  * Mock data for Catalogi entity testing
+ *
  * @module Entities
  * @package
  * @author Ruben Linde
  * @copyright 2024
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { TCatalogi } from './catalogi.types'
+import type { TCatalogi } from './catalogi.types'
 
 export const mockCatalogi: TCatalogi = {
 	id: '1',
@@ -28,6 +29,7 @@ export const mockCatalogi: TCatalogi = {
 	status: 'development',
 	slug: 'test-catalogi',
 	hasWooSitemap: false,
+	hasOoapi: false,
 }
 
 export const mockCatalogiList: TCatalogi[] = [
@@ -48,5 +50,6 @@ export const mockCatalogiList: TCatalogi[] = [
 		status: 'development',
 		slug: 'another-catalogi',
 		hasWooSitemap: true,
+		hasOoapi: false,
 	},
 ]

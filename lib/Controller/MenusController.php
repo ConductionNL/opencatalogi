@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi Menus Controller.
  *
@@ -11,249 +12,289 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/specs/content-management/spec.md
+ * @spec openspec/specs/content-management/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
+use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\IAppConfig;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use RuntimeException;
 
 /**
  * Controller for handling menu-related operations.
  */
-class MenusController extends Controller
-{
+class MenusController extends Controller {
+	use ResolvesRegisterConfiguration;
 
-    /**
-     * Allowed CORS methods.
-     *
-     * @var string
-     */
-    private string $corsMethods;
+	/**
+	 * Allowed CORS methods.
+	 *
+	 * @var string
+	 */
+	private string $corsMethods;
 
-    /**
-     * Allowed CORS headers.
-     *
-     * @var string
-     */
-    private string $corsAllowedHeaders;
+	/**
+	 * Allowed CORS headers.
+	 *
+	 * @var string
+	 */
+	private string $corsAllowedHeaders;
 
-    /**
-     * CORS max age.
-     *
-     * @var integer
-     */
-    private int $corsMaxAge;
+	/**
+	 * CORS max age.
+	 *
+	 * @var integer
+	 */
+	private int $corsMaxAge;
 
-    /**
-     * MenusController constructor.
-     *
-     * @param string             $appName            The name of the app.
-     * @param IRequest           $request            The request object.
-     * @param IAppConfig         $config             App configuration interface.
-     * @param ContainerInterface $container          Server container for DI.
-     * @param IAppManager        $appManager         App manager.
-     * @param IL10N              $l10n               The localization service.
-     * @param string             $corsMethods        Allowed CORS methods.
-     * @param string             $corsAllowedHeaders Allowed CORS headers.
-     * @param integer            $corsMaxAge         CORS max age.
-     */
-    public function __construct(
-        $appName,
-        IRequest $request,
-        private readonly IAppConfig $config,
-        private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager,
-        private readonly IL10N $l10n,
-        string $corsMethods='PUT, POST, GET, DELETE, PATCH',
-        string $corsAllowedHeaders='Authorization, Content-Type, Accept',
-        int $corsMaxAge=1728000
-    ) {
-        parent::__construct($appName, $request);
-        $this->corsMethods        = $corsMethods;
-        $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge         = $corsMaxAge;
+	/**
+	 * MenusController constructor.
+	 *
+	 * @param string $appName The name of the app.
+	 * @param IRequest $request The request object.
+	 * @param IAppConfig $config App configuration interface.
+	 * @param ContainerInterface $container Server container for DI.
+	 * @param IAppManager $appManager App manager.
+	 * @param IL10N $l10n The localization service.
+	 * @param string $corsMethods Allowed CORS methods.
+	 * @param string $corsAllowedHeaders Allowed CORS headers.
+	 * @param integer $corsMaxAge CORS max age.
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+	 */
+	public function __construct(
+		$appName,
+		IRequest $request,
+		private readonly IAppConfig $config,
+		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
+		private readonly IL10N $l10n,
+		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		int $corsMaxAge = 1728000,
+	) {
+		parent::__construct(appName: $appName, request: $request);
+		$this->corsMethods = $corsMethods;
+		$this->corsAllowedHeaders = $corsAllowedHeaders;
+		$this->corsMaxAge = $corsMaxAge;
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Attempts to retrieve the OpenRegister ObjectService from the container.
-     *
-     * @return \OCA\OpenRegister\Service\ObjectService|null The ObjectService.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     */
-    private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        }
+	/**
+	 * Attempts to retrieve the OpenRegister ObjectService from the container.
+	 *
+	 * @return \OCA\OpenRegister\Service\ObjectService|null The ObjectService.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 */
+	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		}
 
-        throw new RuntimeException('OpenRegister service is not available.');
+		throw new RuntimeException('OpenRegister service is not available.');
+	}//end getObjectService()
 
-    }//end getObjectService()
+	/**
+	 * Get the schema and register configuration for menus.
+	 *
+	 * Resolved through OpenRegister's RegisterResolverService (no empty-string
+	 * fallback); an unconfigured `menu_register`/`menu_schema` raises
+	 * MissingConfigException which the caller converts to a 503.
+	 *
+	 * @return array<string, string> Array containing schema and register configuration.
+	 *
+	 * @throws \RuntimeException When OpenRegister is unavailable.
+	 * @throws \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException When a context key is unconfigured.
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
+	 */
+	private function getMenuConfiguration(): array {
+		return $this->resolveRegisterConfiguration(registerKey: 'menu_register', schemaKey: 'menu_schema');
+	}//end getMenuConfiguration()
 
-    /**
-     * Get the schema and register configuration for menus.
-     *
-     * @return array<string, string> Array containing schema and register configuration.
-     */
-    private function getMenuConfiguration(): array
-    {
-        // Get the menu schema and register from configuration.
-        $schema   = $this->config->getValueString($this->appName, 'menu_schema', '');
-        $register = $this->config->getValueString($this->appName, 'menu_register', '');
+	/**
+	 * Resolve the Access-Control-Allow-Origin header value for the current request.
+	 *
+	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
+	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
+	 * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
+	 *
+	 * @return string The header value to use for Access-Control-Allow-Origin.
+	 */
+	private function resolveAllowedOrigin(): string {
+		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
+		if ($configured === '' || $configured === '*') {
+			return '*';
+		}
 
-        return [
-            'schema'   => $schema,
-            'register' => $register,
-        ];
+		$allowlist = array_filter(
+			array_map('trim', explode(',', $configured)),
+			static fn (string $entry): bool => $entry !== ''
+		);
 
-    }//end getMenuConfiguration()
+		$callerOrigin = $this->request->getHeader('Origin');
+		if ($callerOrigin === '') {
+			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
+		}
 
-    /**
-     * Implements a preflighted CORS response for OPTIONS requests.
-     *
-     * @return Response The CORS response.
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     * @PublicPage
-     */
-    public function preflightedCors(): Response
-    {
-        // Determine the origin.
-        $origin = $this->request->getHeader('Origin');
-        if ($origin === '') {
-            $origin = '*';
-        }
+		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
+			return $callerOrigin;
+		}
 
-        // Create and configure the response.
-        $response = new Response();
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
-        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-        $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
-        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-        $response->addHeader('Access-Control-Allow-Credentials', 'false');
+		return ($allowlist[0] ?? '*');
+	}//end resolveAllowedOrigin()
 
-        return $response;
+	/**
+	 * Implements a preflighted CORS response for OPTIONS requests.
+	 *
+	 * @return Response The CORS response.
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
+	public function preflightedCors(): Response {
+		// Create and configure the response.
+		$response = new Response();
+		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
+		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
-    }//end preflightedCors()
+		return $response;
+	}//end preflightedCors()
 
-    /**
-     * Get all menus with pagination support.
-     *
-     * @return JSONResponse The JSON response containing the list of menus.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     * @PublicPage
-     */
-    public function index(): JSONResponse
-    {
-        // Get menu configuration from settings.
-        $menuConfig = $this->getMenuConfiguration();
+	/**
+	 * Get all menus with pagination support.
+	 *
+	 * @return JSONResponse The JSON response containing the list of menus.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/specs/content-management/spec.md
+	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
+	public function index(): JSONResponse {
+		// Get menu configuration from settings (resolved via OpenRegister; 503 if unconfigured).
+		try {
+			$menuConfig = $this->getMenuConfiguration();
+		} catch (\Throwable $e) {
+			return $this->registerConfigErrorResponse(e: $e);
+		}
 
-        // Get query parameters from request.
-        $queryParams = $this->request->getParams();
+		// Get query parameters from request.
+		$queryParams = $this->request->getParams();
 
-        // Build search query.
-        $searchQuery = $queryParams;
+		// Build search query.
+		$searchQuery = $queryParams;
 
-        // Clean up unwanted parameters.
-        unset($searchQuery['id'], $searchQuery['_route']);
+		// Clean up unwanted parameters.
+		unset($searchQuery['id'], $searchQuery['_route']);
 
-        // Add schema filter - use _schema for magic mapper routing.
-        $searchQuery['_schema'] = '7';
-        if (empty($menuConfig['schema']) === false) {
-            $searchQuery['_schema'] = $menuConfig['schema'];
-        }
+		// Add schema filter - use _schema for magic mapper routing.
+		$searchQuery['_schema'] = '7';
+		if (empty($menuConfig['schema']) === false) {
+			$searchQuery['_schema'] = $menuConfig['schema'];
+		}
 
-        // Add register filter - use _register for magic mapper routing.
-        $searchQuery['_register'] = '1';
-        if (empty($menuConfig['register']) === false) {
-            $searchQuery['_register'] = $menuConfig['register'];
-        }
+		// Add register filter - use _register for magic mapper routing.
+		$searchQuery['_register'] = '1';
+		if (empty($menuConfig['register']) === false) {
+			$searchQuery['_register'] = $menuConfig['register'];
+		}
 
-        // Use searchObjectsPaginated for better performance and pagination support.
-        $result = $this->getObjectService()->searchObjectsPaginated(
-            $searchQuery,
-            _rbac: false,
-            _multitenancy: false
-        );
+		// Use searchObjectsPaginated for better performance and pagination support.
+		// Rbac=true enforces schema authorization; multi=false for public menu access.
+		$result = $this->getObjectService()->searchObjectsPaginated(
+			$searchQuery,
+			_rbac: true,
+			_multitenancy: false
+		);
 
-        // Add CORS headers for public API access.
-        $response = new JSONResponse($result);
-        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
+		// Visibility governed by RBAC on the search above (_rbac: true).
+		// Add CORS headers for public API access.
+		$response = new JSONResponse($result);
 
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
-        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
-        return $response;
+		return $response;
+	}//end index()
 
-    }//end index()
+	/**
+	 * Get a specific menu by its ID.
+	 *
+	 * @param string|integer $id The ID of the menu to retrieve.
+	 *
+	 * @return JSONResponse The JSON response containing the menu details.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/specs/content-management/spec.md
+	 */
+	#[AnonRateLimit(limit: 120, period: 60)]
+	public function show(string|int $id): JSONResponse {
+		// Use searchObjectsPaginated to find single menu.
+		$searchQuery = [
+			'_ids' => [$id],
+			'_limit' => 1,
+		];
+		// Rbac=true enforces schema authorization; multi=false for public menu access.
+		$result = $this->getObjectService()->searchObjectsPaginated(
+			$searchQuery,
+			_rbac: true,
+			_multitenancy: false
+		);
 
-    /**
-     * Get a specific menu by its ID.
-     *
-     * @param string|integer $id The ID of the menu to retrieve.
-     *
-     * @return JSONResponse The JSON response containing the menu details.
-     *
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     * @PublicPage
-     */
-    public function show(string|int $id): JSONResponse
-    {
-        // Use searchObjectsPaginated to find single menu.
-        $searchQuery = [
-            '_ids'   => [$id],
-            '_limit' => 1,
-        ];
-        $result      = $this->getObjectService()->searchObjectsPaginated(
-            $searchQuery,
-            _rbac: false,
-            _multitenancy: false
-        );
+		if (empty($result['results']) === true) {
+			return new JSONResponse(data: ['error' => $this->l10n->t('Menu not found')], statusCode: 404);
+		}
 
-        if (empty($result['results']) === true) {
-            return new JSONResponse(data: ['error' => $this->l10n->t('Menu not found')], statusCode: 404);
-        }
+		$menu = $result['results'][0];
 
-        $menu = $result['results'][0];
+		// Visibility governed by RBAC on the search above (_rbac: true); a menu the caller
+		// may not read resolves to an empty result and 404s above.
+		$data = $menu;
+		if ($menu instanceof \OCP\AppFramework\Db\Entity) {
+			$data = $menu->jsonSerialize();
+		}
 
-        $data = $menu;
-        if ($menu instanceof \OCP\AppFramework\Db\Entity) {
-            $data = $menu->jsonSerialize();
-        }
+		// Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
+		$response = new JSONResponse($data);
 
-        // Add CORS headers for public API access.
-        $response = new JSONResponse($data);
-        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
+		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
-        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-        return $response;
-
-    }//end show()
+		return $response;
+	}//end show()
 }//end class
