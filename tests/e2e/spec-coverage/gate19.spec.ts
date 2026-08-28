@@ -492,8 +492,21 @@ test.describe('admin-settings', () => {
 		page,
 	}) => {
 		await bootApp(page)
+		// The app's OWN `SettingsMenu` entry is gone, deliberately: #1171
+		// ("stop shipping two Settings entries") found the gear foldout
+		// reading "Personal settings / Admin settings / Flows / Settings",
+		// where that last entry was this app's `SettingsMenu` (action:
+		// user-settings) opening the very same dialog as the library's
+		// auto-prepended "Personal settings". The duplicate was dropped and
+		// the lib's correctly-labelled one kept.
+		//
+		// SET-017 is unchanged as a requirement — a Settings nav entry must
+		// open the user-settings dialog — so this now targets the entry that
+		// survived. Note the different testid scheme: manifest entries render
+		// as `cn-nav-entry-${id}`, while the library's auto entry is
+		// `cn-nav-personal-settings`.
 		const entry = page
-			.locator('[data-testid="cn-nav-entry-SettingsMenu"]')
+			.locator('[data-testid="cn-nav-personal-settings"]')
 			.first()
 		// Use the shared helper rather than an inline copy of the gear
 		// selectors: @nextcloud/vue v9 renders the settings foldout with
