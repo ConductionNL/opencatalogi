@@ -46,6 +46,26 @@ export const APP = '/index.php/apps/opencatalogi'
  *    overlay, so dismiss it explicitly.
  */
 export async function dismissOverlays(page: Page): Promise<void> {
+	// The non-gating setup wizard, when storage seeding did not take (a
+	// blocked-storage context, or a page opened without bootApp). Identified by
+	// the step markup CnSetupWizard renders inside CnWizardDialog rather than
+	// by a title, which is translated.
+	const setupWizard = page
+		.locator('[role="dialog"]')
+		.filter({ has: page.locator('.cn-setup-step') })
+		.first()
+	if (await setupWizard.isVisible().catch(() => false)) {
+		const skip = setupWizard
+			.getByRole('button', { name: /cancel|close|skip|later|annuleren/i })
+			.first()
+		if (await skip.isVisible().catch(() => false)) {
+			await skip.click().catch(() => {})
+		} else {
+			await page.keyboard.press('Escape').catch(() => {})
+		}
+		await setupWizard.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {})
+	}
+
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		const close = wizard
@@ -99,6 +119,30 @@ export async function dismissOverlays(page: Page): Promise<void> {
 
 /** Boot the SPA at its root and wait for the navigation shell to render. */
 export async function bootApp(page: Page): Promise<void> {
+	// Stand the non-gating setup wizard down BEFORE the app boots.
+	//
+	// CnAppRoot opens it whenever the server reports an optional setup step
+	// as outstanding, and opencatalogi declares several. It renders as a
+	// modal over the shell, so every click behind it — the nav entries these
+	// specs drive — times out rather than failing by name. Dismissing it
+	// reactively is a race against its enter transition; seeding the key it
+	// reads is not.
+	//
+	// The key is versioned (`cn-setup-wizard-dismissed:<appId>:<setup.version>`),
+	// so a range is seeded: bumping manifest.setup.version must not silently
+	// re-open the wizard across the whole suite.
+	await page.addInitScript(() => {
+		try {
+			for (let v = 0; v <= 20; v++) {
+				window.localStorage.setItem(
+					`cn-setup-wizard-dismissed:opencatalogi:${v}`,
+					'1',
+				)
+			}
+		} catch (e) {
+			/* storage blocked — dismissOverlays() is the fallback */
+		}
+	})
 	await page.goto(`${APP}/`, { waitUntil: 'domcontentloaded' }).catch(() => {})
 	await dismissOverlays(page)
 	// CnAppNav rendered → shell is up.
