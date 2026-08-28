@@ -149,6 +149,26 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	await page.evaluate(() => {
 		try {
 			window.localStorage.setItem('cn-support-dialog-shown:opencatalogi', '1')
+			// The non-gating setup wizard, for the same reason and in the same
+			// place. CnAppRoot opens it whenever the server reports an OPTIONAL
+			// setup step as outstanding, and this app declares five. It renders
+			// over the shell, so a click behind it does not fail fast: it waits
+			// out the full 60s timeout, which reads as a slow page rather than a
+			// covered one.
+			//
+			// Seeded HERE rather than in a per-directory helper: tests/e2e has
+			// spec-coverage/_nav.ts and workflows/_crud.ts as separate boot
+			// paths, and fixing only the first left federation-search still
+			// timing out. globalSetup is the one place every project shares.
+			//
+			// The key is versioned, so a range is seeded: bumping
+			// manifest.setup.version must not silently re-arm it suite-wide.
+			for (let v = 0; v <= 20; v++) {
+				window.localStorage.setItem(
+					`cn-setup-wizard-dismissed:opencatalogi:${v}`,
+					'1',
+				)
+			}
 		} catch (e) {
 			/* private mode / quota — the dismissOverlays fallback still applies */
 		}
