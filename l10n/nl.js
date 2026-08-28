@@ -915,6 +915,9 @@ OC.L10N.register(
         "Content blocks": "Inhoudsblokken",
         "Menu": "Menu",
         "Flow": "Flow",
+        "Where the automation lives": "Waar de automatisering zit",
+        "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them. Nothing to build now.": "Flows zijn wat er gebeurt zonder dat iemand klikt: een herinnering voordat een termijn verstrijkt, een bevestiging bij indiening. Hier lees en bewerk je ze. Je hoeft nu niets te bouwen.",
+        "Open Flows in the menu": "Open Flows in het menu",
         "Menu items": "Menu-items"
     },
     "nplurals=2; plural=(n != 1);"
