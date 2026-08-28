@@ -46,38 +46,6 @@
             }
           }
         },
-        "x-openregister-lifecycle": {
-          "field": "status",
-          "initial": "development",
-          "final": [
-            "obsolete"
-          ],
-          "transitions": {
-            "promoteToBeta": {
-              "from": [
-                "development"
-              ],
-              "to": "beta",
-              "description": "Promote a catalog from development to beta."
-            },
-            "promoteToStable": {
-              "from": [
-                "beta"
-              ],
-              "to": "stable",
-              "description": "Promote a beta catalog to stable."
-            },
-            "obsolete": {
-              "from": [
-                "development",
-                "beta",
-                "stable"
-              ],
-              "to": "obsolete",
-              "description": "Mark the catalog as obsolete."
-            }
-          }
-        },
         "title": "Catalog",
         "version": "0.2.0",
         "published": "2025-01-01T00:00:00+00:00",
@@ -508,38 +476,6 @@
             "subject": {
               "nl": "Synchronisatie van listing {{title}} mislukt: {{statusMessage}}",
               "en": "Sync of listing {{title}} failed: {{statusMessage}}"
-            }
-          }
-        },
-        "x-openregister-lifecycle": {
-          "field": "status",
-          "initial": "development",
-          "final": [
-            "obsolete"
-          ],
-          "transitions": {
-            "promoteToBeta": {
-              "from": [
-                "development"
-              ],
-              "to": "beta",
-              "description": "Promote a listing from development to beta."
-            },
-            "promoteToStable": {
-              "from": [
-                "beta"
-              ],
-              "to": "stable",
-              "description": "Promote a beta listing to stable."
-            },
-            "obsolete": {
-              "from": [
-                "development",
-                "beta",
-                "stable"
-              ],
-              "to": "obsolete",
-              "description": "Mark the listing as obsolete."
             }
           }
         },
@@ -1389,23 +1325,6 @@
             ],
             "facetable": true,
             "title": "Status"
-          }
-        },
-        "x-openregister-lifecycle": {
-          "field": "status",
-          "initial": "published",
-          "final": [
-            "archived"
-          ],
-          "transitions": {
-            "archive": {
-              "from": [
-                "published"
-              ],
-              "to": "archived",
-              "label": "Archive",
-              "description": "Archive"
-            }
           }
         },
         "x-openregister-notifications": {
