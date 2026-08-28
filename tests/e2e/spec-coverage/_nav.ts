@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -14,7 +16,7 @@
  * live inside the NcAppNavigationSettings foldout, which must be opened
  * first.
  */
-import { type Page, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 export const APP = '/index.php/apps/opencatalogi'
 
@@ -262,4 +264,33 @@ export function trackPageErrors(page: Page): string[] {
 
 export function fatalErrors(errors: string[]): string[] {
 	return errors.filter((e) => !/warning|warn|deprecat|ResizeObserver/i.test(e))
+}
+
+/**
+ * Open an in-app page by its hash ROUTE rather than by clicking a nav entry.
+ *
+ * Six concepts were retired from this app's navigation in
+ * `src/menu-layout.json#removals` — Organizations (an OpenRegister concept),
+ * Glossary / Themes / Pages / Menus (Portaliq's, per ADR-086), and WOO (an
+ * object type, not a section). `removals` deliberately drops only the MENU
+ * ENTRY: every page stays registered on the router precisely so deep links
+ * and these specs keep working. There is simply no longer a
+ * `[data-testid="cn-nav-entry-…"]` to click for them.
+ *
+ * This is the hash form, which is what this SPA actually routes on — the
+ * same mechanism `gate19.spec.ts#gotoHash` has always used. The warning at
+ * the top of this file is about PATH-style deep links
+ * (`/apps/opencatalogi/glossary`), which do land on the Dashboard because
+ * the server template boots the router at `/`. `#/glossary` does not.
+ *
+ * @param page The Playwright page.
+ * @param route The in-app route, leading slash included (e.g. '/glossary').
+ */
+export async function navToRoute(page: Page, route: string): Promise<void> {
+	await page.goto(`${APP}/#${route}`, { waitUntil: 'domcontentloaded' })
+	await page.waitForTimeout(1500)
+	await dismissOverlays(page)
+	await expect(page.locator('[data-testid="cn-nav"]').first()).toBeVisible({
+		timeout: 20000,
+	})
 }
