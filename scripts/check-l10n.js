@@ -252,6 +252,134 @@ function printSection(title, color, body) {
 	console.log('')
 }
 
+/**
+ * Strings the SERVER translates, harvested from PHP `$l->t()` / `$l->n()`.
+ *
+ * WHY THIS IS NOT OPTIONAL.
+ *
+ * `l10n/<locale>.js` is GENERATED from `l10n/<locale>.json` by
+ * build-l10n-js.js, and the .json is the catalogue PHP reads. So a key that
+ * only PHP uses is necessarily present in the .js too — and this check, which
+ * scanned nothing but src/, reported every one of them as an orphan.
+ *
+ * That made the two checks mutually unsatisfiable: `check:l10n` demanded those
+ * keys be stripped from the .js, and `check:l10n-js` regenerated the .js from
+ * the .json and put them straight back. Measured 2026-08-27 on opencatalogi:
+ * 24 keys sat in exactly that trap, including "Not logged in" and
+ * "Publication not found".
+ *
+ * Deleting them from the .json instead would have been worse — the server
+ * would have rendered them untranslated, silently, in every locale.
+ *
+ * @return {Set<string>} Strings passed to a server-side translate call.
+ */
+function collectPhpTranslated() {
+	const dirs = [
+		path.join(ROOT, 'lib'),
+		path.join(ROOT, 'templates'),
+		path.join(ROOT, 'appinfo'),
+	]
+	const used = new Set()
+
+	for (const dir of dirs) {
+		if (!fs.existsSync(dir)) {
+			continue
+		}
+
+		for (const file of walk(dir, ['.php'])) {
+			const source = fs.readFileSync(file, 'utf8')
+			// ->t('…') / ->n('…') and their double-quoted forms. Escapes are
+			// honoured so a string containing a quote is captured whole rather
+			// than truncated at it.
+			const patterns = [
+				/->[tn]\(\s*'((?:\\.|[^'\\])*)'/g,
+				/->[tn]\(\s*"((?:\\.|[^"\\])*)"/g,
+			]
+			for (const re of patterns) {
+				let m
+				while ((m = re.exec(source)) !== null) {
+					used.add(m[1].replace(/\\(['"\\])/g, '$1'))
+				}
+			}
+		}
+	}
+
+	return used
+}
+
+/**
+ * Every user-visible string the MANIFEST declares.
+ *
+ * The same shape as collectPhpTranslated(): a source of used keys that lives
+ * outside the src/ scan, so a key it covers is not an orphan.
+ *
+ * Scanning .vue/.js/.ts finds t() calls and nothing else. The manifest is not
+ * source the extractor reads; it is data the renderer walks. CnAppNav
+ * translates `menu[].label`, CnPageHeader a page's `title` and `description`,
+ * CnWalkthrough a step's `title` / `body` / `task` — each through the app's own
+ * translate function, each looking up a key this checker could not see.
+ *
+ * Without this a LIVE manifest string reads as dead weight and gets deleted:
+ * "Menu items" is declared by the manifest and was reported unused by this very
+ * check, on a list of 113 keys proposed for removal.
+ *
+ * src/manifest.d/*.json counts too — merged at runtime via require.context, so
+ * reading only src/manifest.json is blind to it. `_meta` is skipped: it is
+ * per-fragment provenance, never rendered.
+ *
+ * @return {Set<string>} the manifest's user-visible strings
+ */
+function collectManifestStrings() {
+	const FIELDS = new Set([
+		'title',
+		'body',
+		'task',
+		'label',
+		'description',
+		'emptyText',
+		'placeholder',
+		'subtitle',
+		'helpText',
+	])
+	const out = new Set()
+	const visit = (node) => {
+		if (Array.isArray(node)) {
+			node.forEach(visit)
+			return
+		}
+		if (node === null || typeof node !== 'object') return
+		for (const [key, value] of Object.entries(node)) {
+			if (key.startsWith('_')) continue
+			if (FIELDS.has(key) && typeof value === 'string' && value.trim()) {
+				out.add(value)
+			} else {
+				visit(value)
+			}
+		}
+	}
+	const candidates = [path.join(SRC_DIR, 'manifest.json')]
+	const fragmentDir = path.join(SRC_DIR, 'manifest.d')
+	if (fs.existsSync(fragmentDir)) {
+		for (const name of fs.readdirSync(fragmentDir).sort()) {
+			if (name.endsWith('.json')) candidates.push(path.join(fragmentDir, name))
+		}
+	}
+	for (const file of candidates) {
+		if (!fs.existsSync(file)) continue
+		try {
+			visit(JSON.parse(fs.readFileSync(file, 'utf8')))
+		} catch (e) {
+			// An unparseable manifest is check:manifest's finding, not this
+			// script's. Say so rather than reporting a translation verdict over a
+			// file that was never read.
+			console.error(
+				`[check-l10n] SKIP ${rel(file)}: unreadable (${e.message})`,
+			)
+		}
+	}
+	return out
+}
+
 function main() {
 	const { app, translations } = loadJsTranslations(L10N_FILE)
 	const keys = new Set(Object.keys(translations))
@@ -260,24 +388,37 @@ function main() {
 
 	const { found, unanalyzable } = extractTCalls(files, app)
 	const usedKeys = new Set(found.keys())
+	const phpKeys = collectPhpTranslated()
+	const manifestKeys = collectManifestStrings()
 
-	const missing = [...usedKeys].filter((k) => !keys.has(k)).sort()
-	const unused = [...keys].filter((k) => !usedKeys.has(k)).sort()
+	const missing = [...usedKeys, ...manifestKeys].filter((k) => !keys.has(k)).sort()
+	// A key the SERVER translates is not an orphan, even though nothing in src/
+	// references it — see collectPhpTranslated(). The same is true of a string
+	// the MANIFEST declares — see collectManifestStrings().
+	const unused = [...keys]
+		.filter((k) => !usedKeys.has(k) && !phpKeys.has(k) && !manifestKeys.has(k))
+		.sort()
 	const unwrapped = findUnwrapped(vueFiles, keys)
 
 	console.log(`${BOLD}${CYAN}${app} l10n check${RESET}`)
 	console.log(
-		`${DIM}Scanned ${files.length} files (${vueFiles.length} .vue), ${keys.size} keys in en.js${RESET}`,
+		`${DIM}Scanned ${files.length} files (${vueFiles.length} .vue), ${keys.size} keys in en.js; ${phpKeys.size} strings also translated server-side${RESET}`,
 	)
 	console.log('')
 
 	if (missing.length) {
 		const body = missing
 			.map((k) => {
-				const locs = found
-					.get(k)
-					.map((l) => `${DIM}${rel(l.file)}:${l.line}${RESET}`)
-					.join(', ')
+				// A key reaches MISSING from a t() call the extractor found, or
+				// from a manifest field. Only the first has an entry in `found`,
+				// so dereferencing it unguarded throws on every manifest string.
+				const hits = found.get(k)
+				const locs =
+					hits === undefined
+						? `${DIM}declared in src/manifest.json or src/manifest.d/${RESET}`
+						: hits
+								.map((l) => `${DIM}${rel(l.file)}:${l.line}${RESET}`)
+								.join(', ')
 				return `  ${RED}•${RESET} ${JSON.stringify(k)}\n    ${locs}`
 			})
 			.join('\n')
