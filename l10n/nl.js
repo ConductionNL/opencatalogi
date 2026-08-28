@@ -896,7 +896,6 @@ OC.L10N.register(
         "WOO": "Woo",
         "Administration": "Beheer",
         "Features & roadmap": "Functies en roadmap",
-        "Restart tutorial": "Rondleiding opnieuw starten",
         "Flows": "Flows",
         "Views": "Weergaven",
         "Downloads": "Downloads",

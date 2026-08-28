@@ -967,7 +967,6 @@ OC.L10N.register(
         "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create. You can still tighten or widen it later.": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create. You can still tighten or widen it later.",
         "Publishing is access-controlled": "Publishing is access-controlled",
         "Publishing prerequisites": "Publishing prerequisites",
-        "Restart tutorial": "Restart tutorial",
         "Retention": "Retention",
         "Sync all directories": "Sync all directories",
         "That is the full loop: catalog, publication, schema-RBAC publishing, discovery. Published catalogs are harvested as DCAT-AP, so registers and portals re-list them automatically.": "That is the full loop: catalog, publication, schema-RBAC publishing, discovery. Published catalogs are harvested as DCAT-AP, so registers and portals re-list them automatically.",

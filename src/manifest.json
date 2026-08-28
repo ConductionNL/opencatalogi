@@ -95,7 +95,7 @@
 						"body": "Let's walk the publishing journey together, from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.",
 						"target": {
 							"kind": "page",
-							"ref": "Catalogs"
+							"ref": "Dashboard"
 						},
 						"advanceOn": {
 							"type": "manual"
@@ -347,13 +347,6 @@
 					"icon": "Folder",
 					"route": "Directory",
 					"order": 97
-				},
-				{
-					"id": "SettingsMenu",
-					"label": "Settings",
-					"icon": "CogOutline",
-					"action": "user-settings",
-					"order": 99
 				}
 			]
 		},
@@ -372,15 +365,6 @@
 			"route": "FeaturesRoadmap",
 			"section": "footer",
 			"order": 2
-		},
-		{
-			"id": "RestartTutorial",
-			"label": "Restart tutorial",
-			"icon": "PlayCircleOutline",
-			"action": "replay-walkthrough",
-			"tourId": "opencatalogi:getting-started",
-			"section": "footer",
-			"order": 3
 		},
 		{
 			"id": "FlowsMenu",
