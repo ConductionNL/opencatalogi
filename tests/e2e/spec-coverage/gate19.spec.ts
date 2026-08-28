@@ -483,9 +483,17 @@ test.describe('admin-settings', () => {
 	 * WHEN UserSettings.vue renders
 	 * THEN it MUST show the OpenCatalogi settings dialog with the General placeholder section.
 	 *
-	 * The trigger is the SettingsMenu entry in the app-navigation settings
-	 * foldout. We open the foldout, click the entry, and assert the dialog
-	 * genuinely opens.
+	 * The trigger is the auto-prepended "Personal settings" entry in the
+	 * app-navigation settings foldout. We open the foldout, click it, and
+	 * assert the dialog genuinely opens.
+	 *
+	 * It used to be this app's own SettingsMenu entry. #1170 dropped that
+	 * from the manifest: CnAppNav already prepends a Personal settings entry
+	 * opening the very same user-settings dialog, so the manifest entry only
+	 * added a second, differently-labelled button for one destination and the
+	 * foldout read "Personal settings / ... / Settings". The BEHAVIOUR this
+	 * spec covers is unchanged — the dialog still opens from the foldout — so
+	 * the spec follows the surviving control rather than being retired.
 	 */
 	test(// @e2e admin-settings::open-the-user-settings-dialog
 	'SET-017 — Settings nav entry opens the user settings dialog', async ({
@@ -493,7 +501,7 @@ test.describe('admin-settings', () => {
 	}) => {
 		await bootApp(page)
 		const entry = page
-			.locator('[data-testid="cn-nav-entry-SettingsMenu"]')
+			.locator('[data-testid="cn-nav-personal-settings"]')
 			.first()
 		// Use the shared helper rather than an inline copy of the gear
 		// selectors: @nextcloud/vue v9 renders the settings foldout with
