@@ -20,12 +20,7 @@
  * page stops resolving its schema.
  */
 import { expect, test } from '@playwright/test'
-import {
-	content,
-	fatalErrors,
-	navToRoute,
-	trackPageErrors,
-} from './_nav'
+import { content, fatalErrors, navToRoute, trackPageErrors } from './_nav'
 
 test.describe('woo-batches-page', () => {
 	test('WOO-PROV-003 — the WOO page resolves real register/schema ids, never a literal @resolve sentinel', async ({

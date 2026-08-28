@@ -22,7 +22,7 @@
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test gate19
  */
 
-import type {APIRequestContext, Page} from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
 import {

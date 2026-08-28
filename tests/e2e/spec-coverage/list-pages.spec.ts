@@ -56,7 +56,7 @@ const NAV_LIST_PAGES = ['CatalogsMenu']
  * working. So these assert exactly the same index surface as before — they
  * just arrive by route instead of by click.
  */
-const ROUTE_LIST_PAGES: Array<{ id: string, route: string }> = [
+const ROUTE_LIST_PAGES: Array<{ id: string; route: string }> = [
 	{ id: 'Organizations', route: '/organizations' },
 	{ id: 'Themes', route: '/themes' },
 	{ id: 'Glossary', route: '/glossary' },
