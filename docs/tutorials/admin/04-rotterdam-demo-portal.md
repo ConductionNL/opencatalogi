@@ -53,9 +53,9 @@ Road 1 exists so you can see the mechanism actually work.
 
 Two independent Nextcloud instances plus a database:
 
-- **`oc-demo-main`** on <http://localhost:8580> — OpenRegister, OpenCatalogi,
+- **`oc-demo-main`** on [http://localhost:8580](http://localhost:8580) — OpenRegister, OpenCatalogi,
   Portaliq and NLDesign. This one serves the portal.
-- **`oc-demo-peer`** on <http://localhost:8581> — OpenRegister and OpenCatalogi
+- **`oc-demo-peer`** on [http://localhost:8581](http://localhost:8581) — OpenRegister and OpenCatalogi
   only. A second catalogue with its own publications.
 
 The peer deliberately does **not** run Portaliq. A publication from the peer
@@ -88,7 +88,7 @@ the two instances, and then **verifies the result** rather than announcing it:
 Demo rig ready.
 ```
 
-Then open <http://localhost:8580/index.php/apps/portaliq/site>.
+Then open [http://localhost:8580/index.php/apps/portaliq/site](http://localhost:8580/index.php/apps/portaliq/site).
 
 ### Prove it is really federated
 
