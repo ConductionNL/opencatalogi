@@ -56,7 +56,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl. Voor een Service Level Agreement (SLA), neem contact op via sales@conduction.nl.
     ]]></description>
-	<version>1.0.9-unstable.20260826085353</version>
+	<version>1.0.14-unstable.20260829125631</version>
 	<licence>EUPL-1.2</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
@@ -164,7 +164,50 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				post-migration only: a fresh install has no rows to remove, and
 				the step is idempotent either way.
 			-->
+			<!-- WRITTEN BUT NEVER REGISTERED until now, so it never ran anywhere.
+			     gate-98 (repair-step-registration) found it.
+			
+			     One-shot cleanup for the getUniqueDirectories() publications-URL
+			     bug: older builds fed `publications` URLs into syncDirectory() as
+			     if they were directory URLs, so every publication the peer
+			     returned was saved as a `listing` row carrying the wrong
+			     `directory`. Those rows never sync again once the bug is fixed and
+			     simply sit as stale garbage.
+			
+			     THIS STEP DELETES ROWS, which is why it is worth stating what it
+			     will and will not touch: it removes a listing only when its
+			     `directory` is empty or does not contain `/api/directory`. A real
+			     listing always carries such a URL, so a correctly-synced store is
+			     untouched and a re-run is a no-op.
+			
+			     Register/schema discovery goes through SchemaMapper/RegisterMapper
+			     rather than the `listing_register` app-config key, because some
+			     environments hold a corrupt value there (the literal string
+			     "Array") and a config-driven lookup would silently skip the
+			     cleanup rather than fail. -->
+			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
 			<step>OCA\OpenCatalogi\Repair\RemoveRetiredCronJobs</step>
+			<!--
+				Written but never registered, so it had never run once: a class that
+				exists is not a class that runs. gate-98 found it.
+
+				It removes directory listings whose `directory` field is empty or does
+				not point at an `/api/directory` endpoint — rows a since-fixed bug
+				created by storing the federation *publications* URL as a listing.
+				Those rows never sync again and just sit as stale garbage.
+
+				The delete is RECOVERABLE: it goes through OpenRegister's
+				ObjectService::deleteObject(), which soft-deletes — the scan itself
+				filters on `_deleted IS NULL`, so an already-removed row is skipped
+				rather than touched again. Idempotent by the same property: once the
+				store is clean it is a no-op. Listings are a cache of remote
+				directories, not authored content, so a wrongly-removed row comes back
+				on the next sync.
+
+				post-migration only: a fresh install has no stale rows to clean, and
+				the step is idempotent either way.
+			-->
+			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
 		</post-migration>
 		<!--
 			Nextcloud runs migrateSchemaOnly() on a FIRST install, so NEITHER

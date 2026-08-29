@@ -30,7 +30,9 @@
     "test:e2e:install": "playwright install chromium",
     "format": "prettier --check \"**/*.{js,ts,vue,css,scss}\"",
     "format:fix": "prettier --write \"**/*.{js,ts,vue,css,scss}\"",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "prepare": "git config core.hooksPath .githooks || true",
+    "l10n:build": "node scripts/build-l10n-js.js",
+    "check:l10n-js": "node scripts/build-l10n-js.js --check"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
@@ -38,7 +40,7 @@
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-xml": "^6.1.0",
-    "@conduction/nextcloud-vue": "^2.19.0",
+    "@conduction/nextcloud-vue": "^2.22.1",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "6.6.0",
     "@fortawesome/free-regular-svg-icons": "6.6.0",

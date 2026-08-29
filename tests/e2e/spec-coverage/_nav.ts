@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -14,7 +16,7 @@
  * live inside the NcAppNavigationSettings foldout, which must be opened
  * first.
  */
-import { type Page, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 export const APP = '/index.php/apps/opencatalogi'
 
@@ -46,6 +48,26 @@ export const APP = '/index.php/apps/opencatalogi'
  *    overlay, so dismiss it explicitly.
  */
 export async function dismissOverlays(page: Page): Promise<void> {
+	// The non-gating setup wizard, when storage seeding did not take (a
+	// blocked-storage context, or a page opened without bootApp). Identified by
+	// the step markup CnSetupWizard renders inside CnWizardDialog rather than
+	// by a title, which is translated.
+	const setupWizard = page
+		.locator('[role="dialog"]')
+		.filter({ has: page.locator('.cn-setup-step') })
+		.first()
+	if (await setupWizard.isVisible().catch(() => false)) {
+		const skip = setupWizard
+			.getByRole('button', { name: /cancel|close|skip|later|annuleren/i })
+			.first()
+		if (await skip.isVisible().catch(() => false)) {
+			await skip.click().catch(() => {})
+		} else {
+			await page.keyboard.press('Escape').catch(() => {})
+		}
+		await setupWizard.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {})
+	}
+
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		const close = wizard
@@ -99,6 +121,30 @@ export async function dismissOverlays(page: Page): Promise<void> {
 
 /** Boot the SPA at its root and wait for the navigation shell to render. */
 export async function bootApp(page: Page): Promise<void> {
+	// Stand the non-gating setup wizard down BEFORE the app boots.
+	//
+	// CnAppRoot opens it whenever the server reports an optional setup step
+	// as outstanding, and opencatalogi declares several. It renders as a
+	// modal over the shell, so every click behind it — the nav entries these
+	// specs drive — times out rather than failing by name. Dismissing it
+	// reactively is a race against its enter transition; seeding the key it
+	// reads is not.
+	//
+	// The key is versioned (`cn-setup-wizard-dismissed:<appId>:<setup.version>`),
+	// so a range is seeded: bumping manifest.setup.version must not silently
+	// re-open the wizard across the whole suite.
+	await page.addInitScript(() => {
+		try {
+			for (let v = 0; v <= 20; v++) {
+				window.localStorage.setItem(
+					`cn-setup-wizard-dismissed:opencatalogi:${v}`,
+					'1',
+				)
+			}
+		} catch (e) {
+			/* storage blocked — dismissOverlays() is the fallback */
+		}
+	})
 	await page.goto(`${APP}/`, { waitUntil: 'domcontentloaded' }).catch(() => {})
 	await dismissOverlays(page)
 	// CnAppNav rendered → shell is up.
@@ -218,4 +264,33 @@ export function trackPageErrors(page: Page): string[] {
 
 export function fatalErrors(errors: string[]): string[] {
 	return errors.filter((e) => !/warning|warn|deprecat|ResizeObserver/i.test(e))
+}
+
+/**
+ * Open an in-app page by its hash ROUTE rather than by clicking a nav entry.
+ *
+ * Six concepts were retired from this app's navigation in
+ * `src/menu-layout.json#removals` — Organizations (an OpenRegister concept),
+ * Glossary / Themes / Pages / Menus (Portaliq's, per ADR-086), and WOO (an
+ * object type, not a section). `removals` deliberately drops only the MENU
+ * ENTRY: every page stays registered on the router precisely so deep links
+ * and these specs keep working. There is simply no longer a
+ * `[data-testid="cn-nav-entry-…"]` to click for them.
+ *
+ * This is the hash form, which is what this SPA actually routes on — the
+ * same mechanism `gate19.spec.ts#gotoHash` has always used. The warning at
+ * the top of this file is about PATH-style deep links
+ * (`/apps/opencatalogi/glossary`), which do land on the Dashboard because
+ * the server template boots the router at `/`. `#/glossary` does not.
+ *
+ * @param page The Playwright page.
+ * @param route The in-app route, leading slash included (e.g. '/glossary').
+ */
+export async function navToRoute(page: Page, route: string): Promise<void> {
+	await page.goto(`${APP}/#${route}`, { waitUntil: 'domcontentloaded' })
+	await page.waitForTimeout(1500)
+	await dismissOverlays(page)
+	await expect(page.locator('[data-testid="cn-nav"]').first()).toBeVisible({
+		timeout: 20000,
+	})
 }
