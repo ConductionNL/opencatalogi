@@ -921,6 +921,9 @@ OC.L10N.register(
         "Woo-index harvester readiness": "Woo-index harvester readiness",
         "Woo-index registration status": "Woo-index registration status",
         "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.": "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.",
+        "Where the automation lives": "Where the automation lives",
+        "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them. Nothing to build now.": "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them. Nothing to build now.",
+        "Open Flows in the menu": "Open Flows in the menu",
         "A catalog is the container your publications live in. We'll create your first one using the scope you just chose. You can rename it and add publications afterwards.": "A catalog is the container your publications live in. We'll create your first one using the scope you just chose. You can rename it and add publications afterwards.",
         "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications. Let's create your first catalog and connect you to the federated network.": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications. Let's create your first catalog and connect you to the federated network.",
         "A publication is a single thing you make open: a document, dataset or record. Add your first one.": "A publication is a single thing you make open: a document, dataset or record. Add your first one.",
@@ -967,7 +970,6 @@ OC.L10N.register(
         "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create. You can still tighten or widen it later.": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create. You can still tighten or widen it later.",
         "Publishing is access-controlled": "Publishing is access-controlled",
         "Publishing prerequisites": "Publishing prerequisites",
-        "Restart tutorial": "Restart tutorial",
         "Retention": "Retention",
         "Sync all directories": "Sync all directories",
         "That is the full loop: catalog, publication, schema-RBAC publishing, discovery. Published catalogs are harvested as DCAT-AP, so registers and portals re-list them automatically.": "That is the full loop: catalog, publication, schema-RBAC publishing, discovery. Published catalogs are harvested as DCAT-AP, so registers and portals re-list them automatically.",
@@ -977,7 +979,9 @@ OC.L10N.register(
         "WOO": "WOO",
         "WOO batches": "WOO batches",
         "Welcome to OpenCatalogi": "Welcome to OpenCatalogi",
-        "You're publishing": "You're publishing"
+        "You're publishing": "You're publishing",
+        "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.": "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.",
+        "Demo data (optional)": "Demo data (optional)"
     },
     "nplurals=2; plural=(n != 1);"
 )

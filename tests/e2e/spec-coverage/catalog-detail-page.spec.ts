@@ -28,8 +28,8 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test catalog-detail-page
  */
-import { test, expect } from '@playwright/test'
-import { bootApp, navTo, content, trackPageErrors, fatalErrors, APP } from './_nav'
+import { expect, test } from '@playwright/test'
+import { APP, bootApp, content, fatalErrors, navTo, trackPageErrors } from './_nav'
 
 test.describe('catalog-detail-page', () => {
 	test(// @e2e catalogs::open-a-catalog-detail-from-the-list
@@ -46,26 +46,16 @@ test.describe('catalog-detail-page', () => {
 
 		await bootApp(page)
 
-		// CatalogsMenu is a child of the collapsible `CatalogueGroup`
-		// (the nav-IA `settings-foldout + admin-IA hygiene` refactor moved
-		// Catalogs/Glossary/Themes/Pages/Menus/WooBatches under it). The
-		// group renders collapsed (aria-expanded=false) so its children are
-		// hidden until it is opened — exactly as woo-batches-page.spec.ts
-		// handles WooBatchesMenu. The stale `settings=true` here opened the
-		// settings gear foldout (where CatalogsMenu does NOT live), leaving
-		// the entry hidden and the click never landing. Expand the group
-		// first, then use the normal nav click.
-		const group = page
-			.locator('[data-testid="cn-nav-entry-CatalogueGroup"]')
-			.first()
-		await expect(group).toBeVisible({ timeout: 10000 })
-		const catalogsEntry = page
-			.locator('[data-testid="cn-nav-entry-CatalogsMenu"]')
-			.first()
-		if (!(await catalogsEntry.isVisible().catch(() => false))) {
-			await group.locator('a, button').first().click()
-			await expect(catalogsEntry).toBeVisible({ timeout: 10000 })
-		}
+		// CatalogsMenu used to be a child of the collapsible `CatalogueGroup`
+		// and this spec expanded that group first. The group is gone: its other
+		// five children (Glossary/Themes/Pages/Menus/WOO) are retired from the
+		// nav in `src/menu-layout.json#removals` and Catalogs is relocated to
+		// the top level, so `applyMenuRelocations` drops the empty shell. The
+		// entry is visible on a cold boot now, so a plain nav click is the whole
+		// interaction.
+		await expect(
+			page.locator('[data-testid="cn-nav-entry-CatalogsMenu"]').first(),
+		).toBeVisible({ timeout: 10000 })
 
 		await navTo(page, 'CatalogsMenu')
 		await expect(

@@ -19,8 +19,8 @@
  * fails if a resolve-sentinel ever reaches the network again, or if the WOO
  * page stops resolving its schema.
  */
-import { test, expect } from '@playwright/test'
-import { bootApp, navTo, content, trackPageErrors, fatalErrors } from './_nav'
+import { expect, test } from '@playwright/test'
+import { content, fatalErrors, navToRoute, trackPageErrors } from './_nav'
 
 test.describe('woo-batches-page', () => {
 	test('WOO-PROV-003 — the WOO page resolves real register/schema ids, never a literal @resolve sentinel', async ({
@@ -43,25 +43,22 @@ test.describe('woo-batches-page', () => {
 			}
 		})
 
-		await bootApp(page)
+		// WOO has no nav entry any more. It was one -- a menu item labelled
+		// "WOO" inside the collapsible "Catalogue" group, pointing at the
+		// wooBatch object type's generic index -- and that is exactly what got
+		// retired in `src/menu-layout.json#removals`: an object type is not a
+		// section. The PAGE is untouched and still routable, which is the whole
+		// contract of `removals`, so this regression guard still has something
+		// to guard. Reaching it by route is now the only way, and it is also
+		// the stricter test: the sentinel substitution in `src/main.js` has to
+		// happen before first paint either way.
+		await navToRoute(page, '/woo')
 
-		// WooBatchesMenu is rendered inside the collapsible "Catalogue" group
-		// (`li.app-navigation-entry--collapsible[data-testid=cn-nav-entry-CatalogueGroup]`),
-		// so it is in the DOM but zero-height until the group is expanded.
-		// Expand it first, then use the normal nav click.
-		const group = page
-			.locator('[data-testid="cn-nav-entry-CatalogueGroup"]')
-			.first()
-		await expect(group).toBeVisible({ timeout: 10000 })
-		const wooEntry = page
-			.locator('[data-testid="cn-nav-entry-WooBatchesMenu"]')
-			.first()
-		if (!(await wooEntry.isVisible().catch(() => false))) {
-			await group.locator('a, button').first().click()
-			await expect(wooEntry).toBeVisible({ timeout: 10000 })
-		}
-
-		await navTo(page, 'WooBatchesMenu')
+		// The entry is genuinely gone -- asserted, not assumed, because a
+		// `removals` id that matches nothing is a silent no-op.
+		await expect(
+			page.locator('[data-testid="cn-nav-entry-WooBatchesMenu"]'),
+		).toHaveCount(0)
 
 		// 1. The defect itself: a literal sentinel reaching the network.
 		const sentinelCalls = openRegisterCalls.filter((u) =>

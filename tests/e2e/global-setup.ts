@@ -149,10 +149,67 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	await page.evaluate(() => {
 		try {
 			window.localStorage.setItem('cn-support-dialog-shown:opencatalogi', '1')
+			// The non-gating setup wizard, for the same reason and in the same
+			// place. CnAppRoot opens it whenever the server reports an OPTIONAL
+			// setup step as outstanding, and this app declares five. It renders
+			// over the shell, so a click behind it does not fail fast: it waits
+			// out the full 60s timeout, which reads as a slow page rather than a
+			// covered one.
+			//
+			// Seeded HERE rather than in a per-directory helper: tests/e2e has
+			// spec-coverage/_nav.ts and workflows/_crud.ts as separate boot
+			// paths, and fixing only the first left federation-search still
+			// timing out. globalSetup is the one place every project shares.
+			//
+			// The key is versioned, so a range is seeded: bumping
+			// manifest.setup.version must not silently re-arm it suite-wide.
+			for (let v = 0; v <= 20; v++) {
+				window.localStorage.setItem(
+					`cn-setup-wizard-dismissed:opencatalogi:${v}`,
+					'1',
+				)
+			}
 		} catch (e) {
 			/* private mode / quota — the dismissOverlays fallback still applies */
 		}
 	})
+
+	/*
+	 * Suppress the product walkthrough (ADR-043) for automated runs, the way
+	 * dossiq's global-setup already does.
+	 *
+	 * This became load-bearing with @conduction/nextcloud-vue 2.22.x. A
+	 * `placement: "center"` welcome step used to be parked in `_pendingAutoTour`
+	 * and never opened; the library now correctly starts it on any route, so the
+	 * tour actually appears — and its `cn-walkthrough__dim--full` layer is a
+	 * `role="dialog" aria-modal="true"` overlay that intercepts every click
+	 * behind it. Specs that had never had to account for a tour started timing
+	 * out, and `getByRole('dialog').first()` began resolving to the dim layer
+	 * instead of the modal under test.
+	 *
+	 * The marker is per USER, not per test, so without it the suite is also
+	 * order-dependent: whichever spec runs first wears the tour and the rest
+	 * inherit a dismissed one.
+	 *
+	 * The sentinel is higher than any real app version, so every step's
+	 * `sinceVersion` sorts below it and the tour composes to an empty step set
+	 * rather than merely starting dismissed. The page is already on the instance
+	 * origin after login, which is the origin storageState persists.
+	 */
+	try {
+		await page.evaluate(() => {
+			try {
+				window.localStorage.setItem(
+					'cn-walkthrough-seen:opencatalogi',
+					'999.0.0',
+				)
+			} catch (e) {
+				// localStorage unavailable — specs fall back to dismissing by hand.
+			}
+		})
+	} catch {
+		// Never fail setup over an optional convenience.
+	}
 
 	await context.storageState({ path: STORAGE_STATE })
 	await browser.close()

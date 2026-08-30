@@ -1,0 +1,1043 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "opencatalogi demo data",
+    "version": "1.0.0",
+    "description": "Demo data covering every schema this app supplies, offered as the first step of the app's setup walkthrough. Generated from the schemas themselves, so every object satisfies the schema that will validate it."
+  },
+  "x-openregister": {
+    "type": "mock",
+    "app": "opencatalogi",
+    "description": "Demo data for opencatalogi. NOT installed automatically — a mock register is imported on demand, from the setup walkthrough or `occ openregister:descriptors:list --app=opencatalogi --import=<slug>`."
+  },
+  "paths": {},
+  "components": {
+    "registers": {
+      "publication": {
+        "slug": "publication",
+        "title": "Publication (demo)",
+        "version": "0.1.0",
+        "description": "Demo data for Publication. Generated from the register's own schemas — see hydra-gates/scripts/lib/generate_mock_register.py."
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "catalog",
+          "slug": "catalog-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "summary": "Voorbeeld Summary 1",
+        "description": "Voorbeeld Description 1",
+        "image": "Voorbeeld Image 1",
+        "listed": true,
+        "organization": "00000000-0000-4000-8000-000000000000",
+        "registers": [
+          "Voorbeeld Registers 1"
+        ],
+        "schemas": [
+          "Voorbeeld Schemas 1"
+        ],
+        "filters": {},
+        "status": "development",
+        "view": 1,
+        "slug": "abc",
+        "hasWooSitemap": false,
+        "hasOoapi": false,
+        "published": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "catalog",
+          "slug": "catalog-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "summary": "Voorbeeld Summary 2",
+        "description": "Voorbeeld Description 2",
+        "image": "Voorbeeld Image 2",
+        "listed": false,
+        "organization": "00000000-0000-4000-8000-000000000001",
+        "registers": [
+          "Voorbeeld Registers 2"
+        ],
+        "schemas": [
+          "Voorbeeld Schemas 2"
+        ],
+        "filters": {},
+        "status": "beta",
+        "view": 2,
+        "slug": "bcd",
+        "hasWooSitemap": false,
+        "hasOoapi": false,
+        "published": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "catalog",
+          "slug": "catalog-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "summary": "Voorbeeld Summary 3",
+        "description": "Voorbeeld Description 3",
+        "image": "Voorbeeld Image 3",
+        "listed": true,
+        "organization": "00000000-0000-4000-8000-000000000002",
+        "registers": [
+          "Voorbeeld Registers 3"
+        ],
+        "schemas": [
+          "Voorbeeld Schemas 3"
+        ],
+        "filters": {},
+        "status": "stable",
+        "view": 3,
+        "slug": "cde",
+        "hasWooSitemap": false,
+        "hasOoapi": false,
+        "published": "2026-03-03T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "course",
+          "slug": "course-voorbeeld-name-1-1"
+        },
+        "code": "Voorbeeld Code 1",
+        "name": "Voorbeeld Name 1",
+        "catalog": "00000000-0000-4000-8000-000000000000",
+        "level": "Voorbeeld Level 1",
+        "language": "Voorbeeld Language 1",
+        "rioOpleidingseenheidId": "Voorbeeld Rioopleidingseenheidid 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "course",
+          "slug": "course-voorbeeld-name-2-2"
+        },
+        "code": "Voorbeeld Code 2",
+        "name": "Voorbeeld Name 2",
+        "catalog": "00000000-0000-4000-8000-000000000001",
+        "level": "Voorbeeld Level 2",
+        "language": "Voorbeeld Language 2",
+        "rioOpleidingseenheidId": "Voorbeeld Rioopleidingseenheidid 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "course",
+          "slug": "course-voorbeeld-name-3-3"
+        },
+        "code": "Voorbeeld Code 3",
+        "name": "Voorbeeld Name 3",
+        "catalog": "00000000-0000-4000-8000-000000000002",
+        "level": "Voorbeeld Level 3",
+        "language": "Voorbeeld Language 3",
+        "rioOpleidingseenheidId": "Voorbeeld Rioopleidingseenheidid 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "document",
+          "slug": "document-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "publication": {
+          "id": "Voorbeeld Id 1",
+          "slug": "Voorbeeld Slug 1",
+          "title": "Voorbeeld Title 1"
+        },
+        "filename": "Voorbeeld Filename 1",
+        "mimeType": "Voorbeeld Mimetype 1",
+        "summary": "Voorbeeld Summary 1",
+        "description": "Voorbeeld Description 1",
+        "organization": "Voorbeeld Organization 1",
+        "publicationDate": "2026-03-01T09:00:00+00:00",
+        "depublicationDate": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "document",
+          "slug": "document-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "publication": {
+          "id": "Voorbeeld Id 2",
+          "slug": "Voorbeeld Slug 2",
+          "title": "Voorbeeld Title 2"
+        },
+        "filename": "Voorbeeld Filename 2",
+        "mimeType": "Voorbeeld Mimetype 2",
+        "summary": "Voorbeeld Summary 2",
+        "description": "Voorbeeld Description 2",
+        "organization": "Voorbeeld Organization 2",
+        "publicationDate": "2026-03-02T09:00:00+00:00",
+        "depublicationDate": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "document",
+          "slug": "document-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "publication": {
+          "id": "Voorbeeld Id 3",
+          "slug": "Voorbeeld Slug 3",
+          "title": "Voorbeeld Title 3"
+        },
+        "filename": "Voorbeeld Filename 3",
+        "mimeType": "Voorbeeld Mimetype 3",
+        "summary": "Voorbeeld Summary 3",
+        "description": "Voorbeeld Description 3",
+        "organization": "Voorbeeld Organization 3",
+        "publicationDate": "2026-03-03T09:00:00+00:00",
+        "depublicationDate": "2026-03-03T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "glossary",
+          "slug": "glossary-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "summary": "Voorbeeld Summary 1",
+        "description": "Voorbeeld Description 1",
+        "externalLink": "https://example.invalid/resource/0",
+        "keywords": [
+          "Voorbeeld Keywords 1"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "glossary",
+          "slug": "glossary-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "summary": "Voorbeeld Summary 2",
+        "description": "Voorbeeld Description 2",
+        "externalLink": "https://example.invalid/resource/1",
+        "keywords": [
+          "Voorbeeld Keywords 2"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "glossary",
+          "slug": "glossary-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "summary": "Voorbeeld Summary 3",
+        "description": "Voorbeeld Description 3",
+        "externalLink": "https://example.invalid/resource/2",
+        "keywords": [
+          "Voorbeeld Keywords 3"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "listing",
+          "slug": "listing-voorbeeld-title-1-1"
+        },
+        "catalogusId": "00000000-0000-4000-8000-000000000000",
+        "title": "Voorbeeld Title 1",
+        "summary": "Voorbeeld Summary 1",
+        "description": "Voorbeeld Description 1",
+        "search": "https://example.invalid/resource/0",
+        "publications": "https://example.invalid/resource/0",
+        "directory": "https://example.invalid/resource/0",
+        "metadata": [
+          "Voorbeeld Metadata 1"
+        ],
+        "status": "development",
+        "statusMessage": "Voorbeeld Statusmessage 1",
+        "statusCode": 200.0,
+        "lastSync": "2026-03-01T09:00:00+00:00",
+        "integrationLevel": "none",
+        "default": true,
+        "organization": {},
+        "schemas": [
+          "Voorbeeld Schemas 1"
+        ],
+        "version": "Voorbeeld Version 1",
+        "published": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "listing",
+          "slug": "listing-voorbeeld-title-2-2"
+        },
+        "catalogusId": "00000000-0000-4000-8000-000000000001",
+        "title": "Voorbeeld Title 2",
+        "summary": "Voorbeeld Summary 2",
+        "description": "Voorbeeld Description 2",
+        "search": "https://example.invalid/resource/1",
+        "publications": "https://example.invalid/resource/1",
+        "directory": "https://example.invalid/resource/1",
+        "metadata": [
+          "Voorbeeld Metadata 2"
+        ],
+        "status": "beta",
+        "statusMessage": "Voorbeeld Statusmessage 2",
+        "statusCode": 201.0,
+        "lastSync": "2026-03-02T09:00:00+00:00",
+        "integrationLevel": "connection",
+        "default": false,
+        "organization": {},
+        "schemas": [
+          "Voorbeeld Schemas 2"
+        ],
+        "version": "Voorbeeld Version 2",
+        "published": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "listing",
+          "slug": "listing-voorbeeld-title-3-3"
+        },
+        "catalogusId": "00000000-0000-4000-8000-000000000002",
+        "title": "Voorbeeld Title 3",
+        "summary": "Voorbeeld Summary 3",
+        "description": "Voorbeeld Description 3",
+        "search": "https://example.invalid/resource/2",
+        "publications": "https://example.invalid/resource/2",
+        "directory": "https://example.invalid/resource/2",
+        "metadata": [
+          "Voorbeeld Metadata 3"
+        ],
+        "status": "stable",
+        "statusMessage": "Voorbeeld Statusmessage 3",
+        "statusCode": 202.0,
+        "lastSync": "2026-03-03T09:00:00+00:00",
+        "integrationLevel": "search",
+        "default": true,
+        "organization": {},
+        "schemas": [
+          "Voorbeeld Schemas 3"
+        ],
+        "version": "Voorbeeld Version 3",
+        "published": "2026-03-03T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "slug": "menu-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "position": 0.0,
+        "items": [
+          {
+            "order": 0.0,
+            "name": "Voorbeeld Name 1",
+            "link": "Voorbeeld Link 1",
+            "description": "Voorbeeld Description 1",
+            "icon": "ViewDashboardOutline",
+            "groups": [
+              "Voorbeeld Groups 1"
+            ],
+            "hideAfterLogin": true,
+            "hideBeforeLogin": true
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 1"
+        ],
+        "hideBeforeLogin": true,
+        "icon": "ViewDashboardOutline"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "slug": "menu-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "position": 1.0,
+        "items": [
+          {
+            "order": 1.0,
+            "name": "Voorbeeld Name 2",
+            "link": "Voorbeeld Link 2",
+            "description": "Voorbeeld Description 2",
+            "icon": "BookOpenVariantOutline",
+            "groups": [
+              "Voorbeeld Groups 2"
+            ],
+            "hideAfterLogin": false,
+            "hideBeforeLogin": false
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 2"
+        ],
+        "hideBeforeLogin": false,
+        "icon": "BookOpenVariantOutline"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "slug": "menu-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "position": 2.0,
+        "items": [
+          {
+            "order": 2.0,
+            "name": "Voorbeeld Name 3",
+            "link": "Voorbeeld Link 3",
+            "description": "Voorbeeld Description 3",
+            "icon": "MapMarkerPath",
+            "groups": [
+              "Voorbeeld Groups 3"
+            ],
+            "hideAfterLogin": true,
+            "hideBeforeLogin": true
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 3"
+        ],
+        "hideBeforeLogin": true,
+        "icon": "MapMarkerPath"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "offering",
+          "slug": "offering-offering-1-1"
+        },
+        "courseId": "00000000-0000-4000-8000-000000000000",
+        "catalog": "00000000-0000-4000-8000-000000000000",
+        "programmeId": "00000000-0000-4000-8000-000000000000",
+        "period": "Voorbeeld Period 1",
+        "academicYear": "Voorbeeld Academicyear 1",
+        "teacherIds": [
+          "Voorbeeld Teacherids 1"
+        ],
+        "learnerIds": [
+          "Voorbeeld Learnerids 1"
+        ],
+        "rioAangebodenOpleidingId": "Voorbeeld Rioaangebodenopleidingid 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "offering",
+          "slug": "offering-offering-2-2"
+        },
+        "courseId": "00000000-0000-4000-8000-000000000001",
+        "catalog": "00000000-0000-4000-8000-000000000001",
+        "programmeId": "00000000-0000-4000-8000-000000000001",
+        "period": "Voorbeeld Period 2",
+        "academicYear": "Voorbeeld Academicyear 2",
+        "teacherIds": [
+          "Voorbeeld Teacherids 2"
+        ],
+        "learnerIds": [
+          "Voorbeeld Learnerids 2"
+        ],
+        "rioAangebodenOpleidingId": "Voorbeeld Rioaangebodenopleidingid 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "offering",
+          "slug": "offering-offering-3-3"
+        },
+        "courseId": "00000000-0000-4000-8000-000000000002",
+        "catalog": "00000000-0000-4000-8000-000000000002",
+        "programmeId": "00000000-0000-4000-8000-000000000002",
+        "period": "Voorbeeld Period 3",
+        "academicYear": "Voorbeeld Academicyear 3",
+        "teacherIds": [
+          "Voorbeeld Teacherids 3"
+        ],
+        "learnerIds": [
+          "Voorbeeld Learnerids 3"
+        ],
+        "rioAangebodenOpleidingId": "Voorbeeld Rioaangebodenopleidingid 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "organization",
+          "slug": "organization-voorbeeld-name-1-1"
+        },
+        "name": "Voorbeeld Name 1",
+        "summary": "Voorbeeld Summary 1",
+        "description": "Voorbeeld Description 1",
+        "oin": "00000000123456789000",
+        "tooi": "AB0123",
+        "tooiIdentifier": "Voorbeeld Tooiidentifier 1",
+        "rsin": "012345678",
+        "pki": "0",
+        "image": "Voorbeeld Image 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "organization",
+          "slug": "organization-voorbeeld-name-2-2"
+        },
+        "name": "Voorbeeld Name 2",
+        "summary": "Voorbeeld Summary 2",
+        "description": "Voorbeeld Description 2",
+        "oin": "00000001234567890000",
+        "tooi": "BC1234",
+        "tooiIdentifier": "Voorbeeld Tooiidentifier 2",
+        "rsin": "123456789",
+        "pki": "1",
+        "image": "Voorbeeld Image 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "organization",
+          "slug": "organization-voorbeeld-name-3-3"
+        },
+        "name": "Voorbeeld Name 3",
+        "summary": "Voorbeeld Summary 3",
+        "description": "Voorbeeld Description 3",
+        "oin": "00000002345678901000",
+        "tooi": "CD2345",
+        "tooiIdentifier": "Voorbeeld Tooiidentifier 3",
+        "rsin": "234567890",
+        "pki": "2",
+        "image": "Voorbeeld Image 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "slug": "page-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "slug": "abc",
+        "contents": [
+          {
+            "type": "Voorbeeld Type 1",
+            "id": "Voorbeeld Id 1",
+            "data": {},
+            "groups": [
+              "Voorbeeld Groups 1"
+            ],
+            "hideAfterLogin": true,
+            "hideBeforeLogin": true
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 1"
+        ],
+        "hideAfterLogin": true,
+        "hideBeforeLogin": true
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "slug": "page-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "slug": "bcd",
+        "contents": [
+          {
+            "type": "Voorbeeld Type 2",
+            "id": "Voorbeeld Id 2",
+            "data": {},
+            "groups": [
+              "Voorbeeld Groups 2"
+            ],
+            "hideAfterLogin": false,
+            "hideBeforeLogin": false
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 2"
+        ],
+        "hideAfterLogin": false,
+        "hideBeforeLogin": false
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "slug": "page-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "slug": "cde",
+        "contents": [
+          {
+            "type": "Voorbeeld Type 3",
+            "id": "Voorbeeld Id 3",
+            "data": {},
+            "groups": [
+              "Voorbeeld Groups 3"
+            ],
+            "hideAfterLogin": true,
+            "hideBeforeLogin": true
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 3"
+        ],
+        "hideAfterLogin": true,
+        "hideBeforeLogin": true
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "program",
+          "slug": "program-voorbeeld-name-1-1"
+        },
+        "code": "Voorbeeld Code 1",
+        "name": "Voorbeeld Name 1",
+        "catalog": "00000000-0000-4000-8000-000000000000",
+        "level": "Voorbeeld Level 1",
+        "courseIds": [
+          "00000000-0000-4000-8000-000000000000"
+        ],
+        "rioOpleidingseenheidId": "Voorbeeld Rioopleidingseenheidid 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "program",
+          "slug": "program-voorbeeld-name-2-2"
+        },
+        "code": "Voorbeeld Code 2",
+        "name": "Voorbeeld Name 2",
+        "catalog": "00000000-0000-4000-8000-000000000001",
+        "level": "Voorbeeld Level 2",
+        "courseIds": [
+          "00000000-0000-4000-8000-000000000001"
+        ],
+        "rioOpleidingseenheidId": "Voorbeeld Rioopleidingseenheidid 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "program",
+          "slug": "program-voorbeeld-name-3-3"
+        },
+        "code": "Voorbeeld Code 3",
+        "name": "Voorbeeld Name 3",
+        "catalog": "00000000-0000-4000-8000-000000000002",
+        "level": "Voorbeeld Level 3",
+        "courseIds": [
+          "00000000-0000-4000-8000-000000000002"
+        ],
+        "rioOpleidingseenheidId": "Voorbeeld Rioopleidingseenheidid 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publication",
+          "slug": "publication-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "summary": "Voorbeeld Summary 1",
+        "description": "Voorbeeld Description 1",
+        "organization": "00000000-0000-4000-8000-000000000000",
+        "themes": [
+          "00000000-0000-4000-8000-000000000000"
+        ],
+        "publicationDate": "2026-03-01T09:00:00+00:00",
+        "depublicationDate": "2026-03-01T09:00:00+00:00",
+        "retentionCategory": "Voorbeeld Retentioncategory 1",
+        "retentionTermMonths": 0,
+        "retentionAction": "review",
+        "retentionExpiresAt": "2026-03-01T09:00:00+00:00",
+        "retentionNote": "Voorbeeld Retentionnote 1",
+        "retentionLastEvaluatedAt": "2026-03-01T09:00:00+00:00",
+        "status": "published"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publication",
+          "slug": "publication-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "summary": "Voorbeeld Summary 2",
+        "description": "Voorbeeld Description 2",
+        "organization": "00000000-0000-4000-8000-000000000001",
+        "themes": [
+          "00000000-0000-4000-8000-000000000001"
+        ],
+        "publicationDate": "2026-03-02T09:00:00+00:00",
+        "depublicationDate": "2026-03-02T09:00:00+00:00",
+        "retentionCategory": "Voorbeeld Retentioncategory 2",
+        "retentionTermMonths": 1,
+        "retentionAction": "depublish",
+        "retentionExpiresAt": "2026-03-02T09:00:00+00:00",
+        "retentionNote": "Voorbeeld Retentionnote 2",
+        "retentionLastEvaluatedAt": "2026-03-02T09:00:00+00:00",
+        "status": "archived"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publication",
+          "slug": "publication-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "summary": "Voorbeeld Summary 3",
+        "description": "Voorbeeld Description 3",
+        "organization": "00000000-0000-4000-8000-000000000002",
+        "themes": [
+          "00000000-0000-4000-8000-000000000002"
+        ],
+        "publicationDate": "2026-03-03T09:00:00+00:00",
+        "depublicationDate": "2026-03-03T09:00:00+00:00",
+        "retentionCategory": "Voorbeeld Retentioncategory 3",
+        "retentionTermMonths": 2,
+        "retentionAction": "archive",
+        "retentionExpiresAt": "2026-03-03T09:00:00+00:00",
+        "retentionNote": "Voorbeeld Retentionnote 3",
+        "retentionLastEvaluatedAt": "2026-03-03T09:00:00+00:00",
+        "status": "published"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publiccode",
+          "slug": "publiccode-voorbeeld-name-1-1"
+        },
+        "name": "Voorbeeld Name 1",
+        "url": "https://example.invalid/resource/0",
+        "applicationSuite": "Voorbeeld Applicationsuite 1",
+        "landingURL": "https://example.invalid/resource/0",
+        "softwareVersion": "Voorbeeld Softwareversion 1",
+        "releaseDate": "2026-03-01",
+        "logo": "Voorbeeld Logo 1",
+        "platforms": [
+          "Voorbeeld Platforms 1"
+        ],
+        "categories": [
+          "Voorbeeld Categories 1"
+        ],
+        "developmentStatus": "Voorbeeld Developmentstatus 1",
+        "softwareType": "Voorbeeld Softwaretype 1",
+        "description": {},
+        "maintenanceType": "Voorbeeld Maintenancetype 1",
+        "maintainers": [
+          {}
+        ],
+        "legalLicense": "Voorbeeld Legallicense 1",
+        "legalRepoOwner": "Voorbeeld Legalrepoowner 1",
+        "localisationAvailableLanguages": [
+          "Voorbeeld Localisationavailablelanguages 1"
+        ],
+        "itConformsTo": [
+          "Voorbeeld Itconformsto 1"
+        ],
+        "publiccodeYmlVersion": "Voorbeeld Publiccodeymlversion 1",
+        "harvestedFrom": "Voorbeeld Harvestedfrom 1",
+        "harvestedAt": "2026-03-01T09:00:00+00:00",
+        "rawPubliccode": {}
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publiccode",
+          "slug": "publiccode-voorbeeld-name-2-2"
+        },
+        "name": "Voorbeeld Name 2",
+        "url": "https://example.invalid/resource/1",
+        "applicationSuite": "Voorbeeld Applicationsuite 2",
+        "landingURL": "https://example.invalid/resource/1",
+        "softwareVersion": "Voorbeeld Softwareversion 2",
+        "releaseDate": "2026-03-02",
+        "logo": "Voorbeeld Logo 2",
+        "platforms": [
+          "Voorbeeld Platforms 2"
+        ],
+        "categories": [
+          "Voorbeeld Categories 2"
+        ],
+        "developmentStatus": "Voorbeeld Developmentstatus 2",
+        "softwareType": "Voorbeeld Softwaretype 2",
+        "description": {},
+        "maintenanceType": "Voorbeeld Maintenancetype 2",
+        "maintainers": [
+          {}
+        ],
+        "legalLicense": "Voorbeeld Legallicense 2",
+        "legalRepoOwner": "Voorbeeld Legalrepoowner 2",
+        "localisationAvailableLanguages": [
+          "Voorbeeld Localisationavailablelanguages 2"
+        ],
+        "itConformsTo": [
+          "Voorbeeld Itconformsto 2"
+        ],
+        "publiccodeYmlVersion": "Voorbeeld Publiccodeymlversion 2",
+        "harvestedFrom": "Voorbeeld Harvestedfrom 2",
+        "harvestedAt": "2026-03-02T09:00:00+00:00",
+        "rawPubliccode": {}
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publiccode",
+          "slug": "publiccode-voorbeeld-name-3-3"
+        },
+        "name": "Voorbeeld Name 3",
+        "url": "https://example.invalid/resource/2",
+        "applicationSuite": "Voorbeeld Applicationsuite 3",
+        "landingURL": "https://example.invalid/resource/2",
+        "softwareVersion": "Voorbeeld Softwareversion 3",
+        "releaseDate": "2026-03-03",
+        "logo": "Voorbeeld Logo 3",
+        "platforms": [
+          "Voorbeeld Platforms 3"
+        ],
+        "categories": [
+          "Voorbeeld Categories 3"
+        ],
+        "developmentStatus": "Voorbeeld Developmentstatus 3",
+        "softwareType": "Voorbeeld Softwaretype 3",
+        "description": {},
+        "maintenanceType": "Voorbeeld Maintenancetype 3",
+        "maintainers": [
+          {}
+        ],
+        "legalLicense": "Voorbeeld Legallicense 3",
+        "legalRepoOwner": "Voorbeeld Legalrepoowner 3",
+        "localisationAvailableLanguages": [
+          "Voorbeeld Localisationavailablelanguages 3"
+        ],
+        "itConformsTo": [
+          "Voorbeeld Itconformsto 3"
+        ],
+        "publiccodeYmlVersion": "Voorbeeld Publiccodeymlversion 3",
+        "harvestedFrom": "Voorbeeld Harvestedfrom 3",
+        "harvestedAt": "2026-03-03T09:00:00+00:00",
+        "rawPubliccode": {}
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "theme",
+          "slug": "theme-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "summary": "Voorbeeld Summary 1",
+        "description": "Voorbeeld Description 1",
+        "image": "Voorbeeld Image 1",
+        "content": "Voorbeeld Content 1",
+        "link": "Voorbeeld Link 1",
+        "url": "Voorbeeld Url 1",
+        "icon": "ViewDashboardOutline",
+        "isExternal": true,
+        "sort": 1
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "theme",
+          "slug": "theme-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "summary": "Voorbeeld Summary 2",
+        "description": "Voorbeeld Description 2",
+        "image": "Voorbeeld Image 2",
+        "content": "Voorbeeld Content 2",
+        "link": "Voorbeeld Link 2",
+        "url": "Voorbeeld Url 2",
+        "icon": "BookOpenVariantOutline",
+        "isExternal": false,
+        "sort": 2
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "theme",
+          "slug": "theme-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "summary": "Voorbeeld Summary 3",
+        "description": "Voorbeeld Description 3",
+        "image": "Voorbeeld Image 3",
+        "content": "Voorbeeld Content 3",
+        "link": "Voorbeeld Link 3",
+        "url": "Voorbeeld Url 3",
+        "icon": "MapMarkerPath",
+        "isExternal": true,
+        "sort": 3
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "usageCounter",
+          "slug": "usagecounter-usagecounter-1-1"
+        },
+        "publication": "00000000-0000-4000-8000-000000000000",
+        "date": "Voorbeeld ",
+        "kind": "view",
+        "count": 0,
+        "catalog": "Voorbeeld Catalog 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "usageCounter",
+          "slug": "usagecounter-usagecounter-2-2"
+        },
+        "publication": "00000000-0000-4000-8000-000000000001",
+        "date": "Voorbeeld ",
+        "kind": "download",
+        "count": 1,
+        "catalog": "Voorbeeld Catalog 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "usageCounter",
+          "slug": "usagecounter-usagecounter-3-3"
+        },
+        "publication": "00000000-0000-4000-8000-000000000002",
+        "date": "Voorbeeld ",
+        "kind": "view",
+        "count": 2,
+        "catalog": "Voorbeeld Catalog 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooAssessment",
+          "slug": "wooassessment-wooassessment-1-1"
+        },
+        "documentReference": "Voorbeeld Documentreference 1",
+        "assessment": "te_beoordelen",
+        "fileName": "Voorbeeld Filename 1",
+        "fileType": "Voorbeeld Filetype 1",
+        "weigeringsgronden": [
+          "Voorbeeld Weigeringsgronden 1"
+        ],
+        "redactionInstructions": "Voorbeeld Redactioninstructions 1",
+        "anonymizedDocument": "Voorbeeld Anonymizeddocument 1",
+        "caseReference": "Voorbeeld Casereference 1",
+        "assessedBy": "Voorbeeld Assessedby 1",
+        "assessedAt": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooAssessment",
+          "slug": "wooassessment-wooassessment-2-2"
+        },
+        "documentReference": "Voorbeeld Documentreference 2",
+        "assessment": "openbaar",
+        "fileName": "Voorbeeld Filename 2",
+        "fileType": "Voorbeeld Filetype 2",
+        "weigeringsgronden": [
+          "Voorbeeld Weigeringsgronden 2"
+        ],
+        "redactionInstructions": "Voorbeeld Redactioninstructions 2",
+        "anonymizedDocument": "Voorbeeld Anonymizeddocument 2",
+        "caseReference": "Voorbeeld Casereference 2",
+        "assessedBy": "Voorbeeld Assessedby 2",
+        "assessedAt": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooAssessment",
+          "slug": "wooassessment-wooassessment-3-3"
+        },
+        "documentReference": "Voorbeeld Documentreference 3",
+        "assessment": "niet_openbaar",
+        "fileName": "Voorbeeld Filename 3",
+        "fileType": "Voorbeeld Filetype 3",
+        "weigeringsgronden": [
+          "Voorbeeld Weigeringsgronden 3"
+        ],
+        "redactionInstructions": "Voorbeeld Redactioninstructions 3",
+        "anonymizedDocument": "Voorbeeld Anonymizeddocument 3",
+        "caseReference": "Voorbeeld Casereference 3",
+        "assessedBy": "Voorbeeld Assessedby 3",
+        "assessedAt": "2026-03-03T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooBatch",
+          "slug": "woobatch-woobatch-1-1"
+        },
+        "caseReference": "Voorbeeld Casereference 1",
+        "status": "in_progress",
+        "deckBoardId": 1,
+        "deckAvailable": true,
+        "documents": [
+          "00000000-0000-4000-8000-000000000000"
+        ],
+        "decisionLetter": "Voorbeeld Decisionletter 1",
+        "inventoryList": "Voorbeeld Inventorylist 1",
+        "documentSummary": {},
+        "publishedAt": "2026-03-01T09:00:00+00:00",
+        "publishedCount": 0,
+        "wooPublication": {},
+        "createdAt": "2026-03-01T09:00:00+00:00",
+        "updatedAt": "2026-03-01T09:00:00+00:00",
+        "createdBy": "Voorbeeld Createdby 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooBatch",
+          "slug": "woobatch-woobatch-2-2"
+        },
+        "caseReference": "Voorbeeld Casereference 2",
+        "status": "ready_for_review",
+        "deckBoardId": 2,
+        "deckAvailable": false,
+        "documents": [
+          "00000000-0000-4000-8000-000000000001"
+        ],
+        "decisionLetter": "Voorbeeld Decisionletter 2",
+        "inventoryList": "Voorbeeld Inventorylist 2",
+        "documentSummary": {},
+        "publishedAt": "2026-03-02T09:00:00+00:00",
+        "publishedCount": 1,
+        "wooPublication": {},
+        "createdAt": "2026-03-02T09:00:00+00:00",
+        "updatedAt": "2026-03-02T09:00:00+00:00",
+        "createdBy": "Voorbeeld Createdby 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooBatch",
+          "slug": "woobatch-woobatch-3-3"
+        },
+        "caseReference": "Voorbeeld Casereference 3",
+        "status": "published",
+        "deckBoardId": 3,
+        "deckAvailable": true,
+        "documents": [
+          "00000000-0000-4000-8000-000000000002"
+        ],
+        "decisionLetter": "Voorbeeld Decisionletter 3",
+        "inventoryList": "Voorbeeld Inventorylist 3",
+        "documentSummary": {},
+        "publishedAt": "2026-03-03T09:00:00+00:00",
+        "publishedCount": 2,
+        "wooPublication": {},
+        "createdAt": "2026-03-03T09:00:00+00:00",
+        "updatedAt": "2026-03-03T09:00:00+00:00",
+        "createdBy": "Voorbeeld Createdby 3"
+      }
+    ]
+  }
+}
