@@ -520,7 +520,7 @@ export default {
 }
 
 .orgCertIcon {
-	float: left;
+	float: inline-start;
 	margin-block-start: 4px;
 	margin-inline-end: 10px;
 }

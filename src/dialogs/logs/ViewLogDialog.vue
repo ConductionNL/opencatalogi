@@ -102,7 +102,7 @@ export default {
 }
 
 .log-content {
-	text-align: left;
+	text-align: start;
 	margin: 1rem 0;
 	padding: 1rem;
 	background-color: var(--color-background-dark);
@@ -114,6 +114,6 @@ export default {
 .log-content pre {
 	margin: 0;
 	white-space: pre-wrap;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 </style>

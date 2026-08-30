@@ -169,7 +169,7 @@ export default {
 	padding: 16px 16px 16px 13px;
 	background: var(--color-main-background);
 	border: 1px solid var(--color-border);
-	border-left: 4px solid var(--color-border);
+	border-inline-start: 4px solid var(--color-border);
 	border-radius: var(--border-radius-large, 10px);
 	cursor: pointer;
 	transition:
@@ -190,15 +190,15 @@ export default {
 }
 
 .publication-card--published {
-	border-left-color: var(--color-success);
+	border-inline-start-color: var(--color-success);
 }
 
 .publication-card--concept {
-	border-left-color: var(--color-warning);
+	border-inline-start-color: var(--color-warning);
 }
 
 .publication-card--depublished {
-	border-left-color: var(--color-error);
+	border-inline-start-color: var(--color-error);
 }
 
 .publication-card--selected {

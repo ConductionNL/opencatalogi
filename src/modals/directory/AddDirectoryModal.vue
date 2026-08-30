@@ -423,19 +423,19 @@ export default {
 	padding: 8px 12px;
 	background: var(--color-background-hover);
 	border-radius: var(--border-radius);
-	border-left: 3px solid var(--color-border);
+	border-inline-start: 3px solid var(--color-border);
 }
 
 .stat-item.success {
-	border-left-color: var(--color-success);
+	border-inline-start-color: var(--color-success);
 }
 
 .stat-item.warning {
-	border-left-color: var(--color-warning);
+	border-inline-start-color: var(--color-warning);
 }
 
 .stat-item.error {
-	border-left-color: var(--color-error);
+	border-inline-start-color: var(--color-error);
 }
 
 .stat-label {
@@ -453,7 +453,7 @@ export default {
 	padding: 12px;
 	background: var(--color-error-hover);
 	border-radius: var(--border-radius);
-	border-left: 3px solid var(--color-error);
+	border-inline-start: 3px solid var(--color-error);
 }
 
 .sync-errors h5 {
@@ -463,7 +463,7 @@ export default {
 
 .sync-errors ul {
 	margin: 0;
-	padding-left: 20px;
+	padding-inline-start: 20px;
 }
 
 .error-item {

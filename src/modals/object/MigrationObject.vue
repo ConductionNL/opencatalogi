@@ -1124,7 +1124,7 @@ export default {
 
 .report-section ul {
 	margin: 0;
-	padding-left: 20px;
+	padding-inline-start: 20px;
 }
 
 .report-section li {
