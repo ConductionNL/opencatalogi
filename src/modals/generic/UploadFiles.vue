@@ -1435,7 +1435,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 
 .modalFooterStatus {
 	position: absolute;
-	left: 50%;
+	inset-inline-start: 50%;
 	transform: translateX(-50%);
 	color: var(--color-text-maxcontrast);
 	pointer-events: none;
@@ -1458,7 +1458,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .files-table-td-name span {
-	float: left;
+	float: inline-start;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -1505,12 +1505,12 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	justify-content: center;
 	width: 32px;
 	height: 100%;
-	margin-right: var(--checkbox-padding);
+	margin-inline-end: var(--checkbox-padding);
 	color: var(--color-primary-element);
 }
 
 .files-list__row-action-system-tags {
-	margin-right: 7px;
+	margin-inline-end: 7px;
 	display: flex;
 }
 
@@ -1552,7 +1552,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	justify-content: space-between;
 	text-align: unset;
 	align-items: center;
-	-webkit-box-align: end;
+	align-items: end;
 	box-sizing: border-box;
 }
 

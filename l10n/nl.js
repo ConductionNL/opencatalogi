@@ -43,6 +43,7 @@ OC.L10N.register(
         "Concept publicaties": "Concept publicaties",
         "Expiring soon": "Verloopt binnenkort",
         "Nothing requires retention review": "Niets vereist een bewaartermijnbeoordeling",
+        "Restart tutorial": "Rondleiding opnieuw starten",
         "Retention review": "Bewaartermijnbeoordeling",
         "Retention review required": "Bewaartermijnbeoordeling vereist",
         "Concept Publications": "Concept publicaties",

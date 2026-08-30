@@ -1138,8 +1138,8 @@ export default {
 <style>
 .actionsButton > div > button {
 	margin-top: 0px !important;
-	margin-right: 0px !important;
-	padding-right: 0px !important;
+	margin-inline-end: 0px !important;
+	padding-inline-end: 0px !important;
 }
 </style>
 
@@ -1232,7 +1232,7 @@ export default {
 .statisticsTable th,
 .statisticsTable td {
 	padding: 6px 8px;
-	text-align: left;
+	text-align: start;
 	border-bottom: 1px solid var(--color-border-dark);
 }
 
@@ -1259,7 +1259,7 @@ export default {
 .viewTable th,
 .viewTable td {
 	padding: 12px 8px;
-	text-align: left;
+	text-align: start;
 	border-bottom: 1px solid var(--color-border);
 	width: auto;
 	min-width: 120px;
@@ -1309,7 +1309,7 @@ export default {
 
 .stickyHeader {
 	position: sticky;
-	left: 0;
+	inset-inline-start: 0;
 }
 
 /* Row selection styling */

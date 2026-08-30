@@ -692,7 +692,7 @@ export default {
 
 <style scoped>
 .dialog__content {
-	text-align: left;
+	text-align: start;
 	max-width: 80vw;
 	max-height: 80vh;
 	overflow-y: auto;
@@ -776,7 +776,7 @@ export default {
 .object-type,
 .object-order {
 	display: inline-block;
-	margin-right: 12px;
+	margin-inline-end: 12px;
 	color: var(--color-text-lighter);
 	font-size: 0.9em;
 }
@@ -808,7 +808,7 @@ export default {
 	border-radius: var(--border-radius);
 	font-family: monospace;
 	white-space: pre-wrap;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 .contentItemOrder {
@@ -878,7 +878,7 @@ export default {
 	font-size: 0.85em;
 	color: var(--color-main-text);
 	white-space: pre-wrap;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 .emptyState {

@@ -857,7 +857,7 @@ export default {
 
 <style scoped>
 .modal__content {
-	text-align: left;
+	text-align: start;
 }
 
 .menuDetails {
@@ -919,7 +919,7 @@ export default {
 	padding: var(--OC-margin-15);
 	background-color: var(--color-background-hover);
 	border-radius: var(--border-radius);
-	border-left: 3px solid var(--color-primary);
+	border-inline-start: 3px solid var(--color-primary);
 }
 
 .menuItemHeader {
@@ -1025,7 +1025,7 @@ export default {
 }
 
 .position-info {
-	text-align: left;
+	text-align: start;
 	color: var(--color-text-lighter);
 	font-size: 0.9em;
 	margin-top: -0.5rem;
@@ -1034,7 +1034,7 @@ export default {
 
 .field-error {
 	color: var(--color-error);
-	text-align: left;
+	text-align: start;
 	font-size: 0.85em;
 }
 
@@ -1077,7 +1077,7 @@ export default {
 	font-size: 0.85em;
 	color: var(--color-main-text);
 	white-space: pre-wrap;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 .emptyState {
@@ -1125,7 +1125,7 @@ export default {
 .object-groups,
 .object-hide-after-login {
 	display: inline-block;
-	margin-right: 12px;
+	margin-inline-end: 12px;
 	color: var(--color-text-lighter);
 	font-size: 0.9em;
 }

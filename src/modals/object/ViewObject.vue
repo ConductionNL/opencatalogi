@@ -3138,14 +3138,14 @@ export default {
 
 /* Actions header cell styling for toggle button */
 .actions-header-cell {
-	text-align: right !important;
+	text-align: end !important;
 	vertical-align: middle !important;
-	padding-right: 8px !important;
+	padding-inline-end: 8px !important;
 }
 
 /* Toggle button styling */
 .eye-toggle-btn {
-	float: right;
+	float: inline-end;
 	margin: 0;
 }
 
@@ -3175,52 +3175,52 @@ export default {
 
 .viewTableRow.edited-row {
 	background-color: var(--color-success-light);
-	border-left: 3px solid var(--color-success);
+	border-inline-start: 3px solid var(--color-success);
 }
 
 .viewTableRow.edited-row.selected-row {
 	background-color: var(--color-primary-light);
-	border-left: 3px solid var(--color-success);
+	border-inline-start: 3px solid var(--color-success);
 }
 
 .viewTableRow.property-invalid {
 	background-color: var(--color-error-light);
-	border-left: 4px solid var(--color-error);
+	border-inline-start: 4px solid var(--color-error);
 }
 
 .viewTableRow.property-warning {
 	background-color: var(--color-warning-light);
-	border-left: 4px solid var(--color-warning);
+	border-inline-start: 4px solid var(--color-warning);
 }
 
 .viewTableRow.property-new {
 	background-color: var(--color-primary-element-light);
-	border-left: 4px solid var(--color-primary-element);
+	border-inline-start: 4px solid var(--color-primary-element);
 }
 
 .viewTableRow.property-valid {
-	border-left: 4px solid var(--color-success);
+	border-inline-start: 4px solid var(--color-success);
 }
 
 .prop-cell-content {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	text-align: left;
+	text-align: start;
 }
 
 .value-cell-content {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	text-align: left;
+	text-align: start;
 	width: 100%;
 	flex-wrap: wrap;
 }
 
 .value-input-container {
 	flex: 1;
-	text-align: left;
+	text-align: start;
 	padding: 0;
 	margin: 0;
 	width: 100%;
@@ -3229,7 +3229,7 @@ export default {
 .drop-property-btn {
 	opacity: 0.3 !important;
 	transition: 0.2s ease !important;
-	margin-left: auto;
+	margin-inline-start: auto;
 	flex-shrink: 0;
 }
 
@@ -3271,7 +3271,7 @@ export default {
 
 .value-cell {
 	position: relative;
-	text-align: left;
+	text-align: start;
 }
 
 .value-input-container .text-field {
@@ -3281,15 +3281,15 @@ export default {
 
 /* Ensure proper alignment for table cells */
 .tableColumnConstrained {
-	text-align: left;
+	text-align: start;
 	align-items: center;
 }
 
 .tableColumnExpanded {
-	text-align: left;
+	text-align: start;
 	align-items: center;
 	white-space: normal;
-	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .json-value {
@@ -3451,7 +3451,7 @@ export default {
 	min-height: 100px;
 	resize: vertical;
 	white-space: pre-wrap;
-	word-break: break-word;
+	overflow-wrap: break-word;
 	overflow-wrap: anywhere;
 }
 
@@ -3520,7 +3520,7 @@ export default {
 
 /* Label editing styles (from UploadFiles.vue) */
 .files-list__row-action-system-tags {
-	margin-right: 7px;
+	margin-inline-end: 7px;
 	display: flex;
 }
 
@@ -3572,7 +3572,7 @@ export default {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	margin-right: 8px;
+	margin-inline-end: 8px;
 }
 
 .label-edit-container {
@@ -3591,7 +3591,7 @@ export default {
 
 .label-edit-container .editTagsButton {
 	flex-shrink: 0;
-	margin-left: 2px;
+	margin-inline-start: 2px;
 }
 
 .viewObjectDialog .viewTable {
@@ -3601,7 +3601,7 @@ export default {
 .viewObjectDialog .viewTable th,
 .viewObjectDialog .viewTable td {
 	white-space: normal;
-	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .viewObjectDialog .viewTable td.td-labels {
@@ -3623,7 +3623,7 @@ export default {
 .viewObjectDialog .viewTable td.table-row-title {
 	flex: 1;
 	white-space: normal;
-	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .short-column {
@@ -3639,7 +3639,7 @@ export default {
 	width: 100%;
 	max-width: initial;
 	white-space: normal;
-	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .table-row-type {

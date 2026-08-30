@@ -400,7 +400,7 @@ export default {
 }
 
 .selected-object-item.has-error {
-	border-left: 3px solid var(--color-error);
+	border-inline-start: 3px solid var(--color-error);
 	background-color: var(--color-background-dark);
 }
 
@@ -423,8 +423,7 @@ export default {
 
 .list-leave-active {
 	position: absolute;
-	right: 0;
-	left: 0;
+	inset-inline: 0;
 }
 
 /* WCAG 2.3.3. Two decorative motions here: the per-item hover transition, and
