@@ -888,7 +888,7 @@ export default {
 	padding: 12px;
 	background-color: var(--color-background-hover);
 	border-radius: 4px;
-	border-left: 3px solid var(--color-primary);
+	border-inline-start: 3px solid var(--color-primary);
 }
 
 .detail-label {
@@ -908,17 +908,17 @@ export default {
 }
 
 .detail-value {
-	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .sub-detail-value {
-	word-break: break-word;
+	overflow-wrap: break-word;
 	font-size: 0.8rem;
 	color: var(--color-text-maxcontrast);
 }
 
 .detail-item.empty-value {
-	border-left-color: var(--color-warning);
+	border-inline-start-color: var(--color-warning);
 }
 
 .edit-tabs {
@@ -954,14 +954,14 @@ export default {
 .format-json-button {
 	position: absolute;
 	bottom: 0;
-	right: 0;
+	inset-inline-end: 0;
 	transform: translateY(100%);
 }
 
 .error-message {
 	position: absolute;
 	bottom: 0;
-	right: 50%;
+	inset-inline-end: 50%;
 	transform: translateY(100%) translateX(50%);
 	color: var(--color-error);
 	font-size: 0.8rem;

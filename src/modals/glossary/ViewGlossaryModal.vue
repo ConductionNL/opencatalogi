@@ -183,7 +183,7 @@ export default {
 
 <style scoped>
 .modal__content {
-	text-align: left;
+	text-align: start;
 	max-width: 80vw;
 	max-height: 80vh;
 	overflow-y: auto;
@@ -272,7 +272,7 @@ export default {
 	font-size: 0.85em;
 	color: var(--color-main-text);
 	white-space: pre-wrap;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 .emptyState {
