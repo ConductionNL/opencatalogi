@@ -483,18 +483,18 @@ function getFieldDisplayName(fieldName, fieldInfo) {
 	color: var(--color-primary-element-text);
 	padding: 2px 6px;
 	border-radius: 10px;
-	margin-left: 8px;
+	margin-inline-start: 8px;
 }
 
 .facet-info {
 	font-size: 12px;
 	color: var(--color-text-maxcontrast);
-	margin-left: 8px;
+	margin-inline-start: 8px;
 }
 
 .facet-type-selector,
 .facet-config {
-	margin-left: 24px;
+	margin-inline-start: 24px;
 	margin-top: 8px;
 }
 

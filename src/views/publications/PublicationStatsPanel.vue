@@ -200,7 +200,7 @@ export default {
 
 .usageStatsTable th,
 .usageStatsTable td {
-	text-align: left;
+	text-align: start;
 	padding: 4px 8px;
 	border-bottom: 1px solid var(--color-border);
 }

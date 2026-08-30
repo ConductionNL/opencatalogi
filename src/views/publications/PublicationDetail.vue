@@ -1901,7 +1901,7 @@ h4 {
 }
 
 .float-right {
-	float: right;
+	float: inline-end;
 }
 
 .buttonsContainer {

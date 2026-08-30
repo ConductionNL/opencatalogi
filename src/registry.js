@@ -41,10 +41,17 @@ import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
 import CatalogsIndexView from './views/catalogi/CatalogiIndex.vue'
 import DashboardView from './views/dashboard/Dashboard.vue'
 import FederationDirectory from './views/directory/FederationDirectory.vue'
+import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
 import FederationSearch from './views/search/FederationSearch.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
 
 export default {
+	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
+	//     the list and the canvas are the shared `flows` / `flow-detail`
+	//     manifest page types. CnFlowSidebar has to mount in the NC app
+	//     sidebar for the canvas to keep full width. ---
+	FlowDetailSidebar,
+
 	// --- Page components (referenced by `component` in manifest pages). ---
 	DashboardView,
 	CatalogsIndexView,

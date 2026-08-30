@@ -1,5 +1,5 @@
 ---
-status: done
+status: in-progress
 ---
 
 # WOO Compliance (Sitemaps, Robots, DIWOO)
@@ -405,6 +405,11 @@ Each file attached to a publication generates a `diwoo:Document` with:
 
 ## Cross-References
 
+- **Woo category mapping** (in progress, `openspec/changes/woo-category-mapping-intake/`): the
+  `diwoo:informatiecategorie` axis (WOO-TOOI-001) gains a type-level default fallback sourced from the
+  `woo-category-mapping` capability, consumed by any publishing app (including a future decidesk
+  `DiWooMetadataService`) via a direct OpenRegister object query — see that change's proposal and design for
+  the full cross-app mapping contract.
 - **Auto-publishing**: When `auto_publish_attachments` is enabled (see [auto-publishing spec](../auto-publishing/spec.md)), files get share links created automatically. These share links are used as `downloadUrl` values in DIWOO sitemap documents. Without auto-publishing or manual share link creation, the DIWOO sitemap `loc` fields may be empty.
 - **File Management**: The [file management service](../file-management/spec.md) provides share link creation used by both auto-publishing and WOO sitemap generation.
 - **Download Service**: The [download service](../download-service/spec.md) generates PDF/ZIP exports of publications, which is complementary to the WOO sitemap's XML-based discovery mechanism.

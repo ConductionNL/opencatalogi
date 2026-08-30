@@ -1246,7 +1246,7 @@ export default {
 .merge-table th,
 .merge-table td {
 	padding: 12px;
-	text-align: left;
+	text-align: start;
 	border-bottom: 1px solid var(--color-border);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -1333,7 +1333,7 @@ export default {
 .relation-table th,
 .relation-table td {
 	padding: 8px 12px;
-	text-align: left;
+	text-align: start;
 	border-bottom: 1px solid var(--color-border);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -1443,7 +1443,7 @@ export default {
 
 .report-section ul {
 	margin: 0;
-	padding-left: 20px;
+	padding-inline-start: 20px;
 }
 
 .report-section li {
@@ -1459,7 +1459,7 @@ export default {
 .report-table th,
 .report-table td {
 	padding: 8px 12px;
-	text-align: left;
+	text-align: start;
 	border-bottom: 1px solid var(--color-border);
 }
 
