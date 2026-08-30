@@ -6,6 +6,7 @@ OC.L10N.register(
         "Archived": "Archived",
         "Expiring soon": "Expiring soon",
         "Nothing requires retention review": "Nothing requires retention review",
+        "Restart tutorial": "Restart tutorial",
         "Retention review": "Retention review",
         "Retention review required": "Retention review required",
         "Back": "Back",

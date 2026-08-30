@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "2.6.0",
+	"version": "2.5.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -103,7 +103,7 @@
 						"body": "Let's walk the publishing journey together, from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.",
 						"target": {
 							"kind": "page",
-							"ref": "Dashboard"
+							"ref": "Catalogs"
 						},
 						"advanceOn": {
 							"type": "manual"
@@ -210,18 +210,24 @@
 							"route": "Directory"
 						}
 					},
-						{
-							"id": "see-flows",
-							"sinceVersion": "2.6.0",
-							"placement": "right",
-							"optional": true,
-							"allowManualNext": true,
-							"title": "Where the automation lives",
-							"body": "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them. Nothing to build now.",
-							"task": "Open Flows in the menu",
-							"target": {"kind": "nav-item", "ref": "Flows"},
-							"advanceOn": {"type": "route-match", "route": "Flows"}
+					{
+						"id": "see-flows",
+						"sinceVersion": "1.1.0",
+						"placement": "right",
+						"optional": true,
+						"allowManualNext": true,
+						"title": "Where the automation lives",
+						"body": "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them. Nothing to build now.",
+						"task": "Open Flows in the menu",
+						"target": {
+							"kind": "nav-item",
+							"ref": "Flows"
 						},
+						"advanceOn": {
+							"type": "route-match",
+							"route": "Flows"
+						}
+					},
 					{
 						"id": "done",
 						"sinceVersion": "2.4.0",
@@ -367,6 +373,13 @@
 					"icon": "Folder",
 					"route": "Directory",
 					"order": 97
+				},
+				{
+					"id": "SettingsMenu",
+					"label": "Settings",
+					"icon": "CogOutline",
+					"action": "user-settings",
+					"order": 99
 				}
 			]
 		},
@@ -385,6 +398,15 @@
 			"route": "FeaturesRoadmap",
 			"section": "footer",
 			"order": 2
+		},
+		{
+			"id": "RestartTutorial",
+			"label": "Restart tutorial",
+			"icon": "PlayCircleOutline",
+			"action": "replay-walkthrough",
+			"tourId": "opencatalogi:getting-started",
+			"section": "footer",
+			"order": 3
 		},
 		{
 			"id": "FlowsMenu",
@@ -1378,18 +1400,19 @@
 		{
 			"id": "Flows",
 			"route": "/flows",
-			"type": "index",
+			"type": "flows",
 			"title": "Flows",
-			"config": { "entitySource": "flows", "app": "opencatalogi" },
-			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. An ordinary index over the named `flows` source (config.entitySource) rather than the deprecated `flows` page type, reading OpenRegister's one native flow store (ADR-065), scoped to this app by config.app."
+			"config": { "app": "opencatalogi" },
+			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. Rendered by the shared CnFlowsPage page type over OpenRegister's one native flow store (ADR-065), scoped to this app."
 		},
 		{
 			"id": "FlowDetail",
 			"route": "/flows/:id",
-			"type": "flow",
+			"type": "flow-detail",
 			"title": "Flow",
 			"config": { "app": "opencatalogi" },
-			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar so the canvas keeps full width."
+			"sidebarComponent": "FlowDetailSidebar",
+			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar (sidebarComponent) so the canvas keeps full width; canvas and sidebar share useFlowStore. The _note claimed this before the field existed, so #/flows/new -- and every #/flows/:id -- rendered a bare canvas with no way to name, describe, trigger or step-edit the flow. Mirrors pipelinq#1490."
 		}
 	]
 }
