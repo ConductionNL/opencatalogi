@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkopencatalogi_docs=self.webpackChunkopencatalogi_docs||[]).push([[7636],{57636:(e,c,a)=>{a.d(c,{createCynefinServices:()=>s.t});var s=a(93279);a(4954)}}]);

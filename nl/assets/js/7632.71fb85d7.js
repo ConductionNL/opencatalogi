@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkopencatalogi_docs=self.webpackChunkopencatalogi_docs||[]).push([[7632],{37632:(e,a,c)=>{c.d(a,{createWardleyServices:()=>s.J});var s=c(9427);c(4954)}}]);

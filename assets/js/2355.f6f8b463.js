@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkopencatalogi_docs=self.webpackChunkopencatalogi_docs||[]).push([[2355],{52355:(e,c,a)=>{a.d(c,{createEventModelingServices:()=>s.g});var s=a(82688);a(4954)}}]);

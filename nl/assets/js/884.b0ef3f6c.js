@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkopencatalogi_docs=self.webpackChunkopencatalogi_docs||[]).push([[884],{90884:(e,a,c)=>{c.d(a,{createTreemapServices:()=>s.d});var s=c(16527);c(4954)}}]);
