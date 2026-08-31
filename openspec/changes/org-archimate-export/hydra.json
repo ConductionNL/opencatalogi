@@ -1,0 +1,8 @@
+{
+  "spec_slug": "org-archimate-export",
+  "title": "Organization-Specific ArchiMate Export Specification",
+  "app": "opencatalogi",
+  "repo": "https://github.com/ConductionNL/opencatalogi",
+  "depends_on": [],
+  "issue": null
+}

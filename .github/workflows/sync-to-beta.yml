@@ -4,7 +4,10 @@ on:
   push:
     branches: [development]
 
-permissions: {}
+# `permissions: {}` here granted the callee NOTHING, while
+# ConductionNL/.github's sync-to-beta.yml needs `contents: write` +
+# `pull-requests: write` to push the merge and open the release PR. The call
+# was unsatisfiable, so the run aborted before any job existed.
 
 jobs:
   sync-to-beta:

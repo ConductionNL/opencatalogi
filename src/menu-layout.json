@@ -1,0 +1,32 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"description": "Canonical navigation layout applied AFTER all manifest.d fragments merge (see mergeManifestFragments in main.js). Fragments stay the source of WHAT exists in the menu (ADR-037); this file is the single place deciding WHERE entries live. relocations: sourceId -> targetGroupId (groups dissolve into the target, leaves move under it; a leaf whose target group does not exist stays top-level so nothing silently disappears). sections: menu-entry id -> section name. removals: leaf menu-entry ids retired as duplicate navigation — their PAGES stay routable for deep links and e2e specs. settingsSection: top-level config/definition/admin ids lifted into Nextcloud's settings foldout (NcAppNavigationSettings gear, OUTSIDE the scrollable nav) — see applySettingsSection in main.js; operational/report items stay in the main nav. Lives outside manifest.json because the app-manifest-v2 schema has additionalProperties:false at the root.",
+		"_opencatalogi_note": "opencatalogi shipped no menu-layout.json and scattered config/admin under a top-level 'Administration' (AdminGroup) group that duplicated the Settings gear. Resolution: SettingsMenu (action:user-settings) -> settings foldout; Directory is OPERATIONAL (not admin) so it relocates to top-level; the now-empty AdminGroup shell is dropped by the relocation filter so only genuine settings live under the gear.",
+		"_concept_ownership_note": "This app's navigation claimed six concepts it does not own. Each is retired from the NAV here rather than deleted, because `removals` keeps the page routable: stored objects, deep links, the public REST API and the e2e specs all keep working, and no register slug or stored literal moves. (1) Organizations — an OpenRegister concept. NB the two are not the same object today: OpenRegister's Organisation is a TENANT (uuid, users, groups, quotas, authorization, provisioning lifecycle, parent/children) while this app's `organization` schema is a PUBLISHER master record (name, summary, description, oin, tooi, rsin, pki, image), and they share only name+description. Consolidating them needs OpenRegister to own the statutory-identity fields first; until then the publisher objects stay in the `publication` register and are managed through OpenRegister's object browser, which is the OR abstraction this app is supposed to consume (ADR-022). (2..5) Glossary, Themes, Pages, Menus — portal-presentation concepts that belong to Portaliq, which already ships all four (portaliq/src/manifest.json). ADR-086 (portaliq-headless-cms) is the governing decision and hydra/openspec/changes/portaliq-phase-two/proposal.md is the open task. The PHP controllers and their public REST API stay for now: tilburg-woo-ui reads all four over HTTP, openwoo-app-website publishes them as a contract in static/oas/opencatalogi-publications.json, softwarecatalog writes this app's page/menu/theme register+schema appconfig, and openregister's full-chain-test.sh asserts /api/menus and /api/pages/home load. Deprecating those endpoints is Portaliq phase-two work with a migration, not a nav change. (6) WOO — the entry labelled 'WOO' pointed at the wooBatch object type's generic index, i.e. an object type given a menu item and a page. It stays reachable at #/woo, at #/woo/:id, and through OpenRegister's object browser for its register/schema.",
+		"_settings_entry_note": "The app's own SettingsMenu entry (label 'Settings', action:user-settings) was DROPPED from manifest.json, so this list is now empty. CnAppNav already auto-prepends a 'Personal settings' entry that opens the very same user-settings dialog; the manifest entry only ever added a second, differently-labelled button for one destination, and the gear foldout read 'Personal settings / Admin settings / ... / Settings'. Keep this list for genuine config/definition pages; the personal-settings link is the lib's job."
+	},
+	"relocations": {
+		"CatalogsMenu": "__toplevel__",
+		"DirectoryMenu": "__toplevel__"
+	},
+	"sections": {},
+	"removals": [
+		"OrganizationsMenu",
+		"GlossaryMenu",
+		"ThemesMenu",
+		"PagesMenu",
+		"MenusMenu",
+		"WooBatchesMenu"
+	],
+	"removalsReplacedBy": {
+		"OrganizationsMenu": "openregister:objects",
+		"GlossaryMenu": "portaliq:Glossary",
+		"ThemesMenu": "portaliq:Themes",
+		"PagesMenu": "portaliq:Pages",
+		"MenusMenu": "portaliq:Menus",
+		"WooBatchesMenu": "openregister:objects"
+	},
+	"settingsSection": []
+}

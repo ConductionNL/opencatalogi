@@ -59,8 +59,8 @@ It connects to a federated directory of other OpenCatalogi instances, enabling c
 ### Search & Discovery
 
 - **Faceted Search** — Filter publications by category, organization, catalog, date range, and custom metadata fields
-- **Full-Text Search** — Search across publication content and attached documents
-- **ElasticSearch Support** — Optional ElasticSearch backend for high-performance search at scale
+- **Full-Text Search** — Search across publication metadata (SQL full-text by default). Searching across attached document content is *planned* — tracked by the `add-public-fulltext-search` change, not yet shipped
+- **SOLR Support** — Optional OpenRegister SOLR backend for high-performance search at scale
 - **Public Search API** — RESTful endpoints for external frontends and third-party integrations
 
 ### Content Management
@@ -93,7 +93,7 @@ graph TD
     C --> D[(PostgreSQL JSON store)]
     B --> E[Federation Directory]
     E -->|sync| F[External OpenCatalogi Instances]
-    B --> G[ElasticSearch — optional]
+    B --> G[OpenRegister SOLR — optional]
     H[Public Frontend — Tilburg WOO UI] -->|Public API| B
     B --> I[Nextcloud Activity]
 ```
@@ -104,6 +104,7 @@ graph TD
 | ------------ | ---------------------------------------------------------------------------------- | ----------------------- |
 | Publication  | Core metadata wrapper for published information — title, summary, category, status | DCAT-AP                 |
 | Attachment   | File or document linked to a publication with its own metadata                     | DCAT Distribution       |
+| Document     | Schema-discoverable summary of a publication's file (title, filename, MIME type) — surfaced alongside publications by the public search endpoint (`GET /apps/opencatalogi/api/search`) | DCAT Distribution |
 | Catalogue    | A named collection of publications with its own slug, organization, and settings   | DCAT Catalog            |
 | Organisation | The publishing organization with contact info, logo, and branding                  | Schema.org Organization |
 | Listing      | A subscription to an external catalog from the federated directory                 | —                       |
@@ -197,8 +198,9 @@ npm run build      # Production build
 # PHP
 composer phpcs          # Check coding standards
 composer cs:fix         # Auto-fix PHPCS issues
-composer phpmd          # Mess detection
+composer phpmd          # Mess detection (0 violations — clean)
 composer psalm          # Static analysis
+composer phpstan        # Static analysis (1-entry baseline; 12 fixed)
 composer phpmetrics     # HTML metrics report
 
 # Frontend
@@ -206,8 +208,19 @@ npm run lint            # ESLint
 npm run stylelint       # CSS linting
 
 # Full check (all tools)
-composer check:strict   # Runs lint, phpcs, phpmd, psalm, phpstan, tests
+composer check:strict   # Runs lint, phpcs, phpmd, psalm, phpstan
 ```
+
+**Quality gate status** (as of 2026-06-01):
+
+| Gate | Status | Notes |
+|------|--------|-------|
+| PHPCS | ✓ 0 errors | All inline-IF and exclude-pattern debt cleared |
+| PHPMD | ✓ 0 violations | 47 violations fixed; no phpmd.baseline.xml needed |
+| PHPStan | ✓ 0 errors | Baseline shrunk 13→1 (1 GuzzleHttp edge case deferred) |
+| Psalm | ✓ 0 errors | |
+
+CI runs `composer check:strict` (lint + phpcs + phpmd + psalm + phpstan) on every PR via `.github/workflows/code-quality.yml`.
 
 ## Tech Stack
 
@@ -217,7 +230,7 @@ composer check:strict   # Runs lint, phpcs, phpmd, psalm, phpstan, tests
 | Build     | Webpack 5, @nextcloud/webpack-vue-config                    |
 | Backend   | PHP 8.1+, Nextcloud App Framework                           |
 | Data      | OpenRegister (PostgreSQL JSON objects)                      |
-| Search    | ElasticSearch 8 (optional), SQL full-text (default)         |
+| Search    | OpenRegister SOLR (optional), SQL full-text (default)       |
 | PDF       | mPDF for document generation                                |
 | Templates | Twig for content rendering                                  |
 | Quality   | PHPCS, PHPMD, Psalm, PHPStan, phpmetrics, ESLint, Stylelint |
@@ -236,7 +249,7 @@ Full documentation is available at **[documentatie.opencatalogi.nl](https://docu
 
 ## Standards & Compliance
 
-- **Metadata standard:** DCAT-AP (EU) for publication metadata interoperability
+- **Metadata standard:** DCAT-AP-NL 3.0 (EU/NL open-data profile) for publication metadata interoperability. Every DCAT-enabled catalog is harvestable as a machine-readable catalog document — `GET /apps/opencatalogi/api/dcat` (instance-level list of catalogs) and `GET /apps/opencatalogi/api/catalogs/{catalogSlug}/dcat` (per-catalog datasets). Content-negotiated JSON-LD (default), Turtle, and RDF/XML (`Accept` header or `?format=jsonld|turtle|rdfxml`), with `hydra:PagedCollection` paging and `Last-Modified`/`ETag` conditional-GET caching. National (data.overheid.nl) and EU (data.europa.eu) portals can poll these endpoints directly; enable per catalog via Admin settings (`hasDcat`) and register the instance DCAT URL at data.overheid.nl once. See the `dcat-ap-harvest` spec.
 - **WOO compliance:** Publication categories aligned with Dutch Open Government Act requirements
 - **Common Ground:** Follows Common Ground principles for federated, reusable government IT
 - **Accessibility:** WCAG AA (Dutch government requirement)

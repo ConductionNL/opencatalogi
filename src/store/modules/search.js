@@ -8,13 +8,13 @@
  * @package
  * @author   Ruben van der Linde
  * @copyright 2024
- * @license  AGPL-3.0-or-later
+ * @license  EUPL-1.2
  * @version  1.0.0
  * @see     {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import { defineStore } from 'pinia'
 import { generateOcsUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 
 /**
  * Search store for handling publication search operations
@@ -63,6 +63,7 @@ export const useSearchStore = defineStore('search', {
 	getters: {
 		/**
 		 * Get current search results
+		 *
 		 * @param {object} state - The store state
 		 * @return {Array} Array of search results
 		 */
@@ -70,6 +71,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get current search term
+		 *
 		 * @param {object} state - The store state
 		 * @return {string} Current search term
 		 */
@@ -77,6 +79,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get loading state
+		 *
 		 * @param {object} state - The store state
 		 * @return {boolean} Whether search is currently loading
 		 */
@@ -84,6 +87,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get error state
+		 *
 		 * @param {object} state - The store state
 		 * @return {string|null} Current error message or null
 		 */
@@ -91,6 +95,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get pagination information
+		 *
 		 * @param {object} state - The store state
 		 * @return {object} Pagination object with page, limit, total, etc.
 		 */
@@ -98,6 +103,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get current filters
+		 *
 		 * @param {object} state - The store state
 		 * @return {object} Current filter settings
 		 */
@@ -105,6 +111,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get current facets
+		 *
 		 * @param {object} state - The store state
 		 * @return {object} Current facet data
 		 */
@@ -112,6 +119,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get facetable metadata
+		 *
 		 * @param {object} state - The store state
 		 * @return {object} Facetable metadata for dynamic filters
 		 */
@@ -119,6 +127,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get current ordering
+		 *
 		 * @param {object} state - The store state
 		 * @return {object} Current ordering settings
 		 */
@@ -126,6 +135,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get current view mode
+		 *
 		 * @param {object} state - The store state
 		 * @return {string} Current view mode ('cards' or 'table')
 		 */
@@ -133,6 +143,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get selected publications
+		 *
 		 * @param {object} state - The store state
 		 * @return {Array} Array of selected publication IDs
 		 */
@@ -142,6 +153,7 @@ export const useSearchStore = defineStore('search', {
 	actions: {
 		/**
 		 * Set search term
+		 *
 		 * @param {string} term - Search term to set
 		 */
 		setSearchTerm(term) {
@@ -150,6 +162,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set loading state
+		 *
 		 * @param {boolean} loading - Loading state
 		 */
 		setLoading(loading) {
@@ -158,6 +171,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set error state
+		 *
 		 * @param {string|null} error - Error message or null
 		 */
 		setError(error) {
@@ -166,6 +180,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set search results
+		 *
 		 * @param {Array} results - Search results array
 		 */
 		setSearchResults(results) {
@@ -174,7 +189,12 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set pagination data
+		 *
 		 * @param {object} paginationData - Pagination information
+		 */
+		/**
+		 * @param paginationData
+		 * @spec openspec/specs/search/spec.md
 		 */
 		setPagination(paginationData) {
 			this.pagination = {
@@ -185,6 +205,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set filters
+		 *
 		 * @param {object} filters - Filter object to merge with existing filters
 		 */
 		setFilters(filters) {
@@ -193,7 +214,12 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Clear a specific filter
+		 *
 		 * @param {string} key - Filter key to clear
+		 */
+		/**
+		 * @param key
+		 * @spec openspec/specs/search/spec.md
 		 */
 		clearFilter(key) {
 			const newFilters = { ...this.filters }
@@ -204,12 +230,14 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear all filters
 		 */
+		/** @spec openspec/specs/search/spec.md */
 		clearAllFilters() {
 			this.filters = {}
 		},
 
 		/**
 		 * Set facets data
+		 *
 		 * @param {object} facets - Facets data
 		 */
 		setFacets(facets) {
@@ -218,6 +246,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set facetable metadata
+		 *
 		 * @param {object} facetable - Facetable metadata
 		 */
 		setFacetable(facetable) {
@@ -226,6 +255,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set ordering for a field
+		 *
 		 * @param {string} field - Field to order by
 		 * @param {string} direction - Direction ('ASC' or 'DESC')
 		 */
@@ -235,7 +265,12 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Remove ordering for a field
+		 *
 		 * @param {string} field - Field to remove ordering for
+		 */
+		/**
+		 * @param field
+		 * @spec openspec/specs/search/spec.md
 		 */
 		removeOrdering(field) {
 			const newOrdering = { ...this.ordering }
@@ -246,13 +281,19 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear all ordering
 		 */
+		/** @spec openspec/specs/search/spec.md */
 		clearOrdering() {
 			this.ordering = {}
 		},
 
 		/**
 		 * Set view mode
+		 *
 		 * @param {string} mode - View mode ('cards' or 'table')
+		 */
+		/**
+		 * @param mode
+		 * @spec openspec/specs/search/spec.md
 		 */
 		setViewMode(mode) {
 			if (['cards', 'table'].includes(mode)) {
@@ -262,36 +303,55 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Toggle publication selection
+		 *
 		 * @param {string} id - Publication ID
 		 * @param {boolean} selected - Whether to select or deselect
+		 */
+		/**
+		 * @param id
+		 * @param selected
+		 * @spec openspec/specs/search/spec.md
 		 */
 		togglePublicationSelection(id, selected) {
 			if (selected && !this.selectedPublications.includes(id)) {
 				this.selectedPublications.push(id)
 			} else if (!selected) {
-				this.selectedPublications = this.selectedPublications.filter(pubId => pubId !== id)
+				this.selectedPublications = this.selectedPublications.filter(
+					(pubId) => pubId !== id,
+				)
 			}
 		},
 
 		/**
 		 * Select all current publications
 		 */
+		/** @spec openspec/specs/search/spec.md */
 		selectAllPublications() {
-			const currentIds = this.searchResults.map(pub => pub.id).filter(id => id)
-			this.selectedPublications = [...new Set([...this.selectedPublications, ...currentIds])]
+			const currentIds = this.searchResults
+				.map((pub) => pub.id)
+				.filter((id) => id)
+			this.selectedPublications = [
+				...new Set([...this.selectedPublications, ...currentIds]),
+			]
 		},
 
 		/**
 		 * Clear all publication selections
 		 */
+		/** @spec openspec/specs/search/spec.md */
 		clearAllSelections() {
 			this.selectedPublications = []
 		},
 
 		/**
 		 * Build query parameters for search
+		 *
 		 * @param {object} additionalParams - Additional parameters to include
 		 * @return {object} Query parameters object
+		 */
+		/**
+		 * @param additionalParams
+		 * @spec openspec/specs/search/spec.md
 		 */
 		buildQueryParams(additionalParams = {}) {
 			const params = {
@@ -306,7 +366,9 @@ export const useSearchStore = defineStore('search', {
 				...this.filters,
 
 				// Ordering
-				...(Object.keys(this.ordering).length > 0 && { _order: this.ordering }),
+				...(Object.keys(this.ordering).length > 0 && {
+					_order: this.ordering,
+				}),
 
 				// Enable faceting and aggregation
 				_facetable: true,
@@ -320,8 +382,12 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			// Remove empty values
-			Object.keys(params).forEach(key => {
-				if (params[key] === '' || params[key] === null || params[key] === undefined) {
+			Object.keys(params).forEach((key) => {
+				if (
+					params[key] === ''
+					|| params[key] === null
+					|| params[key] === undefined
+				) {
 					delete params[key]
 				}
 			})
@@ -331,16 +397,22 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Build API URL with query parameters
+		 *
 		 * @param {string} endpoint - API endpoint (relative to base)
 		 * @param {object} params - Query parameters
 		 * @return {string} Complete API URL
+		 */
+		/**
+		 * @param endpoint
+		 * @param params
+		 * @spec openspec/specs/search/spec.md
 		 */
 		buildApiUrl(endpoint, params = {}) {
 			const queryString = new URLSearchParams()
 
 			Object.entries(params).forEach(([key, value]) => {
 				if (Array.isArray(value)) {
-					value.forEach(v => queryString.append(`${key}[]`, v))
+					value.forEach((v) => queryString.append(`${key}[]`, v))
 				} else if (typeof value === 'object' && value !== null) {
 					Object.entries(value).forEach(([subKey, subValue]) => {
 						queryString.append(`${key}[${subKey}]`, subValue)
@@ -356,8 +428,13 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Perform search for publications
+		 *
 		 * @param {object} additionalParams - Additional search parameters
 		 * @return {Promise} Search promise
+		 */
+		/**
+		 * @param additionalParams
+		 * @spec openspec/specs/search/spec.md
 		 */
 		async searchPublications(additionalParams = {}) {
 			this.setLoading(true)
@@ -386,7 +463,9 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Search failed with status ${response.status}: ${response.statusText}`)
+					throw new Error(
+						`Search failed with status ${response.status}: ${response.statusText}`,
+					)
 				}
 
 				const data = await response.json()
@@ -414,7 +493,6 @@ export const useSearchStore = defineStore('search', {
 					results: data.results?.length || 0,
 					page: data.page,
 				})
-
 			} catch (error) {
 				console.error('Search error:', error)
 				this.setError(error.message || 'Failed to search publications')
@@ -426,8 +504,10 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Load initial results without search term
+		 *
 		 * @return {Promise} Load promise
 		 */
+		/** @spec openspec/specs/search/spec.md */
 		async loadInitialResults() {
 			console.info('Loading initial search results')
 			return this.searchPublications({ _page: 1 })
@@ -436,6 +516,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear search and reset to initial state
 		 */
+		/** @spec openspec/specs/search/spec.md */
 		async clearSearch() {
 			this.setSearchTerm('')
 			this.clearAllFilters()
@@ -449,8 +530,13 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get publication by ID
+		 *
 		 * @param {string} id - Publication ID
 		 * @return {Promise<object>} Publication data
+		 */
+		/**
+		 * @param id
+		 * @spec openspec/specs/search/spec.md
 		 */
 		async getPublication(id) {
 			if (!id) {
@@ -458,7 +544,9 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			try {
-				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}`)
+				const url = generateOcsUrl(
+					`/apps/opencatalogi/api/federation/publications/${id}`,
+				)
 
 				const response = await fetch(url, {
 					method: 'GET',
@@ -469,11 +557,12 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to fetch publication: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to fetch publication: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				return await response.json()
-
 			} catch (error) {
 				console.error('Error fetching publication:', error)
 				throw error
@@ -482,8 +571,13 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get publications that this publication uses
+		 *
 		 * @param {string} id - Publication ID
 		 * @return {Promise<object>} Publications that this publication uses
+		 */
+		/**
+		 * @param id
+		 * @spec openspec/specs/search/spec.md
 		 */
 		async getPublicationUses(id) {
 			if (!id) {
@@ -491,7 +585,9 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			try {
-				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}/uses`)
+				const url = generateOcsUrl(
+					`/apps/opencatalogi/api/federation/publications/${id}/uses`,
+				)
 
 				const response = await fetch(url, {
 					method: 'GET',
@@ -502,11 +598,12 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to fetch publication uses: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to fetch publication uses: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				return await response.json()
-
 			} catch (error) {
 				console.error('Error fetching publication uses:', error)
 				throw error
@@ -515,8 +612,13 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get publications that use this publication
+		 *
 		 * @param {string} id - Publication ID
 		 * @return {Promise<object>} Publications that use this publication
+		 */
+		/**
+		 * @param id
+		 * @spec openspec/specs/search/spec.md
 		 */
 		async getPublicationUsed(id) {
 			if (!id) {
@@ -524,7 +626,9 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			try {
-				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}/used`)
+				const url = generateOcsUrl(
+					`/apps/opencatalogi/api/federation/publications/${id}/used`,
+				)
 
 				const response = await fetch(url, {
 					method: 'GET',
@@ -535,11 +639,12 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to fetch publication used: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to fetch publication used: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				return await response.json()
-
 			} catch (error) {
 				console.error('Error fetching publication used:', error)
 				throw error
@@ -548,8 +653,13 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Get publication attachments
+		 *
 		 * @param {string} id - Publication ID
 		 * @return {Promise<object>} Publication attachments
+		 */
+		/**
+		 * @param id
+		 * @spec openspec/specs/search/spec.md
 		 */
 		async getPublicationAttachments(id) {
 			if (!id) {
@@ -557,7 +667,9 @@ export const useSearchStore = defineStore('search', {
 			}
 
 			try {
-				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}/attachments`)
+				const url = generateOcsUrl(
+					`/apps/opencatalogi/api/federation/publications/${id}/attachments`,
+				)
 
 				const response = await fetch(url, {
 					method: 'GET',
@@ -568,11 +680,12 @@ export const useSearchStore = defineStore('search', {
 				})
 
 				if (!response.ok) {
-					throw new Error(`Failed to fetch publication attachments: ${response.status} ${response.statusText}`)
+					throw new Error(
+						`Failed to fetch publication attachments: ${response.status} ${response.statusText}`,
+					)
 				}
 
 				return await response.json()
-
 			} catch (error) {
 				console.error('Error fetching publication attachments:', error)
 				throw error

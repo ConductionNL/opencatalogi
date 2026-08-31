@@ -70,7 +70,7 @@ class WOO536RepairReadRulesTest extends TestCase
         $fakeSchema->method('getId')->willReturn(42);
         $fakeSchema->method('getAuthorization')->willReturn([
             'read' => [
-                ['group' => 'public', 'match' => ['publicatiedatum' => ['$lte' => '$now']]],
+                ['group' => 'public', 'match' => ['publicationDate' => ['$lte' => '$now']]],
                 'authenticated',
             ],
         ]);
@@ -101,9 +101,9 @@ class WOO536RepairReadRulesTest extends TestCase
         $read = $captured['read'];
 
         $this->assertCount(3, $read, 'Upgraded read should have 3 elements: 2 conditional rules + authenticated');
-        $this->assertSame(['$lte' => '$now'], $read[0]['match']['publicatiedatum']);
-        $this->assertSame(['$gte' => '$now'], $read[0]['match']['depublicatiedatum']);
-        $this->assertSame(['$exists' => false], $read[1]['match']['depublicatiedatum']);
+        $this->assertSame(['$lte' => '$now'], $read[0]['match']['publicationDate']);
+        $this->assertSame(['$gte' => '$now'], $read[0]['match']['depublicationDate']);
+        $this->assertSame(['$exists' => false], $read[1]['match']['depublicationDate']);
         $this->assertSame('authenticated', $read[2], 'authenticated element must be preserved');
     }
 
@@ -119,12 +119,12 @@ class WOO536RepairReadRulesTest extends TestCase
         $fakeSchema->method('getAuthorization')->willReturn([
             'read' => [
                 ['group' => 'public', 'match' => [
-                    'publicatiedatum'   => ['$lte' => '$now'],
-                    'depublicatiedatum' => ['$gte' => '$now'],
+                    'publicationDate'   => ['$lte' => '$now'],
+                    'depublicationDate' => ['$gte' => '$now'],
                 ]],
                 ['group' => 'public', 'match' => [
-                    'publicatiedatum'   => ['$lte' => '$now'],
-                    'depublicatiedatum' => ['$exists' => false],
+                    'publicationDate'   => ['$lte' => '$now'],
+                    'depublicationDate' => ['$exists' => false],
                 ]],
                 'authenticated',
             ],
@@ -154,7 +154,7 @@ class WOO536RepairReadRulesTest extends TestCase
         $fakeSchema->method('getAuthorization')->willReturn([
             'read' => [
                 ['group' => 'public', 'match' => [
-                    'publicatiedatum' => ['$lte' => '$now'],
+                    'publicationDate' => ['$lte' => '$now'],
                     'status'          => 'approved',
                 ]],
                 'authenticated',

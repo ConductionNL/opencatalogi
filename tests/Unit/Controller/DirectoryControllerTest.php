@@ -8,183 +8,242 @@ use OCA\OpenCatalogi\Controller\DirectoryController;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
+use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use GuzzleHttp\Exception\TransferException;
+use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for DirectoryController.
  */
-class DirectoryControllerTest extends TestCase
-{
+class DirectoryControllerTest extends TestCase {
 
-    private IRequest|MockObject $request;
-    private DirectoryService|MockObject $directoryService;
-    private IL10N|MockObject $l10n;
-    private DirectoryController $controller;
+	private IRequest|MockObject $request;
+	private DirectoryService|MockObject $directoryService;
+	private IL10N|MockObject $l10n;
+	private LoggerInterface|MockObject $logger;
+	private IAppConfig|MockObject $config;
+	private DirectoryController $controller;
 
-    protected function setUp(): void
-    {
-        $this->request          = $this->createMock(IRequest::class);
-        $this->directoryService = $this->createMock(DirectoryService::class);
-        $this->l10n             = $this->createMock(IL10N::class);
+	protected function setUp(): void {
+		$this->request = $this->createMock(IRequest::class);
+		$this->directoryService = $this->createMock(DirectoryService::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->config = $this->createMock(IAppConfig::class);
 
-        $this->l10n->method('t')
-            ->willReturnCallback(fn(string $text) => $text);
+		$this->l10n->method('t')
+			->willReturnCallback(fn (string $text, array $params = []) => $text);
 
-        $this->controller = new DirectoryController(
-            'opencatalogi',
-            $this->request,
-            $this->directoryService,
-            $this->l10n
-        );
-    }
+		// CORS allowlist defaults to '*' unless a test overrides it.
+		$this->config->method('getValueString')
+			->willReturnCallback(fn (string $app, string $key, string $default = '') => $default);
 
-    public function testPreflightedCorsReturnsResponse(): void
-    {
-        $this->request->method('getHeader')
-            ->with('Origin')
-            ->willReturn('https://example.com');
+		$this->controller = new DirectoryController(
+			'opencatalogi',
+			$this->request,
+			$this->directoryService,
+			$this->l10n,
+			$this->logger,
+			$this->config
+		);
+	}
 
-        $response = $this->controller->preflightedCors();
+	public function testPreflightedCorsReturnsResponse(): void {
+		$this->request->method('getHeader')
+			->with('Origin')
+			->willReturn('https://example.com');
 
-        $this->assertInstanceOf(Response::class, $response);
-    }
+		$response = $this->controller->preflightedCors();
 
-    public function testPreflightedCorsWildcardWhenNoOrigin(): void
-    {
-        $this->request->method('getHeader')
-            ->with('Origin')
-            ->willReturn('');
+		$this->assertInstanceOf(Response::class, $response);
+	}
 
-        $response = $this->controller->preflightedCors();
+	public function testPreflightedCorsWildcardWhenNoOrigin(): void {
+		$this->request->method('getHeader')
+			->with('Origin')
+			->willReturn('');
 
-        $this->assertInstanceOf(Response::class, $response);
-    }
+		$response = $this->controller->preflightedCors();
 
-    public function testIndexReturnsJsonResponseSuccess(): void
-    {
-        $directoryData = ['results' => [['id' => 1]], 'total' => 1];
+		$this->assertInstanceOf(Response::class, $response);
+	}
 
-        $this->request->method('getParams')
-            ->willReturn([]);
+	public function testIndexReturnsJsonResponseSuccess(): void {
+		$directoryData = ['results' => [['id' => 1]], 'total' => 1];
 
-        $this->directoryService->method('getDirectory')
-            ->willReturn($directoryData);
+		$this->request->method('getParams')
+			->willReturn([]);
 
-        $this->request->server = ['HTTP_ORIGIN' => 'https://test.com'];
+		$this->directoryService->method('getDirectory')
+			->willReturn($directoryData);
 
-        $response = $this->controller->index();
+		$this->request->server = ['HTTP_ORIGIN' => 'https://test.com'];
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(200, $response->getStatus());
-    }
+		$response = $this->controller->index();
 
-    public function testIndexReturns500OnException(): void
-    {
-        $this->request->method('getParams')
-            ->willReturn([]);
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(200, $response->getStatus());
+	}
 
-        $this->directoryService->method('getDirectory')
-            ->willThrowException(new \Exception('Database error'));
+	public function testIndexReturns500OnException(): void {
+		$this->request->method('getParams')
+			->willReturn([]);
 
-        $this->request->server = [];
+		$this->directoryService->method('getDirectory')
+			->willThrowException(new \Exception('Database error: revealing SQL fragment'));
 
-        $response = $this->controller->index();
+		$this->request->server = [];
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(500, $response->getStatus());
-    }
+		$response = $this->controller->index();
 
-    public function testUpdateReturnsBadRequestWhenNoDirectoryUrl(): void
-    {
-        $this->request->method('getParam')
-            ->with('directory')
-            ->willReturn(null);
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(500, $response->getStatus());
+	}
 
-        $this->request->method('getHeader')
-            ->with('Origin')
-            ->willReturn('');
+	/**
+	 * Security (#735): a public 500 response must NOT leak the raw exception message
+	 * to the caller — internal SQL/file-path fragments accelerate reconnaissance.
+	 */
+	public function testIndexReturns500WithoutLeakingExceptionMessage(): void {
+		$this->request->method('getParams')
+			->willReturn([]);
 
-        $response = $this->controller->update();
+		$secretMessage = 'PDOException: SQLSTATE[42S02] in /var/www/html/internal-path/foo.php:123';
+		$this->directoryService->method('getDirectory')
+			->willThrowException(new \Exception($secretMessage));
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(400, $response->getStatus());
-    }
+		$this->request->server = [];
 
-    public function testUpdateReturnsBadRequestWithEmptyDirectoryUrl(): void
-    {
-        $this->request->method('getParam')
-            ->with('directory')
-            ->willReturn('');
+		$response = $this->controller->index();
 
-        $this->request->method('getHeader')
-            ->with('Origin')
-            ->willReturn('');
+		$this->assertSame(500, $response->getStatus());
+		$body = json_encode($response->getData());
+		$this->assertStringNotContainsString($secretMessage, (string)$body);
+		$this->assertStringNotContainsString('PDOException', (string)$body);
+		$this->assertStringNotContainsString('/var/www/html', (string)$body);
+	}
 
-        $response = $this->controller->update();
+	/**
+	 * Security (#735): an attacker-controlled Origin must NOT be reflected when a
+	 * non-wildcard allowlist is configured.
+	 */
+	public function testIndexDoesNotReflectArbitraryOriginWhenAllowlistConfigured(): void {
+		// Re-create the config + controller with a non-wildcard allowlist.
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')
+			->willReturnCallback(function (string $app, string $key, string $default = '') {
+				return match ($key) {
+					'cors_allowed_origins' => 'https://trusted.example',
+					default => $default,
+				};
+			});
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(400, $response->getStatus());
-    }
+		$controller = new DirectoryController(
+			'opencatalogi',
+			$this->request,
+			$this->directoryService,
+			$this->l10n,
+			$this->logger,
+			$config
+		);
 
-    public function testUpdateReturnsSuccessOnValidSync(): void
-    {
-        $this->request->method('getParam')
-            ->with('directory')
-            ->willReturn('https://example.com/directory');
+		$this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = ['HTTP_ORIGIN' => 'https://evil.attacker.test'];
 
-        $this->directoryService->method('syncDirectory')
-            ->with('https://example.com/directory')
-            ->willReturn(['synced' => 5]);
+		$response = $controller->index();
 
-        $this->request->method('getHeader')
-            ->with('Origin')
-            ->willReturn('https://example.com');
+		$this->assertSame(
+			'https://trusted.example',
+			$response->getHeaders()['Access-Control-Allow-Origin']
+		);
+	}
 
-        $response = $this->controller->update();
+	public function testUpdateReturnsBadRequestWhenNoDirectoryUrl(): void {
+		$this->request->method('getParam')
+			->with('directory')
+			->willReturn(null);
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(200, $response->getStatus());
-    }
+		$this->request->method('getHeader')
+			->with('Origin')
+			->willReturn('');
 
-    public function testUpdateReturns400OnInvalidArgumentException(): void
-    {
-        $this->request->method('getParam')
-            ->with('directory')
-            ->willReturn('not-a-url');
+		$response = $this->controller->update();
 
-        $this->directoryService->method('syncDirectory')
-            ->willThrowException(new \InvalidArgumentException('Invalid URL'));
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(400, $response->getStatus());
+	}
 
-        $this->request->method('getHeader')
-            ->with('Origin')
-            ->willReturn('');
+	public function testUpdateReturnsBadRequestWithEmptyDirectoryUrl(): void {
+		$this->request->method('getParam')
+			->with('directory')
+			->willReturn('');
 
-        $response = $this->controller->update();
+		$this->request->method('getHeader')
+			->with('Origin')
+			->willReturn('');
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(400, $response->getStatus());
-    }
+		$response = $this->controller->update();
 
-    public function testUpdateReturns500OnGenericException(): void
-    {
-        $this->request->method('getParam')
-            ->with('directory')
-            ->willReturn('https://example.com/dir');
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(400, $response->getStatus());
+	}
 
-        $this->directoryService->method('syncDirectory')
-            ->willThrowException(new \Exception('Unexpected error'));
+	public function testUpdateReturnsSuccessOnValidSync(): void {
+		$this->request->method('getParam')
+			->with('directory')
+			->willReturn('https://example.com/directory');
 
-        $this->request->method('getHeader')
-            ->with('Origin')
-            ->willReturn('');
+		$this->directoryService->method('syncDirectory')
+			->with('https://example.com/directory')
+			->willReturn(['synced' => 5]);
 
-        $response = $this->controller->update();
+		$this->request->method('getHeader')
+			->with('Origin')
+			->willReturn('https://example.com');
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(500, $response->getStatus());
-    }
+		$response = $this->controller->update();
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(200, $response->getStatus());
+	}
+
+	public function testUpdateReturns400OnInvalidArgumentException(): void {
+		$this->request->method('getParam')
+			->with('directory')
+			->willReturn('not-a-url');
+
+		$this->directoryService->method('syncDirectory')
+			->willThrowException(new \InvalidArgumentException('Invalid URL'));
+
+		$this->request->method('getHeader')
+			->with('Origin')
+			->willReturn('');
+
+		$response = $this->controller->update();
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(400, $response->getStatus());
+	}
+
+	public function testUpdateReturns500OnGenericException(): void {
+		$this->request->method('getParam')
+			->with('directory')
+			->willReturn('https://example.com/dir');
+
+		$this->directoryService->method('syncDirectory')
+			->willThrowException(new \Exception('Unexpected error'));
+
+		$this->request->method('getHeader')
+			->with('Origin')
+			->willReturn('');
+
+		$response = $this->controller->update();
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(500, $response->getStatus());
+	}
 }

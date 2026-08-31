@@ -1,22 +1,42 @@
+<script setup>
+import { translate as t } from '@nextcloud/l10n'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
+import { navigationStore, objectStore } from '../../store/store.js'
+
+// Editing a catalog is an admin action, so the control that starts it is
+// admin-only — see the `v-if` on the Edit button below.
+//
+// This lives in <script setup> rather than a `setup()` option because this
+// component has BOTH blocks, and Vue forbids a `setup()` option in the
+// companion <script> when <script setup> is present. Putting it there compiled
+// but produced a component that rendered nothing at all — the e2e caught it as
+// `[data-testid="cn-detail-page"]` never appearing, which looks like a routing
+// failure rather than a script-block conflict.
+const { isAdmin } = useIsAdmin()
+</script>
+
 <template>
 	<CnDetailPage
 		:title="catalog?.title || t('opencatalogi', 'Catalog')"
 		:description="catalog?.summary || ''"
 		icon="DatabaseEyeOutline"
 		:loading="loading"
-		:loading-label="t('opencatalogi', 'Loading catalog...')"
+		:loadingLabel="t('opencatalogi', 'Loading catalog...')"
 		:empty="!catalog && !loading"
-		:empty-label="t('opencatalogi', 'Catalog not found')"
+		:emptyLabel="t('opencatalogi', 'Catalog not found')"
 		:error="!!error"
-		:error-message="error"
-		:on-retry="loadCatalog"
+		:errorMessage="error"
+		:onRetry="loadCatalog"
 		:layout="detailLayout"
 		:widgets="widgetDefs"
 		:sidebar="!!catalog"
-		:sidebar-open="sidebarOpen"
-		object-type="catalog"
-		:object-id="catalogId"
-		:sidebar-props="{ register: String(catalog?.['@self']?.register || ''), schema: String(catalog?.['@self']?.schema || '') }">
+		:sidebarOpen="sidebarOpen"
+		objectType="catalog"
+		:objectId="catalogId"
+		:sidebarProps="{
+			register: String(catalog?.['@self']?.register || ''),
+			schema: String(catalog?.['@self']?.schema || ''),
+		}">
 		<!-- Header actions -->
 		<template #actions>
 			<NcButton @click="goBack">
@@ -25,7 +45,7 @@
 				</template>
 				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
-			<NcButton v-if="isAdmin" type="primary" @click="editCatalog">
+			<NcButton v-if="isAdmin" variant="primary" @click="editCatalog">
 				<template #icon>
 					<Pencil :size="20" />
 				</template>
@@ -41,9 +61,7 @@
 
 		<!-- Metadata widget -->
 		<template #widget-metadata>
-			<CnDetailGrid
-				:items="metadataItems"
-				layout="horizontal" />
+			<CnDetailGrid :items="metadataItems" layout="horizontal" />
 		</template>
 
 		<!-- Description widget -->
@@ -60,9 +78,7 @@
 
 		<!-- Configuration widget -->
 		<template #widget-configuration>
-			<CnDetailGrid
-				:items="configItems"
-				layout="horizontal" />
+			<CnDetailGrid :items="configItems" layout="horizontal" />
 		</template>
 
 		<!-- Raw data widget -->
@@ -70,29 +86,52 @@
 			<CnJsonViewer
 				:value="JSON.stringify(catalog, null, 2)"
 				language="json"
-				:read-only="true"
-				:height="300" />
+				:readOnly="true"
+				height="300px" />
 		</template>
 	</CnDetailPage>
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n'
+import { CnDetailGrid, CnDetailPage, CnJsonViewer } from '@conduction/nextcloud-vue'
 import { NcButton } from '@nextcloud/vue'
-import { CnDetailPage, CnDetailGrid, CnJsonViewer } from '@conduction/nextcloud-vue'
-import { objectStore, navigationStore } from '../../store/store.js'
-import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 
 const DETAIL_LAYOUT = [
 	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
-	{ id: 2, widgetId: 'configuration', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 4 },
-	{ id: 3, widgetId: 'description', gridX: 0, gridY: 4, gridWidth: 12, gridHeight: 2 },
-	{ id: 4, widgetId: 'raw-data', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 4 },
+	{
+		id: 2,
+		widgetId: 'configuration',
+		gridX: 6,
+		gridY: 0,
+		gridWidth: 6,
+		gridHeight: 4,
+	},
+	{
+		id: 3,
+		widgetId: 'description',
+		gridX: 0,
+		gridY: 4,
+		gridWidth: 12,
+		gridHeight: 2,
+	},
+	{
+		id: 4,
+		widgetId: 'raw-data',
+		gridX: 0,
+		gridY: 6,
+		gridWidth: 12,
+		gridHeight: 4,
+	},
 ]
 
+/**
+ * CatalogDetailPage — route view for a single catalog, resolved by route id.
+ *
+ * @spec openspec/specs/catalogs/spec.md
+ */
 export default {
 	name: 'CatalogDetailPage',
 	components: {
@@ -104,10 +143,7 @@ export default {
 		Pencil,
 		OpenInApp,
 	},
-	setup() {
-		const { isAdmin } = useIsAdmin()
-		return { isAdmin }
-	},
+
 	data() {
 		return {
 			loading: false,
@@ -116,47 +152,128 @@ export default {
 			detailLayout: [...DETAIL_LAYOUT],
 		}
 	},
+
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		catalogId() {
 			return this.$route.params.id
 		},
+
+		/**
+		 * Prefer the id-keyed cache populated by `fetchObject` (route-driven
+		 * loads never set active, so `getActiveObject` returns null on a
+		 * fresh detail load), fall back to the active-object slot for
+		 * flows that set active before navigating (edit modal → detail).
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3
+		 */
 		catalog() {
-			return objectStore.getActiveObject('catalog')
+			return (
+				objectStore.getObject('catalog', this.catalogId)
+				|| objectStore.getActiveObject('catalog')
+			)
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		metadataItems() {
 			if (!this.catalog) return []
 			const self = this.catalog['@self'] || {}
 			return [
-				{ label: t('opencatalogi', 'Title'), value: this.catalog.title || '-' },
-				{ label: t('opencatalogi', 'Summary'), value: this.catalog.summary || '-' },
-				{ label: t('opencatalogi', 'Slug'), value: this.catalog.slug || '-' },
-				{ label: t('opencatalogi', 'Status'), value: this.catalog.status || '-' },
-				{ label: t('opencatalogi', 'Listed'), value: this.catalog.listed ? t('opencatalogi', 'Public') : t('opencatalogi', 'Private') },
-				{ label: t('opencatalogi', 'Created'), value: self.created ? new Date(self.created).toLocaleString() : '-' },
-				{ label: t('opencatalogi', 'Updated'), value: self.updated ? new Date(self.updated).toLocaleString() : '-' },
-				{ label: t('opencatalogi', 'ID'), value: self.id || this.catalog.id || '-' },
+				{
+					label: t('opencatalogi', 'Title'),
+					value: this.catalog.title || '-',
+				},
+				{
+					label: t('opencatalogi', 'Summary'),
+					value: this.catalog.summary || '-',
+				},
+				{
+					label: t('opencatalogi', 'Slug'),
+					value: this.catalog.slug || '-',
+				},
+				{
+					label: t('opencatalogi', 'Status'),
+					value: this.catalog.status || '-',
+				},
+				{
+					label: t('opencatalogi', 'Listed'),
+					value: this.catalog.listed
+						? t('opencatalogi', 'Public')
+						: t('opencatalogi', 'Private'),
+				},
+				{
+					label: t('opencatalogi', 'Created'),
+					value: self.created
+						? new Date(self.created).toLocaleString()
+						: '-',
+				},
+				{
+					label: t('opencatalogi', 'Updated'),
+					value: self.updated
+						? new Date(self.updated).toLocaleString()
+						: '-',
+				},
+				{
+					label: t('opencatalogi', 'ID'),
+					value: self.id || this.catalog.id || '-',
+				},
 			]
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		configItems() {
 			if (!this.catalog) return []
 			return [
-				{ label: t('opencatalogi', 'Registers'), value: (this.catalog.registers || []).length },
-				{ label: t('opencatalogi', 'Schemas'), value: (this.catalog.schemas || []).length },
-				{ label: t('opencatalogi', 'WOO Sitemap'), value: this.catalog.hasWooSitemap ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') },
+				{
+					label: t('opencatalogi', 'Registers'),
+					value: (this.catalog.registers || []).length,
+				},
+				{
+					label: t('opencatalogi', 'Schemas'),
+					value: (this.catalog.schemas || []).length,
+				},
+				{
+					label: t('opencatalogi', 'WOO Sitemap'),
+					value: this.catalog.hasWooSitemap
+						? t('opencatalogi', 'Yes')
+						: t('opencatalogi', 'No'),
+				},
+				{
+					label: t('opencatalogi', 'OOAPI 5.0 Publication'),
+					value: this.catalog.hasOoapi
+						? t('opencatalogi', 'Yes')
+						: t('opencatalogi', 'No'),
+				},
 			]
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		widgetDefs() {
 			return [
-				{ id: 'metadata', title: t('opencatalogi', 'Metadata'), type: 'custom' },
-				{ id: 'configuration', title: t('opencatalogi', 'Configuration'), type: 'custom' },
-				{ id: 'description', title: t('opencatalogi', 'Description'), type: 'custom' },
+				{
+					id: 'metadata',
+					title: t('opencatalogi', 'Metadata'),
+					type: 'custom',
+				},
+				{
+					id: 'configuration',
+					title: t('opencatalogi', 'Configuration'),
+					type: 'custom',
+				},
+				{
+					id: 'description',
+					title: t('opencatalogi', 'Description'),
+					type: 'custom',
+				},
 				{ id: 'raw-data', title: t('opencatalogi', 'Data'), type: 'custom' },
 			]
 		},
 	},
+
 	watch: {
 		catalogId: {
 			immediate: true,
+			/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 			handler() {
 				if (this.catalogId) {
 					this.loadCatalog()
@@ -164,7 +281,9 @@ export default {
 			},
 		},
 	},
+
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		async loadCatalog() {
 			this.loading = true
 			this.error = null
@@ -176,16 +295,25 @@ export default {
 				this.loading = false
 			}
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		goBack() {
 			this.$router.push({ name: 'Catalogs' })
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		editCatalog() {
 			objectStore.setActiveObject('catalog', this.catalog)
 			navigationStore.setModal('catalog')
 		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		openPublications() {
 			if (this.catalog?.slug) {
-				this.$router.push({ name: 'Publications', params: { catalogSlug: this.catalog.slug } })
+				this.$router.push({
+					name: 'Publications',
+					params: { catalogSlug: this.catalog.slug },
+				})
 			}
 		},
 	},

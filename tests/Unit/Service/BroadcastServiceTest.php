@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
-use OCA\OpenCatalogi\Service\BroadcastService;
-use OCP\IURLGenerator;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
+use OCA\OpenCatalogi\Service\BroadcastService;
+use OCA\OpenCatalogi\Service\Federation\FederationHostPolicy;
+use OCP\App\IAppManager;
+use OCP\IAppConfig;
+use OCP\IURLGenerator;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -22,732 +25,913 @@ use RuntimeException;
  *
  * Tests all public and private methods including broadcast logic,
  * retry mechanisms, service resolution, and URL handling.
+ *
+ * The testBroadcast* cases that perform a live broadcast are tagged `@group network`:
+ * broadcast() runs the SSRF outbound-URL guard (assertSafeOutboundUrl) which does real
+ * DNS resolution of the target host, so they require outbound DNS and are excluded by
+ * default (see phpunit.xml / phpunit-unit.xml). Run them with the network group in an
+ * environment that has DNS.
  */
-class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
-{
-
-    /**
-     * @var IURLGenerator|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $urlGeneratorMock;
-
-    /**
-     * @var ContainerInterface|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $containerMock;
-
-    /**
-     * @var IAppManager|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $appManagerMock;
-
-    /**
-     * @var LoggerInterface|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $loggerMock;
-
-    /**
-     * @var Client|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $clientMock;
-
-    /**
-     * @var BroadcastService
-     */
-    private BroadcastService $broadcastService;
-
-
-    protected function setUp(): void
-    {
-        $this->urlGeneratorMock = $this->createMock(IURLGenerator::class);
-        $this->containerMock    = $this->createMock(ContainerInterface::class);
-        $this->appManagerMock   = $this->createMock(IAppManager::class);
-        $this->loggerMock       = $this->createMock(LoggerInterface::class);
-
-        $this->broadcastService = new BroadcastService(
-            $this->urlGeneratorMock,
-            $this->containerMock,
-            $this->appManagerMock,
-            $this->loggerMock
-        );
-
-        // Replace the private $client with a mock via reflection.
-        $this->clientMock = $this->createMock(Client::class);
-        $reflection       = new \ReflectionClass($this->broadcastService);
-        $clientProperty   = $reflection->getProperty('client');
-        $clientProperty->setAccessible(true);
-        $clientProperty->setValue($this->broadcastService, $this->clientMock);
-
-    }//end setUp()
-
-
-    /**
-     * Helper to invoke private methods via reflection.
-     *
-     * @param object $object     The object instance.
-     * @param string $methodName The private method name.
-     * @param array  $parameters The method parameters.
-     *
-     * @return mixed The method return value.
-     */
-    private function invokePrivateMethod(object $object, string $methodName, array $parameters = []): mixed
-    {
-        $reflection = new \ReflectionClass($object);
-        $method     = $reflection->getMethod($methodName);
-        $method->setAccessible(true);
-
-        return $method->invokeArgs($object, $parameters);
-
-    }//end invokePrivateMethod()
+class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
+
+	/**
+	 * @var IURLGenerator|\PHPUnit\Framework\MockObject\MockObject
+	 */
+	private $urlGeneratorMock;
+
+	/**
+	 * @var ContainerInterface|\PHPUnit\Framework\MockObject\MockObject
+	 */
+	private $containerMock;
+
+	/**
+	 * @var IAppManager|\PHPUnit\Framework\MockObject\MockObject
+	 */
+	private $appManagerMock;
+
+	/**
+	 * @var LoggerInterface|\PHPUnit\Framework\MockObject\MockObject
+	 */
+	private $loggerMock;
+
+	/**
+	 * @var Client|\PHPUnit\Framework\MockObject\MockObject
+	 */
+	private $clientMock;
+
+	/**
+	 * @var IAppConfig|\PHPUnit\Framework\MockObject\MockObject
+	 */
+	private $configMock;
+
+	/**
+	 * @var BroadcastService
+	 */
+	private BroadcastService $broadcastService;
+
+	protected function setUp(): void {
+		$this->urlGeneratorMock = $this->createMock(IURLGenerator::class);
+		$this->containerMock = $this->createMock(ContainerInterface::class);
+		$this->appManagerMock = $this->createMock(IAppManager::class);
+		$this->loggerMock = $this->createMock(LoggerInterface::class);
+		$this->configMock = $this->createMock(IAppConfig::class);
+
+		// Default config: a configured listing schema/register so getDirectoryUrls()
+		// proceeds to OpenRegister, but an EMPTY local-federation allowlist so the SSRF
+		// guard stays fully active (matching production defaults).
+		$this->configMock->method('getValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $default = '') {
+					return match ($key) {
+						'listing_schema' => 'listing',
+						'listing_register' => 'directory',
+						default => $default,
+					};
+				}
+			);
+
+		// Retry count and request timeout are now operator-tunable app-config
+		// keys (`broadcast_max_retries` / `broadcast_request_timeout`); honour the
+		// production defaults the service passes (3 retries, 30s timeout).
+		$this->configMock->method('getValueInt')
+			->willReturnCallback(
+				static fn (string $app, string $key, int $default = 0): int => $default
+			);
+
+		// The host policy is a pure decision object over the same IAppConfig the
+		// service already holds, so the real one is used rather than a mock: a
+		// mocked policy would assert our own expectation of "is this local?"
+		// instead of the rule the production path actually applies.
+		$this->broadcastService = new BroadcastService(
+			$this->urlGeneratorMock,
+			$this->containerMock,
+			$this->appManagerMock,
+			$this->loggerMock,
+			$this->configMock,
+			new FederationHostPolicy($this->configMock)
+		);
+
+		// Replace the private $client with a mock via reflection.
+		$this->clientMock = $this->createMock(Client::class);
+		$reflection = new \ReflectionClass($this->broadcastService);
+		$clientProperty = $reflection->getProperty('client');
+		$clientProperty->setAccessible(true);
+		$clientProperty->setValue($this->broadcastService, $this->clientMock);
+
+	}//end setUp()
+
+	/**
+	 * Helper to invoke private methods via reflection.
+	 *
+	 * @param object $object The object instance.
+	 * @param string $methodName The private method name.
+	 * @param array $parameters The method parameters.
+	 *
+	 * @return mixed The method return value.
+	 */
+	private function invokePrivateMethod(object $object, string $methodName, array $parameters = []): mixed {
+		$reflection = new \ReflectionClass($object);
+		$method = $reflection->getMethod($methodName);
+		$method->setAccessible(true);
+
+		return $method->invokeArgs($object, $parameters);
+	}//end invokePrivateMethod()
+
+	/**
+	 * Create a mock ObjectService with searchObjects method.
+	 *
+	 * getDirectoryUrls() calls jsonSerialize() on each returned listing (the canonical
+	 * OpenRegister contract: searchObjects() yields ObjectEntity objects), so each plain
+	 * listing array is wrapped in an ObjectEntity mock whose jsonSerialize() returns it.
+	 *
+	 * @param array $listings The listing arrays to return from searchObjects.
+	 *
+	 * @return \PHPUnit\Framework\MockObject\MockObject
+	 */
+	private function createMockObjectService(array $listings = []): \PHPUnit\Framework\MockObject\MockObject {
+		$listingObjects = array_map(
+			function (array $listing) {
+				$entity = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
+					->disableOriginalConstructor()
+					->onlyMethods(['jsonSerialize'])
+					->getMock();
+				$entity->method('jsonSerialize')->willReturn($listing);
+				return $entity;
+			},
+			$listings
+		);
+
+		$mock = $this->getMockBuilder(\OCA\OpenRegister\Service\ObjectService::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['searchObjects'])
+			->getMock();
+		$mock->method('searchObjects')
+			->willReturn($listingObjects);
+
+		return $mock;
+	}//end createMockObjectService()
+
+	// ===== getObjectService tests =====
+
+	/**
+	 * Test getObjectService returns service when OpenRegister is installed.
+	 */
+	public function testGetObjectServiceAvailable(): void {
+		$mockService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+
+		$this->containerMock->method('get')
+			->with('OCA\OpenRegister\Service\ObjectService')
+			->willReturn($mockService);
+
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getObjectService');
+		$this->assertSame($mockService, $result);
+
+	}//end testGetObjectServiceAvailable()
+
+	/**
+	 * Test getObjectService throws RuntimeException when OpenRegister is not installed.
+	 */
+	public function testGetObjectServiceNotInstalled(): void {
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['opencatalogi']);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('OpenRegister service is not available');
+
+		$this->invokePrivateMethod($this->broadcastService, 'getObjectService');
+
+	}//end testGetObjectServiceNotInstalled()
+
+	/**
+	 * Test getObjectService throws container exception and logs error.
+	 */
+	public function testGetObjectServiceContainerException(): void {
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+
+		$exception = new class('Container error') extends \Exception implements ContainerExceptionInterface {
+		};
+
+		$this->containerMock->method('get')
+			->willThrowException($exception);
+
+		$this->loggerMock->expects($this->once())
+			->method('error')
+			->with($this->stringContains('Failed to retrieve OpenRegister ObjectService'));
+
+		$this->expectException(ContainerExceptionInterface::class);
+
+		$this->invokePrivateMethod($this->broadcastService, 'getObjectService');
+
+	}//end testGetObjectServiceContainerException()
+
+	// ===== getAppVersion tests =====
+
+	/**
+	 * Test getAppVersion returns the version string.
+	 */
+	public function testGetAppVersionSuccess(): void {
+		$this->appManagerMock->method('getAppInfo')
+			->with('opencatalogi')
+			->willReturn(['version' => '2.1.0']);
+
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getAppVersion');
+		$this->assertEquals('2.1.0', $result);
+
+	}//end testGetAppVersionSuccess()
+
+	/**
+	 * Test getAppVersion returns 'unknown' when version key is missing.
+	 */
+	public function testGetAppVersionMissingKey(): void {
+		$this->appManagerMock->method('getAppInfo')
+			->with('opencatalogi')
+			->willReturn(['name' => 'opencatalogi']);
+
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getAppVersion');
+		$this->assertEquals('unknown', $result);
+
+	}//end testGetAppVersionMissingKey()
+
+	/**
+	 * Test getAppVersion returns 'unknown' on exception.
+	 */
+	public function testGetAppVersionException(): void {
+		$this->appManagerMock->method('getAppInfo')
+			->willThrowException(new \Exception('App not found'));
+
+		$this->loggerMock->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('Failed to retrieve app version'));
+
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getAppVersion');
+		$this->assertEquals('unknown', $result);
+
+	}//end testGetAppVersionException()
+
+	// ===== getCurrentDirectoryUrl tests =====
+
+	/**
+	 * Test getCurrentDirectoryUrl generates the correct URL.
+	 */
+	public function testGetCurrentDirectoryUrl(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->with('opencatalogi.directory.index')
+			->willReturn('/apps/opencatalogi/api/directory');
+
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->with('/apps/opencatalogi/api/directory')
+			->willReturn('https://cloud.example.com/apps/opencatalogi/api/directory');
+
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getCurrentDirectoryUrl');
+		$this->assertEquals('https://cloud.example.com/apps/opencatalogi/api/directory', $result);
+
+	}//end testGetCurrentDirectoryUrl()
+
+	// ===== getDirectoryUrls tests =====
 
-
-    /**
-     * Create a mock ObjectService with getObjects method.
-     *
-     * @param array $listings The listings to return from getObjects.
-     *
-     * @return \PHPUnit\Framework\MockObject\MockObject
-     */
-    private function createMockObjectService(array $listings = []): \PHPUnit\Framework\MockObject\MockObject
-    {
-        $mock = $this->getMockBuilder(\OCA\OpenRegister\Service\ObjectService::class)
-            ->disableOriginalConstructor()
-            ->addMethods(['getObjects'])
-            ->getMock();
-        $mock->method('getObjects')
-            ->willReturn($listings);
+	/**
+	 * Test getDirectoryUrls extracts unique valid URLs from listings.
+	 */
+	public function testGetDirectoryUrlsSuccess(): void {
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+
+		$listings = [
+			['directory' => 'https://instance-a.com/api/directory'],
+			['directory' => 'https://instance-b.com/api/directory'],
+			['directory' => 'https://instance-a.com/api/directory'],
+			['directory' => ''],
+			['directory' => 'not-a-url'],
+		];
+
+		$mockObjectService = $this->createMockObjectService($listings);
+
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
 
-        return $mock;
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getDirectoryUrls');
+
+		$this->assertCount(2, $result);
+		$this->assertContains('https://instance-a.com/api/directory', $result);
+		$this->assertContains('https://instance-b.com/api/directory', $result);
+
+	}//end testGetDirectoryUrlsSuccess()
+
+	/**
+	 * Test getDirectoryUrls throws when service is unavailable.
+	 */
+	public function testGetDirectoryUrlsServiceUnavailable(): void {
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn([]);
 
-    }//end createMockObjectService()
+		$this->loggerMock->expects($this->once())
+			->method('error')
+			->with($this->stringContains('Failed to retrieve directory URLs'));
 
+		$this->expectException(RuntimeException::class);
+
+		$this->invokePrivateMethod($this->broadcastService, 'getDirectoryUrls');
+
+	}//end testGetDirectoryUrlsServiceUnavailable()
+
+	/**
+	 * Test getDirectoryUrls filters out empty and invalid URLs.
+	 */
+	public function testGetDirectoryUrlsFiltersInvalid(): void {
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
 
-    // ===== getObjectService tests =====
+		$listings = [
+			['directory' => ''],
+			['directory' => 'ftp://invalid'],
+			['directory' => null],
+		];
+
+		$mockObjectService = $this->createMockObjectService($listings);
 
-    /**
-     * Test getObjectService returns service when OpenRegister is installed.
-     */
-    public function testGetObjectServiceAvailable(): void
-    {
-        $mockService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
+
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getDirectoryUrls');
+
+		// ftp:// is technically a valid URL according to FILTER_VALIDATE_URL, so it passes.
+		// Empty and null are filtered out.
+		$this->assertNotContains('', $result);
+		$this->assertNotContains(null, $result);
 
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
+	}//end testGetDirectoryUrlsFiltersInvalid()
 
-        $this->containerMock->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($mockService);
+	// ===== sendBroadcastRequest tests =====
+
+	/**
+	 * Test sendBroadcastRequest succeeds on first attempt.
+	 */
+	public function testSendBroadcastRequestSuccessFirstAttempt(): void {
+		$this->clientMock->method('post')
+			->willReturn(new Response(200));
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$this->loggerMock->expects($this->once())
+			->method('info')
+			->with($this->stringContains('Successfully broadcasted'));
+
+		$result = $this->invokePrivateMethod(
+			$this->broadcastService,
+			'sendBroadcastRequest',
+			['https://target.example.com/api/directory', 'https://self.example.com/api/directory']
+		);
+
+		$this->assertTrue($result);
 
-        $result = $this->invokePrivateMethod($this->broadcastService, 'getObjectService');
-        $this->assertSame($mockService, $result);
+	}//end testSendBroadcastRequestSuccessFirstAttempt()
 
-    }//end testGetObjectServiceAvailable()
+	/**
+	 * Test sendBroadcastRequest succeeds with 201 status code.
+	 */
+	public function testSendBroadcastRequestSuccess201(): void {
+		$this->clientMock->method('post')
+			->willReturn(new Response(201));
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->invokePrivateMethod(
+			$this->broadcastService,
+			'sendBroadcastRequest',
+			['https://target.example.com/api', 'https://self.example.com/api']
+		);
+
+		$this->assertTrue($result);
+
+	}//end testSendBroadcastRequestSuccess201()
+
+	/**
+	 * Test sendBroadcastRequest returns false after all retries fail.
+	 */
+	public function testSendBroadcastRequestAllRetriesFail(): void {
+		$request = new Request('POST', 'https://target.example.com/api');
+		$exception = new RequestException('Connection refused', $request);
+
+		$this->clientMock->method('post')
+			->willThrowException($exception);
 
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
 
-    /**
-     * Test getObjectService throws RuntimeException when OpenRegister is not installed.
-     */
-    public function testGetObjectServiceNotInstalled(): void
-    {
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['opencatalogi']);
+		$this->loggerMock->expects($this->exactly(3))
+			->method('warning');
+
+		$this->loggerMock->expects($this->once())
+			->method('error')
+			->with($this->stringContains('All 3 broadcast attempts'));
+
+		$result = $this->invokePrivateMethod(
+			$this->broadcastService,
+			'sendBroadcastRequest',
+			['https://target.example.com/api', 'https://self.example.com/api']
+		);
+
+		$this->assertFalse($result);
+
+	}//end testSendBroadcastRequestAllRetriesFail()
+
+	/**
+	 * Test sendBroadcastRequest returns false on non-success status codes.
+	 */
+	public function testSendBroadcastRequestNonSuccessStatus(): void {
+		$this->clientMock->method('post')
+			->willReturn(new Response(500));
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('OpenRegister service is not available');
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->invokePrivateMethod(
+			$this->broadcastService,
+			'sendBroadcastRequest',
+			['https://target.example.com/api', 'https://self.example.com/api']
+		);
 
-        $this->invokePrivateMethod($this->broadcastService, 'getObjectService');
+		$this->assertFalse($result);
+
+	}//end testSendBroadcastRequestNonSuccessStatus()
 
-    }//end testGetObjectServiceNotInstalled()
+	/**
+	 * Test sendBroadcastRequest succeeds on retry after initial failure.
+	 */
+	public function testSendBroadcastRequestSuccessOnRetry(): void {
+		$request = new Request('POST', 'https://target.example.com/api');
+		$exception = new RequestException('Timeout', $request);
 
+		$this->clientMock->method('post')
+			->willReturnOnConsecutiveCalls(
+				$this->throwException($exception),
+				new Response(200)
+			);
 
-    /**
-     * Test getObjectService throws container exception and logs error.
-     */
-    public function testGetObjectServiceContainerException(): void
-    {
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
 
-        $exception = new class ('Container error') extends \Exception implements ContainerExceptionInterface {
-        };
+		$result = $this->invokePrivateMethod(
+			$this->broadcastService,
+			'sendBroadcastRequest',
+			['https://target.example.com/api', 'https://self.example.com/api']
+		);
 
-        $this->containerMock->method('get')
-            ->willThrowException($exception);
+		$this->assertTrue($result);
 
-        $this->loggerMock->expects($this->once())
-            ->method('error')
-            ->with($this->stringContains('Failed to retrieve OpenRegister ObjectService'));
+	}//end testSendBroadcastRequestSuccessOnRetry()
 
-        $this->expectException(ContainerExceptionInterface::class);
+	// ===== broadcast tests =====
 
-        $this->invokePrivateMethod($this->broadcastService, 'getObjectService');
+	/**
+	 * Test broadcast with a specific valid URL.
+	 */
+	/**
+	 * @group network
+	 */
+	public function testBroadcastWithSpecificUrl(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
 
-    }//end testGetObjectServiceContainerException()
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
 
+		// Mock getDirectoryUrls - even though we provide a URL, broadcast calls getDirectoryUrls first.
+		$mockObjectService = $this->createMockObjectService([]);
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
 
-    // ===== getAppVersion tests =====
+		$this->clientMock->method('post')
+			->willReturn(new Response(200));
 
-    /**
-     * Test getAppVersion returns the version string.
-     */
-    public function testGetAppVersionSuccess(): void
-    {
-        $this->appManagerMock->method('getAppInfo')
-            ->with('opencatalogi')
-            ->willReturn(['version' => '2.1.0']);
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
 
-        $result = $this->invokePrivateMethod($this->broadcastService, 'getAppVersion');
-        $this->assertEquals('2.1.0', $result);
+		$result = $this->broadcastService->broadcast('https://target.example.com/api/directory');
 
-    }//end testGetAppVersionSuccess()
+		$this->assertArrayHasKey('https://target.example.com/api/directory', $result);
+		$this->assertTrue($result['https://target.example.com/api/directory']);
 
+	}//end testBroadcastWithSpecificUrl()
 
-    /**
-     * Test getAppVersion returns 'unknown' when version key is missing.
-     */
-    public function testGetAppVersionMissingKey(): void
-    {
-        $this->appManagerMock->method('getAppInfo')
-            ->with('opencatalogi')
-            ->willReturn(['name' => 'opencatalogi']);
+	/**
+	 * Test broadcast with invalid URL throws InvalidArgumentException.
+	 */
+	public function testBroadcastWithInvalidUrl(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
 
-        $result = $this->invokePrivateMethod($this->broadcastService, 'getAppVersion');
-        $this->assertEquals('unknown', $result);
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
 
-    }//end testGetAppVersionMissingKey()
+		$mockObjectService = $this->createMockObjectService([]);
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
 
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Invalid URL provided for broadcast');
 
-    /**
-     * Test getAppVersion returns 'unknown' on exception.
-     */
-    public function testGetAppVersionException(): void
-    {
-        $this->appManagerMock->method('getAppInfo')
-            ->willThrowException(new \Exception('App not found'));
+		$this->broadcastService->broadcast('not-a-valid-url');
 
-        $this->loggerMock->expects($this->once())
-            ->method('warning')
-            ->with($this->stringContains('Failed to retrieve app version'));
+	}//end testBroadcastWithInvalidUrl()
 
-        $result = $this->invokePrivateMethod($this->broadcastService, 'getAppVersion');
-        $this->assertEquals('unknown', $result);
+	/**
+	 * Test broadcast skips self URL to avoid loops.
+	 */
+	public function testBroadcastSkipsSelf(): void {
+		$selfUrl = 'https://self.example.com/apps/opencatalogi/api/directory';
 
-    }//end testGetAppVersionException()
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn($selfUrl);
 
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
 
-    // ===== getCurrentDirectoryUrl tests =====
+		$listings = [
+			['directory' => $selfUrl],
+			['directory' => 'https://other.example.com/api/directory'],
+		];
 
-    /**
-     * Test getCurrentDirectoryUrl generates the correct URL.
-     */
-    public function testGetCurrentDirectoryUrl(): void
-    {
-        $this->urlGeneratorMock->method('linkToRoute')
-            ->with('opencatalogi.directory.index')
-            ->willReturn('/apps/opencatalogi/api/directory');
+		$mockObjectService = $this->createMockObjectService($listings);
 
-        $this->urlGeneratorMock->method('getAbsoluteURL')
-            ->with('/apps/opencatalogi/api/directory')
-            ->willReturn('https://cloud.example.com/apps/opencatalogi/api/directory');
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
 
-        $result = $this->invokePrivateMethod($this->broadcastService, 'getCurrentDirectoryUrl');
-        $this->assertEquals('https://cloud.example.com/apps/opencatalogi/api/directory', $result);
+		$this->clientMock->method('post')
+			->willReturn(new Response(200));
 
-    }//end testGetCurrentDirectoryUrl()
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
 
+		$result = $this->broadcastService->broadcast();
 
-    // ===== getDirectoryUrls tests =====
+		// Self URL should be skipped, only the other URL should be in results.
+		$this->assertArrayNotHasKey($selfUrl, $result);
+		$this->assertArrayHasKey('https://other.example.com/api/directory', $result);
 
-    /**
-     * Test getDirectoryUrls extracts unique valid URLs from listings.
-     */
-    public function testGetDirectoryUrlsSuccess(): void
-    {
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
+	}//end testBroadcastSkipsSelf()
 
-        $listings = [
-            ['directory' => 'https://instance-a.com/api/directory'],
-            ['directory' => 'https://instance-b.com/api/directory'],
-            ['directory' => 'https://instance-a.com/api/directory'],
-            ['directory' => ''],
-            ['directory' => 'not-a-url'],
-        ];
+	/**
+	 * Test broadcast with empty target URLs returns empty results.
+	 */
+	public function testBroadcastEmptyTargets(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
 
-        $mockObjectService = $this->createMockObjectService($listings);
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
 
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
+		$mockObjectService = $this->createMockObjectService([]);
 
-        $result = $this->invokePrivateMethod($this->broadcastService, 'getDirectoryUrls');
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
 
-        $this->assertCount(2, $result);
-        $this->assertContains('https://instance-a.com/api/directory', $result);
-        $this->assertContains('https://instance-b.com/api/directory', $result);
+		$this->loggerMock->expects($this->once())
+			->method('warning')
+			->with('No target URLs found for broadcasting');
 
-    }//end testGetDirectoryUrlsSuccess()
+		$result = $this->broadcastService->broadcast();
 
+		$this->assertEmpty($result);
 
-    /**
-     * Test getDirectoryUrls throws when service is unavailable.
-     */
-    public function testGetDirectoryUrlsServiceUnavailable(): void
-    {
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn([]);
+	}//end testBroadcastEmptyTargets()
 
-        $this->loggerMock->expects($this->once())
-            ->method('error')
-            ->with($this->stringContains('Failed to retrieve directory URLs'));
+	/**
+	 * Test broadcast to all directories with mixed success.
+	 */
+	/**
+	 * @group network
+	 */
+	public function testBroadcastAllDirectoriesMixed(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
 
-        $this->expectException(RuntimeException::class);
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
 
-        $this->invokePrivateMethod($this->broadcastService, 'getDirectoryUrls');
+		$listings = [
+			['directory' => 'https://instance-a.com/api/directory'],
+			['directory' => 'https://instance-b.com/api/directory'],
+		];
 
-    }//end testGetDirectoryUrlsServiceUnavailable()
+		$mockObjectService = $this->createMockObjectService($listings);
 
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
 
-    /**
-     * Test getDirectoryUrls filters out empty and invalid URLs.
-     */
-    public function testGetDirectoryUrlsFiltersInvalid(): void
-    {
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
 
-        $listings = [
-            ['directory' => ''],
-            ['directory' => 'ftp://invalid'],
-            ['directory' => null],
-        ];
+		// First URL succeeds, second fails.
+		$request = new Request('POST', 'https://instance-b.com/api/directory');
+		$exception = new RequestException('Connection refused', $request);
 
-        $mockObjectService = $this->createMockObjectService($listings);
+		$this->clientMock->method('post')
+			->willReturnCallback(function ($uri) use ($exception) {
+				if ($uri === 'https://instance-a.com/api/directory') {
+					return new Response(200);
+				}
 
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
+				throw $exception;
+			});
 
-        $result = $this->invokePrivateMethod($this->broadcastService, 'getDirectoryUrls');
+		$result = $this->broadcastService->broadcast();
 
-        // ftp:// is technically a valid URL according to FILTER_VALIDATE_URL, so it passes.
-        // Empty and null are filtered out.
-        $this->assertNotContains('', $result);
-        $this->assertNotContains(null, $result);
+		$this->assertTrue($result['https://instance-a.com/api/directory']);
+		$this->assertFalse($result['https://instance-b.com/api/directory']);
 
-    }//end testGetDirectoryUrlsFiltersInvalid()
+	}//end testBroadcastAllDirectoriesMixed()
 
+	/**
+	 * Test broadcast logs summary with correct counts.
+	 */
+	/**
+	 * @group network
+	 */
+	public function testBroadcastLogsSummary(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
 
-    // ===== sendBroadcastRequest tests =====
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
 
-    /**
-     * Test sendBroadcastRequest succeeds on first attempt.
-     */
-    public function testSendBroadcastRequestSuccessFirstAttempt(): void
-    {
-        $this->clientMock->method('post')
-            ->willReturn(new Response(200));
+		$listings = [
+			['directory' => 'https://instance-a.com/api/directory'],
+		];
 
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
+		$mockObjectService = $this->createMockObjectService($listings);
 
-        $this->loggerMock->expects($this->once())
-            ->method('info')
-            ->with($this->stringContains('Successfully broadcasted'));
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
 
-        $result = $this->invokePrivateMethod(
-            $this->broadcastService,
-            'sendBroadcastRequest',
-            ['https://target.example.com/api/directory', 'https://self.example.com/api/directory']
-        );
+		$this->clientMock->method('post')
+			->willReturn(new Response(200));
 
-        $this->assertTrue($result);
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
 
-    }//end testSendBroadcastRequestSuccessFirstAttempt()
+		// Expect the summary log with 1/1 successful.
+		$this->loggerMock->expects($this->atLeastOnce())
+			->method('info')
+			->with($this->logicalOr(
+				$this->stringContains('Starting broadcast'),
+				$this->stringContains('Successfully broadcasted'),
+				$this->stringContains('Broadcast completed: 1/1 successful')
+			));
 
+		$this->broadcastService->broadcast();
 
-    /**
-     * Test sendBroadcastRequest succeeds with 201 status code.
-     */
-    public function testSendBroadcastRequestSuccess201(): void
-    {
-        $this->clientMock->method('post')
-            ->willReturn(new Response(201));
+	}//end testBroadcastLogsSummary()
 
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
+	/**
+	 * Test broadcast to all directories when all targets are self (all skipped).
+	 */
+	public function testBroadcastAllTargetsAreSelf(): void {
+		$selfUrl = 'https://self.example.com/apps/opencatalogi/api/directory';
+
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn($selfUrl);
+
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+
+		$listings = [
+			['directory' => $selfUrl],
+		];
+
+		$mockObjectService = $this->createMockObjectService($listings);
+
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->broadcastService->broadcast();
+
+		// All targets are self, so results should be empty.
+		$this->assertEmpty($result);
+
+	}//end testBroadcastAllTargetsAreSelf()
+
+	/**
+	 * Test broadcast with specific URL that equals self URL.
+	 */
+	public function testBroadcastSpecificUrlEqualsSelf(): void {
+		$selfUrl = 'https://self.example.com/apps/opencatalogi/api/directory';
+
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn($selfUrl);
+
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+
+		$mockObjectService = $this->createMockObjectService([]);
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->broadcastService->broadcast($selfUrl);
+
+		// Self URL should be skipped even when explicitly provided.
+		$this->assertEmpty($result);
+
+	}//end testBroadcastSpecificUrlEqualsSelf()
+
+	/**
+	 * getMaxRetries() / getRequestTimeout() honour the operator-configured
+	 * app-config keys and fall back to the shipped defaults otherwise.
+	 *
+	 * @return void
+	 */
+	public function testRetryAndTimeoutAreOperatorTunable(): void {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnArgument(2);
+		$config->method('getValueInt')->willReturnMap(
+			[
+				['opencatalogi', 'broadcast_max_retries', 3, 7],
+				['opencatalogi', 'broadcast_request_timeout', 30, 12],
+			]
+		);
 
-        $result = $this->invokePrivateMethod(
-            $this->broadcastService,
-            'sendBroadcastRequest',
-            ['https://target.example.com/api', 'https://self.example.com/api']
-        );
+		$service = new BroadcastService(
+			$this->urlGeneratorMock,
+			$this->containerMock,
+			$this->appManagerMock,
+			$this->loggerMock,
+			$config,
+			new FederationHostPolicy($config)
+		);
+
+		$this->assertSame(7, $this->invokePrivateMethod($service, 'getMaxRetries'));
+		$this->assertSame(12, $this->invokePrivateMethod($service, 'getRequestTimeout'));
+
+	}//end testRetryAndTimeoutAreOperatorTunable()
+
+	/**
+	 * Out-of-range config values are clamped so the loop always runs at least
+	 * once and the timeout is never below one second.
+	 *
+	 * @return void
+	 */
+	public function testRetryAndTimeoutClampInvalidValues(): void {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnArgument(2);
+		$config->method('getValueInt')->willReturn(0);
 
-        $this->assertTrue($result);
-
-    }//end testSendBroadcastRequestSuccess201()
-
-
-    /**
-     * Test sendBroadcastRequest returns false after all retries fail.
-     */
-    public function testSendBroadcastRequestAllRetriesFail(): void
-    {
-        $request   = new Request('POST', 'https://target.example.com/api');
-        $exception = new RequestException('Connection refused', $request);
-
-        $this->clientMock->method('post')
-            ->willThrowException($exception);
-
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
-
-        $this->loggerMock->expects($this->exactly(3))
-            ->method('warning');
-
-        $this->loggerMock->expects($this->once())
-            ->method('error')
-            ->with($this->stringContains('All 3 broadcast attempts'));
-
-        $result = $this->invokePrivateMethod(
-            $this->broadcastService,
-            'sendBroadcastRequest',
-            ['https://target.example.com/api', 'https://self.example.com/api']
-        );
-
-        $this->assertFalse($result);
-
-    }//end testSendBroadcastRequestAllRetriesFail()
-
-
-    /**
-     * Test sendBroadcastRequest returns false on non-success status codes.
-     */
-    public function testSendBroadcastRequestNonSuccessStatus(): void
-    {
-        $this->clientMock->method('post')
-            ->willReturn(new Response(500));
-
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
-
-        $result = $this->invokePrivateMethod(
-            $this->broadcastService,
-            'sendBroadcastRequest',
-            ['https://target.example.com/api', 'https://self.example.com/api']
-        );
-
-        $this->assertFalse($result);
-
-    }//end testSendBroadcastRequestNonSuccessStatus()
-
-
-    /**
-     * Test sendBroadcastRequest succeeds on retry after initial failure.
-     */
-    public function testSendBroadcastRequestSuccessOnRetry(): void
-    {
-        $request   = new Request('POST', 'https://target.example.com/api');
-        $exception = new RequestException('Timeout', $request);
-
-        $this->clientMock->method('post')
-            ->willReturnOnConsecutiveCalls(
-                $this->throwException($exception),
-                new Response(200)
-            );
-
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
-
-        $result = $this->invokePrivateMethod(
-            $this->broadcastService,
-            'sendBroadcastRequest',
-            ['https://target.example.com/api', 'https://self.example.com/api']
-        );
-
-        $this->assertTrue($result);
-
-    }//end testSendBroadcastRequestSuccessOnRetry()
-
-
-    // ===== broadcast tests =====
-
-    /**
-     * Test broadcast with a specific valid URL.
-     */
-    public function testBroadcastWithSpecificUrl(): void
-    {
-        $this->urlGeneratorMock->method('linkToRoute')
-            ->willReturn('/apps/opencatalogi/api/directory');
-        $this->urlGeneratorMock->method('getAbsoluteURL')
-            ->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
-
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        // Mock getDirectoryUrls - even though we provide a URL, broadcast calls getDirectoryUrls first.
-        $mockObjectService = $this->createMockObjectService([]);
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
-
-        $this->clientMock->method('post')
-            ->willReturn(new Response(200));
-
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
-
-        $result = $this->broadcastService->broadcast('https://target.example.com/api/directory');
-
-        $this->assertArrayHasKey('https://target.example.com/api/directory', $result);
-        $this->assertTrue($result['https://target.example.com/api/directory']);
-
-    }//end testBroadcastWithSpecificUrl()
-
-
-    /**
-     * Test broadcast with invalid URL throws InvalidArgumentException.
-     */
-    public function testBroadcastWithInvalidUrl(): void
-    {
-        $this->urlGeneratorMock->method('linkToRoute')
-            ->willReturn('/apps/opencatalogi/api/directory');
-        $this->urlGeneratorMock->method('getAbsoluteURL')
-            ->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
-
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $mockObjectService = $this->createMockObjectService([]);
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid URL provided for broadcast');
-
-        $this->broadcastService->broadcast('not-a-valid-url');
-
-    }//end testBroadcastWithInvalidUrl()
-
-
-    /**
-     * Test broadcast skips self URL to avoid loops.
-     */
-    public function testBroadcastSkipsSelf(): void
-    {
-        $selfUrl = 'https://self.example.com/apps/opencatalogi/api/directory';
-
-        $this->urlGeneratorMock->method('linkToRoute')
-            ->willReturn('/apps/opencatalogi/api/directory');
-        $this->urlGeneratorMock->method('getAbsoluteURL')
-            ->willReturn($selfUrl);
-
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $listings = [
-            ['directory' => $selfUrl],
-            ['directory' => 'https://other.example.com/api/directory'],
-        ];
-
-        $mockObjectService = $this->createMockObjectService($listings);
-
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
-
-        $this->clientMock->method('post')
-            ->willReturn(new Response(200));
-
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
-
-        $result = $this->broadcastService->broadcast();
-
-        // Self URL should be skipped, only the other URL should be in results.
-        $this->assertArrayNotHasKey($selfUrl, $result);
-        $this->assertArrayHasKey('https://other.example.com/api/directory', $result);
-
-    }//end testBroadcastSkipsSelf()
-
-
-    /**
-     * Test broadcast with empty target URLs returns empty results.
-     */
-    public function testBroadcastEmptyTargets(): void
-    {
-        $this->urlGeneratorMock->method('linkToRoute')
-            ->willReturn('/apps/opencatalogi/api/directory');
-        $this->urlGeneratorMock->method('getAbsoluteURL')
-            ->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
-
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $mockObjectService = $this->createMockObjectService([]);
-
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
-
-        $this->loggerMock->expects($this->once())
-            ->method('warning')
-            ->with('No target URLs found for broadcasting');
-
-        $result = $this->broadcastService->broadcast();
-
-        $this->assertEmpty($result);
-
-    }//end testBroadcastEmptyTargets()
-
-
-    /**
-     * Test broadcast to all directories with mixed success.
-     */
-    public function testBroadcastAllDirectoriesMixed(): void
-    {
-        $this->urlGeneratorMock->method('linkToRoute')
-            ->willReturn('/apps/opencatalogi/api/directory');
-        $this->urlGeneratorMock->method('getAbsoluteURL')
-            ->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
-
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $listings = [
-            ['directory' => 'https://instance-a.com/api/directory'],
-            ['directory' => 'https://instance-b.com/api/directory'],
-        ];
-
-        $mockObjectService = $this->createMockObjectService($listings);
-
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
-
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
-
-        // First URL succeeds, second fails.
-        $request   = new Request('POST', 'https://instance-b.com/api/directory');
-        $exception = new RequestException('Connection refused', $request);
-
-        $this->clientMock->method('post')
-            ->willReturnCallback(function ($uri) use ($exception) {
-                if ($uri === 'https://instance-a.com/api/directory') {
-                    return new Response(200);
-                }
-
-                throw $exception;
-            });
-
-        $result = $this->broadcastService->broadcast();
-
-        $this->assertTrue($result['https://instance-a.com/api/directory']);
-        $this->assertFalse($result['https://instance-b.com/api/directory']);
-
-    }//end testBroadcastAllDirectoriesMixed()
-
-
-    /**
-     * Test broadcast logs summary with correct counts.
-     */
-    public function testBroadcastLogsSummary(): void
-    {
-        $this->urlGeneratorMock->method('linkToRoute')
-            ->willReturn('/apps/opencatalogi/api/directory');
-        $this->urlGeneratorMock->method('getAbsoluteURL')
-            ->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
-
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $listings = [
-            ['directory' => 'https://instance-a.com/api/directory'],
-        ];
-
-        $mockObjectService = $this->createMockObjectService($listings);
-
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
-
-        $this->clientMock->method('post')
-            ->willReturn(new Response(200));
-
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
-
-        // Expect the summary log with 1/1 successful.
-        $this->loggerMock->expects($this->atLeastOnce())
-            ->method('info')
-            ->with($this->logicalOr(
-                $this->stringContains('Starting broadcast'),
-                $this->stringContains('Successfully broadcasted'),
-                $this->stringContains('Broadcast completed: 1/1 successful')
-            ));
-
-        $this->broadcastService->broadcast();
-
-    }//end testBroadcastLogsSummary()
-
-
-    /**
-     * Test broadcast to all directories when all targets are self (all skipped).
-     */
-    public function testBroadcastAllTargetsAreSelf(): void
-    {
-        $selfUrl = 'https://self.example.com/apps/opencatalogi/api/directory';
-
-        $this->urlGeneratorMock->method('linkToRoute')
-            ->willReturn('/apps/opencatalogi/api/directory');
-        $this->urlGeneratorMock->method('getAbsoluteURL')
-            ->willReturn($selfUrl);
-
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $listings = [
-            ['directory' => $selfUrl],
-        ];
-
-        $mockObjectService = $this->createMockObjectService($listings);
-
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
-
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
-
-        $result = $this->broadcastService->broadcast();
-
-        // All targets are self, so results should be empty.
-        $this->assertEmpty($result);
-
-    }//end testBroadcastAllTargetsAreSelf()
-
-
-    /**
-     * Test broadcast with specific URL that equals self URL.
-     */
-    public function testBroadcastSpecificUrlEqualsSelf(): void
-    {
-        $selfUrl = 'https://self.example.com/apps/opencatalogi/api/directory';
-
-        $this->urlGeneratorMock->method('linkToRoute')
-            ->willReturn('/apps/opencatalogi/api/directory');
-        $this->urlGeneratorMock->method('getAbsoluteURL')
-            ->willReturn($selfUrl);
-
-        $this->appManagerMock->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $mockObjectService = $this->createMockObjectService([]);
-        $this->containerMock->method('get')
-            ->willReturn($mockObjectService);
-
-        $this->appManagerMock->method('getAppInfo')
-            ->willReturn(['version' => '1.0.0']);
-
-        $result = $this->broadcastService->broadcast($selfUrl);
-
-        // Self URL should be skipped even when explicitly provided.
-        $this->assertEmpty($result);
-
-    }//end testBroadcastSpecificUrlEqualsSelf()
-
+		$service = new BroadcastService(
+			$this->urlGeneratorMock,
+			$this->containerMock,
+			$this->appManagerMock,
+			$this->loggerMock,
+			$config,
+			new FederationHostPolicy($config)
+		);
+
+		$this->assertSame(1, $this->invokePrivateMethod($service, 'getMaxRetries'));
+		$this->assertSame(1, $this->invokePrivateMethod($service, 'getRequestTimeout'));
+
+	}//end testRetryAndTimeoutClampInvalidValues()
+
+	// ===== enqueueBroadcast tests =====
+	//
+	// enqueueBroadcast() is the Phase 1 adapter from
+	// openspec/changes/opencatalogi-delegate-broadcast-to-or-webhooks: it wraps
+	// the existing synchronous sendBroadcastRequest() in a BroadcastResult
+	// without changing dispatch behaviour, so these targets are literal IPs
+	// (no DNS lookup) rather than the `@group network`-tagged hostnames used
+	// by the broadcast() tests above.
+
+	/**
+	 * Test enqueueBroadcast returns a delivered BroadcastResult on success.
+	 */
+	public function testEnqueueBroadcastReturnsDeliveredOnSuccess(): void {
+		$this->clientMock->method('post')
+			->willReturn(new Response(200));
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->broadcastService->enqueueBroadcast('https://203.0.113.10/directory', 'https://self.example.com/api/directory');
+
+		$this->assertInstanceOf(BroadcastResult::class, $result);
+		$this->assertSame('https://203.0.113.10/directory', $result->url);
+		$this->assertSame(BroadcastResult::STATUS_DELIVERED, $result->status);
+		$this->assertTrue($result->isSuccessful());
+
+	}//end testEnqueueBroadcastReturnsDeliveredOnSuccess()
+
+	/**
+	 * Test enqueueBroadcast returns a failed BroadcastResult when delivery does not succeed.
+	 */
+	public function testEnqueueBroadcastReturnsFailedOnDeliveryFailure(): void {
+		$this->clientMock->method('post')
+			->willReturn(new Response(500));
+
+		$this->appManagerMock->method('getAppInfo')
+			->willReturn(['version' => '1.0.0']);
+
+		$result = $this->broadcastService->enqueueBroadcast('https://203.0.113.10/directory', 'https://self.example.com/api/directory');
+
+		$this->assertSame(BroadcastResult::STATUS_FAILED, $result->status);
+		$this->assertFalse($result->isSuccessful());
+
+	}//end testEnqueueBroadcastReturnsFailedOnDeliveryFailure()
+
+	/**
+	 * Test enqueueBroadcast rejects an unsafe URL before any delivery is attempted.
+	 */
+	public function testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery(): void {
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$this->expectException(InvalidArgumentException::class);
+
+		$this->broadcastService->enqueueBroadcast('http://169.254.169.254/latest/meta-data', 'https://self.example.com/api/directory');
+
+	}//end testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery()
+
+
+	/**
+	 * A localhost instance must not advertise itself to a real directory.
+	 *
+	 * The SSRF pre-flight cannot catch this: it validates the TARGET, and the
+	 * target here is a perfectly reachable public directory. It is the PAYLOAD —
+	 * our own address — that no peer could resolve. Without the guard this call
+	 * POSTs `http://localhost/...` into a production directory.
+	 */
+	public function testBroadcastRefusesWhenThisInstanceAdvertisesALocalAddress(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('http://localhost/apps/opencatalogi/api/directory');
+
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$results = $this->broadcastService->broadcast('https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
+
+		$this->assertSame([], $results);
+
+	}//end testBroadcastRefusesWhenThisInstanceAdvertisesALocalAddress()
+
+
+	/**
+	 * The `local_federation_hosts` allowlist re-enables a local docker rig.
+	 *
+	 * Two instances on a private network must still be able to federate, which is
+	 * what the allowlist exists for. Same local address as the test above, so the
+	 * only difference is the allowlist — that is what makes this a control.
+	 */
+	public function testBroadcastProceedsWhenTheLocalHostIsAllowlisted(): void {
+		$allowlistingConfig = $this->createMock(IAppConfig::class);
+		$allowlistingConfig->method('getValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $default = '') {
+					return match ($key) {
+						'listing_schema' => 'listing',
+						'listing_register' => 'directory',
+						'local_federation_hosts' => 'localhost',
+						default => $default,
+					};
+				}
+			);
+
+		$policy = new FederationHostPolicy($allowlistingConfig);
+
+		$this->assertFalse(
+			$policy->isLocalUrl('http://localhost/apps/opencatalogi/api/directory'),
+			'An allowlisted host must be treated as remote so a docker rig can federate.'
+		);
+		$this->assertTrue(
+			$policy->isLocalUrl('http://127.0.0.1/apps/opencatalogi/api/directory'),
+			'Allowlisting one host must not blanket-allow every local address.'
+		);
+
+	}//end testBroadcastProceedsWhenTheLocalHostIsAllowlisted()
 
 }//end class

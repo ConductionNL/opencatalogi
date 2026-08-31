@@ -1,0 +1,502 @@
+<?php
+
+/**
+ * Unit tests for SetupController (ADR-042 first-time-setup contract).
+ *
+ * @category Test
+ * @package  OCA\OpenCatalogi\Tests
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
+ * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md#requirement-setup-server-contract-endpoints-onb-005
+ */
+
+declare(strict_types=1);
+
+namespace Unit\Controller;
+
+use OCA\OpenCatalogi\Controller\SetupController;
+use OCA\OpenCatalogi\Service\BroadcastService;
+use OCA\OpenCatalogi\Service\DemoDataService;
+use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Service\SettingsService;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\IAppConfig;
+use OCP\IL10N;
+use OCP\IRequest;
+use OCP\IUserSession;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Unit tests for SetupController.
+ */
+class SetupControllerTest extends TestCase {
+
+	/**
+	 * The setup contract version, read from the controller rather than typed.
+	 *
+	 * These assertions used to hardcode `2`. This change bumped
+	 * SetupController::SETUP_VERSION to 3 and three literals in this file went
+	 * stale at once — one asserting the reported version, one seeding the
+	 * `onboarding_completed_version` short-circuit (which then no longer
+	 * matched, so a step silently reported "not done"), and one asserting the
+	 * value written back. Reading the constant means the next bump cannot
+	 * quietly invalidate the tests that are supposed to guard it.
+	 *
+	 * @return int
+	 */
+	private static function setupVersion(): int {
+		$constant = (new \ReflectionClass(SetupController::class))->getConstant('SETUP_VERSION');
+
+		return (int)$constant;
+	}//end setupVersion()
+	private $demoDataService;
+
+	private IRequest|MockObject $request;
+	private IAppConfig|MockObject $config;
+	private SettingsService|MockObject $settingsService;
+	private DirectoryService|MockObject $directoryService;
+	private BroadcastService|MockObject $broadcastService;
+	private ContainerInterface|MockObject $container;
+	private IL10N|MockObject $l10n;
+	private LoggerInterface|MockObject $logger;
+	private IUserSession|MockObject $userSession;
+	private SetupController $controller;
+
+	/**
+	 * Backing store for the mocked IAppConfig getValueString/setValueString.
+	 *
+	 * @var array<string,string>
+	 */
+	private array $configValues = [];
+
+	protected function setUp(): void {
+		$this->request = $this->createMock(IRequest::class);
+		$this->config = $this->createMock(IAppConfig::class);
+		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->directoryService = $this->createMock(DirectoryService::class);
+		$this->broadcastService = $this->createMock(BroadcastService::class);
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->userSession = $this->createMock(IUserSession::class);
+
+		// Default to a signed-in user so status()'s login guard passes; the
+		// anonymous path is asserted explicitly in its own test.
+		$this->userSession->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+
+		$this->l10n->method('t')
+			->willReturnCallback(
+				fn (string $text, array $params = []) => $params === [] ? $text : vsprintf($text, $params)
+			);
+
+		// A stateful IAppConfig backed by $this->configValues.
+		$this->config->method('getValueString')
+			->willReturnCallback(
+				fn (string $app, string $key, string $default = '') => $this->configValues[$key] ?? $default
+			);
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) {
+					$this->configValues[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->demoDataService = $this->createMock(DemoDataService::class);
+
+		$this->directoryService->method('getDefaultDirectoryUrl')
+			->willReturn('https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
+
+		$this->controller = new SetupController(
+			'opencatalogi',
+			$this->request,
+			$this->config,
+			$this->settingsService,
+			// Positional: DemoDataService sits between $settingsService and
+			// $directoryService (ADR-111 rule 4). Omitting it shifts every later
+			// argument by one — PHPUnit reports that as a type error on the
+			// NEXT argument, which is what it did on buildiq.
+			$this->demoDataService,
+			$this->directoryService,
+			$this->broadcastService,
+			$this->container,
+			$this->l10n,
+			$this->logger,
+			$this->userSession
+		);
+	}
+
+	public function testStatusRejectsAnonymous(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
+		$controller = new SetupController(
+			'opencatalogi',
+			$this->request,
+			$this->config,
+			$this->settingsService,
+			// Positional: DemoDataService sits between $settingsService and
+			// $directoryService (ADR-111 rule 4). Omitting it shifts every later
+			// argument by one — PHPUnit reports that as a type error on the
+			// NEXT argument, which is what it did on buildiq.
+			$this->createMock(DemoDataService::class),
+			$this->directoryService,
+			$this->broadcastService,
+			$this->container,
+			$this->l10n,
+			$this->logger,
+			$session
+		);
+
+		$response = $controller->status();
+
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+	}
+
+	/**
+	 * Seed the four register/schema keys so registersConfigured() is true.
+	 */
+	private function wireRegisters(): void {
+		$this->configValues['catalog_register'] = '14';
+		$this->configValues['catalog_schema'] = '54';
+		$this->configValues['publication_register'] = '14';
+		$this->configValues['listing_register'] = '14';
+		$this->configValues['listing_schema'] = '55';
+	}
+
+	/**
+	 * Wire the container to return an ObjectService whose searchObjects yields $result.
+	 */
+	private function mockObjectService(array $result = []): MockObject {
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjects')->willReturn($result);
+
+		$this->container->method('get')
+			->with('OCA\OpenRegister\Service\ObjectService')
+			->willReturn($objectService);
+
+		return $objectService;
+	}
+
+	/**
+	 * Build an ObjectEntity mock whose jsonSerialize() returns a safe wrapper.
+	 *
+	 * @param array<string,mixed> $object The inner object payload.
+	 */
+	private function makeEntity(array $object = []): MockObject {
+		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$entity->method('jsonSerialize')->willReturn(['object' => $object]);
+		return $entity;
+	}
+
+	public function testStatusConfigCheckDoneWhenRegistersWired(): void {
+		$this->wireRegisters();
+		$this->configValues['default_catalog_scope'] = 'public';
+		$this->mockObjectService([$this->makeEntity()]);
+
+		$response = $this->controller->status();
+		$body = $response->getData();
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame(self::setupVersion(), $body['version']);
+		$this->assertTrue($body['steps']['config-check']['done']);
+		$this->assertTrue($body['steps']['catalog-scope']['done']);
+		$this->assertTrue($body['steps']['create-catalog']['done']);
+		$this->assertTrue($body['completed']);
+	}
+
+	public function testStatusConfigCheckNotDoneWhenRegistersMissing(): void {
+		// Only some keys set — catalog_register missing.
+		$this->configValues['catalog_schema'] = '54';
+		$this->configValues['publication_register'] = '14';
+		$this->configValues['listing_register'] = '14';
+		$this->mockObjectService([]);
+
+		$body = $this->controller->status()->getData();
+
+		$this->assertFalse($body['steps']['config-check']['done']);
+		$this->assertFalse($body['completed']);
+	}
+
+	public function testStatusCreateCatalogDoneViaOnboardingFlag(): void {
+		$this->wireRegisters();
+		$this->configValues['default_catalog_scope'] = 'internal';
+		$this->configValues['onboarding_completed_version'] = (string)self::setupVersion();
+		// No ObjectService needed — the onboarding flag short-circuits catalogExists().
+
+		$body = $this->controller->status()->getData();
+
+		$this->assertTrue($body['steps']['create-catalog']['done']);
+		$this->assertTrue($body['completed']);
+	}
+
+	public function testConfigPersistsOnlyWhitelistedKeys(): void {
+		$this->request->method('getParams')->willReturn(
+			[
+				'default_catalog_scope' => 'private',
+				'catalog_register' => '999',
+				'unrelated_key' => 'nope',
+			]
+		);
+
+		$body = $this->controller->config()->getData();
+
+		$this->assertContains('default_catalog_scope', $body['saved']);
+		$this->assertNotContains('catalog_register', $body['saved']);
+		$this->assertNotContains('unrelated_key', $body['saved']);
+		$this->assertSame('private', $this->configValues['default_catalog_scope']);
+		// The non-whitelisted key was not written.
+		$this->assertArrayNotHasKey('catalog_register', $this->configValues);
+	}
+
+	public function testActionReloadSettingsSucceedsWhenRegistersBecomeConfigured(): void {
+		$this->settingsService->expects($this->once())
+			->method('loadSettings')
+			->willReturnCallback(
+				function () {
+					$this->wireRegisters();
+					return [];
+				}
+			);
+
+		$body = $this->controller->action('reload-settings')->getData();
+
+		$this->assertTrue($body['success']);
+	}
+
+	public function testActionReloadSettingsFailsWhenStillUnconfigured(): void {
+		$this->settingsService->method('loadSettings')->willReturn([]);
+
+		$body = $this->controller->action('reload-settings')->getData();
+
+		$this->assertFalse($body['success']);
+	}
+
+	public function testCreateFirstCatalogCreatesWhenNoneExists(): void {
+		$this->wireRegisters();
+		$this->configValues['default_catalog_scope'] = 'public';
+		$objectService = $this->mockObjectService([]);
+
+		$objectService->expects($this->once())->method('saveObject');
+
+		$body = $this->controller->action('create-first-catalog')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertSame((string)self::setupVersion(), $this->configValues['onboarding_completed_version']);
+	}
+
+	/**
+	 * The seeded catalog must include `registers` + `schemas` so
+	 * `PublicationService::getCatalogFilters()` has a scope to union.
+	 * Regression coverage for WOO-529: without these arrays the /search
+	 * endpoint returns 0 local rows on a fresh install and the create-
+	 * publication modal falls into the WOO-527 "not configured" state.
+	 */
+	public function testCreateFirstCatalogSeedsRegistersAndSchemasFromPublicationConfig(): void {
+		$this->wireRegisters();
+		$this->configValues['publication_schema'] = '77';
+		$this->configValues['default_catalog_scope'] = 'public';
+		$objectService = $this->mockObjectService([]);
+
+		$capturedObject = null;
+		$saved = $this->makeEntity();
+		$objectService->expects($this->once())
+			->method('saveObject')
+			->willReturnCallback(function ($object) use (&$capturedObject, $saved) {
+				$capturedObject = $object;
+				return $saved;
+			});
+
+		$body = $this->controller->action('create-first-catalog')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertIsArray($capturedObject, 'saveObject received a payload');
+		$this->assertArrayHasKey('registers', $capturedObject, 'catalog has registers scope');
+		$this->assertArrayHasKey('schemas', $capturedObject, 'catalog has schemas scope');
+		$this->assertSame(['14'], $capturedObject['registers']);
+		$this->assertSame(['77'], $capturedObject['schemas']);
+	}
+
+	/**
+	 * Absent publication_register / publication_schema keys must not abort
+	 * catalog creation — the wizard still produces a catalog that an admin
+	 * can retro-fit later. Only the corresponding array is omitted.
+	 */
+	public function testCreateFirstCatalogOmitsScopeArraysWhenPublicationKeysMissing(): void {
+		$this->wireRegisters();
+		unset($this->configValues['publication_register']);
+		// publication_schema was never set in wireRegisters; make it explicit.
+		$this->configValues['default_catalog_scope'] = 'public';
+		$objectService = $this->mockObjectService([]);
+
+		$capturedObject = null;
+		$saved = $this->makeEntity();
+		$objectService->expects($this->once())
+			->method('saveObject')
+			->willReturnCallback(function ($object) use (&$capturedObject, $saved) {
+				$capturedObject = $object;
+				return $saved;
+			});
+
+		$body = $this->controller->action('create-first-catalog')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertArrayNotHasKey('registers', $capturedObject);
+		$this->assertArrayNotHasKey('schemas', $capturedObject);
+	}
+
+	public function testCreateFirstCatalogIsIdempotentWhenCatalogExists(): void {
+		$this->wireRegisters();
+		$objectService = $this->mockObjectService([$this->makeEntity()]);
+
+		$objectService->expects($this->never())->method('saveObject');
+
+		$body = $this->controller->action('create-first-catalog')->getData();
+
+		$this->assertTrue($body['success']);
+	}
+
+	public function testConnectFederationSyncsTheNationalDirectory(): void {
+		$url = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+
+		$this->directoryService->expects($this->once())
+			->method('syncDirectory')
+			->with($url)
+			->willReturn(['listings_created' => 3, 'listings_updated' => 1]);
+
+		$this->broadcastService->expects($this->once())
+			->method('broadcast')
+			->with($url)
+			->willReturn([$url => true]);
+
+		$body = $this->controller->action('connect-federation')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertSame(3, $body['details']['listings_created']);
+		$this->assertSame(1, $body['details']['listings_updated']);
+		$this->assertTrue($body['details']['advertised']);
+		$this->assertStringContainsString('Fetched 3 new and 1 updated', $body['message']);
+		$this->assertStringContainsString('announced to the directory', $body['message']);
+	}
+
+	public function testConnectFederationZeroListingsReportsEmptyDirectoryAndAdvertise(): void {
+		$url = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+
+		$this->directoryService->method('syncDirectory')
+			->willReturn(['listings_created' => 0, 'listings_updated' => 0]);
+
+		$this->broadcastService->method('broadcast')
+			->willReturn([$url => true]);
+
+		$body = $this->controller->action('connect-federation')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertSame(0, $body['details']['listings_created']);
+		$this->assertSame(0, $body['details']['listings_updated']);
+		$this->assertTrue($body['details']['advertised']);
+		// No misleading "connected" — instead explain what 0/0 actually means.
+		$this->assertStringContainsString('no other peer instances registered yet', $body['message']);
+		$this->assertStringContainsString('announced to the directory', $body['message']);
+	}
+
+	public function testConnectFederationBroadcastFailureIsReportedButStepSucceeds(): void {
+		$this->directoryService->method('syncDirectory')
+			->willReturn(['listings_created' => 0, 'listings_updated' => 0]);
+
+		$this->broadcastService->method('broadcast')
+			->willThrowException(new \RuntimeException('remote unreachable'));
+
+		$body = $this->controller->action('connect-federation')->getData();
+
+		// Pull succeeded → step is still success:true, but advertise=false surfaces
+		// in the details and the message tells the admin explicitly.
+		$this->assertTrue($body['success']);
+		$this->assertFalse($body['details']['advertised']);
+		$this->assertStringContainsString('could not be announced', $body['message']);
+	}
+
+	public function testConnectFederationFailureIsNonFatal(): void {
+		$this->directoryService->method('syncDirectory')
+			->willThrowException(new \RuntimeException('unreachable'));
+
+		$response = $this->controller->action('connect-federation');
+		$body = $response->getData();
+
+		// Non-fatal: success=false but HTTP 200 so the optional step stays skippable.
+		$this->assertFalse($body['success']);
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}
+
+	/**
+	 * The happy path, and the numbers reach the operator.
+	 *
+	 * 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be told
+	 * apart from an import that wrote nothing — which is exactly the defect the
+	 * openregister side of this programme shipped and had to fix.
+	 */
+	public function testInstallDemoDataReportsWhatLandedAndRecordsTheDecision(): void {
+		$this->demoDataService->expects($this->once())
+			->method('install')
+			->willReturn(['objects' => 48, 'schemas' => 16]);
+
+		$body = $this->controller->action('install-demo-data')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertStringContainsString('48', $body['message']);
+		$this->assertStringContainsString('16', $body['message']);
+		$this->assertSame(['objects' => 48, 'schemas' => 16], $body['detail']);
+		$this->assertSame('installed', $this->configValues['demo_data_decided']);
+	}
+
+	/**
+	 * 🔴 A FAILED INSTALL MUST NOT RECORD THE DECISION.
+	 *
+	 * The controller marks the step decided only AFTER the import returns. Doing
+	 * it first would let a failed install present as a finished step — the wizard
+	 * would never offer it again, and the operator would never learn the demo
+	 * data is absent.
+	 */
+	public function testAFailedInstallIsReportedAndLeavesTheStepUndecided(): void {
+		$this->demoDataService->method('install')
+			->willThrowException(new \RuntimeException('openregister is not installed'));
+
+		$body = $this->controller->action('install-demo-data')->getData();
+
+		$this->assertFalse($body['success']);
+		$this->assertStringContainsString('openregister', $body['message']);
+		$this->assertArrayNotHasKey(
+			'demo_data_decided',
+			$this->configValues,
+			'a failed install must leave the step undecided so it is offered again'
+		);
+	}
+
+	/**
+	 * Skipping is a DECISION, not an absence of one: it records `skipped` so the
+	 * optional wizard stops offering the step, without importing anything.
+	 */
+	public function testSkipDemoDataRecordsTheDecisionWithoutImporting(): void {
+		$this->demoDataService->expects($this->never())->method('install');
+
+		$body = $this->controller->action('skip-demo-data')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertSame('skipped', $this->configValues['demo_data_decided']);
+	}
+
+	public function testUnknownActionReturnsBadRequest(): void {
+		$response = $this->controller->action('does-not-exist');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertFalse($response->getData()['success']);
+	}
+}//end class

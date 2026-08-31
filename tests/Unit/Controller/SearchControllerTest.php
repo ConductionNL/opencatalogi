@@ -5,220 +5,330 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\SearchController;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCP\App\IAppManager;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for SearchController.
  */
-class SearchControllerTest extends TestCase
-{
+class SearchControllerTest extends TestCase {
 
-    private IRequest|MockObject $request;
-    private PublicationService|MockObject $publicationService;
-    private SearchController $controller;
+	private IRequest|MockObject $request;
 
-    protected function setUp(): void
-    {
-        $this->request            = $this->createMock(IRequest::class);
-        $this->publicationService = $this->createMock(PublicationService::class);
+	private PublicationService|MockObject $publicationService;
 
-        $this->controller = new SearchController(
-            'opencatalogi',
-            $this->request,
-            $this->publicationService
-        );
-    }
+	private IUserSession|MockObject $userSession;
 
-    public function testIndexDelegatesToPublicationService(): void
-    {
-        $expectedResponse = new JSONResponse(['results' => [], 'total' => 0]);
+	private IL10N|MockObject $l10n;
 
-        $this->publicationService->method('index')
-            ->with(null)
-            ->willReturn($expectedResponse);
+	private PublicationQueryService|MockObject $queryService;
 
-        $response = $this->controller->index();
+	private ContainerInterface|MockObject $container;
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame($expectedResponse, $response);
-    }
+	private IAppManager|MockObject $appManager;
 
-    public function testIndexWithCatalogId(): void
-    {
-        $expectedResponse = new JSONResponse(['results' => [['id' => 'pub-1']], 'total' => 1]);
+	private LoggerInterface|MockObject $logger;
 
-        $this->publicationService->method('index')
-            ->with('catalog-123')
-            ->willReturn($expectedResponse);
+	private SearchController $controller;
 
-        $response = $this->controller->index('catalog-123');
+	protected function setUp(): void {
+		$this->request = $this->createMock(IRequest::class);
+		$this->publicationService = $this->createMock(PublicationService::class);
+		$this->userSession = $this->createMock(IUserSession::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appManager = $this->createMock(IAppManager::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame($expectedResponse, $response);
-    }
+		// L10n->t() returns the source string unchanged for assertions.
+		$this->l10n->method('t')
+			->willReturnArgument(0);
 
-    public function testIndexWithNullCatalogId(): void
-    {
-        $expectedResponse = new JSONResponse(['results' => []]);
+		// Show()/attachments()/etc. guard on an authenticated user; default to logged-in.
+		$this->userSession->method('getUser')
+			->willReturn($this->createMock(\OCP\IUser::class));
 
-        $this->publicationService->expects($this->once())
-            ->method('index')
-            ->with(null)
-            ->willReturn($expectedResponse);
+		$this->appManager->method('getInstalledApps')
+			->willReturn(['openregister']);
 
-        $response = $this->controller->index(null);
+		$this->controller = new SearchController(
+			appName: 'opencatalogi',
+			request: $this->request,
+			publicationService: $this->publicationService,
+			userSession: $this->userSession,
+			l10n: $this->l10n,
+			queryService: $this->queryService,
+			container: $this->container,
+			appManager: $this->appManager,
+			logger: $this->logger
+		);
+	}//end setUp()
 
-        $this->assertSame($expectedResponse, $response);
-    }
+	/**
+	 * Anonymous callers get the assembled envelope with HTTP 200.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturnsAssembledSearchResultsForAnonymousCallers(): void {
+		$objectService = new \stdClass();
+		$this->container->method('get')
+			->with('OCA\OpenRegister\Service\ObjectService')
+			->willReturn($objectService);
 
-    public function testShowDelegatesToPublicationService(): void
-    {
-        $expectedResponse = new JSONResponse(['id' => 'pub-123', 'title' => 'Test']);
+		$this->request->method('getParams')->willReturn(['_search' => 'jaarverslag']);
 
-        $this->publicationService->method('show')
-            ->with('pub-123')
-            ->willReturn($expectedResponse);
+		$expected = ['results' => [['@self' => ['schema' => 'publication']]], 'total' => 1];
+		$this->queryService->expects($this->once())
+			->method('assemblePublicSearchResults')
+			->with(['_search' => 'jaarverslag'], $objectService)
+			->willReturn($expected);
 
-        $response = $this->controller->show('pub-123');
+		$response = $this->controller->index();
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame($expectedResponse, $response);
-    }
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame($expected, $response->getData());
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testIndexReturnsAssembledSearchResultsForAnonymousCallers()
 
-    public function testShowWithUuid(): void
-    {
-        $uuid             = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-        $expectedResponse = new JSONResponse(['uuid' => $uuid]);
+	/**
+	 * The index() endpoint must be reachable without a session user — no auth guard.
+	 *
+	 * @return void
+	 */
+	public function testIndexNeverReturns401(): void {
+		// Index() must be reachable without a session user — no auth guard.
+		$this->userSession->method('getUser')->willReturn(null);
 
-        $this->publicationService->expects($this->once())
-            ->method('show')
-            ->with($uuid)
-            ->willReturn($expectedResponse);
+		$objectService = new \stdClass();
+		$this->container->method('get')->willReturn($objectService);
+		$this->request->method('getParams')->willReturn([]);
+		$this->queryService->method('assemblePublicSearchResults')
+			->willReturn(['results' => [], 'total' => 0]);
 
-        $response = $this->controller->show($uuid);
+		$response = $this->controller->index();
 
-        $this->assertSame($expectedResponse, $response);
-    }
+		$this->assertNotSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testIndexNeverReturns401()
 
-    public function testAttachmentsDelegatesToPublicationService(): void
-    {
-        $expectedResponse = new JSONResponse(['files' => [['name' => 'doc.pdf']]]);
+	/**
+	 * When OpenRegister is not installed, index() returns HTTP 503 (Service
+	 * Unavailable) with a user-facing 'search backend not available' message —
+	 * NOT a generic 500. This distinguishes deploy issues (OR not enabled) from
+	 * real code bugs, and the log level is `warning` (not `error`) to match.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturns503WhenOpenRegisterUnavailable(): void {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('getInstalledApps')->willReturn([]);
+		// Log-level `warning` for the deploy-issue path — `error` reserved for genuine bugs.
+		$this->logger->expects($this->once())->method('warning');
+		$this->logger->expects($this->never())->method('error');
 
-        $this->publicationService->method('attachments')
-            ->with('pub-123')
-            ->willReturn($expectedResponse);
+		$controller = new SearchController(
+			appName: 'opencatalogi',
+			request: $this->request,
+			publicationService: $this->publicationService,
+			userSession: $this->userSession,
+			l10n: $this->l10n,
+			queryService: $this->queryService,
+			container: $this->container,
+			appManager: $appManager,
+			logger: $this->logger
+		);
 
-        $response = $this->controller->attachments('pub-123');
+		$response = $controller->index();
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame($expectedResponse, $response);
-    }
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame(['error' => 'Search backend is not available.'], $response->getData());
+	}//end testIndexReturns503WhenOpenRegisterUnavailable()
 
-    public function testAttachmentsWithEmptyResult(): void
-    {
-        $expectedResponse = new JSONResponse(['files' => []]);
+	/**
+	 * When the query service throws a non-Runtime exception (i.e. a genuine code
+	 * bug, not a deploy issue), index() returns the generic 500 + `error` log.
+	 * This test locks in that the 500 branch is NOT triggered by the RuntimeException
+	 * / OR-not-installed path any more.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturns500ForGenericException(): void {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn(new \stdClass());
+		$this->queryService->method('assemblePublicSearchResults')
+			->willThrowException(new \LogicException('unexpected bug'));
 
-        $this->publicationService->expects($this->once())
-            ->method('attachments')
-            ->with('pub-empty')
-            ->willReturn($expectedResponse);
+		$this->logger->expects($this->once())->method('error');
+		$this->logger->expects($this->never())->method('warning');
 
-        $response = $this->controller->attachments('pub-empty');
+		$controller = new SearchController(
+			appName: 'opencatalogi',
+			request: $this->request,
+			publicationService: $this->publicationService,
+			userSession: $this->userSession,
+			l10n: $this->l10n,
+			queryService: $this->queryService,
+			container: $this->container,
+			appManager: $appManager,
+			logger: $this->logger
+		);
 
-        $this->assertSame($expectedResponse, $response);
-    }
+		$response = $controller->index();
 
-    public function testDownloadReturnsJsonResponse(): void
-    {
-        $expectedResponse = new JSONResponse(['url' => 'http://example.com/file.pdf']);
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$this->assertSame(['error' => 'Internal server error'], $response->getData());
+	}//end testIndexReturns500ForGenericException()
 
-        $this->publicationService->method('download')
-            ->with('pub-123')
-            ->willReturn($expectedResponse);
+	public function testShowDelegatesToPublicationService(): void {
+		$expectedResponse = new JSONResponse(['id' => 'pub-123', 'title' => 'Test']);
 
-        $response = $this->controller->download('pub-123');
+		$this->publicationService->method('show')
+			->with('pub-123')
+			->willReturn($expectedResponse);
 
-        $this->assertSame($expectedResponse, $response);
-    }
+		$response = $this->controller->show('pub-123');
 
-    public function testDownloadReturnsDataDownloadResponse(): void
-    {
-        $expectedResponse = new DataDownloadResponse('file-content', 'document.pdf', 'application/pdf');
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame($expectedResponse, $response);
+	}//end testShowDelegatesToPublicationService()
 
-        $this->publicationService->method('download')
-            ->with('pub-456')
-            ->willReturn($expectedResponse);
+	public function testShowWithUuid(): void {
+		$uuid = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+		$expectedResponse = new JSONResponse(['uuid' => $uuid]);
 
-        $response = $this->controller->download('pub-456');
+		$this->publicationService->expects($this->once())
+			->method('show')
+			->with($uuid)
+			->willReturn($expectedResponse);
 
-        $this->assertInstanceOf(DataDownloadResponse::class, $response);
-        $this->assertSame($expectedResponse, $response);
-    }
+		$response = $this->controller->show($uuid);
 
-    public function testUsesDelegatesToPublicationService(): void
-    {
-        $expectedResponse = new JSONResponse(['results' => [], 'total' => 0]);
+		$this->assertSame($expectedResponse, $response);
+	}//end testShowWithUuid()
 
-        $this->publicationService->method('uses')
-            ->with('pub-123')
-            ->willReturn($expectedResponse);
+	public function testAttachmentsDelegatesToPublicationService(): void {
+		$expectedResponse = new JSONResponse(['files' => [['name' => 'doc.pdf']]]);
 
-        $response = $this->controller->uses('pub-123');
+		$this->publicationService->method('attachments')
+			->with('pub-123')
+			->willReturn($expectedResponse);
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame($expectedResponse, $response);
-    }
+		$response = $this->controller->attachments('pub-123');
 
-    public function testUsesWithRelatedObjects(): void
-    {
-        $expectedResponse = new JSONResponse([
-            'results' => [['id' => 'obj-1'], ['id' => 'obj-2']],
-            'total'   => 2,
-        ]);
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame($expectedResponse, $response);
+	}//end testAttachmentsDelegatesToPublicationService()
 
-        $this->publicationService->expects($this->once())
-            ->method('uses')
-            ->with('pub-789')
-            ->willReturn($expectedResponse);
+	public function testAttachmentsWithEmptyResult(): void {
+		$expectedResponse = new JSONResponse(['files' => []]);
 
-        $response = $this->controller->uses('pub-789');
+		$this->publicationService->expects($this->once())
+			->method('attachments')
+			->with('pub-empty')
+			->willReturn($expectedResponse);
 
-        $this->assertSame($expectedResponse, $response);
-    }
+		$response = $this->controller->attachments('pub-empty');
 
-    public function testUsedDelegatesToPublicationService(): void
-    {
-        $expectedResponse = new JSONResponse(['results' => [], 'total' => 0]);
+		$this->assertSame($expectedResponse, $response);
+	}//end testAttachmentsWithEmptyResult()
 
-        $this->publicationService->method('used')
-            ->with('pub-123')
-            ->willReturn($expectedResponse);
+	public function testDownloadReturnsJsonResponse(): void {
+		$expectedResponse = new JSONResponse(['url' => 'http://example.com/file.pdf']);
 
-        $response = $this->controller->used('pub-123');
+		$this->publicationService->method('download')
+			->with('pub-123')
+			->willReturn($expectedResponse);
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame($expectedResponse, $response);
-    }
+		$response = $this->controller->download('pub-123');
 
-    public function testUsedWithReferencingObjects(): void
-    {
-        $expectedResponse = new JSONResponse([
-            'results' => [['id' => 'ref-1']],
-            'total'   => 1,
-        ]);
+		$this->assertSame($expectedResponse, $response);
+	}//end testDownloadReturnsJsonResponse()
 
-        $this->publicationService->expects($this->once())
-            ->method('used')
-            ->with('pub-999')
-            ->willReturn($expectedResponse);
+	public function testDownloadReturnsDataDownloadResponse(): void {
+		$expectedResponse = new DataDownloadResponse('file-content', 'document.pdf', 'application/pdf');
 
-        $response = $this->controller->used('pub-999');
+		$this->publicationService->method('download')
+			->with('pub-456')
+			->willReturn($expectedResponse);
 
-        $this->assertSame($expectedResponse, $response);
-    }
-}
+		$response = $this->controller->download('pub-456');
+
+		$this->assertInstanceOf(DataDownloadResponse::class, $response);
+		$this->assertSame($expectedResponse, $response);
+	}//end testDownloadReturnsDataDownloadResponse()
+
+	public function testUsesDelegatesToPublicationService(): void {
+		$expectedResponse = new JSONResponse(['results' => [], 'total' => 0]);
+
+		$this->publicationService->method('uses')
+			->with('pub-123')
+			->willReturn($expectedResponse);
+
+		$response = $this->controller->uses('pub-123');
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame($expectedResponse, $response);
+	}//end testUsesDelegatesToPublicationService()
+
+	public function testUsesWithRelatedObjects(): void {
+		$expectedResponse = new JSONResponse(
+			[
+				'results' => [['id' => 'obj-1'], ['id' => 'obj-2']],
+				'total' => 2,
+			]
+		);
+
+		$this->publicationService->expects($this->once())
+			->method('uses')
+			->with('pub-789')
+			->willReturn($expectedResponse);
+
+		$response = $this->controller->uses('pub-789');
+
+		$this->assertSame($expectedResponse, $response);
+	}//end testUsesWithRelatedObjects()
+
+	public function testUsedDelegatesToPublicationService(): void {
+		$expectedResponse = new JSONResponse(['results' => [], 'total' => 0]);
+
+		$this->publicationService->method('used')
+			->with('pub-123')
+			->willReturn($expectedResponse);
+
+		$response = $this->controller->used('pub-123');
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame($expectedResponse, $response);
+	}//end testUsedDelegatesToPublicationService()
+
+	public function testUsedWithReferencingObjects(): void {
+		$expectedResponse = new JSONResponse(
+			[
+				'results' => [['id' => 'ref-1']],
+				'total' => 1,
+			]
+		);
+
+		$this->publicationService->expects($this->once())
+			->method('used')
+			->with('pub-999')
+			->willReturn($expectedResponse);
+
+		$response = $this->controller->used('pub-999');
+
+		$this->assertSame($expectedResponse, $response);
+	}//end testUsedWithReferencingObjects()
+}//end class

@@ -1,39 +1,34 @@
+# OpenCatalogi — Conduction PHPStan config.
+#
+# The shared base is the single source of truth. Everything here is either the
+# app's own tracked debt or an ignore naming a symbol that exists in no other
+# fleet app. Anything you are tempted to add that another app would also need
+# belongs in the base, not here.
+includes:
+    - vendor/conduction/hydra-gates/quality-config/phpstan-base.neon
+    # Per-app tracked lint debt (auto-generated via `phpstan --generate-baseline`).
+    - phpstan-baseline.neon
+
 parameters:
-    level: 5
-    paths:
-        - lib
-    bootstrapFiles:
-        - phpstan-bootstrap.php
+    # App-specific only. The base already sets level, paths, bootstrapFiles,
+    # excludePaths, scanDirectories and every fleet-wide ignore.
     excludePaths:
-        - vendor
-        - vendor-bin
-        # CMSTool implements OCA\OpenRegister\Tool\ToolInterface which isn't available during analysis
+        # CMSTool implements OCA\OpenRegister\Tool\ToolInterface, which is unavailable during
+        # static analysis. PHPStan cannot ignore "implements unknown interface" via ignoreErrors
+        # (rule requires excludePaths), so the file is excluded. Tracked for re-enable post
+        # peer-app interface stubbing.
         - lib/Tool/CMSTool.php
-    scanDirectories:
-        - vendor/nextcloud/ocp
-    reportUnmatchedIgnoredErrors: false
-    treatPhpDocTypesAsCertain: false
+        # OpenCatalogiMetricsProvider implements OCA\OpenRegister\AppHost\IMetricsProvider,
+        # which is unavailable during static analysis. PHPStan cannot ignore "implements
+        # unknown interface" via ignoreErrors (rule requires excludePaths), same as CMSTool.
+        - lib/Observability/OpenCatalogiMetricsProvider.php
+
     ignoreErrors:
-        # Nextcloud internal classes that PHPStan might not recognize
-        - '#Call to an undefined method OC::#'
-        - '#Class OC not found#'
-        - '#Access to static property \$server on an unknown class OC#'
-        - '#unknown class OC\\\\#'
-        - '#unknown class OCA\\\\DAV\\\\#'
-        - '#unknown class OC_App#'
-        - '#Caught class OC\\\\#'
-        - '#Class OCA\\\\DAV\\\\#'
-        # OCA classes from other apps (OpenRegister) not available during static analysis
-        - '#OCA\\OpenRegister\\#'
-        # GuzzleHttp is available at runtime via Nextcloud but not in composer require
-        - '#GuzzleHttp\\#'
-        # Doctrine DBAL classes used in migrations (available at runtime via Nextcloud)
-        - '#Doctrine\\DBAL\\#'
-        # React\Promise used by Guzzle (available at runtime)
-        - '#React\\Promise\\#'
-        # OCP\Files\Node::putContent() exists at runtime but not in stubs
-        - '#Call to an undefined method OCP\\Files\\Node::putContent#'
-        # OCP\AppFramework\Db\Entity::jsonSerialize() exists at runtime (implements JsonSerializable)
-        - '#Call to an undefined method OCP\\AppFramework\\Db\\Entity::jsonSerialize#'
-        # Dynamic HTTP status codes from business rule validation results
-        - '#Parameter \$statusCode of class OCP\\AppFramework\\Http\\JSONResponse constructor expects#'
+        # OCP\Files\Node::putContent() exists on File but not on the Node interface stub
+        - '#Call to an undefined method OCP\\Files\\Node::putContent\(\)#'
+        # @throws with MissingConfigException (OpenRegister exception class) — PHPStan cannot
+        # resolve the class to verify it is Throwable since OCA\OpenRegister is excluded.
+        - '#PHPDoc tag @throws with type OCA\\OpenRegister\\.*is not subtype of Throwable#'
+        # Nextcloud's TemplateResponse stub does not include 'admin' in the renderAs union
+        # even though it is a valid NC runtime value used by admin settings pages.
+        - '#Parameter \$renderAs of class OCP\\AppFramework\\Http\\TemplateResponse constructor expects.*admin.*given#'

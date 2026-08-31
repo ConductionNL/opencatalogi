@@ -5,6 +5,9 @@ const isAdmin = ref(false)
 const loaded = ref(false)
 let pending = null
 
+/**
+ *
+ */
 function load() {
 	if (pending) return pending
 	pending = getCurrentUserGroups()
@@ -20,6 +23,7 @@ function load() {
 	return pending
 }
 
+/** @spec openspec/specs/admin-settings/spec.md */
 export function useIsAdmin() {
 	if (!loaded.value) load()
 	return { isAdmin, loaded }

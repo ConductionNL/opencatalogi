@@ -1,220 +1,391 @@
 ---
-status: reviewed
+or_dep: zoeken-filteren
+audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 ---
+
+**Status**: done
+**Scope**: opencatalogi
+**OpenSpec changes**:
+
+- [add-public-fulltext-search](../../changes/archive/2026-07-16-add-public-fulltext-search/) — done _(archived 2026-07-16)_
 
 # Search
 
+> **NEEDS-REWRITE notice:** This spec was rewritten as part of
+> `opencatalogi-adopt-or-abstractions` (Phase 7). The bespoke query
+> parsing, faceting, ranking, and filter-generation logic described in
+> the previous version of this spec is replaced by a citation of OR's
+> `zoeken-filteren` capability. opencatalogi's search surface is now a
+> thin orchestrator on top of `zoeken-filteren`. See the REMOVED section.
+>
+> Upstream dependency: OR `zoeken-filteren` capability.
+
 ## Purpose
 
-The search feature provides an internal search API endpoint that queries publications across all available catalogs. Unlike the public publication endpoints (scoped by catalog slug), the internal search endpoint is for authenticated Nextcloud users and administrative purposes. The `SearchController` delegates to `PublicationService` for all search operations. Note: There is no separate `SearchService` or `ElasticSearchService` class in the OpenCatalogi codebase -- all search and federation logic is handled by `PublicationService`.
+@e2e exclude OR-abstraction-consumer spec — query parsing/faceting/ranking delegated to OpenRegister's `zoeken-filteren`, verified by PHPUnit/vitest/Newman; the search UI is separately real-UI covered.
 
+opencatalogi's search capability aggregates publications from local
+catalogs and federated remote OpenCatalogi instances into a single
+search interface. After Phase 7, the query parsing, faceting, and
+ranking are owned by OR's `zoeken-filteren` capability; opencatalogi
+is responsible only for:
+
+1. Fanning out parallel `zoeken-filteren` calls across all configured
+   catalog contexts (local + federated).
+2. Merging the ranked result sets in a documented, stable order.
+3. Merging facet buckets across sources by `_id`.
+
+opencatalogi MUST NOT re-implement query string parsing, bracket-notation
+parsing, facet generation, score computation, or pagination arithmetic.
+Those are owned upstream by OR `zoeken-filteren`.
 ## Requirements
+### Requirement: single-catalog search delegates to OR `zoeken-filteren` (SCH-OR-001)
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| SCH-001 | Provide an internal search endpoint at `/api/search` for authenticated users | Must | Implemented |
-| SCH-002 | Support full-text search via `_search` parameter | Must | Implemented |
-| SCH-003 | Support filtering by catalog ID | Should | Implemented |
-| SCH-004 | Support pagination (_limit, _page, _offset) | Must | Implemented |
-| SCH-005 | Support ordering (_order) | Must | Implemented |
-| SCH-006 | Integrate with ElasticSearch when configured | Should | Not Implemented (no ElasticSearchService in OpenCatalogi) |
-| SCH-007 | Support distributed search across remote directories via async HTTP | Should | Implemented (via PublicationService federation) |
-| SCH-008 | Merge facets/aggregations from multiple sources | Should | Implemented (via PublicationService federation) |
-| SCH-009 | Parse complex query strings with nested parameters | Should | Implemented (via ObjectService.buildSearchQuery) |
-| SCH-010 | Create MySQL/MongoDB-compatible search filters and sort parameters | Must | Not Applicable (no SearchService exists -- search uses OpenRegister's ObjectService directly) |
-| SCH-011 | SearchController has show(), attachments(), download(), uses(), used() methods with no routes | Nice | Dead Code |
-| SCH-012 | Support filter syntax with special query parameters (_search, _order, _limit, _page, _offset, _queries) | Must | Implemented |
-| SCH-013 | Generate dual MySQL and MongoDB filter/sort parameters from request query parameters | Must | Not Applicable (no SearchService exists in OpenCatalogi) |
-| SCH-014 | Parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`) | Must | Implemented (via ObjectService.buildSearchQuery in OpenRegister) |
-| SCH-015 | Unset all underscore-prefixed special parameters before passing to database filter layer | Must | Implemented (via ObjectService.buildSearchQuery in OpenRegister) |
-| SCH-PFTS-001 | Public search endpoint enforces uniform visibility for all callers (SQL RBAC via `_rbac_as_public`, per ADR-022) | Must | Implemented (WOO-536) |
-| SCH-PFTS-CAT-001 | Accept `_catalog` / `_catalogi[]` scope-narrowing params | Must | Implemented (WOO-536) |
-| SCH-PFTS-CAT-002 | Default scope = union of listed and published catalogs | Must | Implemented (WOO-536) |
-| SCH-PFTS-CAT-003 | Catalog-derived scope replaces app-config scope | Must | Implemented (WOO-536) |
+When a user issues a search query within a single catalog, opencatalogi MUST delegate the full query — including `_search`, `_order`, `_limit`,
+`_page`, `_offset`, `_filters`, and any `_facetable` / `_aggregate` flags
+— to OR's `zoeken-filteren` API unmodified. opencatalogi MUST NOT alter
+the query, re-parse bracket notation, or inject custom filter parameters.
 
-### Requirement: Public search endpoint enforces uniform visibility for all callers (SCH-PFTS-001)
+> @e2e exclude Backend query-passthrough contract (full query delegated to OR `zoeken-filteren` unmodified; no local filter transformation or score adjustment) — a server-side delegation with no UI surface; verified by PHPUnit/Newman asserting the constructed call and unchanged response. The search UI itself is already real-UI covered under search::run-a-publication-search.
 
-The `/apps/opencatalogi/api/search` endpoint SHALL return identical result sets regardless of the caller's authentication state. Authenticated callers (including Nextcloud admins and object owners) SHALL see the same results as anonymous callers. This SHALL be enforced by passing `_rbac_as_public: true` alongside `_rbac: true` to `ObjectService::searchObjectsPaginated()` (consuming the `rbac-as-public-toggle` primitive from OpenRegister, per ADR-022). The previous mechanism — a PHP post-filter (`isObjectPublic()`) — is removed; visibility is now enforced in SQL by the RBAC engine using only the `public` group's matching rules from each schema's `authorization.read` configuration. This change preserves the security intent of SCH-PFTS-001 while extending it to arbitrary schemas (not only `publication` and `document`).
+#### Scenario: single-catalog search passes through
 
-#### Scenario: Admin caller sees same results as anonymous caller
-- **WHEN** an authenticated Nextcloud admin sends `GET /apps/opencatalogi/api/search?_search=term`
-- **THEN** the result set is identical to that returned for an anonymous (unauthenticated) caller with the same query
-- **AND** the admin's own unpublished objects are absent from the results
+- **WHEN** a user issues a search query within a single catalog,
+- **THEN** opencatalogi constructs a single `zoeken-filteren` call for
+  that catalog context,
+- **AND** returns the OR response to the caller unchanged,
+- **AND** does NOT apply local filter transformation or score adjustment.
 
-#### Scenario: Object owner cannot see their own unpublished objects via search
-- **WHEN** a user who owns a draft `publication` object (publicatiedatum in the future) sends `GET /apps/opencatalogi/api/search?_search=term`
-- **THEN** the draft object is absent from the results
-- **AND** the result set matches what an anonymous caller would see
+### Requirement: federated search is a thin orchestrator (SCH-OR-002)
 
-#### Scenario: Published objects within window are visible to all callers
-- **WHEN** a `publication` object has `publicatiedatum` in the past and `depublicatiedatum` absent or in the future
-- **AND** any caller (anonymous or authenticated) sends `GET /apps/opencatalogi/api/search?_search=term`
-- **THEN** the publication is present in the results
+When a user issues a federated search across N catalogs or remote directories, opencatalogi MUST act as a thin orchestrator that:
 
-#### Scenario: Depublished objects are absent for all callers
-- **WHEN** a `publication` object has `depublicatiedatum` in the past
-- **AND** any caller sends `GET /apps/opencatalogi/api/search?_search=term`
-- **THEN** the publication is absent from the results
+1. Makes N parallel `zoeken-filteren` calls (one per catalog context
+   / remote endpoint) using async HTTP.
+2. Merges the result arrays in a stable, documented order (descending
+   `_score`; ties broken by source order declared in the active listings).
+3. Merges facet buckets by `_id`; counts are summed across sources.
+4. Returns a single paginated response whose `total` is the sum of all
+   source totals.
+
+opencatalogi MUST NOT alter individual ranking scores, re-rank within
+a source's result set, or apply cross-source deduplication beyond
+merging on `_id` equality.
+
+> @e2e exclude Backend federation-orchestration contract (N parallel `zoeken-filteren` calls; stable descending-_score merge; facet buckets summed by _id; total = sum of source totals; no re-ranking) — server-side merge math with no UI surface; verified by PHPUnit/Newman over the orchestrator with seeded multi-source responses. The federated search UI is already real-UI covered under search::run-a-publication-search and ::toggle-a-facet-from-the-ui.
+
+#### Scenario: cross-catalog search merges OR results
+
+- **WHEN** a user issues a federated search across N catalogs,
+- **THEN** opencatalogi makes N parallel `zoeken-filteren` calls,
+- **AND** merges the results in stable descending `_score` order,
+- **AND** does NOT alter individual ranking scores.
+
+#### Scenario: facet merging
+
+- **GIVEN** catalog A returns `{theme: [{_id: "milieu", count: 5}]}`
+  and catalog B returns `{theme: [{_id: "milieu", count: 3}, {_id: "energie", count: 2}]}`,
+- **WHEN** the federated results are merged,
+- **THEN** the response contains `{theme: [{_id: "milieu", count: 8}, {_id: "energie", count: 2}]}`.
+
+### Requirement: internal search endpoint delegates to `zoeken-filteren` (SCH-OR-003)
+
+The `SearchController::index` (`GET /apps/opencatalogi/api/search`) MUST delegate to OR's `zoeken-filteren`. Two facets of the prior wording are superseded by this change and are hereby MODIFIED:
+
+1. **Auth posture:** the endpoint is no longer authenticated-only — anonymous callers reach it (per `SCH-PFTS-001`). The controller carries `#[PublicPage]` + `#[NoCSRFRequired]`. `SCH-PFTS-004`'s post-scoring `isObjectPublic()` filter provides the anonymous visibility guarantee that the old authenticated-only posture used to provide implicitly.
+2. **Delegation scope:** the controller MUST delegate to `zoeken-filteren` across **both** the `publication` **and** `document` schemas, not the `publications` context alone (per `SCH-PFTS-002` / `SCH-PFTS-006`). It MUST NOT call a bespoke `buildSearchQuery()` or `searchObjectsPaginated()` method in opencatalogi itself.
+
+Everything else about SCH-OR-003 (the "no bespoke query layer" prohibition, the passthrough contract) is preserved.
+
+#### Scenario: internal endpoint delegates (updated for public + multi-schema)
+
+- **GIVEN** any request (authenticated or anonymous) to `GET /apps/opencatalogi/api/search`,
+- **WHEN** `SearchController::index` runs,
+- **THEN** it calls `zoeken-filteren` across both the `publication` and `document` schemas with the caller's query parameters,
+- **AND** returns the merged + visibility-filtered response.
+
+### Requirement: search frontend store calls the federation endpoint (SCH-OR-004)
+
+The frontend search store MUST query publications via the federation
+endpoint `GET /api/federation/publications`, building query parameters
+from the current search term, pagination, active filters, ordering, and
+the federation flags `_facetable=true`, `_aggregate=true`. The federation
+endpoint in turn calls `zoeken-filteren` per catalog context. The frontend
+store MUST NOT call OR's `zoeken-filteren` endpoint directly.
+
+> @e2e exclude Frontend network-target contract (search store queries `/api/federation/publications` with the term/pagination/filters/order + `_facetable`/`_aggregate` flags, never calling `zoeken-filteren` directly) — the assertion is the request target/params, not a distinct browsable surface; verified by vitest mocking the federation endpoint and asserting the URL + params. The search UI is already real-UI covered under search::run-a-publication-search.
+
+#### Scenario: frontend search runs through the federation endpoint
+
+- **GIVEN** a search term and optional filters,
+- **WHEN** the search store runs a search,
+- **THEN** it sends the request to `/api/federation/publications`,
+- **AND** does NOT call `zoeken-filteren` directly from the frontend.
+
+### Requirement: facet discovery and active-facet query building (SCH-OR-005)
+
+The search frontend MUST provide facet discovery (`discoverFacetableFields()`)
+and active-facet encoding (`buildFacetQuery()`). These translate the user's
+enabled facets into the `_facetable` / `_aggregate` parameters on the
+`zoeken-filteren` call — they do NOT compute facet buckets locally.
+
+#### Scenario: discover facetable fields
+
+- **GIVEN** the search view loads,
+- **WHEN** `discoverFacetableFields()` runs,
+- **THEN** the facetable-fields map is populated from the OR response's
+  `facetable` metadata.
+
+### Requirement: search UI components (SCH-OR-006)
+
+opencatalogi MUST provide a `SearchSideBar` (facet filter controls),
+a `SearchResults` component (result list), and a `FacetComponent`
+(individual facet toggle). These components render the OR `zoeken-filteren`
+response; they do NOT contain local filter computation.
+
+#### Scenario: search UI renders OR results without local computation
+
+- **GIVEN** a `zoeken-filteren` response is returned to the search view,
+- **WHEN** `SearchSideBar`, `SearchResults`, and `FacetComponent` render,
+- **THEN** they MUST display the OR-provided results and facets,
+- **AND** they MUST NOT compute filters, facet buckets, or scores locally.
+
+### Requirement: Public full-text search endpoint absorbs the admin-only search (SCH-PFTS-001)
+
+The existing internal endpoint `GET /apps/opencatalogi/api/search` (currently served by `SearchController::index` and admin-only — returns 401 for anonymous callers) MUST become the canonical public full-text search endpoint. The route MUST be reachable without authentication (annotated `#[PublicPage]` + `#[NoCSRFRequired]`), and MUST NOT require a session user. A new endpoint path MUST NOT be introduced for this purpose.
+
+The companion `GET /publications` endpoint MUST remain unchanged: its behaviour, response shape, and admission rules are out of scope for this change.
+
+#### Scenario: anonymous caller reaches the public search endpoint
+
+- **GIVEN** no authenticated session,
+- **WHEN** a `GET /apps/opencatalogi/api/search?q=jaarverslag` request is issued,
+- **THEN** the endpoint MUST respond with HTTP 200 and a search-result envelope,
+- **AND** MUST NOT respond with HTTP 401.
+
+#### Scenario: the publications endpoint is untouched
+
+- **GIVEN** this change has been implemented,
+- **WHEN** the existing `GET /publications` behaviour is exercised against the previous contract,
+- **THEN** every previously-passing assertion against `/publications` MUST still pass,
+- **AND** no request shape, response shape, or admission rule of `/publications` MUST have changed.
+
+### Requirement: Search results are a flat envelope with `@self.schema` as the row discriminator (SCH-PFTS-002)
+
+`GET /apps/opencatalogi/api/search` MUST return a single flat result array whose rows MAY mix object types. Each row MUST carry an `@self.schema` field whose value identifies the row's schema slug (`publication`, `document`, …); callers use this field as the discriminator to render row-specific UI. Rows MUST NOT be grouped into per-type sub-arrays in the response envelope.
+
+This shape is consistent with the existing `/publications` envelope's use of `@self` metadata; clients MUST be able to switch rendering on `@self.schema` without inspecting any other field.
+
+#### Scenario: mixed-type rows are returned in a single flat array
+
+- **GIVEN** a search query matching both publications and documents,
+- **WHEN** the response is inspected,
+- **THEN** the result rows MUST live in a single flat array,
+- **AND** each row MUST carry `@self.schema` set to the row's schema slug,
+- **AND** the response MUST NOT contain separate `publications` / `documents` sub-arrays.
+
+### Requirement: Document rows include an embedded publication summary (SCH-PFTS-003)
+
+Every document row in the result envelope MUST include an embedded `publication` object with at least the fields `{ id, slug, title }` of the publication the document is linked to. Field name is English (`title`, not Dutch `titel`) to match the publication schema's canonical property names in the bundled publication register and to satisfy ADR-001's "do not hardcode Dutch field names as primary" rule. This enables the frontend to render a document card with a "from publication X" backlink without a second API roundtrip. A document with no linked publication MUST NOT appear in the public result set.
+
+#### Scenario: document row carries publication summary
+
+- **GIVEN** a document linked to a publication titled "Jaarverslag 2024" (slug `jaarverslag-2024`, id `pub-001`),
+- **WHEN** that document matches the search query,
+- **THEN** its result row MUST include `publication: { id: "pub-001", slug: "jaarverslag-2024", title: "Jaarverslag 2024" }`.
+
+#### Scenario: document with no publication link is suppressed
+
+- **GIVEN** a document object that has no linked publication,
+- **WHEN** the public search assembly runs,
+- **THEN** the document MUST NOT appear in the result rows returned to anonymous callers.
+
+### Requirement: Uniform-visibility enforcement via SQL RBAC (SCH-PFTS-004)
+
+**AMENDED by WOO-536 (2026-08-27).** The prior mechanism — a PHP post-filter (`isObjectPublic()`) run AFTER scoring/merge — is REMOVED. Visibility on the public search endpoint MUST now be enforced in SQL by OR's RBAC engine using only the `public` group's matching rules from each schema's `authorization.read` configuration. This is achieved by passing `_rbac_as_public: true` alongside `_rbac: true` to `ObjectService::searchObjectsPaginated()`, consuming the `rbac-as-public-toggle` primitive from OpenRegister (ADR-022). Under this mode, the RBAC engine ignores the caller's session (admin bypass suppressed, owner-bypass suppressed) and evaluates only the `public` group rules — so authenticated and anonymous callers see identical result sets on this endpoint (Q1 Option B).
+
+The SQL-side enforcement means visibility is a WHERE-clause predicate on the underlying query, not a post-filter, so `total`, `facets`, and `facetable` reflect the true visible count without undercount workarounds. For documents, transitive visibility is realised by looking up the linked publication via `_relations_contains` with the same `_rbac_as_public: true` flag — a document surfaces only when its linked publication itself passes the `public` group's read rules.
+
+#### Scenario: admin caller sees identical result set to anonymous caller
+
+- **GIVEN** an authenticated Nextcloud admin,
+- **WHEN** the admin issues `GET /apps/opencatalogi/api/search?_search=jaarverslag`,
+- **THEN** the result set MUST be identical to that returned for an anonymous caller with the same query,
+- **AND** the admin's own draft publications MUST be absent from the results.
+
+#### Scenario: depublished publications are absent for all callers
+
+- **GIVEN** a publication whose `depublicationDate` is in the past,
+- **WHEN** any caller (anonymous or authenticated) issues the public search,
+- **THEN** the publication MUST NOT appear in the response.
+
+#### Scenario: document visibility is transitively gated
+
+- **GIVEN** a document D linked to a publication P whose `depublicationDate` is in the past,
+- **WHEN** an anonymous caller searches for content matching D,
+- **THEN** D MUST NOT appear in the response.
 
 #### Scenario: `total` reflects the true visible count
-- **WHEN** any caller sends `GET /apps/opencatalogi/api/search?_search=term`
-- **THEN** the `total` field in the response equals the actual count of objects visible under public RBAC
-- **AND** `total` is NOT an undercount caused by PHP post-filtering
+
+- **WHEN** any caller sends `GET /apps/opencatalogi/api/search`,
+- **THEN** the `total` field MUST equal the actual count of objects visible under public RBAC,
+- **AND** `total` MUST NOT be an undercount caused by PHP post-filtering.
 
 #### Scenario: `facets` and `facetable` are populated for anonymous callers
-- **WHEN** an anonymous caller sends `GET /apps/opencatalogi/api/search?_search=term`
-- **THEN** the `facets` and `facetable` fields are present and populated in the response
-- **AND** facet counts reflect only publicly visible objects
+
+- **WHEN** an anonymous caller sends `GET /apps/opencatalogi/api/search`,
+- **THEN** the `facets` and `facetable` fields MUST be present and populated,
+- **AND** facet counts MUST reflect only publicly visible objects.
+
+### Requirement: A dedicated `document` schema is bundled in the publication register (SCH-PFTS-005)
+
+OpenCatalogi MUST add a new `document` schema as a **bundled** schema inside `lib/Settings/publication_register.json` (registered alongside `publication`, `catalog`, `organization`, …). This schema MUST NOT be supplied by a deployer-side fragment; bundling guarantees the schema is present on every install so the public search endpoint can rely on its presence.
+
+The schema MUST be discoverable through OR's standard schema-listing APIs (i.e. it MUST carry its own `@self.schema` identity in returned objects), MUST be `searchable: true`, and MUST be authorized so that anonymous read access is allowed for documents whose linked publication satisfies `isObjectPublic()` (matching publication's authorization shape).
+
+#### Scenario: document schema ships with the app
+
+- **GIVEN** a fresh OpenCatalogi install,
+- **WHEN** the publication register is loaded,
+- **THEN** a `document` schema MUST be present under `components.schemas.document` in `lib/Settings/publication_register.json`,
+- **AND** the schema MUST carry `searchable: true`,
+- **AND** the magic mapper MUST auto-allocate a dedicated table for the schema on first install (`oc_openregister_table_publication_document`, per the magic-mapper's `oc_openregister_table_{register}_{schema}` convention — no manual `configuration.schemas` wiring needed, consistent with how the other bundled schemas — `publication`, `catalog`, `page`, `menu`, `theme`, `glossary`, `listing`, `organization`, `usageCounter` — are wired today).
+
+#### Scenario: document objects carry their own `@self.schema`
+
+- **GIVEN** a stored document object,
+- **WHEN** the public search endpoint returns that object,
+- **THEN** its row MUST carry `@self.schema = "document"`.
+
+### Requirement: OpenCatalogi consumes OR for search and (Path A) content extraction (SCH-PFTS-006)
+
+OpenCatalogi MUST NOT re-implement search query parsing, faceting, ranking, or document content extraction. The public search endpoint orchestrates: it calls OR's `zoeken-filteren` (per ADR-022 and consistent with `SCH-OR-001` / `SCH-OR-002`) across the publication and document schemas, applies the anonymous visibility filter post-merge (per `SCH-PFTS-004`), shapes the flat envelope (per `SCH-PFTS-002` / `SCH-PFTS-003`), and returns it.
+
+When document content indexing is enabled (Path A — pending Ruben's confirmation per the proposal's "Pending decisions"), OpenCatalogi MUST consume OR's `TextExtractionService` + `FileHandler` + Solr-pipeline; OpenCatalogi MUST NOT add its own extraction or indexing pipeline. When Path A is not yet enabled (Path B), document rows MUST surface metadata-only matches (filename, MIME, linked-publication fields) and content-search MUST be the subject of a separate follow-up change.
+
+#### Scenario: search query parsing is delegated to OR
+
+- **GIVEN** a search request to `/apps/opencatalogi/api/search`,
+- **WHEN** the controller runs,
+- **THEN** it MUST forward the query to OR's `zoeken-filteren`,
+- **AND** MUST NOT re-parse bracket notation, recompute scores, or build a bespoke search filter set.
+
+#### Scenario: document content extraction (Path A) is delegated to OR
+
+- **GIVEN** Path A is enabled,
+- **WHEN** a document is indexed for content search,
+- **THEN** the extraction pipeline MUST be OR's `TextExtractionService` + `FileHandler` + Solr-pipeline,
+- **AND** OpenCatalogi MUST NOT add a parallel extraction pipeline.
+
+### Requirement: Search matches across all schema properties, not only pre-configured ones (SCH-PFTS-007)
+
+Matches on the public search endpoint MUST cover **every searchable property** of the target schemas (`publication`, `document`), plus the standard `@self` metadata fields OR's `zoeken-filteren` already surfaces (`_name`, `_description`, `_summary`, timestamps). Callers MUST NOT need to enumerate which properties are searched, and OpenCatalogi MUST NOT filter the OR-side search surface down to a subset of properties. This makes the behaviour explicit rather than leaving it implicit-in-`zoeken-filteren`-delegation, so a reviewer inspecting only this spec can confirm the WOO-506 requirement that the endpoint zoekt "over alle properties en metadata — niet alleen de schema-properties die wij hebben ingesteld".
+
+New properties added to a schema in future changes (e.g. a `kenmerk` field added to `document` in a later B3) MUST be automatically covered by search without any modification to `SearchController::index` or the assembly helper — they inherit `searchable: true` from the schema-level flag.
+
+#### Scenario: a new schema property is searchable without controller changes
+
+- **GIVEN** the `document` schema gains a new string property `kenmerk` in a future change,
+- **AND** the schema keeps `searchable: true`,
+- **WHEN** a search query matches the value of `kenmerk` on a document object,
+- **THEN** that document MUST appear in the result set,
+- **AND** neither `SearchController::index` nor the assembly helper MUST have been modified to expose the new property to search.
+
+#### Scenario: search covers metadata fields OR already surfaces
+
+- **GIVEN** a document whose `@self` metadata contains a match for the search query but whose declared schema properties do not,
+- **WHEN** the public search runs,
+- **THEN** the document MUST appear in the result set (matched via OR's `zoeken-filteren` on the metadata fields it already covers).
 
 ### Requirement: Accept `_catalog` and `_catalogi[]` scope-narrowing params (SCH-PFTS-CAT-001)
 
-The `/apps/opencatalogi/api/search` endpoint SHALL accept an optional `_catalog` query parameter (single catalog UUID or slug) and an optional `_catalogi[]` array parameter (multiple catalog UUIDs or slugs). When either parameter is provided, the search scope SHALL be limited to the union of registers and schemas declared by the matching catalog(s). When both are absent, the default scope applies (see SCH-PFTS-CAT-002). Clients MAY NOT widen scope via `_schema`, `_registers`, or `fq` on this endpoint (those parameters remain stripped, per existing discipline). Links to CAT-010, PUB-003, PUB-004.
+**Added by WOO-536 (2026-08-27).** The `/apps/opencatalogi/api/search` endpoint MUST accept an optional `_catalog` query parameter (single catalog UUID or slug) and an optional `_catalogi[]` array parameter (multiple catalog UUIDs or slugs). When either parameter is provided, the search scope MUST be limited to the union of registers and schemas declared by the matching catalog(s). When both are absent, the default scope applies (see SCH-PFTS-CAT-002). Clients MUST NOT be able to widen scope via `_schema`, `_registers`, or `fq` on this endpoint (those parameters remain stripped per Q7 Interpretation A). Links to CAT-010, PUB-003, PUB-004.
 
-#### Scenario: Single catalog scope via `_catalog`
-- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_catalog=my-catalog`
-- **THEN** the search scope is limited to the registers and schemas declared by the catalog with slug `my-catalog`
-- **AND** objects from schemas not in that catalog are absent from the results
+#### Scenario: single catalog scope via `_catalog`
 
-#### Scenario: Multi-catalog scope via `_catalogi[]`
-- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_catalogi[]=cat-a&_catalogi[]=cat-b`
-- **THEN** the search scope is the union of all registers and schemas declared by catalogs `cat-a` and `cat-b`
-- **AND** objects from either catalog are present in the results
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_catalog=my-catalog`,
+- **THEN** the search scope MUST be limited to the registers and schemas declared by the catalog with slug `my-catalog`,
+- **AND** objects from schemas not in that catalog MUST be absent from the results.
 
-#### Scenario: Disallowed scope widening via `_schema`
-- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_schema=42`
-- **THEN** the `_schema` parameter is silently stripped
-- **AND** the scope is resolved from the catalog model as normal
+#### Scenario: multi-catalog scope via `_catalogi[]`
+
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_catalogi[]=cat-a&_catalogi[]=cat-b`,
+- **THEN** the search scope MUST be the union of all registers and schemas declared by catalogs `cat-a` and `cat-b`,
+- **AND** objects from either catalog MUST be present in the results.
+
+#### Scenario: disallowed scope widening via `_schema`
+
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_schema=42`,
+- **THEN** the `_schema` parameter MUST be silently stripped,
+- **AND** the scope MUST be resolved from the catalog model as normal.
 
 ### Requirement: Default scope is union of listed and published catalogs (SCH-PFTS-CAT-002)
 
-When neither `_catalog` nor `_catalogi[]` is provided, the `/apps/opencatalogi/api/search` endpoint SHALL compute its scope as the union of all catalogs where `listed: true` AND the catalog object itself is published (passes its own `read` authorization rules under public context). Schemas without any explicit `read` authorization configuration SHALL be excluded from the anonymous search scope and the system SHALL log a warning for each such schema encountered. Links to CAT-010, PUB-003.
+**Added by WOO-536 (2026-08-27).** When neither `_catalog` nor `_catalogi[]` is provided, the `/apps/opencatalogi/api/search` endpoint MUST compute its scope as the union of all catalogs where `listed: true` AND the catalog object itself is published (passes its own `read` authorization rules under public context). Schemas without any explicit `read` authorization configuration MUST be excluded from the anonymous search scope and the system MUST log a warning for each such schema encountered. Links to CAT-010, PUB-003.
 
-#### Scenario: Default scope includes all listed published catalogs
-- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term` with no `_catalog` or `_catalogi[]` params
-- **THEN** the search scope is the union of registers and schemas from all catalogs with `listed: true` that are themselves published
-- **AND** objects from schemas in non-listed or unpublished catalogs are absent from the results
+#### Scenario: default scope includes all listed published catalogs
 
-#### Scenario: Schema without explicit read rules is excluded
-- **WHEN** a schema in a listed published catalog has no `authorization.read` configuration
-- **THEN** that schema is excluded from the anonymous search scope
-- **AND** the system logs a warning identifying the schema by ID and slug
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term` with no `_catalog` or `_catalogi[]` params,
+- **THEN** the search scope MUST be the union of registers and schemas from all catalogs with `listed: true` that are themselves published,
+- **AND** objects from schemas in non-listed or unpublished catalogs MUST be absent from the results.
+
+#### Scenario: schema without explicit read rules is excluded
+
+- **WHEN** a schema in a listed published catalog has no `authorization.read` configuration,
+- **THEN** that schema MUST be excluded from the anonymous search scope,
+- **AND** the system MUST log a warning identifying the schema by ID and slug.
 
 ### Requirement: Catalog-derived scope replaces app-config scope (SCH-PFTS-CAT-003)
 
-The `/apps/opencatalogi/api/search` endpoint SHALL NOT use `publication_register`, `publication_schema`, or `document_schema` app-config values to determine search scope. Scope SHALL be derived entirely from the catalog model via `buildCatalogSearchQuery()` + `resolveSchemaAndRegisterObjects()`. A misconfigured or missing app-config value SHALL NOT cause the endpoint to return an empty result set. Links to CAT-010, PUB-003, PUB-004.
+**Added by WOO-536 (2026-08-27).** The `/apps/opencatalogi/api/search` endpoint MUST NOT use `publication_register`, `publication_schema`, or `document_schema` app-config values to determine search scope. Scope MUST be derived entirely from the catalog model via `buildCatalogSearchQuery()` + `resolveSchemaAndRegisterObjects()`. A misconfigured or missing app-config value MUST NOT cause the endpoint to return an empty result set. Links to CAT-010, PUB-003, PUB-004.
 
-#### Scenario: Scope independent of app-config
-- **WHEN** the `publication_register` / `publication_schema` / `document_schema` app-config values are absent or incorrect
-- **THEN** the search still returns results from the catalog-model-derived scope
-- **AND** the endpoint does not return HTTP 200 with an empty result set due to a missing config value
+#### Scenario: scope independent of app-config
 
-#### Scenario: Multi-schema catalog returns results from all schemas
-- **WHEN** a catalog declares three schemas (e.g. `publication`, `document`, `besluit`)
-- **AND** the caller sends `GET /apps/opencatalogi/api/search?_search=term`
-- **THEN** results from all three schemas are present in the response
-- **AND** each result carries `@self.schema` set to the correct schema slug
+- **WHEN** the `publication_register` / `publication_schema` / `document_schema` app-config values are absent or incorrect,
+- **THEN** the search MUST still return results from the catalog-model-derived scope,
+- **AND** the endpoint MUST NOT return HTTP 200 with an empty result set due to a missing config value.
 
-## Data Model
+#### Scenario: multi-schema catalog returns results from all schemas
 
-Search does not have its own schema. It queries across publication objects from all catalogs.
+- **WHEN** a catalog declares three schemas (e.g. `publication`, `document`, `besluit`),
+- **AND** the caller sends `GET /apps/opencatalogi/api/search?_search=term`,
+- **THEN** results from all three schemas MUST be present in the response,
+- **AND** each result MUST carry `@self.schema` set to the correct schema slug.
 
-Search response structure:
+## REMOVED Requirements
 
-| Field | Type | Description |
-|-------|------|-------------|
-| results | array | Publication objects matching the search query |
-| facets | object | Aggregation/facet data for filtering UI |
-| count | integer | Number of results in current page |
-| total | integer | Total matching results |
-| limit | integer | Page size |
-| page | integer | Current page |
-| pages | integer | Total pages |
+The following requirements described bespoke implementations that OR's
+`zoeken-filteren` capability now owns. They are retained for traceability;
+implementation MUST NOT re-introduce them.
 
-## User Interface
+| ID | Title | Reason removed |
+|----|-------|----------------|
+| SCH-010 | Create MySQL/MongoDB-compatible search filters and sort parameters | REMOVED — re-implements OR's `zoeken-filteren` query layer; consume OR per ADR-022. OpenRegister's `ObjectService::buildSearchQuery()` is the authoritative implementation. |
+| SCH-013 | Generate dual MySQL and MongoDB filter/sort parameters | REMOVED — same rationale as SCH-010. |
+| SCH-014 | Parse complex nested query strings with bracket notation | REMOVED — bracket notation parsing (`_order[title]=asc`, `themes[or]=1,2,3`) is owned by OR `zoeken-filteren`; opencatalogi MUST NOT re-implement or duplicate it. |
+| SCH-015 | Unset underscore-prefixed special parameters before passing to database layer | REMOVED — owned by OR `zoeken-filteren`; opencatalogi passes the raw query to OR unmodified. |
 
-- **SearchIndex.vue** (`/search`) - Main search page with filters and results
-- **SearchResults.vue** - Search results display component
-- **SearchSideBar.vue** - Sidebar with facet filters
-- **FacetComponent.vue** - Individual facet filter component
+SCH-001 through SCH-009, SCH-011, SCH-012, SCH-016 through SCH-020 are superseded
+by SCH-OR-001 through SCH-OR-006. The observable behaviours they describe are
+preserved; the implementation path now routes through `zoeken-filteren`.
+
+## Breaking Changes
+
+| Breaking change | Old behaviour | New behaviour |
+|---|---|---|
+| Local `buildSearchQuery()` removed | opencatalogi applied bracket-notation parsing before calling OR | Raw query parameters forwarded to OR `zoeken-filteren`; OR parses them. Operators or clients relying on opencatalogi-side parsing must verify compatibility with the OR implementation. |
+| `ElasticSearch` integration removed | SCH-006 noted "not implemented"; any future bespoke ElasticSearch integration is forbidden | Search goes through OR `zoeken-filteren`; OR owns the storage backend choice. |
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/search` | Internal search across all catalogs (authenticated) |
+| GET | `/apps/opencatalogi/api/search` | Public full-text search — delegates to OR `zoeken-filteren` across the `publication` + `document` schemas; anonymous-reachable with post-scoring `isObjectPublic()` filter (per `add-public-fulltext-search`). Prior posture: authenticated + publications-only. |
 
-Note: The search endpoint does NOT have CORS preflight routes, as it is intended for internal/authenticated use only.
+## References
 
-## Dead Code: SearchController Extra Methods (Gap 10)
-
-The `SearchController` (`lib/Controller/SearchController.php`) contains the following methods that have **no corresponding routes** in `routes.php`:
-
-| Method | Signature | Delegates To | Status |
-|--------|-----------|-------------|--------|
-| `show(string $id)` | Get single publication | `PublicationService::show()` | **Dead Code** - No route registered |
-| `attachments(string $id)` | Get publication attachments | `PublicationService::attachments()` | **Dead Code** - No route registered |
-| `download(string $id)` | Download publication files | `PublicationService::download()` | **Dead Code** - No route registered |
-| `uses(string $id)` | Get outgoing relations | `PublicationService::uses()` | **Dead Code** - No route registered |
-| `used(string $id)` | Get incoming relations | `PublicationService::used()` | **Dead Code** - No route registered |
-
-Only `SearchController::index()` has a route (`/api/search`). The other methods exist in the controller code and delegate to `PublicationService` but are completely unreachable via HTTP because no routes are defined for them. These likely represent planned features (an authenticated search detail API) that were never completed, or were superseded by the public `PublicationsController` endpoints.
-
-## Filter Syntax and Special Query Parameters (Gap 20)
-
-**Important**: There is no `SearchService` class in the OpenCatalogi codebase. The filter parsing, query building, and search infrastructure described below is provided by **OpenRegister's ObjectService** (`ObjectService::buildSearchQuery()`), not by OpenCatalogi itself. The SearchController delegates directly to `PublicationService`, which in turn uses OpenRegister's ObjectService for all search operations.
-
-### Special Query Parameters
-
-| Parameter | Purpose | Example |
-|-----------|---------|---------|
-| `_search` | Full-text search term | `?_search=klimaat` |
-| `_order` | Sort order (field to direction map) | `?_order[title]=asc&_order[date]=desc` |
-| `_limit` | Results per page (default: 20) | `?_limit=50` |
-| `_page` | Current page number | `?_page=2` |
-| `_offset` | Skip N results | `?_offset=20` |
-| `_queries` | Fields to aggregate/facet | `?_queries[]=theme&_queries[]=organization` |
-| `_catalogi` | Filter by catalog IDs | `?_catalogi[]=cat1&_catalogi[]=cat2` |
-
-### Query Building (via OpenRegister ObjectService)
-
-`ObjectService::buildSearchQuery()` handles:
-- PHP dot-to-underscore conversion (`@self.register` to `@self_register`)
-- Nested property conversion (`person.address.street` to `person_address_street`)
-- System parameter extraction (removes `id`, `_route`, `rbac`, `multi`, `published`, `deleted`)
-- Bracket notation parsing (e.g., `_order[title]=asc`, `themes[or]=1,2,3`)
-
-The actual search, filter generation, and pagination is handled internally by OpenRegister's `searchObjectsPaginated()` method, which supports both magic table (SQL) and blob storage backends.
-
-## Scenarios
-
-### Scenario: Internal publication search
-- GIVEN catalogs with publications exist
-- WHEN an authenticated user sends GET `/api/search?_search=klimaat`
-- THEN PublicationService.index() is called
-- AND results from all catalogs are returned with pagination
-
-### Scenario: Search with federation
-- GIVEN federated directory listings exist with `default: true`
-- WHEN a search is performed via `/api/search` or `/api/federation/publications`
-- THEN PublicationService queries local catalogs for publications
-- AND remote directories are queried via async HTTP
-- AND all results are merged and sorted by relevance score
-
-### Scenario: Facet merging from multiple sources
-- GIVEN local search returns facets {theme: [{_id: "milieu", count: 5}]}
-- AND a remote source returns facets {theme: [{_id: "milieu", count: 3}, {_id: "energie", count: 2}]}
-- WHEN PublicationService merges aggregations
-- THEN the merged result is {theme: [{_id: "milieu", count: 8}, {_id: "energie", count: 2}]}
-
-### Scenario: Query building via ObjectService
-- GIVEN a query string `_order[title]=asc&themes[or]=1,2,3&_search=test`
-- WHEN ObjectService.buildSearchQuery() is called with the request params
-- THEN it returns a normalized query with proper bracket/dot notation handled
-- AND the query is passed to searchObjectsPaginated() for execution
-
-## Dependencies
-
-- **PublicationService** - `index()` for internal search, `getAggregatedPublications()` for federated search with facet merging and result sorting
-- **OpenRegister ObjectService** - `buildSearchQuery()` for query parsing, `searchObjectsPaginated()` for paginated search with facets
-- **DirectoryService** - Provides remote listing data for federated search (used by PublicationService)
-- **GuzzleHttp** - Async HTTP requests to remote directories (used by PublicationService)
+- OR `zoeken-filteren` capability (upstream dependency)
+- `.claude/audit-2026-05-03/02-spec-rewrite.md` (Stream 2 MISSING-OR-DEP rationale)
+- `openspec/changes/opencatalogi-adopt-or-abstractions/` (Phase 7 implementation change)
+- `openspec/specs/federation/spec.md` (federated search orchestration)
+- ADR-022 — Apps consume OR abstractions

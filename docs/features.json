@@ -1,0 +1,167 @@
+[
+  {
+    "slug": "woo-disclosure-workflow",
+    "title": "WOO disclosure workflow",
+    "summary": "Run disclosure batches, assess documents, record refusal grounds, and publish.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/woo-transparency/spec.md",
+    "title_nl": "Woo-openbaarmaking",
+    "summary_nl": "Je draait openbaarmakingsbatches, beoordeelt documenten, legt weigeringsgronden vast en publiceert."
+  },
+  {
+    "slug": "dcat-ap-harvest",
+    "title": "DCAT-AP harvest",
+    "summary": "Serve harvestable catalogs in JSON-LD, Turtle, and RDF-XML for data.overheid.nl.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/dcat-ap-harvest/spec.md",
+    "title_nl": "DCAT-AP-harvesting",
+    "summary_nl": "Je biedt oogstbare catalogi aan in JSON-LD, Turtle en RDF-XML voor data.overheid.nl."
+  },
+  {
+    "slug": "federated-directory",
+    "title": "Federated directory",
+    "summary": "Register catalogs so other organizations discover and subscribe to them.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/federation/spec.md",
+    "title_nl": "Gefedereerde directory",
+    "summary_nl": "Je registreert catalogi zodat andere organisaties ze vinden en volgen."
+  },
+  {
+    "slug": "cross-organization-search",
+    "title": "Cross-organization search",
+    "summary": "Search publications across federated catalogs from one screen.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/federation/spec.md",
+    "title_nl": "Zoeken over organisaties",
+    "summary_nl": "Je doorzoekt publicaties van gefedereerde catalogi vanaf een scherm."
+  },
+  {
+    "slug": "publications",
+    "title": "Publications",
+    "summary": "Manage publications with metadata and attachments, stored as OpenRegister objects.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/publications/spec.md",
+    "providedBy": "openregister",
+    "title_nl": "Publicaties",
+    "summary_nl": "Je beheert publicaties met metadata en bijlagen, opgeslagen als OpenRegister-objecten."
+  },
+  {
+    "slug": "catalogs",
+    "title": "Catalogs",
+    "summary": "Group publications into branded catalogs per department or theme.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/catalogs/spec.md",
+    "title_nl": "Catalogi",
+    "summary_nl": "Je groepeert publicaties in eigen catalogi per afdeling of thema."
+  },
+  {
+    "slug": "faceted-search-api",
+    "title": "Faceted search API",
+    "summary": "Filter publications by category, organization, date, and custom fields.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/search/spec.md",
+    "title_nl": "Zoek-API met facetten",
+    "summary_nl": "Je filtert publicaties op categorie, organisatie, datum en eigen velden."
+  },
+  {
+    "slug": "retention-and-lifecycle",
+    "title": "Retention and lifecycle",
+    "summary": "Schedule publication and depublication, set retention, automate disposal.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/publication-retention-lifecycle/spec.md",
+    "providedBy": "openregister",
+    "title_nl": "Bewaren en levenscyclus",
+    "summary_nl": "Je plant publicatie en depublicatie, stelt bewaartermijnen in en automatiseert vernietiging."
+  },
+  {
+    "slug": "usage-analytics",
+    "title": "Usage analytics",
+    "summary": "Count views and downloads without storing personal data, export to CSV.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/publication-usage-analytics/spec.md",
+    "title_nl": "Gebruiksstatistieken",
+    "summary_nl": "Je telt weergaven en downloads zonder persoonsgegevens en exporteert naar CSV."
+  },
+  {
+    "slug": "bulk-operations",
+    "title": "Bulk operations",
+    "summary": "Publish, depublish, lock, and validate hundreds of publications at once.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/content-management/spec.md",
+    "title_nl": "Bulkacties",
+    "summary_nl": "Je publiceert, depubliceert, vergrendelt en valideert honderden publicaties tegelijk."
+  },
+  {
+    "slug": "public-cms",
+    "title": "Public CMS",
+    "summary": "Build a branded reading room with pages, menus, themes, and a glossary.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/content-management/spec.md",
+    "title_nl": "Publiek CMS",
+    "summary_nl": "Je bouwt een eigen leeszaal met pagina's, menu's, thema's en een begrippenlijst."
+  },
+  {
+    "slug": "woo-compliance-basics",
+    "title": "WOO compliance basics",
+    "summary": "Generate per-catalog sitemaps, robots.txt, and DIWOO metadata.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/woo-compliance/spec.md",
+    "title_nl": "Woo-basis",
+    "summary_nl": "Je genereert per catalogus sitemaps, robots.txt en DIWOO-metadata."
+  },
+  {
+    "slug": "public-api-and-cors",
+    "title": "Public API and CORS",
+    "summary": "Read catalogs and publications from any frontend over a public REST API.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/cross-origin-api-access/spec.md",
+    "title_nl": "Publieke API en CORS",
+    "summary_nl": "Je leest catalogi en publicaties vanaf elke frontend via een publieke REST-API."
+  },
+  {
+    "slug": "ai-agent-access-mcp",
+    "title": "AI-agent access (MCP)",
+    "summary": "Let an AI agent manage catalogs and publications through one tool.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/cms-tool/spec.md",
+    "providedBy": "openregister",
+    "title_nl": "AI-agenttoegang (MCP)",
+    "summary_nl": "Je laat een AI-agent catalogi en publicaties beheren via een enkele tool."
+  },
+  {
+    "slug": "monitoring",
+    "title": "Monitoring",
+    "summary": "Expose Prometheus metrics and a health endpoint for your operations team.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/prometheus-metrics/spec.md",
+    "title_nl": "Monitoring",
+    "summary_nl": "Je biedt je beheerteam Prometheus-metrics en een health-endpoint."
+  },
+  {
+    "slug": "download-and-export",
+    "title": "Download and export",
+    "summary": "Download a publication and its attachments as a single ZIP.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/download-service/spec.md",
+    "title_nl": "Downloaden en exporteren",
+    "summary_nl": "Je downloadt een publicatie met bijlagen als een enkel ZIP-bestand."
+  },
+  {
+    "slug": "api-management-government-koppelingen",
+    "title": "API management and government koppelingen",
+    "summary": "Connect to government systems through OpenConnector.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/api-management-government-koppelingen/spec.md",
+    "title_nl": "API-beheer en overheidskoppelingen",
+    "summary_nl": "Je koppelt aan overheidssystemen via OpenConnector."
+  },
+  {
+    "slug": "high-performance-search",
+    "title": "High-performance search",
+    "summary": "Add an ElasticSearch backend for search at large scale.",
+    "status": "soon",
+    "docsUrl": "openspec/specs/high-performance-search/spec.md",
+    "title_nl": "Zoeken op grote schaal",
+    "summary_nl": "Je voegt een ElasticSearch-backend toe voor zoeken op grote schaal."
+  }
+]

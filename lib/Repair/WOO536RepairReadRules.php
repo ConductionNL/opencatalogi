@@ -30,7 +30,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Repair step that backfills the two-rule `depublicatiedatum` read-shape
+ * Repair step that backfills the two-rule `depublicationDate` read-shape
  * on the `publication` and `document` schemas for existing installations.
  *
  * WOO-536 (Robert Zondervan, 2026-08-12) requires the public search endpoint
@@ -38,8 +38,8 @@ use Psr\Log\LoggerInterface;
  * `lib/Settings/publication_register.json` was updated to the two-rule shape:
  *
  *   read: [
- *     { group: public, match: { publicatiedatum $lte $now, depublicatiedatum $gte $now } },
- *     { group: public, match: { publicatiedatum $lte $now, depublicatiedatum $exists false } },
+ *     { group: public, match: { publicationDate $lte $now, depublicationDate $gte $now } },
+ *     { group: public, match: { publicationDate $lte $now, depublicationDate $exists false } },
  *     "authenticated"
  *   ]
  *
@@ -52,7 +52,7 @@ use Psr\Log\LoggerInterface;
  *   1. OR must be installed (skip otherwise).
  *   2. The schema's `authorization.read` must exist on disk.
  *   3. The read block must be on the single-rule shape (missing
- *      depublicatiedatum). Admin-customised shapes are left alone.
+ *      depublicationDate). Admin-customised shapes are left alone.
  *   4. Update is idempotent — re-running has no effect once schema is on
  *      the two-rule shape.
  *
@@ -170,7 +170,7 @@ class WOO536RepairReadRules implements IRepairStep
             }
 
             // Upgrade: replace the single conditional public rule with the two-rule
-            // depublicatiedatum-aware shape. Preserve any non-public elements
+            // depublicationDate-aware shape. Preserve any non-public elements
             // (like 'authenticated') by keeping them after the two new rules.
             $authorization['read'] = $this->buildTwoRuleRead(existing: $read);
             $schema->setAuthorization($authorization);
@@ -200,12 +200,12 @@ class WOO536RepairReadRules implements IRepairStep
      * Detect the old single-rule shape:
      *
      *   read: [
-     *     { group: public, match: { publicatiedatum: { $lte: $now } } },
+     *     { group: public, match: { publicationDate: { $lte: $now } } },
      *     "authenticated"     (optional third element)
      *   ]
      *
      * Any deviation from this shape (extra rules, different match keys,
-     * additional operators on publicatiedatum) is considered admin-customised
+     * additional operators on publicationDate) is considered admin-customised
      * and left alone.
      *
      * @param array $read The current read-block array.
@@ -240,15 +240,15 @@ class WOO536RepairReadRules implements IRepairStep
                 return false;
             }
 
-            // Old shape: exactly one match key, `publicatiedatum: { $lte: $now }`.
-            if (count($match) !== 1 || isset($match['publicatiedatum']) === false) {
+            // Old shape: exactly one match key, `publicationDate: { $lte: $now }`.
+            if (count($match) !== 1 || isset($match['publicationDate']) === false) {
                 return false;
             }
 
-            $publicatiedatum = $match['publicatiedatum'];
-            if (is_array($publicatiedatum) === false
-                || count($publicatiedatum) !== 1
-                || ($publicatiedatum['$lte'] ?? null) !== '$now'
+            $publicationDate = $match['publicationDate'];
+            if (is_array($publicationDate) === false
+                || count($publicationDate) !== 1
+                || ($publicationDate['$lte'] ?? null) !== '$now'
             ) {
                 return false;
             }
@@ -275,15 +275,15 @@ class WOO536RepairReadRules implements IRepairStep
             [
                 'group' => 'public',
                 'match' => [
-                    'publicatiedatum'   => ['$lte' => '$now'],
-                    'depublicatiedatum' => ['$gte' => '$now'],
+                    'publicationDate'   => ['$lte' => '$now'],
+                    'depublicationDate' => ['$gte' => '$now'],
                 ],
             ],
             [
                 'group' => 'public',
                 'match' => [
-                    'publicatiedatum'   => ['$lte' => '$now'],
-                    'depublicatiedatum' => ['$exists' => false],
+                    'publicationDate'   => ['$lte' => '$now'],
+                    'depublicationDate' => ['$exists' => false],
                 ],
             ],
         ];

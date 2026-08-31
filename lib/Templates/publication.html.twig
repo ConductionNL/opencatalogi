@@ -1,0 +1,59 @@
+{# Publication metadata layout rendered into the download ZIP (DWN-OR-001 / DWN-OR-003). #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>{{ publication.title|default('Publication') }}</title>
+    <style>
+        body { font-family: sans-serif; font-size: 11pt; color: #222; }
+        h1 { font-size: 18pt; margin-bottom: 0; }
+        h2 { font-size: 13pt; margin-top: 24px; border-bottom: 1px solid #ccc; }
+        p.summary { font-style: italic; color: #555; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid #eee; }
+        th { width: 30%; font-weight: bold; }
+        ul { margin-top: 8px; }
+    </style>
+</head>
+<body>
+<h1>{{ publication.title|default('Publication') }}</h1>
+
+{% if publication.summary is defined and publication.summary is not empty %}
+    <p class="summary">{{ publication.summary }}</p>
+{% endif %}
+
+{% if publication.description is defined and publication.description is not empty %}
+    <h2>Description</h2>
+    <div>{{ publication.description }}</div>
+{% endif %}
+
+<h2>Metadata</h2>
+<table>
+    <tbody>
+    {% for key, value in publication %}
+        {% if key not in ['title', 'summary', 'description', 'attachments'] and value is not iterable and value is not empty %}
+            <tr>
+                <th>{{ key }}</th>
+                <td>{{ value }}</td>
+            </tr>
+        {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+
+{% if publication.attachments is defined and publication.attachments is iterable and publication.attachments|length > 0 %}
+    <h2>Attachments</h2>
+    <ul>
+        {% for attachment in publication.attachments %}
+            <li>
+                {%- if attachment is iterable -%}
+                    {{ attachment.title|default(attachment.name|default('')) }}
+                {%- else -%}
+                    {{ attachment }}
+                {%- endif -%}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+</body>
+</html>

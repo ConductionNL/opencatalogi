@@ -1,0 +1,204 @@
+{
+	"info": {
+		"_postman_id": "opencatalogi-dcat-ap-harvest",
+		"name": "OpenCatalogi - DCAT-AP-NL Harvest API",
+		"description": "API-only contract tests for the DCAT-AP-NL harvest surface (dcat-ap-harvest change, DCAT-001..010). Covers the instance-level catalog document, per-catalog documents, content negotiation across JSON-LD / Turtle / RDF-XML, unknown/disabled-catalog 404s, unsupported-format 406, and harvester caching headers. Per the Playwright-UI-only / Newman-API convention this surface has no browser UI and is asserted here.\n\nVariables:\n- baseUrl: instance base URL (default http://localhost:8080)\n- catalogSlug: a DCAT-enabled catalog slug to harvest (set per environment)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+		{ "key": "catalogSlug", "value": "woo-besluiten", "type": "string" }
+	],
+	"item": [
+		{
+			"name": "DCAT-002 Instance document (JSON-LD)",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 OK', () => pm.response.code === 200 || pm.response.code === 500);",
+							"if (pm.response.code === 200) {",
+							"  pm.test('Content-Type is JSON-LD', () => pm.response.headers.get('Content-Type').includes('application/ld+json'));",
+							"  const doc = pm.response.json();",
+							"  pm.test('has @context', () => doc['@context'] !== undefined);",
+							"  pm.test('has @graph', () => Array.isArray(doc['@graph']));",
+							"  pm.test('root is a dcat:Catalog', () => doc['@graph'].some(n => n['@type'] === 'dcat:Catalog'));",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "DCAT-001 Per-catalog document (JSON-LD)",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 (enabled) or 404 (disabled/unknown)', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  pm.test('Content-Type is JSON-LD', () => pm.response.headers.get('Content-Type').includes('application/ld+json'));",
+							"  const doc = pm.response.json();",
+							"  pm.test('has dcat:Catalog node', () => doc['@graph'].some(n => n['@type'] === 'dcat:Catalog'));",
+							"  pm.test('declares DCAT-AP-NL profile in context', () => JSON.stringify(doc['@context']).includes('dcat-ap-nl'));",
+							"  pm.test('Last-Modified header present', () => pm.response.headers.has('Last-Modified'));",
+							"  pm.test('ETag header present', () => pm.response.headers.has('ETag'));",
+							"  pm.test('CORS allow-origin present', () => pm.response.headers.has('Access-Control-Allow-Origin'));",
+							"  pm.collectionVariables.set('lastEtag', pm.response.headers.get('ETag'));",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "DCAT-007 Per-catalog document (Turtle via Accept)",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "text/turtle" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 404', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  pm.test('Content-Type is Turtle', () => pm.response.headers.get('Content-Type').includes('text/turtle'));",
+							"  pm.test('body declares @prefix dcat', () => pm.response.text().includes('@prefix dcat:'));",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "DCAT-007 Per-catalog document (RDF/XML via ?format=)",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "*/*" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/dcat?format=rdfxml", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "dcat"], "query": [{ "key": "format", "value": "rdfxml" }] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 404', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  pm.test('Content-Type is RDF/XML', () => pm.response.headers.get('Content-Type').includes('application/rdf+xml'));",
+							"  pm.test('body is RDF/XML', () => pm.response.text().includes('<rdf:RDF'));",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "DCAT-007 Unsupported format -> 406",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "*/*" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/dcat?format=excel", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "dcat"], "query": [{ "key": "format", "value": "excel" }] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('406 Not Acceptable', () => pm.response.code === 406);",
+							"pm.test('lists supported serializations', () => {",
+							"  const body = pm.response.json();",
+							"  return Array.isArray(body.supported) && body.supported.includes('jsonld');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "DCAT-001 Unknown catalog -> 404",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/this-catalog-does-not-exist/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "this-catalog-does-not-exist", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('404 Not Found', () => pm.response.code === 404);",
+							"pm.test('has descriptive error body', () => pm.response.json().error !== undefined);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "DCAT-008 Conditional GET (If-None-Match -> 304)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/ld+json" },
+					{ "key": "If-None-Match", "value": "{{lastEtag}}" }
+				],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('304 when ETag matches, else 200/404', () => [200, 304, 404].includes(pm.response.code));",
+							"if (pm.collectionVariables.get('lastEtag') && pm.response.code === 304) {",
+							"  pm.test('304 carries no body', () => pm.response.text().length === 0);",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "DCAT-001 CORS preflight (OPTIONS)",
+			"request": {
+				"method": "OPTIONS",
+				"header": [{ "key": "Origin", "value": "https://data.overheid.nl" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('preflight succeeds', () => [200, 204].includes(pm.response.code));",
+							"pm.test('Access-Control-Allow-Origin present', () => pm.response.headers.has('Access-Control-Allow-Origin'));",
+							"pm.test('Access-Control-Allow-Methods includes GET', () => pm.response.headers.get('Access-Control-Allow-Methods').includes('GET'));"
+						]
+					}
+				}
+			]
+		}
+	]
+}

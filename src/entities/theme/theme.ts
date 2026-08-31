@@ -1,20 +1,30 @@
-import { SafeParseReturnType, z } from 'zod'
-import { TTheme } from './theme.types'
+import type { SafeParseReturnType } from 'zod'
+import type { TTheme } from './theme.types'
 
+import { z } from 'zod'
+
+/**
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ */
 export class Theme implements TTheme {
+	public id!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public image!: string
+	public content!: string
+	public link!: string
+	public url!: string
+	public icon!: string
+	public isExternal!: boolean
+	public sort!: number
 
-	public id: string
-	public title: string
-	public summary: string
-	public description: string
-	public image: string
-	public content: string
-	public link: string
-	public url: string
-	public icon: string
-	public isExternal: boolean
-	public sort: number
-
+	/**
+	 * @param data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
 	constructor(data: TTheme) {
 		this.hydrate(data)
 	}
@@ -56,5 +66,4 @@ export class Theme implements TTheme {
 
 		return result
 	}
-
 }

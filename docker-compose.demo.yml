@@ -1,0 +1,136 @@
+# Docker Compose for the OpenCatalogi demo portal
+#
+# One command brings up a Rotterdam-themed public portal that searches
+# publications across TWO catalogues:
+#
+#   docker compose -f docker-compose.demo.yml up -d
+#   bash docker/demo/provision.sh
+#
+# Then open http://localhost:8580/index.php/apps/portaliq/site
+#
+# WHY TWO INSTANCES
+# -----------------
+# Because one cannot demonstrate federation. The production directory at
+# directory.opencatalogi.nl answers `{"results":[],"total":0}` — measured
+# 2026-08-20 — so an instance federating with it syncs successfully and
+# receives nothing, and a portal reading it shows an empty list that is
+# indistinguishable from a broken install.
+#
+# `demo-peer` is a second, independent catalogue with its own publications.
+# `demo-main` discovers it, syncs from it, and its portal renders results that
+# NAME the peer they came from. That makes federation observable rather than
+# asserted, and it works with no network access at all.
+#
+# Ports: 8580 (portal instance), 8581 (peer catalogue). Chosen clear of the
+# dev environment (8080), the federation test rig (9081/9082) and the e2e rigs
+# in the 8090–8500 range. The database has NO host port — nothing outside this
+# compose needs it, and binding one is how two rigs collide.
+#
+# Teardown, including the seeded data:
+#   docker compose -f docker-compose.demo.yml down -v
+
+volumes:
+  demo-main:
+  demo-peer:
+  demo-db:
+
+networks:
+  opencatalogi-demo:
+    name: opencatalogi-demo
+    driver: bridge
+
+services:
+  demo-db:
+    container_name: oc-demo-db
+    image: pgvector/pgvector:pg16
+    restart: "no"
+    environment:
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=demo
+      - POSTGRES_DB=main
+    volumes:
+      - demo-db:/var/lib/postgresql/data
+      - ./docker/demo/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+    networks:
+      - opencatalogi-demo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud -d main"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # The portal instance: OpenRegister + OpenCatalogi + Portaliq + NLDesign.
+  # This is the one a visitor opens.
+  demo-main:
+    user: root
+    container_name: oc-demo-main
+    image: nextcloud:34.0.0-apache
+    restart: "no"
+    ports:
+      - "8580:80"
+    depends_on:
+      demo-db:
+        condition: service_healthy
+    volumes:
+      - demo-main:/var/www/html:rw
+      # App paths are overridable so the rig can run against a checkout, a
+      # worktree or a release tarball without editing this file.
+      - ${OPENREGISTER_PATH:-../openregister}:/var/www/html/custom_apps/openregister
+      - ${PORTALIQ_PATH:-../portaliq}:/var/www/html/custom_apps/portaliq
+      - ${NLDESIGN_PATH:-../nldesign}:/var/www/html/custom_apps/nldesign
+      - .:/var/www/html/custom_apps/opencatalogi
+    environment:
+      - POSTGRES_DB=main
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=demo
+      - POSTGRES_HOST=demo-db
+      - NEXTCLOUD_ADMIN_USER=admin
+      - NEXTCLOUD_ADMIN_PASSWORD=admin
+      # The peer is reached by its container name from inside the network and
+      # by localhost:8581 from the host. Both are trusted so that a redirect
+      # or a generated URL is not rewritten to something unreachable.
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost oc-demo-main demo-main
+      - PHP_MEMORY_LIMIT=1G
+    networks:
+      - opencatalogi-demo
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost/status.php | grep -q '\"installed\":true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 40
+      start_period: 60s
+
+  # The peer catalogue. OpenCatalogi + OpenRegister only — it publishes, it
+  # does not render a portal. Deliberately NOT running portaliq, so that a
+  # result appearing on the main portal can only have arrived by federation.
+  demo-peer:
+    user: root
+    container_name: oc-demo-peer
+    image: nextcloud:34.0.0-apache
+    restart: "no"
+    ports:
+      - "8581:80"
+    depends_on:
+      demo-db:
+        condition: service_healthy
+    volumes:
+      - demo-peer:/var/www/html:rw
+      - ${OPENREGISTER_PATH:-../openregister}:/var/www/html/custom_apps/openregister
+      - .:/var/www/html/custom_apps/opencatalogi
+    environment:
+      - POSTGRES_DB=peer
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=demo
+      - POSTGRES_HOST=demo-db
+      - NEXTCLOUD_ADMIN_USER=admin
+      - NEXTCLOUD_ADMIN_PASSWORD=admin
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost oc-demo-peer demo-peer
+      - PHP_MEMORY_LIMIT=1G
+    networks:
+      - opencatalogi-demo
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost/status.php | grep -q '\"installed\":true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 40
+      start_period: 60s

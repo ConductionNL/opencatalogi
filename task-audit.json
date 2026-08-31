@@ -1,0 +1,37 @@
+{
+  "spec": "openspec/changes/opencatalogi-legacy-quality-cleanup",
+  "verified": [
+    {
+      "task": "1",
+      "file": "openspec/changes/publication-detail-leaf-widgets/tasks.md",
+      "ok": true,
+      "note": "Planning complete: required (maps, contacts) vs optional (photos, bookmarks) split confirmed."
+    },
+    {
+      "task": "2",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "PublicationDetail.widgets now includes maps widgetKey bound to field:geo at gridX=8, gridY=0."
+    },
+    {
+      "task": "3",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "OrganizationDetail page added with contacts widgetKey at gridX=8, gridY=0."
+    },
+    {
+      "task": "4",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "photos (gridX=0, gridY=8) and bookmarks (gridX=6, gridY=8) declared on PublicationDetail independently."
+    },
+    {
+      "task": "5",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "maps widget is manifest-declared only; runtime graceful-hide/empty-state behaviour is leaf-side. No bespoke component added. geo shapes (Point/Polygon/FeatureCollection) handled by leaf at runtime."
+    }
+  ],
+  "stubs": [],
+  "missing_routes": []
+}

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Configuration } from './configuration'
 import { mockConfiguration } from './configuration.mock'
 
