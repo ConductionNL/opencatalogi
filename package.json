@@ -128,7 +128,7 @@
     "vue-eslint-parser": "^10.3.0"
   },
   "overrides": {
-    "@nextcloud/axios": "~2.5.2",
+    "@nextcloud/axios": "$@nextcloud/axios",
     "braces": "^3.0.3",
     "micromatch": "^4.0.8",
     "dompurify": "$dompurify",
