@@ -427,6 +427,117 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertCount(0, $out['results'], 'orphan document must be silent-dropped (N4a)');
 	}
 
+	/**
+	 * RET-006 belt-and-braces on the UUID fast-path: a document pointing at
+	 * a publication with `status: 'archived'` MUST be dropped, even though
+	 * `_rbacAsPublic: true` would have kept the row visible under a
+	 * mis-configured schema RBAC. The linked publication's terminal-hidden
+	 * status is a second gate.
+	 */
+	public function testDocumentDroppedWhenUuidFastPathPublicationIsArchived(): void {
+		$archivedPublication = [
+			'@self'  => ['id' => 'pub-archived-1', 'slug' => 'shelved-report', 'schema' => 1],
+			'title'  => 'Archived report',
+			'status' => 'archived',
+		];
+		$documentRow = [
+			'@self' => [
+				'id'        => 'doc-uuid-archived',
+				'schema'    => 2,
+				'relations' => ['publication' => 'pub-archived-1'],
+			],
+			'title' => 'PDF pointing at archived pub',
+		];
+
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+			// After the UUID fast-path returns null (archived), the code falls through
+			// to the `_relations_contains` refinement, which finds nothing either.
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+		$fake->findResponses['pub-archived-1'] = $archivedPublication;
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(0, $out['results'], 'document with archived linked publication must drop (UUID fast-path RET-006)');
+	}
+
+	/**
+	 * RET-006 belt-and-braces on the slug fast-path: a document whose
+	 * `_relations['publication.slug']` resolves to an archived publication
+	 * MUST be dropped. Same rule as the UUID fast-path.
+	 */
+	public function testDocumentDroppedWhenSlugFastPathPublicationIsArchived(): void {
+		$archivedPublication = [
+			'@self'  => ['id' => 'pub-archived-2', 'slug' => 'shelved-slug', 'schema' => 1],
+			'title'  => 'Archived legacy report',
+			'status' => 'archived',
+		];
+		$documentRow = [
+			'@self' => [
+				'id'        => 'doc-slug-archived',
+				'schema'    => 2,
+				'relations' => ['publication.slug' => 'shelved-slug'],
+			],
+			'title' => 'Legacy PDF pointing at archived pub',
+		];
+
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$documentRow],         'total' => 1, 'facets' => [], 'facetable' => []],
+			['results' => [$archivedPublication], 'total' => 1, 'facets' => [], 'facetable' => []],
+			// Slug fast-path returned null → fall through to `_relations_contains`, which finds nothing.
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(0, $out['results'], 'document with archived slug-linked publication must drop (slug fast-path RET-006)');
+	}
+
+	/**
+	 * D2 slug cache: N documents in one page pointing at the same
+	 * `_relations['publication.slug']` MUST trigger the slug scan exactly
+	 * once — subsequent hits are memoised. Guards against the O(N × 500)
+	 * regression on legacy-seed hot pages.
+	 */
+	public function testSlugFastPathIsCachedAcrossDocumentsInOnePage(): void {
+		$sharedPublication = [
+			'@self' => ['id' => 'pub-shared', 'slug' => 'shared-slug', 'schema' => 1],
+			'title' => 'Shared publication',
+		];
+		$documentRows = [];
+		for ($i = 1; $i <= 3; $i++) {
+			$documentRows[] = [
+				'@self' => [
+					'id'        => "doc-shared-{$i}",
+					'schema'    => 2,
+					'relations' => ['publication.slug' => 'shared-slug'],
+				],
+				'title' => "Legacy PDF #{$i}",
+			];
+		}
+
+		$fake = $this->wireHappyPath();
+		// Only TWO responses queued: (1) the candidate page with 3 docs,
+		// (2) the ONE slug-scan for 'shared-slug'. If the cache is broken,
+		// the second and third docs would consume queued response slots
+		// that don't exist and fall through to the `_relations_contains`
+		// path with an empty default response — the test would still
+		// pass results-count but capturedCalls would show > 2.
+		$fake->queuedResponses = [
+			['results' => $documentRows,         'total' => 3, 'facets' => [], 'facetable' => []],
+			['results' => [$sharedPublication],  'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(3, $out['results'], 'all 3 docs must resolve via one cached slug lookup');
+		// Exactly 2 OR calls: the initial candidate paginate + one slug scan.
+		$this->assertCount(2, $fake->capturedCalls, 'slug scan must run exactly once for 3 docs sharing a slug (D2 cache)');
+	}
+
 	// -------------------------------------------------------------------------
 	// findObjectLocation — constrained (register × schema) lookup (#734).
 	// -------------------------------------------------------------------------

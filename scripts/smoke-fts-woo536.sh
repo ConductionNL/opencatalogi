@@ -81,11 +81,11 @@ pass() { echo "  ✓ $1"; PASS=$((PASS + 1)); }
 fail() { echo "  ✗ $1" >&2; FAIL=$((FAIL + 1)); FAILURES+=("$1"); }
 
 json_get() {
-	python3 -c "import json,sys; d=json.loads(sys.stdin.read()); k='$1'; v=d
-for part in k.split('.'):
-	v = v.get(part) if isinstance(v, dict) else v[int(part)] if isinstance(v, list) else None
-	if v is None: break
-print('' if v is None else v)"
+	# Dot-path getter. `jq` is preinstalled in the NC container image; safer than
+	# a tab-indented Python heredoc that any editor pass or `shfmt` run can break.
+	# `// empty` maps a missing path to a blank line so callers can `[ "$x" = "0" ]`
+	# without special-casing the missing key.
+	jq -r --arg key "$1" 'getpath($key | split(".")) // empty'
 }
 
 echo "=== WOO-536 anon default-scope search ==="
