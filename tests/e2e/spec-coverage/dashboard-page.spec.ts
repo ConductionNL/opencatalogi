@@ -85,8 +85,10 @@ test.describe('dashboard-page', () => {
 		await expect(actions).toBeVisible({ timeout: 10000 })
 		await actions.click()
 
+		// NcActionButton renders the item as role=menuitem inside the popover,
+		// which mounts outside `content(page)`. Not role=button.
 		const refresh = page
-			.getByRole('button', { name: /^Refresh$/i })
+			.getByRole('menuitem', { name: /^Refresh$/i })
 			.first()
 		await expect(refresh).toBeVisible({ timeout: 10000 })
 		await expect(refresh).toBeEnabled()
