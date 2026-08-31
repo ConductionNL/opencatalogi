@@ -92,6 +92,8 @@ class WOO536RepairReadRules implements IRepairStep
      * @param IOutput $output The output interface.
      *
      * @return void
+     *
+     * @spec openspec/specs/search/spec.md
      */
     public function run(IOutput $output): void
     {

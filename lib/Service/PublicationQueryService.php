@@ -219,7 +219,16 @@ class PublicationQueryService
 
         // Stap 3 — Dynamic schema-discriminator via SchemaMapper. Replaces the pre-WOO-536
         // two-element hardcoded map; per-request cache so multi-schema search doesn't hit
-        // the DB per row.
+        // the DB per row. ADR-083: OR is an optional dependency for this path, so
+        // establish availability before the container lookup — if OR is not installed
+        // the endpoint is architecturally unreachable and we return an empty envelope.
+        if (class_exists('OCA\\OpenRegister\\Db\\SchemaMapper') === false) {
+            $this->logger?->warning(
+                'PublicationQueryService: OpenRegister SchemaMapper unavailable — returning empty envelope',
+                []
+            );
+            return ['results' => [], 'total' => 0];
+        }
         $schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
         $schemaSlugById = [];
 
