@@ -41,7 +41,7 @@
 
 ## 8. Tests
 
-- [ ] 8.1 Add `tests/Unit/Service/PublicationQueryServiceTest.php` covering: multi-schema catalog returns rows from 3+ schemas; default scope = listed+published union; `_catalog` param narrows scope; `_catalogi[]` unions catalogs; anon caller does not see draft/future-dated objects; admin caller sees same set as anon; `total` equals actual visible count; `facets`/`facetable` present for anon; deleted `catalogSlug` still ignored; `_schema` param still stripped.
+- [x] 8.1 Add `tests/Unit/Service/PublicationQueryServiceTest.php` covering: fail-closed empty scope, `_rbac`/`_rbacAsPublic`/`_multitenancy` forwarded to OR, Q7 Interpretation A scope-widening params stripped, catalog-scope propagates as `_schemas`, envelope `facets`/`facetable` pass-through, M2 fast-path via `_relations['publication.slug']` (bug 1 fix) + `_relations['publication']` (UUID) + N4a silent-drop, pure helpers (`isCatalogPubliclyAvailable`, `normalizeIds`, `stripEmptyValues`), plus preserved `findObjectLocation` fail-closed + happy-path + DoesNotExistException-continue cases. 19 tests, 53 assertions, all green (2026-08-31). Commit b6dc3f83.
 - [x] 8.2 Add `tests/Unit/Service/RepairMigrationTest.php` covering: single-rule-shape install gets two-rule shape added; already-two-rule-shape install is not duplicated (idempotency); admin-customised read block is not clobbered; `"authenticated"` element is preserved.
 
 Acceptance criteria:
