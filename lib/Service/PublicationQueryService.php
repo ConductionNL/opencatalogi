@@ -152,6 +152,20 @@ class PublicationQueryService
             ];
         }
 
+        // ADR-083 preflight: OR is an optional dependency for this path. Establish
+        // that SchemaMapper is loadable BEFORE we touch $objectService — every OR
+        // call downstream ($objectService->buildSearchQuery, ->searchObjectsPaginated,
+        // and the container->get(SchemaMapper) below) assumes the package is present.
+        // If it isn't, return the same empty envelope shape as the no-scope branch
+        // so the endpoint stays uniform for the anonymous caller.
+        if (class_exists('OCA\\OpenRegister\\Db\\SchemaMapper') === false) {
+            $this->logger?->warning(
+                'PublicationQueryService: OpenRegister SchemaMapper unavailable — returning empty envelope',
+                []
+            );
+            return ['results' => [], 'total' => 0];
+        }
+
         // Opt-in content-search (WOO-517): widen matching to include
         // OR-extracted document body text. Default false — omitted/false is
         // byte-identical to the WOO-506 baseline, so existing consumers see zero
@@ -219,16 +233,7 @@ class PublicationQueryService
 
         // Stap 3 — Dynamic schema-discriminator via SchemaMapper. Replaces the pre-WOO-536
         // two-element hardcoded map; per-request cache so multi-schema search doesn't hit
-        // the DB per row. ADR-083: OR is an optional dependency for this path, so
-        // establish availability before the container lookup — if OR is not installed
-        // the endpoint is architecturally unreachable and we return an empty envelope.
-        if (class_exists('OCA\\OpenRegister\\Db\\SchemaMapper') === false) {
-            $this->logger?->warning(
-                'PublicationQueryService: OpenRegister SchemaMapper unavailable — returning empty envelope',
-                []
-            );
-            return ['results' => [], 'total' => 0];
-        }
+        // the DB per row. Availability preflight for OR ran at the top of this method.
         $schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
         $schemaSlugById = [];
 
@@ -250,6 +255,10 @@ class PublicationQueryService
         // `total` and `facets` therefore reflect visible-only counts by construction —
         // no undercount workaround, no facet stripping.
         $publicationCache = [];
+        // M2 slug cache — memoises tryPublicationSlugLookup results (including null
+        // misses) by slug across the whole page so N documents sharing one
+        // `_relations['publication.slug']` collapse to a single scan.
+        $slugCache        = [];
         $seenObjectIds    = [];
         $rows = [];
 
@@ -320,7 +329,8 @@ class PublicationQueryService
                     objectService: $objectService,
                     registerId: $refinementRegisterId,
                     publicationSchemaId: $publicationSchemaId,
-                    cache: $publicationCache
+                    cache: $publicationCache,
+                    slugCache: $slugCache
                 );
 
                 if ($publicationSummary === null || $publicationSummary['public'] !== true) {
@@ -341,12 +351,19 @@ class PublicationQueryService
             $rows[] = $rowArray;
         }//end foreach
 
-        // Stap 4 — Total + facets pass through unmodified. Under _rbac_as_public, OR's
-        // `total` already reflects visible-only count and OR's facets aggregate over
-        // visible-only rows. No caller-identity branching needed anymore.
+        // Stap 4 — Facets pass through unmodified (OR aggregates over visible-only
+        // rows under `_rbac_as_public`). `total` is REBUILT from the emitted rows
+        // rather than passed through from OR, because the row-loop may drop
+        // documents that fail transitive-visibility (N4a) — a doc whose linked
+        // publication is not publicly visible under `_rbacAsPublic: true`. OR's
+        // pre-drop count would leave callers with `total > results-length`
+        // (undercount from client perspective; the bug 1 pattern reported
+        // 2026-08-31). Recomputing from `$rows` keeps SCH-PFTS-004's `total
+        // reflects the true visible count` contract intact on both the metadata
+        // and the `_content=true` chunk-hit paths.
         $envelope = [
             'results' => $rows,
-            'total'   => (int) ($candidateResult['total'] ?? count($rows)),
+            'total'   => count($rows),
         ];
 
         if (isset($candidateResult['facets']) === true) {
@@ -666,7 +683,8 @@ class PublicationQueryService
         object $objectService,
         ?int $registerId,
         int $publicationSchemaId,
-        array &$cache
+        array &$cache,
+        array &$slugCache
     ): ?array {
         $documentUuid = ($documentRow['@self']['id'] ?? ($documentRow['id'] ?? null));
         if (is_string($documentUuid) === false || $documentUuid === '') {
@@ -724,12 +742,17 @@ class PublicationQueryService
 
             $linkedBySlug = ($relations['publication.slug'] ?? null);
             if (is_string($linkedBySlug) === true && $linkedBySlug !== '') {
-                $slugPath = $this->tryPublicationSlugLookup(
-                    publicationSlug: $linkedBySlug,
-                    objectService: $objectService,
-                    registerId: $registerId,
-                    publicationSchemaId: $publicationSchemaId
-                );
+                if (array_key_exists($linkedBySlug, $slugCache) === true) {
+                    $slugPath = $slugCache[$linkedBySlug];
+                } else {
+                    $slugPath = $this->tryPublicationSlugLookup(
+                        publicationSlug: $linkedBySlug,
+                        objectService: $objectService,
+                        registerId: $registerId,
+                        publicationSchemaId: $publicationSchemaId
+                    );
+                    $slugCache[$linkedBySlug] = $slugPath;
+                }
                 if ($slugPath !== null) {
                     $cache[$documentUuid] = $slugPath;
                     return $slugPath;
@@ -893,9 +916,16 @@ class PublicationQueryService
     ): ?array {
         // ObjectService::searchObjectsPaginated normalises the query differently
         // for `@self.<field>` filters than the HTTP query parser does, so we scan
-        // the small publication set for a slug match instead of relying on a
-        // pushdown filter. The result set is tiny (schema-scoped, listed+published
-        // catalogs only) so this is O(catalog-scope) not O(all-publications).
+        // for a slug match client-side instead of relying on a pushdown filter.
+        // Scope is `_schemas => [$publicationSchemaId]` (+ optional `_register` when
+        // the outer catalog scope collapses to one register) — this is O(500) per
+        // unique slug scanned, capped by `_limit: 500`. Slug collisions across
+        // registers on a multi-register scope are possible. The caller memoises
+        // the result per slug for the duration of the request (see $slugCache in
+        // the row loop), so N documents sharing one slug pay the scan cost once.
+        // Callers holding 500+ publications on the publication schema will see
+        // legacy slugs beyond row 500 fail to resolve — such fleets should migrate
+        // away from the denormalised `publication.slug` shape (WOO-506 legacy).
         try {
             $matches = $objectService->searchObjectsPaginated(
                 query: [
@@ -915,6 +945,8 @@ class PublicationQueryService
         }
 
         $rows = ($matches['results'] ?? []);
+        $firstMatch = null;
+        $matchCount = 0;
         foreach ($rows as $publication) {
             if (is_array($publication) === false) {
                 $publication = $publication->jsonSerialize();
@@ -923,20 +955,37 @@ class PublicationQueryService
             if ($candidateSlug !== $publicationSlug) {
                 continue;
             }
-            if (($publication['status'] ?? null) === 'archived') {
-                return null;
+            $matchCount++;
+            if ($firstMatch === null) {
+                $firstMatch = $publication;
             }
-            return [
-                'summary' => [
-                    'id'    => (string) ($publication['@self']['id'] ?? ($publication['id'] ?? '')),
-                    'slug'  => (string) $candidateSlug,
-                    'title' => (string) ($publication['title'] ?? ''),
-                ],
-                'public' => true,
-            ];
         }
 
-        return null;
+        if ($matchCount > 1) {
+            // Slug collision: OR does not SQL-UNIQUE `slug` at the schema layer.
+            // Parity with N4b (multi-linked documents in the `_relations_contains`
+            // path) — debug (not info) keeps log volume sane on hot public endpoints.
+            $this->logger?->debug(
+                'WOO-536: publication slug matched multiple rows; using first-scanned',
+                ['slug' => $publicationSlug, 'count' => $matchCount]
+            );
+        }
+
+        if ($firstMatch === null) {
+            return null;
+        }
+        if (($firstMatch['status'] ?? null) === 'archived') {
+            return null;
+        }
+
+        return [
+            'summary' => [
+                'id'    => (string) ($firstMatch['@self']['id'] ?? ($firstMatch['id'] ?? '')),
+                'slug'  => (string) $publicationSlug,
+                'title' => (string) ($firstMatch['title'] ?? ''),
+            ],
+            'public' => true,
+        ];
 
     }//end tryPublicationSlugLookup()
 
