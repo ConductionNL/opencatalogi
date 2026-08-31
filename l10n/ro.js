@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Create recent",
         "Recently modified": "Modificate recent",
         "Refresh": "Reîmprospătează",
-        "Refresh dashboard": "Reîmprospătează tabloul de bord",
         "Refresh facets": "Reîmprospătează fațetele",
         "Registers": "Registre",
         "Reimport configuration": "Reimportă configurația",

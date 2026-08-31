@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Äskettäin luotu",
         "Recently modified": "Äskettäin muokattu",
         "Refresh": "Päivitä",
-        "Refresh dashboard": "Päivitä kojelauta",
         "Refresh facets": "Päivitä fasetit",
         "Registers": "Rekisterit",
         "Reimport configuration": "Tuo määritys uudelleen",

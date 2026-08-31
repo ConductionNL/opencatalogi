@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Son oluşturulanlar",
         "Recently modified": "Son değiştirilenler",
         "Refresh": "Yenile",
-        "Refresh dashboard": "Panoyu yenile",
         "Refresh facets": "Yönleri yenile",
         "Registers": "Kayıtlar",
         "Reimport configuration": "Yapılandırmayı yeniden içe aktar",

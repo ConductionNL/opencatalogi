@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Maħluq reċentement",
         "Recently modified": "Immodifikat reċentement",
         "Refresh": "Iġġedded",
-        "Refresh dashboard": "Iġġedded id-dashboard",
         "Refresh facets": "Iġġedded il-faċċetti",
         "Registers": "Reġistri",
         "Reimport configuration": "Erġa' importa l-konfigurazzjoni",

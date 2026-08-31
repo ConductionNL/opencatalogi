@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Creados recientemente",
         "Recently modified": "Modificados recientemente",
         "Refresh": "Actualizar",
-        "Refresh dashboard": "Actualizar panel de control",
         "Refresh facets": "Actualizar facetas",
         "Registers": "Registros",
         "Reimport configuration": "Reimportar configuración",

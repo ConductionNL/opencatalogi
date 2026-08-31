@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Senest oprettet",
         "Recently modified": "Senest ændret",
         "Refresh": "Opdater",
-        "Refresh dashboard": "Opdater oversigt",
         "Refresh facets": "Opdater facetter",
         "Registers": "Registre",
         "Reimport configuration": "Genimportér konfiguration",

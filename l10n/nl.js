@@ -160,7 +160,6 @@ OC.L10N.register(
         "Recently created": "Onlangs gemaakt",
         "Recently modified": "Onlangs gewijzigd",
         "Refresh": "Vernieuwen",
-        "Refresh dashboard": "Dashboard vernieuwen",
         "Refresh facets": "Facetten vernieuwen",
         "Registers": "Registers",
         "Reimport configuration": "Configuratie opnieuw importeren",

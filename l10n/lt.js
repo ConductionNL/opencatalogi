@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Neseniai sukurta",
         "Recently modified": "Neseniai keista",
         "Refresh": "Atnaujinti",
-        "Refresh dashboard": "Atnaujinti skydelį",
         "Refresh facets": "Atnaujinti facetes",
         "Registers": "Registrai",
         "Reimport configuration": "Iš naujo importuoti konfigūraciją",

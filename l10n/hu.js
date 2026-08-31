@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Nemrég létrehozott",
         "Recently modified": "Nemrég módosított",
         "Refresh": "Frissítés",
-        "Refresh dashboard": "Vezérlőpult frissítése",
         "Refresh facets": "Szempontok frissítése",
         "Registers": "Nyilvántartások",
         "Reimport configuration": "Konfiguráció újraimportálása",

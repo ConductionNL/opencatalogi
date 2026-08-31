@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Cruthaithe le déanaí",
         "Recently modified": "Athraithe le déanaí",
         "Refresh": "Athnuaigh",
-        "Refresh dashboard": "Athnuaigh an painéal",
         "Refresh facets": "Athnuaigh gnéithe",
         "Registers": "Cláir",
         "Reimport configuration": "Athiompórtáil cumraíocht",

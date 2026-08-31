@@ -76,9 +76,17 @@ test.describe('dashboard-page', () => {
 		).toBeVisible({ timeout: 15000 })
 
 		// The Refresh action (re-runs loadDashboardData) — a genuine,
-		// data-independent dashboard interaction.
-		const refresh = content(page)
-			.getByRole('button', { name: /Refresh dashboard|^Refresh$/i })
+		// data-independent dashboard interaction. It lives ONLY in the
+		// page-level Actions overflow menu: the dashboard used to repeat it
+		// as a toolbar button, which shipped two Refreshes side by side.
+		const actions = content(page)
+			.getByRole('button', { name: /^Actions$/i })
+			.first()
+		await expect(actions).toBeVisible({ timeout: 10000 })
+		await actions.click()
+
+		const refresh = page
+			.getByRole('button', { name: /^Refresh$/i })
 			.first()
 		await expect(refresh).toBeVisible({ timeout: 10000 })
 		await expect(refresh).toBeEnabled()
