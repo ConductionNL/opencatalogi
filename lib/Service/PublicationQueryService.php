@@ -690,6 +690,44 @@ class PublicationQueryService
             }
         }
 
+        // M2 fast-path: legacy documents store the linked publication in their
+        // OWN `_relations` array — either as `publication` (UUID form, canonical)
+        // or `publication.slug` (denormalised form, WOO-506 seed shape). Fase 5
+        // Robert-plan assumed publication.documents[] (inverse), but the fleet
+        // seed and existing writes point document→publication, not the other
+        // way around. Query the publication schema by id or slug and let the
+        // schema-level RBAC decide visibility.
+        $relations = ($documentRow['@self']['relations'] ?? ($documentRow['_relations'] ?? []));
+        if (is_array($relations) === true) {
+            $linkedById = ($relations['publication'] ?? null);
+            if (is_string($linkedById) === true && $linkedById !== '') {
+                $fastPath = $this->tryFastPathPublicationLookup(
+                    publicationId: $linkedById,
+                    objectService: $objectService,
+                    registerId: $registerId,
+                    publicationSchemaId: $publicationSchemaId
+                );
+                if ($fastPath !== null) {
+                    $cache[$documentUuid] = $fastPath;
+                    return $fastPath;
+                }
+            }
+
+            $linkedBySlug = ($relations['publication.slug'] ?? null);
+            if (is_string($linkedBySlug) === true && $linkedBySlug !== '') {
+                $slugPath = $this->tryPublicationSlugLookup(
+                    publicationSlug: $linkedBySlug,
+                    objectService: $objectService,
+                    registerId: $registerId,
+                    publicationSchemaId: $publicationSchemaId
+                );
+                if ($slugPath !== null) {
+                    $cache[$documentUuid] = $slugPath;
+                    return $slugPath;
+                }
+            }
+        }
+
         // Build the per-document refinement query. Under _rbac_as_public: true, OR only
         // returns publications that would be visible to an anonymous caller — so a
         // non-empty result guarantees the linked pub is public.
@@ -820,6 +858,78 @@ class PublicationQueryService
         ];
 
     }//end tryFastPathPublicationLookup()
+
+    /**
+     * Slug-based fallback lookup for legacy document seeds that carry
+     * `_relations['publication.slug'] = <slug>` rather than a UUID.
+     *
+     * Runs a targeted `searchObjectsPaginated` on the publication schema with
+     * `slug` as a match filter and the same `_rbac_as_public: true` gating as
+     * the UUID fast-path — a non-empty result guarantees the linked publication
+     * is publicly visible. Returns null on miss (unknown slug, non-public,
+     * archived) so the caller falls through to the `_relations_contains` path.
+     *
+     * @param string      $publicationSlug     The linked publication's slug.
+     * @param object      $objectService       OpenRegister ObjectService instance.
+     * @param integer|null $registerId         Publication register id or null.
+     * @param integer     $publicationSchemaId Publication schema id in scope.
+     *
+     * @return array|null The public-visible publication summary + flag, or null on miss.
+     */
+    private function tryPublicationSlugLookup(
+        string $publicationSlug,
+        object $objectService,
+        ?int $registerId,
+        int $publicationSchemaId
+    ): ?array {
+        // ObjectService::searchObjectsPaginated normalises the query differently
+        // for `@self.<field>` filters than the HTTP query parser does, so we scan
+        // the small publication set for a slug match instead of relying on a
+        // pushdown filter. The result set is tiny (schema-scoped, listed+published
+        // catalogs only) so this is O(catalog-scope) not O(all-publications).
+        try {
+            $matches = $objectService->searchObjectsPaginated(
+                query: [
+                    '_schemas' => [$publicationSchemaId],
+                    '_limit'   => 500,
+                ] + ($registerId !== null ? ['_register' => $registerId] : []),
+                _rbac: true,
+                _multitenancy: false,
+                _rbacAsPublic: true
+            );
+        } catch (\Throwable $e) {
+            $this->logger?->warning(
+                'WOO-536: slug scan threw',
+                ['slug' => $publicationSlug, 'error' => $e->getMessage()]
+            );
+            return null;
+        }
+
+        $rows = ($matches['results'] ?? []);
+        foreach ($rows as $publication) {
+            if (is_array($publication) === false) {
+                $publication = $publication->jsonSerialize();
+            }
+            $candidateSlug = ($publication['@self']['slug'] ?? ($publication['slug'] ?? ''));
+            if ($candidateSlug !== $publicationSlug) {
+                continue;
+            }
+            if (($publication['status'] ?? null) === 'archived') {
+                return null;
+            }
+            return [
+                'summary' => [
+                    'id'    => (string) ($publication['@self']['id'] ?? ($publication['id'] ?? '')),
+                    'slug'  => (string) $candidateSlug,
+                    'title' => (string) ($publication['title'] ?? ''),
+                ],
+                'public' => true,
+            ];
+        }
+
+        return null;
+
+    }//end tryPublicationSlugLookup()
 
     /**
      * Find the register and schema IDs for an object UUID within a constrained scope.
