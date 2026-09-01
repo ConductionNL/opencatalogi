@@ -725,7 +725,11 @@ class PublicationQueryService
                     // type — normalise to string|null (keep the `array<int, string|null>`
                     // shape of the by-ref cache intact).
                     $rawSlug = $schemaMapper->find($sidInt)->getSlug();
-                    $slug    = is_string($rawSlug) ? $rawSlug : null;
+                    if (is_string($rawSlug) === true) {
+                        $slug = $rawSlug;
+                    } else {
+                        $slug = null;
+                    }
                 } catch (\Throwable $e) {
                     $schemaSlugById[$sidInt] = null;
                     continue;
