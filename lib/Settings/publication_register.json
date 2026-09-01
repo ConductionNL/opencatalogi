@@ -299,6 +299,20 @@
               "match": {
                 "publicationDate": {
                   "$lte": "$now"
+                },
+                "depublicationDate": {
+                  "$gte": "$now"
+                }
+              }
+            },
+            {
+              "group": "public",
+              "match": {
+                "publicationDate": {
+                  "$lte": "$now"
+                },
+                "depublicationDate": {
+                  "$exists": false
                 }
               }
             },
@@ -411,6 +425,20 @@
               "match": {
                 "publicationDate": {
                   "$lte": "$now"
+                },
+                "depublicationDate": {
+                  "$gte": "$now"
+                }
+              }
+            },
+            {
+              "group": "public",
+              "match": {
+                "publicationDate": {
+                  "$lte": "$now"
+                },
+                "depublicationDate": {
+                  "$exists": false
                 }
               }
             },

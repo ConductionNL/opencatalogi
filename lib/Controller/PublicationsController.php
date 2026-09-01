@@ -40,6 +40,8 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -391,11 +393,10 @@ class PublicationsController extends Controller {
 	 *
 	 * @return Response The CORS response
 	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		// Determine the origin via the same allowlist-aware resolver used elsewhere
@@ -420,15 +421,14 @@ class PublicationsController extends Controller {
 	 *
 	 * @return JSONResponse JSON response containing publications, pagination info, and optionally facets
 	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(string $catalogSlug): JSONResponse {
 		try {
@@ -552,15 +552,14 @@ class PublicationsController extends Controller {
 	 * @return JSONResponse JSON response containing the requested publication
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string $catalogSlug, string $id): JSONResponse {
 		try {
@@ -840,11 +839,10 @@ class PublicationsController extends Controller {
 	 * @return JSONResponse JSON response containing the requested attachments/files.
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function attachments(string $catalogSlug, string $id): JSONResponse {
 
@@ -927,11 +925,10 @@ class PublicationsController extends Controller {
 	 * @return DataDownloadResponse|JSONResponse JSON response containing the requested attachments/files.
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function download(string $catalogSlug, string $id): DataDownloadResponse|JSONResponse {
 		try {
@@ -1023,12 +1020,12 @@ class PublicationsController extends Controller {
 	 * @return JSONResponse A JSON response containing the related objects
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) catalogSlug required by route pattern.
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function uses(string $catalogSlug, string $id): JSONResponse {
 		try {
@@ -1041,7 +1038,7 @@ class PublicationsController extends Controller {
 			//
 			// Failing to place the object inside the catalog is a refusal, not a reason to
 			// continue unscoped (#857): find() below with no register and no schema falls
-			// back to OpenRegister's every-magic-table path, and this route is @PublicPage.
+			// back to OpenRegister's every-magic-table path, and this route is #[PublicPage].
 			// A catalog with no configured scope has no namespace to serve from, which is
 			// the same C-1 policy attachments() and download() have carried since wave-7.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
@@ -1128,12 +1125,12 @@ class PublicationsController extends Controller {
 	 * @return JSONResponse A JSON response containing the referenced objects
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) catalogSlug required by route pattern.
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function used(string $catalogSlug, string $id): JSONResponse {
 		try {
@@ -1146,7 +1143,7 @@ class PublicationsController extends Controller {
 			//
 			// Failing to place the object inside the catalog is a refusal, not a reason to
 			// continue unscoped (#857): find() below with no register and no schema falls
-			// back to OpenRegister's every-magic-table path, and this route is @PublicPage.
+			// back to OpenRegister's every-magic-table path, and this route is #[PublicPage].
 			// A catalog with no configured scope has no namespace to serve from, which is
 			// the same C-1 policy attachments() and download() have carried since wave-7.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
