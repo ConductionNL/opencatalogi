@@ -30,6 +30,9 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
@@ -54,7 +57,7 @@ use RuntimeException;
  *
  * The remaining methods on this controller are internal/admin-use only
  * (testing + administrative introspection); they retain their original
- * `@NoAdminRequired` posture and do not participate in the public surface.
+ * `#[NoAdminRequired]` posture and do not participate in the public surface.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
@@ -129,12 +132,11 @@ class SearchController extends Controller {
 	 *
 	 * @return JSONResponse JSON response containing the mixed publication/document result envelope.
 	 *
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 *
 	 * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-3
 	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function index(): JSONResponse {
 		try {
@@ -188,11 +190,10 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-a-single-publication-by-id-from-local-or-federated-sources-fed-002
 	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	public function show(string $id): JSONResponse {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -212,11 +213,10 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-publication-attachments-from-local-or-federated-sources-fed-005
 	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	public function attachments(string $id): JSONResponse {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -236,11 +236,10 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-download-publication-files-from-local-or-federated-sources-fed-006
 	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	public function download(string $id): DataDownloadResponse|JSONResponse {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -261,11 +260,10 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-outgoing-relations-uses-with-federation-support-fed-003
 	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	public function uses(string $id): JSONResponse {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -286,11 +284,10 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-incoming-relations-used-by-with-federation-support-fed-004
 	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	public function used(string $id): JSONResponse {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
