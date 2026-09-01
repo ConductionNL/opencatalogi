@@ -7,24 +7,18 @@
 			:loading="globalLoading && !hasData"
 			:emptyLabel="t('opencatalogi', 'No widgets configured')"
 			:unavailableLabel="t('opencatalogi', 'Widget not available')"
-			@layoutChange="onLayoutChange">
-			<!-- Header actions -->
+			:refreshing="globalLoading"
+			@layoutChange="onLayoutChange"
+			@refresh="loadDashboardData">
+			<!-- Header actions. Refresh is NOT repeated here: CnActionsMenu
+			     already carries it, and `@refresh` above routes that one item
+			     to loadDashboardData. -->
 			<template #actions>
 				<NcButton variant="primary" @click="createPublication">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
 					{{ t('opencatalogi', 'New Publication') }}
-				</NcButton>
-				<NcButton
-					:disabled="globalLoading"
-					:aria-label="t('opencatalogi', 'Refresh dashboard')"
-					@click="loadDashboardData">
-					<template #icon>
-						<Refresh
-							:size="20"
-							:class="{ 'icon-spinning': globalLoading }" />
-					</template>
 				</NcButton>
 			</template>
 
@@ -433,7 +427,6 @@ import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue
 import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
 import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
 import {
 	useAccentChartColor,
 	useCategoricalChartColors,
@@ -571,7 +564,6 @@ export default {
 		CnStatsBlock,
 		CnChartWidget,
 		Plus,
-		Refresh,
 		DatabaseEyeOutline,
 		FileDocumentEditOutline,
 		FileDocumentCheckOutline,
@@ -1280,30 +1272,5 @@ export default {
 
 .dashboard-error p {
 	margin-bottom: 12px;
-}
-
-/* Refresh button spinning animation */
-.icon-spinning {
-	animation: spin 1s linear infinite;
-}
-
-/* WCAG 2.3.3. The spinner is a status indicator, not decoration: stopping it
-   outright would hide the fact that something is still loading. It is slowed
-   to a near-static rate instead, which removes the vestibular trigger while
-   keeping the "busy" signal. The clickable publication rows below carry no
-   motion of their own, so nothing else in this component needs a fallback. */
-@media (prefers-reduced-motion: reduce) {
-	.icon-spinning {
-		animation-duration: 6s;
-	}
-}
-
-@keyframes spin {
-	from {
-		transform: rotate(0deg);
-	}
-	to {
-		transform: rotate(360deg);
-	}
 }
 </style>

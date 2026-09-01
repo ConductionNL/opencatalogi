@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Nedavno ustvarjeno",
         "Recently modified": "Nedavno spremenjeno",
         "Refresh": "Osveži",
-        "Refresh dashboard": "Osveži nadzorno ploščo",
         "Refresh facets": "Osveži fasete",
         "Registers": "Registri",
         "Reimport configuration": "Znova uvozi konfiguracijo",

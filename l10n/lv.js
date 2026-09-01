@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Nesen izveidots",
         "Recently modified": "Nesen modificēts",
         "Refresh": "Atsvaidzināt",
-        "Refresh dashboard": "Atsvaidzināt informācijas paneli",
         "Refresh facets": "Atsvaidzināt fasetes",
         "Registers": "Reģistri",
         "Reimport configuration": "Atkārtoti importēt konfigurāciju",

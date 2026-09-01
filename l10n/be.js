@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Нядаўна створаныя",
         "Recently modified": "Нядаўна зменены",
         "Refresh": "Абнавіць",
-        "Refresh dashboard": "Абнавіць панэль кіравання",
         "Refresh facets": "Абнавіць фасеты",
         "Registers": "Рэестры",
         "Reimport configuration": "Паўторна імпартаваць канфігурацыю",

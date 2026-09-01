@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Nýlega búið til",
         "Recently modified": "Nýlega breytt",
         "Refresh": "Endurnýja",
-        "Refresh dashboard": "Endurnýja stjórnborð",
         "Refresh facets": "Endurnýja hliðar",
         "Registers": "Skráningar",
         "Reimport configuration": "Flytja stillingar inn að nýju",

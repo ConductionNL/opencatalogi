@@ -160,7 +160,6 @@ OC.L10N.register(
         "Recently created": "Recently created",
         "Recently modified": "Recently modified",
         "Refresh": "Refresh",
-        "Refresh dashboard": "Refresh dashboard",
         "Refresh facets": "Refresh facets",
         "Registers": "Registers",
         "Reimport configuration": "Reimport configuration",

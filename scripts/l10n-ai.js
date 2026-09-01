@@ -137,6 +137,7 @@ function writeAll(entries) {
 				app: e.app,
 				translations: e.translations,
 				pluralForm: e.pluralForm,
+				style: e.style,
 			}),
 		)
 		written.push(e.file)

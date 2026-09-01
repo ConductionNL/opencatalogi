@@ -90,13 +90,18 @@ function main() {
 
 	const written = []
 	for (const file of files) {
-		const { app: fileApp, translations, pluralForm } = loadJsTranslations(file)
+		const {
+			app: fileApp,
+			translations,
+			pluralForm,
+			style,
+		} = loadJsTranslations(file)
 		const before = Object.keys(translations).length
 		for (const k of unused) delete translations[k]
 		const after = Object.keys(translations).length
 		fs.writeFileSync(
 			file,
-			serializeJs({ app: fileApp, translations, pluralForm }),
+			serializeJs({ app: fileApp, translations, pluralForm, style }),
 		)
 		written.push(file)
 		console.log(`${path.basename(file)}: ${before} → ${after} keys`)

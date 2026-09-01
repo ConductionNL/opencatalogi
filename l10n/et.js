@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Hiljuti loodud",
         "Recently modified": "Hiljuti muudetud",
         "Refresh": "Värskenda",
-        "Refresh dashboard": "Värskenda töölauda",
         "Refresh facets": "Värskenda tahke",
         "Registers": "Registrid",
         "Reimport configuration": "Impordi seadistus uuesti",

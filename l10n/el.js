@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Πρόσφατα δημιουργημένα",
         "Recently modified": "Πρόσφατα τροποποιημένα",
         "Refresh": "Ανανέωση",
-        "Refresh dashboard": "Ανανέωση πίνακα ελέγχου",
         "Refresh facets": "Ανανέωση όψεων",
         "Registers": "Μητρώα",
         "Reimport configuration": "Επανεισαγωγή διαμόρφωσης",

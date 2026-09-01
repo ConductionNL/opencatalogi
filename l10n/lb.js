@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Viru kuerzem erstellt",
         "Recently modified": "Viru kuerzem geännert",
         "Refresh": "Aktualiséieren",
-        "Refresh dashboard": "Dashboard aktualiséieren",
         "Refresh facets": "Facetten aktualiséieren",
         "Registers": "Registeren",
         "Reimport configuration": "Konfiguratioun nei importéieren",

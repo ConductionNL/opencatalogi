@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Nedávno vytvorené",
         "Recently modified": "Nedávno upravené",
         "Refresh": "Obnoviť",
-        "Refresh dashboard": "Obnoviť nástenku",
         "Refresh facets": "Obnoviť fasety",
         "Registers": "Registre",
         "Reimport configuration": "Znovu importovať konfiguráciu",

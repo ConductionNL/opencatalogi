@@ -154,7 +154,6 @@ OC.L10N.register(
         "Recently created": "Nylig opprettet",
         "Recently modified": "Nylig endret",
         "Refresh": "Oppdater",
-        "Refresh dashboard": "Oppdater kontrollpanel",
         "Refresh facets": "Oppdater fasetter",
         "Registers": "Registre",
         "Reimport configuration": "Importer konfigurasjon på nytt",
