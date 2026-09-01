@@ -227,16 +227,29 @@ class PublicationQueryService
             $searchQuery['_content_search'] = true;
         }
 
-        // Stap 1 — Enable OR's schema-level RBAC with the endpoint-level anon-context
-        // primitive (RBA-PUBLIC-001..006 from openregister PR #2855 / SCH-PFTS-001).
-        // `_rbac_as_public: true` forces $userId=null, $userGroups=[], skips admin bypass
-        // and the `_owner` OR-in — every caller sees the same public-group-eligible
-        // result set. Multitenancy auto-bypasses under this flag (RBA-PUBLIC-002).
+        // Stap 1 — Enable OR's schema-level RBAC. The `_rbac_as_public: true` runtime
+        // toggle from openregister PR #2855 (WOO-536 precursor) has been REMOVED on
+        // OR main by commit `31687c6f3` (`feat(rbac): graft inheritFromPublic onto dev
+        // RBAC`); the new API does authorization inheritance at the schema/register
+        // level via `authorization.inheritFromPublic` with a tenant-wide default
+        // (`openregister.rbac.inherit_from_public_default`). There is no equivalent
+        // per-call "force anonymous" primitive in the new OR API.
+        //
+        // WOO-551 SEMANTIC DRIFT: SCH-PFTS-001's uniform-visibility contract ("admin
+        // sees the same set as anonymous on this public endpoint") is no longer
+        // enforced at the OR layer. Under the new RBAC model, admin sessions bypass
+        // filters entirely and authenticated callers get their `_owner` clause OR'd
+        // in — so signed-in staff may see per-user draft publications through this
+        // endpoint. Anonymous callers still see only public-group-eligible rows
+        // (which the `read` rules on `publication_register.json` scope to
+        // `publicationDate <= now AND (depublicationDate >= now OR $exists false)`).
+        // Restoring uniform visibility requires a follow-up decision — reintroduce a
+        // `_forceAnonymous`-style primitive in OR, or a client-side session strip on
+        // this endpoint. Tracked as WOO-551 follow-up work.
         $candidateResult = $objectService->searchObjectsPaginated(
             query: $searchQuery,
             _rbac: true,
-            _multitenancy: false,
-            _rbacAsPublic: true
+            _multitenancy: false
         );
 
         // Stap 3 — Dynamic schema-discriminator via SchemaMapper. Replaces the pre-WOO-536
@@ -911,11 +924,12 @@ class PublicationQueryService
         }
 
         try {
+            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
+            // in assemblePublicSearchResults() for context.
             $matches = $objectService->searchObjectsPaginated(
                 query: $refinementQuery,
                 _rbac: true,
-                _multitenancy: false,
-                _rbacAsPublic: true
+                _multitenancy: false
             );
         } catch (\Throwable $e) {
             $this->logger?->warning(
@@ -991,6 +1005,8 @@ class PublicationQueryService
         int $publicationSchemaId
     ): ?array {
         try {
+            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
+            // in assemblePublicSearchResults() for context.
             $publication = $objectService->find(
                 id: $publicationId,
                 _extend: [],
@@ -998,8 +1014,7 @@ class PublicationQueryService
                 register: $registerId,
                 schema: $publicationSchemaId,
                 _rbac: true,
-                _multitenancy: false,
-                _rbacAsPublic: true
+                _multitenancy: false
             );
         } catch (\Throwable $e) {
             return null;
@@ -1078,11 +1093,12 @@ class PublicationQueryService
             $slugScanQuery['_register'] = $registerId;
         }
         try {
+            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
+            // in assemblePublicSearchResults() for context.
             $matches = $objectService->searchObjectsPaginated(
                 query: $slugScanQuery,
                 _rbac: true,
-                _multitenancy: false,
-                _rbacAsPublic: true
+                _multitenancy: false
             );
         } catch (\Throwable $e) {
             $this->logger?->warning(
