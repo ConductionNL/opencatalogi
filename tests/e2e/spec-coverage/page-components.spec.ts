@@ -157,7 +157,7 @@ async function gotoHash(
 	page: import('@playwright/test').Page,
 	route: string,
 ): Promise<void> {
-	await page.goto(`${APP}/#${route}`, { waitUntil: 'domcontentloaded' })
+	await page.goto(`${APP}${route}`, { waitUntil: 'domcontentloaded' })
 	await page.waitForTimeout(1500)
 	await dismissOverlays(page)
 }

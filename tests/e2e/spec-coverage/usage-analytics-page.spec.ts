@@ -153,7 +153,7 @@ test.describe('usage-analytics', () => {
 
 		// The Publications index for the catalog (hash route — path-form
 		// gotos boot the Dashboard in this hash-mode SPA).
-		await page.goto(`${APP}/#/publications/${slug}`, {
+		await page.goto(`${APP}/publications/${slug}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await page.waitForTimeout(1500)
@@ -163,7 +163,7 @@ test.describe('usage-analytics', () => {
 		).toBeVisible({ timeout: 15000 })
 
 		// The publication detail page for a real publication.
-		await page.goto(`${APP}/#/publications/${slug}/${pubId}`, {
+		await page.goto(`${APP}/publications/${slug}/${pubId}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await page.waitForTimeout(1500)
@@ -208,7 +208,7 @@ test.describe('usage-analytics', () => {
 		const slug = await resolveCatalogSlug(request)
 		const pubId = await resolvePublicationId(request)
 		await bootApp(page)
-		await page.goto(`${APP}/#/publications/${slug}/${pubId}`, {
+		await page.goto(`${APP}/publications/${slug}/${pubId}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await page.waitForTimeout(1500)

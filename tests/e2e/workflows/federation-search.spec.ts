@@ -100,7 +100,7 @@ test.describe('Federation search page', () => {
 			}
 		})
 
-		await page.goto(`${APP}/#/search`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP}/search`, { waitUntil: 'domcontentloaded' })
 		await dismissSupportDialog(page)
 
 		// The page must actually mount a search surface. Asserting on the
@@ -139,7 +139,7 @@ test.describe('Federation search page', () => {
 			}
 		})
 
-		await page.goto(`${APP}/#/search`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP}/search`, { waitUntil: 'domcontentloaded' })
 		await dismissSupportDialog(page)
 
 		const searchInput = appSearchBox(page)

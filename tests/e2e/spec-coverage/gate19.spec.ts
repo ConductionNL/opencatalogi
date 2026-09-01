@@ -101,7 +101,7 @@ async function openIndexRoute(page: Page, route: string): Promise<void> {
  * @param route The in-app route (e.g. '/catalogi/123').
  */
 async function gotoHash(page: Page, route: string): Promise<void> {
-	await page.goto(`${APP}/#${route}`, { waitUntil: 'domcontentloaded' })
+	await page.goto(`${APP}${route}`, { waitUntil: 'domcontentloaded' })
 	await page.waitForTimeout(1500)
 	await dismissOverlays(page)
 }
