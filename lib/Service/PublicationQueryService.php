@@ -868,6 +868,39 @@ class PublicationQueryService
             }
         }
 
+        // M1b: the carried summary may name the publication by SLUG and not by
+        // id. That is the shape the fleet actually writes — a document is
+        // created with `publication: {slug, title}` — and before this branch
+        // existed it matched nothing: M1 above reads `publication.id`, M2 below
+        // reads the `_relations` array rather than this property, and the
+        // refinement query at the end asks the INVERSE question (a publication
+        // whose relations contain this document), which document→publication
+        // writes never answer.
+        //
+        // So a well-formed public document dropped out of every content-search
+        // result, silently: the row is discarded by the `publicationSummary
+        // === null` guard in assemblePublicSearchResults(), and an empty result
+        // set is indistinguishable from "nothing matched".
+        $carriedPublicationSlug = ($documentRow['publication']['slug'] ?? null);
+        if (is_string($carriedPublicationSlug) === true && $carriedPublicationSlug !== '') {
+            if (array_key_exists($carriedPublicationSlug, $slugCache) === true) {
+                $slugPath = $slugCache[$carriedPublicationSlug];
+            } else {
+                $slugPath = $this->tryPublicationSlugLookup(
+                    publicationSlug: $carriedPublicationSlug,
+                    objectService: $objectService,
+                    registerId: $registerId,
+                    publicationSchemaId: $publicationSchemaId
+                );
+                $slugCache[$carriedPublicationSlug] = $slugPath;
+            }
+
+            if ($slugPath !== null) {
+                $cache[$documentUuid] = $slugPath;
+                return $slugPath;
+            }
+        }
+
         // M2 fast-path: legacy documents store the linked publication in their
         // OWN `_relations` array — either as `publication` (UUID form, canonical)
         // or `publication.slug` (denormalised form, WOO-506 seed shape). Fase 5
