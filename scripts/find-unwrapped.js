@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable jsdoc/require-param */
-/* eslint-disable n/no-process-exit */
-/* eslint-disable no-console */
-/* eslint-disable n/shebang */
+
 /**
  * Candidate unwrapped-string detector.
  *
@@ -28,7 +26,6 @@
 
 const fs = require('fs')
 const path = require('path')
-
 const { walk } = require('./lib/l10n.js')
 
 const ROOT = path.resolve(__dirname, '..')
@@ -141,6 +138,9 @@ function isComponentAttrOptOut(tagName, attrName) {
 
 // ---------- CLI ----------
 
+/**
+ *
+ */
 function parseFlags(argv) {
 	const flags = {}
 	const positionals = []
@@ -176,6 +176,9 @@ const minLength = flags['min-length']
 
 // ---------- helpers ----------
 
+/**
+ *
+ */
 function rel(p) {
 	return path.relative(ROOT, p)
 }
@@ -362,6 +365,9 @@ function computeTCallRanges(text, app) {
 	return ranges
 }
 
+/**
+ *
+ */
 function isInsideRange(pos, ranges) {
 	for (const [start, end] of ranges) {
 		if (pos >= start && pos < end) return true
@@ -508,6 +514,9 @@ function isInsideStoreCall(expr, pos) {
 	return /Store$/.test(baseIdent)
 }
 
+/**
+ *
+ */
 function findStringLiteralsInExpression(expr) {
 	const out = []
 	let i = 0
@@ -777,6 +786,9 @@ function scanScript(file, fullText, scriptStart, scriptEnd, tCallRanges) {
 
 // ---------- main ----------
 
+/**
+ *
+ */
 function findVueFiles(roots) {
 	const files = []
 	for (const root of roots) {
@@ -790,6 +802,9 @@ function findVueFiles(roots) {
 	return files
 }
 
+/**
+ *
+ */
 function detectAppName() {
 	// Mirror l10n-ai's approach: read l10n/en.js and trust the registered name.
 	const enFile = path.join(ROOT, 'l10n', 'en.js')
@@ -799,6 +814,9 @@ function detectAppName() {
 	return m ? m[2] : 'opencatalogi'
 }
 
+/**
+ *
+ */
 function main() {
 	const roots = positionals.length
 		? positionals.map((p) =>

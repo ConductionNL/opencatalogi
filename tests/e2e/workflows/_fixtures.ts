@@ -1,3 +1,5 @@
+import type { APIRequestContext } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,8 +40,8 @@
  * (see _fixtures `setPublished` note and the publish-workflow spec) — so we
  * never call a non-existent `saveObject`/`publish` REST verb here.
  */
-import { request, type APIRequestContext } from '@playwright/test'
-import { BASE_URL } from '../base-url'
+import { request } from '@playwright/test'
+import { BASE_URL } from '../base-url.ts'
 
 // ⚠️ This module CREATES AND DELETES catalogs and publications. Its previous
 // `|| 'http://localhost:8080'` fallback aimed those writes at the SHARED dev
@@ -75,8 +77,9 @@ const SCHEMA_SLUGS = {
 	document: 'document',
 }
 
-const OBJ = (reg: number | string, schema: number | string, id?: string) =>
-	`/index.php/apps/openregister/api/objects/${reg}/${schema}${id ? `/${id}` : ''}`
+function OBJ(reg: number | string, schema: number | string, id?: string) {
+	return `/index.php/apps/openregister/api/objects/${reg}/${schema}${id ? `/${id}` : ''}`
+}
 
 /** A unique-per-run prefix so fixtures never collide and are easy to sweep. */
 export function newRunId(): string {
@@ -377,6 +380,7 @@ export class Fixtures {
 		} catch (err) {
 			throw new Error(
 				`extractFile ${fileId}: network failure — ${(err as Error).message}`,
+				{ cause: err },
 			)
 		}
 		if (res.ok()) {

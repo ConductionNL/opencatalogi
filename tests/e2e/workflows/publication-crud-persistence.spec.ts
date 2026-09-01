@@ -29,15 +29,15 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test workflows/publication-crud
  */
-import { test, expect } from '@playwright/test'
-import { Fixtures, REG_PUBLICATION, SCHEMA_PUBLICATION } from './_fixtures'
+import { expect, test } from '@playwright/test'
 import {
 	bootApp,
-	navTo,
 	dismissOverlays,
-	trackPageErrors,
 	fatalErrors,
-} from '../spec-coverage/_nav'
+	navTo,
+	trackPageErrors,
+} from '../spec-coverage/_nav.ts'
+import { Fixtures, REG_PUBLICATION, SCHEMA_PUBLICATION } from './_fixtures.ts'
 
 const fx = new Fixtures()
 

@@ -29,7 +29,14 @@
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test catalog-detail-page
  */
 import { expect, test } from '@playwright/test'
-import { APP, bootApp, content, fatalErrors, navTo, trackPageErrors } from './_nav'
+import {
+	APP,
+	bootApp,
+	content,
+	fatalErrors,
+	navTo,
+	trackPageErrors,
+} from './_nav.ts'
 
 test.describe('catalog-detail-page', () => {
 	test(// @e2e catalogs::open-a-catalog-detail-from-the-list

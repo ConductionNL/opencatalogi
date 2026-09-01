@@ -12,8 +12,8 @@
  * catalog store does not boot the full Pinia tree / NC shell.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // catalog.js imports `objectStore` from ../../store/store.js, which would
 // otherwise initialise every store (navigation/search/object) on import.

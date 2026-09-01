@@ -80,12 +80,14 @@ function createObjectStore(id, options = {}) {
 	})
 }
 
-const noopPlugin = () => ({
-	name: 'noop',
-	state: () => ({}),
-	getters: {},
-	actions: {},
-})
+function noopPlugin() {
+	return {
+		name: 'noop',
+		state: () => ({}),
+		getters: {},
+		actions: {},
+	}
+}
 
 // Faithful-enough stub of the real CnThemePreview (mirrors its `pickers`
 // required-prop + `buildInitialModel`/`previewStyle` logic) so component

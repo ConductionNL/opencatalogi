@@ -10,11 +10,13 @@
  * Pattern reference: ADR-030 (hydra/openspec/architecture/).
  */
 
-import { chromium, request, type FullConfig } from '@playwright/test'
-import { resolveBaseUrl } from './base-url'
+import type { FullConfig } from '@playwright/test'
+
+import { chromium, request } from '@playwright/test'
 import { execSync } from 'child_process'
-import * as path from 'path'
 import * as fs from 'fs'
+import * as path from 'path'
+import { resolveBaseUrl } from './base-url.ts'
 
 const AUTH_DIR = path.resolve(__dirname, '.auth')
 const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
@@ -55,7 +57,7 @@ function ensureBundleBuilt(): void {
 				+ 'check that step rather than rebuilding here, because a rebuild would hide it.',
 		)
 	}
-	// eslint-disable-next-line no-console
+
 	console.log(
 		`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`,
 	)
@@ -169,7 +171,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 					'1',
 				)
 			}
-		} catch (e) {
+		} catch {
 			/* private mode / quota — the dismissOverlays fallback still applies */
 		}
 	})
@@ -203,7 +205,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 					'cn-walkthrough-seen:opencatalogi',
 					'999.0.0',
 				)
-			} catch (e) {
+			} catch {
 				// localStorage unavailable — specs fall back to dismissing by hand.
 			}
 		})

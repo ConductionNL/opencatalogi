@@ -15,8 +15,8 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test dashboard-page
  */
-import { test, expect } from '@playwright/test'
-import { bootApp, content, trackPageErrors, fatalErrors } from './_nav'
+import { expect, test } from '@playwright/test'
+import { bootApp, content, fatalErrors, trackPageErrors } from './_nav.ts'
 
 test.describe('dashboard-page', () => {
 	test(// @e2e dashboard::dashboard-renders-stats-and-activity

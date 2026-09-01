@@ -35,7 +35,9 @@
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test spec-coverage
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
