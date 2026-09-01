@@ -1038,7 +1038,7 @@ class PublicationsController extends Controller {
 			//
 			// Failing to place the object inside the catalog is a refusal, not a reason to
 			// continue unscoped (#857): find() below with no register and no schema falls
-			// back to OpenRegister's every-magic-table path, and this route is @PublicPage.
+			// back to OpenRegister's every-magic-table path, and this route is #[PublicPage].
 			// A catalog with no configured scope has no namespace to serve from, which is
 			// the same C-1 policy attachments() and download() have carried since wave-7.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
@@ -1143,7 +1143,7 @@ class PublicationsController extends Controller {
 			//
 			// Failing to place the object inside the catalog is a refusal, not a reason to
 			// continue unscoped (#857): find() below with no register and no schema falls
-			// back to OpenRegister's every-magic-table path, and this route is @PublicPage.
+			// back to OpenRegister's every-magic-table path, and this route is #[PublicPage].
 			// A catalog with no configured scope has no namespace to serve from, which is
 			// the same C-1 policy attachments() and download() have carried since wave-7.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
