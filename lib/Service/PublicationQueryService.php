@@ -261,6 +261,9 @@ class PublicationQueryService
         $slugCache        = [];
         $seenObjectIds    = [];
         $rows = [];
+        // Track how many candidates the loop dropped so we can subtract from OR's
+        // pre-drop `total` below — see the envelope comment for the full rationale.
+        $droppedCount = 0;
 
         foreach (($candidateResult['results'] ?? []) as $candidate) {
             $rowArray = $candidate;
@@ -272,7 +275,9 @@ class PublicationQueryService
             // appear exactly once. Rows without a resolvable id (defensive — should not
             // occur) are never deduped. Marker is stamped AFTER per-row validation so a
             // first candidate that fails validation cannot silently suppress a later
-            // same-id candidate that would have passed.
+            // same-id candidate that would have passed. Dedup drops do NOT count against
+            // `total` — they collapse a single logical hit that OR double-counted, so
+            // OR's total remains the correct upper bound.
             $objectId = ($rowArray['@self']['id'] ?? ($rowArray['id'] ?? null));
             if ($objectId !== null && isset($seenObjectIds[$objectId]) === true) {
                 continue;
@@ -280,6 +285,7 @@ class PublicationQueryService
 
             $schemaId = $this->extractSchemaId($rowArray);
             if ($schemaId === null) {
+                $droppedCount++;
                 continue;
             }
 
@@ -294,6 +300,7 @@ class PublicationQueryService
             }
             $schemaSlug = $schemaSlugById[$schemaId];
             if ($schemaSlug === null) {
+                $droppedCount++;
                 continue;
             }
 
@@ -307,6 +314,7 @@ class PublicationQueryService
             // unknown, which would silently drop pre-status-migration rows). Enforcing here
             // in PHP is deterministic and safe for legacy data.
             if (($rowArray['status'] ?? null) === 'archived') {
+                $droppedCount++;
                 continue;
             }
 
@@ -338,6 +346,7 @@ class PublicationQueryService
                     // visible under _rbac_as_public — drop the document row
                     // (transitive visibility; RBA-PUBLIC-006 propagates the anon
                     // context to the per-document refinement).
+                    $droppedCount++;
                     continue;
                 }
 
@@ -351,19 +360,39 @@ class PublicationQueryService
             $rows[] = $rowArray;
         }//end foreach
 
-        // Stap 4 — Facets pass through unmodified (OR aggregates over visible-only
-        // rows under `_rbac_as_public`). `total` is REBUILT from the emitted rows
-        // rather than passed through from OR, because the row-loop may drop
-        // documents that fail transitive-visibility (N4a) — a doc whose linked
-        // publication is not publicly visible under `_rbacAsPublic: true`. OR's
-        // pre-drop count would leave callers with `total > results-length`
-        // (undercount from client perspective; the bug 1 pattern reported
-        // 2026-08-31). Recomputing from `$rows` keeps SCH-PFTS-004's `total
-        // reflects the true visible count` contract intact on both the metadata
-        // and the `_content=true` chunk-hit paths.
+        // Stap 4 — Envelope `total` reconciles OR's global count with the PHP drops.
+        //
+        // OR's `total` is the GLOBAL count of candidate rows matching the query
+        // across every page (needed so paginated consumers can compute `has_more`).
+        // Under `_rbacAsPublic: true` most drops are already applied at the SQL
+        // layer — but the row-loop still filters two classes OR cannot see:
+        //   1. `status: 'archived'` (belt-and-braces RET-006, no schema-side rule)
+        //   2. Transitive visibility on documents whose linked publication is not
+        //      publicly visible (N4a — `_content=true` chunk-hits are the common
+        //      trigger; OR's schema RBAC gates the document but not its parent
+        //      publication).
+        // Both drops leak "invisible" rows into OR's `total`. Sending OR's raw
+        // total when we dropped rows on THIS page would ship `total > count(rows)`
+        // with no way for the caller to reconcile — the SCH-PFTS-004 bug pattern.
+        //
+        // Compromise without an OR schema change: subtract per-page drops from
+        // OR's total, floored at `count($rows)` so the envelope never claims
+        // fewer visible items than it actually shipped. This preserves the
+        // pagination signal (total > count(rows) still means "more pages") while
+        // guaranteeing total ≥ count(rows) on every page. It is a per-page
+        // approximation: later pages may drop more rows and shrink `total`
+        // further, so a UI polling forward will see `total` decrease monotonically
+        // as invisible candidates are filtered out — acceptable for a public
+        // FTS surface where the exact global count is not a hard requirement.
+        //
+        // The architecturally clean fix (push transitive visibility down to
+        // OR's schema RBAC) needs an OR schema change and cross-schema `read`
+        // rules; tracked as follow-up.
+        $orTotal        = (int) ($candidateResult['total'] ?? count($rows));
+        $adjustedTotal  = max(count($rows), ($orTotal - $droppedCount));
         $envelope = [
             'results' => $rows,
-            'total'   => count($rows),
+            'total'   => $adjustedTotal,
         ];
 
         if (isset($candidateResult['facets']) === true) {

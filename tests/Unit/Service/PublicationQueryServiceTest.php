@@ -328,6 +328,102 @@ class PublicationQueryServiceTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
+	// Envelope `total` — pagination signal + `total ≥ count(results)` invariant.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Pagination signal: when OR's global `total` exceeds the current page's
+	 * `_limit` and NOTHING is dropped in the row loop, the envelope MUST ship
+	 * OR's global total so consumers can compute `has_more`.
+	 */
+	public function testEnvelopeTotalPreservesGlobalCountWhenNothingDropped(): void {
+		$publicationRow = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'p1', 'schema' => 1],
+			'title' => 'Page 1 publication',
+		];
+		$fake = $this->wireHappyPath();
+		// OR reports total: 42 across all pages; this page has 1 row and nothing drops.
+		$fake->queuedResponses = [
+			['results' => [$publicationRow], 'total' => 42, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(1, $out['results'], 'row loop keeps the visible pub');
+		$this->assertSame(42, $out['total'], 'total must reflect OR global count so pagination has_more works');
+	}
+
+	/**
+	 * `total ≥ count(results)` invariant: when the row loop drops rows on this
+	 * page (e.g. N4a transitive-visibility on a document whose linked pub isn't
+	 * public), `total` is reduced by the drops but MUST NOT dip below the
+	 * shipped `results` count. Guarantees `total: X, results: []` never happens.
+	 */
+	public function testEnvelopeTotalSubtractsPerPageDropsButFloorsAtResultsLength(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-orphan-page1', 'schema' => 2, 'relations' => ['organization' => 'x']],
+			'title' => 'Orphan doc on page 1',
+		];
+		$fake = $this->wireHappyPath();
+		// OR reports total: 5 globally; this page returns 1 candidate that N4a-drops.
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 5, 'facets' => [], 'facetable' => []],
+			// _relations_contains refinement → 0 pubs → drops the doc.
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(0, $out['results'], 'orphan doc dropped');
+		// 5 (or_total) - 1 (drop) = 4 → floored to max(0, 4) = 4. Pagination signal preserved.
+		$this->assertSame(4, $out['total'], 'total = or_total - drops (floored at count(results))');
+	}
+
+	/**
+	 * When `or_total == drops_on_this_page`, `total` MUST reach 0 (not
+	 * remain at OR's pre-drop count). Guards against the SCH-PFTS-004
+	 * `total: 1, results: []` bug pattern.
+	 */
+	public function testEnvelopeTotalGoesToZeroWhenAllOrCandidatesDrop(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-only-invisible', 'schema' => 2, 'relations' => ['organization' => 'x']],
+			'title' => 'Only doc is invisible',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertSame(['results' => [], 'total' => 0], ['results' => $out['results'], 'total' => $out['total']]);
+	}
+
+	/**
+	 * Dedup drops (same `@self.id` twice — metadata + chunk hit) MUST NOT
+	 * count against `total`. OR reports these as separate candidates but
+	 * the dedup collapses one logical hit; treating dedup as a drop would
+	 * silently shrink pagination totals on `_content=true` pages.
+	 */
+	public function testEnvelopeTotalIgnoresDedupDrops(): void {
+		$publicationRow = [
+			'@self' => ['id' => 'pub-dup', 'slug' => 'dup', 'schema' => 1],
+			'title' => 'Duplicate publication row',
+		];
+		$fake = $this->wireHappyPath();
+		// OR returned same pub twice (metadata + content match); dedup collapses.
+		$fake->queuedResponses = [
+			['results' => [$publicationRow, $publicationRow], 'total' => 10, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(1, $out['results'], 'dedup collapses to one row');
+		$this->assertSame(10, $out['total'], 'dedup drop must NOT be subtracted from total');
+	}
+
+	// -------------------------------------------------------------------------
 	// M2 fast-path (bug 1 fix, 2026-08-31).
 	// SCH-PFTS-004 transitive visibility with the legacy document seed shape.
 	// -------------------------------------------------------------------------

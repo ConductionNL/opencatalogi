@@ -100,10 +100,14 @@ else
 	fail "assertion 1: expected at least 1 row, got ${total_default} — is the seed data present?"
 fi
 
-if [ "${total_default:-0}" = "${count_default:-999}" ]; then
-	pass "assertion 2: total (${total_default}) == results-length (${count_default}) — bug 1 regression guard"
+# SCH-PFTS-004 pagination-safe invariant: `total ≥ count(results)`. `total`
+# reflects OR's global count minus per-page drops so pagination has_more still
+# works — but MUST NEVER dip below what we actually shipped on this page
+# (that would be the `total: 1, results: []` bug pattern).
+if [ "${total_default:-0}" -ge "${count_default:-999}" ] 2>/dev/null; then
+	pass "assertion 2: total (${total_default}) ≥ results-length (${count_default}) — SCH-PFTS-004 invariant"
 else
-	fail "assertion 2: total (${total_default}) != results-length (${count_default}) — UNDERCOUNT REGRESSION (SCH-PFTS-004)"
+	fail "assertion 2: total (${total_default}) < results-length (${count_default}) — UNDERCOUNT REGRESSION (SCH-PFTS-004)"
 fi
 
 # Envelope keys
