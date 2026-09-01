@@ -79,6 +79,9 @@ async function pollContentSearch(
 test.describe('content-search-endpoint', () => {
 	test(// @e2e search::content-search-surfaces-a-body-text-only-match
 	'WOO-517 — a body-text-only match surfaces via ?_content=true and is absent without it', async () => {
+		// Text extraction is asynchronous and this test waits on it, so the
+		// budget has to cover the wait rather than the work. See the poll below.
+		test.setTimeout(120_000)
 		const marker = `lorem-ipsum-woo517-marker-${fx.runId}`
 
 		// Publicly visible publication (past publicationDate) + a linked document,
@@ -161,7 +164,19 @@ test.describe('content-search-endpoint', () => {
 		// `_content=true` — widen to body text. Extraction may lag the upload by a
 		// short interval even after the force-trigger above (design.md "Extraction
 		// lag"), so poll briefly before asserting.
-		const withContent = await pollContentSearch(marker, 10, 1000)
+		// 30s, not 10. Extraction is queued work: `extractFile()` force-triggers
+		// it and returns as soon as the request is accepted, so the marker
+		// becomes searchable some time later. Ten seconds was enough on an idle
+		// runner and not on a loaded one, which made this test flap rather than
+		// fail: it went red on c402608d, green on a07067af and red again on
+		// 6012ff52, always alone and always with 111 others passing, and the
+		// extraction request itself reported no error in any of them.
+		//
+		// The loop returns the moment a title appears, so a longer ceiling costs
+		// nothing when extraction is prompt. It only stops the suite reporting
+		// 'the body-text match does not surface' when the truth is that it had
+		// not surfaced YET.
+		const withContent = await pollContentSearch(marker, 30, 1000)
 		expect(withContent.status, 'content search succeeds').toBe(200)
 		expect(
 			withContent.titles,
