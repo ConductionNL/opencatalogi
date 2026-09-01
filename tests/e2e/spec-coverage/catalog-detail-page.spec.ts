@@ -91,7 +91,7 @@ test.describe('catalog-detail-page', () => {
 			})
 			expect(id, 'a catalog id must be resolvable from the list').toBeTruthy()
 
-			await page.goto(`${APP}/#/catalogi/${id}`, {
+			await page.goto(`${APP}/catalogi/${id}`, {
 				waitUntil: 'domcontentloaded',
 			})
 			await page.waitForTimeout(1500)
