@@ -4,18 +4,27 @@
  * Unit tests for PublicationQueryService.
  *
  * Covers the WOO-536 Fase-5 refactor of `assemblePublicSearchResults`
- * (catalog-derived scope, `_rbacAsPublic` uniform visibility, dynamic
- * schema discriminator, N4a document-transitive visibility), the M2
- * fast-path added 2026-08-31 that resolves document→publication via
- * the document's OWN `_relations` (bug 1 fix), the pure helpers
+ * (catalog-derived scope, dynamic schema discriminator, N4a
+ * document-transitive visibility), the M2 fast-path added 2026-08-31
+ * that resolves document→publication via the document's OWN
+ * `_relations` (bug 1 fix), the pure helpers
  * (`isCatalogPubliclyAvailable`, `normalizeIds`, `stripEmptyValues`),
  * and `findObjectLocation` (the constrained object-location query).
  *
  * The service is thin over OpenRegister — most branches boil down to
- * "did the right query reach the right OR method with `_rbacAsPublic:
- * true`?". These tests mock the container and the OR ObjectService
- * surface via a stub; the SQL/RBAC pathway is out of scope. The
- * integration smoke script covers the wire-level behaviour end-to-end.
+ * "did the right query reach the right OR method with `_rbac: true`
+ * and `_multitenancy: false`?". These tests mock the container and the
+ * OR ObjectService surface via a stub; the SQL/RBAC pathway is out of
+ * scope. The integration smoke script covers the wire-level behaviour
+ * end-to-end.
+ *
+ * WOO-551: the `_rbacAsPublic` uniform-visibility primitive from
+ * openregister PR #2855 has been removed on OR main
+ * (commit `31687c6f3`). The fake surface below no longer accepts the
+ * parameter; the "forwards Q1 Option B toggle" assertion has been
+ * downgraded to just `_rbac` + `_multitenancy` forwarding. The
+ * semantic drift on SCH-PFTS-001 is documented in
+ * `PublicationQueryService::assemblePublicSearchResults()`.
  *
  * @spec openspec/specs/search/spec.md
  *
@@ -39,10 +48,13 @@ use ReflectionClass;
 
 /**
  * Fake OpenRegister ObjectService double for `assemblePublicSearchResults`
- * tests. Captures the query passed to `searchObjectsPaginated` and the
- * `_rbacAsPublic` flag so scope-enforcement can be asserted. Serves multiple
- * queued response sets to cover per-request candidate + document-refinement
- * calls.
+ * tests. Captures the query and RBAC flags passed to
+ * `searchObjectsPaginated` so scope-enforcement can be asserted. Serves
+ * multiple queued response sets to cover per-request candidate +
+ * document-refinement calls.
+ *
+ * WOO-551: signatures mirror the current OR API after commit `31687c6f3`
+ * removed the `_rbacAsPublic` primitive — see the file docblock.
  */
 class FakeSearchObjectService {
 
@@ -65,13 +77,11 @@ class FakeSearchObjectService {
 		array $query,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_rbacAsPublic = false,
 	): array {
 		$this->capturedCalls[] = [
 			'query'         => $query,
 			'_rbac'         => $_rbac,
 			'_multitenancy' => $_multitenancy,
-			'_rbacAsPublic' => $_rbacAsPublic,
 		];
 
 		$response = $this->queuedResponses[$this->callCursor] ?? ['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []];
@@ -95,7 +105,6 @@ class FakeSearchObjectService {
 		?int $schema = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_rbacAsPublic = false,
 	): ?array {
 		return $this->findResponses[$id] ?? null;
 	}
@@ -245,19 +254,25 @@ class PublicationQueryServiceTest extends TestCase {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * SCH-PFTS-001 / SCH-PFTS-004: the endpoint MUST forward `_rbac: true`
-	 * AND `_rbacAsPublic: true` to OR, so RBAC evaluates the public group
-	 * only — admin bypass suppressed, `_owner` OR-in suppressed. Q1 Option B.
+	 * SCH-PFTS-004: the endpoint MUST forward `_rbac: true` and
+	 * `_multitenancy: false` to OR so schema-level RBAC and cross-tenant
+	 * publication access work as intended.
+	 *
+	 * WOO-551 note: the pre-existing `_rbacAsPublic: true` forwarding was
+	 * removed after OR commit `31687c6f3` deleted the primitive. See the
+	 * Stap 1 comment in `PublicationQueryService::assemblePublicSearchResults()`
+	 * for the semantic-drift context on Q1 Option B (admin/owner leak on
+	 * this endpoint is now a documented follow-up).
 	 */
-	public function testAssembleForwardsRbacAsPublicTrueToObjectService(): void {
+	public function testAssembleForwardsRbacAndDisablesMultitenancyOnObjectService(): void {
 		$fake = $this->wireHappyPath();
 		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
 
 		$this->assertNotEmpty($fake->capturedCalls, 'searchObjectsPaginated was not called');
 		$first = $fake->capturedCalls[0];
 		$this->assertTrue($first['_rbac'], '_rbac must be true');
-		$this->assertTrue($first['_rbacAsPublic'], '_rbacAsPublic must be true (Q1 Option B)');
 		$this->assertFalse($first['_multitenancy'], 'multitenancy must be false on public endpoint');
+		$this->assertArrayNotHasKey('_rbacAsPublic', $first, 'WOO-551: `_rbacAsPublic` must no longer be forwarded — primitive removed on OR main');
 	}
 
 	/**
@@ -525,10 +540,9 @@ class PublicationQueryServiceTest extends TestCase {
 
 	/**
 	 * RET-006 belt-and-braces on the UUID fast-path: a document pointing at
-	 * a publication with `status: 'archived'` MUST be dropped, even though
-	 * `_rbacAsPublic: true` would have kept the row visible under a
-	 * mis-configured schema RBAC. The linked publication's terminal-hidden
-	 * status is a second gate.
+	 * a publication with `status: 'archived'` MUST be dropped, even when
+	 * a mis-configured schema RBAC would let the row through. The linked
+	 * publication's terminal-hidden status is a second gate.
 	 */
 	public function testDocumentDroppedWhenUuidFastPathPublicationIsArchived(): void {
 		$archivedPublication = [
