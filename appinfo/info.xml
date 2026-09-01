@@ -188,6 +188,23 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
 			<step>OCA\OpenCatalogi\Repair\RemoveRetiredCronJobs</step>
 			<!--
+				Written but never registered — gate-98 (repair-step-registration) has been
+				failing on development since the WOO-536 merge for exactly this: a class
+				that exists is not a class that runs.
+
+				It backfills the two-rule `depublicatiedatum` read-shape onto the
+				`publication` and `document` schemas. A FRESH install does not need it —
+				`lib/Settings/publication_register.json` already seeds that shape, and
+				InitializeSettings imports the seed from <install> — so this is
+				post-migration only, which is also where the change that introduced it
+				(2026-08-28-fix-fts-catalog-model-alignment) says it belongs: a repair for
+				EXISTING installations.
+
+				It must run after InitializeSettings, which syncs the register and schemas
+				this step then edits. Idempotent and safe to re-run.
+			-->
+			<step>OCA\OpenCatalogi\Repair\WOO536RepairReadRules</step>
+			<!--
 				Written but never registered, so it had never run once: a class that
 				exists is not a class that runs. gate-98 found it.
 
