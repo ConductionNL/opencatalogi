@@ -200,25 +200,42 @@ Every document row in the result envelope MUST include an embedded `publication`
 - **WHEN** the public search assembly runs,
 - **THEN** the document MUST NOT appear in the result rows returned to anonymous callers.
 
-### Requirement: Anonymous visibility filter runs AFTER scoring and merging (SCH-PFTS-004)
+### Requirement: Uniform-visibility enforcement via SQL RBAC (SCH-PFTS-004)
 
-For anonymous callers, the public search endpoint MUST apply the same `isObjectPublic()` filter that `/publications` already uses, with identical ordering semantics: the filter runs AFTER the underlying search (scoring and merge) has produced the candidate result set, NOT as a pre-filter on the query. This guarantees the public result set is a strict subset of what scoring produced, and that ranking decisions are made on the full corpus before visibility is enforced.
+**AMENDED by WOO-536 (2026-08-27).** The prior mechanism — a PHP post-filter (`isObjectPublic()`) run AFTER scoring/merge — is REMOVED. Visibility on the public search endpoint MUST now be enforced in SQL by OR's RBAC engine using only the `public` group's matching rules from each schema's `authorization.read` configuration. This is achieved by passing `_rbac_as_public: true` alongside `_rbac: true` to `ObjectService::searchObjectsPaginated()`, consuming the `rbac-as-public-toggle` primitive from OpenRegister (ADR-022). Under this mode, the RBAC engine ignores the caller's session (admin bypass suppressed, owner-bypass suppressed) and evaluates only the `public` group rules — so authenticated and anonymous callers see identical result sets on this endpoint (Q1 Option B).
 
-For documents, visibility MUST also be transitively gated: a document is visible to anonymous callers only if its linked publication itself satisfies `isObjectPublic()`.
+The SQL-side enforcement means visibility is a WHERE-clause predicate on the underlying query, not a post-filter, so `total`, `facets`, and `facetable` reflect the true visible count without undercount workarounds. For documents, transitive visibility is realised by looking up the linked publication via `_relations_contains` with the same `_rbac_as_public: true` flag — a document surfaces only when its linked publication itself passes the `public` group's read rules.
 
-#### Scenario: anonymous filter strips depublished publications post-scoring
+#### Scenario: admin caller sees identical result set to anonymous caller
 
-- **GIVEN** anonymous request matching publications A (live) and B (depublicatiedatum in the past),
-- **WHEN** the public search runs,
-- **THEN** the candidate set initially contains both A and B,
-- **AND** the visibility filter is applied AFTER scoring/merge,
-- **AND** the response contains A only.
+- **GIVEN** an authenticated Nextcloud admin,
+- **WHEN** the admin issues `GET /apps/opencatalogi/api/search?_search=jaarverslag`,
+- **THEN** the result set MUST be identical to that returned for an anonymous caller with the same query,
+- **AND** the admin's own draft publications MUST be absent from the results.
+
+#### Scenario: depublished publications are absent for all callers
+
+- **GIVEN** a publication whose `depublicationDate` is in the past,
+- **WHEN** any caller (anonymous or authenticated) issues the public search,
+- **THEN** the publication MUST NOT appear in the response.
 
 #### Scenario: document visibility is transitively gated
 
-- **GIVEN** a document D linked to a publication P whose `depublicatiedatum` is in the past,
+- **GIVEN** a document D linked to a publication P whose `depublicationDate` is in the past,
 - **WHEN** an anonymous caller searches for content matching D,
 - **THEN** D MUST NOT appear in the response.
+
+#### Scenario: `total` reflects the true visible count
+
+- **WHEN** any caller sends `GET /apps/opencatalogi/api/search`,
+- **THEN** the `total` field MUST equal the actual count of objects visible under public RBAC,
+- **AND** `total` MUST NOT be an undercount caused by PHP post-filtering.
+
+#### Scenario: `facets` and `facetable` are populated for anonymous callers
+
+- **WHEN** an anonymous caller sends `GET /apps/opencatalogi/api/search`,
+- **THEN** the `facets` and `facetable` fields MUST be present and populated,
+- **AND** facet counts MUST reflect only publicly visible objects.
 
 ### Requirement: A dedicated `document` schema is bundled in the publication register (SCH-PFTS-005)
 
@@ -279,6 +296,61 @@ New properties added to a schema in future changes (e.g. a `kenmerk` field added
 - **GIVEN** a document whose `@self` metadata contains a match for the search query but whose declared schema properties do not,
 - **WHEN** the public search runs,
 - **THEN** the document MUST appear in the result set (matched via OR's `zoeken-filteren` on the metadata fields it already covers).
+
+### Requirement: Accept `_catalog` and `_catalogi[]` scope-narrowing params (SCH-PFTS-CAT-001)
+
+**Added by WOO-536 (2026-08-27).** The `/apps/opencatalogi/api/search` endpoint MUST accept an optional `_catalog` query parameter (single catalog UUID or slug) and an optional `_catalogi[]` array parameter (multiple catalog UUIDs or slugs). When either parameter is provided, the search scope MUST be limited to the union of registers and schemas declared by the matching catalog(s). When both are absent, the default scope applies (see SCH-PFTS-CAT-002). Clients MUST NOT be able to widen scope via `_schema`, `_registers`, or `fq` on this endpoint (those parameters remain stripped per Q7 Interpretation A). Links to CAT-010, PUB-003, PUB-004.
+
+#### Scenario: single catalog scope via `_catalog`
+
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_catalog=my-catalog`,
+- **THEN** the search scope MUST be limited to the registers and schemas declared by the catalog with slug `my-catalog`,
+- **AND** objects from schemas not in that catalog MUST be absent from the results.
+
+#### Scenario: multi-catalog scope via `_catalogi[]`
+
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_catalogi[]=cat-a&_catalogi[]=cat-b`,
+- **THEN** the search scope MUST be the union of all registers and schemas declared by catalogs `cat-a` and `cat-b`,
+- **AND** objects from either catalog MUST be present in the results.
+
+#### Scenario: disallowed scope widening via `_schema`
+
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_schema=42`,
+- **THEN** the `_schema` parameter MUST be silently stripped,
+- **AND** the scope MUST be resolved from the catalog model as normal.
+
+### Requirement: Default scope is union of listed and published catalogs (SCH-PFTS-CAT-002)
+
+**Added by WOO-536 (2026-08-27).** When neither `_catalog` nor `_catalogi[]` is provided, the `/apps/opencatalogi/api/search` endpoint MUST compute its scope as the union of all catalogs where `listed: true` AND the catalog object itself is published (passes its own `read` authorization rules under public context). Schemas without any explicit `read` authorization configuration MUST be excluded from the anonymous search scope and the system MUST log a warning for each such schema encountered. Links to CAT-010, PUB-003.
+
+#### Scenario: default scope includes all listed published catalogs
+
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term` with no `_catalog` or `_catalogi[]` params,
+- **THEN** the search scope MUST be the union of registers and schemas from all catalogs with `listed: true` that are themselves published,
+- **AND** objects from schemas in non-listed or unpublished catalogs MUST be absent from the results.
+
+#### Scenario: schema without explicit read rules is excluded
+
+- **WHEN** a schema in a listed published catalog has no `authorization.read` configuration,
+- **THEN** that schema MUST be excluded from the anonymous search scope,
+- **AND** the system MUST log a warning identifying the schema by ID and slug.
+
+### Requirement: Catalog-derived scope replaces app-config scope (SCH-PFTS-CAT-003)
+
+**Added by WOO-536 (2026-08-27).** The `/apps/opencatalogi/api/search` endpoint MUST NOT use `publication_register`, `publication_schema`, or `document_schema` app-config values to determine search scope. Scope MUST be derived entirely from the catalog model via `buildCatalogSearchQuery()` + `resolveSchemaAndRegisterObjects()`. A misconfigured or missing app-config value MUST NOT cause the endpoint to return an empty result set. Links to CAT-010, PUB-003, PUB-004.
+
+#### Scenario: scope independent of app-config
+
+- **WHEN** the `publication_register` / `publication_schema` / `document_schema` app-config values are absent or incorrect,
+- **THEN** the search MUST still return results from the catalog-model-derived scope,
+- **AND** the endpoint MUST NOT return HTTP 200 with an empty result set due to a missing config value.
+
+#### Scenario: multi-schema catalog returns results from all schemas
+
+- **WHEN** a catalog declares three schemas (e.g. `publication`, `document`, `besluit`),
+- **AND** the caller sends `GET /apps/opencatalogi/api/search?_search=term`,
+- **THEN** results from all three schemas MUST be present in the response,
+- **AND** each result MUST carry `@self.schema` set to the correct schema slug.
 
 ## REMOVED Requirements
 

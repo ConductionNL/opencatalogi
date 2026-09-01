@@ -148,6 +148,14 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			-->
 			<step>OCA\OpenCatalogi\Repair\RenameDutchPublicationColumns</step>
 			<!--
+				WOO-536 Fase 4: backfill the two-rule read-block on publication +
+				document schemas (adds the `depublicationDate` clause required by
+				Robert's DoD). Runs AFTER RenameDutchPublicationColumns so the guard
+				sees English field names. Idempotent: skips schemas that already
+				carry a two-rule shape or admin-customised rules.
+			-->
+			<step>OCA\OpenCatalogi\Repair\WOO536RepairReadRules</step>
+			<!--
 				The background jobs moved from OCA\OpenCatalogi\Cron to
 				OCA\OpenCatalogi\BackgroundJob in #1119. The <job> entries above
 				are a REGISTRATION instruction, not a description of state: on
