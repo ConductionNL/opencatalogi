@@ -106,11 +106,12 @@ class PublicationQueryService
      * `_relations_contains` refinement; documents whose linked publication is not
      * publicly visible are dropped (transitive visibility).
      *
-     * Visibility is enforced in SQL by OR's schema-level RBAC under the
-     * `_rbac_as_public: true` primitive (openregister PR #2855, RBA-PUBLIC-001..006):
-     * admin bypass is skipped, `_owner` OR-in is suppressed, admin and anonymous
-     * callers see the exact same result set — the uniform-visibility contract of
-     * SCH-PFTS-001, previously enforced by a PHP post-filter, now lives in SQL.
+     * Visibility is enforced in SQL by OR's schema-level RBAC. Anonymous callers see
+     * only `public`-group-eligible rows (SCH-PFTS-001 lower half). The historical
+     * `_rbac_as_public: true` runtime toggle from openregister PR #2855 that also
+     * forced anonymous evaluation on admin sessions has been removed on OR main —
+     * see the Stap 1 comment inside this method + WOO-551 for the semantic-drift
+     * documentation on the admin/owner half of SCH-PFTS-001.
      *
      * Scope resolution:
      *   1. `_catalog=<slug>` — that catalog's registers + schemas (SCH-PFTS-CAT-001).
@@ -227,16 +228,29 @@ class PublicationQueryService
             $searchQuery['_content_search'] = true;
         }
 
-        // Stap 1 — Enable OR's schema-level RBAC with the endpoint-level anon-context
-        // primitive (RBA-PUBLIC-001..006 from openregister PR #2855 / SCH-PFTS-001).
-        // `_rbac_as_public: true` forces $userId=null, $userGroups=[], skips admin bypass
-        // and the `_owner` OR-in — every caller sees the same public-group-eligible
-        // result set. Multitenancy auto-bypasses under this flag (RBA-PUBLIC-002).
+        // Stap 1 — Enable OR's schema-level RBAC. The `_rbac_as_public: true` runtime
+        // toggle from openregister PR #2855 (WOO-536 precursor) has been REMOVED on
+        // OR main by commit `31687c6f3` (`feat(rbac): graft inheritFromPublic onto dev
+        // RBAC`); the new API does authorization inheritance at the schema/register
+        // level via `authorization.inheritFromPublic` with a tenant-wide default
+        // (`openregister.rbac.inherit_from_public_default`). There is no equivalent
+        // per-call "force anonymous" primitive in the new OR API.
+        //
+        // WOO-551 SEMANTIC DRIFT: SCH-PFTS-001's uniform-visibility contract ("admin
+        // sees the same set as anonymous on this public endpoint") is no longer
+        // enforced at the OR layer. Under the new RBAC model, admin sessions bypass
+        // filters entirely and authenticated callers get their `_owner` clause OR'd
+        // in — so signed-in staff may see per-user draft publications through this
+        // endpoint. Anonymous callers still see only public-group-eligible rows
+        // (which the `read` rules on `publication_register.json` scope to
+        // `publicationDate <= now AND (depublicationDate >= now OR $exists false)`).
+        // Restoring uniform visibility requires a follow-up decision — reintroduce a
+        // `_forceAnonymous`-style primitive in OR, or a client-side session strip on
+        // this endpoint. Tracked as WOO-551 follow-up work.
         $candidateResult = $objectService->searchObjectsPaginated(
             query: $searchQuery,
             _rbac: true,
-            _multitenancy: false,
-            _rbacAsPublic: true
+            _multitenancy: false
         );
 
         // Stap 3 — Dynamic schema-discriminator via SchemaMapper. Replaces the pre-WOO-536
@@ -356,9 +370,8 @@ class PublicationQueryService
 
                 if ($publicationSummary === null || $publicationSummary['public'] !== true) {
                     // No linked publication OR linked publication is not publicly
-                    // visible under _rbac_as_public — drop the document row
-                    // (transitive visibility; RBA-PUBLIC-006 propagates the anon
-                    // context to the per-document refinement).
+                    // visible under schema-level RBAC — drop the document row
+                    // (transitive visibility).
                     $droppedCount++;
                     continue;
                 }
@@ -377,8 +390,8 @@ class PublicationQueryService
         //
         // OR's `total` is the GLOBAL count of candidate rows matching the query
         // across every page (needed so paginated consumers can compute `has_more`).
-        // Under `_rbacAsPublic: true` most drops are already applied at the SQL
-        // layer — but the row-loop still filters two classes OR cannot see:
+        // Most drops are already applied at the SQL layer via OR's schema-level
+        // RBAC — but the row-loop still filters two classes OR cannot see:
         //   1. `status: 'archived'` (belt-and-braces RET-006, no schema-side rule)
         //   2. Transitive visibility on documents whose linked publication is not
         //      publicly visible (N4a — `_content=true` chunk-hits are the common
@@ -537,9 +550,9 @@ class PublicationQueryService
                 return [];
             }
 
-            // Note: `searchObjects` does not accept `_rbacAsPublic` (only the
-            // paginated variant does); the PHP `published <= now` check below
-            // covers the visibility branch that RBAC would otherwise encode.
+            // Note: `searchObjects` is the non-paginated variant used for the
+            // catalog enumeration below. The PHP `published <= now` check further
+            // down covers the visibility branch that RBAC would otherwise encode.
             // `listed:true` is a business-scope filter not carried by the schema
             // read-rules, so the query needs it explicitly.
             $catalogs = $objectService->searchObjects(
@@ -783,12 +796,13 @@ class PublicationQueryService
      * OR-side relation graph is authoritative, so a slug rename no longer detaches
      * documents from the envelope.
      *
-     * The query runs under `_rbac_as_public: true` so admin sessions on the public
-     * endpoint see the SAME linked-publication as anonymous callers — no linked-object
-     * leak (RBA-PUBLIC-006). If OR returns nothing, the linked publication either does
-     * not exist, is not public under the caller's effective context, or the document
-     * is genuinely unlinked — all three collapse to "drop the row" (transitive
-     * visibility).
+     * The query runs under OR's schema-level RBAC. Anonymous callers see only the
+     * public-group-eligible linked publication. If OR returns nothing, the linked
+     * publication either does not exist, is not public under the caller's effective
+     * context, or the document is genuinely unlinked — all three collapse to "drop the
+     * row" (transitive visibility). WOO-551: the historical uniform-visibility guarantee
+     * for admin sessions here (RBA-PUBLIC-006) no longer holds — see the Stap 1 comment
+     * in {@see assemblePublicSearchResults()} for the drift documentation.
      *
      * N4b (WOO-536 plan): a document related to multiple publications resolves to the
      * OLDEST-by-created linked publication (most stable link — does not change as new
@@ -897,9 +911,12 @@ class PublicationQueryService
             }
         }
 
-        // Build the per-document refinement query. Under _rbac_as_public: true, OR only
-        // returns publications that would be visible to an anonymous caller — so a
-        // non-empty result guarantees the linked pub is public.
+        // Build the per-document refinement query. Under OR's schema-level RBAC,
+        // anonymous callers only see publications the `public` group is allowed to
+        // read — so a non-empty result guarantees the linked pub is public for
+        // anon callers. WOO-551: for authenticated staff the admin bypass /
+        // `_owner` clause may broaden the result set; see the Stap 1 comment in
+        // {@see assemblePublicSearchResults()} for the drift documentation.
         $refinementQuery = [
             '_schema'             => $publicationSchemaId,
             '_relations_contains' => $documentUuid,
@@ -911,11 +928,12 @@ class PublicationQueryService
         }
 
         try {
+            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
+            // in assemblePublicSearchResults() for context.
             $matches = $objectService->searchObjectsPaginated(
                 query: $refinementQuery,
                 _rbac: true,
-                _multitenancy: false,
-                _rbacAsPublic: true
+                _multitenancy: false
             );
         } catch (\Throwable $e) {
             $this->logger?->warning(
@@ -971,11 +989,14 @@ class PublicationQueryService
      * to a publicly-visible publication row via a single {@see ObjectService::find()}
      * call, avoiding the per-row `_relations_contains` fan-out.
      *
-     * Under `_rbac: true`, `_rbacAsPublic: true`, `find()` throws or returns null
-     * when the publication is not publicly visible (draft, depublished, archived
-     * under the schema RBAC), so a non-null return guarantees the caller may
-     * embed the summary. On any failure the method returns null and the caller
-     * falls back to the relations-based path — authoritative but slower.
+     * Under `_rbac: true` + `_multitenancy: false`, `find()` returns null when the
+     * publication is not publicly visible to an anonymous caller (draft,
+     * depublished, archived under the schema RBAC), so a non-null return guarantees
+     * the caller may embed the summary. On any failure the method returns null and
+     * the caller falls back to the relations-based path — authoritative but slower.
+     * WOO-551 note: authenticated callers may now see rows that anonymous callers
+     * can't (admin bypass + `_owner` clause) — see the Stap 1 comment in
+     * {@see assemblePublicSearchResults()} for the drift documentation.
      *
      * @param string      $publicationId       The UUID from the document row's carried summary.
      * @param object      $objectService       OpenRegister ObjectService instance.
@@ -991,6 +1012,8 @@ class PublicationQueryService
         int $publicationSchemaId
     ): ?array {
         try {
+            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
+            // in assemblePublicSearchResults() for context.
             $publication = $objectService->find(
                 id: $publicationId,
                 _extend: [],
@@ -998,8 +1021,7 @@ class PublicationQueryService
                 register: $registerId,
                 schema: $publicationSchemaId,
                 _rbac: true,
-                _multitenancy: false,
-                _rbacAsPublic: true
+                _multitenancy: false
             );
         } catch (\Throwable $e) {
             return null;
@@ -1037,10 +1059,13 @@ class PublicationQueryService
      * `_relations['publication.slug'] = <slug>` rather than a UUID.
      *
      * Runs a targeted `searchObjectsPaginated` on the publication schema with
-     * `slug` as a match filter and the same `_rbac_as_public: true` gating as
-     * the UUID fast-path — a non-empty result guarantees the linked publication
-     * is publicly visible. Returns null on miss (unknown slug, non-public,
-     * archived) so the caller falls through to the `_relations_contains` path.
+     * `slug` as a match filter and the same schema-level RBAC gating as the UUID
+     * fast-path — for anonymous callers, a non-empty result guarantees the
+     * linked publication is publicly visible. Returns null on miss (unknown
+     * slug, non-public, archived) so the caller falls through to the
+     * `_relations_contains` path. WOO-551 note: authenticated staff may see
+     * broader results — see the Stap 1 comment in
+     * {@see assemblePublicSearchResults()} for the drift documentation.
      *
      * @param string      $publicationSlug     The linked publication's slug.
      * @param object      $objectService       OpenRegister ObjectService instance.
@@ -1078,11 +1103,12 @@ class PublicationQueryService
             $slugScanQuery['_register'] = $registerId;
         }
         try {
+            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
+            // in assemblePublicSearchResults() for context.
             $matches = $objectService->searchObjectsPaginated(
                 query: $slugScanQuery,
                 _rbac: true,
-                _multitenancy: false,
-                _rbacAsPublic: true
+                _multitenancy: false
             );
         } catch (\Throwable $e) {
             $this->logger?->warning(
