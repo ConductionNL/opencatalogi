@@ -100,7 +100,7 @@ async function openIndexRoute(page: Page, route: string): Promise<void> {
  * @param page The Playwright page.
  * @param route The in-app route (e.g. '/catalogi/123').
  */
-async function gotoHash(page: Page, route: string): Promise<void> {
+async function gotoRoute(page: Page, route: string): Promise<void> {
 	await page.goto(`${APP}${route}`, { waitUntil: 'domcontentloaded' })
 	await page.waitForTimeout(1500)
 	await dismissOverlays(page)
@@ -188,22 +188,26 @@ test.describe('spa-deep-link-routing', () => {
 	 * THEN it returns a TemplateResponse for the index template with a permissive connect-src CSP
 	 * AND the front-end router resolves the remaining path client-side.
 	 *
-	 * The router is hash-mode, so the client-resolvable deep link is the
-	 * hash form. We open #/search cold and assert the Search page (not the
-	 * Dashboard fallback) actually rendered.
+	 * The router is HISTORY-mode, so the client-resolvable deep link is a
+	 * plain path. We open /search cold and assert the Search page (not the
+	 * Dashboard fallback) actually rendered — the Dashboard is exactly what
+	 * appears when the router cannot resolve the path and the catch-all
+	 * redirects to `/`, which is the regression this guards.
 	 */
 	test(// @e2e spa-deep-link-routing::open-a-deep-link-directly
-	'SPA-001 — direct hash deep-link to /search renders the Search page, not the Dashboard', async ({
+	'SPA-001 — direct deep-link to /search renders the Search page, not the Dashboard', async ({
 		page,
 	}) => {
-		await gotoHash(page, '/search')
+		await gotoRoute(page, '/search')
 		// The genuine Search surface must mount from the deep link.
 		await expect(
 			page.locator('[data-testid="cn-search-page"]').first(),
 		).toBeVisible({ timeout: 20000 })
-		// And the URL kept the deep-link route.
+		// And the URL kept the deep-link route. Matched as a suffix: Nextcloud
+		// serves the app as both `/apps/...` and `/index.php/apps/...`, and the
+		// router emits whichever base the page was loaded under.
 		expect(page.url()).toContain('/apps/opencatalogi')
-		expect(page.url()).toContain('#/search')
+		expect(page.url()).toMatch(/\/apps\/opencatalogi\/search$/)
 	})
 })
 
@@ -587,7 +591,7 @@ test.describe('catalogs', () => {
 	}) => {
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoHash(page, `/catalogi/${cat.id}`)
+		await gotoRoute(page, `/catalogi/${cat.id}`)
 		await expect(
 			page.locator('[data-testid="cn-detail-page"]').first(),
 		).toBeVisible({ timeout: 15000 })
@@ -606,7 +610,7 @@ test.describe('catalogs', () => {
 	}) => {
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoHash(page, `/publications/${cat.slug}`)
+		await gotoRoute(page, `/publications/${cat.slug}`)
 		// The Publications page is a manifest type:index page — its genuine
 		// surface is cn-index-page (not the dashboard).
 		await expect(
@@ -1055,7 +1059,7 @@ test.describe('publications', () => {
 		const errors = trackPageErrors(page)
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoHash(page, `/publications/${cat.slug}`)
+		await gotoRoute(page, `/publications/${cat.slug}`)
 		await expect(
 			page.locator('[data-testid="cn-index-page"]').first(),
 		).toBeVisible({ timeout: 15000 })
@@ -1079,7 +1083,7 @@ test.describe('publications', () => {
 		const errors = trackPageErrors(page)
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoHash(page, `/publications/${cat.slug}`)
+		await gotoRoute(page, `/publications/${cat.slug}`)
 		await expect(
 			page.locator('[data-testid="cn-index-page"]').first(),
 		).toBeVisible({ timeout: 15000 })
