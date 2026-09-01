@@ -35,7 +35,7 @@ import {
 	navToRoute,
 	openSettingsFoldout,
 	trackPageErrors,
-} from './_nav'
+} from './_nav.ts'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 

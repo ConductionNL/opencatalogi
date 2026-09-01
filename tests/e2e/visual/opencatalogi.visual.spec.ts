@@ -20,15 +20,15 @@
  * Baselines live in tests/e2e/visual/<spec>-snapshots/ and ARE committed.
  * See _visual-helpers.ts for the platform-rendering caveat.
  */
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
-	shootSurface,
 	dismissSupportDialog,
-	waitForContentReady,
-	freezePage,
 	dynamicMasks,
+	freezePage,
+	shootSurface,
 	SHOT_OPTIONS,
-} from './_visual-helpers'
+	waitForContentReady,
+} from './_visual-helpers.ts'
 
 const APP = '/index.php/apps/opencatalogi'
 

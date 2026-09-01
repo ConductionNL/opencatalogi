@@ -141,7 +141,7 @@ export async function bootApp(page: Page): Promise<void> {
 					'1',
 				)
 			}
-		} catch (e) {
+		} catch {
 			/* storage blocked — dismissOverlays() is the fallback */
 		}
 	})

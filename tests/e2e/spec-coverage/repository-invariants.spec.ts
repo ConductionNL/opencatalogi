@@ -41,7 +41,7 @@
  *   npx playwright test repository-invariants
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -222,10 +222,7 @@ test.describe('notifications (repository invariants)', () => {
 		for (const name of OWNERLESS_CONFIG_SCHEMAS) {
 			expect(schemas[name], `the ${name} schema must exist`).toBeTruthy()
 			expect(
-				Object.prototype.hasOwnProperty.call(
-					schemas[name],
-					'x-openregister-notifications',
-				),
+				Object.hasOwn(schemas[name], 'x-openregister-notifications'),
 				`${name} has no lifecycle or owner field and must declare no notifications`,
 			).toBe(false)
 		}
@@ -234,10 +231,7 @@ test.describe('notifications (repository invariants)', () => {
 		// register in which nothing declares notifications at all.
 		for (const name of ['catalog', 'listing', 'publication']) {
 			expect(
-				Object.prototype.hasOwnProperty.call(
-					schemas[name],
-					'x-openregister-notifications',
-				),
+				Object.hasOwn(schemas[name], 'x-openregister-notifications'),
 				`${name} must declare notifications`,
 			).toBe(true)
 		}

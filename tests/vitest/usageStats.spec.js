@@ -7,18 +7,19 @@
  * counting-start note and the export-URL builder. These take no DOM and assert
  * the dashboard/detail-panel logic exactly (Vitest offline suite).
  */
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
+	catalogExportUrl,
+	countingStartNote,
 	deriveTrend,
 	formatCount,
-	countingStartNote,
-	catalogExportUrl,
 } from '../../src/services/usageStats.js'
 
-const t = (app, key, params = {}) =>
-	key.replace(/\{(\w+)\}/g, (_, k) =>
+function t(app, key, params = {}) {
+	return key.replace(/\{(\w+)\}/g, (_, k) =>
 		params[k] !== undefined ? params[k] : `{${k}}`,
 	)
+}
 
 describe('deriveTrend', () => {
 	it('returns up when the recent half outweighs the older half', () => {

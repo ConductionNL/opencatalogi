@@ -6,10 +6,10 @@
  * a separate concern and are not handled here.
  */
 
+const { spawnSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 const vm = require('vm')
-const { spawnSync } = require('child_process')
 
 /**
  * Load a single l10n/*.js file and return its app name, translations object,
@@ -240,6 +240,9 @@ function findKeyReferences(srcDir, app, key) {
 	return hits
 }
 
+/**
+ *
+ */
 function escapeRegex(s) {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

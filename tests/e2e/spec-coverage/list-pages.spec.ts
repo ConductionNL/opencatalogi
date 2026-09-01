@@ -36,7 +36,7 @@ import {
 	navTo,
 	navToRoute,
 	trackPageErrors,
-} from './_nav'
+} from './_nav.ts'
 
 /**
  * The index pages still reachable by clicking a nav entry.

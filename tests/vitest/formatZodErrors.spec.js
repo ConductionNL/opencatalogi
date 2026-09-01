@@ -8,7 +8,7 @@
  * grouped/nested/summary projections are exactly assertable.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createZodErrorHandler } from '../../src/services/formatZodErrors.js'
 
 // A representative Zod-style failure result with three issues across two paths.

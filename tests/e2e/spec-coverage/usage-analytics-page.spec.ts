@@ -1,3 +1,5 @@
+import type { APIRequestContext } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -24,14 +26,15 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test usage-analytics-page
  */
+import { expect, request as pwRequest, test } from '@playwright/test'
+import { resolveBaseUrl } from '../base-url.ts'
 import {
-	test,
-	expect,
-	request as pwRequest,
-	type APIRequestContext,
-} from '@playwright/test'
-import { APP, bootApp, dismissOverlays, trackPageErrors, fatalErrors } from './_nav'
-import { resolveBaseUrl } from '../base-url'
+	APP,
+	bootApp,
+	dismissOverlays,
+	fatalErrors,
+	trackPageErrors,
+} from './_nav.ts'
 
 const RUN_ID = `ana-${Date.now()}`
 const WIDGET_ID = 'opencatalogi_most_viewed_publications_widget'

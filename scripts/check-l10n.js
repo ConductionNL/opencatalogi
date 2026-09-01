@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable jsdoc/require-param */
-/* eslint-disable n/no-process-exit */
-/* eslint-disable no-console */
-/* eslint-disable n/shebang */
+
 /**
  * l10n/i18n consistency checker.
  *
@@ -19,7 +17,6 @@
 
 const fs = require('fs')
 const path = require('path')
-
 const { loadJsTranslations, walk } = require('./lib/l10n.js')
 
 const ROOT = path.resolve(__dirname, '..')
@@ -34,10 +31,16 @@ const DIM = '\x1b[2m'
 const BOLD = '\x1b[1m'
 const RESET = '\x1b[0m'
 
+/**
+ *
+ */
 function rel(p) {
 	return path.relative(ROOT, p)
 }
 
+/**
+ *
+ */
 function escapeRegex(s) {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
@@ -169,6 +172,9 @@ const NON_DISPLAY_ATTRS = new Set([
 	'role',
 ])
 
+/**
+ *
+ */
 function findUnwrapped(vueFiles, keys) {
 	const hits = []
 	for (const file of vueFiles) {
@@ -246,6 +252,9 @@ function findUnwrapped(vueFiles, keys) {
 	return hits
 }
 
+/**
+ *
+ */
 function printSection(title, color, body) {
 	console.log(`${color}${BOLD}${title}${RESET}`)
 	console.log(body)
@@ -380,6 +389,9 @@ function collectManifestStrings() {
 	return out
 }
 
+/**
+ *
+ */
 function main() {
 	const { app, translations } = loadJsTranslations(L10N_FILE)
 	const keys = new Set(Object.keys(translations))

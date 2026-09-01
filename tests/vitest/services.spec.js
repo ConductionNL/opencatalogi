@@ -8,14 +8,14 @@
  * import no Nextcloud runtime, so they are exact-output assertable.
  */
 
-import { describe, it, expect, vi, afterEach } from 'vitest'
-import getValidISOstring from '../../src/services/getValidISOstring.js'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getPublicationTypeId } from '../../src/services/getPublicationTypeId.js'
+import getValidISOstring from '../../src/services/getValidISOstring.js'
 import {
-	isPublished,
-	isDepublished,
-	isConcept,
 	getPublicationStatus,
+	isConcept,
+	isDepublished,
+	isPublished,
 } from '../../src/services/publicationStatus.js'
 
 describe('getValidISOstring', () => {

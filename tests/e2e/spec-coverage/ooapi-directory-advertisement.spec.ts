@@ -1,3 +1,5 @@
+import type { APIRequestContext } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +39,7 @@
  *   PLAYWRIGHT_BASE_URL=http://localhost:8296 \
  *     npx playwright test --config=tests/e2e/playwright.config.ts spec-coverage/ooapi-directory
  */
-import { test, expect, type APIRequestContext } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/index.php/apps/opencatalogi'
 const OR = '/index.php/apps/openregister/api'
