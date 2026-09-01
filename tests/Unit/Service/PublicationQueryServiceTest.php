@@ -483,6 +483,50 @@ class PublicationQueryServiceTest extends TestCase {
 	}
 
 	/**
+	 * THE SHAPE THE FLEET ACTUALLY WRITES, and the one that matched nothing.
+	 *
+	 * A document is created with `publication: {slug, title}` as a plain
+	 * property — no id, and not inside `_relations`. Before M1b that resolved
+	 * through no path at all: M1 reads `publication.id`, M2 reads the
+	 * `_relations` array, and the refinement query asks the INVERSE question
+	 * (a publication whose relations contain this document), which a
+	 * document→publication write never answers.
+	 *
+	 * The row was then dropped by the `publicationSummary === null` guard, and
+	 * an empty result set is indistinguishable from "nothing matched". It cost
+	 * a body-text content search every one of its document hits.
+	 */
+	public function testDocumentCarryingPublicationSlugWithoutIdIsResolvedAndKept(): void {
+		$publicationRow = [
+			'@self' => ['id' => 'pub-uuid-3', 'slug' => 'content-search-publication', 'schema' => 1],
+			'title' => 'Content Search Publication',
+		];
+		$documentRow = [
+			'@self' => ['id' => 'doc-uuid-3', 'schema' => 2],
+			'title' => 'Content Search Document',
+			// No id, and no `_relations` — exactly what createDocument() writes.
+			'publication' => [
+				'slug'  => 'content-search-publication',
+				'title' => 'Content Search Publication',
+			],
+		];
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+			['results' => [$publicationRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(1, $out['results'], 'a document carrying only publication.slug must survive N4a');
+		$emitted = $out['results'][0];
+		$this->assertSame('doc-uuid-3', $emitted['@self']['id']);
+		$this->assertSame('Content Search Document', $emitted['title'], 'the DOCUMENT is what surfaces, not its publication');
+		$this->assertArrayHasKey('publication', $emitted);
+		$this->assertSame('content-search-publication', $emitted['publication']['slug']);
+	}
+
+	/**
 	 * Documents storing the linked publication as `_relations['publication']`
 	 * (UUID form, canonical/new) MUST resolve via the M1 UUID fast-path
 	 * (`ObjectService::find()`) without spending a slug scan.
