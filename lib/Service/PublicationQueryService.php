@@ -22,8 +22,10 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateTimeImmutable;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -36,6 +38,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  */
 class PublicationQueryService
 {
@@ -73,13 +76,18 @@ class PublicationQueryService
     /**
      * Constructor.
      *
-     * @param ContainerInterface   $container DI container
-     * @param IAppConfig|null      $config    App config; used by the catalog-enumeration path to locate the catalog register/schema.
-     * @param LoggerInterface|null $logger    Logger — surfaces the fail-closed empty-envelope branch so silent
-     *                                        catalog-scope resolution failure is observable in production (WOO-536).
+     * @param ContainerInterface   $container   DI container
+     * @param IUserSession|null    $userSession User session — consumed by {@see isAnonymous()},
+     *                                          which the public `/publications/{id}/uses` and
+     *                                          `/used-by` endpoints use to gate visibility on
+     *                                          non-public root objects. Auto-wired at runtime.
+     * @param IAppConfig|null      $config      App config; used by the catalog-enumeration path to locate the catalog register/schema.
+     * @param LoggerInterface|null $logger      Logger — surfaces the fail-closed empty-envelope branch so silent
+     *                                          catalog-scope resolution failure is observable in production (WOO-536).
      */
     public function __construct(
         private readonly ContainerInterface $container,
+        private readonly ?IUserSession $userSession=null,
         private readonly ?IAppConfig $config=null,
         private readonly ?LoggerInterface $logger=null,
     ) {
@@ -235,6 +243,8 @@ class PublicationQueryService
         // two-element hardcoded map; per-request cache so multi-schema search doesn't hit
         // the DB per row. Availability preflight for OR ran at the top of this method.
         $schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
+        // Phpstan needs to track the by-ref parameter's element type across resolvePublicationSchemaId().
+        /* @var array<int, string|null> $schemaSlugById */
         $schemaSlugById = [];
 
         // Track the publication schema for document→publication refinement (Stap 5a).
@@ -248,7 +258,10 @@ class PublicationQueryService
         // Track a single register for per-document refinement queries. Falls back to null
         // when the scope spans multiple registers — refinement then goes through the
         // multi-schema path via the query dict.
-        $refinementRegisterId = (count($scope['registers']) === 1) ? $scope['registers'][0] : null;
+        $refinementRegisterId = null;
+        if (count($scope['registers']) === 1) {
+            $refinementRegisterId = $scope['registers'][0];
+        }
 
         // Stap 4 — Removed the isObjectPublic() PHP post-filter. Visibility is now
         // enforced in SQL by OR's schema authorization (RBA-PUBLIC-001..004). OR's
@@ -283,7 +296,7 @@ class PublicationQueryService
                 continue;
             }
 
-            $schemaId = $this->extractSchemaId($rowArray);
+            $schemaId = $this->extractSchemaId(rowArray: $rowArray);
             if ($schemaId === null) {
                 $droppedCount++;
                 continue;
@@ -423,6 +436,9 @@ class PublicationQueryService
      * @param array $queryParams Raw request query dict.
      *
      * @return array{registers: int[], schemas: int[]}
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     private function resolveCatalogScope(array $queryParams): array
     {
@@ -545,7 +561,11 @@ class PublicationQueryService
         $out = [];
         foreach ($catalogs as $catalogEntity) {
             try {
-                $c = is_array($catalogEntity) === true ? $catalogEntity : $catalogEntity->jsonSerialize();
+                if (is_array($catalogEntity) === true) {
+                    $c = $catalogEntity;
+                } else {
+                    $c = $catalogEntity->jsonSerialize();
+                }
             } catch (\Throwable $e) {
                 continue;
             }
@@ -575,7 +595,7 @@ class PublicationQueryService
             return false;
         }
         try {
-            return new \DateTimeImmutable($published) <= new \DateTimeImmutable('now');
+            return new DateTimeImmutable($published) <= new DateTimeImmutable('now');
         } catch (\Throwable $e) {
             return false;
         }
@@ -594,7 +614,11 @@ class PublicationQueryService
     {
         if (is_string($value) === true) {
             $decoded = json_decode($value, true);
-            $value = is_array($decoded) === true ? $decoded : [];
+            if (is_array($decoded) === true) {
+                $value = $decoded;
+            } else {
+                $value = [];
+            }
         }
         if (is_array($value) === false) {
             return [];
@@ -602,6 +626,69 @@ class PublicationQueryService
         return array_values(array_map('intval', $value));
 
     }//end normalizeIds()
+
+    /**
+     * Whether the current caller is anonymous (no logged-in user).
+     *
+     * Consumed by {@see \OCA\OpenCatalogi\Controller\PublicationsController::getUses}
+     * and `::getUsedBy` to gate anonymous access to relationship endpoints on
+     * non-public root objects. Fail-closed: treats an unavailable session as
+     * anonymous so the stricter visibility rule applies.
+     *
+     * @return boolean True when no user session is available or no user is logged in.
+     *
+     * @spec exclude Visibility helper for the public relation-endpoint published-predicate guard.
+     */
+    public function isAnonymous(): bool
+    {
+        if ($this->userSession === null) {
+            // Fail closed: when the session is unavailable, treat the caller as anonymous
+            // so the published-predicate guard applies the stricter visibility rule.
+            return true;
+        }
+
+        return $this->userSession->getUser() === null;
+
+    }//end isAnonymous()
+
+    /**
+     * Determine whether an object is publicly visible (published and not depublished).
+     *
+     * Mirrors the live OpenRegister RBAC visibility model (APB-006), the same rule
+     * the public publications API and the frontend `publicationStatus` helpers use:
+     * an object is public when its own `publicatiedatum` field is set and is at or
+     * before "now", and either carries no `depublicatiedatum` or one still in the
+     * future. The removed object-level `@self.published` predicate is not consulted.
+     *
+     * @param array $objectData The serialized object data (own fields + `@self` envelope).
+     *
+     * @return boolean True when the object is currently published.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
+     */
+    public function isObjectPublic(array $objectData): bool
+    {
+        $publicatiedatum   = ($objectData['publicatiedatum'] ?? null);
+        $depublicatiedatum = ($objectData['depublicatiedatum'] ?? null);
+
+        if ($publicatiedatum === null || $publicatiedatum === '') {
+            return false;
+        }
+
+        $now           = time();
+        $publishedTime = strtotime((string) $publicatiedatum);
+        if ($publishedTime === false || $publishedTime > $now) {
+            return false;
+        }
+
+        if ($depublicatiedatum === null || $depublicatiedatum === '') {
+            return true;
+        }
+
+        $depublishedTime = strtotime((string) $depublicatiedatum);
+        return ($depublishedTime === false || $depublishedTime > $now);
+
+    }//end isObjectPublic()
 
     /**
      * Find the `publication` schema id inside the resolved scope so document rows can
@@ -614,9 +701,13 @@ class PublicationQueryService
      * `publication` match is found), so the row-loop's later slug lookups reuse
      * the same per-request cache instead of re-hitting the mapper (M3).
      *
-     * @param object                    $schemaMapper   OR SchemaMapper.
-     * @param int[]                     $scopeSchemas   Schema ids in the resolved scope.
-     * @param array<int, string|null>   $schemaSlugById Per-request slug cache (by reference).
+     * @param object                  $schemaMapper   OR SchemaMapper.
+     * @param int[]                   $scopeSchemas   Schema ids in the resolved scope.
+     * @param array<int, string|null> $schemaSlugById Per-request slug cache (by reference).
+     *                                                Callers must annotate their local
+     *                                                `[]` with an inline `@var` tag so
+     *                                                phpstan tracks the type across the
+     *                                                pass-by-ref boundary.
      *
      * @return int|null Publication schema id when present in scope, null otherwise.
      */
@@ -629,7 +720,10 @@ class PublicationQueryService
                 $slug = $schemaSlugById[$sidInt];
             } else {
                 try {
-                    $slug = $schemaMapper->find($sidInt)->getSlug();
+                    // $schemaMapper is typed `object` (OR is an optional dep, resolved
+                    // via the container), so phpstan can't infer getSlug()'s return
+                    // type — cast to string|null defensively.
+                    $slug = (string) $schemaMapper->find($sidInt)->getSlug();
                 } catch (\Throwable $e) {
                     $schemaSlugById[$sidInt] = null;
                     continue;
@@ -702,10 +796,18 @@ class PublicationQueryService
      * @param integer             $publicationSchemaId The publication schema id in scope.
      * @param array<string,mixed> $cache               Per-request document-uuid → summary cache
      *                                                 (by reference).
+     * @param array<string,mixed> $slugCache           Per-request publication-slug → summary cache
+     *                                                 (by reference). Prevents O(N × 500) scan
+     *                                                 regression when N documents on one page
+     *                                                 share the same `_relations['publication.slug']`.
      *
      * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
      *
      * @spec openspec/changes/fix-fts-catalog-model-alignment/tasks.md
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     private function resolveDocumentPublicationSummary(
         array $documentRow,
@@ -901,7 +1003,11 @@ class PublicationQueryService
             return null;
         }
 
-        $publicationArray = is_array($publication) === true ? $publication : $publication->jsonSerialize();
+        if (is_array($publication) === true) {
+            $publicationArray = $publication;
+        } else {
+            $publicationArray = $publication->jsonSerialize();
+        }
 
         // Guard: RET-006 archived rows must never surface even if RBAC lets them through
         // (see B1 in the row loop above — same rule applies to the linked publication).
@@ -936,6 +1042,9 @@ class PublicationQueryService
      * @param integer     $publicationSchemaId Publication schema id in scope.
      *
      * @return array|null The public-visible publication summary + flag, or null on miss.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     private function tryPublicationSlugLookup(
         string $publicationSlug,
@@ -955,12 +1064,16 @@ class PublicationQueryService
         // Callers holding 500+ publications on the publication schema will see
         // legacy slugs beyond row 500 fail to resolve — such fleets should migrate
         // away from the denormalised `publication.slug` shape (WOO-506 legacy).
+        $slugScanQuery = [
+            '_schemas' => [$publicationSchemaId],
+            '_limit'   => 500,
+        ];
+        if ($registerId !== null) {
+            $slugScanQuery['_register'] = $registerId;
+        }
         try {
             $matches = $objectService->searchObjectsPaginated(
-                query: [
-                    '_schemas' => [$publicationSchemaId],
-                    '_limit'   => 500,
-                ] + ($registerId !== null ? ['_register' => $registerId] : []),
+                query: $slugScanQuery,
                 _rbac: true,
                 _multitenancy: false,
                 _rbacAsPublic: true

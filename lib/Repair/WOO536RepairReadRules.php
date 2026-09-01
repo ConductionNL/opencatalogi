@@ -118,9 +118,9 @@ class WOO536RepairReadRules implements IRepairStep
             $result = $this->maybeUpgradeSchema(schemaMapper: $schemaMapper, slug: $slug, output: $output);
             if ($result === 'updated') {
                 $updated++;
-            } else {
-                $skipped++;
+                continue;
             }
+            $skipped++;
         }
 
         $output->info(
@@ -194,12 +194,17 @@ class WOO536RepairReadRules implements IRepairStep
             }
         }//end foreach
 
-        return $updated === true ? 'updated' : 'skipped';
+        if ($updated === true) {
+            return 'updated';
+        }
+        return 'skipped';
 
     }//end maybeUpgradeSchema()
 
     /**
-     * Detect the old single-rule shape:
+     * Detect the old single-rule shape.
+     *
+     * Old shape (before this repair):
      *
      *   read: [
      *     { group: public, match: { publicationDate: { $lte: $now } } },
