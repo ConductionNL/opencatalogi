@@ -253,21 +253,23 @@ export class Fixtures {
 			title,
 			summary: `Fixture catalog for ${this.prefix}`,
 			description: 'Created by the OpenCatalogi deep e2e workflow suite.',
-			// Wire the catalog at the publication register + BOTH schemas so
-			// publications and their documents surface through this catalog's
-			// public listing.
-			//
-			// SCHEMA_DOCUMENT IS NOT OPTIONAL HERE. Since WOO-536, `/api/search`
-			// derives its scope from the catalog model — `resolveCatalogScope()`
-			// unions the `registers` and `schemas` of every listed+published
-			// catalog — where it used to come from app config, whose keys were
-			// publication_register / publication_schema / document_schema. A
-			// catalog listing only the publication schema therefore puts documents
-			// OUT of scope, and a document that is out of scope is invisible to
-			// every query, with or without `_content=true`.
+			// Wire the catalog at the publication register + publication schema so
+			// publications created in REG_PUBLICATION/SCHEMA_PUBLICATION surface
+			// through this catalog's public listing. A caller that also needs the
+			// document schema in scope passes it through `extra.schemas`; widening
+			// the default breaks catalog-crud-persistence, which asserts this exact
+			// list round-trips.
 			registers: [REG_PUBLICATION],
-			schemas: [SCHEMA_PUBLICATION, SCHEMA_DOCUMENT],
+			schemas: [SCHEMA_PUBLICATION],
 			listed: true,
+			// LISTED IS NOT ENOUGH, AND THAT IS THE PART THAT BITES.
+			// `resolveCatalogScope()` unions only listed AND published catalogs, and
+			// `isCatalogPubliclyAvailable()` requires `published` to be a non-empty
+			// string parsing to a date <= now. Without it every catalog this fixture
+			// creates is dropped from that union silently, so it contributes nothing
+			// to what /api/search can see — which is never what a test asking for a
+			// catalog wants.
+			published: '2020-01-01T00:00:00+00:00',
 			...extra,
 		})
 	}

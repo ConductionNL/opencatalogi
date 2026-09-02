@@ -23,7 +23,12 @@ import type { APIRequestContext } from '@playwright/test'
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test content-search-endpoint
  */
 import { expect, request, test } from '@playwright/test'
-import { BASE, Fixtures } from '../workflows/_fixtures.ts'
+import {
+	BASE,
+	Fixtures,
+	SCHEMA_DOCUMENT,
+	SCHEMA_PUBLICATION,
+} from '../workflows/_fixtures.ts'
 
 const fx = new Fixtures()
 
@@ -116,7 +121,16 @@ test.describe('content-search-endpoint', () => {
 		// another spec having made one — which made it order-dependent, and left
 		// documents out of scope entirely because the shared fixture wired its
 		// catalog to the publication schema alone.
-		await fx.createCatalog('Content Search Catalog')
+		// BOTH SCHEMAS, and published. The scope union takes only catalogs that
+		// are listed AND published, so a catalog without a past `published` date
+		// contributes nothing however its schemas are set. The document schema has
+		// to be named explicitly because the fixture default carries publication
+		// alone, and a document outside the scope is invisible to every query with
+		// or without `_content=true` — which is the failure this spec kept
+		// reporting as a content-search one.
+		await fx.createCatalog('Content Search Catalog', {
+			schemas: [SCHEMA_PUBLICATION, SCHEMA_DOCUMENT],
+		})
 
 		const pub = await fx.createPublication('Content Search Publication', {
 			publicationDate: pastPublicatiedatum,
