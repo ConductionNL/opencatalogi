@@ -192,6 +192,31 @@ test.describe('content-search-endpoint', () => {
 			'the anonymous caller must see the seeded publication itself — if this fails, anonymous visibility is broken and the content-search assertion below is measuring the wrong thing',
 		).toContain(pub.title)
 
+		// SECOND CONTROL, one layer down. The probe above proves anonymous callers
+		// see PUBLICATIONS. It does not prove they see DOCUMENTS, and the document
+		// is what has to surface below.
+		//
+		// Searching its TITLE is a metadata match, so it must succeed with no
+		// `_content=true` at all. If it does not, the document is invisible to this
+		// caller and the body-text assertion below can never pass no matter how
+		// content search behaves — again reporting a content-search failure for a
+		// visibility one.
+		//
+		// Together the two controls bisect the remaining space: publication visible
+		// + document visible means the drop really is in the chunk-match path.
+		const anonDocProbe = await anon.get(
+			`/index.php/apps/opencatalogi/api/search?_search=${encodeURIComponent(doc.title)}`,
+		)
+		expect(anonDocProbe.status(), 'anon document probe succeeds').toBe(200)
+		const anonDocBody = await anonDocProbe.json().catch(() => ({}))
+		const anonDocTitles = (
+			(anonDocBody.results as Array<Record<string, unknown>>) ?? []
+		).map((r) => (r.title as string) ?? '')
+		expect(
+			anonDocTitles,
+			'the anonymous caller must see the seeded document by its title — a metadata match needing no _content=true; if this fails the document is invisible and the body-text assertion below is measuring the wrong thing',
+		).toContain(doc.title)
+
 		// `_content=true` — widen to body text. Extraction may lag the upload by a
 		// short interval even after the force-trigger above (design.md "Extraction
 		// lag"), so poll briefly before asserting.
