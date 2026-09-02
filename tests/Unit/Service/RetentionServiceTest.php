@@ -68,6 +68,7 @@ class FakeObjectService {
 
 /**
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionPolicyTable
  */
 class RetentionServiceTest extends TestCase {
 
