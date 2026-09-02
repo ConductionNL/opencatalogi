@@ -1,6 +1,6 @@
 {
   "spec_slug": "dcat-oai-pmh-harvesting",
-  "title": "DCAT + OAI-PMH harvesting",
+  "title": "DCAT + OAI-PMH harvesting (superseded, re-scoped 2026-09-02)",
   "app": "opencatalogi",
   "repo": "https://github.com/ConductionNL/opencatalogi",
   "depends_on": [],
