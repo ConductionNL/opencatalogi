@@ -253,11 +253,20 @@ export class Fixtures {
 			title,
 			summary: `Fixture catalog for ${this.prefix}`,
 			description: 'Created by the OpenCatalogi deep e2e workflow suite.',
-			// Wire the catalog at the publication register + publication schema so
-			// publications created in REG_PUBLICATION/SCHEMA_PUBLICATION surface
-			// through this catalog's public listing.
+			// Wire the catalog at the publication register + BOTH schemas so
+			// publications and their documents surface through this catalog's
+			// public listing.
+			//
+			// SCHEMA_DOCUMENT IS NOT OPTIONAL HERE. Since WOO-536, `/api/search`
+			// derives its scope from the catalog model — `resolveCatalogScope()`
+			// unions the `registers` and `schemas` of every listed+published
+			// catalog — where it used to come from app config, whose keys were
+			// publication_register / publication_schema / document_schema. A
+			// catalog listing only the publication schema therefore puts documents
+			// OUT of scope, and a document that is out of scope is invisible to
+			// every query, with or without `_content=true`.
 			registers: [REG_PUBLICATION],
-			schemas: [SCHEMA_PUBLICATION],
+			schemas: [SCHEMA_PUBLICATION, SCHEMA_DOCUMENT],
 			listed: true,
 			...extra,
 		})
