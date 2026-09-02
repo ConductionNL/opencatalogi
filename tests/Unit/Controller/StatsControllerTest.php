@@ -39,6 +39,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * @covers \OCA\OpenCatalogi\Controller\StatsController
+ * @uses \OCA\OpenCatalogi\Service\QualityService
  */
 class StatsControllerTest extends TestCase {
 

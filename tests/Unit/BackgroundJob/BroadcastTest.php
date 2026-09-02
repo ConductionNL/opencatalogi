@@ -80,7 +80,13 @@ class BroadcastTest extends TestCase {
 	 */
 	public function testJobIsRegisteredInTheAppManifest(): void {
 		$manifest = dirname(__DIR__, 3) . '/appinfo/info.xml';
-		$xml = simplexml_load_file($manifest);
+		// The Nextcloud server bootstrap installs a libxml external entity
+		// loader that returns null, which makes simplexml_load_file() fail on
+		// ANY file once the server is loaded (as it is on the CI runner). Read
+		// the bytes ourselves and parse the string instead.
+		$bytes = file_get_contents($manifest);
+		$this->assertNotFalse($bytes, 'appinfo/info.xml must be readable');
+		$xml = simplexml_load_string($bytes);
 		$this->assertNotFalse($xml, 'appinfo/info.xml must parse');
 
 		$jobs = [];
