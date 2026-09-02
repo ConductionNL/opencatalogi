@@ -161,6 +161,37 @@ test.describe('content-search-endpoint', () => {
 			'a body-text-only match MUST NOT surface without _content=true',
 		).not.toContain(doc.title)
 
+		// POSITIVE CONTROL, and the reason this test could fail for a reason it
+		// never named. The assertion above is satisfied by an EMPTY list, so it
+		// passes identically whether the endpoint correctly withheld one document
+		// or returned nothing at all because the anonymous caller can see no
+		// publications whatsoever.
+		//
+		// That distinction is the whole question when the `_content=true` half
+		// below comes back empty: WOO-551 removed OR's `_rbacAsPublic` toggle, and
+		// the replacement inherits authorization at the schema level, so anonymous
+		// visibility now depends on read rules being present on the register. If
+		// they are not, every publication is invisible here, the document can
+		// never resolve its owning publication, and the failure surfaces as
+		// "the body-text match does not surface" — an assertion about content
+		// search, blamed for an authorization gap.
+		//
+		// The publication carries a past publicationDate, which is exactly what
+		// the register's read rules scope anonymous access to, so it MUST be
+		// visible. If this fails, stop reading the content-search code.
+		const anonPubProbe = await anon.get(
+			`/index.php/apps/opencatalogi/api/search?_search=${encodeURIComponent(pub.title)}`,
+		)
+		expect(anonPubProbe.status(), 'anon publication probe succeeds').toBe(200)
+		const anonPubBody = await anonPubProbe.json().catch(() => ({}))
+		const anonPubTitles = (
+			(anonPubBody.results as Array<Record<string, unknown>>) ?? []
+		).map((r) => (r.title as string) ?? '')
+		expect(
+			anonPubTitles,
+			'the anonymous caller must see the seeded publication itself — if this fails, anonymous visibility is broken and the content-search assertion below is measuring the wrong thing',
+		).toContain(pub.title)
+
 		// `_content=true` — widen to body text. Extraction may lag the upload by a
 		// short interval even after the force-trigger above (design.md "Extraction
 		// lag"), so poll briefly before asserting.
