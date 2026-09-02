@@ -109,6 +109,15 @@ test.describe('content-search-endpoint', () => {
 		// an explicit slug -> `total: 2`, including the row with
 		// `@self.schema === "document"`.
 		const pastPublicatiedatum = '2020-01-01T00:00:00+00:00'
+		// A CATALOG THAT COVERS BOTH SCHEMAS, created here rather than assumed.
+		// `/api/search` derives its scope from listed+published catalogs since
+		// WOO-536, so a document is only reachable when some catalog lists the
+		// document schema. This spec used to create none at all and depended on
+		// another spec having made one — which made it order-dependent, and left
+		// documents out of scope entirely because the shared fixture wired its
+		// catalog to the publication schema alone.
+		await fx.createCatalog('Content Search Catalog')
+
 		const pub = await fx.createPublication('Content Search Publication', {
 			publicationDate: pastPublicatiedatum,
 			slug: `e2e-${fx.runId}-content-search-pub`,
