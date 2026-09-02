@@ -226,6 +226,39 @@ class PublicationQueryService
             // union on object id before returning; the `@self.id` dedup below is an
             // additional guarantee at the OC assembly layer.
             $searchQuery['_content_search'] = true;
+
+            // AND WIDEN THE SCOPE TO THE DOCUMENT SCHEMA, or the fan-out returns
+            // nothing it is allowed to keep.
+            //
+            // A catalog is wired at the publication register + PUBLICATION schema, so
+            // `$scope['schemas']` is publication-only. OR's chunk arm applies that same
+            // scope to each resolved chunk owner, and a body-text chunk belongs to a
+            // DOCUMENT. Measured on the dev instance 2026-09-02 with a freshly seeded,
+            // publicly visible publication + document + .txt, extraction confirmed:
+            //
+            //   SCOPECHECK objReg=31 objSchema=1114 scope={"registers":[31],
+            //              "schemas":[1113]} match=false
+            //
+            // so every document match was discarded inside OR and this assembler never
+            // saw a row: `{"results":[],"total":1}`. That is WOO-517's
+            // "a body-text-only match surfaces via ?_content=true" failing, and it is
+            // the silent drop resolveDocumentPublicationSummary()'s docblock already
+            // warned about, one layer further out.
+            //
+            // Scoped to `_content=true` on purpose: without it the schemas stay
+            // publication-only, so a document still MUST NOT surface on the
+            // metadata-only path. The document rows this admits are still gated by the
+            // transitive-visibility check in the row loop below, which drops any
+            // document whose linked publication is not publicly visible.
+            $documentSchemaIds = $this->resolveDocumentSchemaIds(
+                registerIds: $scope['registers'],
+                schemas: $searchQuery['_schemas']
+            );
+            if ($documentSchemaIds !== []) {
+                $searchQuery['_schemas'] = array_values(
+                    array_unique(array_merge($searchQuery['_schemas'], $documentSchemaIds))
+                );
+            }
         }
 
         // Stap 1 — Enable OR's schema-level RBAC. The `_rbac_as_public: true` runtime
@@ -702,6 +735,112 @@ class PublicationQueryService
         return ($depublishedTime === false || $depublishedTime > $now);
 
     }//end isObjectPublic()
+
+    /**
+     * The `document` schema ids carried by the scope's registers.
+     *
+     * A catalog is wired at the publication register + publication schema, so the
+     * resolved scope names the publication schema only. Body text lives on
+     * DOCUMENTS, so a content search has to admit their schema or OR's chunk arm
+     * resolves owners it is then obliged to discard.
+     *
+     * Reads the register's own schema list rather than scanning every schema on
+     * the instance: a document schema that no register in scope carries is not a
+     * document this search may return, and widening past the catalog boundary is
+     * exactly what the `unset()` of client-supplied `_schemas` above prevents.
+     *
+     * @param array<int, int|string> $registerIds The scope's register ids.
+     * @param array<int, int|string> $schemas     Schema ids already in scope.
+     *
+     * @return array<int, int> The document schema ids not already in scope.
+     *
+     * @spec openspec/changes/add-document-content-search/tasks.md#task-3
+     */
+    private function resolveDocumentSchemaIds(array $registerIds, array $schemas): array
+    {
+        if ($registerIds === []) {
+            return [];
+        }
+
+        try {
+            $registerMapper = $this->container->get('OCA\\OpenRegister\\Db\\RegisterMapper');
+            $schemaMapper   = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
+        } catch (\Throwable $e) {
+            $this->logger?->warning(
+                'WOO-517: could not resolve OR mappers for document-schema widening',
+                ['error' => $e->getMessage()]
+            );
+            return [];
+        }
+
+        $already = [];
+        foreach ($schemas as $sid) {
+            $already[(int) $sid] = true;
+        }
+
+        $found = [];
+        foreach ($registerIds as $registerId) {
+            foreach ($this->documentSchemaIdsOfRegister(
+                registerMapper: $registerMapper,
+                schemaMapper: $schemaMapper,
+                registerId: (int) $registerId
+            ) as $sid) {
+                if (isset($already[$sid]) === false) {
+                    $found[$sid] = true;
+                }
+            }
+        }
+
+        return array_keys($found);
+
+    }//end resolveDocumentSchemaIds()
+
+
+    /**
+     * The schema ids one register carries that are slugged `document`.
+     *
+     * Split out of {@see resolveDocumentSchemaIds()} to keep both within the
+     * complexity budget; a register that cannot be read, or a schema whose slug
+     * cannot be resolved, contributes nothing rather than failing the search.
+     *
+     * @param object $registerMapper OR RegisterMapper.
+     * @param object $schemaMapper   OR SchemaMapper.
+     * @param int    $registerId     The register to read.
+     *
+     * @return array<int, int> The document schema ids this register carries.
+     *
+     * @spec openspec/changes/add-document-content-search/tasks.md#task-3
+     */
+    private function documentSchemaIdsOfRegister(object $registerMapper, object $schemaMapper, int $registerId): array
+    {
+        try {
+            $register = $registerMapper->find($registerId);
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ($register->getSchemas() as $sid) {
+            $sidInt = (int) $sid;
+            if ($sidInt === 0) {
+                continue;
+            }
+
+            try {
+                $slug = $schemaMapper->find($sidInt)->getSlug();
+            } catch (\Throwable $e) {
+                continue;
+            }
+
+            if ($slug === 'document') {
+                $ids[] = $sidInt;
+            }
+        }
+
+        return $ids;
+
+    }//end documentSchemaIdsOfRegister()
+
 
     /**
      * Find the `publication` schema id inside the resolved scope so document rows can
