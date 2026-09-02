@@ -333,19 +333,7 @@ class RetentionService {
 	 */
 	public function applyDefaultsAtPublication(array $objectData): ?array {
 		$self = ($objectData['@self'] ?? []);
-		if (is_array($self) === false) {
-			return null;
-		}
-
-		$register = (string)($self['register'] ?? '');
-		$schema = (string)($self['schema'] ?? '');
-		$configuredRegister = $this->getRegister();
-		$configuredSchema = $this->getSchema();
-		if ($configuredRegister === null || $configuredSchema === null) {
-			return null;
-		}
-
-		if ($register !== $configuredRegister || $schema !== $configuredSchema) {
+		if (is_array($self) === false || $this->isConfiguredPublication(self: $self) === false) {
 			// Not a publication object; retention defaults do not apply.
 			return null;
 		}
@@ -362,6 +350,8 @@ class RetentionService {
 			return null;
 		}
 
+		$register = (string)($self['register'] ?? '');
+		$schema = (string)($self['schema'] ?? '');
 		$stamped = $this->applyDefaults(
 			publication: $data,
 			catalogSlug: $this->resolveCatalogSlug(register: $register, schema: $schema)
@@ -371,10 +361,7 @@ class RetentionService {
 			return null;
 		}
 
-		$uuid = (string)($self['uuid'] ?? ($self['id'] ?? ($data['id'] ?? '')));
-		if ($uuid !== '' && empty($stamped['id']) === true) {
-			$stamped['id'] = $uuid;
-		}
+		$stamped = $this->carryObjectId(self: $self, data: $stamped);
 
 		try {
 			$saved = $this->save(objectService: $objectService, register: $register, schema: $schema, data: $stamped);
@@ -385,6 +372,46 @@ class RetentionService {
 
 		return $this->normalise(object: $saved);
 	}//end applyDefaultsAtPublication()
+
+	/**
+	 * Whether an event's @self envelope names the configured publication register/schema.
+	 *
+	 * @param array<string, mixed> $self The event object's @self envelope.
+	 *
+	 * @return bool True when the object is a publication.
+	 *
+	 * @spec exclude internal guard for the RET-004 publication-time hook.
+	 */
+	private function isConfiguredPublication(array $self): bool {
+		$configuredRegister = $this->getRegister();
+		$configuredSchema = $this->getSchema();
+		if ($configuredRegister === null || $configuredSchema === null) {
+			return false;
+		}
+
+		return (string)($self['register'] ?? '') === $configuredRegister
+			&& (string)($self['schema'] ?? '') === $configuredSchema;
+	}//end isConfiguredPublication()
+
+	/**
+	 * Carry the object id from the @self envelope onto the payload so the save
+	 * updates the existing object instead of creating a duplicate.
+	 *
+	 * @param array<string, mixed> $self The event object's @self envelope.
+	 * @param array<string, mixed> $data The stamped publication payload.
+	 *
+	 * @return array<string, mixed> The payload with its id ensured.
+	 *
+	 * @spec exclude internal helper for the RET-004 publication-time hook.
+	 */
+	private function carryObjectId(array $self, array $data): array {
+		$uuid = (string)($self['uuid'] ?? ($self['id'] ?? ($data['id'] ?? '')));
+		if ($uuid !== '' && empty($data['id']) === true) {
+			$data['id'] = $uuid;
+		}
+
+		return $data;
+	}//end carryObjectId()
 
 	/**
 	 * Resolve the catalog slug a publication belongs to.

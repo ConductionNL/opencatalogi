@@ -212,12 +212,9 @@ class WooService {
 	}//end getDeckCardService()
 
 	/**
-	 * Resolve the OpenRegister TaskSequenceMapper from the container.
-	 *
-	 * The mapper is the read surface for approval-chain outcomes: OpenRegister's
-	 * approval-workflow records every chain run as a task sequence anchored on
-	 * the object under approval. OpenCatalogi only reads the recorded outcome
-	 * here (ADR-022); provisioning, decisions and the audit trail are OpenRegister's.
+	 * Resolve the OpenRegister TaskSequenceMapper: the read surface for
+	 * approval-chain outcomes. OpenCatalogi only reads the recorded outcome
+	 * (ADR-022); provisioning, decisions and the audit trail are OpenRegister's.
 	 *
 	 * @return object|null The TaskSequenceMapper, or null when unavailable.
 	 *
@@ -874,24 +871,24 @@ class WooService {
 		$chainId = $this->getPublishApprovalChain();
 		if ($chainId === null) {
 			throw new RuntimeException(
-				$this->l10n->t('Publishing is blocked: no approval chain is configured. Set the woo_publish_approval_chain setting to the OpenRegister approval chain that signs off WOO batches.')
+				$this->l10n->t('Publishing is blocked: no approval chain is configured (woo_publish_approval_chain).')
 			);
 		}
 
+		$unverifiable = $this->l10n->t(
+			'Publishing is blocked: the OpenRegister approval workflow is unavailable, so approval chain "%s" cannot be verified.',
+			[$chainId]
+		);
 		$mapper = $this->getTaskSequenceMapper();
 		if ($mapper === null || method_exists($mapper, 'findNewestForAnchor') === false) {
-			throw new RuntimeException(
-				$this->l10n->t('Publishing is blocked: the OpenRegister approval workflow is unavailable, so approval chain "%s" cannot be verified.', [$chainId])
-			);
+			throw new RuntimeException($unverifiable);
 		}
 
 		try {
 			$sequence = $mapper->findNewestForAnchor(anchorObjectUuid: $batchId, templateId: $chainId);
 		} catch (\Throwable $e) {
 			$this->logger->warning('[WooService] approval chain lookup failed for batch ' . $batchId . ': ' . $e->getMessage());
-			throw new RuntimeException(
-				$this->l10n->t('Publishing is blocked: the OpenRegister approval workflow is unavailable, so approval chain "%s" cannot be verified.', [$chainId])
-			);
+			throw new RuntimeException($unverifiable);
 		}
 
 		$status = '';
@@ -899,9 +896,8 @@ class WooService {
 			$status = (string)$sequence->getStatus();
 		}
 
-		// 'completed' is OpenRegister's release condition: every position in the
-		// sequence completed with an approving outcome. Running, rejected,
-		// terminated or absent sequences all refuse.
+		// 'completed' is OpenRegister's release condition (every position approved);
+		// running, rejected, terminated or absent sequences all refuse.
 		if ($status !== 'completed') {
 			throw new RuntimeException(
 				$this->l10n->t('Publishing is blocked: approval chain "%s" has not recorded a completed approval for this batch.', [$chainId])
@@ -942,9 +938,7 @@ class WooService {
 			throw new RuntimeException('Batch must be ready_for_review (passed the approval gate) before publishing');
 		}
 
-		// The actual approval gate: the batch status only says a review CAN start;
-		// the configured OpenRegister approval chain must have recorded a completed
-		// approval for this batch before anything becomes public (fail closed).
+		// The actual approval gate: status only says a review CAN start (fail closed).
 		$this->assertPublishApproved(batchId: $batchId);
 
 		$assessments = $this->loadAssessments(batch: $batch);

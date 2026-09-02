@@ -982,7 +982,7 @@ OC.L10N.register(
         "You're publishing": "You're publishing",
         "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.": "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.",
         "Demo data (optional)": "Demo data (optional)",
-        "Publishing is blocked: no approval chain is configured. Set the woo_publish_approval_chain setting to the OpenRegister approval chain that signs off WOO batches.": "Publishing is blocked: no approval chain is configured. Set the woo_publish_approval_chain setting to the OpenRegister approval chain that signs off WOO batches.",
+        "Publishing is blocked: no approval chain is configured (woo_publish_approval_chain).": "Publishing is blocked: no approval chain is configured (woo_publish_approval_chain).",
         "Publishing is blocked: the OpenRegister approval workflow is unavailable, so approval chain \"%s\" cannot be verified.": "Publishing is blocked: the OpenRegister approval workflow is unavailable, so approval chain \"%s\" cannot be verified.",
         "Publishing is blocked: approval chain \"%s\" has not recorded a completed approval for this batch.": "Publishing is blocked: approval chain \"%s\" has not recorded a completed approval for this batch."
     },
