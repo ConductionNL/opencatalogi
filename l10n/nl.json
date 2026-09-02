@@ -919,7 +919,10 @@
         "Where the automation lives": "Waar de automatisering zit",
         "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them. Nothing to build now.": "Flows zijn wat er gebeurt zonder dat iemand klikt: een herinnering voordat een termijn verstrijkt, een bevestiging bij indiening. Hier lees en bewerk je ze. Je hoeft nu niets te bouwen.",
         "Open Flows in the menu": "Open Flows in het menu",
-        "Menu items": "Menu-items"
+        "Menu items": "Menu-items",
+        "Publishing is blocked: no approval chain is configured (woo_publish_approval_chain).": "Publiceren is geblokkeerd: er is geen goedkeuringsketen ingesteld (woo_publish_approval_chain).",
+        "Publishing is blocked: the OpenRegister approval workflow is unavailable, so approval chain \"%s\" cannot be verified.": "Publiceren is geblokkeerd: de OpenRegister-goedkeuringsworkflow is niet beschikbaar, dus goedkeuringsketen \"%s\" kan niet worden gecontroleerd.",
+        "Publishing is blocked: approval chain \"%s\" has not recorded a completed approval for this batch.": "Publiceren is geblokkeerd: goedkeuringsketen \"%s\" heeft geen afgeronde goedkeuring voor deze batch vastgelegd."
     },
     "plurals": {}
 }

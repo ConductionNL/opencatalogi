@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md#requirement-broadcast-this-directory-to-external-instances-cron-every-4-hours-dir-007
  */
 
 namespace OCA\OpenCatalogi\BackgroundJob;
@@ -80,7 +80,7 @@ class Broadcast extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 *
-	 * @spec openspec/specs/dashboard/spec.md
+	 * @spec openspec/specs/dashboard/spec.md#requirement-broadcast-this-directory-to-external-instances-cron-every-4-hours-dir-007
 	 */
 	protected function run($argument): void {
 		try {

@@ -316,6 +316,157 @@ class RetentionService {
 	}//end applyDefaults()
 
 	/**
+	 * Stamp retention defaults onto a publication at publication time (RET-004).
+	 *
+	 * Called from the OR object event listeners when an object first becomes
+	 * published. Only publication objects (the configured publication
+	 * register/schema) are touched; the matching per-catalog default fills any
+	 * retention field the officer left empty, values already set are never
+	 * overwritten, and when nothing changes nothing is saved (so the follow-up
+	 * OR update event terminates instead of looping).
+	 *
+	 * @param array<string, mixed> $objectData The OR event object data (with @self envelope).
+	 *
+	 * @return array<string, mixed>|null The saved publication, or null when nothing was stamped.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	public function applyDefaultsAtPublication(array $objectData): ?array {
+		$self = ($objectData['@self'] ?? []);
+		if (is_array($self) === false || $this->isConfiguredPublication(self: $self) === false) {
+			// Not a publication object; retention defaults do not apply.
+			return null;
+		}
+
+		$data = $objectData;
+		unset($data['@self']);
+		if (empty($data['publicationDate']) === true) {
+			// Not published yet; RET-004 stamps at publication time only.
+			return null;
+		}
+
+		$objectService = $this->getObjectService();
+		if ($objectService === null) {
+			return null;
+		}
+
+		$register = (string)($self['register'] ?? '');
+		$schema = (string)($self['schema'] ?? '');
+		$stamped = $this->applyDefaults(
+			publication: $data,
+			catalogSlug: $this->resolveCatalogSlug(register: $register, schema: $schema)
+		);
+		if ($stamped === $data) {
+			// Idempotent: already stamped (or no matching default) means no write.
+			return null;
+		}
+
+		$stamped = $this->carryObjectId(self: $self, data: $stamped);
+
+		try {
+			$saved = $this->save(objectService: $objectService, register: $register, schema: $schema, data: $stamped);
+		} catch (\Throwable $e) {
+			$this->logger->error('[RetentionService] failed to stamp retention defaults at publication: ' . $e->getMessage());
+			return null;
+		}
+
+		return $this->normalise(object: $saved);
+	}//end applyDefaultsAtPublication()
+
+	/**
+	 * Whether an event's @self envelope names the configured publication register/schema.
+	 *
+	 * @param array<string, mixed> $self The event object's @self envelope.
+	 *
+	 * @return bool True when the object is a publication.
+	 *
+	 * @spec exclude internal guard for the RET-004 publication-time hook.
+	 */
+	private function isConfiguredPublication(array $self): bool {
+		$configuredRegister = $this->getRegister();
+		$configuredSchema = $this->getSchema();
+		if ($configuredRegister === null || $configuredSchema === null) {
+			return false;
+		}
+
+		return (string)($self['register'] ?? '') === $configuredRegister
+			&& (string)($self['schema'] ?? '') === $configuredSchema;
+	}//end isConfiguredPublication()
+
+	/**
+	 * Carry the object id from the @self envelope onto the payload so the save
+	 * updates the existing object instead of creating a duplicate.
+	 *
+	 * @param array<string, mixed> $self The event object's @self envelope.
+	 * @param array<string, mixed> $data The stamped publication payload.
+	 *
+	 * @return array<string, mixed> The payload with its id ensured.
+	 *
+	 * @spec exclude internal helper for the RET-004 publication-time hook.
+	 */
+	private function carryObjectId(array $self, array $data): array {
+		$uuid = (string)($self['uuid'] ?? ($self['id'] ?? ($data['id'] ?? '')));
+		if ($uuid !== '' && empty($data['id']) === true) {
+			$data['id'] = $uuid;
+		}
+
+		return $data;
+	}//end carryObjectId()
+
+	/**
+	 * Resolve the catalog slug a publication belongs to.
+	 *
+	 * Catalog membership is by register/schema: a catalog object lists the
+	 * registers and schemas it contains. The first catalog whose lists include
+	 * the publication's register and schema provides the slug that keys the
+	 * per-catalog retention defaults (RET-004). Returns an empty string when no
+	 * catalog matches, in which case no catalog default can apply.
+	 *
+	 * @param string $register The publication's register id.
+	 * @param string $schema The publication's schema id.
+	 *
+	 * @return string The catalog slug, or an empty string when unresolvable.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	private function resolveCatalogSlug(string $register, string $schema): string {
+		$objectService = $this->getObjectService();
+		$catalogRegister = (string)$this->config->getValueString('opencatalogi', 'catalog_register', '');
+		$catalogSchema = (string)$this->config->getValueString('opencatalogi', 'catalog_schema', '');
+		if ($objectService === null || $catalogRegister === '' || $catalogSchema === '') {
+			return '';
+		}
+
+		try {
+			$result = $objectService->searchObjectsPaginated(
+				query: [
+					'@self' => ['register' => $catalogRegister, 'schema' => $catalogSchema],
+					'_limit' => 1000,
+				],
+				_rbac: false,
+				_multitenancy: false
+			);
+			$catalogs = ($result['results'] ?? []);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[RetentionService] catalog lookup for retention defaults failed: ' . $e->getMessage());
+			return '';
+		}
+
+		foreach ($catalogs as $catalog) {
+			$catalogData = $this->normalise(object: $catalog);
+			$registers = array_map('intval', (array)($catalogData['registers'] ?? []));
+			$schemas = array_map('intval', (array)($catalogData['schemas'] ?? []));
+			if (in_array((int)$register, $registers, true) === true
+				&& in_array((int)$schema, $schemas, true) === true
+			) {
+				return (string)($catalogData['slug'] ?? '');
+			}
+		}
+
+		return '';
+	}//end resolveCatalogSlug()
+
+	/**
 	 * Evaluate all publications for retention expiry and act per stored policy.
 	 *
 	 * Dumb evaluator (RET-005): queries publications whose retentionExpiresAt is

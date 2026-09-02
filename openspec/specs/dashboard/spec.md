@@ -352,7 +352,7 @@ The system MUST provide anti-loop protection during broadcast sync cycles.
 ### Requirement: Broadcast this directory to external instances (cron every 4 hours) (DIR-007)
 The system MUST broadcast this directory to external instances on a cron every 4 hours.
 
-**Priority:** Should **Status:** Bug (Not Registered in info.xml)
+**Priority:** Should **Status:** Implemented
 
 #### Scenario: directory is broadcast to external instances
 - GIVEN the broadcast cron job is scheduled every 4 hours
