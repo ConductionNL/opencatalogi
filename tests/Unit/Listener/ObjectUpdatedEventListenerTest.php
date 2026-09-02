@@ -6,6 +6,7 @@ namespace Unit\Listener;
 
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Service\EventService;
+use OCA\OpenCatalogi\Service\RetentionService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
@@ -20,9 +21,15 @@ use Psr\Log\LoggerInterface;
 class ObjectUpdatedEventListenerTest extends TestCase {
 	private ObjectUpdatedEventListener $listener;
 
+	private RetentionService&MockObject $retentionService;
+
+	private LoggerInterface&MockObject $listenerLogger;
+
 	protected function setUp(): void {
 		parent::setUp();
-		$this->listener = new ObjectUpdatedEventListener();
+		$this->retentionService = $this->createMock(RetentionService::class);
+		$this->listenerLogger = $this->createMock(LoggerInterface::class);
+		$this->listener = new ObjectUpdatedEventListener($this->retentionService, $this->listenerLogger);
 	}
 
 	/**
@@ -380,8 +387,8 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 	}
 
 	public function testHandleCatchesExceptionAndLogs(): void {
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->atLeastOnce())->method('error')
+		// The catch block reports through the injected listener logger.
+		$this->listenerLogger->expects($this->atLeastOnce())->method('error')
 			->with($this->stringContains('Exception in object update event listener'));
 
 		$settingsService = $this->createMock(SettingsService::class);
@@ -389,10 +396,99 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 			->willThrowException(new \RuntimeException('Settings broken'));
 
 		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
 
 		$newEntity = $this->createObjectEntityMock();
 		$event = new ObjectUpdatedEvent($newEntity, null);
+		$this->listener->handle($event);
+	}
+
+	// -------------------------------------------------------------------------
+	// Retention defaults at publication time (RET-004 wiring)
+	// -------------------------------------------------------------------------
+
+	public function testHandleStampsRetentionDefaultsOnPublishTransition(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')->willReturn([
+			'auto_publish_objects' => false,
+			'auto_publish_attachments' => false,
+		]);
+
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
+		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+
+		// Unpublished -> published transition MUST reach the retention service,
+		// even with every auto-publishing option disabled.
+		$this->retentionService->expects($this->once())
+			->method('applyDefaultsAtPublication')
+			->with(
+				$this->callback(
+					static fn (array $data): bool => ($data['@self']['uuid'] ?? '') === 'ret-uuid'
+				)
+			);
+
+		$newEntity = $this->createObjectEntityMock(
+			uuid: 'ret-uuid',
+			published: new \DateTime('2025-06-01')
+		);
+		$oldEntity = $this->createObjectEntityMock(uuid: 'ret-uuid');
+
+		$event = new ObjectUpdatedEvent($newEntity, $oldEntity);
+		$this->listener->handle($event);
+	}
+
+	public function testHandleDoesNotStampRetentionWhenAlreadyPublished(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')->willReturn([
+			'auto_publish_objects' => false,
+			'auto_publish_attachments' => false,
+		]);
+
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
+		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+
+		// Already published before the update: not a publication transition.
+		$this->retentionService->expects($this->never())
+			->method('applyDefaultsAtPublication');
+
+		$newEntity = $this->createObjectEntityMock(
+			uuid: 'ret-uuid-2',
+			published: new \DateTime('2025-06-01')
+		);
+		$oldEntity = $this->createObjectEntityMock(
+			uuid: 'ret-uuid-2',
+			published: new \DateTime('2025-01-01')
+		);
+
+		$event = new ObjectUpdatedEvent($newEntity, $oldEntity);
+		$this->listener->handle($event);
+	}
+
+	public function testHandleRetentionFailureNeverBlocksTheSavePipeline(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')->willReturn([
+			'auto_publish_objects' => false,
+			'auto_publish_attachments' => false,
+		]);
+
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
+		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+
+		$this->retentionService->method('applyDefaultsAtPublication')
+			->willThrowException(new \RuntimeException('retention store down'));
+		$this->listenerLogger->expects($this->once())->method('error')
+			->with($this->stringContains('failed to stamp retention defaults'));
+
+		$newEntity = $this->createObjectEntityMock(
+			uuid: 'ret-uuid-3',
+			published: new \DateTime('2025-06-01')
+		);
+
+		$event = new ObjectUpdatedEvent($newEntity, $this->createObjectEntityMock(uuid: 'ret-uuid-3'));
+		// Must not throw.
 		$this->listener->handle($event);
 	}
 }

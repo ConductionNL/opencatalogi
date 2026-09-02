@@ -136,6 +136,16 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	<background-jobs>
 		<job>OCA\OpenCatalogi\BackgroundJob\DirectorySync</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\RetentionEvaluation</job>
+		<!--
+			Broadcast was written but never registered here, so the 4-hourly
+			directory broadcast required by dashboard/spec.md DIR-007 silently
+			never ran. The delivery mechanics inside BroadcastService are due to
+			move onto OpenRegister's webhook pipeline (change
+			opencatalogi-delegate-broadcast-to-or-webhooks); that change replaces
+			HOW a broadcast is delivered, not WHETHER a schedule exists, so the
+			job registration stays correct across it.
+		-->
+		<job>OCA\OpenCatalogi\BackgroundJob\Broadcast</job>
 	</background-jobs>
 
 	<repair-steps>

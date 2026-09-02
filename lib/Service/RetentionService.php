@@ -316,6 +316,130 @@ class RetentionService {
 	}//end applyDefaults()
 
 	/**
+	 * Stamp retention defaults onto a publication at publication time (RET-004).
+	 *
+	 * Called from the OR object event listeners when an object first becomes
+	 * published. Only publication objects (the configured publication
+	 * register/schema) are touched; the matching per-catalog default fills any
+	 * retention field the officer left empty, values already set are never
+	 * overwritten, and when nothing changes nothing is saved (so the follow-up
+	 * OR update event terminates instead of looping).
+	 *
+	 * @param array<string, mixed> $objectData The OR event object data (with @self envelope).
+	 *
+	 * @return array<string, mixed>|null The saved publication, or null when nothing was stamped.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	public function applyDefaultsAtPublication(array $objectData): ?array {
+		$self = ($objectData['@self'] ?? []);
+		if (is_array($self) === false) {
+			return null;
+		}
+
+		$register = (string)($self['register'] ?? '');
+		$schema = (string)($self['schema'] ?? '');
+		$configuredRegister = $this->getRegister();
+		$configuredSchema = $this->getSchema();
+		if ($configuredRegister === null || $configuredSchema === null) {
+			return null;
+		}
+
+		if ($register !== $configuredRegister || $schema !== $configuredSchema) {
+			// Not a publication object; retention defaults do not apply.
+			return null;
+		}
+
+		$data = $objectData;
+		unset($data['@self']);
+		if (empty($data['publicationDate']) === true) {
+			// Not published yet; RET-004 stamps at publication time only.
+			return null;
+		}
+
+		$objectService = $this->getObjectService();
+		if ($objectService === null) {
+			return null;
+		}
+
+		$stamped = $this->applyDefaults(
+			publication: $data,
+			catalogSlug: $this->resolveCatalogSlug(register: $register, schema: $schema)
+		);
+		if ($stamped === $data) {
+			// Idempotent: already stamped (or no matching default) means no write.
+			return null;
+		}
+
+		$uuid = (string)($self['uuid'] ?? ($self['id'] ?? ($data['id'] ?? '')));
+		if ($uuid !== '' && empty($stamped['id']) === true) {
+			$stamped['id'] = $uuid;
+		}
+
+		try {
+			$saved = $this->save(objectService: $objectService, register: $register, schema: $schema, data: $stamped);
+		} catch (\Throwable $e) {
+			$this->logger->error('[RetentionService] failed to stamp retention defaults at publication: ' . $e->getMessage());
+			return null;
+		}
+
+		return $this->normalise(object: $saved);
+	}//end applyDefaultsAtPublication()
+
+	/**
+	 * Resolve the catalog slug a publication belongs to.
+	 *
+	 * Catalog membership is by register/schema: a catalog object lists the
+	 * registers and schemas it contains. The first catalog whose lists include
+	 * the publication's register and schema provides the slug that keys the
+	 * per-catalog retention defaults (RET-004). Returns an empty string when no
+	 * catalog matches, in which case no catalog default can apply.
+	 *
+	 * @param string $register The publication's register id.
+	 * @param string $schema The publication's schema id.
+	 *
+	 * @return string The catalog slug, or an empty string when unresolvable.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	private function resolveCatalogSlug(string $register, string $schema): string {
+		$objectService = $this->getObjectService();
+		$catalogRegister = (string)$this->config->getValueString('opencatalogi', 'catalog_register', '');
+		$catalogSchema = (string)$this->config->getValueString('opencatalogi', 'catalog_schema', '');
+		if ($objectService === null || $catalogRegister === '' || $catalogSchema === '') {
+			return '';
+		}
+
+		try {
+			$result = $objectService->searchObjectsPaginated(
+				query: [
+					'@self' => ['register' => $catalogRegister, 'schema' => $catalogSchema],
+					'_limit' => 1000,
+				],
+				_rbac: false,
+				_multitenancy: false
+			);
+			$catalogs = ($result['results'] ?? []);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[RetentionService] catalog lookup for retention defaults failed: ' . $e->getMessage());
+			return '';
+		}
+
+		foreach ($catalogs as $catalog) {
+			$catalogData = $this->normalise(object: $catalog);
+			$registers = array_map('intval', (array)($catalogData['registers'] ?? []));
+			$schemas = array_map('intval', (array)($catalogData['schemas'] ?? []));
+			if (in_array((int)$register, $registers, true) === true
+				&& in_array((int)$schema, $schemas, true) === true
+			) {
+				return (string)($catalogData['slug'] ?? '');
+			}
+		}
+
+		return '';
+	}//end resolveCatalogSlug()
+
+	/**
 	 * Evaluate all publications for retention expiry and act per stored policy.
 	 *
 	 * Dumb evaluator (RET-005): queries publications whose retentionExpiresAt is

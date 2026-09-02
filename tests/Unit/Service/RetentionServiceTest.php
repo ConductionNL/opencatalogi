@@ -172,6 +172,110 @@ class RetentionServiceTest extends TestCase {
 
 	}//end testSetDefaultsRejectsInvalidAction()
 
+	/**
+	 * Seed config + a catalog object so applyDefaultsAtPublication can match a
+	 * publication (register 11 / schema 12) to catalog "vergunningen".
+	 *
+	 * @return void
+	 */
+	private function seedPublicationTimeDefaults(): void {
+		$this->store['publication_register'] = '11';
+		$this->store['publication_schema'] = '12';
+		$this->store['catalog_register'] = '1';
+		$this->store['catalog_schema'] = '2';
+		$this->store['retention_defaults'] = json_encode(
+			[
+				'vergunningen' => [
+					'_fallback' => ['termMonths' => 12, 'action' => 'depublish'],
+				],
+			]
+		);
+		$this->fake->objects = [
+			['id' => 'cat-1', 'slug' => 'vergunningen', 'registers' => [11], 'schemas' => [12]],
+		];
+
+	}//end seedPublicationTimeDefaults()
+
+	public function testApplyDefaultsAtPublicationStampsANewlyPublishedObject(): void {
+		$this->seedPublicationTimeDefaults();
+
+		$saved = $this->service->applyDefaultsAtPublication(
+			[
+				'@self' => ['uuid' => 'pub-1', 'register' => '11', 'schema' => '12'],
+				'title' => 'Kapvergunning',
+				'publicationDate' => '2026-06-11T00:00:00+00:00',
+			]
+		);
+
+		$this->assertNotNull($saved);
+		$this->assertSame(12, $saved['retentionTermMonths']);
+		$this->assertSame('depublish', $saved['retentionAction']);
+		$this->assertSame('2027-06-11', substr((string)$saved['retentionExpiresAt'], 0, 10));
+		$this->assertCount(1, $this->fake->saved);
+		$this->assertSame('pub-1', $this->fake->saved[0]['id']);
+
+	}//end testApplyDefaultsAtPublicationStampsANewlyPublishedObject()
+
+	public function testApplyDefaultsAtPublicationPreservesOfficerValues(): void {
+		$this->seedPublicationTimeDefaults();
+
+		$saved = $this->service->applyDefaultsAtPublication(
+			[
+				'@self' => ['uuid' => 'pub-2', 'register' => '11', 'schema' => '12'],
+				'publicationDate' => '2026-06-11T00:00:00+00:00',
+				'retentionTermMonths' => 60,
+			]
+		);
+
+		// The officer's 60 wins over the 12-month default (RET-004).
+		$this->assertNotNull($saved);
+		$this->assertSame(60, $saved['retentionTermMonths']);
+		$this->assertSame('2031-06-11', substr((string)$saved['retentionExpiresAt'], 0, 10));
+
+	}//end testApplyDefaultsAtPublicationPreservesOfficerValues()
+
+	public function testApplyDefaultsAtPublicationIsIdempotentOnRepublish(): void {
+		$this->seedPublicationTimeDefaults();
+
+		$first = $this->service->applyDefaultsAtPublication(
+			[
+				'@self' => ['uuid' => 'pub-3', 'register' => '11', 'schema' => '12'],
+				'publicationDate' => '2026-06-11T00:00:00+00:00',
+			]
+		);
+		$this->assertNotNull($first);
+		$this->assertCount(1, $this->fake->saved);
+
+		// Re-publishing the already-stamped object changes nothing and saves nothing.
+		$second = $this->service->applyDefaultsAtPublication(
+			array_merge($first, ['@self' => ['uuid' => 'pub-3', 'register' => '11', 'schema' => '12']])
+		);
+		$this->assertNull($second);
+		$this->assertCount(1, $this->fake->saved);
+
+	}//end testApplyDefaultsAtPublicationIsIdempotentOnRepublish()
+
+	public function testApplyDefaultsAtPublicationIgnoresOtherObjects(): void {
+		$this->seedPublicationTimeDefaults();
+
+		// Wrong register/schema: not a publication, never touched.
+		$other = $this->service->applyDefaultsAtPublication(
+			[
+				'@self' => ['uuid' => 'x-1', 'register' => '99', 'schema' => '98'],
+				'publicationDate' => '2026-06-11T00:00:00+00:00',
+			]
+		);
+		$this->assertNull($other);
+
+		// Publication without a publicationDate: not published yet, never touched.
+		$draft = $this->service->applyDefaultsAtPublication(
+			['@self' => ['uuid' => 'pub-4', 'register' => '11', 'schema' => '12'], 'title' => 'Draft']
+		);
+		$this->assertNull($draft);
+		$this->assertCount(0, $this->fake->saved);
+
+	}//end testApplyDefaultsAtPublicationIgnoresOtherObjects()
+
 	public function testEvaluateDepublishesExpiredAndRecordsDecision(): void {
 		$this->fake->objects = [
 			[

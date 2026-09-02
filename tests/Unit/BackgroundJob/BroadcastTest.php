@@ -10,6 +10,9 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @covers \OCA\OpenCatalogi\BackgroundJob\Broadcast
+ */
 class BroadcastTest extends TestCase {
 	private Broadcast $job;
 	private BroadcastService $broadcastService;
@@ -68,5 +71,27 @@ class BroadcastTest extends TestCase {
 		$prop->setAccessible(true);
 
 		$this->assertSame(14400, $prop->getValue($this->job));
+	}
+
+	/**
+	 * DIR-007 requires the 4-hourly directory broadcast, and a TimedJob that is
+	 * not listed in info.xml's background-jobs block silently never runs: the
+	 * class shipped for months without this registration and nothing noticed.
+	 */
+	public function testJobIsRegisteredInTheAppManifest(): void {
+		$manifest = dirname(__DIR__, 3) . '/appinfo/info.xml';
+		$xml = simplexml_load_file($manifest);
+		$this->assertNotFalse($xml, 'appinfo/info.xml must parse');
+
+		$jobs = [];
+		foreach ($xml->{'background-jobs'}->job as $job) {
+			$jobs[] = (string)$job;
+		}
+
+		$this->assertContains(
+			'OCA\OpenCatalogi\BackgroundJob\Broadcast',
+			$jobs,
+			'The Broadcast job must be registered in info.xml or the DIR-007 schedule never fires.'
+		);
 	}
 }
