@@ -68,6 +68,7 @@ class FakeObjectService {
 
 /**
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionPolicyTable
  */
 class RetentionServiceTest extends TestCase {
 
@@ -109,7 +110,15 @@ class RetentionServiceTest extends TestCase {
 				}
 			);
 
-		$this->container->method('get')->willReturn($this->fake);
+		// Per-class resolution: the duck-typed ObjectService fake for OR's
+		// ObjectService, the REAL shared DMN evaluator (sibling checkout, or
+		// its signature-identical CI stub) for the decision-table seam.
+		$this->container->method('get')->willReturnCallback(
+			fn (string $class): object => match ($class) {
+				'OCA\OpenRegister\Service\Dmn\DecisionTableEvaluator' => new \OCA\OpenRegister\Service\Dmn\DecisionTableEvaluator(),
+				default => $this->fake,
+			}
+		);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('officer1');
@@ -165,6 +174,105 @@ class RetentionServiceTest extends TestCase {
 		$this->assertSame(60, $kept['retentionTermMonths']);
 
 	}//end testApplyDefaultsFillsEmptyButNeverOverwrites()
+
+	public function testApplyDefaultsResolvesSpecificCategoryThroughEvaluator(): void {
+		$this->store['retention_defaults'] = json_encode(
+			[
+				'vergunningen' => [
+					'vergunningen' => ['termMonths' => 12, 'action' => 'depublish'],
+					'beschikkingen' => ['termMonths' => 24, 'action' => 'archive'],
+					'_fallback' => ['termMonths' => 6, 'action' => 'review'],
+				],
+			]
+		);
+
+		// The specific category row wins over the trailing `-` fallback (FIRST).
+		$applied = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'beschikkingen'],
+			'vergunningen'
+		);
+		$this->assertSame(24, $applied['retentionTermMonths']);
+		$this->assertSame('archive', $applied['retentionAction']);
+
+		// An unconfigured category falls through to the `_fallback` row.
+		$fellBack = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'onbekend'],
+			'vergunningen'
+		);
+		$this->assertSame(6, $fellBack['retentionTermMonths']);
+		$this->assertSame('review', $fellBack['retentionAction']);
+
+		// An empty category also lands on the fallback, as before.
+		$empty = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00'],
+			'vergunningen'
+		);
+		$this->assertSame(6, $empty['retentionTermMonths']);
+
+	}//end testApplyDefaultsResolvesSpecificCategoryThroughEvaluator()
+
+	public function testApplyDefaultsWithoutMatchingRuleLeavesPublicationUnchanged(): void {
+		$this->store['retention_defaults'] = json_encode(
+			[
+				'vergunningen' => [
+					'vergunningen' => ['termMonths' => 12, 'action' => 'depublish'],
+				],
+			]
+		);
+
+		// No row for the category, no `_fallback`: the evaluator's
+		// no_rule_matched maps to "return unchanged", never an error.
+		$publication = ['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'onbekend'];
+		$this->assertSame($publication, $this->service->applyDefaults($publication, 'vergunningen'));
+
+	}//end testApplyDefaultsWithoutMatchingRuleLeavesPublicationUnchanged()
+
+	public function testApplyDefaultsMatchesACategoryContainingAQuote(): void {
+		$this->store['retention_defaults'] = json_encode(
+			[
+				'vergunningen' => [
+					'zeg "nee"' => ['termMonths' => 3, 'action' => 'review'],
+				],
+			]
+		);
+
+		$applied = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'zeg "nee"'],
+			'vergunningen'
+		);
+		$this->assertSame(3, $applied['retentionTermMonths']);
+
+	}//end testApplyDefaultsMatchesACategoryContainingAQuote()
+
+	public function testApplyDefaultsLogsWhenEvaluatorUnavailable(): void {
+		// A container that refuses the evaluator: the guard logs and the
+		// publication comes back unchanged — no app-local fallback matcher.
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			function (string $class): object {
+				if ($class === 'OCA\OpenRegister\Service\Dmn\DecisionTableEvaluator') {
+					throw new \RuntimeException('not installed');
+				}
+
+				return $this->fake;
+			}
+		);
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('DecisionTableEvaluator unavailable'));
+
+		$service = new RetentionService($this->config, $container, $this->userSession, $logger);
+
+		$this->store['retention_defaults'] = json_encode(
+			['vergunningen' => ['_fallback' => ['termMonths' => 12, 'action' => 'depublish']]]
+		);
+
+		$publication = ['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'vergunningen'];
+		$this->assertSame($publication, $service->applyDefaults($publication, 'vergunningen'));
+
+	}//end testApplyDefaultsLogsWhenEvaluatorUnavailable()
 
 	public function testSetDefaultsRejectsInvalidAction(): void {
 		$this->expectException(\RuntimeException::class);

@@ -47,6 +47,8 @@ use RuntimeException;
  * Drives the publication retention lifecycle.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md
  */
 class RetentionService {
 
@@ -86,18 +88,27 @@ class RetentionService {
 	private ?object $objectService = null;
 
 	/**
+	 * Cached OpenRegister DMN DecisionTableEvaluator instance.
+	 *
+	 * @var object|null
+	 */
+	private ?object $dmnEvaluator = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config App configuration.
 	 * @param ContainerInterface $container Server container for resolving OpenRegister.
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
+	 * @param RetentionPolicyTable $policyTable Translates stored defaults into the DMN table shape.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly RetentionPolicyTable $policyTable = new RetentionPolicyTable(),
 	) {
 
 	}//end __construct()
@@ -121,6 +132,32 @@ class RetentionService {
 
 		return $this->objectService;
 	}//end getObjectService()
+
+	/**
+	 * Resolve the shared OpenRegister DMN decision-table evaluator.
+	 *
+	 * The RET-004 category match is delegated to this evaluator (hydra
+	 * ADR-065, One Engine): opencatalogi translates its stored defaults into
+	 * a decision table and never matches rules itself. Same availability
+	 * guard as {@see getObjectService()}: unresolvable means "no defaults
+	 * configured", logged, never guessed around with an app-local matcher.
+	 *
+	 * @return object|null The DecisionTableEvaluator, or null when OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	public function getDecisionTableEvaluator(): ?object {
+		if ($this->dmnEvaluator === null) {
+			try {
+				$this->dmnEvaluator = $this->container->get('OCA\OpenRegister\Service\Dmn\DecisionTableEvaluator');
+			} catch (\Throwable $e) {
+				$this->logger->warning('[RetentionService] OpenRegister DecisionTableEvaluator unavailable: ' . $e->getMessage());
+				return null;
+			}
+		}
+
+		return $this->dmnEvaluator;
+	}//end getDecisionTableEvaluator()
 
 	/**
 	 * Resolve the configured publication register identifier.
@@ -257,14 +294,17 @@ class RetentionService {
 	 *
 	 * Already-set retention values are never overwritten (RET-004). Returns the
 	 * publication array with any newly-applied retention fields and a recomputed
-	 * retentionExpiresAt; the caller persists it. Pure in-memory policy resolution.
+	 * retentionExpiresAt; the caller persists it. The category-to-default match
+	 * is delegated to OpenRegister's shared DMN decision-table evaluator (hydra
+	 * ADR-065, One Engine): the stored defaults become a FIRST-policy table and
+	 * this service never matches rules itself.
 	 *
 	 * @param array<string, mixed> $publication The publication object data.
 	 * @param string $catalogSlug The catalog slug the publication belongs to.
 	 *
 	 * @return array<string, mixed> The publication with defaults applied.
 	 *
-	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	public function applyDefaults(array $publication, string $catalogSlug): array {
 		$defaults = $this->getRetentionDefaults();
@@ -273,27 +313,46 @@ class RetentionService {
 			return $publication;
 		}
 
-		$category = (string)($publication['retentionCategory'] ?? '');
-		$rule = null;
-		if ($category !== '' && isset($catalogDefaults[$category]) === true && is_array($catalogDefaults[$category]) === true) {
-			$rule = $catalogDefaults[$category];
-		} elseif (isset($catalogDefaults['_fallback']) === true && is_array($catalogDefaults['_fallback']) === true) {
-			$rule = $catalogDefaults['_fallback'];
-		}
-
-		if ($rule === null) {
+		$decisionTable = $this->policyTable->fromDefaults(catalogDefaults: $catalogDefaults);
+		if ($decisionTable === null) {
+			// Nothing configured for this catalog.
 			return $publication;
 		}
 
-		// Only fill empties — never overwrite an officer's choice.
-		if (empty($publication['retentionTermMonths']) === true && isset($rule['termMonths']) === true) {
-			$publication['retentionTermMonths'] = (int)$rule['termMonths'];
+		$evaluator = $this->getDecisionTableEvaluator();
+		if ($evaluator === null) {
+			// Already warned in the resolver; degrade to "no defaults configured".
+			return $publication;
 		}
 
-		if (empty($publication['retentionAction']) === true && isset($rule['action']) === true
-			&& in_array($rule['action'], self::ACTIONS, true) === true
+		$category = (string)($publication['retentionCategory'] ?? '');
+		try {
+			$result = $evaluator->evaluate($decisionTable, ['category' => $category]);
+		} catch (\Throwable $e) {
+			if (method_exists($e, 'getErrorCode') === true && $e->getErrorCode() === 'no_rule_matched') {
+				// Expected: no row for this category and no fallback configured.
+				return $publication;
+			}
+
+			$this->logger->warning('[RetentionService] retention decision-table evaluation failed: ' . $e->getMessage());
+			return $publication;
+		}
+
+		$outputs = ($result['outputs'] ?? []);
+		if (is_array($outputs) === false) {
+			return $publication;
+		}
+
+		// Only fill empties — never overwrite an officer's choice. Null outputs
+		// mean the winning row does not configure that key; skip them.
+		if (empty($publication['retentionTermMonths']) === true && isset($outputs['termMonths']) === true) {
+			$publication['retentionTermMonths'] = (int)$outputs['termMonths'];
+		}
+
+		if (empty($publication['retentionAction']) === true && isset($outputs['action']) === true
+			&& in_array($outputs['action'], self::ACTIONS, true) === true
 		) {
-			$publication['retentionAction'] = (string)$rule['action'];
+			$publication['retentionAction'] = (string)$outputs['action'];
 		}
 
 		// Recompute expiry from publication date + term when not manually held.
