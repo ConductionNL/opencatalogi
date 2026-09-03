@@ -114,7 +114,12 @@ class WOO536RepairReadRules implements IRepairStep
 
         $updated = 0;
         $skipped = 0;
-        foreach (['publication', 'document'] as $slug) {
+        // `document` was retired: attachments are files on the publication now,
+        // and a file inherits the publication's visibility rather than carrying
+        // its own read rules. A legacy instance that has not yet run
+        // `opencatalogi:documents:attach-to-publications` still has the schema
+        // and its rules; this step simply stops re-asserting them.
+        foreach (['publication'] as $slug) {
             $result = $this->maybeUpgradeSchema(schemaMapper: $schemaMapper, slug: $slug, output: $output);
             if ($result === 'updated') {
                 $updated++;
@@ -136,7 +141,7 @@ class WOO536RepairReadRules implements IRepairStep
      * @param object  $schemaMapper The OpenRegister SchemaMapper (typed as object
      *                              so this repair step can compile without an OR
      *                              dependency at analysis-time).
-     * @param string  $slug         Schema slug ('publication' or 'document').
+     * @param string  $slug         Schema slug ('publication').
      * @param IOutput $output       The output interface for progress reporting.
      *
      * @return string 'updated' | 'skipped'

@@ -314,6 +314,11 @@ class AttachDocumentsToPublicationsCommand extends Command {
 				'  <comment>No files. The document carries only metadata, so migrating it would '
 				. 'lose that metadata rather than move it. Left in place.</comment>'
 			);
+			$output->writeln(
+				'  <comment>Note this also blocks retirement: openregister:schemas:prune-retired '
+				. 'refuses a schema that still owns objects. Decide per document — copy what it '
+				. 'says onto the publication and delete it, or accept the loss with --force.</comment>'
+			);
 			return array_merge($none, ['skipped' => 1]);
 		}
 

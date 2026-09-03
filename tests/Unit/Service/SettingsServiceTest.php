@@ -482,7 +482,6 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 			'page',
 			'menu',
 			'glossary',
-			'document',
 			'usageCounter',
 			// ooapi-catalog-publication (OOAPI-010): materialized course/program/offering scope.
 			'ooapi_courses',
@@ -506,7 +505,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->service->getSettings();
 
-		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'document'];
+		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertArrayHasKey("{$type}_source", $result['configuration']);
 			$this->assertArrayHasKey("{$type}_schema", $result['configuration']);
@@ -532,7 +531,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->service->getSettings();
 
-		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'document'];
+		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertSame('openregister', $result['configuration']["{$type}_source"]);
 		}
@@ -1973,14 +1972,20 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testShouldLoadSettingsReturnsFalseWhenOlderVersion()
 
 	/**
-	 * Assert `document_source`, `document_schema` and `document_register` are
-	 * all persisted to app-config when `updateObjectTypeConfiguration()` runs
-	 * against a normal import result that includes the bundled `document`
-	 * schema on the shared `publication` register.
+	 * `document` was retired: an attachment is a file on the publication now.
+	 *
+	 * This test used to assert the opposite, that `document_*` keys were
+	 * persisted. It is inverted rather than deleted, because the case it guards
+	 * is real: a legacy instance still HAS the schema, so an import result will
+	 * still carry it, and provisioning must not quietly reinstate configuration
+	 * for a type the app no longer offers.
+	 *
+	 * The publication keys must still be written, which is what proves the
+	 * document schema was skipped rather than the whole result being ignored.
 	 *
 	 * @return void
 	 */
-	public function testUpdateObjectTypeConfigurationPopulatesDocumentKeys(): void {
+	public function testUpdateObjectTypeConfigurationSkipsTheRetiredDocumentSchema(): void {
 		$importResult = [
 			'schemas' => [
 				['slug' => 'publication', 'id' => 42],
@@ -2002,33 +2007,30 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		// All three document_* keys MUST be present after provisioning.
-		$this->assertArrayHasKey('document_source', $storedValues, 'document_source was not persisted');
-		$this->assertArrayHasKey('document_schema', $storedValues, 'document_schema was not persisted');
-		$this->assertArrayHasKey('document_register', $storedValues, 'document_register was not persisted');
+		// No document_* key is written, even though the import result carries the
+		// schema — which is exactly what a legacy instance's import looks like.
+		$this->assertArrayNotHasKey('document_source', $storedValues, 'document_source was reinstated');
+		$this->assertArrayNotHasKey('document_schema', $storedValues, 'document_schema was reinstated');
+		$this->assertArrayNotHasKey('document_register', $storedValues, 'document_register was reinstated');
 
-		// document_source is a fixed literal.
-		$this->assertSame('openregister', $storedValues['document_source']);
-
-		// document_schema and document_register are stringified numeric IDs.
-		$this->assertSame('43', $storedValues['document_schema']);
-		$this->assertSame('7', $storedValues['document_register']);
-		$this->assertMatchesRegularExpression('/^\d+$/', $storedValues['document_schema']);
-		$this->assertMatchesRegularExpression('/^\d+$/', $storedValues['document_register']);
-
-		// And the publication_* keys must ALSO be there (co-tenant of the same register).
+		// The publication keys ARE written. Without this the test would pass
+		// just as well if provisioning had done nothing at all.
 		$this->assertSame('42', $storedValues['publication_schema']);
 		$this->assertSame('7', $storedValues['publication_register']);
 
-	}//end testUpdateObjectTypeConfigurationPopulatesDocumentKeys()
+	}//end testUpdateObjectTypeConfigurationSkipsTheRetiredDocumentSchema()
 
 	/**
-	 * Assert `updateSettings()` accepts `document_*` keys — the C1 allowlist
-	 * must include `document` alongside the other bundled object types.
+	 * `updateSettings()` no longer accepts `document_*` keys.
+	 *
+	 * The allowlist is built from the same object-type enumeration the settings
+	 * screen renders, so retiring the type retires the keys with it. Inverted
+	 * from the test that asserted they were accepted: an API that still took
+	 * them would let an operator configure a type the app does not have.
 	 *
 	 * @return void
 	 */
-	public function testUpdateSettingsAcceptsDocumentKeys(): void {
+	public function testUpdateSettingsRejectsTheRetiredDocumentKeys(): void {
 		$inputData = [
 			'document_source' => 'openregister',
 			'document_schema' => '43',
@@ -2053,11 +2055,54 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->service->updateSettings($inputData);
 
-		$this->assertSame('openregister', $result['document_source']);
-		$this->assertSame('43', $result['document_schema']);
-		$this->assertSame('7', $result['document_register']);
+		$this->assertArrayNotHasKey('document_source', $result, 'document_source is still accepted');
+		$this->assertArrayNotHasKey('document_schema', $result, 'document_schema is still accepted');
+		$this->assertArrayNotHasKey('document_register', $result, 'document_register is still accepted');
+		$this->assertSame([], $stored, 'a rejected key must not be written to app-config either');
 
-	}//end testUpdateSettingsAcceptsDocumentKeys()
+	}//end testUpdateSettingsRejectsTheRetiredDocumentKeys()
+
+	/**
+	 * The allowlist still ACCEPTS a live object type.
+	 *
+	 * Added alongside the inversion above, and not merely for symmetry: with
+	 * only the rejection test, an allowlist that rejected EVERYTHING would pass.
+	 * The two together say what the allowlist actually does — this type through,
+	 * that one not.
+	 *
+	 * @return void
+	 */
+	public function testUpdateSettingsAcceptsALiveObjectType(): void {
+		$inputData = [
+			'catalog_source' => 'openregister',
+			'catalog_schema' => '43',
+			'catalog_register' => '7',
+		];
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->config->method('getValueString')
+			->willReturnCallback(
+				function (string $app, string $key) use (&$stored) {
+					return $stored[$key] ?? '';
+				}
+			);
+
+		$result = $this->service->updateSettings($inputData);
+
+		$this->assertSame('openregister', $result['catalog_source']);
+		$this->assertSame('43', $result['catalog_schema']);
+		$this->assertSame('7', $result['catalog_register']);
+		$this->assertSame('43', $stored['catalog_schema'], 'an accepted key must reach app-config');
+
+	}//end testUpdateSettingsAcceptsALiveObjectType()
 
 	// ---------------------------------------------------------------
 	// updateObjectTypeConfiguration() — WOO key map

@@ -439,7 +439,6 @@ class SettingsService {
 			'page',
 			'menu',
 			'glossary',
-			'document',
 			'usageCounter',
 			// OOAPI-catalog-publication (OOAPI-010): materialized course/program/offering
 			// scope. Included here so the generic Settings.vue schema selector renders
@@ -658,7 +657,6 @@ class SettingsService {
 				'page',
 				'menu',
 				'glossary',
-				'document',
 				// OOAPI-catalog-publication (OOAPI-010).
 				'ooapi_courses',
 				'ooapi_programs',
@@ -1158,14 +1156,16 @@ class SettingsService {
 		// Get the object types that need configuration.
 		// 'publication' is included so publication_register/publication_schema
 		// resolve for retention evaluation (RET-005); it was previously omitted.
-		// 'document' is included so document_register/document_schema resolve for the
-		// public full-text search assembly (SCH-PFTS-005/SCH-PFTS-002).
+		// 'document' was retired: attachments are files on the publication, so
+		// there is no document_register/document_schema left to resolve. The
+		// public full-text search assembly (SCH-PFTS-005/SCH-PFTS-002) resolves
+		// the document schema by slug when a legacy instance still has one, and
+		// finds nothing once it does not.
 		$objectTypes = [
 			'catalog',
 			'listing',
 			'organization',
 			'publication',
-			'document',
 			'theme',
 			'page',
 			'menu',
