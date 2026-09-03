@@ -17,6 +17,7 @@ import BookOpenVariant from 'vue-material-design-icons/BookOpenVariant.vue'
 import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
 import Bookshelf from 'vue-material-design-icons/Bookshelf.vue'
 import ChartBar from 'vue-material-design-icons/ChartBar.vue'
+import ChartBoxOutline from 'vue-material-design-icons/ChartBoxOutline.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 import CogOutline from 'vue-material-design-icons/CogOutline.vue'
 import FileDocument from 'vue-material-design-icons/FileDocument.vue'
@@ -45,6 +46,7 @@ export default {
 	BookOpenVariantOutline,
 	Bookshelf,
 	ChartBar,
+	ChartBoxOutline,
 	Cog,
 	CogOutline,
 	FileDocument,
