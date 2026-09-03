@@ -133,6 +133,10 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		<nextcloud min-version="32" max-version="34"/>
 	</dependencies>
 
+	<commands>
+		<command>OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand</command>
+	</commands>
+
 	<background-jobs>
 		<job>OCA\OpenCatalogi\BackgroundJob\DirectorySync</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\RetentionEvaluation</job>
