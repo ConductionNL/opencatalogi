@@ -2062,6 +2062,48 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 	}//end testUpdateSettingsRejectsTheRetiredDocumentKeys()
 
+	/**
+	 * The allowlist still ACCEPTS a live object type.
+	 *
+	 * Added alongside the inversion above, and not merely for symmetry: with
+	 * only the rejection test, an allowlist that rejected EVERYTHING would pass.
+	 * The two together say what the allowlist actually does — this type through,
+	 * that one not.
+	 *
+	 * @return void
+	 */
+	public function testUpdateSettingsAcceptsALiveObjectType(): void {
+		$inputData = [
+			'catalog_source' => 'openregister',
+			'catalog_schema' => '43',
+			'catalog_register' => '7',
+		];
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->config->method('getValueString')
+			->willReturnCallback(
+				function (string $app, string $key) use (&$stored) {
+					return $stored[$key] ?? '';
+				}
+			);
+
+		$result = $this->service->updateSettings($inputData);
+
+		$this->assertSame('openregister', $result['catalog_source']);
+		$this->assertSame('43', $result['catalog_schema']);
+		$this->assertSame('7', $result['catalog_register']);
+		$this->assertSame('43', $stored['catalog_schema'], 'an accepted key must reach app-config');
+
+	}//end testUpdateSettingsAcceptsALiveObjectType()
+
 	// ---------------------------------------------------------------
 	// updateObjectTypeConfiguration() — WOO key map
 	// (fix-woo-capability-provisioning / WOO-PROV-002)
