@@ -28,11 +28,7 @@ import type { APIRequestContext } from '@playwright/test'
  *   PLAYWRIGHT_BASE_URL=http://localhost:8087 npx playwright test content-search-endpoint
  */
 import { expect, request, test } from '@playwright/test'
-import {
-	BASE,
-	Fixtures,
-	SCHEMA_PUBLICATION,
-} from '../workflows/_fixtures.ts'
+import { BASE, Fixtures, SCHEMA_PUBLICATION } from '../workflows/_fixtures.ts'
 
 const fx = new Fixtures()
 
@@ -129,10 +125,7 @@ test.describe('content-search-endpoint', () => {
 			((pub.raw['@self'] as Record<string, unknown>)?.slug as string)
 			?? (pub.raw.slug as string)
 			?? ''
-		expect(
-			pubSlug,
-			'the publication must carry a slug',
-		).not.toBe('')
+		expect(pubSlug, 'the publication must carry a slug').not.toBe('')
 
 		// Attach a plain-text file DIRECTLY to the publication, whose ONLY
 		// occurrence of the marker is in the body — never in any metadata field
