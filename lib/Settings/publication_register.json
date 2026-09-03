@@ -1053,7 +1053,7 @@
         "slug": "menu",
         "x-schema-org": "schema:SiteNavigationElement",
         "title": "Menu",
-        "version": "0.0.4",
+        "version": "0.0.5",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "Navigation structure for the catalog website",
         "description": "Menus define the navigation structure of the catalog website. They allow administrators to organize pages, listings, and other content into a hierarchical navigation system. Multiple menus can be created for different purposes, such as main navigation, footer links, or specialized content groupings.",
@@ -1210,6 +1210,12 @@
             },
             "facetable": false,
             "title": "Groups"
+          },
+          "hideAfterLogin": {
+            "type": "boolean",
+            "description": "Hide this menu once the visitor signs in.",
+            "facetable": false,
+            "title": "Hide after login"
           },
           "hideBeforeLogin": {
             "type": "boolean",
