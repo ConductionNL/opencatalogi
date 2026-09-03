@@ -6,27 +6,31 @@ import type { APIRequestContext } from '@playwright/test'
  *
  * WOO-517 content-search e2e coverage (SCH-PFTS-CONTENT-001/-002/-003).
  *
- * Seeds a publication + a document, attaches a plain-text file carrying a
- * distinctive phrase absent from all metadata fields, force-triggers OR's
- * text-extraction for that file (rather than waiting on the lazy
- * `FileTextExtractionJob` cron — see design.md "Extraction lag" risk), and
- * asserts the phrase surfaces the document via the ANONYMOUS public search
- * endpoint (`GET /apps/opencatalogi/api/search?_search=...&_content=true`) —
- * but NOT when `_content` is omitted, since the phrase is body-text-only.
+ * Seeds a publication, attaches a plain-text file carrying a distinctive phrase
+ * absent from all metadata fields, force-triggers OR's text-extraction for that
+ * file (rather than waiting on the lazy `FileTextExtractionJob` cron — see
+ * design.md "Extraction lag" risk), and asserts the phrase surfaces the
+ * PUBLICATION via the ANONYMOUS public search endpoint
+ * (`GET /apps/opencatalogi/api/search?_search=...&_content=true`) — but NOT when
+ * `_content` is omitted, since the phrase is body-text-only.
  *
  * This proves the full chain: OC's `_content` opt-in -> OR's `_content_search`
- * flag -> `ChunkMapper::searchByKeyword()` -> chunk-to-document resolution ->
- * `isObjectPublic()` + transitive publication-visibility (unaffected here,
- * both rows are public) -> flat WOO-506 envelope, dedup on `@self.id`.
+ * flag -> `ChunkMapper::searchByKeyword()` -> `FileMapper::findOwningObjectUuid()`
+ * -> `isObjectPublic()` -> flat WOO-506 envelope, dedup on `@self.id`.
+ *
+ * The attachment used to be a separate `document` object, which is the only
+ * reason the assembler needed to widen its schema scope at all: the chunk's
+ * owner sat outside the catalog's scope. A file on the publication resolves to
+ * the publication, so this now exercises the ordinary path rather than a
+ * special case built for one.
  *
  * Run:
- *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test content-search-endpoint
+ *   PLAYWRIGHT_BASE_URL=http://localhost:8087 npx playwright test content-search-endpoint
  */
 import { expect, request, test } from '@playwright/test'
 import {
 	BASE,
 	Fixtures,
-	SCHEMA_DOCUMENT,
 	SCHEMA_PUBLICATION,
 } from '../workflows/_fixtures.ts'
 
@@ -89,49 +93,34 @@ test.describe('content-search-endpoint', () => {
 		test.setTimeout(120_000)
 		const marker = `lorem-ipsum-woo517-marker-${fx.runId}`
 
-		// Publicly visible publication (past publicationDate) + a linked document,
-		// neither carrying the marker phrase in any metadata field.
+		// A publicly visible publication (past publicationDate) carrying the marker
+		// phrase in no metadata field at all — only in the body of an attached file.
 		//
-		// The publication MUST be created with an explicit `slug`. OpenRegister
-		// does not derive one: a publication created without it comes back with
-		// `@self.slug === null`, so `pubSlug` below resolved to the empty string
-		// and the document was linked as `publication: { slug: "" }`.
-		//
-		// That empty link is why this test failed. OpenCatalogi resolves a
-		// document's owning publication by slug —
-		// `PublicationQueryService::resolveDocumentPublicationSummary()` returns
-		// null immediately on `$slug === ''` — and the assembler then drops the
-		// row: "No linked publication — MUST NOT appear (SCH-PFTS-003)". So the
-		// document could never surface, with or without `_content=true`, and the
-		// product code was doing exactly what its spec says.
-		//
-		// Note this also made the test's own negative assertion vacuous: "MUST
-		// NOT surface without _content=true" passed because documents never
-		// surfaced at all, not because the metadata arm excluded it.
-		//
-		// Verified against a live instance: publication created WITHOUT a slug ->
-		// OC search returns the publication only (`total: 1`); the same pair with
-		// an explicit slug -> `total: 2`, including the row with
-		// `@self.schema === "document"`.
+		// The long note that used to sit here described a failure in the document to
+		// publication slug link. There is no such link any more: the attachment is a
+		// file on the publication. What survives from it is the one rule that still
+		// bites, restated at the point it applies below — OpenRegister does not
+		// derive a slug, so one has to be passed explicitly.
 		const pastPublicatiedatum = '2020-01-01T00:00:00+00:00'
-		// A CATALOG THAT COVERS BOTH SCHEMAS, created here rather than assumed.
-		// `/api/search` derives its scope from listed+published catalogs since
-		// WOO-536, so a document is only reachable when some catalog lists the
-		// document schema. This spec used to create none at all and depended on
-		// another spec having made one — which made it order-dependent, and left
-		// documents out of scope entirely because the shared fixture wired its
-		// catalog to the publication schema alone.
-		// BOTH SCHEMAS, and published. The scope union takes only catalogs that
-		// are listed AND published, so a catalog without a past `published` date
-		// contributes nothing however its schemas are set. The document schema has
-		// to be named explicitly because the fixture default carries publication
-		// alone, and a document outside the scope is invisible to every query with
-		// or without `_content=true` — which is the failure this spec kept
-		// reporting as a content-search one.
+
+		// A CATALOG THAT COVERS THE PUBLICATION SCHEMA, created here rather than
+		// assumed. `/api/search` derives its scope from listed+published catalogs
+		// since WOO-536, so a publication is only reachable when some catalog
+		// lists its schema AND the catalog itself is published. A catalog without
+		// a past `published` date contributes nothing however its schemas are set.
+		//
+		// This used to name the DOCUMENT schema too, because the attachment was a
+		// separate object that had to be in scope in its own right. It is a file
+		// on the publication now, and OpenRegister resolves a file chunk to its
+		// OWNING object, so the publication's own scope is the only one involved.
+		// That is what retiring `document` bought: the schema widening this test
+		// was written for has nothing left to widen.
 		await fx.createCatalog('Content Search Catalog', {
-			schemas: [SCHEMA_PUBLICATION, SCHEMA_DOCUMENT],
+			schemas: [SCHEMA_PUBLICATION],
 		})
 
+		// The publication MUST be created with an explicit `slug`. OpenRegister
+		// does not derive one, and an empty slug has broken this test before.
 		const pub = await fx.createPublication('Content Search Publication', {
 			publicationDate: pastPublicatiedatum,
 			slug: `e2e-${fx.runId}-content-search-pub`,
@@ -142,26 +131,19 @@ test.describe('content-search-endpoint', () => {
 			?? ''
 		expect(
 			pubSlug,
-			'the publication must carry a slug — the document→publication link is resolved by it',
+			'the publication must carry a slug',
 		).not.toBe('')
-		const doc = await fx.createDocument(
-			'Content Search Document',
-			{ slug: pubSlug, title: pub.title },
-			{
-				publicationDate: pastPublicatiedatum,
-				filename: 'content-search-marker.txt',
-			},
-		)
 
-		// Attach a plain-text file whose ONLY occurrence of the marker is in the
-		// body — never in the document's title/summary/filename metadata.
+		// Attach a plain-text file DIRECTLY to the publication, whose ONLY
+		// occurrence of the marker is in the body — never in any metadata field
+		// of the publication or the file.
 		const fileId = await fx.attachFile(
 			pub.register,
-			doc.schema,
-			doc.id,
+			pub.schema,
+			pub.id,
 			'content-search-marker.txt',
 			`This file exists solely to carry a distinctive phrase: ${marker}. `
-				+ 'No metadata field on the owning document repeats this phrase.',
+				+ 'No metadata field on the owning publication repeats this phrase.',
 		)
 		await fx.extractFile(fileId)
 
@@ -170,7 +152,7 @@ test.describe('content-search-endpoint', () => {
 		expect(whoami.status(), 'anon context is unauthenticated').toBe(401)
 
 		// `_content` omitted (WOO-506 baseline) — metadata-only match. The marker
-		// lives only in the file body, so the document MUST NOT surface.
+		// lives only in the file body, so the publication MUST NOT surface.
 		const metadataOnly = await anon.get(
 			`/index.php/apps/opencatalogi/api/search?_search=${encodeURIComponent(marker)}`,
 		)
@@ -182,11 +164,11 @@ test.describe('content-search-endpoint', () => {
 		expect(
 			metadataOnlyTitles,
 			'a body-text-only match MUST NOT surface without _content=true',
-		).not.toContain(doc.title)
+		).not.toContain(pub.title)
 
 		// POSITIVE CONTROL, and the reason this test could fail for a reason it
 		// never named. The assertion above is satisfied by an EMPTY list, so it
-		// passes identically whether the endpoint correctly withheld one document
+		// passes identically whether the endpoint correctly withheld one publication
 		// or returned nothing at all because the anonymous caller can see no
 		// publications whatsoever.
 		//
@@ -194,7 +176,7 @@ test.describe('content-search-endpoint', () => {
 		// below comes back empty: WOO-551 removed OR's `_rbacAsPublic` toggle, and
 		// the replacement inherits authorization at the schema level, so anonymous
 		// visibility now depends on read rules being present on the register. If
-		// they are not, every publication is invisible here, the document can
+		// they are not, every publication is invisible here, the file chunk can
 		// never resolve its owning publication, and the failure surfaces as
 		// "the body-text match does not surface" — an assertion about content
 		// search, blamed for an authorization gap.
@@ -215,31 +197,6 @@ test.describe('content-search-endpoint', () => {
 			'the anonymous caller must see the seeded publication itself — if this fails, anonymous visibility is broken and the content-search assertion below is measuring the wrong thing',
 		).toContain(pub.title)
 
-		// SECOND CONTROL, one layer down. The probe above proves anonymous callers
-		// see PUBLICATIONS. It does not prove they see DOCUMENTS, and the document
-		// is what has to surface below.
-		//
-		// Searching its TITLE is a metadata match, so it must succeed with no
-		// `_content=true` at all. If it does not, the document is invisible to this
-		// caller and the body-text assertion below can never pass no matter how
-		// content search behaves — again reporting a content-search failure for a
-		// visibility one.
-		//
-		// Together the two controls bisect the remaining space: publication visible
-		// + document visible means the drop really is in the chunk-match path.
-		const anonDocProbe = await anon.get(
-			`/index.php/apps/opencatalogi/api/search?_search=${encodeURIComponent(doc.title)}`,
-		)
-		expect(anonDocProbe.status(), 'anon document probe succeeds').toBe(200)
-		const anonDocBody = await anonDocProbe.json().catch(() => ({}))
-		const anonDocTitles = (
-			(anonDocBody.results as Array<Record<string, unknown>>) ?? []
-		).map((r) => (r.title as string) ?? '')
-		expect(
-			anonDocTitles,
-			'the anonymous caller must see the seeded document by its title — a metadata match needing no _content=true; if this fails the document is invisible and the body-text assertion below is measuring the wrong thing',
-		).toContain(doc.title)
-
 		// `_content=true` — widen to body text. Extraction may lag the upload by a
 		// short interval even after the force-trigger above (design.md "Extraction
 		// lag"), so poll briefly before asserting.
@@ -259,7 +216,7 @@ test.describe('content-search-endpoint', () => {
 		expect(withContent.status, 'content search succeeds').toBe(200)
 		expect(
 			withContent.titles,
-			'the body-text match surfaces the owning document when _content=true',
-		).toContain(doc.title)
+			'the body-text match surfaces the owning publication when _content=true',
+		).toContain(pub.title)
 	})
 })
