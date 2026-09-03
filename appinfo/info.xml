@@ -133,10 +133,6 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		<nextcloud min-version="32" max-version="34"/>
 	</dependencies>
 
-	<commands>
-		<command>OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand</command>
-	</commands>
-
 	<background-jobs>
 		<job>OCA\OpenCatalogi\BackgroundJob\DirectorySync</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\RetentionEvaluation</job>
@@ -255,6 +251,10 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
 		</install>
 	</repair-steps>
+
+	<commands>
+		<command>OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand</command>
+	</commands>
 
 	<!-- The app-menu navigation entry is registered in PHP (lib/AppInfo/Application.php::boot),
 	     NOT here. The dashboard SPA is served by the engine-namespaced AppHost route
