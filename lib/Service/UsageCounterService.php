@@ -29,6 +29,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use Exception;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -425,6 +426,47 @@ class UsageCounterService {
 	}//end getCountersForCatalog()
 
 	/**
+	 * Fetch every counter object on the instance within a date range.
+	 *
+	 * Instance-wide reads feed the dashboard usage card: all publications, all
+	 * catalogs. The rows are the same privacy-safe aggregates as the per-object
+	 * queries (publication, date, kind, count), never request data.
+	 *
+	 * @param string|null $from Inclusive start day (Y-m-d), or null.
+	 * @param string|null $to Inclusive end day (Y-m-d), or null.
+	 *
+	 * @return array<int, array<string, mixed>> Normalised counter rows.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
+	 */
+	public function getCountersForInstance(?string $from = null, ?string $to = null): array {
+		$objectService = $this->getObjectService();
+		$register = $this->getRegisterId();
+		$schema = $this->getSchemaId();
+		if ($objectService === null || $register === null || $schema === null) {
+			return [];
+		}
+
+		$results = $objectService->searchObjects(
+			query: [
+				'@self' => [
+					'register' => $register,
+					'schema' => $schema,
+				],
+			],
+			_rbac: false,
+			_multitenancy: false,
+		);
+
+		$rows = [];
+		if (is_array($results) === true) {
+			$rows = $results;
+		}
+
+		return $this->filterByRange(rows: $rows, from: $from, to: $to);
+	}//end getCountersForInstance()
+
+	/**
 	 * Compute per-publication statistics: totals plus a daily timeseries.
 	 *
 	 * Pure aggregation over counter rows (no SQL) — the result is privacy-safe
@@ -461,6 +503,79 @@ class UsageCounterService {
 		$rows = $this->getCountersForCatalog(catalog: $catalog, from: $from, to: $to);
 		return $this->aggregateCatalog(rows: $rows, top: $top);
 	}//end getCatalogStats()
+
+	/**
+	 * Compute the instance-wide daily usage series for the dashboard card.
+	 *
+	 * Sums every counter object per day into one series of publication views
+	 * and file downloads. The window defaults to the last 30 days (inclusive,
+	 * UTC). The counting-start marker is taken from the FULL counter set, not
+	 * the window, so a card showing an empty month can still say when
+	 * measurement began (ANA-004 "zero" versus "not measured").
+	 *
+	 * These are request counts, never unique visitors, and they cover only the
+	 * public publication and download reads that the usage counters record.
+	 * Page views on a Portaliq-served portal are measured by Portaliq's traffic
+	 * analytics, not here.
+	 *
+	 * @param string|null $from Inclusive start day (Y-m-d); null means 29 days before `$to`.
+	 * @param string|null $to Inclusive end day (Y-m-d); null means today (UTC).
+	 *
+	 * @return array{views:int,downloads:int,series:array<int,array{date:string,views:int,downloads:int}>,countingStart:?string,from:string,to:string}
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
+	 */
+	public function aggregateInstanceSeries(?string $from = null, ?string $to = null): array {
+		$utc = new DateTimeZone('UTC');
+		if ($to === null || $this->isDay(value: $to) === false) {
+			$to = (new DateTimeImmutable('today', $utc))->format('Y-m-d');
+		}
+
+		if ($from === null || $this->isDay(value: $from) === false) {
+			$from = (new DateTimeImmutable($to, $utc))->modify('-29 days')->format('Y-m-d');
+		}
+
+		// One OR query: the unfiltered set yields the counting start, the
+		// windowed subset yields the series and totals.
+		$rows = $this->getCountersForInstance(from: null, to: null);
+		$countingStart = $this->aggregateSeries(rows: $rows)['countingStart'];
+		$windowed = $this->aggregateSeries(rows: $this->filterByRange(rows: $rows, from: $from, to: $to));
+
+		return [
+			'views' => $windowed['views'],
+			'downloads' => $windowed['downloads'],
+			'series' => $windowed['series'],
+			'countingStart' => $countingStart,
+			'from' => $from,
+			'to' => $to,
+		];
+
+	}//end aggregateInstanceSeries()
+
+	/**
+	 * Whether a string is a well-formed calendar day (Y-m-d).
+	 *
+	 * @param string $value The candidate.
+	 *
+	 * @return boolean True for a valid Y-m-d day.
+	 *
+	 * @spec exclude Input-shape guard for aggregateInstanceSeries(); the window
+	 *       contract is asserted through that method.
+	 */
+	private function isDay(string $value): bool {
+		if (preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $value) !== 1) {
+			return false;
+		}
+
+		try {
+			// Round-trip so an overflowing day (2026-02-30) is refused too.
+			$parsed = new DateTimeImmutable($value, new DateTimeZone('UTC'));
+		} catch (Exception) {
+			return false;
+		}
+
+		return $parsed->format('Y-m-d') === $value;
+	}//end isDay()
 
 	/**
 	 * Aggregate counter rows into totals and a sorted daily series.

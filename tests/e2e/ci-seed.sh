@@ -111,7 +111,7 @@ import json, sys
 path, kind = sys.argv[1], sys.argv[2]
 required = {
     'registers': ['publication'],
-    'schemas': ['publication', 'catalog', 'organization', 'document'],
+    'schemas': ['publication', 'catalog', 'organization'],
 }[kind]
 with open(path) as fh:
     raw = fh.read()

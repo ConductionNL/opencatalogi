@@ -180,6 +180,87 @@ class StatsControllerTest extends TestCase {
 	}//end testCatalogStatsUnknownCatalog()
 
 	// ──────────────────────────────────────────────────────────
+	// Instance-wide series for the dashboard usage card (ANA-009)
+	// ──────────────────────────────────────────────────────────
+
+	public function testSeriesReturnsInstanceSeries(): void {
+		$payload = [
+			'views' => 12,
+			'downloads' => 2,
+			'series' => [['date' => '2026-05-02', 'views' => 12, 'downloads' => 0]],
+			'countingStart' => '2026-01-01',
+			'from' => '2026-05-01',
+			'to' => '2026-05-31',
+		];
+		$this->usage->expects($this->once())
+			->method('aggregateInstanceSeries')
+			->with(null, null)
+			->willReturn($payload);
+
+		$resp = $this->controller->series();
+		$this->assertSame(200, $resp->getStatus());
+		$this->assertSame($payload, $resp->getData());
+	}//end testSeriesReturnsInstanceSeries()
+
+	public function testSeriesPassesWindowThrough(): void {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			fn (string $k, $d = null) => match ($k) {
+				'from' => '2026-05-01',
+				'to' => '2026-05-31',
+				default => $d,
+			}
+		);
+		$controller = new StatsController(
+			'opencatalogi',
+			$request,
+			$this->usage,
+			$this->catalogi,
+			$this->appManager,
+			$this->container,
+			$this->l10n,
+			$this->userSession,
+			$this->logger,
+		);
+		$this->usage->expects($this->once())
+			->method('aggregateInstanceSeries')
+			->with('2026-05-01', '2026-05-31')
+			->willReturn(['views' => 0, 'downloads' => 0, 'series' => [], 'countingStart' => null, 'from' => '2026-05-01', 'to' => '2026-05-31']);
+
+		$resp = $controller->series();
+		$this->assertSame(200, $resp->getStatus());
+	}//end testSeriesPassesWindowThrough()
+
+	public function testSeriesRejectsAnonymous(): void {
+		$anon = $this->createMock(IUserSession::class);
+		$anon->method('getUser')->willReturn(null);
+		$controller = new StatsController(
+			'opencatalogi',
+			$this->request,
+			$this->usage,
+			$this->catalogi,
+			$this->appManager,
+			$this->container,
+			$this->l10n,
+			$anon,
+			$this->logger,
+		);
+		$this->usage->expects($this->never())->method('aggregateInstanceSeries');
+
+		$resp = $controller->series();
+		$this->assertSame(403, $resp->getStatus());
+	}//end testSeriesRejectsAnonymous()
+
+	public function testSeriesFailureIsA500NotALeak(): void {
+		$this->usage->method('aggregateInstanceSeries')->willThrowException(new \RuntimeException('db gone'));
+
+		$resp = $this->controller->series();
+		$this->assertSame(500, $resp->getStatus());
+		$this->assertArrayNotHasKey('series', $resp->getData());
+		$this->assertStringNotContainsString('db gone', json_encode($resp->getData()));
+	}//end testSeriesFailureIsA500NotALeak()
+
+	// ──────────────────────────────────────────────────────────
 	// CSV export (ANA-007)
 	// ──────────────────────────────────────────────────────────
 
