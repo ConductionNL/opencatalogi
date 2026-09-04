@@ -254,6 +254,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 
 	<commands>
 		<command>OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand</command>
+		<command>OCA\OpenCatalogi\Command\MigrateCmsToPortaliqCommand</command>
 	</commands>
 
 	<!-- The app-menu navigation entry is registered in PHP (lib/AppInfo/Application.php::boot),
