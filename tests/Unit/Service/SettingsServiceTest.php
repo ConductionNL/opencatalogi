@@ -1821,7 +1821,9 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+		// 'organization' is absent: its keys come from OpenRegister's shared
+		// organisation now, not from this app's own import result.
+		$types = ['catalog', 'listing', 'theme', 'page', 'menu', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertSame('openregister', $storedValues["{$type}_source"]);
 			$this->assertArrayNotHasKey("{$type}_schema", $storedValues);
@@ -1873,10 +1875,17 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		$expectedTypes = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+		$expectedTypes = ['catalog', 'listing', 'theme', 'page', 'menu', 'glossary'];
 		foreach ($expectedTypes as $type) {
 			$this->assertArrayHasKey("{$type}_source", $storedValues);
 		}
+
+		// The organisation is NOT resolved from this app's import result. It is
+		// OpenRegister's schema now, so an import carrying a row called
+		// `organization` must not reinstate a key pointing at this app's copy.
+		$this->assertArrayNotHasKey('organization_source', $storedValues);
+		$this->assertArrayNotHasKey('organization_schema', $storedValues);
+		$this->assertArrayNotHasKey('organization_register', $storedValues);
 
 	}//end testUpdateObjectTypeConfigurationSetsAllObjectTypes()
 

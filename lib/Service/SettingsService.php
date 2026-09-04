@@ -79,6 +79,23 @@ use RuntimeException;
 class SettingsService {
 
 	/**
+	 * The OpenRegister register the shared organisation projection lives on.
+	 *
+	 * `directory` is always available: it carries the core `nc-user` /
+	 * `nc-group` projections and is not gated on any app being installed.
+	 */
+	private const SHARED_ORGANISATION_REGISTER = 'directory';
+
+	/**
+	 * The OpenRegister schema slug for the shared organisation.
+	 *
+	 * `nc-` prefixed by OpenRegister so it cannot collide with a leaf app's own
+	 * `organization` schema, which has to keep working until every app has
+	 * migrated off it.
+	 */
+	private const SHARED_ORGANISATION_SCHEMA = 'nc-organisation';
+
+	/**
 	 * Minimum allowed federation sync interval in seconds (15 minutes).
 	 *
 	 * The interval bounds live here rather than on the cron job because this is
@@ -1161,10 +1178,16 @@ class SettingsService {
 		// public full-text search assembly (SCH-PFTS-005/SCH-PFTS-002) resolves
 		// the document schema by slug when a legacy instance still has one, and
 		// finds nothing once it does not.
+		//
+		// 'organization' is absent for a different reason: the schema is
+		// OpenRegister's `nc-organisation` projection now, not one this app
+		// ships, so it cannot be resolved from this app's own import result.
+		// resolveSharedOrganisationConfiguration() points the same three config
+		// keys at OpenRegister's directory register instead, which is why the
+		// frontend picker needs no change at all.
 		$objectTypes = [
 			'catalog',
 			'listing',
-			'organization',
 			'publication',
 			'theme',
 			'page',
@@ -1345,7 +1368,57 @@ class SettingsService {
 			}
 		}
 
+		// The organisation is OpenRegister's, so its keys come from there.
+		$this->resolveSharedOrganisationConfiguration();
+
 	}//end updateObjectTypeConfiguration()
+
+	/**
+	 * Point the `organization_*` keys at OpenRegister's shared organisation.
+	 *
+	 * The organisation used to be a schema this app shipped, which is why the
+	 * slug collided with stackiq's copy: a schema slug is global per
+	 * organisation. It is OpenRegister's `nc-organisation` projection now, so it
+	 * cannot be resolved from this app's own import result the way every other
+	 * object type is.
+	 *
+	 * The three keys keep their names on purpose. `objectStore.getCollection()`
+	 * resolves a type through `<type>_source` / `_schema` / `_register` and cares
+	 * about nothing else, so pointing those at OpenRegister's directory register
+	 * moves the whole frontend onto the shared organisation without a single
+	 * change to a Vue file.
+	 *
+	 * Failure is soft. OpenRegister may be absent, or an older version may not
+	 * carry the projection yet. Neither is a reason to fail an import, and a
+	 * missing key surfaces as a picker with nothing to offer rather than as a
+	 * broken install.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publications-reference-the-shared-organisation/specs/shared-organisation/spec.md#requirement-the-organisation-comes-from-openregister-req-sho-101
+	 */
+	private function resolveSharedOrganisationConfiguration(): void {
+		try {
+			$registerMapper = $this->getRegisterMapper();
+			$schemaMapper = $this->getSchemaMapper();
+			$register = $registerMapper?->find(self::SHARED_ORGANISATION_REGISTER);
+			$schema = $schemaMapper?->find(self::SHARED_ORGANISATION_SCHEMA);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset',
+				['error' => $e->getMessage()]
+			);
+			return;
+		}
+
+		if ($register === null || $schema === null) {
+			return;
+		}
+
+		$this->config->setValueString($this->appName, 'organization_source', 'openregister');
+		$this->config->setValueString($this->appName, 'organization_register', (string)$register->getId());
+		$this->config->setValueString($this->appName, 'organization_schema', (string)$schema->getId());
+	}//end resolveSharedOrganisationConfiguration()
 
 	/**
 	 * Ensure every local catalog has a non-empty registers/schemas scope.
