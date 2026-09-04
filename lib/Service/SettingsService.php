@@ -453,8 +453,6 @@ class SettingsService {
 			'listing',
 			'organization',
 			'theme',
-			'page',
-			'menu',
 			'glossary',
 			'usageCounter',
 			// OOAPI-catalog-publication (OOAPI-010): materialized course/program/offering
@@ -671,8 +669,6 @@ class SettingsService {
 				'listing',
 				'organization',
 				'theme',
-				'page',
-				'menu',
 				'glossary',
 				// OOAPI-catalog-publication (OOAPI-010).
 				'ooapi_courses',
@@ -1190,8 +1186,6 @@ class SettingsService {
 			'listing',
 			'publication',
 			'theme',
-			'page',
-			'menu',
 			'glossary',
 		];
 

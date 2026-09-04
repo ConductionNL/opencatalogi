@@ -12,17 +12,12 @@ import { navigationStore } from './../store/store.js'
 		<!--View Modals-->
 		<ViewDirectoryModal />
 		<ViewGlossaryModal />
-		<ViewMenuModal />
-		<ViewPageModal />
 		<ViewThemeModal />
 		<!--Specific-->
 		<EditAttachmentModal v-if="navigationStore.modal === 'editAttachment'" />
 		<AddDirectoryModal />
 		<EditListingModal v-if="navigationStore.modal === 'editListing'" />
-		<PageContentForm v-if="navigationStore.modal === 'pageContentForm'" />
 		<!-- Menu -->
-		<MenuItemForm v-if="navigationStore.modal === 'menuItemForm'" />
-		<DeleteMenuItemModal v-if="navigationStore.modal === 'deleteMenuItem'" />
 		<UploadFilesModal v-if="navigationStore.modal === 'uploadFiles'" />
 		<ObjectModal v-if="navigationStore.modal === 'objectModal'" />
 		<!-- Object Modals -->
@@ -56,10 +51,6 @@ import EditListingModal from './directory/EditListingModal.vue'
 import ViewDirectoryModal from './directory/ViewDirectoryModal.vue'
 import UploadFilesModal from './generic/UploadFiles.vue'
 import ViewGlossaryModal from './glossary/ViewGlossaryModal.vue'
-import ViewMenuModal from './menu/ViewMenuModal.vue'
-import DeleteMenuItemModal from './menuItem/DeleteMenuItemModal.vue'
-// menu
-import MenuItemForm from './menuItem/MenuItemForm.vue'
 import DownloadObject from './object/DownloadObject.vue'
 import LockObject from './object/LockObject.vue'
 import MassDeleteObject from './object/MassDeleteObject.vue'
@@ -72,8 +63,6 @@ import ObjectModal from './object/ObjectModal.vue'
 import UploadObject from './object/UploadObject.vue'
 // Object Modals
 import ViewObject from './object/ViewObject.vue'
-import ViewPageModal from './page/ViewPageModal.vue'
-import PageContentForm from './pageContents/PageContentForm.vue'
 // Publication
 import AddPublicationThemeModal from './theme/AddPublicationThemeModal.vue'
 import ViewThemeModal from './theme/ViewThemeModal.vue'
@@ -90,13 +79,7 @@ export default {
 		// View Modals
 		ViewDirectoryModal,
 		ViewGlossaryModal,
-		ViewMenuModal,
-		ViewPageModal,
 		ViewThemeModal,
-		PageContentForm,
-		// menu
-		MenuItemForm,
-		DeleteMenuItemModal,
 		UploadFilesModal,
 		ObjectModal,
 		// Object Modals
