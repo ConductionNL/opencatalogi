@@ -479,8 +479,6 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 			'listing',
 			'organization',
 			'theme',
-			'page',
-			'menu',
 			'glossary',
 			'usageCounter',
 			// ooapi-catalog-publication (OOAPI-010): materialized course/program/offering scope.
@@ -505,7 +503,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->service->getSettings();
 
-		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+		$types = ['catalog', 'listing', 'organization', 'theme', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertArrayHasKey("{$type}_source", $result['configuration']);
 			$this->assertArrayHasKey("{$type}_schema", $result['configuration']);
@@ -531,7 +529,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->service->getSettings();
 
-		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+		$types = ['catalog', 'listing', 'organization', 'theme', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertSame('openregister', $result['configuration']["{$type}_source"]);
 		}
@@ -1823,7 +1821,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		// 'organization' is absent: its keys come from OpenRegister's shared
 		// organisation now, not from this app's own import result.
-		$types = ['catalog', 'listing', 'theme', 'page', 'menu', 'glossary'];
+		$types = ['catalog', 'listing', 'theme', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertSame('openregister', $storedValues["{$type}_source"]);
 			$this->assertArrayNotHasKey("{$type}_schema", $storedValues);
@@ -1833,9 +1831,12 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testUpdateObjectTypeConfigurationEmptyResult()
 
 	public function testUpdateObjectTypeConfigurationWithUuidFallback(): void {
+		// `catalog` stands in for what `page` used to demonstrate here. The
+		// behaviour under test is the uuid fallback when a row carries no id,
+		// not anything specific to the object type.
 		$importResult = [
 			'schemas' => [
-				['slug' => 'page', 'uuid' => 'abc-123'],
+				['slug' => 'catalog', 'uuid' => 'abc-123'],
 			],
 			'registers' => [
 				['slug' => 'publication', 'uuid' => 'reg-456'],
@@ -1853,8 +1854,8 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		$this->assertSame('abc-123', $storedValues['page_schema']);
-		$this->assertSame('reg-456', $storedValues['page_register']);
+		$this->assertSame('abc-123', $storedValues['catalog_schema']);
+		$this->assertSame('reg-456', $storedValues['catalog_register']);
 
 	}//end testUpdateObjectTypeConfigurationWithUuidFallback()
 
@@ -1875,7 +1876,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		$expectedTypes = ['catalog', 'listing', 'theme', 'page', 'menu', 'glossary'];
+		$expectedTypes = ['catalog', 'listing', 'theme', 'glossary'];
 		foreach ($expectedTypes as $type) {
 			$this->assertArrayHasKey("{$type}_source", $storedValues);
 		}

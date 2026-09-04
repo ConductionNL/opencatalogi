@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "x-openregister": {
     "type": "application",
@@ -23,7 +23,7 @@
       "publication": {
         "slug": "publication",
         "title": "Publication",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website, including catalogs, listings, organizations, publications, themes, pages, menus, and glossary items. This register enables the creation of rich, navigable catalog websites with proper content organization and user-friendly navigation.",
         "published": "2025-01-01T00:00:00+00:00",
         "schemas": [
@@ -31,8 +31,6 @@
           "listing",
           "publication",
           "theme",
-          "page",
-          "menu",
           "glossary",
           "usageCounter"
         ],
@@ -759,117 +757,6 @@
           ]
         }
       },
-      "page": {
-        "slug": "page",
-        "x-schema-org": "schema:WebPage",
-        "title": "Page",
-        "version": "0.0.4",
-        "published": "2025-01-01T00:00:00+00:00",
-        "summary": "A content page for static information",
-        "description": "Pages are used to create static content within the catalog website. They can contain information about how to use the catalog, contact information, about pages, or any other static content that needs to be accessible through the website. Pages are accessible through their unique slugs and can be organized in the navigation menu.",
-        "icon": null,
-        "required": [
-          "title",
-          "slug"
-        ],
-        "configuration": {
-          "autoPublish": false
-        },
-        "properties": {
-          "title": {
-            "type": "string",
-            "description": "The title of the page",
-            "minLength": 1,
-            "facetable": true,
-            "title": "Title"
-          },
-          "slug": {
-            "type": "string",
-            "description": "URL-friendly version of the page name",
-            "pattern": "^[a-z0-9-]+$",
-            "minLength": 1,
-            "facetable": true,
-            "title": "Slug"
-          },
-          "contents": {
-            "type": "array",
-            "description": "Content blocks of the page",
-            "facetable": false,
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "description": "Type of content block",
-                  "minLength": 1,
-                  "title": "Content Block Type"
-                },
-                "id": {
-                  "type": "string",
-                  "description": "Identifier for the content block",
-                  "title": "Content Block ID"
-                },
-                "data": {
-                  "type": "object",
-                  "description": "Content block data",
-                  "additionalProperties": true,
-                  "title": "Content Block Data"
-                },
-                "groups": {
-                  "type": "array",
-                  "description": "Nextcloud groups that have access to this content block",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Access Groups"
-                },
-                "hideAfterLogin": {
-                  "type": "boolean",
-                  "description": "Whether to hide this content block after user login",
-                  "title": "Hide After Login"
-                },
-                "hideBeforeLogin": {
-                  "type": "boolean",
-                  "description": "Whether to hide this content block before user login",
-                  "title": "Hide Before Login"
-                }
-              },
-              "required": [
-                "type"
-              ]
-            },
-            "title": "Contents"
-          },
-          "groups": {
-            "type": "array",
-            "description": "Nextcloud groups that have access to this page",
-            "items": {
-              "type": "string"
-            },
-            "facetable": false,
-            "title": "Groups"
-          },
-          "hideAfterLogin": {
-            "type": "boolean",
-            "description": "Whether to hide this page after user login",
-            "facetable": false,
-            "title": "Hide After Login"
-          },
-          "hideBeforeLogin": {
-            "type": "boolean",
-            "description": "Whether to hide this page before user login",
-            "facetable": false,
-            "title": "Hide Before Login"
-          }
-        },
-        "hardValidation": true,
-        "searchable": true,
-        "authorization": {
-          "read": [
-            "public"
-          ]
-        }
-      },
       "theme": {
         "slug": "theme",
         "x-schema-org": "schema:DefinedTerm",
@@ -949,200 +836,6 @@
         },
         "configuration": {
           "autoPublish": false
-        },
-        "hardValidation": true,
-        "searchable": true,
-        "authorization": {
-          "read": [
-            "public"
-          ]
-        }
-      },
-      "menu": {
-        "slug": "menu",
-        "x-schema-org": "schema:SiteNavigationElement",
-        "title": "Menu",
-        "version": "0.0.5",
-        "published": "2025-01-01T00:00:00+00:00",
-        "summary": "Navigation structure for the catalog website",
-        "description": "Menus define the navigation structure of the catalog website. They allow administrators to organize pages, listings, and other content into a hierarchical navigation system. Multiple menus can be created for different purposes, such as main navigation, footer links, or specialized content groupings.",
-        "icon": null,
-        "required": [
-          "title"
-        ],
-        "configuration": {
-          "autoPublish": false
-        },
-        "properties": {
-          "title": {
-            "type": "string",
-            "description": "The name of the menu",
-            "minLength": 1,
-            "facetable": true,
-            "title": "Title"
-          },
-          "position": {
-            "type": "number",
-            "description": "Order position of the menu",
-            "minimum": 0,
-            "facetable": true,
-            "title": "Position"
-          },
-          "items": {
-            "type": "array",
-            "description": "Menu items and their structure",
-            "facetable": false,
-            "items": {
-              "type": "object",
-              "properties": {
-                "order": {
-                  "type": "number",
-                  "description": "Order/position of the menu item within the menu",
-                  "minimum": 0,
-                  "title": "Order"
-                },
-                "name": {
-                  "type": "string",
-                  "description": "Name of the menu item",
-                  "minLength": 1,
-                  "title": "Name"
-                },
-                "link": {
-                  "type": "string",
-                  "description": "URL or path for the menu item",
-                  "minLength": 1,
-                  "title": "Link"
-                },
-                "description": {
-                  "type": "string",
-                  "description": "Description of the menu item",
-                  "title": "Description"
-                },
-                "icon": {
-                  "type": "string",
-                  "description": "Icon for the menu item",
-                  "title": "Icon"
-                },
-                "groups": {
-                  "type": "array",
-                  "description": "Nextcloud groups that have access to this menu item",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Access Groups"
-                },
-                "hideAfterLogin": {
-                  "type": "boolean",
-                  "description": "Whether to hide this menu item after user login",
-                  "title": "Hide After Login"
-                },
-                "hideBeforeLogin": {
-                  "type": "boolean",
-                  "description": "Whether to hide this menu item before user login",
-                  "title": "Hide Before Login"
-                },
-                "items": {
-                  "type": "array",
-                  "description": "Submenu items",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "order": {
-                        "type": "number",
-                        "description": "Order/position of the submenu item within its parent",
-                        "minimum": 0,
-                        "title": "Order"
-                      },
-                      "name": {
-                        "type": "string",
-                        "description": "Name of the submenu item",
-                        "minLength": 1,
-                        "title": "Name"
-                      },
-                      "link": {
-                        "type": "string",
-                        "description": "URL or path for the submenu item",
-                        "minLength": 1,
-                        "title": "Link"
-                      },
-                      "description": {
-                        "type": "string",
-                        "description": "Description of the submenu item",
-                        "title": "Description"
-                      },
-                      "icon": {
-                        "type": "string",
-                        "description": "Icon for the submenu item",
-                        "title": "Icon"
-                      },
-                      "groups": {
-                        "type": "array",
-                        "description": "Nextcloud groups that have access to this submenu item",
-                        "items": {
-                          "type": "string"
-                        },
-                        "title": "Access Groups"
-                      },
-                      "hideAfterLogin": {
-                        "type": "boolean",
-                        "description": "Whether to hide this submenu item after user login",
-                        "title": "Hide After Login"
-                      },
-                      "hideBeforeLogin": {
-                        "type": "boolean",
-                        "description": "Whether to hide this submenu item before user login",
-                        "title": "Hide Before Login"
-                      }
-                    },
-                    "required": [
-                      "order",
-                      "name",
-                      "link"
-                    ]
-                  },
-                  "title": "Submenu Items"
-                }
-              },
-              "required": [
-                "order",
-                "name",
-                "link"
-              ]
-            },
-            "title": "Items"
-          },
-          "groups": {
-            "type": "array",
-            "description": "Nextcloud groups that have access to this menu",
-            "items": {
-              "type": "string"
-            },
-            "facetable": false,
-            "title": "Groups"
-          },
-          "hideAfterLogin": {
-            "type": "boolean",
-            "description": "Hide this menu once the visitor signs in.",
-            "facetable": false,
-            "title": "Hide after login"
-          },
-          "hideBeforeLogin": {
-            "type": "boolean",
-            "description": "Whether to hide this menu before user login",
-            "facetable": false,
-            "title": "Hide Before Login"
-          },
-          "icon": {
-            "type": "string",
-            "description": "Pick an icon (Material Design) or paste custom SVG.",
-            "widget": "icon",
-            "iconSources": [
-              "mdi"
-            ],
-            "allowCustomSvg": true,
-            "facetable": false,
-            "title": "Icon"
-          }
         },
         "hardValidation": true,
         "searchable": true,
