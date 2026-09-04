@@ -111,9 +111,17 @@ test.describe('app chrome (ADR-114)', () => {
 			timeout: 15_000,
 		})
 
+		// SCOPE TO THE PAGE BODY. Unscoped, `getByText('Usage')` resolves first
+		// to Nextcloud's own telemetry prompt ("help us improve Nextcloud by
+		// providing usage data"), which is attached-but-hidden — so the
+		// assertion waited 15s on an element that is not the report and can
+		// never become visible. That is the same trap the header note names for
+		// the nav: an unscoped selector finds Nextcloud's chrome first.
+		const content = page.locator('main, .app-content').first()
+
 		for (const label of ['Publications', 'Usage', 'Catalogs and directory']) {
 			await expect(
-				page.getByText(label, { exact: false }).first(),
+				content.getByText(label, { exact: false }).first(),
 			).toBeVisible({ timeout: 15_000 })
 		}
 	})
