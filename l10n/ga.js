@@ -814,7 +814,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Níor léadh aon rud go fóill",
         "What is published, what is archived, and what retention says to do next.": "Cad atá foilsithe, cad atá cartlannaithe, agus cad a ordaíonn an coinneáil ina dhiaidh.",
         "What people looked at and what they downloaded.": "Cad a d'fhéach daoine air agus cad a d'íoslódáil siad.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cé chomh haibí is atá na catalóga, agus cé chomh domhain is atá iontrálacha an eolaire comhtháite."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cé chomh haibí is atá na catalóga, agus cé chomh domhain is atá iontrálacha an eolaire comhtháite.",
+        "Store": "Siopa",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Suiteáil cláir, scéimeanna agus sruthanna a d'fhoilsigh eagraíochtaí eile."
     },
     "nplurals=2; plural=(n != 1);"
 )

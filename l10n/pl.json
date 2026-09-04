@@ -813,7 +813,9 @@
         "Nothing has been read yet": "Nic jeszcze nie przeczytano",
         "What is published, what is archived, and what retention says to do next.": "Co jest opublikowane, co zarchiwizowane i co retencja nakazuje dalej.",
         "What people looked at and what they downloaded.": "Na co ludzie patrzyli i co pobrali.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Jak dojrzałe są katalogi i jak głęboko zintegrowane są wpisy katalogu."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Jak dojrzałe są katalogi i jak głęboko zintegrowane są wpisy katalogu.",
+        "Store": "Sklep",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Zainstaluj rejestry, schematy i przepływy opublikowane przez inne organizacje."
     },
     "plurals": {}
 }

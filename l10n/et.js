@@ -814,7 +814,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Midagi pole veel loetud",
         "What is published, what is archived, and what retention says to do next.": "Mis on avaldatud, mis arhiveeritud ja mida säilitus edasi ette näeb.",
         "What people looked at and what they downloaded.": "Mida inimesed vaatasid ja mida alla laadisid.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kui küpsed on kataloogid ja kui sügavalt on kataloogi kirjed lõimitud."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kui küpsed on kataloogid ja kui sügavalt on kataloogi kirjed lõimitud.",
+        "Store": "Pood",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Paigalda registrid, skeemid ja voog, mille teised organisatsioonid on avaldanud."
     },
     "nplurals=2; plural=(n != 1);"
 )

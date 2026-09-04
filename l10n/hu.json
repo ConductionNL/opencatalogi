@@ -813,7 +813,9 @@
         "Nothing has been read yet": "Még semmit sem olvastak",
         "What is published, what is archived, and what retention says to do next.": "Mi van közzétéve, mi van archiválva, és mit ír elő a megőrzés ezután.",
         "What people looked at and what they downloaded.": "Mit néztek meg az emberek, és mit töltöttek le.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Mennyire érettek a katalógusok, és mennyire mélyen integráltak a címtárbejegyzések."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Mennyire érettek a katalógusok, és mennyire mélyen integráltak a címtárbejegyzések.",
+        "Store": "Áruház",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Telepítsen más szervezetek által közzétett nyilvántartásokat, sémákat és folyamatokat."
     },
     "plurals": {}
 }

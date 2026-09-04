@@ -813,7 +813,9 @@
         "Nothing has been read yet": "Vēl nekas nav lasīts",
         "What is published, what is archived, and what retention says to do next.": "Kas ir publicēts, kas arhivēts un ko glabāšana nosaka tālāk.",
         "What people looked at and what they downloaded.": "Ko cilvēki skatījās un ko lejupielādēja.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cik brieduši ir katalogi un cik dziļi ir integrēti direktorija ieraksti."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cik brieduši ir katalogi un cik dziļi ir integrēti direktorija ieraksti.",
+        "Store": "Veikals",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalējiet reģistrus, shēmas un plūsmas, ko publicējušas citas organizācijas."
     },
     "plurals": {}
 }

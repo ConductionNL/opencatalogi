@@ -813,7 +813,9 @@
         "Nothing has been read yet": "Δεν έχει διαβαστεί τίποτα ακόμη",
         "What is published, what is archived, and what retention says to do next.": "Τι είναι δημοσιευμένο, τι αρχειοθετημένο και τι ορίζει η διατήρηση στη συνέχεια.",
         "What people looked at and what they downloaded.": "Τι είδαν οι άνθρωποι και τι κατέβασαν.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Πόσο ώριμοι είναι οι κατάλογοι και πόσο βαθιά είναι ενσωματωμένες οι καταχωρίσεις ευρετηρίου."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Πόσο ώριμοι είναι οι κατάλογοι και πόσο βαθιά είναι ενσωματωμένες οι καταχωρίσεις ευρετηρίου.",
+        "Store": "Κατάστημα",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Εγκαταστήστε μητρώα, σχήματα και ροές που έχουν δημοσιεύσει άλλοι οργανισμοί."
     },
     "plurals": {}
 }

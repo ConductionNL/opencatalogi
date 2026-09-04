@@ -814,7 +814,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Anc n'è nagut legì",
         "What is published, what is archived, and what retention says to do next.": "Tge ch'è publitgà, tge ch'è archivà e tge che la conservaziun prescriva silsuenter.",
         "What people looked at and what they downloaded.": "Tge che la glieud ha guardà e tge ch'ella ha telechargià.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Quant maturs ch'ils catalogs èn e quant profund ch'las endataziuns dal register èn integradas."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Quant maturs ch'ils catalogs èn e quant profund ch'las endataziuns dal register èn integradas.",
+        "Store": "Butia",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installescha registers, schemas e process ch'autras organisaziuns han publitgà."
     },
     "nplurals=2; plural=(n != 1);"
 )

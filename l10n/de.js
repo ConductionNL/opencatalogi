@@ -814,7 +814,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Es wurde noch nichts gelesen",
         "What is published, what is archived, and what retention says to do next.": "Was veröffentlicht ist, was archiviert ist und was die Aufbewahrung als Nächstes vorschreibt.",
         "What people looked at and what they downloaded.": "Was Menschen angesehen und was sie heruntergeladen haben.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Wie ausgereift die Kataloge sind und wie tief die Verzeichniseinträge integriert sind."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Wie ausgereift die Kataloge sind und wie tief die Verzeichniseinträge integriert sind.",
+        "Store": "Store",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installieren Sie Register, Schemata und Flows, die andere Organisationen veröffentlicht haben."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -813,7 +813,9 @@
         "Nothing has been read yet": "Още нищо не е прочетено",
         "What is published, what is archived, and what retention says to do next.": "Какво е публикувано, какво е архивирано и какво предписва съхранението след това.",
         "What people looked at and what they downloaded.": "Какво са разглеждали хората и какво са изтеглили.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Колко зрели са каталозите и колко дълбоко са интегрирани записите в директорията."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Колко зрели са каталозите и колко дълбоко са интегрирани записите в директорията.",
+        "Store": "Магазин",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Инсталирайте регистри, схеми и потоци, публикувани от други организации."
     },
     "plurals": {}
 }

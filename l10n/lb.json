@@ -813,7 +813,9 @@
         "Nothing has been read yet": "Et gouf nach näischt gelies",
         "What is published, what is archived, and what retention says to do next.": "Wat publizéiert ass, wat archivéiert ass a wat d'Opbewahrung als Nächst virschreift.",
         "What people looked at and what they downloaded.": "Wat d'Leit ugekuckt hunn a wat se erofgelueden hunn.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Wéi reif d'Kataloger sinn a wéi déif d'Verzeechnesandeel integréiert sinn."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Wéi reif d'Kataloger sinn a wéi déif d'Verzeechnesandeel integréiert sinn.",
+        "Store": "Buttek",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installéiert Registeren, Schemaen a Flows déi aner Organisatiounen publizéiert hunn."
     },
     "plurals": {}
 }
