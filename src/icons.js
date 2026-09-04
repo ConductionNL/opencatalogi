@@ -35,6 +35,7 @@ import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed
 import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
+import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
 import TagOutline from 'vue-material-design-icons/TagOutline.vue'
 import Tune from 'vue-material-design-icons/Tune.vue'
 import ViewDashboardOutline from 'vue-material-design-icons/ViewDashboardOutline.vue'
@@ -64,6 +65,7 @@ export default {
 	PlayCircleOutline,
 	ShieldAccountOutline,
 	Sitemap,
+	StoreOutline,
 	TagOutline,
 	Tune,
 	ViewDashboardOutline,

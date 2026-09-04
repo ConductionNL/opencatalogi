@@ -813,7 +813,9 @@
         "Nothing has been read yet": "Яшчэ нічога не прачытана",
         "What is published, what is archived, and what retention says to do next.": "Што апублікавана, што заархівавана і што прадпісвае захоўванне далей.",
         "What people looked at and what they downloaded.": "На што людзі глядзелі і што спампавалі.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Наколькі сталыя каталогі і наколькі глыбока інтэграваныя запісы каталога."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Наколькі сталыя каталогі і наколькі глыбока інтэграваныя запісы каталога.",
+        "Store": "Крама",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Усталюйце рэестры, схемы і патокі, апублікаваныя іншымі арганізацыямі."
     },
     "plurals": {}
 }

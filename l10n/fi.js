@@ -814,7 +814,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Mitään ei ole vielä luettu",
         "What is published, what is archived, and what retention says to do next.": "Mikä on julkaistu, mikä arkistoitu ja mitä säilytys määrää seuraavaksi.",
         "What people looked at and what they downloaded.": "Mitä ihmiset katsoivat ja mitä he latasivat.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kuinka kypsiä luettelot ovat ja kuinka syvälle hakemistomerkinnät on integroitu."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kuinka kypsiä luettelot ovat ja kuinka syvälle hakemistomerkinnät on integroitu.",
+        "Store": "Kauppa",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Asenna muiden organisaatioiden julkaisemia rekistereitä, skeemoja ja vuokaavioita."
     },
     "nplurals=2; plural=(n != 1);"
 )

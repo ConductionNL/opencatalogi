@@ -814,7 +814,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Xejn ma nqara s'issa",
         "What is published, what is archived, and what retention says to do next.": "X'inhu ppubblikat, x'inhu arkivjat, u x'tordna ż-żamma wara.",
         "What people looked at and what they downloaded.": "Xi raw in-nies u x'niżżlu.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kemm huma maturi l-katalgi, u kemm huma integrati fil-fond l-entrati tad-direttorju."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kemm huma maturi l-katalgi, u kemm huma integrati fil-fond l-entrati tad-direttorju.",
+        "Store": "Ħanut",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installa reġistri, skemi u flussi ppubblikati minn organizzazzjonijiet oħra."
     },
     "nplurals=2; plural=(n != 1);"
 )

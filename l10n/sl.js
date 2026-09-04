@@ -814,7 +814,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Še ni nič prebrano",
         "What is published, what is archived, and what retention says to do next.": "Kaj je objavljeno, kaj arhivirano in kaj hramba določa naprej.",
         "What people looked at and what they downloaded.": "Kaj so ljudje gledali in kaj so prenesli.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kako zreli so katalogi in kako globoko so vključeni vnosi v imeniku."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kako zreli so katalogi in kako globoko so vključeni vnosi v imeniku.",
+        "Store": "Trgovina",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Namestite registre, sheme in tokove, ki so jih objavile druge organizacije."
     },
     "nplurals=2; plural=(n != 1);"
 )

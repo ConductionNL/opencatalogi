@@ -813,7 +813,9 @@
         "Nothing has been read yet": "Încă nu s-a citit nimic",
         "What is published, what is archived, and what retention says to do next.": "Ce este publicat, ce este arhivat și ce prevede păstrarea în continuare.",
         "What people looked at and what they downloaded.": "Ce au privit oamenii și ce au descărcat.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cât de mature sunt cataloagele și cât de profund sunt integrate intrările din director."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cât de mature sunt cataloagele și cât de profund sunt integrate intrările din director.",
+        "Store": "Magazin",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalați registre, scheme și fluxuri publicate de alte organizații."
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

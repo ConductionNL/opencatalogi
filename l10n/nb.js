@@ -814,7 +814,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Ingenting er lest ennå",
         "What is published, what is archived, and what retention says to do next.": "Hva som er publisert, hva som er arkivert, og hva oppbevaringen foreskriver videre.",
         "What people looked at and what they downloaded.": "Hva folk så på, og hva de lastet ned.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hvor modne katalogene er, og hvor dypt katalogoppføringene er integrert."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hvor modne katalogene er, og hvor dypt katalogoppføringene er integrert.",
+        "Store": "Butikk",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installer registre, skjemaer og flyter som andre organisasjoner har publisert."
     },
     "nplurals=2; plural=(n != 1);"
 )

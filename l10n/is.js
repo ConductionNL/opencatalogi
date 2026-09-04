@@ -814,7 +814,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Ekkert hefur verið lesið enn",
         "What is published, what is archived, and what retention says to do next.": "Hvað er birt, hvað er í skjalasafni og hvað varðveislan segir til um næst.",
         "What people looked at and what they downloaded.": "Hvað fólk skoðaði og hvað það sótti.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hversu þroskaðar skrárnar eru og hversu djúpt skráningar í skráasafninu eru samþættar."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hversu þroskaðar skrárnar eru og hversu djúpt skráningar í skráasafninu eru samþættar.",
+        "Store": "Verslun",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Settu upp skrár, skemu og flæði sem aðrar stofnanir hafa birt."
     },
     "nplurals=2; plural=(n != 1);"
 )

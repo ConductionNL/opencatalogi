@@ -952,7 +952,9 @@ OC.L10N.register(
         "Nothing has been read yet": "Er is nog niets gelezen",
         "What is published, what is archived, and what retention says to do next.": "Wat gepubliceerd is, wat gearchiveerd is, en wat de bewaartermijn als volgende stap voorschrijft.",
         "What people looked at and what they downloaded.": "Waar mensen naar keken en wat ze downloadden.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hoe volwassen de catalogi zijn, en hoe diep de directoryvermeldingen geïntegreerd zijn."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hoe volwassen de catalogi zijn, en hoe diep de directoryvermeldingen geïntegreerd zijn.",
+        "Store": "Store",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installeer registers, schema's en flows die andere organisaties hebben gepubliceerd."
     },
     "nplurals=2; plural=(n != 1);"
 )

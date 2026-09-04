@@ -813,7 +813,9 @@
         "Nothing has been read yet": "Ende asgjë nuk është lexuar",
         "What is published, what is archived, and what retention says to do next.": "Çfarë është botuar, çfarë është arkivuar dhe çfarë përcakton ruajtja më pas.",
         "What people looked at and what they downloaded.": "Çfarë panë njerëzit dhe çfarë shkarkuan.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Sa të pjekur janë katalogët dhe sa thellë janë integruar regjistrimet e direktorisë."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "Sa të pjekur janë katalogët dhe sa thellë janë integruar regjistrimet e direktorisë.",
+        "Store": "Dyqani",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instaloni regjistra, skema dhe rrjedha të publikuara nga organizata të tjera."
     },
     "plurals": {}
 }
