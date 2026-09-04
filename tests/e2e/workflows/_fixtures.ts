@@ -65,16 +65,29 @@ export const ADMIN_PASS = process.env.NC_ADMIN_PASS || 'admin'
 export let REG_PUBLICATION: number | string = 14
 export let SCHEMA_PUBLICATION: number | string = 53
 export let SCHEMA_CATALOG: number | string = 54
-export let SCHEMA_ORGANIZATION: number | string = 47
-export let SCHEMA_DOCUMENT: number | string = 55
+export let SCHEMA_USAGE_COUNTER: number | string = 56
+
+/**
+ * The register the MANIFEST reads, which is not always the one above.
+ *
+ * `lib/Settings/publication_register.json` imports under slug `opencatalogi`,
+ * and every manifest widget names `"register": "opencatalogi"`. A dev box that
+ * has also seen the older demo import carries a SECOND register under slug
+ * `publication`, and objects are stored per (register, schema): a fixture
+ * written to one is invisible to a page reading the other. The deep CRUD specs
+ * write and read through the same ids, so they never noticed. A fixture whose
+ * point is to put a number on a manifest-driven report does notice, so it
+ * resolves this one instead.
+ */
+export let REG_OPENCATALOGI: number | string = 14
 
 /** Stable slugs the OpenCatalogi register import uses (slug -> resolved id). */
 const REGISTER_SLUG = 'publication'
+const MANIFEST_REGISTER_SLUG = 'opencatalogi'
 const SCHEMA_SLUGS = {
 	publication: 'publication',
 	catalog: 'catalog',
-	organization: 'organization',
-	document: 'document',
+	usageCounter: 'usageCounter',
 }
 
 function OBJ(reg: number | string, schema: number | string, id?: string) {
@@ -142,6 +155,19 @@ export class Fixtures {
 				)
 				if (reg && (reg.id || reg.id === 0))
 					REG_PUBLICATION = reg.id as number | string
+				const manifestReg = list.find(
+					(r: Record<string, unknown>) =>
+						r.slug === MANIFEST_REGISTER_SLUG,
+				)
+				// Fall back to the publication register rather than to a
+				// hardcoded id: on an instance with only one of the two, that is
+				// the same register, and on an instance with neither the failure
+				// belongs at the create call, not at a number that happens to
+				// name some other app's register.
+				REG_OPENCATALOGI =
+					manifestReg && (manifestReg.id || manifestReg.id === 0)
+						? (manifestReg.id as number | string)
+						: REG_PUBLICATION
 			}
 			const schRes = await this.ctx.get(
 				'/index.php/apps/openregister/api/schemas?_limit=1000',
@@ -157,10 +183,8 @@ export class Fixtures {
 					SCHEMA_PUBLICATION = bySlug.get(SCHEMA_SLUGS.publication)!
 				if (bySlug.has(SCHEMA_SLUGS.catalog))
 					SCHEMA_CATALOG = bySlug.get(SCHEMA_SLUGS.catalog)!
-				if (bySlug.has(SCHEMA_SLUGS.organization))
-					SCHEMA_ORGANIZATION = bySlug.get(SCHEMA_SLUGS.organization)!
-				if (bySlug.has(SCHEMA_SLUGS.document))
-					SCHEMA_DOCUMENT = bySlug.get(SCHEMA_SLUGS.document)!
+				if (bySlug.has(SCHEMA_SLUGS.usageCounter))
+					SCHEMA_USAGE_COUNTER = bySlug.get(SCHEMA_SLUGS.usageCounter)!
 			}
 		} catch {
 			/* keep dev-box seed ids on any resolution failure */
@@ -278,13 +302,17 @@ export class Fixtures {
 	 * Create a Publication (in draft — no publish action applied).
 	 * @param name
 	 * @param extra
+	 * @param register Which register to create it in. Defaults to the deep
+	 *                 suite's register; a caller seeding a manifest-driven page
+	 *                 passes {@link REG_OPENCATALOGI} so the page can see it.
 	 */
 	async createPublication(
 		name: string,
 		extra: Record<string, unknown> = {},
+		register: number | string = REG_PUBLICATION,
 	): Promise<SeededObject> {
 		const title = this.label(name)
-		return this.create(REG_PUBLICATION, SCHEMA_PUBLICATION, {
+		return this.create(register, SCHEMA_PUBLICATION, {
 			title,
 			summary: `Fixture publication for ${this.prefix}`,
 			description: 'Created by the OpenCatalogi deep e2e workflow suite.',
@@ -293,43 +321,37 @@ export class Fixtures {
 	}
 
 	/**
-	 * Create an Organization.
-	 * @param name
-	 * @param extra
+	 * Create a usageCounter row.
+	 *
+	 * usageCounter stores a `count` per publication per day per kind, so the
+	 * Usage report SUMs `count` rather than counting rows. A test that wants a
+	 * number on that report has to put one there: with no counters the report
+	 * correctly renders an em-dash, and an assertion for a digit then measures
+	 * whether some earlier spec happened to leave data behind.
+	 *
+	 * The `organization` and `document` creators that used to sit here were
+	 * removed with their schemas (`catalogi-uses-the-shared-organisation` and
+	 * `attachments-are-files`). Their hardcoded fallback ids were the hazard:
+	 * schema slugs are global per organisation, so once the slug stopped
+	 * resolving here the fixture would have written into whichever app owns id
+	 * 47 or 55 on that instance.
+	 *
+	 * @param publicationId The publication UUID the counter is attributed to.
+	 * @param kind          `view` or `download`.
+	 * @param count         How many, on that day.
+	 * @param extra         Extra fields merged into the object.
 	 */
-	async createOrganization(
-		name: string,
+	async createUsageCounter(
+		publicationId: string,
+		kind: 'view' | 'download',
+		count: number,
 		extra: Record<string, unknown> = {},
 	): Promise<SeededObject> {
-		const title = this.label(name)
-		return this.create(REG_PUBLICATION, SCHEMA_ORGANIZATION, {
-			title,
-			summary: `Fixture organization for ${this.prefix}`,
-			...extra,
-		})
-	}
-
-	/**
-	 * Create a Document linked to a publication (WOO-517 content-search fixture).
-	 * `publication` carries the `{slug, title}` summary
-	 * `PublicationQueryService::resolveDocumentPublicationSummary()` resolves by
-	 * slug — the UUID is filled in server-side once the link is followed.
-	 * @param name
-	 * @param publication
-	 * @param publication.slug
-	 * @param publication.title
-	 * @param extra
-	 */
-	async createDocument(
-		name: string,
-		publication: { slug: string; title: string },
-		extra: Record<string, unknown> = {},
-	): Promise<SeededObject> {
-		const title = this.label(name)
-		return this.create(REG_PUBLICATION, SCHEMA_DOCUMENT, {
-			title,
-			summary: `Fixture document for ${this.prefix}`,
-			publication,
+		return this.create(REG_OPENCATALOGI, SCHEMA_USAGE_COUNTER, {
+			publication: publicationId,
+			kind,
+			count,
+			date: new Date().toISOString().slice(0, 10),
 			...extra,
 		})
 	}
@@ -438,12 +460,10 @@ export class Fixtures {
 		this.created = []
 
 		// Prefix sweep across the fixture schemas (catches UI-created rows).
-		for (const schema of [
-			SCHEMA_PUBLICATION,
-			SCHEMA_CATALOG,
-			SCHEMA_ORGANIZATION,
-			SCHEMA_DOCUMENT,
-		]) {
+		// usageCounter is deliberately absent: it carries no `title` to match a
+		// prefix on, and it lives in REG_OPENCATALOGI rather than here. The
+		// tracked-id pass above is what removes it.
+		for (const schema of [SCHEMA_PUBLICATION, SCHEMA_CATALOG]) {
 			const rows = await this.list(REG_PUBLICATION, schema, 500)
 			for (const row of rows) {
 				const title =
