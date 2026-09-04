@@ -85,7 +85,7 @@ async function openIndexPage(page: Page, menuId: string): Promise<void> {
  * asserting the same surface; there is just no entry left to click.
  *
  * @param page The Playwright page.
- * @param route The in-app route (e.g. '/pages').
+ * @param route The in-app route (e.g. '/themes').
  */
 async function openIndexRoute(page: Page, route: string): Promise<void> {
 	await navToRoute(page, route)
@@ -735,68 +735,6 @@ test.describe('search', () => {
 // ── Content management ────────────────────────────────────────────────────────
 
 test.describe('content-management', () => {
-	/**
-	 * CMS-036 — Add or edit a page content block.
-	 * GIVEN the page content form is open for a page
-	 * WHEN the user saves the content block
-	 * THEN the parent page MUST be persisted via objectStore.updateObject('page', id, page).
-	 */
-	test(// @e2e content-management::add-or-edit-a-page-content-block
-	'CMS-036 — Pages index renders with Add CTA and list/empty surface', async ({
-		page,
-	}) => {
-		await openIndexRoute(page, '/pages')
-		await expect(
-			page.locator('[data-testid="cn-cta-primary"]').first(),
-		).toBeVisible({ timeout: 10000 })
-	})
-
-	/**
-	 * CMS-036 — Delete a page content block.
-	 * GIVEN a content block on a page
-	 * WHEN the delete-page-content dialog confirms removal
-	 * THEN the page MUST be updated with the block removed via updateObject('page', ...).
-	 */
-	test(// @e2e content-management::delete-a-page-content-block
-	'CMS-036 — Pages index renders without fatal JS errors (delete dialog host)', async ({
-		page,
-	}) => {
-		const errors = trackPageErrors(page)
-		await openIndexRoute(page, '/pages')
-		expect(fatalErrors(errors)).toHaveLength(0)
-	})
-
-	/**
-	 * CMS-037 — Add or edit a menu item.
-	 * GIVEN the menu item form is open for a menu
-	 * WHEN the user saves the item
-	 * THEN the parent menu MUST be persisted via objectStore.updateObject('menu', id, menu).
-	 */
-	test(// @e2e content-management::add-or-edit-a-menu-item
-	'CMS-037 — Menus index renders with Add CTA and list/empty surface', async ({
-		page,
-	}) => {
-		await openIndexRoute(page, '/menus')
-		await expect(
-			page.locator('[data-testid="cn-cta-primary"]').first(),
-		).toBeVisible({ timeout: 10000 })
-	})
-
-	/**
-	 * CMS-037 — Copy a menu.
-	 * GIVEN an active menu
-	 * WHEN the copy-menu dialog is confirmed
-	 * THEN a new menu MUST be created via objectStore.createObject('menu', clone) with a (kopie) title.
-	 */
-	test(// @e2e content-management::copy-a-menu
-	'CMS-037 — Menus index renders without fatal JS errors (copy-menu dialog host)', async ({
-		page,
-	}) => {
-		const errors = trackPageErrors(page)
-		await openIndexRoute(page, '/menus')
-		expect(fatalErrors(errors)).toHaveLength(0)
-	})
-
 	/**
 	 * CMS-038 — Attach a theme to a publication.
 	 * GIVEN the add-publication-theme modal is open

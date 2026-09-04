@@ -290,12 +290,12 @@
 		]
 	},
 	"store": {
-	  "_note": "Configuration exchange, not rows. A configuration set carries the registers, schemas, objects, views, flows, sources and mappings that make one way of working hold together. There is deliberately NO `installable` allowlist: a set exists to introduce schemas the instance does not have YET, so listing schemas this app already owns would refuse exactly the sets worth installing. The trust boundary for a bundle is its publisher, enforced by the engine's source allowlist and trusted-key check. \u26a0\ufe0f An EMPTY `installable` means install NOTHING, not install anything \u2014 omitting the key and declaring an empty list are different things.",
-	  "types": [
-	    "openregister.configset",
-	    "openregister.flows"
-	  ],
-	  "localRegister": "opencatalogi"
+		"_note": "Configuration exchange, not rows. A configuration set carries the registers, schemas, objects, views, flows, sources and mappings that make one way of working hold together. There is deliberately NO `installable` allowlist: a set exists to introduce schemas the instance does not have YET, so listing schemas this app already owns would refuse exactly the sets worth installing. The trust boundary for a bundle is its publisher, enforced by the engine's source allowlist and trusted-key check. ⚠️ An EMPTY `installable` means install NOTHING, not install anything — omitting the key and declaring an empty list are different things.",
+		"types": [
+			"openregister.configset",
+			"openregister.flows"
+		],
+		"localRegister": "opencatalogi"
 	},
 	"menu": [
 		{
@@ -338,20 +338,6 @@
 					"icon": "Tune",
 					"route": "Themes",
 					"order": 94
-				},
-				{
-					"id": "PagesMenu",
-					"label": "Pages",
-					"icon": "FolderMultiple",
-					"route": "Pages",
-					"order": 95
-				},
-				{
-					"id": "MenusMenu",
-					"label": "Menus",
-					"icon": "Tune",
-					"route": "Menus",
-					"order": 96
 				},
 				{
 					"id": "WooBatchesMenu",
@@ -400,12 +386,12 @@
 			"order": 90
 		},
 		{
-		  "id": "StoreMenu",
-		  "label": "Store",
-		  "icon": "StoreOutline",
-		  "route": "Store",
-		  "section": "footer",
-		  "order": 92
+			"id": "StoreMenu",
+			"label": "Store",
+			"icon": "StoreOutline",
+			"route": "Store",
+			"section": "footer",
+			"order": 92
 		},
 		{
 			"id": "ReportsMenu",
@@ -443,16 +429,16 @@
 	],
 	"pages": [
 		{
-		  "id": "Store",
-		  "route": "/store",
-		  "type": "store",
-		  "title": "Store",
-		  "config": {
-		    "app": "opencatalogi",
-		    "title": "Store",
-		    "description": "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them."
-		  },
-		  "_note": "ADR-114 Decision 4 / ADR-080. Declarative: openregister hosts the store plane, so this app writes NO store controller. With no registry configured the page renders the app's built-in items and makes NO network call."
+			"id": "Store",
+			"route": "/store",
+			"type": "store",
+			"title": "Store",
+			"config": {
+				"app": "opencatalogi",
+				"title": "Store",
+				"description": "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them."
+			},
+			"_note": "ADR-114 Decision 4 / ADR-080. Declarative: openregister hosts the store plane, so this app writes NO store controller. With no registry configured the page renders the app's built-in items and makes NO network call."
 		},
 		{
 			"id": "WooBatches",
@@ -570,7 +556,11 @@
 								"depublicationDate",
 								"status"
 							],
-							"overrides": { "status": { "editable": false } }
+							"overrides": {
+								"status": {
+									"editable": false
+								}
+							}
 						}
 					},
 					{
@@ -630,7 +620,14 @@
 								"retentionNote",
 								"retentionLastEvaluatedAt"
 							],
-							"overrides": { "retentionExpiresAt": { "editable": false }, "retentionLastEvaluatedAt": { "editable": false } }
+							"overrides": {
+								"retentionExpiresAt": {
+									"editable": false
+								},
+								"retentionLastEvaluatedAt": {
+									"editable": false
+								}
+							}
 						}
 					},
 					{
@@ -1201,200 +1198,6 @@
 						"gridX": 6,
 						"gridY": 0,
 						"gridWidth": 6,
-						"gridHeight": 5
-					}
-				],
-				"sidebar": {
-					"enabled": true,
-					"showMetadata": true,
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "History",
-							"icon": "History",
-							"widgets": [
-								{
-									"type": "audit"
-								}
-							]
-						}
-					]
-				}
-			}
-		},
-		{
-			"id": "Pages",
-			"route": "/pages",
-			"type": "index",
-			"title": "Pages",
-			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
-			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "page",
-				"rowClickToView": false,
-				"actionToggles": {
-					"showAdd": true,
-					"showEditAction": false,
-					"showCopyAction": false,
-					"showDeleteAction": false,
-					"showMassImport": false,
-					"showMassExport": false,
-					"showMassCopy": false,
-					"showMassDelete": false,
-					"showViewToggle": true,
-					"selectable": true
-				},
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			}
-		},
-		{
-			"id": "PageDetail",
-			"route": "/pages/:id",
-			"type": "detail",
-			"title": "Page",
-			"_note": "CMS-page / structured-content archetype — a portal page (title, slug, visibility flags hideBeforeLogin/hideAfterLogin, access groups) whose body is an ordered list of embedded content blocks (`contents[]` — inline objects, NOT a separate register schema, so an object-list child table cannot be used). Previously this page had NO widgets and fell back to the generic data dump. Now the body pairs the page settings (5-wide, 1-column — slug + visibility read as a config sheet, with `contents` excluded because the tree-view owns it) with the tree-view custom widget (7-wide) that renders the nested content-block structure so an editor can see and reorder the page composition. NO comms/Files/related: a portal page declares no linkedTypes, its content is inline, and it communicates with nobody (HARD RULE 1). Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled); Metadata is on-demand via the Data widget's Actions menu rather than a permanent card.",
-			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "page",
-				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl",
-				"widgets": [
-					{
-						"id": "page-data",
-						"type": "data",
-						"title": "Page",
-						"icon": "FileDocument",
-						"content": {
-							"columns": 1,
-							"exclude": [
-								"contents"
-							]
-						}
-					},
-					{
-						"id": "page-tree",
-						"type": "tree-view",
-						"title": "Content blocks",
-						"icon": "Sitemap",
-						"content": {
-							"field": "contents"
-						}
-					}
-				],
-				"layout": [
-					{
-						"id": "1",
-						"widgetId": "page-data",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 5,
-						"gridHeight": 5
-					},
-					{
-						"id": "2",
-						"widgetId": "page-tree",
-						"gridX": 5,
-						"gridY": 0,
-						"gridWidth": 7,
-						"gridHeight": 5
-					}
-				],
-				"sidebar": {
-					"enabled": true,
-					"showMetadata": true,
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "History",
-							"icon": "History",
-							"widgets": [
-								{
-									"type": "audit"
-								}
-							]
-						}
-					]
-				}
-			}
-		},
-		{
-			"id": "Menus",
-			"route": "/menus",
-			"type": "index",
-			"title": "Menus",
-			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
-			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "menu",
-				"rowClickToView": false,
-				"actionToggles": {
-					"showAdd": true,
-					"showEditAction": false,
-					"showCopyAction": false,
-					"showDeleteAction": false,
-					"showMassImport": false,
-					"showMassExport": false,
-					"showMassCopy": false,
-					"showMassDelete": false,
-					"showViewToggle": true,
-					"selectable": true
-				},
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			}
-		},
-		{
-			"id": "MenuDetail",
-			"route": "/menus/:id",
-			"type": "detail",
-			"title": "Menu",
-			"_note": "Navigation-menu / structure archetype — a portal menu (title, position, visibility flag hideBeforeLogin, access groups) whose SUBSTANCE is its ordered, nestable sub-menu items. The user comes here to see and reorder those sub-menu items, so the body pairs the menu settings (4-wide, 1-column — position/visibility read as a config sheet, with `items` excluded because the tree-view owns it) with a wide tree-view (8-wide) that renders the ordered item hierarchy and lets an editor reorder it, since the tree IS the menu. IMPORTANT design constraint verified against the register: the sub-menu items live in `menu.items[]` as INLINE objects (each with order/name/link/description/icon/groups) — there is NO separate menu-item register schema and menu has NO self-FK, so the intuitively-desired FK-scoped `object-list` of child menu items ('items where parentMenu=@objectId') is NOT expressible. tree-view over the inline `items` field, sorted by each item's `order`, is the faithful representation of the ordered sub-menu items. NO comms/Files/related: a menu declares no linkedTypes, its items are inline, and it communicates with nobody (HARD RULE 1). Audit history is the sidebar CnAuditTrailTab; Metadata is on-demand via the Data widget's Actions menu. WISH-LIST for nc-vue: an ordered-editor widget over an inline object-array (add/remove/reorder items) would be a better fit than the read-lean tree-view here.",
-			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "menu",
-				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl",
-				"widgets": [
-					{
-						"id": "menu-data",
-						"type": "data",
-						"title": "Menu",
-						"icon": "Cog",
-						"content": {
-							"columns": 1,
-							"exclude": [
-								"items"
-							]
-						}
-					},
-					{
-						"id": "menu-tree",
-						"type": "tree-view",
-						"title": "Menu items",
-						"icon": "Sitemap",
-						"content": {
-							"field": "items",
-							"sort": {
-								"field": "order",
-								"dir": "asc"
-							}
-						}
-					}
-				],
-				"layout": [
-					{
-						"id": "1",
-						"widgetId": "menu-data",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 4,
-						"gridHeight": 5
-					},
-					{
-						"id": "2",
-						"widgetId": "menu-tree",
-						"gridX": 4,
-						"gridY": 0,
-						"gridWidth": 8,
 						"gridHeight": 5
 					}
 				],
@@ -2142,7 +1945,9 @@
 			"route": "/flows",
 			"type": "flows",
 			"title": "Flows",
-			"config": { "app": "opencatalogi" },
+			"config": {
+				"app": "opencatalogi"
+			},
 			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. Rendered by the shared CnFlowsPage page type over OpenRegister's one native flow store (ADR-065), scoped to this app."
 		},
 		{
@@ -2150,7 +1955,9 @@
 			"route": "/flows/:id",
 			"type": "flow-detail",
 			"title": "Flow",
-			"config": { "app": "opencatalogi" },
+			"config": {
+				"app": "opencatalogi"
+			},
 			"sidebarComponent": "FlowDetailSidebar",
 			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar (sidebarComponent) so the canvas keeps full width; canvas and sidebar share useFlowStore. The _note claimed this before the field existed, so #/flows/new -- and every #/flows/:id -- rendered a bare canvas with no way to name, describe, trigger or step-edit the flow. Mirrors pipelinq#1490."
 		}

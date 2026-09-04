@@ -56,12 +56,12 @@ const NAV_LIST_PAGES = ['CatalogsMenu']
  * working. So these assert exactly the same index surface as before — they
  * just arrive by route instead of by click.
  */
+// Pages and Menus were here until the CMS moved to Portaliq. This app ships no
+// page or menu schema, so those routes render nothing to assert on.
 const ROUTE_LIST_PAGES: Array<{ id: string; route: string }> = [
 	{ id: 'Organizations', route: '/organizations' },
 	{ id: 'Themes', route: '/themes' },
 	{ id: 'Glossary', route: '/glossary' },
-	{ id: 'Pages', route: '/pages' },
-	{ id: 'Menus', route: '/menus' },
 ]
 
 for (const menuId of NAV_LIST_PAGES) {
