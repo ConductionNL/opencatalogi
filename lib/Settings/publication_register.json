@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "x-openregister": {
     "type": "application",
@@ -23,13 +23,12 @@
       "publication": {
         "slug": "publication",
         "title": "Publication",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website, including catalogs, listings, organizations, publications, themes, pages, menus, and glossary items. This register enables the creation of rich, navigable catalog websites with proper content organization and user-friendly navigation.",
         "published": "2025-01-01T00:00:00+00:00",
         "schemas": [
           "catalog",
           "listing",
-          "organization",
           "publication",
           "theme",
           "page",
@@ -130,9 +129,9 @@
           },
           "organization": {
             "type": "string",
-            "description": "Reference to the organization that owns this publication",
+            "description": "Reference to the organisation that owns this publication, resolved against OpenRegister's shared organisation.",
             "format": "uuid",
-            "$ref": "organization",
+            "$ref": "nc-organisation",
             "facetable": true,
             "title": "Organization"
           },
@@ -423,9 +422,9 @@
           },
           "organization": {
             "type": "string",
-            "description": "Reference to the organization that owns this catalog",
+            "description": "Reference to the organisation that owns this catalog, resolved against OpenRegister's shared organisation.",
             "format": "uuid",
-            "$ref": "organization",
+            "$ref": "nc-organisation",
             "facetable": true,
             "title": "Organization"
           },
@@ -757,96 +756,6 @@
               }
             },
             "authenticated"
-          ]
-        }
-      },
-      "organization": {
-        "slug": "organization",
-        "x-schema-org": "schema:Organization",
-        "title": "Organization",
-        "version": "0.0.5",
-        "published": "2025-01-01T00:00:00+00:00",
-        "summary": "An organization that publishes or manages catalogs",
-        "description": "Organizations represent entities that publish or manage catalogs. They can be government agencies, companies, or other institutions. Each organization can have multiple catalogs and is identified by various standardized identifiers like OIN, RSIN, and PKI certificates.",
-        "icon": null,
-        "required": [
-          "name",
-          "summary"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "The name of the organization",
-            "minLength": 1,
-            "facetable": true,
-            "title": "Name"
-          },
-          "summary": {
-            "type": "string",
-            "description": "Brief description of the organization",
-            "minLength": 1,
-            "facetable": false,
-            "title": "Summary"
-          },
-          "description": {
-            "type": "string",
-            "description": "Detailed description of the organization",
-            "facetable": false,
-            "title": "Description"
-          },
-          "oin": {
-            "type": "string",
-            "description": "Organization Identification Number (OIN)",
-            "pattern": "^0000000\\d{10}000$",
-            "facetable": true,
-            "title": "OIN"
-          },
-          "tooi": {
-            "type": "string",
-            "description": "TOOI identifier for the organization",
-            "pattern": "^\\w{2,}\\d{4}$",
-            "facetable": true,
-            "title": "TOOI"
-          },
-          "tooiIdentifier": {
-            "type": "string",
-            "description": "Full TOOI organisatie identifier URI (https://identifier.overheid.nl/tooi/id/...) used as the diwoo:publisher @resource in DIWOO Woo-index feeds",
-            "facetable": false,
-            "title": "TOOI Identifier URI"
-          },
-          "rsin": {
-            "type": "string",
-            "description": "RSIN number for tax identification",
-            "pattern": "^\\d{9}$",
-            "facetable": true,
-            "title": "RSIN"
-          },
-          "pki": {
-            "type": "string",
-            "description": "PKI certificate information",
-            "pattern": "^\\d{1,}$",
-            "facetable": false,
-            "title": "PKI"
-          },
-          "image": {
-            "type": "string",
-            "description": "URL to the organization's logo or image",
-            "facetable": false,
-            "title": "Image"
-          }
-        },
-        "configuration": {
-          "autoPublish": false,
-          "implements": [
-            "https://openregister.app/ns#Organization",
-            "https://schema.org/Organization"
-          ]
-        },
-        "hardValidation": true,
-        "searchable": true,
-        "authorization": {
-          "read": [
-            "public"
           ]
         }
       },

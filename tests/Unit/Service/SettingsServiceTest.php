@@ -1821,7 +1821,9 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+		// 'organization' is absent: its keys come from OpenRegister's shared
+		// organisation now, not from this app's own import result.
+		$types = ['catalog', 'listing', 'theme', 'page', 'menu', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertSame('openregister', $storedValues["{$type}_source"]);
 			$this->assertArrayNotHasKey("{$type}_schema", $storedValues);
@@ -1873,12 +1875,131 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		$expectedTypes = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+		$expectedTypes = ['catalog', 'listing', 'theme', 'page', 'menu', 'glossary'];
 		foreach ($expectedTypes as $type) {
 			$this->assertArrayHasKey("{$type}_source", $storedValues);
 		}
 
+		// The organisation is NOT resolved from this app's import result. It is
+		// OpenRegister's schema now, so an import carrying a row called
+		// `organization` must not reinstate a key pointing at this app's copy.
+		$this->assertArrayNotHasKey('organization_source', $storedValues);
+		$this->assertArrayNotHasKey('organization_schema', $storedValues);
+		$this->assertArrayNotHasKey('organization_register', $storedValues);
+
 	}//end testUpdateObjectTypeConfigurationSetsAllObjectTypes()
+
+	/**
+	 * The organisation keys are resolved from OpenRegister.
+	 *
+	 * They cannot come from this app's import result any more: the schema is
+	 * OpenRegister's `nc-organisation` projection. They keep their NAMES so the
+	 * object store resolves the type exactly as before and no frontend change
+	 * was needed, which is the whole reason that consolidation was cheap.
+	 *
+	 * @return void
+	 */
+	public function testTheOrganisationKeysComeFromOpenRegister(): void {
+		// The accessors declare OpenRegister return types, so these must be
+		// mocks of the real mappers — an anonymous stand-in trips the return
+		// type, the accessor throws, and the method bails looking like a
+		// deliberate soft failure.
+		// Real entities with their ids set by reflection. `getId()` is a magic
+		// Entity accessor, so PHPUnit refuses to configure it on a mock.
+		$register = new \OCA\OpenRegister\Db\Register();
+		$schema = new \OCA\OpenRegister\Db\Schema();
+		foreach ([[$register, 2], [$schema, 38]] as [$entity, $id]) {
+			$property = (new \ReflectionClass($entity))->getProperty('id');
+			$property->setAccessible(true);
+			$property->setValue($entity, $id);
+		}
+
+		$registerMapper = $this->createMock(\OCA\OpenRegister\Db\RegisterMapper::class);
+		$registerMapper->method('find')->willReturn($register);
+		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($registerMapper, $schemaMapper) {
+				if (str_contains($id, 'RegisterMapper') === true) {
+					return $registerMapper;
+				}
+
+				return $schemaMapper;
+			}
+		);
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->invokePrivateMethod($this->service, 'resolveSharedOrganisationConfiguration', []);
+
+		$this->assertSame('openregister', $stored['organization_source']);
+		$this->assertSame('2', $stored['organization_register']);
+		$this->assertSame('38', $stored['organization_schema']);
+
+	}//end testTheOrganisationKeysComeFromOpenRegister()
+
+	/**
+	 * OpenRegister being absent leaves the keys unset rather than failing.
+	 *
+	 * A missing picker option is a smaller failure than an import that dies, and
+	 * an older OpenRegister may simply not carry the projection yet.
+	 *
+	 * @return void
+	 */
+	public function testAnAbsentOpenRegisterLeavesTheKeysUnset(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->invokePrivateMethod($this->service, 'resolveSharedOrganisationConfiguration', []);
+
+		$this->assertSame([], $stored, 'nothing is written when OpenRegister is absent');
+
+	}//end testAnAbsentOpenRegisterLeavesTheKeysUnset()
+
+	/**
+	 * A missing projection is the same soft failure: an OpenRegister too old to
+	 * carry `nc-organisation` must not break an import.
+	 *
+	 * @return void
+	 */
+	public function testAMissingProjectionLeavesTheKeysUnset(): void {
+		$registerMapper = $this->createMock(\OCA\OpenRegister\Db\RegisterMapper::class);
+		$registerMapper->method('find')->willThrowException(new \RuntimeException('no such register'));
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($registerMapper);
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->invokePrivateMethod($this->service, 'resolveSharedOrganisationConfiguration', []);
+
+		$this->assertSame([], $stored, 'nothing is written when the projection is absent');
+
+	}//end testAMissingProjectionLeavesTheKeysUnset()
 
 	// ---------------------------------------------------------------
 	// Private: shouldLoadSettings
