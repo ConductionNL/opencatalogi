@@ -33,6 +33,7 @@
 import type { Page } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
+import { Fixtures, REG_OPENCATALOGI } from './workflows/_fixtures.ts'
 
 const APP_BASE = '/apps/opencatalogi'
 
@@ -110,9 +111,17 @@ test.describe('app chrome (ADR-114)', () => {
 			timeout: 15_000,
 		})
 
+		// SCOPE TO THE PAGE BODY. Unscoped, `getByText('Usage')` resolves first
+		// to Nextcloud's own telemetry prompt ("help us improve Nextcloud by
+		// providing usage data"), which is attached-but-hidden — so the
+		// assertion waited 15s on an element that is not the report and can
+		// never become visible. That is the same trap the header note names for
+		// the nav: an unscoped selector finds Nextcloud's chrome first.
+		const content = page.locator('main, .app-content').first()
+
 		for (const label of ['Publications', 'Usage', 'Catalogs and directory']) {
 			await expect(
-				page.getByText(label, { exact: false }).first(),
+				content.getByText(label, { exact: false }).first(),
 			).toBeVisible({ timeout: 15_000 })
 		}
 	})
@@ -136,24 +145,50 @@ test.describe('app chrome (ADR-114)', () => {
 	test('the usage report sums the stored count rather than counting rows', async ({
 		page,
 	}) => {
-		// See the header note. This asserts the page resolves and shows a
-		// number; the sum-versus-count distinction is documented in the
-		// manifest so a later edit has to argue with it rather than drift.
-		await page.goto(`${APP_BASE}/reports/usage`)
-		await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible({
-			timeout: 30_000,
-		})
-		await expect(
-			page
-				.locator('main, .app-content')
-				.first()
-				.getByText('Downloads', { exact: false })
-				.first(),
-		).toBeVisible({ timeout: 30_000 })
-		await expect(page.locator('main, .app-content').first()).toContainText(
-			/\d/,
-			{ timeout: 30_000 },
-		)
+		// SEED, do not hope. With no counters the report correctly renders an
+		// em-dash for both totals, so `toContainText(/\d/)` was really asking
+		// whether some earlier spec had left data behind — it passed on a dev
+		// box with history and failed on a fresh instance, from the same code.
+		//
+		// Two rows on ONE day for ONE publication, 7 views and 4 downloads.
+		// That is the shape the metric turns on: SUM(count) reads 7 and 4,
+		// COUNT(rows) would read 1 and 1, so the assertion below separates them.
+		const fx = new Fixtures()
+		await fx.init()
+		try {
+			const publication = await fx.createPublication(
+				'Usage report',
+				{},
+				REG_OPENCATALOGI,
+			)
+			await fx.createUsageCounter(publication.id, 'view', 7)
+			await fx.createUsageCounter(publication.id, 'download', 4)
+
+			await page.goto(`${APP_BASE}/reports/usage`)
+			await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible({
+				timeout: 30_000,
+			})
+			const main = page.locator('main, .app-content').first()
+			await expect(
+				main.getByText('Downloads', { exact: false }).first(),
+			).toBeVisible({ timeout: 30_000 })
+
+			// SCOPE TO THE STAT CARDS. Unscoped, `toContainText('4')` is
+			// satisfied by the bar chart's y-axis ticks (12/10/8/6/4/2/0) and by
+			// the date column of the Most-recent table, so it would pass on a
+			// report whose totals both read an em-dash.
+			await expect(main.locator('[widget-id="use-views"]')).toContainText(
+				'7',
+				{ timeout: 30_000 },
+			)
+			await expect(main.locator('[widget-id="use-downloads"]')).toContainText(
+				'4',
+				{ timeout: 30_000 },
+			)
+		} finally {
+			await fx.cleanupAll()
+			await fx.dispose()
+		}
 	})
 
 	test('the federation report is reachable and titled', async ({ page }) => {

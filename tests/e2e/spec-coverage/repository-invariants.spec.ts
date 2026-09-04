@@ -162,62 +162,84 @@ test.describe('app-packaging (repository invariants)', () => {
 
 // ── frontend-performance ─────────────────────────────────────────────────────
 
-/** Files FEP-001 names as single-`cloneDeep` call sites. */
-const SINGLE_CLONE_FILES = [
-	'src/modals/object/ObjectModal.vue',
-	'src/modals/menu/ViewMenuModal.vue',
-	'src/modals/menuItem/MenuItemForm.vue',
-	'src/dialogs/page/DeletePageContentDialog.vue',
-]
+/**
+ * Walk `src/` and return every repository-relative source path.
+ *
+ * FEP-001 used to name four files. Three of them, and the only multi-function
+ * call site, left with the CMS surfaces, so the rule now holds over the whole
+ * tree. Walking it means a file added tomorrow is covered without an edit here,
+ * and it removes the failure mode where deleting the named file made the check
+ * vacuous.
+ *
+ * @return Repository-relative paths of every source file under `src/`.
+ */
+function sourceFiles(): string[] {
+	const out: string[] = []
+	const walk = (dir: string): void => {
+		for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+			const abs = path.join(dir, entry.name)
+			if (entry.isDirectory()) {
+				walk(abs)
+			} else if (/\.(vue|js|ts)$/.test(entry.name)) {
+				out.push(path.relative(ROOT, abs))
+			}
+		}
+	}
+	walk(path.join(ROOT, 'src'))
+	return out
+}
 
 test.describe('frontend-performance (repository invariants)', () => {
-	test(// @e2e frontend-performance::single-use-clonedeep-call-sites-use-structuredclone-not-lodash
-	'FEP-001 — single-clone call sites use structuredClone and import no lodash', async () => {
-		for (const rel of SINGLE_CLONE_FILES) {
+	test(// @e2e frontend-performance::no-file-in-the-source-tree-imports-lodash
+	'FEP-001 — no file under src/ imports lodash, by barrel or by module path', async () => {
+		const files = sourceFiles()
+		// Control on the walk itself: an empty list would pass the loop below
+		// for free, which is how a check that never ran looks like one that did.
+		expect(files.length, 'the src/ walk must find source files').toBeGreaterThan(
+			50,
+		)
+
+		const offenders = files.filter((rel) => {
 			const src = read(rel)
-			// "MUST NOT import lodash at all" — barrel or per-function path.
-			expect(src, `${rel} must not import lodash in any form`).not.toMatch(
-				/\bfrom\s+['"]lodash(\/[\w-]+)?['"]/,
+			return (
+				/\bfrom\s+['"]lodash(\/[\w-]+)?['"]/.test(src)
+				|| /\brequire\(\s*['"]lodash(\/[\w-]+)?['"]\s*\)/.test(src)
 			)
-			expect(src, `${rel} must not require lodash`).not.toMatch(
-				/\brequire\(\s*['"]lodash(\/[\w-]+)?['"]\s*\)/,
-			)
-			// And the clone must actually still happen, natively.
-			expect(src, `${rel} must clone via structuredClone`).toContain(
-				'structuredClone(',
-			)
-		}
+		})
+		expect(offenders, 'no source file may import lodash').toEqual([])
 	})
 
-	test(// @e2e frontend-performance::multi-function-call-site-cherry-picks-named-lodash-modules
-	'FEP-001 — the multi-function call site cherry-picks named lodash modules', async () => {
-		const rel = 'src/modals/pageContents/PageContentForm.vue'
-		const src = read(rel)
-		expect(src).toMatch(/import\s+cloneDeep\s+from\s+['"]lodash\/cloneDeep['"]/)
-		expect(src).toMatch(
-			/import\s+upperFirst\s+from\s+['"]lodash\/upperFirst['"]/,
+	test(// @e2e frontend-performance::the-surviving-clone-call-site-clones-natively
+	'FEP-001 — the surviving clone call site clones natively', async () => {
+		const rel = 'src/modals/object/ObjectModal.vue'
+		expect(read(rel), `${rel} must clone via structuredClone`).toContain(
+			'structuredClone(',
 		)
-		// The barrel specifically — `from 'lodash'` with no sub-path.
-		expect(src, `${rel} must not import the lodash barrel`).not.toMatch(
-			/\bfrom\s+['"]lodash['"]/,
-		)
+	})
+
+	test(// @e2e frontend-performance::lodash-is-not-a-declared-dependency
+	'FEP-001 — lodash is not a declared dependency', async () => {
+		const pkg = JSON.parse(read('package.json'))
+		const declared = {
+			...(pkg.dependencies ?? {}),
+			...(pkg.devDependencies ?? {}),
+		}
+		// Control: the manifest really was parsed and really does declare things.
+		expect(Object.keys(declared).length).toBeGreaterThan(10)
+
+		expect(Object.hasOwn(declared, 'lodash')).toBe(false)
+		expect(Object.hasOwn(declared, '@types/lodash')).toBe(false)
 	})
 })
 
 // ── notifications ────────────────────────────────────────────────────────────
 
 /** Schemas that carry no lifecycle or owner field to notify against. */
-const OWNERLESS_CONFIG_SCHEMAS = [
-	'page',
-	'menu',
-	'theme',
-	'glossary',
-	'organization',
-]
+const OWNERLESS_CONFIG_SCHEMAS = ['theme', 'glossary', 'usageCounter']
 
 test.describe('notifications (repository invariants)', () => {
 	test(// @e2e notifications::no-notifications-on-ownerless-config-schemas
-	'NTF — the ownerless CMS-config schemas declare no notification rules', async () => {
+	'NTF — the ownerless config schemas declare no notification rules', async () => {
 		const schemas = registerSchemas()
 		for (const name of OWNERLESS_CONFIG_SCHEMAS) {
 			expect(schemas[name], `the ${name} schema must exist`).toBeTruthy()

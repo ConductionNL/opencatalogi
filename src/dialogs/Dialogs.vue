@@ -12,8 +12,6 @@ import { navigationStore } from './../store/store.js'
 		<DeleteAttachmentDialog
 			v-if="navigationStore.dialog === 'deleteAttachment'" />
 		<UploadFiles />
-		<DeletePageContentDialog
-			v-if="navigationStore.dialog === 'deletePageContent'" />
 	</div>
 </template>
 
@@ -24,7 +22,6 @@ import CopyObjectDialog from './generic/CopyObjectDialog.vue'
 import DeleteObjectDialog from './generic/DeleteObjectDialog.vue'
 import DeleteListingDialog from './listing/DeleteListingDialog.vue'
 import ViewLogDialog from './logs/ViewLogDialog.vue'
-import DeletePageContentDialog from './page/DeletePageContentDialog.vue'
 
 export default {
 	name: 'Dialogs',
@@ -34,7 +31,6 @@ export default {
 		DeleteListingDialog,
 		ViewLogDialog,
 		DeleteAttachmentDialog,
-		DeletePageContentDialog,
 	},
 }
 </script>
