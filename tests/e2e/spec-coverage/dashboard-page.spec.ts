@@ -65,6 +65,69 @@ test.describe('dashboard-page', () => {
 		expect(fatalErrors(errors)).toHaveLength(0)
 	})
 
+	test(// @e2e dashboard::usage-card-draws-from-usage-counters
+	'Dashboard — the usage card shows publication views from the usage counters, not audit-trail reads', async ({
+		page,
+	}) => {
+		const errors = trackPageErrors(page)
+
+		// Record what the dashboard asks the server for. The old "Traffic"
+		// card read OpenRegister's audit-trail chart (every API object read,
+		// admins included) and labelled it "Requests". The Activity card still
+		// legitimately reads that chart, so the honest assertion is: exactly one
+		// audit-trail call (Activity), and the usage series is called.
+		const auditCalls: string[] = []
+		page.on('request', (req) => {
+			if (req.url().includes('audit-trail-actions')) auditCalls.push(req.url())
+		})
+		const seriesResponse = page.waitForResponse(
+			(res) =>
+				res.url().includes('/apps/opencatalogi/api/stats/series')
+				&& res.request().method() === 'GET',
+			{ timeout: 30000 },
+		)
+
+		await bootApp(page)
+		await expect(
+			page.locator('[data-testid="cn-dashboard-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+
+		// The card is titled honestly.
+		await expect(
+			content(page)
+				.getByRole('heading', { name: /^Publication views$/i })
+				.first(),
+		).toBeVisible({ timeout: 15000 })
+
+		// The usage series endpoint answered with the counter shape.
+		const res = await seriesResponse
+		expect(res.status()).toBe(200)
+		const body = await res.json()
+		expect(Array.isArray(body.series)).toBe(true)
+		expect(body).toHaveProperty('countingStart')
+
+		// The counting-start note qualifies the numbers either way.
+		await expect(
+			content(page)
+				.getByText(/not unique visitors/i)
+				.first(),
+		).toBeVisible({ timeout: 15000 })
+
+		// No card relabels audit-trail reads as "Requests" or "Traffic".
+		await expect(
+			content(page).getByText('Requests', { exact: true }),
+		).toHaveCount(0)
+		await expect(
+			content(page).getByRole('heading', { name: /^Traffic$/i }),
+		).toHaveCount(0)
+
+		// Only the Activity card reads the audit trail: at most one call, and
+		// never a second one for the usage card.
+		expect(auditCalls.length).toBeLessThanOrEqual(1)
+
+		expect(fatalErrors(errors)).toHaveLength(0)
+	})
+
 	test(// @e2e dashboard::refresh-reloads-dashboard-data
 	'Dashboard — Refresh action reloads the dashboard without a fatal error', async ({
 		page,
