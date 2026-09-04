@@ -65,7 +65,7 @@ test.describe('dashboard-page', () => {
 		expect(fatalErrors(errors)).toHaveLength(0)
 	})
 
-	test(// @e2e dashboard::usage-card-draws-from-usage-counters
+	test(// @e2e publication-usage-analytics::usage-card-draws-from-the-usage-counters
 	'Dashboard — the usage card shows publication views from the usage counters, not audit-trail reads', async ({
 		page,
 	}) => {
