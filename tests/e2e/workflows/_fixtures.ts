@@ -143,52 +143,104 @@ export class Fixtures {
 	 * hardcoded ids would have.
 	 */
 	private async resolveRegisterAndSchemas(): Promise<void> {
-		try {
-			const regRes = await this.ctx.get(
-				'/index.php/apps/openregister/api/registers?_limit=300',
+		const regRes = await this.ctx.get(
+			'/index.php/apps/openregister/api/registers?_limit=300',
+		)
+		if (regRes.ok()) {
+			const body = await regRes.json()
+			const list = Array.isArray(body) ? body : body.results || []
+			const reg = list.find(
+				(r: Record<string, unknown>) => r.slug === REGISTER_SLUG,
 			)
-			if (regRes.ok()) {
-				const body = await regRes.json()
-				const list = Array.isArray(body) ? body : body.results || []
-				const reg = list.find(
-					(r: Record<string, unknown>) => r.slug === REGISTER_SLUG,
-				)
-				if (reg && (reg.id || reg.id === 0))
-					REG_PUBLICATION = reg.id as number | string
-				const manifestReg = list.find(
-					(r: Record<string, unknown>) =>
-						r.slug === MANIFEST_REGISTER_SLUG,
-				)
-				// Fall back to the publication register rather than to a
-				// hardcoded id: on an instance with only one of the two, that is
-				// the same register, and on an instance with neither the failure
-				// belongs at the create call, not at a number that happens to
-				// name some other app's register.
-				REG_OPENCATALOGI =
-					manifestReg && (manifestReg.id || manifestReg.id === 0)
-						? (manifestReg.id as number | string)
-						: REG_PUBLICATION
-			}
-			const schRes = await this.ctx.get(
-				'/index.php/apps/openregister/api/schemas?_limit=1000',
+			if (reg && (reg.id || reg.id === 0))
+				REG_PUBLICATION = reg.id as number | string
+			const manifestReg = list.find(
+				(r: Record<string, unknown>) => r.slug === MANIFEST_REGISTER_SLUG,
 			)
-			if (schRes.ok()) {
-				const body = await schRes.json()
-				const list = Array.isArray(body) ? body : body.results || []
-				const bySlug = new Map<string, number | string>()
-				for (const s of list)
-					if (s && s.slug)
-						bySlug.set(s.slug as string, s.id as number | string)
-				if (bySlug.has(SCHEMA_SLUGS.publication))
-					SCHEMA_PUBLICATION = bySlug.get(SCHEMA_SLUGS.publication)!
-				if (bySlug.has(SCHEMA_SLUGS.catalog))
-					SCHEMA_CATALOG = bySlug.get(SCHEMA_SLUGS.catalog)!
-				if (bySlug.has(SCHEMA_SLUGS.usageCounter))
-					SCHEMA_USAGE_COUNTER = bySlug.get(SCHEMA_SLUGS.usageCounter)!
-			}
-		} catch {
-			/* keep dev-box seed ids on any resolution failure */
+			// Fall back to the publication register rather than to a
+			// hardcoded id: on an instance with only one of the two, that is
+			// the same register, and on an instance with neither the failure
+			// belongs at the create call, not at a number that happens to
+			// name some other app's register.
+			REG_OPENCATALOGI =
+				manifestReg && (manifestReg.id || manifestReg.id === 0)
+					? (manifestReg.id as number | string)
+					: REG_PUBLICATION
 		}
+		// A PAGE IS NOT THE SET, and a SLUG IS NOT UNIQUE. Both bit here.
+		//
+		// This asked for `?_limit=1000` and treated the page as everything.
+		// On an instance running the whole fleet there are 1,876 schemas, so
+		// `catalog` and `publication` fell off the end, `bySlug` never held
+		// them, and the hardcoded fallbacks below stood — pointing at
+		// whichever app owns ids 53 and 54 on that instance. The suite then
+		// failed with `create 18/53 failed: The required properties (term,
+		// definition, portal) are missing`, which is a GLOSSARY complaining
+		// about a publication write, and reads as a data bug rather than a
+		// resolution one.
+		//
+		// Resolving inside THIS app's register fixes both at once: the
+		// register names its own schema ids, so the set is small, complete,
+		// and cannot contain another app's same-named schema.
+		const resolved = await this.schemasOfRegister(REG_PUBLICATION)
+		if (resolved.has(SCHEMA_SLUGS.publication))
+			SCHEMA_PUBLICATION = resolved.get(SCHEMA_SLUGS.publication)!
+		if (resolved.has(SCHEMA_SLUGS.catalog))
+			SCHEMA_CATALOG = resolved.get(SCHEMA_SLUGS.catalog)!
+		if (resolved.has(SCHEMA_SLUGS.usageCounter))
+			SCHEMA_USAGE_COUNTER = resolved.get(SCHEMA_SLUGS.usageCounter)!
+
+		// FAIL HERE, not at the create. A slug that did not resolve leaves a
+		// hardcoded id in place, and that id belongs to somebody. Better to
+		// say which slug is missing than to write a publication into another
+		// app's glossary and report its validation error.
+		const unresolved = [SCHEMA_SLUGS.publication, SCHEMA_SLUGS.catalog].filter(
+			(slug) => !resolved.has(slug),
+		)
+		if (unresolved.length > 0) {
+			throw new Error(
+				`Fixtures.init(): register "${REGISTER_SLUG}" (id ${REG_PUBLICATION}) `
+					+ `does not carry ${unresolved.join(', ')}. `
+					+ 'Run tests/e2e/ci-seed.sh against this instance first.',
+			)
+		}
+	}
+
+	/**
+	 * The slug -> id map for the schemas a register actually carries.
+	 *
+	 * Reads the register's own `schemas` list and resolves each id, rather than
+	 * listing every schema on the instance and filtering by slug. On a fleet
+	 * instance that list runs to thousands and a slug is not unique across apps,
+	 * so filtering by slug is both paginated and ambiguous.
+	 *
+	 * @param register The register id or slug.
+	 *
+	 * @return Slug to schema id, for that register only.
+	 */
+	private async schemasOfRegister(
+		register: number | string,
+	): Promise<Map<string, number | string>> {
+		const out = new Map<string, number | string>()
+
+		const res = await this.ctx.get(
+			`/index.php/apps/openregister/api/registers/${register}`,
+		)
+		if (!res.ok()) return out
+
+		const body = await res.json()
+		const ids: Array<number | string> = body?.schemas ?? []
+
+		for (const id of ids) {
+			const schemaRes = await this.ctx.get(
+				`/index.php/apps/openregister/api/schemas/${id}`,
+			)
+			if (!schemaRes.ok()) continue
+			const schema = await schemaRes.json()
+			if (schema?.slug) out.set(String(schema.slug), schema.id ?? id)
+		}
+
+		return out
 	}
 
 	get api(): APIRequestContext {
