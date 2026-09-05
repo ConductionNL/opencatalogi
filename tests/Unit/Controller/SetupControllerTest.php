@@ -437,6 +437,37 @@ class SetupControllerTest extends TestCase {
 	}
 
 	/**
+	 * Picking the shipped dataset stores it, and the load step then imports it.
+	 *
+	 * The two halves are one flow: the choice step writes the answer through
+	 * `config()` and the run-action step reads it back, because
+	 * `CnSetupWizard::runAction()` posts no body and so cannot carry it.
+	 */
+	public function testPickingTheDatasetAndThenLoadingImportsIt(): void {
+		$this->demoDataService->method('listChoices')->willReturn(
+			[
+				['id' => 'none', 'label' => 'None', 'description' => 'Nothing.', 'objectCount' => 0, 'icon' => 'CloseCircleOutline'],
+				['id' => 'demo', 'label' => 'Example data', 'description' => 'Sample values.', 'objectCount' => 48, 'icon' => 'DatabaseOutline'],
+			]
+		);
+		$this->request->method('getParams')->willReturn(['demo_dataset' => 'demo']);
+
+		$saved = $this->controller->config()->getData();
+		$this->assertContains('demo_dataset', $saved['saved']);
+		$this->assertSame('demo', $this->configValues['demo_dataset']);
+
+		$this->demoDataService->expects($this->once())
+			->method('install')
+			->willReturn(['objects' => 48, 'schemas' => 16]);
+
+		$body = $this->controller->action('load-demo-data')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertStringContainsString('48', $body['message']);
+		$this->assertSame('installed', $this->configValues['demo_data_decided']);
+	}
+
+	/**
 	 * The happy path, and the numbers reach the operator.
 	 *
 	 * 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be told

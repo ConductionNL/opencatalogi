@@ -1,6 +1,8 @@
 OC.L10N.register(
     "opencatalogi",
     {
+        "Store": "Store",
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.",
         "Load example data?": "Load example data?",
         "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.",
         "Load the example data": "Load the example data",
