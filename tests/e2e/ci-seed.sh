@@ -124,8 +124,30 @@ except json.JSONDecodeError:
 items = body if isinstance(body, list) else body.get('results', [])
 slugs = {i.get('slug') for i in items if isinstance(i, dict)}
 missing = [s for s in required if s not in slugs]
-print(f'[ci-seed] {kind} present: {sorted(s for s in slugs if s)}')
+
+# A PAGE IS NOT THE SET. This asked for one page and treated it as everything,
+# which is true on a CI instance running one app and false on any instance
+# running the fleet. Measured: 1,876 schemas on an instance with 19 apps
+# installed, a page of 1,000, and this reporting `publication`, `catalog` and
+# `usageCounter` missing while all three sat in the database. A verification
+# step that fails on a healthy instance is worse than no verification, because
+# the next person learns to ignore it.
+#
+# So distinguish "not there" from "not on this page" and say which.
+total = None
+if isinstance(body, dict):
+    total = body.get('total')
+truncated = (total is not None and isinstance(total, int) and total > len(items))
+
+print(f'[ci-seed] {kind}: {len(items)} returned'
+      + (f' of {total} total' if total is not None else ''))
+if missing and truncated:
+    print(f'::error::OpenCatalogi {kind} not found in the FIRST PAGE: {missing}')
+    print(f'::error::The endpoint reports {total} {kind} and returned {len(items)}, so this'
+          ' says nothing about whether they exist. Raise the page size in ci-seed.sh.')
+    sys.exit(1)
 if missing:
+    print(f'[ci-seed] {kind} present: {sorted(s for s in slugs if s)}')
     print(f'::error::OpenCatalogi {kind} missing after import: {missing}')
     sys.exit(1)
 print(f'[ci-seed] {kind} OK ({len(required)} required slugs present)')
@@ -139,7 +161,7 @@ verify "$REG_BODY" registers
 
 SCH_BODY="$(mktemp)"
 curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
-	"${BASE}/index.php/apps/openregister/api/schemas?_limit=1000" -o "$SCH_BODY"
+	"${BASE}/index.php/apps/openregister/api/schemas?_limit=10000" -o "$SCH_BODY"
 verify "$SCH_BODY" schemas
 
 echo "[ci-seed] OpenCatalogi register + schemas provisioned."
