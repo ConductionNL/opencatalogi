@@ -165,6 +165,19 @@ export function dynamicMasks(page: Page): Locator[] {
 		'.app-content-details',
 		'.app-sidebar',
 		'[class*="dashboard-detail"]',
+		// AND THE LIST ROWS THEMSELVES. A baseline over a live, seeded list is
+		// a picture of the data, not of the page: any run that seeds one extra
+		// publication moves it. Measured on an instance running the whole fleet
+		// — 3% of the pixels differed, entirely in the rows, on a page whose
+		// layout had not changed at all.
+		//
+		// What this project is for is the SHELL: header, filters, table frame,
+		// spacing, the empty state. What the rows contain is the data's
+		// business and is asserted by the functional specs, which can say
+		// which row is wrong. A screenshot can only say that some pixels moved.
+		'.cn-index-page__body',
+		'[class*="index-page__body"]',
+		'tbody',
 	]
 	return selectors.map((s) => page.locator(s))
 }
