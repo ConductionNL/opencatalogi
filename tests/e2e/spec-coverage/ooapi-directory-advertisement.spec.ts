@@ -78,11 +78,64 @@ async function idFor(
 	const rows: Array<Record<string, unknown>> =
 		body?.results ?? (Array.isArray(body) ? body : [])
 	const hit = rows.find((r) => r.slug === slug)
+
+	// A PAGE IS NOT THE SET. `_limit=200` is plenty of REGISTERS and nowhere
+	// near enough schemas: an instance running the fleet carries 1,876, so
+	// `catalog` was simply not on page one and this reported "the register
+	// import is a precondition" — blaming the import for a healthy instance.
+	// Schemas are resolved within their register instead (see schemaInRegister).
+	const total = typeof body?.total === 'number' ? body.total : rows.length
 	expect(
 		hit,
-		`${kind.slice(0, -1)} "${slug}" must exist — the register import is a precondition`,
+		`${kind.slice(0, -1)} "${slug}" must exist — searched ${rows.length} of ${total}`
+			+ (total > rows.length ? ', which is a PAGE, not the set' : ''),
 	).toBeTruthy()
 	return String(hit!.id)
+}
+
+/**
+ * The id of a schema, resolved inside the register that carries it.
+ *
+ * Scoped rather than global for two reasons that both bite on a fleet
+ * instance: the global list is paginated, and a schema slug is global per
+ * organisation, so `catalog` alone can name another app's schema as readily as
+ * this one's.
+ *
+ * @param api An authenticated API request context.
+ * @param registerId The register that owns the schema.
+ * @param slug The schema slug.
+ * @return The numeric id, as a string.
+ */
+async function schemaInRegister(
+	api: APIRequestContext,
+	registerId: string,
+	slug: string,
+): Promise<string> {
+	const regResp = await api.get(`${OR}/registers/${registerId}`, {
+		headers: { 'OCS-APIRequest': 'true' },
+	})
+	expect(
+		regResp.status(),
+		`GET ${OR}/registers/${registerId} must answer 200`,
+	).toBe(200)
+	const ids: Array<number | string> = (await regResp.json())?.schemas ?? []
+	expect(ids.length, `register ${registerId} must carry schemas`).toBeGreaterThan(
+		0,
+	)
+
+	for (const id of ids) {
+		const res = await api.get(`${OR}/schemas/${id}`, {
+			headers: { 'OCS-APIRequest': 'true' },
+		})
+		if (!res.ok()) continue
+		const schema = await res.json()
+		if (schema?.slug === slug) return String(schema.id ?? id)
+	}
+
+	throw new Error(
+		`schema "${slug}" is not in register ${registerId} (${ids.length} schemas checked)`
+			+ ' — run tests/e2e/ci-seed.sh against this instance',
+	)
 }
 
 /**
@@ -156,7 +209,7 @@ test.describe('OOAPI 5.0 federation directory advertisement', () => {
 	test.beforeAll(async ({ playwright, baseURL, storageState }) => {
 		const api = await playwright.request.newContext({ baseURL, storageState })
 		const register = await idFor(api, 'registers', 'publication')
-		const schema = await idFor(api, 'schemas', 'catalog')
+		const schema = await schemaInRegister(api, register, 'catalog')
 		catalogObjects = `${OR}/objects/${register}/${schema}`
 
 		// PRECONDITION, asserted loudly: `hasOoapi` must survive a write at all.
