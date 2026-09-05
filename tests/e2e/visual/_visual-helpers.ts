@@ -128,6 +128,27 @@ export async function waitForContentReady(page: Page): Promise<void> {
  * baseline. Returns the locators present on the page; absent ones are simply
  * not masked.
  */
+/**
+ * ⚠️ MASKING THE LIST ROWS WAS TRIED AND DOES NOT WORK YET.
+ *
+ * A baseline over a live, seeded list is a picture of the data, not of the
+ * page: on an instance running the whole fleet the `publications list` shot
+ * differed by 3% of its pixels, entirely in the rows, on a page whose layout
+ * had not changed at all.
+ *
+ * `.cn-index-page__body`, `[class*="index-page__body"]` and `tbody` were added
+ * here to mask them. All three match ZERO elements on that page — the count was
+ * checked afterwards, and the change was reverted rather than left in place
+ * looking like it did something. `[class*="list-item"]` matches 65, but every
+ * one of them is in the nav sidebar, which is exactly the chrome the shot
+ * exists to capture; scoping it under `[data-testid="cn-index-page"]` or
+ * `.app-content` matches zero again.
+ *
+ * So the row markup still needs finding before this can be masked. Until then
+ * the visual project stays what its config already says it is: opt-in,
+ * non-gating, and excluded from the CI config (`tests/e2e/playwright.config.ts`
+ * declares only the regression project). Its baselines move with the data.
+ */
 export function dynamicMasks(page: Page): Locator[] {
 	const selectors = [
 		// Nextcloud header right-side: user menu / avatar / notifications /
@@ -165,19 +186,6 @@ export function dynamicMasks(page: Page): Locator[] {
 		'.app-content-details',
 		'.app-sidebar',
 		'[class*="dashboard-detail"]',
-		// AND THE LIST ROWS THEMSELVES. A baseline over a live, seeded list is
-		// a picture of the data, not of the page: any run that seeds one extra
-		// publication moves it. Measured on an instance running the whole fleet
-		// — 3% of the pixels differed, entirely in the rows, on a page whose
-		// layout had not changed at all.
-		//
-		// What this project is for is the SHELL: header, filters, table frame,
-		// spacing, the empty state. What the rows contain is the data's
-		// business and is asserted by the functional specs, which can say
-		// which row is wrong. A screenshot can only say that some pixels moved.
-		'.cn-index-page__body',
-		'[class*="index-page__body"]',
-		'tbody',
 	]
 	return selectors.map((s) => page.locator(s))
 }
