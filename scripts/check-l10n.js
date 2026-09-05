@@ -317,6 +317,72 @@ function collectPhpTranslated() {
 }
 
 /**
+ * Every user-visible string a PHP array DECLARES for the client to render.
+ *
+ * A third source of used keys, alongside `collectPhpTranslated()` and
+ * `collectManifestStrings()`, and it exists for the same reason both of those
+ * do: the string is live, and nothing this script scans can see that.
+ *
+ * The setup wizard's card step is the case that forced it. A `choice` step with
+ * `optionsSource` carries NO options in the manifest — the server returns them,
+ * so the label and the description of every card are PHP array values, and the
+ * wizard translates each one client-side by literal lookup. To this script they
+ * looked like orphans in `en.js`, and deleting them is the one outcome that
+ * must not happen: the cards would render English inside a Dutch wizard, in
+ * every locale, with nothing going red.
+ *
+ * The fields are the manifest collector's fields, because a PHP array using
+ * `label` / `description` is the same kind of thing: data a renderer walks.
+ * Adjacent string literals joined by `.` are read as one value — PHP wraps long
+ * prose that way and a first-fragment-only match would silently miss it.
+ *
+ * @return {Set<string>} Strings a PHP array declares for the client.
+ */
+function collectPhpDeclared() {
+	const FIELDS = [
+		'title',
+		'body',
+		'task',
+		'label',
+		'description',
+		'emptyText',
+		'placeholder',
+		'subtitle',
+		'helpText',
+	]
+	const out = new Set()
+	const dir = path.join(ROOT, 'lib')
+	if (!fs.existsSync(dir)) {
+		return out
+	}
+
+	// One quoted PHP string, escapes honoured.
+	const PART = String.raw`'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)"`
+
+	for (const file of walk(dir, ['.php'])) {
+		const source = fs.readFileSync(file, 'utf8')
+		for (const field of FIELDS) {
+			const re = new RegExp(
+				String.raw`['"]${field}['"]\s*=>\s*\(?\s*((?:(?:${PART})\s*\.?\s*)+)`,
+				'g',
+			)
+			let m
+			while ((m = re.exec(source)) !== null) {
+				const parts = [...m[1].matchAll(new RegExp(PART, 'g'))].map((q) =>
+					(q[1] ?? q[2] ?? '').replace(/\\(['"\\])/g, '$1'),
+				)
+				const joined = parts.join('')
+				if (joined.trim()) {
+					out.add(joined)
+				}
+			}
+		}
+	}
+
+	return out
+}
+
+/**
  * Every user-visible string the MANIFEST declares.
  *
  * The same shape as collectPhpTranslated(): a source of used keys that lives
@@ -402,13 +468,20 @@ function main() {
 	const usedKeys = new Set(found.keys())
 	const phpKeys = collectPhpTranslated()
 	const manifestKeys = collectManifestStrings()
+	const phpDeclared = collectPhpDeclared()
 
 	const missing = [...usedKeys, ...manifestKeys].filter((k) => !keys.has(k)).sort()
 	// A key the SERVER translates is not an orphan, even though nothing in src/
 	// references it — see collectPhpTranslated(). The same is true of a string
 	// the MANIFEST declares — see collectManifestStrings().
 	const unused = [...keys]
-		.filter((k) => !usedKeys.has(k) && !phpKeys.has(k) && !manifestKeys.has(k))
+		.filter(
+			(k) =>
+				!usedKeys.has(k)
+				&& !phpKeys.has(k)
+				&& !manifestKeys.has(k)
+				&& !phpDeclared.has(k),
+		)
 		.sort()
 	const unwrapped = findUnwrapped(vueFiles, keys)
 
