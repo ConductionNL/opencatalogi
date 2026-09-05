@@ -82,7 +82,21 @@ class SetupController extends Controller {
 	private const WRITABLE_CONFIG_KEYS = [
 		'default_catalog_scope',
 		'default_directory_url',
+		self::DATASET_KEY,
 	];
+
+	/**
+	 * App-config key holding the dataset the operator picked.
+	 *
+	 * The wizard's `choice` step writes it through `POST /api/setup/config`, and
+	 * the `run-action` step that follows reads it back. Two steps rather than
+	 * one because `CnSetupWizard::runAction()` posts to
+	 * `/api/setup/action/{action}` with no body: an action cannot carry the
+	 * answer, so the answer has to be stored before the action runs.
+	 *
+	 * @var string
+	 */
+	private const DATASET_KEY = 'demo_dataset';
 
 	/**
 	 * Required register/schema keys whose presence means publishing is wired.
@@ -170,9 +184,15 @@ class SetupController extends Controller {
 		// data has finished the step; re-offering it on every visit would make
 		// "no thanks" impossible to express.
 		$demoDecided = ($this->config->getValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, '') !== '');
+		$pickedDataset = $this->config->getValueString($this->appName, self::DATASET_KEY, '');
 
 		$steps = [
-			'demo-data' => ['done' => $demoDecided],
+			'demo-data' => ['done' => ($pickedDataset !== '')],
+			// "None" is an ANSWER, so the load step is finished the moment it
+			// is chosen: there is nothing left for the operator to run.
+			'load-demo-data' => [
+				'done' => ($demoDecided === true || $pickedDataset === DemoDataService::NONE_DATASET),
+			],
 			'welcome' => ['done' => true],
 			'config-check' => ['done' => $registersWired],
 			'catalog-scope' => ['done' => $scopeChosen],
@@ -190,6 +210,10 @@ class SetupController extends Controller {
 			[
 				'version' => self::SETUP_VERSION,
 				'completed' => $completed,
+				// The choice step reads its options from here: it declares
+				// `optionsSource: datasets` and no options of its own, so a
+				// dataset missing from this list is a dataset nobody can pick.
+				'datasets' => $this->demoDataService->listChoices(),
 				'steps' => $steps,
 			]
 		);
@@ -243,6 +267,11 @@ class SetupController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function action(string $actionId): JSONResponse {
 		switch ($actionId) {
+			// `install-demo-data` is the id the step used before it asked WHICH
+			// dataset, and it still means "import the one this app ships". Kept
+			// so an older manifest or a runbook that posts it keeps working.
+			case 'load-demo-data':
+				return $this->loadDataset();
 			case 'install-demo-data':
 				return $this->installDemoData();
 			case 'skip-demo-data':
@@ -271,6 +300,35 @@ class SetupController extends Controller {
 	 * Install the shipped demo dataset (ADR-111 rule 4).
 	 *
 	 * @return JSONResponse The outcome, carrying the counts.
+	 */
+	private function loadDataset(): JSONResponse {
+		$picked = $this->config->getValueString($this->appName, self::DATASET_KEY, '');
+
+		// 🔴 NO SILENT DEFAULT. Importing here because the operator clicked Run
+		// one step early would plant example objects nobody asked for.
+		if ($picked === '') {
+			return new JSONResponse(
+				['success' => false, 'message' => $this->l10n->t('Pick a dataset first.')],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		if ($picked === DemoDataService::NONE_DATASET) {
+			$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
+
+			return new JSONResponse(
+				['success' => true, 'message' => $this->l10n->t('No example data was loaded.')]
+			);
+		}
+
+		return $this->installDemoData();
+
+	}//end loadDataset()
+
+	/**
+	 * Import the dataset this app ships.
+	 *
+	 * @return JSONResponse `{ success, message }`.
 	 */
 	private function installDemoData(): JSONResponse {
 		try {
@@ -308,6 +366,11 @@ class SetupController extends Controller {
 	 * @return JSONResponse The outcome.
 	 */
 	private function skipDemoData(): JSONResponse {
+		// 🔴 IT ANSWERS *BOTH* STEPS. The wizard now has a choice step and a
+		// run-action step; closing only the second leaves the first
+		// outstanding, and CnAppRoot opens the wizard while ANY optional step
+		// is outstanding.
+		$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataService::NONE_DATASET);
 		$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 		return new JSONResponse(
