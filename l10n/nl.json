@@ -922,8 +922,6 @@
         "Content blocks": "Inhoudsblokken",
         "Menu": "Menu",
         "Flow": "Flow",
-        "Demo data (optional)": "Demodata (optioneel)",
-        "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install.": "Laad een kleine voorbeeldcatalogus met publicaties, aanbiedingen en organisaties, zodat lijsten, zoeken en de publicatiedetailpagina's meteen een werkend product tonen. Optioneel en veilig om vaker uit te voeren. Sla dit over bij een productie-installatie.",
         "Where the automation lives": "Waar de automatisering zit",
         "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them. Nothing to build now.": "Flows zijn wat er gebeurt zonder dat iemand klikt: een herinnering voordat een termijn verstrijkt, een bevestiging bij indiening. Hier lees en bewerk je ze. Je hoeft nu niets te bouwen.",
         "Open Flows in the menu": "Open Flows in het menu",
