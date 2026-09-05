@@ -30,9 +30,11 @@
 namespace OCA\OpenCatalogi\Listener;
 
 use OCA\OpenCatalogi\Service\EventService;
+use OCA\OpenCatalogi\Service\RetentionService;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use Psr\Log\LoggerInterface;
 
 /**
  * Event listener for object creation events from OpenRegister.
@@ -50,8 +52,14 @@ use OCP\EventDispatcher\IEventListener;
 class ObjectCreatedEventListener implements IEventListener {
 	/**
 	 * ObjectCreatedEventListener constructor.
+	 *
+	 * @param RetentionService $retentionService Stamps retention defaults at publication time (RET-004).
+	 * @param LoggerInterface $logger Logger for the retention side effect.
 	 */
-	public function __construct() {
+	public function __construct(
+		private readonly RetentionService $retentionService,
+		private readonly LoggerInterface $logger,
+	) {
 
 	}//end __construct()
 
@@ -74,6 +82,11 @@ class ObjectCreatedEventListener implements IEventListener {
 		if ($event instanceof ObjectCreatedEvent === false) {
 			return;
 		}
+
+		// An object created with its publicationDate already set is published from
+		// birth: stamp retention defaults now (RET-004), independent of the
+		// auto-publishing options below.
+		$this->stampRetentionDefaults(event: $event);
 
 		try {
 			// Get services from the server container.
@@ -128,19 +141,45 @@ class ObjectCreatedEventListener implements IEventListener {
 					);
 				}
 			}
-		} catch (\Exception $e) {
-			// Log unexpected errors and continue gracefully.
-			if (isset($logger) === false) {
-				$logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
-			}
-
-			$logger->error(
+		} catch (\Throwable $e) {
+			// Log unexpected errors and continue gracefully. \Throwable, not
+			// \Exception: a missing class or type error is a PHP Error, and an
+			// uncaught one here would abort the OR save pipeline.
+			$this->logger->error(
 				message: 'OpenCatalogi: Exception in object creation event listener: ' . $e->getMessage(),
 				context: ['exception' => $e]
 			);
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Stamp retention defaults when an object is created already published (RET-004).
+	 *
+	 * The register/schema guard, the publicationDate requirement, the
+	 * fill-empties-only rule and the no-change-no-save idempotency all live in
+	 * {@see RetentionService::applyDefaultsAtPublication()}. Failures are logged
+	 * and swallowed: retention stamping must never block the OpenRegister save
+	 * pipeline.
+	 *
+	 * @param ObjectCreatedEvent $event The OR object creation event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	private function stampRetentionDefaults(ObjectCreatedEvent $event): void {
+		try {
+			$objectData = $this->convertObjectEntityToArray(objectEntity: $event->getObject());
+			$this->retentionService->applyDefaultsAtPublication(objectData: $objectData);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				message: 'OpenCatalogi: failed to stamp retention defaults at publication: ' . $e->getMessage(),
+				context: ['exception' => $e]
+			);
+		}
+
+	}//end stampRetentionDefaults()
 
 	/**
 	 * Convert ObjectEntity to array format for EventService.

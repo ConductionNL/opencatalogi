@@ -39,7 +39,7 @@
  */
 
 import { expect, test } from '@playwright/test'
-import { BASE_URL } from './base-url'
+import { BASE_URL } from './base-url.ts'
 
 /**
  * The demo portal is public by design — `authentication.modes: ["public"]`.

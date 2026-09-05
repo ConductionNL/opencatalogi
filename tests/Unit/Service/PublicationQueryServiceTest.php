@@ -483,6 +483,50 @@ class PublicationQueryServiceTest extends TestCase {
 	}
 
 	/**
+	 * THE SHAPE THE FLEET ACTUALLY WRITES, and the one that matched nothing.
+	 *
+	 * A document is created with `publication: {slug, title}` as a plain
+	 * property — no id, and not inside `_relations`. Before M1b that resolved
+	 * through no path at all: M1 reads `publication.id`, M2 reads the
+	 * `_relations` array, and the refinement query asks the INVERSE question
+	 * (a publication whose relations contain this document), which a
+	 * document→publication write never answers.
+	 *
+	 * The row was then dropped by the `publicationSummary === null` guard, and
+	 * an empty result set is indistinguishable from "nothing matched". It cost
+	 * a body-text content search every one of its document hits.
+	 */
+	public function testDocumentCarryingPublicationSlugWithoutIdIsResolvedAndKept(): void {
+		$publicationRow = [
+			'@self' => ['id' => 'pub-uuid-3', 'slug' => 'content-search-publication', 'schema' => 1],
+			'title' => 'Content Search Publication',
+		];
+		$documentRow = [
+			'@self' => ['id' => 'doc-uuid-3', 'schema' => 2],
+			'title' => 'Content Search Document',
+			// No id, and no `_relations` — exactly what createDocument() writes.
+			'publication' => [
+				'slug'  => 'content-search-publication',
+				'title' => 'Content Search Publication',
+			],
+		];
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+			['results' => [$publicationRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(1, $out['results'], 'a document carrying only publication.slug must survive N4a');
+		$emitted = $out['results'][0];
+		$this->assertSame('doc-uuid-3', $emitted['@self']['id']);
+		$this->assertSame('Content Search Document', $emitted['title'], 'the DOCUMENT is what surfaces, not its publication');
+		$this->assertArrayHasKey('publication', $emitted);
+		$this->assertSame('content-search-publication', $emitted['publication']['slug']);
+	}
+
+	/**
 	 * Documents storing the linked publication as `_relations['publication']`
 	 * (UUID form, canonical/new) MUST resolve via the M1 UUID fast-path
 	 * (`ObjectService::find()`) without spending a slug scan.
@@ -776,6 +820,209 @@ class PublicationQueryServiceTest extends TestCase {
 	private function withDefaultCatalog(array $params = []): array {
 		return $params + ['_catalog' => 'default-catalog'];
 	}
+
+	// -------------------------------------------------------------------------
+	// WOO-517 — content search must admit the document schema.
+	//
+	// A catalog is wired at the publication register + PUBLICATION schema, so the
+	// resolved scope is publication-only. OR applies that same scope to every
+	// chunk owner it resolves, and a body-text chunk belongs to a DOCUMENT, so
+	// every document match was discarded inside OR before this assembler saw a
+	// row. Measured on the dev instance: `{"results":[],"total":1}`.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * The document schema carried by a scope register is returned.
+	 *
+	 * @return void
+	 */
+	public function testDocumentSchemaOfAScopeRegisterIsReturned(): void {
+		$this->wireMappers(registerSchemas: [31 => [1113, 1114]], slugs: [1113 => 'publication', 1114 => 'document']);
+
+		$this->assertSame(
+			[1114],
+			$this->invokePrivate('resolveDocumentSchemaIds', [[31], [1113]])
+		);
+
+	}//end testDocumentSchemaOfAScopeRegisterIsReturned()
+
+	/**
+	 * A schema already in scope is not returned again, so the caller's
+	 * array_merge cannot produce a duplicate `_schemas` entry.
+	 *
+	 * @return void
+	 */
+	public function testASchemaAlreadyInScopeIsNotReturnedAgain(): void {
+		$this->wireMappers(registerSchemas: [31 => [1113, 1114]], slugs: [1113 => 'publication', 1114 => 'document']);
+
+		$this->assertSame(
+			[],
+			$this->invokePrivate('resolveDocumentSchemaIds', [[31], [1113, 1114]])
+		);
+
+	}//end testASchemaAlreadyInScopeIsNotReturnedAgain()
+
+	/**
+	 * A register carrying no document schema contributes nothing. Widening past
+	 * the catalog boundary is exactly what the caller's `unset()` of
+	 * client-supplied `_schemas` exists to prevent.
+	 *
+	 * @return void
+	 */
+	public function testARegisterWithNoDocumentSchemaContributesNothing(): void {
+		$this->wireMappers(registerSchemas: [31 => [1113]], slugs: [1113 => 'publication']);
+
+		$this->assertSame(
+			[],
+			$this->invokePrivate('resolveDocumentSchemaIds', [[31], [1113]])
+		);
+
+	}//end testARegisterWithNoDocumentSchemaContributesNothing()
+
+	/**
+	 * Two registers each carrying a document schema yield both, deduped.
+	 *
+	 * @return void
+	 */
+	public function testDocumentSchemasAcrossSeveralRegistersAreCollectedOnce(): void {
+		$this->wireMappers(
+			registerSchemas: [31 => [1113, 1114], 32 => [1114, 2114]],
+			slugs: [1113 => 'publication', 1114 => 'document', 2114 => 'document']
+		);
+
+		$this->assertSame(
+			[1114, 2114],
+			$this->invokePrivate('resolveDocumentSchemaIds', [[31, 32], [1113]])
+		);
+
+	}//end testDocumentSchemasAcrossSeveralRegistersAreCollectedOnce()
+
+	/**
+	 * An empty register scope short-circuits: no mapper is asked anything.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyRegisterScopeAsksTheMapperNothing(): void {
+		$this->container->expects($this->never())->method('get');
+
+		$this->assertSame([], $this->invokePrivate('resolveDocumentSchemaIds', [[], [1113]]));
+
+	}//end testAnEmptyRegisterScopeAsksTheMapperNothing()
+
+	/**
+	 * A search must not fail because OR's mappers are unavailable: the widening
+	 * is an enhancement, not a precondition.
+	 *
+	 * @return void
+	 */
+	public function testUnavailableMappersDegradeToNoWidening(): void {
+		$this->container->method('get')->willThrowException(new \RuntimeException('no OR'));
+
+		$this->assertSame([], $this->invokePrivate('resolveDocumentSchemaIds', [[31], [1113]]));
+
+	}//end testUnavailableMappersDegradeToNoWidening()
+
+	/**
+	 * A register that cannot be read, and a schema whose slug cannot be
+	 * resolved, each contribute nothing rather than failing the search.
+	 *
+	 * @return void
+	 */
+	public function testUnreadableRegisterAndUnresolvableSlugAreSkipped(): void {
+		$registerMapper = new class {
+			public function find(int $id): object {
+				if ($id === 31) {
+					throw new \RuntimeException('gone');
+				}
+
+				return new class {
+					public function getSchemas(): array {
+						return [1114, 9999];
+					}
+				};
+			}
+		};
+		$schemaMapper = new class {
+			public function find(int $id): object {
+				if ($id === 9999) {
+					throw new \RuntimeException('gone');
+				}
+
+				return new class {
+					public function getSlug(): string {
+						return 'document';
+					}
+				};
+			}
+		};
+		$this->container->method('get')->willReturnCallback(
+			fn(string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
+		);
+
+		// Register 31 throws; register 32 yields 1114 and skips the unresolvable 9999.
+		$this->assertSame([1114], $this->invokePrivate('resolveDocumentSchemaIds', [[31, 32], [1113]]));
+
+	}//end testUnreadableRegisterAndUnresolvableSlugAreSkipped()
+
+	/**
+	 * Wire container-resolved OR mappers from plain id maps.
+	 *
+	 * @param array<int, array<int, int>> $registerSchemas registerId => schema ids.
+	 * @param array<int, string>          $slugs           schemaId => slug.
+	 *
+	 * @return void
+	 */
+	private function wireMappers(array $registerSchemas, array $slugs): void {
+		$registerMapper = new class($registerSchemas) {
+			/**
+			 * @param array<int, array<int, int>> $map Register id to schema ids.
+			 */
+			public function __construct(private array $map) {
+			}
+
+			public function find(int $id): object {
+				return new class(($this->map[$id] ?? [])) {
+					/**
+					 * @param array<int, int> $schemas The schema ids.
+					 */
+					public function __construct(private array $schemas) {
+					}
+
+					/**
+					 * @return array<int, int>
+					 */
+					public function getSchemas(): array {
+						return $this->schemas;
+					}
+				};
+			}
+		};
+
+		$schemaMapper = new class($slugs) {
+			/**
+			 * @param array<int, string> $slugs Schema id to slug.
+			 */
+			public function __construct(private array $slugs) {
+			}
+
+			public function find(int $id): object {
+				return new class(($this->slugs[$id] ?? null)) {
+					public function __construct(private ?string $slug) {
+					}
+
+					public function getSlug(): ?string {
+						return $this->slug;
+					}
+				};
+			}
+		};
+
+		$this->container->method('get')->willReturnCallback(
+			fn(string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
+		);
+
+	}//end wireMappers()
+
 
 	/**
 	 * Invoke a private/protected method by name via reflection.

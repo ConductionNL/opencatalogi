@@ -141,7 +141,7 @@ export async function bootApp(page: Page): Promise<void> {
 					'1',
 				)
 			}
-		} catch (e) {
+		} catch {
 			/* storage blocked — dismissOverlays() is the fallback */
 		}
 	})
@@ -287,7 +287,7 @@ export function fatalErrors(errors: string[]): string[] {
  * @param route The in-app route, leading slash included (e.g. '/glossary').
  */
 export async function navToRoute(page: Page, route: string): Promise<void> {
-	await page.goto(`${APP}/#${route}`, { waitUntil: 'domcontentloaded' })
+	await page.goto(`${APP}${route}`, { waitUntil: 'domcontentloaded' })
 	await page.waitForTimeout(1500)
 	await dismissOverlays(page)
 	await expect(page.locator('[data-testid="cn-nav"]').first()).toBeVisible({

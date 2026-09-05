@@ -10,7 +10,7 @@
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress",
     "dev": "NODE_ENV=development webpack --config webpack.config.js --progress",
     "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch",
-    "lint": "eslint src",
+    "lint": "eslint src tests scripts",
     "lint-fix": "npm run lint -- --fix",
     "test": "jest --silent",
     "test-coverage": "jest --silent --coverage",
@@ -40,7 +40,7 @@
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-xml": "^6.1.0",
-    "@conduction/nextcloud-vue": "^2.24.2",
+    "@conduction/nextcloud-vue": "^2.37.0",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "6.6.0",
     "@fortawesome/free-regular-svg-icons": "6.6.0",
@@ -65,7 +65,6 @@
     "dompurify": "^3.4.5",
     "gridstack": "^12.6.0",
     "highlight.js": "^11.11.1",
-    "lodash": "^4.17.21",
     "marked": "^12.0.0",
     "node-polyfill-webpack-plugin": "4.0.0",
     "path-browserify": "^1.0.1",
@@ -97,7 +96,6 @@
     "@pinia/testing": "^0.1.5",
     "@playwright/test": "^1.49.0",
     "@types/jest": "^29.5.12",
-    "@types/lodash": "^4.17.7",
     "@types/node": "^22.5.0",
     "@typescript-eslint/parser": "^8.67.0",
     "@uiw/codemirror-theme-github": "^4.25.9",
@@ -128,7 +126,7 @@
     "vue-eslint-parser": "^10.3.0"
   },
   "overrides": {
-    "@nextcloud/axios": "~2.5.2",
+    "@nextcloud/axios": "$@nextcloud/axios",
     "braces": "^3.0.3",
     "micromatch": "^4.0.8",
     "dompurify": "$dompurify",

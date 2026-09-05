@@ -7,12 +7,12 @@
  * entities derivation, per-status summary/progress derivation, and the ready-for-
  * review gate. Offline, no DOM.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
 	buildRedactionInstructions,
-	pagesWithEntities,
-	deriveSummary,
 	canMarkReadyForReview,
+	deriveSummary,
+	pagesWithEntities,
 } from '../../src/services/wooHelpers.js'
 
 describe('buildRedactionInstructions', () => {

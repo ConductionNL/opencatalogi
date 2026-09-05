@@ -29,7 +29,14 @@
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test catalog-detail-page
  */
 import { expect, test } from '@playwright/test'
-import { APP, bootApp, content, fatalErrors, navTo, trackPageErrors } from './_nav'
+import {
+	APP,
+	bootApp,
+	content,
+	fatalErrors,
+	navTo,
+	trackPageErrors,
+} from './_nav.ts'
 
 test.describe('catalog-detail-page', () => {
 	test(// @e2e catalogs::open-a-catalog-detail-from-the-list
@@ -91,7 +98,7 @@ test.describe('catalog-detail-page', () => {
 			})
 			expect(id, 'a catalog id must be resolvable from the list').toBeTruthy()
 
-			await page.goto(`${APP}/#/catalogi/${id}`, {
+			await page.goto(`${APP}/catalogi/${id}`, {
 				waitUntil: 'domcontentloaded',
 			})
 			await page.waitForTimeout(1500)

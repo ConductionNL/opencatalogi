@@ -7,24 +7,18 @@
 			:loading="globalLoading && !hasData"
 			:emptyLabel="t('opencatalogi', 'No widgets configured')"
 			:unavailableLabel="t('opencatalogi', 'Widget not available')"
-			@layoutChange="onLayoutChange">
-			<!-- Header actions -->
+			:refreshing="globalLoading"
+			@layoutChange="onLayoutChange"
+			@refresh="loadDashboardData">
+			<!-- Header actions. Refresh is NOT repeated here: CnActionsMenu
+			     already carries it, and `@refresh` above routes that one item
+			     to loadDashboardData. -->
 			<template #actions>
 				<NcButton variant="primary" @click="createPublication">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
 					{{ t('opencatalogi', 'New Publication') }}
-				</NcButton>
-				<NcButton
-					:disabled="globalLoading"
-					:aria-label="t('opencatalogi', 'Refresh dashboard')"
-					@click="loadDashboardData">
-					<template #icon>
-						<Refresh
-							:size="20"
-							:class="{ 'icon-spinning': globalLoading }" />
-					</template>
 				</NcButton>
 			</template>
 
@@ -179,17 +173,24 @@
 				</div>
 			</template>
 
-			<!-- Traffic graph widget (API read requests over time) -->
-			<template #widget-traffic>
+			<!--
+				Publication usage widget: daily publication views and file
+				downloads from the privacy-safe usage counters (UsageCounterService,
+				GET /api/stats/series). Requests, not unique visitors. It never reads
+				the OpenRegister audit trail, whose "read" rows are every API object
+				read, officers and admins included. Page views on a Portaliq-served
+				portal are measured by Portaliq's traffic analytics, not here.
+			-->
+			<template #widget-usage>
 				<CnChartWidget
-					v-if="trafficChartData.series.length > 0"
+					v-if="usageChartData.labels.length > 0"
 					type="area"
-					:series="trafficChartData.series"
-					:categories="trafficChartData.labels"
-					:height="280"
+					:series="usageChartData.series"
+					:categories="usageChartData.labels"
+					:height="240"
 					:options="{
 						stroke: { curve: 'smooth', width: 2 },
-						colors: accentChartColor,
+						colors: usageChartColors,
 						fill: {
 							type: 'gradient',
 							gradient: {
@@ -214,8 +215,17 @@
 					}" />
 				<div v-else class="widget-empty">
 					<ChartAreaspline :size="40" class="widget-empty-icon" />
-					<p>{{ t('opencatalogi', 'No traffic data') }}</p>
+					<p>{{ t('opencatalogi', 'No usage data yet') }}</p>
 				</div>
+				<p class="usage-note">
+					{{
+						t(
+							'opencatalogi',
+							'Daily views and downloads of publications. Counts are requests, not unique visitors.',
+						)
+					}}
+					{{ usageCountingStartNote }}
+				</p>
 			</template>
 
 			<!-- Popular Search Terms widget -->
@@ -433,7 +443,6 @@ import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue
 import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
 import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
 import {
 	useAccentChartColor,
 	useCategoricalChartColors,
@@ -443,6 +452,7 @@ import {
 	isDepublished,
 	isPublished,
 } from '../../services/publicationStatus.js'
+import { countingStartNote, fetchInstanceSeries } from '../../services/usageStats.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
 // Register/schema ids for the `publication` schema, surfaced as initial state by
@@ -516,7 +526,7 @@ const DEFAULT_LAYOUT = [
 	},
 	{
 		id: 11,
-		widgetId: 'traffic',
+		widgetId: 'usage',
 		gridX: 0,
 		gridY: 11,
 		gridWidth: 8,
@@ -571,7 +581,6 @@ export default {
 		CnStatsBlock,
 		CnChartWidget,
 		Plus,
-		Refresh,
 		DatabaseEyeOutline,
 		FileDocumentEditOutline,
 		FileDocumentCheckOutline,
@@ -595,7 +604,8 @@ export default {
 			refreshTimer: null,
 			dashboardLayout: [...DEFAULT_LAYOUT],
 			activityChartData: { labels: [], series: [] },
-			trafficChartData: { labels: [], series: [] },
+			usageChartData: { labels: [], series: [] },
+			usageCountingStart: null,
 			popularSearchTerms: [],
 			publicationTotal: 0,
 			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
@@ -615,12 +625,31 @@ export default {
 		},
 
 		/**
-		 * Theme-aware accent color for the traffic chart.
+		 * Theme-aware accent color for single-series charts.
 		 *
 		 * @spec openspec/changes/nc-css-vars-color-cleanup/tasks.md#task-1
 		 */
 		accentChartColor() {
 			return useAccentChartColor()
+		},
+
+		/**
+		 * Two theme-aware colours for the usage card: views, then downloads.
+		 *
+		 * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
+		 */
+		usageChartColors() {
+			return useCategoricalChartColors().slice(0, 2)
+		},
+
+		/**
+		 * Counting-start note under the usage card, so an empty window reads as
+		 * "not measured yet" rather than "no reach".
+		 *
+		 * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
+		 */
+		usageCountingStartNote() {
+			return countingStartNote(this.usageCountingStart, t)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
@@ -745,8 +774,8 @@ export default {
 					type: 'custom',
 				},
 				{
-					id: 'traffic',
-					title: t('opencatalogi', 'Traffic'),
+					id: 'usage',
+					title: t('opencatalogi', 'Publication views'),
 					type: 'custom',
 				},
 				{
@@ -812,7 +841,7 @@ export default {
 					this.fetchPublicationAggregations(),
 					this.fetchAllPublications(),
 					this.fetchActivityChart(),
-					this.fetchTrafficChart(),
+					this.fetchUsageChart(),
 					this.fetchPopularSearchTerms(),
 				])
 			} catch (err) {
@@ -953,40 +982,39 @@ export default {
 		},
 
 		/**
-		 * Fetch API read-request volume over time (traffic graph).
-		 * Filters the audit-trail-actions chart to the "Read" series.
+		 * Fetch the instance-wide daily usage series for the "Publication views" card.
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 * Reads the privacy-safe usage counters through GET /api/stats/series:
+		 * publication views and file downloads per day over the last 30 days.
+		 * These are request counts, not unique visitors. The card deliberately
+		 * does NOT read the OpenRegister audit trail (see fetchActivityChart),
+		 * whose "read" rows count every API object read by officers and admins
+		 * and no anonymous visitor at all, so they must never be shown as reach.
+		 * Page views on a Portaliq-served portal are measured by Portaliq's
+		 * traffic analytics, not here.
+		 *
+		 * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
 		 */
-		async fetchTrafficChart() {
+		async fetchUsageChart() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php')
-					? '/index.php'
-					: ''
-				const response = await fetch(
-					`${prefix}/apps/openregister/api/dashboard/charts/audit-trail-actions`,
-					{ method: 'GET', headers: buildHeaders() },
-				)
-				if (response.ok) {
-					const data = await response.json()
-					const allSeries = data.series || []
-					const readSeries = allSeries.filter((s) => s.name === 'Read')
-					this.trafficChartData = {
-						labels: data.labels || [],
-						series:
-							readSeries.length > 0
-								? readSeries.map((s) => ({
-										...s,
-										name: t('opencatalogi', 'Requests'),
-									}))
-								: allSeries.map((s) => ({
-										...s,
-										name: t('opencatalogi', s.name),
-									})),
-					}
+				const data = await fetchInstanceSeries()
+				const series = Array.isArray(data?.series) ? data.series : []
+				this.usageCountingStart = data?.countingStart || null
+				this.usageChartData = {
+					labels: series.map((d) => d.date),
+					series: [
+						{
+							name: t('opencatalogi', 'Views'),
+							data: series.map((d) => Number(d.views) || 0),
+						},
+						{
+							name: t('opencatalogi', 'Downloads'),
+							data: series.map((d) => Number(d.downloads) || 0),
+						},
+					],
 				}
 			} catch (err) {
-				console.warn('Failed to load traffic chart:', err)
+				console.warn('Failed to load usage chart:', err)
 			}
 		},
 
@@ -1264,6 +1292,12 @@ export default {
 	font-size: 14px;
 }
 
+.usage-note {
+	margin: 4px 12px 8px;
+	color: var(--color-text-maxcontrast);
+	font-size: 12px;
+}
+
 /* Welcome / error */
 .welcome-message {
 	text-align: center;
@@ -1280,30 +1314,5 @@ export default {
 
 .dashboard-error p {
 	margin-bottom: 12px;
-}
-
-/* Refresh button spinning animation */
-.icon-spinning {
-	animation: spin 1s linear infinite;
-}
-
-/* WCAG 2.3.3. The spinner is a status indicator, not decoration: stopping it
-   outright would hide the fact that something is still loading. It is slowed
-   to a near-static rate instead, which removes the vestibular trigger while
-   keeping the "busy" signal. The clickable publication rows below carry no
-   motion of their own, so nothing else in this component needs a fallback. */
-@media (prefers-reduced-motion: reduce) {
-	.icon-spinning {
-		animation-duration: 6s;
-	}
-}
-
-@keyframes spin {
-	from {
-		transform: rotate(0deg);
-	}
-	to {
-		transform: rotate(360deg);
-	}
 }
 </style>

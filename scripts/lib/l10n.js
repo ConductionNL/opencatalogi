@@ -6,10 +6,10 @@
  * a separate concern and are not handled here.
  */
 
+const { spawnSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 const vm = require('vm')
-const { spawnSync } = require('child_process')
 
 /**
  * Load a single l10n/*.js file and return its app name, translations object,
@@ -47,25 +47,56 @@ function loadJsTranslations(file) {
 		app,
 		translations: captured,
 		pluralForm: plural || 'nplurals=2; plural=(n != 1);',
+		style: detectStyle(code),
 	}
 }
 
 /**
- * Serialize an l10n/*.js file matching the existing project convention:
- * sorted keys (case-insensitive), tab indent, double-quoted strings.
+ * Read the formatting a locale file already uses, so a write can put it back.
+ *
+ * Without this the writer imposed its own house style on every file it
+ * touched: tab indent where the tree uses four spaces, and a trailing comma
+ * after the last entry where the tree has none. Removing ONE key from
+ * opencatalogi's 37 locale files produced a 29,500-line diff, nearly all of it
+ * reformatting. `eslint --fix` does not undo it: run on an untouched locale
+ * file it is a no-op, which is how the reformat was traced here rather than to
+ * config drift.
+ */
+function detectStyle(code) {
+	// The app-name argument is the first quoted string after `register(`, and
+	// its leading whitespace is the file's one indent unit.
+	const indentMatch = code.match(/\n([ \t]+)"/)
+	return {
+		indent: indentMatch ? indentMatch[1] : '\t',
+		// True when the last entry carries a comma before the closing brace.
+		trailingComma: /,\s*\n\s*\}/.test(code),
+	}
+}
+
+/**
+ * Serialize an l10n/*.js file, preserving the formatting it already had.
+ *
+ * Pass the `style` that `loadJsTranslations` returned and an unmodified file
+ * round-trips byte for byte, so a one-key edit produces a one-line diff. Key
+ * order is the order the file already had: these files come out of the
+ * extractor unsorted, so sorting them here rewrote every line of all 37
+ * locales to remove a single entry.
  *
  * Pluralized values (arrays) are preserved as JSON arrays; the writer doesn't
  * re-pretty-print them, but eslint --fix afterwards normalizes spacing.
  */
-function serializeJs({ app, translations, pluralForm }) {
-	const keys = Object.keys(translations).sort((a, b) =>
-		a.toLowerCase().localeCompare(b.toLowerCase()),
-	)
-	const lines = keys.map((k) => {
+function serializeJs({ app, translations, pluralForm, style }) {
+	const indent = (style && style.indent) || '\t'
+	const trailingComma = style ? style.trailingComma : true
+	const inner = indent + indent
+	const keys = Object.keys(translations)
+	const lines = keys.map((k, i) => {
 		const value = translations[k]
-		return `\t\t${JSON.stringify(k)}: ${JSON.stringify(value)},`
+		const comma = trailingComma || i < keys.length - 1 ? ',' : ''
+		return `${inner}${JSON.stringify(k)}: ${JSON.stringify(value)}${comma}`
 	})
-	return `OC.L10N.register(\n\t${JSON.stringify(app)},\n\t{\n${lines.join('\n')}\n\t},\n\t${JSON.stringify(pluralForm)},\n)\n`
+	const tail = trailingComma ? ',' : ''
+	return `OC.L10N.register(\n${indent}${JSON.stringify(app)},\n${indent}{\n${lines.join('\n')}\n${indent}},\n${indent}${JSON.stringify(pluralForm)}${tail}\n)\n`
 }
 
 /**
@@ -209,6 +240,9 @@ function findKeyReferences(srcDir, app, key) {
 	return hits
 }
 
+/**
+ *
+ */
 function escapeRegex(s) {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

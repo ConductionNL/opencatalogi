@@ -17,11 +17,21 @@
 			},
 			{
 				"id": "demo-data",
-				"type": "run-action",
-				"action": "install-demo-data",
-				"title": "Demo data (optional)",
+				"type": "choice",
+				"display": "cards",
+				"optionsSource": "datasets",
+				"configKey": "demo_dataset",
+				"title": "Load example data?",
 				"required": false,
-				"body": "Load a small example catalog of publications, listings and organisations, so lists, search and the publication detail pages show a working product right away. Optional, and safe to run more than once. Skip this on a production install."
+				"body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install."
+			},
+			{
+				"id": "load-demo-data",
+				"type": "run-action",
+				"action": "load-demo-data",
+				"title": "Load the example data",
+				"required": false,
+				"body": "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards."
 			},
 			{
 				"id": "config-check",
@@ -289,6 +299,14 @@
 			}
 		]
 	},
+	"store": {
+		"_note": "Configuration exchange, not rows. A configuration set carries the registers, schemas, objects, views, flows, sources and mappings that make one way of working hold together. There is deliberately NO `installable` allowlist: a set exists to introduce schemas the instance does not have YET, so listing schemas this app already owns would refuse exactly the sets worth installing. The trust boundary for a bundle is its publisher, enforced by the engine's source allowlist and trusted-key check. ⚠️ An EMPTY `installable` means install NOTHING, not install anything — omitting the key and declaring an empty list are different things.",
+		"types": [
+			"openregister.configset",
+			"openregister.flows"
+		],
+		"localRegister": "opencatalogi"
+	},
 	"menu": [
 		{
 			"id": "Dashboard",
@@ -330,20 +348,6 @@
 					"icon": "Tune",
 					"route": "Themes",
 					"order": 94
-				},
-				{
-					"id": "PagesMenu",
-					"label": "Pages",
-					"icon": "FolderMultiple",
-					"route": "Pages",
-					"order": 95
-				},
-				{
-					"id": "MenusMenu",
-					"label": "Menus",
-					"icon": "Tune",
-					"route": "Menus",
-					"order": 96
 				},
 				{
 					"id": "WooBatchesMenu",
@@ -389,7 +393,23 @@
 			"icon": "BookOpenVariantOutline",
 			"href": "https://opencatalogi.conduction.nl",
 			"section": "footer",
-			"order": 1
+			"order": 90
+		},
+		{
+			"id": "StoreMenu",
+			"label": "Store",
+			"icon": "StoreOutline",
+			"route": "Store",
+			"section": "footer",
+			"order": 92
+		},
+		{
+			"id": "ReportsMenu",
+			"label": "Reports",
+			"icon": "ChartBoxOutline",
+			"route": "Reports",
+			"section": "footer",
+			"order": 95
 		},
 		{
 			"id": "FeaturesRoadmapMenu",
@@ -397,7 +417,7 @@
 			"icon": "MapMarkerPath",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
-			"order": 2
+			"order": 100
 		},
 		{
 			"id": "RestartTutorial",
@@ -406,7 +426,7 @@
 			"action": "replay-walkthrough",
 			"tourId": "opencatalogi:getting-started",
 			"section": "footer",
-			"order": 3
+			"order": 105
 		},
 		{
 			"id": "FlowsMenu",
@@ -418,6 +438,18 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "Store",
+			"route": "/store",
+			"type": "store",
+			"title": "Store",
+			"config": {
+				"app": "opencatalogi",
+				"title": "Store",
+				"description": "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them."
+			},
+			"_note": "ADR-114 Decision 4 / ADR-080. Declarative: openregister hosts the store plane, so this app writes NO store controller. With no registry configured the page renders the app's built-in items and makes NO network call."
+		},
 		{
 			"id": "WooBatches",
 			"route": "/woo",
@@ -534,7 +566,11 @@
 								"depublicationDate",
 								"status"
 							],
-							"overrides": { "status": { "editable": false } }
+							"overrides": {
+								"status": {
+									"editable": false
+								}
+							}
 						}
 					},
 					{
@@ -594,7 +630,14 @@
 								"retentionNote",
 								"retentionLastEvaluatedAt"
 							],
-							"overrides": { "retentionExpiresAt": { "editable": false }, "retentionLastEvaluatedAt": { "editable": false } }
+							"overrides": {
+								"retentionExpiresAt": {
+									"editable": false
+								},
+								"retentionLastEvaluatedAt": {
+									"editable": false
+								}
+							}
 						}
 					},
 					{
@@ -1187,206 +1230,716 @@
 			}
 		},
 		{
-			"id": "Pages",
-			"route": "/pages",
-			"type": "index",
-			"title": "Pages",
-			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
-			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "page",
-				"rowClickToView": false,
-				"actionToggles": {
-					"showAdd": true,
-					"showEditAction": false,
-					"showCopyAction": false,
-					"showDeleteAction": false,
-					"showMassImport": false,
-					"showMassExport": false,
-					"showMassCopy": false,
-					"showMassDelete": false,
-					"showViewToggle": true,
-					"selectable": true
-				},
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			}
-		},
-		{
-			"id": "PageDetail",
-			"route": "/pages/:id",
-			"type": "detail",
-			"title": "Page",
-			"_note": "CMS-page / structured-content archetype — a portal page (title, slug, visibility flags hideBeforeLogin/hideAfterLogin, access groups) whose body is an ordered list of embedded content blocks (`contents[]` — inline objects, NOT a separate register schema, so an object-list child table cannot be used). Previously this page had NO widgets and fell back to the generic data dump. Now the body pairs the page settings (5-wide, 1-column — slug + visibility read as a config sheet, with `contents` excluded because the tree-view owns it) with the tree-view custom widget (7-wide) that renders the nested content-block structure so an editor can see and reorder the page composition. NO comms/Files/related: a portal page declares no linkedTypes, its content is inline, and it communicates with nobody (HARD RULE 1). Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled); Metadata is on-demand via the Data widget's Actions menu rather than a permanent card.",
-			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "page",
-				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl",
-				"widgets": [
-					{
-						"id": "page-data",
-						"type": "data",
-						"title": "Page",
-						"icon": "FileDocument",
-						"content": {
-							"columns": 1,
-							"exclude": [
-								"contents"
-							]
-						}
-					},
-					{
-						"id": "page-tree",
-						"type": "tree-view",
-						"title": "Content blocks",
-						"icon": "Sitemap",
-						"content": {
-							"field": "contents"
-						}
-					}
-				],
-				"layout": [
-					{
-						"id": "1",
-						"widgetId": "page-data",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 5,
-						"gridHeight": 5
-					},
-					{
-						"id": "2",
-						"widgetId": "page-tree",
-						"gridX": 5,
-						"gridY": 0,
-						"gridWidth": 7,
-						"gridHeight": 5
-					}
-				],
-				"sidebar": {
-					"enabled": true,
-					"showMetadata": true,
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "History",
-							"icon": "History",
-							"widgets": [
-								{
-									"type": "audit"
-								}
-							]
-						}
-					]
-				}
-			}
-		},
-		{
-			"id": "Menus",
-			"route": "/menus",
-			"type": "index",
-			"title": "Menus",
-			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
-			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "menu",
-				"rowClickToView": false,
-				"actionToggles": {
-					"showAdd": true,
-					"showEditAction": false,
-					"showCopyAction": false,
-					"showDeleteAction": false,
-					"showMassImport": false,
-					"showMassExport": false,
-					"showMassCopy": false,
-					"showMassDelete": false,
-					"showViewToggle": true,
-					"selectable": true
-				},
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			}
-		},
-		{
-			"id": "MenuDetail",
-			"route": "/menus/:id",
-			"type": "detail",
-			"title": "Menu",
-			"_note": "Navigation-menu / structure archetype — a portal menu (title, position, visibility flag hideBeforeLogin, access groups) whose SUBSTANCE is its ordered, nestable sub-menu items. The user comes here to see and reorder those sub-menu items, so the body pairs the menu settings (4-wide, 1-column — position/visibility read as a config sheet, with `items` excluded because the tree-view owns it) with a wide tree-view (8-wide) that renders the ordered item hierarchy and lets an editor reorder it, since the tree IS the menu. IMPORTANT design constraint verified against the register: the sub-menu items live in `menu.items[]` as INLINE objects (each with order/name/link/description/icon/groups) — there is NO separate menu-item register schema and menu has NO self-FK, so the intuitively-desired FK-scoped `object-list` of child menu items ('items where parentMenu=@objectId') is NOT expressible. tree-view over the inline `items` field, sorted by each item's `order`, is the faithful representation of the ordered sub-menu items. NO comms/Files/related: a menu declares no linkedTypes, its items are inline, and it communicates with nobody (HARD RULE 1). Audit history is the sidebar CnAuditTrailTab; Metadata is on-demand via the Data widget's Actions menu. WISH-LIST for nc-vue: an ordered-editor widget over an inline object-array (add/remove/reorder items) would be a better fit than the read-lean tree-view here.",
-			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "menu",
-				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl",
-				"widgets": [
-					{
-						"id": "menu-data",
-						"type": "data",
-						"title": "Menu",
-						"icon": "Cog",
-						"content": {
-							"columns": 1,
-							"exclude": [
-								"items"
-							]
-						}
-					},
-					{
-						"id": "menu-tree",
-						"type": "tree-view",
-						"title": "Menu items",
-						"icon": "Sitemap",
-						"content": {
-							"field": "items",
-							"sort": {
-								"field": "order",
-								"dir": "asc"
-							}
-						}
-					}
-				],
-				"layout": [
-					{
-						"id": "1",
-						"widgetId": "menu-data",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 4,
-						"gridHeight": 5
-					},
-					{
-						"id": "2",
-						"widgetId": "menu-tree",
-						"gridX": 4,
-						"gridY": 0,
-						"gridWidth": 8,
-						"gridHeight": 5
-					}
-				],
-				"sidebar": {
-					"enabled": true,
-					"showMetadata": true,
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "History",
-							"icon": "History",
-							"widgets": [
-								{
-									"type": "audit"
-								}
-							]
-						}
-					]
-				}
-			}
-		},
-		{
 			"id": "Directory",
 			"route": "/directory",
 			"type": "custom",
 			"title": "Directory",
 			"component": "FederationDirectory",
 			"_note": "FederationDirectory (custom) fetches /api/listings and renders CnFederationStatus with mapped nodes + an admin add-directory modal. The bare CnFederationStatus this replaced shipped a permanent empty-state because the manifest had no :nodes binding."
+		},
+		{
+			"id": "Reports",
+			"_note": "ADR-112 / ADR-114 Decision 3. All three are declarative type:dashboard pages over the publication register — no bespoke component and no per-app controller. Nothing moves here: opencatalogi had no report surface at all.",
+			"route": "/reports",
+			"type": "reports",
+			"title": "Reports",
+			"config": {
+				"description": "Pick a report to open it.",
+				"categories": {
+					"publishing": "Publishing",
+					"reach": "Reach and federation"
+				},
+				"cards": [
+					{
+						"id": "PublicationsReport",
+						"label": "Publications",
+						"description": "What is published, what is archived, and what retention says to do next.",
+						"icon": "FileDocument",
+						"category": "publishing",
+						"route": "PublicationsReport"
+					},
+					{
+						"id": "UsageReport",
+						"label": "Usage",
+						"description": "What people looked at and what they downloaded.",
+						"icon": "ChartBar",
+						"category": "reach",
+						"route": "UsageReport"
+					},
+					{
+						"id": "FederationReport",
+						"label": "Catalogs and directory",
+						"description": "How mature the catalogs are, and how deeply the directory listings are integrated.",
+						"icon": "Bookshelf",
+						"category": "reach",
+						"route": "FederationReport"
+					}
+				]
+			}
+		},
+		{
+			"id": "PublicationsReport",
+			"route": "/reports/publications",
+			"type": "dashboard",
+			"title": "Publications",
+			"_note": "Every filter is scalar equality, the only kind OpenRegister's aggregation endpoint can evaluate. Retention is grouped rather than filtered on a date for that reason: retentionExpiresAt cannot be compared to today here, so the honest reading is what each publication's retentionAction SAYS to do, not which ones are overdue.",
+			"config": {
+				"widgets": [
+					{
+						"id": "pub-published",
+						"title": "Published",
+						"type": "stat",
+						"content": {
+							"label": "Published",
+							"icon": "FileDocument",
+							"route": {
+								"name": "Search"
+							},
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							},
+							"source": {
+								"register": "opencatalogi",
+								"schema": "publication",
+								"metric": "count",
+								"filter": {
+									"status": "published"
+								}
+							}
+						}
+					},
+					{
+						"id": "pub-archived",
+						"title": "Archived",
+						"type": "stat",
+						"content": {
+							"label": "Archived",
+							"icon": "PackageVariantClosed",
+							"route": {
+								"name": "Search"
+							},
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							},
+							"source": {
+								"register": "opencatalogi",
+								"schema": "publication",
+								"metric": "count",
+								"filter": {
+									"status": "archived"
+								}
+							}
+						}
+					},
+					{
+						"id": "pub-to-review",
+						"title": "Retention says review",
+						"type": "stat",
+						"content": {
+							"label": "Retention says review",
+							"icon": "History",
+							"route": {
+								"name": "Search"
+							},
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							},
+							"source": {
+								"register": "opencatalogi",
+								"schema": "publication",
+								"metric": "count",
+								"filter": {
+									"retentionAction": "review"
+								}
+							}
+						}
+					},
+					{
+						"id": "pub-by-status",
+						"title": "By status",
+						"type": "chart",
+						"content": {
+							"chartKind": "donut",
+							"legendPosition": "bottom",
+							"emptyLabel": "Nothing published yet",
+							"dataSource": {
+								"register": "opencatalogi",
+								"schema": "publication",
+								"aggregate": {
+									"groupBy": "status",
+									"metric": "count"
+								}
+							}
+						}
+					},
+					{
+						"id": "pub-by-retention",
+						"title": "What retention says to do",
+						"type": "chart",
+						"content": {
+							"chartKind": "donut",
+							"legendPosition": "bottom",
+							"emptyLabel": "Nothing published yet",
+							"dataSource": {
+								"register": "opencatalogi",
+								"schema": "publication",
+								"aggregate": {
+									"groupBy": "retentionAction",
+									"metric": "count"
+								}
+							}
+						}
+					},
+					{
+						"id": "pub-by-org",
+						"title": "Per organisation",
+						"type": "chart",
+						"content": {
+							"chartKind": "bar",
+							"legendPosition": "bottom",
+							"emptyLabel": "Nothing published yet",
+							"dataSource": {
+								"register": "opencatalogi",
+								"schema": "publication",
+								"aggregate": {
+									"groupBy": "organization",
+									"metric": "count",
+									"topN": 10,
+									"otherBucket": true,
+									"labelResolve": {
+										"schema": "organization",
+										"labelField": "title"
+									}
+								}
+							}
+						}
+					},
+					{
+						"id": "pub-recent",
+						"title": "Most recent",
+						"type": "object-table",
+						"content": {
+							"register": "opencatalogi",
+							"schema": "publication",
+							"filter": {},
+							"sort": {
+								"field": "publicationDate",
+								"dir": "desc"
+							},
+							"limit": 8,
+							"hideHeader": true,
+							"emptyText": "Nothing published yet",
+							"viewAllRoute": {
+								"name": "Search"
+							},
+							"viewAllLabel": "Search the catalogue",
+							"columns": [
+								{
+									"key": "publicationDate",
+									"label": "Date"
+								},
+								{
+									"key": "title",
+									"label": "Publication"
+								},
+								{
+									"key": "status",
+									"label": "Status"
+								}
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "pub-published",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "pub-archived",
+						"gridX": 4,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "pub-to-review",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "pub-by-status",
+						"gridX": 0,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "5",
+						"widgetId": "pub-by-retention",
+						"gridX": 4,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "6",
+						"widgetId": "pub-by-org",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "7",
+						"widgetId": "pub-recent",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 4,
+						"showTitle": true
+					}
+				]
+			}
+		},
+		{
+			"id": "UsageReport",
+			"route": "/reports/usage",
+			"type": "dashboard",
+			"title": "Usage",
+			"_note": "usageCounter stores a `count` per publication per day per kind, so the totals are SUMs of that field rather than row counts. Counting rows would answer how many days had activity, which is a different and much less useful question.",
+			"config": {
+				"widgets": [
+					{
+						"id": "use-views",
+						"title": "Views",
+						"type": "stat",
+						"content": {
+							"label": "Views",
+							"icon": "Magnify",
+							"route": {
+								"name": "Search"
+							},
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							},
+							"source": {
+								"register": "opencatalogi",
+								"schema": "usageCounter",
+								"metric": "sum",
+								"field": "count",
+								"filter": {
+									"kind": "view"
+								}
+							}
+						}
+					},
+					{
+						"id": "use-downloads",
+						"title": "Downloads",
+						"type": "stat",
+						"content": {
+							"label": "Downloads",
+							"icon": "Package",
+							"route": {
+								"name": "Search"
+							},
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							},
+							"source": {
+								"register": "opencatalogi",
+								"schema": "usageCounter",
+								"metric": "sum",
+								"field": "count",
+								"filter": {
+									"kind": "download"
+								}
+							}
+						}
+					},
+					{
+						"id": "use-by-kind",
+						"title": "Views against downloads",
+						"type": "chart",
+						"content": {
+							"chartKind": "donut",
+							"legendPosition": "bottom",
+							"emptyLabel": "Nothing has been read yet",
+							"dataSource": {
+								"register": "opencatalogi",
+								"schema": "usageCounter",
+								"aggregate": {
+									"groupBy": "kind",
+									"metric": "sum",
+									"sumField": "count"
+								}
+							}
+						}
+					},
+					{
+						"id": "use-by-publication",
+						"title": "Most read publications",
+						"type": "chart",
+						"content": {
+							"chartKind": "bar",
+							"legendPosition": "bottom",
+							"emptyLabel": "Nothing has been read yet",
+							"dataSource": {
+								"register": "opencatalogi",
+								"schema": "usageCounter",
+								"aggregate": {
+									"groupBy": "publication",
+									"metric": "sum",
+									"sumField": "count",
+									"topN": 10,
+									"otherBucket": true,
+									"labelResolve": {
+										"schema": "publication",
+										"labelField": "title"
+									}
+								}
+							}
+						}
+					},
+					{
+						"id": "use-recent",
+						"title": "Most recent",
+						"type": "object-table",
+						"content": {
+							"register": "opencatalogi",
+							"schema": "usageCounter",
+							"filter": {},
+							"sort": {
+								"field": "date",
+								"dir": "desc"
+							},
+							"limit": 8,
+							"hideHeader": true,
+							"emptyText": "Nothing has been read yet",
+							"viewAllRoute": {
+								"name": "Search"
+							},
+							"viewAllLabel": "Search the catalogue",
+							"columns": [
+								{
+									"key": "date",
+									"label": "Date"
+								},
+								{
+									"key": "kind",
+									"label": "Kind"
+								},
+								{
+									"key": "count",
+									"label": "How many"
+								}
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "use-views",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "use-downloads",
+						"gridX": 6,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "use-by-kind",
+						"gridX": 0,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "4",
+						"widgetId": "use-by-publication",
+						"gridX": 4,
+						"gridY": 2,
+						"gridWidth": 8,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "5",
+						"widgetId": "use-recent",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 4,
+						"showTitle": true
+					}
+				]
+			}
+		},
+		{
+			"id": "FederationReport",
+			"route": "/reports/federation",
+			"type": "dashboard",
+			"title": "Catalogs and directory",
+			"_note": "catalog is what this instance publishes; listing is what it has found in the directory of other instances. Both on one page because the reader's question is how far this catalogue reaches, which neither answers alone.",
+			"config": {
+				"widgets": [
+					{
+						"id": "cat-stable",
+						"title": "Stable catalogs",
+						"type": "stat",
+						"content": {
+							"label": "Stable catalogs",
+							"icon": "Bookshelf",
+							"route": {
+								"name": "CatalogsMenu"
+							},
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							},
+							"source": {
+								"register": "opencatalogi",
+								"schema": "catalog",
+								"metric": "count",
+								"filter": {
+									"status": "stable"
+								}
+							}
+						}
+					},
+					{
+						"id": "list-total",
+						"title": "Directory listings",
+						"type": "stat",
+						"content": {
+							"label": "Directory listings",
+							"icon": "Web",
+							"route": {
+								"name": "DirectoryMenu"
+							},
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							},
+							"source": {
+								"register": "opencatalogi",
+								"schema": "listing",
+								"metric": "count"
+							}
+						}
+					},
+					{
+						"id": "list-searchable",
+						"title": "Searchable listings",
+						"type": "stat",
+						"content": {
+							"label": "Searchable listings",
+							"icon": "Magnify",
+							"route": {
+								"name": "DirectoryMenu"
+							},
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							},
+							"source": {
+								"register": "opencatalogi",
+								"schema": "listing",
+								"metric": "count",
+								"filter": {
+									"integrationLevel": "search"
+								}
+							}
+						}
+					},
+					{
+						"id": "cat-by-status",
+						"title": "Catalogs by maturity",
+						"type": "chart",
+						"content": {
+							"chartKind": "donut",
+							"legendPosition": "bottom",
+							"emptyLabel": "No catalogs yet",
+							"dataSource": {
+								"register": "opencatalogi",
+								"schema": "catalog",
+								"aggregate": {
+									"groupBy": "status",
+									"metric": "count"
+								}
+							}
+						}
+					},
+					{
+						"id": "list-by-status",
+						"title": "Listings by maturity",
+						"type": "chart",
+						"content": {
+							"chartKind": "donut",
+							"legendPosition": "bottom",
+							"emptyLabel": "No listings yet",
+							"dataSource": {
+								"register": "opencatalogi",
+								"schema": "listing",
+								"aggregate": {
+									"groupBy": "status",
+									"metric": "count"
+								}
+							}
+						}
+					},
+					{
+						"id": "list-by-integration",
+						"title": "How deeply listings are integrated",
+						"type": "chart",
+						"content": {
+							"chartKind": "donut",
+							"legendPosition": "bottom",
+							"emptyLabel": "No listings yet",
+							"dataSource": {
+								"register": "opencatalogi",
+								"schema": "listing",
+								"aggregate": {
+									"groupBy": "integrationLevel",
+									"metric": "count"
+								}
+							}
+						}
+					},
+					{
+						"id": "list-recent",
+						"title": "Most recently synced",
+						"type": "object-table",
+						"content": {
+							"register": "opencatalogi",
+							"schema": "listing",
+							"filter": {},
+							"sort": {
+								"field": "lastSync",
+								"dir": "desc"
+							},
+							"limit": 8,
+							"hideHeader": true,
+							"emptyText": "No listings yet",
+							"viewAllRoute": {
+								"name": "DirectoryMenu"
+							},
+							"viewAllLabel": "Open the directory",
+							"columns": [
+								{
+									"key": "lastSync",
+									"label": "Last sync"
+								},
+								{
+									"key": "title",
+									"label": "Listing"
+								},
+								{
+									"key": "integrationLevel",
+									"label": "Integration"
+								}
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "cat-stable",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "list-total",
+						"gridX": 4,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "list-searchable",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "cat-by-status",
+						"gridX": 0,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "5",
+						"widgetId": "list-by-status",
+						"gridX": 4,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "6",
+						"widgetId": "list-by-integration",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "7",
+						"widgetId": "list-recent",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 4,
+						"showTitle": true
+					}
+				]
+			}
 		},
 		{
 			"id": "FeaturesRoadmap",
@@ -1402,7 +1955,9 @@
 			"route": "/flows",
 			"type": "flows",
 			"title": "Flows",
-			"config": { "app": "opencatalogi" },
+			"config": {
+				"app": "opencatalogi"
+			},
 			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. Rendered by the shared CnFlowsPage page type over OpenRegister's one native flow store (ADR-065), scoped to this app."
 		},
 		{
@@ -1410,7 +1965,9 @@
 			"route": "/flows/:id",
 			"type": "flow-detail",
 			"title": "Flow",
-			"config": { "app": "opencatalogi" },
+			"config": {
+				"app": "opencatalogi"
+			},
 			"sidebarComponent": "FlowDetailSidebar",
 			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar (sidebarComponent) so the canvas keeps full width; canvas and sidebar share useFlowStore. The _note claimed this before the field existed, so #/flows/new -- and every #/flows/:id -- rendered a bare canvas with no way to name, describe, trigger or step-edit the flow. Mirrors pipelinq#1490."
 		}

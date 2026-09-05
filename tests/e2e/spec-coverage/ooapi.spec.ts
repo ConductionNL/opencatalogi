@@ -1,3 +1,5 @@
+import type { APIRequestContext } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +34,7 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test spec-coverage/ooapi
  */
-import { test, expect, request, type APIRequestContext } from '@playwright/test'
+import { expect, request, test } from '@playwright/test'
 
 const APP = '/index.php/apps/opencatalogi'
 
@@ -49,7 +51,7 @@ const OOAPI_COLLECTIONS = ['organizations', 'programs', 'courses']
 /** Anonymous context: an explicitly empty cookie jar. */
 let anon: APIRequestContext
 
-test.beforeAll(async ({ playwright }, testInfo) => {
+test.beforeAll(async ({ playwright: _playwright }, testInfo) => {
 	// The dev container leaks an admin session into a bare request context,
 	// so a context that merely omits credentials is NOT anonymous. The empty
 	// storageState is what makes the 401 assertions meaningful — without it

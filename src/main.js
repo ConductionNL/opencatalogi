@@ -31,7 +31,7 @@ import {
 import { generateUrl } from '@nextcloud/router'
 import hljs from 'highlight.js'
 import { createApp, h } from 'vue'
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
@@ -284,8 +284,33 @@ function routesFromManifest(manifest) {
 	return routes
 }
 
+/**
+ * The router base for THIS page load.
+ *
+ * ⚠️ `generateUrl('/apps/opencatalogi')` alone is not enough. Nextcloud serves
+ * the app under BOTH `/apps/opencatalogi/...` and
+ * `/index.php/apps/opencatalogi/...`, but `generateUrl()` returns only the form
+ * the instance is configured for. A visitor arriving on the other form — a
+ * bookmark, an emailed deep link, an integration that hardcodes `/index.php` —
+ * falls outside the router base, vue-router cannot resolve the path, and the
+ * catch-all redirects to `/`. They land on the dashboard with no error: the
+ * deep link is silently swallowed.
+ *
+ * Hash routing never had this, because the route travelled in the fragment and
+ * the path prefix was irrelevant. This app's own e2e suite uses BOTH spellings
+ * — `/index.php/apps/opencatalogi` in `_nav.ts` and the visual spec,
+ * `/apps/opencatalogi` in `docs-screenshots.spec.ts` — so either would break
+ * without this.
+ *
+ * @return {string} The base path vue-router should strip from the URL.
+ */
+function routerBase() {
+	const match = window.location.pathname.match(/^(.*\/apps\/opencatalogi)(?:\/|$)/)
+	return match ? match[1] : generateUrl('/apps/opencatalogi')
+}
+
 const router = createRouter({
-	history: createWebHashHistory(generateUrl('/apps/opencatalogi')),
+	history: createWebHistory(routerBase()),
 	routes: routesFromManifest(resolvedManifest),
 })
 

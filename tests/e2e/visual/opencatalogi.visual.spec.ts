@@ -20,21 +20,21 @@
  * Baselines live in tests/e2e/visual/<spec>-snapshots/ and ARE committed.
  * See _visual-helpers.ts for the platform-rendering caveat.
  */
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
-	shootSurface,
 	dismissSupportDialog,
-	waitForContentReady,
-	freezePage,
 	dynamicMasks,
+	freezePage,
+	shootSurface,
 	SHOT_OPTIONS,
-} from './_visual-helpers'
+	waitForContentReady,
+} from './_visual-helpers.ts'
 
 const APP = '/index.php/apps/opencatalogi'
 
 test.describe('OpenCatalogi — visual baselines', () => {
 	test('dashboard', async ({ page }) => {
-		await shootSurface(page, `${APP}/#/`, 'dashboard.png')
+		await shootSurface(page, `${APP}/`, 'dashboard.png')
 	})
 
 	test('publications list', async ({ page, request }) => {
@@ -54,10 +54,10 @@ test.describe('OpenCatalogi — visual baselines', () => {
 
 		// Boot the SPA, then take the in-app hash route (path-form gotos boot
 		// the Dashboard in this hash-mode SPA; see tests/e2e/spec-coverage/_nav.ts).
-		await page.goto(`${APP}/#/`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP}/`, { waitUntil: 'domcontentloaded' })
 		await dismissSupportDialog(page)
 		await waitForContentReady(page)
-		await page.goto(`${APP}/#/publications/${slug}`, {
+		await page.goto(`${APP}/publications/${slug}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await page.waitForTimeout(1500)

@@ -17,6 +17,7 @@ import BookOpenVariant from 'vue-material-design-icons/BookOpenVariant.vue'
 import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
 import Bookshelf from 'vue-material-design-icons/Bookshelf.vue'
 import ChartBar from 'vue-material-design-icons/ChartBar.vue'
+import ChartBoxOutline from 'vue-material-design-icons/ChartBoxOutline.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 import CogOutline from 'vue-material-design-icons/CogOutline.vue'
 import FileDocument from 'vue-material-design-icons/FileDocument.vue'
@@ -34,6 +35,7 @@ import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed
 import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
+import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
 import TagOutline from 'vue-material-design-icons/TagOutline.vue'
 import Tune from 'vue-material-design-icons/Tune.vue'
 import ViewDashboardOutline from 'vue-material-design-icons/ViewDashboardOutline.vue'
@@ -45,6 +47,7 @@ export default {
 	BookOpenVariantOutline,
 	Bookshelf,
 	ChartBar,
+	ChartBoxOutline,
 	Cog,
 	CogOutline,
 	FileDocument,
@@ -62,6 +65,7 @@ export default {
 	PlayCircleOutline,
 	ShieldAccountOutline,
 	Sitemap,
+	StoreOutline,
 	TagOutline,
 	Tune,
 	ViewDashboardOutline,

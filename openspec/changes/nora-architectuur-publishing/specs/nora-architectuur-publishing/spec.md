@@ -23,7 +23,7 @@ This spec moves architectures into OpenCatalogi with five core schemas (NoraPrin
 - `openregister/openspec/...`: Schemas and CRUD patterns for all five item types
 - `opencatalogi/openspec/federation`: Federation of NORA catalogs across municipalities
 - `opencatalogi/org-archimate-export`: ArchiMate 3.1 export of building-block + service layers
-- `opencatalogi/dcat-oai-pmh-harvesting`: NORA catalog exposed as DCAT-AP-NL dataset + OAI-PMH set
+- `opencatalogi/dcat-ap-harvest` (live spec) + `opencatalogi/oai-pmh-endpoint` (change): NORA catalog exposed as DCAT-AP-NL dataset + OAI-PMH set (the `dcat-oai-pmh-harvesting` umbrella was re-scoped 2026-09-02)
 
 **Relation to existing OpenCatalogi entities:**
 - NORA catalogs are typed OpenCatalogi catalogs (`catalogType: nora-architecture`)

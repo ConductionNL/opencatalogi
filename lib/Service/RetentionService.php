@@ -47,6 +47,8 @@ use RuntimeException;
  * Drives the publication retention lifecycle.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md
  */
 class RetentionService {
 
@@ -86,18 +88,27 @@ class RetentionService {
 	private ?object $objectService = null;
 
 	/**
+	 * Cached OpenRegister DMN DecisionTableEvaluator instance.
+	 *
+	 * @var object|null
+	 */
+	private ?object $dmnEvaluator = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config App configuration.
 	 * @param ContainerInterface $container Server container for resolving OpenRegister.
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
+	 * @param RetentionPolicyTable $policyTable Translates stored defaults into the DMN table shape.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly RetentionPolicyTable $policyTable = new RetentionPolicyTable(),
 	) {
 
 	}//end __construct()
@@ -121,6 +132,32 @@ class RetentionService {
 
 		return $this->objectService;
 	}//end getObjectService()
+
+	/**
+	 * Resolve the shared OpenRegister DMN decision-table evaluator.
+	 *
+	 * The RET-004 category match is delegated to this evaluator (hydra
+	 * ADR-065, One Engine): opencatalogi translates its stored defaults into
+	 * a decision table and never matches rules itself. Same availability
+	 * guard as {@see getObjectService()}: unresolvable means "no defaults
+	 * configured", logged, never guessed around with an app-local matcher.
+	 *
+	 * @return object|null The DecisionTableEvaluator, or null when OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	public function getDecisionTableEvaluator(): ?object {
+		if ($this->dmnEvaluator === null) {
+			try {
+				$this->dmnEvaluator = $this->container->get('OCA\OpenRegister\Service\Dmn\DecisionTableEvaluator');
+			} catch (\Throwable $e) {
+				$this->logger->warning('[RetentionService] OpenRegister DecisionTableEvaluator unavailable: ' . $e->getMessage());
+				return null;
+			}
+		}
+
+		return $this->dmnEvaluator;
+	}//end getDecisionTableEvaluator()
 
 	/**
 	 * Resolve the configured publication register identifier.
@@ -257,14 +294,17 @@ class RetentionService {
 	 *
 	 * Already-set retention values are never overwritten (RET-004). Returns the
 	 * publication array with any newly-applied retention fields and a recomputed
-	 * retentionExpiresAt; the caller persists it. Pure in-memory policy resolution.
+	 * retentionExpiresAt; the caller persists it. The category-to-default match
+	 * is delegated to OpenRegister's shared DMN decision-table evaluator (hydra
+	 * ADR-065, One Engine): the stored defaults become a FIRST-policy table and
+	 * this service never matches rules itself.
 	 *
 	 * @param array<string, mixed> $publication The publication object data.
 	 * @param string $catalogSlug The catalog slug the publication belongs to.
 	 *
 	 * @return array<string, mixed> The publication with defaults applied.
 	 *
-	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	public function applyDefaults(array $publication, string $catalogSlug): array {
 		$defaults = $this->getRetentionDefaults();
@@ -273,27 +313,46 @@ class RetentionService {
 			return $publication;
 		}
 
-		$category = (string)($publication['retentionCategory'] ?? '');
-		$rule = null;
-		if ($category !== '' && isset($catalogDefaults[$category]) === true && is_array($catalogDefaults[$category]) === true) {
-			$rule = $catalogDefaults[$category];
-		} elseif (isset($catalogDefaults['_fallback']) === true && is_array($catalogDefaults['_fallback']) === true) {
-			$rule = $catalogDefaults['_fallback'];
-		}
-
-		if ($rule === null) {
+		$decisionTable = $this->policyTable->fromDefaults(catalogDefaults: $catalogDefaults);
+		if ($decisionTable === null) {
+			// Nothing configured for this catalog.
 			return $publication;
 		}
 
-		// Only fill empties — never overwrite an officer's choice.
-		if (empty($publication['retentionTermMonths']) === true && isset($rule['termMonths']) === true) {
-			$publication['retentionTermMonths'] = (int)$rule['termMonths'];
+		$evaluator = $this->getDecisionTableEvaluator();
+		if ($evaluator === null) {
+			// Already warned in the resolver; degrade to "no defaults configured".
+			return $publication;
 		}
 
-		if (empty($publication['retentionAction']) === true && isset($rule['action']) === true
-			&& in_array($rule['action'], self::ACTIONS, true) === true
+		$category = (string)($publication['retentionCategory'] ?? '');
+		try {
+			$result = $evaluator->evaluate($decisionTable, ['category' => $category]);
+		} catch (\Throwable $e) {
+			if (method_exists($e, 'getErrorCode') === true && $e->getErrorCode() === 'no_rule_matched') {
+				// Expected: no row for this category and no fallback configured.
+				return $publication;
+			}
+
+			$this->logger->warning('[RetentionService] retention decision-table evaluation failed: ' . $e->getMessage());
+			return $publication;
+		}
+
+		$outputs = ($result['outputs'] ?? []);
+		if (is_array($outputs) === false) {
+			return $publication;
+		}
+
+		// Only fill empties — never overwrite an officer's choice. Null outputs
+		// mean the winning row does not configure that key; skip them.
+		if (empty($publication['retentionTermMonths']) === true && isset($outputs['termMonths']) === true) {
+			$publication['retentionTermMonths'] = (int)$outputs['termMonths'];
+		}
+
+		if (empty($publication['retentionAction']) === true && isset($outputs['action']) === true
+			&& in_array($outputs['action'], self::ACTIONS, true) === true
 		) {
-			$publication['retentionAction'] = (string)$rule['action'];
+			$publication['retentionAction'] = (string)$outputs['action'];
 		}
 
 		// Recompute expiry from publication date + term when not manually held.
@@ -314,6 +373,157 @@ class RetentionService {
 
 		return $publication;
 	}//end applyDefaults()
+
+	/**
+	 * Stamp retention defaults onto a publication at publication time (RET-004).
+	 *
+	 * Called from the OR object event listeners when an object first becomes
+	 * published. Only publication objects (the configured publication
+	 * register/schema) are touched; the matching per-catalog default fills any
+	 * retention field the officer left empty, values already set are never
+	 * overwritten, and when nothing changes nothing is saved (so the follow-up
+	 * OR update event terminates instead of looping).
+	 *
+	 * @param array<string, mixed> $objectData The OR event object data (with @self envelope).
+	 *
+	 * @return array<string, mixed>|null The saved publication, or null when nothing was stamped.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	public function applyDefaultsAtPublication(array $objectData): ?array {
+		$self = ($objectData['@self'] ?? []);
+		if (is_array($self) === false || $this->isConfiguredPublication(self: $self) === false) {
+			// Not a publication object; retention defaults do not apply.
+			return null;
+		}
+
+		$data = $objectData;
+		unset($data['@self']);
+		if (empty($data['publicationDate']) === true) {
+			// Not published yet; RET-004 stamps at publication time only.
+			return null;
+		}
+
+		$objectService = $this->getObjectService();
+		if ($objectService === null) {
+			return null;
+		}
+
+		$register = (string)($self['register'] ?? '');
+		$schema = (string)($self['schema'] ?? '');
+		$stamped = $this->applyDefaults(
+			publication: $data,
+			catalogSlug: $this->resolveCatalogSlug(register: $register, schema: $schema)
+		);
+		if ($stamped === $data) {
+			// Idempotent: already stamped (or no matching default) means no write.
+			return null;
+		}
+
+		$stamped = $this->carryObjectId(self: $self, data: $stamped);
+
+		try {
+			$saved = $this->save(objectService: $objectService, register: $register, schema: $schema, data: $stamped);
+		} catch (\Throwable $e) {
+			$this->logger->error('[RetentionService] failed to stamp retention defaults at publication: ' . $e->getMessage());
+			return null;
+		}
+
+		return $this->normalise(object: $saved);
+	}//end applyDefaultsAtPublication()
+
+	/**
+	 * Whether an event's @self envelope names the configured publication register/schema.
+	 *
+	 * @param array<string, mixed> $self The event object's @self envelope.
+	 *
+	 * @return bool True when the object is a publication.
+	 *
+	 * @spec exclude internal guard for the RET-004 publication-time hook.
+	 */
+	private function isConfiguredPublication(array $self): bool {
+		$configuredRegister = $this->getRegister();
+		$configuredSchema = $this->getSchema();
+		if ($configuredRegister === null || $configuredSchema === null) {
+			return false;
+		}
+
+		return (string)($self['register'] ?? '') === $configuredRegister
+			&& (string)($self['schema'] ?? '') === $configuredSchema;
+	}//end isConfiguredPublication()
+
+	/**
+	 * Carry the object id from the @self envelope onto the payload so the save
+	 * updates the existing object instead of creating a duplicate.
+	 *
+	 * @param array<string, mixed> $self The event object's @self envelope.
+	 * @param array<string, mixed> $data The stamped publication payload.
+	 *
+	 * @return array<string, mixed> The payload with its id ensured.
+	 *
+	 * @spec exclude internal helper for the RET-004 publication-time hook.
+	 */
+	private function carryObjectId(array $self, array $data): array {
+		$uuid = (string)($self['uuid'] ?? ($self['id'] ?? ($data['id'] ?? '')));
+		if ($uuid !== '' && empty($data['id']) === true) {
+			$data['id'] = $uuid;
+		}
+
+		return $data;
+	}//end carryObjectId()
+
+	/**
+	 * Resolve the catalog slug a publication belongs to.
+	 *
+	 * Catalog membership is by register/schema: a catalog object lists the
+	 * registers and schemas it contains. The first catalog whose lists include
+	 * the publication's register and schema provides the slug that keys the
+	 * per-catalog retention defaults (RET-004). Returns an empty string when no
+	 * catalog matches, in which case no catalog default can apply.
+	 *
+	 * @param string $register The publication's register id.
+	 * @param string $schema The publication's schema id.
+	 *
+	 * @return string The catalog slug, or an empty string when unresolvable.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	private function resolveCatalogSlug(string $register, string $schema): string {
+		$objectService = $this->getObjectService();
+		$catalogRegister = (string)$this->config->getValueString('opencatalogi', 'catalog_register', '');
+		$catalogSchema = (string)$this->config->getValueString('opencatalogi', 'catalog_schema', '');
+		if ($objectService === null || $catalogRegister === '' || $catalogSchema === '') {
+			return '';
+		}
+
+		try {
+			$result = $objectService->searchObjectsPaginated(
+				query: [
+					'@self' => ['register' => $catalogRegister, 'schema' => $catalogSchema],
+					'_limit' => 1000,
+				],
+				_rbac: false,
+				_multitenancy: false
+			);
+			$catalogs = ($result['results'] ?? []);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[RetentionService] catalog lookup for retention defaults failed: ' . $e->getMessage());
+			return '';
+		}
+
+		foreach ($catalogs as $catalog) {
+			$catalogData = $this->normalise(object: $catalog);
+			$registers = array_map('intval', (array)($catalogData['registers'] ?? []));
+			$schemas = array_map('intval', (array)($catalogData['schemas'] ?? []));
+			if (in_array((int)$register, $registers, true) === true
+				&& in_array((int)$schema, $schemas, true) === true
+			) {
+				return (string)($catalogData['slug'] ?? '');
+			}
+		}
+
+		return '';
+	}//end resolveCatalogSlug()
 
 	/**
 	 * Evaluate all publications for retention expiry and act per stored policy.

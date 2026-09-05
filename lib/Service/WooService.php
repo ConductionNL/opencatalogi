@@ -44,6 +44,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use OCP\IAppConfig;
+use OCP\IL10N;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -145,18 +146,27 @@ class WooService {
 	private ?object $deckCardService = null;
 
 	/**
+	 * Cached OpenRegister TaskSequenceMapper instance (approval-chain outcomes).
+	 *
+	 * @var object|null
+	 */
+	private ?object $taskSequenceMapper = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config App configuration.
 	 * @param ContainerInterface $container Server container for resolving OpenRegister.
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
+	 * @param IL10N $l10n Translated refusal messages for the publish gate.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 
 	}//end __construct()
@@ -200,6 +210,28 @@ class WooService {
 
 		return $this->deckCardService;
 	}//end getDeckCardService()
+
+	/**
+	 * Resolve the OpenRegister TaskSequenceMapper: the read surface for
+	 * approval-chain outcomes. OpenCatalogi only reads the recorded outcome
+	 * (ADR-022); provisioning, decisions and the audit trail are OpenRegister's.
+	 *
+	 * @return object|null The TaskSequenceMapper, or null when unavailable.
+	 *
+	 * @spec exclude pure framework plumbing — resolves the consumed OR approval-outcome store.
+	 */
+	public function getTaskSequenceMapper(): ?object {
+		if ($this->taskSequenceMapper === null) {
+			try {
+				$this->taskSequenceMapper = $this->container->get('OCA\OpenRegister\Db\TaskSequenceMapper');
+			} catch (\Throwable $e) {
+				$this->logger->warning('[WooService] OpenRegister TaskSequenceMapper unavailable: ' . $e->getMessage());
+				return null;
+			}
+		}
+
+		return $this->taskSequenceMapper;
+	}//end getTaskSequenceMapper()
 
 	/**
 	 * The configured WOO register id/uuid (shared by batch + assessment objects).
@@ -800,6 +832,7 @@ class WooService {
 	/**
 	 * The approval-chain id that gates the publication transition. The chain is an
 	 * OpenRegister approval-workflow construct; OpenCatalogi only references it.
+	 * Evaluated by {@see assertPublishApproved()} on every publish.
 	 *
 	 * @return string|null The configured chain id, or null when unconfigured.
 	 *
@@ -815,14 +848,74 @@ class WooService {
 	}//end getPublishApprovalChain()
 
 	/**
+	 * Evaluate the configured approval chain for a batch: the publish gate.
+	 *
+	 * Fail-closed policy on every branch. Publishing is refused when no chain is
+	 * configured (the spec requires the ready_for_review -> published transition
+	 * to be approval-gated and is silent on the unconfigured case), when the
+	 * OpenRegister approval workflow cannot be consulted, and when the chain has
+	 * not recorded a completed, approving sequence anchored on this batch. This
+	 * method only READS the recorded outcome; the chain, its steps and its
+	 * decision history are OpenRegister approval-workflow constructs (ADR-022),
+	 * so OpenCatalogi implements no approval-step machinery of its own.
+	 *
+	 * @param string $batchId The batch uuid the approval sequence is anchored on.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException Translated refusal naming what is missing.
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
+	 */
+	private function assertPublishApproved(string $batchId): void {
+		$chainId = $this->getPublishApprovalChain();
+		if ($chainId === null) {
+			throw new RuntimeException(
+				$this->l10n->t('Publishing is blocked: no approval chain is configured (woo_publish_approval_chain).')
+			);
+		}
+
+		$unverifiable = $this->l10n->t(
+			'Publishing is blocked: the OpenRegister approval workflow is unavailable, so approval chain "%s" cannot be verified.',
+			[$chainId]
+		);
+		$mapper = $this->getTaskSequenceMapper();
+		if ($mapper === null || method_exists($mapper, 'findNewestForAnchor') === false) {
+			throw new RuntimeException($unverifiable);
+		}
+
+		try {
+			$sequence = $mapper->findNewestForAnchor(anchorObjectUuid: $batchId, templateId: $chainId);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[WooService] approval chain lookup failed for batch ' . $batchId . ': ' . $e->getMessage());
+			throw new RuntimeException($unverifiable);
+		}
+
+		$status = '';
+		if (is_object($sequence) === true && method_exists($sequence, 'getStatus') === true) {
+			$status = (string)$sequence->getStatus();
+		}
+
+		// 'completed' is OpenRegister's release condition (every position approved);
+		// running, rejected, terminated or absent sequences all refuse.
+		if ($status !== 'completed') {
+			throw new RuntimeException(
+				$this->l10n->t('Publishing is blocked: approval chain "%s" has not recorded a completed approval for this batch.', [$chainId])
+			);
+		}
+
+	}//end assertPublishApproved()
+
+	/**
 	 * Publish a completed WOO batch to a public reading room.
 	 *
 	 * The reading room is built on the existing Catalog/Publication infrastructure
 	 * (ADR-022 — not a bespoke CMS). Only openbaar + deels_openbaar (anonymized)
 	 * documents are published; niet_openbaar documents are excluded. The
 	 * ready_for_review -> published transition is gated by the configured
-	 * approval-workflow chain — when a chain is configured the batch MUST already
-	 * be in "ready_for_review" (approval recorded by the workflow leaf).
+	 * approval-workflow chain: the batch MUST be in "ready_for_review" AND the
+	 * chain MUST have recorded a completed approval for this batch (evaluated
+	 * fail-closed by {@see assertPublishApproved()}).
 	 *
 	 * @param string $batchId The batch uuid.
 	 *
@@ -844,6 +937,9 @@ class WooService {
 		if ((string)($batch['status'] ?? '') !== 'ready_for_review') {
 			throw new RuntimeException('Batch must be ready_for_review (passed the approval gate) before publishing');
 		}
+
+		// The actual approval gate: status only says a review CAN start (fail closed).
+		$this->assertPublishApproved(batchId: $batchId);
 
 		$assessments = $this->loadAssessments(batch: $batch);
 		$publishable = array_values(

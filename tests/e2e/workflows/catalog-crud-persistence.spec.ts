@@ -35,15 +35,20 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test workflows/catalog-crud
  */
-import { test, expect } from '@playwright/test'
-import { bootApp, navTo, trackPageErrors, fatalErrors } from '../spec-coverage/_nav'
+import { expect, test } from '@playwright/test'
+import {
+	bootApp,
+	fatalErrors,
+	navTo,
+	trackPageErrors,
+} from '../spec-coverage/_nav.ts'
+import { waitIndexBody } from './_crud.ts'
 import {
 	Fixtures,
 	REG_PUBLICATION,
 	SCHEMA_CATALOG,
 	SCHEMA_PUBLICATION,
-} from './_fixtures'
-import { waitIndexBody } from './_crud'
+} from './_fixtures.ts'
 
 const fx = new Fixtures()
 

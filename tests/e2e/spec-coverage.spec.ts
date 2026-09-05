@@ -21,7 +21,6 @@
  *  - SCH-001 + SCH-002 /search UI                     → search-page.spec.ts
  *  - DIR-001 /directory UI                            → directory-page.spec.ts
  *  - GOM-001 + GOM-004 /catalogi UI                   → gate19 GOM-* + list-pages
- *  - CMS-001 /pages UI + CMS-010 /menus UI            → list-pages.spec.ts
  *
  * What remains here are the API-direct contracts (public endpoints, CORS,
  * WOO robots/sitemaps, metrics/health, federation) plus the NC admin
@@ -35,7 +34,9 @@
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test spec-coverage
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -436,65 +437,9 @@ test.describe('federation (FED)', () => {
 	})
 })
 
-// ─── CMS: Content Management ─────────────────────────────────────────────────
-
-test.describe('content-management (CMS)', () => {
-	/**
-	 * CMS-001: List all pages via public API.
-	 */
-	test('CMS-001 — GET /api/pages returns JSON (public endpoint)', async ({
-		browser,
-	}) => {
-		const context = await browser.newContext()
-		const page = await context.newPage()
-		const resp = await page.request.get('/index.php/apps/opencatalogi/api/pages')
-		expect([200, 404]).toContain(resp.status())
-		if (resp.status() === 200) {
-			const body = await resp.json().catch(() => null)
-			expect(body).not.toBeNull()
-		}
-		await context.close()
-	})
-
-	/**
-	 * CMS-010: List all menus via public API.
-	 */
-	test('CMS-010 — GET /api/menus returns JSON (public endpoint)', async ({
-		browser,
-	}) => {
-		const context = await browser.newContext()
-		const page = await context.newPage()
-		const resp = await page.request.get('/index.php/apps/opencatalogi/api/menus')
-		expect([200, 404]).toContain(resp.status())
-		if (resp.status() === 200) {
-			const body = await resp.json().catch(() => null)
-			expect(body).not.toBeNull()
-		}
-		await context.close()
-	})
-
-	/**
-	 * CMS-006/016: CORS headers on pages and menus — checked via GET (with Origin),
-	 * since Nextcloud returns 405 for OPTIONS on these routes at the framework level.
-	 */
-	test('CMS-006/016 — GET /api/pages and /api/menus with Origin return CORS headers', async ({
-		browser,
-	}) => {
-		for (const endpoint of [
-			'/index.php/apps/opencatalogi/api/pages',
-			'/index.php/apps/opencatalogi/api/menus',
-		]) {
-			const context = await browser.newContext()
-			const page = await context.newPage()
-			const resp = await page.request.get(endpoint, {
-				headers: { Origin: 'https://external.example.nl' },
-			})
-			expect([200, 404]).toContain(resp.status())
-			if (resp.status() === 200) {
-				const acao = resp.headers()['access-control-allow-origin']
-				expect(acao).toBeTruthy()
-			}
-			await context.close()
-		}
-	})
-})
+// ─── CMS: retired ────────────────────────────────────────────────────────────
+//
+// CMS-001 / CMS-006 / CMS-010 / CMS-016 covered this app's own `/api/pages` and
+// `/api/menus`. Pages and menus are Portaliq's now — it serves them at
+// `/api/content/pages` and `/api/content/menus`, and this app ships no page or
+// menu schema at all. There is nothing here left to cover.

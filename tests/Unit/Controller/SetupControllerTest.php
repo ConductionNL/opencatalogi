@@ -437,6 +437,37 @@ class SetupControllerTest extends TestCase {
 	}
 
 	/**
+	 * Picking the shipped dataset stores it, and the load step then imports it.
+	 *
+	 * The two halves are one flow: the choice step writes the answer through
+	 * `config()` and the run-action step reads it back, because
+	 * `CnSetupWizard::runAction()` posts no body and so cannot carry it.
+	 */
+	public function testPickingTheDatasetAndThenLoadingImportsIt(): void {
+		$this->demoDataService->method('listChoices')->willReturn(
+			[
+				['id' => 'none', 'label' => 'None', 'description' => 'Nothing.', 'objectCount' => 0, 'icon' => 'CloseCircleOutline'],
+				['id' => 'demo', 'label' => 'Example data', 'description' => 'Sample values.', 'objectCount' => 48, 'icon' => 'DatabaseOutline'],
+			]
+		);
+		$this->request->method('getParams')->willReturn(['demo_dataset' => 'demo']);
+
+		$saved = $this->controller->config()->getData();
+		$this->assertContains('demo_dataset', $saved['saved']);
+		$this->assertSame('demo', $this->configValues['demo_dataset']);
+
+		$this->demoDataService->expects($this->once())
+			->method('install')
+			->willReturn(['objects' => 48, 'schemas' => 16]);
+
+		$body = $this->controller->action('load-demo-data')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertStringContainsString('48', $body['message']);
+		$this->assertSame('installed', $this->configValues['demo_data_decided']);
+	}
+
+	/**
 	 * The happy path, and the numbers reach the operator.
 	 *
 	 * 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be told
@@ -488,6 +519,76 @@ class SetupControllerTest extends TestCase {
 		$this->demoDataService->expects($this->never())->method('install');
 
 		$body = $this->controller->action('skip-demo-data')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertSame('skipped', $this->configValues['demo_data_decided']);
+		// 🔴 IT HAS TO ANSWER BOTH STEPS. The step split into a choice plus a
+		// run-action, and CnAppRoot opens the wizard while ANY optional step is
+		// outstanding — so writing only the decision flag would leave the
+		// choice open and the wizard covering every page.
+		$this->assertSame('none', $this->configValues['demo_dataset'] ?? null, 'skipping IS choosing none');
+	}
+
+	/**
+	 * The status document carries the datasets the choice step offers.
+	 *
+	 * 🔴 THIS RESPONSE *IS* THE OPTION LIST. The step declares
+	 * `optionsSource: datasets` and carries no options of its own, so a dataset
+	 * missing here is a dataset nobody can pick.
+	 */
+	public function testStatusCarriesTheOptionListTheChoiceStepReads(): void {
+		$this->demoDataService->method('listChoices')->willReturn(
+			[
+				['id' => 'none', 'label' => 'None', 'description' => 'Nothing.', 'objectCount' => 0, 'icon' => 'CloseCircleOutline'],
+				['id' => 'demo', 'label' => 'Example data', 'description' => 'Sample values.', 'objectCount' => 11, 'icon' => 'DatabaseOutline'],
+			]
+		);
+
+		$data = $this->controller->status()->getData();
+
+		$this->assertSame(['none', 'demo'], array_column($data['datasets'], 'id'));
+		$this->assertSame(11, $data['datasets'][1]['objectCount']);
+		$this->assertArrayHasKey('load-demo-data', $data['steps']);
+	}
+
+	/**
+	 * Choosing none closes both steps without running anything.
+	 *
+	 * 🔴 THE DEFECT THIS FIXES. This app implemented `skip-demo-data` and no
+	 * manifest step could reach it, so declining was unsayable.
+	 */
+	public function testChoosingNoneClosesBothStepsWithoutRunningAnything(): void {
+		$this->configValues['demo_dataset'] = 'none';
+
+		$steps = $this->controller->status()->getData()['steps'];
+
+		$this->assertTrue($steps['demo-data']['done']);
+		$this->assertTrue($steps['load-demo-data']['done']);
+	}
+
+	/**
+	 * Running the load step with no dataset picked refuses rather than guessing.
+	 *
+	 * 🔴 NO SILENT DEFAULT. Importing because the operator clicked Run one step
+	 * early would plant example objects nobody asked for.
+	 */
+	public function testLoadingWithoutAChoiceRefusesRatherThanGuessing(): void {
+		$this->demoDataService->expects($this->never())->method('install');
+
+		$response = $this->controller->action('load-demo-data');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertFalse($response->getData()['success']);
+	}
+
+	/**
+	 * Choosing none and then running imports nothing, rather than refusing.
+	 */
+	public function testChoosingNoneAndThenRunningImportsNothing(): void {
+		$this->configValues['demo_dataset'] = 'none';
+		$this->demoDataService->expects($this->never())->method('install');
+
+		$body = $this->controller->action('load-demo-data')->getData();
 
 		$this->assertTrue($body['success']);
 		$this->assertSame('skipped', $this->configValues['demo_data_decided']);

@@ -35,7 +35,7 @@ import {
 	navToRoute,
 	openSettingsFoldout,
 	trackPageErrors,
-} from './_nav'
+} from './_nav.ts'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ async function openIndexPage(page: Page, menuId: string): Promise<void> {
  * asserting the same surface; there is just no entry left to click.
  *
  * @param page The Playwright page.
- * @param route The in-app route (e.g. '/pages').
+ * @param route The in-app route (e.g. '/themes').
  */
 async function openIndexRoute(page: Page, route: string): Promise<void> {
 	await navToRoute(page, route)
@@ -100,8 +100,8 @@ async function openIndexRoute(page: Page, route: string): Promise<void> {
  * @param page The Playwright page.
  * @param route The in-app route (e.g. '/catalogi/123').
  */
-async function gotoHash(page: Page, route: string): Promise<void> {
-	await page.goto(`${APP}/#${route}`, { waitUntil: 'domcontentloaded' })
+async function gotoRoute(page: Page, route: string): Promise<void> {
+	await page.goto(`${APP}${route}`, { waitUntil: 'domcontentloaded' })
 	await page.waitForTimeout(1500)
 	await dismissOverlays(page)
 }
@@ -188,22 +188,26 @@ test.describe('spa-deep-link-routing', () => {
 	 * THEN it returns a TemplateResponse for the index template with a permissive connect-src CSP
 	 * AND the front-end router resolves the remaining path client-side.
 	 *
-	 * The router is hash-mode, so the client-resolvable deep link is the
-	 * hash form. We open #/search cold and assert the Search page (not the
-	 * Dashboard fallback) actually rendered.
+	 * The router is HISTORY-mode, so the client-resolvable deep link is a
+	 * plain path. We open /search cold and assert the Search page (not the
+	 * Dashboard fallback) actually rendered — the Dashboard is exactly what
+	 * appears when the router cannot resolve the path and the catch-all
+	 * redirects to `/`, which is the regression this guards.
 	 */
 	test(// @e2e spa-deep-link-routing::open-a-deep-link-directly
-	'SPA-001 — direct hash deep-link to /search renders the Search page, not the Dashboard', async ({
+	'SPA-001 — direct deep-link to /search renders the Search page, not the Dashboard', async ({
 		page,
 	}) => {
-		await gotoHash(page, '/search')
+		await gotoRoute(page, '/search')
 		// The genuine Search surface must mount from the deep link.
 		await expect(
 			page.locator('[data-testid="cn-search-page"]').first(),
 		).toBeVisible({ timeout: 20000 })
-		// And the URL kept the deep-link route.
+		// And the URL kept the deep-link route. Matched as a suffix: Nextcloud
+		// serves the app as both `/apps/...` and `/index.php/apps/...`, and the
+		// router emits whichever base the page was loaded under.
 		expect(page.url()).toContain('/apps/opencatalogi')
-		expect(page.url()).toContain('#/search')
+		expect(page.url()).toMatch(/\/apps\/opencatalogi\/search$/)
 	})
 })
 
@@ -587,7 +591,7 @@ test.describe('catalogs', () => {
 	}) => {
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoHash(page, `/catalogi/${cat.id}`)
+		await gotoRoute(page, `/catalogi/${cat.id}`)
 		await expect(
 			page.locator('[data-testid="cn-detail-page"]').first(),
 		).toBeVisible({ timeout: 15000 })
@@ -606,7 +610,7 @@ test.describe('catalogs', () => {
 	}) => {
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoHash(page, `/publications/${cat.slug}`)
+		await gotoRoute(page, `/publications/${cat.slug}`)
 		// The Publications page is a manifest type:index page — its genuine
 		// surface is cn-index-page (not the dashboard).
 		await expect(
@@ -731,68 +735,6 @@ test.describe('search', () => {
 // ── Content management ────────────────────────────────────────────────────────
 
 test.describe('content-management', () => {
-	/**
-	 * CMS-036 — Add or edit a page content block.
-	 * GIVEN the page content form is open for a page
-	 * WHEN the user saves the content block
-	 * THEN the parent page MUST be persisted via objectStore.updateObject('page', id, page).
-	 */
-	test(// @e2e content-management::add-or-edit-a-page-content-block
-	'CMS-036 — Pages index renders with Add CTA and list/empty surface', async ({
-		page,
-	}) => {
-		await openIndexRoute(page, '/pages')
-		await expect(
-			page.locator('[data-testid="cn-cta-primary"]').first(),
-		).toBeVisible({ timeout: 10000 })
-	})
-
-	/**
-	 * CMS-036 — Delete a page content block.
-	 * GIVEN a content block on a page
-	 * WHEN the delete-page-content dialog confirms removal
-	 * THEN the page MUST be updated with the block removed via updateObject('page', ...).
-	 */
-	test(// @e2e content-management::delete-a-page-content-block
-	'CMS-036 — Pages index renders without fatal JS errors (delete dialog host)', async ({
-		page,
-	}) => {
-		const errors = trackPageErrors(page)
-		await openIndexRoute(page, '/pages')
-		expect(fatalErrors(errors)).toHaveLength(0)
-	})
-
-	/**
-	 * CMS-037 — Add or edit a menu item.
-	 * GIVEN the menu item form is open for a menu
-	 * WHEN the user saves the item
-	 * THEN the parent menu MUST be persisted via objectStore.updateObject('menu', id, menu).
-	 */
-	test(// @e2e content-management::add-or-edit-a-menu-item
-	'CMS-037 — Menus index renders with Add CTA and list/empty surface', async ({
-		page,
-	}) => {
-		await openIndexRoute(page, '/menus')
-		await expect(
-			page.locator('[data-testid="cn-cta-primary"]').first(),
-		).toBeVisible({ timeout: 10000 })
-	})
-
-	/**
-	 * CMS-037 — Copy a menu.
-	 * GIVEN an active menu
-	 * WHEN the copy-menu dialog is confirmed
-	 * THEN a new menu MUST be created via objectStore.createObject('menu', clone) with a (kopie) title.
-	 */
-	test(// @e2e content-management::copy-a-menu
-	'CMS-037 — Menus index renders without fatal JS errors (copy-menu dialog host)', async ({
-		page,
-	}) => {
-		const errors = trackPageErrors(page)
-		await openIndexRoute(page, '/menus')
-		expect(fatalErrors(errors)).toHaveLength(0)
-	})
-
 	/**
 	 * CMS-038 — Attach a theme to a publication.
 	 * GIVEN the add-publication-theme modal is open
@@ -1055,7 +997,7 @@ test.describe('publications', () => {
 		const errors = trackPageErrors(page)
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoHash(page, `/publications/${cat.slug}`)
+		await gotoRoute(page, `/publications/${cat.slug}`)
 		await expect(
 			page.locator('[data-testid="cn-index-page"]').first(),
 		).toBeVisible({ timeout: 15000 })
@@ -1079,7 +1021,7 @@ test.describe('publications', () => {
 		const errors = trackPageErrors(page)
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoHash(page, `/publications/${cat.slug}`)
+		await gotoRoute(page, `/publications/${cat.slug}`)
 		await expect(
 			page.locator('[data-testid="cn-index-page"]').first(),
 		).toBeVisible({ timeout: 15000 })

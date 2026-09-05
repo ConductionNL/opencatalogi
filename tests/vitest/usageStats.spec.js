@@ -7,18 +7,21 @@
  * counting-start note and the export-URL builder. These take no DOM and assert
  * the dashboard/detail-panel logic exactly (Vitest offline suite).
  */
-import { describe, it, expect } from 'vitest'
+import axios from '@nextcloud/axios'
+import { describe, expect, it, vi } from 'vitest'
 import {
-	deriveTrend,
-	formatCount,
-	countingStartNote,
 	catalogExportUrl,
+	countingStartNote,
+	deriveTrend,
+	fetchInstanceSeries,
+	formatCount,
 } from '../../src/services/usageStats.js'
 
-const t = (app, key, params = {}) =>
-	key.replace(/\{(\w+)\}/g, (_, k) =>
+function t(app, key, params = {}) {
+	return key.replace(/\{(\w+)\}/g, (_, k) =>
 		params[k] !== undefined ? params[k] : `{${k}}`,
 	)
+}
 
 describe('deriveTrend', () => {
 	it('returns up when the recent half outweighs the older half', () => {
@@ -84,5 +87,27 @@ describe('catalogExportUrl', () => {
 		const url = catalogExportUrl('woo', { from: '2026-01-01', to: '2026-12-31' })
 		expect(url).toContain('from=2026-01-01')
 		expect(url).toContain('to=2026-12-31')
+	})
+})
+
+describe('fetchInstanceSeries', () => {
+	it('reads the usage-counter series endpoint, never the audit trail', async () => {
+		const payload = {
+			series: [{ date: '2026-05-02', views: 12, downloads: 0 }],
+			views: 12,
+			downloads: 0,
+			countingStart: '2026-01-01',
+		}
+		const spy = vi.spyOn(axios, 'get').mockResolvedValueOnce({ data: payload })
+
+		const result = await fetchInstanceSeries({ from: '2026-05-01' })
+
+		expect(result).toEqual(payload)
+		expect(spy).toHaveBeenCalledTimes(1)
+		const [url, config] = spy.mock.calls[0]
+		expect(url).toBe('/index.php/apps/opencatalogi/api/stats/series')
+		expect(url).not.toContain('audit-trail')
+		expect(config).toEqual({ params: { from: '2026-05-01' } })
+		spy.mockRestore()
 	})
 })
