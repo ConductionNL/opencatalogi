@@ -1,3 +1,5 @@
+import type { APIRequestContext } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,8 +40,8 @@
  * (see _fixtures `setPublished` note and the publish-workflow spec) — so we
  * never call a non-existent `saveObject`/`publish` REST verb here.
  */
-import { request, type APIRequestContext } from '@playwright/test'
-import { BASE_URL } from '../base-url'
+import { request } from '@playwright/test'
+import { BASE_URL } from '../base-url.ts'
 
 // ⚠️ This module CREATES AND DELETES catalogs and publications. Its previous
 // `|| 'http://localhost:8080'` fallback aimed those writes at the SHARED dev
@@ -63,20 +65,34 @@ export const ADMIN_PASS = process.env.NC_ADMIN_PASS || 'admin'
 export let REG_PUBLICATION: number | string = 14
 export let SCHEMA_PUBLICATION: number | string = 53
 export let SCHEMA_CATALOG: number | string = 54
-export let SCHEMA_ORGANIZATION: number | string = 47
-export let SCHEMA_DOCUMENT: number | string = 55
+export let SCHEMA_USAGE_COUNTER: number | string = 56
+
+/**
+ * The register the MANIFEST reads, which is not always the one above.
+ *
+ * `lib/Settings/publication_register.json` imports under slug `opencatalogi`,
+ * and every manifest widget names `"register": "opencatalogi"`. A dev box that
+ * has also seen the older demo import carries a SECOND register under slug
+ * `publication`, and objects are stored per (register, schema): a fixture
+ * written to one is invisible to a page reading the other. The deep CRUD specs
+ * write and read through the same ids, so they never noticed. A fixture whose
+ * point is to put a number on a manifest-driven report does notice, so it
+ * resolves this one instead.
+ */
+export let REG_OPENCATALOGI: number | string = 14
 
 /** Stable slugs the OpenCatalogi register import uses (slug -> resolved id). */
 const REGISTER_SLUG = 'publication'
+const MANIFEST_REGISTER_SLUG = 'opencatalogi'
 const SCHEMA_SLUGS = {
 	publication: 'publication',
 	catalog: 'catalog',
-	organization: 'organization',
-	document: 'document',
+	usageCounter: 'usageCounter',
 }
 
-const OBJ = (reg: number | string, schema: number | string, id?: string) =>
-	`/index.php/apps/openregister/api/objects/${reg}/${schema}${id ? `/${id}` : ''}`
+function OBJ(reg: number | string, schema: number | string, id?: string) {
+	return `/index.php/apps/openregister/api/objects/${reg}/${schema}${id ? `/${id}` : ''}`
+}
 
 /** A unique-per-run prefix so fixtures never collide and are easy to sweep. */
 export function newRunId(): string {
@@ -127,41 +143,104 @@ export class Fixtures {
 	 * hardcoded ids would have.
 	 */
 	private async resolveRegisterAndSchemas(): Promise<void> {
-		try {
-			const regRes = await this.ctx.get(
-				'/index.php/apps/openregister/api/registers?_limit=300',
+		const regRes = await this.ctx.get(
+			'/index.php/apps/openregister/api/registers?_limit=300',
+		)
+		if (regRes.ok()) {
+			const body = await regRes.json()
+			const list = Array.isArray(body) ? body : body.results || []
+			const reg = list.find(
+				(r: Record<string, unknown>) => r.slug === REGISTER_SLUG,
 			)
-			if (regRes.ok()) {
-				const body = await regRes.json()
-				const list = Array.isArray(body) ? body : body.results || []
-				const reg = list.find(
-					(r: Record<string, unknown>) => r.slug === REGISTER_SLUG,
-				)
-				if (reg && (reg.id || reg.id === 0))
-					REG_PUBLICATION = reg.id as number | string
-			}
-			const schRes = await this.ctx.get(
-				'/index.php/apps/openregister/api/schemas?_limit=1000',
+			if (reg && (reg.id || reg.id === 0))
+				REG_PUBLICATION = reg.id as number | string
+			const manifestReg = list.find(
+				(r: Record<string, unknown>) => r.slug === MANIFEST_REGISTER_SLUG,
 			)
-			if (schRes.ok()) {
-				const body = await schRes.json()
-				const list = Array.isArray(body) ? body : body.results || []
-				const bySlug = new Map<string, number | string>()
-				for (const s of list)
-					if (s && s.slug)
-						bySlug.set(s.slug as string, s.id as number | string)
-				if (bySlug.has(SCHEMA_SLUGS.publication))
-					SCHEMA_PUBLICATION = bySlug.get(SCHEMA_SLUGS.publication)!
-				if (bySlug.has(SCHEMA_SLUGS.catalog))
-					SCHEMA_CATALOG = bySlug.get(SCHEMA_SLUGS.catalog)!
-				if (bySlug.has(SCHEMA_SLUGS.organization))
-					SCHEMA_ORGANIZATION = bySlug.get(SCHEMA_SLUGS.organization)!
-				if (bySlug.has(SCHEMA_SLUGS.document))
-					SCHEMA_DOCUMENT = bySlug.get(SCHEMA_SLUGS.document)!
-			}
-		} catch {
-			/* keep dev-box seed ids on any resolution failure */
+			// Fall back to the publication register rather than to a
+			// hardcoded id: on an instance with only one of the two, that is
+			// the same register, and on an instance with neither the failure
+			// belongs at the create call, not at a number that happens to
+			// name some other app's register.
+			REG_OPENCATALOGI =
+				manifestReg && (manifestReg.id || manifestReg.id === 0)
+					? (manifestReg.id as number | string)
+					: REG_PUBLICATION
 		}
+		// A PAGE IS NOT THE SET, and a SLUG IS NOT UNIQUE. Both bit here.
+		//
+		// This asked for `?_limit=1000` and treated the page as everything.
+		// On an instance running the whole fleet there are 1,876 schemas, so
+		// `catalog` and `publication` fell off the end, `bySlug` never held
+		// them, and the hardcoded fallbacks below stood — pointing at
+		// whichever app owns ids 53 and 54 on that instance. The suite then
+		// failed with `create 18/53 failed: The required properties (term,
+		// definition, portal) are missing`, which is a GLOSSARY complaining
+		// about a publication write, and reads as a data bug rather than a
+		// resolution one.
+		//
+		// Resolving inside THIS app's register fixes both at once: the
+		// register names its own schema ids, so the set is small, complete,
+		// and cannot contain another app's same-named schema.
+		const resolved = await this.schemasOfRegister(REG_PUBLICATION)
+		if (resolved.has(SCHEMA_SLUGS.publication))
+			SCHEMA_PUBLICATION = resolved.get(SCHEMA_SLUGS.publication)!
+		if (resolved.has(SCHEMA_SLUGS.catalog))
+			SCHEMA_CATALOG = resolved.get(SCHEMA_SLUGS.catalog)!
+		if (resolved.has(SCHEMA_SLUGS.usageCounter))
+			SCHEMA_USAGE_COUNTER = resolved.get(SCHEMA_SLUGS.usageCounter)!
+
+		// FAIL HERE, not at the create. A slug that did not resolve leaves a
+		// hardcoded id in place, and that id belongs to somebody. Better to
+		// say which slug is missing than to write a publication into another
+		// app's glossary and report its validation error.
+		const unresolved = [SCHEMA_SLUGS.publication, SCHEMA_SLUGS.catalog].filter(
+			(slug) => !resolved.has(slug),
+		)
+		if (unresolved.length > 0) {
+			throw new Error(
+				`Fixtures.init(): register "${REGISTER_SLUG}" (id ${REG_PUBLICATION}) `
+					+ `does not carry ${unresolved.join(', ')}. `
+					+ 'Run tests/e2e/ci-seed.sh against this instance first.',
+			)
+		}
+	}
+
+	/**
+	 * The slug -> id map for the schemas a register actually carries.
+	 *
+	 * Reads the register's own `schemas` list and resolves each id, rather than
+	 * listing every schema on the instance and filtering by slug. On a fleet
+	 * instance that list runs to thousands and a slug is not unique across apps,
+	 * so filtering by slug is both paginated and ambiguous.
+	 *
+	 * @param register The register id or slug.
+	 *
+	 * @return Slug to schema id, for that register only.
+	 */
+	private async schemasOfRegister(
+		register: number | string,
+	): Promise<Map<string, number | string>> {
+		const out = new Map<string, number | string>()
+
+		const res = await this.ctx.get(
+			`/index.php/apps/openregister/api/registers/${register}`,
+		)
+		if (!res.ok()) return out
+
+		const body = await res.json()
+		const ids: Array<number | string> = body?.schemas ?? []
+
+		for (const id of ids) {
+			const schemaRes = await this.ctx.get(
+				`/index.php/apps/openregister/api/schemas/${id}`,
+			)
+			if (!schemaRes.ok()) continue
+			const schema = await schemaRes.json()
+			if (schema?.slug) out.set(String(schema.slug), schema.id ?? id)
+		}
+
+		return out
 	}
 
 	get api(): APIRequestContext {
@@ -252,10 +331,21 @@ export class Fixtures {
 			description: 'Created by the OpenCatalogi deep e2e workflow suite.',
 			// Wire the catalog at the publication register + publication schema so
 			// publications created in REG_PUBLICATION/SCHEMA_PUBLICATION surface
-			// through this catalog's public listing.
+			// through this catalog's public listing. A caller that also needs the
+			// document schema in scope passes it through `extra.schemas`; widening
+			// the default breaks catalog-crud-persistence, which asserts this exact
+			// list round-trips.
 			registers: [REG_PUBLICATION],
 			schemas: [SCHEMA_PUBLICATION],
 			listed: true,
+			// LISTED IS NOT ENOUGH, AND THAT IS THE PART THAT BITES.
+			// `resolveCatalogScope()` unions only listed AND published catalogs, and
+			// `isCatalogPubliclyAvailable()` requires `published` to be a non-empty
+			// string parsing to a date <= now. Without it every catalog this fixture
+			// creates is dropped from that union silently, so it contributes nothing
+			// to what /api/search can see — which is never what a test asking for a
+			// catalog wants.
+			published: '2020-01-01T00:00:00+00:00',
 			...extra,
 		})
 	}
@@ -264,13 +354,17 @@ export class Fixtures {
 	 * Create a Publication (in draft — no publish action applied).
 	 * @param name
 	 * @param extra
+	 * @param register Which register to create it in. Defaults to the deep
+	 *                 suite's register; a caller seeding a manifest-driven page
+	 *                 passes {@link REG_OPENCATALOGI} so the page can see it.
 	 */
 	async createPublication(
 		name: string,
 		extra: Record<string, unknown> = {},
+		register: number | string = REG_PUBLICATION,
 	): Promise<SeededObject> {
 		const title = this.label(name)
-		return this.create(REG_PUBLICATION, SCHEMA_PUBLICATION, {
+		return this.create(register, SCHEMA_PUBLICATION, {
 			title,
 			summary: `Fixture publication for ${this.prefix}`,
 			description: 'Created by the OpenCatalogi deep e2e workflow suite.',
@@ -279,43 +373,37 @@ export class Fixtures {
 	}
 
 	/**
-	 * Create an Organization.
-	 * @param name
-	 * @param extra
+	 * Create a usageCounter row.
+	 *
+	 * usageCounter stores a `count` per publication per day per kind, so the
+	 * Usage report SUMs `count` rather than counting rows. A test that wants a
+	 * number on that report has to put one there: with no counters the report
+	 * correctly renders an em-dash, and an assertion for a digit then measures
+	 * whether some earlier spec happened to leave data behind.
+	 *
+	 * The `organization` and `document` creators that used to sit here were
+	 * removed with their schemas (`catalogi-uses-the-shared-organisation` and
+	 * `attachments-are-files`). Their hardcoded fallback ids were the hazard:
+	 * schema slugs are global per organisation, so once the slug stopped
+	 * resolving here the fixture would have written into whichever app owns id
+	 * 47 or 55 on that instance.
+	 *
+	 * @param publicationId The publication UUID the counter is attributed to.
+	 * @param kind          `view` or `download`.
+	 * @param count         How many, on that day.
+	 * @param extra         Extra fields merged into the object.
 	 */
-	async createOrganization(
-		name: string,
+	async createUsageCounter(
+		publicationId: string,
+		kind: 'view' | 'download',
+		count: number,
 		extra: Record<string, unknown> = {},
 	): Promise<SeededObject> {
-		const title = this.label(name)
-		return this.create(REG_PUBLICATION, SCHEMA_ORGANIZATION, {
-			title,
-			summary: `Fixture organization for ${this.prefix}`,
-			...extra,
-		})
-	}
-
-	/**
-	 * Create a Document linked to a publication (WOO-517 content-search fixture).
-	 * `publication` carries the `{slug, title}` summary
-	 * `PublicationQueryService::resolveDocumentPublicationSummary()` resolves by
-	 * slug — the UUID is filled in server-side once the link is followed.
-	 * @param name
-	 * @param publication
-	 * @param publication.slug
-	 * @param publication.title
-	 * @param extra
-	 */
-	async createDocument(
-		name: string,
-		publication: { slug: string; title: string },
-		extra: Record<string, unknown> = {},
-	): Promise<SeededObject> {
-		const title = this.label(name)
-		return this.create(REG_PUBLICATION, SCHEMA_DOCUMENT, {
-			title,
-			summary: `Fixture document for ${this.prefix}`,
-			publication,
+		return this.create(REG_OPENCATALOGI, SCHEMA_USAGE_COUNTER, {
+			publication: publicationId,
+			kind,
+			count,
+			date: new Date().toISOString().slice(0, 10),
 			...extra,
 		})
 	}
@@ -377,6 +465,7 @@ export class Fixtures {
 		} catch (err) {
 			throw new Error(
 				`extractFile ${fileId}: network failure — ${(err as Error).message}`,
+				{ cause: err },
 			)
 		}
 		if (res.ok()) {
@@ -423,12 +512,10 @@ export class Fixtures {
 		this.created = []
 
 		// Prefix sweep across the fixture schemas (catches UI-created rows).
-		for (const schema of [
-			SCHEMA_PUBLICATION,
-			SCHEMA_CATALOG,
-			SCHEMA_ORGANIZATION,
-			SCHEMA_DOCUMENT,
-		]) {
+		// usageCounter is deliberately absent: it carries no `title` to match a
+		// prefix on, and it lives in REG_OPENCATALOGI rather than here. The
+		// tracked-id pass above is what removes it.
+		for (const schema of [SCHEMA_PUBLICATION, SCHEMA_CATALOG]) {
 			const rows = await this.list(REG_PUBLICATION, schema, 500)
 			for (const row of rows) {
 				const title =

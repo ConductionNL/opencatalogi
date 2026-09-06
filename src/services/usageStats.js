@@ -42,6 +42,24 @@ export async function fetchCatalogStats(slug, opts = {}) {
 }
 
 /**
+ * Fetch the instance-wide daily usage series for the dashboard usage card.
+ *
+ * Sums the privacy-safe usage counters of every publication per day into
+ * views and downloads. Requests, not unique visitors; never the OpenRegister
+ * audit trail. Page views on a Portaliq-served portal are measured by
+ * Portaliq's traffic analytics, not here.
+ *
+ * @param {object} [opts] Optional { from, to } (Y-m-d; default last 30 days).
+ * @return {Promise<object>} { series, views, downloads, countingStart, from, to }.
+ * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
+ */
+export async function fetchInstanceSeries(opts = {}) {
+	const url = generateUrl('/apps/opencatalogi/api/stats/series')
+	const response = await axios.get(url, { params: opts })
+	return response.data
+}
+
+/**
  * Build the authenticated CSV export URL for a catalog + range.
  *
  * @param {string} slug Catalog slug.

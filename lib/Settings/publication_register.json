@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.2.0"
+    "version": "0.5.0"
   },
   "x-openregister": {
     "type": "application",
@@ -23,18 +23,14 @@
       "publication": {
         "slug": "publication",
         "title": "Publication",
-        "version": "0.1.0",
+        "version": "0.4.0",
         "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website, including catalogs, listings, organizations, publications, themes, pages, menus, and glossary items. This register enables the creation of rich, navigable catalog websites with proper content organization and user-friendly navigation.",
         "published": "2025-01-01T00:00:00+00:00",
         "schemas": [
           "catalog",
           "listing",
-          "organization",
           "publication",
-          "document",
           "theme",
-          "page",
-          "menu",
           "glossary",
           "usageCounter"
         ],
@@ -131,9 +127,9 @@
           },
           "organization": {
             "type": "string",
-            "description": "Reference to the organization that owns this publication",
+            "description": "Reference to the organisation that owns this publication, resolved against OpenRegister's shared organisation.",
             "format": "uuid",
-            "$ref": "organization",
+            "$ref": "nc-organisation",
             "facetable": true,
             "title": "Organization"
           },
@@ -320,132 +316,6 @@
           ]
         }
       },
-      "document": {
-        "slug": "document",
-        "title": "Document",
-        "version": "0.1.0",
-        "published": "2026-07-03T00:00:00+00:00",
-        "summary": "A document attached to a publication, discoverable via the public full-text search endpoint",
-        "description": "A document represents a file (e.g. PDF, DOCX) attached to a publication. Documents are schema-discoverable so the public full-text search endpoint (SCH-PFTS-005) can surface them alongside publications, discriminated by @self.schema.",
-        "icon": null,
-        "required": [
-          "title",
-          "publication"
-        ],
-        "properties": {
-          "title": {
-            "type": "string",
-            "description": "The title of the document",
-            "maxLength": 255,
-            "minLength": 1,
-            "facetable": true,
-            "title": "Title"
-          },
-          "filename": {
-            "type": "string",
-            "description": "The original filename of the document",
-            "maxLength": 255,
-            "facetable": false,
-            "title": "Filename"
-          },
-          "mimeType": {
-            "type": "string",
-            "description": "The MIME type of the document",
-            "maxLength": 255,
-            "facetable": true,
-            "title": "MIME Type"
-          },
-          "summary": {
-            "type": "string",
-            "description": "Brief description of the document",
-            "maxLength": 255,
-            "facetable": false,
-            "title": "Summary"
-          },
-          "description": {
-            "type": "string",
-            "description": "Detailed description of the document",
-            "maxLength": 2555,
-            "facetable": false,
-            "title": "Description"
-          },
-          "publication": {
-            "type": "object",
-            "description": "Summary of the publication this document is attached to",
-            "facetable": false,
-            "title": "Publication",
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "The UUID of the linked publication",
-                "title": "Publication ID"
-              },
-              "slug": {
-                "type": "string",
-                "description": "The slug of the linked publication",
-                "title": "Publication Slug"
-              },
-              "title": {
-                "type": "string",
-                "description": "The title of the linked publication",
-                "title": "Publication Title"
-              }
-            }
-          },
-          "organization": {
-            "type": "string",
-            "description": "Reference to the organization that owns this document",
-            "facetable": true,
-            "title": "Organization"
-          },
-          "publicationDate": {
-            "type": "string",
-            "description": "Publication date (WOO/DIWOO) — when set to a date in the past, this document is live and publicly accessible",
-            "format": "date-time",
-            "facetable": true,
-            "title": "Publication Date"
-          },
-          "depublicationDate": {
-            "type": "string",
-            "description": "Depublication date (WOO/DIWOO) — when set and in the past, this document is withdrawn from public access",
-            "format": "date-time",
-            "facetable": true,
-            "title": "Depublication Date"
-          }
-        },
-        "configuration": {
-          "autoPublish": false
-        },
-        "hardValidation": false,
-        "searchable": true,
-        "authorization": {
-          "read": [
-            {
-              "group": "public",
-              "match": {
-                "publicationDate": {
-                  "$lte": "$now"
-                },
-                "depublicationDate": {
-                  "$gte": "$now"
-                }
-              }
-            },
-            {
-              "group": "public",
-              "match": {
-                "publicationDate": {
-                  "$lte": "$now"
-                },
-                "depublicationDate": {
-                  "$exists": false
-                }
-              }
-            },
-            "authenticated"
-          ]
-        }
-      },
       "catalog": {
         "slug": "catalog",
         "x-schema-org": "schema:DataCatalog",
@@ -550,9 +420,9 @@
           },
           "organization": {
             "type": "string",
-            "description": "Reference to the organization that owns this catalog",
+            "description": "Reference to the organisation that owns this catalog, resolved against OpenRegister's shared organisation.",
             "format": "uuid",
-            "$ref": "organization",
+            "$ref": "nc-organisation",
             "facetable": true,
             "title": "Organization"
           },
@@ -887,207 +757,6 @@
           ]
         }
       },
-      "organization": {
-        "slug": "organization",
-        "x-schema-org": "schema:Organization",
-        "title": "Organization",
-        "version": "0.0.5",
-        "published": "2025-01-01T00:00:00+00:00",
-        "summary": "An organization that publishes or manages catalogs",
-        "description": "Organizations represent entities that publish or manage catalogs. They can be government agencies, companies, or other institutions. Each organization can have multiple catalogs and is identified by various standardized identifiers like OIN, RSIN, and PKI certificates.",
-        "icon": null,
-        "required": [
-          "name",
-          "summary"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "The name of the organization",
-            "minLength": 1,
-            "facetable": true,
-            "title": "Name"
-          },
-          "summary": {
-            "type": "string",
-            "description": "Brief description of the organization",
-            "minLength": 1,
-            "facetable": false,
-            "title": "Summary"
-          },
-          "description": {
-            "type": "string",
-            "description": "Detailed description of the organization",
-            "facetable": false,
-            "title": "Description"
-          },
-          "oin": {
-            "type": "string",
-            "description": "Organization Identification Number (OIN)",
-            "pattern": "^0000000\\d{10}000$",
-            "facetable": true,
-            "title": "OIN"
-          },
-          "tooi": {
-            "type": "string",
-            "description": "TOOI identifier for the organization",
-            "pattern": "^\\w{2,}\\d{4}$",
-            "facetable": true,
-            "title": "TOOI"
-          },
-          "tooiIdentifier": {
-            "type": "string",
-            "description": "Full TOOI organisatie identifier URI (https://identifier.overheid.nl/tooi/id/...) used as the diwoo:publisher @resource in DIWOO Woo-index feeds",
-            "facetable": false,
-            "title": "TOOI Identifier URI"
-          },
-          "rsin": {
-            "type": "string",
-            "description": "RSIN number for tax identification",
-            "pattern": "^\\d{9}$",
-            "facetable": true,
-            "title": "RSIN"
-          },
-          "pki": {
-            "type": "string",
-            "description": "PKI certificate information",
-            "pattern": "^\\d{1,}$",
-            "facetable": false,
-            "title": "PKI"
-          },
-          "image": {
-            "type": "string",
-            "description": "URL to the organization's logo or image",
-            "facetable": false,
-            "title": "Image"
-          }
-        },
-        "configuration": {
-          "autoPublish": false,
-          "implements": [
-            "https://openregister.app/ns#Organization",
-            "https://schema.org/Organization"
-          ]
-        },
-        "hardValidation": true,
-        "searchable": true,
-        "authorization": {
-          "read": [
-            "public"
-          ]
-        }
-      },
-      "page": {
-        "slug": "page",
-        "x-schema-org": "schema:WebPage",
-        "title": "Page",
-        "version": "0.0.4",
-        "published": "2025-01-01T00:00:00+00:00",
-        "summary": "A content page for static information",
-        "description": "Pages are used to create static content within the catalog website. They can contain information about how to use the catalog, contact information, about pages, or any other static content that needs to be accessible through the website. Pages are accessible through their unique slugs and can be organized in the navigation menu.",
-        "icon": null,
-        "required": [
-          "title",
-          "slug"
-        ],
-        "configuration": {
-          "autoPublish": false
-        },
-        "properties": {
-          "title": {
-            "type": "string",
-            "description": "The title of the page",
-            "minLength": 1,
-            "facetable": true,
-            "title": "Title"
-          },
-          "slug": {
-            "type": "string",
-            "description": "URL-friendly version of the page name",
-            "pattern": "^[a-z0-9-]+$",
-            "minLength": 1,
-            "facetable": true,
-            "title": "Slug"
-          },
-          "contents": {
-            "type": "array",
-            "description": "Content blocks of the page",
-            "facetable": false,
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "description": "Type of content block",
-                  "minLength": 1,
-                  "title": "Content Block Type"
-                },
-                "id": {
-                  "type": "string",
-                  "description": "Identifier for the content block",
-                  "title": "Content Block ID"
-                },
-                "data": {
-                  "type": "object",
-                  "description": "Content block data",
-                  "additionalProperties": true,
-                  "title": "Content Block Data"
-                },
-                "groups": {
-                  "type": "array",
-                  "description": "Nextcloud groups that have access to this content block",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Access Groups"
-                },
-                "hideAfterLogin": {
-                  "type": "boolean",
-                  "description": "Whether to hide this content block after user login",
-                  "title": "Hide After Login"
-                },
-                "hideBeforeLogin": {
-                  "type": "boolean",
-                  "description": "Whether to hide this content block before user login",
-                  "title": "Hide Before Login"
-                }
-              },
-              "required": [
-                "type"
-              ]
-            },
-            "title": "Contents"
-          },
-          "groups": {
-            "type": "array",
-            "description": "Nextcloud groups that have access to this page",
-            "items": {
-              "type": "string"
-            },
-            "facetable": false,
-            "title": "Groups"
-          },
-          "hideAfterLogin": {
-            "type": "boolean",
-            "description": "Whether to hide this page after user login",
-            "facetable": false,
-            "title": "Hide After Login"
-          },
-          "hideBeforeLogin": {
-            "type": "boolean",
-            "description": "Whether to hide this page before user login",
-            "facetable": false,
-            "title": "Hide Before Login"
-          }
-        },
-        "hardValidation": true,
-        "searchable": true,
-        "authorization": {
-          "read": [
-            "public"
-          ]
-        }
-      },
       "theme": {
         "slug": "theme",
         "x-schema-org": "schema:DefinedTerm",
@@ -1167,194 +836,6 @@
         },
         "configuration": {
           "autoPublish": false
-        },
-        "hardValidation": true,
-        "searchable": true,
-        "authorization": {
-          "read": [
-            "public"
-          ]
-        }
-      },
-      "menu": {
-        "slug": "menu",
-        "x-schema-org": "schema:SiteNavigationElement",
-        "title": "Menu",
-        "version": "0.0.4",
-        "published": "2025-01-01T00:00:00+00:00",
-        "summary": "Navigation structure for the catalog website",
-        "description": "Menus define the navigation structure of the catalog website. They allow administrators to organize pages, listings, and other content into a hierarchical navigation system. Multiple menus can be created for different purposes, such as main navigation, footer links, or specialized content groupings.",
-        "icon": null,
-        "required": [
-          "title"
-        ],
-        "configuration": {
-          "autoPublish": false
-        },
-        "properties": {
-          "title": {
-            "type": "string",
-            "description": "The name of the menu",
-            "minLength": 1,
-            "facetable": true,
-            "title": "Title"
-          },
-          "position": {
-            "type": "number",
-            "description": "Order position of the menu",
-            "minimum": 0,
-            "facetable": true,
-            "title": "Position"
-          },
-          "items": {
-            "type": "array",
-            "description": "Menu items and their structure",
-            "facetable": false,
-            "items": {
-              "type": "object",
-              "properties": {
-                "order": {
-                  "type": "number",
-                  "description": "Order/position of the menu item within the menu",
-                  "minimum": 0,
-                  "title": "Order"
-                },
-                "name": {
-                  "type": "string",
-                  "description": "Name of the menu item",
-                  "minLength": 1,
-                  "title": "Name"
-                },
-                "link": {
-                  "type": "string",
-                  "description": "URL or path for the menu item",
-                  "minLength": 1,
-                  "title": "Link"
-                },
-                "description": {
-                  "type": "string",
-                  "description": "Description of the menu item",
-                  "title": "Description"
-                },
-                "icon": {
-                  "type": "string",
-                  "description": "Icon for the menu item",
-                  "title": "Icon"
-                },
-                "groups": {
-                  "type": "array",
-                  "description": "Nextcloud groups that have access to this menu item",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Access Groups"
-                },
-                "hideAfterLogin": {
-                  "type": "boolean",
-                  "description": "Whether to hide this menu item after user login",
-                  "title": "Hide After Login"
-                },
-                "hideBeforeLogin": {
-                  "type": "boolean",
-                  "description": "Whether to hide this menu item before user login",
-                  "title": "Hide Before Login"
-                },
-                "items": {
-                  "type": "array",
-                  "description": "Submenu items",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "order": {
-                        "type": "number",
-                        "description": "Order/position of the submenu item within its parent",
-                        "minimum": 0,
-                        "title": "Order"
-                      },
-                      "name": {
-                        "type": "string",
-                        "description": "Name of the submenu item",
-                        "minLength": 1,
-                        "title": "Name"
-                      },
-                      "link": {
-                        "type": "string",
-                        "description": "URL or path for the submenu item",
-                        "minLength": 1,
-                        "title": "Link"
-                      },
-                      "description": {
-                        "type": "string",
-                        "description": "Description of the submenu item",
-                        "title": "Description"
-                      },
-                      "icon": {
-                        "type": "string",
-                        "description": "Icon for the submenu item",
-                        "title": "Icon"
-                      },
-                      "groups": {
-                        "type": "array",
-                        "description": "Nextcloud groups that have access to this submenu item",
-                        "items": {
-                          "type": "string"
-                        },
-                        "title": "Access Groups"
-                      },
-                      "hideAfterLogin": {
-                        "type": "boolean",
-                        "description": "Whether to hide this submenu item after user login",
-                        "title": "Hide After Login"
-                      },
-                      "hideBeforeLogin": {
-                        "type": "boolean",
-                        "description": "Whether to hide this submenu item before user login",
-                        "title": "Hide Before Login"
-                      }
-                    },
-                    "required": [
-                      "order",
-                      "name",
-                      "link"
-                    ]
-                  },
-                  "title": "Submenu Items"
-                }
-              },
-              "required": [
-                "order",
-                "name",
-                "link"
-              ]
-            },
-            "title": "Items"
-          },
-          "groups": {
-            "type": "array",
-            "description": "Nextcloud groups that have access to this menu",
-            "items": {
-              "type": "string"
-            },
-            "facetable": false,
-            "title": "Groups"
-          },
-          "hideBeforeLogin": {
-            "type": "boolean",
-            "description": "Whether to hide this menu before user login",
-            "facetable": false,
-            "title": "Hide Before Login"
-          },
-          "icon": {
-            "type": "string",
-            "description": "Pick an icon (Material Design) or paste custom SVG.",
-            "widget": "icon",
-            "iconSources": [
-              "mdi"
-            ],
-            "allowCustomSvg": true,
-            "facetable": false,
-            "title": "Icon"
-          }
         },
         "hardValidation": true,
         "searchable": true,

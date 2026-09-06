@@ -628,14 +628,6 @@ export const useObjectStore = defineStore('object', {
 			// Update using reactive assignment
 			this.activeObjects = { ...this.activeObjects, [type]: object }
 
-			// List of virtual types that don't have API schemas and should not fetch related data
-			const virtualTypes = ['pageContent']
-
-			// Skip fetching related data for virtual types
-			if (virtualTypes.includes(type)) {
-				return
-			}
-
 			// Initialize related data structure if not exists
 			this.relatedData = {
 				...this.relatedData,

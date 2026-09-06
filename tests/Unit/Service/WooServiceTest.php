@@ -28,10 +28,9 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\WooService;
 use OCP\IAppConfig;
+use OCP\IL10N;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -122,6 +121,45 @@ class WooFakeDeckService {
 }//end class
 
 /**
+ * Duck-typed fake of the consumed OpenRegister TaskSequenceMapper. Parameter
+ * names mirror the real mapper because the service calls it with named
+ * arguments; a fake with different names would silently diverge.
+ */
+class WooFakeTaskSequenceMapper {
+
+	/** @var string|null Status the newest sequence reports; null = no sequence recorded. */
+	public ?string $status = null;
+
+	/** @var array<int, array{anchor: string, template: string}> */
+	public array $lookups = [];
+
+	public ?\Throwable $throwOnLookup = null;
+
+	public function findNewestForAnchor(string $anchorObjectUuid, string $templateId): ?object {
+		$this->lookups[] = ['anchor' => $anchorObjectUuid, 'template' => $templateId];
+		if ($this->throwOnLookup !== null) {
+			throw $this->throwOnLookup;
+		}
+
+		if ($this->status === null) {
+			return null;
+		}
+
+		$status = $this->status;
+		return new class($status) {
+			public function __construct(
+				private string $status,
+			) {
+			}
+			public function getStatus(): string {
+				return $this->status;
+			}
+		};
+
+	}//end findNewestForAnchor()
+}//end class
+
+/**
  * @covers \OCA\OpenCatalogi\Service\WooService
  */
 class WooServiceTest extends TestCase {
@@ -134,28 +172,38 @@ class WooServiceTest extends TestCase {
 
 	private LoggerInterface|MockObject $logger;
 
+	private IL10N|MockObject $l10n;
+
 	private WooFakeObjectService $objects;
 
 	private WooFakeDeckService $deck;
 
+	private WooFakeTaskSequenceMapper $sequences;
+
 	private WooService $service;
+
+	/** @var array<string, string> */
+	private array $store = [];
 
 	protected function setUp(): void {
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
 		$this->objects = new WooFakeObjectService();
 		$this->deck = new WooFakeDeckService();
+		$this->sequences = new WooFakeTaskSequenceMapper();
 
-		$store = [
+		$this->store = [
 			'woo_register' => '1',
 			'woo_batch_schema' => 'batch-sch',
 			'woo_assessment_schema' => 'assess-sch',
+			'woo_publish_approval_chain' => 'chain-1',
 		];
 		$this->config->method('getValueString')
 			->willReturnCallback(
-				fn (string $app, string $key, string $default = '') => ($store[$key] ?? $default)
+				fn (string $app, string $key, string $default = '') => ($this->store[$key] ?? $default)
 			);
 
 		$this->container->method('get')->willReturnCallback(
@@ -168,9 +216,24 @@ class WooServiceTest extends TestCase {
 					return $this->deck;
 				}
 
+				if ($id === 'OCA\OpenRegister\Db\TaskSequenceMapper') {
+					return $this->sequences;
+				}
+
 				throw new \RuntimeException('unknown service ' . $id);
 			}
 		);
+
+		$this->l10n->method('t')
+			->willReturnCallback(
+				static function (string $text, mixed $parameters = []) {
+					if (is_array($parameters) === false) {
+						$parameters = [$parameters];
+					}
+
+					return vsprintf($text, $parameters);
+				}
+			);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -181,8 +244,7 @@ class WooServiceTest extends TestCase {
 			$this->container,
 			$this->userSession,
 			$this->logger,
-			$this->createMock(PublicationService::class),
-			$this->createMock(CatalogiService::class),
+			$this->l10n,
 		);
 
 	}//end setUp()
@@ -314,9 +376,81 @@ class WooServiceTest extends TestCase {
 
 	}//end testPublishRequiresReadyForReview()
 
+	public function testPublishRefusesWhenNoApprovalChainConfigured(): void {
+		unset($this->store['woo_publish_approval_chain']);
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('no approval chain is configured');
+		$this->service->publishBatch('batch-1');
+
+	}//end testPublishRefusesWhenNoApprovalChainConfigured()
+
+	public function testPublishRefusesWhenChainHasNoRecordedApproval(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+
+		// No sequence recorded for the anchor at all.
+		$this->sequences->status = null;
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('has not recorded a completed approval');
+		$this->service->publishBatch('batch-1');
+
+	}//end testPublishRefusesWhenChainHasNoRecordedApproval()
+
+	public function testPublishRefusesWhileChainIsStillRunning(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->sequences->status = 'running';
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('chain "chain-1" has not recorded a completed approval');
+		$this->service->publishBatch('batch-1');
+
+	}//end testPublishRefusesWhileChainIsStillRunning()
+
+	public function testPublishRefusesWhenChainRejected(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->sequences->status = 'rejected';
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('has not recorded a completed approval');
+		$this->service->publishBatch('batch-1');
+
+	}//end testPublishRefusesWhenChainRejected()
+
+	public function testPublishFailsClosedWhenApprovalStoreErrors(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->sequences->throwOnLookup = new \RuntimeException('database gone');
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('cannot be verified');
+		$this->service->publishBatch('batch-1');
+
+	}//end testPublishFailsClosedWhenApprovalStoreErrors()
+
+	public function testPublishEvaluatesTheChainAnchoredOnTheBatch(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->sequences->status = 'completed';
+
+		$this->service->publishBatch('batch-1');
+
+		$this->assertSame(
+			[['anchor' => 'batch-1', 'template' => 'chain-1']],
+			$this->sequences->lookups
+		);
+
+	}//end testPublishEvaluatesTheChainAnchoredOnTheBatch()
+
 	public function testPublishExcludesNietOpenbaar(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->sequences->status = 'completed';
 		$result = $this->service->publishBatch('batch-1');
 		$this->assertSame('published', $result['status']);
 		// 2 openbaar + 1 deels_openbaar published; 1 niet_openbaar excluded.

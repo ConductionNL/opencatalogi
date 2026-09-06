@@ -183,6 +183,24 @@ dashboard-widget surfaces — no new view framework.
 - THEN the widget MUST list the top publications by views with their counts
 - AND clicking an entry MUST open that publication
 
+### Requirement: Dashboard usage card shows publication views and downloads (ANA-009)
+The dashboard usage card MUST show publication views and downloads, never
+audit-trail reads. It MUST draw its daily series from the privacy-safe usage
+counters (the instance-wide series endpoint `GET /api/stats/series`), and it
+MUST NOT read the OpenRegister audit trail, whose `read` rows count every
+API object read (officers and admins included) and no visitor at all. The
+card MUST state that the counts are requests, not unique visitors, and MUST
+show the counting-start note so an empty window reads as "not measured
+yet", not as "no reach". Page views on a Portaliq-served portal are measured
+by Portaliq's traffic analytics, not by this card.
+
+#### Scenario: Usage card draws from the usage counters
+- GIVEN an officer who opens the dashboard
+- WHEN the usage card loads
+- THEN the card MUST be titled "Publication views"
+- AND its series MUST be "Views" and "Downloads" fetched from `/api/stats/series`
+- AND no card MUST label audit-trail reads as "Requests" or "Traffic"
+
 ### Requirement: CSV export for WOO reporting (ANA-007)
 The system MUST provide an authenticated CSV export (UTF-8 with BOM) per
 catalog and date range: one row per publication with columns Publication,

@@ -39,9 +39,13 @@ The OpenCatalogi `listing` schema SHALL declare an
 
 ### Requirement: CMS-config and ownerless schemas are not notified
 
-OpenCatalogi SHALL NOT declare `x-openregister-notifications` on the CMS-config
-schemas (`page`, `menu`, `theme`, `glossary`, `organization`), which have no
-lifecycle or owner field to notify against.
+OpenCatalogi SHALL NOT declare `x-openregister-notifications` on the ownerless
+config schemas (`theme`, `glossary`, `usageCounter`), which have no lifecycle or
+owner field to notify against.
+
+`page` and `menu` left this register with `opencatalogi-has-no-cms`, and
+`organization` with `catalogi-uses-the-shared-organisation`. They are Portaliq's
+and OpenRegister's respectively, and each register governs its own notifications.
 
 The `publication` schema is **excluded from this prohibition**: it carries an
 `x-openregister-lifecycle` and an `x-openregister-notifications` block (the
@@ -49,13 +53,13 @@ retention-expiring-soon / retention-review-required rules). Those notification
 rules are owned and specified by `publication-retention-lifecycle` (RET-008,
 "Retention notifications are schema-declared"); they MUST remain the canonical
 ADR-031 declarative dialect with no imperative per-app dispatch. This requirement
-therefore governs only the ownerless CMS-config schemas.
+therefore governs only the ownerless config schemas.
 
 #### Scenario: No notifications on ownerless config schemas
 
 - **WHEN** the publication register JSON is inspected
-- **THEN** no `x-openregister-notifications` key is present on `page`, `menu`,
-  `theme`, `glossary`, or `organization`
+- **THEN** no `x-openregister-notifications` key is present on `theme`,
+  `glossary`, or `usageCounter`
 
 #### Scenario: Publication carries its retention notifications
 

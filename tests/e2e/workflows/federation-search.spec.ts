@@ -1,3 +1,5 @@
+import type { Locator, Page, Request } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,13 +37,7 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test workflows/federation-search
  */
-import {
-	test,
-	expect,
-	type Locator,
-	type Page,
-	type Request,
-} from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/index.php/apps/opencatalogi'
 
@@ -100,7 +96,7 @@ test.describe('Federation search page', () => {
 			}
 		})
 
-		await page.goto(`${APP}/#/search`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP}/search`, { waitUntil: 'domcontentloaded' })
 		await dismissSupportDialog(page)
 
 		// The page must actually mount a search surface. Asserting on the
@@ -139,7 +135,7 @@ test.describe('Federation search page', () => {
 			}
 		})
 
-		await page.goto(`${APP}/#/search`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP}/search`, { waitUntil: 'domcontentloaded' })
 		await dismissSupportDialog(page)
 
 		const searchInput = appSearchBox(page)

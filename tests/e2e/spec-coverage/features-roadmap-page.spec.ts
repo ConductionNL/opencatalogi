@@ -17,8 +17,8 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test features-roadmap-page
  */
-import { test, expect } from '@playwright/test'
-import { bootApp, navTo, content, trackPageErrors, fatalErrors } from './_nav'
+import { expect, test } from '@playwright/test'
+import { bootApp, content, fatalErrors, navTo, trackPageErrors } from './_nav.ts'
 
 test.describe('features-roadmap-page', () => {
 	test(// @e2e dashboard::features-roadmap-renders-content

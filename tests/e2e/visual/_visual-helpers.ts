@@ -1,3 +1,5 @@
+import type { Locator, Page } from '@playwright/test'
+
 /*
  * SPDX-License-Identifier: EUPL-1.2
  *
@@ -24,7 +26,7 @@
  * own baselines on first run, or (b) stay non-gating until baselined in the CI
  * environment. See tests/e2e/visual/README in-repo wiring notes.
  */
-import { expect, type Page, type Locator } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 /** Common screenshot options applied to every visual assertion. */
 export const SHOT_OPTIONS = {
@@ -125,6 +127,27 @@ export async function waitForContentReady(page: Page): Promise<void> {
  * (timestamps, uuids, user avatars, live counts, relative times) never flips a
  * baseline. Returns the locators present on the page; absent ones are simply
  * not masked.
+ */
+/**
+ * ⚠️ MASKING THE LIST ROWS WAS TRIED AND DOES NOT WORK YET.
+ *
+ * A baseline over a live, seeded list is a picture of the data, not of the
+ * page: on an instance running the whole fleet the `publications list` shot
+ * differed by 3% of its pixels, entirely in the rows, on a page whose layout
+ * had not changed at all.
+ *
+ * `.cn-index-page__body`, `[class*="index-page__body"]` and `tbody` were added
+ * here to mask them. All three match ZERO elements on that page — the count was
+ * checked afterwards, and the change was reverted rather than left in place
+ * looking like it did something. `[class*="list-item"]` matches 65, but every
+ * one of them is in the nav sidebar, which is exactly the chrome the shot
+ * exists to capture; scoping it under `[data-testid="cn-index-page"]` or
+ * `.app-content` matches zero again.
+ *
+ * So the row markup still needs finding before this can be masked. Until then
+ * the visual project stays what its config already says it is: opt-in,
+ * non-gating, and excluded from the CI config (`tests/e2e/playwright.config.ts`
+ * declares only the regression project). Its baselines move with the data.
  */
 export function dynamicMasks(page: Page): Locator[] {
 	const selectors = [

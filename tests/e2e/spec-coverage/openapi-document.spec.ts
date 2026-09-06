@@ -1,3 +1,5 @@
+import type { APIRequestContext } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -13,8 +15,8 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test openapi-document
  */
-import { test, expect, request, type APIRequestContext } from '@playwright/test'
-import { BASE } from '../workflows/_fixtures'
+import { expect, request, test } from '@playwright/test'
+import { BASE } from '../workflows/_fixtures.ts'
 
 /** Anonymous (no credentials) request context — the public document caller. */
 let anon: APIRequestContext

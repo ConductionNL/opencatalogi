@@ -56,7 +56,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl. Voor een Service Level Agreement (SLA), neem contact op via sales@conduction.nl.
     ]]></description>
-	<version>2.0.13</version>
+	<version>2.0.11-unstable.20260901034809</version>
 	<licence>EUPL-1.2</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
@@ -136,6 +136,16 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	<background-jobs>
 		<job>OCA\OpenCatalogi\BackgroundJob\DirectorySync</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\RetentionEvaluation</job>
+		<!--
+			Broadcast was written but never registered here, so the 4-hourly
+			directory broadcast required by dashboard/spec.md DIR-007 silently
+			never ran. The delivery mechanics inside BroadcastService are due to
+			move onto OpenRegister's webhook pipeline (change
+			opencatalogi-delegate-broadcast-to-or-webhooks); that change replaces
+			HOW a broadcast is delivered, not WHETHER a schedule exists, so the
+			job registration stays correct across it.
+		-->
+		<job>OCA\OpenCatalogi\BackgroundJob\Broadcast</job>
 	</background-jobs>
 
 	<repair-steps>
@@ -147,14 +157,6 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				non-destructive; safe to re-run.
 			-->
 			<step>OCA\OpenCatalogi\Repair\RenameDutchPublicationColumns</step>
-			<!--
-				WOO-536 Fase 4: backfill the two-rule read-block on publication +
-				document schemas (adds the `depublicationDate` clause required by
-				Robert's DoD). Runs AFTER RenameDutchPublicationColumns so the guard
-				sees English field names. Idempotent: skips schemas that already
-				carry a two-rule shape or admin-customised rules.
-			-->
-			<step>OCA\OpenCatalogi\Repair\WOO536RepairReadRules</step>
 			<!--
 				The background jobs moved from OCA\OpenCatalogi\Cron to
 				OCA\OpenCatalogi\BackgroundJob in #1119. The <job> entries above
@@ -196,6 +198,23 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
 			<step>OCA\OpenCatalogi\Repair\RemoveRetiredCronJobs</step>
 			<!--
+				Written but never registered — gate-98 (repair-step-registration) has been
+				failing on development since the WOO-536 merge for exactly this: a class
+				that exists is not a class that runs.
+
+				It backfills the two-rule `depublicatiedatum` read-shape onto the
+				`publication` and `document` schemas. A FRESH install does not need it —
+				`lib/Settings/publication_register.json` already seeds that shape, and
+				InitializeSettings imports the seed from <install> — so this is
+				post-migration only, which is also where the change that introduced it
+				(2026-08-28-fix-fts-catalog-model-alignment) says it belongs: a repair for
+				EXISTING installations.
+
+				It must run after InitializeSettings, which syncs the register and schemas
+				this step then edits. Idempotent and safe to re-run.
+			-->
+			<step>OCA\OpenCatalogi\Repair\WOO536RepairReadRules</step>
+			<!--
 				Written but never registered, so it had never run once: a class that
 				exists is not a class that runs. gate-98 found it.
 
@@ -232,6 +251,11 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
 		</install>
 	</repair-steps>
+
+	<commands>
+		<command>OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand</command>
+		<command>OCA\OpenCatalogi\Command\MigrateCmsToPortaliqCommand</command>
+	</commands>
 
 	<!-- The app-menu navigation entry is registered in PHP (lib/AppInfo/Application.php::boot),
 	     NOT here. The dashboard SPA is served by the engine-namespaced AppHost route

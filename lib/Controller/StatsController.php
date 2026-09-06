@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
@@ -165,6 +166,42 @@ class StatsController extends Controller {
 		}
 
 	}//end catalog()
+
+	/**
+	 * Return the instance-wide daily usage series for the dashboard card.
+	 *
+	 * Authenticated officer surface (never anonymous), the same posture as the
+	 * catalog roll-up. Sums the privacy-safe usage counters of every publication
+	 * per day: views and downloads, requests rather than unique visitors, over
+	 * the requested window (default last 30 days). It never reads the
+	 * OpenRegister audit trail, so back-office reads by officers are not
+	 * reported as reach (ANA-009).
+	 *
+	 * @return JSONResponse Daily series + totals + counting-start date + window.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
+	 */
+	#[NoAdminRequired]
+	public function series(): JSONResponse {
+		// Auth guard: instance-wide usage is officer-facing, never anonymous.
+		if ($this->requireAuthenticatedUser() === null) {
+			return new JSONResponse(
+				['error' => $this->l10n->t('Authentication required.')],
+				Http::STATUS_FORBIDDEN
+			);
+		}
+
+		[$from, $to] = $this->readRange();
+
+		try {
+			$stats = $this->usageCounterService->aggregateInstanceSeries(from: $from, to: $to);
+			return new JSONResponse($stats, 200);
+		} catch (\Throwable $e) {
+			$this->logger->error('[StatsController::series] failed', ['error' => $e->getMessage()]);
+			return new JSONResponse(['error' => $this->l10n->t('Could not compute usage statistics.')], 500);
+		}
+
+	}//end series()
 
 	/**
 	 * Return the per-catalog metadata-quality roll-up (MQA/FAIR).

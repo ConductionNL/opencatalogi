@@ -1,3 +1,4 @@
+import type { APIRequestContext } from '@playwright/test'
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,8 +65,10 @@
  *   PLAYWRIGHT_BASE_URL=http://localhost:8296 \
  *     npx playwright test --config=tests/e2e/playwright.config.ts spec-coverage/page-components
  */
-import { test, expect, type APIRequestContext } from '@playwright/test'
-import { APP, bootApp, dismissOverlays, content } from './_nav'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
+import { APP, bootApp, content, dismissOverlays } from './_nav.ts'
 
 /** OpenRegister object API root for the publication register. */
 const OR_OBJECTS = '/index.php/apps/openregister/api/objects'
@@ -153,11 +156,8 @@ async function registerId(
  * @param page The Playwright page.
  * @param route The in-app route, e.g. `/woo/<id>`.
  */
-async function gotoHash(
-	page: import('@playwright/test').Page,
-	route: string,
-): Promise<void> {
-	await page.goto(`${APP}/#${route}`, { waitUntil: 'domcontentloaded' })
+async function gotoHash(page: Page, route: string): Promise<void> {
+	await page.goto(`${APP}${route}`, { waitUntil: 'domcontentloaded' })
 	await page.waitForTimeout(1500)
 	await dismissOverlays(page)
 }

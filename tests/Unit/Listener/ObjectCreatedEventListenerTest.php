@@ -6,6 +6,7 @@ namespace Unit\Listener;
 
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Service\EventService;
+use OCA\OpenCatalogi\Service\RetentionService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
@@ -23,9 +24,15 @@ use Psr\Log\LoggerInterface;
 class ObjectCreatedEventListenerTest extends TestCase {
 	private ObjectCreatedEventListener $listener;
 
+	private RetentionService&MockObject $retentionService;
+
+	private LoggerInterface&MockObject $listenerLogger;
+
 	protected function setUp(): void {
 		parent::setUp();
-		$this->listener = new ObjectCreatedEventListener();
+		$this->retentionService = $this->createMock(RetentionService::class);
+		$this->listenerLogger = $this->createMock(LoggerInterface::class);
+		$this->listener = new ObjectCreatedEventListener($this->retentionService, $this->listenerLogger);
 	}
 
 	/**
@@ -262,17 +269,69 @@ class ObjectCreatedEventListenerTest extends TestCase {
 		$settingsService->method('getPublishingOptions')
 			->willThrowException(new \RuntimeException('Settings broken'));
 
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->once())
+		// The catch block reports through the injected listener logger.
+		$this->listenerLogger->expects($this->once())
 			->method('error')
 			->with($this->stringContains('Exception in object creation event listener'));
 
 		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
 
 		$entity = $this->createObjectEntityMock();
 		$event = new ObjectCreatedEvent($entity);
 		$this->listener->handle($event);
+	}
+
+	/**
+	 * Every created object reaches the retention service (RET-004 wiring); the
+	 * service itself filters on register/schema and publicationDate.
+	 */
+	public function testHandleStampsRetentionDefaultsForCreatedObjects(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')->willReturn([
+			'auto_publish_objects' => false,
+			'auto_publish_attachments' => false,
+		]);
+
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
+		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+
+		$this->retentionService->expects($this->once())
+			->method('applyDefaultsAtPublication')
+			->with(
+				$this->callback(
+					static fn (array $data): bool => ($data['@self']['uuid'] ?? '') === 'born-published'
+				)
+			);
+
+		$entity = $this->createObjectEntityMock(
+			uuid: 'born-published',
+			published: new \DateTime('2025-06-01')
+		);
+		$event = new ObjectCreatedEvent($entity);
+		$this->listener->handle($event);
+	}
+
+	public function testHandleRetentionFailureNeverBlocksTheSavePipeline(): void {
+		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService->method('getPublishingOptions')->willReturn([
+			'auto_publish_objects' => false,
+			'auto_publish_attachments' => false,
+		]);
+
+		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
+		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
+		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+
+		$this->retentionService->method('applyDefaultsAtPublication')
+			->willThrowException(new \RuntimeException('retention store down'));
+		$this->listenerLogger->expects($this->once())->method('error')
+			->with($this->stringContains('failed to stamp retention defaults'));
+
+		$entity = $this->createObjectEntityMock(uuid: 'ret-fail');
+		// Must not throw.
+		$this->listener->handle(new ObjectCreatedEvent($entity));
 	}
 
 	/**

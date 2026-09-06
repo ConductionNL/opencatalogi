@@ -19,6 +19,15 @@ module.exports = {
 		'/node_modules/',
 		'<rootDir>/tests/e2e/',
 		'<rootDir>/tests/vitest/',
+		// And `vendor/` — composer's tree, not ours. hydra-gates ships
+		// Playwright fixtures under
+		// `vendor/conduction/hydra-gates/.../scripts/test-fixtures/`, which are
+		// deliberately-planted inputs for the gates' own acceptance matrix.
+		// Jest collected all 7 and failed every one on "Class extends value
+		// undefined" from importing @playwright/test, so `npm test` exited 1 on
+		// a tree whose own 61 specs were green. The count moves whenever the
+		// gates package is updated, which is the tell that they are not ours.
+		'<rootDir>/vendor/',
 	],
 	moduleNameMapper: {
 		'^@/(.*)$': '<rootDir>/src/$1',

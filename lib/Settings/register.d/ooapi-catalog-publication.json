@@ -29,16 +29,6 @@
       }
     },
     "schemas": {
-      "organization": {
-        "x-ooapi": {
-          "resource": "organization",
-          "mapping": {
-            "name": "name",
-            "description": "description",
-            "shortName": "tooi"
-          }
-        }
-      },
       "course": {
         "slug": "course",
         "x-ooapi": {
