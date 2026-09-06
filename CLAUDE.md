@@ -2,7 +2,11 @@
 
 This project ships dedicated scripts for every l10n / i18n operation. **Use them.** Do not read or edit `l10n/*.js` files by hand, do not grep them for keys, and do not invent new translation entries with `Edit`/`Write`. Manual edits skip the tools' validation, formatting, and ESLint pass and produce inconsistent files across locales.
 
-`l10n/*.json` is the **backend** (PHP) translation set, maintained through a separate workflow. Never read or modify it. All scripts below operate on `l10n/*.js` only.
+`l10n/*.json` is the **source of truth for both formats**, and `l10n/*.js` is **generated from it** by `scripts/build-l10n-js.js` (`npm run l10n:build`). `check:l10n-js` is that derivation asserted: it regenerates and fails when the committed `.js` differs.
+
+This corrects what this file used to say. It called the two sets independent and told you never to touch the `.json`. They are not independent, and the rule was unfollowable: removing a string from source leaves a key that `check:l10n` reports as UNUSED, and deleting it from the `.js` alone makes `check:l10n-js` report the catalogue stale. Both legs run in Code Quality, so obeying the old rule turned one of them red whatever you did.
+
+**So: edit the `.json`, then run `npm run l10n:build` and commit the regenerated `.js`.** Never hand-edit a `.js` catalogue; the next build overwrites it.
 
 The wrap pattern in source code is always:
 
@@ -144,7 +148,8 @@ node scripts/clean-l10n.js --apply  # actually remove (this is what `npm run cle
 Important constraints:
 
 - **Does NOT add missing keys.** Adding a key without a translation would let `t()` return English-as-Dutch silently instead of falling back to the source string. Add missing keys via `l10n-ai.js add`, never by editing files.
-- Safe **only** because frontend `l10n/*.js` is independent of backend `l10n/*.json`. Do not adapt this script for projects that keep `.js` and `.json` in sync.
+- 🔴 **Read the dry-run before applying, and do not trust the count.** Measured 2026-08-31: `check:l10n` reported 1 unused key while `clean-l10n.js` proposed removing **87**. It scans only `t('opencatalogi', '...')` calls in `src/`, so every key reached another way (server-side `$l->t()`, manifest copy the renderer walks) looks unused to it. The other 86 were false positives. If the count surprises you, stop.
+- It writes `.js` only, which the next `npm run l10n:build` overwrites from the `.json`. To drop a key for good, remove it from `l10n/*.json` and rebuild.
 - After running, `npm run check:l10n` should report zero UNUSED.
 
 ---

@@ -1,3 +1,5 @@
+import type { APIRequestContext } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -24,14 +26,15 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test usage-analytics-page
  */
+import { expect, request as pwRequest, test } from '@playwright/test'
+import { resolveBaseUrl } from '../base-url.ts'
 import {
-	test,
-	expect,
-	request as pwRequest,
-	type APIRequestContext,
-} from '@playwright/test'
-import { APP, bootApp, dismissOverlays, trackPageErrors, fatalErrors } from './_nav'
-import { resolveBaseUrl } from '../base-url'
+	APP,
+	bootApp,
+	dismissOverlays,
+	fatalErrors,
+	trackPageErrors,
+} from './_nav.ts'
 
 const RUN_ID = `ana-${Date.now()}`
 const WIDGET_ID = 'opencatalogi_most_viewed_publications_widget'
@@ -153,7 +156,7 @@ test.describe('usage-analytics', () => {
 
 		// The Publications index for the catalog (hash route — path-form
 		// gotos boot the Dashboard in this hash-mode SPA).
-		await page.goto(`${APP}/#/publications/${slug}`, {
+		await page.goto(`${APP}/publications/${slug}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await page.waitForTimeout(1500)
@@ -163,7 +166,7 @@ test.describe('usage-analytics', () => {
 		).toBeVisible({ timeout: 15000 })
 
 		// The publication detail page for a real publication.
-		await page.goto(`${APP}/#/publications/${slug}/${pubId}`, {
+		await page.goto(`${APP}/publications/${slug}/${pubId}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await page.waitForTimeout(1500)
@@ -208,7 +211,7 @@ test.describe('usage-analytics', () => {
 		const slug = await resolveCatalogSlug(request)
 		const pubId = await resolvePublicationId(request)
 		await bootApp(page)
-		await page.goto(`${APP}/#/publications/${slug}/${pubId}`, {
+		await page.goto(`${APP}/publications/${slug}/${pubId}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await page.waitForTimeout(1500)

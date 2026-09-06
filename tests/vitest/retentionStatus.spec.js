@@ -6,17 +6,18 @@
  * src/services/retentionStatus.js — expiry computation (RET-003), expiring-soon
  * / review-required / archived classification (RET-005/006/007). Offline, no DOM.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
 	computeExpiry,
+	getRetentionStatus,
 	isArchived,
 	isExpiringSoon,
 	isReviewRequired,
-	getRetentionStatus,
 } from '../../src/services/retentionStatus.js'
 
-const daysFromNow = (n) =>
-	new Date(Date.now() + n * 24 * 60 * 60 * 1000).toISOString()
+function daysFromNow(n) {
+	return new Date(Date.now() + n * 24 * 60 * 60 * 1000).toISOString()
+}
 
 describe('computeExpiry', () => {
 	it('adds the term in months to the publication date', () => {

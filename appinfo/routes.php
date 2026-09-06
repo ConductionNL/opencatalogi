@@ -99,11 +99,7 @@ return [
 		['name' => 'themes#preflightedCors', 'url' => '/api/themes', 'verb' => 'OPTIONS'],
 		['name' => 'themes#preflightedCors', 'url' => '/api/themes/{id}', 'verb' => 'OPTIONS'],
 		// Menus CORS
-		['name' => 'menus#preflightedCors', 'url' => '/api/menus', 'verb' => 'OPTIONS'],
-		['name' => 'menus#preflightedCors', 'url' => '/api/menus/{id}', 'verb' => 'OPTIONS'],
 		// Pages CORS
-		['name' => 'pages#preflightedCors', 'url' => '/api/pages', 'verb' => 'OPTIONS'],
-		['name' => 'pages#preflightedCors', 'url' => '/api/pages/{slug}', 'verb' => 'OPTIONS', 'requirements' => ['slug' => '.+']],
 		// Directory CORS
 		['name' => 'directory#preflightedCors', 'url' => '/api/directory', 'verb' => 'OPTIONS'],
 		// Listings CORS
@@ -143,11 +139,7 @@ return [
 		['name' => 'themes#index', 'url' => '/api/themes', 'verb' => 'GET'],
 		['name' => 'themes#show', 'url' => '/api/themes/{id}', 'verb' => 'GET'],
 		// Menus (specific route - must be before wildcard catalog routes)
-		['name' => 'menus#index', 'url' => '/api/menus', 'verb' => 'GET'],
-		['name' => 'menus#show', 'url' => '/api/menus/{id}', 'verb' => 'GET'],
 		// Pages (specific route - must be before wildcard catalog routes)
-		['name' => 'pages#index', 'url' => '/api/pages', 'verb' => 'GET'],
-		['name' => 'pages#show', 'url' => '/api/pages/{slug}', 'verb' => 'GET', 'requirements' => ['slug' => '.+']],
 		// Directory (specific route - must be before wildcard catalog routes)
 		['name' => 'directory#index', 'url' => '/api/directory', 'verb' => 'GET'],
 		['name' => 'directory#update', 'url' => '/api/directory', 'verb' => 'POST'],
@@ -172,6 +164,7 @@ return [
 		['name' => 'stats#catalog', 'url' => '/api/catalogs/{slug}/stats', 'verb' => 'GET', 'requirements' => ['slug' => '[A-Za-z0-9-]+']],
 		['name' => 'stats#quality', 'url' => '/api/catalogs/{slug}/quality', 'verb' => 'GET', 'requirements' => ['slug' => '[A-Za-z0-9-]+']],
 		['name' => 'stats#export', 'url' => '/api/catalogs/{slug}/stats/export', 'verb' => 'GET', 'requirements' => ['slug' => '[A-Za-z0-9-]+']],
+		['name' => 'stats#series', 'url' => '/api/stats/series', 'verb' => 'GET'],
 		// Health check endpoint — served by the AppHost engine from the
 		// `observability.health` block (ADR-040 / ADR-006). The engine adds
 		// #[PublicPage] (anonymous health — an intentional improvement over the

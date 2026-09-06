@@ -1,3 +1,5 @@
+import type { APIRequestContext } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,8 +46,8 @@
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test workflows/publish-workflow
  */
-import { test, expect, request, type APIRequestContext } from '@playwright/test'
-import { Fixtures, BASE, REG_PUBLICATION, SCHEMA_PUBLICATION } from './_fixtures'
+import { expect, request, test } from '@playwright/test'
+import { BASE, Fixtures, REG_PUBLICATION, SCHEMA_PUBLICATION } from './_fixtures.ts'
 
 const fx = new Fixtures()
 

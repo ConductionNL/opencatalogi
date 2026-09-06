@@ -479,10 +479,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 			'listing',
 			'organization',
 			'theme',
-			'page',
-			'menu',
 			'glossary',
-			'document',
 			'usageCounter',
 			// ooapi-catalog-publication (OOAPI-010): materialized course/program/offering scope.
 			'ooapi_courses',
@@ -506,7 +503,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->service->getSettings();
 
-		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'document'];
+		$types = ['catalog', 'listing', 'organization', 'theme', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertArrayHasKey("{$type}_source", $result['configuration']);
 			$this->assertArrayHasKey("{$type}_schema", $result['configuration']);
@@ -532,7 +529,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->service->getSettings();
 
-		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'document'];
+		$types = ['catalog', 'listing', 'organization', 'theme', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertSame('openregister', $result['configuration']["{$type}_source"]);
 		}
@@ -1822,7 +1819,9 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		$types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+		// 'organization' is absent: its keys come from OpenRegister's shared
+		// organisation now, not from this app's own import result.
+		$types = ['catalog', 'listing', 'theme', 'glossary'];
 		foreach ($types as $type) {
 			$this->assertSame('openregister', $storedValues["{$type}_source"]);
 			$this->assertArrayNotHasKey("{$type}_schema", $storedValues);
@@ -1832,9 +1831,12 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testUpdateObjectTypeConfigurationEmptyResult()
 
 	public function testUpdateObjectTypeConfigurationWithUuidFallback(): void {
+		// `catalog` stands in for what `page` used to demonstrate here. The
+		// behaviour under test is the uuid fallback when a row carries no id,
+		// not anything specific to the object type.
 		$importResult = [
 			'schemas' => [
-				['slug' => 'page', 'uuid' => 'abc-123'],
+				['slug' => 'catalog', 'uuid' => 'abc-123'],
 			],
 			'registers' => [
 				['slug' => 'publication', 'uuid' => 'reg-456'],
@@ -1852,8 +1854,8 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		$this->assertSame('abc-123', $storedValues['page_schema']);
-		$this->assertSame('reg-456', $storedValues['page_register']);
+		$this->assertSame('abc-123', $storedValues['catalog_schema']);
+		$this->assertSame('reg-456', $storedValues['catalog_register']);
 
 	}//end testUpdateObjectTypeConfigurationWithUuidFallback()
 
@@ -1874,12 +1876,131 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		$expectedTypes = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+		$expectedTypes = ['catalog', 'listing', 'theme', 'glossary'];
 		foreach ($expectedTypes as $type) {
 			$this->assertArrayHasKey("{$type}_source", $storedValues);
 		}
 
+		// The organisation is NOT resolved from this app's import result. It is
+		// OpenRegister's schema now, so an import carrying a row called
+		// `organization` must not reinstate a key pointing at this app's copy.
+		$this->assertArrayNotHasKey('organization_source', $storedValues);
+		$this->assertArrayNotHasKey('organization_schema', $storedValues);
+		$this->assertArrayNotHasKey('organization_register', $storedValues);
+
 	}//end testUpdateObjectTypeConfigurationSetsAllObjectTypes()
+
+	/**
+	 * The organisation keys are resolved from OpenRegister.
+	 *
+	 * They cannot come from this app's import result any more: the schema is
+	 * OpenRegister's `nc-organisation` projection. They keep their NAMES so the
+	 * object store resolves the type exactly as before and no frontend change
+	 * was needed, which is the whole reason that consolidation was cheap.
+	 *
+	 * @return void
+	 */
+	public function testTheOrganisationKeysComeFromOpenRegister(): void {
+		// The accessors declare OpenRegister return types, so these must be
+		// mocks of the real mappers — an anonymous stand-in trips the return
+		// type, the accessor throws, and the method bails looking like a
+		// deliberate soft failure.
+		// Real entities with their ids set by reflection. `getId()` is a magic
+		// Entity accessor, so PHPUnit refuses to configure it on a mock.
+		$register = new \OCA\OpenRegister\Db\Register();
+		$schema = new \OCA\OpenRegister\Db\Schema();
+		foreach ([[$register, 2], [$schema, 38]] as [$entity, $id]) {
+			$property = (new \ReflectionClass($entity))->getProperty('id');
+			$property->setAccessible(true);
+			$property->setValue($entity, $id);
+		}
+
+		$registerMapper = $this->createMock(\OCA\OpenRegister\Db\RegisterMapper::class);
+		$registerMapper->method('find')->willReturn($register);
+		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($registerMapper, $schemaMapper) {
+				if (str_contains($id, 'RegisterMapper') === true) {
+					return $registerMapper;
+				}
+
+				return $schemaMapper;
+			}
+		);
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->invokePrivateMethod($this->service, 'resolveSharedOrganisationConfiguration', []);
+
+		$this->assertSame('openregister', $stored['organization_source']);
+		$this->assertSame('2', $stored['organization_register']);
+		$this->assertSame('38', $stored['organization_schema']);
+
+	}//end testTheOrganisationKeysComeFromOpenRegister()
+
+	/**
+	 * OpenRegister being absent leaves the keys unset rather than failing.
+	 *
+	 * A missing picker option is a smaller failure than an import that dies, and
+	 * an older OpenRegister may simply not carry the projection yet.
+	 *
+	 * @return void
+	 */
+	public function testAnAbsentOpenRegisterLeavesTheKeysUnset(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->invokePrivateMethod($this->service, 'resolveSharedOrganisationConfiguration', []);
+
+		$this->assertSame([], $stored, 'nothing is written when OpenRegister is absent');
+
+	}//end testAnAbsentOpenRegisterLeavesTheKeysUnset()
+
+	/**
+	 * A missing projection is the same soft failure: an OpenRegister too old to
+	 * carry `nc-organisation` must not break an import.
+	 *
+	 * @return void
+	 */
+	public function testAMissingProjectionLeavesTheKeysUnset(): void {
+		$registerMapper = $this->createMock(\OCA\OpenRegister\Db\RegisterMapper::class);
+		$registerMapper->method('find')->willThrowException(new \RuntimeException('no such register'));
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($registerMapper);
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->invokePrivateMethod($this->service, 'resolveSharedOrganisationConfiguration', []);
+
+		$this->assertSame([], $stored, 'nothing is written when the projection is absent');
+
+	}//end testAMissingProjectionLeavesTheKeysUnset()
 
 	// ---------------------------------------------------------------
 	// Private: shouldLoadSettings
@@ -1973,14 +2094,20 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testShouldLoadSettingsReturnsFalseWhenOlderVersion()
 
 	/**
-	 * Assert `document_source`, `document_schema` and `document_register` are
-	 * all persisted to app-config when `updateObjectTypeConfiguration()` runs
-	 * against a normal import result that includes the bundled `document`
-	 * schema on the shared `publication` register.
+	 * `document` was retired: an attachment is a file on the publication now.
+	 *
+	 * This test used to assert the opposite, that `document_*` keys were
+	 * persisted. It is inverted rather than deleted, because the case it guards
+	 * is real: a legacy instance still HAS the schema, so an import result will
+	 * still carry it, and provisioning must not quietly reinstate configuration
+	 * for a type the app no longer offers.
+	 *
+	 * The publication keys must still be written, which is what proves the
+	 * document schema was skipped rather than the whole result being ignored.
 	 *
 	 * @return void
 	 */
-	public function testUpdateObjectTypeConfigurationPopulatesDocumentKeys(): void {
+	public function testUpdateObjectTypeConfigurationSkipsTheRetiredDocumentSchema(): void {
 		$importResult = [
 			'schemas' => [
 				['slug' => 'publication', 'id' => 42],
@@ -2002,33 +2129,30 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
 
-		// All three document_* keys MUST be present after provisioning.
-		$this->assertArrayHasKey('document_source', $storedValues, 'document_source was not persisted');
-		$this->assertArrayHasKey('document_schema', $storedValues, 'document_schema was not persisted');
-		$this->assertArrayHasKey('document_register', $storedValues, 'document_register was not persisted');
+		// No document_* key is written, even though the import result carries the
+		// schema — which is exactly what a legacy instance's import looks like.
+		$this->assertArrayNotHasKey('document_source', $storedValues, 'document_source was reinstated');
+		$this->assertArrayNotHasKey('document_schema', $storedValues, 'document_schema was reinstated');
+		$this->assertArrayNotHasKey('document_register', $storedValues, 'document_register was reinstated');
 
-		// document_source is a fixed literal.
-		$this->assertSame('openregister', $storedValues['document_source']);
-
-		// document_schema and document_register are stringified numeric IDs.
-		$this->assertSame('43', $storedValues['document_schema']);
-		$this->assertSame('7', $storedValues['document_register']);
-		$this->assertMatchesRegularExpression('/^\d+$/', $storedValues['document_schema']);
-		$this->assertMatchesRegularExpression('/^\d+$/', $storedValues['document_register']);
-
-		// And the publication_* keys must ALSO be there (co-tenant of the same register).
+		// The publication keys ARE written. Without this the test would pass
+		// just as well if provisioning had done nothing at all.
 		$this->assertSame('42', $storedValues['publication_schema']);
 		$this->assertSame('7', $storedValues['publication_register']);
 
-	}//end testUpdateObjectTypeConfigurationPopulatesDocumentKeys()
+	}//end testUpdateObjectTypeConfigurationSkipsTheRetiredDocumentSchema()
 
 	/**
-	 * Assert `updateSettings()` accepts `document_*` keys — the C1 allowlist
-	 * must include `document` alongside the other bundled object types.
+	 * `updateSettings()` no longer accepts `document_*` keys.
+	 *
+	 * The allowlist is built from the same object-type enumeration the settings
+	 * screen renders, so retiring the type retires the keys with it. Inverted
+	 * from the test that asserted they were accepted: an API that still took
+	 * them would let an operator configure a type the app does not have.
 	 *
 	 * @return void
 	 */
-	public function testUpdateSettingsAcceptsDocumentKeys(): void {
+	public function testUpdateSettingsRejectsTheRetiredDocumentKeys(): void {
 		$inputData = [
 			'document_source' => 'openregister',
 			'document_schema' => '43',
@@ -2053,11 +2177,54 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->service->updateSettings($inputData);
 
-		$this->assertSame('openregister', $result['document_source']);
-		$this->assertSame('43', $result['document_schema']);
-		$this->assertSame('7', $result['document_register']);
+		$this->assertArrayNotHasKey('document_source', $result, 'document_source is still accepted');
+		$this->assertArrayNotHasKey('document_schema', $result, 'document_schema is still accepted');
+		$this->assertArrayNotHasKey('document_register', $result, 'document_register is still accepted');
+		$this->assertSame([], $stored, 'a rejected key must not be written to app-config either');
 
-	}//end testUpdateSettingsAcceptsDocumentKeys()
+	}//end testUpdateSettingsRejectsTheRetiredDocumentKeys()
+
+	/**
+	 * The allowlist still ACCEPTS a live object type.
+	 *
+	 * Added alongside the inversion above, and not merely for symmetry: with
+	 * only the rejection test, an allowlist that rejected EVERYTHING would pass.
+	 * The two together say what the allowlist actually does — this type through,
+	 * that one not.
+	 *
+	 * @return void
+	 */
+	public function testUpdateSettingsAcceptsALiveObjectType(): void {
+		$inputData = [
+			'catalog_source' => 'openregister',
+			'catalog_schema' => '43',
+			'catalog_register' => '7',
+		];
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->config->method('getValueString')
+			->willReturnCallback(
+				function (string $app, string $key) use (&$stored) {
+					return $stored[$key] ?? '';
+				}
+			);
+
+		$result = $this->service->updateSettings($inputData);
+
+		$this->assertSame('openregister', $result['catalog_source']);
+		$this->assertSame('43', $result['catalog_schema']);
+		$this->assertSame('7', $result['catalog_register']);
+		$this->assertSame('43', $stored['catalog_schema'], 'an accepted key must reach app-config');
+
+	}//end testUpdateSettingsAcceptsALiveObjectType()
 
 	// ---------------------------------------------------------------
 	// updateObjectTypeConfiguration() — WOO key map

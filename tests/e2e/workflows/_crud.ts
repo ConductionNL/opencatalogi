@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: EUPL-1.2
@@ -20,7 +22,7 @@
  * labelled by the schema property title ("Title", "Summary", …) and a primary
  * confirm button labelled "Create" / "Save".
  */
-import { type Page, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 /** Wait for the index body to settle into rows or the empty state. */
 export async function waitIndexBody(page: Page): Promise<void> {

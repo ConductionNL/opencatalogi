@@ -54,6 +54,22 @@ class SchemaMapper {
 	}//end findMultiple()
 
 	/**
+	 * Find multiple schemas by IDs in a single optimized query.
+	 *
+	 * Mirrors the real mapper's signature (one `ids` parameter, no RBAC or
+	 * multitenancy flags); SettingsService calls it with named arguments, and a
+	 * stub without the method makes createMock() drop it, which turns the call
+	 * into a fatal instead of a mockable expectation.
+	 *
+	 * @param array<int> $ids Array of schema IDs to find.
+	 *
+	 * @return array<int|string, Schema> Map keyed by schema ID.
+	 */
+	public function findMultipleOptimized(array $ids): array {
+		return [];
+	}//end findMultipleOptimized()
+
+	/**
 	 * Find all schemas.
 	 *
 	 * @return array<Schema>

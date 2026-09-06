@@ -83,8 +83,9 @@ class WOO536RepairReadRulesTest extends TestCase
                 $captured = $auth;
             });
 
-        // Return the schema only for the publication slug lookup; return empty
-        // for the document slug so setAuthorization is called exactly once.
+        // One slug is looked up now that `document` is retired, so
+        // setAuthorization is called exactly once because the loop runs once.
+        // This used to depend on the document lookup returning empty.
         $fakeMapper = $this->createMock(FakeSchemaMapper::class);
         $fakeMapper->method('findAll')->willReturnCallback(
             fn (array $filters = []) => ($filters['slug'] ?? null) === 'publication' ? [$fakeSchema] : []
@@ -185,6 +186,38 @@ class WOO536RepairReadRulesTest extends TestCase
         $this->container->method('get')->willReturn($fakeMapper);
 
         $this->step->run($this->createMock(IOutput::class));
+    }
+
+    /**
+     * The step asks for `publication` and for nothing else.
+     *
+     * `document` was retired, and a legacy instance still HAS that schema, so
+     * "we stopped passing the slug" is not self-evident from the outside: the
+     * step would look identical if it still reasserted read rules on a schema
+     * the app no longer ships. This pins the slugs it actually asks for.
+     *
+     * @return void
+     */
+    public function testAsksForThePublicationSlugAndNoOther(): void
+    {
+        $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
+            fn (string $appId) => $appId === 'openregister'
+        );
+
+        $asked = [];
+        $fakeMapper = $this->createMock(FakeSchemaMapper::class);
+        $fakeMapper->method('findAll')->willReturnCallback(
+            function (array $filters = []) use (&$asked) {
+                $asked[] = ($filters['slug'] ?? null);
+                return [];
+            }
+        );
+
+        $this->container->method('get')->willReturn($fakeMapper);
+
+        $this->step->run($this->createMock(IOutput::class));
+
+        $this->assertSame(['publication'], $asked);
     }
 }//end class
 

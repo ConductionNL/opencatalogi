@@ -156,7 +156,8 @@ duplication.
 | forum-standaardisatie-pas-toe-of-leg-uit | Standaarden > Forum Standaardisatie | Standaarden |
 | kerngegevens-stelsel-registratie | Standaarden > Kerngegevensstelsel | Standaarden |
 | org-archimate-export | Standaarden > ArchiMate-export | Standaarden |
-| dcat-oai-pmh-harvesting | Koppelvlakken > DCAT/OAI-PMH harvesting | Koppelvlakken |
+| oai-pmh-endpoint | Koppelvlakken > DCAT/OAI-PMH harvesting | Koppelvlakken |
+| harvest-feed-intake (+ conflict-policies, protocol-plugins, observability) | Koppelvlakken > DCAT/OAI-PMH harvesting | Koppelvlakken |
 | woo-compliance | Koppelvlakken > Woo-compliance | Koppelvlakken |
 | eidas-koppeling-publicatie | Koppelvlakken > eIDAS dienstencatalogus | Koppelvlakken |
 | file-management | Beheer > Bestanden | Beheer |

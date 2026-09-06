@@ -1,8 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable jsdoc/require-param */
-/* eslint-disable n/no-process-exit */
-/* eslint-disable no-console */
-/* eslint-disable n/shebang */
+
 /**
  * l10n unused-key remover.
  *
@@ -29,7 +26,6 @@
 
 const fs = require('fs')
 const path = require('path')
-
 const {
 	loadJsTranslations,
 	serializeJs,
@@ -56,6 +52,9 @@ const apply = args.has('--apply')
 
 // ---------- Main ----------
 
+/**
+ *
+ */
 function main() {
 	if (!fs.existsSync(ENGLISH_FILE)) {
 		console.error(`English source file not found: ${ENGLISH_FILE}`)
@@ -90,13 +89,18 @@ function main() {
 
 	const written = []
 	for (const file of files) {
-		const { app: fileApp, translations, pluralForm } = loadJsTranslations(file)
+		const {
+			app: fileApp,
+			translations,
+			pluralForm,
+			style,
+		} = loadJsTranslations(file)
 		const before = Object.keys(translations).length
 		for (const k of unused) delete translations[k]
 		const after = Object.keys(translations).length
 		fs.writeFileSync(
 			file,
-			serializeJs({ app: fileApp, translations, pluralForm }),
+			serializeJs({ app: fileApp, translations, pluralForm, style }),
 		)
 		written.push(file)
 		console.log(`${path.basename(file)}: ${before} → ${after} keys`)

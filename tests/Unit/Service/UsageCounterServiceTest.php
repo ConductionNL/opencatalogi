@@ -309,4 +309,92 @@ class UsageCounterServiceTest extends TestCase {
 		$this->assertSame('p24', $agg['topViewed'][0]['publication']);
 	}//end testAggregateCatalogDefaultTopBounded()
 
+	// ──────────────────────────────────────────────────────────
+	// aggregateInstanceSeries() — dashboard usage card (ANA-009)
+	// ──────────────────────────────────────────────────────────
+
+	public function testAggregateInstanceSeriesSumsAllPublicationsPerDay(): void {
+		$os = $this->createMock(ObjectService::class);
+		$os->method('searchObjects')->willReturn(
+			[
+				['publication' => 'a', 'catalog' => 'x', 'date' => '2026-05-02', 'kind' => 'view', 'count' => 5],
+				['publication' => 'b', 'catalog' => 'y', 'date' => '2026-05-02', 'kind' => 'view', 'count' => 7],
+				['publication' => 'a', 'catalog' => 'x', 'date' => '2026-05-03', 'kind' => 'download', 'count' => 2],
+				// Before the window: shapes countingStart, never the series.
+				['publication' => 'a', 'catalog' => 'x', 'date' => '2026-01-01', 'kind' => 'view', 'count' => 999],
+			]
+		);
+		$this->withObjectService($os);
+
+		$agg = $this->service->aggregateInstanceSeries('2026-05-01', '2026-05-31');
+
+		$this->assertSame('2026-05-01', $agg['from']);
+		$this->assertSame('2026-05-31', $agg['to']);
+		// Two publications on the same day roll up into one point.
+		$this->assertCount(2, $agg['series']);
+		$this->assertSame('2026-05-02', $agg['series'][0]['date']);
+		$this->assertSame(12, $agg['series'][0]['views']);
+		$this->assertSame(0, $agg['series'][0]['downloads']);
+		$this->assertSame(2, $agg['series'][1]['downloads']);
+		$this->assertSame(12, $agg['views']);
+		$this->assertSame(2, $agg['downloads']);
+		// Counting start comes from the full set, not the window.
+		$this->assertSame('2026-01-01', $agg['countingStart']);
+	}//end testAggregateInstanceSeriesSumsAllPublicationsPerDay()
+
+	public function testAggregateInstanceSeriesDefaultsToLastThirtyDays(): void {
+		$os = $this->createMock(ObjectService::class);
+		$os->method('searchObjects')->willReturn([]);
+		$this->withObjectService($os);
+
+		$agg = $this->service->aggregateInstanceSeries(null, null);
+
+		$today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+		$this->assertSame($today->format('Y-m-d'), $agg['to']);
+		$this->assertSame($today->modify('-29 days')->format('Y-m-d'), $agg['from']);
+		$this->assertSame([], $agg['series']);
+		$this->assertSame(0, $agg['views']);
+		$this->assertNull($agg['countingStart']);
+	}//end testAggregateInstanceSeriesDefaultsToLastThirtyDays()
+
+	public function testAggregateInstanceSeriesRejectsMalformedWindow(): void {
+		$os = $this->createMock(ObjectService::class);
+		$os->method('searchObjects')->willReturn([]);
+		$this->withObjectService($os);
+
+		$agg = $this->service->aggregateInstanceSeries('not-a-day', '2026-13-45');
+
+		$today = (new \DateTimeImmutable('today', new \DateTimeZone('UTC')))->format('Y-m-d');
+		$this->assertSame($today, $agg['to']);
+		$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', $agg['from']);
+	}//end testAggregateInstanceSeriesRejectsMalformedWindow()
+
+	public function testAggregateInstanceSeriesQueriesWholeSchemaOnce(): void {
+		$os = $this->createMock(ObjectService::class);
+		$os->expects($this->once())
+			->method('searchObjects')
+			->with(
+				$this->callback(
+					function (array $query): bool {
+						// Instance-wide: no publication or catalog filter.
+						return isset($query['@self']) === true
+							&& isset($query['publication']) === false
+							&& isset($query['catalog']) === false;
+					}
+				)
+			)
+			->willReturn([]);
+		$this->withObjectService($os);
+
+		$this->service->aggregateInstanceSeries('2026-05-01', '2026-05-31');
+	}//end testAggregateInstanceSeriesQueriesWholeSchemaOnce()
+
+	public function testGetCountersForInstanceEmptyWhenUnconfigured(): void {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('');
+		$service = new UsageCounterService($appConfig, $this->appManager, $this->container, $this->logger);
+
+		$this->assertSame([], $service->getCountersForInstance());
+	}//end testGetCountersForInstanceEmptyWhenUnconfigured()
+
 }//end class
