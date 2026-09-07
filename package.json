@@ -139,7 +139,8 @@
     "postcss": ">=8.4.47",
     "fast-xml-parser": ">=5.7.0",
     "markdown-it": ">=12.3.2",
-    "uuid": ">=14.0.0"
+    "uuid": ">=14.0.0",
+    "toml": ">=4.2.0"
   },
   "prettier": "@nextcloud/prettier-config"
 }
