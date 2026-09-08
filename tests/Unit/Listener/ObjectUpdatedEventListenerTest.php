@@ -29,7 +29,29 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 		parent::setUp();
 		$this->retentionService = $this->createMock(RetentionService::class);
 		$this->listenerLogger = $this->createMock(LoggerInterface::class);
-		$this->listener = new ObjectUpdatedEventListener($this->retentionService, $this->listenerLogger);
+		$this->listener = $this->makeListener(settingsService: $this->createMock(SettingsService::class));
+	}
+
+	/**
+	 * Build a listener around per-test doubles.
+	 *
+	 * The listener takes its collaborators through the constructor, so each
+	 * test builds its own instance instead of registering mocks on the global
+	 * server (which never resets between tests). The retention service is the
+	 * shared mock from setUp() so retention expectations keep working; the
+	 * logger defaults to the shared listener logger.
+	 */
+	private function makeListener(
+		SettingsService $settingsService,
+		?EventService $eventService = null,
+		?LoggerInterface $logger = null,
+	): ObjectUpdatedEventListener {
+		return new ObjectUpdatedEventListener(
+			$this->retentionService,
+			$settingsService,
+			$eventService ?? $this->createMock(EventService::class),
+			$logger ?? $this->listenerLogger,
+		);
 	}
 
 	/**
@@ -78,7 +100,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 	public function testHandleIgnoresNonObjectUpdatedEvent(): void {
 		$event = $this->createMock(Event::class);
 
-		// Should return early without accessing \OC::$server.
+		// Should return early without consulting the settings service.
 		$this->listener->handle($event);
 		$this->assertTrue(true);
 	}
@@ -263,7 +285,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// handle() integration tests via \OC::$server
+	// handle() tests with injected doubles
 	// -------------------------------------------------------------------------
 
 	public function testHandleReturnsEarlyWhenAutoPublishingDisabled(): void {
@@ -278,9 +300,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 
 		$logger = $this->createMock(LoggerInterface::class);
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $eventService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->listener = $this->makeListener(settingsService: $settingsService, eventService: $eventService, logger: $logger);
 
 		$newEntity = $this->createObjectEntityMock();
 		$event = new ObjectUpdatedEvent($newEntity, null);
@@ -309,9 +329,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 		$logger->expects($this->once())->method('info')
 			->with($this->stringContains('Processed object update event'));
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $eventService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->listener = $this->makeListener(settingsService: $settingsService, eventService: $eventService, logger: $logger);
 
 		$newEntity = $this->createObjectEntityMock(
 			uuid: 'new-uuid',
@@ -343,9 +361,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 		$logger->expects($this->atLeastOnce())->method('error')
 			->with($this->stringContains('Error processing object update event'));
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $eventService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->listener = $this->makeListener(settingsService: $settingsService, eventService: $eventService, logger: $logger);
 
 		$newEntity = $this->createObjectEntityMock(
 			uuid: 'err-uuid',
@@ -368,9 +384,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 
 		$logger = $this->createMock(LoggerInterface::class);
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $eventService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->listener = $this->makeListener(settingsService: $settingsService, eventService: $eventService, logger: $logger);
 
 		// Both old and new are published -- no status change.
 		$newEntity = $this->createObjectEntityMock(
@@ -395,8 +409,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 		$settingsService->method('getPublishingOptions')
 			->willThrowException(new \RuntimeException('Settings broken'));
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+		$this->listener = $this->makeListener(settingsService: $settingsService);
 
 		$newEntity = $this->createObjectEntityMock();
 		$event = new ObjectUpdatedEvent($newEntity, null);
@@ -414,9 +427,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 			'auto_publish_attachments' => false,
 		]);
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
-		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+		$this->listener = $this->makeListener(settingsService: $settingsService);
 
 		// Unpublished -> published transition MUST reach the retention service,
 		// even with every auto-publishing option disabled.
@@ -445,9 +456,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 			'auto_publish_attachments' => false,
 		]);
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
-		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+		$this->listener = $this->makeListener(settingsService: $settingsService);
 
 		// Already published before the update: not a publication transition.
 		$this->retentionService->expects($this->never())
@@ -473,9 +482,7 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 			'auto_publish_attachments' => false,
 		]);
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
-		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+		$this->listener = $this->makeListener(settingsService: $settingsService);
 
 		$this->retentionService->method('applyDefaultsAtPublication')
 			->willThrowException(new \RuntimeException('retention store down'));

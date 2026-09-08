@@ -24,7 +24,11 @@ class CatalogCacheEventListenerTest extends TestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
-		$this->listener = new CatalogCacheEventListener();
+		$this->listener = new CatalogCacheEventListener(
+			$this->createMock(CatalogiService::class),
+			$this->createMock(IAppConfig::class),
+			$this->createMock(LoggerInterface::class),
+		);
 	}
 
 	/**
@@ -60,16 +64,18 @@ class CatalogCacheEventListenerTest extends TestCase {
 	}
 
 	/**
-	 * Register mock services in the DI container.
+	 * Build the listener around per-test doubles.
+	 *
+	 * The listener takes its collaborators through the constructor, so each
+	 * test builds its own instance instead of registering mocks on the global
+	 * server (which never resets between tests).
 	 */
-	private function registerMockServices(
+	private function buildListener(
 		CatalogiService $catalogiService,
 		IAppConfig $appConfig,
 		LoggerInterface $logger,
 	): void {
-		\OC::$server->registerService(CatalogiService::class, fn () => $catalogiService);
-		\OC::$server->registerService(IAppConfig::class, fn () => $appConfig);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->listener = new CatalogCacheEventListener($catalogiService, $appConfig, $logger);
 	}
 
 	/**
@@ -108,7 +114,7 @@ class CatalogCacheEventListenerTest extends TestCase {
 			->method('info')
 			->with($this->stringContains('Catalog cache warmed up after creation'));
 
-		$this->registerMockServices($catalogiService, $appConfig, $logger);
+		$this->buildListener($catalogiService, $appConfig, $logger);
 
 		$entity = $this->createObjectEntityMock('cat-schema', 'cat-reg', 'uuid-1', 'my-catalog');
 		$event = new ObjectCreatedEvent($entity);
@@ -127,7 +133,7 @@ class CatalogCacheEventListenerTest extends TestCase {
 			->method('info')
 			->with($this->stringContains('Catalog cache warmed up after update'));
 
-		$this->registerMockServices($catalogiService, $appConfig, $logger);
+		$this->buildListener($catalogiService, $appConfig, $logger);
 
 		$newEntity = $this->createObjectEntityMock('cat-schema', 'cat-reg', 'uuid-2', 'updated-catalog');
 		$event = new ObjectUpdatedEvent($newEntity, null);
@@ -146,7 +152,7 @@ class CatalogCacheEventListenerTest extends TestCase {
 			->method('info')
 			->with($this->stringContains('Catalog cache invalidated after deletion'));
 
-		$this->registerMockServices($catalogiService, $appConfig, $logger);
+		$this->buildListener($catalogiService, $appConfig, $logger);
 
 		$entity = $this->createObjectEntityMock('cat-schema', 'cat-reg', 'uuid-3', 'deleted-catalog');
 		$event = new ObjectDeletedEvent($entity);
@@ -161,7 +167,7 @@ class CatalogCacheEventListenerTest extends TestCase {
 		$appConfig = $this->createMockAppConfig('cat-schema', 'cat-reg');
 		$logger = $this->createMock(LoggerInterface::class);
 
-		$this->registerMockServices($catalogiService, $appConfig, $logger);
+		$this->buildListener($catalogiService, $appConfig, $logger);
 
 		$entity = $this->createObjectEntityMock('other-schema', 'cat-reg', 'uuid-4', 'some-slug');
 		$event = new ObjectCreatedEvent($entity);
@@ -177,7 +183,7 @@ class CatalogCacheEventListenerTest extends TestCase {
 		$appConfig = $this->createMockAppConfig('cat-schema', 'cat-reg');
 		$logger = $this->createMock(LoggerInterface::class);
 
-		$this->registerMockServices($catalogiService, $appConfig, $logger);
+		$this->buildListener($catalogiService, $appConfig, $logger);
 
 		$entity = $this->createObjectEntityMock('cat-schema', 'other-reg', 'uuid-5', 'some-slug');
 		$event = new ObjectCreatedEvent($entity);
@@ -194,7 +200,7 @@ class CatalogCacheEventListenerTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$logger->expects($this->never())->method('info');
 
-		$this->registerMockServices($catalogiService, $appConfig, $logger);
+		$this->buildListener($catalogiService, $appConfig, $logger);
 
 		$entity = $this->createObjectEntityMock('cat-schema', 'cat-reg', 'uuid-6', null);
 		$event = new ObjectCreatedEvent($entity);
@@ -210,7 +216,7 @@ class CatalogCacheEventListenerTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$logger->expects($this->never())->method('info');
 
-		$this->registerMockServices($catalogiService, $appConfig, $logger);
+		$this->buildListener($catalogiService, $appConfig, $logger);
 
 		$entity = $this->createObjectEntityMock('cat-schema', 'cat-reg', 'uuid-7', null);
 		$event = new ObjectDeletedEvent($entity);
@@ -229,23 +235,25 @@ class CatalogCacheEventListenerTest extends TestCase {
 			->method('error')
 			->with($this->stringContains('Exception in catalog cache event listener'));
 
-		$this->registerMockServices($catalogiService, $appConfig, $logger);
+		$this->buildListener($catalogiService, $appConfig, $logger);
 
 		$entity = $this->createObjectEntityMock();
 		$event = new ObjectCreatedEvent($entity);
 		$this->listener->handle($event);
 	}
 
-	public function testHandleCatchesExceptionWhenLoggerNotInitialized(): void {
+	public function testHandleCatchesExceptionFromCacheWarmup(): void {
+		$catalogiService = $this->createMock(CatalogiService::class);
+		$catalogiService->method('warmupCatalogCache')
+			->willThrowException(new \RuntimeException('Cache unavailable'));
+
 		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method('info');
 		$logger->expects($this->once())
 			->method('error')
 			->with($this->stringContains('Exception in catalog cache event listener'));
 
-		\OC::$server->registerService(CatalogiService::class, function () {
-			throw new \RuntimeException('Service unavailable');
-		});
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->buildListener($catalogiService, $this->createMockAppConfig('cat-schema', 'cat-reg'), $logger);
 
 		$entity = $this->createObjectEntityMock();
 		$event = new ObjectCreatedEvent($entity);
