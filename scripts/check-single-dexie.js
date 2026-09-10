@@ -61,13 +61,15 @@
 // WHAT IT SCANS
 //
 //   Every `*.js` in `js/`, so the bundle set is whatever the build emits and
-//   there is no per-entry list here to fall out of date. This repo emits the
-//   app bundle `opencatalogi-main.js` alongside the dashboard-widget entries
-//   (`opencatalogi-catalogiWidget.js`,
-//   `opencatalogi-mostViewedPublicationsWidget.js`) and their split chunks.
-//   The widget entries are the reason a per-entry list would be the wrong
-//   shape here: they load on the Nextcloud dashboard, next to openregister's
-//   integration-global, in a page the app bundle never touches.
+//   there is no per-entry list here to fall out of date — this repo's webpack
+//   config declares the app bundle, an admin-settings entry and five
+//   dashboard widgets, and writing that down here would be a gate that goes
+//   quiet the next time one is added or renamed. Today only
+//   `opencatalogi-main.js` carries Dexie (the production build reports "across
+//   1 chunk(s)"), but the widgets are why the SHAPE has to be a directory
+//   scan: they load on the Nextcloud dashboard, next to openregister's
+//   integration-global, in a page the app bundle never touches — so the day
+//   one of them pulls Dexie in, the guard must already be looking.
 //
 // WHEN IT RUNS
 //
@@ -90,9 +92,14 @@ const jsDir = path.join(repoRoot, 'js')
 const SENTINEL = 'Two different versions of Dexie'
 const VERSION_PATTERNS = [
 	// Production: Dexie.semVer survives minification as a property literal.
-	/semVer\s*[:=]\s*["']([0-9][0-9A-Za-z.+-]*)["']/g,
-	// Development: the unminified source constant Dexie.semVer is assigned from.
-	/DEXIE_VERSION\s*=\s*["']([0-9][0-9A-Za-z.+-]*)["']/g,
+	// The left boundary matters: without it `mySemVer:"1.2.3"` in the same
+	// chunk reads as a second Dexie version and the guard fails a bundle set
+	// that is fine — the one failure mode a guard must not have.
+	/(?<![\w$])semVer\s*[:=]\s*["']([0-9][0-9A-Za-z.+-]*)["']/g,
+	// Development: the unminified source constant Dexie.semVer is assigned
+	// from. Same boundary, same reason: `EXPECTED_DEXIE_VERSION = '4.4.4'` or
+	// `MIN_DEXIE_VERSION = '4.0.8'` must not count as a Dexie version.
+	/(?<![\w$])DEXIE_VERSION\s*=\s*["']([0-9][0-9A-Za-z.+-]*)["']/g,
 ]
 
 if (!fs.existsSync(jsDir)) {
@@ -115,6 +122,17 @@ try {
 } catch (e) {
 	console.log(
 		`i dexie singleton: could not read package-lock.json (${e.message}); checking chunk agreement only`,
+	)
+}
+
+// A lock that parses fine but carries no dexie entry is the case that MATTERS:
+// the entry exists today only because dexie is a direct dependency, and
+// @conduction/nextcloud-vue declares it as a peer that it used to vendor
+// itself — the 2026-09-07 shape. Half the guard then disappears, so it says so
+// rather than passing quietly (review of the WOO-562 PRs).
+if (expected === null) {
+	console.log(
+		'i dexie singleton: package-lock.json has no node_modules/dexie entry; checking chunk agreement only',
 	)
 }
 
