@@ -65,6 +65,16 @@ use Psr\Log\LoggerInterface;
  */
 class WOO536RepairReadRules implements IRepairStep
 {
+
+    /**
+     * Bundled schemas whose read rules encode the publication lifecycle and
+     * therefore get the WOO-536 two-rule upgrade. Translation of Dutch keys
+     * (WOO-573) is NOT limited to this list.
+     *
+     * @var string[]
+     */
+    private const TWO_RULE_SLUGS = ['publication', 'document'];
+
     /**
      * Constructor.
      *
@@ -94,6 +104,13 @@ class WOO536RepairReadRules implements IRepairStep
     /**
      * Run the repair step.
      *
+     * Walks EVERY OpenRegister schema (WOO-573): the Dutch 1.x match-keys can
+     * live on any schema an operator copied its rules from, not only on the two
+     * bundled ones, and after RenameDutchPublicationColumns they all become SQL
+     * against a column that no longer exists. Translation therefore runs
+     * everywhere; the WOO-536 two-rule upgrade stays limited to the bundled
+     * `publication` / `document` slugs whose lifecycle fields it encodes.
+     *
      * @param IOutput $output The output interface.
      *
      * @return void
@@ -112,151 +129,159 @@ class WOO536RepairReadRules implements IRepairStep
 
         try {
             $schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
+            $schemas      = $schemaMapper->findAll();
         } catch (\Throwable $e) {
-            $output->warning('OpenRegister SchemaMapper unavailable - skipping WOO-536 read-rule backfill');
+            $output->warning('OpenRegister SchemaMapper unavailable - skipping WOO-536 read-rule backfill: '.$e->getMessage());
             return;
         }
 
         $updated = 0;
         $skipped = 0;
-        // `document` was retired from the seed: attachments are files on the
-        // publication now. A legacy 1.x instance that upgrades to 2.x still HAS
-        // the schema and its rules, and RenameDutchPublicationColumns has by
-        // then renamed the object columns to English while the rules still say
-        // `publicatiedatum` — under `_rbac: true` that rule becomes SQL against a
-        // column that no longer exists (HTTP 500 on anonymous /api/search,
-        // WOO-573). So the schema stays in this loop, for translation, even
-        // though the seed no longer ships it.
-        foreach (['publication', 'document'] as $slug) {
-            $result = $this->maybeUpgradeSchema(schemaMapper: $schemaMapper, slug: $slug, output: $output);
-            if ($result === 'updated') {
+        foreach ($schemas as $schema) {
+            if ($this->repairSchema(schemaMapper: $schemaMapper, schema: $schema, output: $output) === true) {
                 $updated++;
                 continue;
             }
+
             $skipped++;
         }
 
         $output->info(
-            sprintf('WOO-536 read-rule backfill: %d schema(s) upgraded, %d skipped (already correct or customised)', $updated, $skipped)
+            sprintf(
+                'WOO-536 read-rule backfill: %d schema(s) updated, %d skipped (no Dutch keys, already correct or customised)',
+                $updated,
+                $skipped
+            )
         );
 
     }//end run()
 
+
     /**
-     * Locate a schema by slug and upgrade its read-block if it carries the
-     * old single-rule shape.
+     * Repair one schema: translate Dutch match-keys, then (bundled slugs only)
+     * upgrade the single-rule read shape, and persist when anything changed.
      *
      * @param object  $schemaMapper The OpenRegister SchemaMapper (typed as object
-     *                              so this repair step can compile without an OR
+     *                              so this repair step compiles without an OR
      *                              dependency at analysis-time).
-     * @param string  $slug         Schema slug ('publication').
+     * @param object  $schema       The OpenRegister Schema entity.
      * @param IOutput $output       The output interface for progress reporting.
      *
-     * @return string 'updated' | 'skipped'
+     * @return bool True when the schema was updated.
+     *
+     * @spec openspec/specs/search/spec.md
      */
-    private function maybeUpgradeSchema(object $schemaMapper, string $slug, IOutput $output): string
+    private function repairSchema(object $schemaMapper, object $schema, IOutput $output): bool
     {
+        $slug          = (string) $schema->getSlug();
+        $label         = "schema '{$slug}' (id ".$schema->getId().")";
+        $authorization = $schema->getAuthorization();
+        if (is_array($authorization) === false) {
+            return false;
+        }
+
+        $dropped = [];
+        $result  = $this->computeAuthorizationChanges(
+            authorization: $authorization,
+            slug: $slug,
+            dropped: $dropped
+        );
+        foreach ($dropped as $where) {
+            $output->warning(
+                "WOO-573: {$label} — Dutch key dropped at {$where} because the English key already exists; verify the two conditions agreed"
+            );
+        }
+
+        if (empty($result['changes']) === true) {
+            if (in_array($slug, self::TWO_RULE_SLUGS, true) === true) {
+                $output->info("WOO-536: {$label} already on two-rule shape or admin-customised — skipping");
+            }
+
+            return false;
+        }
+
+        $schema->setAuthorization($result['authorization']);
         try {
-            $schemas = $schemaMapper->findAll(filters: ['slug' => $slug]);
+            $schemaMapper->update($schema);
         } catch (\Throwable $e) {
-            $output->warning("WOO-536: cannot list schemas by slug '{$slug}' — {$e->getMessage()}");
-            return 'skipped';
+            $output->warning("WOO-536: failed to update {$label}: {$e->getMessage()}");
+            return false;
         }
 
-        if (empty($schemas) === true) {
-            $output->info("WOO-536: schema '{$slug}' not present in this installation — nothing to upgrade");
-            return 'skipped';
+        $output->info("WOO-536: {$label} ".implode(' + ', $result['changes']));
+        $this->logger->info(
+            'WOO-536 repair: schema authorization updated',
+            ['schema' => $slug, 'schemaId' => $schema->getId(), 'changes' => $result['changes']]
+        );
+
+        return true;
+
+    }//end repairSchema()
+
+
+    /**
+     * Pure computation of the repaired authorization block.
+     *
+     * Step 1 (WOO-573, every schema): translate the Dutch 1.x property names in
+     * every action's match-clauses. Step 2 (WOO-536, bundled slugs only): upgrade
+     * the single-rule read shape to the depublicationDate-aware two-rule shape,
+     * preserving non-conditional elements such as "authenticated".
+     *
+     * @param array    $authorization The current authorization block.
+     * @param string   $slug          The schema slug (decides whether step 2 applies).
+     * @param string[] $dropped       By-ref: "action[index].key" of Dutch keys dropped in favour of an existing English key.
+     *
+     * @return array{authorization: array, changes: string[]} The new block and a human-readable change list (empty = nothing to write).
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function computeAuthorizationChanges(array $authorization, string $slug, array &$dropped): array
+    {
+        $changes    = [];
+        $translated = $this->translateDutchKeys(authorization: $authorization, dropped: $dropped);
+        if ($translated !== $authorization) {
+            $changes[] = 'Dutch keys translated (WOO-573)';
         }
 
-        $updated = false;
-        foreach ($schemas as $schema) {
-            $authorization = $schema->getAuthorization();
-            if (is_array($authorization) === false || isset($authorization['read']) === false) {
-                $output->info("WOO-536: schema '{$slug}' (id ".$schema->getId().") has no authorization.read block — skipping");
-                continue;
-            }
-
-            // WOO-573 — Step 1: translate the Dutch 1.x property names in every
-            // action's match-clauses to the English names that
-            // RenameDutchPublicationColumns gave the object columns. Only the two
-            // known keys are renamed; everything else in the rule set (extra
-            // keys, extra rules, other groups) is kept as-is so admin
-            // customisations survive.
-            $translated    = $this->translateDutchKeys(authorization: $authorization);
-            $keysRenamed   = ($translated !== $authorization);
-            $authorization = $translated;
-
-            // Step 2: the (now English) single-rule shape still needs the
-            // depublicationDate-aware two-rule upgrade from WOO-536.
-            $read          = $authorization['read'];
-            $shapeUpgraded = false;
-            if ($this->isSingleRuleShape(read: $read) === true) {
-                // Upgrade: replace the single conditional public rule with the two-rule
-                // depublicationDate-aware shape. Preserve any non-public elements
-                // (like 'authenticated') by keeping them after the two new rules.
-                $authorization['read'] = $this->buildTwoRuleRead(existing: $read);
-                $shapeUpgraded         = true;
-            }
-
-            if ($keysRenamed === false && $shapeUpgraded === false) {
-                $output->info(
-                    "WOO-536: schema '{$slug}' (id ".$schema->getId().") already on two-rule shape or admin-customised — skipping"
-                );
-                continue;
-            }
-
-            $schema->setAuthorization($authorization);
-
-            $what = [];
-            if ($keysRenamed === true) {
-                $what[] = 'Dutch keys translated (WOO-573)';
-            }
-
-            if ($shapeUpgraded === true) {
-                $what[] = 'upgraded to two-rule shape';
-            }
-
-            try {
-                $schemaMapper->update($schema);
-                $output->info(
-                    "WOO-536: schema '{$slug}' (id ".$schema->getId().") ".implode(' + ', $what)
-                );
-                $updated = true;
-                $this->logger->info(
-                    'WOO-536 repair: schema authorization updated',
-                    ['schema' => $slug, 'schemaId' => $schema->getId(), 'changes' => $what]
-                );
-            } catch (\Throwable $e) {
-                $output->warning(
-                    "WOO-536: failed to update schema '{$slug}' (id ".$schema->getId()."): {$e->getMessage()}"
-                );
-            }
-        }//end foreach
-
-        if ($updated === true) {
-            return 'updated';
+        $read = ($translated['read'] ?? null);
+        if (in_array($slug, self::TWO_RULE_SLUGS, true) === true
+            && is_array($read) === true
+            && $this->isSingleRuleShape(read: $read) === true
+        ) {
+            $translated['read'] = $this->buildTwoRuleRead(existing: $read);
+            $changes[]          = 'upgraded to two-rule shape';
         }
-        return 'skipped';
 
-    }//end maybeUpgradeSchema()
+        return [
+            'authorization' => $translated,
+            'changes'       => $changes,
+        ];
+
+    }//end computeAuthorizationChanges()
+
 
     /**
      * Rename the Dutch 1.x property names inside every action's conditional
      * rules to the English names used since #850 / RenameDutchPublicationColumns.
      *
      * Applies to `read`, `create`, `update` and `delete` alike (any action whose
-     * value is a rule list). Only `publicatiedatum` and `depublicatiedatum` are
+     * value is a rule list; non-list siblings such as `inheritFromPublic` are
+     * left untouched). Only `publicatiedatum` and `depublicatiedatum` are
      * renamed; all other keys, operators and rules are returned untouched, so
      * the caller can compare the result with the input to learn whether anything
-     * changed. Pure function — no side effects.
+     * changed. When the English key already exists in the same match, the Dutch
+     * duplicate is dropped and reported through `$dropped` so the operator can
+     * verify the two conditions agreed. Pure function apart from that by-ref
+     * report.
      *
-     * @param array $authorization The schema's authorization block.
+     * @param array    $authorization The schema's authorization block.
+     * @param string[] $dropped       By-ref: "action[index].key" of every dropped Dutch duplicate.
      *
      * @return array The authorization block with English match-keys.
      *
      * @spec openspec/specs/search/spec.md
      */
-    private function translateDutchKeys(array $authorization): array
+    private function translateDutchKeys(array $authorization, array &$dropped): array
     {
         $map = [
             'publicatiedatum'   => 'publicationDate',
@@ -279,6 +304,7 @@ class WOO536RepairReadRules implements IRepairStep
                     // An English key that already exists wins over the Dutch
                     // duplicate — never clobber a rule the admin already fixed.
                     if ($newKey !== $key && array_key_exists($newKey, $rule['match']) === true) {
+                        $dropped[] = "{$action}[{$index}].{$key}";
                         continue;
                     }
 

@@ -83,13 +83,9 @@ class WOO536RepairReadRulesTest extends TestCase
                 $captured = $auth;
             });
 
-        // `publication` carries the schema; `document` (WOO-573: back in the
-        // loop for legacy instances) resolves to nothing here, so
-        // setAuthorization is called exactly once.
+        $fakeSchema->method('getSlug')->willReturn('publication');
         $fakeMapper = $this->createMock(FakeSchemaMapper::class);
-        $fakeMapper->method('findAll')->willReturnCallback(
-            fn (array $filters = []) => ($filters['slug'] ?? null) === 'publication' ? [$fakeSchema] : []
-        );
+        $fakeMapper->method('findAll')->willReturn([$fakeSchema]);
         $fakeMapper->expects($this->atLeastOnce())->method('update')->with($fakeSchema);
 
         $this->container->method('get')->willReturn($fakeMapper);
@@ -117,6 +113,7 @@ class WOO536RepairReadRulesTest extends TestCase
         // Already on two-rule shape.
         $fakeSchema = $this->createMock(FakeSchema::class);
         $fakeSchema->method('getId')->willReturn(42);
+        $fakeSchema->method('getSlug')->willReturn('publication');
         $fakeSchema->method('getAuthorization')->willReturn([
             'read' => [
                 ['group' => 'public', 'match' => [
@@ -152,6 +149,7 @@ class WOO536RepairReadRulesTest extends TestCase
         // Admin has added an extra field to the match — leave alone.
         $fakeSchema = $this->createMock(FakeSchema::class);
         $fakeSchema->method('getId')->willReturn(42);
+        $fakeSchema->method('getSlug')->willReturn('publication');
         $fakeSchema->method('getAuthorization')->willReturn([
             'read' => [
                 ['group' => 'public', 'match' => [
@@ -189,35 +187,66 @@ class WOO536RepairReadRulesTest extends TestCase
     }
 
     /**
-     * The step asks for `publication` and for nothing else.
-     *
-     * `document` was retired, and a legacy instance still HAS that schema, so
-     * "we stopped passing the slug" is not self-evident from the outside: the
-     * step would look identical if it still reasserted read rules on a schema
-     * the app no longer ships. This pins the slugs it actually asks for.
+     * WOO-573: the step walks EVERY schema (one unfiltered findAll) so Dutch keys
+     * on customer-created schemas are translated too, while the two-rule
+     * upgrade stays limited to the bundled publication/document slugs.
      *
      * @return void
      */
-    public function testAsksForThePublicationAndDocumentSlugsAndNoOther(): void
+    public function testWalksEverySchemaAndTranslatesCustomerSchemaWithoutTwoRuleUpgrade(): void
     {
         $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
             fn (string $appId) => $appId === 'openregister'
         );
 
-        $asked = [];
-        $fakeMapper = $this->createMock(FakeSchemaMapper::class);
-        $fakeMapper->method('findAll')->willReturnCallback(
-            function (array $filters = []) use (&$asked) {
-                $asked[] = ($filters['slug'] ?? null);
-                return [];
-            }
-        );
+        $customer = $this->createMock(FakeSchema::class);
+        $customer->method('getId')->willReturn(9);
+        $customer->method('getSlug')->willReturn('besluit');
+        $customer->method('getAuthorization')->willReturn([
+            'read' => [['group' => 'public', 'match' => ['publicatiedatum' => ['$lte' => '$now']]], 'authenticated'],
+        ]);
+        $capturedCustomer = null;
+        $customer->expects($this->once())->method('setAuthorization')->willReturnCallback(function ($auth) use (&$capturedCustomer) {
+            $capturedCustomer = $auth;
+        });
 
+        $english = $this->createMock(FakeSchema::class);
+        $english->method('getId')->willReturn(10);
+        $english->method('getSlug')->willReturn('organization');
+        $english->method('getAuthorization')->willReturn(['read' => ['public']]);
+        $english->expects($this->never())->method('setAuthorization');
+
+        $fakeMapper = $this->createMock(FakeSchemaMapper::class);
+        $fakeMapper->expects($this->once())->method('findAll')->willReturn([$customer, $english]);
+        $fakeMapper->expects($this->once())->method('update')->with($customer);
         $this->container->method('get')->willReturn($fakeMapper);
 
         $this->step->run($this->createMock(IOutput::class));
 
-        $this->assertSame(['publication', 'document'], $asked);
+        $this->assertSame(
+            [['group' => 'public', 'match' => ['publicationDate' => ['$lte' => '$now']]], 'authenticated'],
+            $capturedCustomer['read'],
+            'customer schema: keys translated, single-rule shape kept (no two-rule template outside publication/document)'
+        );
+    }
+
+    /**
+     * WOO-573: dropping a Dutch duplicate in favour of an existing English key
+     * must be visible to the operator.
+     */
+    public function testDroppedDutchDuplicateIsReportedAsWarning(): void
+    {
+        $output = $this->createMock(IOutput::class);
+        $output->expects($this->once())->method('warning')->with(
+            $this->stringContains("Dutch key dropped at read[0].publicatiedatum")
+        );
+        $this->runStepOnDocumentRead(
+            read: [
+                ['group' => 'public', 'match' => ['publicatiedatum' => ['$lte' => '2020-01-01'], 'publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$exists' => false]]],
+                ['group' => 'public', 'match' => ['publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$gte' => '$now']]],
+            ],
+            output: $output
+        );
     }
 
     /**
@@ -316,7 +345,7 @@ class WOO536RepairReadRulesTest extends TestCase
      *
      * @return array The authorization array passed to setAuthorization().
      */
-    private function runStepOnDocumentRead(array $read, array $extra = []): array
+    private function runStepOnDocumentRead(array $read, array $extra = [], ?IOutput $output = null): array
     {
         $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
             fn (string $appId) => $appId === 'openregister'
@@ -324,6 +353,7 @@ class WOO536RepairReadRulesTest extends TestCase
 
         $fakeSchema = $this->createMock(FakeSchema::class);
         $fakeSchema->method('getId')->willReturn(7);
+        $fakeSchema->method('getSlug')->willReturn('document');
         $fakeSchema->method('getAuthorization')->willReturn(array_merge(['read' => $read], $extra));
 
         $captured = null;
@@ -334,13 +364,11 @@ class WOO536RepairReadRulesTest extends TestCase
             });
 
         $fakeMapper = $this->createMock(FakeSchemaMapper::class);
-        $fakeMapper->method('findAll')->willReturnCallback(
-            fn (array $filters = []) => ($filters['slug'] ?? null) === 'document' ? [$fakeSchema] : []
-        );
+        $fakeMapper->method('findAll')->willReturn([$fakeSchema]);
         $fakeMapper->expects($this->once())->method('update')->with($fakeSchema);
 
         $this->container->method('get')->willReturn($fakeMapper);
-        $this->step->run($this->createMock(IOutput::class));
+        $this->step->run($output ?? $this->createMock(IOutput::class));
 
         $this->assertIsArray($captured, 'setAuthorization should have been called');
         return $captured;
@@ -354,7 +382,7 @@ class WOO536RepairReadRulesTest extends TestCase
  */
 abstract class FakeSchemaMapper
 {
-    abstract public function findAll(array $filters = []): array;
+    abstract public function findAll(): array;
     abstract public function update(object $schema): object;
 }
 
@@ -364,6 +392,7 @@ abstract class FakeSchemaMapper
 abstract class FakeSchema
 {
     abstract public function getId(): int;
+    abstract public function getSlug(): ?string;
     abstract public function getAuthorization(): ?array;
     abstract public function setAuthorization(?array $authorization): void;
 }
