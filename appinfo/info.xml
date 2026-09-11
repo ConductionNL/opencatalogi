@@ -27,7 +27,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 
 **Support:** For support, contact support@conduction.nl. For a Service Level Agreement (SLA), contact sales@conduction.nl.
     ]]></description>
-	<version>0.7.56</version>
+	<version>1.0.9-woo-1</version>
 	<licence>agpl</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
@@ -62,6 +62,15 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 	<repair-steps>
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<!--
+				WOO-572 (port of WOO-536): backfill the two-rule read-block on the
+				publication + document schemas so depublished objects drop out of
+				the public search under OpenRegister's SQL RBAC. Runs AFTER
+				InitializeSettings (which seeds fresh installs with the new shape).
+				Idempotent: skips schemas already on the two-rule shape or with
+				admin-customised rules.
+			-->
+			<step>OCA\OpenCatalogi\Repair\WOO572RepairReadRules</step>
 		</post-migration>
 	</repair-steps>
 
