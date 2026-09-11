@@ -1,0 +1,42 @@
+name: WOO-572 Hotfix CI
+
+# Branch-local CI for the 1.x hotfix line. The repo's regular Code Quality
+# workflow cannot start on this branch: its v1.0.9-era caller grants only
+# read permissions to the shared quality workflow, which now needs write.
+# This workflow runs the checks that are meaningful for the hotfix: lint,
+# phpcs on the touched files, and the unit tests that ship with WOO-572,
+# against OpenRegister v1.1.5 (what acato runs) for the OCA\OpenRegister types.
+on:
+  push:
+    branches: [hotfix/woo-572-fts-stable-line]
+  pull_request:
+    branches: [stable/1.0.9]
+
+permissions:
+  contents: read
+
+jobs:
+  hotfix-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout OpenRegister v1.1.5 (type source for the unit tests)
+        uses: actions/checkout@v4
+        with:
+          repository: ConductionNL/openregister
+          ref: v1.1.5
+          path: .ci/openregister
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: zip, gd
+      - run: composer install --no-interaction --no-progress
+      - name: PHP lint
+        run: find lib appinfo -name '*.php' -print0 | xargs -0 -n1 -P4 php -l > /dev/null
+      - name: phpcs on the WOO-572 files
+        run: vendor/bin/phpcs --standard=phpcs.xml lib/Service/PublicationQueryService.php lib/Repair/WOO572RepairReadRules.php lib/Controller/SearchController.php
+      - name: Unit tests shipped with WOO-572
+        run: |
+          for t in tests/Unit/Service/PublicationQueryServiceTest.php tests/Unit/Repair/WOO572RepairReadRulesTest.php tests/Unit/Controller/SearchControllerTest.php; do
+            vendor/bin/phpunit --no-coverage --do-not-cache-result --bootstrap tests/bootstrap-hotfix-ci.php "$t"
+          done

@@ -132,3 +132,117 @@ The actual search, filter generation, and pagination is handled internally by Op
 - **OpenRegister ObjectService** - `buildSearchQuery()` for query parsing, `searchObjectsPaginated()` for paginated search with facets
 - **DirectoryService** - Provides remote listing data for federated search (used by PublicationService)
 - **GuzzleHttp** - Async HTTP requests to remote directories (used by PublicationService)
+
+## Catalog-model scope for the public search endpoint (WOO-536, ported to the 1.x stable line by WOO-572)
+
+The public full-text search endpoint `/apps/opencatalogi/api/search` derives its
+scope from the catalog model and enforces visibility in SQL through
+OpenRegister's schema-level RBAC. This section is the 1.x-line port of the
+`fix-fts-catalog-model-alignment` change (`openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/`);
+field names follow the 1.x seed (`publicatiedatum` / `depublicatiedatum`).
+
+### Requirement: Accept `_catalog` and `_catalogi[]` scope-narrowing params (SCH-PFTS-CAT-001)
+
+The endpoint MUST accept an optional `_catalog` query parameter (single catalog
+slug) and an optional `_catalogi[]` array parameter (multiple catalog slugs).
+When either is provided, the search scope MUST be limited to the union of
+registers and schemas declared by the matching catalog(s). Catalogs that are not
+publicly available (no `published` datetime in the past) MUST be treated as
+non-existent. Clients MUST NOT be able to widen scope via `_schema`,
+`_registers`, `fq` or `catalogSlug` on this endpoint — those parameters are
+stripped before the query reaches OpenRegister.
+
+#### Scenario: single catalog scope via `_catalog`
+
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_catalog=my-catalog`,
+- **THEN** the search scope MUST be limited to the registers and schemas declared by the catalog with slug `my-catalog`,
+- **AND** objects from schemas not in that catalog MUST be absent from the results.
+
+#### Scenario: unpublished catalog is indistinguishable from a missing one
+
+- **WHEN** a caller sends `_catalog=<slug-of-unpublished-catalog>`,
+- **THEN** the endpoint MUST return HTTP 200 with `total: 0` and no results.
+
+#### Scenario: disallowed scope widening via `_schema`
+
+- **WHEN** a caller sends `GET /apps/opencatalogi/api/search?_search=term&_schema=42`,
+- **THEN** the `_schema` parameter MUST be silently stripped,
+- **AND** the scope MUST be resolved from the catalog model as normal.
+
+### Requirement: Default scope is the union of listed and published catalogs (SCH-PFTS-CAT-002)
+
+When neither `_catalog` nor `_catalogi[]` is provided, the scope MUST be the
+union of registers and schemas of all catalogs with `listed: true` AND a
+`published` datetime in the past. The catalog register and schema are located
+through the `catalog_register` / `catalog_schema` app-config values. An empty
+resolved scope MUST fail closed to an empty envelope (`results: [], total: 0`)
+and MUST log a warning.
+
+#### Scenario: multi-schema catalog returns results from all schemas
+
+- **WHEN** a listed, published catalog declares three schemas (e.g. `publication`, `document`, `besluit`),
+- **AND** the caller sends `GET /apps/opencatalogi/api/search?_search=term`,
+- **THEN** results from all three schemas MUST be present in the response,
+- **AND** each result MUST carry `@self.schema` set to the schema's slug (resolved dynamically via the OpenRegister SchemaMapper).
+
+### Requirement: Catalog-derived scope replaces app-config scope (SCH-PFTS-CAT-003)
+
+The endpoint MUST NOT use the `publication_register`, `publication_schema` or
+`document_schema` app-config values to determine its scope.
+
+### Requirement: Visibility is enforced in SQL by schema-level RBAC (SCH-PFTS-004, amended)
+
+The endpoint MUST call `ObjectService::searchObjectsPaginated()` with
+`_rbac: true` and `_multitenancy: false`. The former PHP post-filter
+(`isObjectPublic()`), the anonymous per-page `total` undercount and the
+stripping of `facets` / `facetable` for anonymous callers are REMOVED.
+Visibility for anonymous callers is defined by the `public` group's `read`
+rules on each schema. For the bundled `publication` and `document` schemas the
+seed MUST carry the two-rule shape:
+
+```json
+"read": [
+  { "group": "public", "match": { "publicatiedatum": { "$lte": "$now" }, "depublicatiedatum": { "$gte": "$now" } } },
+  { "group": "public", "match": { "publicatiedatum": { "$lte": "$now" }, "depublicatiedatum": { "$exists": false } } },
+  "authenticated"
+]
+```
+
+Existing installations MUST be brought to this shape by the idempotent repair
+step `OCA\OpenCatalogi\Repair\WOO572RepairReadRules`; admin-customised rule
+sets MUST be left untouched.
+
+Two drops remain in PHP because OpenRegister cannot express them in a schema
+rule: rows with `status: archived` (terminal-hidden state) and document rows
+whose linked publication is not visible to the caller (transitive visibility,
+resolved through the OpenRegister relation graph with `_relations_contains`).
+The envelope `total` is OpenRegister's global count minus the per-page drops,
+floored at the number of rows shipped, so `total >= count(results)` always
+holds.
+
+Authenticated callers are evaluated by the same RBAC engine (group rules,
+`_owner` clause, admin bypass, `inheritFromPublic`), so signed-in staff MAY see
+rows anonymous callers do not — the same semantics as the 2.x line after
+WOO-551.
+
+#### Scenario: depublished publications are absent for anonymous callers
+
+- **GIVEN** a publication whose `depublicatiedatum` is in the past,
+- **WHEN** an anonymous caller issues the public search,
+- **THEN** the publication MUST NOT appear in the response.
+
+#### Scenario: document visibility is transitively gated
+
+- **GIVEN** a document D linked to a publication P whose `depublicatiedatum` is in the past,
+- **WHEN** an anonymous caller searches for content matching D,
+- **THEN** D MUST NOT appear in the response.
+
+#### Scenario: `total` never undercounts the shipped page
+
+- **WHEN** any caller sends `GET /apps/opencatalogi/api/search`,
+- **THEN** `total` MUST be greater than or equal to the number of rows in `results`.
+
+#### Scenario: `facets` and `facetable` are forwarded for anonymous callers
+
+- **WHEN** an anonymous caller sends `GET /apps/opencatalogi/api/search?_facetable=true`,
+- **THEN** the `facets` and `facetable` blocks returned by OpenRegister MUST be forwarded unchanged.
