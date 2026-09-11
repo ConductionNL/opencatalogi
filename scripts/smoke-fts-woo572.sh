@@ -185,7 +185,11 @@ sleep 2
 
 # _catalog=nonexistent
 echo "=== _catalog=nonexistent graceful edge case ==="
-http_code=$(curl_in -o /dev/null -w "%{http_code}" -H "Host: ${BASE_URL#http://}" "http://localhost/index.php/apps/opencatalogi/api/search?_catalog=nonexistent-catalog-slug-xyz")
+if [ -n "${DOCKER_CONTAINER}" ]; then
+	http_code=$(curl_in -o /dev/null -w "%{http_code}" -H "Host: ${BASE_URL#*://}" "http://localhost/index.php/apps/opencatalogi/api/search?_catalog=nonexistent-catalog-slug-xyz")
+else
+	http_code=$(curl_in -o /dev/null -w "%{http_code}" "${BASE_URL}/index.php/apps/opencatalogi/api/search?_catalog=nonexistent-catalog-slug-xyz")
+fi
 env4=$(fetch_envelope "/index.php/apps/opencatalogi/api/search?_catalog=nonexistent-catalog-slug-xyz" anon)
 if [ "${http_code}" = "200" ]; then
 	total_ne=$(echo "$env4" | json_get 'total')
