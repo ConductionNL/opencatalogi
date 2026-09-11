@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ------------------------------------------------------------------
-# WOO-536 acceptance-criteria smoke test (fresh docker install).
+# WOO-572 smoke test — the WOO-536 acceptance criteria on the 1.x stable
+# line (OpenCatalogi 1.0.9-woo-1 hotfix). Ported from scripts/smoke-fts-woo536.sh
+# on main; the assertions are identical.
 #
 # Assumes seed-fulltext-search-test-data.sh has run (or an equivalent
 # seed exists) so a catalog + publications + documents are in place.
@@ -19,11 +21,14 @@
 #   8. every row carries `@self.schema` as a slug string (SCH-PFTS-002)
 #
 # Usage:
-#   ./scripts/smoke-fts-woo536.sh \
+#   ./scripts/smoke-fts-woo572.sh \
 #     [--base-url http://nextcloud.local] \
 #     [--admin-user admin] \
 #     [--admin-token <app-password>] \
-#     [--catalog-slug <known-catalog-slug>]
+#     [--catalog-slug <known-catalog-slug>] \
+#     [--container <nc-container>]   (curl runs inside that container)
+#     [--no-container]              (curl runs on this host straight at --base-url,
+#                                    e.g. https://acato.accept.commonground.nu)
 #
 # Exits 0 on all-green, non-zero on any assertion failure with a
 # per-check diagnostic. Rate-limits itself with sleep so it doesn't
@@ -46,6 +51,7 @@ while [ $# -gt 0 ]; do
 		--admin-token)   ADMIN_TOKEN="$2"; shift 2 ;;
 		--catalog-slug)  CATALOG_SLUG="$2"; shift 2 ;;
 		--container)     DOCKER_CONTAINER="$2"; shift 2 ;;
+		--no-container)  DOCKER_CONTAINER=""; shift 1 ;;
 		-h|--help)
 			sed -n '3,32p' "$0" | sed 's|^# \?||'
 			exit 0
@@ -57,19 +63,31 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-# All curls run inside the NC container so networking is deterministic.
+# By default all curls run inside the NC container so networking is
+# deterministic; with --no-container they run on this host against --base-url
+# (the acato / any remote deployment case).
 curl_in() {
-	docker exec "${DOCKER_CONTAINER}" curl -s "$@"
+	if [ -n "${DOCKER_CONTAINER}" ]; then
+		docker exec "${DOCKER_CONTAINER}" curl -s "$@"
+	else
+		curl -s "$@"
+	fi
 }
 
 # Fetch envelope + assert basic keys. Args: 1=url, 2=[admin|anon].
 fetch_envelope() {
 	local url="$1"
 	local mode="$2"
-	if [ "$mode" = "admin" ]; then
-		curl_in -u "${ADMIN_USER}:${ADMIN_TOKEN}" -H "Host: ${BASE_URL#http://}" "http://localhost${url}"
+	local target
+	if [ -n "${DOCKER_CONTAINER}" ]; then
+		target="http://localhost${url}"
 	else
-		curl_in -H "Host: ${BASE_URL#http://}" "http://localhost${url}"
+		target="${BASE_URL}${url}"
+	fi
+	if [ "$mode" = "admin" ]; then
+		curl_in -u "${ADMIN_USER}:${ADMIN_TOKEN}" -H "Host: ${BASE_URL#*://}" "${target}"
+	else
+		curl_in -H "Host: ${BASE_URL#*://}" "${target}"
 	fi
 }
 
