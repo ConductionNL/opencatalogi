@@ -6,6 +6,9 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\SearchController;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCP\AppFramework\Http;
+use Psr\Container\ContainerInterface;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -34,46 +37,80 @@ class SearchControllerTest extends TestCase
         );
     }
 
-    public function testIndexDelegatesToPublicationService(): void
+    /**
+     * Build a controller wired for the WOO-572 FTS path (query service + container).
+     */
+    private function ftsController(PublicationQueryService|MockObject $queryService, ContainerInterface|MockObject $container): SearchController
     {
-        $expectedResponse = new JSONResponse(['results' => [], 'total' => 0]);
+        return new SearchController(
+            'opencatalogi',
+            $this->request,
+            $this->publicationService,
+            $queryService,
+            $container
+        );
+    }
 
-        $this->publicationService->method('index')
-            ->with(null)
-            ->willReturn($expectedResponse);
+    public function testIndexWithoutQueryServiceReturns503(): void
+    {
+        // Constructed without a PublicationQueryService (setUp): the FTS backend
+        // is not wired, so the endpoint reports 503 instead of falling back to the
+        // pre-WOO-506 internal listing (removed in WOO-572 for 2.x parity).
+        $this->publicationService->expects($this->never())->method('index');
 
         $response = $this->controller->index();
 
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame($expectedResponse, $response);
+        $this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
     }
 
-    public function testIndexWithCatalogId(): void
+    public function testIndexDelegatesToQueryServiceEvenWithoutSearchTerm(): void
     {
-        $expectedResponse = new JSONResponse(['results' => [['id' => 'pub-1']], 'total' => 1]);
+        $envelope      = ['results' => [['title' => 'x', '@self' => ['schema' => 'publication']]], 'total' => 1];
+        $objectService = new \stdClass();
+        $container     = $this->createMock(ContainerInterface::class);
+        $container->method('get')->with('OCA\\OpenRegister\\Service\\ObjectService')->willReturn($objectService);
+        $queryService = $this->createMock(PublicationQueryService::class);
+        // No `_search` in the request: 2.x parity means the FTS envelope is still
+        // served (catalog-scoped listing), never the legacy PublicationService::index().
+        $this->request->method('getParams')->willReturn(['_limit' => '10']);
+        $queryService->expects($this->once())
+            ->method('assemblePublicSearchResults')
+            ->with(['_limit' => '10'], $objectService)
+            ->willReturn($envelope);
+        $this->publicationService->expects($this->never())->method('index');
 
-        $this->publicationService->method('index')
-            ->with('catalog-123')
-            ->willReturn($expectedResponse);
+        $response = $this->ftsController($queryService, $container)->index();
 
-        $response = $this->controller->index('catalog-123');
-
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame($expectedResponse, $response);
+        $this->assertSame(Http::STATUS_OK, $response->getStatus());
+        $this->assertSame($envelope, $response->getData());
     }
 
-    public function testIndexWithNullCatalogId(): void
+    public function testIndexReturns503WhenOpenRegisterIsUnavailable(): void
     {
-        $expectedResponse = new JSONResponse(['results' => []]);
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->willThrowException(new \RuntimeException('no openregister'));
+        $queryService = $this->createMock(PublicationQueryService::class);
+        $queryService->expects($this->never())->method('assemblePublicSearchResults');
 
-        $this->publicationService->expects($this->once())
-            ->method('index')
-            ->with(null)
-            ->willReturn($expectedResponse);
+        $response = $this->ftsController($queryService, $container)->index();
 
-        $response = $this->controller->index(null);
+        $this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+        $this->assertArrayHasKey('error', $response->getData());
+    }
 
-        $this->assertSame($expectedResponse, $response);
+    public function testIndexReturns500WithGenericBodyOnUnexpectedException(): void
+    {
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->willReturn(new \stdClass());
+        $queryService = $this->createMock(PublicationQueryService::class);
+        $queryService->method('assemblePublicSearchResults')->willThrowException(new \Exception('SQLSTATE[42703] secret column name'));
+        $this->request->method('getParams')->willReturn(['_search' => 'x']);
+
+        $response = $this->ftsController($queryService, $container)->index();
+
+        $this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+        $this->assertSame(['error' => 'Internal server error'], $response->getData());
     }
 
     public function testShowDelegatesToPublicationService(): void

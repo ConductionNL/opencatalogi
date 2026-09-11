@@ -25,6 +25,7 @@ use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
@@ -59,87 +60,77 @@ class SearchController extends Controller
     }//end __construct()
 
     /**
-     * Search endpoint. Two behaviours behind the same route:
+     * Public full-text search endpoint (WOO-506 / WOO-517 / WOO-536).
      *
-     *  - **WOO-506 / WOO-517 public full-text search** (fires when `_search` is present in
-     *    the query). Delegates to {@see PublicationQueryService::assemblePublicSearchResults()},
-     *    returns the flat mixed envelope with `@self.schema` discriminator. Respects the
-     *    opt-in `_content=true` for document body-text search (WOO-517 / OR PR #473).
-     *  - **Pre-WOO-506 internal listing** (fires when `_search` is absent). Preserves the
-     *    original main behaviour: delegates to `PublicationService::index($catalogId)` and
-     *    lists publications, optionally scoped by catalog. This branch is a defensive
-     *    backward-compat guard for any admin/testing tool that still hits `/api/search`
-     *    without a search term.
+     * Delegates entirely to {@see PublicationQueryService::assemblePublicSearchResults()}
+     * and returns the flat mixed envelope with the `@self.schema` discriminator. Respects
+     * the opt-in `_content=true` for document body-text search (WOO-517) and the catalog
+     * scope parameters `_catalog` / `_catalogi[]` (WOO-536).
      *
-     * @param string|null $catalogId Optional ID of a specific catalog to filter by
-     *                               (only honoured by the legacy internal listing branch).
+     * WOO-572 (port of the 2.x behaviour): the pre-WOO-506 "internal listing" branch that
+     * fired when `_search` was absent is gone — `/api/search` without a term now returns
+     * the catalog-scoped envelope like the 2.x line does. The per-request
+     * `@BruteForceProtection` throttle (which pushed anonymous callers into HTTP 429 after
+     * roughly ten searches) is replaced by the ADR-082 volume ceiling: 60 anonymous
+     * requests per minute, exactly as on 2.x.
      *
-     * @return JSONResponse JSON response — search-envelope or publication list.
+     * @return JSONResponse JSON response containing the mixed publication/document result envelope.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
-     * @BruteForceProtection(action=publicSearch)
      */
-    public function index(?string $catalogId=null): JSONResponse
+    #[AnonRateLimit(limit: 60, period: 60)]
+    public function index(): JSONResponse
     {
-        // WOO-506 public FTS gate: opt-in when `_search` is supplied, OR when the caller
-        // wants facets (`_facetable=true` / `_facets[...]`) which are only usefully served
-        // by the FTS-envelope path. Absent → pre-WOO-506 internal-listing behaviour is
-        // preserved byte-for-byte below.
-        $searchTerm     = $this->request->getParam('_search');
-        $hasSearch      = ($searchTerm !== null && trim((string) $searchTerm) !== '');
-        $wantsFacetable = filter_var($this->request->getParam('_facetable', false), FILTER_VALIDATE_BOOLEAN) === true;
-        $wantsFacets    = is_array($this->request->getParam('_facets')) === true;
-        if (($hasSearch === true || $wantsFacetable === true || $wantsFacets === true) && $this->queryService !== null) {
-            try {
-                $objectService = $this->getObjectService();
-                $result = $this->queryService->assemblePublicSearchResults(
-                    queryParams: $this->request->getParams(),
-                    objectService: $objectService
-                );
-                $response = new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
-                // Activate `@BruteForceProtection(action=publicSearch)` — the
-                // annotation only accrues delay when a controller calls
-                // `throttle()`; without this call the throttle was cosmetic
-                // and no rate limiting ever kicked in on the public path
-                // (review #147 🟡 unauthenticated DoS). Recording every
-                // public-FTS request meters legitimate use lightly and
-                // ramps up the delay only under sustained hammering, per
-                // Nextcloud's built-in brute-force machinery.
-                $response->throttle(['action' => 'publicSearch']);
-                return $response;
-            } catch (RuntimeException $e) {
-                if ($this->logger !== null) {
-                    $this->logger->warning(
-                        '[SearchController::index] OpenRegister not installed — public search unavailable',
-                        ['error' => $e->getMessage()]
-                    );
-                }
-                $errorMsg = $this->l10n !== null ? $this->l10n->t('Search backend is not available.') : 'Search backend is not available.';
-                return new JSONResponse(
-                    data: ['error' => $errorMsg],
-                    statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-                );
-            } catch (\Exception $e) {
-                if ($this->logger !== null) {
-                    $this->logger->error(
-                        '[SearchController::index] Failed to execute public search',
-                        ['error' => $e->getMessage()]
-                    );
-                }
-                $errorMsg = $this->l10n !== null ? $this->l10n->t('Internal server error') : 'Internal server error';
-                return new JSONResponse(
-                    data: ['error' => $errorMsg],
-                    statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-                );
+        if ($this->queryService === null) {
+            $errorMsg = 'Search backend is not available.';
+            if ($this->l10n !== null) {
+                $errorMsg = $this->l10n->t('Search backend is not available.');
             }
+
+            return new JSONResponse(
+                data: ['error' => $errorMsg],
+                statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+            );
         }
 
-        // Legacy pre-WOO-506 path: preserved unchanged.
-        return $this->publicationService->index($catalogId);
+        try {
+            $objectService = $this->getObjectService();
+            $result        = $this->queryService->assemblePublicSearchResults(
+                queryParams: $this->request->getParams(),
+                objectService: $objectService
+            );
+            return new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
+        } catch (RuntimeException $e) {
+            if ($this->logger !== null) {
+                $this->logger->warning(
+                    '[SearchController::index] OpenRegister not installed — public search unavailable',
+                    ['error' => $e->getMessage()]
+                );
+            }
+
+            $errorMsg = $this->l10n !== null ? $this->l10n->t('Search backend is not available.') : 'Search backend is not available.';
+            return new JSONResponse(
+                data: ['error' => $errorMsg],
+                statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+            );
+        } catch (\Exception $e) {
+            if ($this->logger !== null) {
+                $this->logger->error(
+                    '[SearchController::index] Failed to execute public search',
+                    ['error' => $e->getMessage()]
+                );
+            }
+
+            $errorMsg = $this->l10n !== null ? $this->l10n->t('Internal server error') : 'Internal server error';
+            return new JSONResponse(
+                data: ['error' => $errorMsg],
+                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }//end try
 
     }//end index()
 
@@ -158,6 +149,7 @@ class SearchController extends Controller
         if ($this->container === null) {
             throw new RuntimeException('Container not available; SearchController FTS branch inactive.');
         }
+
         try {
             return $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
         } catch (\Throwable $e) {
