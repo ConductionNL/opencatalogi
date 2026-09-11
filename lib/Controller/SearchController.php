@@ -42,9 +42,13 @@ class SearchController extends Controller
     /**
      * SearchController constructor.
      *
-     * @param string             $appName            The name of the app.
-     * @param IRequest           $request            The request object.
-     * @param PublicationService $publicationService The publication service.
+     * @param string                       $appName            The name of the app.
+     * @param IRequest                     $request            The request object.
+     * @param PublicationService           $publicationService The publication service.
+     * @param PublicationQueryService|null $queryService       Assembles the public FTS envelope (WOO-506/WOO-536).
+     * @param ContainerInterface|null      $container          Resolves the OpenRegister ObjectService lazily.
+     * @param LoggerInterface|null         $logger             Logger for the fail-closed branches.
+     * @param IL10N|null                   $l10n               Translations for the error envelopes.
      */
     public function __construct(
         $appName,
@@ -112,7 +116,11 @@ class SearchController extends Controller
                 );
             }
 
-            $errorMsg = $this->l10n !== null ? $this->l10n->t('Search backend is not available.') : 'Search backend is not available.';
+            $errorMsg = 'Search backend is not available.';
+            if ($this->l10n !== null) {
+                $errorMsg = $this->l10n->t('Search backend is not available.');
+            }
+
             return new JSONResponse(
                 data: ['error' => $errorMsg],
                 statusCode: Http::STATUS_SERVICE_UNAVAILABLE
@@ -125,7 +133,11 @@ class SearchController extends Controller
                 );
             }
 
-            $errorMsg = $this->l10n !== null ? $this->l10n->t('Internal server error') : 'Internal server error';
+            $errorMsg = 'Internal server error';
+            if ($this->l10n !== null) {
+                $errorMsg = $this->l10n->t('Internal server error');
+            }
+
             return new JSONResponse(
                 data: ['error' => $errorMsg],
                 statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
@@ -153,7 +165,11 @@ class SearchController extends Controller
         try {
             return $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
         } catch (\Throwable $e) {
-            throw new RuntimeException('OpenRegister ObjectService not available: '.$e->getMessage(), 0, $e);
+            throw new RuntimeException(
+                message: 'OpenRegister ObjectService not available: '.$e->getMessage(),
+                code: 0,
+                previous: $e
+            );
         }
     }//end getObjectService()
 
