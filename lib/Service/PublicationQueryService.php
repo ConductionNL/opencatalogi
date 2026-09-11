@@ -593,7 +593,7 @@ class PublicationQueryService
             }
 
             $kept[] = (int) $schemaId;
-        }
+        }//end foreach
 
         return $kept;
 
