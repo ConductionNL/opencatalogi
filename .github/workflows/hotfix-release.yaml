@@ -24,6 +24,11 @@ on:
     branches:
       - hotfix/woo-572-fts-stable-line
 
+# Least privilege (review #1482): tag move, release create/update and asset
+# upload all need contents:write; nothing else is used.
+permissions:
+  contents: write
+
 jobs:
   release-management:
     runs-on: ubuntu-latest

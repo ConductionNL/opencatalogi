@@ -47,6 +47,27 @@ class WOO572RepairReadRulesTest extends TestCase
         $this->assertStringContainsString('WOO-536', $this->step->getName());
     }
 
+    /**
+     * The primary availability check (`isEnabledForAnyone`, NC >= 32) cannot be
+     * exercised through `createMock(IAppManager::class)` because the vendored
+     * OCP stub (NC 31) does not declare the method. `addMethods()` adds it to
+     * the mock so the `method_exists()` branch is covered as well.
+     */
+    public function testUsesIsEnabledForAnyoneWhenTheCoreOffersIt(): void
+    {
+        $appManager = $this->getMockBuilder(IAppManager::class)
+            ->addMethods(['isEnabledForAnyone'])
+            ->getMockForAbstractClass();
+        $appManager->expects($this->once())->method('isEnabledForAnyone')->with('openregister')->willReturn(false);
+        $appManager->expects($this->never())->method('isInstalled');
+
+        $step   = new WOO572RepairReadRules($appManager, $this->container, $this->logger);
+        $output = $this->createMock(IOutput::class);
+        $output->expects($this->once())->method('warning')->with($this->stringContains('OpenRegister app is not enabled'));
+
+        $step->run($output);
+    }
+
     public function testSkipsWhenOpenRegisterNotInstalled(): void
     {
         $this->appManager->method('isInstalled')->willReturn(false);

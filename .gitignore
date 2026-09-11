@@ -50,3 +50,6 @@ Thumbs.db
 sbom.cdx.json
 bom-php.cdx.json
 bom-npm.cdx.json
+
+# WOO-572 hotfix CI checks out OpenRegister here (hotfix-ci.yaml); never commit it.
+/.ci/

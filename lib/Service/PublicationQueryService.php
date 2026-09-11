@@ -121,6 +121,12 @@ class PublicationQueryService
     /**
      * Determine whether an object is publicly visible (published and not depublished).
      *
+     * NOTE (WOO-572): `assemblePublicSearchResults()` no longer calls this method —
+     * visibility on the public search endpoint is enforced in SQL by OpenRegister's
+     * schema read-rules. It is retained as the single PHP-side statement of the
+     * publication lifecycle for callers outside this class and for the rollback
+     * path; it has no production caller inside this app at the moment.
+     *
      * Mirrors the live OpenRegister RBAC visibility model (APB-006), the same rule
      * the public publications API and the frontend `publicationStatus` helpers use:
      * an object is public when its `status` is not a terminal-hidden state (e.g.
@@ -226,6 +232,17 @@ class PublicationQueryService
         // publication_schema / document_schema) with a catalog-model union so
         // /api/search covers every (register × schema) the caller may see.
         $scope = $this->resolveCatalogScope(queryParams: $queryParams);
+
+        // SCH-PFTS-CAT-002 guard (WOO-572 review, tasks.md 3.5 of the WOO-536
+        // change): OpenRegister treats a schema WITHOUT `authorization.read`
+        // rules as open to all (`bypass => true` in MagicRbacHandler), so on the
+        // anonymous surface every row of such a schema would be exposed. Drop
+        // those schemas from the anonymous scope and warn the operator; signed-in
+        // callers keep normal RBAC evaluation (WOO-551 semantics).
+        if ($this->isAnonymous() === true && empty($scope['schemas']) === false) {
+            $scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
+        }
+
         if (empty($scope['schemas']) === true) {
             // Fail-closed: no schemas in scope — either an explicit _catalog / _catalogi[]
             // resolved to nothing, or the deployment has no listed+published catalogs.
@@ -518,6 +535,69 @@ class PublicationQueryService
         return $envelope;
 
     }//end assemblePublicSearchResults()
+
+    /**
+     * Drop every schema that has no `authorization.read` rules from the anonymous scope.
+     *
+     * OpenRegister's RBAC engine returns `bypass => true` (no WHERE clause at all)
+     * for a schema whose effective authorization is empty or lacks the `read`
+     * action — see MagicRbacHandler::buildRbacConditionsSql(). On the public
+     * search surface that is a data leak, so the schema is excluded here and a
+     * warning names it (SCH-PFTS-CAT-002). Fail-closed: when the mapper cannot
+     * be consulted the whole scope collapses to empty, which the caller turns
+     * into the empty envelope.
+     *
+     * Trade-off: OR resolves authorization with a register-level cascade; a
+     * schema that inherits its rules from the register is dropped here too
+     * because only the schema-level block is inspected. Configure the read
+     * rules on the schema itself to include it in anonymous search.
+     *
+     * @param int[] $schemaIds Schema ids in the resolved catalog scope.
+     *
+     * @return int[] The ids whose schema carries non-empty `authorization.read` rules.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function dropSchemasWithoutReadRules(array $schemaIds): array
+    {
+        try {
+            $schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
+        } catch (\Throwable $e) {
+            $this->logger?->warning(
+                'WOO-572: SchemaMapper unavailable for the read-rule guard — anonymous scope emptied',
+                ['error' => $e->getMessage()]
+            );
+            return [];
+        }
+
+        $kept = [];
+        foreach ($schemaIds as $schemaId) {
+            try {
+                $schema        = $schemaMapper->find((int) $schemaId);
+                $authorization = $schema->getAuthorization();
+                $slug          = (string) $schema->getSlug();
+            } catch (\Throwable $e) {
+                $this->logger?->warning(
+                    'WOO-572: schema lookup failed in the read-rule guard — schema excluded from anonymous scope',
+                    ['schemaId' => $schemaId, 'error' => $e->getMessage()]
+                );
+                continue;
+            }
+
+            if (is_array($authorization) === false || empty($authorization['read']) === true) {
+                $this->logger?->warning(
+                    'WOO-572: schema has no authorization.read rules — excluded from anonymous search (SCH-PFTS-CAT-002)',
+                    ['schemaId' => $schemaId, 'schema' => $slug]
+                );
+                continue;
+            }
+
+            $kept[] = (int) $schemaId;
+        }
+
+        return $kept;
+
+    }//end dropSchemasWithoutReadRules()
 
     /**
      * Resolve the register + schema union that /api/search covers for this request.
