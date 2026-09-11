@@ -191,7 +191,7 @@ class WOO572RepairReadRules implements IRepairStep
             $read = $authorization['read'];
             if ($this->isSingleRuleShape(read: $read) === false) {
                 $output->info(
-                    "WOO-572: schema '{$slug}' (id ".$schema->getId().") ".'already on two-rule shape or admin-customised — skipping'
+                    "WOO-572: schema '{$slug}' (id ".$schema->getId().") already on two-rule shape or customised — skipping"
                 );
                 continue;
             }

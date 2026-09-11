@@ -154,6 +154,14 @@ jobs:
       # `prerelease: true` keeps Nextcloud from picking this up as "latest".
       # `commit: github.sha` pins the tag to the built commit; without it
       # GitHub creates the tag on the DEFAULT branch (main) — WOO-552 lesson.
+      # ncipollo/release-action creates the tag only when it does not exist yet;
+      # on a re-cut (allowUpdates) the existing tag would keep pointing at the
+      # FIRST build while the tarball comes from HEAD (WOO-552 r28 lesson). Move
+      # the tag to the built commit first so tag, release and asset agree.
+      - name: Point the release tag at the built commit
+        run: |
+          git tag -f "${{ env.RELEASE_TAG }}" "${{ github.sha }}"
+          git push -f origin "refs/tags/${{ env.RELEASE_TAG }}"
       - name: Create / update the WOO-572 hotfix prerelease
         uses: ncipollo/release-action@v1
         with:
