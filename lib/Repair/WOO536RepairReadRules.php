@@ -31,7 +31,10 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Repair step that backfills the two-rule `depublicationDate` read-shape
- * on the `publication` and `document` schemas for existing installations.
+ * on the `publication` and `document` schemas for existing installations, and
+ * (WOO-573) translates the Dutch 1.x match-keys `publicatiedatum` /
+ * `depublicatiedatum` those legacy schemas still carry after
+ * RenameDutchPublicationColumns renamed the object columns to English.
  *
  * WOO-536 (Robert Zondervan, 2026-08-12) requires the public search endpoint
  * to filter depublished objects. The seed JSON in
@@ -57,6 +60,8 @@ use Psr\Log\LoggerInterface;
  *      the two-rule shape.
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity) Guard branches are the point of the class.
+ *
+ * @spec openspec/specs/search/spec.md
  */
 class WOO536RepairReadRules implements IRepairStep
 {
@@ -114,12 +119,15 @@ class WOO536RepairReadRules implements IRepairStep
 
         $updated = 0;
         $skipped = 0;
-        // `document` was retired: attachments are files on the publication now,
-        // and a file inherits the publication's visibility rather than carrying
-        // its own read rules. A legacy instance that has not yet run
-        // `opencatalogi:documents:attach-to-publications` still has the schema
-        // and its rules; this step simply stops re-asserting them.
-        foreach (['publication'] as $slug) {
+        // `document` was retired from the seed: attachments are files on the
+        // publication now. A legacy 1.x instance that upgrades to 2.x still HAS
+        // the schema and its rules, and RenameDutchPublicationColumns has by
+        // then renamed the object columns to English while the rules still say
+        // `publicatiedatum` — under `_rbac: true` that rule becomes SQL against a
+        // column that no longer exists (HTTP 500 on anonymous /api/search,
+        // WOO-573). So the schema stays in this loop, for translation, even
+        // though the seed no longer ships it.
+        foreach (['publication', 'document'] as $slug) {
             $result = $this->maybeUpgradeSchema(schemaMapper: $schemaMapper, slug: $slug, output: $output);
             if ($result === 'updated') {
                 $updated++;
@@ -168,29 +176,55 @@ class WOO536RepairReadRules implements IRepairStep
                 continue;
             }
 
-            $read = $authorization['read'];
-            if ($this->isSingleRuleShape(read: $read) === false) {
+            // WOO-573 — Step 1: translate the Dutch 1.x property names in every
+            // action's match-clauses to the English names that
+            // RenameDutchPublicationColumns gave the object columns. Only the two
+            // known keys are renamed; everything else in the rule set (extra
+            // keys, extra rules, other groups) is kept as-is so admin
+            // customisations survive.
+            $translated    = $this->translateDutchKeys(authorization: $authorization);
+            $keysRenamed   = ($translated !== $authorization);
+            $authorization = $translated;
+
+            // Step 2: the (now English) single-rule shape still needs the
+            // depublicationDate-aware two-rule upgrade from WOO-536.
+            $read          = $authorization['read'];
+            $shapeUpgraded = false;
+            if ($this->isSingleRuleShape(read: $read) === true) {
+                // Upgrade: replace the single conditional public rule with the two-rule
+                // depublicationDate-aware shape. Preserve any non-public elements
+                // (like 'authenticated') by keeping them after the two new rules.
+                $authorization['read'] = $this->buildTwoRuleRead(existing: $read);
+                $shapeUpgraded         = true;
+            }
+
+            if ($keysRenamed === false && $shapeUpgraded === false) {
                 $output->info(
                     "WOO-536: schema '{$slug}' (id ".$schema->getId().") already on two-rule shape or admin-customised — skipping"
                 );
                 continue;
             }
 
-            // Upgrade: replace the single conditional public rule with the two-rule
-            // depublicationDate-aware shape. Preserve any non-public elements
-            // (like 'authenticated') by keeping them after the two new rules.
-            $authorization['read'] = $this->buildTwoRuleRead(existing: $read);
             $schema->setAuthorization($authorization);
+
+            $what = [];
+            if ($keysRenamed === true) {
+                $what[] = 'Dutch keys translated (WOO-573)';
+            }
+
+            if ($shapeUpgraded === true) {
+                $what[] = 'upgraded to two-rule shape';
+            }
 
             try {
                 $schemaMapper->update($schema);
                 $output->info(
-                    "WOO-536: schema '{$slug}' (id ".$schema->getId().") upgraded to two-rule shape"
+                    "WOO-536: schema '{$slug}' (id ".$schema->getId().") ".implode(' + ', $what)
                 );
                 $updated = true;
                 $this->logger->info(
-                    'WOO-536 repair: schema authorization.read upgraded to two-rule shape',
-                    ['schema' => $slug, 'schemaId' => $schema->getId()]
+                    'WOO-536 repair: schema authorization updated',
+                    ['schema' => $slug, 'schemaId' => $schema->getId(), 'changes' => $what]
                 );
             } catch (\Throwable $e) {
                 $output->warning(
@@ -205,6 +239,59 @@ class WOO536RepairReadRules implements IRepairStep
         return 'skipped';
 
     }//end maybeUpgradeSchema()
+
+    /**
+     * Rename the Dutch 1.x property names inside every action's conditional
+     * rules to the English names used since #850 / RenameDutchPublicationColumns.
+     *
+     * Applies to `read`, `create`, `update` and `delete` alike (any action whose
+     * value is a rule list). Only `publicatiedatum` and `depublicatiedatum` are
+     * renamed; all other keys, operators and rules are returned untouched, so
+     * the caller can compare the result with the input to learn whether anything
+     * changed. Pure function — no side effects.
+     *
+     * @param array $authorization The schema's authorization block.
+     *
+     * @return array The authorization block with English match-keys.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function translateDutchKeys(array $authorization): array
+    {
+        $map = [
+            'publicatiedatum'   => 'publicationDate',
+            'depublicatiedatum' => 'depublicationDate',
+        ];
+
+        foreach ($authorization as $action => $rules) {
+            if (is_array($rules) === false) {
+                continue;
+            }
+
+            foreach ($rules as $index => $rule) {
+                if (is_array($rule) === false || isset($rule['match']) === false || is_array($rule['match']) === false) {
+                    continue;
+                }
+
+                $match = [];
+                foreach ($rule['match'] as $key => $condition) {
+                    $newKey = ($map[$key] ?? $key);
+                    // An English key that already exists wins over the Dutch
+                    // duplicate — never clobber a rule the admin already fixed.
+                    if ($newKey !== $key && array_key_exists($newKey, $rule['match']) === true) {
+                        continue;
+                    }
+
+                    $match[$newKey] = $condition;
+                }
+
+                $authorization[$action][$index]['match'] = $match;
+            }
+        }
+
+        return $authorization;
+
+    }//end translateDutchKeys()
 
     /**
      * Detect the old single-rule shape.

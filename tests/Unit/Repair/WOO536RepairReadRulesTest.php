@@ -83,9 +83,9 @@ class WOO536RepairReadRulesTest extends TestCase
                 $captured = $auth;
             });
 
-        // One slug is looked up now that `document` is retired, so
-        // setAuthorization is called exactly once because the loop runs once.
-        // This used to depend on the document lookup returning empty.
+        // `publication` carries the schema; `document` (WOO-573: back in the
+        // loop for legacy instances) resolves to nothing here, so
+        // setAuthorization is called exactly once.
         $fakeMapper = $this->createMock(FakeSchemaMapper::class);
         $fakeMapper->method('findAll')->willReturnCallback(
             fn (array $filters = []) => ($filters['slug'] ?? null) === 'publication' ? [$fakeSchema] : []
@@ -198,7 +198,7 @@ class WOO536RepairReadRulesTest extends TestCase
      *
      * @return void
      */
-    public function testAsksForThePublicationSlugAndNoOther(): void
+    public function testAsksForThePublicationAndDocumentSlugsAndNoOther(): void
     {
         $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
             fn (string $appId) => $appId === 'openregister'
@@ -217,7 +217,133 @@ class WOO536RepairReadRulesTest extends TestCase
 
         $this->step->run($this->createMock(IOutput::class));
 
-        $this->assertSame(['publication'], $asked);
+        $this->assertSame(['publication', 'document'], $asked);
+    }
+
+    /**
+     * WOO-573: a legacy 1.x `document` schema still carries the stock 1.0.9
+     * single Dutch rule after RenameDutchPublicationColumns renamed the
+     * columns. It must come out English AND two-rule, with "authenticated"
+     * preserved — otherwise anonymous /api/search is a 500 on 2.x.
+     */
+    public function testTranslatesDutchSingleRuleToEnglishTwoRule(): void
+    {
+        $captured = $this->runStepOnDocumentRead([
+            ['group' => 'public', 'match' => ['publicatiedatum' => ['$lte' => '$now']]],
+            'authenticated',
+        ]);
+
+        $read = $captured['read'];
+        $this->assertCount(3, $read);
+        $this->assertSame(['publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$gte' => '$now']], $read[0]['match']);
+        $this->assertSame(['publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$exists' => false]], $read[1]['match']);
+        $this->assertSame('authenticated', $read[2]);
+        $this->assertStringNotContainsString('publicatiedatum', json_encode($captured));
+    }
+
+    /**
+     * WOO-573: the WOO-572 hotfix shape (two Dutch rules) must be translated
+     * key-for-key without changing the rule structure.
+     */
+    public function testTranslatesDutchTwoRuleToEnglishTwoRule(): void
+    {
+        $captured = $this->runStepOnDocumentRead([
+            ['group' => 'public', 'match' => ['publicatiedatum' => ['$lte' => '$now'], 'depublicatiedatum' => ['$gte' => '$now']]],
+            ['group' => 'public', 'match' => ['publicatiedatum' => ['$lte' => '$now'], 'depublicatiedatum' => ['$exists' => false]]],
+            'authenticated',
+        ]);
+
+        $read = $captured['read'];
+        $this->assertCount(3, $read);
+        $this->assertSame(['publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$gte' => '$now']], $read[0]['match']);
+        $this->assertSame(['publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$exists' => false]], $read[1]['match']);
+        $this->assertSame('authenticated', $read[2]);
+    }
+
+    /**
+     * WOO-573: an admin-customised Dutch rule set keeps its structure; only the
+     * two known keys are renamed, other keys/rules stay exactly as they were.
+     */
+    public function testTranslatesDutchKeysButKeepsAdminCustomisedStructure(): void
+    {
+        $captured = $this->runStepOnDocumentRead([
+            ['group' => 'public', 'match' => ['publicatiedatum' => ['$lte' => '$now'], 'status' => ['$eq' => 'published']]],
+            ['group' => 'redactie', 'match' => ['organisatie' => ['$eq' => '$organisation']]],
+        ]);
+
+        $read = $captured['read'];
+        $this->assertCount(2, $read, 'admin-customised structure must not be replaced by the two-rule template');
+        $this->assertSame(['publicationDate' => ['$lte' => '$now'], 'status' => ['$eq' => 'published']], $read[0]['match']);
+        $this->assertSame(['organisatie' => ['$eq' => '$organisation']], $read[1]['match']);
+    }
+
+    /**
+     * WOO-573: Dutch keys in the other actions are translated too.
+     */
+    public function testTranslatesDutchKeysInNonReadActions(): void
+    {
+        $captured = $this->runStepOnDocumentRead(
+            read: [
+                ['group' => 'public', 'match' => ['publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$exists' => false]]],
+                ['group' => 'public', 'match' => ['publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$gte' => '$now']]],
+            ],
+            extra: ['update' => [['group' => 'redactie', 'match' => ['depublicatiedatum' => ['$exists' => false]]]]]
+        );
+
+        $this->assertSame(['depublicationDate' => ['$exists' => false]], $captured['update'][0]['match']);
+    }
+
+    /**
+     * WOO-573: an existing English key wins over its Dutch duplicate.
+     */
+    public function testEnglishKeyWinsOverDutchDuplicate(): void
+    {
+        $captured = $this->runStepOnDocumentRead([
+            ['group' => 'public', 'match' => ['publicatiedatum' => ['$lte' => '2020-01-01'], 'publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$exists' => false]]],
+            ['group' => 'public', 'match' => ['publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$gte' => '$now']]],
+        ]);
+
+        $this->assertSame(['publicationDate' => ['$lte' => '$now'], 'depublicationDate' => ['$exists' => false]], $captured['read'][0]['match']);
+    }
+
+    /**
+     * Run the step against a single fake `document` schema carrying the given
+     * read block (+ optional other actions) and return what setAuthorization
+     * received. Fails the test when the step did not write.
+     *
+     * @param array $read  The read block to put on the fake schema.
+     * @param array $extra Additional authorization actions (e.g. update).
+     *
+     * @return array The authorization array passed to setAuthorization().
+     */
+    private function runStepOnDocumentRead(array $read, array $extra = []): array
+    {
+        $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
+            fn (string $appId) => $appId === 'openregister'
+        );
+
+        $fakeSchema = $this->createMock(FakeSchema::class);
+        $fakeSchema->method('getId')->willReturn(7);
+        $fakeSchema->method('getAuthorization')->willReturn(array_merge(['read' => $read], $extra));
+
+        $captured = null;
+        $fakeSchema->expects($this->once())
+            ->method('setAuthorization')
+            ->willReturnCallback(function ($auth) use (&$captured) {
+                $captured = $auth;
+            });
+
+        $fakeMapper = $this->createMock(FakeSchemaMapper::class);
+        $fakeMapper->method('findAll')->willReturnCallback(
+            fn (array $filters = []) => ($filters['slug'] ?? null) === 'document' ? [$fakeSchema] : []
+        );
+        $fakeMapper->expects($this->once())->method('update')->with($fakeSchema);
+
+        $this->container->method('get')->willReturn($fakeMapper);
+        $this->step->run($this->createMock(IOutput::class));
+
+        $this->assertIsArray($captured, 'setAuthorization should have been called');
+        return $captured;
     }
 }//end class
 
