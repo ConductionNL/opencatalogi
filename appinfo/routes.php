@@ -31,12 +31,12 @@ return [
 		 */
 		
 		// Publications CORS (wildcard catalog-based endpoints)
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// Catalogi CORS
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi', 'verb' => 'OPTIONS'],
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi/{id}', 'verb' => 'OPTIONS'],
@@ -102,18 +102,18 @@ return [
 		['name' => 'federation#publicationAttachments', 'url' => '/api/federation/publications/{id}/attachments', 'verb' => 'GET'],
 		['name' => 'federation#publicationDownload', 'url' => '/api/federation/publications/{id}/download', 'verb' => 'GET'],
 		// Publications (wildcard catalog-based endpoints - MUST BE ABSOLUTE LAST to avoid catching any specific routes)
-		['name' => 'publications#index', 'url' => '/api/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#show', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'publications#download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#index', 'url' => '/api/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#show', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 
 		// UI page routes for SPA deep links
 		['name' => 'ui#dashboard', 'url' => '/', 'verb' => 'GET'],
 		['name' => 'ui#catalogi', 'url' => '/catalogi', 'verb' => 'GET'],
-		['name' => 'ui#publicationsIndex', 'url' => '/publications/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
-		['name' => 'ui#publicationsPage', 'url' => '/publications/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+', 'id' => '[a-z0-9-]+']],
+		['name' => 'ui#publicationsIndex', 'url' => '/publications/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'ui#publicationsPage', 'url' => '/publications/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+', 'id' => '[A-Za-z0-9-]+']],
 		['name' => 'ui#search', 'url' => '/search', 'verb' => 'GET'],
 		['name' => 'ui#organizations', 'url' => '/organizations', 'verb' => 'GET'],
 		['name' => 'ui#themes', 'url' => '/themes', 'verb' => 'GET'],
