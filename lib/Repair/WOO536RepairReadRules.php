@@ -177,6 +177,10 @@ class WOO536RepairReadRules implements IRepairStep
         $label         = "schema '{$slug}' (id ".$schema->getId().")";
         $authorization = $schema->getAuthorization();
         if (is_array($authorization) === false) {
+            if (in_array($slug, self::TWO_RULE_SLUGS, true) === true) {
+                $output->warning("WOO-536: {$label} has no authorization block — skipping (anonymous read rules missing)");
+            }
+
             return false;
         }
 

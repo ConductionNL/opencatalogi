@@ -234,6 +234,35 @@ class WOO536RepairReadRulesTest extends TestCase
      * WOO-573: dropping a Dutch duplicate in favour of an existing English key
      * must be visible to the operator.
      */
+    /**
+     * WOO-573 review (round 2): a bundled schema without any authorization
+     * block must still be called out explicitly, not silently roll into the
+     * aggregate "skipped" count.
+     */
+    public function testBundledSchemaWithoutAuthorizationIsReportedAsWarning(): void
+    {
+        $this->appManager->method('isEnabledForAnyone')->willReturnCallback(
+            fn (string $appId) => $appId === 'openregister'
+        );
+
+        $fakeSchema = $this->createMock(FakeSchema::class);
+        $fakeSchema->method('getId')->willReturn(9);
+        $fakeSchema->method('getSlug')->willReturn('document');
+        $fakeSchema->method('getAuthorization')->willReturn(null);
+        $fakeSchema->expects($this->never())->method('setAuthorization');
+
+        $fakeMapper = $this->createMock(FakeSchemaMapper::class);
+        $fakeMapper->method('findAll')->willReturn([$fakeSchema]);
+        $fakeMapper->expects($this->never())->method('update');
+        $this->container->method('get')->willReturn($fakeMapper);
+
+        $output = $this->createMock(IOutput::class);
+        $output->expects($this->once())->method('warning')->with(
+            $this->stringContains("schema 'document' (id 9) has no authorization block")
+        );
+        $this->step->run($output);
+    }
+
     public function testDroppedDutchDuplicateIsReportedAsWarning(): void
     {
         $output = $this->createMock(IOutput::class);
