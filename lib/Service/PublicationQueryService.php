@@ -495,7 +495,7 @@ class PublicationQueryService
      *
      * @return int[] The ids whose schema carries non-empty `authorization.read` rules.
      *
-     * @spec openspec/changes/fix-fts-catalog-model-alignment/specs/search/spec.md
+     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
      */
     private function dropSchemasWithoutReadRules(array $schemaIds): array
     {
