@@ -206,6 +206,16 @@ Every document row in the result envelope MUST include an embedded `publication`
 
 The SQL-side enforcement means visibility is a WHERE-clause predicate on the underlying query, not a post-filter, so `total`, `facets`, and `facetable` reflect the true visible count without undercount workarounds. For documents, transitive visibility is realised by looking up the linked publication via `_relations_contains` with the same `_rbac_as_public: true` flag — a document surfaces only when its linked publication itself passes the `public` group's read rules.
 
+**Legacy installations (WOO-573).** A 1.x installation keeps the Dutch property names `publicatiedatum` / `depublicatiedatum` in its schema `authorization` rules after `RenameDutchPublicationColumns` renamed the object columns to English. The repair step `OCA\OpenCatalogi\Repair\WOO536RepairReadRules` MUST therefore, on every schema, translate those two keys to `publicationDate` / `depublicationDate` in every action's match-clauses (only those two keys; an already-present English key wins and the dropped Dutch duplicate is reported to the operator), and MUST then apply the single-rule → two-rule read upgrade on the bundled `publication` and `document` schemas. The step MUST be idempotent and MUST leave admin-customised rule structures intact.
+
+#### Scenario: Dutch read-rule keys are translated on upgrade
+
+- **GIVEN** a schema whose `authorization.read` still uses `publicatiedatum` after the column rename,
+- **WHEN** `occ upgrade` (or `occ maintenance:repair`) runs `WOO536RepairReadRules`,
+- **THEN** the rule keys MUST read `publicationDate` / `depublicationDate`,
+- **AND** anonymous `GET /apps/opencatalogi/api/search` MUST return HTTP 200 for a scope that includes that schema,
+- **AND** a second run MUST change nothing.
+
 #### Scenario: admin caller sees identical result set to anonymous caller
 
 - **GIVEN** an authenticated Nextcloud admin,

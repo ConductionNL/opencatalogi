@@ -34,6 +34,8 @@
  * are therefore accepted; only the hardcoded fallback is gone.
  */
 
+import { assertInstancePermitted } from './shared-instance.ts'
+
 const CANDIDATES = [
 	'PLAYWRIGHT_BASE_URL',
 	'BASE_URL',
@@ -44,14 +46,18 @@ const CANDIDATES = [
 /**
  * Resolve the Nextcloud base URL for the e2e suite.
  *
- * @throws {Error} When none of the accepted environment variables is set.
+ * @throws {Error} When none of the accepted environment variables is set, or
+ * when the resolved URL is the shared development instance and the run did not
+ * name it in the opt-in variable.
  * @return {string} The base URL, without a trailing slash.
  */
 export function resolveBaseUrl(): string {
 	for (const name of CANDIDATES) {
 		const value = process.env[name]
 		if (value && value.trim() !== '') {
-			return value.trim().replace(/\/+$/, '')
+			// One place a target enters this suite, so one place the
+			// shared-instance opt-in is checked. See tests/e2e/shared-instance.ts.
+			return assertInstancePermitted(value.trim().replace(/\/+$/, ''))
 		}
 	}
 

@@ -190,7 +190,9 @@ if (class_exists('OC_Util') === false) {
 	require_once __DIR__ . '/Stubs/OC/Util.php';
 }
 
-// Minimal OC stub used by CatalogCacheEventListener tests that call \OC::$server->get().
+// Minimal OC stub. No test registers services on it any more (the listeners take
+// their collaborators through the constructor), but the real OCP\AppFramework\Http
+// responses and OCP\Util still resolve framework services through \OC::$server.
 if (class_exists('OC') === false) {
 	class OC {
 

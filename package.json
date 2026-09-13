@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress",
+    "postbuild": "node scripts/check-single-dexie.js",
     "dev": "NODE_ENV=development webpack --config webpack.config.js --progress",
     "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch",
     "lint": "eslint src tests scripts",
@@ -20,6 +21,7 @@
     "test:coverage-ratchet": "npm run test:coverage && bash tests/coverage-ratchet.sh vitest coverage-vitest/coverage-summary.json",
     "stylelint": "stylelint \"{src,css}/**/*.{vue,scss,css}\"",
     "stylelint:fix": "stylelint \"{src,css}/**/*.{vue,scss,css}\" --fix",
+    "check:dexie": "node scripts/check-single-dexie.js",
     "check:schema-l10n": "node scripts/check-schema-l10n.js",
     "check:l10n": "node scripts/check-l10n.js",
     "check:manifest": "node tests/validate-manifest.js",
@@ -139,7 +141,8 @@
     "postcss": ">=8.4.47",
     "fast-xml-parser": ">=5.7.0",
     "markdown-it": ">=12.3.2",
-    "uuid": ">=14.0.0"
+    "uuid": ">=14.0.0",
+    "toml": ">=4.2.0"
   },
   "prettier": "@nextcloud/prettier-config"
 }

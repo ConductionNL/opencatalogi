@@ -153,13 +153,25 @@ class FakeSchemaMapper {
 	/** @var array<int, string> id => slug map. */
 	public array $slugById = [];
 
+	/**
+	 * id => authorization block. Ids not listed get a non-empty public read rule so
+	 * the WOO-574 read-rule guard keeps them in the anonymous scope by default.
+	 *
+	 * @var array<int, array|null>
+	 */
+	public array $authorizationById = [];
+
 	public function find(int|string $id): object {
 		$slug = ($this->slugById[(int) $id] ?? "schema-{$id}");
-		return new class ((int) $id, $slug) {
-			public function __construct(private int $id, private string $slug) {}
+		$authorization = array_key_exists((int) $id, $this->authorizationById)
+			? $this->authorizationById[(int) $id]
+			: ['read' => [['group' => 'public', 'match' => ['publicationDate' => ['$lte' => '$now']]]]];
+		return new class ((int) $id, $slug, $authorization) {
+			public function __construct(private int $id, private string $slug, private ?array $authorization) {}
 			public function getId(): int { return $this->id; }
 			public function getSlug(): string { return $this->slug; }
 			public function getTitle(): string { return ucfirst($this->slug); }
+			public function getAuthorization(): ?array { return $this->authorization; }
 		};
 	}
 }
@@ -770,7 +782,52 @@ class PublicationQueryServiceTest extends TestCase {
 	 * the FakeSearchObjectService that the test passes into the service call
 	 * (also registered under the ObjectService key for the per-doc lookups).
 	 */
-	private function wireHappyPath(): FakeSearchObjectService {
+	// -------------------------------------------------------------------------
+	// WOO-574 — SCH-PFTS-CAT-002 read-rule guard.
+	// -------------------------------------------------------------------------
+
+	public function testAnonymousScopeDropsSchemaWithoutReadRulesAndWarns(): void {
+		$fakeObjectService = $this->wireHappyPath(authorizationById: [2 => ['create' => ['authenticated']]]);
+		$fakeObjectService->queuedResponses = [['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []]];
+
+		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
+			$this->stringContains('no authorization.read rules'),
+			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
+		);
+
+		$this->service->assemblePublicSearchResults(['_search' => 'x', '_catalog' => 'default-catalog'], $fakeObjectService);
+
+		$this->assertSame([1], $fakeObjectService->capturedCalls[0]['query']['_schemas'], 'schema 2 (no read rules) must be excluded from the anonymous scope');
+	}
+
+	public function testAnonymousScopeIsEmptyEnvelopeWhenEveryScopedSchemaLacksReadRules(): void {
+		$fakeObjectService = $this->wireHappyPath(authorizationById: [1 => null, 2 => []]);
+
+		$envelope = $this->service->assemblePublicSearchResults(['_search' => 'x', '_catalog' => 'default-catalog'], $fakeObjectService);
+
+		$this->assertSame(['results' => [], 'total' => 0], $envelope);
+		$this->assertSame([], $fakeObjectService->capturedCalls, 'OR must not be queried at all when the anonymous scope is empty (fail-closed)');
+	}
+
+	public function testAuthenticatedCallerKeepsSchemaWithoutReadRulesInScope(): void {
+		$user = $this->createMock(\OCP\IUser::class);
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$this->service = new PublicationQueryService(
+			container: $this->container,
+			userSession: $session,
+			config: $this->config,
+			logger: $this->logger,
+		);
+		$fakeObjectService = $this->wireHappyPath(authorizationById: [2 => null]);
+		$fakeObjectService->queuedResponses = [['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []]];
+
+		$this->service->assemblePublicSearchResults(['_search' => 'x', '_catalog' => 'default-catalog'], $fakeObjectService);
+
+		$this->assertSame([1, 2], $fakeObjectService->capturedCalls[0]['query']['_schemas'], 'signed-in callers are evaluated by OR RBAC (WOO-551), the guard is anonymous-only');
+	}
+
+	private function wireHappyPath(array $authorizationById = []): FakeSearchObjectService {
 		$fakeObjectService = new FakeSearchObjectService();
 
 		$catalog = [
@@ -787,6 +844,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$fakeSchemaMapper = new FakeSchemaMapper();
 		$fakeSchemaMapper->slugById = [1 => 'publication', 2 => 'document'];
+		$fakeSchemaMapper->authorizationById = $authorizationById;
 
 		// Config keys needed by the default-scope enumeration path; safe to set
 		// even for _catalog=<slug> tests since that path doesn't consult them.

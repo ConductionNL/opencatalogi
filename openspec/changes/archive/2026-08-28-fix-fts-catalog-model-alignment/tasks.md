@@ -14,7 +14,7 @@
 - [x] 3.2 Accept optional `_catalog` (string) and `_catalogi[]` (array) from the incoming `$searchQuery`; strip them before forwarding to OR (they are OC-level params, not OR filter params).
 - [x] 3.3 When `_catalog` or `_catalogi[]` is provided, call `buildCatalogSearchQuery()` to resolve catalog objects, then `resolveSchemaAndRegisterObjects()` to get the register/schema scope.
 - [x] 3.4 When neither param is provided, resolve scope as the union of all catalogs where `listed: true` and the catalog is published (same helper calls, filtering catalogs by `listed: true` + published predicate).
-- [ ] 3.5 Add guard: if resolved scope contains a schema with no `read` authorization config (bypass = true under `_rbac_as_public`), log a `$this->logger->warning()` with the schema ID/slug and exclude it from the anonymous scope.
+- [x] 3.5 (WOO-574, 2026-09-11 — `dropSchemasWithoutReadRules()`; the `_rbac_as_public` wording predates WOO-551, the guard keys on `isAnonymous()`) Add guard: if resolved scope contains a schema with no `read` authorization config (bypass = true under `_rbac_as_public`), log a `$this->logger->warning()` with the schema ID/slug and exclude it from the anonymous scope.
 
 ## 4. Stap 3 — Dynamic schema discriminator
 

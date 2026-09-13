@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Listener;
 
 use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenCatalogi\Service\RetentionService;
+use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -54,11 +55,20 @@ class ObjectUpdatedEventListener implements IEventListener {
 	/**
 	 * ObjectUpdatedEventListener constructor.
 	 *
+	 * The auto-publishing collaborators are injected rather than looked up on
+	 * the global server at handle time: the listener is only built when an
+	 * object event fires, so nothing here runs at boot, and a unit test can
+	 * hand in its own doubles.
+	 *
 	 * @param RetentionService $retentionService Stamps retention defaults at publication time (RET-004).
-	 * @param LoggerInterface $logger Logger for the retention side effect.
+	 * @param SettingsService $settingsService Answers which auto-publishing options are on.
+	 * @param EventService $eventService Applies the auto-publishing side effect.
+	 * @param LoggerInterface $logger Logger for both side effects.
 	 */
 	public function __construct(
 		private readonly RetentionService $retentionService,
+		private readonly SettingsService $settingsService,
+		private readonly EventService $eventService,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -90,17 +100,8 @@ class ObjectUpdatedEventListener implements IEventListener {
 		$this->stampRetentionDefaults(event: $event);
 
 		try {
-			// Get services from the server container.
-			$logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
-			$settingsService = \OC::$server->get(
-				\OCA\OpenCatalogi\Service\SettingsService::class
-			);
-			$eventService = \OC::$server->get(
-				\OCA\OpenCatalogi\Service\EventService::class
-			);
-
 			// Check if any auto-publishing features are enabled.
-			$publishingOptions = $settingsService->getPublishingOptions();
+			$publishingOptions = $this->settingsService->getPublishingOptions();
 
 			// Skip if no auto-publishing features are enabled.
 			if ($publishingOptions['auto_publish_objects'] === false
@@ -127,11 +128,11 @@ class ObjectUpdatedEventListener implements IEventListener {
 			}
 
 			// Process the object update event through EventService.
-			$result = $eventService->handleObjectUpdateEvents([$newObjectData]);
+			$result = $this->eventService->handleObjectUpdateEvents([$newObjectData]);
 
 			// Log successful processing for monitoring.
 			if ($result['processed'] > 0) {
-				$logger->info(
+				$this->logger->info(
 					message: 'OpenCatalogi: Processed object update event',
 					context: [
 						'objectId' => ($newObjectData['@self']['id'] ?? 'unknown'),
@@ -144,7 +145,7 @@ class ObjectUpdatedEventListener implements IEventListener {
 			// Log any errors that occurred during processing.
 			if (empty($result['errors']) === false) {
 				foreach ($result['errors'] as $error) {
-					$logger->error(
+					$this->logger->error(
 						message: 'OpenCatalogi: Error processing object update event',
 						context: [
 							'error' => $error,

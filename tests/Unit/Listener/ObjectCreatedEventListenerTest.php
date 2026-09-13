@@ -18,7 +18,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for ObjectCreatedEventListener.
  *
- * Uses \OC::$server to register mock services, then calls handle() to test
+ * Builds the listener around per-test doubles, then calls handle() to test
  * the full handle() logic including auto-publishing and error branches.
  */
 class ObjectCreatedEventListenerTest extends TestCase {
@@ -32,7 +32,29 @@ class ObjectCreatedEventListenerTest extends TestCase {
 		parent::setUp();
 		$this->retentionService = $this->createMock(RetentionService::class);
 		$this->listenerLogger = $this->createMock(LoggerInterface::class);
-		$this->listener = new ObjectCreatedEventListener($this->retentionService, $this->listenerLogger);
+		$this->listener = $this->makeListener(settingsService: $this->createMock(SettingsService::class));
+	}
+
+	/**
+	 * Build a listener around per-test doubles.
+	 *
+	 * The listener takes its collaborators through the constructor, so each
+	 * test builds its own instance instead of registering mocks on the global
+	 * server (which never resets between tests). The retention service is the
+	 * shared mock from setUp() so retention expectations keep working; the
+	 * logger defaults to the shared listener logger.
+	 */
+	private function makeListener(
+		SettingsService $settingsService,
+		?EventService $eventService = null,
+		?LoggerInterface $logger = null,
+	): ObjectCreatedEventListener {
+		return new ObjectCreatedEventListener(
+			$this->retentionService,
+			$settingsService,
+			$eventService ?? $this->createMock(EventService::class),
+			$logger ?? $this->listenerLogger,
+		);
 	}
 
 	/**
@@ -83,7 +105,7 @@ class ObjectCreatedEventListenerTest extends TestCase {
 	public function testHandleIgnoresNonObjectCreatedEvent(): void {
 		$event = $this->createMock(Event::class);
 
-		// Should return early without accessing \OC::$server.
+		// Should return early without consulting the settings service.
 		$this->listener->handle($event);
 		$this->assertTrue(true);
 	}
@@ -179,9 +201,7 @@ class ObjectCreatedEventListenerTest extends TestCase {
 
 		$logger = $this->createMock(LoggerInterface::class);
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $eventService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->listener = $this->makeListener(settingsService: $settingsService, eventService: $eventService, logger: $logger);
 
 		$entity = $this->createObjectEntityMock();
 		$event = new ObjectCreatedEvent($entity);
@@ -215,9 +235,7 @@ class ObjectCreatedEventListenerTest extends TestCase {
 			->method('info')
 			->with($this->stringContains('Processed object creation event'));
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $eventService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->listener = $this->makeListener(settingsService: $settingsService, eventService: $eventService, logger: $logger);
 
 		$entity = $this->createObjectEntityMock(
 			uuid: 'pub-uuid',
@@ -252,9 +270,7 @@ class ObjectCreatedEventListenerTest extends TestCase {
 			->method('error')
 			->with($this->stringContains('Error processing object creation event'));
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $eventService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->listener = $this->makeListener(settingsService: $settingsService, eventService: $eventService, logger: $logger);
 
 		$entity = $this->createObjectEntityMock(uuid: 'err-uuid');
 		$event = new ObjectCreatedEvent($entity);
@@ -274,8 +290,7 @@ class ObjectCreatedEventListenerTest extends TestCase {
 			->method('error')
 			->with($this->stringContains('Exception in object creation event listener'));
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+		$this->listener = $this->makeListener(settingsService: $settingsService);
 
 		$entity = $this->createObjectEntityMock();
 		$event = new ObjectCreatedEvent($entity);
@@ -293,9 +308,7 @@ class ObjectCreatedEventListenerTest extends TestCase {
 			'auto_publish_attachments' => false,
 		]);
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
-		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+		$this->listener = $this->makeListener(settingsService: $settingsService);
 
 		$this->retentionService->expects($this->once())
 			->method('applyDefaultsAtPublication')
@@ -320,9 +333,7 @@ class ObjectCreatedEventListenerTest extends TestCase {
 			'auto_publish_attachments' => false,
 		]);
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $this->createMock(EventService::class));
-		\OC::$server->registerService(LoggerInterface::class, fn () => $this->createMock(LoggerInterface::class));
+		$this->listener = $this->makeListener(settingsService: $settingsService);
 
 		$this->retentionService->method('applyDefaultsAtPublication')
 			->willThrowException(new \RuntimeException('retention store down'));
@@ -357,9 +368,7 @@ class ObjectCreatedEventListenerTest extends TestCase {
 		$logger->expects($this->never())->method('info');
 		$logger->expects($this->never())->method('error');
 
-		\OC::$server->registerService(SettingsService::class, fn () => $settingsService);
-		\OC::$server->registerService(EventService::class, fn () => $eventService);
-		\OC::$server->registerService(LoggerInterface::class, fn () => $logger);
+		$this->listener = $this->makeListener(settingsService: $settingsService, eventService: $eventService, logger: $logger);
 
 		$entity = $this->createObjectEntityMock(uuid: 'no-proc-uuid');
 		$event = new ObjectCreatedEvent($entity);

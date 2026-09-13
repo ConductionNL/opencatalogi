@@ -26,11 +26,14 @@
 
 namespace OCA\OpenCatalogi\Listener;
 
+use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use OCP\IAppConfig;
+use Psr\Log\LoggerInterface;
 
 /**
  * Event listener for catalog object events from OpenRegister.
@@ -43,8 +46,20 @@ use OCP\EventDispatcher\IEventListener;
 class CatalogCacheEventListener implements IEventListener {
 	/**
 	 * CatalogCacheEventListener constructor.
+	 *
+	 * The collaborators are injected rather than looked up on the global server
+	 * at handle time: the listener is only built when a catalog event fires, so
+	 * nothing here runs at boot, and a unit test can hand in its own doubles.
+	 *
+	 * @param CatalogiService $catalogiService Owns the catalog cache.
+	 * @param IAppConfig $appConfig Holds the catalog schema and register ids.
+	 * @param LoggerInterface $logger Logger for cache operations and failures.
 	 */
-	public function __construct() {
+	public function __construct(
+		private readonly CatalogiService $catalogiService,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
 
 	}//end __construct()
 
@@ -100,13 +115,6 @@ class CatalogCacheEventListener implements IEventListener {
 		}
 
 		try {
-			// Get services from the server container.
-			$catalogiService = \OC::$server->get(
-				\OCA\OpenCatalogi\Service\CatalogiService::class
-			);
-			$appConfig = \OC::$server->get(\OCP\IAppConfig::class);
-			$logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
-
 			// Get the object from the event based on event type.
 			$objectEntity = $this->extractObjectFromEvent(event: $event);
 			if ($objectEntity === null) {
@@ -114,12 +122,12 @@ class CatalogCacheEventListener implements IEventListener {
 			}
 
 			// Get catalog schema and register from config.
-			$catalogSchema = $appConfig->getValueString(
+			$catalogSchema = $this->appConfig->getValueString(
 				app: 'opencatalogi',
 				key: 'catalog_schema',
 				default: ''
 			);
-			$catalogRegister = $appConfig->getValueString(
+			$catalogRegister = $this->appConfig->getValueString(
 				app: 'opencatalogi',
 				key: 'catalog_register',
 				default: ''
@@ -142,8 +150,8 @@ class CatalogCacheEventListener implements IEventListener {
 
 			if ($event instanceof ObjectDeletedEvent) {
 				// For deletion, only invalidate cache.
-				$catalogiService->invalidateCatalogCache($catalogData['slug']);
-				$logger->info(
+				$this->catalogiService->invalidateCatalogCache($catalogData['slug']);
+				$this->logger->info(
 					message: 'OpenCatalogi: Catalog cache invalidated after deletion',
 					context: [
 						'catalogId' => $objectEntity->getUuid(),
@@ -154,13 +162,13 @@ class CatalogCacheEventListener implements IEventListener {
 			}
 
 			// For creation and updates, invalidate and warm up cache.
-			$catalogiService->warmupCatalogCache($catalogData['slug']);
+			$this->catalogiService->warmupCatalogCache($catalogData['slug']);
 			$eventType = 'update';
 			if ($event instanceof ObjectCreatedEvent) {
 				$eventType = 'creation';
 			}
 
-			$logger->info(
+			$this->logger->info(
 				message: 'OpenCatalogi: Catalog cache warmed up after ' . $eventType,
 				context: [
 					'catalogId' => $objectEntity->getUuid(),
@@ -169,11 +177,7 @@ class CatalogCacheEventListener implements IEventListener {
 			);
 		} catch (\Exception $e) {
 			// Log unexpected errors and continue gracefully.
-			if (isset($logger) === false) {
-				$logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
-			}
-
-			$logger->error(
+			$this->logger->error(
 				message: 'OpenCatalogi: Exception in catalog cache event listener: ' . $e->getMessage(),
 				context: ['exception' => $e]
 			);
