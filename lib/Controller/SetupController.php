@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\BroadcastService;
+use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\DemoDataService;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
@@ -124,6 +125,9 @@ class SetupController extends Controller {
 	 * @param IL10N $l10n Localization.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IUserSession $userSession Current user session (login guard).
+	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
 	public function __construct(
 		string $appName,
@@ -137,6 +141,7 @@ class SetupController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
+		private readonly ?ConnectionReporter $connectionReporter = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -227,9 +232,14 @@ class SetupController extends Controller {
 	 * gate) and CSRF-protected (no @NoCSRFRequired). #[AuthorizedAdminSetting]
 	 * makes it auditable via NC delegated-admin. Only whitelisted keys are written.
 	 *
+	 * A save that writes `default_directory_url` asks integriq to resolve the
+	 * directory connection again (adopt-connection-registry). That never
+	 * throws, does nothing without integriq, and never changes the response.
+	 *
 	 * @return JSONResponse The saved keys.
 	 *
 	 * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md#requirement-setup-server-contract-endpoints-onb-005
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function config(): JSONResponse {
@@ -244,6 +254,8 @@ class SetupController extends Controller {
 			$this->config->setValueString($this->appName, $key, (string)$params[$key]);
 			$saved[] = $key;
 		}
+
+		$this->connectionReporter?->refreshFromSave(savedKeys: $saved);
 
 		return new JSONResponse(['saved' => $saved]);
 	}//end config()
