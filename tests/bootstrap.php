@@ -149,3 +149,20 @@ if (class_exists('OCA\\OpenRegister\\AppHost\\Observability\\MetricSample') === 
 if (interface_exists('OCA\\OpenRegister\\AppHost\\IMetricsProvider') === false) {
 	require_once __DIR__ . '/Stubs/AppHost/IMetricsProvider.php';
 }
+
+// Integriq's connection-registry events (adopt-connection-registry).
+// ConnectionReporter sends them by string class name behind class_exists
+// (ADR-041), so OpenCatalogi stays installable without integriq. The stubs
+// mirror hydra connection-registry design D6 and integriq's own classes on
+// `development`, and load only when the real classes are absent. Without a
+// booted Nextcloud or OCP on the autoload path the stubs' parent class is
+// missing, so they are skipped rather than fatal.
+foreach (['ConnectionStatusReportedEvent', 'ConnectionRefreshRequestedEvent'] as $integriqStubEvent) {
+	if (class_exists('\\OCP\\EventDispatcher\\Event') === true
+		&& class_exists('\\OCA\\Integriq\\Event\\' . $integriqStubEvent) === false
+	) {
+		require_once __DIR__ . '/Stubs/Integriq/Event/' . $integriqStubEvent . '.php';
+	}
+}
+
+unset($integriqStubEvent);

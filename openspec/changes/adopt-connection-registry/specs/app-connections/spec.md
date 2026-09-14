@@ -65,7 +65,7 @@ A directory sync SHALL report `directory` as `configured` when every directory a
 - **AND** the message SHALL name the failing directory's host and not its path
 
 #### Scenario: A broadcast from a local address reads not configured
-@e2e exclude The CI instance advertises localhost, and the event is not observable from a browser; tests/Unit/Service/BroadcastConnectionReportTest.php asserts the report.
+@e2e exclude The CI instance advertises localhost, and the event is not observable from a browser; tests/Unit/Controller/ConnectionReportCallersTest.php asserts the report.
 
 - **GIVEN** this instance advertises `http://localhost`
 - **WHEN** a broadcast runs
