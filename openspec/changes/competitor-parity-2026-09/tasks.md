@@ -16,3 +16,9 @@ named change is archived.
   rendered there, so neither repo builds both halves.
 - [ ] 7 Add any opencatalogi change opened from the sweep after this
   umbrella to the index, in the same PR.
+- [x] 8 Read the one pending-proposal row (11.46) against
+  `published-service-and-case-type-catalogue` and record that REQ-PSC-101
+  and REQ-PSC-102 carry it, so no change is opened to hold it.
+- [ ] 9 Tell the dossiq lane that the resolution half of 11.46 is row
+  8.29 and stays there: opencatalogi publishes the term on the entry,
+  dossiq decides which term the clock counts.
