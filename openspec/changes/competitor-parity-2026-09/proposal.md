@@ -56,6 +56,50 @@ carries its own `proposal.md`, `design.md`, `specs/` and `tasks.md`.
   None of that cluster's seven candidates is one of the five revivals
   D5 weighs, so nothing in the change turns on the answer.
 
+## Wave 4: the pending proposals
+
+The pending half of the gap register (`procest/_gaps/gap-register.json`,
+v4, 2026-09-14) holds 146 proposals. One of them is opencatalogi's, and
+it is already carried, so no change is opened for it.
+
+| row | rating | carried by | basis |
+|---|---|---|---|
+| 11.46, published service catalogue whose leaf sets form, case type and term at once | partial | `published-service-and-case-type-catalogue` | existing, by substance |
+
+The reading, so nobody repeats it. REQ-PSC-101 requires that each
+catalogue entry "MUST name what the requester gets, what it costs and how
+long it takes, and MUST carry a form binding of case type, audience and
+form name", and its first scenario has the entries listed with their cost
+and their duration. Form, case type and term on one leaf is the row.
+REQ-PSC-102 adds the link from a published case type to the form that
+starts it.
+
+The row's citation, for the trail. Source, verbatim:
+`dossiq#2314, published as 11.38`. The ledger note, verbatim: "Row 11.23
+groups case types into folders for administrators. This is the
+citizen-facing side of the same object, and it is what makes a term
+resolvable per service rather than per case type." The corpus batch file
+is `procest/_round4/compare/proposed-rows-dossiq-2026-09-10.md`, and its
+table row reads:
+
+```
+| proposed | in dossiq | capability | dossiq | competitors | cross-reference |
+| **11.46** | 11.38 | Published service catalogue whose leaf sets form, case type and term at once | partial | unread | corpus 11.23 |
+```
+
+The row entered under decision **D1**, so no competitor has been read for
+it and the corpus says so: "Every competitor column is `unread`, and none
+of them is `no`." The driven evidence under the same capability is
+cluster 31's, which `published-service-and-case-type-catalogue` already
+cites: GLPI, xxllnc Zaken and Znuny on `C-intake-15`.
+
+**What is not closed by this.** The row's second sentence, resolving a
+term per service at runtime rather than per case type, is the resolution
+half and it is dossiq's, where it is row 8.29, "lead time resolved from
+the organisation, the service and the priority", to be specified in
+dossiq by the same wave. opencatalogi publishes the term on the entry;
+dossiq decides which term the clock counts.
+
 ## Halves that sit in other repos
 
 - **The portal surface is portaliq's.** `C-intake-15`, the public request
