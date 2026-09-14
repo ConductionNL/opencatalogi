@@ -36,6 +36,7 @@ import {
 	CnRelationshipGraph,
 	CnTreeView,
 } from '@conduction/nextcloud-vue'
+import { generateUrl } from '@nextcloud/router'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
 import CatalogsIndexView from './views/catalogi/CatalogiIndex.vue'
@@ -44,8 +45,19 @@ import FederationDirectory from './views/directory/FederationDirectory.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
 import FederationSearch from './views/search/FederationSearch.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
+import { createConnectionHandlers } from './services/connectionRegistry.js'
 
 export default {
+	// Header-action handler: the Integrations page's Add integration
+	// (adopt-connection-registry). A FUNCTION, because it leaves the app for
+	// integriq's Connections overview and a header action's `navigate` only
+	// pushes a route inside this app. CnIndexPage resolves a handler name
+	// against this map.
+	...createConnectionHandlers({
+		generateUrl,
+		assign: (url) => window.location.assign(url),
+	}),
+
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
 	//     the list and the canvas are the shared `flows` / `flow-detail`
 	//     manifest page types. CnFlowSidebar has to mount in the NC app

@@ -33,6 +33,7 @@ import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import Package from 'vue-material-design-icons/Package.vue'
 import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed.vue'
 import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
+import PowerPlugOutline from 'vue-material-design-icons/PowerPlugOutline.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
 import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
@@ -63,6 +64,7 @@ export default {
 	Package,
 	PackageVariantClosed,
 	PlayCircleOutline,
+	PowerPlugOutline,
 	ShieldAccountOutline,
 	Sitemap,
 	StoreOutline,
