@@ -923,7 +923,19 @@
         "Nothing has been read yet": "Nothing has been read yet",
         "What is published, what is archived, and what retention says to do next.": "What is published, what is archived, and what retention says to do next.",
         "What people looked at and what they downloaded.": "What people looked at and what they downloaded.",
-        "How mature the catalogs are, and how deeply the directory listings are integrated.": "How mature the catalogs are, and how deeply the directory listings are integrated."
+        "How mature the catalogs are, and how deeply the directory listings are integrated.": "How mature the catalogs are, and how deeply the directory listings are integrated.",
+        "Integrations": "Integrations",
+        "Connection": "Connection",
+        "Status message": "Status message",
+        "Open settings": "Open settings",
+        "Add integration": "Add integration",
+        "All connections": "All connections",
+        "Configured": "Configured",
+        "Limited": "Limited",
+        "Not configured": "Not configured",
+        "Simulated": "Simulated",
+        "Not available": "Not available",
+        "Error": "Error"
     },
     "plurals": {}
 }

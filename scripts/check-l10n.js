@@ -415,6 +415,9 @@ function collectManifestStrings() {
 		'placeholder',
 		'subtitle',
 		'helpText',
+		// folderSidebar.allLabel, the "All" row of an index page's folder
+		// sidebar (adopt-connection-registry's Integrations page).
+		'allLabel',
 	])
 	const out = new Set()
 	const visit = (node) => {

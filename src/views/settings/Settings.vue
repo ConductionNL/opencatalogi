@@ -148,6 +148,7 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-woo-index"
 			:name="t('opencatalogi', 'Woo-index harvester readiness')"
 			:description="
 				t(
@@ -365,6 +366,7 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-federation-sync"
 			:name="t('opencatalogi', 'Federation sync')"
 			:description="
 				t(
