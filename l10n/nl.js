@@ -867,7 +867,20 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Waar mensen naar keken en wat ze downloadden.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hoe volwassen de catalogi zijn, en hoe diep de directoryvermeldingen geïntegreerd zijn.",
         "Store": "Store",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installeer registers, schema's en flows die andere organisaties hebben gepubliceerd."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installeer registers, schema's en flows die andere organisaties hebben gepubliceerd.",
+        "Integrations": "Koppelingen",
+        "Connection": "Verbinding",
+        "Status message": "Statusbericht",
+        "Last checked": "Laatst gecontroleerd",
+        "Open settings": "Instellingen openen",
+        "Add integration": "Integratie toevoegen",
+        "All connections": "Alle verbindingen",
+        "Configured": "Ingericht",
+        "Limited": "Beperkt",
+        "Not configured": "Niet geconfigureerd",
+        "Simulated": "Gesimuleerd",
+        "Not available": "Niet beschikbaar",
+        "Error": "Fout"
     },
     "nplurals=2; plural=(n != 1);"
 )

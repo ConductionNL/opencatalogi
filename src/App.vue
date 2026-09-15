@@ -6,6 +6,7 @@
 			:manifest="manifest"
 			:customComponents="customComponents"
 			:pageTypes="pageTypes"
+			:formatters="formatters"
 			appId="opencatalogi"
 			:translate="translateForApp"
 			:permissions="permissions" />
@@ -27,6 +28,7 @@ import { translate as ncT } from '@nextcloud/l10n'
 import { reactive } from 'vue'
 import Dialogs from './dialogs/Dialogs.vue'
 import Modals from './modals/Modals.vue'
+import { createConnectionFormatters } from './services/connectionRegistry.js'
 import { objectStore } from './store/store.js'
 
 /**
@@ -74,6 +76,15 @@ export default {
 
 	data() {
 		return {
+			/**
+			 * Named cell formatters merged over CnAppRoot's built-ins.
+			 * `connectionStatus` and `connectionSettingsLabel` render the
+			 * Integrations page (adopt-connection-registry); nextcloud-vue
+			 * 2.37.0 ships neither as a built-in. Before this change the app
+			 * passed no formatters at all.
+			 */
+			formatters: createConnectionFormatters(ncT),
+
 			objectSidebarState: reactive({
 				active: false,
 				open: true,
