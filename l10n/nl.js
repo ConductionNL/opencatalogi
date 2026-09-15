@@ -872,15 +872,8 @@ OC.L10N.register(
         "Connection": "Verbinding",
         "Status message": "Statusbericht",
         "Last checked": "Laatst gecontroleerd",
-        "Open settings": "Instellingen openen",
         "Add integration": "Integratie toevoegen",
-        "All connections": "Alle verbindingen",
-        "Configured": "Ingericht",
-        "Limited": "Beperkt",
-        "Not configured": "Niet geconfigureerd",
-        "Simulated": "Gesimuleerd",
-        "Not available": "Niet beschikbaar",
-        "Error": "Fout"
+        "All connections": "Alle verbindingen"
     },
     "nplurals=2; plural=(n != 1);"
 )
