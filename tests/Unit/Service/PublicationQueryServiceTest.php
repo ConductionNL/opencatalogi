@@ -1082,6 +1082,202 @@ class PublicationQueryServiceTest extends TestCase {
 	}//end wireMappers()
 
 
+	// -------------------------------------------------------------------------
+	// WOO-577 — pagination guards.
+	//
+	// The envelope is the only pagination contract the public FTS surface has:
+	// there is no `has_more`, no `page`, no `pages` key, so a consumer derives
+	// "is there another page" purely from `total` versus what it has collected.
+	// That makes every one of these cheap to break and expensive to notice —
+	// `_limit` silently swallowed by the scope stripper, or the DoS clamp
+	// removed, both look fine in a smoke test and only show up as a UI that
+	// pages forever or a public CPU amplifier. These tests pin the behaviour so
+	// a regression fails here instead of on acato.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * `assemblePublicSearchResults()` deliberately strips scope-widening keys
+	 * (`_schema`, `_registers`, `_catalog`, `fq`, …) before handing the query to
+	 * OpenRegister. The pagination keys MUST survive that strip untouched —
+	 * losing them collapses every page to OR's default window while `total`
+	 * keeps advertising the global count, which is exactly the shape of a
+	 * pagination outage that no unit test would otherwise catch.
+	 */
+	public function testPaginationParametersSurviveTheScopeStrip(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog(['_search' => 'x', '_limit' => 25, '_page' => 3, '_offset' => 50]),
+			$fake
+		);
+
+		$this->assertNotEmpty($fake->capturedCalls, 'OR must be called for a resolved scope');
+		$query = $fake->capturedCalls[0]['query'];
+
+		$this->assertSame(25, $query['_limit'], '_limit must reach OR unchanged');
+		$this->assertSame(3, $query['_page'], '_page must reach OR unchanged');
+		$this->assertSame(50, $query['_offset'], '_offset must reach OR unchanged');
+	}
+
+	/**
+	 * The `_limit` clamp is a security control, not a nicety: review #147 found
+	 * that an anonymous `?_limit=1000000&_content=true` fanned out unbounded
+	 * into OR's chunk-search path. A regression here reads as "pagination got a
+	 * bit more generous" while actually restoring a public CPU/memory
+	 * amplifier, so the cap gets its own guard.
+	 */
+	public function testLimitAboveThePublicMaximumIsClampedBeforeReachingOpenRegister(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog(['_search' => 'x', '_limit' => 1000000]),
+			$fake
+		);
+
+		$this->assertSame(
+			PublicationQueryService::PUBLIC_LIMIT_MAX,
+			$fake->capturedCalls[0]['query']['_limit'],
+			'_limit must be clamped to PUBLIC_LIMIT_MAX for anonymous callers'
+		);
+	}
+
+	/**
+	 * A `_limit` at or below the cap is the caller's choice and must not be
+	 * rewritten — clamping everything to the maximum would quietly turn a
+	 * five-row page into a hundred-row one.
+	 */
+	public function testLimitAtOrBelowThePublicMaximumIsLeftAlone(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog(['_search' => 'x', '_limit' => PublicationQueryService::PUBLIC_LIMIT_MAX]),
+			$fake
+		);
+
+		$this->assertSame(
+			PublicationQueryService::PUBLIC_LIMIT_MAX,
+			$fake->capturedCalls[0]['query']['_limit']
+		);
+	}
+
+	/**
+	 * `total >= count(results)` on every page, whatever combination of drops and
+	 * dedups the row loop performed. A consumer that sees `total` dip below the
+	 * rows it is holding cannot compute anything sensible, and the floor is the
+	 * one guarantee the envelope comment promises unconditionally.
+	 *
+	 * @dataProvider provideEnvelopeShapes
+	 *
+	 * @param array $candidateRows Rows OR returns for the candidate call.
+	 * @param int   $orTotal       Global total OR reports.
+	 */
+	public function testTotalIsNeverBelowTheNumberOfRowsShipped(array $candidateRows, int $orTotal): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => $candidateRows, 'total' => $orTotal, 'facets' => [], 'facetable' => []],
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertGreaterThanOrEqual(
+			count($out['results']),
+			$out['total'],
+			'total must never claim fewer items than the envelope actually ships'
+		);
+	}
+
+	/**
+	 * Envelope shapes for the floor invariant: a clean page, a page whose rows
+	 * all collapse on dedup, and a page where OR reports a total it returns no
+	 * rows for at all (the shape measured on the rig: total 8, results []).
+	 *
+	 * @return array<string, array{0: array, 1: int}>
+	 */
+	public static function provideEnvelopeShapes(): array {
+		$pub = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'p1', 'schema' => 1],
+			'title' => 'A publication',
+		];
+
+		return [
+			'clean page'              => [[$pub], 42],
+			'every row dedups to one' => [[$pub, $pub, $pub], 10],
+			'or reports rows it does not return' => [[], 8],
+		];
+	}
+
+	/**
+	 * KNOWN DEFECT — the measured WOO-577 case, kept in the suite so it is not
+	 * forgotten and so the fix has a home to land in.
+	 *
+	 * Measured 2026-09-15 on the NC 32 rig (OpenCatalogi 1.0.9-woo-2 +
+	 * OpenRegister 1.1.5, the acato combination): an anonymous
+	 * `_search=Nextcloud&_content=true` answers `total: 8` with an EMPTY
+	 * `results` array. Working back through this method, that is only reachable
+	 * when OR returns no rows at all while reporting a non-zero total: with
+	 * rows present the floor would have shown them, and with rows dropped
+	 * `$droppedCount` would have pulled the total down. So OR's count query and
+	 * its (deduplicated) row stream disagree, and the assembler forwards that
+	 * disagreement untouched.
+	 *
+	 * The surrounding envelope comment already names this exact shape as "the
+	 * SCH-PFTS-004 bug pattern" and guards against it for row-loop drops; the
+	 * case where OR itself supplies the mismatch is not covered.
+	 *
+	 * An empty page is the end of the line: the caller has nothing to page
+	 * towards and no consumer is helped by a count it can never reach, so the
+	 * assembler reports 0 and logs a warning. Pages that DO carry rows keep OR's
+	 * total untouched — whether THAT number should be deduplicated is the open
+	 * question in WOO-577 and belongs in OR's count, not in a per-page guess.
+	 */
+	public function testTotalIsZeroWhenOpenRegisterReturnsNoRowsAtAll(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 8, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->logger->expects($this->atLeastOnce())
+			->method('warning')
+			->with($this->stringContains('WOO-577'), $this->anything());
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertSame([], $out['results'], 'nothing to ship');
+		$this->assertSame(0, $out['total'], 'the envelope must not advertise results it cannot deliver');
+	}
+
+	/**
+	 * The guard above must stay narrow: a page that carries rows keeps OR's
+	 * global total, because that is the only "there are more pages" signal the
+	 * envelope has. Guards against over-correcting WOO-577 into a pagination
+	 * outage.
+	 */
+	public function testTotalOnAPageThatCarriesRowsIsLeftAlone(): void {
+		$publicationRow = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'p1', 'schema' => 1],
+			'title' => 'A publication',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$publicationRow], 'total' => 42, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(1, $out['results']);
+		$this->assertSame(42, $out['total'], 'pagination signal must survive the WOO-577 guard');
+	}
+
 	/**
 	 * Invoke a private/protected method by name via reflection.
 	 *

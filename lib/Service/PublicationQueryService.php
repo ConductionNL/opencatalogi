@@ -460,6 +460,31 @@ class PublicationQueryService
         // rules; tracked as follow-up.
         $orTotal        = (int) ($candidateResult['total'] ?? count($rows));
         $adjustedTotal  = max(count($rows), ($orTotal - $droppedCount));
+
+        // WOO-577: OR's count query and its row stream can disagree. OR dedupes
+        // the metadata-match + chunk-match union on object id before returning
+        // `results`, but `total` stays the undeduplicated chunk-join count, so a
+        // `_content=true` query can answer `total: 8` while handing back NOTHING.
+        // Measured on acato and reproduced on the NC 32 rig (OpenCatalogi
+        // 1.0.9-woo-2 + OpenRegister 1.1.5): `_search=Nextcloud&_content=true`
+        // → `{"total": 8, "results": []}`.
+        //
+        // Only the "no rows at all" case is corrected here, and deliberately so:
+        // an empty page is the end of the line, the caller has nothing to page
+        // towards, and no consumer is helped by a count it can never reach — it
+        // is the `total: X, results: []` shape the envelope comment above already
+        // calls out as the SCH-PFTS-004 bug pattern. Pages that DO carry rows keep
+        // OR's total untouched, so the "more pages" signal survives; whether that
+        // number itself should be deduplicated is the open question in WOO-577 and
+        // belongs in OR's count, not in a per-page guess here.
+        if ($rows === [] && $droppedCount === 0 && $orTotal > 0) {
+            $this->logger?->warning(
+                'WOO-577: OpenRegister reported a total without returning any rows; '
+                . 'reporting 0 so the envelope does not advertise unreachable results',
+                ['orTotal' => $orTotal]
+            );
+            $adjustedTotal = 0;
+        }
         $envelope = [
             'results' => $rows,
             'total'   => $adjustedTotal,
