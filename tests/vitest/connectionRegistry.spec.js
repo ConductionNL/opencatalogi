@@ -5,9 +5,10 @@
  * The Integrations page over integriq's connection registry
  * (adopt-connection-registry, hydra connection-registry D8 and D9).
  *
- * The page is declared in JSON and resolves two formatters, one handler and
- * one icon by NAME. A misspelled name renders a raw enum, no glyph, or an Add
- * integration that does nothing, and none of them logs a thing. So this spec
+ * The page is declared in JSON and resolves two built-in formatters, one
+ * handler and one icon by NAME. A misspelled name renders a raw enum, no
+ * glyph, or an Add integration that does nothing, and none of them logs a
+ * thing. So this spec
  * reads the real fragment and checks every name against what has to answer it.
  *
  * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-004-an-admin-reads-the-connections-on-an-integrations-page
@@ -16,13 +17,13 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { describe, expect, it } from 'vitest'
-import {
-	CONNECTION_STATUSES,
-	connectionStatusLabels,
-	createConnectionFormatters,
-	createConnectionHandlers,
-	INTEGRIQ_CONNECTIONS_PATH,
-} from '../../src/services/connectionRegistry.js'
+import * as connectionRegistry from '../../src/services/connectionRegistry.js'
+
+// The built-ins import @nextcloud/l10n, whose auth dependency reads `window`
+// at load. The node environment has none, and an untranslated call returns
+// the English source string, which is what the checks compare.
+globalThis.window ??= globalThis
+const { BUILT_IN_FORMATTERS } = await import('@conduction/nextcloud-vue/dist/esm/utils/builtInFormatters.js')
 
 const ROOT = path.resolve(__dirname, '../..')
 const read = (...parts) => fs.readFileSync(path.join(ROOT, ...parts), 'utf8')
@@ -31,59 +32,30 @@ const page = fragment.pages.find((p) => p.id === 'Integrations')
 const menu = fragment.menu.find((m) => m.id === 'IntegrationsMenu')
 
 /**
- * A translator that marks what it translated and for which app, so a missing
- * call or a wrong app id shows.
+ * The formatter registry the page renders with, built the way CnAppRoot builds
+ * it: `{ ...BUILT_IN_FORMATTERS, ...props.formatters }`. A local copy passed to
+ * CnAppRoot under a built-in's name wins, so a copy that predates a status
+ * shows that status as its raw word.
  *
- * @param {string} app The app id.
- * @param {string} source The English source string.
- * @return {string} The marked string.
+ * @return {Object<string, Function>} Formatter name to formatter.
  */
-const translate = (app, source) => `${app}:${source}`
+function pageFormatters() {
+	const local = /createConnectionFormatters\(/.test(read('src', 'App.vue'))
+		? connectionRegistry.createConnectionFormatters((app, source) => source)
+		: {}
+	return { ...BUILT_IN_FORMATTERS, ...local }
+}
 
 describe('connection formatters', () => {
-	const formatters = createConnectionFormatters(translate)
-
-	it('labels all six statuses, limited included', () => {
-		expect([...CONNECTION_STATUSES].sort()).toEqual(
-			['configured', 'error', 'limited', 'simulated', 'unavailable', 'unconfigured'],
-		)
-		expect(formatters.connectionStatus('configured')).toBe('opencatalogi:Configured')
-		expect(formatters.connectionStatus('limited')).toBe('opencatalogi:Limited')
-		expect(formatters.connectionStatus('unconfigured')).toBe('opencatalogi:Not configured')
-		expect(formatters.connectionStatus('simulated')).toBe('opencatalogi:Simulated')
-		expect(formatters.connectionStatus('unavailable')).toBe('opencatalogi:Not available')
-		expect(formatters.connectionStatus('error')).toBe('opencatalogi:Error')
-	})
-
-	// A connection that works in part is neither working nor broken, so it must
-	// not borrow either label.
-	it('keeps limited apart from configured, not available and error', () => {
-		const limited = formatters.connectionStatus('limited')
-		expect(limited).not.toBe(formatters.connectionStatus('configured'))
-		expect(limited).not.toBe(formatters.connectionStatus('unavailable'))
-		expect(limited).not.toBe(formatters.connectionStatus('error'))
-	})
-
-	it('renders an unknown status as itself and a missing one as empty', () => {
-		expect(formatters.connectionStatus('degraded')).toBe('degraded')
-		expect(formatters.connectionStatus('toString')).toBe('toString')
-		expect(formatters.connectionStatus(null)).toBe('')
-		expect(formatters.connectionStatus(undefined)).toBe('')
-	})
-
-	it('offers Open settings only when the row has a settings link', () => {
-		expect(formatters.connectionSettingsLabel('/settings/admin/opencatalogi#section-woo-index')).toBe('opencatalogi:Open settings')
-		expect(formatters.connectionSettingsLabel('')).toBe('')
-		expect(formatters.connectionSettingsLabel(undefined)).toBe('')
-		expect(formatters.connectionSettingsLabel(null)).toBe('')
+	it('reads a switched-off connection as Switched off, from the built-in', () => {
+		expect(pageFormatters().connectionStatus('disabled')).toBe('Switched off')
+		expect(read('src', 'App.vue')).not.toContain(':formatters=')
 	})
 
 	it('ships an English and a Dutch catalogue entry for every label the page shows', () => {
 		const en = JSON.parse(read('l10n', 'en.json')).translations
 		const nl = JSON.parse(read('l10n', 'nl.json')).translations
 		const labels = [
-			...Object.values(connectionStatusLabels((app, source) => source)),
-			'Open settings',
 			page.title,
 			menu.label,
 			page.config.folderSidebar.allLabel,
@@ -94,23 +66,20 @@ describe('connection formatters', () => {
 			expect(en[label], `en: ${label}`).toBe(label)
 			expect(nl[label], `nl: ${label}`).toBeTruthy()
 		}
-		expect(nl.Limited).toBe('Beperkt')
-		// The browser reads the .js catalogue, never the .json one.
-		expect(read('l10n', 'nl.js')).toContain('"Limited": "Beperkt"')
 	})
 })
 
 describe('Add integration handler', () => {
 	it('opens integriq on the link dialog, preset to opencatalogi', () => {
 		const opened = []
-		const handlers = createConnectionHandlers({
+		const handlers = connectionRegistry.createConnectionHandlers({
 			generateUrl: (p) => `/index.php${p}`,
 			assign: (url) => opened.push(url),
 		})
 
 		handlers.openIntegriqConnections()
 
-		expect(INTEGRIQ_CONNECTIONS_PATH).toBe('/apps/integriq/connections?app=opencatalogi&link=1')
+		expect(connectionRegistry.INTEGRIQ_CONNECTIONS_PATH).toBe('/apps/integriq/connections?app=opencatalogi&link=1')
 		expect(opened).toEqual(['/index.php/apps/integriq/connections?app=opencatalogi&link=1'])
 	})
 })
@@ -142,8 +111,8 @@ describe('the Integrations page declaration', () => {
 	})
 
 	it('names only formatters and handlers that exist, and wires both into the app', () => {
-		const formatters = createConnectionFormatters(translate)
-		const handlers = createConnectionHandlers({ generateUrl: (p) => p, assign: () => {} })
+		const formatters = pageFormatters()
+		const handlers = connectionRegistry.createConnectionHandlers({ generateUrl: (p) => p, assign: () => {} })
 
 		for (const column of page.config.columns.filter((c) => c.formatter)) {
 			expect(typeof formatters[column.formatter], column.formatter).toBe('function')
@@ -152,8 +121,6 @@ describe('the Integrations page declaration', () => {
 			expect(typeof handlers[action.handler], action.handler).toBe('function')
 		}
 
-		expect(read('src', 'App.vue')).toContain(':formatters="formatters"')
-		expect(read('src', 'App.vue')).toContain('formatters: createConnectionFormatters(ncT)')
 		expect(read('src', 'registry.js')).toMatch(/^\t\.\.\.createConnectionHandlers\(\{$/m)
 	})
 
