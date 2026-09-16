@@ -33,7 +33,8 @@ import { expect, test } from '@playwright/test'
 const APP_BASE = '/apps/opencatalogi'
 
 /** Integriq's objects endpoint for OpenCatalogi's connection rows. */
-const CONNECTIONS_API = '/index.php/apps/openregister/api/objects/integriq/app_connection?app=opencatalogi&_limit=50'
+const CONNECTIONS_API =
+	'/index.php/apps/openregister/api/objects/integriq/app_connection?app=opencatalogi&_limit=50'
 
 /** OpenCatalogi's settings endpoint, admin only. */
 const SETTINGS_API = `/index.php${APP_BASE}/api/settings`
@@ -54,14 +55,18 @@ const JSON_HEADERS = { 'OCS-APIRequest': 'true', Accept: 'application/json' }
  * @param request An admin request context.
  * @return The rows by key.
  */
-async function rowsByKey(request: APIRequestContext): Promise<Record<string, Record<string, unknown>>> {
+async function rowsByKey(
+	request: APIRequestContext,
+): Promise<Record<string, Record<string, unknown>>> {
 	const res = await request.get(CONNECTIONS_API, { headers: JSON_HEADERS })
 	expect(res.ok(), `list integriq/app_connection -> ${res.status()}`).toBeTruthy()
 	const body = await res.json()
 	const byKey: Record<string, Record<string, unknown>> = {}
 	for (const row of (body.results ?? []) as Record<string, unknown>[]) {
 		// A row from another app here means the bare filter was dropped.
-		expect(String(row.app), 'a connection row from another app').toBe('opencatalogi')
+		expect(String(row.app), 'a connection row from another app').toBe(
+			'opencatalogi',
+		)
 		byKey[String(row.key)] = row
 	}
 	return byKey
@@ -73,26 +78,38 @@ async function rowsByKey(request: APIRequestContext): Promise<Record<string, Rec
  * @param page The Playwright page.
  */
 async function openIntegrations(page: Page): Promise<void> {
-	await page.goto(`${APP_BASE}/settings/integrations?app=opencatalogi`, { timeout: 60_000 })
+	await page.goto(`${APP_BASE}/settings/integrations?app=opencatalogi`, {
+		timeout: 60_000,
+	})
 	await expect(page.locator('.cn-index-page')).toBeVisible({ timeout: 30_000 })
 }
 
 test.describe('Integrations over the connection registry', () => {
-	test('lists the three declared connections, all of them OpenCatalogi\'s', async ({ page }) => {
+	test("lists the three declared connections, all of them OpenCatalogi's", async ({
+		page,
+	}) => {
 		const byKey = await rowsByKey(page.request)
 		expect(Object.keys(byKey).sort()).toEqual(DECLARED.map((d) => d.key).sort())
 
 		// The two rows with a settings section link into OpenCatalogi's own admin page.
-		expect(String(byKey.directory?.settingsUrl ?? '')).toBe('/settings/admin/opencatalogi#section-federation-sync')
-		expect(String(byKey['woo-index']?.settingsUrl ?? '')).toBe('/settings/admin/opencatalogi#section-woo-index')
+		expect(String(byKey.directory?.settingsUrl ?? '')).toBe(
+			'/settings/admin/opencatalogi#section-federation-sync',
+		)
+		expect(String(byKey['woo-index']?.settingsUrl ?? '')).toBe(
+			'/settings/admin/opencatalogi#section-woo-index',
+		)
 
 		await openIntegrations(page)
 		for (const { title } of DECLARED) {
-			await expect(page.getByRole('row', { name: new RegExp(`^${title}\\b`, 'i') })).toHaveCount(1)
+			await expect(
+				page.getByRole('row', { name: new RegExp(`^${title}\\b`, 'i') }),
+			).toHaveCount(1)
 		}
 	})
 
-	test('asks integriq to look again when the Woo-index registration is saved', async ({ page }) => {
+	test('asks integriq to look again when the Woo-index registration is saved', async ({
+		page,
+	}) => {
 		/**
 		 * The woo-index row's refreshedAt, read without asserting: a throw
 		 * inside `expect.poll` ends the poll instead of retrying it.
@@ -100,21 +117,34 @@ test.describe('Integrations over the connection registry', () => {
 		 * @return The timestamp, or '' when the row or the field is missing.
 		 */
 		const refreshedAt = async (): Promise<string> => {
-			const list = await page.request.get(CONNECTIONS_API, { headers: JSON_HEADERS })
+			const list = await page.request.get(CONNECTIONS_API, {
+				headers: JSON_HEADERS,
+			})
 			const rows = list.ok() ? ((await list.json()).results ?? []) : []
-			const row = rows.find((r: Record<string, unknown>) => r.key === 'woo-index' && r.app === 'opencatalogi')
+			const row = rows.find(
+				(r: Record<string, unknown>) =>
+					r.key === 'woo-index' && r.app === 'opencatalogi',
+			)
 			return String(row?.refreshedAt ?? '')
 		}
 
-		const settings = await page.request.get(SETTINGS_API, { headers: JSON_HEADERS })
+		const settings = await page.request.get(SETTINGS_API, {
+			headers: JSON_HEADERS,
+		})
 		expect(settings.ok(), `settings read -> ${settings.status()}`).toBeTruthy()
-		const previous = String((await settings.json())?.configuration?.woo_index_registration_status ?? 'not_registered')
+		const previous = String(
+			(await settings.json())?.configuration?.woo_index_registration_status
+				?? 'not_registered',
+		)
 		const before = await refreshedAt()
 
 		try {
 			const res = await page.request.put(SETTINGS_API, {
 				headers: JSON_HEADERS,
-				data: { woo_index_registration_status: previous === 'requested' ? 'not_registered' : 'requested' },
+				data: {
+					woo_index_registration_status:
+						previous === 'requested' ? 'not_registered' : 'requested',
+				},
 			})
 			expect(res.ok(), `settings save -> ${res.status()}`).toBeTruthy()
 
@@ -128,7 +158,9 @@ test.describe('Integrations over the connection registry', () => {
 		}
 	})
 
-	test('sends Add integration to integriq instead of offering a form', async ({ page }) => {
+	test('sends Add integration to integriq instead of offering a form', async ({
+		page,
+	}) => {
 		await openIntegrations(page)
 
 		// No generic Add button: a row nothing declared has nothing to check.
@@ -138,8 +170,15 @@ test.describe('Integrations over the connection registry', () => {
 		// catalogues this change ships, and nothing forces the E2E locale.
 		await page.locator('[data-testid="cn-actions"] button').first().click()
 		await Promise.all([
-			page.waitForURL(/\/apps\/integriq\/connections\?app=opencatalogi&link=1$/, { timeout: 30_000 }),
-			page.getByRole('menuitem', { name: /Add integration|Integratie toevoegen/i }).click(),
+			page.waitForURL(
+				/\/apps\/integriq\/connections\?app=opencatalogi&link=1$/,
+				{ timeout: 30_000 },
+			),
+			page
+				.getByRole('menuitem', {
+					name: /Add integration|Integratie toevoegen/i,
+				})
+				.click(),
 		])
 	})
 })

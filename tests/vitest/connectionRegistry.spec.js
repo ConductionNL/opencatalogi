@@ -23,7 +23,8 @@ import * as connectionRegistry from '../../src/services/connectionRegistry.js'
 // at load. The node environment has none, and an untranslated call returns
 // the English source string, which is what the checks compare.
 globalThis.window ??= globalThis
-const { BUILT_IN_FORMATTERS } = await import('@conduction/nextcloud-vue/dist/esm/utils/builtInFormatters.js')
+const { BUILT_IN_FORMATTERS } =
+	await import('@conduction/nextcloud-vue/dist/esm/utils/builtInFormatters.js')
 
 const ROOT = path.resolve(__dirname, '../..')
 const read = (...parts) => fs.readFileSync(path.join(ROOT, ...parts), 'utf8')
@@ -79,8 +80,12 @@ describe('Add integration handler', () => {
 
 		handlers.openIntegriqConnections()
 
-		expect(connectionRegistry.INTEGRIQ_CONNECTIONS_PATH).toBe('/apps/integriq/connections?app=opencatalogi&link=1')
-		expect(opened).toEqual(['/index.php/apps/integriq/connections?app=opencatalogi&link=1'])
+		expect(connectionRegistry.INTEGRIQ_CONNECTIONS_PATH).toBe(
+			'/apps/integriq/connections?app=opencatalogi&link=1',
+		)
+		expect(opened).toEqual([
+			'/index.php/apps/integriq/connections?app=opencatalogi&link=1',
+		])
 	})
 })
 
@@ -112,21 +117,31 @@ describe('the Integrations page declaration', () => {
 
 	it('names only formatters and handlers that exist, and wires both into the app', () => {
 		const formatters = pageFormatters()
-		const handlers = connectionRegistry.createConnectionHandlers({ generateUrl: (p) => p, assign: () => {} })
+		const handlers = connectionRegistry.createConnectionHandlers({
+			generateUrl: (p) => p,
+			assign: () => {},
+		})
 
 		for (const column of page.config.columns.filter((c) => c.formatter)) {
-			expect(typeof formatters[column.formatter], column.formatter).toBe('function')
+			expect(typeof formatters[column.formatter], column.formatter).toBe(
+				'function',
+			)
 		}
 		for (const action of page.config.headerActions) {
 			expect(typeof handlers[action.handler], action.handler).toBe('function')
 		}
 
-		expect(read('src', 'registry.js')).toMatch(/^\t\.\.\.createConnectionHandlers\(\{$/m)
+		expect(read('src', 'registry.js')).toMatch(
+			/^\t\.\.\.createConnectionHandlers\(\{$/m,
+		)
 	})
 
 	it('names an icon src/icons.js registers', () => {
 		const icons = read('src', 'icons.js')
-		for (const icon of [menu.icon, ...page.config.headerActions.map((a) => a.icon)]) {
+		for (const icon of [
+			menu.icon,
+			...page.config.headerActions.map((a) => a.icon),
+		]) {
 			expect(icons).toContain(`\n\t${icon},`)
 		}
 	})
