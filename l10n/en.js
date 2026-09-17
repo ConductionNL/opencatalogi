@@ -928,15 +928,8 @@ OC.L10N.register(
         "Integrations": "Integrations",
         "Connection": "Connection",
         "Status message": "Status message",
-        "Open settings": "Open settings",
         "Add integration": "Add integration",
-        "All connections": "All connections",
-        "Configured": "Configured",
-        "Limited": "Limited",
-        "Not configured": "Not configured",
-        "Simulated": "Simulated",
-        "Not available": "Not available",
-        "Error": "Error"
+        "All connections": "All connections"
     },
     "nplurals=2; plural=(n != 1);"
 )
