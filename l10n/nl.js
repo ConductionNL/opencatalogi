@@ -1107,7 +1107,10 @@ OC.L10N.register(
         "Why a step was skipped, for a step nobody was asked to take.": "Waarom een stap is overgeslagen, voor een stap die niemand hoefde te zetten.",
         "Why it was taken down, in words a reader can follow.": "Waarom het is ingetrokken, in woorden die een lezer kan volgen.",
         "Withdrawals": "Intrekkingen",
-        "Zienswijze ask": "Verzoek om een zienswijze"
+        "Zienswijze ask": "Verzoek om een zienswijze",
+        "Name the depublication and the channel that acknowledged.": "Noem de depublicatie en het kanaal dat bevestigd heeft.",
+        "No withdrawal was sent to that channel, so there is nothing for it to acknowledge.": "Naar dat kanaal is geen intrekking verstuurd, dus er is niets om te bevestigen.",
+        "The withdrawals were sent but could not be recorded.": "De intrekkingen zijn verstuurd maar konden niet worden vastgelegd."
     },
     "nplurals=2; plural=(n != 1);"
 )

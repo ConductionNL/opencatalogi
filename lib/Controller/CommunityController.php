@@ -522,6 +522,57 @@ class CommunityController extends Controller {
 	}//end saveNoticeBoard()
 
 	/**
+	 * Save a notice on a board.
+	 *
+	 * The write path REQ-PCS-104 asks for. A notice is checked before it is
+	 * stored, so a notice with no board, no title or a period this app cannot
+	 * read is refused with the reason rather than saved and rendered blank.
+	 *
+	 * @return JSONResponse The stored notice, or the refusal.
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function saveNotice(): JSONResponse {
+		$notice = $this->request->getParam('notice', []);
+		if (is_array($notice) === false || $notice === []) {
+			return new JSONResponse(data: ['error' => 'missing-notice'], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$checked = $this->noticeService->validateNotice(notice: $notice);
+		} catch (\DomainException $e) {
+			return new JSONResponse(
+				data: ['error' => 'notice-refused', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		try {
+			$config = $this->configurationFor(schemaKey: 'notice_schema');
+			$saved = $this->objects->getObjectService()->saveObject(
+				object: $checked,
+				extend: [],
+				register: $config['register'],
+				schema: $config['schema'],
+				uuid: (string)($notice['id'] ?? '')
+			);
+		} catch (CatalogueUnreadableException $e) {
+			return new JSONResponse(data: ['error' => 'notice-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
+		} catch (\Throwable $e) {
+			return $this->registerConfigErrorResponse(e: $e);
+		}
+
+		$stored = $this->asArray(object: $saved);
+
+		return new JSONResponse(
+			array_merge($stored, ['current' => $this->noticeService->isCurrent(notice: $stored)]),
+			Http::STATUS_CREATED
+		);
+
+	}//end saveNotice()
+
+	/**
 	 * A catalogue's activity as an Atom feed.
 	 *
 	 * The publication rules own the access decision and it runs per entry, so a

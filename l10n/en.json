@@ -1162,7 +1162,10 @@
         "The status page could not be read, so this is not a report that everything is fine.": "The status page could not be read, so this is not a report that everything is fine.",
         "This definition was not imported, so there is no source to compare it with.": "This definition was not imported, so there is no source to compare it with.",
         "This organisation publishes no verification key, so a stamp here cannot be checked.": "This organisation publishes no verification key, so a stamp here cannot be checked.",
-        "This publication is held while a zienswijze is still open.": "This publication is held while a zienswijze is still open."
+        "This publication is held while a zienswijze is still open.": "This publication is held while a zienswijze is still open.",
+        "Name the depublication and the channel that acknowledged.": "Name the depublication and the channel that acknowledged.",
+        "No withdrawal was sent to that channel, so there is nothing for it to acknowledge.": "No withdrawal was sent to that channel, so there is nothing for it to acknowledge.",
+        "The withdrawals were sent but could not be recorded.": "The withdrawals were sent but could not be recorded."
     },
     "plurals": {}
 }

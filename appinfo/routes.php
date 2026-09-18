@@ -72,6 +72,7 @@ return [
 		['name' => 'community#banners', 'url' => '/api/banners', 'verb' => 'GET'],
 		['name' => 'community#dismissBanner', 'url' => '/api/banners/dismiss', 'verb' => 'POST'],
 		['name' => 'community#saveNoticeBoard', 'url' => '/api/notice-boards', 'verb' => 'POST'],
+		['name' => 'community#saveNotice', 'url' => '/api/notices', 'verb' => 'POST'],
 		// Active publication, inspection and the national indexes: the admin surfaces.
 		['name' => 'publicationRules#previewRule', 'url' => '/api/publication-rules/preview', 'verb' => 'POST'],
 		['name' => 'publicationRules#validateDecision', 'url' => '/api/publication-rules/validate-decision', 'verb' => 'POST'],
@@ -79,6 +80,7 @@ return [
 		['name' => 'publicationRules#completeStep', 'url' => '/api/publication-process/step', 'verb' => 'POST'],
 		['name' => 'publicationRules#raiseZienswijze', 'url' => '/api/publication-process/zienswijze', 'verb' => 'POST'],
 		['name' => 'publicationRules#depublish', 'url' => '/api/publications/depublish', 'verb' => 'POST'],
+		['name' => 'publicationRules#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
 		['name' => 'publicationRules#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
 		['name' => 'publicationRules#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
 		['name' => 'publicationRules#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],

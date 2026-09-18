@@ -296,14 +296,105 @@ test.describe('The national channels', () => {
 			},
 		})
 
+		test.skip(
+			response.status() === 503,
+			'the registers are not configured on this instance',
+		)
 		expect(response.status()).toBe(200)
 		const body = await response.json()
 		expect(body.depublishedBy).toBeTruthy()
 		expect(body.reason).toBe('E2E: publicatiefout.')
+		// The depublication is stored, so it has an id an acknowledgement can
+		// be recorded against. Without one the outstanding state has no exit.
+		expect(body.id).toBeTruthy()
 
 		if (body.complete === false) {
 			expect(body.outstandingChannels).toContain('national-woo-index')
 		}
+	})
+
+	test('an anonymous caller cannot acknowledge a withdrawal', async ({
+		baseURL,
+	}) => {
+		const anon = await anonymous(baseURL as string)
+		const response = await anon.post(
+			`${API_BASE}/publications/depublish/acknowledge`,
+			{ data: { depublication: 'whatever', channel: 'national-woo-index' } },
+		)
+
+		expect([401, 403, 404, 412]).toContain(response.status())
+
+		await anon.dispose()
+	})
+
+	test('an acknowledgement takes a withdrawal out of outstanding', async ({
+		request: admin,
+	}) => {
+		const made = await admin.post(`${API_BASE}/publications/depublish`, {
+			data: {
+				publication: { id: 'e2e-p-ack' },
+				reason: 'E2E: publicatiefout.',
+				channels: ['local-channel'],
+			},
+		})
+
+		test.skip(
+			made.status() === 503,
+			'the registers are not configured on this instance',
+		)
+		const depublication = await made.json()
+		test.skip(
+			depublication.complete === true,
+			'this instance acknowledged on delivery, so there is nothing outstanding to record',
+		)
+
+		const response = await admin.post(
+			`${API_BASE}/publications/depublish/acknowledge`,
+			{
+				data: {
+					depublication: depublication.id,
+					channel: 'local-channel',
+					answer: 'E2E: verwijderd',
+				},
+			},
+		)
+
+		expect(response.status()).toBe(200)
+		const body = await response.json()
+		expect(body.outstandingChannels).not.toContain('local-channel')
+		expect(body.withdrawals[0].acknowledgedAt).toBeTruthy()
+		expect(body.withdrawals[0].answer).toBe('E2E: verwijderd')
+	})
+
+	test('a channel no withdrawal was sent to cannot acknowledge one', async ({
+		request: admin,
+	}) => {
+		const made = await admin.post(`${API_BASE}/publications/depublish`, {
+			data: {
+				publication: { id: 'e2e-p-ack2' },
+				reason: 'E2E: publicatiefout.',
+				channels: ['local-channel'],
+			},
+		})
+
+		test.skip(
+			made.status() === 503,
+			'the registers are not configured on this instance',
+		)
+
+		const response = await admin.post(
+			`${API_BASE}/publications/depublish/acknowledge`,
+			{
+				data: {
+					depublication: (await made.json()).id,
+					channel: 'a-channel-nobody-wrote-to',
+					answer: 'E2E',
+				},
+			},
+		)
+
+		expect(response.status()).toBe(400)
+		expect((await response.json()).error).toBe('unknown-channel')
 	})
 
 	test('a depublication without a reason is refused', async ({

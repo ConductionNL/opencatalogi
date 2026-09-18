@@ -67,10 +67,17 @@
   with no gateway installed the delivery is reported as unreachable rather than
   as made. The DIWOO and TPOD payload profiles themselves are the sitemap and
   DCAT work, not this change.
-- **The obligation overview reads what it is given.** `ObligationOverviewService`
-  assembles from every registered source and names the ones it could not read.
-  The per-source readers, and the harvest intake it will also read from, are
-  `harvest-feed-intake`.
+- **The obligation overview reads what it is given, and nothing gives it
+  anything yet, so REQ-PIN-110 is NOT met by this change.**
+  `ObligationOverviewService` assembles from every registered source and names
+  the ones it could not read, and it is the only class here with no caller: no
+  controller method, no route, no injection. The per-source readers and the
+  harvest intake it reads from are `harvest-feed-intake`, and wiring an endpoint
+  before them would publish an overview that reports every source as unread.
+  `PublicationRulesController`'s class docblock used to list the overview among
+  its surfaces; that sentence has been corrected, because a docblock
+  advertising a surface nobody can reach is what stops the next person
+  checking whether it exists. REQ-PIN-110 stays open until the intake lands.
 - **The anonymous permission set is enforced in this app's public handlers.**
   Enforcing the same set inside OpenRegister's own object API, so a leaf app
   cannot serve a withheld property by going around this app, is an OpenRegister
