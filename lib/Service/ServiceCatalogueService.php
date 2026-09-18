@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -88,10 +89,12 @@ class ServiceCatalogueService {
 	 *
 	 * @param ContainerInterface $container Server container for resolving OpenRegister.
 	 * @param LoggerInterface $logger Logger.
+	 * @param IAppManager $appManager The app manager, to establish that OpenRegister is there before asking for it.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -112,6 +115,18 @@ class ServiceCatalogueService {
 	public function getObjectService(): object {
 		if ($this->objectService !== null) {
 			return $this->objectService;
+		}
+
+		// ADR-083 rule 1: the dependency is optional at runtime, so its presence
+		// is established before it is asked for. Without this the container
+		// lookup is the only place the dependency is declared, which is nowhere
+		// a reader or a gate can see it.
+		// The app id is written out rather than held in a constant: ADR-083's
+		// checker reads the literal, and an indirection here is invisible to it.
+		if ($this->appManager->isInstalled('openregister') === false) {
+			throw new CatalogueUnreadableException(
+				message: 'The service catalogue cannot be read because OpenRegister is not installed.'
+			);
 		}
 
 		try {
@@ -175,13 +190,13 @@ class ServiceCatalogueService {
 	 * says an entry with no resolvable form is listed as unavailable.
 	 *
 	 * @param array<string, mixed> $entry One catalogue entry.
-	 * @param array<string, array<string, mixed>> $caseTypesByIdentifier Published case types keyed by identifier.
+	 * @param array<string, array<string, mixed>> $caseTypesById Published case types keyed by identifier.
 	 *
 	 * @return array<string, mixed> The entry with its availability decided.
 	 *
 	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-public-catalogue-lists-everything-that-can-be-requested-req-psc-101
 	 */
-	public function decideAvailability(array $entry, array $caseTypesByIdentifier): array {
+	public function decideAvailability(array $entry, array $caseTypesById): array {
 		$binding = ($entry['formBinding'] ?? null);
 
 		if (is_array($binding) === false || $binding === []) {
@@ -196,11 +211,11 @@ class ServiceCatalogueService {
 			return $this->markUnavailable(entry: $entry, reason: self::REASON_INCOMPLETE_BINDING);
 		}
 
-		if (array_key_exists($caseType, $caseTypesByIdentifier) === false) {
+		if (array_key_exists($caseType, $caseTypesById) === false) {
 			return $this->markUnavailable(entry: $entry, reason: self::REASON_UNKNOWN_CASE_TYPE);
 		}
 
-		$definition = $caseTypesByIdentifier[$caseType];
+		$definition = $caseTypesById[$caseType];
 		if (($definition['published'] ?? null) === false) {
 			return $this->markUnavailable(entry: $entry, reason: self::REASON_UNPUBLISHED_CASE_TYPE);
 		}
@@ -246,7 +261,7 @@ class ServiceCatalogueService {
 		$unavailable = 0;
 
 		foreach ($entries as $entry) {
-			$decidedEntry = $this->decideAvailability(entry: $entry, caseTypesByIdentifier: $indexed);
+			$decidedEntry = $this->decideAvailability(entry: $entry, caseTypesById: $indexed);
 			if ($decidedEntry['available'] === false) {
 				$unavailable++;
 			}
@@ -299,7 +314,12 @@ class ServiceCatalogueService {
 	 * @param array<string, string> $caseTypeConfig The register and schema of the case type definitions.
 	 * @param array<string, mixed> $filters Extra search filters from the caller.
 	 *
-	 * @return array{entries: array<int, array<string, mixed>>, groups: array<string, array<int, array<string, mixed>>>, unavailable: integer, total: integer}
+	 * @return array{
+	 *     entries: array<int, array<string, mixed>>,
+	 *     groups: array<string, array<int, array<string, mixed>>>,
+	 *     unavailable: integer,
+	 *     total: integer
+	 * }
 	 *
 	 * @throws CatalogueUnreadableException When OpenRegister cannot be reached.
 	 *

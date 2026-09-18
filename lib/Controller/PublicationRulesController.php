@@ -109,8 +109,11 @@ class PublicationRulesController extends Controller {
 	 */
 	private function actor(): string {
 		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return '';
+		}
 
-		return ($user === null ? '' : $user->getUID());
+		return $user->getUID();
 
 	}//end actor()
 
@@ -212,6 +215,11 @@ class PublicationRulesController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
+	 * @no-admin-idor-exempt the decision and its type arrive in the request body
+	 * and are validated as given. Nothing is looked up by identifier, nothing is
+	 * stored, and an unauthenticated caller is refused above, so there is no
+	 * object reference to substitute.
+	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function validateDecision(): JSONResponse {
@@ -301,7 +309,6 @@ class PublicationRulesController extends Controller {
 		}
 
 		$advance = $this->processService->mayAdvance(
-			process: $process,
 			asks: array_values(array_filter($asks, 'is_array'))
 		);
 
@@ -440,6 +447,11 @@ class PublicationRulesController extends Controller {
 		// The notices are returned whether or not they were delivered, and an
 		// undelivered channel is named. Answering 200 with only the deliveries
 		// would let an operator read a partial announcement as a complete one.
+		$statusCode = Http::STATUS_BAD_GATEWAY;
+		if ($unreachable === []) {
+			$statusCode = Http::STATUS_OK;
+		}
+
 		return new JSONResponse(
 			data: [
 				'notices' => $notices,
@@ -447,7 +459,7 @@ class PublicationRulesController extends Controller {
 				'unreachable' => $unreachable,
 				'complete' => ($unreachable === []),
 			],
-			statusCode: ($unreachable === [] ? Http::STATUS_OK : Http::STATUS_BAD_GATEWAY)
+			statusCode: $statusCode
 		);
 
 	}//end announce()
@@ -553,8 +565,16 @@ class PublicationRulesController extends Controller {
 			);
 		}
 
+		// A document that is not valid base64 is verified as the raw bytes that
+		// came in, so a caller that posted the document unencoded gets a real
+		// verdict rather than a verification of the empty string.
+		$documentBytes = base64_decode($document, true);
+		if ($documentBytes === false) {
+			$documentBytes = $document;
+		}
+
 		$outcome = $this->stampService->verify(
-			documentBytes: base64_decode($document, true) ?: $document,
+			documentBytes: $documentBytes,
 			metadata: $metadata,
 			stamp: $stamp
 		);

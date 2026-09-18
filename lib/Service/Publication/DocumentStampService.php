@@ -116,14 +116,15 @@ class DocumentStampService {
 			);
 		}
 
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		return [
 			'algorithm' => self::ALGORITHM,
 			'keyId' => $this->keyId,
-			'signature' => hash_hmac(self::ALGORITHM, $this->canonical($documentBytes, $metadata), $this->signingKey),
+			'signature' => hash_hmac(self::ALGORITHM, $this->canonical(documentBytes: $documentBytes, metadata: $metadata), $this->signingKey),
 			'signedAt' => $moment->format(DateTimeInterface::ATOM),
 			'covers' => self::COVERED_METADATA,
 		];
@@ -155,7 +156,7 @@ class DocumentStampService {
 			return ['valid' => false, 'reason' => 'unknown-algorithm'];
 		}
 
-		$expected = hash_hmac(self::ALGORITHM, $this->canonical($documentBytes, $metadata), $this->signingKey);
+		$expected = hash_hmac(self::ALGORITHM, $this->canonical(documentBytes: $documentBytes, metadata: $metadata), $this->signingKey);
 
 		if (hash_equals($expected, $signature) === false) {
 			return ['valid' => false, 'reason' => 'does-not-match'];

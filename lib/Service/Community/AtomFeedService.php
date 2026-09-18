@@ -127,9 +127,10 @@ class AtomFeedService {
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function toAtom(string $catalogTitle, string $selfUrl, array $entries, ?DateTimeInterface $now = null): string {
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		$escape = static fn (string $value): string => htmlspecialchars(
 			$value,

@@ -206,4 +206,50 @@ class ServiceCatalogueControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
 	}//end testAnExtractionByAnUnauthenticatedCallerIsRefused()
+
+	/**
+	 * A published case type is answered with the links it publishes.
+	 *
+	 * The wire contract of `GET /api/case-types/{id}`: the definition, plus the
+	 * form and API links resolved for it, plus when it was last synchronised.
+	 */
+	public function testAPublishedCaseTypeIsAnsweredWithItsLinks(): void {
+		$definition = ['identifier' => 'vergunning', 'title' => 'Vergunning', 'published' => true];
+		$objectService = new class($definition) {
+			public function __construct(private readonly array $definition) {
+			}
+
+			public function find(string $id, string $register, string $schema): array {
+				return $this->definition;
+			}
+		};
+		$this->catalogueService->method('getObjectService')->willReturn($objectService);
+		$this->caseTypeService->method('publishedLinks')->willReturn(
+			['form' => 'https://example.org/form', 'apiDescription' => null, 'complete' => false]
+		);
+		$this->caseTypeService->method('syncedAt')->willReturn('2026-09-01T00:00:00+00:00');
+
+		$response = $this->controller->caseType('vergunning');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('vergunning', $data['identifier']);
+		$this->assertSame('https://example.org/form', $data['links']['form']);
+		$this->assertSame('2026-09-01T00:00:00+00:00', $data['syncedAt']);
+
+	}//end testAPublishedCaseTypeIsAnsweredWithItsLinks()
+
+	/**
+	 * A case type nobody can read answers 503, never an empty definition.
+	 */
+	public function testACaseTypeInAnUnreadableCatalogueAnswers503(): void {
+		$this->catalogueService->method('getObjectService')
+			->willThrowException(new CatalogueUnreadableException('OpenRegister is unavailable'));
+
+		$response = $this->controller->caseType('vergunning');
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('catalogue-unreadable', $response->getData()['error']);
+
+	}//end testACaseTypeInAnUnreadableCatalogueAnswers503()
 }//end class

@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use InvalidArgumentException;
 
 /**
  * Counts what readers thought of an article, and turns an answer into one.
@@ -104,7 +105,10 @@ class KnowledgeArticleService {
 			}
 		}
 
-		$field = ($helpful === true ? 'helpfulCount' : 'notHelpfulCount');
+		$field = 'notHelpfulCount';
+		if ($helpful === true) {
+			$field = 'helpfulCount';
+		}
 		$article[$field] = ((int)($article[$field] ?? 0) + 1);
 
 		$moment = ($now ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
@@ -162,7 +166,7 @@ class KnowledgeArticleService {
 	public function extractDraft(array $case, string $answerProperty = 'answer', ?string $title = null): array {
 		$answer = trim((string)($case[$answerProperty] ?? ''));
 		if ($answer === '') {
-			throw new \InvalidArgumentException(
+			throw new InvalidArgumentException(
 				message: 'The case carries no answer under "' . $answerProperty . '" to extract.'
 			);
 		}

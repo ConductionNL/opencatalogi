@@ -86,9 +86,10 @@ class InspectionService {
 			);
 		}
 
-		$startsAt = ($start === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($start);
+		$startsAt = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($start !== null) {
+			$startsAt = new DateTimeImmutable($start->format('Y-m-d\\TH:i:s.uP'));
+		}
 		$endsAt = $startsAt->add(new DateInterval('P' . $termDays . 'D'));
 
 		return [
@@ -117,9 +118,10 @@ class InspectionService {
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function isOpen(array $inspection, ?DateTimeInterface $now = null): bool {
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		try {
 			$start = new DateTimeImmutable((string)($inspection['startDate'] ?? ''));

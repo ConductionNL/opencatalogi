@@ -167,7 +167,10 @@ class MarkupRenderService {
 	 * @return boolean True when every line is an item.
 	 */
 	private function isList(array $lines, bool $ordered): bool {
-		$pattern = ($ordered === true ? '/^\d+\.\s+/' : '/^[-*]\s+/');
+		$pattern = '/^[-*]\s+/';
+		if ($ordered === true) {
+			$pattern = '/^\d+\.\s+/';
+		}
 
 		foreach ($lines as $line) {
 			if (preg_match($pattern, $line) !== 1) {

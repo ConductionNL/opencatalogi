@@ -261,4 +261,69 @@ class PublicationRulesControllerTest extends TestCase {
 		$this->assertStringNotContainsString('test-key', (string)json_encode($data));
 
 	}//end testTheVerificationKeyIsPublishedAndIsNotTheKey()
+
+	/**
+	 * A document verifies against the stamp that was made for it.
+	 *
+	 * The wire contract of `POST /api/publications/verify`: the reader sends
+	 * the document, its publication metadata and the stamp, and gets a verdict.
+	 */
+	public function testAStampedDocumentVerifiesThroughTheEndpoint(): void {
+		$stampService = new DocumentStampService(signingKey: 'test-key');
+		$metadata = ['publication' => 'p1', 'publishedAt' => '2026-09-01T00:00:00+00:00'];
+		$stamp = $stampService->stamp(documentBytes: 'the document bytes', metadata: $metadata);
+
+		$this->withParams(
+			[
+				'document' => base64_encode('the document bytes'),
+				'metadata' => $metadata,
+				'stamp' => $stamp,
+			]
+		);
+
+		$response = $this->controller->verifyDocument();
+
+		$this->assertTrue($response->getData()['valid']);
+
+	}//end testAStampedDocumentVerifiesThroughTheEndpoint()
+
+	/**
+	 * A document that was changed after it was stamped does not verify.
+	 *
+	 * The half that matters: a verify endpoint that answered `valid` for
+	 * everything would tell every reader a document is authentic while nobody
+	 * checked anything.
+	 */
+	public function testAChangedDocumentDoesNotVerify(): void {
+		$stampService = new DocumentStampService(signingKey: 'test-key');
+		$metadata = ['publication' => 'p1', 'publishedAt' => '2026-09-01T00:00:00+00:00'];
+		$stamp = $stampService->stamp(documentBytes: 'the document bytes', metadata: $metadata);
+
+		$this->withParams(
+			[
+				'document' => base64_encode('the document bytes, altered'),
+				'metadata' => $metadata,
+				'stamp' => $stamp,
+			]
+		);
+
+		$data = $this->controller->verifyDocument()->getData();
+
+		$this->assertFalse($data['valid']);
+		$this->assertSame('does-not-match', $data['reason']);
+
+	}//end testAChangedDocumentDoesNotVerify()
+
+	/**
+	 * A verify call without a stamp is refused, never answered `valid`.
+	 */
+	public function testAVerifyWithoutAStampIsRefused(): void {
+		$this->withParams(['document' => 'x', 'metadata' => [], 'stamp' => []]);
+
+		$response = $this->controller->verifyDocument();
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('missing-parameters', $response->getData()['error']);
+
+	}//end testAVerifyWithoutAStampIsRefused()
 }//end class

@@ -92,15 +92,18 @@
 						"properties": {
 							"amount": {
 								"type": "number",
-								"description": "The amount, in the given currency."
+								"description": "The amount, in the given currency.",
+								"title": "Amount"
 							},
 							"currency": {
 								"type": "string",
-								"description": "ISO 4217 currency code."
+								"description": "ISO 4217 currency code.",
+								"title": "Currency"
 							},
 							"description": {
 								"type": "string",
-								"description": "The cost in words, for a cost that is not a single amount."
+								"description": "The cost in words, for a cost that is not a single amount.",
+								"title": "Cost in words"
 							}
 						}
 					},
@@ -111,7 +114,8 @@
 						"properties": {
 							"term": {
 								"type": "integer",
-								"description": "The number of units."
+								"description": "The number of units.",
+								"title": "Term"
 							},
 							"unit": {
 								"type": "string",
@@ -120,11 +124,13 @@
 									"week",
 									"month"
 								],
-								"description": "The unit the term is counted in."
+								"description": "The unit the term is counted in.",
+								"title": "Unit"
 							},
 							"description": {
 								"type": "string",
-								"description": "The duration in words."
+								"description": "The duration in words.",
+								"title": "Duration in words"
 							}
 						}
 					},
@@ -140,15 +146,18 @@
 						"properties": {
 							"caseType": {
 								"type": "string",
-								"description": "The case type the request opens."
+								"description": "The case type the request opens.",
+								"title": "Case type"
 							},
 							"audience": {
 								"type": "string",
-								"description": "The audience the form is rendered for."
+								"description": "The audience the form is rendered for.",
+								"title": "Audience"
 							},
 							"formName": {
 								"type": "string",
-								"description": "The name of the form in the portal."
+								"description": "The name of the form in the portal.",
+								"title": "Form name"
 							}
 						}
 					}
@@ -174,18 +183,21 @@
 					},
 					"title": {
 						"type": "string",
-						"title": "Title"
+						"title": "Title",
+						"description": "What this case type is called, in the requester's words."
 					},
 					"description": {
 						"type": "string",
-						"title": "Description"
+						"title": "Description",
+						"description": "What the case type covers."
 					},
 					"catalog": {
 						"type": "string",
 						"format": "uuid",
 						"$ref": "catalog",
 						"title": "Catalog",
-						"facetable": true
+						"facetable": true,
+						"description": "The catalogue this definition is published in."
 					},
 					"formUrl": {
 						"type": "string",
@@ -214,20 +226,24 @@
 						"properties": {
 							"sourceId": {
 								"type": "string",
-								"description": "The registered external catalogue."
+								"description": "The registered external catalogue.",
+								"title": "Source"
 							},
 							"externalId": {
 								"type": "string",
-								"description": "The identifier of the definition at the source."
+								"description": "The identifier of the definition at the source.",
+								"title": "Identifier at the source"
 							},
 							"version": {
 								"type": "string",
-								"description": "The version imported."
+								"description": "The version imported.",
+								"title": "Imported version"
 							},
 							"importedAt": {
 								"type": "string",
 								"format": "date-time",
-								"description": "The moment of the import."
+								"description": "The moment of the import.",
+								"title": "Imported at"
 							}
 						}
 					},
@@ -253,18 +269,21 @@
 				"properties": {
 					"title": {
 						"type": "string",
-						"title": "Title"
+						"title": "Title",
+						"description": "The question the article answers."
 					},
 					"body": {
 						"type": "string",
-						"title": "Body"
+						"title": "Body",
+						"description": "The answer, in the markup this app renders."
 					},
 					"catalog": {
 						"type": "string",
 						"format": "uuid",
 						"$ref": "catalog",
 						"title": "Catalog",
-						"facetable": true
+						"facetable": true,
+						"description": "The catalogue the article is published in."
 					},
 					"draft": {
 						"type": "boolean",
@@ -281,12 +300,14 @@
 					"helpfulCount": {
 						"type": "integer",
 						"title": "Helpful count",
-						"default": 0
+						"default": 0,
+						"description": "How many readers said the article helped."
 					},
 					"notHelpfulCount": {
 						"type": "integer",
 						"title": "Not helpful count",
-						"default": 0
+						"default": 0,
+						"description": "How many readers said it did not."
 					}
 				}
 			},
@@ -317,12 +338,14 @@
 					},
 					"helpful": {
 						"type": "boolean",
-						"title": "Helpful"
+						"title": "Helpful",
+						"description": "Whether the reader said the article helped."
 					},
 					"recordedAt": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Recorded at"
+						"title": "Recorded at",
+						"description": "When the verdict was recorded."
 					}
 				}
 			}

@@ -30,6 +30,8 @@ use RuntimeException;
 
 /**
  * The catalogue is unreadable, which is not the same as empty.
+ *
+ * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-public-catalogue-lists-everything-that-can-be-requested-req-psc-101
  */
 class CatalogueUnreadableException extends RuntimeException {
 

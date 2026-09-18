@@ -229,7 +229,7 @@ class CommunityController extends Controller {
 			$components = $this->readAll(schemaKey: 'service_status_schema');
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: [
 						'error' => 'status-unreadable',
 						'message' => $this->l10n->t('The status page could not be read, so this is not a report that everything is fine.'),
@@ -248,7 +248,7 @@ class CommunityController extends Controller {
 		);
 
 		return $this->withCors(
-			new JSONResponse(
+			response: new JSONResponse(
 				$this->statusService->render(components: $components, stalenessHours: $stalenessHours)
 			)
 		);
@@ -265,13 +265,17 @@ class CommunityController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function setStatus(): JSONResponse {
 		$user = $this->userSession->getUser();
+		$setBy = '';
+		if ($user !== null) {
+			$setBy = $user->getUID();
+		}
 
 		try {
 			$status = $this->statusService->setState(
 				component: trim((string)$this->request->getParam('component', '')),
 				state: trim((string)$this->request->getParam('state', '')),
 				message: (string)$this->request->getParam('message', ''),
-				setBy: ($user === null ? '' : $user->getUID())
+				setBy: $setBy
 			);
 		} catch (\DomainException $e) {
 			return new JSONResponse(
@@ -321,7 +325,7 @@ class CommunityController extends Controller {
 			);
 		} catch (\DomainException $e) {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: ['error' => 'subscription-refused', 'message' => $e->getMessage()],
 					statusCode: Http::STATUS_BAD_REQUEST
 				)
@@ -338,14 +342,14 @@ class CommunityController extends Controller {
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
-				new JSONResponse(data: ['error' => 'status-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE)
+				response: new JSONResponse(data: ['error' => 'status-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE)
 			);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		return $this->withCors(
-			new JSONResponse(
+			response: new JSONResponse(
 				data: [
 					'pending' => true,
 					'message' => $this->l10n->t('Confirm the address before anything is sent to it.'),
@@ -541,7 +545,7 @@ class CommunityController extends Controller {
 			$records = $this->readAll(schemaKey: 'publication_schema', filters: ['catalog' => $catalogSlug]);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: [
 						'error' => 'feed-unreadable',
 						'message' => $this->l10n->t('The feed could not be assembled, so this is not an empty catalogue.'),
@@ -584,7 +588,7 @@ class CommunityController extends Controller {
 		$value = trim((string)$this->request->getParam('value', ''));
 		if ($value === '') {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: ['error' => 'missing-value', 'message' => $this->l10n->t('Say what you are voting.')],
 					statusCode: Http::STATUS_BAD_REQUEST
 				)
@@ -604,17 +608,17 @@ class CommunityController extends Controller {
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
-				new JSONResponse(data: ['error' => 'record-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE)
+				response: new JSONResponse(data: ['error' => 'record-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE)
 			);
 		} catch (\Throwable $e) {
-			return $this->withCors(new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
+			return $this->withCors(response: new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
 		}
 
 		if ($this->voteService->acceptsVotes(record: $record) === false) {
 			// An unpublished record answers the same 404 as one that does not
 			// exist: a different answer would let a reader confirm that a draft
 			// exists.
-			return $this->withCors(new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
+			return $this->withCors(response: new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
 		}
 
 		$existing = $this->readAll(schemaKey: 'record_vote_schema', filters: ['record' => $id]);
@@ -629,7 +633,7 @@ class CommunityController extends Controller {
 			);
 		} catch (\DomainException $e) {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: ['error' => 'vote-refused', 'message' => $e->getMessage()],
 					statusCode: Http::STATUS_BAD_REQUEST
 				)
@@ -649,7 +653,7 @@ class CommunityController extends Controller {
 		// Only the distribution leaves this app. The votes themselves, which
 		// carry a reader hash that is stable across records, never do.
 		return $this->withCors(
-			new JSONResponse(
+			response: new JSONResponse(
 				array_merge(
 					$this->voteService->distribution(votes: $existing),
 					['counted' => $outcome['counted']]
@@ -670,6 +674,10 @@ class CommunityController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
+	 * @no-admin-idor-exempt the caller supplies markup text and nothing else. No
+	 * identifier reaches a lookup, no object is read and none is written, so
+	 * there is no direct object reference for a caller to substitute.
+	 *
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
 	 */
 	#[AnonRateLimit(limit: 30, period: 60)]
@@ -677,14 +685,14 @@ class CommunityController extends Controller {
 		$markup = $this->request->getParam('markup', null);
 		if (is_string($markup) === false) {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: ['error' => 'missing-markup', 'message' => $this->l10n->t('Send the markup to render.')],
 					statusCode: Http::STATUS_BAD_REQUEST
 				)
 			);
 		}
 
-		return $this->withCors(new JSONResponse($this->markupService->render(markup: $markup)));
+		return $this->withCors(response: new JSONResponse($this->markupService->render(markup: $markup)));
 
 	}//end renderMarkup()
 

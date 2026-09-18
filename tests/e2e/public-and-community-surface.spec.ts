@@ -49,7 +49,9 @@ async function anonymous(baseURL: string): Promise<APIRequestContext> {
 }
 
 test.describe('The status page', () => {
-	test('it is readable without an account, or it says it could not be read', async ({ baseURL }) => {
+	test('it is readable without an account, or it says it could not be read', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.get(`${API_BASE}/status`)
 
@@ -81,7 +83,11 @@ test.describe('The status page', () => {
 	test('an anonymous reader cannot set a component state', async ({ baseURL }) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.post(`${API_BASE}/status`, {
-			data: { component: 'E2E component', state: 'unavailable', message: 'E2E' },
+			data: {
+				component: 'E2E component',
+				state: 'unavailable',
+				message: 'E2E',
+			},
 		})
 
 		expect([401, 403, 404, 412]).toContain(response.status())
@@ -89,19 +95,31 @@ test.describe('The status page', () => {
 		await anon.dispose()
 	})
 
-	test('a component set to unavailable is listed as such, and a fresh state is not stale', async ({ baseURL, request: admin }) => {
+	test('a component set to unavailable is listed as such, and a fresh state is not stale', async ({
+		baseURL,
+		request: admin,
+	}) => {
 		const set = await admin.post(`${API_BASE}/status`, {
-			data: { component: 'E2E DigiD', state: 'unavailable', message: 'E2E: tijdelijk niet beschikbaar.' },
+			data: {
+				component: 'E2E DigiD',
+				state: 'unavailable',
+				message: 'E2E: tijdelijk niet beschikbaar.',
+			},
 		})
 
-		test.skip(set.status() === 503, 'the registers are not configured on this instance')
+		test.skip(
+			set.status() === 503,
+			'the registers are not configured on this instance',
+		)
 		expect(set.status()).toBe(201)
 
 		const anon = await anonymous(baseURL as string)
 		const page = await anon.get(`${API_BASE}/status`)
 		const body = await page.json()
 
-		const component = body.components.find((c: { component: string }) => c.component === 'E2E DigiD')
+		const component = body.components.find(
+			(c: { component: string }) => c.component === 'E2E DigiD',
+		)
 		expect(component).toBeDefined()
 		expect(component.state).toBe('unavailable')
 		expect(component.message).toBe('E2E: tijdelijk niet beschikbaar.')
@@ -110,7 +128,10 @@ test.describe('The status page', () => {
 		await anon.dispose()
 	})
 
-	test('an unconfirmed address never appears in the recipient list', async ({ baseURL, request: admin }) => {
+	test('an unconfirmed address never appears in the recipient list', async ({
+		baseURL,
+		request: admin,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const address = `e2e-unconfirmed-${Date.now()}@example.org`
 
@@ -118,7 +139,10 @@ test.describe('The status page', () => {
 			data: { address, scope: 'status' },
 		})
 
-		test.skip(subscribed.status() === 503, 'the registers are not configured on this instance')
+		test.skip(
+			subscribed.status() === 503,
+			'the registers are not configured on this instance',
+		)
 		expect(subscribed.status()).toBe(202)
 
 		// The confirmation token never comes back to the caller: returning it
@@ -127,14 +151,18 @@ test.describe('The status page', () => {
 		const body = await subscribed.json()
 		expect(JSON.stringify(body)).not.toMatch(/[0-9a-f]{32}/)
 
-		const recipients = await admin.get(`${API_BASE}/status/recipients?scope=status`)
+		const recipients = await admin.get(
+			`${API_BASE}/status/recipients?scope=status`,
+		)
 		expect(recipients.status()).toBe(200)
 		expect((await recipients.json()).recipients).not.toContain(address)
 
 		await anon.dispose()
 	})
 
-	test('an anonymous reader cannot read the recipient list', async ({ baseURL }) => {
+	test('an anonymous reader cannot read the recipient list', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.get(`${API_BASE}/status/recipients?scope=status`)
 
@@ -145,7 +173,9 @@ test.describe('The status page', () => {
 })
 
 test.describe('Notice boards and the feed', () => {
-	test('a board with comments and no moderator is refused with the reason', async ({ request: admin }) => {
+	test('a board with comments and no moderator is refused with the reason', async ({
+		request: admin,
+	}) => {
 		const response = await admin.post(`${API_BASE}/notice-boards`, {
 			data: { board: { title: 'E2E mededelingen', commentsEnabled: true } },
 		})
@@ -158,15 +188,22 @@ test.describe('Notice boards and the feed', () => {
 
 	test('a new board offers no comment form', async ({ request: admin }) => {
 		const response = await admin.post(`${API_BASE}/notice-boards`, {
-			data: { board: { title: 'E2E mededelingen zonder comments', catalog: 'e2e' } },
+			data: {
+				board: { title: 'E2E mededelingen zonder comments', catalog: 'e2e' },
+			},
 		})
 
-		test.skip(response.status() === 503, 'the registers are not configured on this instance')
+		test.skip(
+			response.status() === 503,
+			'the registers are not configured on this instance',
+		)
 		expect(response.status()).toBe(201)
 		expect((await response.json()).commentsOffered).toBe(false)
 	})
 
-	test('the feed is readable without an account and is Atom', async ({ baseURL }) => {
+	test('the feed is readable without an account and is Atom', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.get(`${API_BASE}/feeds/e2e`)
 
@@ -192,11 +229,16 @@ test.describe('Notice boards and the feed', () => {
 })
 
 test.describe('The reader and the renderer', () => {
-	test('a vote on a record that accepts none is refused the same way as one that does not exist', async ({ baseURL }) => {
+	test('a vote on a record that accepts none is refused the same way as one that does not exist', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
-		const response = await anon.post(`${API_BASE}/records/e2e-does-not-exist/vote`, {
-			data: { value: 'voor' },
-		})
+		const response = await anon.post(
+			`${API_BASE}/records/e2e-does-not-exist/vote`,
+			{
+				data: { value: 'voor' },
+			},
+		)
 
 		// The same 404 either way: a different answer would let a reader
 		// confirm that an unpublished record exists.
@@ -207,7 +249,9 @@ test.describe('The reader and the renderer', () => {
 
 	test('a vote without a value is refused', async ({ baseURL }) => {
 		const anon = await anonymous(baseURL as string)
-		const response = await anon.post(`${API_BASE}/records/e2e-r1/vote`, { data: {} })
+		const response = await anon.post(`${API_BASE}/records/e2e-r1/vote`, {
+			data: {},
+		})
 
 		expect(response.status()).toBe(400)
 		expect((await response.json()).error).toBe('missing-value')
@@ -218,7 +262,9 @@ test.describe('The reader and the renderer', () => {
 	test('a client gets back the HTML this app renders', async ({ baseURL }) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.post(`${API_BASE}/markup/render`, {
-			data: { markup: '# Kop\n\nEen **vette** tekst met [een link](https://example.org).' },
+			data: {
+				markup: '# Kop\n\nEen **vette** tekst met [een link](https://example.org).',
+			},
 		})
 
 		expect(response.status()).toBe(200)
@@ -233,7 +279,9 @@ test.describe('The reader and the renderer', () => {
 	test('HTML a caller sends never comes back as HTML', async ({ baseURL }) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.post(`${API_BASE}/markup/render`, {
-			data: { markup: '<script>alert(1)</script>\n\n[klik](javascript:alert(1))' },
+			data: {
+				markup: '<script>alert(1)</script>\n\n[klik](javascript:alert(1))',
+			},
 		})
 
 		expect(response.status()).toBe(200)
@@ -245,7 +293,9 @@ test.describe('The reader and the renderer', () => {
 		await anon.dispose()
 	})
 
-	test('rendering twice gives the same answer and creates nothing', async ({ baseURL }) => {
+	test('rendering twice gives the same answer and creates nothing', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const markup = { markup: '# Idempotent' }
 

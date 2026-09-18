@@ -81,7 +81,10 @@ class NoticeBoardService {
 		}
 
 		$board['commentsEnabled'] = $commentsEnabled;
-		$board['moderator'] = ($moderator === '' ? null : $moderator);
+		$board['moderator'] = null;
+		if ($moderator !== '') {
+			$board['moderator'] = $moderator;
+		}
 
 		return $board;
 
@@ -152,9 +155,10 @@ class NoticeBoardService {
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function isCurrent(array $notice, ?DateTimeInterface $now = null): bool {
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		try {
 			$start = new DateTimeImmutable((string)($notice['startDate'] ?? ''));

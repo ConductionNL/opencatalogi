@@ -109,9 +109,10 @@ class BannerService {
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function isCurrent(array $banner, ?DateTimeInterface $now = null): bool {
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		try {
 			$start = new DateTimeImmutable((string)($banner['startDate'] ?? ''));

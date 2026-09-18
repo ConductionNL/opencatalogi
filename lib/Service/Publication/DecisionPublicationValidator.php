@@ -34,6 +34,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
+use DomainException;
 
 /**
  * Refuses a decision that does not meet its own type's publication rules.
@@ -75,19 +76,9 @@ class DecisionPublicationValidator {
 			];
 		}
 
-		$rawPublicationDate = ($decision['publicationDate'] ?? null);
-		$publicationDate = null;
-
-		if ($rawPublicationDate === null || trim((string)$rawPublicationDate) === '') {
-			$reasons[] = 'This decision type obliges publication, and the decision carries no publication date.';
-		} else {
-			try {
-				$publicationDate = new DateTimeImmutable((string)$rawPublicationDate);
-			} catch (\Throwable $e) {
-				$reasons[] = 'The publication date on this decision cannot be read as a date: "'
-					. (string)$rawPublicationDate . '".';
-			}
-		}
+		$read = $this->readPublicationDate(decision: $decision);
+		$publicationDate = $read['date'];
+		$reasons = array_merge($reasons, $read['reasons']);
 
 		$termDays = (int)($decisionType['responseTermDays'] ?? 0);
 		if ($termDays <= 0) {
@@ -109,6 +100,39 @@ class DecisionPublicationValidator {
 	}//end validate()
 
 	/**
+	 * Read the publication date off a decision, saying why it could not be read.
+	 *
+	 * A missing date and a date nobody can parse are different failures and are
+	 * named differently, because they send whoever fixes the decision to
+	 * different places.
+	 *
+	 * @param array<string, mixed> $decision The decision to publish.
+	 *
+	 * @return array{date: DateTimeImmutable|null, reasons: array<int, string>} The date and what was wrong.
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 */
+	private function readPublicationDate(array $decision): array {
+		$raw = trim((string)($decision['publicationDate'] ?? ''));
+		if ($raw === '') {
+			return [
+				'date' => null,
+				'reasons' => ['This decision type obliges publication, and the decision carries no publication date.'],
+			];
+		}
+
+		try {
+			return ['date' => new DateTimeImmutable($raw), 'reasons' => []];
+		} catch (\Throwable $e) {
+			return [
+				'date' => null,
+				'reasons' => ['The publication date on this decision cannot be read as a date: "' . $raw . '".'],
+			];
+		}
+
+	}//end readPublicationDate()
+
+	/**
 	 * The text the type publishes with every one of its records.
 	 *
 	 * @param array<string, mixed> $decisionType The decision type.
@@ -119,8 +143,11 @@ class DecisionPublicationValidator {
 	 */
 	public function publicationText(array $decisionType): ?string {
 		$text = trim((string)($decisionType['publicationText'] ?? ''));
+		if ($text === '') {
+			return null;
+		}
 
-		return ($text === '' ? null : $text);
+		return $text;
 
 	}//end publicationText()
 
@@ -128,7 +155,7 @@ class DecisionPublicationValidator {
 	 * The decision as it is recorded once it passes.
 	 *
 	 * @param array<string, mixed> $decision The decision.
-	 * @param array{publishable: boolean, reasons: array<int, string>, responseDate: string|null, publicationText: string|null} $validation The validation result.
+	 * @param array{publishable: boolean, reasons: array<int, string>, responseDate: string|null, publicationText: string|null} $validation Result.
 	 *
 	 * @return array<string, mixed> The decision with its computed response date and its type's text.
 	 *
@@ -138,7 +165,7 @@ class DecisionPublicationValidator {
 	 */
 	public function applyValidated(array $decision, array $validation): array {
 		if ($validation['publishable'] === false) {
-			throw new \DomainException(message: implode(' ', $validation['reasons']));
+			throw new DomainException(message: implode(' ', $validation['reasons']));
 		}
 
 		if ($validation['responseDate'] !== null) {

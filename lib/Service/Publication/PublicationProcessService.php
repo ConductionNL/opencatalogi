@@ -85,12 +85,23 @@ class PublicationProcessService {
 		$steps = [];
 		foreach (self::STEPS as $step) {
 			$enabled = (bool)($enabledSteps[$step] ?? true);
+
+			// A step that is configured off is recorded as skipped with the reason,
+			// never as done: an instance that wants one action still has to be able
+			// to tell a step nobody took from a step nobody asked for.
+			$status = self::SKIPPED;
+			$note = 'Configured off on this instance.';
+			if ($enabled === true) {
+				$status = self::PENDING;
+				$note = null;
+			}
+
 			$steps[] = [
 				'step' => $step,
-				'status' => ($enabled === true ? self::PENDING : self::SKIPPED),
+				'status' => $status,
 				'completedBy' => null,
 				'completedAt' => null,
-				'note' => ($enabled === true ? null : 'Configured off on this instance.'),
+				'note' => $note,
 			];
 		}
 
@@ -126,9 +137,10 @@ class PublicationProcessService {
 			throw new DomainException(message: 'A publication has no step called "' . $step . '".');
 		}
 
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		$found = false;
 		foreach (($process['steps'] ?? []) as $index => $recorded) {
@@ -153,7 +165,10 @@ class PublicationProcessService {
 			throw new DomainException(message: 'This process does not carry the step "' . $step . '".');
 		}
 
-		$process['state'] = ($this->isComplete(process: $process) === true ? 'complete' : 'open');
+		$process['state'] = 'open';
+		if ($this->isComplete(process: $process) === true) {
+			$process['state'] = 'complete';
+		}
 
 		return $process;
 
@@ -182,11 +197,13 @@ class PublicationProcessService {
 	/**
 	 * Whether the publication may advance, and what holds it if not.
 	 *
+	 * The answer is read from the asks alone: the process itself never holds a
+	 * publication, so it is not asked for here.
+	 *
 	 * An unanswered ask inside its term holds the publication and is named. An
 	 * ask whose term has passed does not hold it: the party was asked and did
 	 * not answer, which is an answer the law accepts.
 	 *
-	 * @param array<string, mixed> $process The process.
 	 * @param array<int, array<string, mixed>> $asks The zienswijze asks on this publication.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
 	 *
@@ -194,10 +211,11 @@ class PublicationProcessService {
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-interested-parties-are-consulted-before-information-about-them-is-published-req-pin-105
 	 */
-	public function mayAdvance(array $process, array $asks, ?DateTimeInterface $now = null): array {
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+	public function mayAdvance(array $asks, ?DateTimeInterface $now = null): array {
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		$held = [];
 		foreach ($asks as $ask) {

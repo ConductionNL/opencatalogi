@@ -7,6 +7,7 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenRegister\Service\ObjectService;
+use OCP\App\IAppManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -26,7 +27,9 @@ class ServiceCatalogueServiceTest extends TestCase {
 	protected function setUp(): void {
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
-		$this->service = new ServiceCatalogueService($this->container, $this->logger);
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isInstalled')->willReturn(true);
+		$this->service = new ServiceCatalogueService($this->container, $this->logger, $appManager);
 
 	}//end setUp()
 
@@ -51,7 +54,7 @@ class ServiceCatalogueServiceTest extends TestCase {
 
 		$decided = $this->service->decideAvailability(
 			entry: $entry,
-			caseTypesByIdentifier: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
+			caseTypesById: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
 		);
 
 		$this->assertTrue($decided['available']);
@@ -62,7 +65,7 @@ class ServiceCatalogueServiceTest extends TestCase {
 	public function testAnEntryWithNoBindingIsListedAsUnavailable(): void {
 		$decided = $this->service->decideAvailability(
 			entry: ['title' => 'Iets aanvragen'],
-			caseTypesByIdentifier: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
+			caseTypesById: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
 		);
 
 		$this->assertFalse($decided['available']);
@@ -73,7 +76,7 @@ class ServiceCatalogueServiceTest extends TestCase {
 	public function testAnIncompleteBindingIsNamedAsSuch(): void {
 		$decided = $this->service->decideAvailability(
 			entry: ['title' => 'Iets', 'formBinding' => ['caseType' => 'verhuizing', 'audience' => '', 'formName' => 'f']],
-			caseTypesByIdentifier: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
+			caseTypesById: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
 		);
 
 		$this->assertSame(ServiceCatalogueService::REASON_INCOMPLETE_BINDING, $decided['unavailableReason']);
@@ -83,7 +86,7 @@ class ServiceCatalogueServiceTest extends TestCase {
 	public function testAnUnknownCaseTypeIsNamedAsSuch(): void {
 		$decided = $this->service->decideAvailability(
 			entry: ['title' => 'Iets', 'formBinding' => ['caseType' => 'niets', 'audience' => 'resident', 'formName' => 'f']],
-			caseTypesByIdentifier: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
+			caseTypesById: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
 		);
 
 		$this->assertSame(ServiceCatalogueService::REASON_UNKNOWN_CASE_TYPE, $decided['unavailableReason']);
@@ -93,7 +96,7 @@ class ServiceCatalogueServiceTest extends TestCase {
 	public function testAnUnpublishedCaseTypeIsNamedAsSuch(): void {
 		$decided = $this->service->decideAvailability(
 			entry: ['title' => 'Kap', 'formBinding' => ['caseType' => 'kapvergunning', 'audience' => 'resident', 'formName' => 'f']],
-			caseTypesByIdentifier: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
+			caseTypesById: $this->service->indexCaseTypes(caseTypes: $this->caseTypes())
 		);
 
 		$this->assertSame(ServiceCatalogueService::REASON_UNPUBLISHED_CASE_TYPE, $decided['unavailableReason']);

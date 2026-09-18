@@ -94,9 +94,10 @@ class ZienswijzeService {
 			throw new DomainException(message: 'A zienswijze ask needs the party it is addressed to.');
 		}
 
-		$sentAt = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$sentAt = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$sentAt = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		return [
 			'publication' => $publicationId,
@@ -150,9 +151,10 @@ class ZienswijzeService {
 			);
 		}
 
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		$ask['answer'] = $answer;
 		$ask['answeredBy'] = $answeredBy;

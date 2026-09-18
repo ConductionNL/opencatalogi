@@ -87,10 +87,11 @@ class DepublicationService {
 			);
 		}
 
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
-		$at = $moment->format(DateTimeInterface::ATOM);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
+		$takenDownAt = $moment->format(DateTimeInterface::ATOM);
 
 		$publicationId = (string)($publication['id'] ?? '');
 		$withdrawals = [];
@@ -98,7 +99,7 @@ class DepublicationService {
 		foreach (array_values(array_unique(array_map('strval', $channels))) as $channel) {
 			$withdrawal = [
 				'channel' => $channel,
-				'sentAt' => $at,
+				'sentAt' => $takenDownAt,
 				'acknowledgedAt' => null,
 				'answer' => null,
 			];
@@ -129,7 +130,7 @@ class DepublicationService {
 			'publication' => $publicationId,
 			'reason' => $reason,
 			'depublishedBy' => $depublishedBy,
-			'depublishedAt' => $at,
+			'depublishedAt' => $takenDownAt,
 			'withdrawals' => $withdrawals,
 		];
 
@@ -192,9 +193,10 @@ class DepublicationService {
 		string $answer,
 		?DateTimeInterface $now = null,
 	): array {
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		foreach (($depublication['withdrawals'] ?? []) as $index => $withdrawal) {
 			if ((string)($withdrawal['channel'] ?? '') !== $channel) {

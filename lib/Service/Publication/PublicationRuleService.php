@@ -248,7 +248,14 @@ class PublicationRuleService {
 	 * @param array<string, mixed> $rule The draft rule.
 	 * @param array<int, array<string, mixed>> $sample A sample of existing records.
 	 *
-	 * @return array{valid: boolean, errors: array<int, string>, wouldPublish: array<int, array<string, mixed>>, wouldNotPublish: integer, exposedProperties: array<int, string>, sampleSize: integer}
+	 * @return array{
+	 *     valid: boolean,
+	 *     errors: array<int, string>,
+	 *     wouldPublish: array<int, array<string, mixed>>,
+	 *     wouldNotPublish: integer,
+	 *     exposedProperties: array<int, string>,
+	 *     sampleSize: integer
+	 * }
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
@@ -388,6 +395,8 @@ class PublicationRuleService {
 	 * @param array<int, array<string, mixed>> $rules The rules.
 	 *
 	 * @return array<string, array<string, mixed>> The rules keyed by record type.
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function indexByRecordType(array $rules): array {
 		$indexed = [];

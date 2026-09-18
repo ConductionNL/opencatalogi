@@ -164,13 +164,17 @@ class InspectionController extends Controller {
 		}
 
 		$user = $this->userSession->getUser();
+		$openedBy = '';
+		if ($user !== null) {
+			$openedBy = $user->getUID();
+		}
 
 		try {
 			$inspection = $this->inspectionService->open(
 				record: $record,
 				recordType: $recordType,
 				documents: array_map('strval', $documents),
-				openedBy: ($user === null ? '' : $user->getUID())
+				openedBy: $openedBy
 			);
 		} catch (\DomainException $e) {
 			return new JSONResponse(
@@ -227,14 +231,14 @@ class InspectionController extends Controller {
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: ['error' => 'register-unreadable'],
 					statusCode: Http::STATUS_SERVICE_UNAVAILABLE
 				)
 			);
 		} catch (\Throwable $e) {
 			return $this->withCors(
-				new JSONResponse(data: ['error' => 'unknown-inspection'], statusCode: Http::STATUS_NOT_FOUND)
+				response: new JSONResponse(data: ['error' => 'unknown-inspection'], statusCode: Http::STATUS_NOT_FOUND)
 			);
 		}
 
@@ -243,7 +247,7 @@ class InspectionController extends Controller {
 		} catch (\DomainException $e) {
 			// An unreadable window refuses rather than defaulting either way.
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: ['error' => 'unreadable-window', 'message' => $e->getMessage()],
 					statusCode: Http::STATUS_SERVICE_UNAVAILABLE
 				)
@@ -252,7 +256,7 @@ class InspectionController extends Controller {
 
 		if ($outcome['readable'] === false && $outcome['reason'] === 'window-closed') {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: [
 						'error' => 'window-closed',
 						'message' => $this->l10n->t('The inspection period for these documents has ended.'),
@@ -265,12 +269,12 @@ class InspectionController extends Controller {
 
 		if ($outcome['readable'] === false) {
 			return $this->withCors(
-				new JSONResponse(data: ['error' => 'unknown-inspection'], statusCode: Http::STATUS_NOT_FOUND)
+				response: new JSONResponse(data: ['error' => 'unknown-inspection'], statusCode: Http::STATUS_NOT_FOUND)
 			);
 		}
 
 		return $this->withCors(
-			new JSONResponse(
+			response: new JSONResponse(
 				[
 					'record' => ($inspection['record'] ?? null),
 					'documents' => $outcome['documents'],

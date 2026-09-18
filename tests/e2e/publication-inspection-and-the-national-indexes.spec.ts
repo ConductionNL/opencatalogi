@@ -67,10 +67,16 @@ const NARROW_RULE = {
 }
 
 test.describe('The anonymous permission set', () => {
-	test('a property outside the set never reaches an anonymous reader', async ({ baseURL }) => {
+	test('a property outside the set never reaches an anonymous reader', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.post(`${API_BASE}/publications/search`, {
-			data: { records: [RECORD_WITH_A_SECRET], rules: [NARROW_RULE], q: 'Dorpsstraat' },
+			data: {
+				records: [RECORD_WITH_A_SECRET],
+				rules: [NARROW_RULE],
+				q: 'Dorpsstraat',
+			},
 		})
 
 		expect(response.status()).toBe(200)
@@ -85,10 +91,16 @@ test.describe('The anonymous permission set', () => {
 		await anon.dispose()
 	})
 
-	test('a word occurring only in a withheld property returns nothing', async ({ baseURL }) => {
+	test('a word occurring only in a withheld property returns nothing', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.post(`${API_BASE}/publications/search`, {
-			data: { records: [RECORD_WITH_A_SECRET], rules: [NARROW_RULE], q: 'E2E-ZELDZAAMWOORD' },
+			data: {
+				records: [RECORD_WITH_A_SECRET],
+				rules: [NARROW_RULE],
+				q: 'E2E-ZELDZAAMWOORD',
+			},
 		})
 
 		expect(response.status()).toBe(200)
@@ -97,7 +109,9 @@ test.describe('The anonymous permission set', () => {
 		await anon.dispose()
 	})
 
-	test('an anonymous reader cannot preview a publication rule', async ({ baseURL }) => {
+	test('an anonymous reader cannot preview a publication rule', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.post(`${API_BASE}/publication-rules/preview`, {
 			data: { rule: NARROW_RULE, sample: [RECORD_WITH_A_SECRET] },
@@ -108,28 +122,43 @@ test.describe('The anonymous permission set', () => {
 		await anon.dispose()
 	})
 
-	test('an administrator sees both halves of the preview before saving', async ({ request: admin }) => {
+	test('an administrator sees both halves of the preview before saving', async ({
+		request: admin,
+	}) => {
 		const response = await admin.post(`${API_BASE}/publication-rules/preview`, {
-			data: { rule: { ...NARROW_RULE, enabled: false }, sample: [RECORD_WITH_A_SECRET] },
+			data: {
+				rule: { ...NARROW_RULE, enabled: false },
+				sample: [RECORD_WITH_A_SECRET],
+			},
 		})
 
 		expect(response.status()).toBe(200)
 		const body = await response.json()
 		expect(body.valid).toBe(true)
 		expect(body.wouldPublish).toHaveLength(1)
-		expect(body.exposedProperties).toEqual(expect.arrayContaining(['title', 'publicationDate']))
+		expect(body.exposedProperties).toEqual(
+			expect.arrayContaining(['title', 'publicationDate']),
+		)
 		expect(body.exposedProperties).not.toContain('aanvrager')
 	})
 })
 
 test.describe('The decision type', () => {
-	test('a decision without a publication date is refused and the reason names the date', async ({ request: admin }) => {
-		const response = await admin.post(`${API_BASE}/publication-rules/validate-decision`, {
-			data: {
-				decision: { id: 'e2e-b1', title: 'E2E besluit' },
-				decisionType: { publicationObligation: true, responseTermDays: 42 },
+	test('a decision without a publication date is refused and the reason names the date', async ({
+		request: admin,
+	}) => {
+		const response = await admin.post(
+			`${API_BASE}/publication-rules/validate-decision`,
+			{
+				data: {
+					decision: { id: 'e2e-b1', title: 'E2E besluit' },
+					decisionType: {
+						publicationObligation: true,
+						responseTermDays: 42,
+					},
+				},
 			},
-		})
+		)
 
 		expect(response.status()).toBe(422)
 		const body = await response.json()
@@ -137,16 +166,29 @@ test.describe('The decision type', () => {
 		expect(body.reasons.join(' ')).toContain('publication date')
 	})
 
-	test('the response date is computed from the term, not taken from the decision', async ({ request: admin }) => {
-		const response = await admin.post(`${API_BASE}/publication-rules/validate-decision`, {
-			data: {
-				decision: { publicationDate: '2026-09-01T00:00:00+00:00', responseDate: '2099-01-01' },
-				decisionType: { publicationObligation: true, responseTermDays: 42 },
+	test('the response date is computed from the term, not taken from the decision', async ({
+		request: admin,
+	}) => {
+		const response = await admin.post(
+			`${API_BASE}/publication-rules/validate-decision`,
+			{
+				data: {
+					decision: {
+						publicationDate: '2026-09-01T00:00:00+00:00',
+						responseDate: '2099-01-01',
+					},
+					decisionType: {
+						publicationObligation: true,
+						responseTermDays: 42,
+					},
+				},
 			},
-		})
+		)
 
 		expect(response.status()).toBe(200)
-		expect((await response.json()).responseDate).toBe('2026-10-13T00:00:00+00:00')
+		expect((await response.json()).responseDate).toBe(
+			'2026-10-13T00:00:00+00:00',
+		)
 	})
 })
 
@@ -166,7 +208,10 @@ test.describe('Terinzagelegging', () => {
 		await anon.dispose()
 	})
 
-	test('a link inside its window serves only the chosen documents, and a closed one is gone', async ({ baseURL, request: admin }) => {
+	test('a link inside its window serves only the chosen documents, and a closed one is gone', async ({
+		baseURL,
+		request: admin,
+	}) => {
 		const opened = await admin.post(`${API_BASE}/inspections`, {
 			data: {
 				record: { id: 'e2e-r1' },
@@ -175,19 +220,26 @@ test.describe('Terinzagelegging', () => {
 			},
 		})
 
-		test.skip(opened.status() === 503, 'the registers are not configured on this instance')
+		test.skip(
+			opened.status() === 503,
+			'the registers are not configured on this instance',
+		)
 		expect(opened.status()).toBe(201)
 
 		const inspection = await opened.json()
 		const anon = await anonymous(baseURL as string)
 
-		const inside = await anon.get(`${API_BASE}/inspections/${inspection.id}?token=${inspection.token}`)
+		const inside = await anon.get(
+			`${API_BASE}/inspections/${inspection.id}?token=${inspection.token}`,
+		)
 		expect(inside.status()).toBe(200)
 		expect((await inside.json()).documents).toEqual(['e2e-d2', 'e2e-d4'])
 
 		// A wrong token is refused without telling the caller anything about
 		// the window it guessed at.
-		const wrongToken = await anon.get(`${API_BASE}/inspections/${inspection.id}?token=not-the-token`)
+		const wrongToken = await anon.get(
+			`${API_BASE}/inspections/${inspection.id}?token=not-the-token`,
+		)
 		expect(wrongToken.status()).toBe(404)
 
 		// The closed window is exercised by the unit suite with a controlled
@@ -207,9 +259,17 @@ test.describe('Terinzagelegging', () => {
 })
 
 test.describe('The national channels', () => {
-	test('an announcement that reached nothing is 502 and names the channels', async ({ request: admin }) => {
+	test('an announcement that reached nothing is 502 and names the channels', async ({
+		request: admin,
+	}) => {
 		const response = await admin.post(`${API_BASE}/publications/announce`, {
-			data: { decision: { id: 'e2e-b1', title: 'E2E bekendmaking', publicationDate: '2026-09-18' } },
+			data: {
+				decision: {
+					id: 'e2e-b1',
+					title: 'E2E bekendmaking',
+					publicationDate: '2026-09-18',
+				},
+			},
 		})
 
 		// With no gateway configured this is 502, and the notices are still
@@ -225,7 +285,9 @@ test.describe('The national channels', () => {
 		}
 	})
 
-	test('a withdrawal nothing acknowledged is outstanding, not done', async ({ request: admin }) => {
+	test('a withdrawal nothing acknowledged is outstanding, not done', async ({
+		request: admin,
+	}) => {
 		const response = await admin.post(`${API_BASE}/publications/depublish`, {
 			data: {
 				publication: { id: 'e2e-p1' },
@@ -244,7 +306,9 @@ test.describe('The national channels', () => {
 		}
 	})
 
-	test('a depublication without a reason is refused', async ({ request: admin }) => {
+	test('a depublication without a reason is refused', async ({
+		request: admin,
+	}) => {
 		const response = await admin.post(`${API_BASE}/publications/depublish`, {
 			data: { publication: { id: 'e2e-p1' }, reason: '   ', channels: [] },
 		})
@@ -253,10 +317,20 @@ test.describe('The national channels', () => {
 		expect((await response.json()).error).toBe('depublication-refused')
 	})
 
-	test('a zienswijze over a channel that does not identify is refused', async ({ request: admin }) => {
-		const response = await admin.post(`${API_BASE}/publication-process/zienswijze`, {
-			data: { publication: 'e2e-p1', party: 'E2E party', channel: 'anonymous-webform', termDays: 14 },
-		})
+	test('a zienswijze over a channel that does not identify is refused', async ({
+		request: admin,
+	}) => {
+		const response = await admin.post(
+			`${API_BASE}/publication-process/zienswijze`,
+			{
+				data: {
+					publication: 'e2e-p1',
+					party: 'E2E party',
+					channel: 'anonymous-webform',
+					termDays: 14,
+				},
+			},
+		)
 
 		expect(response.status()).toBe(400)
 		expect((await response.json()).error).toBe('ask-refused')
@@ -264,11 +338,16 @@ test.describe('The national channels', () => {
 })
 
 test.describe('The stamp', () => {
-	test('a changed document fails the check, and an unchanged one passes', async ({ baseURL }) => {
+	test('a changed document fails the check, and an unchanged one passes', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const key = await anon.get(`${API_BASE}/publications/verification-key`)
 
-		test.skip(key.status() === 503, 'this instance publishes no verification key')
+		test.skip(
+			key.status() === 503,
+			'this instance publishes no verification key',
+		)
 		expect(key.status()).toBe(200)
 
 		const published = await key.json()
@@ -281,8 +360,16 @@ test.describe('The stamp', () => {
 		const verify = await anon.post(`${API_BASE}/publications/verify`, {
 			data: {
 				document: 'de inhoud',
-				metadata: { id: 'e2e-d1', title: 'E2E', publicationDate: '2026-09-18' },
-				stamp: { algorithm: 'sha256', keyId: published.keyId, signature: 'niet-de-handtekening' },
+				metadata: {
+					id: 'e2e-d1',
+					title: 'E2E',
+					publicationDate: '2026-09-18',
+				},
+				stamp: {
+					algorithm: 'sha256',
+					keyId: published.keyId,
+					signature: 'niet-de-handtekening',
+				},
 			},
 		})
 

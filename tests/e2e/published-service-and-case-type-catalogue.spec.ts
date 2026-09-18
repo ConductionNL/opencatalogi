@@ -59,7 +59,9 @@ async function anonymous(baseURL: string): Promise<APIRequestContext> {
 }
 
 test.describe('The public request catalogue', () => {
-	test('an anonymous reader reads the catalogue, or is told it is unreadable', async ({ baseURL }) => {
+	test('an anonymous reader reads the catalogue, or is told it is unreadable', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.get(CATALOGUE)
 
@@ -102,7 +104,9 @@ test.describe('The public request catalogue', () => {
 		await anon.dispose()
 	})
 
-	test('the catalogue answers CORS preflight for a portal on another origin', async ({ baseURL }) => {
+	test('the catalogue answers CORS preflight for a portal on another origin', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.fetch(CATALOGUE, {
 			method: 'OPTIONS',
@@ -115,7 +119,9 @@ test.describe('The public request catalogue', () => {
 		await anon.dispose()
 	})
 
-	test('an anonymous reader cannot read the administrator list of broken entries', async ({ baseURL }) => {
+	test('an anonymous reader cannot read the administrator list of broken entries', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.get(UNAVAILABLE)
 
@@ -139,9 +145,14 @@ test.describe('The case type catalogue', () => {
 		await anon.dispose()
 	})
 
-	test('an import from a source that cannot be reached says unreachable, not empty', async ({ request: admin }) => {
+	test('an import from a source that cannot be reached says unreachable, not empty', async ({
+		request: admin,
+	}) => {
 		const response = await admin.post(IMPORT, {
-			data: { sourceId: 'a-source-that-does-not-exist', externalId: 'verhuizing' },
+			data: {
+				sourceId: 'a-source-that-does-not-exist',
+				externalId: 'verhuizing',
+			},
 		})
 
 		// The one answer this must never give is 200 with nothing in it. An
@@ -155,16 +166,29 @@ test.describe('The case type catalogue', () => {
 		}
 	})
 
-	test('a published case type links to its form and its API description', async ({ baseURL, request: admin }) => {
+	test('a published case type links to its form and its API description', async ({
+		baseURL,
+		request: admin,
+	}) => {
 		const listed = await admin.get(`${CATALOGUE}?_limit=50`)
-		test.skip(listed.status() !== 200, 'the catalogue is not configured on this instance')
+		test.skip(
+			listed.status() !== 200,
+			'the catalogue is not configured on this instance',
+		)
 
 		const body = await listed.json()
-		const bound = body.entries.find((entry: { available: boolean }) => entry.available === true)
-		test.skip(bound === undefined, 'this instance has no entry with a resolvable form')
+		const bound = body.entries.find(
+			(entry: { available: boolean }) => entry.available === true,
+		)
+		test.skip(
+			bound === undefined,
+			'this instance has no entry with a resolvable form',
+		)
 
 		const anon = await anonymous(baseURL as string)
-		const caseType = await anon.get(`${API_BASE}/case-types/${bound.formBinding.caseType}`)
+		const caseType = await anon.get(
+			`${API_BASE}/case-types/${bound.formBinding.caseType}`,
+		)
 
 		if (caseType.status() === 200) {
 			const definition = await caseType.json()
@@ -177,7 +201,10 @@ test.describe('The case type catalogue', () => {
 })
 
 test.describe('Knowledge articles', () => {
-	test('an extracted article is a draft, and an anonymous reader cannot read it', async ({ baseURL, request: admin }) => {
+	test('an extracted article is a draft, and an anonymous reader cannot read it', async ({
+		baseURL,
+		request: admin,
+	}) => {
 		const created = await admin.post(`${API_BASE}/knowledge-articles/extract`, {
 			data: {
 				case: {
@@ -188,7 +215,10 @@ test.describe('Knowledge articles', () => {
 			},
 		})
 
-		test.skip(created.status() === 503, 'the catalogue is not configured on this instance')
+		test.skip(
+			created.status() === 503,
+			'the catalogue is not configured on this instance',
+		)
 		expect([201, 401, 403]).toContain(created.status())
 
 		if (created.status() !== 201) {
@@ -202,17 +232,25 @@ test.describe('Knowledge articles', () => {
 		// The failure that matters: an answer written to one applicant reaching
 		// the public catalogue because an action said "article".
 		const anon = await anonymous(baseURL as string)
-		const verdict = await anon.post(`${API_BASE}/knowledge-articles/${draft.id}/verdict`, {
-			data: { helpful: true },
-		})
+		const verdict = await anon.post(
+			`${API_BASE}/knowledge-articles/${draft.id}/verdict`,
+			{
+				data: { helpful: true },
+			},
+		)
 		expect(verdict.status()).toBe(404)
 
 		await anon.dispose()
 	})
 
-	test('an anonymous reader must say whether the article helped', async ({ baseURL }) => {
+	test('an anonymous reader must say whether the article helped', async ({
+		baseURL,
+	}) => {
 		const anon = await anonymous(baseURL as string)
-		const response = await anon.post(`${API_BASE}/knowledge-articles/does-not-exist/verdict`, { data: {} })
+		const response = await anon.post(
+			`${API_BASE}/knowledge-articles/does-not-exist/verdict`,
+			{ data: {} },
+		)
 
 		expect([400, 404, 503]).toContain(response.status())
 

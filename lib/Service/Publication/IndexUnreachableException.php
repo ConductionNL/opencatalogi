@@ -1,7 +1,9 @@
 <?php
 
 /**
- * A national index or a channel we could not reach. Distinct from an index that answered nothing. A withdrawal or a registration that was never delivered is outstanding, never done.
+ * A national index or a channel we could not reach. Distinct from an index
+ * that answered nothing. A withdrawal or a registration that was never
+ * delivered is outstanding, never done.
  *
  * @category Exception
  * @package  OCA\OpenCatalogi\Service\Publication
@@ -25,7 +27,11 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use RuntimeException;
 
 /**
- * A national index or a channel we could not reach. Distinct from an index that answered nothing. A withdrawal or a registration that was never delivered is outstanding, never done.
+ * A national index or a channel we could not reach. Distinct from an index
+ * that answered nothing. A withdrawal or a registration that was never
+ * delivered is outstanding, never done.
+ *
+ * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
  */
 class IndexUnreachableException extends RuntimeException {
 

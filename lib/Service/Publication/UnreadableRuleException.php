@@ -1,7 +1,9 @@
 <?php
 
 /**
- * A publication rule this app cannot evaluate. A rule nobody can read must not be treated as one that publishes everything, and equally not as one that publishes nothing: it refuses, and somebody fixes it.
+ * A publication rule this app cannot evaluate. A rule nobody can read must
+ * not be treated as one that publishes everything, and equally not as one that
+ * publishes nothing: it refuses, and somebody fixes it.
  *
  * @category Exception
  * @package  OCA\OpenCatalogi\Service\Publication
@@ -25,7 +27,11 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use RuntimeException;
 
 /**
- * A publication rule this app cannot evaluate. A rule nobody can read must not be treated as one that publishes everything, and equally not as one that publishes nothing: it refuses, and somebody fixes it.
+ * A publication rule this app cannot evaluate. A rule nobody can read must
+ * not be treated as one that publishes everything, and equally not as one that
+ * publishes nothing: it refuses, and somebody fixes it.
+ *
+ * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
  */
 class UnreadableRuleException extends RuntimeException {
 

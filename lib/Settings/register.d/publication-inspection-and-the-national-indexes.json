@@ -93,7 +93,9 @@
 							],
 							"properties": {
 								"property": {
-									"type": "string"
+									"type": "string",
+									"title": "Property",
+									"description": "The property on the record the condition looks at."
 								},
 								"operator": {
 									"type": "string",
@@ -105,10 +107,13 @@
 										"in",
 										"before",
 										"after"
-									]
+									],
+									"title": "Operator",
+									"description": "How the property is compared with the value."
 								},
 								"value": {
-									"description": "The value the operator compares against, where it takes one."
+									"description": "The value the operator compares against, where it takes one.",
+									"title": "Value"
 								}
 							}
 						}
@@ -126,7 +131,8 @@
 					"previewedAt": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Previewed at"
+						"title": "Previewed at",
+						"description": "When somebody last previewed this rule. A rule that was never previewed cannot be turned on."
 					}
 				}
 			},
@@ -148,12 +154,14 @@
 					"record": {
 						"type": "string",
 						"title": "Record",
-						"facetable": true
+						"facetable": true,
+						"description": "The record the documents belong to."
 					},
 					"recordType": {
 						"type": "string",
 						"title": "Record type",
-						"facetable": true
+						"facetable": true,
+						"description": "The schema slug of that record, which is where the statutory term comes from."
 					},
 					"documents": {
 						"type": "array",
@@ -166,7 +174,8 @@
 					"startDate": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Start date"
+						"title": "Start date",
+						"description": "The day the documents went open for inspection."
 					},
 					"endDate": {
 						"type": "string",
@@ -176,7 +185,8 @@
 					},
 					"termDays": {
 						"type": "integer",
-						"title": "Term in days"
+						"title": "Term in days",
+						"description": "How many days the documents lie open, taken from the record type."
 					},
 					"token": {
 						"type": "string",
@@ -185,7 +195,8 @@
 					},
 					"openedBy": {
 						"type": "string",
-						"title": "Opened by"
+						"title": "Opened by",
+						"description": "Who opened the inspection."
 					}
 				}
 			},
@@ -204,7 +215,8 @@
 					"publication": {
 						"type": "string",
 						"title": "Publication",
-						"facetable": true
+						"facetable": true,
+						"description": "The publication these steps belong to."
 					},
 					"state": {
 						"type": "string",
@@ -214,7 +226,8 @@
 							"open",
 							"held",
 							"complete"
-						]
+						],
+						"description": "Open while a step is still pending, complete once none is."
 					},
 					"steps": {
 						"type": "array",
@@ -229,7 +242,9 @@
 										"zienswijze",
 										"approval",
 										"channels"
-									]
+									],
+									"title": "Step",
+									"description": "Which of the four steps this is."
 								},
 								"status": {
 									"type": "string",
@@ -237,20 +252,29 @@
 										"pending",
 										"complete",
 										"skipped"
-									]
+									],
+									"title": "Status",
+									"description": "Pending, done, or skipped because the step is configured off here."
 								},
 								"completedBy": {
-									"type": "string"
+									"type": "string",
+									"title": "Completed by",
+									"description": "Who completed the step."
 								},
 								"completedAt": {
 									"type": "string",
-									"format": "date-time"
+									"format": "date-time",
+									"title": "Completed at",
+									"description": "When the step was completed."
 								},
 								"note": {
-									"type": "string"
+									"type": "string",
+									"title": "Note",
+									"description": "Why a step was skipped, for a step nobody was asked to take."
 								}
 							}
-						}
+						},
+						"description": "The four steps around this publication, each with what happened to it."
 					}
 				}
 			},
@@ -273,11 +297,13 @@
 					"publication": {
 						"type": "string",
 						"title": "Publication",
-						"facetable": true
+						"facetable": true,
+						"description": "The publication the party was asked about."
 					},
 					"party": {
 						"type": "string",
-						"title": "Interested party"
+						"title": "Interested party",
+						"description": "The party whose information would be published."
 					},
 					"channel": {
 						"type": "string",
@@ -287,25 +313,30 @@
 					"sentAt": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Sent at"
+						"title": "Sent at",
+						"description": "When the ask went out."
 					},
 					"termEndsAt": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Term ends at"
+						"title": "Term ends at",
+						"description": "When the term to answer runs out. After that the publication is no longer held."
 					},
 					"answeredAt": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Answered at"
+						"title": "Answered at",
+						"description": "When the party answered."
 					},
 					"answer": {
 						"type": "string",
-						"title": "Answer"
+						"title": "Answer",
+						"description": "What the party answered."
 					},
 					"answeredBy": {
 						"type": "string",
-						"title": "Answered by"
+						"title": "Answered by",
+						"description": "Who recorded the answer."
 					}
 				}
 			},
@@ -327,20 +358,24 @@
 					"publication": {
 						"type": "string",
 						"title": "Publication",
-						"facetable": true
+						"facetable": true,
+						"description": "The publication that was taken down."
 					},
 					"reason": {
 						"type": "string",
-						"title": "Reason"
+						"title": "Reason",
+						"description": "Why it was taken down, in words a reader can follow."
 					},
 					"depublishedBy": {
 						"type": "string",
-						"title": "Depublished by"
+						"title": "Depublished by",
+						"description": "Who took it down."
 					},
 					"depublishedAt": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Depublished at"
+						"title": "Depublished at",
+						"description": "When it was taken down."
 					},
 					"withdrawals": {
 						"type": "array",
@@ -349,21 +384,30 @@
 							"type": "object",
 							"properties": {
 								"channel": {
-									"type": "string"
+									"type": "string",
+									"title": "Channel",
+									"description": "The channel the withdrawal was sent to."
 								},
 								"sentAt": {
 									"type": "string",
-									"format": "date-time"
+									"format": "date-time",
+									"title": "Sent at",
+									"description": "When the withdrawal was sent."
 								},
 								"acknowledgedAt": {
 									"type": "string",
-									"format": "date-time"
+									"format": "date-time",
+									"title": "Acknowledged at",
+									"description": "When the channel confirmed it. Empty means the withdrawal is still outstanding."
 								},
 								"answer": {
-									"type": "string"
+									"type": "string",
+									"title": "Answer",
+									"description": "What the channel answered."
 								}
 							}
-						}
+						},
+						"description": "One withdrawal per channel the publication reached, including the national ones."
 					}
 				}
 			},
@@ -383,11 +427,13 @@
 					"appId": {
 						"type": "string",
 						"title": "App id",
-						"facetable": true
+						"facetable": true,
+						"description": "The app id the source registers under."
 					},
 					"title": {
 						"type": "string",
-						"title": "Title"
+						"title": "Title",
+						"description": "The name this source is shown under in the overview."
 					},
 					"kind": {
 						"type": "string",
@@ -396,17 +442,20 @@
 							"app",
 							"harvest"
 						],
-						"default": "app"
+						"default": "app",
+						"description": "Whether the source is asked directly or read over the harvest intake."
 					},
 					"enabled": {
 						"type": "boolean",
 						"title": "Enabled",
-						"default": true
+						"default": true,
+						"description": "A source that is off is left out of the overview entirely."
 					},
 					"lastReadAt": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Last read at"
+						"title": "Last read at",
+						"description": "When this source was last read. A source that could not be read is named as unread, never counted as a source with nothing to publish."
 					}
 				}
 			}

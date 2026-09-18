@@ -31,6 +31,8 @@ use RuntimeException;
 
 /**
  * An external catalogue we could not ask, reported as such.
+ *
+ * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
  */
 class ExternalCatalogueUnreachableException extends RuntimeException {
 

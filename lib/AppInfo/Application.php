@@ -37,6 +37,13 @@ use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
+use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
+use OCA\OpenCatalogi\Service\Community\SubscriptionService;
+use OCA\OpenCatalogi\Service\Community\VoteService;
+use OCA\OpenCatalogi\Service\KnowledgeArticleService;
+use OCA\OpenCatalogi\Service\Publication\DocumentStampService;
+use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
+use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
 use OCA\OpenRegister\AppHost\Controller\GenericHealthController;
 use OCA\OpenRegister\AppHost\Controller\GenericMetricsController;
@@ -265,16 +272,16 @@ class Application extends App implements IBootstrap {
 		// there is no gateway to ask with.
 		$context->registerServiceAlias(
 			'OCA\\OpenCatalogi\\Service\\Catalogue\\CaseTypeSourceReader',
-			\OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader::class
+			GatewayCaseTypeSourceReader::class
 		);
 
 		// The reader token on an article verdict is hashed with the instance
 		// secret, so a verdict can be counted once without the reader being
 		// identifiable from what is stored.
 		$context->registerService(
-			\OCA\OpenCatalogi\Service\KnowledgeArticleService::class,
+			KnowledgeArticleService::class,
 			static function ($c) {
-				return new \OCA\OpenCatalogi\Service\KnowledgeArticleService(
+				return new KnowledgeArticleService(
 					salt: (string)$c->get('OCP\\IConfig')->getSystemValue('secret', '')
 				);
 			}
@@ -287,11 +294,11 @@ class Application extends App implements IBootstrap {
 		// empty key verifies against an empty key, which would tell every reader
 		// a document is authentic while nobody checked anything.
 		$context->registerService(
-			\OCA\OpenCatalogi\Service\Publication\DocumentStampService::class,
+			DocumentStampService::class,
 			static function ($c) {
 				$config = $c->get(\OCP\IAppConfig::class);
 
-				return new \OCA\OpenCatalogi\Service\Publication\DocumentStampService(
+				return new DocumentStampService(
 					signingKey: $config->getValueString(self::APP_ID, 'publication_signing_key', ''),
 					keyId: $config->getValueString(self::APP_ID, 'publication_signing_key_id', 'default')
 				);
@@ -303,17 +310,17 @@ class Application extends App implements IBootstrap {
 		// counted or checked once without the reader being identifiable from
 		// what is stored.
 		$context->registerService(
-			\OCA\OpenCatalogi\Service\Community\VoteService::class,
+			VoteService::class,
 			static function ($c) {
-				return new \OCA\OpenCatalogi\Service\Community\VoteService(
+				return new VoteService(
 					salt: (string)$c->get('OCP\\IConfig')->getSystemValue('secret', '')
 				);
 			}
 		);
 		$context->registerService(
-			\OCA\OpenCatalogi\Service\Community\SubscriptionService::class,
+			SubscriptionService::class,
 			static function ($c) {
-				return new \OCA\OpenCatalogi\Service\Community\SubscriptionService(
+				return new SubscriptionService(
 					salt: (string)$c->get('OCP\\IConfig')->getSystemValue('secret', '')
 				);
 			}
@@ -323,11 +330,11 @@ class Application extends App implements IBootstrap {
 		// adding a collection takes effect on a running instance without a
 		// release.
 		$context->registerService(
-			\OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService::class,
+			PublishedCollectionsService::class,
 			static function ($c) {
-				return new \OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService(
+				return new PublishedCollectionsService(
 					config: $c->get(\OCP\IAppConfig::class),
-					ruleService: $c->get(\OCA\OpenCatalogi\Service\Publication\PublicationRuleService::class),
+					ruleService: $c->get(PublicationRuleService::class),
 					appName: self::APP_ID
 				);
 			}

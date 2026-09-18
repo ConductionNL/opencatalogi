@@ -161,8 +161,8 @@ class CaseTypeCatalogueService {
 			$sourceValue = ($remote[$property] ?? null);
 			$snapshotValue = ($snapshot[$property] ?? null);
 
-			$propertyChangedLocally = ($localValue !== $snapshotValue);
-			if ($propertyChangedLocally === true) {
+			$changedLocally = ($localValue !== $snapshotValue);
+			if ($changedLocally === true) {
 				$locallyChanged[] = $property;
 			}
 
@@ -174,7 +174,7 @@ class CaseTypeCatalogueService {
 				'property' => $property,
 				'localValue' => $localValue,
 				'sourceValue' => $sourceValue,
-				'locallyChanged' => $propertyChangedLocally,
+				'locallyChanged' => $changedLocally,
 			];
 		}
 
@@ -194,7 +194,7 @@ class CaseTypeCatalogueService {
 	 * is the state a previewed but unaccepted resynchronisation leaves behind.
 	 *
 	 * @param array<string, mixed> $local The local definition.
-	 * @param array{sourceVersion: string, changes: array<int, array<string, mixed>>, locallyChanged: array<int, string>} $diff The diff shown to the administrator.
+	 * @param array{sourceVersion: string, changes: array<int, array<string, mixed>>, locallyChanged: array<int, string>} $diff The diff.
 	 * @param array<int, string> $accepted The properties the administrator accepted.
 	 * @param DateTimeInterface|null $now The moment of the resynchronisation.
 	 *
@@ -260,9 +260,19 @@ class CaseTypeCatalogueService {
 		$form = trim((string)($definition['formUrl'] ?? ''));
 		$api = trim((string)($definition['apiDescriptionUrl'] ?? ''));
 
+		$formLink = null;
+		if ($form !== '') {
+			$formLink = $form;
+		}
+
+		$apiLink = null;
+		if ($api !== '') {
+			$apiLink = $api;
+		}
+
 		return [
-			'form' => ($form === '' ? null : $form),
-			'apiDescription' => ($api === '' ? null : $api),
+			'form' => $formLink,
+			'apiDescription' => $apiLink,
 			'complete' => ($form !== '' && $api !== ''),
 		];
 
@@ -284,8 +294,11 @@ class CaseTypeCatalogueService {
 		}
 
 		$importedAt = trim((string)($source['importedAt'] ?? ''));
+		if ($importedAt === '') {
+			return null;
+		}
 
-		return ($importedAt === '' ? null : $importedAt);
+		return $importedAt;
 
 	}//end syncedAt()
 }//end class

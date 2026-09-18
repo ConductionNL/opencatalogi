@@ -55,14 +55,24 @@ class ObligationOverviewService {
 	 * @param array<string, array<int, array<string, mixed>>|\Throwable> $obligationsBySource What each source gave back.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
 	 *
-	 * @return array{total: integer, published: integer, late: integer, outstanding: integer, unreadSources: array<int, array<string, string>>, obligations: array<int, array<string, mixed>>, sourcesRead: integer, sourcesRegistered: integer}
+	 * @return array{
+	 *     total: integer,
+	 *     published: integer,
+	 *     late: integer,
+	 *     outstanding: integer,
+	 *     unreadSources: array<int, array<string, string>>,
+	 *     obligations: array<int, array<string, mixed>>,
+	 *     sourcesRead: integer,
+	 *     sourcesRegistered: integer
+	 * }
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
 	 */
 	public function assemble(array $sources, array $obligationsBySource, ?DateTimeInterface $now = null): array {
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		$obligations = [];
 		$unread = [];
@@ -100,8 +110,8 @@ class ObligationOverviewService {
 			}
 		}
 
-		$published = count(array_filter($obligations, static fn (array $o): bool => $o['state'] === 'published'));
-		$late = count(array_filter($obligations, static fn (array $o): bool => $o['state'] === 'late'));
+		$published = count(array_filter($obligations, static fn (array $row): bool => $row['state'] === 'published'));
+		$late = count(array_filter($obligations, static fn (array $row): bool => $row['state'] === 'late'));
 
 		return [
 			'total' => count($obligations),
@@ -145,7 +155,7 @@ class ObligationOverviewService {
 			return 'unknown';
 		}
 
-		if ($dueDate < DateTimeImmutable::createFromInterface($now)) {
+		if ($dueDate < new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'))) {
 			return 'late';
 		}
 

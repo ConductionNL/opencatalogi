@@ -255,7 +255,7 @@ class ServiceCatalogueController extends Controller {
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: [
 						'error' => 'catalogue-unreadable',
 						'message' => $this->l10n->t('The catalogue could not be read, so this is not a list of nothing. Try again later.'),
@@ -265,7 +265,7 @@ class ServiceCatalogueController extends Controller {
 			);
 		}
 
-		return $this->withCors(new JSONResponse($catalogue));
+		return $this->withCors(response: new JSONResponse($catalogue));
 
 	}//end index()
 
@@ -346,21 +346,21 @@ class ServiceCatalogueController extends Controller {
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: ['error' => 'catalogue-unreadable', 'message' => $this->l10n->t('The catalogue could not be read.')],
 					statusCode: Http::STATUS_SERVICE_UNAVAILABLE
 				)
 			);
 		} catch (\Throwable $e) {
 			return $this->withCors(
-				new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND)
+				response: new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND)
 			);
 		}
 
 		$definition = $this->asArray(object: $found);
 
 		return $this->withCors(
-			new JSONResponse(
+			response: new JSONResponse(
 				array_merge(
 					$definition,
 					[
@@ -560,7 +560,7 @@ class ServiceCatalogueController extends Controller {
 		$helpful = filter_var($this->request->getParam('helpful', null), FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
 		if ($helpful === null) {
 			return $this->withCors(
-				new JSONResponse(
+				response: new JSONResponse(
 					data: ['error' => 'missing-verdict', 'message' => $this->l10n->t('Say whether the article helped.')],
 					statusCode: Http::STATUS_BAD_REQUEST
 				)
@@ -582,14 +582,14 @@ class ServiceCatalogueController extends Controller {
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
-				new JSONResponse(data: ['error' => 'catalogue-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE)
+				response: new JSONResponse(data: ['error' => 'catalogue-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE)
 			);
 		} catch (\Throwable $e) {
-			return $this->withCors(new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
+			return $this->withCors(response: new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
 		}
 
 		if ($this->articleService->isPublic(article: $article) === false) {
-			return $this->withCors(new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
+			return $this->withCors(response: new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
 		}
 
 		$existing = $objectService->searchObjects(
@@ -625,7 +625,7 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		return $this->withCors(
-			new JSONResponse(
+			response: new JSONResponse(
 				array_merge(
 					$this->articleService->publicCounts(article: $outcome['article']),
 					['counted' => $outcome['counted']]

@@ -97,9 +97,10 @@ class StatusPageService {
 			throw new DomainException(message: 'A status needs the component it is about.');
 		}
 
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		return [
 			'component' => trim($component),
@@ -127,9 +128,10 @@ class StatusPageService {
 		int $stalenessHours = self::DEFAULT_STALENESS_HOURS,
 		?DateTimeInterface $now = null,
 	): array {
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		$rendered = [];
 		$stale = 0;
@@ -157,11 +159,16 @@ class StatusPageService {
 				$stale++;
 			}
 
+			$stateSetAt = null;
+			if ($setAt !== '') {
+				$stateSetAt = $setAt;
+			}
+
 			$rendered[] = [
 				'component' => (string)($component['component'] ?? ''),
 				'state' => (string)($component['state'] ?? ''),
 				'message' => (string)($component['message'] ?? ''),
-				'stateSetAt' => ($setAt === '' ? null : $setAt),
+				'stateSetAt' => $stateSetAt,
 				'stale' => $isStale,
 				'order' => (int)($component['order'] ?? 0),
 			];

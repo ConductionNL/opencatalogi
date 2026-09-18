@@ -77,7 +77,8 @@
 							"degraded",
 							"unavailable",
 							"maintenance"
-						]
+						],
+						"description": "The state somebody set for this component. Nothing is probed, so nothing is inferred."
 					},
 					"message": {
 						"type": "string",
@@ -92,12 +93,14 @@
 					},
 					"stateSetBy": {
 						"type": "string",
-						"title": "State set by"
+						"title": "State set by",
+						"description": "Who last set the state."
 					},
 					"order": {
 						"type": "integer",
 						"title": "Order",
-						"default": 0
+						"default": 0,
+						"description": "Where the component sits in the list on the page."
 					}
 				},
 				"x-openregister-notifications": {
@@ -162,7 +165,8 @@
 					"requestedAt": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Requested at"
+						"title": "Requested at",
+						"description": "When the address was offered. Nothing is sent to it until it is confirmed."
 					}
 				}
 			},
@@ -182,17 +186,20 @@
 				"properties": {
 					"body": {
 						"type": "string",
-						"title": "Body"
+						"title": "Body",
+						"description": "What the banner says."
 					},
 					"startDate": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Start date"
+						"title": "Start date",
+						"description": "The day the banner starts showing."
 					},
 					"endDate": {
 						"type": "string",
 						"format": "date-time",
-						"title": "End date"
+						"title": "End date",
+						"description": "The day it stops. A banner outside its period is not shown."
 					},
 					"severity": {
 						"type": "string",
@@ -203,12 +210,14 @@
 							"warning",
 							"critical"
 						],
-						"default": "info"
+						"default": "info",
+						"description": "How loudly the banner is shown."
 					},
 					"dismissable": {
 						"type": "boolean",
 						"title": "Dismissable",
-						"default": true
+						"default": true,
+						"description": "Whether a reader can close the banner for themselves."
 					}
 				}
 			},
@@ -230,16 +239,19 @@
 						"format": "uuid",
 						"$ref": "catalog",
 						"title": "Catalog",
-						"facetable": true
+						"facetable": true,
+						"description": "The catalogue this board belongs to."
 					},
 					"title": {
 						"type": "string",
-						"title": "Title"
+						"title": "Title",
+						"description": "The name the board is shown under."
 					},
 					"commentsEnabled": {
 						"type": "boolean",
 						"title": "Comments enabled",
-						"default": false
+						"default": false,
+						"description": "Comments are off until somebody turns them on, and a board with comments has to name a moderator."
 					},
 					"moderator": {
 						"type": "string",
@@ -266,25 +278,30 @@
 					"board": {
 						"type": "string",
 						"title": "Board",
-						"facetable": true
+						"facetable": true,
+						"description": "The board this notice is posted on."
 					},
 					"title": {
 						"type": "string",
-						"title": "Title"
+						"title": "Title",
+						"description": "What the notice is about, in one line."
 					},
 					"body": {
 						"type": "string",
-						"title": "Body"
+						"title": "Body",
+						"description": "The notice itself."
 					},
 					"startDate": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Start date"
+						"title": "Start date",
+						"description": "The day the notice starts showing."
 					},
 					"endDate": {
 						"type": "string",
 						"format": "date-time",
-						"title": "End date"
+						"title": "End date",
+						"description": "The day it stops showing."
 					},
 					"publication": {
 						"type": "string",
@@ -310,7 +327,8 @@
 					"record": {
 						"type": "string",
 						"title": "Record",
-						"facetable": true
+						"facetable": true,
+						"description": "The record the vote was cast on."
 					},
 					"readerHash": {
 						"type": "string",
@@ -320,12 +338,14 @@
 					"value": {
 						"type": "string",
 						"title": "Value",
-						"facetable": true
+						"facetable": true,
+						"description": "What the reader voted."
 					},
 					"castAt": {
 						"type": "string",
 						"format": "date-time",
-						"title": "Cast at"
+						"title": "Cast at",
+						"description": "When the vote was cast."
 					}
 				}
 			}

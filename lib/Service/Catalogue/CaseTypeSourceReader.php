@@ -41,6 +41,8 @@ interface CaseTypeSourceReader {
 	 * @return array<string, mixed> The definition, carrying at least `identifier` and `version`.
 	 *
 	 * @throws ExternalCatalogueUnreachableException When the source cannot be asked.
+	 *
+	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
 	 */
 	public function fetchDefinition(string $sourceId, string $externalId): array;
 
@@ -52,6 +54,8 @@ interface CaseTypeSourceReader {
 	 * @return array<int, array<string, mixed>> The definitions.
 	 *
 	 * @throws ExternalCatalogueUnreachableException When the source cannot be asked.
+	 *
+	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
 	 */
 	public function listDefinitions(string $sourceId): array;
 }//end interface

@@ -36,6 +36,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * The gateway-backed reader for an external case type catalogue.
+ *
+ * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
  */
 class GatewayCaseTypeSourceReader implements CaseTypeSourceReader {
 
@@ -172,6 +174,28 @@ class GatewayCaseTypeSourceReader implements CaseTypeSourceReader {
 			$response = $response->getResponse();
 		}
 
+		return $this->decode(response: $response);
+
+	}//end call()
+
+	/**
+	 * Read what the gateway handed back, in whichever of its shapes it came.
+	 *
+	 * The gateway answers with a decoded array, an array carrying a `body`
+	 * string, or a raw JSON string, depending on how the source is configured.
+	 * An answer this app cannot read is raised as unreachable rather than
+	 * returned as an empty definition: a definition nobody could read is not a
+	 * definition with no properties.
+	 *
+	 * @param mixed $response Whatever the gateway returned.
+	 *
+	 * @return array<string, mixed> The decoded answer.
+	 *
+	 * @throws ExternalCatalogueUnreachableException When the answer cannot be read.
+	 *
+	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
+	 */
+	private function decode(mixed $response): array {
 		if (is_string($response) === true) {
 			$decoded = json_decode($response, true);
 			if (is_array($decoded) === false) {
@@ -198,5 +222,5 @@ class GatewayCaseTypeSourceReader implements CaseTypeSourceReader {
 			message: 'The external case type catalogue answered something this app cannot read.'
 		);
 
-	}//end call()
+	}//end decode()
 }//end class

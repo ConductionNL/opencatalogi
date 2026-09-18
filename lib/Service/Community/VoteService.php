@@ -61,6 +61,8 @@ class VoteService {
 	 * @param string $readerToken The reader's token.
 	 *
 	 * @return string The salted hash.
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-reader-who-is-not-staff-votes-on-a-published-record-req-pcs-106
 	 */
 	public function readerHash(string $readerToken): string {
 		return hash('sha256', $this->salt . '|' . $readerToken);
@@ -112,9 +114,10 @@ class VoteService {
 			}
 		}
 
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		return [
 			'counted' => true,

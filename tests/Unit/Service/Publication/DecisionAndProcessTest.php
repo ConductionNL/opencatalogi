@@ -189,7 +189,6 @@ class DecisionAndProcessTest extends TestCase {
 		);
 
 		$advance = $this->process->mayAdvance(
-			process: $process,
 			asks: [$ask],
 			now: $this->at('2026-09-05T00:00:00+00:00')
 		);
@@ -209,7 +208,6 @@ class DecisionAndProcessTest extends TestCase {
 		);
 
 		$advance = $this->process->mayAdvance(
-			process: $this->process->start(publicationId: 'p1'),
 			asks: [$ask],
 			now: $this->at('2026-10-01T00:00:00+00:00')
 		);
@@ -234,7 +232,6 @@ class DecisionAndProcessTest extends TestCase {
 		);
 
 		$advance = $this->process->mayAdvance(
-			process: $this->process->start(publicationId: 'p1'),
 			asks: [$ask],
 			now: $this->at('2026-09-05T00:00:00+00:00')
 		);
@@ -277,7 +274,6 @@ class DecisionAndProcessTest extends TestCase {
 
 	public function testAnAskWithAnUnreadableTermHoldsThePublication(): void {
 		$advance = $this->process->mayAdvance(
-			process: $this->process->start(publicationId: 'p1'),
 			asks: [['party' => 'J. de Vries', 'termEndsAt' => 'ooit', 'answeredAt' => null]],
 			now: $this->at('2026-09-05T00:00:00+00:00')
 		);

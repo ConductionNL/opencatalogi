@@ -63,6 +63,8 @@ class SubscriptionService {
 	 * @param string $token The token.
 	 *
 	 * @return string The salted hash.
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-reader-subscribes-to-changes-on-the-status-page-req-pcs-102
 	 */
 	public function tokenHash(string $token): string {
 		return hash('sha256', $this->salt . '|' . $token);
@@ -92,9 +94,10 @@ class SubscriptionService {
 			throw new DomainException(message: 'A subscription needs an address that can be confirmed.');
 		}
 
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 		$token = bin2hex(random_bytes(16));
 
 		return [
@@ -129,9 +132,10 @@ class SubscriptionService {
 			throw new DomainException(message: 'This confirmation link does not match this subscription.');
 		}
 
-		$moment = ($now === null)
-			? new DateTimeImmutable('now', new DateTimeZone('UTC'))
-			: DateTimeImmutable::createFromInterface($now);
+		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		if ($now !== null) {
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+		}
 
 		$subscription['confirmedAt'] = $moment->format(DateTimeInterface::ATOM);
 
