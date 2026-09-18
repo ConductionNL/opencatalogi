@@ -298,6 +298,27 @@ class Application extends App implements IBootstrap {
 			}
 		);
 
+		// The reader token on a vote and the confirmation token on a status
+		// subscription are hashed with the instance secret, so both can be
+		// counted or checked once without the reader being identifiable from
+		// what is stored.
+		$context->registerService(
+			\OCA\OpenCatalogi\Service\Community\VoteService::class,
+			static function ($c) {
+				return new \OCA\OpenCatalogi\Service\Community\VoteService(
+					salt: (string)$c->get('OCP\\IConfig')->getSystemValue('secret', '')
+				);
+			}
+		);
+		$context->registerService(
+			\OCA\OpenCatalogi\Service\Community\SubscriptionService::class,
+			static function ($c) {
+				return new \OCA\OpenCatalogi\Service\Community\SubscriptionService(
+					salt: (string)$c->get('OCP\\IConfig')->getSystemValue('secret', '')
+				);
+			}
+		);
+
 		// The published-collection configuration lives in this app's config, so
 		// adding a collection takes effect on a running instance without a
 		// release.

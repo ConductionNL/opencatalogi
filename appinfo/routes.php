@@ -66,6 +66,12 @@ return [
 		// Woo-index harvester-readiness self-check (woo-index-harvester-readiness)
 		['name' => 'wooReadiness#report', 'url' => '/api/woo/readiness', 'verb' => 'GET'],
 		['name' => 'wooReadiness#run', 'url' => '/api/woo/readiness/run', 'verb' => 'POST'],
+		// The public and community surface: the admin surfaces.
+		['name' => 'community#setStatus', 'url' => '/api/status', 'verb' => 'POST'],
+		['name' => 'community#subscriptionRecipients', 'url' => '/api/status/recipients', 'verb' => 'GET'],
+		['name' => 'community#banners', 'url' => '/api/banners', 'verb' => 'GET'],
+		['name' => 'community#dismissBanner', 'url' => '/api/banners/dismiss', 'verb' => 'POST'],
+		['name' => 'community#saveNoticeBoard', 'url' => '/api/notice-boards', 'verb' => 'POST'],
 		// Active publication, inspection and the national indexes: the admin surfaces.
 		['name' => 'publicationRules#previewRule', 'url' => '/api/publication-rules/preview', 'verb' => 'POST'],
 		['name' => 'publicationRules#validateDecision', 'url' => '/api/publication-rules/validate-decision', 'verb' => 'POST'],
@@ -119,6 +125,12 @@ return [
 		// Pages CORS
 		// Directory CORS
 		['name' => 'directory#preflightedCors', 'url' => '/api/directory', 'verb' => 'OPTIONS'],
+		// Community surface CORS (status page, subscriptions, the feed, votes, the renderer)
+		['name' => 'community#preflightedCors', 'url' => '/api/status', 'verb' => 'OPTIONS'],
+		['name' => 'community#preflightedCors', 'url' => '/api/status/subscribe', 'verb' => 'OPTIONS'],
+		['name' => 'community#preflightedCors', 'url' => '/api/feeds/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'community#preflightedCors', 'url' => '/api/records/{id}/vote', 'verb' => 'OPTIONS'],
+		['name' => 'community#preflightedCors', 'url' => '/api/markup/render', 'verb' => 'OPTIONS'],
 		// Active publication CORS (public search, the stamp, the inspection link)
 		['name' => 'publicationRules#preflightedCors', 'url' => '/api/publications/search', 'verb' => 'OPTIONS'],
 		['name' => 'publicationRules#preflightedCors', 'url' => '/api/publications/verification-key', 'verb' => 'OPTIONS'],
@@ -198,6 +210,12 @@ return [
 		// checks} contract. URL unchanged. (Specific route - must be before
 		// wildcard catalog routes.)
 		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericHealth#index', 'url' => '/api/health', 'verb' => 'GET'],
+		// Community surface public routes (specific routes - must be before wildcard catalog routes)
+		['name' => 'community#statusPage', 'url' => '/api/status', 'verb' => 'GET'],
+		['name' => 'community#subscribe', 'url' => '/api/status/subscribe', 'verb' => 'POST'],
+		['name' => 'community#feed', 'url' => '/api/feeds/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'community#vote', 'url' => '/api/records/{id}/vote', 'verb' => 'POST'],
+		['name' => 'community#renderMarkup', 'url' => '/api/markup/render', 'verb' => 'POST'],
 		// Active publication public surfaces (specific routes - must be before wildcard catalog routes)
 		['name' => 'publicationRules#publicSearch', 'url' => '/api/publications/search', 'verb' => 'POST'],
 		['name' => 'publicationRules#verificationKey', 'url' => '/api/publications/verification-key', 'verb' => 'GET'],
