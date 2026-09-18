@@ -882,7 +882,14 @@ OC.L10N.register(
         "This definition was not imported, so there is no source to compare it with.": "Deze definitie is niet geïmporteerd, dus er is geen bron om mee te vergelijken.",
         "The external catalogue could not be reached, so nothing is known about it right now.": "De externe catalogus was niet bereikbaar, dus er is op dit moment niets over bekend.",
         "Say whether the article helped.": "Geef aan of het artikel geholpen heeft.",
-        "Name the case the answer comes from.": "Noem de zaak waar het antwoord vandaan komt."
+        "Name the case the answer comes from.": "Noem de zaak waar het antwoord vandaan komt.",
+        "Send the rule to preview.": "Stuur de regel die je wilt bekijken.",
+        "Send the decision and its type.": "Stuur het besluit en het besluittype.",
+        "This publication is held while a zienswijze is still open.": "Deze publicatie wacht zolang er nog een zienswijze openstaat.",
+        "The inspection could not be stored.": "De terinzagelegging kon niet worden opgeslagen.",
+        "The inspection period for these documents has ended.": "De termijn voor terinzagelegging van deze stukken is voorbij.",
+        "This organisation publishes no verification key, so a stamp here cannot be checked.": "Deze organisatie publiceert geen verificatiesleutel, dus een waarmerk is hier niet te controleren.",
+        "Send the document, its publication metadata and its stamp.": "Stuur het document, de publicatiegegevens en het waarmerk."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1,0 +1,415 @@
+{
+	"_note": "Register fragment for the publication-inspection-and-the-national-indexes change (ADR-037). Publication is a standing rule on a record type rather than a pile of picked objects; an inspection is a window that owns its own link; the process around a publication is walked and recorded; and a depublication is honest about which channel has not acknowledged it yet.",
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"publicationRule",
+					"inspection",
+					"publicationProcess",
+					"zienswijzeAsk",
+					"depublication",
+					"obligationSource"
+				],
+				"configuration": {
+					"schemas": {
+						"publicationRule": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Read on every anonymous read of a record of the type it governs"
+						},
+						"inspection": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Terinzagelegging: the window, its documents and its link"
+						},
+						"publicationProcess": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "The four steps around one publication, each recorded"
+						},
+						"zienswijzeAsk": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "One ask to one interested party, with the answer recorded against the publication"
+						},
+						"depublication": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "One depublication, with a withdrawal per channel and its acknowledgement"
+						},
+						"obligationSource": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "An application that registers as a source of publication obligations"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"publicationRule": {
+				"slug": "publicationRule",
+				"title": "Publication rule",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "A standing rule: for this record type, these parts are public",
+				"description": "Woo actieve openbaarmaking is a standing rule, not a person picking rows. The rule names the record type, the properties an anonymous reader may read, and the conditions under which a record of that type becomes public. A picked list goes stale the moment a new record arrives, and going stale here means failing to publish something the law says must be published.",
+				"icon": null,
+				"required": [
+					"recordType",
+					"anonymousProperties"
+				],
+				"properties": {
+					"recordType": {
+						"type": "string",
+						"title": "Record type",
+						"facetable": true,
+						"description": "The schema slug the rule governs."
+					},
+					"enabled": {
+						"type": "boolean",
+						"title": "Enabled",
+						"default": false,
+						"description": "A rule is off until somebody previews it and turns it on."
+					},
+					"anonymousProperties": {
+						"type": "array",
+						"title": "Anonymous properties",
+						"items": {
+							"type": "string"
+						},
+						"description": "The only properties an anonymous reader may read. Enforced at the read, not by a renderer leaving a field out."
+					},
+					"conditions": {
+						"type": "array",
+						"title": "Conditions",
+						"description": "A record publishes when every condition holds.",
+						"items": {
+							"type": "object",
+							"required": [
+								"property",
+								"operator"
+							],
+							"properties": {
+								"property": {
+									"type": "string"
+								},
+								"operator": {
+									"type": "string",
+									"enum": [
+										"equals",
+										"notEquals",
+										"exists",
+										"notEmpty",
+										"in",
+										"before",
+										"after"
+									]
+								},
+								"value": {
+									"description": "The value the operator compares against, where it takes one."
+								}
+							}
+						}
+					},
+					"publicationText": {
+						"type": "string",
+						"title": "Publication text",
+						"description": "The text published with every record of this type."
+					},
+					"inspectionTermDays": {
+						"type": "integer",
+						"title": "Inspection term in days",
+						"description": "The statutory period a record of this type lies open for inspection. A type that declares one can have an inspection opened on it."
+					},
+					"previewedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Previewed at"
+					}
+				}
+			},
+			"inspection": {
+				"slug": "inspection",
+				"title": "Inspection",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "Terinzagelegging: a window, its documents and its link",
+				"description": "Which documents form part of a decision for inspection is a judgement made per case, not a rule per type, so the set is chosen when the publication is made. The link stops working because the window closed, checked at the read, not because a job ran.",
+				"icon": null,
+				"required": [
+					"record",
+					"startDate",
+					"endDate",
+					"token"
+				],
+				"properties": {
+					"record": {
+						"type": "string",
+						"title": "Record",
+						"facetable": true
+					},
+					"recordType": {
+						"type": "string",
+						"title": "Record type",
+						"facetable": true
+					},
+					"documents": {
+						"type": "array",
+						"title": "Documents",
+						"items": {
+							"type": "string"
+						},
+						"description": "The identifiers of the documents chosen for this inspection, and only those."
+					},
+					"startDate": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Start date"
+					},
+					"endDate": {
+						"type": "string",
+						"format": "date-time",
+						"title": "End date",
+						"description": "Computed from the record type's statutory term. Not typed."
+					},
+					"termDays": {
+						"type": "integer",
+						"title": "Term in days"
+					},
+					"token": {
+						"type": "string",
+						"title": "Token",
+						"description": "The unguessable part of the inspection link."
+					},
+					"openedBy": {
+						"type": "string",
+						"title": "Opened by"
+					}
+				}
+			},
+			"publicationProcess": {
+				"slug": "publicationProcess",
+				"title": "Publication process",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "The four steps around one publication, each recorded",
+				"description": "Publish as a button hides four decisions: which documents, whether a zienswijze round is needed, who approves, and which channels receive it. A municipality that wants one action configures the steps away, and the skipped steps are recorded as configured off rather than as done.",
+				"icon": null,
+				"required": [
+					"publication"
+				],
+				"properties": {
+					"publication": {
+						"type": "string",
+						"title": "Publication",
+						"facetable": true
+					},
+					"state": {
+						"type": "string",
+						"title": "State",
+						"facetable": true,
+						"enum": [
+							"open",
+							"held",
+							"complete"
+						]
+					},
+					"steps": {
+						"type": "array",
+						"title": "Steps",
+						"items": {
+							"type": "object",
+							"properties": {
+								"step": {
+									"type": "string",
+									"enum": [
+										"documents",
+										"zienswijze",
+										"approval",
+										"channels"
+									]
+								},
+								"status": {
+									"type": "string",
+									"enum": [
+										"pending",
+										"complete",
+										"skipped"
+									]
+								},
+								"completedBy": {
+									"type": "string"
+								},
+								"completedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"note": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			},
+			"zienswijzeAsk": {
+				"slug": "zienswijzeAsk",
+				"title": "Zienswijze ask",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "One ask to one interested party, and their answer",
+				"description": "Before information about an interested party is published, that party is asked, over a channel that identifies them. The publication is held while an ask is open inside its term.",
+				"icon": null,
+				"required": [
+					"publication",
+					"party",
+					"channel",
+					"sentAt",
+					"termEndsAt"
+				],
+				"properties": {
+					"publication": {
+						"type": "string",
+						"title": "Publication",
+						"facetable": true
+					},
+					"party": {
+						"type": "string",
+						"title": "Interested party"
+					},
+					"channel": {
+						"type": "string",
+						"title": "Channel",
+						"description": "The channel the ask went out over. It has to identify the recipient."
+					},
+					"sentAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Sent at"
+					},
+					"termEndsAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Term ends at"
+					},
+					"answeredAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Answered at"
+					},
+					"answer": {
+						"type": "string",
+						"title": "Answer"
+					},
+					"answeredBy": {
+						"type": "string",
+						"title": "Answered by"
+					}
+				}
+			},
+			"depublication": {
+				"slug": "depublication",
+				"title": "Depublication",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "Taking a publication back, honestly",
+				"description": "One action takes a publication down, records who did it and why, and sends a withdrawal to every channel it reached, including the national ones. A withdrawal a channel has not acknowledged is shown as outstanding, because an undo that leaves the document in a harvester's copy is not one.",
+				"icon": null,
+				"required": [
+					"publication",
+					"reason",
+					"depublishedBy",
+					"depublishedAt"
+				],
+				"properties": {
+					"publication": {
+						"type": "string",
+						"title": "Publication",
+						"facetable": true
+					},
+					"reason": {
+						"type": "string",
+						"title": "Reason"
+					},
+					"depublishedBy": {
+						"type": "string",
+						"title": "Depublished by"
+					},
+					"depublishedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Depublished at"
+					},
+					"withdrawals": {
+						"type": "array",
+						"title": "Withdrawals",
+						"items": {
+							"type": "object",
+							"properties": {
+								"channel": {
+									"type": "string"
+								},
+								"sentAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"acknowledgedAt": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"answer": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			},
+			"obligationSource": {
+				"slug": "obligationSource",
+				"title": "Obligation source",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "An application that registers as a source of publication obligations",
+				"description": "The publication obligation is on the organisation, not on one case system, so the overview reads from every registered source and from the harvest intake. Publishing only what one product holds is publishing part of it.",
+				"icon": null,
+				"required": [
+					"appId",
+					"title"
+				],
+				"properties": {
+					"appId": {
+						"type": "string",
+						"title": "App id",
+						"facetable": true
+					},
+					"title": {
+						"type": "string",
+						"title": "Title"
+					},
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"enum": [
+							"app",
+							"harvest"
+						],
+						"default": "app"
+					},
+					"enabled": {
+						"type": "boolean",
+						"title": "Enabled",
+						"default": true
+					},
+					"lastReadAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Last read at"
+					}
+				}
+			}
+		}
+	}
+}
