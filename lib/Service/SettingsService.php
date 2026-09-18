@@ -1215,6 +1215,16 @@ class SettingsService {
 			'woo_assessment_schema' => 'wooAssessment',
 		];
 
+		// Published service and case type catalogue: four schemas in the same
+		// shared publication register, with snake_case config keys rather than
+		// the camelCase schema slugs, for the same reason as $wooSchemaMap.
+		$catalogueSchemaMap = [
+			'service_catalogue_entry_schema' => 'serviceCatalogueEntry',
+			'case_type_definition_schema' => 'caseTypeDefinition',
+			'knowledge_article_schema' => 'knowledgeArticle',
+			'article_verdict_schema' => 'articleVerdict',
+		];
+
 		// Build a map of schema slugs to schema IDs.
 		$schemaMap = [];
 		foreach (($importResult['schemas'] ?? []) as $schema) {
@@ -1276,7 +1286,8 @@ class SettingsService {
 		$expectedSlugs = array_merge(
 			$objectTypes,
 			array_values($ooapiTypeMap),
-			array_values($wooSchemaMap)
+			array_values($wooSchemaMap),
+			array_values($catalogueSchemaMap)
 		);
 		$missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
 		if (empty($missingSlugs) === false) {
@@ -1357,6 +1368,20 @@ class SettingsService {
 		}
 
 		foreach ($wooSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The service catalogue shares the same publication register, and each of
+		// its four schemas gets its own key. A key that stays unset makes the
+		// catalogue controller answer 503, which is the intended refusal: an
+		// unconfigured catalogue is not an empty one.
+		if ($registerId !== null) {
+			$this->config->setValueString($this->appName, 'service_catalogue_register', (string)$registerId);
+		}
+
+		foreach ($catalogueSchemaMap as $configKey => $schemaSlug) {
 			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
 			}

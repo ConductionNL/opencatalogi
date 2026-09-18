@@ -66,6 +66,12 @@ return [
 		// Woo-index harvester-readiness self-check (woo-index-harvester-readiness)
 		['name' => 'wooReadiness#report', 'url' => '/api/woo/readiness', 'verb' => 'GET'],
 		['name' => 'wooReadiness#run', 'url' => '/api/woo/readiness/run', 'verb' => 'POST'],
+		// Published service and case type catalogue: the admin surfaces.
+		['name' => 'serviceCatalogue#unavailableEntries', 'url' => '/api/service-catalogue/unavailable', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#importCaseType', 'url' => '/api/case-types/import', 'verb' => 'POST'],
+		['name' => 'serviceCatalogue#previewResync', 'url' => '/api/case-types/{id}/resync', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#applyResync', 'url' => '/api/case-types/{id}/resync', 'verb' => 'POST'],
+		['name' => 'serviceCatalogue#extractArticle', 'url' => '/api/knowledge-articles/extract', 'verb' => 'POST'],
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */
@@ -102,6 +108,10 @@ return [
 		// Pages CORS
 		// Directory CORS
 		['name' => 'directory#preflightedCors', 'url' => '/api/directory', 'verb' => 'OPTIONS'],
+		// Service catalogue CORS (public request catalogue, published case types, article verdicts)
+		['name' => 'serviceCatalogue#preflightedCors', 'url' => '/api/service-catalogue', 'verb' => 'OPTIONS'],
+		['name' => 'serviceCatalogue#preflightedCors', 'url' => '/api/case-types/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'serviceCatalogue#preflightedCors', 'url' => '/api/knowledge-articles/{id}/verdict', 'verb' => 'OPTIONS'],
 		// Listings CORS
 		['name' => 'listings#preflightedCors', 'url' => '/api/listings', 'verb' => 'OPTIONS'],
 		['name' => 'listings#preflightedCors', 'url' => '/api/listings/{id}', 'verb' => 'OPTIONS'],
@@ -172,6 +182,10 @@ return [
 		// checks} contract. URL unchanged. (Specific route - must be before
 		// wildcard catalog routes.)
 		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericHealth#index', 'url' => '/api/health', 'verb' => 'GET'],
+		// Published service catalogue (public; specific routes - must be before wildcard catalog routes)
+		['name' => 'serviceCatalogue#index', 'url' => '/api/service-catalogue', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#caseType', 'url' => '/api/case-types/{id}', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#recordVerdict', 'url' => '/api/knowledge-articles/{id}/verdict', 'verb' => 'POST'],
 		// Search (specific route - must be before wildcard catalog routes)
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
 		['name' => 'search#show', 'url' => '/api/search/{id}', 'verb' => 'GET'],

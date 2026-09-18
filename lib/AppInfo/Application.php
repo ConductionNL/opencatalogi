@@ -259,6 +259,27 @@ class Application extends App implements IBootstrap {
 			}
 		);
 
+		// The external case type catalogue is read through integriq's gateway;
+		// this app composes the ask and reads the answer, and holds no
+		// transport. The reader raises rather than answering an empty list when
+		// there is no gateway to ask with.
+		$context->registerServiceAlias(
+			'OCA\\OpenCatalogi\\Service\\Catalogue\\CaseTypeSourceReader',
+			\OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader::class
+		);
+
+		// The reader token on an article verdict is hashed with the instance
+		// secret, so a verdict can be counted once without the reader being
+		// identifiable from what is stored.
+		$context->registerService(
+			\OCA\OpenCatalogi\Service\KnowledgeArticleService::class,
+			static function ($c) {
+				return new \OCA\OpenCatalogi\Service\KnowledgeArticleService(
+					salt: (string)$c->get('OCP\\IConfig')->getSystemValue('secret', '')
+				);
+			}
+		);
+
 	}//end register()
 
 	/**
