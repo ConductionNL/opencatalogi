@@ -873,7 +873,16 @@ OC.L10N.register(
         "Status message": "Statusbericht",
         "Last checked": "Laatst gecontroleerd",
         "Add integration": "Integratie toevoegen",
-        "All connections": "Alle verbindingen"
+        "All connections": "Alle verbindingen",
+        "The catalogue could not be read, so this is not a list of nothing. Try again later.": "De catalogus kon niet worden gelezen, dus dit is geen lijst met niets. Probeer het later opnieuw.",
+        "The catalogue could not be read, so this is not a list of nothing.": "De catalogus kon niet worden gelezen, dus dit is geen lijst met niets.",
+        "The catalogue could not be read.": "De catalogus kon niet worden gelezen.",
+        "Name the external catalogue and the definition to import.": "Noem de externe catalogus en de definitie die je wilt importeren.",
+        "The definition was read but could not be stored.": "De definitie is gelezen maar kon niet worden opgeslagen.",
+        "This definition was not imported, so there is no source to compare it with.": "Deze definitie is niet geïmporteerd, dus er is geen bron om mee te vergelijken.",
+        "The external catalogue could not be reached, so nothing is known about it right now.": "De externe catalogus was niet bereikbaar, dus er is op dit moment niets over bekend.",
+        "Say whether the article helped.": "Geef aan of het artikel geholpen heeft.",
+        "Name the case the answer comes from.": "Noem de zaak waar het antwoord vandaan komt."
     },
     "nplurals=2; plural=(n != 1);"
 )
