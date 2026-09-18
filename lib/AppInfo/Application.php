@@ -280,6 +280,38 @@ class Application extends App implements IBootstrap {
 			}
 		);
 
+		// The stamp on a published document. The key is the organisation's, read
+		// from this app's own configuration rather than the instance secret, so
+		// rotating it is an administrative act and not a server reinstall. With
+		// no key configured the service refuses to stamp: a stamp made with an
+		// empty key verifies against an empty key, which would tell every reader
+		// a document is authentic while nobody checked anything.
+		$context->registerService(
+			\OCA\OpenCatalogi\Service\Publication\DocumentStampService::class,
+			static function ($c) {
+				$config = $c->get(\OCP\IAppConfig::class);
+
+				return new \OCA\OpenCatalogi\Service\Publication\DocumentStampService(
+					signingKey: $config->getValueString(self::APP_ID, 'publication_signing_key', ''),
+					keyId: $config->getValueString(self::APP_ID, 'publication_signing_key_id', 'default')
+				);
+			}
+		);
+
+		// The published-collection configuration lives in this app's config, so
+		// adding a collection takes effect on a running instance without a
+		// release.
+		$context->registerService(
+			\OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService::class,
+			static function ($c) {
+				return new \OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService(
+					config: $c->get(\OCP\IAppConfig::class),
+					ruleService: $c->get(\OCA\OpenCatalogi\Service\Publication\PublicationRuleService::class),
+					appName: self::APP_ID
+				);
+			}
+		);
+
 	}//end register()
 
 	/**

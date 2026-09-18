@@ -1225,6 +1225,17 @@ class SettingsService {
 			'article_verdict_schema' => 'articleVerdict',
 		];
 
+		// Active publication, inspection and the national indexes: six more
+		// schemas in the same shared publication register, same key convention.
+		$publicationSchemaMap = [
+			'publication_rule_schema' => 'publicationRule',
+			'inspection_schema' => 'inspection',
+			'publication_process_schema' => 'publicationProcess',
+			'zienswijze_ask_schema' => 'zienswijzeAsk',
+			'depublication_schema' => 'depublication',
+			'obligation_source_schema' => 'obligationSource',
+		];
+
 		// Build a map of schema slugs to schema IDs.
 		$schemaMap = [];
 		foreach (($importResult['schemas'] ?? []) as $schema) {
@@ -1287,7 +1298,8 @@ class SettingsService {
 			$objectTypes,
 			array_values($ooapiTypeMap),
 			array_values($wooSchemaMap),
-			array_values($catalogueSchemaMap)
+			array_values($catalogueSchemaMap),
+			array_values($publicationSchemaMap)
 		);
 		$missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
 		if (empty($missingSlugs) === false) {
@@ -1382,6 +1394,16 @@ class SettingsService {
 		}
 
 		foreach ($catalogueSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The publication rules, inspections and the rest share the publication
+		// register, which `publication_register` already points at. A key that
+		// stays unset makes the inspection controller answer 503 rather than
+		// pretending there are no inspections.
+		foreach ($publicationSchemaMap as $configKey => $schemaSlug) {
 			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
 			}
