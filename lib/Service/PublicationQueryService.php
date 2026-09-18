@@ -148,6 +148,53 @@ class PublicationQueryService
      */
     public function assemblePublicSearchResults(array $queryParams, object $objectService): array
     {
+        // ONE anonymous scope around the WHOLE assembly, not just the object reads.
+        // Scope resolution asks OpenRegister's SchemaMapper and RegisterMapper which
+        // schemas and registers exist, and those honour multitenancy by default — so
+        // with a session in play they answer from the caller's active organisation.
+        // Wrapping only the object reads left that door open: a signed-in caller
+        // could resolve a WIDER scope than an anonymous one before the anonymous read
+        // ever started, and see rows an anonymous caller does not. That is exactly
+        // what SCH-PFTS-001 forbids. One scope over the whole method closes the
+        // question for every read on this path, including ones added later.
+        //
+        // The inner `evaluateAsAnonymous()` calls stay: the scope is a depth counter,
+        // so nesting composes, and they keep the guarantee attached to each read for
+        // anyone who calls those helpers from somewhere else.
+        return $this->evaluateAsAnonymous(
+            objectService: $objectService,
+            operation: fn (): array => $this->assembleSearchResultsAsAnonymous(
+                queryParams: $queryParams,
+                objectService: $objectService
+            )
+        );
+
+    }//end assemblePublicSearchResults()
+
+
+    /**
+     * The body of {@see assemblePublicSearchResults()}, always run inside the
+     * anonymous evaluation scope that method opens.
+     *
+     * Private on purpose: calling it directly would skip the scope and reinstate
+     * the WOO-551 drift this ticket exists to remove.
+     *
+     * @param array  $queryParams   Raw request query parameters.
+     * @param object $objectService OpenRegister ObjectService instance.
+     *
+     * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
+     *
+     * @psalm-param   array<string, mixed> $queryParams
+     * @phpstan-param array<string, mixed> $queryParams
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function assembleSearchResultsAsAnonymous(array $queryParams, object $objectService): array
+    {
         // Stap 2 — Catalog-derived scope (SCH-PFTS-CAT-001..003).
         // Replaces the pre-WOO-536 app-config-derived scope (publication_register /
         // publication_schema / document_schema) with a catalog-model union so
@@ -479,7 +526,7 @@ class PublicationQueryService
         }
         return $envelope;
 
-    }//end assemblePublicSearchResults()
+    }//end assembleSearchResultsAsAnonymous()
 
     /**
      * Drop every schema that has no `authorization.read` rules from the anonymous scope.

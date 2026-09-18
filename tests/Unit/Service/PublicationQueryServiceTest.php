@@ -62,6 +62,19 @@ use ReflectionClass;
  */
 class FakeLegacySearchObjectService {
 
+	/**
+	 * Anonymous-scope nesting depth, maintained by the subclass that implements
+	 * `runAsAnonymous()`. Stays zero on this legacy fake, which has no such method.
+	 */
+	public int $scopeDepth = 0;
+
+	/**
+	 * Every read that ran with `scopeDepth === 0`. This is the real WOO-578
+	 * assertion: counting scopes proves a method was called, this proves each
+	 * READ was inside one. An unwrapped callsite lands here by name.
+	 */
+	public array $readsOutsideScope = [];
+
 	/** @var array<int, array<string, mixed>> Captured (query, flags) per invocation. */
 	public array $capturedCalls = [];
 
@@ -82,6 +95,10 @@ class FakeLegacySearchObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): array {
+		if ($this->scopeDepth === 0) {
+			$this->readsOutsideScope[] = 'searchObjectsPaginated';
+		}
+
 		$this->capturedCalls[] = [
 			'query'         => $query,
 			'_rbac'         => $_rbac,
@@ -110,6 +127,10 @@ class FakeLegacySearchObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): ?array {
+		if ($this->scopeDepth === 0) {
+			$this->readsOutsideScope[] = 'find';
+		}
+
 		return $this->findResponses[$id] ?? null;
 	}
 }
@@ -127,7 +148,12 @@ class FakeSearchObjectService extends FakeLegacySearchObjectService {
 
 	public function runAsAnonymous(callable $operation): mixed {
 		$this->anonymousScopes++;
-		return $operation();
+		$this->scopeDepth++;
+		try {
+			return $operation();
+		} finally {
+			$this->scopeDepth--;
+		}
 	}
 }
 
@@ -313,8 +339,32 @@ class PublicationQueryServiceTest extends TestCase {
 		$fake = $this->wireHappyPath();
 		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
 		$this->assertNotEmpty($fake->capturedCalls, 'searchObjectsPaginated was not called');
-		$this->assertGreaterThanOrEqual(count($fake->capturedCalls), $fake->anonymousScopes, 'every OR read must run inside runAsAnonymous()');
+		$this->assertSame([], $fake->readsOutsideScope, 'every OR read must run inside runAsAnonymous()');
 		$this->assertTrue($fake->capturedCalls[0]['_rbac'], '_rbac stays on: the public read rules ARE the filter');
+	}
+
+	/**
+	 * A document row drives a further OR read (the relations refinement).
+	 * Counting scopes cannot tell whether it ran inside one; `readsOutsideScope`
+	 * can, and the row loop has to actually execute for it to be reached at all.
+	 * Unwrap that callsite and this test names it.
+	 */
+	public function testEveryReadBehindADocumentRowAlsoRunsInsideTheScope(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-uuid-anon', 'schema' => 2, 'relations' => ['organization' => 'x']],
+			'title' => 'A document',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+			// The per-document refinement: no publicly visible publication -> drop.
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+
+		$this->assertGreaterThan(1, count($fake->capturedCalls), 'the document row must drive a second OR read');
+		$this->assertSame([], $fake->readsOutsideScope, 'the refinement read must run inside runAsAnonymous() too');
 	}
 
 	/**
@@ -332,6 +382,11 @@ class PublicationQueryServiceTest extends TestCase {
 			->with($this->stringContains('runAsAnonymous'));
 		$result = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $legacy);
 		$this->assertNotEmpty($legacy->capturedCalls, 'the read must still reach OpenRegister');
+		// And the tracker is not vacuously empty: on an OpenRegister WITHOUT the
+		// scope the very same read is recorded as having run outside one. Without
+		// this, `assertSame([], $fake->readsOutsideScope)` elsewhere would pass
+		// even if the recording never fired.
+		$this->assertSame(['searchObjectsPaginated'], $legacy->readsOutsideScope, 'the legacy path runs with the caller session, by design');
 		$this->assertSame(0, $result['total']);
 	}
 
