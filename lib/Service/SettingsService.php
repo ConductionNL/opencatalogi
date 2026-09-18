@@ -1236,6 +1236,18 @@ class SettingsService {
 			'obligation_source_schema' => 'obligationSource',
 		];
 
+		// The public and community surface: the status page, the banner, the
+		// notice boards and the reader's vote. A notice is deliberately its own
+		// schema rather than a publication, so it never enters the sitemap.
+		$communitySchemaMap = [
+			'service_status_schema' => 'serviceStatus',
+			'status_subscription_schema' => 'statusSubscription',
+			'instance_banner_schema' => 'instanceBanner',
+			'notice_board_schema' => 'noticeBoard',
+			'notice_schema' => 'notice',
+			'record_vote_schema' => 'recordVote',
+		];
+
 		// Build a map of schema slugs to schema IDs.
 		$schemaMap = [];
 		foreach (($importResult['schemas'] ?? []) as $schema) {
@@ -1299,7 +1311,8 @@ class SettingsService {
 			array_values($ooapiTypeMap),
 			array_values($wooSchemaMap),
 			array_values($catalogueSchemaMap),
-			array_values($publicationSchemaMap)
+			array_values($publicationSchemaMap),
+			array_values($communitySchemaMap)
 		);
 		$missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
 		if (empty($missingSlugs) === false) {
@@ -1404,6 +1417,15 @@ class SettingsService {
 		// stays unset makes the inspection controller answer 503 rather than
 		// pretending there are no inspections.
 		foreach ($publicationSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The community surface shares the same register. An unset key makes
+		// the status page answer 503 rather than reporting that nothing is
+		// wrong with anything.
+		foreach ($communitySchemaMap as $configKey => $schemaSlug) {
 			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
 			}

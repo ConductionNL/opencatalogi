@@ -889,7 +889,12 @@ OC.L10N.register(
         "The inspection could not be stored.": "De terinzagelegging kon niet worden opgeslagen.",
         "The inspection period for these documents has ended.": "De termijn voor terinzagelegging van deze stukken is voorbij.",
         "This organisation publishes no verification key, so a stamp here cannot be checked.": "Deze organisatie publiceert geen verificatiesleutel, dus een waarmerk is hier niet te controleren.",
-        "Send the document, its publication metadata and its stamp.": "Stuur het document, de publicatiegegevens en het waarmerk."
+        "Send the document, its publication metadata and its stamp.": "Stuur het document, de publicatiegegevens en het waarmerk.",
+        "The status page could not be read, so this is not a report that everything is fine.": "De statuspagina kon niet worden gelezen, dus dit is geen melding dat alles goed gaat.",
+        "Confirm the address before anything is sent to it.": "Bevestig het adres voordat er iets naartoe gaat.",
+        "The feed could not be assembled, so this is not an empty catalogue.": "De feed kon niet worden samengesteld, dus dit is geen lege catalogus.",
+        "Say what you are voting.": "Geef aan waar je voor stemt.",
+        "Send the markup to render.": "Stuur de opmaak die je wilt laten weergeven."
     },
     "nplurals=2; plural=(n != 1);"
 )
