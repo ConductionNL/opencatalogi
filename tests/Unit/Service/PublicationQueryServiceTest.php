@@ -377,8 +377,10 @@ class PublicationQueryServiceTest extends TestCase {
 		$legacy = new FakeLegacySearchObjectService();
 		$legacy->queuedResponses = [['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []]];
 		$this->wireHappyPath();
+		// `error`, not `warning`: the contract is silently not being kept, and a
+		// warning is routinely filtered on a busy public deployment.
 		$this->logger->expects($this->once())
-			->method('warning')
+			->method('error')
 			->with($this->stringContains('runAsAnonymous'));
 		$result = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $legacy);
 		$this->assertNotEmpty($legacy->capturedCalls, 'the read must still reach OpenRegister');

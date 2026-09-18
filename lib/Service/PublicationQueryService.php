@@ -209,8 +209,14 @@ class PublicationQueryService
         // with signed-in callers left to OR's session RBAC (WOO-551 semantics).
         // Since WOO-578 every read on this endpoint is evaluated as an anonymous
         // caller, so the guard holds for every caller: a schema that is open for
-        // want of rules is open for nobody here. Staff reach such schemas through
-        // /api/publications, which still honours the session.
+        // want of rules is open for nobody here.
+        //
+        // NOT a compensating control elsewhere: `/api/{catalogSlug}`
+        // (PublicationsController::index) is `#[PublicPage]` too and does NOT apply
+        // this guard, so the WOO-574 leak it closes is still open on that route for
+        // anonymous callers. Widening the guard here does not create that gap and
+        // does not fix it; closing it needs its own change, because that endpoint
+        // has a different scope-resolution path. Follow-up ticket.
         if (empty($scope['schemas']) === false) {
             $scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
         }
@@ -1581,9 +1587,15 @@ class PublicationQueryService
 
         if ($this->warnedAboutMissingAnonymousScope === false) {
             $this->warnedAboutMissingAnonymousScope = true;
-            $this->logger?->warning(
-                'WOO-578: OpenRegister has no runAsAnonymous(); /api/search evaluates with the '
-                .'caller session, so signed-in users may see more than anonymous callers (WOO-551).'
+            // `error`, not `warning`: the endpoint keeps answering, but its
+            // uniform-visibility contract is silently not being kept, and a warning
+            // is routinely filtered on a busy public deployment. The message names
+            // the fix rather than only the symptom.
+            $this->logger?->error(
+                'WOO-578: this OpenRegister has no ObjectService::runAsAnonymous(), so /api/search '
+                .'evaluates with the caller session and signed-in users may see more than anonymous '
+                .'callers (the WOO-551 behaviour). Upgrade OpenRegister to a build that carries the '
+                .'anonymous evaluation scope to restore uniform visibility.'
             );
         }
 
