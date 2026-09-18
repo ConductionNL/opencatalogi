@@ -1279,6 +1279,85 @@ class PublicationQueryServiceTest extends TestCase {
 	}
 
 	/**
+	 * WOO-577 follow-up: the guard must NOT fire on an ordinary page past the end
+	 * of the results. A caller asking for `_offset=40` of 31 real matches gets
+	 * `{results: [], total: 31}` from a perfectly healthy search — zeroing that
+	 * would make `total` collapse on the last page of every paginated query, and a
+	 * UI that redraws its count per response would show "0 results" for a search
+	 * that found 31.
+	 *
+	 * @dataProvider provideLaterPageParams
+	 *
+	 * @param array $paginationParams The pagination params that place the request past page one.
+	 */
+	public function testTotalSurvivesAnEmptyPagePastTheEnd(array $paginationParams): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 31, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog($paginationParams),
+			$fake
+		);
+
+		$this->assertSame([], $out['results']);
+		$this->assertSame(31, $out['total'], 'an empty page past the end is ordinary — total must not be zeroed');
+	}
+
+	/**
+	 * Pagination params that place a request beyond the first page.
+	 *
+	 * @return array<string, array{0: array<string, mixed>}>
+	 */
+	public static function provideLaterPageParams(): array {
+		return [
+			'explicit offset' => [['_offset' => 40, '_limit' => 10]],
+			'page two'        => [['_page' => 2, '_limit' => 10]],
+			'page two, no limit' => [['_page' => 2]],
+			'offset without limit' => [['_offset' => 5]],
+		];
+	}
+
+	/**
+	 * The guard still fires where it was written to: the FIRST page, where
+	 * `results: []` with a non-zero total and no local drops cannot be explained
+	 * by an offset. `_offset: 0` and `_page: 1` are the first page too.
+	 *
+	 * @dataProvider provideFirstPageParams
+	 *
+	 * @param array $paginationParams Params that still address page one.
+	 */
+	public function testTotalIsZeroedOnAnImpossibleFirstPage(array $paginationParams): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 8, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog($paginationParams),
+			$fake
+		);
+
+		$this->assertSame([], $out['results']);
+		$this->assertSame(0, $out['total'], 'OR reported rows it did not return on page one — report 0');
+	}
+
+	/**
+	 * Params that all mean "start at the beginning".
+	 *
+	 * @return array<string, array{0: array<string, mixed>}>
+	 */
+	public static function provideFirstPageParams(): array {
+		return [
+			'no pagination params' => [[]],
+			'explicit offset zero' => [['_offset' => 0]],
+			'page one'             => [['_page' => 1]],
+			'page one with limit'  => [['_page' => 1, '_limit' => 10]],
+		];
+	}
+
+	/**
 	 * Invoke a private/protected method by name via reflection.
 	 *
 	 * @param string $method Method name.
