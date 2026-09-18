@@ -186,6 +186,66 @@ test.describe('Notice boards and the feed', () => {
 		expect(body.message).toMatch(/moderator/i)
 	})
 
+	test('an anonymous caller cannot save a notice', async ({ baseURL }) => {
+		const anon = await anonymous(baseURL as string)
+		const response = await anon.post(`${API_BASE}/notices`, {
+			data: {
+				notice: {
+					board: 'e2e',
+					title: 'E2E mededeling',
+					startDate: '2026-09-01T00:00:00+00:00',
+					endDate: '2099-01-01T00:00:00+00:00',
+				},
+			},
+		})
+
+		expect([401, 403, 404, 412]).toContain(response.status())
+
+		await anon.dispose()
+	})
+
+	test('a notice with no board is refused with the reason', async ({
+		request: admin,
+	}) => {
+		const response = await admin.post(`${API_BASE}/notices`, {
+			data: {
+				notice: {
+					title: 'E2E mededeling zonder bord',
+					startDate: '2026-09-01T00:00:00+00:00',
+					endDate: '2099-01-01T00:00:00+00:00',
+				},
+			},
+		})
+
+		expect(response.status()).toBe(400)
+		expect((await response.json()).error).toBe('notice-refused')
+	})
+
+	test('a notice that passes its checks is stored and is current', async ({
+		request: admin,
+	}) => {
+		const response = await admin.post(`${API_BASE}/notices`, {
+			data: {
+				notice: {
+					board: 'e2e',
+					title: 'E2E werk aan de kade',
+					body: 'De kade is deze week afgesloten.',
+					startDate: '2026-09-01T00:00:00+00:00',
+					endDate: '2099-01-01T00:00:00+00:00',
+				},
+			},
+		})
+
+		test.skip(
+			response.status() === 503,
+			'the registers are not configured on this instance',
+		)
+		expect(response.status()).toBe(201)
+		const body = await response.json()
+		expect(body.title).toBe('E2E werk aan de kade')
+		expect(body.current).toBe(true)
+	})
+
 	test('a new board offers no comment form', async ({ request: admin }) => {
 		const response = await admin.post(`${API_BASE}/notice-boards`, {
 			data: {

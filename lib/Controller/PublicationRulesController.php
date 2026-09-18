@@ -6,7 +6,14 @@
  * The admin side of active publication: the rules that decide what publishes
  * and what an anonymous reader may read of it, the preview that shows both
  * halves before a rule is saved, the walked process around a publication, the
- * zienswijze round, depublication, and the obligation overview.
+ * zienswijze round, and depublication with its acknowledgements.
+ *
+ * There is NO obligation overview here, and this sentence says so because the
+ * previous one claimed there was. `ObligationOverviewService` assembles an
+ * overview from what it is given, and nothing gives it anything yet: the
+ * per-source readers and the harvest intake it reads from are
+ * `harvest-feed-intake`. REQ-PIN-110 is unmet until that lands, and a docblock
+ * advertising the surface is what stops the next person checking.
  *
  * Every write here is admin-gated. The two public surfaces of this change live
  * in InspectionController (the inspection link) and in the public search
@@ -43,6 +50,8 @@ use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Service\Publication\ZienswijzeService;
+use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -54,6 +63,7 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Container\ContainerInterface;
 
 /**
  * The admin surfaces of active publication, and the public search over it.
@@ -63,6 +73,7 @@ use OCP\IUserSession;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 class PublicationRulesController extends Controller {
+	use ResolvesRegisterConfiguration;
 
 	/**
 	 * Constructor.
@@ -80,6 +91,8 @@ class PublicationRulesController extends Controller {
 	 * @param NationalIndexService $indexService The national channels.
 	 * @param DocumentStampService $stampService The verifiable stamp.
 	 * @param PublishedCollectionsService $collectionsService The configured published set.
+	 * @param ContainerInterface $container Server container, for the register resolver.
+	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -97,6 +110,8 @@ class PublicationRulesController extends Controller {
 		private readonly NationalIndexService $indexService,
 		private readonly DocumentStampService $stampService,
 		private readonly PublishedCollectionsService $collectionsService,
+		private readonly ContainerInterface $container,
+		private readonly ServiceCatalogueService $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -401,11 +416,35 @@ class PublicationRulesController extends Controller {
 			);
 		}
 
-		$outstanding = $this->depublicationService->outstandingChannels(depublication: $depublication);
+		// The depublication is STORED, not just returned. REQ-PIN-106 says each
+		// channel's acknowledgement is recorded and an unacknowledged
+		// withdrawal is shown as outstanding; neither is possible against a
+		// value that only ever existed inside one response.
+		try {
+			$saved = $this->objects->getObjectService()->saveObject(
+				object: $depublication,
+				extend: [],
+				register: $this->depublicationConfiguration()['register'],
+				schema: $this->depublicationConfiguration()['schema']
+			);
+		} catch (CatalogueUnreadableException $e) {
+			return new JSONResponse(
+				data: [
+					'error' => 'depublication-unstored',
+					'message' => $this->l10n->t('The withdrawals were sent but could not be recorded.'),
+				],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		} catch (\Throwable $e) {
+			return $this->registerConfigErrorResponse(e: $e);
+		}
+
+		$stored = $this->asArray(object: $saved);
+		$outstanding = $this->depublicationService->outstandingChannels(depublication: $stored);
 
 		return new JSONResponse(
 			array_merge(
-				$depublication,
+				$stored,
 				[
 					'outstandingChannels' => $outstanding,
 					'complete' => ($outstanding === []),
@@ -414,6 +453,145 @@ class PublicationRulesController extends Controller {
 		);
 
 	}//end depublish()
+
+	/**
+	 * The register and schema the depublications live in.
+	 *
+	 * @return array<string, string> The register and schema identifiers.
+	 */
+	private function depublicationConfiguration(): array {
+		return $this->resolveRegisterConfiguration(
+			registerKey: 'publication_register',
+			schemaKey: 'depublication_schema'
+		);
+
+	}//end depublicationConfiguration()
+
+	/**
+	 * Read an object's properties, whatever shape OpenRegister returned.
+	 *
+	 * @param mixed $object The object.
+	 *
+	 * @return array<string, mixed> The properties.
+	 *
+	 * @spec exclude pure shape adaptation over the consumed OR ObjectService.
+	 */
+	private function asArray(mixed $object): array {
+		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
+			$object = $object->jsonSerialize();
+		}
+
+		if (is_array($object) === false) {
+			return [];
+		}
+
+		if (isset($object['object']) === true && is_array($object['object']) === true) {
+			$properties = $object['object'];
+			$properties['id'] = ($object['id'] ?? ($properties['id'] ?? null));
+
+			return $properties;
+		}
+
+		return $object;
+
+	}//end asArray()
+
+	/**
+	 * Record that a channel acknowledged its withdrawal.
+	 *
+	 * The write path REQ-PIN-106 asks for. Without it a withdrawal can be sent
+	 * and can never be acknowledged, so every depublication stays outstanding
+	 * for ever and the organisation cannot leave that state.
+	 *
+	 * An acknowledgement is only ever recorded against a channel the
+	 * depublication actually sent a withdrawal to. A channel nobody wrote to
+	 * cannot acknowledge on its behalf, which is the failure that would let a
+	 * document be reported as gone from a harvester that still holds it.
+	 *
+	 * @return JSONResponse The depublication with what is still outstanding.
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function acknowledgeWithdrawal(): JSONResponse {
+		$id = trim((string)$this->request->getParam('depublication', ''));
+		$channel = trim((string)$this->request->getParam('channel', ''));
+
+		if ($id === '' || $channel === '') {
+			return new JSONResponse(
+				data: [
+					'error' => 'missing-parameters',
+					'message' => $this->l10n->t('Name the depublication and the channel that acknowledged.'),
+				],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		try {
+			$config = $this->depublicationConfiguration();
+			$objectService = $this->objects->getObjectService();
+			$depublication = $this->asArray(
+				object: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'])
+			);
+		} catch (CatalogueUnreadableException $e) {
+			return new JSONResponse(
+				data: ['error' => 'depublication-unreadable'],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		} catch (\Throwable $e) {
+			return new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND);
+		}
+
+		$channels = array_map(
+			static fn (array $withdrawal): string => (string)($withdrawal['channel'] ?? ''),
+			array_filter((array)($depublication['withdrawals'] ?? []), 'is_array')
+		);
+
+		if (in_array($channel, $channels, true) === false) {
+			return new JSONResponse(
+				data: [
+					'error' => 'unknown-channel',
+					'message' => $this->l10n->t('No withdrawal was sent to that channel, so there is nothing for it to acknowledge.'),
+				],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		$updated = $this->depublicationService->recordAcknowledgement(
+			depublication: $depublication,
+			channel: $channel,
+			answer: trim((string)$this->request->getParam('answer', ''))
+		);
+
+		try {
+			$saved = $this->objects->getObjectService()->saveObject(
+				object: $updated,
+				extend: [],
+				register: $config['register'],
+				schema: $config['schema'],
+				uuid: $id
+			);
+		} catch (CatalogueUnreadableException $e) {
+			return new JSONResponse(
+				data: ['error' => 'depublication-unstored'],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		}
+
+		$stored = $this->asArray(object: $saved);
+		$outstanding = $this->depublicationService->outstandingChannels(depublication: $stored);
+
+		return new JSONResponse(
+			array_merge(
+				$stored,
+				[
+					'outstandingChannels' => $outstanding,
+					'complete' => ($outstanding === []),
+				]
+			)
+		);
+
+	}//end acknowledgeWithdrawal()
 
 	/**
 	 * Compose the official notice for both channels and hand it to the gateway.
