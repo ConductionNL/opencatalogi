@@ -79,7 +79,9 @@ export async function sessionRequestToken(baseURL: string): Promise<string> {
  *
  * @return The context. The caller disposes it.
  */
-export async function authenticatedContext(baseURL: string): Promise<APIRequestContext> {
+export async function authenticatedContext(
+	baseURL: string,
+): Promise<APIRequestContext> {
 	const requesttoken = await sessionRequestToken(baseURL)
 
 	return await request.newContext({
