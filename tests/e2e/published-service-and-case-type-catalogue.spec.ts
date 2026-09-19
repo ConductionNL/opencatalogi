@@ -33,7 +33,13 @@
  */
 import type { APIRequestContext } from '@playwright/test'
 
-import { expect, request, test } from '@playwright/test'
+// `test` and `expect` come from the signed-in wrapper below, not from
+// @playwright/test. Its `request` fixture carries the session CSRF token, so an
+// authenticated write reaches the controller instead of being refused with 412
+// before dispatch. The bare `request` factory is still imported from Playwright,
+// and is used only to build the anonymous contexts.
+import { request } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 
 /** The app's own API base path. */
 const API_BASE = '/index.php/apps/opencatalogi/api'
@@ -127,7 +133,10 @@ test.describe('The public request catalogue', () => {
 
 		// The refusal is the assertion. A 200 here would hand an anonymous
 		// reader the list of what is misconfigured on this instance.
-		expect([401, 403, 404, 412]).toContain(response.status())
+		// 412 is NOT accepted here. It is Nextcloud's CSRF refusal, and it lands
+		// before the controller runs, so accepting it would let this pass on an
+		// instance where the endpoint had no authorization at all.
+		expect([401, 403, 404]).toContain(response.status())
 
 		await anon.dispose()
 	})
@@ -140,7 +149,10 @@ test.describe('The case type catalogue', () => {
 			data: { sourceId: 'i-navigator', externalId: 'verhuizing' },
 		})
 
-		expect([401, 403, 404, 412]).toContain(response.status())
+		// 412 is NOT accepted here. It is Nextcloud's CSRF refusal, and it lands
+		// before the controller runs, so accepting it would let this pass on an
+		// instance where the endpoint had no authorization at all.
+		expect([401, 403, 404]).toContain(response.status())
 
 		await anon.dispose()
 	})
