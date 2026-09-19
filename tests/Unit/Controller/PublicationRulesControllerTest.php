@@ -158,6 +158,15 @@ class PublicationRulesControllerTest extends TestCase {
 	private function objectStore(array $seed = []): object {
 		return new class($seed) {
 			/**
+			 * What a save was handed, by id, so a refusal can be asserted to
+			 * have written nothing at all rather than only to have answered
+			 * with the right status.
+			 *
+			 * @var array<string, array<string, mixed>>
+			 */
+			public array $saved = [];
+
+			/**
 			 * @param array<string, array<string, mixed>> $stored Objects by id.
 			 */
 			public function __construct(private array $stored) {
@@ -181,6 +190,7 @@ class PublicationRulesControllerTest extends TestCase {
 				$id = ($uuid !== '' ? $uuid : 'stored-1');
 				$object['id'] = $id;
 				$this->stored[$id] = $object;
+				$this->saved[$id] = $object;
 
 				return $object;
 			}
@@ -380,18 +390,17 @@ class PublicationRulesControllerTest extends TestCase {
 	 * wrote to, which is the one thing depublication must never report.
 	 */
 	public function testAChannelNoWithdrawalWasSentToCannotAcknowledge(): void {
-		$this->objects->method('getObjectService')->willReturn(
-			$this->objectStore(
-				[
-					'd1' => [
-						'publication' => 'p1',
-						'withdrawals' => [
-							['channel' => 'local-channel', 'sentAt' => '2026-09-01T00:00:00+00:00', 'acknowledgedAt' => null, 'answer' => null],
-						],
+		$store = $this->objectStore(
+			[
+				'd1' => [
+					'publication' => 'p1',
+					'withdrawals' => [
+						['channel' => 'local-channel', 'sentAt' => '2026-09-01T00:00:00+00:00', 'acknowledgedAt' => null, 'answer' => null],
 					],
-				]
-			)
+				],
+			]
 		);
+		$this->objects->method('getObjectService')->willReturn($store);
 		$this->withParams(['depublication' => 'd1', 'channel' => 'woo-index', 'answer' => 'ok']);
 
 		$response = $this->controller->acknowledgeWithdrawal();
@@ -399,18 +408,25 @@ class PublicationRulesControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 		$this->assertSame('unknown-channel', $response->getData()['error']);
 
+		// The status is only half of it. A refusal that still wrote the
+		// acknowledgement would report a document gone from a harvester
+		// nobody wrote to, and answer 400 while doing it.
+		$this->assertSame([], $store->saved);
+
 	}//end testAChannelNoWithdrawalWasSentToCannotAcknowledge()
 
 	/**
 	 * An acknowledgement against a depublication that does not exist is a 404.
 	 */
 	public function testAnAcknowledgementAgainstAnUnknownDepublicationIsNotFound(): void {
-		$this->objects->method('getObjectService')->willReturn($this->objectStore());
+		$store = $this->objectStore();
+		$this->objects->method('getObjectService')->willReturn($store);
 		$this->withParams(['depublication' => 'nope', 'channel' => 'local-channel']);
 
 		$response = $this->controller->acknowledgeWithdrawal();
 
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame([], $store->saved);
 
 	}//end testAnAcknowledgementAgainstAnUnknownDepublicationIsNotFound()
 
@@ -418,12 +434,15 @@ class PublicationRulesControllerTest extends TestCase {
 	 * An acknowledgement without its two parameters is refused.
 	 */
 	public function testAnAcknowledgementWithoutItsParametersIsRefused(): void {
+		$store = $this->objectStore();
+		$this->objects->method('getObjectService')->willReturn($store);
 		$this->withParams([]);
 
 		$response = $this->controller->acknowledgeWithdrawal();
 
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 		$this->assertSame('missing-parameters', $response->getData()['error']);
+		$this->assertSame([], $store->saved);
 
 	}//end testAnAcknowledgementWithoutItsParametersIsRefused()
 
