@@ -557,7 +557,19 @@ class ServiceCatalogueController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 20, period: 60)]
 	public function recordVerdict(string $id): JSONResponse {
-		$helpful = filter_var($this->request->getParam('helpful', null), FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+		// Absence is decided BEFORE filter_var sees the value. filter_var(null)
+		// and filter_var('') both return false rather than null, even with
+		// FILTER_NULL_ON_FAILURE, so a caller who sent no `helpful` at all had
+		// a "not helpful" recorded against the article in their name, and the
+		// refusal below could not be reached by omitting the parameter. The
+		// comparison is strict and against null and '' only, so a real boolean
+		// from a JSON body still reaches filter_var and still counts.
+		$rawVerdict = $this->request->getParam('helpful', null);
+		$helpful = null;
+		if (in_array($rawVerdict, [null, ''], true) === false) {
+			$helpful = filter_var($rawVerdict, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+		}
+
 		if ($helpful === null) {
 			return $this->withCors(
 				response: new JSONResponse(
