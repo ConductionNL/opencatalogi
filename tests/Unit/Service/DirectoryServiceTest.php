@@ -86,6 +86,9 @@ class DirectoryServiceTest extends TestCase {
 			'appManager' => $this->appManager,
 			'broadcastService' => $this->broadcastService,
 			'request' => $this->request,
+			// No reporter (adopt-connection-registry): doCronSync() reads it, and an
+			// uninitialised readonly property throws even behind `?->`.
+			'connectionReporter' => null,
 		];
 
 		foreach ($props as $name => $value) {

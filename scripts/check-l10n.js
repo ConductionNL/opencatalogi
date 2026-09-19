@@ -21,6 +21,7 @@ const { loadJsTranslations, walk } = require('./lib/l10n.js')
 
 const ROOT = path.resolve(__dirname, '..')
 const SRC_DIR = path.join(ROOT, 'src')
+const SCHEMA_DIR = path.join(ROOT, 'lib', 'Settings')
 const L10N_FILE = path.join(ROOT, 'l10n', 'en.js')
 
 const RED = '\x1b[31m'
@@ -415,6 +416,9 @@ function collectManifestStrings() {
 		'placeholder',
 		'subtitle',
 		'helpText',
+		// folderSidebar.allLabel, the "All" row of an index page's folder
+		// sidebar (adopt-connection-registry's Integrations page).
+		'allLabel',
 	])
 	const out = new Set()
 	const visit = (node) => {
@@ -456,6 +460,80 @@ function collectManifestStrings() {
 }
 
 /**
+ * Every user-visible string a REGISTER SCHEMA declares.
+ *
+ * Third source of used keys that lives outside the src/ scan, after
+ * collectPhpTranslated() and collectManifestStrings().
+ *
+ * A schema's `title`, a property's `title` / `description` and an enum's
+ * `x-enum-labels` are what OpenRegister's form renderer puts on screen, each
+ * looked up through this app's own catalogue. Nothing in src/ calls `t()` on
+ * them, so without this every one of them reads as an orphan and gets
+ * proposed for deletion: exactly the failure the manifest branch above exists
+ * to prevent, one file tree over.
+ *
+ * Deliberately feeds the UNUSED filter only, never MISSING. Coverage of schema
+ * strings is `check:schema-l10n`'s ratchet to hold; this check only owes them
+ * the right not to be called dead.
+ *
+ * The collector mirrors scripts/check-schema-l10n.js so both checks agree on
+ * what a schema string is.
+ *
+ * @return {Set<string>} the strings register schemas put on screen
+ */
+function collectSchemaStrings() {
+	const out = new Set()
+	const remember = (value) => {
+		if (typeof value === 'string' && value.trim()) out.add(value)
+	}
+	const visit = (node) => {
+		if (Array.isArray(node)) {
+			node.forEach(visit)
+			return
+		}
+		if (node === null || typeof node !== 'object') return
+		const props = node.properties
+		if (props !== null && typeof props === 'object' && !Array.isArray(props)) {
+			remember(node.title)
+			for (const prop of Object.values(props)) {
+				if (prop === null || typeof prop !== 'object') continue
+				remember(prop.title)
+				remember(prop.description)
+				for (const source of [prop, prop.items]) {
+					if (source === null || typeof source !== 'object') continue
+					const labels = source['x-enum-labels']
+					if (labels === null || typeof labels !== 'object') continue
+					Object.values(labels).forEach(remember)
+				}
+			}
+		}
+		Object.values(node).forEach(visit)
+	}
+	const files = []
+	const gather = (dir) => {
+		if (!fs.existsSync(dir)) return
+		for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+			const full = path.join(dir, entry.name)
+			if (entry.isDirectory()) gather(full)
+			else if (entry.name.endsWith('.json')) files.push(full)
+		}
+	}
+	gather(SCHEMA_DIR)
+	for (const file of files) {
+		try {
+			visit(JSON.parse(fs.readFileSync(file, 'utf8')))
+		} catch (e) {
+			// An unparseable register fragment is check:manifest's finding, not
+			// this script's.
+			console.error(
+				`[check-l10n] SKIP ${rel(file)}: unreadable (${e.message})`,
+			)
+		}
+	}
+	return out
+}
+
+/**
  *
  */
 function main() {
@@ -469,17 +547,20 @@ function main() {
 	const phpKeys = collectPhpTranslated()
 	const manifestKeys = collectManifestStrings()
 	const phpDeclared = collectPhpDeclared()
+	const schemaKeys = collectSchemaStrings()
 
 	const missing = [...usedKeys, ...manifestKeys].filter((k) => !keys.has(k)).sort()
 	// A key the SERVER translates is not an orphan, even though nothing in src/
 	// references it — see collectPhpTranslated(). The same is true of a string
-	// the MANIFEST declares — see collectManifestStrings().
+	// the MANIFEST declares — see collectManifestStrings() — and of one a
+	// REGISTER SCHEMA declares — see collectSchemaStrings().
 	const unused = [...keys]
 		.filter(
 			(k) =>
 				!usedKeys.has(k)
 				&& !phpKeys.has(k)
 				&& !manifestKeys.has(k)
+				&& !schemaKeys.has(k)
 				&& !phpDeclared.has(k),
 		)
 		.sort()
