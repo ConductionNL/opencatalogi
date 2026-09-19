@@ -351,4 +351,151 @@ class CommunityControllerTest extends TestCase {
 		$this->assertSame('missing-value', $response->getData()['error']);
 
 	}//end testAVoteWithoutAValueIsRefused()
+
+	/**
+	 * An object service stand-in that records what it was asked to store.
+	 *
+	 * @param array<int, mixed> $rows The rows searchObjectsPaginated answers with.
+	 *
+	 * @return object The stand-in.
+	 */
+	private function readWriteStore(array $rows = []): object {
+		return new class($rows) {
+			/**
+			 * Every object handed to saveObject, in order.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $saved = [];
+
+			/**
+			 * @param array<int, mixed> $rows The search rows.
+			 */
+			public function __construct(private array $rows) {
+			}
+
+			/**
+			 * @param array<string, mixed> $query The query.
+			 *
+			 * @return array{results: array<int, mixed>} The page.
+			 */
+			public function searchObjectsPaginated(
+				array $query,
+				bool $_rbac = true,
+				bool $_multitenancy = true,
+			): array {
+				return ['results' => $this->rows];
+			}
+
+			/**
+			 * @param array<string, mixed> $object The object to store.
+			 * @param array<int, string>   $extend Unused here.
+			 *
+			 * @return array<string, mixed> The stored object.
+			 */
+			public function saveObject(
+				array $object,
+				array $extend = [],
+				string $register = '',
+				string $schema = '',
+				string $uuid = '',
+			): array {
+				$this->saved[] = $object;
+
+				return $object;
+			}
+		};
+
+	}//end readWriteStore()
+
+	/**
+	 * Setting a component's state stores it and answers 201.
+	 */
+	public function testSettingAComponentStateStoresItAndAnswers201(): void {
+		$store = $this->readWriteStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withParams(['component' => 'zoeken', 'state' => 'degraded', 'message' => 'Trager dan normaal.']);
+
+		$response = $this->controller->setStatus();
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertCount(1, $store->saved);
+		$this->assertSame('zoeken', $store->saved[0]['component']);
+		$this->assertSame('degraded', $store->saved[0]['state']);
+
+	}//end testSettingAComponentStateStoresItAndAnswers201()
+
+	/**
+	 * A state the status page does not know is refused, and stores nothing.
+	 *
+	 * An unknown state stored would render as neither working nor broken, and
+	 * a status page that cannot say which is worse than no status page.
+	 */
+	public function testAnUnknownStateIsRefusedAndStoresNothing(): void {
+		$store = $this->readWriteStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withParams(['component' => 'zoeken', 'state' => 'on-fire', 'message' => '']);
+
+		$response = $this->controller->setStatus();
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('status-refused', $response->getData()['error']);
+		$this->assertSame([], $store->saved);
+
+	}//end testAnUnknownStateIsRefusedAndStoresNothing()
+
+	/**
+	 * The recipient list holds only confirmed subscriptions in that scope.
+	 *
+	 * An unconfirmed address is one nobody proved they own, so sending to it
+	 * is the thing the confirmation step exists to prevent.
+	 */
+	public function testTheRecipientListHoldsOnlyConfirmedAddressesInScope(): void {
+		$store = $this->readWriteStore(
+			[
+				['scope' => 'status', 'address' => 'confirmed@example.org', 'confirmedAt' => '2026-09-01T00:00:00+00:00'],
+				['scope' => 'status', 'address' => 'pending@example.org', 'confirmedAt' => ''],
+				['scope' => 'releases', 'address' => 'other-scope@example.org', 'confirmedAt' => '2026-09-01T00:00:00+00:00'],
+			]
+		);
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withParams(['scope' => 'status']);
+
+		$response = $this->controller->subscriptionRecipients();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('status', $data['scope']);
+		$this->assertSame(['confirmed@example.org'], $data['recipients']);
+
+	}//end testTheRecipientListHoldsOnlyConfirmedAddressesInScope()
+
+	/**
+	 * A recipient list this app cannot read answers 503, never an empty list.
+	 *
+	 * An empty recipient list reads as "nobody asked to be told", which would
+	 * silently stop every notification.
+	 */
+	public function testAnUnreadableRecipientListAnswers503RatherThanNobody(): void {
+		$this->objects->method('getObjectService')
+			->willThrowException(new CatalogueUnreadableException('OpenRegister is unavailable'));
+		$this->withParams(['scope' => 'status']);
+
+		$response = $this->controller->subscriptionRecipients();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('status-unreadable', $response->getData()['error']);
+
+	}//end testAnUnreadableRecipientListAnswers503RatherThanNobody()
+
+	/**
+	 * The preflight answers the browser without reading anything.
+	 */
+	public function testThePreflightAnswersWithoutReadingAnything(): void {
+		$response = $this->controller->preflightedCors();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+
+	}//end testThePreflightAnswersWithoutReadingAnything()
+
 }//end class
