@@ -460,6 +460,47 @@ class PublicationQueryService
         // rules; tracked as follow-up.
         $orTotal        = (int) ($candidateResult['total'] ?? count($rows));
         $adjustedTotal  = max(count($rows), ($orTotal - $droppedCount));
+
+        // WOO-577: OR's count query and its row stream can disagree. OR dedupes
+        // the metadata-match + chunk-match union on object id before returning
+        // `results`, but `total` stays the undeduplicated chunk-join count, so a
+        // `_content=true` query can answer `total: 8` while handing back NOTHING.
+        // Measured on acato and reproduced on the NC 32 rig (OpenCatalogi
+        // 1.0.9-woo-2 + OpenRegister 1.1.5): `_search=Nextcloud&_content=true`
+        // → `{"total": 8, "results": []}`.
+        //
+        // Only the FIRST page's "no rows at all" case is corrected here, and
+        // deliberately so. On page one, `results: []` with `total > 0` and no local
+        // drops is impossible for an honest backend — there is no offset that could
+        // explain it — so it is the `total: X, results: []` shape the envelope
+        // comment above already calls out as the SCH-PFTS-004 bug pattern, and
+        // reporting 0 is the truthful answer.
+        //
+        // ON ANY LATER PAGE THE SAME SHAPE IS ORDINARY. A caller that asks for
+        // `_offset=40` of 31 real matches gets `{results: [], total: 31}` from a
+        // perfectly healthy search — that is what running out of rows looks like.
+        // Zeroing there would make `total` collapse from 31 to 0 on the last page
+        // of every paginated query, and a UI that redraws its count from each
+        // response would show "0 results" at the end of a search that found 31.
+        // The observed WOO-577 desync reproduced on the default first page, so
+        // scoping the correction there loses nothing and costs no honest caller.
+        //
+        // Pages that DO carry rows keep OR's total untouched, so the "more pages"
+        // signal survives; whether that number itself should be deduplicated is
+        // answered in OR's count (openregister#3856), not in a per-page guess here.
+        if ($rows === [] && $droppedCount === 0 && $orTotal > 0 && $this->isFirstPage(searchQuery: $searchQuery) === true) {
+            $this->logger?->warning(
+                'WOO-577: OpenRegister reported a total without returning any rows on the first page; '
+                . 'reporting 0 so the envelope does not advertise unreachable results',
+                [
+                    'orTotal' => $orTotal,
+                    'search' => ($searchQuery['_search'] ?? null),
+                    'contentSearch' => $contentSearchRequested,
+                    'schemas' => ($searchQuery['_schemas'] ?? null),
+                ]
+            );
+            $adjustedTotal = 0;
+        }
         $envelope = [
             'results' => $rows,
             'total'   => $adjustedTotal,
@@ -474,6 +515,42 @@ class PublicationQueryService
         return $envelope;
 
     }//end assemblePublicSearchResults()
+
+    /**
+     * Whether the request addresses the first page of the result set.
+     *
+     * Absent pagination params, `_offset: 0`, or `_page: 1` all mean "start at the
+     * beginning". Anything else may legitimately land past the end of the results,
+     * where an empty page with a non-zero total is ordinary rather than a backend
+     * disagreement (WOO-577). A `_page` without a `_limit` cannot be resolved to an
+     * offset here, so anything above 1 counts as NOT the first page — the
+     * conservative direction, since the cost of guessing wrong is a wrong `total`.
+     *
+     * @param array $searchQuery The query as forwarded to OpenRegister.
+     *
+     * @return bool True when this is the first page.
+     *
+     * @psalm-param   array<string, mixed> $searchQuery
+     * @phpstan-param array<string, mixed> $searchQuery
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function isFirstPage(array $searchQuery): bool
+    {
+        $offset = ($searchQuery['_offset'] ?? null);
+        if ($offset !== null && (int) $offset !== 0) {
+            return false;
+        }
+
+        $page = ($searchQuery['_page'] ?? null);
+        if ($page !== null && (int) $page > 1) {
+            return false;
+        }
+
+        return true;
+
+    }//end isFirstPage()
+
 
     /**
      * Drop every schema that has no `authorization.read` rules from the anonymous scope.
