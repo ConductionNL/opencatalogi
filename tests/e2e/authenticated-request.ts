@@ -19,14 +19,16 @@
  *
  * Sixteen tests in this suite were reading that 412 as the product's answer.
  * Fourteen of them failed for it, which at least showed up. The other kind is
- * worse: three refusal assertions listed 412 among the acceptable statuses, so
+ * worse: eight refusal assertions listed 412 among the acceptable statuses, so
  * they passed on a CSRF rejection and would have passed on an instance where
  * the endpoint had no authorization at all.
  *
  * 🔑 So the token is not optional plumbing, and this fixture never degrades to
- * a tokenless context. If it cannot read a token it throws, because a harness
- * that quietly loses its credentials reports the same green as one that has
- * them.
+ * a tokenless context. It asserts the saved session is signed in before it
+ * hands one out, because `/index.php/csrftoken` answers 200 with a token to
+ * ANYONE, signed in or not: a token alone proves nothing, and a harness that
+ * quietly lost its session would otherwise report the same green as one that
+ * kept it.
  *
  * Anonymous probes must NOT use this. They build their own context with no
  * storage state, so that "an anonymous reader cannot" fails for the right
@@ -40,8 +42,17 @@ import * as path from 'path'
 
 const STORAGE_STATE = path.resolve(__dirname, '.auth', 'admin.json')
 
-/** Nextcloud puts the session CSRF token on the `<head>` element. */
-const TOKEN_PATTERN = /data-requesttoken="([^"]+)"/
+/** Core's own token endpoint. Scraping `data-requesttoken` out of a page needs
+ * a page that exists: `/apps/dashboard/` is 404 on an instance where the
+ * dashboard app is off, and the failure would read as a login problem. */
+const TOKEN_URL = '/index.php/csrftoken'
+
+/** Answers 401 unless the caller is signed in, so it separates "no session"
+ * from "no token". */
+const WHOAMI_URL = '/ocs/v2.php/cloud/user?format=json'
+
+/** One session, one token. Resolved once per worker, per base URL. */
+const tokenCache = new Map<string, Promise<string>>()
 
 /**
  * Read the CSRF token that belongs to the saved session.
@@ -50,26 +61,53 @@ const TOKEN_PATTERN = /data-requesttoken="([^"]+)"/
  *
  * @return The token value.
  */
-export async function sessionRequestToken(baseURL: string): Promise<string> {
+async function readSessionToken(baseURL: string): Promise<string> {
 	const probe = await request.newContext({ baseURL, storageState: STORAGE_STATE })
 	try {
-		const page = await probe.get('/index.php/apps/dashboard/')
-		const html = await page.text()
-		const match = TOKEN_PATTERN.exec(html)
-
-		if (match === null) {
+		const whoami = await probe.get(WHOAMI_URL, {
+			headers: { 'OCS-APIRequest': 'true' },
+		})
+		if (whoami.ok() === false) {
 			throw new Error(
-				'[authenticated-request] no data-requesttoken on /apps/dashboard/ '
-					+ `(status ${page.status()}). The saved session in tests/e2e/.auth/admin.json `
-					+ 'is not signed in, so every write would be refused with 412 and read as the '
-					+ "product's answer. Check globalSetup rather than the app under test.",
+				`[authenticated-request] ${WHOAMI_URL} answered ${whoami.status()}, so the `
+					+ 'session saved in tests/e2e/.auth/admin.json is not signed in. Every write '
+					+ "would then be refused with 412 and read as the product's answer. Check "
+					+ 'globalSetup, not the app under test.',
 			)
 		}
 
-		return match[1]
+		const response = await probe.get(TOKEN_URL)
+		const token = (await response.json())?.token
+
+		if (typeof token !== 'string' || token.length === 0) {
+			throw new Error(
+				`[authenticated-request] ${TOKEN_URL} answered ${response.status()} with no `
+					+ 'token field. Without one every write is refused with 412 before the '
+					+ 'controller runs.',
+			)
+		}
+
+		return token
 	} finally {
 		await probe.dispose()
 	}
+}
+
+/**
+ * The session's CSRF token, computed once.
+ *
+ * @param baseURL The instance under test.
+ *
+ * @return The token value.
+ */
+export async function sessionRequestToken(baseURL: string): Promise<string> {
+	let pending = tokenCache.get(baseURL)
+	if (pending === undefined) {
+		pending = readSessionToken(baseURL)
+		tokenCache.set(baseURL, pending)
+	}
+
+	return await pending
 }
 
 /**
