@@ -230,4 +230,165 @@ class InspectionControllerTest extends TestCase {
 		$this->assertSame('register-unreadable', $response->getData()['error']);
 
 	}//end testAnUnreadableRegisterAnswers503()
+
+	/**
+	 * An object service stand-in that records what it was asked to store.
+	 *
+	 * @return object The stand-in.
+	 */
+	private function recordingStore(): object {
+		return new class {
+			/**
+			 * Every object handed to saveObject, in order.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $saved = [];
+
+			/**
+			 * @param array<string, mixed> $object The object to store.
+			 * @param array<int, string>   $extend Unused here.
+			 *
+			 * @return array<string, mixed> The stored object.
+			 */
+			public function saveObject(
+				array $object,
+				array $extend = [],
+				string $register = '',
+				string $schema = '',
+				string $uuid = '',
+			): array {
+				$object['id'] = 'inspection-1';
+				$this->saved[] = $object;
+
+				return $object;
+			}
+		};
+
+	}//end recordingStore()
+
+	/**
+	 * Answer request parameters from a map.
+	 *
+	 * @param array<string, mixed> $params The parameters.
+	 *
+	 * @return void
+	 */
+	private function withOpenParams(array $params): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static fn (string $key, $default = null) => ($params[$key] ?? $default)
+		);
+
+	}//end withOpenParams()
+
+	/**
+	 * An inspection is stored with the term its record type declares.
+	 */
+	public function testAnInspectionIsStoredForTheDeclaredTerm(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+				'documents' => ['doc-a', 'doc-b'],
+			]
+		);
+
+		$response = $this->controller->open();
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertCount(1, $store->saved);
+		$this->assertSame(42, $store->saved[0]['termDays']);
+		$this->assertSame(['doc-a', 'doc-b'], $store->saved[0]['documents']);
+
+	}//end testAnInspectionIsStoredForTheDeclaredTerm()
+
+	/**
+	 * A record type with no term opens no inspection, and stores nothing.
+	 *
+	 * The term is the statutory period. Defaulting it would put documents on
+	 * public inspection for a length of time nobody chose.
+	 */
+	public function testARecordTypeWithNoTermOpensNothingAndStoresNothing(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'onbekend'],
+				'documents' => ['doc-a'],
+			]
+		);
+
+		$response = $this->controller->open();
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('inspection-refused', $response->getData()['error']);
+		$this->assertSame([], $store->saved);
+
+	}//end testARecordTypeWithNoTermOpensNothingAndStoresNothing()
+
+	/**
+	 * An inspection over no documents is refused, and stores nothing.
+	 */
+	public function testAnInspectionOverNoDocumentsIsRefusedAndStoresNothing(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+				'documents' => [],
+			]
+		);
+
+		$response = $this->controller->open();
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('inspection-refused', $response->getData()['error']);
+		$this->assertSame([], $store->saved);
+
+	}//end testAnInspectionOverNoDocumentsIsRefusedAndStoresNothing()
+
+	/**
+	 * Parameters of the wrong shape are refused before anything is opened.
+	 */
+	public function testParametersOfTheWrongShapeAreRefused(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(['record' => 'not-an-array', 'recordType' => [], 'documents' => []]);
+
+		$response = $this->controller->open();
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('missing-parameters', $response->getData()['error']);
+		$this->assertSame([], $store->saved);
+
+	}//end testParametersOfTheWrongShapeAreRefused()
+
+	/**
+	 * An inspection that cannot be stored answers 503, never a quiet success.
+	 *
+	 * The caller is told the documents are on inspection; if the write was
+	 * lost, nobody can see them and nobody knows.
+	 */
+	public function testAnInspectionThatCannotBeStoredAnswers503(): void {
+		$this->objects->method('getObjectService')
+			->willThrowException(new CatalogueUnreadableException('OpenRegister is unavailable'));
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+				'documents' => ['doc-a'],
+			]
+		);
+
+		$response = $this->controller->open();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('register-unreadable', $response->getData()['error']);
+
+	}//end testAnInspectionThatCannotBeStoredAnswers503()
+
 }//end class
