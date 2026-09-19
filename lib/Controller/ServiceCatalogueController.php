@@ -60,6 +60,9 @@ use Psr\Container\ContainerInterface;
  * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md
  */
 class ServiceCatalogueController extends Controller {
+	use AnswersCrossOriginRequests;
+	use IdentifiesTheReader;
+	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
 
 	/**
@@ -97,35 +100,6 @@ class ServiceCatalogueController extends Controller {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * The caller's Origin is never echoed back unless it is on the allowlist.
-	 *
-	 * @return string The header value.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-
-	}//end resolveAllowedOrigin()
 
 	/**
 	 * Add the CORS headers a public endpoint answers with.
@@ -169,56 +143,22 @@ class ServiceCatalogueController extends Controller {
 	}//end preflightedCors()
 
 	/**
-	 * The register and schema of the catalogue entries.
+	 * The register and schema of one of this controller's schemas.
+	 *
+	 * Everything this controller reads lives in the service catalogue
+	 * register, so only the schema key varies.
+	 *
+	 * @param string $schemaKey The `<thing>_schema` config key.
 	 *
 	 * @return array<string, string> The register and schema identifiers.
 	 */
-	private function entryConfiguration(): array {
+	private function configurationFor(string $schemaKey): array {
 		return $this->resolveRegisterConfiguration(
 			registerKey: 'service_catalogue_register',
-			schemaKey: 'service_catalogue_entry_schema'
+			schemaKey: $schemaKey
 		);
 
-	}//end entryConfiguration()
-
-	/**
-	 * The register and schema of the case type definitions.
-	 *
-	 * @return array<string, string> The register and schema identifiers.
-	 */
-	private function caseTypeConfiguration(): array {
-		return $this->resolveRegisterConfiguration(
-			registerKey: 'service_catalogue_register',
-			schemaKey: 'case_type_definition_schema'
-		);
-
-	}//end caseTypeConfiguration()
-
-	/**
-	 * The register and schema of the knowledge articles.
-	 *
-	 * @return array<string, string> The register and schema identifiers.
-	 */
-	private function articleConfiguration(): array {
-		return $this->resolveRegisterConfiguration(
-			registerKey: 'service_catalogue_register',
-			schemaKey: 'knowledge_article_schema'
-		);
-
-	}//end articleConfiguration()
-
-	/**
-	 * The register and schema of the article verdicts.
-	 *
-	 * @return array<string, string> The register and schema identifiers.
-	 */
-	private function verdictConfiguration(): array {
-		return $this->resolveRegisterConfiguration(
-			registerKey: 'service_catalogue_register',
-			schemaKey: 'article_verdict_schema'
-		);
-
-	}//end verdictConfiguration()
+	}//end configurationFor()
 
 	/**
 	 * The public request catalogue.
@@ -238,8 +178,8 @@ class ServiceCatalogueController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
 		try {
-			$entryConfig = $this->entryConfiguration();
-			$caseTypeConfig = $this->caseTypeConfiguration();
+			$entryConfig = $this->configurationFor(schemaKey: 'service_catalogue_entry_schema');
+			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
@@ -279,8 +219,8 @@ class ServiceCatalogueController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function unavailableEntries(): JSONResponse {
 		try {
-			$entryConfig = $this->entryConfiguration();
-			$caseTypeConfig = $this->caseTypeConfiguration();
+			$entryConfig = $this->configurationFor(schemaKey: 'service_catalogue_entry_schema');
+			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
@@ -332,7 +272,7 @@ class ServiceCatalogueController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function caseType(string $id): JSONResponse {
 		try {
-			$caseTypeConfig = $this->caseTypeConfiguration();
+			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
@@ -393,7 +333,7 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		try {
-			$caseTypeConfig = $this->caseTypeConfiguration();
+			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
@@ -435,7 +375,7 @@ class ServiceCatalogueController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function previewResync(string $id): JSONResponse {
 		try {
-			$caseTypeConfig = $this->caseTypeConfiguration();
+			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
 			$objectService = $this->catalogueService->getObjectService();
 			$local = $this->asArray(
 				object: $objectService->find(
@@ -492,7 +432,7 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		try {
-			$caseTypeConfig = $this->caseTypeConfiguration();
+			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
 			$objectService = $this->catalogueService->getObjectService();
 			$local = $this->asArray(
 				object: $objectService->find(
@@ -582,8 +522,8 @@ class ServiceCatalogueController extends Controller {
 		$readerToken = $this->readerToken();
 
 		try {
-			$articleConfig = $this->articleConfiguration();
-			$verdictConfig = $this->verdictConfiguration();
+			$articleConfig = $this->configurationFor(schemaKey: 'knowledge_article_schema');
+			$verdictConfig = $this->configurationFor(schemaKey: 'article_verdict_schema');
 			$objectService = $this->catalogueService->getObjectService();
 			$article = $this->asArray(
 				object: $objectService->find(
@@ -684,7 +624,7 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		try {
-			$articleConfig = $this->articleConfiguration();
+			$articleConfig = $this->configurationFor(schemaKey: 'knowledge_article_schema');
 			$objectService = $this->catalogueService->getObjectService();
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(data: ['error' => 'catalogue-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
@@ -725,54 +665,4 @@ class ServiceCatalogueController extends Controller {
 		);
 
 	}//end unreachableResponse()
-
-	/**
-	 * The token that identifies a reader for the length of one verdict.
-	 *
-	 * A signed-in reader is their user id; an anonymous one is their session
-	 * id. Neither is stored: the service hashes it with a salt.
-	 *
-	 * @return string The token.
-	 */
-	private function readerToken(): string {
-		$user = $this->userSession->getUser();
-		if ($user !== null) {
-			return 'user:' . $user->getUID();
-		}
-
-		$sessionToken = (string)$this->request->getParam('readerToken', '');
-		if ($sessionToken !== '') {
-			return 'token:' . $sessionToken;
-		}
-
-		return 'address:' . (string)$this->request->getRemoteAddress();
-
-	}//end readerToken()
-
-	/**
-	 * Normalise an OpenRegister result to a plain array.
-	 *
-	 * @param mixed $object The result.
-	 *
-	 * @return array<string, mixed> The properties.
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$properties = $object['object'];
-			$properties['id'] = ($object['id'] ?? ($properties['id'] ?? null));
-
-			return $properties;
-		}
-
-		return $object;
-
-	}//end asArray()
 }//end class

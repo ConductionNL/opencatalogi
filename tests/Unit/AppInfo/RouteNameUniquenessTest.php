@@ -144,4 +144,63 @@ class RouteNameUniquenessTest extends TestCase {
 
 	}//end testThePreflightsThatWereLostAreRoutedAgain()
 
+	/**
+	 * Every declared route must point at a method that exists and is public.
+	 *
+	 * The other half of the same failure. A route whose action no longer
+	 * exists on the named controller is a ReflectionException 500 at request
+	 * time, and nothing before that says so: `routes.php` parses, the class
+	 * loads, the unit tests of the method that DID move stay green in their
+	 * new home, and only a real request finds it.
+	 *
+	 * This is what a controller split needs. Moving an action from
+	 * `CommunityController` to `NoticeBoardController` renames its route from
+	 * `community#banners` to `noticeBoard#banners`, and the entry in
+	 * `routes.php` has to move with it or the URL answers 500 instead of
+	 * answering at all.
+	 *
+	 * The class name is built the way `OC\AppFramework\Routing\RouteParser`
+	 * builds it: the controller segment, underscores to word boundaries,
+	 * ucwords, plus `Controller`.
+	 *
+	 * @return void
+	 */
+	public function testEveryDeclaredRoutePointsAtAMethodThatExists(): void {
+		$file = $this->routeFile();
+
+		foreach (['routes', 'ocs'] as $section) {
+			foreach (($file[$section] ?? []) as $entry) {
+				[$controller, $action] = explode('#', $entry['name']);
+
+				// A controller segment carrying a namespace is a container
+				// ALIAS, not an autoloadable class: the dashboard entries name
+				// OCA\OpenCatalogi\AppHost\Controller\GenericDashboardController,
+				// which Application.php registers as a factory over
+				// OpenRegister's class and which has no file in this repo.
+				// Reflection cannot see it, so it is out of scope here.
+				if (str_contains($controller, '\\') === true) {
+					continue;
+				}
+
+				$class = 'OCA\\OpenCatalogi\\Controller\\'
+					. str_replace(' ', '', ucwords(str_replace('_', ' ', $controller)))
+					. 'Controller';
+
+				$this->assertTrue(
+					class_exists($class),
+					sprintf("Route '%s' names a controller class that does not exist: %s", $entry['name'], $class)
+				);
+				$this->assertTrue(
+					method_exists($class, $action),
+					sprintf("Route '%s' points at %s::%s(), which does not exist (500 at request time)", $entry['name'], $class, $action)
+				);
+				$this->assertTrue(
+					(new \ReflectionMethod($class, $action))->isPublic(),
+					sprintf("Route '%s' points at %s::%s(), which is not public", $entry['name'], $class, $action)
+				);
+			}
+		}
+
+	}//end testEveryDeclaredRoutePointsAtAMethodThatExists()
+
 }//end class
