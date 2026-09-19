@@ -66,6 +66,31 @@ return [
 		// Woo-index harvester-readiness self-check (woo-index-harvester-readiness)
 		['name' => 'wooReadiness#report', 'url' => '/api/woo/readiness', 'verb' => 'GET'],
 		['name' => 'wooReadiness#run', 'url' => '/api/woo/readiness/run', 'verb' => 'POST'],
+		// The public and community surface: the admin surfaces.
+		['name' => 'community#setStatus', 'url' => '/api/status', 'verb' => 'POST'],
+		['name' => 'community#subscriptionRecipients', 'url' => '/api/status/recipients', 'verb' => 'GET'],
+		['name' => 'community#banners', 'url' => '/api/banners', 'verb' => 'GET'],
+		['name' => 'community#dismissBanner', 'url' => '/api/banners/dismiss', 'verb' => 'POST'],
+		['name' => 'community#saveNoticeBoard', 'url' => '/api/notice-boards', 'verb' => 'POST'],
+		['name' => 'community#saveNotice', 'url' => '/api/notices', 'verb' => 'POST'],
+		// Active publication, inspection and the national indexes: the admin surfaces.
+		['name' => 'publicationRules#previewRule', 'url' => '/api/publication-rules/preview', 'verb' => 'POST'],
+		['name' => 'publicationRules#validateDecision', 'url' => '/api/publication-rules/validate-decision', 'verb' => 'POST'],
+		['name' => 'publicationRules#startProcess', 'url' => '/api/publication-process', 'verb' => 'POST'],
+		['name' => 'publicationRules#completeStep', 'url' => '/api/publication-process/step', 'verb' => 'POST'],
+		['name' => 'publicationRules#raiseZienswijze', 'url' => '/api/publication-process/zienswijze', 'verb' => 'POST'],
+		['name' => 'publicationRules#depublish', 'url' => '/api/publications/depublish', 'verb' => 'POST'],
+		['name' => 'publicationRules#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
+		['name' => 'publicationRules#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
+		['name' => 'publicationRules#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
+		['name' => 'publicationRules#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
+		['name' => 'inspection#open', 'url' => '/api/inspections', 'verb' => 'POST'],
+		// Published service and case type catalogue: the admin surfaces.
+		['name' => 'serviceCatalogue#unavailableEntries', 'url' => '/api/service-catalogue/unavailable', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#importCaseType', 'url' => '/api/case-types/import', 'verb' => 'POST'],
+		['name' => 'serviceCatalogue#previewResync', 'url' => '/api/case-types/{id}/resync', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#applyResync', 'url' => '/api/case-types/{id}/resync', 'verb' => 'POST'],
+		['name' => 'serviceCatalogue#extractArticle', 'url' => '/api/knowledge-articles/extract', 'verb' => 'POST'],
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */
@@ -102,6 +127,21 @@ return [
 		// Pages CORS
 		// Directory CORS
 		['name' => 'directory#preflightedCors', 'url' => '/api/directory', 'verb' => 'OPTIONS'],
+		// Community surface CORS (status page, subscriptions, the feed, votes, the renderer)
+		['name' => 'community#preflightedCors', 'url' => '/api/status', 'verb' => 'OPTIONS'],
+		['name' => 'community#preflightedCors', 'url' => '/api/status/subscribe', 'verb' => 'OPTIONS'],
+		['name' => 'community#preflightedCors', 'url' => '/api/feeds/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'community#preflightedCors', 'url' => '/api/records/{id}/vote', 'verb' => 'OPTIONS'],
+		['name' => 'community#preflightedCors', 'url' => '/api/markup/render', 'verb' => 'OPTIONS'],
+		// Active publication CORS (public search, the stamp, the inspection link)
+		['name' => 'publicationRules#preflightedCors', 'url' => '/api/publications/search', 'verb' => 'OPTIONS'],
+		['name' => 'publicationRules#preflightedCors', 'url' => '/api/publications/verification-key', 'verb' => 'OPTIONS'],
+		['name' => 'publicationRules#preflightedCors', 'url' => '/api/publications/verify', 'verb' => 'OPTIONS'],
+		['name' => 'inspection#preflightedCors', 'url' => '/api/inspections/{id}', 'verb' => 'OPTIONS'],
+		// Service catalogue CORS (public request catalogue, published case types, article verdicts)
+		['name' => 'serviceCatalogue#preflightedCors', 'url' => '/api/service-catalogue', 'verb' => 'OPTIONS'],
+		['name' => 'serviceCatalogue#preflightedCors', 'url' => '/api/case-types/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'serviceCatalogue#preflightedCors', 'url' => '/api/knowledge-articles/{id}/verdict', 'verb' => 'OPTIONS'],
 		// Listings CORS
 		['name' => 'listings#preflightedCors', 'url' => '/api/listings', 'verb' => 'OPTIONS'],
 		['name' => 'listings#preflightedCors', 'url' => '/api/listings/{id}', 'verb' => 'OPTIONS'],
@@ -172,6 +212,21 @@ return [
 		// checks} contract. URL unchanged. (Specific route - must be before
 		// wildcard catalog routes.)
 		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericHealth#index', 'url' => '/api/health', 'verb' => 'GET'],
+		// Community surface public routes (specific routes - must be before wildcard catalog routes)
+		['name' => 'community#statusPage', 'url' => '/api/status', 'verb' => 'GET'],
+		['name' => 'community#subscribe', 'url' => '/api/status/subscribe', 'verb' => 'POST'],
+		['name' => 'community#feed', 'url' => '/api/feeds/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'community#vote', 'url' => '/api/records/{id}/vote', 'verb' => 'POST'],
+		['name' => 'community#renderMarkup', 'url' => '/api/markup/render', 'verb' => 'POST'],
+		// Active publication public surfaces (specific routes - must be before wildcard catalog routes)
+		['name' => 'publicationRules#publicSearch', 'url' => '/api/publications/search', 'verb' => 'POST'],
+		['name' => 'publicationRules#verificationKey', 'url' => '/api/publications/verification-key', 'verb' => 'GET'],
+		['name' => 'publicationRules#verifyDocument', 'url' => '/api/publications/verify', 'verb' => 'POST'],
+		['name' => 'inspection#follow', 'url' => '/api/inspections/{id}', 'verb' => 'GET'],
+		// Published service catalogue (public; specific routes - must be before wildcard catalog routes)
+		['name' => 'serviceCatalogue#index', 'url' => '/api/service-catalogue', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#caseType', 'url' => '/api/case-types/{id}', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#recordVerdict', 'url' => '/api/knowledge-articles/{id}/verdict', 'verb' => 'POST'],
 		// Search (specific route - must be before wildcard catalog routes)
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
 		['name' => 'search#show', 'url' => '/api/search/{id}', 'verb' => 'GET'],

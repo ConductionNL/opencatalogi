@@ -1215,6 +1215,39 @@ class SettingsService {
 			'woo_assessment_schema' => 'wooAssessment',
 		];
 
+		// Published service and case type catalogue: four schemas in the same
+		// shared publication register, with snake_case config keys rather than
+		// the camelCase schema slugs, for the same reason as $wooSchemaMap.
+		$catalogueSchemaMap = [
+			'service_catalogue_entry_schema' => 'serviceCatalogueEntry',
+			'case_type_definition_schema' => 'caseTypeDefinition',
+			'knowledge_article_schema' => 'knowledgeArticle',
+			'article_verdict_schema' => 'articleVerdict',
+		];
+
+		// Active publication, inspection and the national indexes: six more
+		// schemas in the same shared publication register, same key convention.
+		$publicationSchemaMap = [
+			'publication_rule_schema' => 'publicationRule',
+			'inspection_schema' => 'inspection',
+			'publication_process_schema' => 'publicationProcess',
+			'zienswijze_ask_schema' => 'zienswijzeAsk',
+			'depublication_schema' => 'depublication',
+			'obligation_source_schema' => 'obligationSource',
+		];
+
+		// The public and community surface: the status page, the banner, the
+		// notice boards and the reader's vote. A notice is deliberately its own
+		// schema rather than a publication, so it never enters the sitemap.
+		$communitySchemaMap = [
+			'service_status_schema' => 'serviceStatus',
+			'status_subscription_schema' => 'statusSubscription',
+			'instance_banner_schema' => 'instanceBanner',
+			'notice_board_schema' => 'noticeBoard',
+			'notice_schema' => 'notice',
+			'record_vote_schema' => 'recordVote',
+		];
+
 		// Build a map of schema slugs to schema IDs.
 		$schemaMap = [];
 		foreach (($importResult['schemas'] ?? []) as $schema) {
@@ -1276,7 +1309,10 @@ class SettingsService {
 		$expectedSlugs = array_merge(
 			$objectTypes,
 			array_values($ooapiTypeMap),
-			array_values($wooSchemaMap)
+			array_values($wooSchemaMap),
+			array_values($catalogueSchemaMap),
+			array_values($publicationSchemaMap),
+			array_values($communitySchemaMap)
 		);
 		$missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
 		if (empty($missingSlugs) === false) {
@@ -1357,6 +1393,39 @@ class SettingsService {
 		}
 
 		foreach ($wooSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The service catalogue shares the same publication register, and each of
+		// its four schemas gets its own key. A key that stays unset makes the
+		// catalogue controller answer 503, which is the intended refusal: an
+		// unconfigured catalogue is not an empty one.
+		if ($registerId !== null) {
+			$this->config->setValueString($this->appName, 'service_catalogue_register', (string)$registerId);
+		}
+
+		foreach ($catalogueSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The publication rules, inspections and the rest share the publication
+		// register, which `publication_register` already points at. A key that
+		// stays unset makes the inspection controller answer 503 rather than
+		// pretending there are no inspections.
+		foreach ($publicationSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The community surface shares the same register. An unset key makes
+		// the status page answer 503 rather than reporting that nothing is
+		// wrong with anything.
+		foreach ($communitySchemaMap as $configKey => $schemaSlug) {
 			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
 			}
