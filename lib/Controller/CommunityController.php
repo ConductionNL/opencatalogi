@@ -4,8 +4,12 @@
  * OpenCatalogi Community Controller.
  *
  * The public and community surface: the status page, subscriptions to it, the
- * instance banner, the notice boards, the Atom feed, the reader's vote, and the
- * endpoint that renders this app's markup the way this app renders it.
+ * Atom feed, the reader's vote, and the endpoint that renders this app's markup
+ * the way this app renders it.
+ *
+ * The banners and the notice boards used to live here too. They are
+ * NoticeBoardController now, and this sentence says so because the previous
+ * paragraph still listed them here after they had gone.
  *
  * The two failures this surface has are the ones every publication surface has.
  * Publishing what should not be public: a draft never reaches the feed, an
@@ -37,9 +41,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
-use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
-use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
 use OCA\OpenCatalogi\Service\Community\SubscriptionService;
 use OCA\OpenCatalogi\Service\Community\VoteService;
@@ -66,6 +68,9 @@ use Psr\Container\ContainerInterface;
  * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
  */
 class CommunityController extends Controller {
+	use AnswersCrossOriginRequests;
+	use IdentifiesTheReader;
+	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
 
 	/**
@@ -79,8 +84,6 @@ class CommunityController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param StatusPageService $statusService The status page.
 	 * @param SubscriptionService $subscriptionService The subscriptions.
-	 * @param BannerService $bannerService The instance banner.
-	 * @param NoticeBoardService $noticeService The notice boards.
 	 * @param AtomFeedService $feedService The catalogue feed.
 	 * @param VoteService $voteService The reader's vote.
 	 * @param MarkupRenderService $markupService The markup renderer.
@@ -97,8 +100,6 @@ class CommunityController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly StatusPageService $statusService,
 		private readonly SubscriptionService $subscriptionService,
-		private readonly BannerService $bannerService,
-		private readonly NoticeBoardService $noticeService,
 		private readonly AtomFeedService $feedService,
 		private readonly VoteService $voteService,
 		private readonly MarkupRenderService $markupService,
@@ -107,29 +108,6 @@ class CommunityController extends Controller {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value.
-	 *
-	 * @return string The header value.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(array_map('trim', explode(',', $configured)), static fn (string $e): bool => $e !== '')
-		);
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-
-	}//end resolveAllowedOrigin()
 
 	/**
 	 * Add the CORS headers a public endpoint answers with.
@@ -393,186 +371,6 @@ class CommunityController extends Controller {
 	}//end subscriptionRecipients()
 
 	/**
-	 * The banners the signed-in user should see right now.
-	 *
-	 * @return JSONResponse The banners.
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
-	 */
-	public function banners(): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['error' => 'not-logged-in'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			$banners = $this->readAll(schemaKey: 'instance_banner_schema');
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(data: ['error' => 'banners-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		$dismissed = json_decode(
-			$this->config->getValueString($this->appName, 'banner_dismissals_' . $user->getUID(), '[]'),
-			true
-		);
-		if (is_array($dismissed) === false) {
-			$dismissed = [];
-		}
-
-		return new JSONResponse(
-			[
-				'banners' => $this->bannerService->forUser(
-					banners: $banners,
-					dismissedIds: array_map('strval', $dismissed)
-				),
-			]
-		);
-
-	}//end banners()
-
-	/**
-	 * Remember that this user dismissed a banner.
-	 *
-	 * @return JSONResponse The dismissal.
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
-	 */
-	public function dismissBanner(): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['error' => 'not-logged-in'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		$bannerId = trim((string)$this->request->getParam('banner', ''));
-		if ($bannerId === '') {
-			return new JSONResponse(data: ['error' => 'missing-banner'], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		$key = 'banner_dismissals_' . $user->getUID();
-		$dismissed = json_decode($this->config->getValueString($this->appName, $key, '[]'), true);
-		if (is_array($dismissed) === false) {
-			$dismissed = [];
-		}
-
-		$dismissed[] = $bannerId;
-		$this->config->setValueString(
-			$this->appName,
-			$key,
-			(string)json_encode(array_values(array_unique(array_map('strval', $dismissed))))
-		);
-
-		return new JSONResponse(['dismissed' => true]);
-
-	}//end dismissBanner()
-
-	/**
-	 * Save a notice board.
-	 *
-	 * @return JSONResponse The board, or the refusal.
-	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function saveNoticeBoard(): JSONResponse {
-		$board = $this->request->getParam('board', []);
-		if (is_array($board) === false || $board === []) {
-			return new JSONResponse(data: ['error' => 'missing-board'], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$checked = $this->noticeService->validateBoard(board: $board);
-		} catch (\DomainException $e) {
-			return new JSONResponse(
-				data: ['error' => 'board-refused', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		try {
-			$config = $this->configurationFor(schemaKey: 'notice_board_schema');
-			$saved = $this->objects->getObjectService()->saveObject(
-				object: $checked,
-				extend: [],
-				register: $config['register'],
-				schema: $config['schema'],
-				uuid: (string)($board['id'] ?? '')
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(data: ['error' => 'board-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		$storedBoard = $this->asArray(object: $saved);
-
-		return new JSONResponse(
-			array_merge(
-				$storedBoard,
-				['commentsOffered' => $this->noticeService->commentsOffered(board: $storedBoard)]
-			),
-			Http::STATUS_CREATED
-		);
-
-	}//end saveNoticeBoard()
-
-	/**
-	 * Save a notice on a board.
-	 *
-	 * The write path REQ-PCS-104 asks for. A notice is checked before it is
-	 * stored, so a notice with no board, no title or a period this app cannot
-	 * read is refused with the reason rather than saved and rendered blank.
-	 *
-	 * @return JSONResponse The stored notice, or the refusal.
-	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function saveNotice(): JSONResponse {
-		$notice = $this->request->getParam('notice', []);
-		if (is_array($notice) === false || $notice === []) {
-			return new JSONResponse(data: ['error' => 'missing-notice'], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$checked = $this->noticeService->validateNotice(notice: $notice);
-		} catch (\DomainException $e) {
-			return new JSONResponse(
-				data: ['error' => 'notice-refused', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		try {
-			$config = $this->configurationFor(schemaKey: 'notice_schema');
-			$saved = $this->objects->getObjectService()->saveObject(
-				object: $checked,
-				extend: [],
-				register: $config['register'],
-				schema: $config['schema'],
-				uuid: (string)($notice['id'] ?? '')
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(data: ['error' => 'notice-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		$stored = $this->asArray(object: $saved);
-
-		return new JSONResponse(
-			array_merge($stored, ['current' => $this->noticeService->isCurrent(notice: $stored)]),
-			Http::STATUS_CREATED
-		);
-
-	}//end saveNotice()
-
-	/**
 	 * A catalogue's activity as an Atom feed.
 	 *
 	 * The publication rules own the access decision and it runs per entry, so a
@@ -746,51 +544,4 @@ class CommunityController extends Controller {
 		return $this->withCors(response: new JSONResponse($this->markupService->render(markup: $markup)));
 
 	}//end renderMarkup()
-
-	/**
-	 * The token that identifies a reader for the length of one vote.
-	 *
-	 * @return string The token.
-	 */
-	private function readerToken(): string {
-		$user = $this->userSession->getUser();
-		if ($user !== null) {
-			return 'user:' . $user->getUID();
-		}
-
-		$readerToken = (string)$this->request->getParam('readerToken', '');
-		if ($readerToken !== '') {
-			return 'token:' . $readerToken;
-		}
-
-		return 'address:' . (string)$this->request->getRemoteAddress();
-
-	}//end readerToken()
-
-	/**
-	 * Normalise an OpenRegister result to a plain array.
-	 *
-	 * @param mixed $object The result.
-	 *
-	 * @return array<string, mixed> The properties.
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$properties = $object['object'];
-			$properties['id'] = ($object['id'] ?? ($properties['id'] ?? null));
-
-			return $properties;
-		}
-
-		return $object;
-
-	}//end asArray()
 }//end class

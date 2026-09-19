@@ -5,8 +5,14 @@
  *
  * The admin side of active publication: the rules that decide what publishes
  * and what an anonymous reader may read of it, the preview that shows both
- * halves before a rule is saved, the walked process around a publication, the
- * zienswijze round, and depublication with its acknowledgements.
+ * halves before a rule is saved, the walked process around a publication, and
+ * the zienswijze round.
+ *
+ * Depublication with its acknowledgements is DepublicationController, and what
+ * is published outward (the collections, the official notice and the
+ * verifiable stamp) is PublicationDisclosureController. Both moved out on
+ * 2026-09-19 and this paragraph names them, because a docblock that still
+ * advertises a surface is what stops the next person looking for it.
  *
  * There is NO obligation overview here, and this sentence says so because the
  * previous one claimed there was. `ObligationOverviewService` assembles an
@@ -41,17 +47,10 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
-use OCA\OpenCatalogi\Service\Publication\DepublicationService;
-use OCA\OpenCatalogi\Service\Publication\DocumentStampService;
-use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
-use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationProcessService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
-use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Service\Publication\ZienswijzeService;
-use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -63,7 +62,6 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * The admin surfaces of active publication, and the public search over it.
@@ -73,7 +71,7 @@ use Psr\Container\ContainerInterface;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 class PublicationRulesController extends Controller {
-	use ResolvesRegisterConfiguration;
+	use AnswersCrossOriginRequests;
 
 	/**
 	 * Constructor.
@@ -87,12 +85,6 @@ class PublicationRulesController extends Controller {
 	 * @param DecisionPublicationValidator $decisionValidator The decision type validation.
 	 * @param PublicationProcessService $processService The walked process.
 	 * @param ZienswijzeService $zienswijzeService The consultation round.
-	 * @param DepublicationService $depublicationService Taking a publication back.
-	 * @param NationalIndexService $indexService The national channels.
-	 * @param DocumentStampService $stampService The verifiable stamp.
-	 * @param PublishedCollectionsService $collectionsService The configured published set.
-	 * @param ContainerInterface $container Server container, for the register resolver.
-	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -106,12 +98,6 @@ class PublicationRulesController extends Controller {
 		private readonly DecisionPublicationValidator $decisionValidator,
 		private readonly PublicationProcessService $processService,
 		private readonly ZienswijzeService $zienswijzeService,
-		private readonly DepublicationService $depublicationService,
-		private readonly NationalIndexService $indexService,
-		private readonly DocumentStampService $stampService,
-		private readonly PublishedCollectionsService $collectionsService,
-		private readonly ContainerInterface $container,
-		private readonly ServiceCatalogueService $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -131,29 +117,6 @@ class PublicationRulesController extends Controller {
 		return $user->getUID();
 
 	}//end actor()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value.
-	 *
-	 * @return string The header value.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(array_map('trim', explode(',', $configured)), static fn (string $e): bool => $e !== '')
-		);
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-
-	}//end resolveAllowedOrigin()
 
 	/**
 	 * Answer a CORS preflight.
@@ -381,388 +344,6 @@ class PublicationRulesController extends Controller {
 		return new JSONResponse($ask, Http::STATUS_CREATED);
 
 	}//end raiseZienswijze()
-
-	/**
-	 * Depublish in one action and withdraw from every channel it reached.
-	 *
-	 * @return JSONResponse The depublication, with any outstanding channel named.
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function depublish(): JSONResponse {
-		$publication = $this->request->getParam('publication', []);
-		$channels = $this->request->getParam('channels', []);
-
-		if (is_array($publication) === false || $publication === []) {
-			return new JSONResponse(data: ['error' => 'missing-publication'], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		if (is_array($channels) === false) {
-			$channels = [];
-		}
-
-		try {
-			$depublication = $this->depublicationService->depublish(
-				publication: $publication,
-				reason: trim((string)$this->request->getParam('reason', '')),
-				depublishedBy: $this->actor(),
-				channels: array_map('strval', $channels)
-			);
-		} catch (\DomainException $e) {
-			return new JSONResponse(
-				data: ['error' => 'depublication-refused', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		// The depublication is STORED, not just returned. REQ-PIN-106 says each
-		// channel's acknowledgement is recorded and an unacknowledged
-		// withdrawal is shown as outstanding; neither is possible against a
-		// value that only ever existed inside one response.
-		try {
-			$saved = $this->objects->getObjectService()->saveObject(
-				object: $depublication,
-				extend: [],
-				register: $this->depublicationConfiguration()['register'],
-				schema: $this->depublicationConfiguration()['schema']
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(
-				data: [
-					'error' => 'depublication-unstored',
-					'message' => $this->l10n->t('The withdrawals were sent but could not be recorded.'),
-				],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		$stored = $this->asArray(object: $saved);
-		$outstanding = $this->depublicationService->outstandingChannels(depublication: $stored);
-
-		return new JSONResponse(
-			array_merge(
-				$stored,
-				[
-					'outstandingChannels' => $outstanding,
-					'complete' => ($outstanding === []),
-				]
-			)
-		);
-
-	}//end depublish()
-
-	/**
-	 * The register and schema the depublications live in.
-	 *
-	 * @return array<string, string> The register and schema identifiers.
-	 */
-	private function depublicationConfiguration(): array {
-		return $this->resolveRegisterConfiguration(
-			registerKey: 'publication_register',
-			schemaKey: 'depublication_schema'
-		);
-
-	}//end depublicationConfiguration()
-
-	/**
-	 * Read an object's properties, whatever shape OpenRegister returned.
-	 *
-	 * @param mixed $object The object.
-	 *
-	 * @return array<string, mixed> The properties.
-	 *
-	 * @spec exclude pure shape adaptation over the consumed OR ObjectService.
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$properties = $object['object'];
-			$properties['id'] = ($object['id'] ?? ($properties['id'] ?? null));
-
-			return $properties;
-		}
-
-		return $object;
-
-	}//end asArray()
-
-	/**
-	 * Record that a channel acknowledged its withdrawal.
-	 *
-	 * The write path REQ-PIN-106 asks for. Without it a withdrawal can be sent
-	 * and can never be acknowledged, so every depublication stays outstanding
-	 * for ever and the organisation cannot leave that state.
-	 *
-	 * An acknowledgement is only ever recorded against a channel the
-	 * depublication actually sent a withdrawal to. A channel nobody wrote to
-	 * cannot acknowledge on its behalf, which is the failure that would let a
-	 * document be reported as gone from a harvester that still holds it.
-	 *
-	 * @return JSONResponse The depublication with what is still outstanding.
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function acknowledgeWithdrawal(): JSONResponse {
-		$id = trim((string)$this->request->getParam('depublication', ''));
-		$channel = trim((string)$this->request->getParam('channel', ''));
-
-		if ($id === '' || $channel === '') {
-			return new JSONResponse(
-				data: [
-					'error' => 'missing-parameters',
-					'message' => $this->l10n->t('Name the depublication and the channel that acknowledged.'),
-				],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		try {
-			$config = $this->depublicationConfiguration();
-			$objectService = $this->objects->getObjectService();
-			$depublication = $this->asArray(
-				object: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'])
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(
-				data: ['error' => 'depublication-unreadable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		} catch (\Throwable $e) {
-			return new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND);
-		}
-
-		$channels = array_map(
-			static fn (array $withdrawal): string => (string)($withdrawal['channel'] ?? ''),
-			array_filter((array)($depublication['withdrawals'] ?? []), 'is_array')
-		);
-
-		if (in_array($channel, $channels, true) === false) {
-			return new JSONResponse(
-				data: [
-					'error' => 'unknown-channel',
-					'message' => $this->l10n->t('No withdrawal was sent to that channel, so there is nothing for it to acknowledge.'),
-				],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		$updated = $this->depublicationService->recordAcknowledgement(
-			depublication: $depublication,
-			channel: $channel,
-			answer: trim((string)$this->request->getParam('answer', ''))
-		);
-
-		try {
-			$saved = $this->objects->getObjectService()->saveObject(
-				object: $updated,
-				extend: [],
-				register: $config['register'],
-				schema: $config['schema'],
-				uuid: $id
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(
-				data: ['error' => 'depublication-unstored'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		}
-
-		$stored = $this->asArray(object: $saved);
-		$outstanding = $this->depublicationService->outstandingChannels(depublication: $stored);
-
-		return new JSONResponse(
-			array_merge(
-				$stored,
-				[
-					'outstandingChannels' => $outstanding,
-					'complete' => ($outstanding === []),
-				]
-			)
-		);
-
-	}//end acknowledgeWithdrawal()
-
-	/**
-	 * Compose the official notice for both channels and hand it to the gateway.
-	 *
-	 * @return JSONResponse What was composed and what each destination answered.
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function announce(): JSONResponse {
-		$decision = $this->request->getParam('decision', []);
-		if (is_array($decision) === false || $decision === []) {
-			return new JSONResponse(data: ['error' => 'missing-decision'], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		$notices = $this->indexService->composeNotices(decision: $decision);
-		$deliveries = [];
-		$unreachable = [];
-
-		foreach ($notices as $notice) {
-			try {
-				$deliveries[] = $this->indexService->deliver(notice: $notice);
-			} catch (IndexUnreachableException $e) {
-				$unreachable[] = [
-					'channel' => (string)($notice['channel'] ?? ''),
-					'reason' => $e->getMessage(),
-				];
-			}
-		}
-
-		// The notices are returned whether or not they were delivered, and an
-		// undelivered channel is named. Answering 200 with only the deliveries
-		// would let an operator read a partial announcement as a complete one.
-		$statusCode = Http::STATUS_BAD_GATEWAY;
-		if ($unreachable === []) {
-			$statusCode = Http::STATUS_OK;
-		}
-
-		return new JSONResponse(
-			data: [
-				'notices' => $notices,
-				'delivered' => $deliveries,
-				'unreachable' => $unreachable,
-				'complete' => ($unreachable === []),
-			],
-			statusCode: $statusCode
-		);
-
-	}//end announce()
-
-	/**
-	 * Read or write which collections publish, and on what conditions.
-	 *
-	 * @return JSONResponse The configured set.
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function publishedCollections(): JSONResponse {
-		try {
-			return new JSONResponse(['collections' => $this->collectionsService->collections()]);
-		} catch (UnreadableRuleException $e) {
-			return new JSONResponse(
-				data: ['error' => 'unreadable-configuration', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		}
-
-	}//end publishedCollections()
-
-	/**
-	 * Save which collections publish.
-	 *
-	 * @return JSONResponse The outcome.
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function savePublishedCollections(): JSONResponse {
-		$collections = $this->request->getParam('collections', []);
-		if (is_array($collections) === false) {
-			return new JSONResponse(data: ['error' => 'missing-collections'], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		$outcome = $this->collectionsService->save(collections: array_values($collections));
-
-		if ($outcome['saved'] === false) {
-			return new JSONResponse(
-				data: ['error' => 'invalid-collections', 'errors' => $outcome['errors']],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		return new JSONResponse(['saved' => true]);
-
-	}//end savePublishedCollections()
-
-	/**
-	 * The organisation's published verification key.
-	 *
-	 * @return JSONResponse The key, or a refusal saying there is none.
-	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-published-document-carries-a-verifiable-stamp-req-pin-109
-	 */
-	#[AnonRateLimit(limit: 60, period: 60)]
-	public function verificationKey(): JSONResponse {
-		$key = $this->stampService->publishedKey();
-
-		if ($key === null) {
-			return new JSONResponse(
-				data: [
-					'error' => 'no-key',
-					'message' => $this->l10n->t('This organisation publishes no verification key, so a stamp here cannot be checked.'),
-				],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		}
-
-		$response = new JSONResponse($key);
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-
-		return $response;
-
-	}//end verificationKey()
-
-	/**
-	 * Verify a published document against the organisation's key.
-	 *
-	 * @return JSONResponse Whether the check passed, and why it did not.
-	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-published-document-carries-a-verifiable-stamp-req-pin-109
-	 */
-	#[AnonRateLimit(limit: 30, period: 60)]
-	public function verifyDocument(): JSONResponse {
-		$document = (string)$this->request->getParam('document', '');
-		$metadata = $this->request->getParam('metadata', []);
-		$stamp = $this->request->getParam('stamp', []);
-
-		if (is_array($metadata) === false || is_array($stamp) === false || $stamp === []) {
-			return new JSONResponse(
-				data: ['error' => 'missing-parameters', 'message' => $this->l10n->t('Send the document, its publication metadata and its stamp.')],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		// A document that is not valid base64 is verified as the raw bytes that
-		// came in, so a caller that posted the document unencoded gets a real
-		// verdict rather than a verification of the empty string.
-		$documentBytes = base64_decode($document, true);
-		if ($documentBytes === false) {
-			$documentBytes = $document;
-		}
-
-		$outcome = $this->stampService->verify(
-			documentBytes: $documentBytes,
-			metadata: $metadata,
-			stamp: $stamp
-		);
-
-		$response = new JSONResponse($outcome);
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-
-		return $response;
-
-	}//end verifyDocument()
 
 	/**
 	 * Search published information in plain words, without an account.

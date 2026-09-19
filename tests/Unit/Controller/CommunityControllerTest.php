@@ -27,7 +27,6 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Controller\CommunityController;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
-use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
@@ -85,8 +84,6 @@ class CommunityControllerTest extends TestCase {
 			->onlyMethods(['getObjectService'])
 			->getMock();
 
-		$notices = new NoticeBoardService();
-
 		$this->controller = new CommunityController(
 			'opencatalogi',
 			$this->request,
@@ -96,9 +93,7 @@ class CommunityControllerTest extends TestCase {
 			$this->userSession,
 			new StatusPageService(),
 			new SubscriptionService(salt: 'test-salt'),
-			new BannerService(),
-			$notices,
-			new AtomFeedService(new PublicationRuleService(), $notices),
+			new AtomFeedService(new PublicationRuleService(), new NoticeBoardService()),
 			new VoteService(salt: 'test-salt'),
 			new MarkupRenderService(),
 			$this->objects
@@ -171,166 +166,6 @@ class CommunityControllerTest extends TestCase {
 		$this->assertSame('missing-markup', $response->getData()['error']);
 
 	}//end testRenderingWithoutAnyMarkupIsRefused()
-
-	public function testAnUnauthenticatedCallerGetsNoBanners(): void {
-		$this->userSession->method('getUser')->willReturn(null);
-
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $this->controller->banners()->getStatus());
-
-	}//end testAnUnauthenticatedCallerGetsNoBanners()
-
-	public function testAnUnauthenticatedCallerCannotDismissABanner(): void {
-		$this->userSession->method('getUser')->willReturn(null);
-
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $this->controller->dismissBanner()->getStatus());
-
-	}//end testAnUnauthenticatedCallerCannotDismissABanner()
-
-	public function testABoardWithCommentsAndNoModeratorIsRefusedByTheController(): void {
-		$this->withParams(['board' => ['title' => 'Mededelingen', 'commentsEnabled' => true]]);
-
-		$response = $this->controller->saveNoticeBoard();
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame('board-refused', $response->getData()['error']);
-
-	}//end testABoardWithCommentsAndNoModeratorIsRefusedByTheController()
-
-	/**
-	 * An in-memory stand-in for OpenRegister's ObjectService.
-	 *
-	 * OpenRegister is not on the autoload path in a standalone checkout, so it
-	 * cannot be mocked by type. This stores what it is handed and answers what
-	 * it stored; a save that dropped the object would fail the assertions
-	 * below rather than pass them.
-	 *
-	 * @return object The stand-in.
-	 */
-	private function objectStore(): object {
-		return new class {
-			/** @var array<string, array<string, mixed>> */
-			public array $stored = [];
-
-			public function saveObject(
-				array $object,
-				array $extend = [],
-				string $register = '',
-				string $schema = '',
-				string $uuid = '',
-			): array {
-				$id = ($uuid !== '' ? $uuid : 'notice-1');
-				$object['id'] = $id;
-				$this->stored[$id] = $object;
-
-				return $object;
-			}
-		};
-
-	}//end objectStore()
-
-	/**
-	 * A notice that passes its checks is stored.
-	 *
-	 * The write path REQ-PCS-104 asks for. Before this, `validateNotice` had no
-	 * caller at all, so nothing a user touched ever checked a notice.
-	 */
-	public function testANoticeThatPassesItsChecksIsStored(): void {
-		$store = $this->objectStore();
-		$this->objects->method('getObjectService')->willReturn($store);
-		$this->withParams(
-			[
-				'notice' => [
-					'board' => 'mededelingen',
-					'title' => 'Werk aan de kade',
-					'body' => 'De kade is deze week afgesloten.',
-					'startDate' => '2026-09-01T00:00:00+00:00',
-					'endDate' => '2099-01-01T00:00:00+00:00',
-				],
-			]
-		);
-
-		$response = $this->controller->saveNotice();
-
-		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
-		$this->assertSame('Werk aan de kade', $response->getData()['title']);
-		$this->assertTrue($response->getData()['current']);
-		$this->assertArrayHasKey('notice-1', $store->stored);
-
-	}//end testANoticeThatPassesItsChecksIsStored()
-
-	/**
-	 * A notice with no board is refused with its reason, and nothing is stored.
-	 */
-	public function testANoticeWithNoBoardIsRefusedAndNothingIsStored(): void {
-		$store = $this->objectStore();
-		$this->objects->method('getObjectService')->willReturn($store);
-		$this->withParams(
-			[
-				'notice' => [
-					'title' => 'Werk aan de kade',
-					'startDate' => '2026-09-01T00:00:00+00:00',
-					'endDate' => '2099-01-01T00:00:00+00:00',
-				],
-			]
-		);
-
-		$response = $this->controller->saveNotice();
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame('notice-refused', $response->getData()['error']);
-		$this->assertSame([], $store->stored);
-
-	}//end testANoticeWithNoBoardIsRefusedAndNothingIsStored()
-
-	/**
-	 * A notice whose period this app cannot read is refused, not stored blank.
-	 */
-	public function testANoticeWithAnUnreadablePeriodIsRefused(): void {
-		$store = $this->objectStore();
-		$this->objects->method('getObjectService')->willReturn($store);
-		$this->withParams(
-			[
-				'notice' => [
-					'board' => 'mededelingen',
-					'title' => 'Werk aan de kade',
-					'startDate' => 'ooit',
-					'endDate' => 'later',
-				],
-			]
-		);
-
-		$response = $this->controller->saveNotice();
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame('notice-refused', $response->getData()['error']);
-		$this->assertSame([], $store->stored);
-
-	}//end testANoticeWithAnUnreadablePeriodIsRefused()
-
-	/**
-	 * A notice that ends before it starts is refused.
-	 */
-	public function testANoticeThatEndsBeforeItStartsIsRefused(): void {
-		$store = $this->objectStore();
-		$this->objects->method('getObjectService')->willReturn($store);
-		$this->withParams(
-			[
-				'notice' => [
-					'board' => 'mededelingen',
-					'title' => 'Werk aan de kade',
-					'startDate' => '2026-09-10T00:00:00+00:00',
-					'endDate' => '2026-09-01T00:00:00+00:00',
-				],
-			]
-		);
-
-		$response = $this->controller->saveNotice();
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame('notice-refused', $response->getData()['error']);
-		$this->assertSame([], $store->stored);
-
-	}//end testANoticeThatEndsBeforeItStartsIsRefused()
 
 	public function testASubscriptionToAnUnusableAddressIsRefused(): void {
 		$this->withParams(['address' => 'niet-een-adres', 'scope' => 'status']);

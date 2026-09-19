@@ -69,21 +69,21 @@ return [
 		// The public and community surface: the admin surfaces.
 		['name' => 'community#setStatus', 'url' => '/api/status', 'verb' => 'POST'],
 		['name' => 'community#subscriptionRecipients', 'url' => '/api/status/recipients', 'verb' => 'GET'],
-		['name' => 'community#banners', 'url' => '/api/banners', 'verb' => 'GET'],
-		['name' => 'community#dismissBanner', 'url' => '/api/banners/dismiss', 'verb' => 'POST'],
-		['name' => 'community#saveNoticeBoard', 'url' => '/api/notice-boards', 'verb' => 'POST'],
-		['name' => 'community#saveNotice', 'url' => '/api/notices', 'verb' => 'POST'],
+		['name' => 'noticeBoard#banners', 'url' => '/api/banners', 'verb' => 'GET'],
+		['name' => 'noticeBoard#dismissBanner', 'url' => '/api/banners/dismiss', 'verb' => 'POST'],
+		['name' => 'noticeBoard#saveNoticeBoard', 'url' => '/api/notice-boards', 'verb' => 'POST'],
+		['name' => 'noticeBoard#saveNotice', 'url' => '/api/notices', 'verb' => 'POST'],
 		// Active publication, inspection and the national indexes: the admin surfaces.
 		['name' => 'publicationRules#previewRule', 'url' => '/api/publication-rules/preview', 'verb' => 'POST'],
 		['name' => 'publicationRules#validateDecision', 'url' => '/api/publication-rules/validate-decision', 'verb' => 'POST'],
 		['name' => 'publicationRules#startProcess', 'url' => '/api/publication-process', 'verb' => 'POST'],
 		['name' => 'publicationRules#completeStep', 'url' => '/api/publication-process/step', 'verb' => 'POST'],
 		['name' => 'publicationRules#raiseZienswijze', 'url' => '/api/publication-process/zienswijze', 'verb' => 'POST'],
-		['name' => 'publicationRules#depublish', 'url' => '/api/publications/depublish', 'verb' => 'POST'],
-		['name' => 'publicationRules#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
-		['name' => 'publicationRules#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
-		['name' => 'publicationRules#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
-		['name' => 'publicationRules#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
+		['name' => 'depublication#depublish', 'url' => '/api/publications/depublish', 'verb' => 'POST'],
+		['name' => 'depublication#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
+		['name' => 'publicationDisclosure#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
+		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
+		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
 		['name' => 'inspection#open', 'url' => '/api/inspections', 'verb' => 'POST'],
 		// Published service and case type catalogue: the admin surfaces.
 		['name' => 'serviceCatalogue#unavailableEntries', 'url' => '/api/service-catalogue/unavailable', 'verb' => 'GET'],
@@ -135,8 +135,8 @@ return [
 		['name' => 'community#preflightedCors', 'postfix' => '-markup-render', 'url' => '/api/markup/render', 'verb' => 'OPTIONS'],
 		// Active publication CORS (public search, the stamp, the inspection link)
 		['name' => 'publicationRules#preflightedCors', 'postfix' => '-publications-search', 'url' => '/api/publications/search', 'verb' => 'OPTIONS'],
-		['name' => 'publicationRules#preflightedCors', 'postfix' => '-publications-verification-key', 'url' => '/api/publications/verification-key', 'verb' => 'OPTIONS'],
-		['name' => 'publicationRules#preflightedCors', 'postfix' => '-publications-verify', 'url' => '/api/publications/verify', 'verb' => 'OPTIONS'],
+		['name' => 'publicationDisclosure#preflightedCors', 'postfix' => '-publications-verification-key', 'url' => '/api/publications/verification-key', 'verb' => 'OPTIONS'],
+		['name' => 'publicationDisclosure#preflightedCors', 'postfix' => '-publications-verify', 'url' => '/api/publications/verify', 'verb' => 'OPTIONS'],
 		['name' => 'inspection#preflightedCors', 'url' => '/api/inspections/{id}', 'verb' => 'OPTIONS'],
 		// Service catalogue CORS (public request catalogue, published case types, article verdicts)
 		['name' => 'serviceCatalogue#preflightedCors', 'postfix' => '-service-catalogue', 'url' => '/api/service-catalogue', 'verb' => 'OPTIONS'],
@@ -220,8 +220,8 @@ return [
 		['name' => 'community#renderMarkup', 'url' => '/api/markup/render', 'verb' => 'POST'],
 		// Active publication public surfaces (specific routes - must be before wildcard catalog routes)
 		['name' => 'publicationRules#publicSearch', 'url' => '/api/publications/search', 'verb' => 'POST'],
-		['name' => 'publicationRules#verificationKey', 'url' => '/api/publications/verification-key', 'verb' => 'GET'],
-		['name' => 'publicationRules#verifyDocument', 'url' => '/api/publications/verify', 'verb' => 'POST'],
+		['name' => 'publicationDisclosure#verificationKey', 'url' => '/api/publications/verification-key', 'verb' => 'GET'],
+		['name' => 'publicationDisclosure#verifyDocument', 'url' => '/api/publications/verify', 'verb' => 'POST'],
 		['name' => 'inspection#follow', 'url' => '/api/inspections/{id}', 'verb' => 'GET'],
 		// Published service catalogue (public; specific routes - must be before wildcard catalog routes)
 		['name' => 'serviceCatalogue#index', 'url' => '/api/service-catalogue', 'verb' => 'GET'],
