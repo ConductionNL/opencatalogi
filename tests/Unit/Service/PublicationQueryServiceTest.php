@@ -827,6 +827,102 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame([1, 2], $fakeObjectService->capturedCalls[0]['query']['_schemas'], 'signed-in callers are evaluated by OR RBAC (WOO-551), the guard is anonymous-only');
 	}
 
+	// -------------------------------------------------------------------------
+	// WOO-580 — the same read-rule guard on the per-catalog routes.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * The leak this ticket closes. `/api/{catalogSlug}` and its siblings build
+	 * their scope straight from the catalog, so the WOO-574 guard never reached
+	 * them: a schema without `authorization.read` is `bypass => true` in
+	 * OpenRegister and every row of it was readable by an anonymous caller.
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardDropsSchemaWithoutReadRulesForAnonymousCaller(): void {
+		$this->wireHappyPath(authorizationById: [2 => ['create' => ['authenticated']]]);
+
+		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
+			$this->stringContains('no authorization.read rules'),
+			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
+		);
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
+
+		$this->assertSame([1], $guarded['schemas'], 'schema 2 heeft geen leesregels en hoort niet in de anonieme scope');
+		$this->assertSame([1], $guarded['registers'], 'de registers blijven ongemoeid');
+	}//end testCatalogGuardDropsSchemaWithoutReadRulesForAnonymousCaller()
+
+	/**
+	 * A catalog in which nothing survives the guard hands back an empty scope.
+	 * Every per-catalog route already refuses on an empty schema list, and
+	 * index() turns it into the empty envelope rather than an unscoped search.
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardEmptiesTheScopeWhenNoSchemaHasReadRules(): void {
+		$this->wireHappyPath(authorizationById: [1 => null, 2 => []]);
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
+
+		$this->assertSame([], $guarded['schemas']);
+	}//end testCatalogGuardEmptiesTheScopeWhenNoSchemaHasReadRules()
+
+	/**
+	 * Anonymous-only, deliberately: these routes are where WOO-578 points staff
+	 * when it narrows `/api/search`. A signed-in caller keeps normal RBAC
+	 * evaluation (WOO-551 semantics), exactly as the guard on `/api/search`
+	 * behaves.
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardLeavesTheScopeAloneForASignedInCaller(): void {
+		$user = $this->createMock(\OCP\IUser::class);
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$this->service = new PublicationQueryService(
+			container: $this->container,
+			userSession: $session,
+			config: $this->config,
+			logger: $this->logger,
+		);
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
+
+		$this->assertSame([1, 2], $guarded['schemas'], 'ingelogde callers worden door OR RBAC beoordeeld, de guard is anoniem-only');
+	}//end testCatalogGuardLeavesTheScopeAloneForASignedInCaller()
+
+	/**
+	 * A catalog whose schema list arrives as a JSON string — the shape the
+	 * catalog object carries in the database — is normalised to ints before the
+	 * guard looks at it, so the guard cannot be sidestepped by the encoding.
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardNormalisesAJsonEncodedSchemaList(): void {
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => '[1,2]', 'registers' => [1]]);
+
+		$this->assertSame([1], $guarded['schemas']);
+	}//end testCatalogGuardNormalisesAJsonEncodedSchemaList()
+
+	/**
+	 * The negative control: a catalog whose schemas all carry read rules comes
+	 * back untouched, so the guard cannot be the reason a working catalog goes
+	 * quiet.
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardKeepsEverySchemaThatCarriesReadRules(): void {
+		$this->wireHappyPath();
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
+
+		$this->assertSame([1, 2], $guarded['schemas']);
+	}//end testCatalogGuardKeepsEverySchemaThatCarriesReadRules()
+
 	private function wireHappyPath(array $authorizationById = []): FakeSearchObjectService {
 		$fakeObjectService = new FakeSearchObjectService();
 

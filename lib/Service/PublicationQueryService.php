@@ -539,6 +539,63 @@ class PublicationQueryService
     }//end dropSchemasWithoutReadRules()
 
     /**
+     * Apply the SCH-PFTS-CAT-002 read-rule guard to a catalog's schema scope.
+     *
+     * Same rule as `/api/search` (WOO-574): OpenRegister returns `bypass => true`
+     * — no WHERE clause at all — for a schema whose effective authorization is
+     * empty or lacks the `read` action, so on an anonymous surface every row of
+     * such a schema is exposed. `assemblePublicSearchResults()` has dropped those
+     * schemas since WOO-574, but that method only serves `/api/search`. The
+     * per-catalog routes (`/api/{catalogSlug}` and its `/{id}`, `/uses`,
+     * `/used`, `/attachments`, `/download` siblings) are `#[PublicPage]` too and
+     * build their scope straight from the catalog, so the guard never reached
+     * them and the leak stayed open there (WOO-580).
+     *
+     * Guarding the CATALOG rather than each query is what makes this one rule
+     * instead of six: every one of those routes reads `$catalog['schemas']`,
+     * directly or through {@see buildCatalogSearchQuery()} /
+     * {@see findObjectInCatalog()}, and each already fails closed on an empty
+     * schema list. Handing them a guarded catalog therefore also keeps the
+     * `@catalog.schemas` block in the response from naming a schema the caller
+     * may not read.
+     *
+     * ANONYMOUS ONLY, deliberately. Signed-in callers keep normal RBAC
+     * evaluation (WOO-551 semantics), exactly as the guard on `/api/search`
+     * behaves today. These per-catalog routes are the surface WOO-578 points
+     * staff at when it narrows `/api/search`; widening the guard here would
+     * close that door in the same move.
+     *
+     * @param array $catalog Catalog data array (keys: schemas, registers).
+     *
+     * @return array The catalog with `schemas` normalised to int[] and, for an
+     *               anonymous caller, filtered to the schemas that carry read rules.
+     *
+     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+     */
+    public function applyCatalogReadRuleGuard(array $catalog): array
+    {
+        $schemas = ($catalog['schemas'] ?? []);
+        if (is_string($schemas) === true) {
+            $schemas = (json_decode($schemas, true) ?? []);
+        }
+
+        if (is_array($schemas) === false) {
+            $schemas = [];
+        }
+
+        $schemas = array_values(array_map('intval', array_filter($schemas, 'is_numeric')));
+
+        if ($this->isAnonymous() === true && empty($schemas) === false) {
+            $schemas = $this->dropSchemasWithoutReadRules(schemaIds: $schemas);
+        }
+
+        $catalog['schemas'] = $schemas;
+
+        return $catalog;
+
+    }//end applyCatalogReadRuleGuard()
+
+    /**
      * Resolve the register + schema union that /api/search covers for this request.
      *
      * Central discriminator for SCH-PFTS-CAT-001..003:
