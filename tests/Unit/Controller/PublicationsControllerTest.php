@@ -42,7 +42,7 @@ class PublicationsControllerTest extends TestCase {
 		$this->request = $this->createMock(IRequest::class);
 		$this->publicationService = $this->createMock(PublicationService::class);
 		$this->catalogiService = $this->createMock(CatalogiService::class);
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appManager = $this->createMock(IAppManager::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -90,6 +90,26 @@ class PublicationsControllerTest extends TestCase {
 	}
 
 	/**
+	 * A PublicationQueryService double with the collaborations every route needs.
+	 *
+	 * WOO-580 put a read-rule guard in front of all six per-catalog routes: each
+	 * one hands its catalog to `applyCatalogReadRuleGuard()` and uses what comes
+	 * back. A bare `createMock()` answers null there, which empties the catalog
+	 * and turns every route into a 404 — so the double has to know about the
+	 * call. It hands the catalog back unchanged, keeping these tests about the
+	 * routes; the guard's own behaviour is covered in PublicationQueryServiceTest.
+	 *
+	 * @return PublicationQueryService|MockObject
+	 */
+	private function newQueryServiceDouble(): PublicationQueryService|MockObject {
+		$queryService = $this->createMock(PublicationQueryService::class);
+		$queryService->method('applyCatalogReadRuleGuard')
+			->willReturnCallback(fn (array $catalog) => $catalog);
+
+		return $queryService;
+	}//end newQueryServiceDouble()
+
+	/**
 	 * Rebuilds $this->queryService and the controller so findObjectInCatalog either
 	 * returns null (object not in catalog) or throws the supplied exception. Used by
 	 * the attachments/download not-found and error-path tests, whose object lookup
@@ -98,7 +118,7 @@ class PublicationsControllerTest extends TestCase {
 	 * @param \Throwable|null $throw When set, findObjectInCatalog throws it; otherwise it returns null.
 	 */
 	private function stubFindObjectInCatalog(?\Throwable $throw = null): void {
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $data) => $data);
@@ -131,7 +151,7 @@ class PublicationsControllerTest extends TestCase {
 				'registers' => [1],
 			]);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $data) => $data);
@@ -409,7 +429,7 @@ class PublicationsControllerTest extends TestCase {
 		$rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => []]);
 		$mockObjService->method('find')->willReturn($rootObject);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('findObjectLocation')->willReturn(null);
 		$this->queryService->method('isAnonymous')->willReturn(true);
 		$this->queryService->method('isObjectPublic')->willReturn(false);
@@ -492,7 +512,7 @@ class PublicationsControllerTest extends TestCase {
 		$rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => []]);
 		$mockObjService->method('find')->willReturn($rootObject);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('findObjectLocation')->willReturn(null);
 		$this->queryService->method('isAnonymous')->willReturn(true);
 		$this->queryService->method('isObjectPublic')->willReturn(false);
@@ -921,7 +941,7 @@ class PublicationsControllerTest extends TestCase {
 
 		// The query service resolves the object's register/schema across the magic
 		// tables; the controller then re-queries ObjectService with that location.
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $data) => $data);
@@ -1016,7 +1036,7 @@ class PublicationsControllerTest extends TestCase {
 		$mockObjService->method('searchObjects')
 			->willReturn([]);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $data) => $data);
@@ -1637,7 +1657,7 @@ class PublicationsControllerTest extends TestCase {
 
 		// Stub findObjectLocation to claim the object is in the catalog's scope so we
 		// exercise the post-lookup membership check (not the upstream constraint).
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $d) => $d);
@@ -1675,7 +1695,7 @@ class PublicationsControllerTest extends TestCase {
 
 		$mockObjService->method('searchObjects')->willReturn([]);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $d) => $d);
@@ -1721,7 +1741,7 @@ class PublicationsControllerTest extends TestCase {
 
 		$mockObjService->method('searchObjects')->willReturn([]);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $d) => $d);
