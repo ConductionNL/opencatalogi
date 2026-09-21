@@ -1099,11 +1099,11 @@ class PublicationsController extends Controller {
 			// A catalog with no configured scope has no namespace to serve from, which is
 			// the same C-1 policy attachments() and download() have carried since wave-7.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			// WOO-580: same read-rule guard as the sibling routes; the catalog may be
-			// null here, which the empty-scope refusal below already turns into a 404.
-			if (is_array($catalog) === true) {
-				$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
-			}
+			// WOO-580: same read-rule guard as the sibling routes. This route checks
+			// for a missing catalog via the empty-scope refusal below rather than an
+			// explicit null test, so the cast keeps that shape: a null catalog guards
+			// to an empty scope and still lands on the 404 two lines down.
+			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: (array)$catalog);
 			$catalogRegisters = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
 			$catalogSchemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
 			if (empty($catalogRegisters) === true || empty($catalogSchemas) === true) {
@@ -1209,11 +1209,11 @@ class PublicationsController extends Controller {
 			// A catalog with no configured scope has no namespace to serve from, which is
 			// the same C-1 policy attachments() and download() have carried since wave-7.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			// WOO-580: same read-rule guard as the sibling routes; the catalog may be
-			// null here, which the empty-scope refusal below already turns into a 404.
-			if (is_array($catalog) === true) {
-				$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
-			}
+			// WOO-580: same read-rule guard as the sibling routes. This route checks
+			// for a missing catalog via the empty-scope refusal below rather than an
+			// explicit null test, so the cast keeps that shape: a null catalog guards
+			// to an empty scope and still lands on the 404 two lines down.
+			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: (array)$catalog);
 			$catalogRegisters = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
 			$catalogSchemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
 			if (empty($catalogRegisters) === true || empty($catalogSchemas) === true) {
