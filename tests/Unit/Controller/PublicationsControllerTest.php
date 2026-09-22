@@ -705,12 +705,24 @@ class PublicationsControllerTest extends TestCase {
 	 * assertion that proves it is a negative one: `searchObjectsPaginated` is
 	 * never reached.
 	 *
-	 * Mutation-checked 2026-09-22: delete the branch and this test goes red. The
-	 * assertion that reports it first is the status one — the route falls through
-	 * to the OpenRegister call the guard had just ruled out, the doubles answer
-	 * nothing usable, and it 500s — with the `never()` expectations failing
-	 * alongside it at teardown. Either way the deletion cannot pass unnoticed,
-	 * which is the property that was missing.
+	 * Mutation-checked 2026-09-22: delete the branch and this test goes red, with
+	 * exactly one failure — `Failed asserting that 500 matches expected 200`.
+	 *
+	 * The route falls through to the OpenRegister call the guard had ruled out;
+	 * the `never()` matcher throws at that moment, the controller's own
+	 * `catch (\Exception)` swallows it into a generic 500, and the status
+	 * assertion then fails. The `never()` expectations do NOT also report: PHPUnit
+	 * calls `verifyMockObjects()` on the line AFTER `runTest()`
+	 * (TestCase::runBare), so once the test body has thrown, mock verification is
+	 * never reached. An earlier version of this docblock claimed they failed
+	 * "alongside it at teardown"; they do not, and the mutation output said so —
+	 * one failure, not two.
+	 *
+	 * Which is worth spelling out, because it means the status assertion is the
+	 * ONLY thing standing between a deleted branch and a green suite here. The
+	 * `never()` expectations are still worth keeping — they are what makes the
+	 * intent readable, and they would report on a mutation that does not throw —
+	 * but they are not the safety net in this particular case.
 	 *
 	 * Here the catalog arrives WITH schemas and the guard drops them all, which
 	 * is the real shape — a catalog configured with nothing at all is the less
