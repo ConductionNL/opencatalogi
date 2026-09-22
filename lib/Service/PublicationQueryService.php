@@ -74,6 +74,14 @@ class PublicationQueryService
     public const PUBLIC_LIMIT_MAX = 100;
 
     /**
+     * Whether the missing-runAsAnonymous() warning has been logged this request.
+     *
+     * @var bool
+     */
+    private bool $warnedAboutMissingAnonymousScope = false;
+
+
+    /**
      * Constructor.
      *
      * @param ContainerInterface   $container   DI container
@@ -106,12 +114,12 @@ class PublicationQueryService
      * `_relations_contains` refinement; documents whose linked publication is not
      * publicly visible are dropped (transitive visibility).
      *
-     * Visibility is enforced in SQL by OR's schema-level RBAC. Anonymous callers see
-     * only `public`-group-eligible rows (SCH-PFTS-001 lower half). The historical
-     * `_rbac_as_public: true` runtime toggle from openregister PR #2855 that also
-     * forced anonymous evaluation on admin sessions has been removed on OR main —
-     * see the Stap 1 comment inside this method + WOO-551 for the semantic-drift
-     * documentation on the admin/owner half of SCH-PFTS-001.
+     * Visibility is enforced in SQL by OR's schema-level RBAC, evaluated as an
+     * anonymous caller for every session (SCH-PFTS-001): the read runs inside OR's
+     * `runAsAnonymous()`, so only `public`-group read rules decide what comes back
+     * and a signed-in administrator sees exactly what an anonymous caller sees.
+     * See the Stap 1 comment inside this method (WOO-578; the interim WOO-551
+     * behaviour applies only on an OpenRegister without that primitive).
      *
      * Scope resolution:
      *   1. `_catalog=<slug>` — that catalog's registers + schemas (SCH-PFTS-CAT-001).
@@ -140,6 +148,53 @@ class PublicationQueryService
      */
     public function assemblePublicSearchResults(array $queryParams, object $objectService): array
     {
+        // ONE anonymous scope around the WHOLE assembly, not just the object reads.
+        // Scope resolution asks OpenRegister's SchemaMapper and RegisterMapper which
+        // schemas and registers exist, and those honour multitenancy by default — so
+        // with a session in play they answer from the caller's active organisation.
+        // Wrapping only the object reads left that door open: a signed-in caller
+        // could resolve a WIDER scope than an anonymous one before the anonymous read
+        // ever started, and see rows an anonymous caller does not. That is exactly
+        // what SCH-PFTS-001 forbids. One scope over the whole method closes the
+        // question for every read on this path, including ones added later.
+        //
+        // The inner `evaluateAsAnonymous()` calls stay: the scope is a depth counter,
+        // so nesting composes, and they keep the guarantee attached to each read for
+        // anyone who calls those helpers from somewhere else.
+        return $this->evaluateAsAnonymous(
+            objectService: $objectService,
+            operation: fn (): array => $this->assembleSearchResultsAsAnonymous(
+                queryParams: $queryParams,
+                objectService: $objectService
+            )
+        );
+
+    }//end assemblePublicSearchResults()
+
+
+    /**
+     * The body of {@see assemblePublicSearchResults()}, always run inside the
+     * anonymous evaluation scope that method opens.
+     *
+     * Private on purpose: calling it directly would skip the scope and reinstate
+     * the WOO-551 drift this ticket exists to remove.
+     *
+     * @param array  $queryParams   Raw request query parameters.
+     * @param object $objectService OpenRegister ObjectService instance.
+     *
+     * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
+     *
+     * @psalm-param   array<string, mixed> $queryParams
+     * @phpstan-param array<string, mixed> $queryParams
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function assembleSearchResultsAsAnonymous(array $queryParams, object $objectService): array
+    {
         // Stap 2 — Catalog-derived scope (SCH-PFTS-CAT-001..003).
         // Replaces the pre-WOO-536 app-config-derived scope (publication_register /
         // publication_schema / document_schema) with a catalog-model union so
@@ -148,11 +203,21 @@ class PublicationQueryService
 
         // SCH-PFTS-CAT-002 guard (WOO-574, tasks.md 3.5 of the WOO-536 change):
         // OpenRegister treats a schema WITHOUT `authorization.read` rules as open
-        // to all (`bypass => true` in MagicRbacHandler), so on the anonymous
-        // surface every row of such a schema would be exposed. Drop those
-        // schemas from the anonymous scope and warn the operator; signed-in
-        // callers keep normal RBAC evaluation (WOO-551 semantics).
-        if ($this->isAnonymous() === true && empty($scope['schemas']) === false) {
+        // to all (`bypass => true` in MagicRbacHandler), so on this surface every
+        // row of such a schema would be exposed. Drop those schemas from the scope
+        // and warn the operator. The guard used to apply to anonymous callers only,
+        // with signed-in callers left to OR's session RBAC (WOO-551 semantics).
+        // Since WOO-578 every read on this endpoint is evaluated as an anonymous
+        // caller, so the guard holds for every caller: a schema that is open for
+        // want of rules is open for nobody here.
+        //
+        // NOT a compensating control elsewhere: `/api/{catalogSlug}`
+        // (PublicationsController::index) is `#[PublicPage]` too and does NOT apply
+        // this guard, so the WOO-574 leak it closes is still open on that route for
+        // anonymous callers. Widening the guard here does not create that gap and
+        // does not fix it; closing it needs its own change, because that endpoint
+        // has a different scope-resolution path. Follow-up ticket.
+        if (empty($scope['schemas']) === false) {
             $scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
         }
 
@@ -272,29 +337,23 @@ class PublicationQueryService
             }
         }
 
-        // Stap 1 — Enable OR's schema-level RBAC. The `_rbac_as_public: true` runtime
-        // toggle from openregister PR #2855 (WOO-536 precursor) has been REMOVED on
-        // OR main by commit `31687c6f3` (`feat(rbac): graft inheritFromPublic onto dev
-        // RBAC`); the new API does authorization inheritance at the schema/register
-        // level via `authorization.inheritFromPublic` with a tenant-wide default
-        // (`openregister.rbac.inherit_from_public_default`). There is no equivalent
-        // per-call "force anonymous" primitive in the new OR API.
-        //
-        // WOO-551 SEMANTIC DRIFT: SCH-PFTS-001's uniform-visibility contract ("admin
-        // sees the same set as anonymous on this public endpoint") is no longer
-        // enforced at the OR layer. Under the new RBAC model, admin sessions bypass
-        // filters entirely and authenticated callers get their `_owner` clause OR'd
-        // in — so signed-in staff may see per-user draft publications through this
-        // endpoint. Anonymous callers still see only public-group-eligible rows
-        // (which the `read` rules on `publication_register.json` scope to
-        // `publicationDate <= now AND (depublicationDate >= now OR $exists false)`).
-        // Restoring uniform visibility requires a follow-up decision — reintroduce a
-        // `_forceAnonymous`-style primitive in OR, or a client-side session strip on
-        // this endpoint. Tracked as WOO-551 follow-up work.
-        $candidateResult = $objectService->searchObjectsPaginated(
-            query: $searchQuery,
-            _rbac: true,
-            _multitenancy: false
+        // Stap 1 — OR's schema-level RBAC, evaluated AS AN ANONYMOUS CALLER.
+        // SCH-PFTS-001 (WOO-536) promises uniform visibility on this public
+        // endpoint: a signed-in administrator sees exactly what an anonymous
+        // caller sees. The `_rbac_as_public: true` toggle that enforced this was
+        // removed on OR (`31687c6f3`) and WOO-551 accepted the drift to keep the
+        // endpoint alive. WOO-578 brings the guarantee back through OR's
+        // `runAsAnonymous()`: the session subject is cleared for the duration of
+        // the call, so the admin bypass, the `_owner` grant and group rules never
+        // enter the evaluation and only the `public` read rules decide.
+        // `_rbac: true` stays — the public rules ARE the filter.
+        $candidateResult = $this->evaluateAsAnonymous(
+            objectService: $objectService,
+            operation: static fn (): array => $objectService->searchObjectsPaginated(
+                query: $searchQuery,
+                _rbac: true,
+                _multitenancy: false
+            )
         );
 
         // Stap 3 — Dynamic schema-discriminator via SchemaMapper. Replaces the pre-WOO-536
@@ -514,7 +573,7 @@ class PublicationQueryService
         }
         return $envelope;
 
-    }//end assemblePublicSearchResults()
+    }//end assembleSearchResultsAsAnonymous()
 
     /**
      * Whether the request addresses the first page of the result set.
@@ -1090,9 +1149,8 @@ class PublicationQueryService
      * public-group-eligible linked publication. If OR returns nothing, the linked
      * publication either does not exist, is not public under the caller's effective
      * context, or the document is genuinely unlinked — all three collapse to "drop the
-     * row" (transitive visibility). WOO-551: the historical uniform-visibility guarantee
-     * for admin sessions here (RBA-PUBLIC-006) no longer holds — see the Stap 1 comment
-     * in {@see assemblePublicSearchResults()} for the drift documentation.
+     * row" (transitive visibility). The read runs as an anonymous caller for every
+     * session (WOO-578), so "the caller's effective context" is always the public one.
      *
      * N4b (WOO-536 plan): a document related to multiple publications resolves to the
      * OLDEST-by-created linked publication (most stable link — does not change as new
@@ -1237,9 +1295,7 @@ class PublicationQueryService
         // Build the per-document refinement query. Under OR's schema-level RBAC,
         // anonymous callers only see publications the `public` group is allowed to
         // read — so a non-empty result guarantees the linked pub is public for
-        // anon callers. WOO-551: for authenticated staff the admin bypass /
-        // `_owner` clause may broaden the result set; see the Stap 1 comment in
-        // {@see assemblePublicSearchResults()} for the drift documentation.
+        // every caller, because the read runs as an anonymous caller (WOO-578).
         $refinementQuery = [
             '_schema'             => $publicationSchemaId,
             '_relations_contains' => $documentUuid,
@@ -1251,12 +1307,15 @@ class PublicationQueryService
         }
 
         try {
-            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
-            // in assemblePublicSearchResults() for context.
-            $matches = $objectService->searchObjectsPaginated(
-                query: $refinementQuery,
-                _rbac: true,
-                _multitenancy: false
+            // Same anonymous evaluation as the main search (WOO-578) — the linked
+            // publication must be visible to an anonymous caller, not to the session.
+            $matches = $this->evaluateAsAnonymous(
+                objectService: $objectService,
+                operation: static fn (): array => $objectService->searchObjectsPaginated(
+                    query: $refinementQuery,
+                    _rbac: true,
+                    _multitenancy: false
+                )
             );
         } catch (\Throwable $e) {
             $this->logger?->warning(
@@ -1317,9 +1376,8 @@ class PublicationQueryService
      * depublished, archived under the schema RBAC), so a non-null return guarantees
      * the caller may embed the summary. On any failure the method returns null and
      * the caller falls back to the relations-based path — authoritative but slower.
-     * WOO-551 note: authenticated callers may now see rows that anonymous callers
-     * can't (admin bypass + `_owner` clause) — see the Stap 1 comment in
-     * {@see assemblePublicSearchResults()} for the drift documentation.
+     * The read runs as an anonymous caller (WOO-578), so "publicly visible" holds
+     * for every session — see the Stap 1 comment in {@see assemblePublicSearchResults()}.
      *
      * @param string      $publicationId       The UUID from the document row's carried summary.
      * @param object      $objectService       OpenRegister ObjectService instance.
@@ -1335,16 +1393,18 @@ class PublicationQueryService
         int $publicationSchemaId
     ): ?array {
         try {
-            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
-            // in assemblePublicSearchResults() for context.
-            $publication = $objectService->find(
-                id: $publicationId,
-                _extend: [],
-                files: false,
-                register: $registerId,
-                schema: $publicationSchemaId,
-                _rbac: true,
-                _multitenancy: false
+            // Same anonymous evaluation as the main search (WOO-578).
+            $publication = $this->evaluateAsAnonymous(
+                objectService: $objectService,
+                operation: static fn (): mixed => $objectService->find(
+                    id: $publicationId,
+                    _extend: [],
+                    files: false,
+                    register: $registerId,
+                    schema: $publicationSchemaId,
+                    _rbac: true,
+                    _multitenancy: false
+            )
             );
         } catch (\Throwable $e) {
             return null;
@@ -1386,9 +1446,8 @@ class PublicationQueryService
      * fast-path — for anonymous callers, a non-empty result guarantees the
      * linked publication is publicly visible. Returns null on miss (unknown
      * slug, non-public, archived) so the caller falls through to the
-     * `_relations_contains` path. WOO-551 note: authenticated staff may see
-     * broader results — see the Stap 1 comment in
-     * {@see assemblePublicSearchResults()} for the drift documentation.
+     * `_relations_contains` path. The read runs as an anonymous caller for every
+     * session (WOO-578).
      *
      * @param string      $publicationSlug     The linked publication's slug.
      * @param object      $objectService       OpenRegister ObjectService instance.
@@ -1426,12 +1485,14 @@ class PublicationQueryService
             $slugScanQuery['_register'] = $registerId;
         }
         try {
-            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
-            // in assemblePublicSearchResults() for context.
-            $matches = $objectService->searchObjectsPaginated(
-                query: $slugScanQuery,
-                _rbac: true,
-                _multitenancy: false
+            // Same anonymous evaluation as the main search (WOO-578).
+            $matches = $this->evaluateAsAnonymous(
+                objectService: $objectService,
+                operation: static fn (): array => $objectService->searchObjectsPaginated(
+                    query: $slugScanQuery,
+                    _rbac: true,
+                    _multitenancy: false
+                )
             );
         } catch (\Throwable $e) {
             $this->logger?->warning(
@@ -1572,6 +1633,53 @@ class PublicationQueryService
         return null;
 
     }//end findObjectLocation()
+
+    /**
+     * Run an OpenRegister read as an anonymous caller (SCH-PFTS-001 / WOO-578).
+     *
+     * OpenRegister's `ObjectService::runAsAnonymous()` clears the session subject
+     * for the duration of the callable, so admin bypass, owner grants and group
+     * rules stay out of the evaluation and every caller gets the same rows and
+     * the same `total`. It is a server-side primitive: nothing in the request
+     * can switch it on or off.
+     *
+     * The guard exists because this app has been taken down once by a hard
+     * dependency on an OR primitive that was removed (WOO-551, `Unknown named
+     * parameter $_rbacAsPublic`). On an OpenRegister without the method the
+     * read runs with the caller's session — the WOO-551 behaviour — and says
+     * so in the log once per request, so the drift is visible, not silent.
+     *
+     * @param object   $objectService The OpenRegister ObjectService.
+     * @param callable $operation     The read to perform.
+     *
+     * @return mixed Whatever the read returns.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function evaluateAsAnonymous(object $objectService, callable $operation): mixed
+    {
+        if (method_exists($objectService, 'runAsAnonymous') === true) {
+            return $objectService->runAsAnonymous($operation);
+        }
+
+        if ($this->warnedAboutMissingAnonymousScope === false) {
+            $this->warnedAboutMissingAnonymousScope = true;
+            // `error`, not `warning`: the endpoint keeps answering, but its
+            // uniform-visibility contract is silently not being kept, and a warning
+            // is routinely filtered on a busy public deployment. The message names
+            // the fix rather than only the symptom.
+            $this->logger?->error(
+                'WOO-578: this OpenRegister has no ObjectService::runAsAnonymous(), so /api/search '
+                .'evaluates with the caller session and signed-in users may see more than anonymous '
+                .'callers (the WOO-551 behaviour). Upgrade OpenRegister to a build that carries the '
+                .'anonymous evaluation scope to restore uniform visibility.'
+            );
+        }
+
+        return $operation();
+
+    }//end evaluateAsAnonymous()
+
 
     /**
      * Resolve the OpenRegister ObjectService from the container.

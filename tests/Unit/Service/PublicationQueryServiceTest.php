@@ -56,7 +56,24 @@ use ReflectionClass;
  * WOO-551: signatures mirror the current OR API after commit `31687c6f3`
  * removed the `_rbacAsPublic` primitive — see the file docblock.
  */
-class FakeSearchObjectService {
+/**
+ * An OpenRegister WITHOUT `runAsAnonymous()` — the API before WOO-578. The
+ * service must keep working against it (WOO-551 lesson) and say so in the log.
+ */
+class FakeLegacySearchObjectService {
+
+	/**
+	 * Anonymous-scope nesting depth, maintained by the subclass that implements
+	 * `runAsAnonymous()`. Stays zero on this legacy fake, which has no such method.
+	 */
+	public int $scopeDepth = 0;
+
+	/**
+	 * Every read that ran with `scopeDepth === 0`. This is the real WOO-578
+	 * assertion: counting scopes proves a method was called, this proves each
+	 * READ was inside one. An unwrapped callsite lands here by name.
+	 */
+	public array $readsOutsideScope = [];
 
 	/** @var array<int, array<string, mixed>> Captured (query, flags) per invocation. */
 	public array $capturedCalls = [];
@@ -78,6 +95,10 @@ class FakeSearchObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): array {
+		if ($this->scopeDepth === 0) {
+			$this->readsOutsideScope[] = 'searchObjectsPaginated';
+		}
+
 		$this->capturedCalls[] = [
 			'query'         => $query,
 			'_rbac'         => $_rbac,
@@ -106,6 +127,10 @@ class FakeSearchObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): ?array {
+		if ($this->scopeDepth === 0) {
+			$this->readsOutsideScope[] = 'find';
+		}
+
 		return $this->findResponses[$id] ?? null;
 	}
 }
@@ -114,6 +139,24 @@ class FakeSearchObjectService {
  * Fake OC CatalogiService double so `resolveCatalogScope` can enumerate
  * a canned catalog set without touching the DB.
  */
+/**
+ * An OpenRegister WITH `runAsAnonymous()` (WOO-578): counts how often the
+ * service asked for an anonymous evaluation and runs the read inside it.
+ */
+class FakeSearchObjectService extends FakeLegacySearchObjectService {
+	public int $anonymousScopes = 0;
+
+	public function runAsAnonymous(callable $operation): mixed {
+		$this->anonymousScopes++;
+		$this->scopeDepth++;
+		try {
+			return $operation();
+		} finally {
+			$this->scopeDepth--;
+		}
+	}
+}
+
 class FakeCatalogiService {
 
 	/** @var array<string, array<string, mixed>> Catalogs to return, keyed by slug. */
@@ -284,7 +327,69 @@ class PublicationQueryServiceTest extends TestCase {
 		$first = $fake->capturedCalls[0];
 		$this->assertTrue($first['_rbac'], '_rbac must be true');
 		$this->assertFalse($first['_multitenancy'], 'multitenancy must be false on public endpoint');
-		$this->assertArrayNotHasKey('_rbacAsPublic', $first, 'WOO-551: `_rbacAsPublic` must no longer be forwarded — primitive removed on OR main');
+		$this->assertArrayNotHasKey('_rbacAsPublic', $first, 'WOO-578: anonymity is a scope on OR, never a query key');
+	}
+
+	/**
+	 * SCH-PFTS-001 / WOO-578: every OR read behind the public search runs inside
+	 * OR's anonymous scope, so a signed-in administrator gets the same rows and
+	 * the same `total` as an anonymous caller.
+	 */
+	public function testAssembleEvaluatesTheSearchAsAnAnonymousCaller(): void {
+		$fake = $this->wireHappyPath();
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+		$this->assertNotEmpty($fake->capturedCalls, 'searchObjectsPaginated was not called');
+		$this->assertSame([], $fake->readsOutsideScope, 'every OR read must run inside runAsAnonymous()');
+		$this->assertTrue($fake->capturedCalls[0]['_rbac'], '_rbac stays on: the public read rules ARE the filter');
+	}
+
+	/**
+	 * A document row drives a further OR read (the relations refinement).
+	 * Counting scopes cannot tell whether it ran inside one; `readsOutsideScope`
+	 * can, and the row loop has to actually execute for it to be reached at all.
+	 * Unwrap that callsite and this test names it.
+	 */
+	public function testEveryReadBehindADocumentRowAlsoRunsInsideTheScope(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-uuid-anon', 'schema' => 2, 'relations' => ['organization' => 'x']],
+			'title' => 'A document',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+			// The per-document refinement: no publicly visible publication -> drop.
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+
+		$this->assertGreaterThan(1, count($fake->capturedCalls), 'the document row must drive a second OR read');
+		$this->assertSame([], $fake->readsOutsideScope, 'the refinement read must run inside runAsAnonymous() too');
+	}
+
+	/**
+	 * WOO-551 lesson: a hard dependency on an OR primitive took `/api/search`
+	 * down with `Unknown named parameter`. Against an OpenRegister without
+	 * `runAsAnonymous()` the search still answers — with the caller's session,
+	 * and a warning that says so.
+	 */
+	public function testAssembleStillAnswersOnAnOpenRegisterWithoutTheAnonymousScope(): void {
+		$legacy = new FakeLegacySearchObjectService();
+		$legacy->queuedResponses = [['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []]];
+		$this->wireHappyPath();
+		// `error`, not `warning`: the contract is silently not being kept, and a
+		// warning is routinely filtered on a busy public deployment.
+		$this->logger->expects($this->once())
+			->method('error')
+			->with($this->stringContains('runAsAnonymous'));
+		$result = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $legacy);
+		$this->assertNotEmpty($legacy->capturedCalls, 'the read must still reach OpenRegister');
+		// And the tracker is not vacuously empty: on an OpenRegister WITHOUT the
+		// scope the very same read is recorded as having run outside one. Without
+		// this, `assertSame([], $fake->readsOutsideScope)` elsewhere would pass
+		// even if the recording never fired.
+		$this->assertSame(['searchObjectsPaginated'], $legacy->readsOutsideScope, 'the legacy path runs with the caller session, by design');
+		$this->assertSame(0, $result['total']);
 	}
 
 	/**
@@ -809,7 +914,12 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame([], $fakeObjectService->capturedCalls, 'OR must not be queried at all when the anonymous scope is empty (fail-closed)');
 	}
 
-	public function testAuthenticatedCallerKeepsSchemaWithoutReadRulesInScope(): void {
+	/**
+	 * WOO-578: the read behind this endpoint runs as an anonymous caller for
+	 * every session, so the read-rule guard holds for a signed-in caller too.
+	 * Before WOO-578 this test asserted the opposite ([1, 2]) under WOO-551.
+	 */
+	public function testSignedInCallerIsHeldToTheSameReadRuleGuard(): void {
 		$user = $this->createMock(\OCP\IUser::class);
 		$session = $this->createMock(\OCP\IUserSession::class);
 		$session->method('getUser')->willReturn($user);
@@ -824,7 +934,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$this->service->assemblePublicSearchResults(['_search' => 'x', '_catalog' => 'default-catalog'], $fakeObjectService);
 
-		$this->assertSame([1, 2], $fakeObjectService->capturedCalls[0]['query']['_schemas'], 'signed-in callers are evaluated by OR RBAC (WOO-551), the guard is anonymous-only');
+		$this->assertSame([1], $fakeObjectService->capturedCalls[0]['query']['_schemas'], 'WOO-578: uniform visibility — the guard drops the rule-less schema for signed-in callers as well');
 	}
 
 	private function wireHappyPath(array $authorizationById = []): FakeSearchObjectService {
