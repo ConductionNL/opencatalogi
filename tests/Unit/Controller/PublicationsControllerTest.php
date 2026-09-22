@@ -691,6 +691,80 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertEquals(200, $response->getStatus());
 	}
 
+	/**
+	 * PINS THE WOO-580 EMPTY-ENVELOPE BRANCH. Read this together with
+	 * `testIndexWithEmptySchemas()` below, which predates the branch and asserts
+	 * only the status code — it stays green with the branch deleted, because the
+	 * stubbed OpenRegister call answers an empty result either way. That makes it
+	 * a test of the route, not of the guard's consequence.
+	 *
+	 * The consequence is the thing worth pinning. `buildCatalogSearchQuery()`
+	 * sets `_schemas` only when the list is non-empty, and an UNSET scope makes
+	 * OpenRegister search every magic table — the exact opposite of what the
+	 * guard just decided. So the branch has to answer before any OR call, and the
+	 * assertion that proves it is a negative one: `searchObjectsPaginated` is
+	 * never reached.
+	 *
+	 * Mutation-checked 2026-09-22: delete the branch and this test goes red. The
+	 * assertion that reports it first is the status one — the route falls through
+	 * to the OpenRegister call the guard had just ruled out, the doubles answer
+	 * nothing usable, and it 500s — with the `never()` expectations failing
+	 * alongside it at teardown. Either way the deletion cannot pass unnoticed,
+	 * which is the property that was missing.
+	 *
+	 * Here the catalog arrives WITH schemas and the guard drops them all, which
+	 * is the real shape — a catalog configured with nothing at all is the less
+	 * interesting case.
+	 *
+	 * @return void
+	 */
+	public function testIndexAnswersTheEmptyEnvelopeWithoutQueryingWhenTheGuardDropsEverySchema(): void {
+		$mockObjService = $this->mockObjectService();
+
+		// THE point of this test: the guard decided the anonymous scope is empty,
+		// so nothing may be asked of OpenRegister at all.
+		$mockObjService->expects($this->never())->method('searchObjectsPaginated');
+		$mockObjService->expects($this->never())->method('buildSearchQuery');
+
+		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService->method('applyCatalogReadRuleGuard')
+			->willReturnCallback(
+				static function (array $catalog): array {
+					// Every schema carried no read rules and was dropped.
+					$catalog['schemas'] = [];
+					return $catalog;
+				}
+			);
+		$this->queryService->expects($this->never())->method('buildCatalogSearchQuery');
+		$this->controller = $this->newControllerWithQueryService();
+
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn([
+				'title'     => 'Guarded Catalog',
+				'schemas'   => [1, 2, 3],
+				'registers' => [7],
+			]);
+
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$response = $this->controller->index('guarded');
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(200, $response->getStatus());
+
+		$body = $response->getData();
+		$this->assertSame([], $body['results'], 'nothing survives the guard, so nothing is returned');
+		$this->assertSame(0, $body['total'], 'and the envelope may not advertise rows it cannot deliver');
+		$this->assertSame(
+			[],
+			$body['@catalog']['schemas'],
+			'the metadata must not name a schema the caller may not read'
+		);
+		$this->assertSame([7], $body['@catalog']['registers'], 'the rest of the catalog block is untouched');
+	}//end testIndexAnswersTheEmptyEnvelopeWithoutQueryingWhenTheGuardDropsEverySchema()
+
+
 	public function testIndexWithEmptySchemas(): void {
 		$mockObjService = $this->mockObjectService();
 
