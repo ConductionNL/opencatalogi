@@ -211,12 +211,16 @@ class PublicationQueryService
         // caller, so the guard holds for every caller: a schema that is open for
         // want of rules is open for nobody here.
         //
-        // NOT a compensating control elsewhere: `/api/{catalogSlug}`
-        // (PublicationsController::index) is `#[PublicPage]` too and does NOT apply
-        // this guard, so the WOO-574 leak it closes is still open on that route for
-        // anonymous callers. Widening the guard here does not create that gap and
-        // does not fix it; closing it needs its own change, because that endpoint
-        // has a different scope-resolution path. Follow-up ticket.
+        // THE SIBLING GAP IS CLOSED, AND ONE IS LEFT. `/api/{catalogSlug}` and its
+        // five sibling routes (PublicationsController) are `#[PublicPage]` too and
+        // used to build their scope from `$catalog['schemas']` without this guard,
+        // so the WOO-574 leak stayed open there. That was the follow-up ticket this
+        // comment used to promise; it is WOO-580, and it lands with
+        // `applyCatalogReadRuleGuard()`, which those six routes now call.
+        // STILL OPEN: `/api/catalogs/{slug}/dcat` and `/api/catalogs/{slug}/schema`
+        // resolve the same schema list through DcatService and SchemaOrgService and
+        // never reach that guard (WOO-581). Do not read "the catalog routes are
+        // guarded" as covering those two.
         if (empty($scope['schemas']) === false) {
             $scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
         }
@@ -711,11 +715,13 @@ class PublicationQueryService
      * own change and their own tests. Read that ticket before assuming this
      * method already covers the surface.
      *
-     * ANONYMOUS ONLY, deliberately. Signed-in callers keep normal RBAC
-     * evaluation (WOO-551 semantics), exactly as the guard on `/api/search`
-     * behaves today. These per-catalog routes are the surface WOO-578 points
-     * staff at when it narrows `/api/search`; widening the guard here would
-     * close that door in the same move.
+     * ANONYMOUS ONLY, deliberately — and since WOO-578 that is a DIFFERENCE
+     * from `/api/search`, not a match. That endpoint now evaluates every read
+     * inside OR's `runAsAnonymous()`, so its own SCH-PFTS-CAT-002 guard holds
+     * for signed-in callers too. These per-catalog routes keep session RBAC,
+     * and that is the surface WOO-578 leaves staff when it narrows
+     * `/api/search`; widening the guard here would close that door in the same
+     * move.
      *
      * @param array $catalog Catalog data array (keys: schemas, registers).
      *
