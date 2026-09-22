@@ -559,6 +559,22 @@ class PublicationQueryService
      * `@catalog.schemas` block in the response from naming a schema the caller
      * may not read.
      *
+     * 🔴 "THE CATALOG IS GUARDED" IS NOT "EVERY READER OF ITS SCHEMAS IS
+     * GUARDED". This guards the catalog ITS CALLER hands in, and its only
+     * callers are the six routes in
+     * {@see \OCA\OpenCatalogi\Controller\PublicationsController}. Two other
+     * `#[PublicPage]` routes build their scope from the same
+     * `$catalog['schemas']` in different services and never come past here:
+     * `/api/catalogs/{slug}/dcat` ({@see \OCA\OpenCatalogi\Service\DcatService})
+     * and `/api/catalogs/{slug}/schema`
+     * ({@see \OCA\OpenCatalogi\Service\SchemaOrgService}). Both call
+     * `searchObjectsPaginated(… _rbac: true …)` with an unguarded schema list,
+     * so SCH-PFTS-CAT-002 is still open on the DCAT harvest feed and the
+     * schema.org endpoint. Tracked as WOO-581 and deliberately not fixed here:
+     * those two resolve their scope through their own services and want their
+     * own change and their own tests. Read that ticket before assuming this
+     * method already covers the surface.
+     *
      * ANONYMOUS ONLY, deliberately. Signed-in callers keep normal RBAC
      * evaluation (WOO-551 semantics), exactly as the guard on `/api/search`
      * behaves today. These per-catalog routes are the surface WOO-578 points

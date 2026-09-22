@@ -203,9 +203,21 @@ class DcatService {
 	 * Build the per-catalog DCAT-AP-NL document for one page of datasets.
 	 *
 	 * Datasets are selected via OR object search scoped to the catalog's
-	 * registers/schemas with `_rbac: true` — byte-for-byte the PUB-001/WOO-001
-	 * visibility rule (only publicly visible objects appear). Opted-out schemas
+	 * registers/schemas with `_rbac: true` — the PUB-001/WOO-001 visibility rule
+	 * (only publicly visible objects appear). Opted-out schemas
 	 * (`"x-dcat": false`) are skipped.
+	 *
+	 * 🔴 NO LONGER BYTE-FOR-BYTE THE PUBLICATIONS PATH, AND THAT IS A GAP, NOT A
+	 * DESIGN. This comment used to claim parity with `/api/{catalogSlug}`. Since
+	 * WOO-580 that route runs its catalog through
+	 * {@see \OCA\OpenCatalogi\Service\PublicationQueryService::applyCatalogReadRuleGuard()}
+	 * first, which drops schemas carrying no `authorization.read` rules from an
+	 * anonymous scope — OpenRegister answers `bypass => true` for those, so
+	 * `_rbac: true` is not a filter there at all. This feed takes
+	 * `$catalog['schemas']` unguarded, so a schema without read rules is still
+	 * readable here by anyone, and a harvest feed is the worst place for that:
+	 * it exists to be crawled and cached by third parties. Tracked as WOO-581.
+	 * Do not restore the parity claim until the guard actually runs on this path.
 	 *
 	 * @param array<string, mixed> $catalog The catalog object.
 	 * @param string $catalogSlug The catalog slug.
