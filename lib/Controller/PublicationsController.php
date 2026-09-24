@@ -440,10 +440,13 @@ class PublicationsController extends Controller {
 			}
 
 			// WOO-580: keep a schema without `authorization.read` rules out of the
-			// anonymous scope, the same guard `/api/search` applies (SCH-PFTS-CAT-002).
-			// OpenRegister answers `bypass => true` for such a schema, so without this
-			// every row of it is readable here. Guarding the catalog covers this route
-			// and the scope it hands to the query builder and the object lookups.
+			// ANONYMOUS scope (SCH-PFTS-CAT-002). `/api/search` drops the same
+			// schemas but, since WOO-578, for every caller; here it is
+			// anonymous-only by design. What that keeps out — and why it is not
+			// the `bypass => true` case it is easy to mistake it for — is spelled
+			// out on {@see PublicationQueryService::dropSchemasWithoutReadRules()}.
+			// Guarding the catalog covers this route and the scope it hands to the
+			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
 			// Every schema in this catalog was dropped by the guard above, so there is
@@ -614,10 +617,13 @@ class PublicationsController extends Controller {
 			}
 
 			// WOO-580: keep a schema without `authorization.read` rules out of the
-			// anonymous scope, the same guard `/api/search` applies (SCH-PFTS-CAT-002).
-			// OpenRegister answers `bypass => true` for such a schema, so without this
-			// every row of it is readable here. Guarding the catalog covers this route
-			// and the scope it hands to the query builder and the object lookups.
+			// ANONYMOUS scope (SCH-PFTS-CAT-002). `/api/search` drops the same
+			// schemas but, since WOO-578, for every caller; here it is
+			// anonymous-only by design. What that keeps out — and why it is not
+			// the `bypass => true` case it is easy to mistake it for — is spelled
+			// out on {@see PublicationQueryService::dropSchemasWithoutReadRules()}.
+			// Guarding the catalog covers this route and the scope it hands to the
+			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
 			// Get ObjectService directly.
@@ -905,10 +911,13 @@ class PublicationsController extends Controller {
 			}
 
 			// WOO-580: keep a schema without `authorization.read` rules out of the
-			// anonymous scope, the same guard `/api/search` applies (SCH-PFTS-CAT-002).
-			// OpenRegister answers `bypass => true` for such a schema, so without this
-			// every row of it is readable here. Guarding the catalog covers this route
-			// and the scope it hands to the query builder and the object lookups.
+			// ANONYMOUS scope (SCH-PFTS-CAT-002). `/api/search` drops the same
+			// schemas but, since WOO-578, for every caller; here it is
+			// anonymous-only by design. What that keeps out — and why it is not
+			// the `bypass => true` case it is easy to mistake it for — is spelled
+			// out on {@see PublicationQueryService::dropSchemasWithoutReadRules()}.
+			// Guarding the catalog covers this route and the scope it hands to the
+			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
 			// First verify the object exists in this catalog register and schema.
@@ -997,10 +1006,13 @@ class PublicationsController extends Controller {
 			}
 
 			// WOO-580: keep a schema without `authorization.read` rules out of the
-			// anonymous scope, the same guard `/api/search` applies (SCH-PFTS-CAT-002).
-			// OpenRegister answers `bypass => true` for such a schema, so without this
-			// every row of it is readable here. Guarding the catalog covers this route
-			// and the scope it hands to the query builder and the object lookups.
+			// ANONYMOUS scope (SCH-PFTS-CAT-002). `/api/search` drops the same
+			// schemas but, since WOO-578, for every caller; here it is
+			// anonymous-only by design. What that keeps out — and why it is not
+			// the `bypass => true` case it is easy to mistake it for — is spelled
+			// out on {@see PublicationQueryService::dropSchemasWithoutReadRules()}.
+			// Guarding the catalog covers this route and the scope it hands to the
+			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
 			// First verify the object exists in this catalog register and schema.

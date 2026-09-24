@@ -202,9 +202,12 @@ class PublicationQueryService
         $scope = $this->resolveCatalogScope(queryParams: $queryParams);
 
         // SCH-PFTS-CAT-002 guard (WOO-574, tasks.md 3.5 of the WOO-536 change):
-        // OpenRegister treats a schema WITHOUT `authorization.read` rules as open
-        // to all (`bypass => true` in MagicRbacHandler), so on this surface every
-        // row of such a schema would be exposed. Drop those schemas from the scope
+        // a schema whose `authorization` block is EMPTY is filtered by
+        // MagicRbacHandler down to owner-admits OR not-private only, so on this
+        // surface every non-private row of it would be exposed. (A non-empty block
+        // that merely omits `read` already fails closed there — it is dropped too,
+        // for a uniform scope, not because it leaks. Full account on
+        // {@see dropSchemasWithoutReadRules()}.) Drop those schemas from the scope
         // and warn the operator. The guard used to apply to anonymous callers only,
         // with signed-in callers left to OR's session RBAC (WOO-551 semantics).
         // Since WOO-578 every read on this endpoint is evaluated as an anonymous
@@ -618,13 +621,20 @@ class PublicationQueryService
     /**
      * Drop every schema that has no `authorization.read` rules from the anonymous scope.
      *
-     * OpenRegister's RBAC engine returns `bypass => true` (no WHERE clause at all)
-     * for a schema whose effective authorization is empty or lacks the `read`
-     * action — see MagicRbacHandler::buildRbacConditionsSql(). On the public
-     * search surface that is a data leak, so the schema is excluded here and a
-     * warning names it (SCH-PFTS-CAT-002). Fail-closed: when the mapper cannot
-     * be consulted the whole scope collapses to empty, which the caller turns
-     * into the empty envelope.
+     * TWO SHAPES, ONE OF WHICH IS THE LEAK. OpenRegister handles them differently
+     * — see MagicRbacHandler::buildRbacConditionsSql():
+     *   - `authorization` EMPTY or absent: `bypass => false`, but the only
+     *     conditions are owner-admits OR not-private. An anonymous caller
+     *     therefore reads every NON-PRIVATE row of the schema. This is the
+     *     exposure, and it is not an unconditional bypass.
+     *   - `authorization` NON-EMPTY but without a `read` action: OpenRegister
+     *     FAILS CLOSED ("Action not configured on a non-empty authorization
+     *     block"), so an anonymous caller already gets nothing.
+     * Both are dropped here — the first because it leaks, the second so the
+     * anonymous scope is uniform rather than because it is unsafe — and a
+     * warning names the schema (SCH-PFTS-CAT-002). Fail-closed: when the mapper
+     * cannot be consulted the whole scope collapses to empty, which the caller
+     * turns into the empty envelope.
      *
      * Trade-off: OR resolves authorization with a register-level cascade; a
      * schema that inherits its rules from the register is dropped here too
@@ -681,11 +691,14 @@ class PublicationQueryService
     /**
      * Apply the SCH-PFTS-CAT-002 read-rule guard to a catalog's schema scope.
      *
-     * Same rule as `/api/search` (WOO-574): OpenRegister returns `bypass => true`
-     * — no WHERE clause at all — for a schema whose effective authorization is
-     * empty or lacks the `read` action, so on an anonymous surface every row of
-     * such a schema is exposed. `assemblePublicSearchResults()` has dropped those
-     * schemas since WOO-574, but that method only serves `/api/search`. The
+     * Same DROP as `/api/search` (WOO-574), on a different surface — but no
+     * longer the same RULE: since WOO-578 that endpoint applies it to every
+     * caller, while this guard is anonymous-only (see ANONYMOUS ONLY below).
+     * Which schemas it removes, and which half of that set is the actual leak
+     * rather than a schema OpenRegister already refuses, is set out on
+     * {@see dropSchemasWithoutReadRules()}.
+     * `assemblePublicSearchResults()` has dropped those schemas since WOO-574,
+     * but that method only serves `/api/search`. The
      * per-catalog routes (`/api/{catalogSlug}` and its `/{id}`, `/uses`,
      * `/used`, `/attachments`, `/download` siblings) are `#[PublicPage]` too and
      * build their scope straight from the catalog, so the guard never reached
@@ -716,9 +729,10 @@ class PublicationQueryService
      * method already covers the surface.
      *
      * ANONYMOUS ONLY, deliberately — and since WOO-578 that is a DIFFERENCE
-     * from `/api/search`, not a match. That endpoint now evaluates every read
-     * inside OR's `runAsAnonymous()`, so its own SCH-PFTS-CAT-002 guard holds
-     * for signed-in callers too. These per-catalog routes keep session RBAC,
+     * from `/api/search`, not a match. That endpoint drops rule-less schemas
+     * unconditionally now, and (where the installed OpenRegister carries the
+     * primitive) evaluates every read inside its `runAsAnonymous()`, so its own
+     * SCH-PFTS-CAT-002 guard holds for signed-in callers too. These per-catalog routes keep session RBAC,
      * and that is the surface WOO-578 leaves staff when it narrows
      * `/api/search`; widening the guard here would close that door in the same
      * move.

@@ -944,8 +944,11 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * The leak this ticket closes. `/api/{catalogSlug}` and its siblings build
 	 * their scope straight from the catalog, so the WOO-574 guard never reached
-	 * them: a schema without `authorization.read` is `bypass => true` in
-	 * OpenRegister and every row of it was readable by an anonymous caller.
+	 * them. A schema whose `authorization` block is EMPTY is filtered by
+	 * OpenRegister down to owner-admits OR not-private only, so an anonymous
+	 * caller read every non-private row of it here. (A non-empty block that
+	 * merely omits `read` fails closed in OpenRegister; it is dropped too, for a
+	 * uniform anonymous scope, not because it leaks.)
 	 *
 	 * @return void
 	 */
@@ -981,8 +984,10 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * Anonymous-only, deliberately: these routes are where WOO-578 points staff
 	 * when it narrows `/api/search`. A signed-in caller keeps normal RBAC
-	 * evaluation (WOO-551 semantics), exactly as the guard on `/api/search`
-	 * behaves.
+	 * evaluation (WOO-551 semantics) — which since WOO-578 is a DIFFERENCE from
+	 * `/api/search`, not a match: that guard now drops rule-less schemas for
+	 * every caller. This test pins the asymmetry, so it must not be read as
+	 * asserting parity.
 	 *
 	 * @return void
 	 */
