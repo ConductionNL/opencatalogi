@@ -202,21 +202,28 @@ class PublicationQueryService
         $scope = $this->resolveCatalogScope(queryParams: $queryParams);
 
         // SCH-PFTS-CAT-002 guard (WOO-574, tasks.md 3.5 of the WOO-536 change):
-        // OpenRegister treats a schema WITHOUT `authorization.read` rules as open
-        // to all (`bypass => true` in MagicRbacHandler), so on this surface every
-        // row of such a schema would be exposed. Drop those schemas from the scope
+        // a schema whose `authorization` block is EMPTY is filtered by
+        // MagicRbacHandler down to owner-admits OR not-private only, so on this
+        // surface every non-private row of it would be exposed. (A non-empty block
+        // that merely omits `read` already fails closed there — it is dropped too,
+        // for a uniform scope, not because it leaks. Full account on
+        // {@see dropSchemasWithoutReadRules()}.) Drop those schemas from the scope
         // and warn the operator. The guard used to apply to anonymous callers only,
         // with signed-in callers left to OR's session RBAC (WOO-551 semantics).
         // Since WOO-578 every read on this endpoint is evaluated as an anonymous
         // caller, so the guard holds for every caller: a schema that is open for
         // want of rules is open for nobody here.
         //
-        // NOT a compensating control elsewhere: `/api/{catalogSlug}`
-        // (PublicationsController::index) is `#[PublicPage]` too and does NOT apply
-        // this guard, so the WOO-574 leak it closes is still open on that route for
-        // anonymous callers. Widening the guard here does not create that gap and
-        // does not fix it; closing it needs its own change, because that endpoint
-        // has a different scope-resolution path. Follow-up ticket.
+        // THE SIBLING GAP IS CLOSED, AND ONE IS LEFT. `/api/{catalogSlug}` and its
+        // five sibling routes (PublicationsController) are `#[PublicPage]` too and
+        // used to build their scope from `$catalog['schemas']` without this guard,
+        // so the WOO-574 leak stayed open there. That was the follow-up ticket this
+        // comment used to promise; it is WOO-580, and it lands with
+        // `applyCatalogReadRuleGuard()`, which those six routes now call.
+        // STILL OPEN: `/api/catalogs/{slug}/dcat` and `/api/catalogs/{slug}/schema`
+        // resolve the same schema list through DcatService and SchemaOrgService and
+        // never reach that guard (WOO-581). Do not read "the catalog routes are
+        // guarded" as covering those two.
         if (empty($scope['schemas']) === false) {
             $scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
         }
@@ -614,13 +621,20 @@ class PublicationQueryService
     /**
      * Drop every schema that has no `authorization.read` rules from the anonymous scope.
      *
-     * OpenRegister's RBAC engine returns `bypass => true` (no WHERE clause at all)
-     * for a schema whose effective authorization is empty or lacks the `read`
-     * action — see MagicRbacHandler::buildRbacConditionsSql(). On the public
-     * search surface that is a data leak, so the schema is excluded here and a
-     * warning names it (SCH-PFTS-CAT-002). Fail-closed: when the mapper cannot
-     * be consulted the whole scope collapses to empty, which the caller turns
-     * into the empty envelope.
+     * TWO SHAPES, ONE OF WHICH IS THE LEAK. OpenRegister handles them differently
+     * — see MagicRbacHandler::buildRbacConditionsSql():
+     *   - `authorization` EMPTY or absent: `bypass => false`, but the only
+     *     conditions are owner-admits OR not-private. An anonymous caller
+     *     therefore reads every NON-PRIVATE row of the schema. This is the
+     *     exposure, and it is not an unconditional bypass.
+     *   - `authorization` NON-EMPTY but without a `read` action: OpenRegister
+     *     FAILS CLOSED ("Action not configured on a non-empty authorization
+     *     block"), so an anonymous caller already gets nothing.
+     * Both are dropped here — the first because it leaks, the second so the
+     * anonymous scope is uniform rather than because it is unsafe — and a
+     * warning names the schema (SCH-PFTS-CAT-002). Fail-closed: when the mapper
+     * cannot be consulted the whole scope collapses to empty, which the caller
+     * turns into the empty envelope.
      *
      * Trade-off: OR resolves authorization with a register-level cascade; a
      * schema that inherits its rules from the register is dropped here too
@@ -673,6 +687,85 @@ class PublicationQueryService
         return $kept;
 
     }//end dropSchemasWithoutReadRules()
+
+    /**
+     * Apply the SCH-PFTS-CAT-002 read-rule guard to a catalog's schema scope.
+     *
+     * Same DROP as `/api/search` (WOO-574), on a different surface — but no
+     * longer the same RULE: since WOO-578 that endpoint applies it to every
+     * caller, while this guard is anonymous-only (see ANONYMOUS ONLY below).
+     * Which schemas it removes, and which half of that set is the actual leak
+     * rather than a schema OpenRegister already refuses, is set out on
+     * {@see dropSchemasWithoutReadRules()}.
+     * `assemblePublicSearchResults()` has dropped those schemas since WOO-574,
+     * but that method only serves `/api/search`. The
+     * per-catalog routes (`/api/{catalogSlug}` and its `/{id}`, `/uses`,
+     * `/used`, `/attachments`, `/download` siblings) are `#[PublicPage]` too and
+     * build their scope straight from the catalog, so the guard never reached
+     * them and the leak stayed open there (WOO-580).
+     *
+     * Guarding the CATALOG rather than each query is what makes this one rule
+     * instead of six: every one of those routes reads `$catalog['schemas']`,
+     * directly or through {@see buildCatalogSearchQuery()} /
+     * {@see findObjectInCatalog()}, and each already fails closed on an empty
+     * schema list. Handing them a guarded catalog therefore also keeps the
+     * `@catalog.schemas` block in the response from naming a schema the caller
+     * may not read.
+     *
+     * 🔴 "THE CATALOG IS GUARDED" IS NOT "EVERY READER OF ITS SCHEMAS IS
+     * GUARDED". This guards the catalog ITS CALLER hands in, and its only
+     * callers are the six routes in
+     * {@see \OCA\OpenCatalogi\Controller\PublicationsController}. Two other
+     * `#[PublicPage]` routes build their scope from the same
+     * `$catalog['schemas']` in different services and never come past here:
+     * `/api/catalogs/{slug}/dcat` ({@see \OCA\OpenCatalogi\Service\DcatService})
+     * and `/api/catalogs/{slug}/schema`
+     * ({@see \OCA\OpenCatalogi\Service\SchemaOrgService}). Both call
+     * `searchObjectsPaginated(… _rbac: true …)` with an unguarded schema list,
+     * so SCH-PFTS-CAT-002 is still open on the DCAT harvest feed and the
+     * schema.org endpoint. Tracked as WOO-581 and deliberately not fixed here:
+     * those two resolve their scope through their own services and want their
+     * own change and their own tests. Read that ticket before assuming this
+     * method already covers the surface.
+     *
+     * ANONYMOUS ONLY, deliberately — and since WOO-578 that is a DIFFERENCE
+     * from `/api/search`, not a match. That endpoint drops rule-less schemas
+     * unconditionally now, and (where the installed OpenRegister carries the
+     * primitive) evaluates every read inside its `runAsAnonymous()`, so its own
+     * SCH-PFTS-CAT-002 guard holds for signed-in callers too. These per-catalog routes keep session RBAC,
+     * and that is the surface WOO-578 leaves staff when it narrows
+     * `/api/search`; widening the guard here would close that door in the same
+     * move.
+     *
+     * @param array $catalog Catalog data array (keys: schemas, registers).
+     *
+     * @return array The catalog with `schemas` normalised to int[] and, for an
+     *               anonymous caller, filtered to the schemas that carry read rules.
+     *
+     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+     */
+    public function applyCatalogReadRuleGuard(array $catalog): array
+    {
+        $schemas = ($catalog['schemas'] ?? []);
+        if (is_string($schemas) === true) {
+            $schemas = (json_decode($schemas, true) ?? []);
+        }
+
+        if (is_array($schemas) === false) {
+            $schemas = [];
+        }
+
+        $schemas = array_values(array_map('intval', array_filter($schemas, 'is_numeric')));
+
+        if ($this->isAnonymous() === true && empty($schemas) === false) {
+            $schemas = $this->dropSchemasWithoutReadRules(schemaIds: $schemas);
+        }
+
+        $catalog['schemas'] = $schemas;
+
+        return $catalog;
+
+    }//end applyCatalogReadRuleGuard()
 
     /**
      * Resolve the register + schema union that /api/search covers for this request.
