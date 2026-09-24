@@ -1038,6 +1038,84 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame([1, 2], $guarded['schemas']);
 	}//end testCatalogGuardKeepsEverySchemaThatCarriesReadRules()
 
+	/**
+	 * WOO-581: the union readers (`/api/federation/publications`,
+	 * `/api/catalogi/{id}`) hand in a bare schema list, not a catalog. A schema
+	 * without an `authorization` block — the shape that actually leaks — is
+	 * dropped for an anonymous caller, with the same SCH-PFTS-CAT-002 warning.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardDropsSchemaWithoutAuthorizationBlockForAnonymousCaller(): void {
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
+			$this->stringContains('no authorization.read rules'),
+			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2)
+		);
+
+		$this->assertSame([1], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
+	}//end testSchemaScopeGuardDropsSchemaWithoutAuthorizationBlockForAnonymousCaller()
+
+	/**
+	 * The unions arrive as whatever the catalog objects stored — numeric strings
+	 * included. They are normalised before the guard looks, so the encoding
+	 * cannot sidestep it.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardNormalisesNumericStringIds(): void {
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$this->assertSame([1], $this->service->applySchemaScopeReadRuleGuard(schemaIds: ['1', '2']));
+	}//end testSchemaScopeGuardNormalisesNumericStringIds()
+
+	/**
+	 * Nothing survives → an empty scope. Every caller must read that as
+	 * "nothing to search", which their own tests pin.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardEmptiesTheScopeWhenNoSchemaHasReadRules(): void {
+		$this->wireHappyPath(authorizationById: [1 => null, 2 => []]);
+
+		$this->assertSame([], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
+	}//end testSchemaScopeGuardEmptiesTheScopeWhenNoSchemaHasReadRules()
+
+	/**
+	 * Anonymous-only, and for a signed-in caller the list comes back UNTOUCHED —
+	 * not even normalised — so session RBAC on the union paths does not move.
+	 * The non-numeric entry is the proof: normalising would have dropped it.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardLeavesTheListUntouchedForASignedInCaller(): void {
+		$user = $this->createMock(\OCP\IUser::class);
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$this->service = new PublicationQueryService(
+			container: $this->container,
+			userSession: $session,
+			config: $this->config,
+			logger: $this->logger,
+		);
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$this->assertSame(['1', '2', 'legacy-slug'], $this->service->applySchemaScopeReadRuleGuard(schemaIds: ['1', '2', 'legacy-slug']));
+	}//end testSchemaScopeGuardLeavesTheListUntouchedForASignedInCaller()
+
+	/**
+	 * Negative control: every schema carries read rules → nothing changes, so
+	 * the guard cannot be why a working federation feed goes quiet.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardKeepsEverySchemaThatCarriesReadRules(): void {
+		$this->wireHappyPath();
+
+		$this->assertSame([1, 2], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
+	}//end testSchemaScopeGuardKeepsEverySchemaThatCarriesReadRules()
+
 	private function wireHappyPath(array $authorizationById = []): FakeSearchObjectService {
 		$fakeObjectService = new FakeSearchObjectService();
 

@@ -181,6 +181,28 @@ class PublicationService {
 	}//end getQueryService()
 
 	/**
+	 * Hold a catalog-union schema scope to the SCH-PFTS-CAT-002 read-rule guard.
+	 *
+	 * The union built here serves `#[PublicPage]` routes — `/api/federation/
+	 * publications` and its fast paths — and used to reach
+	 * `searchObjects(_rbac: true)` unguarded, so an anonymous caller read the full
+	 * record of any schema without an `authorization` block in any catalog, listed
+	 * or not (WOO-581). The rule itself lives in
+	 * {@see PublicationQueryService::applySchemaScopeReadRuleGuard()}; this only
+	 * routes both union builders (getCatalogFilters() and the ultra-fast path)
+	 * through it. Anonymous-only: signed-in callers get the union back untouched.
+	 *
+	 * @param array $schemas The de-duplicated schema union.
+	 *
+	 * @return array The union, filtered for an anonymous caller.
+	 *
+	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+	 */
+	private function guardSchemaScope(array $schemas): array {
+		return $this->getQueryService()->applySchemaScopeReadRuleGuard(schemaIds: $schemas);
+	}//end guardSchemaScope()
+
+	/**
 	 * Set register/schema context on the ObjectService for a given object UUID.
 	 *
 	 * Locates which register/schema an object belongs to — scoped to the catalogs
@@ -397,7 +419,9 @@ class PublicationService {
 
 		// Remove duplicate values and assign to class properties.
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
-		$this->availableSchemas = $this->collectUnique(catalogs: $catalogs, property: 'schemas');
+		$this->availableSchemas = $this->guardSchemaScope(
+			schemas: $this->collectUnique(catalogs: $catalogs, property: 'schemas')
+		);
 
 		$result = [
 			'registers' => array_values($this->availableRegisters),
@@ -499,6 +523,12 @@ class PublicationService {
 
 		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
+
+		// FAIL CLOSED on an empty schema scope (WOO-581): an empty `@self.schema`
+		// must never be read as "no schema filter".
+		if (empty($context['schemas']) === true) {
+			return ['results' => [], 'facets' => [], 'total' => 0];
+		}
 
 		// Validate requested registers and schemas against the context.
 		$requestedRegisters = ($searchQuery['@self']['register'] ?? []);
@@ -2102,7 +2132,7 @@ class PublicationService {
 				}
 
 				$this->availableRegisters = array_unique($uniqueRegisters);
-				$this->availableSchemas = array_unique($uniqueSchemas);
+				$this->availableSchemas = $this->guardSchemaScope(schemas: array_unique($uniqueSchemas));
 
 				$catalogContext = [
 					'registers' => array_values($this->availableRegisters),
@@ -2124,6 +2154,20 @@ class PublicationService {
 				];
 			}//end try
 		}//end if
+
+		// FAIL CLOSED on an empty schema scope (WOO-581): nothing configured, or
+		// every schema dropped by guardSchemaScope(). An empty `@self.schema`
+		// must never be read as "no schema filter".
+		if (empty($catalogContext['schemas']) === true) {
+			return [
+				'results' => [],
+				'total' => 0,
+				'limit' => $limit,
+				'offset' => $offset,
+				'page' => $page,
+				'pages' => 1,
+			];
+		}
 
 		// Set up the search query properly (preserve original logic from searchPublications).
 		if (isset($searchQuery['@self']) === false) {

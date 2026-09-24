@@ -434,8 +434,14 @@ class CatalogiService {
 		$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
 		// Remove duplicate values and assign to class properties.
+		// SCH-PFTS-CAT-002 (WOO-581): this scope serves `#[PublicPage]`
+		// `/api/catalogi/{id}`, which searched it with `_rbac: true` unguarded, so an
+		// anonymous caller read the full record of a schema without an
+		// `authorization` block. Same anonymous-only rule as every other public
+		// catalog reader; signed-in callers get the list back untouched.
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
-		$this->availableSchemas = $this->collectUnique(catalogs: $catalogs, property: 'schemas');
+		$this->availableSchemas = $this->container->get(PublicationQueryService::class)
+			->applySchemaScopeReadRuleGuard(schemaIds: $this->collectUnique(catalogs: $catalogs, property: 'schemas'));
 
 		return [
 			'registers' => array_values($this->availableRegisters),
@@ -800,27 +806,30 @@ class CatalogiService {
 		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
+		// FAIL CLOSED on an empty schema scope (WOO-581): nothing configured, or
+		// every schema dropped by the read-rule guard. Without this the query below
+		// carries only a register filter — a search across every schema in it.
+		if (empty($context['schemas']) === true) {
+			return new JSONResponse(['results' => [], 'total' => 0]);
+		}
+
 		$objectService = $this->getObjectService();
 
 		// Build search query from config using _register and _schema for magic mapper routing.
-		$query = [];
-		if (empty($context['registers']) === false || empty($context['schemas']) === false) {
-			$query['@self'] = [];
-			if (empty($context['registers']) === false) {
-				// Use scalar value when only one register to avoid magic_mapper overhead.
-				$query['@self']['register'] = $context['registers'];
-				if (count($context['registers']) === 1) {
-					$query['@self']['register'] = $context['registers'][0];
-				}
+		// The schema scope is non-empty here (see the fail-closed above).
+		$query = ['@self' => []];
+		if (empty($context['registers']) === false) {
+			// Use scalar value when only one register to avoid magic_mapper overhead.
+			$query['@self']['register'] = $context['registers'];
+			if (count($context['registers']) === 1) {
+				$query['@self']['register'] = $context['registers'][0];
 			}
+		}
 
-			if (empty($context['schemas']) === false) {
-				// Use scalar value when only one schema to avoid magic_mapper overhead.
-				$query['@self']['schema'] = $context['schemas'];
-				if (count($context['schemas']) === 1) {
-					$query['@self']['schema'] = $context['schemas'][0];
-				}
-			}
+		// Use scalar value when only one schema to avoid magic_mapper overhead.
+		$query['@self']['schema'] = $context['schemas'];
+		if (count($context['schemas']) === 1) {
+			$query['@self']['schema'] = $context['schemas'][0];
 		}
 
 		// Add other filters from config.

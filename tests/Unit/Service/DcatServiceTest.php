@@ -28,6 +28,9 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Service\DcatMappingService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
+use OCA\OpenRegister\Db\SchemaMapper;
+use OCA\OpenRegister\Service\FileService;
+use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -141,4 +144,87 @@ class DcatServiceTest extends TestCase {
 		];
 		$this->assertSame([], $this->service->mandatoryViolations($node));
 	}
+
+	/**
+	 * Wire OpenRegister's ObjectService, FileService and SchemaMapper into the
+	 * container, and return the ObjectService mock so a test can pin the search.
+	 *
+	 * @return ObjectService|MockObject The ObjectService mock.
+	 */
+	private function wireOpenRegister(): ObjectService|MockObject {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static fn ($app, $key, $default = '') => $default
+		);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$fileService = $this->createMock(FileService::class);
+		$fileService->method('getFiles')->willReturn([]);
+		$fileService->method('formatFiles')->willReturn(['results' => []]);
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')->willThrowException(new \RuntimeException('not needed'));
+
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				'OCA\\OpenRegister\\Service\\ObjectService' => $objectService,
+				'OCA\\OpenRegister\\Service\\FileService' => $fileService,
+				'OCA\\OpenRegister\\Db\\SchemaMapper' => $schemaMapper,
+			}
+		);
+
+		return $objectService;
+	}//end wireOpenRegister()
+
+	/**
+	 * WOO-581: a catalog whose schema list is empty — nothing configured, or all
+	 * of it dropped by the SCH-PFTS-CAT-002 guard in DcatController — renders a
+	 * VALID catalog with zero datasets and never searches. An empty
+	 * `@self.schema` must not be read as "every schema in the register".
+	 *
+	 * @return void
+	 */
+	public function testBuildCatalogDocumentWithAnEmptySchemaScopeIsAnEmptyCatalogWithoutSearching(): void {
+		$objectService = $this->wireOpenRegister();
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$document = $this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => []],
+			catalogSlug: 'woo'
+		);
+
+		$this->assertSame(0, $document['_meta']['count']);
+		$this->assertFalse($document['_meta']['hasNext']);
+		$this->assertSame('dcat:Catalog', $document['@graph'][0]['@type']);
+		$this->assertSame([], $document['@graph'][0]['dcat:dataset']);
+		$this->assertCount(1, $document['@graph'], 'alleen de catalogus-node, geen datasets');
+	}//end testBuildCatalogDocumentWithAnEmptySchemaScopeIsAnEmptyCatalogWithoutSearching()
+
+	/**
+	 * Negative control: a non-empty scope still searches exactly those schemas,
+	 * with RBAC on, so the fail-closed branch cannot be why a working feed goes
+	 * quiet.
+	 *
+	 * @return void
+	 */
+	public function testBuildCatalogDocumentSearchesExactlyTheCatalogSchemaScope(): void {
+		$objectService = $this->wireOpenRegister();
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with(
+				$this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28, 29] && $q['@self']['register'] === 20),
+				true
+			)
+			->willReturn([
+				'results' => [['@self' => ['uuid' => 'u1', 'schema' => 28, 'updated' => '2026-01-01T00:00:00+00:00'], 'id' => 'u1', 'title' => 'Besluit']],
+				'next' => null,
+			]);
+
+		$document = $this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => [28, 29]],
+			catalogSlug: 'woo'
+		);
+
+		$this->assertSame(1, $document['_meta']['count']);
+		$this->assertSame([['@id' => 'https://host/apps/opencatalogi/api/woo/u1']], $document['@graph'][0]['dcat:dataset']);
+	}//end testBuildCatalogDocumentSearchesExactlyTheCatalogSchemaScope()
 }//end class

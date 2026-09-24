@@ -1448,6 +1448,9 @@ class CatalogiServiceTest extends TestCase {
 		// Object visibility is enforced by OpenRegister RBAC, not by this service, so no
 		// published-predicate stub is needed — the mock is returned for its class id below.
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 
 		$this->container->method('get')
 			->willReturnCallback(
@@ -1524,4 +1527,81 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('schemaVersion', $first['@self']);
 		$this->assertSame('reg-1', $first['@self']['register']);
 	}
+
+	// =======================================================================
+	// WOO-581 — `/api/catalogi/{id}` holds its schema scope to the read-rule guard
+	// =======================================================================
+
+	/**
+	 * Wire the container with an ObjectService mock and a query-service mock
+	 * whose read-rule guard the test decides.
+	 *
+	 * @param ObjectService|MockObject $objectService The ObjectService mock.
+	 * @param \Closure                 $guard         What applySchemaScopeReadRuleGuard() returns.
+	 *
+	 * @return void
+	 */
+	private function injectObjectServiceWithGuard(ObjectService|MockObject $objectService, \Closure $guard): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnCallback($guard);
+
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => $id === \OCA\OpenCatalogi\Service\PublicationQueryService::class ? $queryService : $objectService
+		);
+	}//end injectObjectServiceWithGuard()
+
+	/**
+	 * The catalog's schema list goes through the SCH-PFTS-CAT-002 guard before
+	 * it is searched. Before WOO-581 an anonymous caller read the full record of
+	 * a schema without an `authorization` block here.
+	 *
+	 * @return void
+	 */
+	public function testIndexSearchesOnlyTheReadRuleGuardedSchemas(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [20], 'schemas' => [28, 56]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => $q['@self']['schema'] === 28))
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => array_values(array_diff($schemas, [56])));
+
+		$this->assertSame(200, $this->service->index('publications')->getStatus());
+	}//end testIndexSearchesOnlyTheReadRuleGuardedSchemas()
+
+	/**
+	 * Everything dropped → an empty page and NO search. Without the fail-closed
+	 * the query would carry only a register filter: every schema in it.
+	 *
+	 * @return void
+	 */
+	public function testIndexFailsClosedWhenTheGuardEmptiesTheScope(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [20], 'schemas' => [56]]),
+		]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => []);
+
+		$response = $this->service->index('publications');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
+	}//end testIndexFailsClosedWhenTheGuardEmptiesTheScope()
 }//end class

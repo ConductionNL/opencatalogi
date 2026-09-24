@@ -114,6 +114,9 @@ class PublicationServiceTest extends TestCase {
 		// container as a collaborator. Visibility is enforced by OpenRegister RBAC, not by
 		// an app-side predicate, so only the catalog-scope helper needs stubbing here.
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 
 		// isObjectInCatalogScope() calls findObjectLocation() on the QueryService.
 		// Return a valid location so the scope check passes for all UUIDs in these tests.
@@ -542,7 +545,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() now fails closed (WOO-581).
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -567,7 +571,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() now fails closed (WOO-581).
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -727,6 +732,9 @@ class PublicationServiceTest extends TestCase {
 
 		// The UUID cannot be located within that scope.
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(null);
 
 		$this->container->method('get')
@@ -782,6 +790,9 @@ class PublicationServiceTest extends TestCase {
 		// QueryService mock: confirm the object is in catalog scope so the C-1/C-3 scope
 		// gate passes. Object visibility is enforced by OpenRegister RBAC, not here.
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
 
 		// Provide a minimal catalog so getCatalogFilters() resolves a non-empty scope.
@@ -828,6 +839,9 @@ class PublicationServiceTest extends TestCase {
 			->willReturn(['openregister']);
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
 		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
 		$objectService->method('searchObjects')->willReturn([$catalog]);
@@ -865,6 +879,9 @@ class PublicationServiceTest extends TestCase {
 			->willReturn(['openregister']);
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
 		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
 		$objectService->method('searchObjects')->willReturn([$catalog]);
@@ -904,6 +921,9 @@ class PublicationServiceTest extends TestCase {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
 		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
 		$objectService->method('searchObjects')->willReturn([$catalog]);
@@ -938,6 +958,9 @@ class PublicationServiceTest extends TestCase {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
 		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
 		$objectService->method('searchObjects')->willReturn([$catalog]);
@@ -2227,7 +2250,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() now fails closed (WOO-581).
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -2250,7 +2274,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() now fails closed (WOO-581).
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -2273,7 +2298,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() now fails closed (WOO-581).
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -2304,7 +2330,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() now fails closed (WOO-581).
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -2809,7 +2836,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() now fails closed (WOO-581).
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1', 'reg-2'],
@@ -2842,7 +2870,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() now fails closed (WOO-581).
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -3725,6 +3754,9 @@ class PublicationServiceTest extends TestCase {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
 		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
 		$objectService->method('searchObjects')->willReturn([$catalog]);
@@ -3793,6 +3825,9 @@ class PublicationServiceTest extends TestCase {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
 		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
 		$objectService->method('searchObjects')->willReturn([$catalog]);
@@ -3847,6 +3882,9 @@ class PublicationServiceTest extends TestCase {
 			->willReturn(['openregister']);
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
 		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
 		$objectService->method('searchObjects')->willReturn([$catalog]);
@@ -4007,7 +4045,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() now fails closed (WOO-581).
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -4160,4 +4199,106 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke($this->service, 'abc', 'xyz');
 		$this->assertLessThan(0, $result);
 	}
+
+	// =======================================================================
+	// WOO-581 — the catalog-union scope is held to the read-rule guard
+	// =======================================================================
+
+	/**
+	 * Wire the container like mockObjectServiceAvailable(), but with a
+	 * query-service mock whose read-rule guard the test decides.
+	 *
+	 * @param MockObject $objectService The ObjectService mock.
+	 * @param \Closure   $guard         What applySchemaScopeReadRuleGuard() returns for its input.
+	 *
+	 * @return void
+	 */
+	private function mockObjectServiceWithGuard(MockObject $objectService, \Closure $guard): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnCallback($guard);
+
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => $id === \OCA\OpenCatalogi\Service\PublicationQueryService::class ? $queryService : $objectService
+		);
+	}//end mockObjectServiceWithGuard()
+
+	/**
+	 * The union over every catalog — what `/api/federation/publications` searches
+	 * — goes through the SCH-PFTS-CAT-002 guard. Before WOO-581 an anonymous
+	 * caller read the full record of a schema without an `authorization` block
+	 * in ANY catalog, listed or not.
+	 *
+	 * @return void
+	 */
+	public function testGetCatalogFiltersRoutesTheSchemaUnionThroughTheReadRuleGuard(): void {
+		$objectService = $this->createObjectServiceMock();
+		$received = null;
+		$this->mockObjectServiceWithGuard(
+			$objectService,
+			static function (array $schemas) use (&$received): array {
+				$received = $schemas;
+				return array_values(array_diff($schemas, [56]));
+			}
+		);
+		$this->mockConfiguredCatalogScope();
+
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => [20], 'schemas' => [28]]),
+			$this->createSerializableObject(['registers' => [20], 'schemas' => [56]]),
+		]);
+
+		$result = $this->service->getCatalogFilters();
+
+		$this->assertSame([28, 56], array_values($received), 'de guard krijgt de volledige unie');
+		$this->assertSame([28], $result['schemas']);
+		$this->assertSame([28], array_values($this->service->getAvailableSchemas()));
+	}//end testGetCatalogFiltersRoutesTheSchemaUnionThroughTheReadRuleGuard()
+
+	/**
+	 * The ultra-fast federation path builds its own copy of the union. When the
+	 * guard drops every schema it answers with an EMPTY page and never searches
+	 * — an empty `@self.schema` is not "no schema filter".
+	 *
+	 * @return void
+	 */
+	public function testUltraFastPathFailsClosedWhenTheGuardEmptiesTheScope(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceWithGuard($objectService, static fn (array $schemas): array => []);
+		$this->mockConfiguredCatalogScope();
+
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => [20], 'schemas' => [56]]),
+		]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$result = $this->service->getAggregatedPublications(queryParams: ['_aggregate' => 'false', '_limit' => 10]);
+
+		$this->assertSame([], $result['results']);
+		$this->assertSame(0, $result['total']);
+	}//end testUltraFastPathFailsClosedWhenTheGuardEmptiesTheScope()
+
+	/**
+	 * The fast / index path (`_ultra_fast=false`, `_include_catalogs`) goes
+	 * through searchPublications(); same fail-closed on an emptied scope.
+	 *
+	 * @return void
+	 */
+	public function testSearchPublicationsFailsClosedWhenTheGuardEmptiesTheScope(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceWithGuard($objectService, static fn (array $schemas): array => []);
+		$this->mockConfiguredCatalogScope();
+		$this->request->method('getParams')->willReturn([]);
+
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => [20], 'schemas' => [56]]),
+		]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$result = $this->service->getAggregatedPublications(queryParams: ['_aggregate' => 'false', '_ultra_fast' => 'false', '_limit' => 10]);
+
+		$this->assertSame([], $result['results']);
+		$this->assertSame(0, $result['total'] ?? 0);
+	}//end testSearchPublicationsFailsClosedWhenTheGuardEmptiesTheScope()
 }

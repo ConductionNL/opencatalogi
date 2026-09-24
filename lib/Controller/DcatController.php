@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Http\DcatResponse;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -56,6 +57,7 @@ class DcatController extends Controller {
 	 * @param DcatService $dcatService The DCAT orchestration service.
 	 * @param DcatSerializer $serializer The DCAT serializer.
 	 * @param CatalogiService $catalogiService Catalog resolution (slug → catalog).
+	 * @param PublicationQueryService $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
@@ -68,6 +70,7 @@ class DcatController extends Controller {
 		private readonly DcatService $dcatService,
 		private readonly DcatSerializer $serializer,
 		private readonly CatalogiService $catalogiService,
+		private readonly PublicationQueryService $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly ?IAppConfig $appConfig = null,
@@ -217,6 +220,12 @@ class DcatController extends Controller {
 			if ($this->dcatService->isDcatEnabled($catalog) === false) {
 				return new JSONResponse(['error' => $this->l10n->t('DCAT harvesting is not enabled for this catalog')], 404);
 			}
+
+			// SCH-PFTS-CAT-002 (WOO-581): an anonymous harvester must not reach a
+			// schema without `authorization.read` rules through this feed — the
+			// same guard `/api/{catalogSlug}` applies since WOO-580. A harvest feed
+			// is the worst place to leak: it is crawled and cached by third parties.
+			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
 			$page = max(1, (int)$this->request->getParam('page', 1));
 			$document = $this->dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: $page);
