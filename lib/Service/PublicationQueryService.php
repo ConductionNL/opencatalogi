@@ -74,28 +74,6 @@ class PublicationQueryService
     public const PUBLIC_LIMIT_MAX = 100;
 
     /**
-     * Query keys OpenRegister reads to pick the register/schema a search runs on.
-     *
-     * `MagicMapper::searchObjectsPaginated()` resolves its scope as
-     * `@self.schema ?? _schema ?? schema` (and the same chain for register),
-     * plus `@self.schemas ?? _schemas` and `@self.registers ?? _registers` for a
-     * multi-schema search. A scalar `@self.schema` wins over a guarded
-     * `_schemas` list. OR's `buildSearchQuery()` turns a caller's `schema=` /
-     * `register=` into exactly that `@self` entry. See
-     * {@see stripCallerScope()}.
-     *
-     * @var array<string>
-     */
-    private const CALLER_SCOPE_KEYS = ['register', 'schema', '_register', '_registers', '_schema', '_schemas'];
-
-    /**
-     * The `@self` sub-keys that carry scope (see CALLER_SCOPE_KEYS).
-     *
-     * @var array<string>
-     */
-    private const CALLER_SELF_SCOPE_KEYS = ['register', 'registers', 'schema', 'schemas'];
-
-    /**
      * Whether the missing-runAsAnonymous() warning has been logged this request.
      *
      * @var bool
@@ -214,6 +192,7 @@ class PublicationQueryService
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
      * @spec openspec/specs/search/spec.md
+     * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
      */
     private function assembleSearchResultsAsAnonymous(array $queryParams, object $objectService): array
     {
@@ -252,7 +231,7 @@ class PublicationQueryService
         // A GUARDED SCOPE IS ONLY A GUARD IF IT IS THE SCOPE OR SEARCHES. A
         // caller's `schema=` / `register=` / `@self[schema]=` used to reach OR as
         // `@self.schema`, which wins over the guarded `_schemas`; every public list
-        // route now runs the request query through `stripCallerScope()` first.
+        // route now runs the request query through `CallerScope::strip()` first.
         if (empty($scope['schemas']) === false) {
             $scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
         }
@@ -305,7 +284,7 @@ class PublicationQueryService
         // set past the resolved catalog boundary. This used to strip only `_schema` and
         // `_registers`; `?schema=<S>&register=<R>` reached OR as `@self.schema`, won the
         // precedence chain and bypassed the SCH-PFTS-CAT-002 guard (WOO-581 review).
-        $searchQuery = $this->stripCallerScope(query: $searchQuery);
+        $searchQuery = CallerScope::strip(query: $searchQuery);
         unset($searchQuery['catalogSlug'], $searchQuery['fq']);
         unset($searchQuery['_content']);
         // OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
@@ -369,6 +348,13 @@ class PublicationQueryService
                 registerIds: $scope['registers'],
                 schemas: $searchQuery['_schemas']
             );
+            // The widening runs AFTER the SCH-PFTS-CAT-002 guard, so the schemas it
+            // adds get the same guard; the transitive check below is defence in
+            // depth, not the control (WOO-581 review round 2).
+            if ($documentSchemaIds !== []) {
+                $documentSchemaIds = $this->dropSchemasWithoutReadRules(schemaIds: $documentSchemaIds);
+            }
+
             if ($documentSchemaIds !== []) {
                 $searchQuery['_schemas'] = array_values(
                     array_unique(array_merge($searchQuery['_schemas'], $documentSchemaIds))
@@ -837,43 +823,85 @@ class PublicationQueryService
     }//end applySchemaScopeReadRuleGuard()
 
     /**
-     * Remove every register/schema scope key a CALLER put in a search query.
+     * Apply the SCH-PFTS-CAT-002 read-rule guard to the ROWS of a relation result.
      *
-     * A guarded scope is only a guard if it is the scope OpenRegister searches.
-     * It was not (WOO-581 review): on `/api/search`, `/api/{catalogSlug}` and
-     * `/api/catalogi/{id}` an anonymous `?schema=<S>&register=<R>` (or
-     * `?@self[schema]=<S>`) reached OR as `@self.schema`, which wins the
-     * precedence chain over the guarded `_schemas` list — so a schema without
-     * an `authorization` block was read in full, even one in no catalog at
-     * all. Every public list route therefore strips these keys from the
-     * request-derived query and then writes its own scope. Non-scope `@self`
-     * filters (`owner`, `created`, `uuid`, …) are kept.
+     * `/api/{catalogSlug}/{id}/uses` and `/used` guard their root object, then hand
+     * off to OpenRegister's relation handler, which loads the related objects from
+     * every register × schema and filters them by schema RBAC only — and RBAC reads
+     * an empty `authorization` block as open (WOO-581 review round 2). Those rows
+     * are legitimately outside the catalog's schema list (a publication's documents
+     * live in the document schema), so catalog membership is the wrong filter; the
+     * leak class is. For an anonymous caller every row whose schema lacks read rules
+     * (or carries no numeric schema id) is dropped. A signed-in caller gets the
+     * result back untouched.
      *
-     * @param array $query A search query built from request parameters.
+     * `total` is lowered by the rows dropped from this page. OR pages before it
+     * returns, so a later page may still hold rows that are dropped there; the
+     * figure is an upper bound, never a count of rows the caller may not read.
      *
-     * @return array The query without any caller-supplied register/schema scope.
+     * @param array $result An OpenRegister relation envelope (`results`, `total`, …).
+     *
+     * @return array The envelope with the guarded rows.
      *
      * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
      */
-    public function stripCallerScope(array $query): array
+    public function applyReadRuleGuardToRows(array $result): array
     {
-        foreach (self::CALLER_SCOPE_KEYS as $key) {
-            unset($query[$key]);
+        $rows = ($result['results'] ?? null);
+        if (is_array($rows) === false || $rows === [] || $this->isAnonymous() === false) {
+            return $result;
         }
 
-        if (array_key_exists('@self', $query) === true && is_array($query['@self']) === false) {
-            unset($query['@self']);
-        }
+        $rowSchemas = array_map(fn (mixed $row): ?int => $this->rowSchemaId(row: $row), $rows);
+        $kept       = array_flip(
+            $this->applySchemaScopeReadRuleGuard(schemaIds: array_values(array_unique(array_filter($rowSchemas, 'is_int'))))
+        );
 
-        if (isset($query['@self']) === true) {
-            foreach (self::CALLER_SELF_SCOPE_KEYS as $key) {
-                unset($query['@self'][$key]);
+        $keptRows = [];
+        foreach ($rows as $index => $row) {
+            $schemaId = $rowSchemas[$index];
+            if ($schemaId !== null && isset($kept[$schemaId]) === true) {
+                $keptRows[] = $row;
             }
         }
 
-        return $query;
+        $result['results'] = $keptRows;
+        $dropped           = (count($rows) - count($keptRows));
+        if ($dropped > 0 && is_numeric($result['total'] ?? null) === true) {
+            $result['total'] = max(count($keptRows), ((int) $result['total'] - $dropped));
+        }
 
-    }//end stripCallerScope()
+        return $result;
+
+    }//end applyReadRuleGuardToRows()
+
+    /**
+     * The numeric schema id of a result row (array or serialisable entity).
+     *
+     * @param mixed $row A result row.
+     *
+     * @return int|null The schema id, or null when the row carries none.
+     *
+     * @spec exclude Private helper of applyReadRuleGuardToRows(); no behaviour of its own.
+     */
+    private function rowSchemaId(mixed $row): ?int
+    {
+        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+            $row = $row->jsonSerialize();
+        }
+
+        $schemaId = null;
+        if (is_array($row) === true) {
+            $schemaId = ($row['@self']['schema'] ?? null);
+        }
+
+        if (is_numeric($schemaId) === false) {
+            return null;
+        }
+
+        return (int) $schemaId;
+
+    }//end rowSchemaId()
 
     /**
      * Resolve the register + schema union that /api/search covers for this request.
@@ -1918,6 +1946,7 @@ class PublicationQueryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
      */
     public function buildCatalogSearchQuery(array $catalog, array $queryParams, object $objectService): array
     {
@@ -1929,8 +1958,8 @@ class PublicationQueryService
 
         // The scope is the (guarded) catalog's, never the caller's: without this a
         // `?schema=<S>&register=<R>` became `@self.schema`, which OR prefers over the
-        // `_schemas` set below (WOO-581 review). See stripCallerScope().
-        $searchQuery = $this->stripCallerScope(query: $searchQuery);
+        // `_schemas` set below (WOO-581 review). See CallerScope::strip().
+        $searchQuery = CallerScope::strip(query: $searchQuery);
 
         // Clean up catalog-specific parameters.
         unset($searchQuery['catalogSlug'], $searchQuery['fq']);
@@ -1946,10 +1975,20 @@ class PublicationQueryService
             $schemas = array_map('intval', $schemas);
             // Pass all schemas for both search and faceting.
             $searchQuery['_schemas'] = $schemas;
-            // Only set _schema for single-schema catalogs for magic mapper optimization.
-            // Explicitly unset _schema for multi-schema search to prevent auto-setting.
+            // Only set _schema when the catalog pins ONE schema in ONE register (the
+            // magic-mapper fast path). A scalar schema without a scalar register takes
+            // neither OR's multi-schema route (needs no scalar schema) nor its
+            // single-schema route (needs a register), and falls through to the
+            // all-tables `_ids` lookup — outside the guarded scope (WOO-581 review
+            // round 2). The guard itself produces that shape: [S_ok, S_open] × [R1, R2]
+            // becomes [S_ok] × [R1, R2]. Otherwise `_schemas` carries the scope.
             unset($searchQuery['_schema']);
-            if (count($schemas) === 1) {
+            $catalogRegisters = ($catalog['registers'] ?? []);
+            if (is_string($catalogRegisters) === true) {
+                $catalogRegisters = (json_decode($catalogRegisters, true) ?? []);
+            }
+
+            if (count($schemas) === 1 && is_array($catalogRegisters) === true && count($catalogRegisters) === 1) {
                 $searchQuery['_schema'] = $schemas[0];
             }
         }//end if

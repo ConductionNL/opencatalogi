@@ -798,6 +798,7 @@ class CatalogiService {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	public function index(null|string|int $catalogId = null): JSONResponse {
 		// Get config and fetch objects.
@@ -827,7 +828,7 @@ class CatalogiService {
 			}
 		}
 
-		$query = $this->container->get(PublicationQueryService::class)->stripCallerScope(query: $query);
+		$query = CallerScope::strip(query: $query);
 		if (isset($query['@self']) === false) {
 			$query['@self'] = [];
 		}

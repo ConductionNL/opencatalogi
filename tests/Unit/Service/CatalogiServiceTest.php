@@ -1451,7 +1451,6 @@ class CatalogiServiceTest extends TestCase {
 		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
 		// are about: pass the schema scope through. The guard has its own tests.
 		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
-		$this->stubRealCallerScopeStrip($queryService);
 
 		$this->container->method('get')
 			->willReturnCallback(
@@ -1547,27 +1546,11 @@ class CatalogiServiceTest extends TestCase {
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
 		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnCallback($guard);
-		$this->stubRealCallerScopeStrip($queryService);
 
 		$this->container->method('get')->willReturnCallback(
 			static fn (string $id) => $id === \OCA\OpenCatalogi\Service\PublicationQueryService::class ? $queryService : $objectService
 		);
 	}//end injectObjectServiceWithGuard()
-
-	/**
-	 * Run the REAL stripCallerScope() behind a query-service mock: it is the
-	 * control under test on index(), so a mocked `[]` would hide a regression.
-	 *
-	 * @param MockObject $queryService The PublicationQueryService mock.
-	 *
-	 * @return void
-	 */
-	private function stubRealCallerScopeStrip(MockObject $queryService): void {
-		$real = new \OCA\OpenCatalogi\Service\PublicationQueryService(container: $this->createMock(ContainerInterface::class));
-		$queryService->method('stripCallerScope')->willReturnCallback(
-			static fn (array $query): array => $real->stripCallerScope(query: $query)
-		);
-	}//end stubRealCallerScopeStrip()
 
 	/**
 	 * WOO-581 review f1: `?@self[register]=20&@self[schema]=56` used to replace

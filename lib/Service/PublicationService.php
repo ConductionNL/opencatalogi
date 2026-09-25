@@ -482,6 +482,7 @@ class PublicationService {
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	private function searchPublications(null|string|int $catalogId = null, ?array $ids = null, ?array $customParams = null): array {
 		// Use custom parameters if provided, otherwise use request parameters.
@@ -577,6 +578,13 @@ class PublicationService {
 		$schemas = $context['schemas'];
 		if (empty($requestedSchemas) === false) {
 			$schemas = $requestedSchemas;
+		}
+
+		// Only the (validated) narrowing above survives; every other scope key the
+		// caller sent goes, or OR's facet path follows it (WOO-581 review round 2).
+		$searchQuery = CallerScope::strip(query: $searchQuery);
+		if (isset($searchQuery['@self']) === false) {
+			$searchQuery['@self'] = [];
 		}
 
 		$searchQuery['@self']['register'] = $registers;
@@ -2054,6 +2062,7 @@ class PublicationService {
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	private function getLocalPublicationsUltraFast(
 		array $queryParams,
@@ -2178,7 +2187,11 @@ class PublicationService {
 			];
 		}
 
-		// Set up the search query properly (preserve original logic from searchPublications).
+		// The scope is the guarded catalog union, never the caller's (WOO-581 review
+		// round 2): the rows already followed the server's `@self.schema`, but OR's
+		// facet path reads `@self.schemas ?? _schemas` first, so a caller's keys
+		// steered the facets to any schema. See CallerScope::strip().
+		$searchQuery = CallerScope::strip(query: $searchQuery);
 		if (isset($searchQuery['@self']) === false) {
 			$searchQuery['@self'] = [];
 		}

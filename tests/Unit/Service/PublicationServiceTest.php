@@ -4343,4 +4343,55 @@ class PublicationServiceTest extends TestCase {
 
 		$this->assertSame(404, $this->service->show('secret-object-uuid')->getStatus());
 	}//end testShowIsA404WhenTheGuardDropsEverySchema()
+
+	/**
+	 * Both federation list paths for {@see testFederationListStripsTheCallersScopeKeys()}.
+	 *
+	 * @return array<string, array{0: array<string, string>}>
+	 */
+	public static function federationListPaths(): array {
+		return [
+			'ultra-fast path'       => [[]],
+			'searchPublications()'  => [['_include_catalogs' => 'true']],
+		];
+	}
+
+	/**
+	 * WOO-581 review round 2 (f2): the rows followed the server's `@self.schema`,
+	 * but OR's facet path reads `@self.schemas ?? _schemas` first, so a caller's
+	 * `_schemas` / `@self[schemas]` (and `_registers`) steered the facets of
+	 * `/api/federation/publications` to any schema. None of them reaches OR now,
+	 * on either path; the guarded union does.
+	 *
+	 * @dataProvider federationListPaths
+	 *
+	 * @param array<string, string> $pathParams What selects the path.
+	 *
+	 * @return void
+	 */
+	public function testFederationListStripsTheCallersScopeKeys(array $pathParams): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceWithGuard($objectService, static fn (array $schemas): array => $schemas);
+		$this->mockConfiguredCatalogScope();
+		$callerScope = [
+			'_schemas' => [56],
+			'_registers' => [99],
+			'_schema' => 56,
+			'@self' => ['schemas' => [56], 'registers' => [99]],
+		];
+		$this->request->method('getParams')->willReturn($callerScope);
+
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => [20], 'schemas' => [28]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => array_intersect(['_schemas', '_registers', '_schema'], array_keys($q)) === []
+				&& ($q['@self']['schema'] ?? null) === 28
+				&& ($q['@self']['register'] ?? null) === 20
+				&& isset($q['@self']['schemas'], $q['@self']['registers']) === false))
+			->willReturn(['results' => [], 'total' => 0]);
+
+		$this->service->getAggregatedPublications(queryParams: $callerScope + $pathParams + ['_aggregate' => 'false', '_limit' => 10]);
+	}//end testFederationListStripsTheCallersScopeKeys()
 }

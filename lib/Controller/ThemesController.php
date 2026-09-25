@@ -25,6 +25,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\CallerScope;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -204,6 +205,7 @@ class ThemesController extends Controller {
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 *
 	 * @spec openspec/specs/content-management/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
@@ -222,6 +224,10 @@ class ThemesController extends Controller {
 
 		// Clean up unwanted parameters.
 		unset($searchQuery['id'], $searchQuery['_route']);
+
+		// The configured scope below wins for the rows, but OR's facet path reads
+		// `@self.schemas ?? _schemas` first; drop every caller scope key (WOO-581).
+		$searchQuery = CallerScope::strip(query: $searchQuery);
 
 		// Add schema filter if configured.
 		if (empty($themeConfig['schema']) === false) {

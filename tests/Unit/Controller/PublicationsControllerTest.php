@@ -29,6 +29,9 @@ class PublicationsControllerTest extends TestCase {
 	private PublicationService|MockObject $publicationService;
 	private CatalogiService|MockObject $catalogiService;
 	private PublicationQueryService|MockObject $queryService;
+
+	/** @var \Closure(array): array What applyReadRuleGuardToRows() returns; pass-through by default. */
+	private ?\Closure $rowsGuard = null;
 	private ContainerInterface|MockObject $container;
 	private IAppManager|MockObject $appManager;
 	private LoggerInterface|MockObject $logger;
@@ -105,6 +108,9 @@ class PublicationsControllerTest extends TestCase {
 		$queryService = $this->createMock(PublicationQueryService::class);
 		$queryService->method('applyCatalogReadRuleGuard')
 			->willReturnCallback(fn (array $catalog) => $catalog);
+		// The row guard on /uses and /used (WOO-581): pass-through unless a test swaps it.
+		$queryService->method('applyReadRuleGuardToRows')
+			->willReturnCallback(fn (array $result) => ($this->rowsGuard ?? static fn (array $r): array => $r)($result));
 
 		return $queryService;
 	}//end newQueryServiceDouble()
@@ -407,6 +413,43 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(200, $response->getStatus());
 	}
+
+	/**
+	 * WOO-581 review round 2: the related rows come from every register × schema
+	 * under schema RBAC only, so they go through the read-rule guard before they
+	 * leave. The controller answers with what the guard returns, not with OR's
+	 * raw result.
+	 *
+	 * @return void
+	 */
+	public function testUsesAndUsedAnswerWithTheReadRuleGuardedRows(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->stubObjectInsideCatalogScope();
+
+		$rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]);
+		$mockObjService->method('find')->willReturn($rootObject);
+		$raw = ['results' => [['id' => 'doc-ok', '@self' => ['schema' => '3']], ['id' => 'secret', '@self' => ['schema' => '56']]], 'total' => 2];
+		$mockObjService->method('getObjectUses')->willReturn($raw);
+		$mockObjService->method('getObjectUsedBy')->willReturn($raw);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$seen = [];
+		$this->rowsGuard = static function (array $result) use (&$seen): array {
+			$seen[] = $result;
+			$result['results'] = [$result['results'][0]];
+			$result['total'] = 1;
+			return $result;
+		};
+
+		foreach (['uses', 'used'] as $route) {
+			$data = json_decode($this->controller->$route('test-catalog', 'pub-123')->render(), true);
+			$this->assertSame(['doc-ok'], array_column($data['results'], 'id'), $route);
+			$this->assertSame(1, $data['total'], $route);
+		}
+
+		$this->assertSame([$raw, $raw], $seen, 'the guard receives OR\'s raw relation result');
+	}//end testUsesAndUsedAnswerWithTheReadRuleGuardedRows()
 
 	public function testUsesReturnsNotFoundWhenObjectIsNull(): void {
 		$mockObjService = $this->mockObjectService();

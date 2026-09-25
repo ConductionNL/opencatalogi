@@ -170,6 +170,65 @@ class CatalogiControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 	}
 
+	/**
+	 * WOO-581 review round 2 (f4): the configured `@self.schema` won for the rows,
+	 * but OR's facet path reads `@self.schemas ?? _schemas` first, so a caller's
+	 * scope keys steered the facets to any schema. None reaches OR now; a
+	 * non-scope `@self` filter does.
+	 *
+	 * @return void
+	 */
+	public function testIndexStripsTheCallersScopeKeys(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$caller = [
+				'_schemas' => [56],
+				'_registers' => [99],
+				'_schema' => 56,
+				'schema' => 56,
+				'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+			];
+
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		// OR's buildSearchQuery() keeps these keys; the strip after it is the control.
+		$mockObjService->method('buildSearchQuery')->willReturn($caller);
+		$mockObjService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => array_intersect(['_schemas', '_registers', 'schema', 'register'], array_keys($q)) === []
+				&& isset($q['@self']['schemas'], $q['@self']['registers']) === false
+				&& ($q['@self']['owner'] ?? null) === 'alice'
+				&& ($q['@self']['schema'] ?? null) === '5'
+				&& ($q['_schema'] ?? null) === '5'))
+			->willReturn(['results' => [], 'total' => 0]);
+
+		$this->container->method('get')
+			->willReturnCallback(
+				function (string $id) use ($mockObjService) {
+					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
+						return new class {
+							public function resolveRegisterId(string $a, string $k, ?string $d = null): string {
+								return '3';
+							}
+
+							public function resolveSchemaId(string $a, string $k, ?string $d = null): string {
+								return '5';
+							}
+						};
+					}
+					return $mockObjService;
+				}
+			);
+		$this->config->method('getValueString')
+			->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'catalog_schema' => '5',
+				'catalog_register' => '3',
+				default => $default,
+			});
+		$this->request->method('getParams')->willReturn($caller);
+		$this->request->server = [];
+
+		$this->assertEquals(200, $this->controller->index()->getStatus());
+	}
+
 	public function testIndexReturns503WhenOpenRegisterNotInstalled(): void {
 		// With OpenRegister unavailable the resolver cannot be obtained; the
 		// controller degrades gracefully to a 503 instead of a raw 500.
