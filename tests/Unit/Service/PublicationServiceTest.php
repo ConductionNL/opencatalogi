@@ -523,17 +523,23 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// A configured catalog scope: with none, searchPublications() fails closed
+		// before any parameter reaches the search (WOO-581), and this test would
+		// assert nothing.
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
 			'schemas' => ['sch-1'],
 		]);
 		$objectService->method('searchObjects')->willReturn([$catalog]);
-		$objectService->method('searchObjectsPaginated')->willReturn([
-			'results' => [],
-			'total' => 0,
-		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => ($q['_limit'] ?? null) === 5 && ($q['_page'] ?? null) === 2))
+			->willReturn([
+				'results' => [],
+				'total' => 0,
+			]);
 
 		$customParams = ['_limit' => 5, '_page' => 2];
 		$response = $this->service->index(null, $customParams);
@@ -2408,7 +2414,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// Configured scope, or the WOO-581 fail-closed returns before the mapping runs.
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -2419,10 +2426,13 @@ class PublicationServiceTest extends TestCase {
 		$resultObj = $this->createSerializableObject([
 			'@self' => ['id' => 'obj-1'],
 		]);
-		$objectService->method('searchObjectsPaginated')->willReturn([
-			'results' => [$resultObj],
-			'total' => 1,
-		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => ($q['_extend'] ?? null) === '@self.files' && isset($q['extend']) === false))
+			->willReturn([
+				'results' => [$resultObj],
+				'total' => 1,
+			]);
 
 		// 'extend' should be mapped to '_extend'
 		$this->request->method('getParams')->willReturn([
@@ -3376,7 +3386,12 @@ class PublicationServiceTest extends TestCase {
 	// getLocalPublicationsUltraFast — catalog context fallback
 	// =======================================================================
 
-	public function testGetLocalPublicationsUltraFastCatalogContextFallback(): void {
+	/**
+	 * WOO-581 review f5: a failing catalog lookup used to fall back to the
+	 * configured catalog register/schema, unguarded, and search the CATALOG
+	 * schema on a public route. It now fails closed: an empty page, no search.
+	 */
+	public function testGetLocalPublicationsUltraFastFailsClosedWhenTheCatalogLookupThrows(): void {
 		$method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsUltraFast');
 		$method->setAccessible(true);
 
@@ -3389,17 +3404,10 @@ class PublicationServiceTest extends TestCase {
 				['opencatalogi', 'catalog_register', '', 'register-1'],
 			]);
 
-		// searchObjects throws, should use fallback
+		// searchObjects throws: no fallback scope any more.
 		$objectService->method('searchObjects')
 			->willThrowException(new \Exception('DB unavailable'));
-
-		$resultObj = $this->createSerializableObject([
-			'@self' => ['id' => 'pub-1'],
-		]);
-		$objectService->method('searchObjectsPaginated')->willReturn([
-			'results' => [$resultObj],
-			'total' => 1,
-		]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
 
 		$result = $method->invoke(
 			$this->service,
@@ -3409,8 +3417,8 @@ class PublicationServiceTest extends TestCase {
 			microtime(true)
 		);
 
-		$this->assertArrayHasKey('results', $result);
-		$this->assertTrue($result['_performance']['ultra_fast_path']);
+		$this->assertSame([], $result['results']);
+		$this->assertSame(0, $result['total']);
 	}
 
 	public function testGetLocalPublicationsUltraFastSkipFiltering(): void {
@@ -4007,7 +4015,8 @@ class PublicationServiceTest extends TestCase {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 
-		$this->config->method('getValueString')->willReturn('');
+		// Configured scope, or the WOO-581 fail-closed returns before the mapping runs.
+		$this->mockConfiguredCatalogScope();
 
 		$catalog = $this->createSerializableObject([
 			'registers' => ['reg-1'],
@@ -4016,10 +4025,16 @@ class PublicationServiceTest extends TestCase {
 		$objectService->method('searchObjects')->willReturn([$catalog]);
 
 		$resultObj = $this->createSerializableObject(['@self' => ['id' => 'obj-1']]);
-		$objectService->method('searchObjectsPaginated')->willReturn([
-			'results' => [$resultObj],
-			'total' => 1,
-		]);
+		// Every mapped original is gone from the query and `_extend` is set. Which
+		// value `_extend` ends up with is the mapping's own (known-odd) business.
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => isset($q['_extend']) === true
+				&& array_intersect(['fields', 'facets', 'order', 'page', 'limit'], array_keys($q)) === []))
+			->willReturn([
+				'results' => [$resultObj],
+				'total' => 1,
+			]);
 
 		// Multiple parameters that need mapping
 		$this->request->method('getParams')->willReturn([
@@ -4211,9 +4226,9 @@ class PublicationServiceTest extends TestCase {
 	 * @param MockObject $objectService The ObjectService mock.
 	 * @param \Closure   $guard         What applySchemaScopeReadRuleGuard() returns for its input.
 	 *
-	 * @return void
+	 * @return MockObject The query-service mock, for further expectations.
 	 */
-	private function mockObjectServiceWithGuard(MockObject $objectService, \Closure $guard): void {
+	private function mockObjectServiceWithGuard(MockObject $objectService, \Closure $guard): MockObject {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
@@ -4222,6 +4237,8 @@ class PublicationServiceTest extends TestCase {
 		$this->container->method('get')->willReturnCallback(
 			static fn (string $id) => $id === \OCA\OpenCatalogi\Service\PublicationQueryService::class ? $queryService : $objectService
 		);
+
+		return $queryService;
 	}//end mockObjectServiceWithGuard()
 
 	/**
@@ -4280,8 +4297,10 @@ class PublicationServiceTest extends TestCase {
 	}//end testUltraFastPathFailsClosedWhenTheGuardEmptiesTheScope()
 
 	/**
-	 * The fast / index path (`_ultra_fast=false`, `_include_catalogs`) goes
-	 * through searchPublications(); same fail-closed on an emptied scope.
+	 * `_include_catalogs` sends federation through index() → searchPublications()
+	 * instead of the ultra-fast path (which every request without it takes, even
+	 * with `_ultra_fast=false`); same fail-closed on an emptied scope. That branch
+	 * also serves `uses()` / `used()` and the MCP tool.
 	 *
 	 * @return void
 	 */
@@ -4296,9 +4315,32 @@ class PublicationServiceTest extends TestCase {
 		]);
 		$objectService->expects($this->never())->method('searchObjectsPaginated');
 
-		$result = $this->service->getAggregatedPublications(queryParams: ['_aggregate' => 'false', '_ultra_fast' => 'false', '_limit' => 10]);
+		$result = $this->service->getAggregatedPublications(queryParams: ['_aggregate' => 'false', '_include_catalogs' => 'true', '_limit' => 10]);
 
 		$this->assertSame([], $result['results']);
 		$this->assertSame(0, $result['total'] ?? 0);
 	}//end testSearchPublicationsFailsClosedWhenTheGuardEmptiesTheScope()
+
+	/**
+	 * WOO-581 review f7: the single-object federation routes (`/{id}`, `/uses`,
+	 * `/used`, `/attachments`, `/download`) build their allowed set from
+	 * getCatalogFilters(), so the guard reaches them too: an object in a dropped
+	 * schema is a 404, and its location is never even looked up.
+	 *
+	 * @return void
+	 */
+	public function testShowIsA404WhenTheGuardDropsEverySchema(): void {
+		$objectService = $this->createObjectServiceMock();
+		$queryService = $this->mockObjectServiceWithGuard($objectService, static fn (array $schemas): array => []);
+		$this->mockConfiguredCatalogScope();
+		$this->request->method('getParams')->willReturn([]);
+
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => [20], 'schemas' => [56]]),
+		]);
+		$queryService->expects($this->never())->method('findObjectLocation');
+		$objectService->expects($this->never())->method('find');
+
+		$this->assertSame(404, $this->service->show('secret-object-uuid')->getStatus());
+	}//end testShowIsA404WhenTheGuardDropsEverySchema()
 }

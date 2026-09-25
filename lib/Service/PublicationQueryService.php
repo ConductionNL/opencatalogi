@@ -74,6 +74,28 @@ class PublicationQueryService
     public const PUBLIC_LIMIT_MAX = 100;
 
     /**
+     * Query keys OpenRegister reads to pick the register/schema a search runs on.
+     *
+     * `MagicMapper::searchObjectsPaginated()` resolves its scope as
+     * `@self.schema ?? _schema ?? schema` (and the same chain for register),
+     * plus `@self.schemas ?? _schemas` and `@self.registers ?? _registers` for a
+     * multi-schema search. A scalar `@self.schema` wins over a guarded
+     * `_schemas` list. OR's `buildSearchQuery()` turns a caller's `schema=` /
+     * `register=` into exactly that `@self` entry. See
+     * {@see stripCallerScope()}.
+     *
+     * @var array<string>
+     */
+    private const CALLER_SCOPE_KEYS = ['register', 'schema', '_register', '_registers', '_schema', '_schemas'];
+
+    /**
+     * The `@self` sub-keys that carry scope (see CALLER_SCOPE_KEYS).
+     *
+     * @var array<string>
+     */
+    private const CALLER_SELF_SCOPE_KEYS = ['register', 'registers', 'schema', 'schemas'];
+
+    /**
      * Whether the missing-runAsAnonymous() warning has been logged this request.
      *
      * @var bool
@@ -220,10 +242,17 @@ class PublicationQueryService
         // `applyCatalogReadRuleGuard()`. WOO-581 did the same for
         // `/api/catalogs/{slug}/dcat` and `/schema`, and routed the two readers
         // that build a UNION over all catalogs — `/api/federation/publications`
-        // and `/api/catalogi/{id}` — through `applySchemaScopeReadRuleGuard()`.
-        // NOT covered, because they pick their schema another way: the WOO
-        // sitemap (schema chosen by woo-register category) and OOAPI (schema
-        // chosen by an explicit `x-ooapi` annotation). See WOO-581.
+        // and `/api/catalogi/{id}` — through `applySchemaScopeReadRuleGuard()`,
+        // as it did the WOO sitemap: that picks its schema by woo-register
+        // category but admits it on `$catalog['schemas']` membership, so it is a
+        // reader of the same source. OOAPI is not guarded here and needs no guard:
+        // `requireAuthenticatedConsumer()` refuses anonymous callers, and this
+        // guard is anonymous-only.
+        //
+        // A GUARDED SCOPE IS ONLY A GUARD IF IT IS THE SCOPE OR SEARCHES. A
+        // caller's `schema=` / `register=` / `@self[schema]=` used to reach OR as
+        // `@self.schema`, which wins over the guarded `_schemas`; every public list
+        // route now runs the request query through `stripCallerScope()` first.
         if (empty($scope['schemas']) === false) {
             $scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
         }
@@ -273,8 +302,11 @@ class PublicationQueryService
         // Q7 Interpretation A: strip any client-supplied scope-widening params so a
         // request cannot bypass the catalog-derived scope. This preserves the
         // pre-WOO-536 discipline that clients cannot inject their own register/schema
-        // set past the resolved catalog boundary.
-        unset($searchQuery['_schema'], $searchQuery['_registers'], $searchQuery['catalogSlug'], $searchQuery['fq']);
+        // set past the resolved catalog boundary. This used to strip only `_schema` and
+        // `_registers`; `?schema=<S>&register=<R>` reached OR as `@self.schema`, won the
+        // precedence chain and bypassed the SCH-PFTS-CAT-002 guard (WOO-581 review).
+        $searchQuery = $this->stripCallerScope(query: $searchQuery);
+        unset($searchQuery['catalogSlug'], $searchQuery['fq']);
         unset($searchQuery['_content']);
         // OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
         unset($searchQuery['_catalog'], $searchQuery['_catalogi']);
@@ -562,7 +594,7 @@ class PublicationQueryService
                     'orTotal' => $orTotal,
                     'search' => ($searchQuery['_search'] ?? null),
                     'contentSearch' => $contentSearchRequested,
-                    'schemas' => ($searchQuery['_schemas'] ?? null),
+                    'schemas' => $searchQuery['_schemas'],
                 ]
             );
             $adjustedTotal = 0;
@@ -774,6 +806,10 @@ class PublicationQueryService
      * which serves `/api/catalogi/{id}`. Both are `#[PublicPage]`, both searched
      * with `_rbac: true` over an unguarded union, and on both an anonymous
      * caller read the full record of a schema without an `authorization` block.
+     * The WOO sitemap ({@see \OCA\OpenCatalogi\Service\SitemapService}) runs
+     * its single category schema through it too. Through getCatalogFilters() it
+     * also covers `/api/federation/publications/{id}` and its `/uses`, `/used`,
+     * `/attachments` and `/download` siblings.
      *
      * A signed-in caller gets the list back UNTOUCHED — not even normalised —
      * so session-RBAC behaviour on these paths does not move. An anonymous
@@ -799,6 +835,45 @@ class PublicationQueryService
         return $this->dropSchemasWithoutReadRules(schemaIds: $schemaIds);
 
     }//end applySchemaScopeReadRuleGuard()
+
+    /**
+     * Remove every register/schema scope key a CALLER put in a search query.
+     *
+     * A guarded scope is only a guard if it is the scope OpenRegister searches.
+     * It was not (WOO-581 review): on `/api/search`, `/api/{catalogSlug}` and
+     * `/api/catalogi/{id}` an anonymous `?schema=<S>&register=<R>` (or
+     * `?@self[schema]=<S>`) reached OR as `@self.schema`, which wins the
+     * precedence chain over the guarded `_schemas` list — so a schema without
+     * an `authorization` block was read in full, even one in no catalog at
+     * all. Every public list route therefore strips these keys from the
+     * request-derived query and then writes its own scope. Non-scope `@self`
+     * filters (`owner`, `created`, `uuid`, …) are kept.
+     *
+     * @param array $query A search query built from request parameters.
+     *
+     * @return array The query without any caller-supplied register/schema scope.
+     *
+     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+     */
+    public function stripCallerScope(array $query): array
+    {
+        foreach (self::CALLER_SCOPE_KEYS as $key) {
+            unset($query[$key]);
+        }
+
+        if (array_key_exists('@self', $query) === true && is_array($query['@self']) === false) {
+            unset($query['@self']);
+        }
+
+        if (isset($query['@self']) === true) {
+            foreach (self::CALLER_SELF_SCOPE_KEYS as $key) {
+                unset($query['@self'][$key]);
+            }
+        }
+
+        return $query;
+
+    }//end stripCallerScope()
 
     /**
      * Resolve the register + schema union that /api/search covers for this request.
@@ -1851,6 +1926,11 @@ class PublicationQueryService
             $objectService->buildSearchQuery($queryParams),
             ['_includeDeleted' => false]
         );
+
+        // The scope is the (guarded) catalog's, never the caller's: without this a
+        // `?schema=<S>&register=<R>` became `@self.schema`, which OR prefers over the
+        // `_schemas` set below (WOO-581 review). See stripCallerScope().
+        $searchQuery = $this->stripCallerScope(query: $searchQuery);
 
         // Clean up catalog-specific parameters.
         unset($searchQuery['catalogSlug'], $searchQuery['fq']);

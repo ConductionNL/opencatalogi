@@ -428,6 +428,77 @@ class PublicationQueryServiceTest extends TestCase {
 	}
 
 	/**
+	 * The query OR's `buildSearchQuery()` makes of an anonymous
+	 * `?schema=56&register=20&@self[owner]=alice&_register=99`: `schema` and
+	 * `register` land in `@self`, where MagicMapper prefers them over `_schemas`.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function callerScopeOverride(): array {
+		return [
+			'@self'     => ['schema' => 56, 'register' => 20, 'schemas' => [56], 'registers' => [20], 'owner' => 'alice'],
+			'schema'    => 56,
+			'register'  => 20,
+			'_register' => 99,
+			'_schemas'  => [56],
+		];
+	}
+
+	/**
+	 * WOO-581 review f2: on `/api/search` a caller's `schema=` / `register=`
+	 * reached OR as `@self.schema`, won the precedence chain over the guarded
+	 * `_schemas` and read a schema without an `authorization` block — even one
+	 * in no catalog. Every scope key goes; non-scope `@self` filters stay.
+	 *
+	 * @return void
+	 */
+	public function testAssembleStripsACallerSuppliedSchemaAndRegister(): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog($this->callerScopeOverride()), $fake);
+
+		$captured = $fake->capturedCalls[0]['query'];
+		$this->assertSame(['owner' => 'alice'], $captured['@self']);
+		$this->assertArrayNotHasKey('schema', $captured);
+		$this->assertArrayNotHasKey('register', $captured);
+		$this->assertSame([1, 2], $captured['_schemas']);
+		$this->assertSame(1, $captured['_register']);
+	}//end testAssembleStripsACallerSuppliedSchemaAndRegister()
+
+	/**
+	 * WOO-581 review f2, `/api/{catalogSlug}`: the guarded catalog is the scope,
+	 * whatever `schema=` / `register=` the caller sends.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryStripsACallerSuppliedSchemaAndRegister(): void {
+		$fake = new FakeSearchObjectService();
+
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [28], 'registers' => [20]],
+			queryParams: $this->callerScopeOverride(),
+			objectService: $fake
+		);
+
+		$this->assertSame(['owner' => 'alice'], $query['@self']);
+		$this->assertArrayNotHasKey('schema', $query);
+		$this->assertArrayNotHasKey('register', $query);
+		$this->assertSame([28], $query['_schemas']);
+		$this->assertSame(28, $query['_schema']);
+		$this->assertSame(20, $query['_register']);
+	}//end testCatalogSearchQueryStripsACallerSuppliedSchemaAndRegister()
+
+	/**
+	 * A scalar `@self` (`?@self=x`) is not a filter set; it goes rather than
+	 * reaching OR, which would read `@self['schema']` off a string.
+	 *
+	 * @return void
+	 */
+	public function testStripCallerScopeDropsANonArraySelf(): void {
+		$this->assertSame(['_limit' => 5], $this->service->stripCallerScope(query: ['@self' => 'x', '_limit' => 5, '_schema' => 56]));
+	}//end testStripCallerScopeDropsANonArraySelf()
+
+	/**
 	 * SCH-PFTS-CAT-002: default-scope catalog fixture in wireHappyPath declares
 	 * schemas [1,2] on register 1. Those MUST propagate to the OR query.
 	 */

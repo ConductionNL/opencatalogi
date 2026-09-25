@@ -192,6 +192,12 @@ class PublicationService {
 	 * routes both union builders (getCatalogFilters() and the ultra-fast path)
 	 * through it. Anonymous-only: signed-in callers get the union back untouched.
 	 *
+	 * The single-object family follows automatically: isObjectInCatalogScope()
+	 * and setObjectServiceContext() build their allowed set from
+	 * getCatalogFilters(), so `/api/federation/publications/{id}` and its
+	 * `/uses`, `/used`, `/attachments` and `/download` siblings (all
+	 * `#[PublicPage]`) answer 404 for an object in a dropped schema.
+	 *
 	 * @param array $schemas The de-duplicated schema union.
 	 *
 	 * @return array The union, filtered for an anonymous caller.
@@ -2145,12 +2151,15 @@ class PublicationService {
 					'availableSchemas' => $this->availableSchemas,
 				];
 			} catch (\Exception $e) {
-				// Fallback to defaults.
-				$this->availableRegisters = [$register];
-				$this->availableSchemas = [$schema];
+				// FAIL CLOSED (WOO-581 review): this used to fall back to the configured
+				// catalog register/schema, unguarded — so a transient catalog-lookup
+				// failure made this public endpoint search the CATALOG schema where
+				// publications belong. An empty scope returns the empty page below.
+				$this->availableRegisters = [];
+				$this->availableSchemas = [];
 				$catalogContext = [
-					'registers' => [$register],
-					'schemas' => [$schema],
+					'registers' => [],
+					'schemas' => [],
 				];
 			}//end try
 		}//end if

@@ -815,9 +815,25 @@ class CatalogiService {
 
 		$objectService = $this->getObjectService();
 
-		// Build search query from config using _register and _schema for magic mapper routing.
-		// The schema scope is non-empty here (see the fail-closed above).
-		$query = ['@self' => []];
+		// Copy the request filters FIRST and strip every register/schema key from them,
+		// then write the (guarded) scope. The loop used to run after the scope and to
+		// skip only `register` / `schema`, so `?@self[register]=R&@self[schema]=S`
+		// replaced the whole `@self` block and an anonymous caller read any schema on
+		// the instance (WOO-581 review). Non-scope `@self` filters survive the strip.
+		$query = [];
+		if (empty($config['filters']) === false) {
+			foreach ($config['filters'] as $key => $value) {
+				$query[$key] = $value;
+			}
+		}
+
+		$query = $this->container->get(PublicationQueryService::class)->stripCallerScope(query: $query);
+		if (isset($query['@self']) === false) {
+			$query['@self'] = [];
+		}
+
+		// Scope for magic mapper routing. The schema scope is non-empty here (see the
+		// fail-closed above).
 		if (empty($context['registers']) === false) {
 			// Use scalar value when only one register to avoid magic_mapper overhead.
 			$query['@self']['register'] = $context['registers'];
@@ -830,15 +846,6 @@ class CatalogiService {
 		$query['@self']['schema'] = $context['schemas'];
 		if (count($context['schemas']) === 1) {
 			$query['@self']['schema'] = $context['schemas'][0];
-		}
-
-		// Add other filters from config.
-		if (empty($config['filters']) === false) {
-			foreach ($config['filters'] as $key => $value) {
-				if (in_array($key, ['register', 'schema']) === false) {
-					$query[$key] = $value;
-				}
-			}
 		}
 
 		// Add special parameters.

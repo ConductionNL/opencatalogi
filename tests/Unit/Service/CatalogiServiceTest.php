@@ -1451,6 +1451,7 @@ class CatalogiServiceTest extends TestCase {
 		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
 		// are about: pass the schema scope through. The guard has its own tests.
 		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$this->stubRealCallerScopeStrip($queryService);
 
 		$this->container->method('get')
 			->willReturnCallback(
@@ -1546,11 +1547,61 @@ class CatalogiServiceTest extends TestCase {
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
 		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnCallback($guard);
+		$this->stubRealCallerScopeStrip($queryService);
 
 		$this->container->method('get')->willReturnCallback(
 			static fn (string $id) => $id === \OCA\OpenCatalogi\Service\PublicationQueryService::class ? $queryService : $objectService
 		);
 	}//end injectObjectServiceWithGuard()
+
+	/**
+	 * Run the REAL stripCallerScope() behind a query-service mock: it is the
+	 * control under test on index(), so a mocked `[]` would hide a regression.
+	 *
+	 * @param MockObject $queryService The PublicationQueryService mock.
+	 *
+	 * @return void
+	 */
+	private function stubRealCallerScopeStrip(MockObject $queryService): void {
+		$real = new \OCA\OpenCatalogi\Service\PublicationQueryService(container: $this->createMock(ContainerInterface::class));
+		$queryService->method('stripCallerScope')->willReturnCallback(
+			static fn (array $query): array => $real->stripCallerScope(query: $query)
+		);
+	}//end stubRealCallerScopeStrip()
+
+	/**
+	 * WOO-581 review f1: `?@self[register]=20&@self[schema]=56` used to replace
+	 * the whole `@self` block AFTER the guarded scope was written, so an
+	 * anonymous caller read any schema on the instance — here 56, which is in
+	 * no catalog. The guarded scope wins; a non-scope `@self` filter survives.
+	 *
+	 * @return void
+	 */
+	public function testIndexIgnoresACallerSuppliedSelfScope(): void {
+		$this->request->method('getParams')->willReturn([
+			'@self' => ['register' => 20, 'schema' => 56, 'owner' => 'alice'],
+			'_schemas' => [56],
+			'_register' => 99,
+		]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [21], 'schemas' => [28]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => $q['@self'] === ['owner' => 'alice', 'register' => 21, 'schema' => 28]
+				&& isset($q['_schemas']) === false
+				&& isset($q['_register']) === false))
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => $schemas);
+
+		$this->assertSame(200, $this->service->index('publications')->getStatus());
+	}//end testIndexIgnoresACallerSuppliedSelfScope()
 
 	/**
 	 * The catalog's schema list goes through the SCH-PFTS-CAT-002 guard before
