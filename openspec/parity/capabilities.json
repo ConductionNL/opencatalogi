@@ -20,11 +20,18 @@
 			"key": "ckan",
 			"name": "CKAN",
 			"vendor": "Open Knowledge Foundation",
-			"readOn": "2026-03-14",
+			"readOn": "2026-09-26",
 			"columnAddedOn": "2026-09-25",
-			"evidenceGrade": "docs-only",
-			"readHow": "concurrentie-analyse/openregister/ckan/ (MERGED-ANALYSIS.md dated 2026-03-14, specs/, overview.md) plus intelligence DB competitor_features rows captured 2026-03-21 to 2026-04-18; nobody has driven CKAN for opencatalogi",
-			"unknownReason": "not covered by the CKAN research under concurrentie-analyse/openregister/ckan/ (analysed 2026-03-14 for openregister, not for publication or Woo questions) nor by its 28 intelligence DB rows; nobody has driven CKAN for this row"
+			"evidenceGrade": "driven",
+			"readHow": "source read at ckan-2.12.0 (0058b2e, latest release, 2026-08-26) with the official extensions ckanext-dcat v2.4.4, ckanext-harvest v1.6.2, ckanext-scheming release-3.1.0 and ckanext-spatial v2.3.2, on 2026-09-26; then a lab instance of CKAN 2.12.0 with ckanext-dcat 2.4.4 and ckanext-scheming 3.1.0 (compose project lab-opencatalogi-ckan, market-intelligence opencatalogi/ckan/) was driven over HTTP as anonymous and as sysadmin for the rows whose cells say \"Driven 2026-09-26\"; every other cell is a source read only, and ckanext-harvest and ckanext-spatial were not booted, so cells resting on them are source only. The previous docs-only reading is kept under previousReading",
+			"unknownReason": "the source read at ckan-2.12.0 and its four official extensions on 2026-09-26 did not settle this row, and the lab drive did not cover it; the cell says what was searched",
+			"previousReading": {
+				"readOn": "2026-03-14",
+				"evidenceGrade": "docs-only",
+				"readHow": "concurrentie-analyse/openregister/ckan/ (MERGED-ANALYSIS.md dated 2026-03-14, specs/, overview.md) plus intelligence DB competitor_features rows captured 2026-03-21 to 2026-04-18; nobody has driven CKAN for opencatalogi"
+			},
+			"sourceTag": "ckan-2.12.0",
+			"sourceCommit": "0058b2eb5a53b2a1809503fbe59fdbe0f64fbd21"
 		},
 		{
 			"key": "dkan",
@@ -41,7 +48,49 @@
 				"readHow": "concurrentie-analyse/openregister/dkan/dkan.md (a 3.5 KB profile, 2026-03-21) plus 13 feature rows in the intelligence DB (2026-03-27); the other 51 DKAN rows are release-note lines and were not used"
 			},
 			"sourceTag": "2.23.2",
-			"sourceCommit": "8f4d044f6cc799454c035bc8300c74c99df1f24a"
+			"sourceCommit": "8f4d044f6cc799454c035bc8300c74c99df1f24a",
+			"sources": {
+				"docs": "https://dkan.readthedocs.io/en/latest/",
+				"sourceRepo": "https://github.com/GetDKAN/dkan",
+				"featurePage": "https://civicactions.com/dkan",
+				"featureRequests": "https://github.com/GetDKAN/dkan/issues?q=is%3Aissue+is%3Aopen+label%3A%22feature+request%22",
+				"issueTracker": {
+					"url": "https://github.com/GetDKAN/dkan/issues",
+					"featureLabel": "feature request"
+				},
+				"roadmap": "https://github.com/GetDKAN/dkan/issues?q=is%3Aopen+label%3ARoadmap",
+				"changelog": "https://www.drupal.org/project/dkan/releases",
+				"apiReference": "https://dkan.readthedocs.io/en/latest/components/dkan_api.html",
+				"marketplace": "https://www.drupal.org/project/dkan",
+				"pricing": null,
+				"accessibilityStatement": null,
+				"securityDocs": "https://www.drupal.org/security-advisory-policy",
+				"demoInstance": "https://demo.getdkan.org/",
+				"community": "https://github.com/GetDKAN/dkan/discussions",
+				"reviews": null,
+				"videos": null,
+				"caseStudies": "https://civicactions.com/case-studies/georgia-workforce-open-data/",
+				"partnerDirectory": null,
+				"trainingCurriculum": null,
+				"jobPostings": null,
+				"tenders": [
+					"TenderNed 407973: Gemeente Dordrecht / Bedrijfsvoering Drechtsteden, WOO Publicatietool, 2026-01-14, awarded to eData B.V., 224 parsed requirements (category woo; the product is not named)",
+					"TenderNed 391449: De Connectie (Arnhem, Rheden, Renkum), marktconsultatie applicaties voor het integrale Woo-proces, 2025-09-04, 12 requirements (the product is not named)",
+					"TenderNed 344073: Gemeente Emmen, marktconsultatie Publicatieplatform Woo en Wep, 2024-07-19 (the product is not named)",
+					"TenderNed 302360: Gemeente Leeuwarden with Noardeast-Fryslan, Waadhoeke and the Wadden islands, marktconsultatie Publicatieplatform Woo en Wep, 2023-06-29 (the product is not named)",
+					"No tender in the intelligence database names DKAN (searched name, description and winner for 'dkan' on 2026-09-26: 12 false hits on substrings)"
+				],
+				"nullReasons": {
+					"pricing": "DKAN is GPL open source with no licence fee; getdkan.org and civicactions.com/dkan state no licensing or subscription costs and publish no service price list.",
+					"accessibilityStatement": "no accessibility statement found on getdkan.org, civicactions.com/dkan, dkan.readthedocs.io or the repo (no ACCESSIBILITY file, only an 'Accessibility' issue label).",
+					"reviews": "g2.com/products/dkan and capterra.com/p/dkan both answered 403, and no review listing is linked from getdkan.org or drupal.org/project/dkan.",
+					"videos": "no video channel linked from getdkan.org, civicactions.com/dkan or the docs; youtube.com/@getdkan returned 404.",
+					"partnerDirectory": "no DKAN partner directory; getdkan.org and civicactions.com/dkan name only CivicActions as maintainer.",
+					"trainingCurriculum": "no training programme found; dkan.readthedocs.io has user and developer guides only.",
+					"jobPostings": "no DKAN-specific job listings found on getdkan.org or civicactions.com/dkan."
+				},
+				"notes": "securityDocs is the Drupal security advisory policy, which drupal.org/project/dkan states covers DKAN stable releases; getdkan.org/security.html is linked from the homepage but returns 404, and the GitHub repo has no SECURITY.md. changelog points at drupal.org because releases moved there with 4.0.0 (31 March 2026); 2.x and 3.x release notes stay at https://github.com/GetDKAN/dkan/releases."
+			}
 		},
 		{
 			"key": "xxllnc",
@@ -222,7 +271,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: organizations (and thematic groups) are created at /organization/new, ckan/views/group.py:1343-1354 (CreateGroupView), form ckan/templates/organization/snippets/organization_form.html:12 (title), :20 (URL slug, rendered as the org address /organization/<name>), :22 (markdown description); served back on /organization/<name> via ckan/views/group.py:1355 read.",
+				"ckan": "source read at ckan-2.12.0: organizations (and thematic groups) are created at /organization/new, ckan/views/group.py:1343-1354 (CreateGroupView), form ckan/templates/organization/snippets/organization_form.html:12 (title), :20 (URL slug, rendered as the org address /organization/<name>), :22 (markdown description); served back on /organization/<name> via ckan/views/group.py:1355 read. Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /organization/new as sysadmin returned 200 with title and URL (name) fields; organization_create made /organization/lab-gemeente.",
 				"dkan": "source read at 2.23.2: DKAN runs one catalogue per installation: /data.json is built from a single catalog schema (modules/metastore/src/MetastoreService.php:459-466, schema/collections/catalog.json:1-7) and SchemaRetriever has no catalogue entity (modules/metastore/src/SchemaRetriever.php:44-57). Nearest thing is a publisher item with only name and parent organisation (schema/collections/publisher.json:23-37), which has no summary, no own web address and no page in the tree. Grepped 'catalog' in modules/*/src and routing files."
 			}
 		},
@@ -276,7 +325,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: /organization lists every organization with search and sort, ckan/views/group.py:105 index, ckan/templates/organization/index.html:20,25; opening one shows its datasets with facets (templates/organization/read.html:8,25) and an editor bulk view (templates/organization/bulk_process.html:52-70, route views/group.py:1371 bulk_process).",
+				"ckan": "source read at ckan-2.12.0: /organization lists every organization with search and sort, ckan/views/group.py:105 index, ckan/templates/organization/index.html:20,25; opening one shows its datasets with facets (templates/organization/read.html:8,25) and an editor bulk view (templates/organization/bulk_process.html:52-70, route views/group.py:1371 bulk_process). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /organization/ as anonymous returned 200 listing \"Lab gemeente\".",
 				"dkan": "source read at 2.23.2: no catalogue overview because there is one catalogue per site. Nearest thing is the admin list of every data item at /admin/dkan/datasets (modules/metastore/modules/metastore_admin/config/install/views.view.dkan_dataset_content.yml:1543) with filters on title, data type, status and moderation state (:615-773) and edit links, plus the /publishers route of the external React frontend (modules/dkan_js_frontend/config/install/dkan_js_frontend.config.yml:13)."
 			}
 		},
@@ -331,7 +380,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: groups are thematic collections browsable at /group (ckan/views/group.py:1340 Blueprint, :105 index, templates/group/index.html:21-26), each group page lists its datasets with facets (templates/group/read.html:11,26), and 'groups' is a dataset search facet (ckan/views/dataset.py:288).",
+				"ckan": "source read at ckan-2.12.0: groups are thematic collections browsable at /group (ckan/views/group.py:1340 Blueprint, :105 index, templates/group/index.html:21-26), each group page lists its datasets with facets (templates/group/read.html:11,26), and 'groups' is a dataset search facet (ckan/views/dataset.py:288). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /group/lab-thema-verkeer as anonymous returned 200 listing the dataset filed under the theme.",
 				"dkan": "source read at 2.23.2: theme ('Category') is a referenced item type (schema/collections/theme.json, metastore.settings.yml:4), indexed and offered as a facet on the public search API (modules/metastore/modules/metastore_search/src/FacetsCommonTrait.php:38 approved facets theme, keyword, publisher__name; /api/1/search/facets, metastore_search.routing.yml:11-19) and as the Categories facet block on /dataset/search (metastore_facets/config/install/facets.facet.categories.yml:12-19, views.view.dkan_dataset_search.yml:516); the dataset page lists its themes (modules/metastore/templates/node--data.html.twig:119-128)."
 			}
 		},
@@ -384,7 +433,7 @@
 			"iprox": "unknown",
 			"decos": "partial",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: organization roles admin/editor/member (ckan/authz.py:251-256 ROLE_PERMISSIONS) managed on /organization/member_new/<id> (ckan/views/group.py:1368, templates/organization/member_new.html); private datasets are readable only by holders of the org permission label (ckan/logic/auth/get.py:106-119 package_show), set on the dataset form Visibility select (templates/package/snippets/package_basic_fields.html:94-98); per-dataset collaborators at views/dataset.py:1080.",
+				"ckan": "source read at ckan-2.12.0: organization roles admin/editor/member (ckan/authz.py:251-256 ROLE_PERMISSIONS) managed on /organization/member_new/<id> (ckan/views/group.py:1368, templates/organization/member_new.html); private datasets are readable only by holders of the org permission label (ckan/logic/auth/get.py:106-119 package_show), set on the dataset form Visibility select (templates/package/snippets/package_basic_fields.html:94-98); per-dataset collaborators at views/dataset.py:1080. Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /organization/member_new/lab-gemeente returned 200 with the role select (admin, editor, member).",
 				"dkan": "source read at 2.23.2: edit rights come from Drupal content permissions on the Data node type that DKAN defines (modules/metastore/config/install/node.type.data.yml:8-9) plus per-transition workflow permissions (docs/source/user-guide/guide_roles_permissions.rst:205-237, 'edit own/any data content', 'use dkan_publishing transition publish'), and drafts are hidden from the public (cypress/e2e/10_workflow_transitions.cy.js:9). Missing half: rights are site-wide or own-content only, nothing scopes them to a catalogue or publisher (grepped 'group|og_|publisher' in *.permissions.yml and access handlers, modules/metastore/src/Controller/MetastoreAccessManager.php).",
 				"decos": "docs-only: intelligence DB competitor_features #28465 (Decos JOIN Woo Portaal, captured 2026-04-18) \"Rol- en autorisatiebeheer: Fijnmazige autorisaties op publicatie-acties\""
 			}
@@ -439,7 +488,7 @@
 			"iprox": "unknown",
 			"decos": "yes",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: the dataset form carries free custom key/value fields with no code (templates/package/snippets/package_metadata_fields.html:27 custom_form_fields.html); via ckanext-scheming release-3.1.0 typed fields, choices and presets are declared in a YAML/JSON schema file (ckanext/scheming/ckan_dataset.yaml:11-78, plugins.py:211 scheming.dataset_schemas), no Python needed.",
+				"ckan": "source read at ckan-2.12.0: the dataset form carries free custom key/value fields with no code (templates/package/snippets/package_metadata_fields.html:27 custom_form_fields.html); via ckanext-scheming release-3.1.0 typed fields, choices and presets are declared in a YAML/JSON schema file (ckanext/scheming/ckan_dataset.yaml:11-78, plugins.py:211 scheming.dataset_schemas), no Python needed. Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /dataset/new with the ckanext-dcat dcat_ap_full scheming schema returned 200; fields come from a YAML schema file, and with scheming on the free key/value extras block is replaced by the schema fields.",
 				"dkan": "source read at 2.23.2: extra metadata fields are added by copying schema/collections to docroot/schema and adding properties to dataset.json (docs/source/user-guide/guide_custom_schemas.rst:255-271, SchemaRetriever::findSchemaDirectory modules/metastore/src/SchemaRetriever.php:86); the edit form is generated from the schema by json_form_widget. Missing half: there is no admin screen for it, it means editing JSON Schema files on the server and redeploying.",
 				"decos": "docs-only: intelligence DB competitor_features #28461 (Decos JOIN Woo Portaal, captured 2026-04-18) \"Flexibele metadata-configuratie: Configureerbare metadata per documenttype\""
 			}
@@ -523,7 +572,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: documents are attached as resources by upload or link on /dataset/<id>/resource/new (ckan/views/resource.py:837, templates/package/snippets/resource_form.html:22-31 upload field), downloaded at views/resource.py:847; 2.12 adds configurable file storages (CHANGELOG.rst v.2.12.0 'Files are now first-class entities', #8745). Missing half: the files live in CKAN's own storage, not in Nextcloud.",
+				"ckan": "source read at ckan-2.12.0: documents are attached as resources by upload or link on /dataset/<id>/resource/new (ckan/views/resource.py:837, templates/package/snippets/resource_form.html:22-31 upload field), downloaded at views/resource.py:847; 2.12 adds configurable file storages (CHANGELOG.rst v.2.12.0 'Files are now first-class entities', #8745). Missing half: the files live in CKAN's own storage, not in Nextcloud. Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /dataset/lab-besluit-1/resource/new returned 200 with Upload and Link options.",
 				"dkan": "source read at 2.23.2: documents attach as distributions, uploaded or linked in the dataset form (json_form_widget UploadOrLink element modules/json_form_widget/src/Element/UploadOrLink.php:37-48, allowed extensions incl. pdf, doc, docx, xlsx in schema/collections/dataset.ui.json:171) and listed as downloads on the dataset page (modules/metastore/templates/node--data.html.twig:111-117). Missing half: files are kept in Drupal's own file system, not in Nextcloud."
 			}
 		},
@@ -577,7 +626,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: the dataset form Visibility select switches a dataset between private and public in one save (templates/package/snippets/package_basic_fields.html:94-98), and the dataset page shows the Private badge (templates/package/read.html:6-7); withdraw is also possible by delete (ckan/logic/action/delete.py:71 package_delete, soft state).",
+				"ckan": "source read at ckan-2.12.0: the dataset form Visibility select switches a dataset between private and public in one save (templates/package/snippets/package_basic_fields.html:94-98), and the dataset page shows the Private badge (templates/package/read.html:6-7); withdraw is also possible by delete (ckan/logic/action/delete.py:71 package_delete, soft state). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): private dataset: anonymous GET /dataset/lab-prive-1 returned 404, sysadmin 200; package_patch private=false publishes it.",
 				"dkan": "source read at 2.23.2: the DKAN publishing workflow (modules/metastore/config/install/workflows.workflow.dkan_publishing.yml:15-86, states published, draft, archived, hidden; transitions publish, archive, restore) is set on the edit form moderation select and via PUT /api/1/metastore/schemas/{schema_id}/items/{id}/publish (metastore.routing.yml:61-69, MetastoreController.php:205); drafts and archived datasets are hidden from the catalogue (cypress/e2e/10_workflow_transitions.cy.js:9,55)."
 			}
 		},
@@ -632,7 +681,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: /organization/bulk_process/<id> (ckan/views/group.py:1371, BulkProcessView :815) offers Make public, Make private and Delete on selected datasets (templates/organization/bulk_process.html:52-70), backed by bulk_update_public/private/delete (ckan/logic/action/update.py:1219-1255).",
+				"ckan": "source read at ckan-2.12.0: /organization/bulk_process/<id> (ckan/views/group.py:1371, BulkProcessView :815) offers Make public, Make private and Delete on selected datasets (templates/organization/bulk_process.html:52-70), backed by bulk_update_public/private/delete (ckan/logic/action/update.py:1219-1255). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /organization/bulk_process/lab-gemeente returned 200 with Make public, Make private and Delete actions.",
 				"dkan": "source read at 2.23.2: /admin/dkan/datasets (views.view.dkan_dataset_content.yml:1543) carries a node bulk form with the actions archive_current, hide_current, node_delete_action and publish_latest (:82-86, :1045-1049), backed by moderated_content_bulk_publish and the DKAN HideCurrentRevisionAction (modules/metastore/modules/metastore_admin/metastore_admin.info.yml:13-14, src/Plugin/Action/HideCurrentRevisionAction.php:21); exercised in cypress/e2e/08_admin_views.cy.js:56 'Test moderation bulk operations'."
 			}
 		},
@@ -686,7 +735,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: the activity plugin (ckanext/activity, enabled by the default config, ckan/config/config_declaration.yaml:1087-1089) shows an earlier version at /dataset/<id>/history/<activity_id> (ckanext/activity/views.py:203) and the diff between versions at /dataset/changes/<id> and /dataset/changes_multiple (views.py:386,424, templates/package/changes.html).",
+				"ckan": "source read at ckan-2.12.0: the activity plugin (ckanext/activity, enabled by the default config, ckan/config/config_declaration.yaml:1087-1089) shows an earlier version at /dataset/<id>/history/<activity_id> (ckanext/activity/views.py:203) and the diff between versions at /dataset/changes/<id> and /dataset/changes_multiple (views.py:386,424, templates/package/changes.html). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): as sysadmin, GET /dataset/activity/lab-besluit-1 shows a Changes link per update; GET /dataset/changes/<activity id> returned 200 with \"Updated description ... from Verkeersbesluit parkeren to ...\" and a line diff; the same URL returns 403 to an anonymous reader.",
 				"dkan": "source read at 2.23.2: every save makes a revision (modules/metastore/config/install/node.type.data.yml:12 new_revision: true) and earlier versions are listed and fetched with their log message, date and state through /api/1/metastore/schemas/{schema_id}/items/{id}/revisions and /revisions/{revision_id} (metastore.routing.yml:101-119, modules/metastore/src/Controller/MetastoreRevisionController.php:90-150), and in Drupal's revisions tab on the data node (docs/source/user-guide/guide_revisions.rst:243-251). Missing half: no comparison of what changed between versions (no diff module wired, grepped -i 'diff' in modules and dependencies)."
 			}
 		},
@@ -712,7 +761,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: /dataset/activity/<id> (ckanext/activity/views.py:299 package_activity, template ckanext/activity/templates/package/activity_stream.html) lists each change with the acting user and timestamp; the activity plugin is in the default plugin list (ckan/config/config_declaration.yaml:1087-1089).",
+				"ckan": "source read at ckan-2.12.0: /dataset/activity/<id> (ckanext/activity/views.py:299 package_activity, template ckanext/activity/templates/package/activity_stream.html) lists each change with the acting user and timestamp; the activity plugin is in the default plugin list (ckan/config/config_declaration.yaml:1087-1089). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /dataset/activity/lab-besluit-1 as anonymous returned 200 with the create and update entries.",
 				"dkan": "source read at 2.23.2: the Data node type DKAN installs keeps a revision per save with author and time (modules/metastore/config/install/node.type.data.yml:12-14 new_revision and display_submitted), shown on the node revisions tab behind the 'view data revisions' permission DKAN recommends (docs/source/user-guide/guide_roles_permissions.rst:235, guide_revisions.rst:243-251); the revisions API gives the time, state and log message of each change (modules/metastore/src/Controller/MetastoreRevisionController.php:100-106) but not the user."
 			}
 		},
@@ -1041,7 +1090,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: /robots.txt is served (ckan/views/home.py:84-88,105, template ckan/templates/home/robots.txt with Disallow rules and Crawl-Delay, tested in ckan/tests/test_robots_txt.py). Missing half: it points at no sitemap, because core has none (grepped 'sitemap', only the fa-sitemap icon).",
+				"ckan": "source read at ckan-2.12.0: /robots.txt is served (ckan/views/home.py:84-88,105, template ckan/templates/home/robots.txt with Disallow rules and Crawl-Delay, tested in ckan/tests/test_robots_txt.py). Missing half: it points at no sitemap, because core has none (grepped 'sitemap', only the fa-sitemap icon). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /robots.txt returned 200 with Disallow rules and no Sitemap line.",
 				"dkan": "source read at 2.23.2: no robots.txt handling; grepped -i 'robots' across modules/, schema/ and docs/, no hits. Drupal core's scaffolded robots.txt is not touched by DKAN."
 			}
 		},
@@ -1899,7 +1948,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "via ckanext-dcat v2.4.4: the catalog endpoint /catalog.{format} (ckanext/dcat/blueprints.py:17-33, utils.py:40,423-452) serves one DCAT-AP dcat:Catalog listing every public dataset on the site across all organizations, paged with hydra paging (logic.py dcat_catalog_show, datasets_per_page).",
+				"ckan": "via ckanext-dcat v2.4.4: the catalog endpoint /catalog.{format} (ckanext/dcat/blueprints.py:17-33, utils.py:40,423-452) serves one DCAT-AP dcat:Catalog listing every public dataset on the site across all organizations, paged with hydra paging (logic.py dcat_catalog_show, datasets_per_page). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /catalog.ttl returned 200, a dcat:Catalog with 1 dcat:dataset links.",
 				"dkan": "source read at 2.23.2: /data.json (modules/metastore/metastore.routing.yml:142-150) serves one catalogue listing every published dataset (modules/metastore/src/MetastoreService.php:459-466) in the Project Open Data DCAT-US v1.1 profile (schema/collections/catalog.json:2-6). Missing half: it is DCAT-US, not DCAT-AP (grepped -i 'dcat-ap' across the tree, no hits), and there is only one catalogue per site to list."
 			}
 		},
@@ -1926,7 +1975,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "via ckanext-dcat v2.4.4: the same endpoint takes q and fq (ckanext/dcat/utils.py:434-441), so /catalog.ttl?fq=organization:<name> returns a DCAT-AP document restricted to one organization's datasets for a harvester; the dcat:Catalog node itself keeps the site-level title.",
+				"ckan": "via ckanext-dcat v2.4.4: the same endpoint takes q and fq (ckanext/dcat/utils.py:434-441), so /catalog.ttl?fq=organization:<name> returns a DCAT-AP document restricted to one organization's datasets for a harvester; the dcat:Catalog node itself keeps the site-level title. Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /catalog.ttl?fq=organization:lab-gemeente returned 200 with a dcat:Catalog listing only the Lab besluit verkeer dataset, while /catalog.ttl lists all five.",
 				"dkan": "source read at 2.23.2: the site's single catalogue is served as /data.json for harvesters (modules/metastore/metastore.routing.yml:142-150, MetastoreService.php:459-466), which other DKAN and data.gov harvesters read. Missing half: DCAT-US v1.1 not DCAT-AP (schema/collections/catalog.json:2-6), and no separate document per catalogue because a site has one."
 			}
 		},
@@ -1953,7 +2002,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "via ckanext-dcat v2.4.4: formats rdf/xml, n3, ttl and jsonld (ckanext/dcat/utils.py:30-36 CONTENT_TYPES), chosen by extension on /catalog.<format> and /dataset/<id>.<format> (blueprints.py:28-43) or by Accept header when content negotiation is on (:46-50).",
+				"ckan": "via ckanext-dcat v2.4.4: formats rdf/xml, n3, ttl and jsonld (ckanext/dcat/utils.py:30-36 CONTENT_TYPES), chosen by extension on /catalog.<format> and /dataset/<id>.<format> (blueprints.py:28-43) or by Accept header when content negotiation is on (:46-50). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): dataset DCAT in rdf 200 , jsonld 200 , n3 200 , ttl 200 .",
 				"dkan": "source read at 2.23.2: /data.json is JSON with a JSON-LD @context (schema/collections/catalog.json:2, modules/metastore/src/Controller/MetastoreController.php:330-332 cachedJsonResponse). Missing half: no Turtle or RDF/XML serialisation, grepped -iE 'turtle|rdf\\+xml|easyrdf|text/turtle' across modules and composer.json, no hits."
 			}
 		},
@@ -2034,7 +2083,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "via ckanext-dcat v2.4.4: the structured_data plugin (pyproject.toml:58) embeds schema.org Dataset JSON-LD in every dataset page head (ckanext/dcat/templates/structured_data/package/read_base.html:7-10, helper ckanext/dcat/helpers.py:60, profile ckanext/dcat/profiles/schemaorg.py).",
+				"ckan": "via ckanext-dcat v2.4.4: the structured_data plugin (pyproject.toml:58) embeds schema.org Dataset JSON-LD in every dataset page head (ckanext/dcat/templates/structured_data/package/read_base.html:7-10, helper ckanext/dcat/helpers.py:60, profile ckanext/dcat/profiles/schemaorg.py). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /dataset/lab-besluit-1 returned 200 with a <script type=\"application/ld+json\"> schema.org Dataset block.",
 				"dkan": "source read at 2.23.2: no schema.org Dataset markup; grepped 'schema.org' across modules/ and templates, hits are only JSON Schema $schema URLs (schema/collections/dataset.json:144). The Drupal dataset template emits plain HTML (modules/metastore/templates/node--data.html.twig:95-143); the only search-engine aid is the optional Simple XML sitemap hook (modules/dkan_js_frontend/dkan_js_frontend.module:140)."
 			}
 		},
@@ -2323,7 +2372,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: the organization list is public to any caller (ckan/logic/auth/get.py:48-50, action ckan/logic/action/get.py:498 organization_list at /api/3/action/organization_list), and another CKAN reads it: via ckanext-harvest v1.6.2 the CKAN harvester fetches and recreates the remote organizations when remote_orgs is 'create' (ckanext/harvest/harvesters/ckanharvester.py:458-490, README.rst:351).",
+				"ckan": "source read at ckan-2.12.0: the organization list is public to any caller (ckan/logic/auth/get.py:48-50, action ckan/logic/action/get.py:498 organization_list at /api/3/action/organization_list), and another CKAN reads it: via ckanext-harvest v1.6.2 the CKAN harvester fetches and recreates the remote organizations when remote_orgs is 'create' (ckanext/harvest/harvesters/ckanharvester.py:458-490, README.rst:351). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): anonymous GET /api/3/action/organization_list returned 200 with lab-gemeente.",
 				"dkan": "source read at 2.23.2: each installation publishes its catalogue as /data.json without login (modules/metastore/metastore.routing.yml:142-150, MetastoreService.php:459-466), which is exactly what another DKAN harvest plan reads (modules/harvest/src/ETL/Extract/DataJson.php:45-66). A site has one catalogue, so this feed is its whole directory."
 			}
 		},
@@ -2588,7 +2637,7 @@
 			"iprox": "yes",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: /dataset free-text search (ckan/views/dataset.py:213,1226, form templates/package/snippets/search_results.html:25) is open to anonymous users, who hold the public read label (ckan/lib/plugins.py:619-622).",
+				"ckan": "source read at ckan-2.12.0: /dataset free-text search (ckan/views/dataset.py:213,1226, form templates/package/snippets/search_results.html:25) is open to anonymous users, who hold the public read label (ckan/lib/plugins.py:619-622). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /dataset/?q=parkeren as anonymous returned 200 with the dataset.",
 				"dkan": "source read at 2.23.2: anonymous readers search in plain words on /dataset/search (fulltext filter, modules/metastore/modules/metastore_search/config/install/views.view.dkan_dataset_search.yml:419-440, path :516) and through GET /api/1/search?fulltext= (metastore_search.routing.yml:1-9, src/QueryBuilderTrait.php:57-70), both under 'access content'.",
 				"xxllnc": "docs-only: intelligence DB competitor_features #28420 (xxllnc Publiceren, captured 2026-04-18) \"Publiek Woo-portaal: Burger-gerichte zoekinterface voor gepubliceerde Woo-documenten\"",
 				"iprox": "docs-only: intelligence DB competitor_features #28484 (iprox.open, captured 2026-04-18) \"Zoek- en filterfunctie burgers: Facetzoeken op categorie, datum, thema\""
@@ -2617,7 +2666,7 @@
 			"iprox": "yes",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: search results narrow by organization, groups (themes/categories), tags, formats and licenses (ckan/views/dataset.py:285-291 default facet titles, config search.facets ckan/config/config_declaration.yaml:996-1000). Missing half: no date facet or date-range filter on the search page; dates only sort ('Last Modified', templates/package/snippets/search_results.html:22) or filter through raw Solr q syntax over the API.",
+				"ckan": "source read at ckan-2.12.0: search results narrow by organization, groups (themes/categories), tags, formats and licenses (ckan/views/dataset.py:285-291 default facet titles, config search.facets ckan/config/config_declaration.yaml:996-1000). Missing half: no date facet or date-range filter on the search page; dates only sort ('Last Modified', templates/package/snippets/search_results.html:22) or filter through raw Solr q syntax over the API. Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /dataset/?groups=..&organization=.. returned 200; facets shown for Organizations, Groups, Tags, Formats, Licenses, no date facet.",
 				"dkan": "source read at 2.23.2: results narrow by theme (category), keyword and publisher (organisation) through /api/1/search/facets and field parameters (modules/metastore/modules/metastore_search/src/FacetsCommonTrait.php:38, QueryBuilderTrait.php:119-140) and the facet blocks on /dataset/search (metastore_facets/config/install/facets.facet.categories.yml, publishers.yml, tags.yml). Missing half: no date filter, modified is indexed as a string and only sortable or exact-matched (search_api.index.dkan.yml:25-28).",
 				"iprox": "docs-only: intelligence DB competitor_features #28484 (iprox.open, captured 2026-04-18) \"Zoek- en filterfunctie burgers: Facetzoeken op categorie, datum, thema\""
 			}
@@ -2698,7 +2747,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: the dataset search sort select offers Relevance, Name ascending/descending and Last Modified (ckan/templates/package/snippets/search_results.html:18-23), passed as sort to package_search.",
+				"ckan": "source read at ckan-2.12.0: the dataset search sort select offers Relevance, Name ascending/descending and Last Modified (ckan/templates/package/snippets/search_results.html:18-23), passed as sort to package_search. Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /dataset/?sort=metadata_modified desc returned 200; the sort select shows Relevance, Name and Last Modified.",
 				"dkan": "source read at 2.23.2: search defaults to relevance and sorts by any index field on request (modules/metastore/modules/metastore_search/src/QueryBuilderTrait.php:158-172, sort and sort-order parameters on /api/1/search), and /dataset/search exposes 'Last Updated' and 'Alphabetical' sorts (views.view.dkan_dataset_search.yml:391-418)."
 			}
 		},
@@ -2779,7 +2828,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: every dataset has a stable address /dataset/<name> that also resolves by its UUID (ckan/views/dataset.py read route, slug set on the form templates/package/snippets/package_basic_fields.html:6 slug-preview), and resources at /dataset/<id>/resource/<resource_id> (ckan/views/resource.py:840-847).",
+				"ckan": "source read at ckan-2.12.0: every dataset has a stable address /dataset/<name> that also resolves by its UUID (ckan/views/dataset.py read route, slug set on the form templates/package/snippets/package_basic_fields.html:6 slug-preview), and resources at /dataset/<id>/resource/<resource_id> (ckan/views/resource.py:840-847). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /dataset/<uuid> returned 200, the same dataset as /dataset/lab-besluit-1.",
 				"dkan": "source read at 2.23.2: each dataset has an identifier that 'does not change when edits are made' and is used in its URL /dataset/{id} (docs/source/user-guide/guide_api.rst:139-147; admin view title link '/dataset/{{ uuid }}', views.view.dkan_dataset_content.yml:234; frontend route dataset,/dataset/{id}, dkan_js_frontend.config.yml:10), and the API path /api/1/metastore/schemas/dataset/items/{identifier} (metastore.routing.yml:51-59)."
 			}
 		},
@@ -2886,7 +2935,7 @@
 			"iprox": "yes",
 			"decos": "yes",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: the public site (home, /dataset search, dataset, organization and group pages) is readable without login (ckan/views/home.py, views/dataset.py:213,1226; public label for anonymous users ckan/lib/plugins.py:619-622).",
+				"ckan": "source read at ckan-2.12.0: the public site (home, /dataset search, dataset, organization and group pages) is readable without login (ckan/views/home.py, views/dataset.py:213,1226; public label for anonymous users ckan/lib/plugins.py:619-622). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET / as anonymous returned 200, the public home page.",
 				"dkan": "source read at 2.23.2: readers without login get a server-rendered search page /dataset/search (modules/metastore/modules/metastore_search/config/install/views.view.dkan_dataset_search.yml:511-516) and dataset pages from the data node template with downloads, themes and a metadata table (modules/metastore/templates/node--data.html.twig:108-141); most sites instead mount the decoupled React data-catalog-app on /home, /search, /dataset/{id} and /publishers through dkan_js_frontend (config/install/dkan_js_frontend.config.yml:6-13, README.md:16-23), which lives outside this tree and reads the public API.",
 				"xxllnc": "docs-only: intelligence DB competitor_features #28420 (xxllnc Publiceren, captured 2026-04-18) \"Publiek Woo-portaal: Burger-gerichte zoekinterface voor gepubliceerde Woo-documenten\"",
 				"iprox": "docs-only: intelligence DB competitor_features #28479 (iprox.open, captured 2026-04-18) \"Publiek Woo-portaal front-end: Eigen front-end met Woo-categorien en zoekfunctie\"",
@@ -2917,7 +2966,7 @@
 			"decos": "unknown",
 			"evidence": {
 				"iprox": "docs-only: intelligence DB competitor_features #28486 (iprox.open, captured 2026-04-18) \"Integratie met iprox CMS: Native koppeling met iprox gemeentewebsite-CMS\"",
-				"ckan": "source read at ckan-2.12.0: sysadmins set site title, logo, description, intro text, theme and custom CSS on /ckan-admin/config (ckan/views/admin.py:38-40 editable config keys, template ckan/templates/admin/config.html); full restyling is done with template and public folder overrides (2.12 ships an alternative Midnight Blue theme, CHANGELOG.rst v.2.12.0, #8420).",
+				"ckan": "source read at ckan-2.12.0: sysadmins set site title, logo, description, intro text, theme and custom CSS on /ckan-admin/config (ckan/views/admin.py:38-40 editable config keys, template ckan/templates/admin/config.html); full restyling is done with template and public folder overrides (2.12 ships an alternative Midnight Blue theme, CHANGELOG.rst v.2.12.0, #8420). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /ckan-admin/config returned 200 with site title, logo, custom CSS and about/intro fields.",
 				"dkan": "source read at 2.23.2: dkan_js_frontend loads whatever compiled CSS and JS the site places in its configured folders (modules/dkan_js_frontend/config/install/dkan_js_frontend.config.yml:1-2, README.md:11-14), and the React app it mounts is meant as 'a starting point for your own customizations' (README.md:16-18); the admin settings form at /admin/dkan/js-frontend sets the folders and routes (dkan_js_frontend.routing.yml:3-11). DKAN ships no theme of its own."
 			}
 		},
@@ -3135,7 +3184,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: Atom feeds of new and updated datasets per organization (/feeds/organization/<id>.atom), per group, per tag, site-wide and for a custom query (ckan/views/feed.py:577-584), advertised on the organization page head (ckan/templates/organization/snippets/feeds.html, included by organization/read_base.html:31).",
+				"ckan": "source read at ckan-2.12.0: Atom feeds of new and updated datasets per organization (/feeds/organization/<id>.atom), per group, per tag, site-wide and for a custom query (ckan/views/feed.py:577-584), advertised on the organization page head (ckan/templates/organization/snippets/feeds.html, included by organization/read_base.html:31). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /feeds/organization/lab-gemeente.atom returned 200, an Atom feed.",
 				"dkan": "source read at 2.23.2: no RSS or Atom feed of catalogue activity; grepped -iE '\\brss\\b|\\batom\\b|\\bfeed\\b' across modules, hits are only a CSV parser feed() call, a code comment and ATOM date formats in revision log messages (modules/metastore/src/Storage/Data.php:375), no feed routes in any *.routing.yml. /data.json is a full catalogue dump, not an activity feed."
 			}
 		},
@@ -3513,7 +3562,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: the public action API at /api/3/action/<function> (ckan/views/api.py:493-497) serves package_search, package_show, organization_list, group_list and more to any frontend, anonymous for public data (ckan/logic/auth/get.py:48-50,106-119) and CORS-enabled by config (ckan/views/__init__.py:18-25).",
+				"ckan": "source read at ckan-2.12.0: the public action API at /api/3/action/<function> (ckan/views/api.py:493-497) serves package_search, package_show, organization_list, group_list and more to any frontend, anonymous for public data (ckan/logic/auth/get.py:48-50,106-119) and CORS-enabled by config (ckan/views/__init__.py:18-25). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): anonymous GET /api/3/action/package_search returned 200 with count 1.",
 				"dkan": "source read at 2.23.2: a public REST API reads every item kind and search: GET /api/1/metastore/schemas/{schema_id}/items and /items/{id} (modules/metastore/metastore.routing.yml:31-59), /api/1/search (metastore_search.routing.yml:1-9), /api/1/datastore/query (datastore.routing.yml:62-120), all under 'access content'; documented in docs/source/user-guide/guide_api.rst."
 			}
 		},
@@ -3787,7 +3836,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: each consumer gets its own user with API tokens created and revoked at /user/<id>/api-tokens (ckan/views/user.py:969-972, template user/api_tokens.html; action ckan/logic/action/create.py:1431 api_token_create), optionally expiring (ckan/ckanext/expire_api_token); the token grants that user's reads, including private datasets of organizations it is a member of (ckan/lib/plugins.py:619-628).",
+				"ckan": "source read at ckan-2.12.0: each consumer gets its own user with API tokens created and revoked at /user/<id>/api-tokens (ckan/views/user.py:969-972, template user/api_tokens.html; action ckan/logic/action/create.py:1431 api_token_create), optionally expiring (ckan/ckanext/expire_api_token); the token grants that user's reads, including private datasets of organizations it is a member of (ckan/lib/plugins.py:619-628). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): GET /user/ckan_admin/api-tokens returned 200, create and revoke tokens per user.",
 				"dkan": "source read at 2.23.2: the Alternate API module puts a second set of metastore and SQL read routes behind their own permissions (modules/common/modules/dkan_alt_api/dkan_alt_api.routing.yml:1-39, dkan_alt_api.permissions.yml:1-6) and installs an 'Alternate API user' role holding them (config/install/user.role.alternate_api_user.yml), so each consumer gets its own Drupal account and basic-auth credentials for the protected feed. No API key or token issuance beyond user accounts."
 			}
 		},
@@ -3943,12 +3992,13 @@
 			"providerHow": "read-from-code",
 			"feature": "retention-and-lifecycle",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no retention model; grepped -iw 'retention|disposal|e-depot|edepot|archiv' in ckan/views, logic/action, templates and ckan/ckanext (py and html, non-test) with no hit; organizations carry no retention setting (ckan/templates/organization/snippets/organization_form.html:10-32).",
 				"dkan": "source read at 2.23.2: no default retention per catalogue; grepped -iE 'retention|retain|dispos|e-depot|archival' across modules/ and schema/. The only period setting is the site-wide orphan retain_for for unreferenced items (modules/metastore/config/install/metastore.settings.yml:26-28), and there are no catalogues to set it on."
 			}
 		},
@@ -3969,12 +4019,13 @@
 			"providerHow": "read-from-code",
 			"feature": "retention-and-lifecycle",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no retention model; grepped -iw 'retention|disposal|e-depot|edepot|archiv' in ckan/views, logic/action, templates and ckan/ckanext (py and html, non-test) with no hit. The only spreadsheet export in core is the tracking views CSV (ckan/ckanext/tracking/cli/tracking.py:111-136).",
 				"dkan": "source read at 2.23.2: no retention report; grepped -iE 'retention|retain|dispos|e-depot|archival' across modules/ and schema/, and the only spreadsheet export is the datastore CSV download of a data file (modules/datastore/src/Controller/QueryDownloadController.php:136-137)."
 			}
 		},
@@ -4001,7 +4052,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:93 \"- `delete.py` (826 lines), soft-delete operations\"",
+				"ckan": "source read at ckan-2.12.0: one action takes a dataset down (Make private or Delete, templates/package/snippets/package_basic_fields.html:94-98, ckan/logic/action/delete.py:71), and the activity plugin records who did it and when (ckanext/activity/templates/snippets/activities/deleted_package.html, stream at /dataset/activity/<id>, ckanext/activity/views.py:299). Missing half: no reason field and no notice to channels; downstream harvesters only notice on their next run.",
 				"dkan": "source read at 2.23.2: one transition takes a dataset down: Archive from the edit form or bulk action (workflows.workflow.dkan_publishing.yml:42-48, views.view.dkan_dataset_content.yml:83), after which it cannot be visited and leaves the catalogue (cypress/e2e/10_workflow_transitions.cy.js:55); the revision records who and when, and a reason can be given as revision log (MetastoreRevisionController.php:172-182, node.type.data.yml:12). Missing half: DKAN tells no other channel, harvesters only see it gone on their next pull of /data.json."
 			}
 		},
@@ -4022,12 +4073,13 @@
 			"providerHow": "read-from-code",
 			"feature": "retention-and-lifecycle",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no retention model; grepped -iw 'retention|disposal|e-depot|edepot|archiv' in ckan/views, logic/action, templates and ckan/ckanext (py and html, non-test) with no hit; no e-depot transfer, the only end-of-life actions are delete and purge (ckan/cli/dataset.py:69-71).",
 				"dkan": "source read at 2.23.2: no e-depot transfer; grepped -iE 'retention|retain|dispos|e-depot|archival' across modules/ and schema/, 'archive' exists only as a moderation state that unpublishes (workflows.workflow.dkan_publishing.yml:16-20). No export to an archive system."
 			}
 		},
@@ -4047,12 +4099,13 @@
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no first-use wizard; setup is by CLI: 'ckan generate config' (ckan/cli/generate.py:148-153), 'ckan db init' (ckan/cli/db.py:33) and 'ckan sysadmin add' (ckan/cli/cli.py:232). Grepped -i 'wizard|onboard' in ckan/templates and views with no hit.",
 				"dkan": "source read at 2.23.2: no setup wizard; installation is enabling the module with drush en dkan (dkan.info.yml dependencies) and optional sample content via drush dkan:sample-content:create (modules/sample_content/src/Drush.php:57, docs/source/user-guide/guide_dataset.rst:168-182). Grepped -iE 'wizard|onboard|setup' across modules/*/src, only the word setup in code comments (LifeCycle.php, DatastoreApiDocs.php), no wizard route or form."
 			}
 		},
@@ -4072,12 +4125,13 @@
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "partial",
 			"dkan": "partial",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: the database, search index and site URL are set in the ini file (sqlalchemy.url, solr_url, ckan.site_url at ckan/config/config_declaration.yaml:413,444,919), and via ckanext-scheming release-3.1.0 the metadata schemas are chosen with scheming.dataset_schemas (ckanext/scheming/plugins.py:211). Missing half: none of this is set from an admin screen; /ckan-admin/config only edits look and texts (ckan/views/admin.py:38-40).",
 				"dkan": "source read at 2.23.2: an admin sets which metadata properties are stored as separate referenced items on /admin/dkan/properties (modules/metastore/metastore.routing.yml:152-160, src/Form/DkanDataSettingsForm.php, defaults in config/install/metastore.settings.yml:3-23), and the schema set is chosen by placing a schema/collections directory in the docroot (modules/metastore/src/SchemaRetriever.php:86-112, docs/source/user-guide/guide_custom_schemas.rst:259). Missing half: storage is always DKAN's own data node type, there is no register to point at, and the schema location is a file placement, not a setting."
 			}
 		},
@@ -4097,12 +4151,13 @@
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "partial",
 			"dkan": "yes",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: after an update 'ckan db upgrade' applies core and plugin migrations (ckan/cli/db.py:93-118, pending_migrations :130) and 'ckan search-index rebuild' refreshes the index (ckan/cli/search_index.py:22); via ckanext-scheming release-3.1.0 schema files are re-read from their module path on start (ckanext/scheming/plugins.py:211). Missing half: there is no shipped content configuration (registers, seed objects) to re-import, and no admin action for it.",
 				"dkan": "source read at 2.23.2: DKAN update hooks re-install its shipped configuration on upgrade (drush updb), for example the admin views via installDefaultConfig (modules/metastore/modules/metastore_admin/metastore_admin.install:71-73,119-131) and a config import in metastore_update_8002 (modules/metastore/metastore.install:19-27)."
 			}
 		},
@@ -4129,7 +4184,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/specs/cli-management/spec.md:33 \"- `ckan tracking update` - Update page view tracking\"",
+				"ckan": "source read at ckan-2.12.0: the tracking plugin counts page views and resource download clicks (ckan/ckanext/tracking/assets/tracking.js:22-35, tracking_type page/resource) into per-URL daily summaries with totals and recent views per dataset (ckanext/tracking/model.py:73-84, shown via package_item.html popular badges). Missing half: each raw hit stores an unsalted md5 of user agent plus IP address (ckanext/tracking/middleware.py:29-49), which is pseudonymised rather than free of personal data.",
 				"dkan": "source read at 2.23.2: no view or download counting; grepped -iE 'statistic|view_count|download_count|counter|analytics' across modules/*/src, only datastore import statistics (modules/datastore/src/Controller/ImportController.php:74) and a harvest loop counter. Drupal core statistics is not a dependency (dkan.info.yml:6-18)."
 			}
 		},
@@ -4150,12 +4205,13 @@
 			"providerHow": "read-from-code",
 			"feature": "usage-analytics",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: daily counts are stored (tracking_summary.tracking_date, ckan/ckanext/tracking/model.py:84) but no page charts them; the tracking templates only add popularity sorting and badges (ckanext/tracking/templates/package/search.html:16, snippets). The /stats page charts dataset counts and revisions per week, not usage (ckanext/stats/templates/ckanext/stats/index.html:9-49).",
 				"dkan": "source read at 2.23.2: no usage data exists to chart (see ops-usage, grepped -iE 'statistic|analytics|chart' across modules/*/src), and no dashboard chart in the admin views."
 			}
 		},
@@ -4176,12 +4232,13 @@
 			"providerHow": "read-from-code",
 			"feature": "usage-analytics",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "partial",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: with tracking on, search, organization and group pages add a 'Popular' sort by recent views (ckan/ckanext/tracking/templates/package/search.html:16, organization/read.html:16, group/read.html:16) and popular badges on items (templates/snippets/package_item.html:5). Missing half: not a dashboard widget, and not on a Nextcloud dashboard.",
 				"dkan": "source read at 2.23.2: no view counts (grepped -iE 'view_count|most.?viewed|popular|statistic' across modules/*/src, only datastore import statistics), so nothing ranks datasets by views; the Nextcloud dashboard part does not apply."
 			}
 		},
@@ -4202,12 +4259,13 @@
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "partial",
 			"dkan": "partial",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: the stats plugin page /stats shows total datasets per week, revisions, most edited datasets, largest groups and top tags (ckan/ckanext/stats/blueprint.py:13, templates/ckanext/stats/index.html:9-139); the home page shows the dataset count (ckan/views/home.py:42). Missing half: no counts of organizations or of resources (attachments) on one overview, and stats is an opt-in plugin.",
 				"dkan": "source read at 2.23.2: the admin list /admin/dkan/datasets shows a running total ('Displaying @start - @end of @total', views.view.dkan_dataset_content.yml:971) filterable by data type (dataset, distribution, publisher, theme), and the datastore status dashboard counts datasets with their resources (modules/datastore/src/Form/DashboardForm.php:303 metastore->count('dataset')). Missing half: no single dashboard with counts of catalogues, publications and attachments side by side."
 			}
 		},
@@ -4228,12 +4286,13 @@
 			"providerHow": "read-from-code",
 			"feature": "usage-analytics",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "partial",
 			"dkan": "partial",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: ready-made publication statistics at /stats (ckan/ckanext/stats/templates/ckanext/stats/index.html:9-139) and via ckanext-harvest v1.6.2 per-source harvest job reports with added, updated, deleted and errored counts (ckanext/harvest/templates/snippets/job_details.html:4-26). Missing half: usage is only a CLI CSV export (ckan/ckanext/tracking/cli/tracking.py:41-44), not an in-app report.",
 				"dkan": "source read at 2.23.2: two ready-made admin reports exist: the harvest dashboard with extract status, last run and dataset count per source (modules/harvest/src/HarvestPlanListBuilder.php:73-76) and the datastore import status report per dataset and resource (modules/datastore/src/Form/DashboardForm.php:440-446). Missing half: nothing on usage, since no usage is counted (ops-usage)."
 			}
 		},
@@ -4253,12 +4312,13 @@
 			"providerHow": "read-from-code",
 			"feature": "monitoring",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no Prometheus or other metrics endpoint; grepped -i 'prometheus|statsd|opentelemetry|healthz' across ckan/ckan, ckan/ckanext and the four extensions (non-test) with no hit.",
 				"dkan": "source read at 2.23.2: no Prometheus or metrics endpoint; grepped -iE 'prometheus|metrics|opentelemetry' across modules/ and composer.json, no hits."
 			}
 		},
@@ -4278,12 +4338,13 @@
 			"providerHow": "read-from-code",
 			"feature": "monitoring",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "partial",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: /api/3/action/status_show is open to everyone (ckan/logic/auth/get.py:366-368) and returns site title, URL, version and plugins when the app is up (ckan/logic/action/get.py:2384-2403), which monitors commonly poll. Missing half: it does not check the database, Solr or the job queue; grepped 'healthz|/health|health_check' with no dedicated endpoint. Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): anonymous GET /api/3/action/status_show returned 200 with version and plugins (usable as a liveness probe).",
 				"dkan": "source read at 2.23.2: no health endpoint a monitor can poll; grepped -iE 'health|ping|liveness' across modules, hits are only substrings such as 'mapping' and sample text, and no route in any *.routing.yml serves a health check. Nearest thing is DKAN's entries on Drupal's admin status report (hook_requirements in modules/common/common.install:14-75), which needs an admin login."
 			}
 		},
@@ -4304,13 +4365,13 @@
 			"providerHow": "read-from-code",
 			"feature": "publications",
 			"featureConfidence": "medium",
-			"ckan": "yes",
+			"ckan": "partial",
 			"dkan": "yes",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "yes",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:171 \"Organizations provide clear ownership boundaries: every dataset belongs to exactly one organization. The three-tier role system (admin/editor/member) per organization with polymorphic membership is si\"",
+				"ckan": "source read at ckan-2.12.0: organization roles admin, editor and member (ckan/authz.py:251-256) differ in rights: editors create, update and delete datasets, bulk public/private actions need the org 'update' permission that only admins hold (ckan/logic/auth/update.py:252-269). Missing half: no role that may edit but not publish, since update_dataset also sets Visibility; finer roles need a custom IAuthFunctions plugin (ckan/ckanext/example_iauthfunctions).",
 				"dkan": "source read at 2.23.2: the DKAN publishing workflow has one permission per transition ('use dkan_publishing transition publish', archive, hidden, restore, create_new_draft), separate from create and edit rights on the Data type, so editors and publishers get different rights (modules/metastore/config/install/workflows.workflow.dkan_publishing.yml:41-86, docs/source/user-guide/guide_roles_permissions.rst:205-237); harvest and datastore actions have their own permissions (modules/harvest/harvest.permissions.yml:1-37, modules/datastore/datastore.permissions.yml:1-6).",
 				"decos": "docs-only: intelligence DB competitor_features #28465 (Decos JOIN Woo Portaal, captured 2026-04-18) \"Rol- en autorisatiebeheer: Fijnmazige autorisaties op publicatie-acties\""
 			}
@@ -4331,12 +4392,13 @@
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no guided tour; grepped -iw 'tour|walkthrough' and for intro.js or shepherd in ckan/templates and ckan/public with no hit. First-use help is static text such as the empty-state 'How about creating one?' links (ckan/templates/group/index.html:32).",
 				"dkan": "source read at 2.23.2: no in-app walkthrough or tour; grepped -iE 'tour|walkthrough' across modules/ (yml, php), only substrings inside storage code (modules/common/src/Storage/JobStore.php), and no tour.tour.* file among the shipped config/install files."
 			}
 		},
@@ -4363,7 +4425,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/ckan.md:7 \"- **Self-Hosted:** Yes\"",
+				"ckan": "source read at ckan-2.12.0: AGPL-licensed (LICENSE.txt:8) with install from source, package and docker compose documented in the tree (doc/maintaining/installing/install-from-source.rst, install-from-package.rst, install-from-docker-compose.rst); it runs on the organization's own PostgreSQL and Solr (ckan/config/config_declaration.yaml:413,919).",
 				"dkan": "source read at 2.23.2: DKAN is a GPL Drupal module installed with composer on the organisation's own Drupal site (composer.json, LICENSE.txt, docs/source/installation/index.rst); no vendor service is required, the only outbound calls are to harvest sources the site registers (modules/harvest/src/ETL/Extract/DataJson.php:78-80)."
 			}
 		}
@@ -4385,13 +4447,14 @@
 			"providerHow": "read-from-code",
 			"feature": "dcat-ap-harvest",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "partial",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"pendingReason": "Relies on an x-dcat.hvd schema annotation or a dcatHvdCategory catalogue property that no shipped schema or page sets. Nobody has shown the HVD triples in a served feed.",
 			"evidence": {
+				"ckan": "via ckanext-dcat v2.4.4: dcatap:applicableLegislation is a form field in the DCAT-AP full schema for datasets and access services (ckanext/dcat/schemas/dcat_ap_full.yaml:263,509) and hvd_category is read and written in RDF (ckanext/dcat/profiles/euro_dcat_ap_2.py:103-104,285). Missing half: the hvd_category form field is commented out in the schema with 'TODO: implement separately as part of wider HVD support' (dcat_ap_full.yaml:372-376), so a publisher cannot pick an HVD category on the form.",
 				"dkan": "source read at 2.23.2: no high-value dataset marking; grepped -iE 'hvd|high.?value|applicableLegislation' across modules/ and schema/, no hits. The DCAT-US dataset schema has no such property (schema/collections/dataset.json properties)."
 			}
 		},
@@ -4411,13 +4474,14 @@
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"pendingReason": "Only the schema exists. Nobody has shown a harvest that reads publiccode.yml files into it.",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no software catalogue; grepped -i 'publiccode' across ckan/ckan and the four extensions with no hit, and no harvester or schema reads publiccode.yml (ckanext-dcat harvesters/, ckanext-scheming schemas).",
 				"dkan": "source read at 2.23.2: no software catalogue; grepped -iE 'publiccode' across the tree, no hits, and item kinds are fixed to the DCAT-US set (modules/metastore/src/SchemaRetriever.php:44-57)."
 			}
 		},
@@ -4437,13 +4501,14 @@
 			"providerHow": "read-from-code",
 			"feature": "retention-and-lifecycle",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "partial",
 			"dkan": "no",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"pendingReason": "Only an x-openregister-notifications declaration. Nobody has shown OR's engine firing these for opencatalogi's schemas. The catalog trigger names action 'stable' while the lifecycle action is 'promoteToStable' (publication_register.json:564).",
 			"evidence": {
+				"ckan": "source read at ckan-2.12.0: followers of a dataset or organization get a new-activity count on the dashboard (ckanext/activity/logic/action.py:500 dashboard_new_activities_count, /dashboard at ckanext/activity/views.py:847) and optional activity emails (ckanext/activity/logic/action.py:33-49, 'ckan notify send_emails' ckan/cli/notify.py:25). Missing half: notices fire on any change, not when a publication needs attention, and they are not Nextcloud notifications.",
 				"dkan": "source read at 2.23.2: DKAN sends no notifications to staff; grepped -iE 'notif|message.?send' across modules, only a code comment (modules/metastore/src/Reference/Referencer.php:343), a data facade method and install-time update messages (modules/metastore/modules/metastore_admin/metastore_admin.install:137-146). content_moderation_notifications is not a dependency (metastore.info.yml, composer.json:12-35); the Nextcloud notification part does not apply."
 			}
 		}
