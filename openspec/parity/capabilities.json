@@ -215,7 +215,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:144 \"| 4 | **Organizations and Groups** | Multi-tenancy | Organizations own datasets and provide RBAC boundaries. Groups are thematic cross-organizational collections. | Shared `group` table with `is_organ\""
+				"ckan": "source read at ckan-2.12.0: organizations (and thematic groups) are created at /organization/new, ckan/views/group.py:1343-1354 (CreateGroupView), form ckan/templates/organization/snippets/organization_form.html:12 (title), :20 (URL slug, rendered as the org address /organization/<name>), :22 (markdown description); served back on /organization/<name> via ckan/views/group.py:1355 read."
 			}
 		},
 		{
@@ -235,11 +235,14 @@
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "partial",
 			"dkan": "unknown",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
-			"decos": "unknown"
+			"decos": "unknown",
+			"evidence": {
+				"ckan": "via ckanext-scheming release-3.1.0: several dataset types can be defined (scheming.dataset_schemas, ckanext/scheming/plugins.py:211, helpers.py:163), each reached on /<dataset_type>/new. Missing half: the type set is site-wide, nothing binds a dataset type to an organization; core ckan/views/group.py:1349-1390 has no per-organization type setting (grepped 'dataset_type' in views/group.py, only used for search and the add-dataset link)."
+			}
 		},
 		{
 			"id": "cat-overview",
@@ -264,7 +267,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/specs/organizations-groups/spec.md:16 \"Both Organizations and Groups share the same `group` table in PostgreSQL, differentiated by the `is_organization` boolean column. Fields include: `id`, `name` (unique slug), `title`, `type`, `descript\""
+				"ckan": "source read at ckan-2.12.0: /organization lists every organization with search and sort, ckan/views/group.py:105 index, ckan/templates/organization/index.html:20,25; opening one shows its datasets with facets (templates/organization/read.html:8,25) and an editor bulk view (templates/organization/bulk_process.html:52-70, route views/group.py:1371 bulk_process)."
 			}
 		},
 		{
@@ -290,7 +293,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:144 \"| 4 | **Organizations and Groups** | Multi-tenancy | Organizations own datasets and provide RBAC boundaries. Groups are thematic cross-organizational collections. | Shared `group` table with `is_organ\"",
+				"ckan": "source read at ckan-2.12.0 plus via ckanext-scheming release-3.1.0: an organization records name, URL and description (templates/organization/snippets/organization_form.html:12-22) plus free extras (:32 custom_form_fields.html); scheming adds typed org fields such as an identifier (ckanext/scheming/org_with_dept_id.json:33 'department_id', custom_org_with_address.json:33). Missing half: no government identifiers; grepped -iw 'tooi|rsin|oin' across ckan, ckanext-dcat, ckanext-scheming, no hits outside i18n.",
 				"xxllnc": "docs-only: intelligence DB competitor_features #28411 (xxllnc Publiceren, captured 2026-04-18) \"TOOI metadata-tagging: Metadata conform TOOI waardelijsten (organisatie, documentsoort)\""
 			}
 		},
@@ -317,7 +320,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:171 \"Organizations provide clear ownership boundaries: every dataset belongs to exactly one organization. The three-tier role system (admin/editor/member) per organization with polymorphic membership is si\""
+				"ckan": "source read at ckan-2.12.0: groups are thematic collections browsable at /group (ckan/views/group.py:1340 Blueprint, :105 index, templates/group/index.html:21-26), each group page lists its datasets with facets (templates/group/read.html:11,26), and 'groups' is a dataset search facet (ckan/views/dataset.py:288)."
 			}
 		},
 		{
@@ -336,11 +339,14 @@
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "unknown",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
-			"decos": "unknown"
+			"decos": "unknown",
+			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no glossary; grepped -i 'glossary' across ckan/ckan, ckan/ckanext and all four extensions (no hits outside i18n). Nearest thing is tag vocabularies (ckan/logic/action/create.py:1120 vocabulary_create, get.py:2406 vocabulary_list), which hold tag names only, no explanations shown to readers."
+			}
 		},
 		{
 			"id": "cat-access",
@@ -365,7 +371,7 @@
 			"iprox": "unknown",
 			"decos": "partial",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:171 \"Organizations provide clear ownership boundaries: every dataset belongs to exactly one organization. The three-tier role system (admin/editor/member) per organization with polymorphic membership is si\"",
+				"ckan": "source read at ckan-2.12.0: organization roles admin/editor/member (ckan/authz.py:251-256 ROLE_PERMISSIONS) managed on /organization/member_new/<id> (ckan/views/group.py:1368, templates/organization/member_new.html); private datasets are readable only by holders of the org permission label (ckan/logic/auth/get.py:106-119 package_show), set on the dataset form Visibility select (templates/package/snippets/package_basic_fields.html:94-98); per-dataset collaborators at views/dataset.py:1080.",
 				"dkan": "docs-only: intelligence DB competitor_features #1179 (DKAN, captured 2026-03-27) \"Access Control: Role-based access control for dataset publishing, review, and administration\"",
 				"decos": "docs-only: intelligence DB competitor_features #28465 (Decos JOIN Woo Portaal, captured 2026-04-18) \"Rol- en autorisatiebeheer: Fijnmazige autorisaties op publicatie-acties\""
 			}
@@ -393,7 +399,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:170 \"### 5.5 Organization-Based Multi-Tenancy\"",
+				"ckan": "source read at ckan-2.12.0: many organizations on one site, each dataset owned by one (owner_org select, templates/package/snippets/package_basic_fields.html:77); editing and private reads are scoped to members of the owning org (ckan/authz.py:251-256, ckan/logic/auth/get.py:106-119). Public datasets of every org stay visible to all, which is CKAN's open-data default.",
 				"dkan": "docs-only: concurrentie-analyse/openregister/dkan/dkan.md:53 \"| Multi-tenancy | Partial (Drupal multi-site) | Yes |\""
 			}
 		},
@@ -420,7 +426,7 @@
 			"iprox": "unknown",
 			"decos": "yes",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/overview.md:31 \"- **Extras** = JSONB key-value pairs for custom metadata\"",
+				"ckan": "source read at ckan-2.12.0: the dataset form carries free custom key/value fields with no code (templates/package/snippets/package_metadata_fields.html:27 custom_form_fields.html); via ckanext-scheming release-3.1.0 typed fields, choices and presets are declared in a YAML/JSON schema file (ckanext/scheming/ckan_dataset.yaml:11-78, plugins.py:211 scheming.dataset_schemas), no Python needed.",
 				"dkan": "docs-only: concurrentie-analyse/openregister/dkan/dkan.md:32 \"- JSON-based data objects with JSON Schema enforcement\"",
 				"decos": "docs-only: intelligence DB competitor_features #28461 (Decos JOIN Woo Portaal, captured 2026-04-18) \"Flexibele metadata-configuratie: Configureerbare metadata per documenttype\""
 			}
@@ -442,11 +448,14 @@
 			"providerHow": "read-from-code",
 			"feature": "bulk-operations",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "unknown",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
-			"decos": "unknown"
+			"decos": "unknown",
+			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no copy or clone action for datasets, organizations or groups; grepped 'copy|clone|duplicate' in ckan/views/dataset.py, views/resource.py, templates/package/ and ckanext-scheming templates/views, only internal dict copies and the embed-code hint (templates/package/snippets/resource_view.html:77). Nearest thing is creating a new dataset via package_create from an exported package_show dict over the API."
+			}
 		},
 		{
 			"id": "pub-create",
@@ -471,7 +480,7 @@
 			"iprox": "yes",
 			"decos": "yes",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:141 \"| 1 | **Datasets and Resources** | Core Data | Metadata containers (packages) with attached data files/URLs (resources). JSONB extras for arbitrary key-value metadata. | `package` table with 15+ colum\"",
+				"ckan": "source read at ckan-2.12.0: /dataset/new form has title (templates/package/snippets/package_basic_fields.html:6), markdown description (:21), tags (:26), license (:29-39) and owning organization (:77); categories are groups assigned at /dataset/groups/<id> (ckan/views/dataset.py:1244).",
 				"dkan": "docs-only: intelligence DB competitor_features #1171 (DKAN, captured 2026-03-27) \"Dataset Management: Create and manage datasets with metadata, distributions, and access information\"",
 				"xxllnc": "docs-only: intelligence DB competitor_features #28415 (xxllnc Publiceren, captured 2026-04-18) \"Woo-categorien 1-17: Ondersteunt alle 17 Woo-publicatiecategorien\"",
 				"iprox": "docs-only: intelligence DB competitor_features #28485 (iprox.open, captured 2026-04-18) \"Managementconsole publicatie-beheer: Beheerconsole voor redacteurs/Woo-functionarissen\"",
@@ -494,13 +503,13 @@
 			"providerHow": "read-from-code",
 			"feature": "publications",
 			"featureConfidence": "medium",
-			"ckan": "yes",
+			"ckan": "partial",
 			"dkan": "yes",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:141 \"| 1 | **Datasets and Resources** | Core Data | Metadata containers (packages) with attached data files/URLs (resources). JSONB extras for arbitrary key-value metadata. | `package` table with 15+ colum\"",
+				"ckan": "source read at ckan-2.12.0: documents are attached as resources by upload or link on /dataset/<id>/resource/new (ckan/views/resource.py:837, templates/package/snippets/resource_form.html:22-31 upload field), downloaded at views/resource.py:847; 2.12 adds configurable file storages (CHANGELOG.rst v.2.12.0 'Files are now first-class entities', #8745). Missing half: the files live in CKAN's own storage, not in Nextcloud.",
 				"dkan": "docs-only: concurrentie-analyse/openregister/dkan/dkan.md:35 \"- Datastore for CSV storage with SQL query endpoint\""
 			}
 		},
@@ -521,11 +530,14 @@
 			"providerHow": "read-from-code",
 			"feature": "publications",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "unknown",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
-			"decos": "unknown"
+			"decos": "unknown",
+			"evidence": {
+				"ckan": "source read at ckan-2.12.0: resource read access is always the parent dataset's (ckan/logic/auth/get.py:122-138 resource_show delegates to package_show), and the resource form has no visibility field (templates/package/snippets/resource_form.html, grepped 'private' with no hit). Nearest thing is making the whole dataset private (templates/package/snippets/package_basic_fields.html:94-98)."
+			}
 		},
 		{
 			"id": "pub-status",
@@ -550,7 +562,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/specs/permissions-auth/spec.md:40 \"**Dataset visibility:**\""
+				"ckan": "source read at ckan-2.12.0: the dataset form Visibility select switches a dataset between private and public in one save (templates/package/snippets/package_basic_fields.html:94-98), and the dataset page shows the Private badge (templates/package/read.html:6-7); withdraw is also possible by delete (ckan/logic/action/delete.py:71 package_delete, soft state)."
 			}
 		},
 		{
@@ -570,13 +582,14 @@
 			"providerHow": "read-from-code",
 			"feature": "retention-and-lifecycle",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "unknown",
 			"xxllnc": "yes",
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"xxllnc": "docs-only: intelligence DB competitor_features #28416 (xxllnc Publiceren, captured 2026-04-18) \"Embargo + publicatiedatum: Tijd-gestuurde publicatie met embargo-mechanisme\""
+				"xxllnc": "docs-only: intelligence DB competitor_features #28416 (xxllnc Publiceren, captured 2026-04-18) \"Embargo + publicatiedatum: Tijd-gestuurde publicatie met embargo-mechanisme\"",
+				"ckan": "source read at ckan-2.12.0: no publish-on-date; grepped 'publish_date|scheduled|embargo|release_date' across ckan/ckan (py and html, excluding tests), only the jobs worker scheduler (ckan/cli/jobs.py:22,48) which does not act on datasets. No field in package_basic_fields.html or ckanext-scheming ckan_dataset.yaml sets a go-live date."
 			}
 		},
 		{
@@ -596,11 +609,14 @@
 			"providerHow": "read-from-code",
 			"feature": "bulk-operations",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "yes",
 			"dkan": "unknown",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
-			"decos": "unknown"
+			"decos": "unknown",
+			"evidence": {
+				"ckan": "source read at ckan-2.12.0: /organization/bulk_process/<id> (ckan/views/group.py:1371, BulkProcessView :815) offers Make public, Make private and Delete on selected datasets (templates/organization/bulk_process.html:52-70), backed by bulk_update_public/private/delete (ckan/logic/action/update.py:1219-1255)."
+			}
 		},
 		{
 			"id": "pub-lock",
@@ -619,11 +635,14 @@
 			"providerHow": "read-from-code",
 			"feature": "bulk-operations",
 			"featureConfidence": "medium",
-			"ckan": "unknown",
+			"ckan": "no",
 			"dkan": "unknown",
 			"xxllnc": "unknown",
 			"iprox": "unknown",
-			"decos": "unknown"
+			"decos": "unknown",
+			"evidence": {
+				"ckan": "source read at ckan-2.12.0: no edit lock or checkout; grepped -i 'lock' in ckan/views, ckan/logic/action and templates/package, only a padlock icon for private datasets (templates/package/read.html:8) and a DB note in logic/action/file.py:555. Concurrent edits simply overwrite."
+			}
 		},
 		{
 			"id": "pub-versions",
@@ -648,7 +667,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/specs/activity-stream/spec.md:40 \"The web UI shows diffs between dataset versions, highlighting which fields changed. The `activity_diff` action returns structured diffs comparing two activity snapshots.\""
+				"ckan": "source read at ckan-2.12.0: the activity plugin (ckanext/activity, enabled by the default config, ckan/config/config_declaration.yaml:1087-1089) shows an earlier version at /dataset/<id>/history/<activity_id> (ckanext/activity/views.py:203) and the diff between versions at /dataset/changes/<id> and /dataset/changes_multiple (views.py:386,424, templates/package/changes.html)."
 			}
 		},
 		{
@@ -3633,7 +3652,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:93 \"- `delete.py` (826 lines) -- soft-delete operations\""
+				"ckan": "docs-only: concurrentie-analyse/openregister/ckan/MERGED-ANALYSIS.md:93 \"- `delete.py` (826 lines), soft-delete operations\""
 			}
 		},
 		{
