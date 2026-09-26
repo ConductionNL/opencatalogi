@@ -42,7 +42,7 @@
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-xml": "^6.1.0",
-    "@conduction/nextcloud-vue": "^2.37.0",
+    "@conduction/nextcloud-vue": "^2.56.0",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "6.6.0",
     "@fortawesome/free-regular-svg-icons": "6.6.0",
@@ -63,7 +63,7 @@
     "@vueuse/core": "^14.3.0",
     "axios": "^1.7.4",
     "css-loader": "~7.1.1",
-    "dexie": "^4.4.5",
+    "dexie": "4.4.6",
     "dompurify": "^3.4.5",
     "gridstack": "^12.6.0",
     "highlight.js": "^11.11.1",

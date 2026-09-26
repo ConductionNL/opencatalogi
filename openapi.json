@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "OpenCatalogi",
-    "version": "2.1.6-unstable.20260912034522",
+    "version": "2.1.16-unstable.20260919082905",
     "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` — admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.",
     "license": {
       "name": "EUPL-1.2",
@@ -91,6 +91,18 @@
     {
       "name": "OOAPI",
       "description": "OOAPI 5.0 CORS preflight — the resource endpoints themselves require consumer-credential authentication and are out of scope for this document."
+    },
+    {
+      "name": "Community",
+      "description": "The public and community surface: the status page, its subscriptions, the catalogue feed, reader votes and the markup renderer."
+    },
+    {
+      "name": "Inspections",
+      "description": "Terinzagelegging: the documents that lie open for inspection, and for how long."
+    },
+    {
+      "name": "Service catalogue",
+      "description": "The public request catalogue, the case types it publishes, and reader verdicts on knowledge articles."
     }
   ],
   "components": {
@@ -2028,6 +2040,756 @@
           {
             "$ref": "#/components/parameters/CatalogSlugPath"
           },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "operationId": "community-status-page",
+        "summary": "Read the status page",
+        "description": "The state of every component this instance reports on. A component nobody has touched inside the staleness window is marked stale rather than reported as fine, so an unattended page cannot read as a confident green.",
+        "tags": [
+          "Community"
+        ],
+        "responses": {
+          "200": {
+            "description": "The components and their states.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "community-status-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/status`.",
+        "tags": [
+          "Community"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/status/subscribe": {
+      "post": {
+        "operationId": "community-status-subscribe",
+        "summary": "Subscribe to the status page",
+        "description": "Ask for status updates at an address. The address is stored unconfirmed and nothing is sent to it until it is confirmed, so a subscription cannot be used to mail somebody who never asked.",
+        "tags": [
+          "Community"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "address"
+                ],
+                "properties": {
+                  "address": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "The address to confirm."
+                  },
+                  "scope": {
+                    "type": "string",
+                    "default": "status",
+                    "description": "What the subscription covers."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Stored, awaiting confirmation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The address or the scope was refused.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "community-status-subscribe-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/status/subscribe`.",
+        "tags": [
+          "Community"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/feeds/{catalogSlug}": {
+      "get": {
+        "operationId": "community-feed",
+        "summary": "Read a catalogue Atom feed",
+        "description": "The published records and notices of one catalogue as Atom. A record the publication rules do not publish never reaches the feed, so a draft cannot leak through the harvest surface.",
+        "tags": [
+          "Community"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The feed.",
+            "content": {
+              "application/atom+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "community-feed-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/feeds/{catalogSlug}`.",
+        "tags": [
+          "Community"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/records/{id}/vote": {
+      "post": {
+        "operationId": "community-vote",
+        "summary": "Vote on a published record",
+        "description": "Cast one reader vote on a record that accepts votes. The reader is identified by a salted hash, so a vote is counted once without the reader being identifiable from what is stored. An unpublished record answers the same 404 as one that does not exist.",
+        "tags": [
+          "Community"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "value"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "One of the values the record offers."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The counted vote and the totals.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The value was missing or not one the record accepts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "community-vote-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/records/{id}/vote`.",
+        "tags": [
+          "Community"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/markup/render": {
+      "post": {
+        "operationId": "community-render-markup",
+        "summary": "Render markup",
+        "description": "Render this app's markup the way this app renders it, so a portal shows the same result. Nothing is stored and nothing is read: the request carries the markup and the response carries the rendering.",
+        "tags": [
+          "Community"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "markup"
+                ],
+                "properties": {
+                  "markup": {
+                    "type": "string",
+                    "description": "The markup to render."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The rendering.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No markup was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "community-render-markup-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/markup/render`.",
+        "tags": [
+          "Community"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/publications/search": {
+      "post": {
+        "operationId": "publication-public-search",
+        "summary": "Search published information in plain words",
+        "description": "Search what is actively published, without an account. The search runs over the anonymous permission set and no further, so a property a rule withholds is not searchable and not returned.",
+        "tags": [
+          "Publications"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "q"
+                ],
+                "properties": {
+                  "q": {
+                    "type": "string",
+                    "description": "The words to search for."
+                  },
+                  "records": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "description": "The records to search, when the caller supplies them."
+                  },
+                  "rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "description": "The publication rules to apply."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The matching views.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No search term was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publication-public-search-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/publications/search`.",
+        "tags": [
+          "Publications"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/publications/verification-key": {
+      "get": {
+        "operationId": "publication-verification-key",
+        "summary": "Read the published verification key",
+        "description": "The fingerprint of the organisation's signing key, so a reader can tell which key a stamp was made under. An instance with no key configured answers a refusal rather than a key nothing was signed with.",
+        "tags": [
+          "Publications"
+        ],
+        "responses": {
+          "200": {
+            "description": "The key fingerprint and its identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publication-verification-key-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/publications/verification-key`.",
+        "tags": [
+          "Publications"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/publications/verify": {
+      "post": {
+        "operationId": "publication-verify-document",
+        "summary": "Verify a stamped document",
+        "description": "Check a document and its publication metadata against the stamp that was made for it. The stamp is symmetric, so this endpoint is where a reader checks it; a detached signature a third party could check offline is not implemented.",
+        "tags": [
+          "Publications"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "document",
+                  "metadata",
+                  "stamp"
+                ],
+                "properties": {
+                  "document": {
+                    "type": "string",
+                    "description": "The document, base64 encoded or raw."
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "The publication metadata the stamp covers."
+                  },
+                  "stamp": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "The stamp to check."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The verdict.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The document, its metadata or its stamp was missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "publication-verify-document-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/publications/verify`.",
+        "tags": [
+          "Publications"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/inspections/{id}": {
+      "get": {
+        "operationId": "inspection-follow",
+        "summary": "Follow an inspection link",
+        "description": "The documents that lie open for inspection, for whoever holds the link. The window is checked at the read, not by a job, so a link stops working the moment the statutory period ends. A closed window answers 410 with its end date, so a reader learns the period is over rather than that something is broken.",
+        "tags": [
+          "Inspections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unguessable part of the link."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The chosen documents and the window.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "410": {
+            "description": "The inspection period for these documents has ended.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "inspection-follow-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/inspections/{id}`.",
+        "tags": [
+          "Inspections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/service-catalogue": {
+      "get": {
+        "operationId": "service-catalogue-index",
+        "summary": "List what can be requested",
+        "description": "The public request catalogue: every service a resident or a company can ask for, grouped as the catalogue groups them. An entry whose case type cannot be read is counted as unavailable rather than left out, so a short list is never mistaken for a complete one.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "responses": {
+          "200": {
+            "description": "The entries, their groups and the unavailable count.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "service-catalogue-index-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/service-catalogue`.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/case-types/{id}": {
+      "get": {
+        "operationId": "service-catalogue-case-type",
+        "summary": "Read a published case type",
+        "description": "One case type with the links it publishes: the form that starts it and the description of its API. A case type that is not published is not readable here.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The case type and its links.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "service-catalogue-case-type-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/case-types/{id}`.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/knowledge-articles/{id}/verdict": {
+      "post": {
+        "operationId": "service-catalogue-record-verdict",
+        "summary": "Say whether an article helped",
+        "description": "Record one reader verdict on a knowledge article. The reader is identified by a salted hash, so a verdict counts once and the reader stays unidentifiable in what is stored.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "helpful"
+                ],
+                "properties": {
+                  "helpful": {
+                    "type": "boolean",
+                    "description": "Whether the article helped."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The verdict and the running counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No verdict was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "service-catalogue-record-verdict-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/knowledge-articles/{id}/verdict`.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "parameters": [
           {
             "$ref": "#/components/parameters/IdPath"
           }

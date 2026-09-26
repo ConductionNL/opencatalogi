@@ -16,11 +16,110 @@
       "publication": {
         "slug": "publication",
         "title": "Publication (demo)",
-        "version": "0.1.0",
+        "version": "0.4.0",
         "description": "Demo data for Publication. Generated from the register's own schemas — see hydra-gates/scripts/lib/generate_mock_register.py."
       }
     },
     "objects": [
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "articleVerdict",
+          "slug": "articleverdict-articleverdict-1-1"
+        },
+        "article": "Voorbeeld Article 1",
+        "readerHash": "Voorbeeld Readerhash 1",
+        "helpful": true,
+        "recordedAt": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "articleVerdict",
+          "slug": "articleverdict-articleverdict-2-2"
+        },
+        "article": "Voorbeeld Article 2",
+        "readerHash": "Voorbeeld Readerhash 2",
+        "helpful": false,
+        "recordedAt": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "articleVerdict",
+          "slug": "articleverdict-articleverdict-3-3"
+        },
+        "article": "Voorbeeld Article 3",
+        "readerHash": "Voorbeeld Readerhash 3",
+        "helpful": true,
+        "recordedAt": "2026-03-03T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "caseTypeDefinition",
+          "slug": "casetypedefinition-voorbeeld-title-1-1"
+        },
+        "identifier": "Voorbeeld Identifier 1",
+        "title": "Voorbeeld Title 1",
+        "description": "Voorbeeld Description 1",
+        "catalog": "00000000-0000-4000-8000-000000000000",
+        "formUrl": "Voorbeeld Formurl 1",
+        "apiDescriptionUrl": "Voorbeeld Apidescriptionurl 1",
+        "publicationText": "Voorbeeld Publicationtext 1",
+        "inspectionTermDays": 1,
+        "source": {
+          "sourceId": "Voorbeeld Sourceid 1",
+          "externalId": "Voorbeeld Externalid 1",
+          "version": "Voorbeeld Version 1",
+          "importedAt": "2026-03-01T09:00:00+00:00"
+        },
+        "importedSnapshot": {}
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "caseTypeDefinition",
+          "slug": "casetypedefinition-voorbeeld-title-2-2"
+        },
+        "identifier": "Voorbeeld Identifier 2",
+        "title": "Voorbeeld Title 2",
+        "description": "Voorbeeld Description 2",
+        "catalog": "00000000-0000-4000-8000-000000000001",
+        "formUrl": "Voorbeeld Formurl 2",
+        "apiDescriptionUrl": "Voorbeeld Apidescriptionurl 2",
+        "publicationText": "Voorbeeld Publicationtext 2",
+        "inspectionTermDays": 2,
+        "source": {
+          "sourceId": "Voorbeeld Sourceid 2",
+          "externalId": "Voorbeeld Externalid 2",
+          "version": "Voorbeeld Version 2",
+          "importedAt": "2026-03-02T09:00:00+00:00"
+        },
+        "importedSnapshot": {}
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "caseTypeDefinition",
+          "slug": "casetypedefinition-voorbeeld-title-3-3"
+        },
+        "identifier": "Voorbeeld Identifier 3",
+        "title": "Voorbeeld Title 3",
+        "description": "Voorbeeld Description 3",
+        "catalog": "00000000-0000-4000-8000-000000000002",
+        "formUrl": "Voorbeeld Formurl 3",
+        "apiDescriptionUrl": "Voorbeeld Apidescriptionurl 3",
+        "publicationText": "Voorbeeld Publicationtext 3",
+        "inspectionTermDays": 3,
+        "source": {
+          "sourceId": "Voorbeeld Sourceid 3",
+          "externalId": "Voorbeeld Externalid 3",
+          "version": "Voorbeeld Version 3",
+          "importedAt": "2026-03-03T09:00:00+00:00"
+        },
+        "importedSnapshot": {}
+      },
       {
         "@self": {
           "register": "publication",
@@ -141,62 +240,59 @@
       {
         "@self": {
           "register": "publication",
-          "schema": "document",
-          "slug": "document-voorbeeld-title-1-1"
+          "schema": "depublication",
+          "slug": "depublication-depublication-1-1"
         },
-        "title": "Voorbeeld Title 1",
-        "publication": {
-          "id": "Voorbeeld Id 1",
-          "slug": "Voorbeeld Slug 1",
-          "title": "Voorbeeld Title 1"
-        },
-        "filename": "Voorbeeld Filename 1",
-        "mimeType": "Voorbeeld Mimetype 1",
-        "summary": "Voorbeeld Summary 1",
-        "description": "Voorbeeld Description 1",
-        "organization": "Voorbeeld Organization 1",
-        "publicationDate": "2026-03-01T09:00:00+00:00",
-        "depublicationDate": "2026-03-01T09:00:00+00:00"
+        "publication": "Voorbeeld Publication 1",
+        "reason": "Voorbeeld Reason 1",
+        "depublishedBy": "Voorbeeld Depublishedby 1",
+        "depublishedAt": "2026-03-01T09:00:00+00:00",
+        "withdrawals": [
+          {
+            "channel": "Voorbeeld Channel 1",
+            "sentAt": "2026-03-01T09:00:00+00:00",
+            "acknowledgedAt": "2026-03-01T09:00:00+00:00",
+            "answer": "Voorbeeld Answer 1"
+          }
+        ]
       },
       {
         "@self": {
           "register": "publication",
-          "schema": "document",
-          "slug": "document-voorbeeld-title-2-2"
+          "schema": "depublication",
+          "slug": "depublication-depublication-2-2"
         },
-        "title": "Voorbeeld Title 2",
-        "publication": {
-          "id": "Voorbeeld Id 2",
-          "slug": "Voorbeeld Slug 2",
-          "title": "Voorbeeld Title 2"
-        },
-        "filename": "Voorbeeld Filename 2",
-        "mimeType": "Voorbeeld Mimetype 2",
-        "summary": "Voorbeeld Summary 2",
-        "description": "Voorbeeld Description 2",
-        "organization": "Voorbeeld Organization 2",
-        "publicationDate": "2026-03-02T09:00:00+00:00",
-        "depublicationDate": "2026-03-02T09:00:00+00:00"
+        "publication": "Voorbeeld Publication 2",
+        "reason": "Voorbeeld Reason 2",
+        "depublishedBy": "Voorbeeld Depublishedby 2",
+        "depublishedAt": "2026-03-02T09:00:00+00:00",
+        "withdrawals": [
+          {
+            "channel": "Voorbeeld Channel 2",
+            "sentAt": "2026-03-02T09:00:00+00:00",
+            "acknowledgedAt": "2026-03-02T09:00:00+00:00",
+            "answer": "Voorbeeld Answer 2"
+          }
+        ]
       },
       {
         "@self": {
           "register": "publication",
-          "schema": "document",
-          "slug": "document-voorbeeld-title-3-3"
+          "schema": "depublication",
+          "slug": "depublication-depublication-3-3"
         },
-        "title": "Voorbeeld Title 3",
-        "publication": {
-          "id": "Voorbeeld Id 3",
-          "slug": "Voorbeeld Slug 3",
-          "title": "Voorbeeld Title 3"
-        },
-        "filename": "Voorbeeld Filename 3",
-        "mimeType": "Voorbeeld Mimetype 3",
-        "summary": "Voorbeeld Summary 3",
-        "description": "Voorbeeld Description 3",
-        "organization": "Voorbeeld Organization 3",
-        "publicationDate": "2026-03-03T09:00:00+00:00",
-        "depublicationDate": "2026-03-03T09:00:00+00:00"
+        "publication": "Voorbeeld Publication 3",
+        "reason": "Voorbeeld Reason 3",
+        "depublishedBy": "Voorbeeld Depublishedby 3",
+        "depublishedAt": "2026-03-03T09:00:00+00:00",
+        "withdrawals": [
+          {
+            "channel": "Voorbeeld Channel 3",
+            "sentAt": "2026-03-03T09:00:00+00:00",
+            "acknowledgedAt": "2026-03-03T09:00:00+00:00",
+            "answer": "Voorbeeld Answer 3"
+          }
+        ]
       },
       {
         "@self": {
@@ -239,6 +335,135 @@
         "keywords": [
           "Voorbeeld Keywords 3"
         ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "inspection",
+          "slug": "inspection-inspection-1-1"
+        },
+        "record": "Voorbeeld Record 1",
+        "startDate": "2026-03-01T09:00:00+00:00",
+        "endDate": "2026-03-01T09:00:00+00:00",
+        "token": "Voorbeeld Token 1",
+        "recordType": "Voorbeeld Recordtype 1",
+        "documents": [
+          "Voorbeeld Documents 1"
+        ],
+        "termDays": 1,
+        "openedBy": "Voorbeeld Openedby 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "inspection",
+          "slug": "inspection-inspection-2-2"
+        },
+        "record": "Voorbeeld Record 2",
+        "startDate": "2026-03-02T09:00:00+00:00",
+        "endDate": "2026-03-02T09:00:00+00:00",
+        "token": "Voorbeeld Token 2",
+        "recordType": "Voorbeeld Recordtype 2",
+        "documents": [
+          "Voorbeeld Documents 2"
+        ],
+        "termDays": 2,
+        "openedBy": "Voorbeeld Openedby 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "inspection",
+          "slug": "inspection-inspection-3-3"
+        },
+        "record": "Voorbeeld Record 3",
+        "startDate": "2026-03-03T09:00:00+00:00",
+        "endDate": "2026-03-03T09:00:00+00:00",
+        "token": "Voorbeeld Token 3",
+        "recordType": "Voorbeeld Recordtype 3",
+        "documents": [
+          "Voorbeeld Documents 3"
+        ],
+        "termDays": 3,
+        "openedBy": "Voorbeeld Openedby 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "instanceBanner",
+          "slug": "instancebanner-instancebanner-1-1"
+        },
+        "body": "Voorbeeld Body 1",
+        "startDate": "2026-03-01T09:00:00+00:00",
+        "endDate": "2026-03-01T09:00:00+00:00",
+        "severity": "info",
+        "dismissable": true
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "instanceBanner",
+          "slug": "instancebanner-instancebanner-2-2"
+        },
+        "body": "Voorbeeld Body 2",
+        "startDate": "2026-03-02T09:00:00+00:00",
+        "endDate": "2026-03-02T09:00:00+00:00",
+        "severity": "warning",
+        "dismissable": true
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "instanceBanner",
+          "slug": "instancebanner-instancebanner-3-3"
+        },
+        "body": "Voorbeeld Body 3",
+        "startDate": "2026-03-03T09:00:00+00:00",
+        "endDate": "2026-03-03T09:00:00+00:00",
+        "severity": "critical",
+        "dismissable": true
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "knowledgeArticle",
+          "slug": "knowledgearticle-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "body": "Voorbeeld Body 1",
+        "catalog": "00000000-0000-4000-8000-000000000000",
+        "draft": true,
+        "sourceCase": "Voorbeeld Sourcecase 1",
+        "helpfulCount": 0,
+        "notHelpfulCount": 0
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "knowledgeArticle",
+          "slug": "knowledgearticle-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "body": "Voorbeeld Body 2",
+        "catalog": "00000000-0000-4000-8000-000000000001",
+        "draft": true,
+        "sourceCase": "Voorbeeld Sourcecase 2",
+        "helpfulCount": 0,
+        "notHelpfulCount": 0
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "knowledgeArticle",
+          "slug": "knowledgearticle-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "body": "Voorbeeld Body 3",
+        "catalog": "00000000-0000-4000-8000-000000000002",
+        "draft": true,
+        "sourceCase": "Voorbeeld Sourcecase 3",
+        "helpfulCount": 0,
+        "notHelpfulCount": 0
       },
       {
         "@self": {
@@ -330,86 +555,110 @@
       {
         "@self": {
           "register": "publication",
-          "schema": "menu",
-          "slug": "menu-voorbeeld-title-1-1"
+          "schema": "notice",
+          "slug": "notice-voorbeeld-title-1-1"
         },
+        "board": "Voorbeeld Board 1",
         "title": "Voorbeeld Title 1",
-        "position": 0.0,
-        "items": [
-          {
-            "order": 0.0,
-            "name": "Voorbeeld Name 1",
-            "link": "Voorbeeld Link 1",
-            "description": "Voorbeeld Description 1",
-            "icon": "ViewDashboardOutline",
-            "groups": [
-              "Voorbeeld Groups 1"
-            ],
-            "hideAfterLogin": true,
-            "hideBeforeLogin": true
-          }
-        ],
-        "groups": [
-          "Voorbeeld Groups 1"
-        ],
-        "hideBeforeLogin": true,
-        "icon": "ViewDashboardOutline"
+        "startDate": "2026-03-01T09:00:00+00:00",
+        "endDate": "2026-03-01T09:00:00+00:00",
+        "body": "Voorbeeld Body 1",
+        "publication": "Voorbeeld Publication 1"
       },
       {
         "@self": {
           "register": "publication",
-          "schema": "menu",
-          "slug": "menu-voorbeeld-title-2-2"
+          "schema": "notice",
+          "slug": "notice-voorbeeld-title-2-2"
         },
+        "board": "Voorbeeld Board 2",
         "title": "Voorbeeld Title 2",
-        "position": 1.0,
-        "items": [
-          {
-            "order": 1.0,
-            "name": "Voorbeeld Name 2",
-            "link": "Voorbeeld Link 2",
-            "description": "Voorbeeld Description 2",
-            "icon": "BookOpenVariantOutline",
-            "groups": [
-              "Voorbeeld Groups 2"
-            ],
-            "hideAfterLogin": false,
-            "hideBeforeLogin": false
-          }
-        ],
-        "groups": [
-          "Voorbeeld Groups 2"
-        ],
-        "hideBeforeLogin": false,
-        "icon": "BookOpenVariantOutline"
+        "startDate": "2026-03-02T09:00:00+00:00",
+        "endDate": "2026-03-02T09:00:00+00:00",
+        "body": "Voorbeeld Body 2",
+        "publication": "Voorbeeld Publication 2"
       },
       {
         "@self": {
           "register": "publication",
-          "schema": "menu",
-          "slug": "menu-voorbeeld-title-3-3"
+          "schema": "notice",
+          "slug": "notice-voorbeeld-title-3-3"
         },
+        "board": "Voorbeeld Board 3",
         "title": "Voorbeeld Title 3",
-        "position": 2.0,
-        "items": [
-          {
-            "order": 2.0,
-            "name": "Voorbeeld Name 3",
-            "link": "Voorbeeld Link 3",
-            "description": "Voorbeeld Description 3",
-            "icon": "MapMarkerPath",
-            "groups": [
-              "Voorbeeld Groups 3"
-            ],
-            "hideAfterLogin": true,
-            "hideBeforeLogin": true
-          }
-        ],
-        "groups": [
-          "Voorbeeld Groups 3"
-        ],
-        "hideBeforeLogin": true,
-        "icon": "MapMarkerPath"
+        "startDate": "2026-03-03T09:00:00+00:00",
+        "endDate": "2026-03-03T09:00:00+00:00",
+        "body": "Voorbeeld Body 3",
+        "publication": "Voorbeeld Publication 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "noticeBoard",
+          "slug": "noticeboard-voorbeeld-title-1-1"
+        },
+        "catalog": "00000000-0000-4000-8000-000000000000",
+        "title": "Voorbeeld Title 1",
+        "commentsEnabled": false,
+        "moderator": "Voorbeeld Moderator 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "noticeBoard",
+          "slug": "noticeboard-voorbeeld-title-2-2"
+        },
+        "catalog": "00000000-0000-4000-8000-000000000001",
+        "title": "Voorbeeld Title 2",
+        "commentsEnabled": false,
+        "moderator": "Voorbeeld Moderator 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "noticeBoard",
+          "slug": "noticeboard-voorbeeld-title-3-3"
+        },
+        "catalog": "00000000-0000-4000-8000-000000000002",
+        "title": "Voorbeeld Title 3",
+        "commentsEnabled": false,
+        "moderator": "Voorbeeld Moderator 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "obligationSource",
+          "slug": "obligationsource-voorbeeld-title-1-1"
+        },
+        "appId": "Voorbeeld Appid 1",
+        "title": "Voorbeeld Title 1",
+        "kind": "app",
+        "enabled": true,
+        "lastReadAt": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "obligationSource",
+          "slug": "obligationsource-voorbeeld-title-2-2"
+        },
+        "appId": "Voorbeeld Appid 2",
+        "title": "Voorbeeld Title 2",
+        "kind": "harvest",
+        "enabled": true,
+        "lastReadAt": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "obligationSource",
+          "slug": "obligationsource-voorbeeld-title-3-3"
+        },
+        "appId": "Voorbeeld Appid 3",
+        "title": "Voorbeeld Title 3",
+        "kind": "app",
+        "enabled": true,
+        "lastReadAt": "2026-03-03T09:00:00+00:00"
       },
       {
         "@self": {
@@ -467,132 +716,6 @@
           "Voorbeeld Learnerids 3"
         ],
         "rioAangebodenOpleidingId": "Voorbeeld Rioaangebodenopleidingid 3"
-      },
-      {
-        "@self": {
-          "register": "publication",
-          "schema": "organization",
-          "slug": "organization-voorbeeld-name-1-1"
-        },
-        "name": "Voorbeeld Name 1",
-        "summary": "Voorbeeld Summary 1",
-        "description": "Voorbeeld Description 1",
-        "oin": "00000000123456789000",
-        "tooi": "AB0123",
-        "tooiIdentifier": "Voorbeeld Tooiidentifier 1",
-        "rsin": "012345678",
-        "pki": "0",
-        "image": "Voorbeeld Image 1"
-      },
-      {
-        "@self": {
-          "register": "publication",
-          "schema": "organization",
-          "slug": "organization-voorbeeld-name-2-2"
-        },
-        "name": "Voorbeeld Name 2",
-        "summary": "Voorbeeld Summary 2",
-        "description": "Voorbeeld Description 2",
-        "oin": "00000001234567890000",
-        "tooi": "BC1234",
-        "tooiIdentifier": "Voorbeeld Tooiidentifier 2",
-        "rsin": "123456789",
-        "pki": "1",
-        "image": "Voorbeeld Image 2"
-      },
-      {
-        "@self": {
-          "register": "publication",
-          "schema": "organization",
-          "slug": "organization-voorbeeld-name-3-3"
-        },
-        "name": "Voorbeeld Name 3",
-        "summary": "Voorbeeld Summary 3",
-        "description": "Voorbeeld Description 3",
-        "oin": "00000002345678901000",
-        "tooi": "CD2345",
-        "tooiIdentifier": "Voorbeeld Tooiidentifier 3",
-        "rsin": "234567890",
-        "pki": "2",
-        "image": "Voorbeeld Image 3"
-      },
-      {
-        "@self": {
-          "register": "publication",
-          "schema": "page",
-          "slug": "page-voorbeeld-title-1-1"
-        },
-        "title": "Voorbeeld Title 1",
-        "slug": "abc",
-        "contents": [
-          {
-            "type": "Voorbeeld Type 1",
-            "id": "Voorbeeld Id 1",
-            "data": {},
-            "groups": [
-              "Voorbeeld Groups 1"
-            ],
-            "hideAfterLogin": true,
-            "hideBeforeLogin": true
-          }
-        ],
-        "groups": [
-          "Voorbeeld Groups 1"
-        ],
-        "hideAfterLogin": true,
-        "hideBeforeLogin": true
-      },
-      {
-        "@self": {
-          "register": "publication",
-          "schema": "page",
-          "slug": "page-voorbeeld-title-2-2"
-        },
-        "title": "Voorbeeld Title 2",
-        "slug": "bcd",
-        "contents": [
-          {
-            "type": "Voorbeeld Type 2",
-            "id": "Voorbeeld Id 2",
-            "data": {},
-            "groups": [
-              "Voorbeeld Groups 2"
-            ],
-            "hideAfterLogin": false,
-            "hideBeforeLogin": false
-          }
-        ],
-        "groups": [
-          "Voorbeeld Groups 2"
-        ],
-        "hideAfterLogin": false,
-        "hideBeforeLogin": false
-      },
-      {
-        "@self": {
-          "register": "publication",
-          "schema": "page",
-          "slug": "page-voorbeeld-title-3-3"
-        },
-        "title": "Voorbeeld Title 3",
-        "slug": "cde",
-        "contents": [
-          {
-            "type": "Voorbeeld Type 3",
-            "id": "Voorbeeld Id 3",
-            "data": {},
-            "groups": [
-              "Voorbeeld Groups 3"
-            ],
-            "hideAfterLogin": true,
-            "hideBeforeLogin": true
-          }
-        ],
-        "groups": [
-          "Voorbeeld Groups 3"
-        ],
-        "hideAfterLogin": true,
-        "hideBeforeLogin": true
       },
       {
         "@self": {
@@ -711,6 +834,126 @@
       {
         "@self": {
           "register": "publication",
+          "schema": "publicationProcess",
+          "slug": "publicationprocess-publicationprocess-1-1"
+        },
+        "publication": "Voorbeeld Publication 1",
+        "state": "open",
+        "steps": [
+          {
+            "step": "documents",
+            "status": "pending",
+            "completedBy": "Voorbeeld Completedby 1",
+            "completedAt": "2026-03-01T09:00:00+00:00",
+            "note": "Voorbeeld Note 1"
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publicationProcess",
+          "slug": "publicationprocess-publicationprocess-2-2"
+        },
+        "publication": "Voorbeeld Publication 2",
+        "state": "held",
+        "steps": [
+          {
+            "step": "zienswijze",
+            "status": "complete",
+            "completedBy": "Voorbeeld Completedby 2",
+            "completedAt": "2026-03-02T09:00:00+00:00",
+            "note": "Voorbeeld Note 2"
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publicationProcess",
+          "slug": "publicationprocess-publicationprocess-3-3"
+        },
+        "publication": "Voorbeeld Publication 3",
+        "state": "complete",
+        "steps": [
+          {
+            "step": "approval",
+            "status": "skipped",
+            "completedBy": "Voorbeeld Completedby 3",
+            "completedAt": "2026-03-03T09:00:00+00:00",
+            "note": "Voorbeeld Note 3"
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publicationRule",
+          "slug": "publicationrule-publicationrule-1-1"
+        },
+        "recordType": "Voorbeeld Recordtype 1",
+        "anonymousProperties": [
+          "Voorbeeld Anonymousproperties 1"
+        ],
+        "enabled": false,
+        "conditions": [
+          {
+            "property": "Voorbeeld Property 1",
+            "operator": "equals",
+            "value": "Voorbeeld Value 1"
+          }
+        ],
+        "publicationText": "Voorbeeld Publicationtext 1",
+        "inspectionTermDays": 1,
+        "previewedAt": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publicationRule",
+          "slug": "publicationrule-publicationrule-2-2"
+        },
+        "recordType": "Voorbeeld Recordtype 2",
+        "anonymousProperties": [
+          "Voorbeeld Anonymousproperties 2"
+        ],
+        "enabled": false,
+        "conditions": [
+          {
+            "property": "Voorbeeld Property 2",
+            "operator": "notEquals",
+            "value": "Voorbeeld Value 2"
+          }
+        ],
+        "publicationText": "Voorbeeld Publicationtext 2",
+        "inspectionTermDays": 2,
+        "previewedAt": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publicationRule",
+          "slug": "publicationrule-publicationrule-3-3"
+        },
+        "recordType": "Voorbeeld Recordtype 3",
+        "anonymousProperties": [
+          "Voorbeeld Anonymousproperties 3"
+        ],
+        "enabled": false,
+        "conditions": [
+          {
+            "property": "Voorbeeld Property 3",
+            "operator": "exists",
+            "value": "Voorbeeld Value 3"
+          }
+        ],
+        "publicationText": "Voorbeeld Publicationtext 3",
+        "inspectionTermDays": 3,
+        "previewedAt": "2026-03-03T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
           "schema": "publiccode",
           "slug": "publiccode-voorbeeld-name-1-1"
         },
@@ -824,6 +1067,195 @@
         "harvestedFrom": "Voorbeeld Harvestedfrom 3",
         "harvestedAt": "2026-03-03T09:00:00+00:00",
         "rawPubliccode": {}
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "recordVote",
+          "slug": "recordvote-recordvote-1-1"
+        },
+        "record": "Voorbeeld Record 1",
+        "readerHash": "Voorbeeld Readerhash 1",
+        "value": "Voorbeeld Value 1",
+        "castAt": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "recordVote",
+          "slug": "recordvote-recordvote-2-2"
+        },
+        "record": "Voorbeeld Record 2",
+        "readerHash": "Voorbeeld Readerhash 2",
+        "value": "Voorbeeld Value 2",
+        "castAt": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "recordVote",
+          "slug": "recordvote-recordvote-3-3"
+        },
+        "record": "Voorbeeld Record 3",
+        "readerHash": "Voorbeeld Readerhash 3",
+        "value": "Voorbeeld Value 3",
+        "castAt": "2026-03-03T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "serviceCatalogueEntry",
+          "slug": "servicecatalogueentry-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "catalog": "00000000-0000-4000-8000-000000000000",
+        "formBinding": {
+          "caseType": "Voorbeeld Casetype 1",
+          "audience": "Voorbeeld Audience 1",
+          "formName": "Voorbeeld Formname 1"
+        },
+        "summary": "Voorbeeld Summary 1",
+        "group": "Voorbeeld Group 1",
+        "audience": "resident",
+        "cost": {
+          "amount": 1.0,
+          "currency": "Voorbeeld Currency 1",
+          "description": "Voorbeeld Description 1"
+        },
+        "duration": {
+          "term": 1,
+          "unit": "day",
+          "description": "Voorbeeld Description 1"
+        }
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "serviceCatalogueEntry",
+          "slug": "servicecatalogueentry-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "catalog": "00000000-0000-4000-8000-000000000001",
+        "formBinding": {
+          "caseType": "Voorbeeld Casetype 2",
+          "audience": "Voorbeeld Audience 2",
+          "formName": "Voorbeeld Formname 2"
+        },
+        "summary": "Voorbeeld Summary 2",
+        "group": "Voorbeeld Group 2",
+        "audience": "company",
+        "cost": {
+          "amount": 2.0,
+          "currency": "Voorbeeld Currency 2",
+          "description": "Voorbeeld Description 2"
+        },
+        "duration": {
+          "term": 2,
+          "unit": "week",
+          "description": "Voorbeeld Description 2"
+        }
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "serviceCatalogueEntry",
+          "slug": "servicecatalogueentry-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "catalog": "00000000-0000-4000-8000-000000000002",
+        "formBinding": {
+          "caseType": "Voorbeeld Casetype 3",
+          "audience": "Voorbeeld Audience 3",
+          "formName": "Voorbeeld Formname 3"
+        },
+        "summary": "Voorbeeld Summary 3",
+        "group": "Voorbeeld Group 3",
+        "audience": "both",
+        "cost": {
+          "amount": 3.0,
+          "currency": "Voorbeeld Currency 3",
+          "description": "Voorbeeld Description 3"
+        },
+        "duration": {
+          "term": 3,
+          "unit": "month",
+          "description": "Voorbeeld Description 3"
+        }
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "serviceStatus",
+          "slug": "servicestatus-servicestatus-1-1"
+        },
+        "component": "Voorbeeld Component 1",
+        "state": "available",
+        "stateSetAt": "2026-03-01T09:00:00+00:00",
+        "message": "Voorbeeld Message 1",
+        "stateSetBy": "Voorbeeld Statesetby 1",
+        "order": 0
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "serviceStatus",
+          "slug": "servicestatus-servicestatus-2-2"
+        },
+        "component": "Voorbeeld Component 2",
+        "state": "degraded",
+        "stateSetAt": "2026-03-02T09:00:00+00:00",
+        "message": "Voorbeeld Message 2",
+        "stateSetBy": "Voorbeeld Statesetby 2",
+        "order": 0
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "serviceStatus",
+          "slug": "servicestatus-servicestatus-3-3"
+        },
+        "component": "Voorbeeld Component 3",
+        "state": "unavailable",
+        "stateSetAt": "2026-03-03T09:00:00+00:00",
+        "message": "Voorbeeld Message 3",
+        "stateSetBy": "Voorbeeld Statesetby 3",
+        "order": 0
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "statusSubscription",
+          "slug": "statussubscription-statussubscription-1-1"
+        },
+        "address": "Voorbeeld Address 1",
+        "requestedAt": "2026-03-01T09:00:00+00:00",
+        "confirmationTokenHash": "Voorbeeld Confirmationtokenhash 1",
+        "scope": "Voorbeeld Scope 1",
+        "confirmedAt": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "statusSubscription",
+          "slug": "statussubscription-statussubscription-2-2"
+        },
+        "address": "Voorbeeld Address 2",
+        "requestedAt": "2026-03-02T09:00:00+00:00",
+        "confirmationTokenHash": "Voorbeeld Confirmationtokenhash 2",
+        "scope": "Voorbeeld Scope 2",
+        "confirmedAt": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "statusSubscription",
+          "slug": "statussubscription-statussubscription-3-3"
+        },
+        "address": "Voorbeeld Address 3",
+        "requestedAt": "2026-03-03T09:00:00+00:00",
+        "confirmationTokenHash": "Voorbeeld Confirmationtokenhash 3",
+        "scope": "Voorbeeld Scope 3",
+        "confirmedAt": "2026-03-03T09:00:00+00:00"
       },
       {
         "@self": {
@@ -1037,6 +1469,321 @@
         "createdAt": "2026-03-03T09:00:00+00:00",
         "updatedAt": "2026-03-03T09:00:00+00:00",
         "createdBy": "Voorbeeld Createdby 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "zienswijzeAsk",
+          "slug": "zienswijzeask-zienswijzeask-1-1"
+        },
+        "publication": "Voorbeeld Publication 1",
+        "party": "Voorbeeld Party 1",
+        "channel": "Voorbeeld Channel 1",
+        "sentAt": "2026-03-01T09:00:00+00:00",
+        "termEndsAt": "2026-03-01T09:00:00+00:00",
+        "answeredAt": "2026-03-01T09:00:00+00:00",
+        "answer": "Voorbeeld Answer 1",
+        "answeredBy": "Voorbeeld Answeredby 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "zienswijzeAsk",
+          "slug": "zienswijzeask-zienswijzeask-2-2"
+        },
+        "publication": "Voorbeeld Publication 2",
+        "party": "Voorbeeld Party 2",
+        "channel": "Voorbeeld Channel 2",
+        "sentAt": "2026-03-02T09:00:00+00:00",
+        "termEndsAt": "2026-03-02T09:00:00+00:00",
+        "answeredAt": "2026-03-02T09:00:00+00:00",
+        "answer": "Voorbeeld Answer 2",
+        "answeredBy": "Voorbeeld Answeredby 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "zienswijzeAsk",
+          "slug": "zienswijzeask-zienswijzeask-3-3"
+        },
+        "publication": "Voorbeeld Publication 3",
+        "party": "Voorbeeld Party 3",
+        "channel": "Voorbeeld Channel 3",
+        "sentAt": "2026-03-03T09:00:00+00:00",
+        "termEndsAt": "2026-03-03T09:00:00+00:00",
+        "answeredAt": "2026-03-03T09:00:00+00:00",
+        "answer": "Voorbeeld Answer 3",
+        "answeredBy": "Voorbeeld Answeredby 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "document",
+          "slug": "document-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "publication": {
+          "id": "Voorbeeld Id 1",
+          "slug": "Voorbeeld Slug 1",
+          "title": "Voorbeeld Title 1"
+        },
+        "filename": "Voorbeeld Filename 1",
+        "mimeType": "Voorbeeld Mimetype 1",
+        "summary": "Voorbeeld Summary 1",
+        "description": "Voorbeeld Description 1",
+        "organization": "Voorbeeld Organization 1",
+        "publicationDate": "2026-03-01T09:00:00+00:00",
+        "depublicationDate": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "document",
+          "slug": "document-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "publication": {
+          "id": "Voorbeeld Id 2",
+          "slug": "Voorbeeld Slug 2",
+          "title": "Voorbeeld Title 2"
+        },
+        "filename": "Voorbeeld Filename 2",
+        "mimeType": "Voorbeeld Mimetype 2",
+        "summary": "Voorbeeld Summary 2",
+        "description": "Voorbeeld Description 2",
+        "organization": "Voorbeeld Organization 2",
+        "publicationDate": "2026-03-02T09:00:00+00:00",
+        "depublicationDate": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "document",
+          "slug": "document-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "publication": {
+          "id": "Voorbeeld Id 3",
+          "slug": "Voorbeeld Slug 3",
+          "title": "Voorbeeld Title 3"
+        },
+        "filename": "Voorbeeld Filename 3",
+        "mimeType": "Voorbeeld Mimetype 3",
+        "summary": "Voorbeeld Summary 3",
+        "description": "Voorbeeld Description 3",
+        "organization": "Voorbeeld Organization 3",
+        "publicationDate": "2026-03-03T09:00:00+00:00",
+        "depublicationDate": "2026-03-03T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "slug": "menu-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "position": 0.0,
+        "items": [
+          {
+            "order": 0.0,
+            "name": "Voorbeeld Name 1",
+            "link": "Voorbeeld Link 1",
+            "description": "Voorbeeld Description 1",
+            "icon": "ViewDashboardOutline",
+            "groups": [
+              "Voorbeeld Groups 1"
+            ],
+            "hideAfterLogin": true,
+            "hideBeforeLogin": true
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 1"
+        ],
+        "hideBeforeLogin": true,
+        "icon": "ViewDashboardOutline"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "slug": "menu-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "position": 1.0,
+        "items": [
+          {
+            "order": 1.0,
+            "name": "Voorbeeld Name 2",
+            "link": "Voorbeeld Link 2",
+            "description": "Voorbeeld Description 2",
+            "icon": "BookOpenVariantOutline",
+            "groups": [
+              "Voorbeeld Groups 2"
+            ],
+            "hideAfterLogin": false,
+            "hideBeforeLogin": false
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 2"
+        ],
+        "hideBeforeLogin": false,
+        "icon": "BookOpenVariantOutline"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "slug": "menu-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "position": 2.0,
+        "items": [
+          {
+            "order": 2.0,
+            "name": "Voorbeeld Name 3",
+            "link": "Voorbeeld Link 3",
+            "description": "Voorbeeld Description 3",
+            "icon": "MapMarkerPath",
+            "groups": [
+              "Voorbeeld Groups 3"
+            ],
+            "hideAfterLogin": true,
+            "hideBeforeLogin": true
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 3"
+        ],
+        "hideBeforeLogin": true,
+        "icon": "MapMarkerPath"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "organization",
+          "slug": "organization-voorbeeld-name-1-1"
+        },
+        "name": "Voorbeeld Name 1",
+        "summary": "Voorbeeld Summary 1",
+        "description": "Voorbeeld Description 1",
+        "oin": "00000000123456789000",
+        "tooi": "AB0123",
+        "tooiIdentifier": "Voorbeeld Tooiidentifier 1",
+        "rsin": "012345678",
+        "pki": "0",
+        "image": "Voorbeeld Image 1"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "organization",
+          "slug": "organization-voorbeeld-name-2-2"
+        },
+        "name": "Voorbeeld Name 2",
+        "summary": "Voorbeeld Summary 2",
+        "description": "Voorbeeld Description 2",
+        "oin": "00000001234567890000",
+        "tooi": "BC1234",
+        "tooiIdentifier": "Voorbeeld Tooiidentifier 2",
+        "rsin": "123456789",
+        "pki": "1",
+        "image": "Voorbeeld Image 2"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "organization",
+          "slug": "organization-voorbeeld-name-3-3"
+        },
+        "name": "Voorbeeld Name 3",
+        "summary": "Voorbeeld Summary 3",
+        "description": "Voorbeeld Description 3",
+        "oin": "00000002345678901000",
+        "tooi": "CD2345",
+        "tooiIdentifier": "Voorbeeld Tooiidentifier 3",
+        "rsin": "234567890",
+        "pki": "2",
+        "image": "Voorbeeld Image 3"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "slug": "page-voorbeeld-title-1-1"
+        },
+        "title": "Voorbeeld Title 1",
+        "slug": "abc",
+        "contents": [
+          {
+            "type": "Voorbeeld Type 1",
+            "id": "Voorbeeld Id 1",
+            "data": {},
+            "groups": [
+              "Voorbeeld Groups 1"
+            ],
+            "hideAfterLogin": true,
+            "hideBeforeLogin": true
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 1"
+        ],
+        "hideAfterLogin": true,
+        "hideBeforeLogin": true
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "slug": "page-voorbeeld-title-2-2"
+        },
+        "title": "Voorbeeld Title 2",
+        "slug": "bcd",
+        "contents": [
+          {
+            "type": "Voorbeeld Type 2",
+            "id": "Voorbeeld Id 2",
+            "data": {},
+            "groups": [
+              "Voorbeeld Groups 2"
+            ],
+            "hideAfterLogin": false,
+            "hideBeforeLogin": false
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 2"
+        ],
+        "hideAfterLogin": false,
+        "hideBeforeLogin": false
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "slug": "page-voorbeeld-title-3-3"
+        },
+        "title": "Voorbeeld Title 3",
+        "slug": "cde",
+        "contents": [
+          {
+            "type": "Voorbeeld Type 3",
+            "id": "Voorbeeld Id 3",
+            "data": {},
+            "groups": [
+              "Voorbeeld Groups 3"
+            ],
+            "hideAfterLogin": true,
+            "hideBeforeLogin": true
+          }
+        ],
+        "groups": [
+          "Voorbeeld Groups 3"
+        ],
+        "hideAfterLogin": true,
+        "hideBeforeLogin": true
       }
     ]
   }

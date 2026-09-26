@@ -37,6 +37,13 @@ use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
+use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
+use OCA\OpenCatalogi\Service\Community\SubscriptionService;
+use OCA\OpenCatalogi\Service\Community\VoteService;
+use OCA\OpenCatalogi\Service\KnowledgeArticleService;
+use OCA\OpenCatalogi\Service\Publication\DocumentStampService;
+use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
+use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
 use OCA\OpenRegister\AppHost\Controller\GenericHealthController;
 use OCA\OpenRegister\AppHost\Controller\GenericMetricsController;
@@ -255,6 +262,80 @@ class Application extends App implements IBootstrap {
 					request: $c->get('OCP\\IRequest'),
 					config: $c->get('OCP\\IConfig'),
 					userSession: $c->get('OCP\\IUserSession')
+				);
+			}
+		);
+
+		// The external case type catalogue is read through integriq's gateway;
+		// this app composes the ask and reads the answer, and holds no
+		// transport. The reader raises rather than answering an empty list when
+		// there is no gateway to ask with.
+		$context->registerServiceAlias(
+			'OCA\\OpenCatalogi\\Service\\Catalogue\\CaseTypeSourceReader',
+			GatewayCaseTypeSourceReader::class
+		);
+
+		// The reader token on an article verdict is hashed with the instance
+		// secret, so a verdict can be counted once without the reader being
+		// identifiable from what is stored.
+		$context->registerService(
+			KnowledgeArticleService::class,
+			static function ($c) {
+				return new KnowledgeArticleService(
+					salt: (string)$c->get('OCP\\IConfig')->getSystemValue('secret', '')
+				);
+			}
+		);
+
+		// The stamp on a published document. The key is the organisation's, read
+		// from this app's own configuration rather than the instance secret, so
+		// rotating it is an administrative act and not a server reinstall. With
+		// no key configured the service refuses to stamp: a stamp made with an
+		// empty key verifies against an empty key, which would tell every reader
+		// a document is authentic while nobody checked anything.
+		$context->registerService(
+			DocumentStampService::class,
+			static function ($c) {
+				$config = $c->get(\OCP\IAppConfig::class);
+
+				return new DocumentStampService(
+					signingKey: $config->getValueString(self::APP_ID, 'publication_signing_key', ''),
+					keyId: $config->getValueString(self::APP_ID, 'publication_signing_key_id', 'default')
+				);
+			}
+		);
+
+		// The reader token on a vote and the confirmation token on a status
+		// subscription are hashed with the instance secret, so both can be
+		// counted or checked once without the reader being identifiable from
+		// what is stored.
+		$context->registerService(
+			VoteService::class,
+			static function ($c) {
+				return new VoteService(
+					salt: (string)$c->get('OCP\\IConfig')->getSystemValue('secret', '')
+				);
+			}
+		);
+		$context->registerService(
+			SubscriptionService::class,
+			static function ($c) {
+				return new SubscriptionService(
+					salt: (string)$c->get('OCP\\IConfig')->getSystemValue('secret', '')
+				);
+			}
+		);
+
+		// The published-collection configuration lives in this app's config, so
+		// adding a collection takes effect on a running instance without a
+		// release.
+		$context->registerService(
+			PublishedCollectionsService::class,
+			static function ($c) {
+				return new PublishedCollectionsService(
+					config: $c->get(\OCP\IAppConfig::class),
+					ruleService: $c->get(PublicationRuleService::class),
+					appName: self::APP_ID
 				);
 			}
 		);

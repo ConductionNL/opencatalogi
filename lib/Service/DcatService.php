@@ -203,9 +203,32 @@ class DcatService {
 	 * Build the per-catalog DCAT-AP-NL document for one page of datasets.
 	 *
 	 * Datasets are selected via OR object search scoped to the catalog's
-	 * registers/schemas with `_rbac: true` — byte-for-byte the PUB-001/WOO-001
-	 * visibility rule (only publicly visible objects appear). Opted-out schemas
+	 * registers/schemas with `_rbac: true` — the PUB-001/WOO-001 visibility rule
+	 * (only publicly visible objects appear). Opted-out schemas
 	 * (`"x-dcat": false`) are skipped.
+	 *
+	 * 🔴 NO LONGER BYTE-FOR-BYTE THE PUBLICATIONS PATH, AND THAT IS A GAP, NOT A
+	 * DESIGN. This comment used to claim parity with `/api/{catalogSlug}`. Since
+	 * WOO-580 that route runs its catalog through
+	 * {@see \OCA\OpenCatalogi\Service\PublicationQueryService::applyCatalogReadRuleGuard()}
+	 * first, which drops every schema carrying no `authorization.read` rules
+	 * from an anonymous scope. This feed takes `$catalog['schemas']` unguarded.
+	 *
+	 * The guard drops two different shapes and only ONE of them is a hole here:
+	 *
+	 * - A schema with NO `authorization` block (or an empty one).
+	 *   `MagicRbacHandler::applyRbacFilters()` opens it to every non-private row
+	 *   — `_rbac: true` is not a filter at all for that schema — so it IS
+	 *   anonymously readable through this feed today.
+	 * - A schema with a NON-EMPTY block that simply omits `read`. That one fails
+	 *   closed in OpenRegister ("Action not configured on a non-empty
+	 *   authorization block — failing closed"): it falls through to owner-only
+	 *   conditions and then to the deny-all, so an anonymous caller already gets
+	 *   nothing. The guard drops it for a uniform scope, not because it leaks.
+	 *
+	 * So the exposure is the first shape, and a harvest feed is the worst place
+	 * for it: it exists to be crawled and cached by third parties. Tracked as
+	 * WOO-581. Do not restore the parity claim until the guard runs on this path.
 	 *
 	 * @param array<string, mixed> $catalog The catalog object.
 	 * @param string $catalogSlug The catalog slug.

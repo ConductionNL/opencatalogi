@@ -42,7 +42,7 @@ class PublicationsControllerTest extends TestCase {
 		$this->request = $this->createMock(IRequest::class);
 		$this->publicationService = $this->createMock(PublicationService::class);
 		$this->catalogiService = $this->createMock(CatalogiService::class);
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appManager = $this->createMock(IAppManager::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -90,6 +90,26 @@ class PublicationsControllerTest extends TestCase {
 	}
 
 	/**
+	 * A PublicationQueryService double with the collaborations every route needs.
+	 *
+	 * WOO-580 put a read-rule guard in front of all six per-catalog routes: each
+	 * one hands its catalog to `applyCatalogReadRuleGuard()` and uses what comes
+	 * back. A bare `createMock()` answers null there, which empties the catalog
+	 * and turns every route into a 404 — so the double has to know about the
+	 * call. It hands the catalog back unchanged, keeping these tests about the
+	 * routes; the guard's own behaviour is covered in PublicationQueryServiceTest.
+	 *
+	 * @return PublicationQueryService|MockObject
+	 */
+	private function newQueryServiceDouble(): PublicationQueryService|MockObject {
+		$queryService = $this->createMock(PublicationQueryService::class);
+		$queryService->method('applyCatalogReadRuleGuard')
+			->willReturnCallback(fn (array $catalog) => $catalog);
+
+		return $queryService;
+	}//end newQueryServiceDouble()
+
+	/**
 	 * Rebuilds $this->queryService and the controller so findObjectInCatalog either
 	 * returns null (object not in catalog) or throws the supplied exception. Used by
 	 * the attachments/download not-found and error-path tests, whose object lookup
@@ -98,7 +118,7 @@ class PublicationsControllerTest extends TestCase {
 	 * @param \Throwable|null $throw When set, findObjectInCatalog throws it; otherwise it returns null.
 	 */
 	private function stubFindObjectInCatalog(?\Throwable $throw = null): void {
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $data) => $data);
@@ -131,7 +151,7 @@ class PublicationsControllerTest extends TestCase {
 				'registers' => [1],
 			]);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $data) => $data);
@@ -409,7 +429,7 @@ class PublicationsControllerTest extends TestCase {
 		$rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => []]);
 		$mockObjService->method('find')->willReturn($rootObject);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('findObjectLocation')->willReturn(null);
 		$this->queryService->method('isAnonymous')->willReturn(true);
 		$this->queryService->method('isObjectPublic')->willReturn(false);
@@ -492,7 +512,7 @@ class PublicationsControllerTest extends TestCase {
 		$rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => []]);
 		$mockObjService->method('find')->willReturn($rootObject);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('findObjectLocation')->willReturn(null);
 		$this->queryService->method('isAnonymous')->willReturn(true);
 		$this->queryService->method('isObjectPublic')->willReturn(false);
@@ -670,6 +690,92 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(200, $response->getStatus());
 	}
+
+	/**
+	 * PINS THE WOO-580 EMPTY-ENVELOPE BRANCH. Read this together with
+	 * `testIndexWithEmptySchemas()` below, which predates the branch and asserts
+	 * only the status code — it stays green with the branch deleted, because the
+	 * stubbed OpenRegister call answers an empty result either way. That makes it
+	 * a test of the route, not of the guard's consequence.
+	 *
+	 * The consequence is the thing worth pinning. `buildCatalogSearchQuery()`
+	 * sets `_schemas` only when the list is non-empty, and an UNSET scope makes
+	 * OpenRegister search every magic table — the exact opposite of what the
+	 * guard just decided. So the branch has to answer before any OR call, and the
+	 * assertion that proves it is a negative one: `searchObjectsPaginated` is
+	 * never reached.
+	 *
+	 * Mutation-checked 2026-09-22: delete the branch and this test goes red, with
+	 * exactly one failure — `Failed asserting that 500 matches expected 200`.
+	 *
+	 * The route falls through to the OpenRegister call the guard had ruled out;
+	 * the `never()` matcher throws at that moment, the controller's own
+	 * `catch (\Exception)` swallows it into a generic 500, and the status
+	 * assertion then fails. The `never()` expectations do NOT also report: PHPUnit
+	 * calls `verifyMockObjects()` on the line AFTER `runTest()`
+	 * (TestCase::runBare), so once the test body has thrown, mock verification is
+	 * never reached. An earlier version of this docblock claimed they failed
+	 * "alongside it at teardown"; they do not, and the mutation output said so —
+	 * one failure, not two.
+	 *
+	 * Which is worth spelling out, because it means the status assertion is the
+	 * ONLY thing standing between a deleted branch and a green suite here. The
+	 * `never()` expectations are still worth keeping — they are what makes the
+	 * intent readable, and they would report on a mutation that does not throw —
+	 * but they are not the safety net in this particular case.
+	 *
+	 * Here the catalog arrives WITH schemas and the guard drops them all, which
+	 * is the real shape — a catalog configured with nothing at all is the less
+	 * interesting case.
+	 *
+	 * @return void
+	 */
+	public function testIndexAnswersTheEmptyEnvelopeWithoutQueryingWhenTheGuardDropsEverySchema(): void {
+		$mockObjService = $this->mockObjectService();
+
+		// THE point of this test: the guard decided the anonymous scope is empty,
+		// so nothing may be asked of OpenRegister at all.
+		$mockObjService->expects($this->never())->method('searchObjectsPaginated');
+		$mockObjService->expects($this->never())->method('buildSearchQuery');
+
+		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService->method('applyCatalogReadRuleGuard')
+			->willReturnCallback(
+				static function (array $catalog): array {
+					// Every schema carried no read rules and was dropped.
+					$catalog['schemas'] = [];
+					return $catalog;
+				}
+			);
+		$this->queryService->expects($this->never())->method('buildCatalogSearchQuery');
+		$this->controller = $this->newControllerWithQueryService();
+
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn([
+				'title'     => 'Guarded Catalog',
+				'schemas'   => [1, 2, 3],
+				'registers' => [7],
+			]);
+
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$response = $this->controller->index('guarded');
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(200, $response->getStatus());
+
+		$body = $response->getData();
+		$this->assertSame([], $body['results'], 'nothing survives the guard, so nothing is returned');
+		$this->assertSame(0, $body['total'], 'and the envelope may not advertise rows it cannot deliver');
+		$this->assertSame(
+			[],
+			$body['@catalog']['schemas'],
+			'the metadata must not name a schema the caller may not read'
+		);
+		$this->assertSame([7], $body['@catalog']['registers'], 'the rest of the catalog block is untouched');
+	}//end testIndexAnswersTheEmptyEnvelopeWithoutQueryingWhenTheGuardDropsEverySchema()
+
 
 	public function testIndexWithEmptySchemas(): void {
 		$mockObjService = $this->mockObjectService();
@@ -921,7 +1027,7 @@ class PublicationsControllerTest extends TestCase {
 
 		// The query service resolves the object's register/schema across the magic
 		// tables; the controller then re-queries ObjectService with that location.
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $data) => $data);
@@ -1016,7 +1122,7 @@ class PublicationsControllerTest extends TestCase {
 		$mockObjService->method('searchObjects')
 			->willReturn([]);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $data) => $data);
@@ -1637,7 +1743,7 @@ class PublicationsControllerTest extends TestCase {
 
 		// Stub findObjectLocation to claim the object is in the catalog's scope so we
 		// exercise the post-lookup membership check (not the upstream constraint).
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $d) => $d);
@@ -1675,7 +1781,7 @@ class PublicationsControllerTest extends TestCase {
 
 		$mockObjService->method('searchObjects')->willReturn([]);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $d) => $d);
@@ -1721,7 +1827,7 @@ class PublicationsControllerTest extends TestCase {
 
 		$mockObjService->method('searchObjects')->willReturn([]);
 
-		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService = $this->newQueryServiceDouble();
 		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
 		$this->queryService->method('stripEmptyValues')
 			->willReturnCallback(fn (array $d) => $d);

@@ -41,6 +41,7 @@ use GuzzleHttp\Psr7\Request as Psr7Request;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -121,6 +122,9 @@ class DirectoryService {
 	 * @param BroadcastService $broadcastService Broadcast service for notifying other directories
 	 * @param IRequest $request Request interface for accessing HTTP headers
 	 * @param LoggerInterface|null $logger PSR-3 logger for the SSRF-allowance warning
+	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a sync met, or nothing when absent.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	public function __construct(
 		private readonly IURLGenerator $urlGenerator,
@@ -135,6 +139,9 @@ class DirectoryService {
 		// SSRF-allowance warning, and a missing logger must not be the reason
 		// directory sync stops working.
 		private readonly ?LoggerInterface $logger = null,
+		// The integriq connection report (adopt-connection-registry). Nullable
+		// and last for the same reason as the logger above.
+		private readonly ?ConnectionReporter $connectionReporter = null,
 	) {
 		$this->appName = 'opencatalogi';
 		$this->client = new Client([]);
@@ -173,9 +180,14 @@ class DirectoryService {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 * @throws GuzzleException
 	 *
+	 * The outcome is also reported to integriq's connection registry, from the
+	 * cron job and the Sync directories now button alike
+	 * (adopt-connection-registry). The report never changes the result.
+	 *
 	 * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	public function doCronSync(): array {
 		// BFS-discovery: iterate over peer /api/directory URLs (not publications URLs).
@@ -244,6 +256,8 @@ class DirectoryService {
 				'error' => $syncResult['error'],
 			];
 		}
+
+		$this->connectionReporter?->reportDirectorySync(results: $results);
 
 		return $results;
 	}//end doCronSync()
