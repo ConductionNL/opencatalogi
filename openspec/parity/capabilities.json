@@ -792,7 +792,7 @@
 		{
 			"id": "pub-attach",
 			"area": "publications",
-			"name": "Attach documents to a publication and keep them as files in Nextcloud.",
+			"name": "Attach documents to a publication and keep them as files the organisation manages itself.",
 			"source": "own-code",
 			"opencatalogi": "yes",
 			"built": {
@@ -816,7 +816,8 @@
 				"xxllnc": "docs read 2026-09-26: publications carry attached documents: https://vught.woopublicaties.nl/publicationbackend/Publication/{id}/documents lists files per publication (e.g. two PDFs on \"Participatiebeleid\", public instance vught.woopublicaties.nl, established as xxllnc Publiceren because https://xxllnc.nl/applicaties/publiceren/ names the portal domain pattern gemeente.woopublicaties.nl and the sibling realm datamask.woopublicaties.nl answers /publicationbackend/Platform with customerName \"DataMask test\" and email noreply@xxllnc.nl); keeping them as files in Nextcloud does not apply, the files live in the vendor platform",
 				"iprox": "docs read 2026-09-26: https://iprox.nl/oplossingen/66/iprox-open: \"uploaden van (grote) dossiers tot 10Gb\"; https://iprox.nl/pages/601/page: \"grote hoeveelheden data in een keer te uploaden, inclusief de mappenstructuur van het Woo-dossier\"; keeping the files in Nextcloud does not apply, they live in the vendor platform",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"attach documents to a publication and keep them as files in Nextcloud\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"Attach documents to a publication and keep them as files in Nextcloud.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row."
 		},
 		{
 			"id": "pub-attach-select",
@@ -1120,7 +1121,7 @@
 		{
 			"id": "pub-unpublished",
 			"area": "publications",
-			"name": "See on the Nextcloud dashboard which publications and attachments are not yet published.",
+			"name": "See on a dashboard which publications and attachments are not yet published.",
 			"source": "own-code",
 			"opencatalogi": "no",
 			"built": {
@@ -1129,7 +1130,7 @@
 				"evidence": "lib/AppInfo/Application.php:111-112 registers both widgets; src/views/widgets/UnpublishedPublicationsWidget.vue:76 filters status === 'Concept' but publication status enum is published|archived (publication_register.json:207); UnpublishedAttachmentsWidget.vue:96 fetches collection 'attachment', a type no longer provisioned (SettingsService.php:1185-1191)"
 			},
 			"reachedOn": "Nextcloud dashboard widgets render, but both lists are always empty",
-			"note": "Dead: both widgets filter on a 'Concept' status no current record can carry. Row click also needs a catalog FK that publications do not have (UnpublishedPublicationsWidget.vue:110).",
+			"note": "Dead: both widgets filter on a 'Concept' status no current record can carry. Row click also needs a catalog FK that publications do not have (UnpublishedPublicationsWidget.vue:110). Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"See on the Nextcloud dashboard which publications and attachments are not yet published.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "publications",
@@ -4711,7 +4712,7 @@
 		{
 			"id": "ops-settings",
 			"area": "operations",
-			"name": "Point the app at the register and schemas it stores its data in.",
+			"name": "Choose where the app stores its data and which metadata models it uses.",
 			"source": "own-code",
 			"opencatalogi": "yes",
 			"built": {
@@ -4735,7 +4736,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"point the app at the register and schemas it stores its data in\"; no public admin guide, release notes or operations page exists for xxllnc Publiceren. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"point the app at the register and schemas it stores its data in\"; no public admin guide, release notes or operations page exists for iprox.open. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"point the app at the register and schemas it stores its data in\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"Point the app at the register and schemas it stores its data in.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row."
 		},
 		{
 			"id": "ops-reimport",
@@ -4829,7 +4831,7 @@
 		{
 			"id": "ops-most-viewed",
 			"area": "operations",
-			"name": "See the most viewed publications on the Nextcloud dashboard.",
+			"name": "See which publications are viewed most, on a dashboard.",
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
@@ -4838,7 +4840,7 @@
 				"evidence": "lib/AppInfo/Application.php:113 registers MostViewedPublicationsWidget; src/views/widgets/MostViewedPublicationsWidget.vue:66-69 catalogSlug hard-coded 'publications'; :95 shows the publication UUID as the title; :138 row link /publications/{id} lands on the catalogSlug route"
 			},
 			"reachedOn": "Nextcloud dashboard 'most viewed' widget",
-			"note": "It renders, but only for one catalogue slug, shows UUIDs not titles, and the row link is broken. It also depends on the unprovisioned counter.",
+			"note": "It renders, but only for one catalogue slug, shows UUIDs not titles, and the row link is broken. It also depends on the unprovisioned counter. Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"See the most viewed publications on the Nextcloud dashboard.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "usage-analytics",
@@ -5697,7 +5699,7 @@
 		{
 			"id": "ops-notifications",
 			"area": "operations",
-			"name": "Get a Nextcloud notification when a publication needs attention.",
+			"name": "Get notified when a publication needs attention.",
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
@@ -5722,7 +5724,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"get a Nextcloud notification when a publication needs attention\"; no public admin guide, release notes or operations page exists for xxllnc Publiceren. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"get a Nextcloud notification when a publication needs attention\"; no public admin guide, release notes or operations page exists for iprox.open. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"get a Nextcloud notification when a publication needs attention\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"Get a Nextcloud notification when a publication needs attention.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row."
 		}
 	]
 }
