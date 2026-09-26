@@ -2935,10 +2935,11 @@
 			"built": {
 				"state": "building",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "portaliq lib/Controller/ContentController.php:105-125 gates page content by portal.authentication.modes (for example digid, minTrust substantial); portaliq lib/Controller/SessionController.php:10 says the DigiD/eHerkenning broker is dormant; opencatalogi publications reach portaliq only through @PublicPage federation endpoints (FederationController.php:74)"
+				"evidence": "portaliq lib/Controller/ContentController.php:105-125 gates page content by portal.authentication.modes (for example digid, minTrust substantial); portaliq lib/Controller/SessionController.php:284 oidcStart() and :370 oidcCallback() (appinfo/routes.php:153-154, GET /portal/api/session/oidc/start and /oidc/callback) are a working generic OIDC relying party, and lib/Service/OidcClaimMapperService.php:74-91 ships digid, eherkenning and eidas presets (portaliq commit eb85956). The class docblock at SessionController.php:6-11 still calls the DigiD/eHerkenning broker dormant; that docblock is stale; opencatalogi publications reach portaliq only through @PublicPage federation endpoints (FederationController.php:74)",
+				"readOn": "2026-09-26"
 			},
 			"reachedOn": "portaliq portal-level gate. No per-document restriction on opencatalogi publications",
-			"note": "The gate is per portal, not per document, and the DigiD broker is not wired. opencatalogi has no notion of a publication visible only to authenticated citizens.",
+			"note": "The gate is per portal, not per document. DigiD and eHerkenning login works through portaliq's generic OIDC broker when the organisation fronts it with its own OIDC identity provider (corrected 2026-09-26: the earlier 'broker not wired' rested on a stale SessionController docblock). opencatalogi has no notion of a publication visible only to authenticated citizens.",
 			"provider": "portaliq",
 			"providerHow": "read-from-code",
 			"feature": "public-cms",
