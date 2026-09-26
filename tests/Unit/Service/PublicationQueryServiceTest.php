@@ -428,6 +428,187 @@ class PublicationQueryServiceTest extends TestCase {
 	}
 
 	/**
+	 * The query OR's `buildSearchQuery()` makes of an anonymous
+	 * `?schema=56&register=20&@self[owner]=alice&_register=99`: `schema` and
+	 * `register` land in `@self`, where MagicMapper prefers them over `_schemas`.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function callerScopeOverride(): array {
+		return [
+			'@self'     => ['schema' => 56, 'register' => 20, 'schemas' => [56], 'registers' => [20], 'owner' => 'alice'],
+			'schema'    => 56,
+			'register'  => 20,
+			'_register' => 99,
+			'_schemas'  => [56],
+		];
+	}
+
+	/**
+	 * WOO-581 review f2: on `/api/search` a caller's `schema=` / `register=`
+	 * reached OR as `@self.schema`, won the precedence chain over the guarded
+	 * `_schemas` and read a schema without an `authorization` block — even one
+	 * in no catalog. Every scope key goes; non-scope `@self` filters stay.
+	 *
+	 * @return void
+	 */
+	public function testAssembleStripsACallerSuppliedSchemaAndRegister(): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog($this->callerScopeOverride()), $fake);
+
+		$captured = $fake->capturedCalls[0]['query'];
+		$this->assertSame(['owner' => 'alice'], $captured['@self']);
+		$this->assertArrayNotHasKey('schema', $captured);
+		$this->assertArrayNotHasKey('register', $captured);
+		$this->assertSame([1, 2], $captured['_schemas']);
+		$this->assertSame(1, $captured['_register']);
+	}//end testAssembleStripsACallerSuppliedSchemaAndRegister()
+
+	/**
+	 * WOO-581 review f2, `/api/{catalogSlug}`: the guarded catalog is the scope,
+	 * whatever `schema=` / `register=` the caller sends.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryStripsACallerSuppliedSchemaAndRegister(): void {
+		$fake = new FakeSearchObjectService();
+
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [28], 'registers' => [20]],
+			queryParams: $this->callerScopeOverride(),
+			objectService: $fake
+		);
+
+		$this->assertSame(['owner' => 'alice'], $query['@self']);
+		$this->assertArrayNotHasKey('schema', $query);
+		$this->assertArrayNotHasKey('register', $query);
+		$this->assertSame([28], $query['_schemas']);
+		$this->assertSame(28, $query['_schema']);
+		$this->assertSame(20, $query['_register']);
+	}//end testCatalogSearchQueryStripsACallerSuppliedSchemaAndRegister()
+
+	/**
+	 * A scalar `@self` (`?@self=x`) is not a filter set; it goes rather than
+	 * reaching OR, which would read `@self['schema']` off a string.
+	 *
+	 * @return void
+	 */
+	public function testStripCallerScopeDropsANonArraySelf(): void {
+		$this->assertSame(['_limit' => 5], \OCA\OpenCatalogi\Service\CallerScope::strip(query: ['@self' => 'x', '_limit' => 5, '_schema' => 56]));
+	}//end testStripCallerScopeDropsANonArraySelf()
+
+	/**
+	 * Catalog shapes for {@see testCatalogSearchQueryNeverEmitsAScalarSchemaWithoutAScalarRegister()}.
+	 *
+	 * @return array<string, array{0: array<int, int>, 1: bool}>
+	 */
+	public static function catalogRegisterShapes(): array {
+		return [
+			'one register'         => [[20], true],
+			'several registers'    => [[20, 21], false],
+			'no register'          => [[], false],
+			'JSON-string, several' => ['[20,21]', false],
+		];
+	}
+
+	/**
+	 * WOO-581 review round 2 (f1/f6): a scalar `_schema` without a scalar
+	 * register takes neither OR's multi-schema route nor its single-schema one,
+	 * and a caller's `_ids` then reaches the all-tables lookup. `_schema` is only
+	 * set for ONE schema in ONE register; every other shape leaves the scope to
+	 * `_schemas` (OR's multi-schema route resolves each schema's register).
+	 *
+	 * @dataProvider catalogRegisterShapes
+	 *
+	 * @param array<int, int>|string $registers     The catalog's registers.
+	 * @param bool                   $scalarSchema  Whether `_schema` is expected.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryNeverEmitsAScalarSchemaWithoutAScalarRegister(array|string $registers, bool $scalarSchema): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [28], 'registers' => $registers],
+			queryParams: ['_ids' => ['uuid-x']],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame([28], $query['_schemas']);
+		$this->assertSame($scalarSchema, array_key_exists('_schema', $query));
+		if ($scalarSchema === true) {
+			$this->assertSame(20, $query['_register']);
+		}
+	}//end testCatalogSearchQueryNeverEmitsAScalarSchemaWithoutAScalarRegister()
+
+	/**
+	 * WOO-581 review round 2 (f3): the rows of a relation result go through the
+	 * read-rule guard for an anonymous caller. A row of a schema without an
+	 * `authorization` block goes, a row without a numeric schema id goes (fail
+	 * closed), a row of a ruled schema stays — whether or not that schema is in
+	 * any catalog. `total` drops by the rows removed from this page.
+	 *
+	 * @return void
+	 */
+	public function testRowGuardDropsRowsOfSchemasWithoutReadRulesForAnAnonymousCaller(): void {
+		$this->wireHappyPath(authorizationById: [56 => null]);
+		$entity = new class {
+			public function jsonSerialize(): array { return ['id' => 'doc-entity', '@self' => ['schema' => 3]]; }
+		};
+
+		$out = $this->service->applyReadRuleGuardToRows(result: [
+			'results' => [
+				['id' => 'doc-ok', '@self' => ['schema' => '3']],
+				['id' => 'secret', '@self' => ['schema' => '56']],
+				['id' => 'no-schema', '@self' => []],
+				$entity,
+			],
+			'total' => 10,
+			'limit' => 30,
+		]);
+
+		$this->assertSame(['doc-ok', 'doc-entity'], array_map(static fn ($r) => is_array($r) ? $r['id'] : $r->jsonSerialize()['id'], $out['results']));
+		$this->assertSame(8, $out['total']);
+		$this->assertSame(30, $out['limit']);
+	}//end testRowGuardDropsRowsOfSchemasWithoutReadRulesForAnAnonymousCaller()
+
+	/**
+	 * Anonymous-only: a signed-in caller gets OR's relation result untouched.
+	 *
+	 * @return void
+	 */
+	public function testRowGuardLeavesTheResultUntouchedForASignedInCaller(): void {
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$this->service = new PublicationQueryService(container: $this->container, userSession: $session, config: $this->config, logger: $this->logger);
+		$this->wireHappyPath(authorizationById: [56 => null]);
+
+		$result = ['results' => [['id' => 'secret', '@self' => ['schema' => '56']]], 'total' => 1];
+		$this->assertSame($result, $this->service->applyReadRuleGuardToRows(result: $result));
+	}//end testRowGuardLeavesTheResultUntouchedForASignedInCaller()
+
+	/**
+	 * WOO-581 review round 2 (f5): `_content=true` widens the scope to the
+	 * registers' document schemas AFTER the SCH-PFTS-CAT-002 guard ran, so the
+	 * widening gets the same guard: a document schema without an
+	 * `authorization` block is not added; a ruled one is.
+	 *
+	 * @return void
+	 */
+	public function testContentSearchDoesNotWidenToADocumentSchemaWithoutReadRules(): void {
+		$fake = $this->wireHappyPath(
+			authorizationById: [7 => null],
+			registerSchemas: [1 => [1, 2, 7, 8]],
+			slugById: [7 => 'document', 8 => 'document']
+		);
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x', '_content' => 'true']), $fake);
+
+		$schemas = $fake->capturedCalls[0]['query']['_schemas'];
+		$this->assertContains(8, $schemas);
+		$this->assertNotContains(7, $schemas);
+	}//end testContentSearchDoesNotWidenToADocumentSchemaWithoutReadRules()
+
+	/**
 	 * SCH-PFTS-CAT-002: default-scope catalog fixture in wireHappyPath declares
 	 * schemas [1,2] on register 1. Those MUST propagate to the OR query.
 	 */
@@ -1038,7 +1219,85 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame([1, 2], $guarded['schemas']);
 	}//end testCatalogGuardKeepsEverySchemaThatCarriesReadRules()
 
-	private function wireHappyPath(array $authorizationById = []): FakeSearchObjectService {
+	/**
+	 * WOO-581: the union readers (`/api/federation/publications`,
+	 * `/api/catalogi/{id}`) hand in a bare schema list, not a catalog. A schema
+	 * without an `authorization` block — the shape that actually leaks — is
+	 * dropped for an anonymous caller, with the same SCH-PFTS-CAT-002 warning.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardDropsSchemaWithoutAuthorizationBlockForAnonymousCaller(): void {
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
+			$this->stringContains('no authorization.read rules'),
+			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2)
+		);
+
+		$this->assertSame([1], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
+	}//end testSchemaScopeGuardDropsSchemaWithoutAuthorizationBlockForAnonymousCaller()
+
+	/**
+	 * The unions arrive as whatever the catalog objects stored — numeric strings
+	 * included. They are normalised before the guard looks, so the encoding
+	 * cannot sidestep it.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardNormalisesNumericStringIds(): void {
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$this->assertSame([1], $this->service->applySchemaScopeReadRuleGuard(schemaIds: ['1', '2']));
+	}//end testSchemaScopeGuardNormalisesNumericStringIds()
+
+	/**
+	 * Nothing survives → an empty scope. Every caller must read that as
+	 * "nothing to search", which their own tests pin.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardEmptiesTheScopeWhenNoSchemaHasReadRules(): void {
+		$this->wireHappyPath(authorizationById: [1 => null, 2 => []]);
+
+		$this->assertSame([], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
+	}//end testSchemaScopeGuardEmptiesTheScopeWhenNoSchemaHasReadRules()
+
+	/**
+	 * Anonymous-only, and for a signed-in caller the list comes back UNTOUCHED —
+	 * not even normalised — so session RBAC on the union paths does not move.
+	 * The non-numeric entry is the proof: normalising would have dropped it.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardLeavesTheListUntouchedForASignedInCaller(): void {
+		$user = $this->createMock(\OCP\IUser::class);
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$this->service = new PublicationQueryService(
+			container: $this->container,
+			userSession: $session,
+			config: $this->config,
+			logger: $this->logger,
+		);
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$this->assertSame(['1', '2', 'legacy-slug'], $this->service->applySchemaScopeReadRuleGuard(schemaIds: ['1', '2', 'legacy-slug']));
+	}//end testSchemaScopeGuardLeavesTheListUntouchedForASignedInCaller()
+
+	/**
+	 * Negative control: every schema carries read rules → nothing changes, so
+	 * the guard cannot be why a working federation feed goes quiet.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardKeepsEverySchemaThatCarriesReadRules(): void {
+		$this->wireHappyPath();
+
+		$this->assertSame([1, 2], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
+	}//end testSchemaScopeGuardKeepsEverySchemaThatCarriesReadRules()
+
+	private function wireHappyPath(array $authorizationById = [], array $registerSchemas = [], array $slugById = []): FakeSearchObjectService {
 		$fakeObjectService = new FakeSearchObjectService();
 
 		$catalog = [
@@ -1054,7 +1313,7 @@ class PublicationQueryServiceTest extends TestCase {
 		$fakeCatalogiService->catalogsBySlug = ['default-catalog' => $catalog];
 
 		$fakeSchemaMapper = new FakeSchemaMapper();
-		$fakeSchemaMapper->slugById = [1 => 'publication', 2 => 'document'];
+		$fakeSchemaMapper->slugById = ($slugById + [1 => 'publication', 2 => 'document']);
 		$fakeSchemaMapper->authorizationById = $authorizationById;
 
 		// Config keys needed by the default-scope enumeration path; safe to set
@@ -1068,11 +1327,22 @@ class PublicationQueryServiceTest extends TestCase {
 		);
 
 		$this->container->method('get')->willReturnCallback(
-			function (string $key) use ($fakeCatalogiService, $fakeSchemaMapper, $fakeObjectService) {
+			function (string $key) use ($fakeCatalogiService, $fakeSchemaMapper, $fakeObjectService, $registerSchemas) {
 				return match ($key) {
 					'OCA\\OpenCatalogi\\Service\\CatalogiService' => $fakeCatalogiService,
 					'OCA\\OpenRegister\\Db\\SchemaMapper'         => $fakeSchemaMapper,
 					'OCA\\OpenRegister\\Service\\ObjectService'   => $fakeObjectService,
+					'OCA\\OpenRegister\\Db\\RegisterMapper' => ($registerSchemas !== []
+						? new class ($registerSchemas) {
+							public function __construct(private array $map) {}
+							public function find(int $id): object {
+								return new class (($this->map[$id] ?? [])) {
+									public function __construct(private array $schemas) {}
+									public function getSchemas(): array { return $this->schemas; }
+								};
+							}
+						}
+						: throw new \RuntimeException("Unmocked container key: {$key}")),
 					default => throw new \RuntimeException("Unmocked container key: {$key}"),
 				};
 			}

@@ -26,6 +26,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\CallerScope;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -40,6 +41,8 @@ use RuntimeException;
 
 /**
  * Controller for handling catalog-related operations.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One over the limit since index() strips caller scope via CallerScope (WOO-581).
  */
 class CatalogiController extends Controller {
 	use ResolvesRegisterConfiguration;
@@ -202,6 +205,7 @@ class CatalogiController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
@@ -217,6 +221,10 @@ class CatalogiController extends Controller {
 
 		// Build search query for searchObjectsPaginated.
 		$searchQuery = $this->getObjectService()->buildSearchQuery($requestParams);
+
+		// The configured scope below wins for the rows, but OR's facet path reads
+		// `@self.schemas ?? _schemas` first; drop every caller scope key (WOO-581).
+		$searchQuery = CallerScope::strip(query: $searchQuery);
 
 		// Constrain the query to the configured catalog register/schema.
 		// Set the top-level _register/_schema keys directly: the @self keys produced

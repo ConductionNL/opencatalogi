@@ -181,6 +181,34 @@ class PublicationService {
 	}//end getQueryService()
 
 	/**
+	 * Hold a catalog-union schema scope to the SCH-PFTS-CAT-002 read-rule guard.
+	 *
+	 * The union built here serves `#[PublicPage]` routes — `/api/federation/
+	 * publications` and its fast paths — and used to reach
+	 * `searchObjects(_rbac: true)` unguarded, so an anonymous caller read the full
+	 * record of any schema without an `authorization` block in any catalog, listed
+	 * or not (WOO-581). The rule itself lives in
+	 * {@see PublicationQueryService::applySchemaScopeReadRuleGuard()}; this only
+	 * routes both union builders (getCatalogFilters() and the ultra-fast path)
+	 * through it. Anonymous-only: signed-in callers get the union back untouched.
+	 *
+	 * The single-object family follows automatically: isObjectInCatalogScope()
+	 * and setObjectServiceContext() build their allowed set from
+	 * getCatalogFilters(), so `/api/federation/publications/{id}` and its
+	 * `/uses`, `/used`, `/attachments` and `/download` siblings (all
+	 * `#[PublicPage]`) answer 404 for an object in a dropped schema.
+	 *
+	 * @param array $schemas The de-duplicated schema union.
+	 *
+	 * @return array The union, filtered for an anonymous caller.
+	 *
+	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+	 */
+	private function guardSchemaScope(array $schemas): array {
+		return $this->getQueryService()->applySchemaScopeReadRuleGuard(schemaIds: $schemas);
+	}//end guardSchemaScope()
+
+	/**
 	 * Set register/schema context on the ObjectService for a given object UUID.
 	 *
 	 * Locates which register/schema an object belongs to — scoped to the catalogs
@@ -397,7 +425,9 @@ class PublicationService {
 
 		// Remove duplicate values and assign to class properties.
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
-		$this->availableSchemas = $this->collectUnique(catalogs: $catalogs, property: 'schemas');
+		$this->availableSchemas = $this->guardSchemaScope(
+			schemas: $this->collectUnique(catalogs: $catalogs, property: 'schemas')
+		);
 
 		$result = [
 			'registers' => array_values($this->availableRegisters),
@@ -452,6 +482,7 @@ class PublicationService {
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	private function searchPublications(null|string|int $catalogId = null, ?array $ids = null, ?array $customParams = null): array {
 		// Use custom parameters if provided, otherwise use request parameters.
@@ -500,6 +531,12 @@ class PublicationService {
 		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
+		// FAIL CLOSED on an empty schema scope (WOO-581): an empty `@self.schema`
+		// must never be read as "no schema filter".
+		if (empty($context['schemas']) === true) {
+			return ['results' => [], 'facets' => [], 'total' => 0];
+		}
+
 		// Validate requested registers and schemas against the context.
 		$requestedRegisters = ($searchQuery['@self']['register'] ?? []);
 		$requestedSchemas = ($searchQuery['@self']['schema'] ?? []);
@@ -541,6 +578,13 @@ class PublicationService {
 		$schemas = $context['schemas'];
 		if (empty($requestedSchemas) === false) {
 			$schemas = $requestedSchemas;
+		}
+
+		// Only the (validated) narrowing above survives; every other scope key the
+		// caller sent goes, or OR's facet path follows it (WOO-581 review round 2).
+		$searchQuery = CallerScope::strip(query: $searchQuery);
+		if (isset($searchQuery['@self']) === false) {
+			$searchQuery['@self'] = [];
 		}
 
 		$searchQuery['@self']['register'] = $registers;
@@ -2018,6 +2062,7 @@ class PublicationService {
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	private function getLocalPublicationsUltraFast(
 		array $queryParams,
@@ -2102,7 +2147,7 @@ class PublicationService {
 				}
 
 				$this->availableRegisters = array_unique($uniqueRegisters);
-				$this->availableSchemas = array_unique($uniqueSchemas);
+				$this->availableSchemas = $this->guardSchemaScope(schemas: array_unique($uniqueSchemas));
 
 				$catalogContext = [
 					'registers' => array_values($this->availableRegisters),
@@ -2115,17 +2160,38 @@ class PublicationService {
 					'availableSchemas' => $this->availableSchemas,
 				];
 			} catch (\Exception $e) {
-				// Fallback to defaults.
-				$this->availableRegisters = [$register];
-				$this->availableSchemas = [$schema];
+				// FAIL CLOSED (WOO-581 review): this used to fall back to the configured
+				// catalog register/schema, unguarded — so a transient catalog-lookup
+				// failure made this public endpoint search the CATALOG schema where
+				// publications belong. An empty scope returns the empty page below.
+				$this->availableRegisters = [];
+				$this->availableSchemas = [];
 				$catalogContext = [
-					'registers' => [$register],
-					'schemas' => [$schema],
+					'registers' => [],
+					'schemas' => [],
 				];
 			}//end try
 		}//end if
 
-		// Set up the search query properly (preserve original logic from searchPublications).
+		// FAIL CLOSED on an empty schema scope (WOO-581): nothing configured, or
+		// every schema dropped by guardSchemaScope(). An empty `@self.schema`
+		// must never be read as "no schema filter".
+		if (empty($catalogContext['schemas']) === true) {
+			return [
+				'results' => [],
+				'total' => 0,
+				'limit' => $limit,
+				'offset' => $offset,
+				'page' => $page,
+				'pages' => 1,
+			];
+		}
+
+		// The scope is the guarded catalog union, never the caller's (WOO-581 review
+		// round 2): the rows already followed the server's `@self.schema`, but OR's
+		// facet path reads `@self.schemas ?? _schemas` first, so a caller's keys
+		// steered the facets to any schema. See CallerScope::strip().
+		$searchQuery = CallerScope::strip(query: $searchQuery);
 		if (isset($searchQuery['@self']) === false) {
 			$searchQuery['@self'] = [];
 		}

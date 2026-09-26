@@ -102,6 +102,7 @@ class SitemapService {
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator
 	 * @param IAppConfig $config App configuration (operator-tunable page size)
 	 * @param TooiVocabularyService $tooiVocabulary The TOOI value-list resolver
+	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -110,6 +111,7 @@ class SitemapService {
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IAppConfig $config,
 		private readonly TooiVocabularyService $tooiVocabulary,
+		private readonly PublicationQueryService $queryService,
 	) {
 
 	}//end __construct()
@@ -196,6 +198,18 @@ class SitemapService {
 			return $isValid;
 		}
 
+		$emptyIndex = new XMLResponse(
+			data: [
+				'@root' => 'sitemapindex',
+				'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
+				'sitemap' => [],
+			]
+		);
+
+		if ($this->isDroppedByReadRuleGuard(schemaId: $schemaId) === true) {
+			return $emptyIndex;
+		}
+
 		$searchQuery = [];
 		$searchQuery['@self']['register'] = $registerId;
 		$searchQuery['@self']['schema'] = $schemaId;
@@ -216,13 +230,7 @@ class SitemapService {
 		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
 		if (empty($firstPage['results']) === true) {
-			return new XMLResponse(
-				data: [
-					'@root' => 'sitemapindex',
-					'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
-					'sitemap' => [],
-				]
-			);
+			return $emptyIndex;
 		}
 
 		// Determine lastMod for this specific batch.
@@ -311,21 +319,26 @@ class SitemapService {
 			return $isValid;
 		}
 
-		$searchQuery = [];
-		$searchQuery['@self']['register'] = $registerId;
-		$searchQuery['@self']['schema'] = $schemaId;
-		$searchQuery['_limit'] = $this->getMaxPerPage();
-		$searchQuery['_page'] = $page;
+		// Fail closed: a schema the read-rule guard drops yields a valid, empty
+		// document list, never a search (see isDroppedByReadRuleGuard()).
+		$publications = [];
+		if ($this->isDroppedByReadRuleGuard(schemaId: $schemaId) === false) {
+			$searchQuery = [];
+			$searchQuery['@self']['register'] = $registerId;
+			$searchQuery['@self']['schema'] = $schemaId;
+			$searchQuery['_limit'] = $this->getMaxPerPage();
+			$searchQuery['_page'] = $page;
 
-		$publicationResult = $objectService->searchObjectsPaginated(
-			query: $searchQuery,
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
+			$publicationResult = $objectService->searchObjectsPaginated(
+				query: $searchQuery,
+				_rbac: true,
+				_multitenancy: false,
+				deleted: false
+			);
 
-		// Visibility governed by RBAC on the search above (_rbac: true).
-		$publications = ($publicationResult['results'] ?? []);
+			// Visibility governed by RBAC on the search above (_rbac: true).
+			$publications = ($publicationResult['results'] ?? []);
+		}
 
 		$fileService = $this->getFileService();
 
@@ -372,6 +385,32 @@ class SitemapService {
 
 		return new XMLResponse(data: $xmlContent);
 	}//end buildSitemap()
+
+	/**
+	 * Whether the SCH-PFTS-CAT-002 read-rule guard drops the sitemap's schema.
+	 *
+	 * The sitemap picks its schema by woo-register category, but admits it on
+	 * membership of the catalog's `schemas` list ({@see isValidSitemapRequest()})
+	 * — the same scope source as every other public catalog reader — and then
+	 * searches it with `_rbac: true`. A schema without an `authorization` block
+	 * is open to every non-private row there, and the sitemap also emits each
+	 * row's document URLs to the national Woo index. So it gets the same
+	 * anonymous-only guard as `/api/{catalogSlug}` (WOO-581 review). A signed-in
+	 * caller is untouched; the admin-only diwooReport keeps session RBAC.
+	 *
+	 * @param int|string|null $schemaId The schema the request resolved to.
+	 *
+	 * @return bool True when the caller must get an empty sitemap.
+	 *
+	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+	 */
+	private function isDroppedByReadRuleGuard(int|string|null $schemaId): bool {
+		if ($schemaId === null) {
+			return true;
+		}
+
+		return $this->queryService->applySchemaScopeReadRuleGuard(schemaIds: [$schemaId]) === [];
+	}//end isDroppedByReadRuleGuard()
 
 	/**
 	 * Validates a sitemap request and resolves catalog, schema, and register IDs.
