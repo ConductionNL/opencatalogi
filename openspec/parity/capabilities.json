@@ -75,6 +75,10 @@
 					"TenderNed 302360: Gemeente Leeuwarden with Noardeast-Fryslan, Waadhoeke and the Wadden islands, marktconsultatie Publicatieplatform Woo en Wep, 2023-06-29 (the product is not named)",
 					"No tender in the intelligence database names CKAN (searched name, description and winner for 'ckan' on 2026-09-26: 11 false hits on the place name Westvoorne/Voorne)"
 				]
+			},
+			"readVersion": {
+				"tag": "ckan-2.12.0",
+				"commit": "0058b2eb5a53b2a1809503fbe59fdbe0f64fbd21"
 			}
 		},
 		{
@@ -83,7 +87,7 @@
 			"vendor": "CivicActions",
 			"readOn": "2026-09-26",
 			"columnAddedOn": "2026-09-25",
-			"evidenceGrade": "docs-only",
+			"evidenceGrade": "source-read",
 			"readHow": "source read at DKAN 4.1.3 (267e68b, git.drupalcode.org/project/dkan, latest release, 2026-08-18) on 2026-09-26, after a first read at the last GitHub release 2.23.2 (8f4d044) that gave the same ratings on all 158 rows; not driven. DKAN is a Drupal distribution with a decoupled React frontend kept outside this tree, and json_form_widget is an external dependency not read. The previous docs-only reading is kept under previousReading",
 			"unknownReason": "source read at DKAN 4.1.3 on 2026-09-26 did not settle this row, and the instance was not driven; the cell says what was searched",
 			"previousReading": {
@@ -137,7 +141,12 @@
 					"trainingCurriculum": "no training programme found; dkan.readthedocs.io has user and developer guides only.",
 					"jobPostings": "no DKAN-specific job listings found on getdkan.org or civicactions.com/dkan."
 				}
-			}
+			},
+			"readVersion": {
+				"tag": "4.1.3",
+				"commit": "267e68b438cee5fd23f7bfad73ac16a67d39d3c9"
+			},
+			"evidenceGradeBefore": "docs-only"
 		},
 		{
 			"key": "xxllnc",
