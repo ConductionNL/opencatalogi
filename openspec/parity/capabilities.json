@@ -31,7 +31,51 @@
 				"readHow": "concurrentie-analyse/openregister/ckan/ (MERGED-ANALYSIS.md dated 2026-03-14, specs/, overview.md) plus intelligence DB competitor_features rows captured 2026-03-21 to 2026-04-18; nobody has driven CKAN for opencatalogi"
 			},
 			"sourceTag": "ckan-2.12.0",
-			"sourceCommit": "0058b2eb5a53b2a1809503fbe59fdbe0f64fbd21"
+			"sourceCommit": "0058b2eb5a53b2a1809503fbe59fdbe0f64fbd21",
+			"sources": {
+				"sources": {
+					"docs": "https://docs.ckan.org/en/2.12/",
+					"sourceRepo": "https://github.com/ckan/ckan",
+					"featurePage": "https://ckan.org/features",
+					"featureRequests": "https://github.com/ckan/ckan/discussions/categories/ideas",
+					"issueTracker": {
+						"url": "https://github.com/ckan/ckan/issues",
+						"featureLabel": null
+					},
+					"roadmap": "https://github.com/ckan/ckan/discussions/categories/ckan-3-0",
+					"changelog": "https://docs.ckan.org/en/latest/changelog.html",
+					"apiReference": "https://docs.ckan.org/en/latest/api/index.html",
+					"marketplace": null,
+					"pricing": null,
+					"accessibilityStatement": null,
+					"securityDocs": "https://github.com/ckan/ckan/security/policy",
+					"demoInstance": "https://demo.ckan.org/",
+					"community": "https://ckan.org/community",
+					"reviews": null,
+					"videos": "https://www.youtube.com/channel/UCVeS3fHRae7BzXVn8wMcQVw",
+					"caseStudies": "https://ckan.org/showcase",
+					"partnerDirectory": "https://ckan.org/commercial",
+					"trainingCurriculum": null,
+					"jobPostings": null,
+					"tenders": null
+				},
+				"nullReasons": {
+					"issueTracker.featureLabel": "gh api repos/ckan/ckan/labels lists no feature or enhancement label (labels are Accessibility, UX, Performance, backport and triage labels); feature ideas go to GitHub Discussions category 'Ideas' instead (the older ckan/ideas repo has had no push since 2021-05-20).",
+					"marketplace": "The extension registry https://ecosystem.ckan.org/extension/ (redirect target of extensions.ckan.org) returned 403 to curl with and without a browser user agent, so it could not be confirmed; ckan.org/extensions is 404.",
+					"pricing": "CKAN is AGPL open source (LICENSE.txt:8); ckan.org/pricing is 404 and ckan.org/commercial lists support vendors (Link Digital, Datopian) without published prices.",
+					"accessibilityStatement": "No statement found: ckan.org/accessibility is 404, ckan.org footer links none, and the repo has only an 'Accessibility' issue label and an axe test (cypress/e2e/a11y.cy.js).",
+					"reviews": "G2 (https://www.g2.com/products/ckan/reviews) and Capterra returned 403 to curl, so no review page could be confirmed.",
+					"trainingCurriculum": "No training programme found on ckan.org (home, events, faq, community pages checked); docs.ckan.org has a user guide (https://docs.ckan.org/en/latest/user-guide.html) but no curriculum.",
+					"jobPostings": "No jobs page on ckan.org (home navigation and footer checked); CKAN is a community project stewarded by Link Digital and Datopian."
+				},
+				"tenders": [
+					"TenderNed 407973: Gemeente Dordrecht / Bedrijfsvoering Drechtsteden, WOO Publicatietool, 2026-01-14, awarded to eData B.V., 224 parsed requirements (category woo; the product is not named)",
+					"TenderNed 391449: De Connectie (Arnhem, Rheden, Renkum), marktconsultatie applicaties voor het integrale Woo-proces, 2025-09-04, 12 requirements (the product is not named)",
+					"TenderNed 344073: Gemeente Emmen, marktconsultatie Publicatieplatform Woo en Wep, 2024-07-19 (the product is not named)",
+					"TenderNed 302360: Gemeente Leeuwarden with Noardeast-Fryslan, Waadhoeke and the Wadden islands, marktconsultatie Publicatieplatform Woo en Wep, 2023-06-29 (the product is not named)",
+					"No tender in the intelligence database names CKAN (searched name, description and winner for 'ckan' on 2026-09-26: 11 false hits on the place name Westvoorne/Voorne)"
+				]
+			}
 		},
 		{
 			"key": "dkan",
@@ -88,8 +132,7 @@
 					"partnerDirectory": "no DKAN partner directory; getdkan.org and civicactions.com/dkan name only CivicActions as maintainer.",
 					"trainingCurriculum": "no training programme found; dkan.readthedocs.io has user and developer guides only.",
 					"jobPostings": "no DKAN-specific job listings found on getdkan.org or civicactions.com/dkan."
-				},
-				"notes": "securityDocs is the Drupal security advisory policy, which drupal.org/project/dkan states covers DKAN stable releases; getdkan.org/security.html is linked from the homepage but returns 404, and the GitHub repo has no SECURITY.md. changelog points at drupal.org because releases moved there with 4.0.0 (31 March 2026); 2.x and 3.x release notes stay at https://github.com/GetDKAN/dkan/releases."
+				}
 			}
 		},
 		{
@@ -626,7 +669,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"evidence": {
-				"ckan": "source read at ckan-2.12.0: the dataset form Visibility select switches a dataset between private and public in one save (templates/package/snippets/package_basic_fields.html:94-98), and the dataset page shows the Private badge (templates/package/read.html:6-7); withdraw is also possible by delete (ckan/logic/action/delete.py:71 package_delete, soft state). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): private dataset: anonymous GET /dataset/lab-prive-1 returned 404, sysadmin 200; package_patch private=false publishes it.",
+				"ckan": "source read at ckan-2.12.0: the dataset edit form has an Unpublish button that moves an active dataset back to draft (ckan/templates/package/snippets/package_form.html:47-50, CHANGELOG.rst v.2.12.0 #8308 'Saving a draft dataset is now called Publish'), and the Visibility select switches between private and public in one save (templates/package/snippets/package_basic_fields.html:94-98), with the Private badge on the page (templates/package/read.html:6-7). Driven 2026-09-26 on the lab (CKAN 2.12.0, ckanext-dcat 2.4.4, ckanext-scheming 3.1.0): private dataset: anonymous GET /dataset/lab-prive-1 returned 404, sysadmin 200; package_patch private=false publishes it.",
 				"dkan": "source read at 2.23.2: the DKAN publishing workflow (modules/metastore/config/install/workflows.workflow.dkan_publishing.yml:15-86, states published, draft, archived, hidden; transitions publish, archive, restore) is set on the edit form moderation select and via PUT /api/1/metastore/schemas/{schema_id}/items/{id}/publish (metastore.routing.yml:61-69, MetastoreController.php:205); drafts and archived datasets are hidden from the catalogue (cypress/e2e/10_workflow_transitions.cy.js:9,55)."
 			}
 		},
