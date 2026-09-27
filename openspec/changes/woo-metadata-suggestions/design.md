@@ -20,7 +20,7 @@ A new schema `metadataSuggestion` in `lib/Settings/register.d/woo-metadata-sugge
 
 `WooMetadataSuggestionService::suggestFromRules(array $publication)`:
 
-- `category`: the `WooCategoryMapping` row for the publication's schema slug when that schema exists (open change `woo-category-mapping-intake`), else the category of the Woo catalogue schema the publication sits in (`SitemapService::INFO_CAT` maps category codes to schema names).
+- `category`: the `WooCategoryMapping` row for the publication's schema slug when that schema exists (open change `woo-category-mapping-intake`), else the category of the Woo catalogue schema the publication sits in (`SitemapService::INFO_CAT`, :76, maps each category's sitemap index name to the category title the Woo schema carries).
 - `organization`: the organisation of the catalogue when the publication has none.
 - `soortHandeling`: `ontvangst` for a record created by an integriq synchronisation, `vaststelling` for one handed over by a case app. The value must resolve through `resolveSoortHandeling()`.
 
