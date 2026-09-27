@@ -56,11 +56,43 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "fed-open-remote",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (CKAN and DKAN open a harvested dataset locally with its resources). No change covers opening a remote publication with its attachments in the app.",
+		"change": "federation-open-remote-publication",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "fed-status",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (ckanext-harvest job list, DKAN harvest overview). Open change dashboard covers staleness checks during sync (DIR-010) and adopt-connection-registry reports to integriq; neither shows a listing's last success on the directory page.",
+		"change": "federation-connection-last-success",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "int-cli",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (the ckan CLI, DKAN drush commands). No change adds maintenance commands beyond the two single-purpose occ commands.",
+		"change": "integration-maintenance-commands",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "int-cmis",
 		"matrix": "opencatalogi",
 		"decision": "defer",
 		"reason": "No competitor rated yes and no tender, featureRequest or roadmap demand; outside opencatalogi's core area (publications, catalogues and woo, the areas of the matrix's first 30 rows).",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "int-consumer-keys",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (CKAN per-user API tokens, DKAN per-consumer accounts). The archived ooapi-catalog-publication change left per-catalogue credential scoping out (SettingsService says it is not implemented).",
+		"change": "integration-feed-consumer-credentials",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -112,6 +144,14 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "od-datastore",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Two competitors rated yes (CKAN datastore_search, DKAN datastore query API). No change covers querying the rows of a published table.",
+		"change": "open-data-table-query-and-dictionary",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "od-dcat",
 		"matrix": "opencatalogi",
 		"decision": "defer",
@@ -141,6 +181,14 @@
 		"decision": "defer",
 		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-dictionary",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Two competitors rated yes (CKAN data dictionary on datastore tables, DKAN data-dictionary items). No change covers describing a dataset's columns; it shares the table store with od-datastore.",
+		"change": "open-data-table-query-and-dictionary",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -181,6 +229,14 @@
 		"decision": "defer",
 		"reason": "No competitor rated yes and no tender, featureRequest or roadmap demand; outside opencatalogi's core area (publications, catalogues and woo, the areas of the matrix's first 30 rows).",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ops-cdn-cache",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "featureRequest demand (https://github.com/GetDKAN/dkan/issues/4783) plus one competitor rated yes (CKAN sets public max-age for anonymous responses). No change covers cache headers on the public publications or search API.",
+		"change": "operations-public-api-cache-headers",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -285,6 +341,22 @@
 		"decision": "defer",
 		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-unpublished",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Rated no with both widgets registered but always empty, and the row is in the core area (publications). Open change dashboard-consume-or-aggregations names the widgets (DSH-011), but its tasks for them are blocked on the attachment schema that attachments-are-files retired, and both widgets filter on a Concept status the publication schema no longer has.",
+		"change": "publications-unpublished-overview",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "srch-cors",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (CKAN origin whitelist, xxllnc access-control-allow-origin). No change adds CORS to /api/search or the federation endpoints, and the allowlist has no settings screen.",
+		"change": "search-cors-on-every-public-endpoint",
 		"decidedOn": "2026-09-27"
 	},
 	{

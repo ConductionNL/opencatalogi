@@ -1135,12 +1135,13 @@
 			"source": "own-code",
 			"opencatalogi": "no",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/AppInfo/Application.php:111-112 registers both widgets; src/views/widgets/UnpublishedPublicationsWidget.vue:76 filters status === 'Concept' but publication status enum is published|archived (publication_register.json:207); UnpublishedAttachmentsWidget.vue:96 fetches collection 'attachment', a type no longer provisioned (SettingsService.php:1185-1191)"
+				"evidence": "lib/AppInfo/Application.php:111-112 registers both widgets; src/views/widgets/UnpublishedPublicationsWidget.vue:76 filters status === 'Concept' but publication status enum is published|archived (publication_register.json:207); UnpublishedAttachmentsWidget.vue:96 fetches collection 'attachment', a type no longer provisioned (SettingsService.php:1185-1191)",
+				"change": "openspec/changes/publications-unpublished-overview"
 			},
 			"reachedOn": "Nextcloud dashboard widgets render, but both lists are always empty",
-			"note": "Dead: both widgets filter on a 'Concept' status no current record can carry. Row click also needs a catalog FK that publications do not have (UnpublishedPublicationsWidget.vue:110). Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"See on the Nextcloud dashboard which publications and attachments are not yet published.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row.",
+			"note": "Dead: both widgets filter on a 'Concept' status no current record can carry. Row click also needs a catalog FK that publications do not have (UnpublishedPublicationsWidget.vue:110). Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"See on the Nextcloud dashboard which publications and attachments are not yet published.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row. Specified in openspec/changes/publications-unpublished-overview (OpenSpec pass 2026-09-27).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "publications",
@@ -2653,9 +2654,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "grep -i datastore in opencatalogi lib/src and portaliq src/lib: 0 hits; no row-query route in appinfo/routes.php"
+				"evidence": "grep -i datastore in opencatalogi lib/src and portaliq src/lib: 0 hits; no row-query route in appinfo/routes.php",
+				"change": "openspec/changes/open-data-table-query-and-dictionary"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -2673,7 +2675,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"query the rows inside a published table through an API without downloading the file\"; xxllnc Publiceren is positioned for Woo document publication; no public page mentions datasets or DCAT and the Vught API client has no dataset or DCAT route. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"query the rows inside a published table through an API without downloading the file\"; iprox.open is positioned for Woo publication; no page mentions DCAT or datasets and the public API exposes search, dossier-categories and dossier-metrics only. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"query the rows inside a published table through an API without downloading the file\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in openspec/changes/open-data-table-query-and-dictionary (OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "od-visualise",
@@ -2740,9 +2743,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "grep 'dictionary|dataDictionary' in opencatalogi lib/src and portaliq: 0 relevant hits; no column-description property on the publication schema (publication_register.json:93)"
+				"evidence": "grep 'dictionary|dataDictionary' in opencatalogi lib/src and portaliq: 0 relevant hits; no column-description property on the publication schema (publication_register.json:93)",
+				"change": "openspec/changes/open-data-table-query-and-dictionary"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -2760,7 +2764,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"describe the columns of a dataset in a data dictionary readers can see\"; xxllnc Publiceren is positioned for Woo document publication; no public page mentions datasets or DCAT and the Vught API client has no dataset or DCAT route. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"describe the columns of a dataset in a data dictionary readers can see\"; iprox.open is positioned for Woo publication; no page mentions DCAT or datasets and the public API exposes search, dossier-categories and dossier-metrics only. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"describe the columns of a dataset in a data dictionary readers can see\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in openspec/changes/open-data-table-query-and-dictionary (OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "od-request",
@@ -2974,12 +2979,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "FederationSearch.vue:224-268 opens federated results with window.open in a new tab on the peer; PublicationService.php:2683 getFederatedPublication falls back to DirectoryService getPublication for metadata; PublicationService.php:917 attachments() is local-only (catalog-scope gate returns 404 for remote ids)"
+				"evidence": "FederationSearch.vue:224-268 opens federated results with window.open in a new tab on the peer; PublicationService.php:2683 getFederatedPublication falls back to DirectoryService getPublication for metadata; PublicationService.php:917 attachments() is local-only (catalog-scope gate returns 404 for remote ids)",
+				"change": "openspec/changes/federation-open-remote-publication"
 			},
 			"reachedOn": "/search result click opens the peer instance in a new tab; portaliq PublicationDetailBlock.vue:140 reads /api/federation/publications/{id} metadata",
-			"note": "Remote attachments cannot be opened through this app. The peer deep link uses '#/publications/...' (FederationSearch.vue:266) while the app routes are history mode (routes.php:262), so it probably lands on the peer's dashboard.",
+			"note": "Remote attachments cannot be opened through this app. The peer deep link uses '#/publications/...' (FederationSearch.vue:266) while the app routes are history mode (routes.php:262), so it probably lands on the peer's dashboard. Specified in openspec/changes/federation-open-remote-publication (OpenSpec pass 2026-09-27).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "cross-organization-search",
@@ -3033,12 +3039,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "DirectoryService.php:862,912 store lastSync + statusCode, :1497 on error; FederationDirectory.vue:149-185 shows up/degraded/down dot and HTTP status per listing, grep lastSync in the view: 0; ConnectionReporter.php reports sync/broadcast to integriq (connections.json)"
+				"evidence": "DirectoryService.php:862,912 store lastSync + statusCode, :1497 on error; FederationDirectory.vue:149-185 shows up/degraded/down dot and HTTP status per listing, grep lastSync in the view: 0; ConnectionReporter.php reports sync/broadcast to integriq (connections.json)",
+				"change": "openspec/changes/federation-connection-last-success"
 			},
 			"reachedOn": "/directory (status dot per listing); integriq Integrations page for last sync/broadcast result",
-			"note": "Whether each connection works is visible per listing, but when it last succeeded is stored (lastSync) and not shown on the directory page.",
+			"note": "Whether each connection works is visible per listing, but when it last succeeded is stored (lastSync) and not shown on the directory page. Specified in openspec/changes/federation-connection-last-success (OpenSpec pass 2026-09-27).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "federated-directory",
@@ -3242,12 +3249,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "cors_allowed_origins CSV allowlist (DcatController.php:91, PublicationsController.php:281, PublicationRulesController.php:391 on POST /api/publications/search, OPTIONS routes.php:99-149); SearchController.php and FederationController.php add no CORS header and have no OPTIONS route"
+				"evidence": "cors_allowed_origins CSV allowlist (DcatController.php:91, PublicationsController.php:281, PublicationRulesController.php:391 on POST /api/publications/search, OPTIONS routes.php:99-149); SearchController.php and FederationController.php add no CORS header and have no OPTIONS route",
+				"change": "openspec/changes/search-cors-on-every-public-endpoint"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/publications/search and GET /api/{catalogSlug} from a named origin; set by occ config only",
-			"note": "The main search endpoints, /api/search and /api/federation/publications, send no CORS headers, so a browser on another site cannot call them. The allowlist has no settings UI (not in SettingsService allowedKeys).",
+			"note": "The main search endpoints, /api/search and /api/federation/publications, send no CORS headers, so a browser on another site cannot call them. The allowlist has no settings UI (not in SettingsService allowedKeys). Specified in openspec/changes/search-cors-on-every-public-endpoint (OpenSpec pass 2026-09-27).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "public-api-and-cors",
@@ -4410,12 +4418,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Controller/OoapiController.php:195 requireAuthenticatedConsumer on every OOAPI action; lib/Service/OoapiService.php:168 isConsumerAllowed reads an instance-wide ooapi_consumers allowlist (empty means every Nextcloud user); lib/Service/SettingsService.php:514 says per-catalog credential scoping is NOT implemented"
+				"evidence": "lib/Controller/OoapiController.php:195 requireAuthenticatedConsumer on every OOAPI action; lib/Service/OoapiService.php:168 isConsumerAllowed reads an instance-wide ooapi_consumers allowlist (empty means every Nextcloud user); lib/Service/SettingsService.php:514 says per-catalog credential scoping is NOT implemented",
+				"change": "openspec/changes/integration-feed-consumer-credentials"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/ooapi/v5/* with a Nextcloud user plus app password. No settings page exposes ooapi_consumers (grep src/)",
-			"note": "Credentials are Nextcloud accounts and app passwords, gated by one instance-wide list. No per-feed key exists, and nothing covers DCAT or other feeds.",
+			"note": "Credentials are Nextcloud accounts and app passwords, gated by one instance-wide list. No per-feed key exists, and nothing covers DCAT or other feeds. Specified in openspec/changes/integration-feed-consumer-credentials (OpenSpec pass 2026-09-27).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "public-api-and-cors",
@@ -4440,12 +4449,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/info.xml:256-257 registers lib/Command/AttachDocumentsToPublicationsCommand.php:71 (opencatalogi:documents:attach-to-publications) and MigrateCmsToPortaliqCommand.php:68 (opencatalogi:cms:migrate-to-portaliq)"
+				"evidence": "appinfo/info.xml:256-257 registers lib/Command/AttachDocumentsToPublicationsCommand.php:71 (opencatalogi:documents:attach-to-publications) and MigrateCmsToPortaliqCommand.php:68 (opencatalogi:cms:migrate-to-portaliq)",
+				"change": "openspec/changes/integration-maintenance-commands"
 			},
 			"reachedOn": "occ opencatalogi:documents:attach-to-publications, occ opencatalogi:cms:migrate-to-portaliq",
-			"note": "Two single-purpose bulk commands. There is no general maintenance CLI such as republish, reindex or retention run.",
+			"note": "Two single-purpose bulk commands. There is no general maintenance CLI such as republish, reindex or retention run. Specified in openspec/changes/integration-maintenance-commands (OpenSpec pass 2026-09-27).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "bulk-operations",
@@ -5653,9 +5663,10 @@
 			"originUrl": "https://github.com/GetDKAN/dkan/issues/4783",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the DCAT harvest feeds send ETag and Last-Modified and answer a matching If-None-Match with 304 (lib/Controller/DcatController.php:224-233,343-360), which lets a CDN revalidate cheaply. Missing half: grep cacheFor, Cache-Control, max-age and ETag in lib finds no other caching header, so the public publications API /api/{catalogSlug} and /api/search go out with Nextcloud's default no-cache headers and a CDN cannot hold them. workspace checkout portaliq (development 91fa24d): only the reading room's static assets are cacheable (lib/Controller/WooController.php:131-135 cacheFor 86400, TrafficController.php:443 max-age 3600)."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the DCAT harvest feeds send ETag and Last-Modified and answer a matching If-None-Match with 304 (lib/Controller/DcatController.php:224-233,343-360), which lets a CDN revalidate cheaply. Missing half: grep cacheFor, Cache-Control, max-age and ETag in lib finds no other caching header, so the public publications API /api/{catalogSlug} and /api/search go out with Nextcloud's default no-cache headers and a CDN cannot hold them. workspace checkout portaliq (development 91fa24d): only the reading room's static assets are cacheable (lib/Controller/WooController.php:131-135 cacheFor 86400, TrafficController.php:443 max-age 3600).",
+				"change": "openspec/changes/operations-public-api-cache-headers"
 			},
 			"reachedOn": "/api/catalogs/{catalogSlug}/dcat and /api/dcat (conditional GET)",
 			"provider": "opencatalogi",
@@ -5674,7 +5685,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"let a CDN cache the public catalogue API so readers get fast answers under load\"; the Vught /publicationbackend responses carry no cache or CDN headers, and no page describes CDN caching. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"let a CDN cache the public catalogue API so readers get fast answers under load\"; the Limburg reading room sits behind Cloudflare (server: cloudflare) and the Vechtstromen tenant behind Azure Front Door, where the public API answered x-cache: CONFIG_NOCACHE; no page says whether API caching can be enabled. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"let a CDN cache the public catalogue API so readers get fast answers under load\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in openspec/changes/operations-public-api-cache-headers (OpenSpec pass 2026-09-27)."
 		}
 	],
 	"pending": [
