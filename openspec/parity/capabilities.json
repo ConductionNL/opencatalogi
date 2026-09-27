@@ -865,12 +865,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:737 PublicationDetail lifecycleActions {field: status} -> nextcloud-vue CnDetailPage.vue:163 CnLifecycleActions; publication_register.json:218 only transition archive (published->archived, final); PublicationQueryService.php:453 hides archived publicly; publishing itself = setting publicationDate (PublicationQueryService.php:1008-1040)"
+				"evidence": "src/manifest.json:737 PublicationDetail lifecycleActions {field: status} -> nextcloud-vue CnDetailPage.vue:163 CnLifecycleActions; publication_register.json:218 only transition archive (published->archived, final); PublicationQueryService.php:453 hides archived publicly; publishing itself = setting publicationDate (PublicationQueryService.php:1008-1040)",
+				"change": "openspec/changes/publications-publish-and-withdraw-action"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id header Archive action",
-			"note": "Withdrawing is one action (Archive) but cannot be undone. Publishing is a date field, not a status change. DepublicationController (/api/publications/depublish) and PublishPublicationDialog have no mounted caller.",
+			"note": "Withdrawing is one action (Archive) but cannot be undone. Publishing is a date field, not a status change. DepublicationController (/api/publications/depublish) and PublishPublicationDialog have no mounted caller. Specified in openspec/changes/publications-publish-and-withdraw-action (OpenSpec pass 2026-09-27).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "publications",
@@ -1373,12 +1374,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:33 robots#index at /api/robots.txt; RobotsController.php:93-140 lists 17 sitemap URLs per catalog but does not filter hasWooSitemap, and :131 joins catalogs with single-quoted '\\n' (literal backslash-n); WooReadinessService.php:280 checks $baseUrl/robots.txt at the root"
+				"evidence": "appinfo/routes.php:33 robots#index at /api/robots.txt; RobotsController.php:93-140 lists 17 sitemap URLs per catalog but does not filter hasWooSitemap, and :131 joins catalogs with single-quoted '\\n' (literal backslash-n); WooReadinessService.php:280 checks $baseUrl/robots.txt at the root",
+				"change": "openspec/changes/woo-index-harvester-connection"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/robots.txt (public, harvester); root /robots.txt needs a proxy rewrite (Settings.vue:1395 tells the admin so)",
-			"note": "A harvester reads /robots.txt at the domain root, which the app does not serve without web-server config.",
+			"note": "A harvester reads /robots.txt at the domain root, which the app does not serve without web-server config. Specified in openspec/changes/woo-index-harvester-connection (OpenSpec pass 2026-09-27).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "woo-compliance-basics",
@@ -1463,12 +1465,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "Harvest model: SitemapService.php:179/297 + RobotsController.php:93 expose all publications; Settings.vue:234-280 records Woo-index registration status by hand; NationalIndexService.php:219 registerWithWooIndex has no caller (grep registerWithWooIndex lib)"
+				"evidence": "Harvest model: SitemapService.php:179/297 + RobotsController.php:93 expose all publications; Settings.vue:234-280 records Woo-index registration status by hand; NationalIndexService.php:219 registerWithWooIndex has no caller (grep registerWithWooIndex lib)",
+				"change": "openspec/changes/woo-index-harvester-connection"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/robots.txt and /api/{catalogSlug}/sitemaps/* (public, KOOP harvester)",
-			"note": "Works only as far as woo-sitemap works (external 'woo' register) and root robots.txt is rewritten.",
+			"note": "Works only as far as woo-sitemap works (external 'woo' register) and root robots.txt is rewritten. Specified in openspec/changes/woo-index-harvester-connection (OpenSpec pass 2026-09-27).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "woo-compliance-basics",
@@ -1669,9 +1672,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/dossiq",
-				"evidence": "procest appinfo/routes.php:704 wOOAssessment#publishDecision -> lib/Controller/WOOAssessmentController.php:215 -> lib/Service/WooPublicationService.php:217 publish, :363 createPublication in OpenCatalogi's register, :369 attaches disclosable documents; procest src/services/wooPublicationApi.js:32 publishWooDecision has no importer"
+				"evidence": "procest appinfo/routes.php:704 wOOAssessment#publishDecision -> lib/Controller/WOOAssessmentController.php:215 -> lib/Service/WooPublicationService.php:217 publish, :363 createPublication in OpenCatalogi's register, :369 attaches disclosable documents; procest src/services/wooPublicationApi.js:32 publishWooDecision has no importer",
+				"change": "ConductionNL/dossiq openspec/changes/woo-publish-decision-from-the-case"
 			},
 			"reachedOn": "nothing in a UI: POST /apps/dossiq/api/cases/{id}/woo/publish exists but no dossiq page calls it; opencatalogi only receives the object",
 			"provider": "dossiq",
@@ -1689,7 +1693,8 @@
 				"decos": "docs read 2026-09-26: https://decos.com/oplossingen/woo-portaal: \"Direct gekoppeld aan JOIN Zaak & Document ... rechtstreekse aansluiting\", and for requests \"Na beoordeling worden de relevante documenten via het portaal gepubliceerd, zo nodig na anonimisering via JOIN\"",
 				"ckan": "source read at ckan-2.12.0: grepped -i 'woo|diwoo|tooi|plooi|informatiecategorie' (word match) across ckan/ckan, ckan/ckanext and the four ckanext trees with no hit; no case-system integration, grepped 'zaak|case' in ckan/views and logic/action with no relevant hit. Datasets come from the form, the action API or harvesting (ckanext-harvest), none of which reads cases.",
 				"dkan": "source read at 4.1.3: grepped -iE 'woo|wet open overheid|diwoo|tooi|informatiecategor|plooi|open.overheid' across modules/, schema/ and cypress/ (php, yml, json, twig, js), no hits; no case system integration of any kind (grepped -iE 'zaak|\\bcase\\b' in modules/*/src, only switch statements and code comments)."
-			}
+			},
+			"note": "Specified in ConductionNL/dossiq openspec/changes/woo-publish-decision-from-the-case (dossiq lane, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "woo-anonymise",
@@ -1698,12 +1703,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/filinq",
-				"evidence": "searched opencatalogi lib for anonymi/redact/docudesk/filinq: only WooService.php:357 stores an empty 'anonymizedDocument' and :958 reads it; nothing produces it. filinq has lib/Service/AnonymizationService.php and BatchAnonymizeService.php, not called from opencatalogi"
+				"evidence": "searched opencatalogi lib for anonymi/redact/docudesk/filinq: only WooService.php:357 stores an empty 'anonymizedDocument' and :958 reads it; nothing produces it. filinq has lib/Service/AnonymizationService.php and BatchAnonymizeService.php, not called from opencatalogi",
+				"change": "ConductionNL/filinq openspec/changes/woo-publicatie-pipeline"
 			},
 			"reachedOn": "nothing in opencatalogi",
-			"note": "dossiq also has WOORedactionService/WOOAnonymisationAssistService for its own case flow.",
+			"note": "dossiq also has WOORedactionService/WOOAnonymisationAssistService for its own case flow. Specified in ConductionNL/filinq openspec/changes/woo-publicatie-pipeline (filinq lane, existing change, OpenSpec pass 2026-09-27).",
 			"provider": "filinq",
 			"providerHow": "read-from-code",
 			"feature": "woo-disclosure-workflow",
@@ -2021,13 +2027,13 @@
 			"area": "woo-requests",
 			"name": "Receive a Woo request from a resident through an online form.",
 			"source": "competitor-derived",
-			"opencatalogi": "no",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "none",
+				"state": "built",
 				"owner": "ConductionNL/dossiq",
-				"evidence": "searched opencatalogi lib/src/appinfo for woo-verzoek intake/form: none. dossiq ships lib/Settings/templates/woo-verzoek.json case type"
+				"evidence": "ConductionNL/dossiq development 96b8ef8: lib/Settings/templates/woo-verzoek.json (Woo case type, origin indienen); lib/Service/FormsIntakeService.php:94 caseFor() opens a case from a Nextcloud Forms submission for the case type whose intakeFormRef names the form (:186-223), called by lib/Listener/FormSubmittedListener.php:96"
 			},
-			"reachedOn": "nothing in opencatalogi",
+			"reachedOn": "dossiq: an administrator binds a Nextcloud Forms form to the Woo case type (caseType.intakeFormRef); a resident submits it and a Woo case opens",
 			"provider": "dossiq",
 			"providerHow": "read-from-code",
 			"feature": "woo-disclosure-workflow",
@@ -2043,20 +2049,21 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"receive a Woo request from a resident through an online form\"; the Vught reading room links to the municipality's own form at formulier.vught.nl (label \"Indienen Woo-verzoek\" in the bundle), which is not part of xxllnc Publiceren; no page describes an intake form in the product. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"receive a Woo request from a resident through an online form\"; no public page describes a Woo-request assessment workflow in iprox.open; requests are prepared in the customer's case system or SharePoint. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "docs read 2026-09-26: https://decos.com/oplossingen/woo-portaal: \"Woo-verzoeken komen binnen via eFormulieren of het digitaal loket en worden als zaak afgehandeld in het zaaksysteem\" (JOIN eFormulieren, part of the same suite)"
-			}
+			},
+			"note": "Built in dossiq: woo-verzoek.json plus caseType.intakeFormRef and FormsIntakeService (dossiq lane, OpenSpec pass 2026-09-27). Rating moved from no to yes."
 		},
 		{
 			"id": "wr-deadline",
 			"area": "woo-requests",
 			"name": "Track the statutory decision deadline of a Woo request and warn before it passes.",
 			"source": "competitor-derived",
-			"opencatalogi": "no",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "none",
+				"state": "built",
 				"owner": "ConductionNL/dossiq",
-				"evidence": "opencatalogi WooService.php:14 delegates deadline reminders to flow/n8n; no deadline code in opencatalogi. dossiq lib/Service/WOODeadlineService.php:104 calculate, :135 extendDeadline, :223 checkAndWarn"
+				"evidence": "ConductionNL/dossiq development 96b8ef8: lib/Settings/templates/woo-verzoek.json:13 processingDeadline P28D and :17 extensionPeriod P14D on the Woo case type; lib/Service/WOODeadlineService.php:223 checkAndWarn(), run by lib/BackgroundJob/WOODeadlineCheckJob.php:139 for every active Woo case"
 			},
-			"reachedOn": "nothing in opencatalogi",
+			"reachedOn": "dossiq: a Woo request case carries its statutory term; the deadline job warns before it passes",
 			"provider": "dossiq",
 			"providerHow": "read-from-code",
 			"feature": "woo-disclosure-workflow",
@@ -2072,7 +2079,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"track the statutory decision deadline of a Woo request and warn before it passes\"; the public pages describe anonymisation and publication, not a Woo-request assessment workflow; that lives in xxllnc Zaken, which was not in scope. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"track the statutory decision deadline of a Woo request and warn before it passes\"; no public page describes a Woo-request assessment workflow in iprox.open; requests are prepared in the customer's case system or SharePoint. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "docs read 2026-09-26: https://decos.com/zaaksysteem describes the Woo Portaal as \"Behandel Woo-verzoeken efficient vanuit een centrale omgeving. Houd grip op termijnen, documenten en publicaties\"; warnings before the statutory deadline passes are not described"
-			}
+			},
+			"note": "Built in dossiq on its generic term engine (dossiq lane, OpenSpec pass 2026-09-27). Rating moved from no to yes: the product family tracks the term and warns."
 		},
 		{
 			"id": "dec-validate",
@@ -3113,12 +3121,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "portaliq FederatedSearchBlock.vue:538 one facet field (default 'themes'), :341 facet list; opencatalogi SearchSideBar.vue (facets + sort) mounts only from src/sidebars/SideBars.vue:10, and nothing imports SideBars.vue (grep: 0)"
+				"evidence": "portaliq FederatedSearchBlock.vue:538 one facet field (default 'themes'), :341 facet list; opencatalogi SearchSideBar.vue (facets + sort) mounts only from src/sidebars/SideBars.vue:10, and nothing imports SideBars.vue (grep: 0)",
+				"change": "ConductionNL/portaliq openspec/changes/portal-public-search"
 			},
 			"reachedOn": "portaliq public search (one facet: themes); nothing in opencatalogi's /search page",
-			"note": "No category, organisation or date filter. The in-app facet sidebar is dead code (SideBars.vue:77 also uses this.$route inside script setup).",
+			"note": "No category, organisation or date filter. The in-app facet sidebar is dead code (SideBars.vue:77 also uses this.$route inside script setup). Specified in ConductionNL/portaliq openspec/changes/portal-public-search (portaliq lane, existing change, OpenSpec pass 2026-09-27).",
 			"provider": "portaliq",
 			"providerHow": "read-from-code",
 			"feature": "faceted-search-api",
@@ -3202,12 +3211,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "portaliq FederatedSearchBlock.vue:662-670 sortOptions: publicationDate ASC/DESC and title only; the comment above says relevance is absent because nothing ranks; opencatalogi SearchSideBar.vue:63-102 has Relevance/date sort but is never mounted (see srch-facets)"
+				"evidence": "portaliq FederatedSearchBlock.vue:662-670 sortOptions: publicationDate ASC/DESC and title only; the comment above says relevance is absent because nothing ranks; opencatalogi SearchSideBar.vue:63-102 has Relevance/date sort but is never mounted (see srch-facets)",
+				"change": "ConductionNL/portaliq openspec/changes/search-sort-by-relevance"
 			},
 			"reachedOn": "portaliq public search sort control (date, name)",
-			"note": "Sorting by date works. Sorting by relevance does not exist anywhere reachable.",
+			"note": "Sorting by date works. Sorting by relevance does not exist anywhere reachable. Specified in ConductionNL/portaliq openspec/changes/search-sort-by-relevance (portaliq lane, OpenSpec pass 2026-09-27).",
 			"provider": "portaliq",
 			"providerHow": "read-from-code",
 			"feature": "faceted-search-api",
@@ -3891,12 +3901,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/integriq",
-				"evidence": "appinfo/routes.php:90 POST /api/case-types/import (admin); lib/Controller/ServiceCatalogueController.php:324 importCaseType -> CaseTypeCatalogueService::importDefinition via lib/Service/Catalogue/GatewayCaseTypeSourceReader.php:54-55 (integriq/openconnector CallService)"
+				"evidence": "appinfo/routes.php:90 POST /api/case-types/import (admin); lib/Controller/ServiceCatalogueController.php:324 importCaseType -> CaseTypeCatalogueService::importDefinition via lib/Service/Catalogue/GatewayCaseTypeSourceReader.php:54-55 (integriq/openconnector CallService)",
+				"change": "ConductionNL/integriq openspec/changes/zgw-connectors-for-dossiq"
 			},
 			"reachedOn": "nothing: admin API only, no page in src/ calls it",
-			"note": "The transport to the national catalogue is integriq's. With no gateway installed the source is reported unreachable. The e2e test exercises only that unreachable path.",
+			"note": "The transport to the national catalogue is integriq's. With no gateway installed the source is reported unreachable. The e2e test exercises only that unreachable path. Specified in ConductionNL/integriq openspec/changes/zgw-connectors-for-dossiq (integriq lane, existing change, OpenSpec pass 2026-09-27).",
 			"provider": "integriq",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
@@ -3922,12 +3933,12 @@
 			"opencatalogi": "partial",
 			"built": {
 				"state": "built",
-				"owner": "ConductionNL/integriq",
+				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:91-92 GET/POST /api/case-types/{id}/resync; lib/Controller/ServiceCatalogueController.php:376 previewResync returns diffAgainstSource, :428 applyResync applies only the accepted properties"
 			},
 			"reachedOn": "nothing: admin API only, no page shows the diff or collects the accepted list",
-			"note": "Preview-then-accept logic is built server-side. A staff member has no screen to do it.",
-			"provider": "integriq",
+			"note": "Preview-then-accept logic is built server-side. A staff member has no screen to do it. Owner corrected from integriq to opencatalogi: previewResync and applyResync live in opencatalogi lib/Controller/ServiceCatalogueController.php (integriq lane, OpenSpec pass 2026-09-27).",
+			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
 			"featureConfidence": "medium",
@@ -4219,12 +4230,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/dossiq",
-				"evidence": "dossiq (procest origin/development 00869dd) lib/Service/WooPublicationService.php:244,352 sendPublicationToOpenCatalogi creates the publication and attaches disclosable documents, reached by POST /api/cases/{id}/woo/publish (appinfo/routes.php:704, WOOAssessmentController); src/services/wooPublicationApi.js:32 publishWooDecision has no caller in src/"
+				"evidence": "dossiq (procest origin/development 00869dd) lib/Service/WooPublicationService.php:244,352 sendPublicationToOpenCatalogi creates the publication and attaches disclosable documents, reached by POST /api/cases/{id}/woo/publish (appinfo/routes.php:704, WOOAssessmentController); src/services/wooPublicationApi.js:32 publishWooDecision has no caller in src/",
+				"change": "ConductionNL/dossiq openspec/changes/woo-publish-decision-from-the-case"
 			},
 			"reachedOn": "nothing in a UI: BesluitPublicatiePanel.vue:190 calls publishBesluit -> POST /api/besluitvorming/cases/{id}/publish (routes.php:737) -> PublicationService.php:163 saveObject in dossiq's own register, not opencatalogi's; the opencatalogi hand-over route has no page caller",
-			"note": "Re-rated by the lane from the pack's yes: the pack credited BesluitPublicatiePanel, but that panel publishes into dossiq's own register. Agrees with woo-from-case.",
+			"note": "Re-rated by the lane from the pack's yes: the pack credited BesluitPublicatiePanel, but that panel publishes into dossiq's own register. Agrees with woo-from-case. Specified in ConductionNL/dossiq openspec/changes/woo-publish-decision-from-the-case (dossiq lane, OpenSpec pass 2026-09-27).",
 			"provider": "dossiq",
 			"providerHow": "read-from-code",
 			"feature": "api-management-government-koppelingen",
@@ -4249,9 +4261,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/integriq",
-				"evidence": "integriq lib/AppInfo/Application.php:1473 registers SharePointOnlineAdapter (document-cms reference adapter), but nothing in opencatalogi lib/ or integriq routes its documents into a publication; grep of opencatalogi for sharepoint finds nothing"
+				"evidence": "integriq lib/AppInfo/Application.php:1473 registers SharePointOnlineAdapter (document-cms reference adapter), but nothing in opencatalogi lib/ or integriq routes its documents into a publication; grep of opencatalogi for sharepoint finds nothing",
+				"change": "ConductionNL/integriq openspec/changes/connectors-sharepoint-publication-intake"
 			},
 			"reachedOn": "nothing: no path from SharePoint into an opencatalogi publication",
 			"provider": "integriq",
@@ -4269,7 +4282,8 @@
 				"ckan": "source read at ckan-2.12.0: grepped -iw 'sharepoint|notubiz|ibabs|stuf|cmis|zaak' across ckan/ckan, ckan/ckanext and the four extensions (py and html) with no hit. Resources can link to any URL (templates/package/snippets/resource_form.html:22-31) but nothing pulls documents from SharePoint.",
 				"dkan": "source read at 4.1.3: no SharePoint connector; grepped -iE 'sharepoint|graph.microsoft|onedrive' across modules/, schema/ and docs/, no hits. File fetchers handle http(s) and local files only (modules/dkan_common/src/FileFetcher, docs/source/user-guide/guide_file_fetchers.rst).",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"take documents for publication from SharePoint\"; the public pages name JOIN Zaak & Document over its RestAPI and iBabs as a source; nothing public covers this integration. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in ConductionNL/integriq openspec/changes/connectors-sharepoint-publication-intake (integriq lane, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "int-council",
@@ -5082,9 +5096,10 @@
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/integriq",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): opencatalogi itself only reports three outbound connections (directory sync, broadcast, Woo-index readiness) with a last-checked status, lib/Settings/connections.json:1-30 and lib/Service/Connection/ConnectionReporter.php:170-200, listed on the Integrations page src/manifest.d/connection-registry.json:20-95. Source-system pulls live in integriq: workspace checkout openconnector (integriq, development a9366588): the Sync runs page lists synchronization_run rows with started, status, processed, found, created, updated, invalid (src/manifest.json:4119-4190) and each synchronization has a Run now row action (src/manifest.json:2400-2410, runSynchronizationHandler src/handlers/actionHandlers.js:94-100, POST /api/synchronizations/{id}/run appinfo/routes.php:281). Missing half: the runs list has no source-system column or per-day grouping, so 'per source system which pulls ran each day' needs filtering by synchronization, and none of it is reached from the opencatalogi app beyond the Add integration link."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): opencatalogi itself only reports three outbound connections (directory sync, broadcast, Woo-index readiness) with a last-checked status, lib/Settings/connections.json:1-30 and lib/Service/Connection/ConnectionReporter.php:170-200, listed on the Integrations page src/manifest.d/connection-registry.json:20-95. Source-system pulls live in integriq: workspace checkout openconnector (integriq, development a9366588): the Sync runs page lists synchronization_run rows with started, status, processed, found, created, updated, invalid (src/manifest.json:4119-4190) and each synchronization has a Run now row action (src/manifest.json:2400-2410, runSynchronizationHandler src/handlers/actionHandlers.js:94-100, POST /api/synchronizations/{id}/run appinfo/routes.php:281). Missing half: the runs list has no source-system column or per-day grouping, so 'per source system which pulls ran each day' needs filtering by synchronization, and none of it is reached from the opencatalogi app beyond the Add integration link.",
+				"change": "ConductionNL/integriq openspec/changes/observability-connection-run-summary"
 			},
 			"reachedOn": "integriq /synchronization-runs and /synchronizations (Run now); opencatalogi /settings/integrations shows only its own three connections",
 			"provider": "integriq",
@@ -5104,7 +5119,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"see per source system which scheduled pulls ran each day and what they delivered, and restart a failed pull with one click\"; no public page or live instance shows it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"see per source system which scheduled pulls ran each day and what they delivered, and restart a failed pull with one click\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see per source system which scheduled pulls ran each day and what they delivered, and restart a failed pull with one click\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in ConductionNL/integriq openspec/changes/observability-connection-run-summary (integriq lane, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "int-connector-report",
@@ -5147,9 +5163,10 @@
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): attachments are always uploaded into OpenRegister file storage: the frontend posts files to /api/objects/{register}/{schema}/{id}/files and filesMultipart (src/modals/generic/UploadFiles.vue:1031,1265), and the legacy lib/Service/FileService.php:183-215 writes the upload into Publicaties/<pub>/Bijlagen; the DIWOO sitemap loc is the stored file's downloadUrl (lib/Service/SitemapService.php:512). Searched lib and src for accessURL, downloadURL, externalUrl, sourceUrl and remoteUrl: the only hits are the DCAT distribution mapping (lib/Service/DcatMappingService.php:369-370), which serialises a stored file's URL. Integriq synchronisations copy files too (synchronization_run filesPending, workspace checkout openconnector (integriq, development a9366588): src/manifest.json:4176-4181)."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): attachments are always uploaded into OpenRegister file storage: the frontend posts files to /api/objects/{register}/{schema}/{id}/files and filesMultipart (src/modals/generic/UploadFiles.vue:1031,1265), and the legacy lib/Service/FileService.php:183-215 writes the upload into Publicaties/<pub>/Bijlagen; the DIWOO sitemap loc is the stored file's downloadUrl (lib/Service/SitemapService.php:512). Searched lib and src for accessURL, downloadURL, externalUrl, sourceUrl and remoteUrl: the only hits are the DCAT distribution mapping (lib/Service/DcatMappingService.php:369-370), which serialises a stored file's URL. Integriq synchronisations copy files too (synchronization_run filesPending, workspace checkout openconnector (integriq, development a9366588): src/manifest.json:4176-4181).",
+				"change": "openspec/changes/integration-publish-by-reference"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -5169,7 +5186,8 @@
 				"xxllnc": "docs read 2026-09-26: https://xxllnc.nl/applicaties/publiceren/ FAQ \"Ontdubbeling en verwijzing\": documents that were already published are recognised and the platform can \"verwijzen naar de eerder gepubliceerde documenten\" (\"voegt ze toe inclusief vindplaats\"); https://vught.woopublicaties.nl/publicationbackend/Categories/list shows categories that refer out to external sites (forRefferal, externalLink to vught.bestuurlijkeinformatie.nl). Pointing at a document in the source system instead of copying it is not described for new documents",
 				"iprox": "not checked: searched the public iprox.open material for \"publish a document by pointing at it in the source system, without copying the file into the publication platform\"; the product pages describe uploading dossiers and publishing from SharePoint and case systems, and the Limburg sitemaps list files under https://open.waterschaplimburg.nl/public/download/, which points to copies held by the platform, but no page states it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "docs read 2026-09-26: https://decos.com/oplossingen/woo-portaal: \"Je hoeft je informatie niet op meerdere plekken te beheren. Alles staat in JOIN, de publicatie gebeurt vanuit dezelfde bron\", but https://decos.com/hubfs/woo_infographic_canva.pdf.png shows a separate \"Publicatiebank: Centrale opslag met API voor openbare documenten\", so whether the file is copied is not settled"
-			}
+			},
+			"note": "Specified in openspec/changes/integration-publish-by-reference (OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "woo-metadata-map",
@@ -5179,9 +5197,10 @@
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/integriq",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the Woo-index fields are filled by a fixed mapping in code: lib/Service/SitemapService.php:508-590 reads publisher from the organisation's TOOI id, category from category/tooiCategorieUri/tooiCategorieNaam and soortHandeling from the publication, and emits no official title at all (grep officieleTitel in lib and src finds nothing). The source-to-publication step is configurable without a developer in integriq's mapping editor (workspace checkout openconnector (integriq, development a9366588): Twig-driven lib/Service/MappingService.php:24-64, pages /mappings and /mappings/:id src/manifest.json:2237-2295). Missing half: the publication-to-Woo-index mapping itself cannot be changed without code, and the official title field is not mapped."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the Woo-index fields are filled by a fixed mapping in code: lib/Service/SitemapService.php:508-590 reads publisher from the organisation's TOOI id, category from category/tooiCategorieUri/tooiCategorieNaam and soortHandeling from the publication, and emits no official title at all (grep officieleTitel in lib and src finds nothing). The source-to-publication step is configurable without a developer in integriq's mapping editor (workspace checkout openconnector (integriq, development a9366588): Twig-driven lib/Service/MappingService.php:24-64, pages /mappings and /mappings/:id src/manifest.json:2237-2295). Missing half: the publication-to-Woo-index mapping itself cannot be changed without code, and the official title field is not mapped.",
+				"change": "ConductionNL/integriq openspec/changes/mapping-woo-index-field-mapping"
 			},
 			"reachedOn": "integriq /mappings editor; the fixed DIWOO mapping is reached on /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
 			"provider": "integriq",
@@ -5201,7 +5220,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"map a source system's metadata onto the Woo-index fields (publisher, official title, category, document action) and change that mapping without a developer\"; no public page or live instance shows it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "docs read 2026-09-26: https://iprox.nl/marketing/477/blog-woo-publiceren-koppeling: \"We configureren de koppeling zodat men tijdens interne dossiervorming al de juiste informatiecategorie en metadata toevoegt\"; the mapping is configured by iprox as part of the koppeling (\"Een stuk maatwerk\"), not changed by the customer without a developer",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"map a source system's metadata onto the Woo-index fields (publisher, official title, category, document action) and change that mapping without a developer\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in ConductionNL/integriq openspec/changes/mapping-woo-index-field-mapping (integriq lane, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "woo-metadata-derive",
@@ -5211,9 +5231,10 @@
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): some Woo metadata is derived automatically without a person: publisher @resource from the organisation's TOOI identifier (lib/Service/SitemapService.php:531-538, resolveOrganisationTooiIdentifier :639) and soortHandeling defaulting to ontvangst (lib/Service/TooiVocabularyService.php:168-172); integriq mappings can compute fields from other source data with Twig (workspace checkout openconnector (integriq, development a9366588): lib/Service/MappingService.php:24-64). Missing half: no suggestions a person confirms; grep for suggest, classif, TaskProcessing and llm in lib and src finds only the MCP/CMS tool plumbing (lib/Tool/CMSTool.php:163), nothing that proposes metadata."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): some Woo metadata is derived automatically without a person: publisher @resource from the organisation's TOOI identifier (lib/Service/SitemapService.php:531-538, resolveOrganisationTooiIdentifier :639) and soortHandeling defaulting to ontvangst (lib/Service/TooiVocabularyService.php:168-172); integriq mappings can compute fields from other source data with Twig (workspace checkout openconnector (integriq, development a9366588): lib/Service/MappingService.php:24-64). Missing half: no suggestions a person confirms; grep for suggest, classif, TaskProcessing and llm in lib and src finds only the MCP/CMS tool plumbing (lib/Tool/CMSTool.php:163), nothing that proposes metadata.",
+				"change": "openspec/changes/woo-metadata-suggestions"
 			},
 			"reachedOn": "/api/{catalogSlug}/sitemaps/{categoryCode}/publications (derived values); integriq /mappings",
 			"provider": "opencatalogi",
@@ -5233,7 +5254,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"fill in missing Woo metadata automatically from other data in the source system, with suggestions a person confirms\"; no public page or live instance shows it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"fill in missing Woo metadata automatically from other data in the source system, with suggestions a person confirms\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"fill in missing Woo metadata automatically from other data in the source system, with suggestions a person confirms\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in openspec/changes/woo-metadata-suggestions (OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "woo-sitemap-lastmod",
@@ -5243,9 +5265,10 @@
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the sitemap index sorts by @self.updated and sets each page's lastmod to the newest updated time on it (lib/Service/SitemapService.php:202,230-239,280-286), so a metadata change does move the page entry. But each document's own <lastmod> is the file's published time, falling back to the publication's updated time only when the file has none (lib/Service/SitemapService.php:510-512,526), so a metadata-only change leaves the document's lastmod unchanged and the Woo-index has no per-document signal."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the sitemap index sorts by @self.updated and sets each page's lastmod to the newest updated time on it (lib/Service/SitemapService.php:202,230-239,280-286), so a metadata change does move the page entry. But each document's own <lastmod> is the file's published time, falling back to the publication's updated time only when the file has none (lib/Service/SitemapService.php:510-512,526), so a metadata-only change leaves the document's lastmod unchanged and the Woo-index has no per-document signal.",
+				"change": "openspec/changes/woo-sitemap-document-signals"
 			},
 			"reachedOn": "/api/{catalogSlug}/sitemaps/{categoryCode} and /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
 			"provider": "opencatalogi",
@@ -5265,7 +5288,8 @@
 				"xxllnc": "docs read 2026-09-26: https://vught.woopublicaties.nl/sitemap-00001.xml gives every DiWoo entry a lastmod date (e.g. 2026-05-20) and the index lists lastmod 2026-09-04 (public instance vught.woopublicaties.nl, established as xxllnc Publiceren because https://xxllnc.nl/applicaties/publiceren/ names the portal domain pattern gemeente.woopublicaties.nl and the sibling realm datamask.woopublicaties.nl answers /publicationbackend/Platform with customerName \"DataMask test\" and email noreply@xxllnc.nl); whether lastmod moves when only metadata changes is not documented",
 				"iprox": "docs read 2026-09-26: https://open.waterschaplimburg.nl/sitemap/sitemap-infocat014-1.xml gives every entry a lastmod timestamp such as 2025-11-27T10:09:13.833Z with changefreq always (public instance open.waterschaplimburg.nl, established as iprox.open by the vendor interview https://iprox.nl/marketing/521/interview-marc-ypeij-ws-limburg (\"publiceren ... naar ons platform open.waterschaplimburg.nl\") and by its backend host api-waterschaplimburg.iprox-open.nl); whether lastmod moves when only metadata changes is not documented",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"mark a document as changed in the sitemap when its metadata changes, so the Woo-index harvests it again\"; no public page mentions the Woo-index sitemap at all and no live instance was found. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in openspec/changes/woo-sitemap-document-signals (OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "woo-sitemap-parts",
@@ -5275,9 +5299,10 @@
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): buildSitemap maps every attached file to a separate diwoo:Document (lib/Service/SitemapService.php:343-349, 'Map each file to a separate DIWOO Document'), and mapDiwooDocument emits loc, lastmod, creatiedatum, publisher, format, informatiecategorie and documenthandeling only (:508-590). grep hasPart, isPartOf (any case) in lib, src and in the portaliq and openregister workspace checkouts finds nothing, so a decision and its annexes are not linked in the sitemap."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): buildSitemap maps every attached file to a separate diwoo:Document (lib/Service/SitemapService.php:343-349, 'Map each file to a separate DIWOO Document'), and mapDiwooDocument emits loc, lastmod, creatiedatum, publisher, format, informatiecategorie and documenthandeling only (:508-590). grep hasPart, isPartOf (any case) in lib, src and in the portaliq and openregister workspace checkouts finds nothing, so a decision and its annexes are not linked in the sitemap.",
+				"change": "openspec/changes/woo-sitemap-document-signals"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -5297,7 +5322,8 @@
 				"xxllnc": "docs read 2026-09-26: every entry in https://vught.woopublicaties.nl/sitemap-00001.xml carries <isPartOf resource=\"https://vught.woopublicaties.nl/publication/<uuid>\"/> and an aggregatiekenmerk grouping the documents of one publication (public instance vught.woopublicaties.nl, established as xxllnc Publiceren because https://xxllnc.nl/applicaties/publiceren/ names the portal domain pattern gemeente.woopublicaties.nl and the sibling realm datamask.woopublicaties.nl answers /publicationbackend/Platform with customerName \"DataMask test\" and email noreply@xxllnc.nl); no hasPart element is emitted",
 				"iprox": "docs read 2026-09-26: the entries in the Limburg DiWoo sitemaps (https://open.waterschaplimburg.nl/sitemap/sitemap-infocat011-1.xml to infocat017-1.xml, public instance open.waterschaplimburg.nl, established as iprox.open by the vendor interview https://iprox.nl/marketing/521/interview-marc-ypeij-ws-limburg (\"publiceren ... naar ons platform open.waterschaplimburg.nl\") and by its backend host api-waterschaplimburg.iprox-open.nl) contain only loc, lastmod, changefreq and diwoo informatiecategorie; no hasPart or isPartOf element appears in any of the six sitemaps",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"tell the Woo-index which documents belong together, such as a decision and its annexes, through hasPart and isPartOf in the sitemap\"; no public page mentions the Woo-index sitemap at all and no live instance was found. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in openspec/changes/woo-sitemap-document-signals (OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "lc-source-destroyed",
@@ -5307,9 +5333,10 @@
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/integriq",
-				"evidence": "workspace checkout openconnector (integriq, development a9366588): a full-mode synchronisation garbage-collects target objects whose source record is gone: SynchronizationService::deleteInvalidObjects (lib/Service/SynchronizationService.php:2793-2800 call, :3830 definition, delete via updateTarget action delete :4062-4066), guarded by a deletion-ratio threshold (:3958-3985) and never run in incremental mode (:2793). A publication stored in OpenRegister then leaves every public surface. Missing half: workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): that delete is a soft delete that intentionally leaves the object's files in place for restore (lib/Service/Object/DeleteObject.php:363-364); only a later permanent delete removes them (:272-277). Nothing listens for a destruction event from the source as such; disappearance on the next full run is the trigger."
+				"evidence": "workspace checkout openconnector (integriq, development a9366588): a full-mode synchronisation garbage-collects target objects whose source record is gone: SynchronizationService::deleteInvalidObjects (lib/Service/SynchronizationService.php:2793-2800 call, :3830 definition, delete via updateTarget action delete :4062-4066), guarded by a deletion-ratio threshold (:3958-3985) and never run in incremental mode (:2793). A publication stored in OpenRegister then leaves every public surface. Missing half: workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): that delete is a soft delete that intentionally leaves the object's files in place for restore (lib/Service/Object/DeleteObject.php:363-364); only a later permanent delete removes them (:272-277). Nothing listens for a destruction event from the source as such; disappearance on the next full run is the trigger.",
+				"change": "ConductionNL/integriq openspec/changes/synchronisation-source-destruction-purge"
 			},
 			"reachedOn": "integriq scheduled synchronisation runs (/synchronization-runs shows the deleted count)",
 			"provider": "integriq",
@@ -5329,7 +5356,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"withdraw a publication and remove its file and metadata automatically when the document is destroyed in the source system\"; no public page or live instance shows it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"withdraw a publication and remove its file and metadata automatically when the document is destroyed in the source system\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"withdraw a publication and remove its file and metadata automatically when the document is destroyed in the source system\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in ConductionNL/integriq openspec/changes/synchronisation-source-destruction-purge (integriq lane, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "wr-search-sources",
@@ -5339,9 +5367,10 @@
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/391449",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/dossiq",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): a Woo disclosure batch is created from a documents list the caller already supplies (lib/Service/WooService.php:335-355, POST /api/woo/batches appinfo/routes.php:60, a path the frontend does not call per _lane/api-paths.tsv, so the caller is a sibling such as dossiq). Nothing searches other systems: grep sharepoint, teams, imap and graph in lib finds nothing relevant. workspace checkout openconnector (integriq, development a9366588): the Microsoft 365 adapter reads calendar and mail metadata only, with no search or document gathering (lib/Service/Adapter/Saas/Microsoft365Adapter.php:23-35)."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): a Woo disclosure batch is created from a documents list the caller already supplies (lib/Service/WooService.php:335-355, POST /api/woo/batches appinfo/routes.php:60, a path the frontend does not call per _lane/api-paths.tsv, so the caller is a sibling such as dossiq). Nothing searches other systems: grep sharepoint, teams, imap and graph in lib finds nothing relevant. workspace checkout openconnector (integriq, development a9366588): the Microsoft 365 adapter reads calendar and mail metadata only, with no search or document gathering (lib/Service/Adapter/Saas/Microsoft365Adapter.php:23-35).",
+				"change": "ConductionNL/dossiq openspec/changes/woo-requests-gather-documents-from-sources"
 			},
 			"reachedOn": "nothing",
 			"provider": "dossiq",
@@ -5361,7 +5390,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"search the organisation's other systems (case system, SharePoint, Teams, mail) in one go to gather the documents for a Woo request\"; no public page or live instance shows it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"search the organisation's other systems (case system, SharePoint, Teams, mail) in one go to gather the documents for a Woo request\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"search the organisation's other systems (case system, SharePoint, Teams, mail) in one go to gather the documents for a Woo request\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in ConductionNL/dossiq openspec/changes/woo-requests-gather-documents-from-sources (dossiq lane, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "cat-multi-owner",
@@ -5557,9 +5587,10 @@
 			"originUrl": "https://github.com/GetDKAN/dkan/issues/4581",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "building",
 				"owner": "ConductionNL/integriq",
-				"evidence": "workspace checkout openconnector (integriq, development a9366588): when records vanish from a source, a full synchronisation deletes their targets (lib/Service/SynchronizationService.php:2793-2800), but each source can set deletionRatioThreshold, and above it nothing is deleted until someone reruns with forceDeletion (:3958-3985, forceDeletion read at lib/Controller/SynchronizationsController.php:363), with a SynchronizationDeletionGuardedEvent raised; incremental mode never deletes (:2793). Missing half: the choice is a ratio for the whole run, not a per-record 'keep until I act', and the action is delete, not unpublish. source read at a00f9f8 (lane tip 77fa61f7, no code change since): federated publications are read live from peers (lib/Controller/FederationController.php:81), so a record gone at the peer disappears at once with no choice."
+				"evidence": "workspace checkout openconnector (integriq, development a9366588): when records vanish from a source, a full synchronisation deletes their targets (lib/Service/SynchronizationService.php:2793-2800), but each source can set deletionRatioThreshold, and above it nothing is deleted until someone reruns with forceDeletion (:3958-3985, forceDeletion read at lib/Controller/SynchronizationsController.php:363), with a SynchronizationDeletionGuardedEvent raised; incremental mode never deletes (:2793). Missing half: the choice is a ratio for the whole run, not a per-record 'keep until I act', and the action is delete, not unpublish. source read at a00f9f8 (lane tip 77fa61f7, no code change since): federated publications are read live from peers (lib/Controller/FederationController.php:81), so a record gone at the peer disappears at once with no choice.",
+				"change": "ConductionNL/integriq openspec/changes/records-owned-by-an-external-source"
 			},
 			"reachedOn": "integriq synchronisation settings and Run now; opencatalogi federation search",
 			"provider": "integriq",
@@ -5578,7 +5609,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"decide what happens to a harvested record when it disappears from its source: unpublish it straight away, or keep it until you act\"; no public page or live instance shows it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"decide what happens to a harvested record when it disappears from its source: unpublish it straight away, or keep it until you act\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"decide what happens to a harvested record when it disappears from its source: unpublish it straight away, or keep it until you act\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Being built in ConductionNL/integriq openspec/changes/records-owned-by-an-external-source (integriq lane, existing change, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "int-import-failure-alert",
@@ -5588,9 +5620,10 @@
 			"originUrl": "https://github.com/GetDKAN/dkan/issues/4598",
 			"opencatalogi": "no",
 			"built": {
-				"state": "specified",
+				"state": "building",
 				"owner": "ConductionNL/integriq",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): opencatalogi does not import data files into rows, so the only import path is an integriq synchronisation. workspace checkout openconnector (integriq, development a9366588): declaration only: the integriq register sends a Nextcloud notification to the synchronisation's user and the openconnector-ops group when a job log with level ERROR is created (job-error, enabled, lib/Settings/integriq_register.json:2102-2115), while the synchronization_log rule sync-failed is disabled (:2274-2280); the rules are dispatched by OpenRegister's AnnotationNotificationDispatcher, not traced end to end here. Missing half: no alert tied to a failed file import, and the recipient group still carries the old openconnector name."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): opencatalogi does not import data files into rows, so the only import path is an integriq synchronisation. workspace checkout openconnector (integriq, development a9366588): declaration only: the integriq register sends a Nextcloud notification to the synchronisation's user and the openconnector-ops group when a job log with level ERROR is created (job-error, enabled, lib/Settings/integriq_register.json:2102-2115), while the synchronization_log rule sync-failed is disabled (:2274-2280); the rules are dispatched by OpenRegister's AnnotationNotificationDispatcher, not traced end to end here. Missing half: no alert tied to a failed file import, and the recipient group still carries the old openconnector name.",
+				"change": "ConductionNL/integriq openspec/changes/integriq-notifications"
 			},
 			"reachedOn": "Nextcloud notifications (declared); integriq /synchronization-runs shows failed runs",
 			"provider": "integriq",
@@ -5598,7 +5631,7 @@
 			"feature": null,
 			"featureConfidence": "low",
 			"columnsNote": "row added 2026-09-26 (wave 5); every column rated on that day",
-			"note": "Declaration only: the alerting rests on a notification declaration with no enabled handler, which is rated no per the wave-1 rule, with the reading kept under built.evidence.",
+			"note": "Declaration only: the alerting rests on a notification declaration with no enabled handler, which is rated no per the wave-1 rule, with the reading kept under built.evidence. Being built in ConductionNL/integriq openspec/changes/integriq-notifications (integriq lane, existing change, OpenSpec pass 2026-09-27).",
 			"ckan": "partial",
 			"dkan": "partial",
 			"xxllnc": "unknown",
