@@ -35,7 +35,7 @@ The two lists cross publications and files, and files are not OpenRegister objec
 
 ## Seed data
 
-The second seed publication in `lib/Settings/publication_register.json` gets a `publicationDate` next year, so a fresh install lists one scheduled publication.
+A third seed publication in `lib/Settings/publication_register.json` with a `publicationDate` next year, so a fresh install lists one scheduled publication. The two existing seed publications are left alone: `publications-publish-and-withdraw-action` already gives the second one a past `depublicationDate`.
 
 ## Risks
 
