@@ -7,7 +7,7 @@ Read at opencatalogi development `1694b051`.
 | piece | file | what is there now |
 |---|---|---|
 | sitemap page | `lib/Service/SitemapService.php:297` `buildSitemap()` | loads each publication's files through OpenRegister's `FileService::getFiles()` and `formatFiles()` and maps every file with a `downloadUrl` separately (:338-350) |
-| document mapping | `SitemapService.php:508` `mapDiwooDocument()` | `$published = ($file['published'] ?? $updated)` (:512), `'lastmod' => date('Y-m-d H:i:s', strtotime($published))` (:526), returns `['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]]` (:588) |
+| document mapping | `SitemapService.php:508` `mapDiwooDocument()` | `$published = ($file['published'] ?? $updated)` (:511), `'lastmod' => date('Y-m-d H:i:s', strtotime($published))` (:526), returns `['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]]` (:588) |
 | file fields | OpenRegister `FileFormattingHandler` (development, read 2026-09-27) | each formatted file carries `modified` (upload time), `published`, `depublished` and `labels` |
 | schema location | `SitemapService.php:352-355` | the DiWoo metadata XSD `https://standaarden.overheid.nl/diwoo/metadata/0.9.1/xsd/diwoo-metadata.xsd` |
 
