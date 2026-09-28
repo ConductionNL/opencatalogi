@@ -2218,9 +2218,9 @@ class DirectoryService {
 				continue;
 			}
 
-			// Build the /used endpoint URL.
-			// Convert directory URL to publications URL by replacing /api/directory with /api/publications.
-			$baseUrl = str_replace('/api/directory', '/api/publications', rtrim($directoryUrl, '/'));
+			// Build the /used endpoint URL on the peer's federation endpoint, which
+			// needs no catalogue slug (REQ-FOR-002).
+			$baseUrl = self::peerFederationPublicationsUrl(url: $directoryUrl);
 			$usedUrl = $baseUrl . '/' . urlencode($uuid) . '/used';
 
 			if (empty($queryParams) === false) {
@@ -2381,9 +2381,10 @@ class DirectoryService {
 				continue;
 			}
 
-			// Build the publication endpoint URL.
-			// Convert directory URL to publications URL by replacing /api/directory with /api/publications.
-			$baseUrl = str_replace('/api/directory', '/api/publications', rtrim($directoryUrl, '/'));
+			// Build the publication endpoint URL on the peer's federation endpoint.
+			// `/api/publications/{id}` is the catalogue-slug route and 404s once
+			// the peer renamed its seed catalogue (REQ-FOR-002, issue #1648).
+			$baseUrl = self::peerFederationPublicationsUrl(url: $directoryUrl);
 			$publicationUrl = $baseUrl . '/' . urlencode($publicationId);
 
 			if (empty($queryParams) === false) {
@@ -2444,6 +2445,32 @@ class DirectoryService {
 
 		return null;
 	}//end getPublication()
+
+	/**
+	 * The peer's `/api/federation/publications` URL for a listing URL of any shape.
+	 *
+	 * A listing's `publications` URL is the federation endpoint on current peers,
+	 * but older or hand-registered listings carry the directory URL or the
+	 * catalogue-slug URL `/api/publications`. Everything from the first `/api/`
+	 * on is replaced, so a peer lookup never depends on a catalogue slug that an
+	 * administrator can rename or delete. A URL without `/api/` is kept as is.
+	 *
+	 * @param string $url The listing's publications (or directory) URL
+	 *
+	 * @return string The peer's federation publications URL, without a trailing slash
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#REQ-FOR-002
+	 */
+	private static function peerFederationPublicationsUrl(string $url): string {
+		$base = rtrim((string) strtok($url, '?#'), '/');
+		$pos  = strpos($base.'/', '/api/');
+		if ($pos === false) {
+			return $base;
+		}
+
+		return substr($base, 0, $pos).'/api/federation/publications';
+
+	}//end peerFederationPublicationsUrl()
 
 	/**
 	 * Get directory entries (listings and catalogs formatted as listings)
