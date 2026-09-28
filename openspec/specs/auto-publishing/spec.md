@@ -45,7 +45,7 @@ After Phase 8:
   `{group:public, match:{publicatiedatum:{$lte:$now}}}` on the publication
   schema (see APB-006).
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: publication state transitions consumed from `x-openregister-lifecycle` (APB-SM-001)
 
@@ -115,8 +115,6 @@ activity events from `ObjectCreatedEventListener` / `ObjectUpdatedEventListener`
 - **WHEN** the publication detail page renders,
 - **THEN** the activity widget degrades gracefully ("activity integration required"),
   rather than falling back to a bespoke feed.
-
-## Requirements
 
 ### Requirement: Listen to `ObjectCreatedEvent` and trigger auto-publishing logic (APB-001)
 
@@ -303,7 +301,7 @@ The system MUST register the event listeners in the Application.php bootstrap.
 - WHEN registration runs
 - THEN the `ObjectCreatedEvent` and `ObjectUpdatedEvent` listeners MUST be registered
 
-## REMOVED Requirements
+## Change history
 
 | ID | Title | Reason removed |
 |----|-------|----------------|

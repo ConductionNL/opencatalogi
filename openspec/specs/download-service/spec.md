@@ -128,7 +128,7 @@ If the publication ID is not found via OR's object service, the download service
 - **THEN** it MUST return a 404 response,
 - **AND** it MUST NOT generate any file content.
 
-## REMOVED Requirements
+## Change history
 
 The following requirements described bespoke implementations that OR's
 File Attachments capability now owns. They are retained for traceability;
