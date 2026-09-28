@@ -119,6 +119,14 @@ final class CallerScope
      *   list from `@self.schemas ?? _schemas` only, so it fell back to
      *   `find((int) [S1, S2])`.
      *
+     * One wrong shape is out of this method's reach: OR's
+     * `FacetHandler::calculateFacetsWithFallback()` re-scopes every NON-aggregated
+     * facet to one schema and unsets only the schema lists, so a multi-register
+     * scope still reaches `find((int) [R1, R2])` there — register 1. The
+     * `_register IN (...)` filter keeps that table's buckets inside the scope (no
+     * leak), but those facets come back empty or partial. That needs a fix in
+     * OpenRegister (WOO-581 review round 5).
+     *
      * So the schema is scalar only when the scope is exactly one schema in exactly
      * one register (OR's single-table fast path). Otherwise the lists also go into
      * the top-level `_schemas` / `_registers`, which both routers read. Top-level,
@@ -126,12 +134,17 @@ final class CallerScope
      * as a column filter on each table, and OR rejects a column it does not know
      * (`UnknownMetadataFieldException`, round 4). `@self.register` / `@self.schema`
      * name real columns, and a list there is an `IN (...)`. Call it after
-     * {@see strip()}; the caller fails closed on an empty schema or register scope
-     * before it gets here.
+     * {@see strip()}.
+     *
+     * An empty scope is the caller's to refuse: every caller today returns an empty
+     * result, without searching, on an empty schema or register list. Nothing here
+     * enforces that. An empty register list that does get here is written as
+     * `@self.register = []`, which OR reads as register 0, so the search finds
+     * nothing, but only by that accident.
      *
      * @param array             $query     The search query (already stripped of caller scope).
-     * @param array<int|string> $registers The register ids of the scope (non-empty).
-     * @param array<int|string> $schemas   The schema ids of the scope (non-empty).
+     * @param array<int|string> $registers The register ids of the scope (callers pass a non-empty list).
+     * @param array<int|string> $schemas   The schema ids of the scope (callers pass a non-empty list).
      *
      * @return array The query with the scope written.
      *

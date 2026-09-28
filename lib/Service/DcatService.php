@@ -255,17 +255,17 @@ class DcatService {
 		// PQM-002: attach W3C DQV quality measurements only when the catalog opts in.
 		$dqvExposure = filter_var(($catalog['dqvExposure'] ?? false), FILTER_VALIDATE_BOOLEAN);
 
-		// One schema in one register → scalar fast path; anything else keeps the lists
-		// OR's multi-schema route reads (WOO-581 review round 3, CallerScope::writeScope()).
-		$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
-		$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $registers, schemas: $schemas);
-		$searchQuery['_order']['updated'] = 'desc';
-
 		// FAIL CLOSED on an empty scope: an empty `@self.schema` must never be
 		// read as "no schema filter", nor no register as "every register" (review
 		// round 4). Zero datasets, same envelope (WOO-581).
 		$result = ['results' => [], 'next' => null];
 		if ($schemas !== [] && $registers !== []) {
+			// One schema in one register → scalar fast path; anything else keeps the
+			// lists OR's routers read (WOO-581 review rounds 3-5, CallerScope::writeScope()).
+			$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
+			$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $registers, schemas: $schemas);
+			$searchQuery['_order']['updated'] = 'desc';
+
 			$objectService = $this->getObjectService();
 			// RBAC governs visibility (PUB-001 / WOO-001): anonymous callers receive only
 			// publicly visible (published, not depublished) objects. No DCAT-local filtering.

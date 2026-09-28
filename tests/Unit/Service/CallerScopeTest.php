@@ -25,6 +25,9 @@ class CallerScopeTest extends TestCase {
 			'several schemas, one register' => [[20], [28, 29], ['@self' => ['owner' => 'alice', 'register' => 20, 'schema' => [28, 29]], '_schemas' => [28, 29]]],
 			'one schema, several registers' => [[20, 21], [28], ['@self' => ['owner' => 'alice', 'register' => [20, 21], 'schema' => [28]], '_registers' => [20, 21], '_schemas' => [28]]],
 			'several of both'               => [[20, 21], [28, 29], ['@self' => ['owner' => 'alice', 'register' => [20, 21], 'schema' => [28, 29]], '_registers' => [20, 21], '_schemas' => [28, 29]]],
+			// Callers refuse an empty scope before they get here; if one does not, the
+			// empty register list is written as-is (OR reads it as register 0: nothing).
+			'one schema, no register'       => [[], [28], ['@self' => ['owner' => 'alice', 'register' => [], 'schema' => [28]], '_schemas' => [28]]],
 		];
 	}
 
