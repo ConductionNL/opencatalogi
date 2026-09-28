@@ -39,6 +39,7 @@ opencatalogi MUST NOT re-implement query string parsing, bracket-notation
 parsing, facet generation, score computation, or pagination arithmetic.
 Those are owned upstream by OR `zoeken-filteren`.
 ## Requirements
+
 ### Requirement: single-catalog search delegates to OR `zoeken-filteren` (SCH-OR-001)
 
 When a user issues a search query within a single catalog, opencatalogi MUST delegate the full query — including `_search`, `_order`, `_limit`,
@@ -362,7 +363,7 @@ New properties added to a schema in future changes (e.g. a `kenmerk` field added
 - **THEN** results from all three schemas MUST be present in the response,
 - **AND** each result MUST carry `@self.schema` set to the correct schema slug.
 
-## REMOVED Requirements
+## Change history
 
 The following requirements described bespoke implementations that OR's
 `zoeken-filteren` capability now owns. They are retained for traceability;
