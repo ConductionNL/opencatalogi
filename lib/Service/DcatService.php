@@ -207,28 +207,20 @@ class DcatService {
 	 * (only publicly visible objects appear). Opted-out schemas
 	 * (`"x-dcat": false`) are skipped.
 	 *
-	 * 🔴 NO LONGER BYTE-FOR-BYTE THE PUBLICATIONS PATH, AND THAT IS A GAP, NOT A
-	 * DESIGN. This comment used to claim parity with `/api/{catalogSlug}`. Since
-	 * WOO-580 that route runs its catalog through
+	 * The CALLER guards the catalog first. For the public feed that is
+	 * {@see \OCA\OpenCatalogi\Controller\DcatController::catalog()}, which runs it
+	 * through
 	 * {@see \OCA\OpenCatalogi\Service\PublicationQueryService::applyCatalogReadRuleGuard()}
-	 * first, which drops every schema carrying no `authorization.read` rules
-	 * from an anonymous scope. This feed takes `$catalog['schemas']` unguarded.
+	 * — the SCH-PFTS-CAT-002 guard `/api/{catalogSlug}` has applied since WOO-580
+	 * — so an anonymous harvester never reaches a schema without
+	 * `authorization.read` rules (WOO-581). This method does NOT guard on its own:
+	 * the admin-only validate/donlReport routes and StatsController::quality call
+	 * it too and keep session RBAC. A new public caller must guard the catalog
+	 * before handing it in.
 	 *
-	 * The guard drops two different shapes and only ONE of them is a hole here:
-	 *
-	 * - A schema with NO `authorization` block (or an empty one).
-	 *   `MagicRbacHandler::applyRbacFilters()` opens it to every non-private row
-	 *   — `_rbac: true` is not a filter at all for that schema — so it IS
-	 *   anonymously readable through this feed today.
-	 * - A schema with a NON-EMPTY block that simply omits `read`. That one fails
-	 *   closed in OpenRegister ("Action not configured on a non-empty
-	 *   authorization block — failing closed"): it falls through to owner-only
-	 *   conditions and then to the deny-all, so an anonymous caller already gets
-	 *   nothing. The guard drops it for a uniform scope, not because it leaks.
-	 *
-	 * So the exposure is the first shape, and a harvest feed is the worst place
-	 * for it: it exists to be crawled and cached by third parties. Tracked as
-	 * WOO-581. Do not restore the parity claim until the guard runs on this path.
+	 * An empty schema list — nothing configured, or everything dropped by that
+	 * guard — yields a valid document with zero datasets, never a register-wide
+	 * search.
 	 *
 	 * @param array<string, mixed> $catalog The catalog object.
 	 * @param string $catalogSlug The catalog slug.
@@ -240,6 +232,7 @@ class DcatService {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
@@ -262,20 +255,27 @@ class DcatService {
 		// PQM-002: attach W3C DQV quality measurements only when the catalog opts in.
 		$dqvExposure = filter_var(($catalog['dqvExposure'] ?? false), FILTER_VALIDATE_BOOLEAN);
 
-		$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
-		$searchQuery['@self']['register'] = $this->scalarOrList(ids: $registers);
-		$searchQuery['@self']['schema'] = $this->scalarOrList(ids: $schemas);
-		$searchQuery['_order']['updated'] = 'desc';
+		// FAIL CLOSED on an empty scope: an empty `@self.schema` must never be
+		// read as "no schema filter", nor no register as "every register" (review
+		// round 4). Zero datasets, same envelope (WOO-581).
+		$result = ['results' => [], 'next' => null];
+		if ($schemas !== [] && $registers !== []) {
+			// One schema in one register → scalar fast path; anything else keeps the
+			// lists OR's routers read (WOO-581 review rounds 3-5, CallerScope::writeScope()).
+			$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
+			$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $registers, schemas: $schemas);
+			$searchQuery['_order']['updated'] = 'desc';
 
-		$objectService = $this->getObjectService();
-		// RBAC governs visibility (PUB-001 / WOO-001): anonymous callers receive only
-		// publicly visible (published, not depublished) objects. No DCAT-local filtering.
-		$result = $objectService->searchObjectsPaginated(
-			query: $searchQuery,
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
+			$objectService = $this->getObjectService();
+			// RBAC governs visibility (PUB-001 / WOO-001): anonymous callers receive only
+			// publicly visible (published, not depublished) objects. No DCAT-local filtering.
+			$result = $objectService->searchObjectsPaginated(
+				query: $searchQuery,
+				_rbac: true,
+				_multitenancy: false,
+				deleted: false
+			);
+		}
 
 		$publications = ($result['results'] ?? []);
 		$hasNext = (($result['next'] ?? null) !== null);
@@ -722,22 +722,4 @@ class DcatService {
 
 		return [];
 	}//end toArray()
-
-	/**
-	 * Return a scalar when the ID list has exactly one entry, else the list.
-	 *
-	 * Mirrors CatalogiService::index — a scalar register/schema avoids unnecessary
-	 * magic-mapper overhead in OpenRegister object search.
-	 *
-	 * @param array<int, int> $ids The integer ID list.
-	 *
-	 * @return int|array<int, int> A scalar ID or the list.
-	 */
-	private function scalarOrList(array $ids): int|array {
-		if (count($ids) === 1) {
-			return $ids[0];
-		}
-
-		return $ids;
-	}//end scalarOrList()
 }//end class

@@ -1081,7 +1081,8 @@ class PublicationsController extends Controller {
 	/**
 	 * Retrieves all objects that this publication references (outgoing relations).
 	 *
-	 * Delegates directly to OpenRegister's ObjectService::getObjectUses() and trusts RBAC.
+	 * Delegates to OpenRegister's ObjectService::getObjectUses(); for an anonymous caller
+	 * the returned rows go through the SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 *
 	 * @param string $catalogSlug The slug of the catalog (unused, kept for route compatibility)
 	 * @param string $id The ID of the publication to retrieve relations for
@@ -1159,12 +1160,20 @@ class PublicationsController extends Controller {
 			$queryParams = $this->request->getParams();
 			unset($queryParams['id'], $queryParams['_route'], $queryParams['catalogSlug']);
 
+			// The root is guarded above; the related rows come from every register × schema
+			// under schema RBAC only, which reads an empty `authorization` block as open, so
+			// they get the read-rule guard too (WOO-581 review round 2). OR counts every
+			// related object before it cuts the page: fetch the whole list and let the guard
+			// cut the caller's page after filtering, for an exact `total` (round 3).
+			$page = ['limit' => max(0, (int) ($queryParams['_limit'] ?? 30)), 'offset' => max(0, (int) ($queryParams['_offset'] ?? 0))];
+			$queryParams = array_merge($queryParams, ['_limit' => PHP_INT_MAX, '_offset' => 0]);
 			$result = $objectService->getObjectUses(
 				objectId: $id,
 				query: $queryParams,
 				_rbac: true,
 				_multitenancy: true
 			);
+			$result = $this->queryService->applyReadRuleGuardToRows(result: $result, page: $page);
 
 			// Add CORS headers for public API access.
 			$response = new JSONResponse($result, 200);
@@ -1191,7 +1200,8 @@ class PublicationsController extends Controller {
 	/**
 	 * Retrieves all objects that use this publication (incoming relations).
 	 *
-	 * Delegates directly to OpenRegister's ObjectService::getObjectUsedBy() and trusts RBAC.
+	 * Delegates to OpenRegister's ObjectService::getObjectUsedBy(); for an anonymous caller
+	 * the returned rows go through the SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 *
 	 * @param string $catalogSlug The slug of the catalog (unused, kept for route compatibility)
 	 * @param string $id The ID of the publication to retrieve uses for
@@ -1275,6 +1285,11 @@ class PublicationsController extends Controller {
 				_rbac: true,
 				_multitenancy: true
 			);
+
+			// The root is guarded above; the related rows come from every register
+			// × schema under schema RBAC only, which reads an empty `authorization`
+			// block as open. Same read-rule guard on the rows (WOO-581 review round 2).
+			$result = $this->queryService->applyReadRuleGuardToRows(result: $result);
 
 			// Add CORS headers for public API access.
 			$response = new JSONResponse($result, 200);

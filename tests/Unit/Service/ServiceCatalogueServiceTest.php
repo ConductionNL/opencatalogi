@@ -191,4 +191,31 @@ class ServiceCatalogueServiceTest extends TestCase {
 		$this->assertSame('e1', $catalogue['entries'][0]['id']);
 
 	}//end testReadCatalogueDecoratesWhatOpenRegisterReturns()
+
+	/**
+	 * WOO-581 review round 3 (f3): the `@self` block is the configured one, and a
+	 * caller's top-level scope keys do not reach OpenRegister either — its facet
+	 * path reads `_schemas` first. Other filters pass through.
+	 *
+	 * @return void
+	 */
+	public function testReadCatalogueDropsTheCallersScopeKeys(): void {
+		$objectService = $this->createMock(ObjectService::class);
+		$queries = [];
+		$objectService->method('searchObjectsPaginated')->willReturnCallback(
+			static function (array $query) use (&$queries): array {
+				$queries[] = $query;
+				return ['results' => [], 'total' => 0];
+			}
+		);
+		$this->service->setObjectService($objectService);
+
+		$this->service->readCatalogue(
+			entryConfig: ['register' => '1', 'schema' => '2'],
+			caseTypeConfig: ['register' => '1', 'schema' => '3'],
+			filters: ['_schemas' => [56], '_registers' => [99], '_schema' => 56, 'group' => 'Wonen']
+		);
+
+		$this->assertSame(['group' => 'Wonen', '@self' => ['register' => '1', 'schema' => '2']], $queries[0]);
+	}//end testReadCatalogueDropsTheCallersScopeKeys()
 }//end class

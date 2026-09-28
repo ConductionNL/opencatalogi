@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\App\IAppManager;
@@ -25,6 +26,10 @@ class SitemapServiceTest extends TestCase {
 	private SettingsService|MockObject $settingsService;
 	private IURLGenerator|MockObject $urlGenerator;
 	private IAppConfig|MockObject $config;
+	private PublicationQueryService|MockObject $queryService;
+
+	/** @var \Closure(array): array What the read-rule guard returns; pass-through by default. */
+	private \Closure $guard;
 	private SitemapService $service;
 
 	protected function setUp(): void {
@@ -42,7 +47,13 @@ class SitemapServiceTest extends TestCase {
 			);
 
 		// Object visibility is enforced by OpenRegister RBAC inside the _rbac: true
-		// searches, not by an app-side predicate, so the query service is no longer a dep.
+		// searches. The query service is back as a dep for ONE thing: the
+		// SCH-PFTS-CAT-002 read-rule guard (WOO-581 review). Pass-through here; the
+		// WOO-581 tests below swap $this->guard.
+		$this->guard = static fn (array $schemaIds): array => $schemaIds;
+		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService->method('applySchemaScopeReadRuleGuard')
+			->willReturnCallback(fn (array $schemaIds): array => ($this->guard)($schemaIds));
 
 		$this->service = new SitemapService(
 			$this->container,
@@ -51,6 +62,7 @@ class SitemapServiceTest extends TestCase {
 			$this->urlGenerator,
 			$this->config,
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->queryService,
 		);
 	}
 
@@ -823,6 +835,88 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	// ──────────────────────────────────────────────────────────
+	// WOO-581 review f3 — the read-rule guard on the sitemap
+	// ──────────────────────────────────────────────────────────
+
+	/**
+	 * Wire a valid sitemap request whose category schema is `41`, and count the
+	 * publication searches (the catalog lookup is not one).
+	 *
+	 * @param int $publicationSearches Incremented per publication search.
+	 *
+	 * @return void
+	 */
+	private function wireGuardedSitemap(int &$publicationSearches): void {
+		$this->setupValidSitemapContext('7', '41');
+		$catalogObj = $this->createCatalogObj([41]);
+		$pubObject = $this->createSerializableObject(['id' => 'pub-1', '@self' => ['updated' => '2024-06-01']]);
+
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')
+			->willReturnCallback(function (array $query = []) use ($catalogObj, $pubObject, &$publicationSearches) {
+				if (isset($query['slug'])) {
+					return ['results' => [$catalogObj]];
+				}
+				$publicationSearches++;
+				return ['results' => [$pubObject], 'total' => 1, 'next' => null];
+			});
+
+		$fileService = $this->createMock(\OCA\OpenRegister\Service\FileService::class);
+		$fileService->method('formatFiles')->willReturn(['results' => []]);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn ($id) => $id === 'OCA\OpenRegister\Service\FileService' ? $fileService : $objectService
+		);
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com');
+	}
+
+	/**
+	 * The sitemap admits its category schema on `$catalog['schemas']` membership
+	 * and then searched it with `_rbac: true`, unguarded — for a schema without
+	 * an `authorization` block that published every non-private row, documents
+	 * included, to the national Woo index. A dropped schema is now an empty,
+	 * valid sitemap index, and no publication search runs.
+	 */
+	public function testBuildSitemapIndexIsEmptyWhenTheGuardDropsTheSchema(): void {
+		$publicationSearches = 0;
+		$this->wireGuardedSitemap($publicationSearches);
+		$this->guard = static fn (array $schemaIds): array => [];
+
+		$result = $this->service->buildSitemapIndex('my-catalog', 'sitemapindex-diwoo-infocat001.xml');
+
+		$this->assertSame(200, $result->getStatus());
+		$this->assertStringNotContainsString('<sitemap>', $result->render());
+		$this->assertSame(0, $publicationSearches);
+	}
+
+	public function testBuildSitemapIsEmptyWhenTheGuardDropsTheSchema(): void {
+		$publicationSearches = 0;
+		$this->wireGuardedSitemap($publicationSearches);
+		$this->guard = static fn (array $schemaIds): array => [];
+
+		$result = $this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 1);
+
+		$this->assertSame(200, $result->getStatus());
+		$this->assertStringNotContainsString('<diwoo:Document>', $result->render());
+		$this->assertSame(0, $publicationSearches);
+	}
+
+	/**
+	 * Negative control: the guard keeps the schema → the sitemap is built as
+	 * before, so the guard cannot be why a working Woo-index feed goes quiet.
+	 */
+	public function testBuildSitemapIndexIsUnchangedWhenTheGuardKeepsTheSchema(): void {
+		$publicationSearches = 0;
+		$this->wireGuardedSitemap($publicationSearches);
+
+		$result = $this->service->buildSitemapIndex('my-catalog', 'sitemapindex-diwoo-infocat001.xml');
+
+		$this->assertStringContainsString('<sitemap>', $result->render());
+		$this->assertSame(1, $publicationSearches);
+	}
+
+	// ──────────────────────────────────────────────────────────
 	// Operator-tunable page size
 	// ──────────────────────────────────────────────────────────
 
@@ -844,6 +938,7 @@ class SitemapServiceTest extends TestCase {
 			$this->urlGenerator,
 			$config,
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->queryService,
 		);
 
 		$reflection = new \ReflectionClass($service);
@@ -863,6 +958,7 @@ class SitemapServiceTest extends TestCase {
 			$this->urlGenerator,
 			$config,
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->queryService,
 		);
 
 		$reflection = new \ReflectionClass($service);
