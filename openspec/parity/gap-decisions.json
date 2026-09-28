@@ -598,5 +598,13 @@
 		"reason": "Matrix corrected. Rated yes with built.state none: dossiq publishes a Woo decision's disclosable documents to OpenCatalogi from the case (POST /api/cases/{id}/woo/publish, appinfo/routes.php:820, WOOAssessmentController.php:229, BesluitPublicatiePanel.vue via src/services/wooPublicationApi.js:33, read at dossiq 96b8ef8). built.state should be built; the row lives in dossiq's matrix, so the edit is handed to the coordinator.",
 		"change": null,
 		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "publication-theme-pages",
+		"matrix": "decidiq",
+		"decision": "decided-no",
+		"reason": "Rendering a publication's timeline array as a timeline on the public publication page, the half decidiq publication-theme-pages names (row decidiq pub-20). It is not opencatalogi's: opencatalogi renders no public page (UiController serves only the Nextcloud app), and the public publication page is portaliq's src/site/components/PublicationDetailBlock.vue (portaliq development 8934e73be3), which reads opencatalogi's public federation endpoint /api/federation/publications and renders every field, an array as plain list items. ADR-086 and ADR-109 (both Proposed) put public rendering in portaliq, and opencatalogi's own matrix rows pub-wcag and od-visualise already carry portaliq as owner. opencatalogi already serves the timeline as data, as decidiq's design expects. The half belongs to portaliq.",
+		"change": null,
+		"decidedOn": "2026-09-28"
 	}
 ]
