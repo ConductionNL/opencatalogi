@@ -566,12 +566,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "CatalogModal.vue:105 organisation picker, saved as catalog.organization (:447); SettingsService.php:1179 organisation is OR's nc-organisation projection; openregister lib/Repair/SeedDirectoryVirtualSchemas.php:80-91 declares oin, tooi, rsin, pki; manifest.json:767 Organizations page still targets schema 'organization' in listing_register"
+				"evidence": "CatalogModal.vue:105 organisation picker, saved as catalog.organization (:447); SettingsService.php:1179 organisation is OR's nc-organisation projection; openregister lib/Repair/SeedDirectoryVirtualSchemas.php:80-91 declares oin, tooi, rsin, pki; manifest.json:767 Organizations page still targets schema 'organization' in listing_register",
+				"change": "ConductionNL/openregister openspec/changes/the-organisation-projection-is-writable"
 			},
 			"reachedOn": "/catalogi -> CatalogModal organisation picker; /organizations (manifest.json:767)",
-			"note": "A catalogue can point at an organisation, and the identifier fields exist on OR's nc-organisation. The app's own Organizations page queries schema 'organization', which publication_register.json no longer ships, so where staff edit OIN/TOOI/RSIN is unproven.",
+			"note": "A catalogue can point at an organisation, and the identifier fields exist on OR's nc-organisation. The app's own Organizations page queries schema 'organization', which publication_register.json no longer ships, so where staff edit OIN/TOOI/RSIN is unproven. Specified in ConductionNL/openregister openspec/changes/the-organisation-projection-is-writable (openregister lane, OpenSpec pass 2026-09-27).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
@@ -655,12 +656,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "Searched for per-catalog access: publication_register.json:291 authorization is schema-wide (public on publicationDate, else 'authenticated'), with no create/update rules; SetupController.php:460-469 the 'private (granted groups only)' scope choice only sets listed=false; no catalog-level group field in the catalog schema (publication_register.json:380-530)"
+				"evidence": "Searched for per-catalog access: publication_register.json:291 authorization is schema-wide (public on publicationDate, else 'authenticated'), with no create/update rules; SetupController.php:460-469 the 'private (granted groups only)' scope choice only sets listed=false; no catalog-level group field in the catalog schema (publication_register.json:380-530)",
+				"change": "ConductionNL/openregister openspec/changes/rbac-inherits-to-children"
 			},
 			"reachedOn": "nothing: no per-catalogue staff permission exists",
-			"note": "OR schema RBAC could restrict a whole schema per group, but not the publications of one catalogue. The setup wizard offers a 'private, granted groups only' scope that does nothing beyond hiding the catalogue from listings.",
+			"note": "OR schema RBAC could restrict a whole schema per group, but not the publications of one catalogue. The setup wizard offers a 'private, granted groups only' scope that does nothing beyond hiding the catalogue from listings. Specified in ConductionNL/openregister openspec/changes/rbac-inherits-to-children (openregister lane, OpenSpec pass 2026-09-27).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
@@ -686,11 +688,11 @@
 			"opencatalogi": "partial",
 			"built": {
 				"state": "built",
-				"owner": "ConductionNL/openregister",
+				"owner": "ConductionNL/opencatalogi",
 				"evidence": "Staff pages read through OR objects API (object.js:890 /apps/openregister/api/objects), where OR applies its default multitenancy; opencatalogi's public reads deliberately disable it (openspec/specs/catalogs/spec.md:26 'no RBAC/multitenancy filters'; PublicationsController.php:1166 only uses/used pass _multitenancy: true)"
 			},
 			"reachedOn": "/catalogi and /publications/:catalogSlug through OR's active-organisation scoping",
-			"note": "Isolation rests entirely on OR multitenancy. opencatalogi has no org-scoping logic of its own, and its public API serves every organisation's catalogues. Not verified live.",
+			"note": "Isolation rests entirely on OR multitenancy. opencatalogi has no org-scoping logic of its own, and its public API serves every organisation's catalogues. Not verified live. Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-03-22-saas-multi-tenant; the missing half is opencatalogi's own work, so the owner moved to ConductionNL/opencatalogi (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
@@ -715,12 +717,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "Publications page is schema-driven CnIndexPage/CnDetailPage (manifest.json:523,543), so properties added to the schema in OR's schema editor render in its form; CatalogModal.vue:116 lets a catalogue hold any extra schema; SettingsService.php:901 re-imports publication_register.json on update"
+				"evidence": "Publications page is schema-driven CnIndexPage/CnDetailPage (manifest.json:523,543), so properties added to the schema in OR's schema editor render in its form; CatalogModal.vue:116 lets a catalogue hold any extra schema; SettingsService.php:901 re-imports publication_register.json on update",
+				"change": "ConductionNL/openregister openspec/changes/local-changes-to-app-shipped-configuration"
 			},
 			"reachedOn": "OpenRegister schema editor (outside this app), then /publications/:catalogSlug",
-			"note": "No field editor exists in opencatalogi. Whether an update re-import (InitializeSettings, force=false) keeps fields an admin added to the shipped publication schema is not shown.",
+			"note": "No field editor exists in opencatalogi. Whether an update re-import (InitializeSettings, force=false) keeps fields an admin added to the shipped publication schema is not shown. Specified in ConductionNL/openregister openspec/changes/local-changes-to-app-shipped-configuration (openregister lane, OpenSpec pass 2026-09-27).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "publications",
@@ -926,12 +929,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/nextcloud-vue",
-				"evidence": "src/manifest.json:529-535 Publications page selectable true, showMassDelete not overridden (nextcloud-vue CnIndexPage.vue default true); modals/object/MassPublishObjects.vue and MassDepublishObjects.vue opened only via ViewObject.vue:2634-2639 openSingleObjectDialog (one object)"
+				"evidence": "src/manifest.json:529-535 Publications page selectable true, showMassDelete not overridden (nextcloud-vue CnIndexPage.vue default true); modals/object/MassPublishObjects.vue and MassDepublishObjects.vue opened only via ViewObject.vue:2634-2639 openSingleObjectDialog (one object)",
+				"change": "ConductionNL/nextcloud-vue openspec/changes/index-bulk-edit-and-transitions"
 			},
 			"reachedOn": "/publications/:catalogSlug mass delete (CnIndexPage)",
-			"note": "Bulk delete works. No page offers bulk publish or withdraw.",
+			"note": "Bulk delete works. No page offers bulk publish or withdraw. Specified in ConductionNL/nextcloud-vue openspec/changes/index-bulk-edit-and-transitions (nextcloud-vue lane, OpenSpec pass 2026-09-27).",
 			"provider": "nextcloud-vue",
 			"providerHow": "read-from-code",
 			"feature": "bulk-operations",
@@ -1045,12 +1049,13 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "appinfo/routes.php:253-254 public GET /api/{catalogSlug}/{id}/uses and /used (PublicationsController.php:1099,1209); publication_register.json:100-217 declares no publication-to-publication property; manifest.json:644 pub-related shows only organisation and themes"
+				"evidence": "appinfo/routes.php:253-254 public GET /api/{catalogSlug}/{id}/uses and /used (PublicationsController.php:1099,1209); publication_register.json:100-217 declares no publication-to-publication property; manifest.json:644 pub-related shows only organisation and themes",
+				"change": "ConductionNL/openregister openspec/changes/relation-types-with-inverses"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{id}/uses|used (public); no staff page",
-			"note": "Back-links are readable over the API, but staff have no field or widget to link one publication to another.",
+			"note": "Back-links are readable over the API, but staff have no field or widget to link one publication to another. Specified in ConductionNL/openregister openspec/changes/relation-types-with-inverses (openregister lane, OpenSpec pass 2026-09-27).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "publications",
@@ -1166,12 +1171,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/nextcloud-vue",
-				"evidence": "src/manifest.json:650 pub-files integration widget; nextcloud-vue CnFilesCard.vue:28-29 renders a plain file.url link; CnFilesTab.vue:76-105 has the image preview and Viewer, but the PublicationDetail sidebar only has the audit tab (manifest.json:750)"
+				"evidence": "src/manifest.json:650 pub-files integration widget; nextcloud-vue CnFilesCard.vue:28-29 renders a plain file.url link; CnFilesTab.vue:76-105 has the image preview and Viewer, but the PublicationDetail sidebar only has the audit tab (manifest.json:750)",
+				"change": "ConductionNL/nextcloud-vue openspec/changes/files-preview-in-place"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id Attachments widget (link out)",
-			"note": "Not settled whether the detail-page widget renders CnFilesCard (link only) or the CnFilesTab body with Viewer. Nothing public previews data files.",
+			"note": "Not settled whether the detail-page widget renders CnFilesCard (link only) or the CnFilesTab body with Viewer. Nothing public previews data files. Specified in ConductionNL/nextcloud-vue openspec/changes/files-preview-in-place (nextcloud-vue lane, OpenSpec pass 2026-09-27).",
 			"provider": "nextcloud-vue",
 			"providerHow": "read-from-code",
 			"feature": "publications",
@@ -3159,12 +3165,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "PublicationQueryService.php:268-311 turns ?_content=true into OR _content_search; openregister ContentSearchHandler.php unions chunk matches; add-document-content-search/tasks.md 6/8 done; no caller passes _content (grep src, portaliq: 0)"
+				"evidence": "PublicationQueryService.php:268-311 turns ?_content=true into OR _content_search; openregister ContentSearchHandler.php unions chunk matches; add-document-content-search/tasks.md 6/8 done; no caller passes _content (grep src, portaliq: 0)",
+				"change": "ConductionNL/openregister openspec/changes/expose-content-search-in-object-service"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/search?_content=true (public API only); no page or portaliq block sends it",
-			"note": "Readers cannot reach it: the opt-in flag is off by default and no search UI sets it.",
+			"note": "Readers cannot reach it: the opt-in flag is off by default and no search UI sets it. Specified in ConductionNL/openregister openspec/changes/expose-content-search-in-object-service (openregister lane, OpenSpec pass 2026-09-27).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "faceted-search-api",
@@ -4480,12 +4487,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json Store page (/store: 'Install catalogue configurations ... a publication type, a set of themes, or the flows behind them') and Flows page (/flows) are OpenRegister AppHost surfaces; openspec/changes/harvest-protocol-plugins/tasks.md has 0 of 9 tasks done"
+				"evidence": "src/manifest.json Store page (/store: 'Install catalogue configurations ... a publication type, a set of themes, or the flows behind them') and Flows page (/flows) are OpenRegister AppHost surfaces; openspec/changes/harvest-protocol-plugins/tasks.md has 0 of 9 tasks done",
+				"change": "ConductionNL/openregister openspec/changes/app-leaf-provider-registration"
 			},
 			"reachedOn": "/apps/opencatalogi/store and /apps/opencatalogi/flows (OpenRegister-provided)",
-			"note": "Extension works through configuration packages and flows. opencatalogi has no code plugin interface of its own.",
+			"note": "Extension works through configuration packages and flows. opencatalogi has no code plugin interface of its own. Specified in ConductionNL/openregister openspec/changes/app-leaf-provider-registration (openregister lane, OpenSpec pass 2026-09-27).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "api-management-government-koppelingen",
@@ -5017,11 +5025,11 @@
 			"opencatalogi": "no",
 			"built": {
 				"state": "none",
-				"owner": "ConductionNL/openregister",
+				"owner": "ConductionNL/opencatalogi",
 				"evidence": "Searched publication_register.json authorization blocks: publication (:291) has read rules only, no create/update/publish split; no role or group concept in lib/; publishing is a plain publicationDate write (EventService.php:381), so no separate publish right can exist"
 			},
 			"reachedOn": "nothing: no editor/publisher split",
-			"note": "An admin could set CRUD rights per group in OR's schema editor, but that cannot tell editing from publishing.",
+			"note": "An admin could set CRUD rights per group in OR's schema editor, but that cannot tell editing from publishing. Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-06-15-rbac-and-lifecycle-enforcement (per-transition authorization on x-openregister-lifecycle); opencatalogi's half is not done, since lib/Settings/publication_register.json declares only an archive transition and no publish transition limited to publishers, so the owner moved to ConductionNL/opencatalogi (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "publications",
@@ -5140,9 +5148,10 @@
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): grep for IMailer, INotificationManager, notify( and createNotification in lib/ finds nothing; the connection rows (lib/Settings/connections.json) are only shown on the Integrations page. workspace checkout openconnector (integriq, development a9366588): grep for IMailer and digest in lib/ finds no report mail; its sync-failed notification rule is disabled (lib/Settings/integriq_register.json:2274-2280). Nearest thing: workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): ScheduledReportService can mail a daily export of any register/schema (lib/Service/ScheduledReportService.php:92,125,980, routes appinfo/routes.php:1939-1944), but it is a generic object export with no page in openregister src/ (grep scheduled-reports finds no caller), not a connection report."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): grep for IMailer, INotificationManager, notify( and createNotification in lib/ finds nothing; the connection rows (lib/Settings/connections.json) are only shown on the Integrations page. workspace checkout openconnector (integriq, development a9366588): grep for IMailer and digest in lib/ finds no report mail; its sync-failed notification rule is disabled (lib/Settings/integriq_register.json:2274-2280). Nearest thing: workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): ScheduledReportService can mail a daily export of any register/schema (lib/Service/ScheduledReportService.php:92,125,980, routes appinfo/routes.php:1939-1944), but it is a generic object export with no page in openregister src/ (grep scheduled-reports finds no caller), not a connection report.",
+				"change": "ConductionNL/openregister openspec/changes/connections-daily-report-mail"
 			},
 			"reachedOn": "nothing",
 			"provider": "openregister",
@@ -5151,7 +5160,7 @@
 			"featureConfidence": "low",
 			"columnsNote": "row added 2026-09-26 (wave 5); every column rated on that day",
 			"originNote": "TenderNed 407973 wish DMK-05-KW-02",
-			"note": "Depends on int-connector-monitor: the daily report only exists once the per-source run overview does.",
+			"note": "Depends on int-connector-monitor: the daily report only exists once the per-source run overview does. Specified in ConductionNL/openregister openspec/changes/connections-daily-report-mail (openregister lane, OpenSpec pass 2026-09-27).",
 			"ckan": "yes",
 			"dkan": "no",
 			"xxllnc": "unknown",
@@ -5473,9 +5482,10 @@
 			"originUrl": "https://github.com/ckan/ckan/pull/8308",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the publication schema has no draft state: status is an enum of published and archived with lifecycle initial published (lib/Settings/publication_register.json:207-222), and only title is required. hardValidation is false on it (:289), so an incomplete publication saves, but nothing enforces required fields at publish time. The frontend still calls an object publish endpoint (src/store/modules/object.js:1558) that the workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): routes no longer register (grep publish in appinfo/routes.php finds no objects publish route), and workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): required checks only run when hardValidation is on, at every save alike (lib/Service/ObjectService.php:2192-2222)."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the publication schema has no draft state: status is an enum of published and archived with lifecycle initial published (lib/Settings/publication_register.json:207-222), and only title is required. hardValidation is false on it (:289), so an incomplete publication saves, but nothing enforces required fields at publish time. The frontend still calls an object publish endpoint (src/store/modules/object.js:1558) that the workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): routes no longer register (grep publish in appinfo/routes.php finds no objects publish route), and workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): required checks only run when hardValidation is on, at every save alike (lib/Service/ObjectService.php:2192-2222).",
+				"change": "ConductionNL/openregister openspec/changes/field-rules-by-state"
 			},
 			"reachedOn": "nothing",
 			"provider": "openregister",
@@ -5494,7 +5504,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"save a publication as a draft with required fields still empty, and have them enforced only when it is published\"; no public page or live instance shows it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"save a publication as a draft with required fields still empty, and have them enforced only when it is published\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"save a publication as a draft with required fields still empty, and have them enforced only when it is published\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in ConductionNL/openregister openspec/changes/field-rules-by-state (openregister lane, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "ops-history-purge",
@@ -5535,9 +5546,10 @@
 			"originUrl": "https://github.com/ckan/ckan/pull/9027",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): published records can be read publicly as filtered JSON from /api/{catalogSlug} (appinfo/routes.php publications#index, lib/Controller/PublicationsController.php:433), and workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): signed-in users can export a register/schema's objects with the same filters as CSV, XLSX or PDF (GET /api/objects/{register}/{schema}/export appinfo/routes.php:1172, ObjectsController::export lib/Controller/ObjectsController.php:5432-5464, @NoAdminRequired). Missing half: no public CSV, no TSV or XML, and a tabular file attached to a publication is never parsed into rows (grep text/csv and _format in the publication controllers and services finds nothing), so there is no 'published table' to filter."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): published records can be read publicly as filtered JSON from /api/{catalogSlug} (appinfo/routes.php publications#index, lib/Controller/PublicationsController.php:433), and workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): signed-in users can export a register/schema's objects with the same filters as CSV, XLSX or PDF (GET /api/objects/{register}/{schema}/export appinfo/routes.php:1172, ObjectsController::export lib/Controller/ObjectsController.php:5432-5464, @NoAdminRequired). Missing half: no public CSV, no TSV or XML, and a tabular file attached to a publication is never parsed into rows (grep text/csv and _format in the publication controllers and services finds nothing), so there is no 'published table' to filter.",
+				"change": "ConductionNL/openregister openspec/changes/export-open-formats-and-public-download"
 			},
 			"reachedOn": "/api/{catalogSlug} (public JSON); openregister object export for signed-in users",
 			"provider": "openregister",
@@ -5556,7 +5568,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"download the rows of a published table, filtered to what you need, as CSV, TSV, JSON or XML\"; no public page or live instance shows it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"download the rows of a published table, filtered to what you need, as CSV, TSV, JSON or XML\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"download the rows of a published table, filtered to what you need, as CSV, TSV, JSON or XML\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in ConductionNL/openregister openspec/changes/export-open-formats-and-public-download (openregister lane, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "od-change-alert",
@@ -5566,9 +5579,10 @@
 			"originUrl": "https://github.com/ckan/ckan/discussions/9535",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): schema updates are diffed and classified compatible or breaking, and a breaking change is blocked until an admin acknowledges it, with a versioned changelog (lib/Service/Schema/SchemaVersioningService.php:90,112-121,138,156); OpenRegister's own API versions send Deprecation and Sunset headers (lib/Middleware/ApiVersionMiddleware.php:217-226). Missing half: nobody who builds on the data is told; opencatalogi has no consumer registry or change notice (grep breaking, deprecat and notify( in opencatalogi lib finds only code comments), and the Deprecation headers cover OpenRegister's routes, not opencatalogi's public /api/{catalogSlug}."
+				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): schema updates are diffed and classified compatible or breaking, and a breaking change is blocked until an admin acknowledges it, with a versioned changelog (lib/Service/Schema/SchemaVersioningService.php:90,112-121,138,156); OpenRegister's own API versions send Deprecation and Sunset headers (lib/Middleware/ApiVersionMiddleware.php:217-226). Missing half: nobody who builds on the data is told; opencatalogi has no consumer registry or change notice (grep breaking, deprecat and notify( in opencatalogi lib finds only code comments), and the Deprecation headers cover OpenRegister's routes, not opencatalogi's public /api/{catalogSlug}.",
+				"change": "ConductionNL/openregister openspec/changes/schema-breaking-change-notice"
 			},
 			"reachedOn": "openregister schema edit (acknowledge breaking change); no consumer-facing surface",
 			"provider": "openregister",
@@ -5587,7 +5601,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"warn the people who build on a dataset when a change could break their apps, such as a changed table structure\"; no public page or live instance shows it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"warn the people who build on a dataset when a change could break their apps, such as a changed table structure\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"warn the people who build on a dataset when a change could break their apps, such as a changed table structure\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Specified in ConductionNL/openregister openspec/changes/schema-breaking-change-notice (openregister lane, OpenSpec pass 2026-09-27)."
 		},
 		{
 			"id": "fed-harvest-removed",
