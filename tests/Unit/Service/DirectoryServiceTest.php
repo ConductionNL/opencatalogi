@@ -4556,4 +4556,79 @@ class DirectoryServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('lastSuccessAt', $filtered);
 		$this->assertArrayNotHasKey('lastError', $filtered);
 	}
+
+	// =========================================================================
+	// Peer lookups go through the federation endpoint (REQ-FOR-002, issue #1648)
+	// =========================================================================
+
+	/**
+	 * Run a peer lookup against a fixed set of listing URLs and record every
+	 * request Guzzle would have sent.
+	 *
+	 * The peer host is a public IP literal so the SSRF guard needs no DNS; the
+	 * second entry is a loopback URL the guard must refuse.
+	 *
+	 * @param string $publicationsUrl The listing's `publications` URL
+	 * @param string $method          getPublication or getUsed
+	 *
+	 * @return array{0: mixed, 1: array<int, \Psr\Http\Message\RequestInterface>}
+	 */
+	private function runPeerLookup(string $publicationsUrl, string $method): array {
+		$this->urlGenerator->method('getAbsoluteURL')
+			->willReturn('https://myserver.example.com/index.php/apps/opencatalogi/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/index.php/apps/opencatalogi/api/directory');
+		$this->setPrivateProperty('cachedUniqueDirs', [$publicationsUrl, 'https://127.0.0.1/index.php/apps/opencatalogi/api/federation/publications']);
+		$this->setPrivateProperty('cacheTimestamp', time());
+
+		$history = [];
+		$stack = \GuzzleHttp\HandlerStack::create(new \GuzzleHttp\Handler\MockHandler([
+			new Response(200, [], json_encode(['id' => 'pub-1', 'title' => 'Remote', 'results' => []])),
+		]));
+		$stack->push(\GuzzleHttp\Middleware::history($history));
+
+		$result = $this->service->{$method}('pub-1', ['handler' => $stack]);
+		$requests = array_map(static fn (array $entry) => $entry['request'], $history);
+
+		return [$result, $requests];
+	}
+
+	/**
+	 * @return array<string, array{0: string}>
+	 */
+	public static function peerListingUrlShapes(): array {
+		return [
+			'federation endpoint' => ['https://93.184.216.34/index.php/apps/opencatalogi/api/federation/publications'],
+			'catalogue slug endpoint' => ['https://93.184.216.34/index.php/apps/opencatalogi/api/publications'],
+			'directory endpoint' => ['https://93.184.216.34/index.php/apps/opencatalogi/api/directory'],
+			'trailing slash' => ['https://93.184.216.34/index.php/apps/opencatalogi/api/federation/publications/'],
+		];
+	}
+
+	/**
+	 * @dataProvider peerListingUrlShapes
+	 */
+	public function testGetPublicationAsksThePeersFederationEndpoint(string $publicationsUrl): void {
+		[$result, $requests] = $this->runPeerLookup($publicationsUrl, 'getPublication');
+
+		$this->assertCount(1, $requests, 'only the safe peer is asked; the loopback entry is refused');
+		$uri = $requests[0]->getUri();
+		$this->assertSame('93.184.216.34', $uri->getHost());
+		$this->assertSame('/index.php/apps/opencatalogi/api/federation/publications/pub-1', $uri->getPath());
+		parse_str($uri->getQuery(), $query);
+		$this->assertSame('false', $query['_aggregate'] ?? null);
+		$this->assertSame('Remote', $result['result']['title'] ?? null);
+	}
+
+	/**
+	 * @dataProvider peerListingUrlShapes
+	 */
+	public function testGetUsedAsksThePeersFederationEndpoint(string $publicationsUrl): void {
+		[, $requests] = $this->runPeerLookup($publicationsUrl, 'getUsed');
+
+		$this->assertCount(1, $requests);
+		$uri = $requests[0]->getUri();
+		$this->assertSame('/index.php/apps/opencatalogi/api/federation/publications/pub-1/used', $uri->getPath());
+		parse_str($uri->getQuery(), $query);
+		$this->assertSame('false', $query['_aggregate'] ?? null);
+	}
 }
