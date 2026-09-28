@@ -2574,10 +2574,11 @@
 			"built": {
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "searched lib/src for harvest/ckan/oai: no inbound harvester. openspec/changes/harvest-feed-intake/tasks.md 0/9 and harvest-protocol-plugins/tasks.md 0/9 open; dcat-oai-pmh-harvesting/tasks.md says superseded"
+				"evidence": "searched lib/src for harvest/ckan/oai: no inbound harvester. openspec/changes/harvest-feed-intake/tasks.md 0/9 and harvest-protocol-plugins/tasks.md 0/9 open; dcat-oai-pmh-harvesting/tasks.md says superseded",
+				"change": "openspec/changes/harvest-feed-intake"
 			},
 			"reachedOn": "nothing: not built",
-			"note": "Sibling building blocks exist (integriq SynchronizationService.php:225 pages CKAN; openregister Sync/HarvestPipelineService.php), but nothing connects them to harvesting a catalogue.",
+			"note": "Sibling building blocks exist (integriq SynchronizationService.php:225 pages CKAN; openregister Sync/HarvestPipelineService.php), but nothing connects them to harvesting a catalogue. corrections round 9 (2026-09-28): carried by openspec/changes/harvest-feed-intake (open, 0 of 9 tasks), the scheduled DCAT JSON-LD feed intake that replaces the superseded dcat-oai-pmh-harvesting umbrella; the CKAN walk follows in openspec/changes/harvest-protocol-plugins (open, 0 of 9 tasks, depends on harvest-feed-intake). The archived 2026-06-14-dcat-ap-harvest is the outbound DCAT feed, not a harvester.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "dcat-ap-harvest",
@@ -2604,7 +2605,8 @@
 			"built": {
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "openspec/changes/harvest-conflict-policies/tasks.md 0/8 open; no harvest code in lib (see od-harvest)"
+				"evidence": "openspec/changes/harvest-conflict-policies/tasks.md 0/8 open; no harvest code in lib (see od-harvest)",
+				"change": "openspec/changes/harvest-conflict-policies"
 			},
 			"reachedOn": "nothing: no harvest exists to conflict",
 			"provider": "opencatalogi",
@@ -2622,7 +2624,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"decide what happens when a harvested record conflicts with a local edit\"; xxllnc Publiceren is positioned for Woo document publication; no public page mentions datasets or DCAT and the Vught API client has no dataset or DCAT route. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"decide what happens when a harvested record conflicts with a local edit\"; iprox.open is positioned for Woo publication; no page mentions DCAT or datasets and the public API exposes search, dossier-categories and dossier-metrics only. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"decide what happens when a harvested record conflicts with a local edit\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "corrections round 9 (2026-09-28): carried by openspec/changes/harvest-conflict-policies (open, 0 of 8 tasks), which specifies the per-feed policies shadow-local, overlay, reject-on-conflict and manual-review with a review screen; it depends on harvest-feed-intake."
 		},
 		{
 			"id": "od-oai",
@@ -2633,7 +2636,8 @@
 			"built": {
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "grep -i 'oai' lib src: only openspec; no route in appinfo/routes.php; openspec/changes/oai-pmh-endpoint/tasks.md 0/20 open"
+				"evidence": "grep -i 'oai' lib src: only openspec; no route in appinfo/routes.php; openspec/changes/oai-pmh-endpoint/tasks.md 0/20 open",
+				"change": "openspec/changes/oai-pmh-endpoint"
 			},
 			"reachedOn": "nothing: no route",
 			"provider": "opencatalogi",
@@ -2651,7 +2655,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"offer an OAI-PMH endpoint so library and archive harvesters can collect the records\"; xxllnc Publiceren is positioned for Woo document publication; no public page mentions datasets or DCAT and the Vught API client has no dataset or DCAT route. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"offer an OAI-PMH endpoint so library and archive harvesters can collect the records\"; iprox.open is positioned for Woo publication; no page mentions DCAT or datasets and the public API exposes search, dossier-categories and dossier-metrics only. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"offer an OAI-PMH endpoint so library and archive harvesters can collect the records\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "corrections round 9 (2026-09-28): carried by openspec/changes/oai-pmh-endpoint (open, 0 of 20 tasks), which specifies GET /catalog/{slug}/oai with the six OAI-PMH verbs and the oai_dc and dcat prefixes."
 		},
 		{
 			"id": "od-datastore",
@@ -3558,10 +3563,11 @@
 			"built": {
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "l10n/nl.json has 1110 UI strings (74 l10n files); openspec/changes/register-i18n/tasks.md has only Task 1 'todo'; lib/Settings/publication_register.json publication schema has no language or translation property; portaliq lib/Controller/ContentController.php:212 negotiates a locale for portal pages only"
+				"evidence": "l10n/nl.json has 1110 UI strings (74 l10n files); openspec/changes/register-i18n/tasks.md has only Task 1 'todo'; lib/Settings/publication_register.json publication schema has no language or translation property; portaliq lib/Controller/ContentController.php:212 negotiates a locale for portal pages only",
+				"change": "openspec/changes/register-i18n"
 			},
 			"reachedOn": "staff UI labels via Nextcloud l10n; publication content: nothing",
-			"note": "Labels are translated. Publications are stored and served in one language. Multilingual content is specified (register-i18n), not built.",
+			"note": "Labels are translated. Publications are stored and served in one language. Multilingual content is specified (register-i18n), not built. corrections round 9 (2026-09-28): carried by the open openspec/changes/register-i18n (spec only, Task 1 todo). The archived openspec/changes/archive/2026-03-21-register-i18n ticks 12 of 12 tasks, but at f8c2317120 none of it is in the code (git grep finds no translatable flag in lib/Settings, no lang parameter in lib and no language switcher in src), so that change shipped without the capability; the rating stays partial.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "public-cms",
