@@ -21,7 +21,11 @@ namespace OCA\OpenCatalogi\Service;
 
 /**
  * Strips caller-supplied register/schema scope from a request-derived search query
- * (SCH-PFTS-CAT-002, WOO-581). See {@see CallerScope::strip()}.
+ * and writes the server's scope in a shape OpenRegister routes correctly
+ * (SCH-PFTS-CAT-002, WOO-581). See {@see CallerScope::strip()} and
+ * {@see CallerScope::writeScope()}.
+ *
+ * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
  */
 final class CallerScope
 {
@@ -57,10 +61,12 @@ final class CallerScope
      * `?@self[schema]=<S>`) reached OR as `@self.schema`, which wins the
      * precedence chain over the guarded `_schemas` list — so a schema without
      * an `authorization` block was read in full, even one in no catalog at
-     * all. Every public list route therefore strips these keys from the
-     * request-derived query and then writes its own scope: the three above, the
-     * federation list (both paths in PublicationService) and the glossary, themes
-     * and catalog-list controllers. Round 2 of the review showed why "the server's
+     * all. The public list routes below therefore strip these keys from the
+     * request-derived query and then write their own scope: the three above, the
+     * federation list (both paths in PublicationService), the glossary, themes
+     * and catalog-list controllers and the service catalogue. A new public route
+     * that searches with request parameters has to call this too — nothing
+     * enforces it. Round 2 of the review showed why "the server's
      * `@self.schema` wins" is not enough on its own: that holds for the rows, but
      * OR's facet path reads `@self.schemas ?? _schemas` first. Non-scope `@self`
      * filters (`owner`, `created`, `uuid`, …) are kept. Static on purpose: a pure
@@ -92,5 +98,59 @@ final class CallerScope
         return $query;
 
     }//end strip()
+
+    /**
+     * Write the server's register/schema scope into a search query.
+     *
+     * OpenRegister picks its search route from the SHAPE of this scope
+     * (`MagicMapper::searchObjectsPaginated()`), and two shapes pick the wrong one:
+     *
+     * - A scalar `@self.schema` next to anything but a scalar register. The
+     *   single-schema route runs `find((int) $register)`, and `(int) [R1, R2]` is 1:
+     *   it searches register 1, or — when register 1 does not exist — falls through
+     *   to the all-tables `_ids` lookup outside the scope. The read-rule guard
+     *   produces this shape itself: [S_ok, S_open] × [R1, R2] becomes
+     *   [S_ok] × [R1, R2] (WOO-581 review round 3).
+     * - A register list under `@self.register` alone. The multi-schema route reads
+     *   its registers from `@self.registers ?? _registers` and otherwise takes
+     *   `(int) @self.register` — register 1 again.
+     *
+     * So the schema is scalar only when the scope is exactly one schema in exactly
+     * one register (OR's single-table fast path), and every register list is also
+     * written to `@self.registers`. Call it after {@see strip()}.
+     *
+     * @param array             $query     The search query (already stripped of caller scope).
+     * @param array<int|string> $registers The register ids of the scope (may be empty).
+     * @param array<int|string> $schemas   The schema ids of the scope (non-empty).
+     *
+     * @return array The query with the scope written to `@self`.
+     *
+     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+     */
+    public static function writeScope(array $query, array $registers, array $schemas): array
+    {
+        $registers = array_values($registers);
+        $schemas   = array_values($schemas);
+        if (isset($query['@self']) === false || is_array($query['@self']) === false) {
+            $query['@self'] = [];
+        }
+
+        if (count($registers) === 1) {
+            $query['@self']['register'] = $registers[0];
+        }
+
+        if (count($registers) > 1) {
+            $query['@self']['register']  = $registers;
+            $query['@self']['registers'] = $registers;
+        }
+
+        $query['@self']['schema'] = $schemas;
+        if (count($schemas) === 1 && count($registers) === 1) {
+            $query['@self']['schema'] = $schemas[0];
+        }
+
+        return $query;
+
+    }//end writeScope()
 
 }//end class

@@ -323,12 +323,17 @@ class ServiceCatalogueService {
 	 *
 	 * @throws CatalogueUnreadableException When OpenRegister cannot be reached.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure static function.
+	 *
 	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-public-catalogue-lists-everything-that-can-be-requested-req-psc-101
 	 */
 	public function readCatalogue(array $entryConfig, array $caseTypeConfig, array $filters = []): array {
 		$objectService = $this->getObjectService();
 
-		$entryQuery = $filters;
+		// The `@self` block below replaces the caller's; the top-level scope keys
+		// (`_schemas`, `_registers`, …) have to go too, or OR's facet path follows
+		// them (WOO-581 review round 3, see CallerScope::strip()).
+		$entryQuery = CallerScope::strip(query: $filters);
 		$entryQuery['@self'] = [
 			'register' => $entryConfig['register'],
 			'schema' => $entryConfig['schema'],

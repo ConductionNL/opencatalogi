@@ -227,4 +227,28 @@ class DcatServiceTest extends TestCase {
 		$this->assertSame(1, $document['_meta']['count']);
 		$this->assertSame([['@id' => 'https://host/apps/opencatalogi/api/woo/u1']], $document['@graph'][0]['dcat:dataset']);
 	}//end testBuildCatalogDocumentSearchesExactlyTheCatalogSchemaScope()
+
+	/**
+	 * WOO-581 review round 3 (f1): one schema over two registers. A scalar
+	 * `@self.schema` next to the register list sent OR to `find((int) [20, 21])`
+	 * — register 1. The schema stays a list and the registers reach OR's
+	 * multi-schema route as `@self.registers`.
+	 *
+	 * @return void
+	 */
+	public function testBuildCatalogDocumentKeepsTheSchemaAListOverSeveralRegisters(): void {
+		$objectService = $this->wireOpenRegister();
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with(
+				$this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28] && $q['@self']['registers'] === [20, 21]),
+				true
+			)
+			->willReturn(['results' => [], 'next' => null]);
+
+		$this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20, 21], 'schemas' => [28]],
+			catalogSlug: 'woo'
+		);
+	}//end testBuildCatalogDocumentKeepsTheSchemaAListOverSeveralRegisters()
 }//end class

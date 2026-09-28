@@ -828,26 +828,15 @@ class CatalogiService {
 			}
 		}
 
-		$query = CallerScope::strip(query: $query);
-		if (isset($query['@self']) === false) {
-			$query['@self'] = [];
-		}
-
 		// Scope for magic mapper routing. The schema scope is non-empty here (see the
-		// fail-closed above).
-		if (empty($context['registers']) === false) {
-			// Use scalar value when only one register to avoid magic_mapper overhead.
-			$query['@self']['register'] = $context['registers'];
-			if (count($context['registers']) === 1) {
-				$query['@self']['register'] = $context['registers'][0];
-			}
-		}
-
-		// Use scalar value when only one schema to avoid magic_mapper overhead.
-		$query['@self']['schema'] = $context['schemas'];
-		if (count($context['schemas']) === 1) {
-			$query['@self']['schema'] = $context['schemas'][0];
-		}
+		// fail-closed above). writeScope() keeps the schema a list unless the scope is
+		// one schema in one register (WOO-581 review round 3).
+		$query = CallerScope::strip(query: $query);
+		$query = CallerScope::writeScope(
+			query: $query,
+			registers: ($context['registers'] ?? []),
+			schemas: $context['schemas']
+		);
 
 		// Add special parameters.
 		if (isset($config['limit']) === true) {

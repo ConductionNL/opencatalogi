@@ -232,6 +232,7 @@ class DcatService {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
@@ -254,9 +255,10 @@ class DcatService {
 		// PQM-002: attach W3C DQV quality measurements only when the catalog opts in.
 		$dqvExposure = filter_var(($catalog['dqvExposure'] ?? false), FILTER_VALIDATE_BOOLEAN);
 
+		// One schema in one register → scalar fast path; anything else keeps the lists
+		// OR's multi-schema route reads (WOO-581 review round 3, CallerScope::writeScope()).
 		$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
-		$searchQuery['@self']['register'] = $this->scalarOrList(ids: $registers);
-		$searchQuery['@self']['schema'] = $this->scalarOrList(ids: $schemas);
+		$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $registers, schemas: $schemas);
 		$searchQuery['_order']['updated'] = 'desc';
 
 		// FAIL CLOSED on an empty scope: an empty `@self.schema` must never be
@@ -719,22 +721,4 @@ class DcatService {
 
 		return [];
 	}//end toArray()
-
-	/**
-	 * Return a scalar when the ID list has exactly one entry, else the list.
-	 *
-	 * Mirrors CatalogiService::index — a scalar register/schema avoids unnecessary
-	 * magic-mapper overhead in OpenRegister object search.
-	 *
-	 * @param array<int, int> $ids The integer ID list.
-	 *
-	 * @return int|array<int, int> A scalar ID or the list.
-	 */
-	private function scalarOrList(array $ids): int|array {
-		if (count($ids) === 1) {
-			return $ids[0];
-		}
-
-		return $ids;
-	}//end scalarOrList()
 }//end class

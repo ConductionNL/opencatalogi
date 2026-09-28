@@ -4394,4 +4394,35 @@ class PublicationServiceTest extends TestCase {
 
 		$this->service->getAggregatedPublications(queryParams: $callerScope + $pathParams + ['_aggregate' => 'false', '_limit' => 10]);
 	}//end testFederationListStripsTheCallersScopeKeys()
+
+	/**
+	 * WOO-581 review round 3 (f1): one guarded schema over two registers. Both
+	 * federation paths wrote a scalar `@self.schema` next to the register list,
+	 * which sent OR to `find((int) [20, 21])` — register 1 — or past the scope to
+	 * the all-tables `_ids` lookup that uses()/used() rely on. The schema stays a
+	 * list and the registers reach OR's multi-schema route as `@self.registers`.
+	 *
+	 * @dataProvider federationListPaths
+	 *
+	 * @param array<string, string> $pathParams What selects the path.
+	 *
+	 * @return void
+	 */
+	public function testFederationListKeepsTheSchemaAListOverSeveralRegisters(array $pathParams): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceWithGuard($objectService, static fn (array $schemas): array => array_values(array_diff($schemas, [56])));
+		$this->mockConfiguredCatalogScope();
+		$this->request->method('getParams')->willReturn([]);
+
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => [20, 21], 'schemas' => [28, 56]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28]
+				&& $q['@self']['registers'] === [20, 21]))
+			->willReturn(['results' => [], 'total' => 0]);
+
+		$this->service->getAggregatedPublications(queryParams: $pathParams + ['_aggregate' => 'false', '_limit' => 10]);
+	}//end testFederationListKeepsTheSchemaAListOverSeveralRegisters()
 }

@@ -1614,6 +1614,36 @@ class CatalogiServiceTest extends TestCase {
 	}//end testIndexSearchesOnlyTheReadRuleGuardedSchemas()
 
 	/**
+	 * WOO-581 review round 3 (f1): the guard turns [28, 56] × [20, 21] into
+	 * [28] × [20, 21]. A scalar `@self.schema` next to that register list sent OR
+	 * to `find((int) [20, 21])` — register 1 — or past the scope to the all-tables
+	 * `_ids` lookup. The schema stays a list and the registers reach OR's
+	 * multi-schema route as `@self.registers`.
+	 *
+	 * @return void
+	 */
+	public function testIndexKeepsTheSchemaAListWhenTheScopeHasSeveralRegisters(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [20, 21], 'schemas' => [28, 56]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28]
+				&& $q['@self']['registers'] === [20, 21]))
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => array_values(array_diff($schemas, [56])));
+
+		$this->assertSame(200, $this->service->index('publications')->getStatus());
+	}//end testIndexKeepsTheSchemaAListWhenTheScopeHasSeveralRegisters()
+
+	/**
 	 * Everything dropped → an empty page and NO search. Without the fail-closed
 	 * the query would carry only a register filter: every schema in it.
 	 *

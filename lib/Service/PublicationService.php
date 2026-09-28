@@ -569,7 +569,6 @@ class PublicationService {
 		$objectService = $this->getObjectService();
 
 		// Overwrite certain values in the existing search query.
-		// Use scalar value when only one register/schema to avoid magic_mapper overhead.
 		$registers = $context['registers'];
 		if (empty($requestedRegisters) === false) {
 			$registers = $requestedRegisters;
@@ -582,20 +581,11 @@ class PublicationService {
 
 		// Only the (validated) narrowing above survives; every other scope key the
 		// caller sent goes, or OR's facet path follows it (WOO-581 review round 2).
+		// writeScope() keeps the schema a list unless the scope is one schema in one
+		// register: a scalar schema next to a register list sends OR to register 1, or
+		// past the scope to the all-tables `_ids` lookup (WOO-581 review round 3).
 		$searchQuery = CallerScope::strip(query: $searchQuery);
-		if (isset($searchQuery['@self']) === false) {
-			$searchQuery['@self'] = [];
-		}
-
-		$searchQuery['@self']['register'] = $registers;
-		if (count($registers) === 1) {
-			$searchQuery['@self']['register'] = $registers[0];
-		}
-
-		$searchQuery['@self']['schema'] = $schemas;
-		if (count($schemas) === 1) {
-			$searchQuery['@self']['schema'] = $schemas[0];
-		}
+		$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $registers, schemas: $schemas);
 
 		$searchQuery['_includeDeleted'] = false;
 
@@ -2191,23 +2181,13 @@ class PublicationService {
 		// round 2): the rows already followed the server's `@self.schema`, but OR's
 		// facet path reads `@self.schemas ?? _schemas` first, so a caller's keys
 		// steered the facets to any schema. See CallerScope::strip().
+		// See searchPublications() for why the scope goes through writeScope().
 		$searchQuery = CallerScope::strip(query: $searchQuery);
-		if (isset($searchQuery['@self']) === false) {
-			$searchQuery['@self'] = [];
-		}
-
-		// Use scalar value when only one register/schema to avoid magic_mapper overhead.
-		$registers = $catalogContext['registers'];
-		$schemas = $catalogContext['schemas'];
-		$searchQuery['@self']['register'] = $registers;
-		if (count($registers) === 1) {
-			$searchQuery['@self']['register'] = $registers[0];
-		}
-
-		$searchQuery['@self']['schema'] = $schemas;
-		if (count($schemas) === 1) {
-			$searchQuery['@self']['schema'] = $schemas[0];
-		}
+		$searchQuery = CallerScope::writeScope(
+			query: $searchQuery,
+			registers: $catalogContext['registers'],
+			schemas: $catalogContext['schemas']
+		);
 
 		$searchQuery['_includeDeleted'] = false;
 

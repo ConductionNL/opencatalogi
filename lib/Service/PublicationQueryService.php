@@ -832,41 +832,59 @@ class PublicationQueryService
      * are legitimately outside the catalog's schema list (a publication's documents
      * live in the document schema), so catalog membership is the wrong filter; the
      * leak class is. For an anonymous caller every row whose schema lacks read rules
-     * (or carries no numeric schema id) is dropped. A signed-in caller gets the
-     * result back untouched.
+     * (or carries no numeric schema id) is dropped. A signed-in caller keeps every
+     * row (and only gets the page cut when `$page` is given).
      *
-     * `total` is lowered by the rows dropped from this page. OR pages before it
-     * returns, so a later page may still hold rows that are dropped there; the
-     * figure is an upper bound, never a count of rows the caller may not read.
+     * `total` needs the whole list. OR's `getUses()` counts every related object and
+     * then slices the page, so lowering `total` by the rows dropped from one page
+     * still counted the hidden rows on the other pages — and walking `_offset`
+     * showed where they sat (WOO-581 review round 3). With `$page` the envelope is
+     * the caller's FULL relation list (fetched with `_offset` 0 and no limit): the
+     * guard runs over all of it, `total` becomes the number of rows kept, and the
+     * page is cut here. Without `$page` — `getUsedBy()`, whose `total` is already
+     * page-local — `total` is lowered by the rows dropped from the page, which is
+     * exact there.
      *
-     * @param array $result An OpenRegister relation envelope (`results`, `total`, …).
+     * @param array                                   $result An OpenRegister relation envelope (`results`, `total`, …).
+     * @param array{limit: int, offset: int}|null     $page   The caller's page when `$result` holds the full list.
      *
      * @return array The envelope with the guarded rows.
      *
      * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
      */
-    public function applyReadRuleGuardToRows(array $result): array
+    public function applyReadRuleGuardToRows(array $result, ?array $page = null): array
     {
         $rows = ($result['results'] ?? null);
-        if (is_array($rows) === false || $rows === [] || $this->isAnonymous() === false) {
+        if (is_array($rows) === false || ($page === null && $this->isAnonymous() === false)) {
             return $result;
         }
 
-        $rowSchemas = array_map(fn (mixed $row): ?int => $this->rowSchemaId(row: $row), $rows);
-        $kept       = array_flip(
-            $this->applySchemaScopeReadRuleGuard(schemaIds: array_values(array_unique(array_filter($rowSchemas, 'is_int'))))
-        );
-
-        $keptRows = [];
-        foreach ($rows as $index => $row) {
-            $schemaId = $rowSchemas[$index];
-            if ($schemaId !== null && isset($kept[$schemaId]) === true) {
-                $keptRows[] = $row;
-            }
+        // A signed-in caller keeps every row; only the page is cut (when asked).
+        $keptRows = array_values($rows);
+        if ($this->isAnonymous() === true) {
+            $rowSchemas = array_map(fn (mixed $row): ?int => $this->rowSchemaId(row: $row), $keptRows);
+            $kept       = array_flip(
+                $this->applySchemaScopeReadRuleGuard(schemaIds: array_values(array_unique(array_filter($rowSchemas, 'is_int'))))
+            );
+            $keptRows   = array_values(
+                array_filter(
+                    $keptRows,
+                    static fn (int $index): bool => $rowSchemas[$index] !== null && isset($kept[$rowSchemas[$index]]) === true,
+                    ARRAY_FILTER_USE_KEY
+                )
+            );
         }
 
         $result['results'] = $keptRows;
-        $dropped           = (count($rows) - count($keptRows));
+        if ($page !== null) {
+            $result['total']   = count($keptRows);
+            $result['results'] = array_slice($keptRows, $page['offset'], $page['limit']);
+            $result['limit']   = $page['limit'];
+            $result['offset']  = $page['offset'];
+            return $result;
+        }
+
+        $dropped = (count($rows) - count($keptRows));
         if ($dropped > 0 && is_numeric($result['total'] ?? null) === true) {
             $result['total'] = max(count($keptRows), ((int) $result['total'] - $dropped));
         }

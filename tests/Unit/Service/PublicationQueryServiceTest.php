@@ -501,7 +501,7 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * Catalog shapes for {@see testCatalogSearchQueryNeverEmitsAScalarSchemaWithoutAScalarRegister()}.
 	 *
-	 * @return array<string, array{0: array<int, int>, 1: bool}>
+	 * @return array<string, array{0: array<int, int>|string, 1: bool}>
 	 */
 	public static function catalogRegisterShapes(): array {
 		return [
@@ -585,6 +585,60 @@ class PublicationQueryServiceTest extends TestCase {
 		$result = ['results' => [['id' => 'secret', '@self' => ['schema' => '56']]], 'total' => 1];
 		$this->assertSame($result, $this->service->applyReadRuleGuardToRows(result: $result));
 	}//end testRowGuardLeavesTheResultUntouchedForASignedInCaller()
+
+	/**
+	 * WOO-581 review round 3 (f2): with `$page` the result is the caller's whole
+	 * relation list. The guard runs over all of it, `total` is the number of rows
+	 * kept — not OR's count, which included the hidden rows of every page — and
+	 * the page is cut after the guard, so a hidden row never shifts or shortens it.
+	 *
+	 * @return void
+	 */
+	public function testRowGuardCutsThePageAfterFilteringTheWholeList(): void {
+		$this->wireHappyPath(authorizationById: [56 => null]);
+
+		$out = $this->service->applyReadRuleGuardToRows(
+			result: [
+				'results' => [
+					['id' => 'a', '@self' => ['schema' => 3]],
+					['id' => 'secret-1', '@self' => ['schema' => 56]],
+					['id' => 'b', '@self' => ['schema' => 3]],
+					['id' => 'secret-2', '@self' => ['schema' => 56]],
+					['id' => 'c', '@self' => ['schema' => 3]],
+				],
+				'total' => 5,
+				'limit' => PHP_INT_MAX,
+				'offset' => 0,
+			],
+			page: ['limit' => 1, 'offset' => 1]
+		);
+
+		$this->assertSame(['b'], array_column($out['results'], 'id'));
+		$this->assertSame(3, $out['total']);
+		$this->assertSame(1, $out['limit']);
+		$this->assertSame(1, $out['offset']);
+	}//end testRowGuardCutsThePageAfterFilteringTheWholeList()
+
+	/**
+	 * A signed-in caller keeps every row; with `$page` only the page is cut, and
+	 * `total` is the whole list.
+	 *
+	 * @return void
+	 */
+	public function testRowGuardOnlyCutsThePageForASignedInCaller(): void {
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$this->service = new PublicationQueryService(container: $this->container, userSession: $session, config: $this->config, logger: $this->logger);
+		$this->wireHappyPath(authorizationById: [56 => null]);
+
+		$out = $this->service->applyReadRuleGuardToRows(
+			result: ['results' => [['id' => 'a', '@self' => ['schema' => 3]], ['id' => 'secret', '@self' => ['schema' => 56]]], 'total' => 2],
+			page: ['limit' => 1, 'offset' => 1]
+		);
+
+		$this->assertSame(['secret'], array_column($out['results'], 'id'));
+		$this->assertSame(2, $out['total']);
+	}//end testRowGuardOnlyCutsThePageForASignedInCaller()
 
 	/**
 	 * WOO-581 review round 2 (f5): `_content=true` widens the scope to the
