@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "x-openregister": {
     "type": "application",
@@ -594,7 +594,7 @@
           }
         },
         "title": "Listing",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A filtered view of publications within a catalog",
         "description": "A listing provides a customizable view of publications within a catalog. It allows for the creation of specific publication collections based on filters, sorting, and presentation preferences. Listings can be used to create featured sections, topic-based collections, or any other organized view of publications.",
@@ -690,10 +690,23 @@
           },
           "lastSync": {
             "type": "string",
-            "description": "Timestamp of the last synchronization",
+            "description": "Timestamp of the last synchronization attempt, successful or not",
             "format": "date-time",
             "facetable": true,
             "title": "Last Sync"
+          },
+          "lastSuccessAt": {
+            "type": "string",
+            "description": "Timestamp of the last successful synchronization; a failed attempt leaves it unchanged",
+            "format": "date-time",
+            "facetable": false,
+            "title": "Last Successful Sync"
+          },
+          "lastError": {
+            "type": "string",
+            "description": "Error of the last synchronization attempt when it failed, without credentials or query strings; empty after a success",
+            "facetable": false,
+            "title": "Last Sync Error"
           },
           "integrationLevel": {
             "type": "string",

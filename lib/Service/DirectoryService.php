@@ -657,7 +657,7 @@ class DirectoryService {
 					$errorCode = 500;
 				}
 
-				$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: $errorCode);
+				$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: $errorCode, errorMessage: $error);
 			} catch (\Exception $updateException) {
 				// Removed redundant logging.
 			}
@@ -689,7 +689,7 @@ class DirectoryService {
 
 			// Try to update existing listings with error status.
 			try {
-				$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: 500);
+				$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: 500, errorMessage: $error);
 			} catch (\Exception $updateException) {
 				// Removed redundant logging.
 			}
@@ -859,7 +859,12 @@ class DirectoryService {
 			}
 
 			// Set lastSync as ISO string format instead of DateTime object.
-			$listingData['lastSync'] = (new DateTime())->format('c');
+			// lastSync is the last attempt; lastSuccessAt only moves on a
+			// successful sync, so a failing peer keeps its last good time
+			// (REQ-FLS-001). A success clears the previous error.
+			$listingData['lastSync']      = (new DateTime())->format('c');
+			$listingData['lastSuccessAt'] = $listingData['lastSync'];
+			$listingData['lastError']     = '';
 
 			// Set published from source if available, otherwise default to now for backwards compatibility.
 			// Normalize to ISO 8601 format (date-time validation requires 'T' separator and timezone).
@@ -991,9 +996,10 @@ class DirectoryService {
 					$existingListingData = $existingListing->jsonSerialize();
 					$errorData = ($existingListingData['object'] ?? []);
 
-					// Update with error status.
+					// Update with error status. lastSuccessAt is left as it was.
 					$errorData['statusCode'] = 500;
-					$errorData['lastSync'] = (new DateTime())->format('c');
+					$errorData['lastSync']   = (new DateTime())->format('c');
+					$errorData['lastError']  = self::sanitizeSyncError(message: $e->getMessage());
 
 					$objectService->saveObject(
 						object: $errorData,
@@ -1489,12 +1495,15 @@ class DirectoryService {
 	 * the directory sync fails at the HTTP level.
 	 *
 	 * @param string $directoryUrl The directory URL that failed
-	 * @param integer $statusCode The HTTP status code of the error
+	 * @param integer $statusCode   The HTTP status code of the error
+	 * @param string  $errorMessage The error text; stored without credentials or query strings
 	 *
 	 * @return void
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#REQ-FLS-001
 	 */
-	private function updateDirectoryStatusOnError(string $directoryUrl, int $statusCode): void {
+	private function updateDirectoryStatusOnError(string $directoryUrl, int $statusCode, string $errorMessage=''): void {
 		try {
 			// Check if OpenRegister service is available.
 			if (in_array('openregister', $this->appManager->getInstalledApps()) === false) {
@@ -1530,9 +1539,10 @@ class DirectoryService {
 				$listingData = $listing->jsonSerialize();
 				$errorData = ($listingData['object'] ?? []);
 
-				// Update with error status.
+				// Update with error status. lastSuccessAt is left as it was.
 				$errorData['statusCode'] = $statusCode;
-				$errorData['lastSync'] = (new DateTime())->format('c');
+				$errorData['lastSync']   = (new DateTime())->format('c');
+				$errorData['lastError']  = self::sanitizeSyncError(message: $errorMessage);
 
 				// Use positional parameters for compatibility with different ObjectService versions.
 				$objectService->saveObject(
@@ -1548,6 +1558,39 @@ class DirectoryService {
 		}//end try
 
 	}//end updateDirectoryStatusOnError()
+
+	/**
+	 * Strip credentials and query strings from a sync error before it is stored.
+	 *
+	 * Peer URLs can carry a token in the query string or a user and password in
+	 * the authority part, and Guzzle repeats the full URL in its messages. The
+	 * stored error is shown to administrators, so neither may survive. The text
+	 * is also capped so a peer cannot fill the listing with a huge body.
+	 *
+	 * @param string $message The raw error message
+	 *
+	 * @return string The message without credentials or query strings
+	 *
+	 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#REQ-FLS-001
+	 */
+	private static function sanitizeSyncError(string $message): string {
+		$clean = preg_replace_callback(
+			'~\b([a-z][a-z0-9+.-]*://)([^\s/?#`\'"<>]*@)?([^\s?#`\'"<>]*)(\?[^\s#`\'"<>]*)?(#[^\s`\'"<>]*)?~i',
+			static function (array $match): string {
+				return $match[1].$match[3];
+			},
+			$message
+		);
+		if ($clean === null) {
+			$clean = '';
+		}
+
+		// Any query-looking fragment left outside a URL (for example "?token=abc").
+		$clean = (string) preg_replace('~\?[^\s`\'"<>]*=[^\s`\'"<>]*~', '', $clean);
+
+		return mb_substr($clean, 0, 1000);
+
+	}//end sanitizeSyncError()
 
 	/**
 	 * Check if the current request is from a system broadcast
@@ -2700,6 +2743,8 @@ class DirectoryService {
 			'status',
 			'statusCode',
 			'lastSync',
+			'lastSuccessAt',
+			'lastError',
 			'available',
 			'default',
 			// Unwanted properties as requested.
