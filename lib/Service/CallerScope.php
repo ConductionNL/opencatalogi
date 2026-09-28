@@ -19,6 +19,8 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use InvalidArgumentException;
+
 /**
  * Strips caller-supplied register/schema scope from a request-derived search query
  * and writes the server's scope in a shape OpenRegister routes correctly
@@ -136,17 +138,22 @@ final class CallerScope
      * name real columns, and a list there is an `IN (...)`. Call it after
      * {@see strip()}.
      *
-     * An empty scope is the caller's to refuse: every caller today returns an empty
-     * result, without searching, on an empty schema or register list. Nothing here
-     * enforces that. An empty register list that does get here is written as
-     * `@self.register = []`, which OR reads as register 0, so the search finds
-     * nothing, but only by that accident.
+     * An empty scope is the caller's to refuse, and every caller does: it returns an
+     * empty result, without searching, on an empty schema or register list. This
+     * method throws rather than write one, because neither empty list is safe to
+     * hand to OR. An empty register list only finds nothing by accident (OR reads
+     * `[]` as register 0). An empty schema list is not null, so it skips the
+     * multi-schema route and can reach the all-tables `_ids` lookup outside any
+     * scope (WOO-581 review round 6). A caller that forgets its check fails loud
+     * and closed.
      *
      * @param array             $query     The search query (already stripped of caller scope).
-     * @param array<int|string> $registers The register ids of the scope (callers pass a non-empty list).
-     * @param array<int|string> $schemas   The schema ids of the scope (callers pass a non-empty list).
+     * @param array<int|string> $registers The register ids of the scope (non-empty).
+     * @param array<int|string> $schemas   The schema ids of the scope (non-empty).
      *
      * @return array The query with the scope written.
+     *
+     * @throws InvalidArgumentException When the register or the schema list is empty.
      *
      * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
      */
@@ -154,6 +161,10 @@ final class CallerScope
     {
         $registers = array_values($registers);
         $schemas   = array_values($schemas);
+        if ($registers === [] || $schemas === []) {
+            throw new InvalidArgumentException('Refusing to write an empty register or schema scope; the caller must fail closed first.');
+        }
+
         if (isset($query['@self']) === false || is_array($query['@self']) === false) {
             $query['@self'] = [];
         }

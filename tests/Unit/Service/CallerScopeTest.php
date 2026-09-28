@@ -25,9 +25,6 @@ class CallerScopeTest extends TestCase {
 			'several schemas, one register' => [[20], [28, 29], ['@self' => ['owner' => 'alice', 'register' => 20, 'schema' => [28, 29]], '_schemas' => [28, 29]]],
 			'one schema, several registers' => [[20, 21], [28], ['@self' => ['owner' => 'alice', 'register' => [20, 21], 'schema' => [28]], '_registers' => [20, 21], '_schemas' => [28]]],
 			'several of both'               => [[20, 21], [28, 29], ['@self' => ['owner' => 'alice', 'register' => [20, 21], 'schema' => [28, 29]], '_registers' => [20, 21], '_schemas' => [28, 29]]],
-			// Callers refuse an empty scope before they get here; if one does not, the
-			// empty register list is written as-is (OR reads it as register 0: nothing).
-			'one schema, no register'       => [[], [28], ['@self' => ['owner' => 'alice', 'register' => [], 'schema' => [28]], '_schemas' => [28]]],
 		];
 	}
 
@@ -56,6 +53,39 @@ class CallerScopeTest extends TestCase {
 		$this->assertArrayNotHasKey('registers', $query['@self']);
 		$this->assertArrayNotHasKey('schemas', $query['@self']);
 	}//end testWriteScopeOnlyEmitsAScalarSchemaForOneSchemaInOneRegister()
+
+	/**
+	 * Empty scopes, which writeScope() refuses to write.
+	 *
+	 * @return array<string, array{0: array<int, int>, 1: array<int, int>}>
+	 */
+	public static function emptyScopes(): array {
+		return [
+			'no register' => [[], [28]],
+			'no schema'   => [[20], []],
+			'neither'     => [[], []],
+		];
+	}
+
+	/**
+	 * WOO-581 review round 6: neither empty list is safe to hand to OR. No register
+	 * only finds nothing by accident (register 0), and an empty schema list skips the
+	 * multi-schema route and can reach the all-tables `_ids` lookup. Every caller
+	 * fails closed first; writeScope() throws, so one that forgets fails loud and
+	 * closed instead of relying on that accident.
+	 *
+	 * @dataProvider emptyScopes
+	 *
+	 * @param array<int, int> $registers The scope's registers.
+	 * @param array<int, int> $schemas   The scope's schemas.
+	 *
+	 * @return void
+	 */
+	public function testWriteScopeRefusesAnEmptyScope(array $registers, array $schemas): void {
+		$this->expectException(\InvalidArgumentException::class);
+
+		CallerScope::writeScope(query: ['_ids' => ['uuid-x']], registers: $registers, schemas: $schemas);
+	}//end testWriteScopeRefusesAnEmptyScope()
 
 	/**
 	 * A query without (or with a non-array) `@self` gets a fresh block.
