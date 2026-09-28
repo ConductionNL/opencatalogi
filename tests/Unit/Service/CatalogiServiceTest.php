@@ -1617,8 +1617,9 @@ class CatalogiServiceTest extends TestCase {
 	 * WOO-581 review round 3 (f1): the guard turns [28, 56] × [20, 21] into
 	 * [28] × [20, 21]. A scalar `@self.schema` next to that register list sent OR
 	 * to `find((int) [20, 21])` — register 1 — or past the scope to the all-tables
-	 * `_ids` lookup. The schema stays a list and the registers reach OR's
-	 * multi-schema route as `@self.registers`.
+	 * `_ids` lookup. The schema stays a list, and both lists reach OR's routers as
+	 * the top-level `_schemas` / `_registers` (round 4: `@self.registers` is a
+	 * column filter to OR, and it rejects the unknown column).
 	 *
 	 * @return void
 	 */
@@ -1636,12 +1637,39 @@ class CatalogiServiceTest extends TestCase {
 		$objectService->expects($this->once())
 			->method('searchObjectsPaginated')
 			->with($this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28]
-				&& $q['@self']['registers'] === [20, 21]))
+				&& $q['_schemas'] === [28]
+				&& $q['_registers'] === [20, 21]
+				&& isset($q['@self']['registers']) === false))
 			->willReturn(['results' => [], 'total' => 0]);
 		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => array_values(array_diff($schemas, [56])));
 
 		$this->assertSame(200, $this->service->index('publications')->getStatus());
 	}//end testIndexKeepsTheSchemaAListWhenTheScopeHasSeveralRegisters()
+
+	/**
+	 * WOO-581 review round 4 (f3): a catalog union without registers is an empty
+	 * scope too. Without a register OR resolves each schema to its owning
+	 * register on the whole instance; an empty page, no search.
+	 *
+	 * @return void
+	 */
+	public function testIndexFailsClosedWithoutARegisterScope(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [], 'schemas' => [28]]),
+		]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => $schemas);
+
+		$response = $this->service->index('publications');
+		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
+	}//end testIndexFailsClosedWithoutARegisterScope()
 
 	/**
 	 * Everything dropped → an empty page and NO search. Without the fail-closed

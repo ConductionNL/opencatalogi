@@ -807,10 +807,11 @@ class CatalogiService {
 		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
-		// FAIL CLOSED on an empty schema scope (WOO-581): nothing configured, or
-		// every schema dropped by the read-rule guard. Without this the query below
-		// carries only a register filter — a search across every schema in it.
-		if (empty($context['schemas']) === true) {
+		// FAIL CLOSED on an empty schema or register scope (WOO-581): nothing
+		// configured, or every schema dropped by the read-rule guard. Without this the
+		// query below carries only a register filter — a search across every schema in
+		// it — or no register at all, which OR reads as "every register" (round 4).
+		if (empty($context['schemas']) === true || empty($context['registers']) === true) {
 			return new JSONResponse(['results' => [], 'total' => 0]);
 		}
 
@@ -828,15 +829,11 @@ class CatalogiService {
 			}
 		}
 
-		// Scope for magic mapper routing. The schema scope is non-empty here (see the
+		// Scope for magic mapper routing. Both scopes are non-empty here (see the
 		// fail-closed above). writeScope() keeps the schema a list unless the scope is
-		// one schema in one register (WOO-581 review round 3).
+		// one schema in one register (WOO-581 review rounds 3 and 4).
 		$query = CallerScope::strip(query: $query);
-		$query = CallerScope::writeScope(
-			query: $query,
-			registers: ($context['registers'] ?? []),
-			schemas: $context['schemas']
-		);
+		$query = CallerScope::writeScope(query: $query, registers: $context['registers'], schemas: $context['schemas']);
 
 		// Add special parameters.
 		if (isset($config['limit']) === true) {

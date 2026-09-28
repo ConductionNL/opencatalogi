@@ -531,9 +531,10 @@ class PublicationService {
 		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
-		// FAIL CLOSED on an empty schema scope (WOO-581): an empty `@self.schema`
-		// must never be read as "no schema filter".
-		if (empty($context['schemas']) === true) {
+		// FAIL CLOSED on an empty schema or register scope (WOO-581): an empty
+		// `@self.schema` must never be read as "no schema filter", and no register
+		// must never be read as "every register" (review round 4).
+		if (empty($context['schemas']) === true || empty($context['registers']) === true) {
 			return ['results' => [], 'facets' => [], 'total' => 0];
 		}
 
@@ -2163,10 +2164,11 @@ class PublicationService {
 			}//end try
 		}//end if
 
-		// FAIL CLOSED on an empty schema scope (WOO-581): nothing configured, or
-		// every schema dropped by guardSchemaScope(). An empty `@self.schema`
-		// must never be read as "no schema filter".
-		if (empty($catalogContext['schemas']) === true) {
+		// FAIL CLOSED on an empty schema or register scope (WOO-581): nothing
+		// configured, or every schema dropped by guardSchemaScope(). An empty
+		// `@self.schema` must never be read as "no schema filter", nor an empty
+		// register list as "every register" (review round 4).
+		if (empty($catalogContext['schemas']) === true || empty($catalogContext['registers']) === true) {
 			return [
 				'results' => [],
 				'total' => 0,

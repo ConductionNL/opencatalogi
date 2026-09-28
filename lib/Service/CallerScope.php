@@ -103,7 +103,8 @@ final class CallerScope
      * Write the server's register/schema scope into a search query.
      *
      * OpenRegister picks its search route from the SHAPE of this scope
-     * (`MagicMapper::searchObjectsPaginated()`), and two shapes pick the wrong one:
+     * (`MagicMapper::searchObjectsPaginated()` for the rows, `getSimpleFacets()`
+     * for the facets), and three shapes pick the wrong one:
      *
      * - A scalar `@self.schema` next to anything but a scalar register. The
      *   single-schema route runs `find((int) $register)`, and `(int) [R1, R2]` is 1:
@@ -111,19 +112,28 @@ final class CallerScope
      *   to the all-tables `_ids` lookup outside the scope. The read-rule guard
      *   produces this shape itself: [S_ok, S_open] × [R1, R2] becomes
      *   [S_ok] × [R1, R2] (WOO-581 review round 3).
-     * - A register list under `@self.register` alone. The multi-schema route reads
-     *   its registers from `@self.registers ?? _registers` and otherwise takes
+     * - A register list under `@self.register` alone. Both routers read their
+     *   register list from `@self.registers ?? _registers` and otherwise take
      *   `(int) @self.register` — register 1 again.
+     * - A schema list under `@self.schema` alone. The facet router reads its schema
+     *   list from `@self.schemas ?? _schemas` only, so it fell back to
+     *   `find((int) [S1, S2])`.
      *
      * So the schema is scalar only when the scope is exactly one schema in exactly
-     * one register (OR's single-table fast path), and every register list is also
-     * written to `@self.registers`. Call it after {@see strip()}.
+     * one register (OR's single-table fast path). Otherwise the lists also go into
+     * the top-level `_schemas` / `_registers`, which both routers read. Top-level,
+     * not `@self.schemas` / `@self.registers`: every `@self` key is also applied
+     * as a column filter on each table, and OR rejects a column it does not know
+     * (`UnknownMetadataFieldException`, round 4). `@self.register` / `@self.schema`
+     * name real columns, and a list there is an `IN (...)`. Call it after
+     * {@see strip()}; the caller fails closed on an empty schema or register scope
+     * before it gets here.
      *
      * @param array             $query     The search query (already stripped of caller scope).
-     * @param array<int|string> $registers The register ids of the scope (may be empty).
+     * @param array<int|string> $registers The register ids of the scope (non-empty).
      * @param array<int|string> $schemas   The schema ids of the scope (non-empty).
      *
-     * @return array The query with the scope written to `@self`.
+     * @return array The query with the scope written.
      *
      * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
      */
@@ -135,18 +145,20 @@ final class CallerScope
             $query['@self'] = [];
         }
 
+        $query['@self']['register'] = $registers;
         if (count($registers) === 1) {
             $query['@self']['register'] = $registers[0];
         }
 
         if (count($registers) > 1) {
-            $query['@self']['register']  = $registers;
-            $query['@self']['registers'] = $registers;
+            $query['_registers'] = $registers;
         }
 
         $query['@self']['schema'] = $schemas;
+        $query['_schemas']        = $schemas;
         if (count($schemas) === 1 && count($registers) === 1) {
             $query['@self']['schema'] = $schemas[0];
+            unset($query['_schemas']);
         }
 
         return $query;

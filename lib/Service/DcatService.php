@@ -262,9 +262,10 @@ class DcatService {
 		$searchQuery['_order']['updated'] = 'desc';
 
 		// FAIL CLOSED on an empty scope: an empty `@self.schema` must never be
-		// read as "no schema filter". Zero datasets, same envelope (WOO-581).
+		// read as "no schema filter", nor no register as "every register" (review
+		// round 4). Zero datasets, same envelope (WOO-581).
 		$result = ['results' => [], 'next' => null];
-		if ($schemas !== []) {
+		if ($schemas !== [] && $registers !== []) {
 			$objectService = $this->getObjectService();
 			// RBAC governs visibility (PUB-001 / WOO-001): anonymous callers receive only
 			// publicly visible (published, not depublished) objects. No DCAT-local filtering.

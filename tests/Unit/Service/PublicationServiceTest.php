@@ -4400,7 +4400,8 @@ class PublicationServiceTest extends TestCase {
 	 * federation paths wrote a scalar `@self.schema` next to the register list,
 	 * which sent OR to `find((int) [20, 21])` — register 1 — or past the scope to
 	 * the all-tables `_ids` lookup that uses()/used() rely on. The schema stays a
-	 * list and the registers reach OR's multi-schema route as `@self.registers`.
+	 * list, and both lists reach OR's routers as the top-level `_schemas` /
+	 * `_registers` (round 4: `@self.registers` is a column filter OR rejects).
 	 *
 	 * @dataProvider federationListPaths
 	 *
@@ -4420,9 +4421,37 @@ class PublicationServiceTest extends TestCase {
 		$objectService->expects($this->once())
 			->method('searchObjectsPaginated')
 			->with($this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28]
-				&& $q['@self']['registers'] === [20, 21]))
+				&& $q['_schemas'] === [28]
+				&& $q['_registers'] === [20, 21]
+				&& isset($q['@self']['registers']) === false))
 			->willReturn(['results' => [], 'total' => 0]);
 
 		$this->service->getAggregatedPublications(queryParams: $pathParams + ['_aggregate' => 'false', '_limit' => 10]);
 	}//end testFederationListKeepsTheSchemaAListOverSeveralRegisters()
+
+	/**
+	 * WOO-581 review round 4 (f3): a union without registers is an empty scope on
+	 * both paths — no search, which OR would otherwise run over every register
+	 * that owns one of the schemas.
+	 *
+	 * @dataProvider federationListPaths
+	 *
+	 * @param array<string, string> $pathParams What selects the path.
+	 *
+	 * @return void
+	 */
+	public function testFederationListFailsClosedWithoutARegisterScope(array $pathParams): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceWithGuard($objectService, static fn (array $schemas): array => $schemas);
+		$this->mockConfiguredCatalogScope();
+		$this->request->method('getParams')->willReturn([]);
+
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => [], 'schemas' => [28]]),
+		]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$result = $this->service->getAggregatedPublications(queryParams: $pathParams + ['_aggregate' => 'false', '_limit' => 10]);
+		$this->assertSame(0, $result['total']);
+	}//end testFederationListFailsClosedWithoutARegisterScope()
 }

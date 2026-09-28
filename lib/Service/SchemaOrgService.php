@@ -459,6 +459,8 @@ class SchemaOrgService {
 	 *
 	 * @return array<int, array<string, string>> The dataset reference nodes.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
+	 *
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
 	private function listVisiblePublicationRefs(array $catalog, string $catalogSlug): array {
@@ -473,23 +475,9 @@ class SchemaOrgService {
 			return [];
 		}
 
-		$registerScope = $registers;
-		if (count($registers) === 1) {
-			$registerScope = $registers[0];
-		}
-
-		$schemaScope = $schemas;
-		if (count($schemas) === 1) {
-			$schemaScope = $schemas[0];
-		}
-
-		$searchQuery = [
-			'_limit' => self::MAX_PER_PAGE,
-			'@self' => [
-				'register' => $registerScope,
-				'schema' => $schemaScope,
-			],
-		];
+		// One schema in one register → scalar fast path; anything else keeps the lists
+		// OR's multi-schema route reads (WOO-581 review round 4, CallerScope::writeScope()).
+		$searchQuery = CallerScope::writeScope(query: ['_limit' => self::MAX_PER_PAGE], registers: $registers, schemas: $schemas);
 
 		try {
 			$result = $objectService->searchObjectsPaginated(

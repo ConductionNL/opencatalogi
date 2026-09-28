@@ -231,8 +231,9 @@ class DcatServiceTest extends TestCase {
 	/**
 	 * WOO-581 review round 3 (f1): one schema over two registers. A scalar
 	 * `@self.schema` next to the register list sent OR to `find((int) [20, 21])`
-	 * — register 1. The schema stays a list and the registers reach OR's
-	 * multi-schema route as `@self.registers`.
+	 * — register 1. The schema stays a list, and both lists reach OR's routers as
+	 * the top-level `_schemas` / `_registers` (round 4: `@self.registers` is a
+	 * column filter OR rejects).
 	 *
 	 * @return void
 	 */
@@ -241,7 +242,7 @@ class DcatServiceTest extends TestCase {
 		$objectService->expects($this->once())
 			->method('searchObjectsPaginated')
 			->with(
-				$this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28] && $q['@self']['registers'] === [20, 21]),
+				$this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28] && $q['_schemas'] === [28] && $q['_registers'] === [20, 21] && isset($q['@self']['registers']) === false),
 				true
 			)
 			->willReturn(['results' => [], 'next' => null]);
@@ -251,4 +252,22 @@ class DcatServiceTest extends TestCase {
 			catalogSlug: 'woo'
 		);
 	}//end testBuildCatalogDocumentKeepsTheSchemaAListOverSeveralRegisters()
+
+	/**
+	 * WOO-581 review round 4 (f3): no register is an empty scope too — an empty
+	 * catalog, no search.
+	 *
+	 * @return void
+	 */
+	public function testBuildCatalogDocumentWithoutARegisterScopeDoesNotSearch(): void {
+		$objectService = $this->wireOpenRegister();
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$document = $this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [], 'schemas' => [28]],
+			catalogSlug: 'woo'
+		);
+
+		$this->assertSame([], $document['@graph'][0]['dcat:dataset']);
+	}//end testBuildCatalogDocumentWithoutARegisterScopeDoesNotSearch()
 }//end class
