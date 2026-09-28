@@ -4400,4 +4400,160 @@ class DirectoryServiceTest extends TestCase {
 	}//end testIpv6LoopbackIsRefusedEvenWithTheAllowanceOn()
 
 
+
+	// =========================================================================
+	// Last success apart from last attempt (REQ-FLS-001, issue #1647)
+	// =========================================================================
+
+	/**
+	 * Build an ObjectService double that records every object it is asked to save.
+	 *
+	 * @param array                          $saved    Receives each saved object
+	 * @param array<\OCP\AppFramework\Db\Entity> $existing What searchObjects returns
+	 * @param integer                        $failFirst Number of initial saveObject calls that throw
+	 *
+	 * @return MockObject
+	 */
+	private function createRecordingObjectService(array &$saved, array $existing, int $failFirst = 0): MockObject {
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjects')->willReturn($existing);
+		$calls = 0;
+		$objectService->method('saveObject')
+			->willReturnCallback(function (...$args) use (&$saved, &$calls, $failFirst) {
+				$calls++;
+				if ($calls <= $failFirst) {
+					throw new RuntimeException('Validation failed');
+				}
+
+				$saved[] = $args['object'] ?? $args[0];
+				return new \OCA\OpenRegister\Db\ObjectEntity();
+			});
+
+		return $objectService;
+	}
+
+	public function testSyncListingRecordsLastSuccessAtAndClearsLastError(): void {
+		$saved = [];
+		$existing = $this->createFakeEntity([
+			'id' => 'existing-uuid',
+			'object' => [
+				'id' => 'listing-1',
+				'title' => 'Old Title',
+				'catalog' => 'catalog-1',
+				'lastSuccessAt' => '2026-09-21T09:00:00+00:00',
+				'lastError' => 'Failed to fetch directory data: timeout',
+			],
+		]);
+		$this->setupOpenRegisterAvailable($this->createRecordingObjectService($saved, [$existing]));
+		$this->setupListingConfig();
+
+		$before = new DateTime('-1 minute');
+		$result = $this->service->syncListing(
+			['id' => 'listing-1', 'title' => 'New Title', 'catalog' => 'catalog-1'],
+			'https://directory.example.com/api/directory'
+		);
+
+		$this->assertTrue($result['success']);
+		$this->assertCount(1, $saved);
+		$this->assertArrayHasKey('lastSuccessAt', $saved[0]);
+		$this->assertGreaterThan($before, new DateTime($saved[0]['lastSuccessAt']));
+		$this->assertSame($saved[0]['lastSync'], $saved[0]['lastSuccessAt']);
+		$this->assertArrayHasKey('lastError', $saved[0]);
+		$this->assertSame('', $saved[0]['lastError']);
+	}
+
+	public function testDirectoryFailureKeepsLastSuccessAndRecordsTheError(): void {
+		$saved = [];
+		$existing = $this->createFakeEntity([
+			'id' => 'existing-uuid',
+			'object' => [
+				'id' => 'listing-1',
+				'title' => 'Listing',
+				'lastSync' => '2026-09-21T09:00:00+00:00',
+				'lastSuccessAt' => '2026-09-21T09:00:00+00:00',
+				'statusCode' => 200,
+			],
+		]);
+		$this->setupOpenRegisterAvailable($this->createRecordingObjectService($saved, [$existing]));
+		$this->setupListingConfig();
+
+		$this->invokePrivateMethod(
+			'updateDirectoryStatusOnError',
+			[
+				'https://peer.example.com/api/directory',
+				504,
+				'Failed to fetch directory data: cURL error 28: timed out for https://peer.example.com/api/directory',
+			]
+		);
+
+		$this->assertCount(1, $saved);
+		$this->assertSame(504, $saved[0]['statusCode']);
+		$this->assertSame('2026-09-21T09:00:00+00:00', $saved[0]['lastSuccessAt']);
+		$this->assertNotSame('2026-09-21T09:00:00+00:00', $saved[0]['lastSync']);
+		$this->assertStringContainsString('timed out', $saved[0]['lastError'] ?? '');
+	}
+
+	public function testListingSaveFailureKeepsLastSuccessAndRecordsTheError(): void {
+		$saved = [];
+		$existing = $this->createFakeEntity([
+			'id' => 'existing-uuid',
+			'object' => [
+				'id' => 'listing-1',
+				'title' => 'Old Title',
+				'catalog' => 'catalog-1',
+				'lastSuccessAt' => '2026-09-21T09:00:00+00:00',
+			],
+		]);
+		$this->setupOpenRegisterAvailable($this->createRecordingObjectService($saved, [$existing], 1));
+		$this->setupListingConfig();
+
+		$result = $this->service->syncListing(
+			['id' => 'listing-1', 'title' => 'New Title', 'catalog' => 'catalog-1'],
+			'https://directory.example.com/api/directory'
+		);
+
+		$this->assertFalse($result['success']);
+		$this->assertCount(1, $saved);
+		$this->assertSame(500, $saved[0]['statusCode']);
+		$this->assertSame('2026-09-21T09:00:00+00:00', $saved[0]['lastSuccessAt']);
+		$this->assertSame('Validation failed', $saved[0]['lastError'] ?? null);
+	}
+
+	public function testStoredSyncErrorCarriesNoCredentialsOrQueryString(): void {
+		$saved = [];
+		$existing = $this->createFakeEntity([
+			'id' => 'existing-uuid',
+			'object' => ['id' => 'listing-1', 'lastSuccessAt' => '2026-09-21T09:00:00+00:00'],
+		]);
+		$this->setupOpenRegisterAvailable($this->createRecordingObjectService($saved, [$existing]));
+		$this->setupListingConfig();
+
+		$this->invokePrivateMethod(
+			'updateDirectoryStatusOnError',
+			[
+				'https://peer.example.com/api/directory?token=abc',
+				401,
+				'Client error: `GET https://admin:s3cret@peer.example.com/api/directory?token=abc&x=1` resulted in a `401 Unauthorized` response',
+			]
+		);
+
+		$this->assertCount(1, $saved);
+		$error = $saved[0]['lastError'] ?? '';
+		$this->assertStringContainsString('https://peer.example.com/api/directory', $error);
+		$this->assertStringContainsString('401 Unauthorized', $error);
+		$this->assertStringNotContainsString('token=abc', $error);
+		$this->assertStringNotContainsString('?', $error);
+		$this->assertStringNotContainsString('s3cret', $error);
+		$this->assertStringNotContainsString('admin', $error);
+	}
+
+	public function testLastSuccessAndLastErrorAreNotSharedWithPeers(): void {
+		$filtered = $this->invokePrivateMethod(
+			'filterListingProperties',
+			[['id' => 'l1', 'lastSuccessAt' => '2026-09-21T09:00:00+00:00', 'lastError' => 'boom']]
+		);
+
+		$this->assertArrayNotHasKey('lastSuccessAt', $filtered);
+		$this->assertArrayNotHasKey('lastError', $filtered);
+	}
 }

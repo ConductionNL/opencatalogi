@@ -94,6 +94,17 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					}}</span>
 				</div>
 				<div>
+					<b>{{ t('opencatalogi', 'Last successful synchronisation:') }}</b>
+					<span>{{
+						objectStore.getActiveObject('listing')?.lastSuccessAt
+							|| t('opencatalogi', 'Never synchronised successfully')
+					}}</span>
+				</div>
+				<div v-if="objectStore.getActiveObject('listing')?.lastError">
+					<b>{{ t('opencatalogi', 'Last synchronisation error:') }}</b>
+					<span>{{ objectStore.getActiveObject('listing')?.lastError }}</span>
+				</div>
+				<div>
 					<b>{{ t('opencatalogi', 'Directory:') }}</b>
 					<span>{{
 						objectStore.getActiveObject('listing')?.directory

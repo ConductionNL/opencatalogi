@@ -2,8 +2,8 @@
 
 ## 1. Record it
 
-- [ ] 1.1 Add `lastSuccessAt` and `lastError` to the `listing` schema (REQ-FLS-001). Verify: clean `occ app:enable` imports them; a listing saved with both reads them back.
-- [ ] 1.2 Write `lastSuccessAt` on success and `lastError` on both failure paths, stripping credentials and query strings (REQ-FLS-001). Verify: `tests/Unit/Service/DirectoryServiceTest.php`, a success, a failure after a success (the success time survives), and an error text with a token in a URL.
+- [x] 1.1 Add `lastSuccessAt` and `lastError` to the `listing` schema (REQ-FLS-001). Verify: clean `occ app:enable` imports them; a listing saved with both reads them back.
+- [x] 1.2 Write `lastSuccessAt` on success and `lastError` on both failure paths, stripping credentials and query strings (REQ-FLS-001). Verify: `tests/Unit/Service/DirectoryServiceTest.php`, a success, a failure after a success (the success time survives), and an error text with a token in a URL.
 
 ## 2. Show it
 
