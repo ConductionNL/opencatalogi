@@ -37,6 +37,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use OC_App;
 use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -522,6 +523,10 @@ class SettingsService {
 		$defaults['woo_index_registration_url'] = '';
 		$defaults['woo_index_registration_at'] = '';
 
+		// National channel sources (woo-national-delivery-repair, REQ-WND-001): a
+		// JSON map from channel to the slug of the integriq source it is sent through.
+		$defaults['channel_sources'] = '{}';
+
 		// Get the current values for the object types from the configuration.
 		try {
 			foreach ($defaults as $key => $defaultValue) {
@@ -647,6 +652,36 @@ class SettingsService {
 	}//end enrichRegistersWithSchemas()
 
 	/**
+	 * Keep only the known national channels that name a source slug.
+	 *
+	 * @param mixed $value The submitted map, as an array or as a JSON string.
+	 *
+	 * @return string The map as JSON.
+	 *
+	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+	 */
+	private function normaliseChannelSources(mixed $value): string {
+		if (is_string($value) === true) {
+			$value = json_decode($value, true);
+		}
+
+		$sources = [];
+		foreach (NationalIndexService::CONFIGURABLE_CHANNELS as $channel) {
+			$slug = '';
+			if (is_array($value) === true && is_string($value[$channel] ?? null) === true) {
+				$slug = trim($value[$channel]);
+			}
+
+			if ($slug !== '') {
+				$sources[$channel] = $slug;
+			}
+		}
+
+		return (string)json_encode((object)$sources);
+
+	}//end normaliseChannelSources()
+
+	/**
 	 * Update the settings configuration.
 	 *
 	 * Only keys that belong to the canonical settings allowlist (the same set
@@ -703,12 +738,20 @@ class SettingsService {
 			$allowedKeys[] = 'woo_index_registration_url';
 			$allowedKeys[] = 'woo_index_registration_at';
 
+			// National channel sources (REQ-WND-001).
+			$allowedKeys[] = 'channel_sources';
+
 			$updated = [];
 
 			// Only persist keys that are explicitly allowed.
 			foreach ($allowedKeys as $key) {
 				if (array_key_exists($key, $data) === true) {
-					$this->config->setValueString($this->appName, $key, (string)$data[$key]);
+					$value = $data[$key];
+					if ($key === 'channel_sources') {
+						$value = $this->normaliseChannelSources(value: $value);
+					}
+
+					$this->config->setValueString($this->appName, $key, (string)$value);
 					// Retrieve the persisted value to confirm the change.
 					$updated[$key] = $this->config->getValueString($this->appName, $key);
 				}
