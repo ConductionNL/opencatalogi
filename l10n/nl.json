@@ -1112,7 +1112,13 @@
         "Zienswijze ask": "Verzoek om een zienswijze",
         "Name the depublication and the channel that acknowledged.": "Noem de depublicatie en het kanaal dat bevestigd heeft.",
         "No withdrawal was sent to that channel, so there is nothing for it to acknowledge.": "Naar dat kanaal is geen intrekking verstuurd, dus er is niets om te bevestigen.",
-        "The withdrawals were sent but could not be recorded.": "De intrekkingen zijn verstuurd maar konden niet worden vastgelegd."
+        "The withdrawals were sent but could not be recorded.": "De intrekkingen zijn verstuurd maar konden niet worden vastgelegd.",
+        "Last Successful Sync": "Laatste geslaagde synchronisatie",
+        "Last Sync Error": "Fout bij laatste synchronisatie",
+        "Timestamp of the last synchronization attempt, successful or not": "Tijdstip van de laatste synchronisatiepoging, geslaagd of niet",
+        "Timestamp of the last successful synchronization; a failed attempt leaves it unchanged": "Tijdstip van de laatste geslaagde synchronisatie; een mislukte poging laat dit ongewijzigd",
+        "Error of the last synchronization attempt when it failed, without credentials or query strings; empty after a success": "Fout van de laatste synchronisatiepoging als die mislukte, zonder inloggegevens of querystrings; leeg na een geslaagde poging",
+        "Last Sync": "Laatste synchronisatie"
     },
     "plurals": {}
 }
