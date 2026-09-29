@@ -41,6 +41,9 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCP\EventDispatcher\Event;
+use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -73,6 +76,42 @@ class NationalIndexService {
 	public const CHANNEL_WOO_INDEX = 'national-woo-index';
 
 	/**
+	 * PLOOI, the delivery API of open.overheid.nl.
+	 *
+	 * @var string
+	 */
+	public const CHANNEL_PLOOI = 'plooi';
+
+	/**
+	 * The app config key holding the channel-to-source map.
+	 *
+	 * A JSON object from channel name to the slug of an integriq source, for
+	 * example `{"national-woo-index": "woo-index"}`. A slug, not a uuid, because
+	 * integriq's gateway transport addresses its sources by slug.
+	 *
+	 * @var string
+	 */
+	public const CHANNEL_SOURCES_KEY = 'channel_sources';
+
+	/**
+	 * The channels a source can be set for.
+	 *
+	 * @var array<int, string>
+	 */
+	public const CONFIGURABLE_CHANNELS = [
+		self::CHANNEL_WOO_INDEX,
+		self::CHANNEL_NATIONAL,
+		self::CHANNEL_PLOOI,
+	];
+
+	/**
+	 * The integriq gateway that publishes official notices.
+	 *
+	 * @var string
+	 */
+	private const PUBLICATION_GATEWAY = 'publicatie';
+
+	/**
 	 * The gateway services this app will accept, in order.
 	 *
 	 * Both names are tried because the app id moves per app. Pointing at one
@@ -86,13 +125,37 @@ class NationalIndexService {
 	];
 
 	/**
+	 * The source stores this app will accept, in order, for the same reason.
+	 *
+	 * @var array<int, string>
+	 */
+	private const SOURCE_STORES = [
+		'OCA\Integriq\Service\ConnectionStore',
+		'OCA\OpenConnector\Service\ConnectionStore',
+	];
+
+	/**
+	 * The gateway delivery event classes this app will accept, in order.
+	 *
+	 * @var array<int, string>
+	 */
+	private const DELIVERY_EVENTS = [
+		'OCA\Integriq\Event\GatewayDeliveryRequestedEvent',
+		'OCA\OpenConnector\Event\GatewayDeliveryRequestedEvent',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container Server container for resolving the gateway.
+	 * @param IAppConfig $config App configuration, for the channel sources.
+	 * @param IEventDispatcher $dispatcher Dispatcher for the gateway delivery request.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
+		private readonly IAppConfig $config,
+		private readonly IEventDispatcher $dispatcher,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -127,6 +190,9 @@ class NationalIndexService {
 			'publicationDate' => (string)($decision['publicationDate'] ?? ''),
 			'responseDate' => (string)($decision['responseDate'] ?? ''),
 			'organisation' => (string)($decision['organisation'] ?? ''),
+			'url' => (string)($decision['url'] ?? ''),
+			'publicationType' => (string)($decision['publicationType'] ?? ''),
+			'effectiveDate' => (string)($decision['effectiveDate'] ?? ($decision['publicationDate'] ?? '')),
 			'composedAt' => $moment->format(DateTimeInterface::ATOM),
 		];
 
@@ -151,14 +217,16 @@ class NationalIndexService {
 	}//end composeNotices()
 
 	/**
-	 * Resolve the gateway, or say the destination is unreachable.
+	 * Resolve one of integriq's services, or say the destination is unreachable.
 	 *
-	 * @return object The gateway.
+	 * @param array<int, string> $services The class names to try, in order.
+	 *
+	 * @return object The service.
 	 *
 	 * @throws IndexUnreachableException When no gateway is installed.
 	 */
-	private function gateway(): object {
-		foreach (self::GATEWAY_SERVICES as $service) {
+	private function gateway(array $services=self::GATEWAY_SERVICES): object {
+		foreach ($services as $service) {
 			try {
 				return $this->container->get($service);
 			} catch (\Throwable $e) {
@@ -178,31 +246,167 @@ class NationalIndexService {
 	 * @param array<string, mixed> $notice The composed notice.
 	 * @param DateTimeInterface|null $now The moment.
 	 *
-	 * @return array{channel: string, deliveredAt: string, answer: string}
+	 * A notice for the national publication platform goes through integriq's
+	 * `publicatie` gateway by reference; every other channel is called through
+	 * its configured source.
+	 *
+	 * @return array{channel: string, deliveredAt: string, answer: string, delivery?: array<string, mixed>}
 	 *
 	 * @throws IndexUnreachableException When the delivery could not be made.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
+	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-official-notices-travel-by-reference-through-the-publication-gateway-req-wnd-002
 	 */
 	public function deliver(array $notice, ?DateTimeInterface $now = null): array {
-		$answer = $this->handOver(
-			channel: (string)($notice['channel'] ?? ''),
-			endpoint: 'notices',
-			payload: $notice
-		);
+		$channel = (string)($notice['channel'] ?? '');
+		$delivery = null;
+		if ($channel === self::CHANNEL_NATIONAL) {
+			$delivery = $this->deliverThroughPublicationGateway(notice: $notice);
+			$answer = (string)json_encode($delivery);
+		}
+
+		if ($channel !== self::CHANNEL_NATIONAL) {
+			$answer = $this->handOver(channel: $channel, endpoint: 'notices', payload: $notice);
+		}
 
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		if ($now !== null) {
 			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
 
-		return [
-			'channel' => (string)($notice['channel'] ?? ''),
+		$result = [
+			'channel' => $channel,
 			'deliveredAt' => $moment->format(DateTimeInterface::ATOM),
 			'answer' => $answer,
 		];
+		if ($delivery !== null) {
+			$result['delivery'] = $delivery;
+		}
+
+		return $result;
 
 	}//end deliver()
+
+	/**
+	 * Read the channel-to-source map from the app configuration.
+	 *
+	 * @return array<string, string> Channel name to integriq source slug; unreadable or empty entries are left out.
+	 *
+	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+	 */
+	public function channelSources(): array {
+		$decoded = json_decode($this->config->getValueString('opencatalogi', self::CHANNEL_SOURCES_KEY, '{}'), true);
+		if (is_array($decoded) === false) {
+			return [];
+		}
+
+		$sources = [];
+		foreach ($decoded as $channel => $slug) {
+			if (is_string($channel) === true && is_string($slug) === true && trim($slug) !== '') {
+				$sources[$channel] = trim($slug);
+			}
+		}
+
+		return $sources;
+
+	}//end channelSources()
+
+	/**
+	 * The source slug set for one channel, or a failure that names the setting.
+	 *
+	 * @param string $channel The channel.
+	 *
+	 * @return string The source slug.
+	 *
+	 * @throws IndexUnreachableException When no source is set for the channel.
+	 */
+	private function sourceSlugFor(string $channel): string {
+		$slug = ($this->channelSources()[$channel] ?? '');
+		if ($slug === '') {
+			throw new IndexUnreachableException(
+				message: 'No integriq source is set for the channel "' . $channel . '". Set one in the Woo settings (' . self::CHANNEL_SOURCES_KEY . ').'
+			);
+		}
+
+		return $slug;
+
+	}//end sourceSlugFor()
+
+	/**
+	 * Send an official notice through integriq's `publicatie` gateway.
+	 *
+	 * The notice travels as a document reference and a publication
+	 * instruction, never as the document itself, because that is what the
+	 * gateway accepts.
+	 *
+	 * @param array<string, mixed> $notice The composed notice.
+	 *
+	 * @return array<string, mixed> The delivery integriq returned.
+	 *
+	 * @throws IndexUnreachableException When integriq is absent, took nothing, refused, or did not deliver.
+	 */
+	private function deliverThroughPublicationGateway(array $notice): array {
+		$slug = $this->sourceSlugFor(channel: self::CHANNEL_NATIONAL);
+
+		$eventClass = null;
+		foreach (self::DELIVERY_EVENTS as $candidate) {
+			if (class_exists($candidate) === true) {
+				$eventClass = $candidate;
+				break;
+			}
+		}
+
+		if ($eventClass === null) {
+			throw new IndexUnreachableException(
+				message: 'integriq is not installed, so the channel "' . self::CHANNEL_NATIONAL . '" cannot be reached.'
+			);
+		}
+
+		/*
+		 * @var Event&object $event
+		 */
+		$event = new $eventClass(
+			gatewayId: self::PUBLICATION_GATEWAY,
+			request: [
+				'reference' => [
+					'app' => 'opencatalogi',
+					'id' => (string)($notice['reference'] ?? ''),
+					'url' => (string)($notice['url'] ?? ''),
+				],
+				'instruction' => [
+					'publicationType' => (string)($notice['publicationType'] ?? ''),
+					'effectiveDate' => (string)($notice['effectiveDate'] ?? ''),
+				],
+			],
+			sourceApp: 'opencatalogi',
+			config: ['source' => $slug]
+		);
+		$this->dispatcher->dispatchTyped($event);
+
+		$refusal = $event->getRefusal();
+		if (is_array($refusal) === true) {
+			throw new IndexUnreachableException(
+				message: 'The channel "' . self::CHANNEL_NATIONAL . '" refused the notice (' . (string)($refusal['code'] ?? '') . '): ' . (string)($refusal['reason'] ?? '')
+			);
+		}
+
+		$delivery = $event->getDelivery();
+		if (is_array($delivery) === false) {
+			// Nobody took the request. That is an unreachable channel, never an
+			// acknowledged one.
+			throw new IndexUnreachableException(
+				message: 'No integriq gateway took the notice, so the channel "' . self::CHANNEL_NATIONAL . '" could not be reached.'
+			);
+		}
+
+		if (($delivery['delivered'] ?? false) !== true) {
+			throw new IndexUnreachableException(
+				message: 'The channel "' . self::CHANNEL_NATIONAL . '" did not take the notice: ' . (string)($delivery['reason'] ?? '')
+			);
+		}
+
+		return $delivery;
+
+	}//end deliverThroughPublicationGateway()
 
 	/**
 	 * Register a published record with the national Woo index.
@@ -277,23 +481,41 @@ class NationalIndexService {
 	/**
 	 * Hand one payload to the gateway and read the answer.
 	 *
-	 * @param string $channel The channel, which is the gateway's source name.
+	 * The channel is resolved to the integriq source set for it in
+	 * `channel_sources`, and that source OBJECT is what the gateway is called
+	 * with: integriq's CallService::call() takes an ObjectEntity, and passing
+	 * the channel name made every hand-over fail with a TypeError.
+	 *
+	 * @param string $channel The channel.
 	 * @param string $endpoint The endpoint at the destination.
 	 * @param array<string, mixed> $payload What is being sent.
 	 *
 	 * @return string The destination's answer, as it came back.
 	 *
 	 * @throws IndexUnreachableException When the call failed or answered nothing readable.
+	 *
+	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 	 */
 	private function handOver(string $channel, string $endpoint, array $payload): string {
+		$slug = $this->sourceSlugFor(channel: $channel);
+		$source = $this->gateway(services: self::SOURCE_STORES)->findSourceBySlug(slug: $slug);
+		if ($source === null) {
+			throw new IndexUnreachableException(
+				message: 'The integriq source "' . $slug . '" set for the channel "' . $channel . '" does not exist.'
+			);
+		}
+
 		$gateway = $this->gateway();
 
 		try {
 			$response = $gateway->call(
-				source: $channel,
+				source: $source,
 				endpoint: $endpoint,
 				method: 'POST',
-				config: ['body' => json_encode($payload)]
+				config: [
+					'body' => json_encode($payload),
+					'headers' => ['Content-Type' => 'application/json'],
+				]
 			);
 		} catch (\Throwable $e) {
 			$this->logger->warning('[NationalIndexService] The delivery to "' . $channel . '" failed: ' . $e->getMessage());
@@ -304,12 +526,19 @@ class NationalIndexService {
 			);
 		}
 
-		if (is_object($response) === true && method_exists($response, 'getResponse') === true) {
-			$response = $response->getResponse();
+		// The gateway returns its call log. Its object carries the status and the
+		// response the destination gave.
+		$status = 0;
+		if (is_object($response) === true && method_exists($response, 'getObject') === true) {
+			$log = $response->getObject();
+			$status = (int)($log['statusCode'] ?? ($log['response']['statusCode'] ?? 0));
+			$response = ($log['response']['body'] ?? '');
 		}
 
-		if (is_array($response) === true) {
-			$response = ($response['body'] ?? json_encode($response));
+		if ($status >= 300) {
+			throw new IndexUnreachableException(
+				message: 'The channel "' . $channel . '" answered HTTP ' . $status . ', so the delivery cannot be called acknowledged: ' . (string)$response
+			);
 		}
 
 		if (is_string($response) === false || trim($response) === '') {

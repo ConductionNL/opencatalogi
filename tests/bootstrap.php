@@ -166,3 +166,21 @@ foreach (['ConnectionStatusReportedEvent', 'ConnectionRefreshRequestedEvent'] as
 }
 
 unset($integriqStubEvent);
+
+// Integriq's gateway surface (woo-national-delivery-repair): CallService,
+// ConnectionStore and GatewayDeliveryRequestedEvent. Appended as the LAST
+// autoloader, so the real integriq classes win whenever integriq is installed
+// (CI installs it); the stubs mirror integriq `development` and only fill the gap.
+spl_autoload_register(
+	static function (string $class): void {
+		$prefix = 'OCA\\Integriq\\';
+		if (str_starts_with($class, $prefix) === false) {
+			return;
+		}
+
+		$stub = __DIR__ . '/Stubs/Integriq/' . str_replace('\\', DIRECTORY_SEPARATOR, substr($class, strlen($prefix))) . '.php';
+		if (file_exists($stub) === true) {
+			include_once $stub;
+		}
+	}
+);
