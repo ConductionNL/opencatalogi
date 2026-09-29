@@ -34,6 +34,7 @@ import { createApp, h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
+import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import appIcons from './icons.js'
 import bundledManifest from './manifest.json'
@@ -83,6 +84,16 @@ registerDashboardWidget('audit-trail', {
 	defaultContent: {},
 	displayName: 'Audit trail',
 	icon: 'History',
+	surfaces: ['detail-page'],
+})
+// The Announce action on the publication page (woo-national-delivery-repair,
+// REQ-WND-004): the only screen that calls POST /api/publications/announce.
+registerDashboardWidget('national-announce', {
+	renderer: NationalAnnounceWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Official notice',
+	icon: 'Bullhorn',
 	surfaces: ['detail-page'],
 })
 // `theme-preview` is registered with the local `ThemePreviewWidget` adapter,
