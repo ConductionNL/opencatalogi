@@ -254,7 +254,7 @@ class NationalIndexService {
 	 *
 	 * @throws IndexUnreachableException When the delivery could not be made.
 	 *
-	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-official-notices-travel-by-reference-through-the-publication-gateway-req-wnd-002
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-official-notices-travel-by-reference-through-the-publication-gateway-req-wnd-002
 	 */
 	public function deliver(array $notice, ?DateTimeInterface $now = null): array {
 		$channel = (string)($notice['channel'] ?? '');
@@ -292,7 +292,7 @@ class NationalIndexService {
 	 *
 	 * @return array<string, string> Channel name to integriq source slug; unreadable or empty entries are left out.
 	 *
-	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 	 */
 	public function channelSources(): array {
 		$decoded = json_decode($this->config->getValueString('opencatalogi', self::CHANNEL_SOURCES_KEY, '{}'), true);
@@ -461,6 +461,33 @@ class NationalIndexService {
 	}//end registerWithWooIndex()
 
 	/**
+	 * Deliver one publication to PLOOI, the delivery API of open.overheid.nl.
+	 *
+	 * @param array<string, mixed> $document The DiWoo metadata and document links.
+	 *
+	 * @return array{answer: string, identifier: string|null} The platform's answer and the identifier it gave.
+	 *
+	 * @throws IndexUnreachableException When PLOOI has no source, could not be reached, or refused.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
+	 */
+	public function deliverToPlooi(array $document): array {
+		$answer = $this->handOver(channel: self::CHANNEL_PLOOI, endpoint: '', payload: $document);
+
+		$identifier = null;
+		$decoded = json_decode($answer, true);
+		if (is_array($decoded) === true) {
+			$found = ($decoded['identificatie'] ?? $decoded['identifier'] ?? $decoded['id'] ?? null);
+			if (is_scalar($found) === true && (string)$found !== '') {
+				$identifier = (string)$found;
+			}
+		}
+
+		return ['answer' => $answer, 'identifier' => $identifier];
+
+	}//end deliverToPlooi()
+
+	/**
 	 * Withdraw a publication from one channel.
 	 *
 	 * @param string $channel The channel.
@@ -510,7 +537,7 @@ class NationalIndexService {
 	 *
 	 * @throws IndexUnreachableException When the call failed or answered nothing readable.
 	 *
-	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 	 */
 	private function handOver(string $channel, string $endpoint, array $payload): string {
 		$slug = $this->sourceSlugFor(channel: $channel);

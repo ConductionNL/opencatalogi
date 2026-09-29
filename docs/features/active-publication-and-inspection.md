@@ -98,6 +98,31 @@ composed notices are returned anyway so an operator can see what would have
 been sent. A 200 with nothing delivered would let a partial announcement read
 as a complete one.
 
+An administrator announces a decision from the publication page, in the
+Official notice block. They choose the publication type and the effective date,
+and the block lists each channel with its result.
+
+### Channel sources
+
+Each national channel is sent through an integriq source. You choose it in the
+admin settings, Woo section, under National delivery channels: enter the slug
+of the source as integriq shows it, for the Woo index, the national publication
+platform and PLOOI. A channel without a source fails at once, with a message
+that names the channel and the `channel_sources` setting.
+
+The official notice for the national publication platform goes through
+integriq's `publicatie` gateway as a reference to the document plus a
+publication instruction, never as the document itself.
+
+### PLOOI
+
+Turn on Deliver to PLOOI on a catalogue, and every publication in it is sent
+to PLOOI, the delivery API of open.overheid.nl, when it becomes public. The
+delivery runs in a background job, so publishing never waits for PLOOI. The
+publication page shows the result in the PLOOI delivery block: the status, the
+time, the identifier PLOOI gave, and the reason when it failed. A failed
+delivery does not undo the publishing.
+
 ## Which collections publish
 
 `GET` and `POST /api/published-collections` hold the configured set. A

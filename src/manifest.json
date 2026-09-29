@@ -673,6 +673,36 @@
 						"title": "Official notice",
 						"icon": "Bullhorn"
 					}
+			,
+					{
+						"id": "pub-plooi",
+						"type": "data",
+						"title": "PLOOI delivery",
+						"icon": "Bullhorn",
+						"content": {
+							"columns": 2,
+							"include": [
+								"plooiStatus",
+								"plooiDeliveredAt",
+								"plooiIdentifier",
+								"plooiReason"
+							],
+							"overrides": {
+								"plooiStatus": {
+									"editable": false
+								},
+								"plooiDeliveredAt": {
+									"editable": false
+								},
+								"plooiIdentifier": {
+									"editable": false
+								},
+								"plooiReason": {
+									"editable": false
+								}
+							}
+						}
+					}
 				],
 				"layout": [
 					{
@@ -746,6 +776,14 @@
 						"gridY": 19,
 						"gridWidth": 12,
 						"gridHeight": 4
+					},
+					{
+						"id": "11",
+						"widgetId": "pub-plooi",
+						"gridX": 0,
+						"gridY": 23,
+						"gridWidth": 12,
+						"gridHeight": 3
 					}
 				],
 				"lifecycleActions": {

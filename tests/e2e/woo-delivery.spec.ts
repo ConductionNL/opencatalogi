@@ -9,8 +9,8 @@
  * channel, the announce endpoint answers 502, names the channel and the
  * `channel_sources` setting, and does not mark the notice as sent.
  *
- * @e2e openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#scenario-integriq-is-not-installed
- * @e2e openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#scenario-an-admin-announces-a-decision
+ * @e2e openspec/specs/woo-compliance/spec.md#scenario-integriq-is-not-installed
+ * @e2e openspec/specs/woo-compliance/spec.md#scenario-an-admin-announces-a-decision
  */
 import { expect, test } from './authenticated-request.ts'
 

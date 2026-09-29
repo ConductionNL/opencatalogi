@@ -1504,10 +1504,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "searched lib for plooi/open.overheid: none; NationalIndexService.php:219 registerWithWooIndex (no caller) and :302 handOver passes a string source to integriq CallService::call(ObjectEntity $source) (openconnector lib/Service/CallService.php:2957-2958), which throws TypeError, caught as IndexUnreachableException",
-				"change": "openspec/changes/woo-national-delivery-repair"
+				"evidence": "lib/Listener/PlooiDeliveryListener.php queues lib/BackgroundJob/PlooiDelivery.php -> lib/Service/Publication/PlooiDeliveryService.php::deliver -> NationalIndexService::deliverToPlooi (integriq source from channel_sources); catalog.plooiDelivery + publication.plooi* in lib/Settings/publication_register.json; PLOOI delivery block in src/manifest.json PublicationDetail",
+				"change": "openspec/changes/archive/2026-09-29-woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no route or page calls registerWithWooIndex",
 			"note": "Even when wired, every hand-over through the integriq gateway fails on the signature mismatch.",
@@ -2188,10 +2188,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:84 announce (admin) -> PublicationDisclosureController.php:127-139 composeNotices + deliver -> NationalIndexService.php:302 gateway->call(source: string) vs integriq CallService::call(ObjectEntity $source) (openconnector lib/Service/CallService.php:2958): TypeError caught as unreachable; no src caller",
-				"change": "openspec/changes/woo-national-delivery-repair"
+				"evidence": "src/components/widgets/NationalAnnounceWidget.vue (publication page) -> POST /api/publications/announce -> NationalIndexService::deliver: publicatie gateway via GatewayDeliveryRequestedEvent (national) and handOver with the ConnectionStore source object (other channels)",
+				"change": "openspec/changes/archive/2026-09-29-woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no page, and every delivery reports the channel unreachable",
 			"provider": "opencatalogi",
