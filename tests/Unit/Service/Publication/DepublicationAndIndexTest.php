@@ -160,7 +160,7 @@ class DepublicationAndIndexTest extends TestCase {
 	}//end testADepublicationWithoutAReasonIsRefused()
 
 	public function testTheNoticeIsComposedForBothChannels(): void {
-		$service = new NationalIndexService($this->container, $this->logger);
+		$service = $this->indexWithSources();
 
 		$notices = $service->composeNotices(
 			decision: [
@@ -187,7 +187,7 @@ class DepublicationAndIndexTest extends TestCase {
 	 */
 	public function testWithNoGatewayADeliveryIsUnreachableAndNotSilentlyDone(): void {
 		$this->container->method('get')->willThrowException(new \RuntimeException('not installed'));
-		$service = new NationalIndexService($this->container, $this->logger);
+		$service = $this->indexWithSources();
 
 		$this->expectException(IndexUnreachableException::class);
 
@@ -197,13 +197,36 @@ class DepublicationAndIndexTest extends TestCase {
 
 	public function testRegisteringWithTheWooIndexWithoutAGatewayIsUnreachable(): void {
 		$this->container->method('get')->willThrowException(new \RuntimeException('not installed'));
-		$service = new NationalIndexService($this->container, $this->logger);
+		$service = $this->indexWithSources();
 
 		$this->expectException(IndexUnreachableException::class);
 
 		$service->registerWithWooIndex(publication: ['id' => 'p1']);
 
 	}//end testRegisteringWithTheWooIndexWithoutAGatewayIsUnreachable()
+
+	/**
+	 * The index service with a source set for every channel, so a test reaches the gateway lookup.
+	 *
+	 * @return NationalIndexService
+	 */
+	private function indexWithSources(): NationalIndexService {
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturn(
+			json_encode([
+				NationalIndexService::CHANNEL_NATIONAL => 'national',
+				NationalIndexService::CHANNEL_WOO_INDEX => 'woo-index',
+			])
+		);
+
+		return new NationalIndexService(
+			container: $this->container,
+			config: $config,
+			dispatcher: $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class),
+			logger: $this->logger
+		);
+
+	}//end indexWithSources()
 
 	public function testAReaderVerifiesAPublishedDocumentAndAChangedOneFails(): void {
 		$service = new DocumentStampService(signingKey: 'organisation-key', keyId: 'gemeente-2026');

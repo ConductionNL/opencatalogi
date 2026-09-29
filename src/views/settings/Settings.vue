@@ -279,6 +279,47 @@
 						{{ t('opencatalogi', 'Save registration status') }}
 					</NcButton>
 				</div>
+
+				<h3 class="woo-registration-heading">
+					{{ t('opencatalogi', 'National delivery channels') }}
+				</h3>
+				<p class="option-description">
+					{{
+						t(
+							'opencatalogi',
+							'Choose the integriq source each national channel is sent through. Enter the source slug as integriq shows it.',
+						)
+					}}
+				</p>
+
+				<div class="woo-registration-fields" data-testid="channel-sources">
+					<NcTextField
+						v-for="channel in channelSourceFields"
+						:key="channel.value"
+						:modelValue="channelSources[channel.value]"
+						:label="channel.label"
+						:disabled="savingChannelSources"
+						@update:modelValue="
+							(v) => (channelSources[channel.value] = v)
+						" />
+				</div>
+
+				<NcNoteCard v-if="channelSourcesError" type="error">
+					{{ channelSourcesError }}
+				</NcNoteCard>
+
+				<div class="button-container">
+					<NcButton
+						variant="secondary"
+						:disabled="savingChannelSources"
+						@click="saveChannelSources">
+						<template #icon>
+							<NcLoadingIcon v-if="savingChannelSources" :size="20" />
+							<Save v-else :size="20" />
+						</template>
+						{{ t('opencatalogi', 'Save channel sources') }}
+					</NcButton>
+				</div>
 			</div>
 		</NcSettingsSection>
 
@@ -569,6 +610,16 @@ export default defineComponent({
 			},
 
 			savingRegistration: false,
+
+			// National channel sources (REQ-WND-001): channel name to integriq source slug.
+			channelSources: {
+				'national-woo-index': '',
+				'national-publication-platform': '',
+				plooi: '',
+			},
+
+			savingChannelSources: false,
+			channelSourcesError: '',
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
@@ -582,6 +633,29 @@ export default defineComponent({
 	},
 
 	computed: {
+		/**
+		 * The national channels a source can be set for, with their labels.
+		 *
+		 * @return {Array<object>} Array of {label, value}.
+		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+		 */
+		channelSourceFields() {
+			return [
+				{
+					value: 'national-woo-index',
+					label: this.t('opencatalogi', 'Woo index source'),
+				},
+				{
+					value: 'national-publication-platform',
+					label: this.t(
+						'opencatalogi',
+						'National publication platform source',
+					),
+				},
+				{ value: 'plooi', label: this.t('opencatalogi', 'PLOOI source') },
+			]
+		},
+
 		/**
 		 * Options for the Woo-index registration status selector.
 		 *
@@ -727,6 +801,13 @@ export default defineComponent({
 						(data.configuration
 							&& data.configuration.woo_index_registration_at)
 						|| '',
+				}
+
+				this.channelSources = {
+					...this.channelSources,
+					...this.parseChannelSources(
+						data.configuration && data.configuration.channel_sources,
+					),
 				}
 
 				this.loading = false
@@ -1319,6 +1400,47 @@ export default defineComponent({
 				console.error('Failed to save Woo-index registration status:', error)
 			} finally {
 				this.savingRegistration = false
+			}
+		},
+
+		/**
+		 * Reads the stored channel-to-source map.
+		 *
+		 * @param {string} value The stored JSON.
+		 * @return {object} Channel name to source slug.
+		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+		 */
+		parseChannelSources(value) {
+			try {
+				const parsed = JSON.parse(value || '{}')
+				return parsed && typeof parsed === 'object' ? parsed : {}
+			} catch {
+				return {}
+			}
+		},
+
+		/**
+		 * Saves which integriq source each national channel is sent through.
+		 *
+		 * @async
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+		 */
+		async saveChannelSources() {
+			this.savingChannelSources = true
+			this.channelSourcesError = ''
+
+			try {
+				await axios.put(generateUrl('/apps/opencatalogi/api/settings'), {
+					channel_sources: { ...this.channelSources },
+				})
+			} catch {
+				this.channelSourcesError = this.t(
+					'opencatalogi',
+					'The channel sources could not be saved. Try again.',
+				)
+			} finally {
+				this.savingChannelSources = false
 			}
 		},
 

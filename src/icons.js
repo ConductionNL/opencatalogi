@@ -16,6 +16,7 @@ import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import BookOpenVariant from 'vue-material-design-icons/BookOpenVariant.vue'
 import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
 import Bookshelf from 'vue-material-design-icons/Bookshelf.vue'
+import Bullhorn from 'vue-material-design-icons/Bullhorn.vue'
 import ChartBar from 'vue-material-design-icons/ChartBar.vue'
 import ChartBoxOutline from 'vue-material-design-icons/ChartBoxOutline.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
@@ -47,6 +48,7 @@ export default {
 	BookOpenVariant,
 	BookOpenVariantOutline,
 	Bookshelf,
+	Bullhorn,
 	ChartBar,
 	ChartBoxOutline,
 	Cog,
