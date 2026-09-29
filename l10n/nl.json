@@ -1133,7 +1133,13 @@
         "Government gazette": "Staatscourant",
         "National publication platform": "Landelijk publicatieplatform",
         "Own channel": "Eigen kanaal",
-        "The decision could not be announced. Try again.": "Het besluit is niet bekendgemaakt. Probeer het opnieuw."
+        "The decision could not be announced. Try again.": "Het besluit is niet bekendgemaakt. Probeer het opnieuw.",
+        "Last Successful Sync": "Laatste geslaagde synchronisatie",
+        "Last Sync Error": "Fout bij laatste synchronisatie",
+        "Timestamp of the last synchronization attempt, successful or not": "Tijdstip van de laatste synchronisatiepoging, geslaagd of niet",
+        "Timestamp of the last successful synchronization; a failed attempt leaves it unchanged": "Tijdstip van de laatste geslaagde synchronisatie; een mislukte poging laat dit ongewijzigd",
+        "Error of the last synchronization attempt when it failed, without credentials or query strings; empty after a success": "Fout van de laatste synchronisatiepoging als die mislukte, zonder inloggegevens of querystrings; leeg na een geslaagde poging",
+        "Last Sync": "Laatste synchronisatie"
     },
     "plurals": {}
 }

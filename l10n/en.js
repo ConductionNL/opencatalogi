@@ -1190,7 +1190,13 @@ OC.L10N.register(
         "Government gazette": "Government gazette",
         "National publication platform": "National publication platform",
         "Own channel": "Own channel",
-        "The decision could not be announced. Try again.": "The decision could not be announced. Try again."
+        "The decision could not be announced. Try again.": "The decision could not be announced. Try again.",
+        "Last Successful Sync": "Last Successful Sync",
+        "Last Sync Error": "Last Sync Error",
+        "Timestamp of the last synchronization attempt, successful or not": "Timestamp of the last synchronization attempt, successful or not",
+        "Timestamp of the last successful synchronization; a failed attempt leaves it unchanged": "Timestamp of the last successful synchronization; a failed attempt leaves it unchanged",
+        "Error of the last synchronization attempt when it failed, without credentials or query strings; empty after a success": "Error of the last synchronization attempt when it failed, without credentials or query strings; empty after a success",
+        "Last Sync": "Last Sync"
     },
     "nplurals=2; plural=(n != 1);"
 )
