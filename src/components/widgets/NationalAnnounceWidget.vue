@@ -161,13 +161,13 @@ export default {
 				: (s && (s.slug || s.name || s.id)) || ''
 		},
 
-		/** @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004 */
+		/** @spec openspec/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004 */
 		isAdmin() {
 			const user = getCurrentUser()
 			return Boolean(user && user.isAdmin)
 		},
 
-		/** @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004 */
+		/** @spec openspec/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004 */
 		publicationTypeOptions() {
 			return [
 				{
@@ -196,7 +196,7 @@ export default {
 		 *
 		 * @param {string} channel The channel name.
 		 * @return {string} The label.
-		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004
+		 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004
 		 */
 		channelLabel(channel) {
 			if (channel === 'national-publication-platform') {
@@ -212,7 +212,7 @@ export default {
 		 * Load the publication and announce it on every channel.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004
+		 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004
 		 */
 		async announce() {
 			this.announcing = true
@@ -276,7 +276,7 @@ export default {
 		 *
 		 * @param {object} body The announce response.
 		 * @return {Array<object>} The results.
-		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004
+		 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004
 		 */
 		toResults(body) {
 			const delivered = (body.delivered || []).map((entry) => ({
