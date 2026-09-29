@@ -51,16 +51,25 @@
 				{{ error }}
 			</NcNoteCard>
 
-			<ul v-if="results.length > 0" class="national-announce__results" data-testid="national-announce-results">
+			<ul
+				v-if="results.length > 0"
+				class="national-announce__results"
+				data-testid="national-announce-results">
 				<li v-for="result in results" :key="result.channel">
-					<strong>{{ channelLabel(result.channel) }}</strong>:
+					<strong>{{ channelLabel(result.channel) }}</strong
+					>:
 					<span v-if="result.delivered">
-						{{ t('opencatalogi', 'Delivered') }}<template v-if="result.identifier">
+						{{ t('opencatalogi', 'Delivered')
+						}}<template v-if="result.identifier">
 							({{ result.identifier }})
 						</template>
 					</span>
 					<span v-else>
-						{{ t('opencatalogi', 'Not delivered: {reason}', { reason: result.reason }) }}
+						{{
+							t('opencatalogi', 'Not delivered: {reason}', {
+								reason: result.reason,
+							})
+						}}
 					</span>
 				</li>
 			</ul>
@@ -69,8 +78,8 @@
 </template>
 
 <script>
-import axios from '@nextcloud/axios'
 import { getCurrentUser } from '@nextcloud/auth'
+import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
@@ -132,13 +141,24 @@ export default {
 
 		/** @spec exclude presentational widget adapter; derives the register. */
 		resolvedRegister() {
-			return this.register || this.ctx.register || this.content.register || 'publication'
+			return (
+				this.register
+				|| this.ctx.register
+				|| this.content.register
+				|| 'publication'
+			)
 		},
 
 		/** @spec exclude presentational widget adapter; derives the schema slug. */
 		resolvedSchema() {
-			const s = this.schema || this.ctx.schema || this.content.schema || 'publication'
-			return typeof s === 'string' ? s : (s && (s.slug || s.name || s.id)) || ''
+			const s =
+				this.schema
+				|| this.ctx.schema
+				|| this.content.schema
+				|| 'publication'
+			return typeof s === 'string'
+				? s
+				: (s && (s.slug || s.name || s.id)) || ''
 		},
 
 		/** @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004 */
@@ -150,10 +170,22 @@ export default {
 		/** @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004 */
 		publicationTypeOptions() {
 			return [
-				{ value: 'gemeenteblad', label: this.t('opencatalogi', 'Municipal gazette') },
-				{ value: 'provincieblad', label: this.t('opencatalogi', 'Provincial gazette') },
-				{ value: 'waterschapsblad', label: this.t('opencatalogi', 'Water authority gazette') },
-				{ value: 'staatscourant', label: this.t('opencatalogi', 'Government gazette') },
+				{
+					value: 'gemeenteblad',
+					label: this.t('opencatalogi', 'Municipal gazette'),
+				},
+				{
+					value: 'provincieblad',
+					label: this.t('opencatalogi', 'Provincial gazette'),
+				},
+				{
+					value: 'waterschapsblad',
+					label: this.t('opencatalogi', 'Water authority gazette'),
+				},
+				{
+					value: 'staatscourant',
+					label: this.t('opencatalogi', 'Government gazette'),
+				},
 			]
 		},
 	},
@@ -203,7 +235,9 @@ export default {
 					...publication,
 					id: this.resolvedObjectId,
 					url: window.location.href,
-					publicationType: this.publicationType ? this.publicationType.value : '',
+					publicationType: this.publicationType
+						? this.publicationType.value
+						: '',
 					effectiveDate: this.effectiveDate,
 				}
 
@@ -216,7 +250,11 @@ export default {
 					body = response.data
 				} catch (error) {
 					// A channel that could not be reached answers 502 with the same body.
-					if (error.response && error.response.data && error.response.data.notices) {
+					if (
+						error.response
+						&& error.response.data
+						&& error.response.data.notices
+					) {
 						body = error.response.data
 					} else {
 						throw error
@@ -224,8 +262,11 @@ export default {
 				}
 
 				this.results = this.toResults(body)
-			} catch (error) {
-				this.error = this.t('opencatalogi', 'The decision could not be announced. Try again.')
+			} catch {
+				this.error = this.t(
+					'opencatalogi',
+					'The decision could not be announced. Try again.',
+				)
 			} finally {
 				this.announcing = false
 			}

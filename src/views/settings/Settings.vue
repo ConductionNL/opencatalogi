@@ -647,7 +647,10 @@ export default defineComponent({
 				},
 				{
 					value: 'national-publication-platform',
-					label: this.t('opencatalogi', 'National publication platform source'),
+					label: this.t(
+						'opencatalogi',
+						'National publication platform source',
+					),
 				},
 				{ value: 'plooi', label: this.t('opencatalogi', 'PLOOI source') },
 			]
@@ -1411,7 +1414,7 @@ export default defineComponent({
 			try {
 				const parsed = JSON.parse(value || '{}')
 				return parsed && typeof parsed === 'object' ? parsed : {}
-			} catch (error) {
+			} catch {
 				return {}
 			}
 		},
@@ -1431,7 +1434,7 @@ export default defineComponent({
 				await axios.put(generateUrl('/apps/opencatalogi/api/settings'), {
 					channel_sources: { ...this.channelSources },
 				})
-			} catch (error) {
+			} catch {
 				this.channelSourcesError = this.t(
 					'opencatalogi',
 					'The channel sources could not be saved. Try again.',
