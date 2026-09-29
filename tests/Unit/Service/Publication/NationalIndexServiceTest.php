@@ -209,4 +209,18 @@ class NationalIndexServiceTest extends TestCase {
 		$this->service([NationalIndexService::CHANNEL_NATIONAL => 'officielebekendmakingen'])
 			->deliver(notice: ['channel' => NationalIndexService::CHANNEL_NATIONAL, 'reference' => 'dec-1']);
 	}
+
+	/** REQ-WND-003: a PLOOI delivery goes to the PLOOI source and returns the platform identifier. */
+	public function testAPlooiDeliveryReturnsThePlatformIdentifier(): void {
+		$source = $this->source('plooi-api');
+		$this->connectionStore->method('findSourceBySlug')->with('plooi-api')->willReturn($source);
+		$this->callService->expects($this->once())->method('call')
+			->with($this->identicalTo($source), '', 'POST', $this->anything())
+			->willReturn($this->callLog(201, '{"identificatie":"plooi-42"}'));
+
+		$result = $this->service([NationalIndexService::CHANNEL_PLOOI => 'plooi-api'])
+			->deliverToPlooi(document: ['identifier' => 'pub-1', 'title' => 'Besluit']);
+
+		$this->assertSame('plooi-42', $result['identifier']);
+	}
 }
