@@ -153,12 +153,28 @@ class PlooiDeliveryService {
 	 * @return bool True when one does.
 	 */
 	private function isInPlooiCatalogue(string $register, string $schema): bool {
+		foreach ($this->plooiCatalogues() as $catalog) {
+			if ($this->covers(catalog: $catalog, register: $register, schema: $schema) === true) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end isInPlooiCatalogue()
+
+	/**
+	 * The catalogues that have PLOOI delivery on.
+	 *
+	 * @return array<int, mixed> The catalogues, as entities or arrays; empty when the catalog register is not set.
+	 */
+	private function plooiCatalogues(): array {
 		$configuration = ($this->settingsService->getSettings()['configuration'] ?? []);
 		$catalogRegister = (string)($configuration['catalog_register'] ?? '');
 		$catalogSchema = (string)($configuration['catalog_schema'] ?? '');
 		$objectService = $this->settingsService->getObjectService();
 		if ($catalogRegister === '' || $catalogSchema === '' || $objectService === null) {
-			return false;
+			return [];
 		}
 
 		$result = $objectService->searchObjectsPaginated(
@@ -170,15 +186,9 @@ class PlooiDeliveryService {
 			_multitenancy: false
 		);
 
-		foreach (($result['results'] ?? []) as $catalog) {
-			if ($this->covers(catalog: $catalog, register: $register, schema: $schema) === true) {
-				return true;
-			}
-		}
+		return ($result['results'] ?? []);
 
-		return false;
-
-	}//end isInPlooiCatalogue()
+	}//end plooiCatalogues()
 
 	/**
 	 * Whether one catalogue has PLOOI on and holds this register and schema.
