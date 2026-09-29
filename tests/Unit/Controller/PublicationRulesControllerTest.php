@@ -26,9 +26,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
 use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
-use OCA\OpenCatalogi\Service\Publication\PublicationProcessService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
-use OCA\OpenCatalogi\Service\Publication\ZienswijzeService;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -72,8 +70,6 @@ class PublicationRulesControllerTest extends TestCase {
 			$this->userSession,
 			new PublicationRuleService(),
 			new DecisionPublicationValidator(),
-			new PublicationProcessService(),
-			new ZienswijzeService()
 		);
 
 	}//end setUp()
@@ -150,36 +146,6 @@ class PublicationRulesControllerTest extends TestCase {
 		$this->assertNotEmpty($response->getData()['reasons']);
 
 	}//end testADecisionThatFailsItsTypeIsRefusedWithTheReason()
-
-	public function testAPublicationHeldByAnOpenAskAnswers409AndNamesIt(): void {
-		$process = (new PublicationProcessService())->start(publicationId: 'p1');
-		$ask = (new ZienswijzeService())->raise(
-			publicationId: 'p1',
-			party: 'J. de Vries',
-			channel: 'digid',
-			termDays: 3650
-		);
-
-		$this->withParams(['process' => $process, 'step' => 'channels', 'asks' => [$ask]]);
-
-		$response = $this->controller->completeStep();
-
-		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-		$this->assertSame('J. de Vries', $response->getData()['heldBy'][0]['party']);
-
-	}//end testAPublicationHeldByAnOpenAskAnswers409AndNamesIt()
-
-	public function testAnAskOverAnUnidentifiedChannelIsRefused(): void {
-		$this->withParams(
-			['publication' => 'p1', 'party' => 'J. de Vries', 'channel' => 'anonymous-webform', 'termDays' => 14]
-		);
-
-		$response = $this->controller->raiseZienswijze();
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame('ask-refused', $response->getData()['error']);
-
-	}//end testAnAskOverAnUnidentifiedChannelIsRefused()
 
 	public function testThePublicSearchRunsOverTheProjections(): void {
 		$this->withParams(

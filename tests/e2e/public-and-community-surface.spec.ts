@@ -22,12 +22,10 @@
  * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-reader-sees-what-is-down
  * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-stale-state-does-not-read-as-green
  * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-the-page-probes-nothing
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-an-unconfirmed-address-receives-nothing
  * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-notice-is-published-without-becoming-a-publication
  * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-board-with-comments-names-a-moderator
  * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-reader-watches-without-an-account
  * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-draft-never-reaches-the-feed
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-who-voted-stays-private
  * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-client-shows-what-the-website-shows
  * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-rendering-stores-nothing
  */
@@ -133,52 +131,6 @@ test.describe('The status page', () => {
 		expect(component.state).toBe('unavailable')
 		expect(component.message).toBe('E2E: tijdelijk niet beschikbaar.')
 		expect(component.stale).toBe(false)
-
-		await anon.dispose()
-	})
-
-	test('an unconfirmed address never appears in the recipient list', async ({
-		baseURL,
-		request: admin,
-	}) => {
-		const anon = await anonymous(baseURL as string)
-		const address = `e2e-unconfirmed-${Date.now()}@example.org`
-
-		const subscribed = await anon.post(`${API_BASE}/status/subscribe`, {
-			data: { address, scope: 'status' },
-		})
-
-		test.skip(
-			subscribed.status() === 503,
-			'the registers are not configured on this instance',
-		)
-		expect(subscribed.status()).toBe(202)
-
-		// The confirmation token never comes back to the caller: returning it
-		// would let anyone confirm a subscription for an address that is not
-		// theirs.
-		const body = await subscribed.json()
-		expect(JSON.stringify(body)).not.toMatch(/[0-9a-f]{32}/)
-
-		const recipients = await admin.get(
-			`${API_BASE}/status/recipients?scope=status`,
-		)
-		expect(recipients.status()).toBe(200)
-		expect((await recipients.json()).recipients).not.toContain(address)
-
-		await anon.dispose()
-	})
-
-	test('an anonymous reader cannot read the recipient list', async ({
-		baseURL,
-	}) => {
-		const anon = await anonymous(baseURL as string)
-		const response = await anon.get(`${API_BASE}/status/recipients?scope=status`)
-
-		// 412 is NOT accepted here. It is Nextcloud's CSRF refusal, and it lands
-		// before the controller runs, so accepting it would let this pass on an
-		// instance where the endpoint had no authorization at all.
-		expect([401, 403, 404]).toContain(response.status())
 
 		await anon.dispose()
 	})
@@ -304,36 +256,6 @@ test.describe('Notice boards and the feed', () => {
 })
 
 test.describe('The reader and the renderer', () => {
-	test('a vote on a record that accepts none is refused the same way as one that does not exist', async ({
-		baseURL,
-	}) => {
-		const anon = await anonymous(baseURL as string)
-		const response = await anon.post(
-			`${API_BASE}/records/e2e-does-not-exist/vote`,
-			{
-				data: { value: 'voor' },
-			},
-		)
-
-		// The same 404 either way: a different answer would let a reader
-		// confirm that an unpublished record exists.
-		expect([404, 503]).toContain(response.status())
-
-		await anon.dispose()
-	})
-
-	test('a vote without a value is refused', async ({ baseURL }) => {
-		const anon = await anonymous(baseURL as string)
-		const response = await anon.post(`${API_BASE}/records/e2e-r1/vote`, {
-			data: {},
-		})
-
-		expect(response.status()).toBe(400)
-		expect((await response.json()).error).toBe('missing-value')
-
-		await anon.dispose()
-	})
-
 	test('a client gets back the HTML this app renders', async ({ baseURL }) => {
 		const anon = await anonymous(baseURL as string)
 		const response = await anon.post(`${API_BASE}/markup/render`, {

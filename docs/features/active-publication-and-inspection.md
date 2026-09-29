@@ -59,25 +59,6 @@ learns the period is over rather than that something is broken.
 A window whose dates cannot be read refuses. Read as open it publishes past the
 term; read as closed it withholds what is owed.
 
-## The process around a publication
-
-Publish as a button hides four decisions: which documents, whether a zienswijze
-round is needed, who approves, and which channels receive it. So publication is
-a small process with those four steps, each recording who completed it and
-when.
-
-A municipality that wants one action configures the steps away. A skipped step
-is recorded as configured off, never as done, so a later reading can tell an
-approval that happened from one that was never asked for.
-
-### The zienswijze round
-
-An ask goes out over a channel that identifies the recipient. A channel that
-cannot say who answered is refused, because the answer is what permits the
-publication to go ahead. While an ask is open inside its term the publication
-is held and the open ask is named. An ask past its term no longer holds it: the
-party was asked and did not answer.
-
 ## Taking a publication back
 
 `POST /api/publications/depublish` is one action. It records who and why, and
@@ -131,31 +112,13 @@ without a release. A configuration that cannot be read refuses: read as
 "publish nothing" it silently stops a statutory publication, and read as
 "publish everything" it publishes what nobody approved.
 
-## The stamp
-
-A published document carries a stamp over the document and its publication
-metadata. A document whose bytes changed fails the check, and so does one whose
-publication metadata was edited, because a correct document published under a
-false date is its own kind of falsehood.
-
-`GET /api/publications/verification-key` publishes a fingerprint of the key,
-and `POST /api/publications/verify` checks a document against it. With no key
-configured, stamping refuses rather than producing a stamp made with an empty
-key, which would verify against an empty key and tell every reader a document
-is authentic while nobody checked anything.
-
 ## Which parts of the published standards this implements
 
-- **Woo actieve openbaarmaking** as a rule engine, a walked process and an
-  obligation overview. The DIWOO and TPOD payload profiles themselves belong to
+- **Woo actieve openbaarmaking** as a rule engine and an obligation overview. The DIWOO and TPOD payload profiles themselves belong to
   the sitemap and DCAT surfaces, not here.
 - **Terinzagelegging** as a window with a per-case document set and a link
   checked at the read. The statutory terms themselves are declared per record
   type by the organisation; this app computes from them and asserts none.
-- **The stamp** is a symmetric seal under the organisation's own key, verified
-  through this app. A detached signature a third party could check offline, and
-  anything from the eIDAS qualified-seal family, are not implemented:
-  `eidas-koppeling-publicatie` is where that belongs.
 - **The national publication platform and the national Woo index** are reached
   through integriq's gateway. This app composes the notice and the
   registration, records the answer, and holds no transport.

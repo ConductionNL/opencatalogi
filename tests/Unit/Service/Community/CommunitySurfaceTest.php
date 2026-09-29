@@ -11,8 +11,6 @@ use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
-use OCA\OpenCatalogi\Service\Community\SubscriptionService;
-use OCA\OpenCatalogi\Service\Community\VoteService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use PHPUnit\Framework\TestCase;
 
@@ -20,28 +18,22 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for the public and community surface.
  *
  * @covers \OCA\OpenCatalogi\Service\Community\StatusPageService
- * @covers \OCA\OpenCatalogi\Service\Community\SubscriptionService
  * @covers \OCA\OpenCatalogi\Service\Community\BannerService
  * @covers \OCA\OpenCatalogi\Service\Community\NoticeBoardService
  * @covers \OCA\OpenCatalogi\Service\Community\AtomFeedService
- * @covers \OCA\OpenCatalogi\Service\Community\VoteService
  */
 class CommunitySurfaceTest extends TestCase {
 
 	private StatusPageService $status;
-	private SubscriptionService $subscriptions;
 	private BannerService $banners;
 	private NoticeBoardService $notices;
 	private AtomFeedService $feed;
-	private VoteService $votes;
 
 	protected function setUp(): void {
 		$this->status = new StatusPageService();
-		$this->subscriptions = new SubscriptionService(salt: 'test-salt');
 		$this->banners = new BannerService();
 		$this->notices = new NoticeBoardService();
 		$this->feed = new AtomFeedService(new PublicationRuleService(), $this->notices);
-		$this->votes = new VoteService(salt: 'test-salt');
 
 	}//end setUp()
 
@@ -127,64 +119,6 @@ class CommunitySurfaceTest extends TestCase {
 		$this->status->setState(component: 'DigiD', state: 'probably-fine', message: '', setBy: 'a');
 
 	}//end testAStateOutsideTheKnownSetIsRefused()
-
-	/**
-	 * Subscribing somebody else to an alert stream is a way to send mail on
-	 * their behalf, so an unconfirmed address is never a recipient.
-	 */
-	public function testAnUnconfirmedAddressIsNeverARecipient(): void {
-		$requested = $this->subscriptions->request(address: 'reader@example.org', scope: 'status');
-
-		$this->assertFalse($this->subscriptions->isRecipient(subscription: $requested['subscription']));
-		$this->assertSame(
-			[],
-			$this->subscriptions->recipients(subscriptions: [$requested['subscription']], scope: 'status')
-		);
-
-	}//end testAnUnconfirmedAddressIsNeverARecipient()
-
-	public function testAConfirmedAddressIsARecipientAndIsToldOnce(): void {
-		$requested = $this->subscriptions->request(address: 'reader@example.org', scope: 'status');
-		$confirmed = $this->subscriptions->confirm(
-			subscription: $requested['subscription'],
-			token: $requested['token']
-		);
-
-		$this->assertTrue($this->subscriptions->isRecipient(subscription: $confirmed));
-		$this->assertSame(
-			['reader@example.org'],
-			$this->subscriptions->recipients(subscriptions: [$confirmed, $confirmed], scope: 'status')
-		);
-
-	}//end testAConfirmedAddressIsARecipientAndIsToldOnce()
-
-	public function testAConfirmationWithTheWrongTokenIsRefused(): void {
-		$requested = $this->subscriptions->request(address: 'reader@example.org', scope: 'status');
-
-		$this->expectException(DomainException::class);
-
-		$this->subscriptions->confirm(subscription: $requested['subscription'], token: 'not-the-token');
-
-	}//end testAConfirmationWithTheWrongTokenIsRefused()
-
-	public function testTheStoredSubscriptionHoldsAHashAndNeverTheToken(): void {
-		$requested = $this->subscriptions->request(address: 'reader@example.org', scope: 'status');
-
-		$this->assertStringNotContainsString(
-			$requested['token'],
-			(string)json_encode($requested['subscription'])
-		);
-
-	}//end testTheStoredSubscriptionHoldsAHashAndNeverTheToken()
-
-	public function testASubscriptionToAnotherScopeIsNotARecipientOfThisOne(): void {
-		$other = $this->subscriptions->confirm(
-			...$this->orderedConfirm(scope: 'notice-board')
-		);
-
-		$this->assertSame([], $this->subscriptions->recipients(subscriptions: [$other], scope: 'status'));
-
-	}//end testASubscriptionToAnotherScopeIsNotARecipientOfThisOne()
 
 	/**
 	 * Build the arguments for a confirm() call on a fresh subscription.
@@ -375,66 +309,4 @@ class CommunitySurfaceTest extends TestCase {
 
 	}//end testTheAtomDocumentEscapesWhatCameFromAnEntry()
 
-	public function testOneReaderVotesOnce(): void {
-		$first = $this->votes->cast(
-			recordId: 'r1',
-			existingVotes: [],
-			readerToken: 'reader-1',
-			value: 'voor',
-			allowedValues: ['voor', 'tegen']
-		);
-		$this->assertTrue($first['counted']);
-
-		$second = $this->votes->cast(
-			recordId: 'r1',
-			existingVotes: [$first['vote']],
-			readerToken: 'reader-1',
-			value: 'tegen',
-			allowedValues: ['voor', 'tegen']
-		);
-		$this->assertFalse($second['counted']);
-		$this->assertNull($second['vote']);
-
-	}//end testOneReaderVotesOnce()
-
-	public function testTheDistributionIsReadableAndNoVoterIsIdentifiable(): void {
-		$votes = [
-			['record' => 'r1', 'readerHash' => $this->votes->readerHash(readerToken: 'a'), 'value' => 'voor'],
-			['record' => 'r1', 'readerHash' => $this->votes->readerHash(readerToken: 'b'), 'value' => 'voor'],
-			['record' => 'r1', 'readerHash' => $this->votes->readerHash(readerToken: 'c'), 'value' => 'tegen'],
-		];
-
-		$distribution = $this->votes->distribution(votes: $votes);
-
-		$this->assertSame(3, $distribution['total']);
-		$this->assertSame(['tegen' => 1, 'voor' => 2], $distribution['distribution']);
-
-		// A reader hash is stable across records, so publishing the hashes
-		// would let anyone correlate one person's votes across every item.
-		$serialised = (string)json_encode($distribution);
-		foreach (['a', 'b', 'c'] as $reader) {
-			$this->assertStringNotContainsString($this->votes->readerHash(readerToken: $reader), $serialised);
-		}
-
-	}//end testTheDistributionIsReadableAndNoVoterIsIdentifiable()
-
-	public function testAVoteOnADraftIsNotAccepted(): void {
-		$this->assertFalse($this->votes->acceptsVotes(record: ['votingEnabled' => true, 'draft' => true]));
-		$this->assertFalse($this->votes->acceptsVotes(record: ['draft' => false]));
-		$this->assertTrue($this->votes->acceptsVotes(record: ['votingEnabled' => true, 'draft' => false]));
-
-	}//end testAVoteOnADraftIsNotAccepted()
-
-	public function testAValueTheRecordDoesNotAcceptIsRefused(): void {
-		$this->expectException(DomainException::class);
-
-		$this->votes->cast(
-			recordId: 'r1',
-			existingVotes: [],
-			readerToken: 'reader-1',
-			value: 'misschien',
-			allowedValues: ['voor', 'tegen']
-		);
-
-	}//end testAValueTheRecordDoesNotAcceptIsRefused()
 }//end class

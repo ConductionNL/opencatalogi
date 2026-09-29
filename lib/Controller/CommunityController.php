@@ -43,8 +43,6 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
-use OCA\OpenCatalogi\Service\Community\SubscriptionService;
-use OCA\OpenCatalogi\Service\Community\VoteService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -69,7 +67,6 @@ use Psr\Container\ContainerInterface;
  */
 class CommunityController extends Controller {
 	use AnswersCrossOriginRequests;
-	use IdentifiesTheReader;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
 
@@ -83,9 +80,7 @@ class CommunityController extends Controller {
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param StatusPageService $statusService The status page.
-	 * @param SubscriptionService $subscriptionService The subscriptions.
 	 * @param AtomFeedService $feedService The catalogue feed.
-	 * @param VoteService $voteService The reader's vote.
 	 * @param MarkupRenderService $markupService The markup renderer.
 	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
 	 *
@@ -99,9 +94,7 @@ class CommunityController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly StatusPageService $statusService,
-		private readonly SubscriptionService $subscriptionService,
 		private readonly AtomFeedService $feedService,
-		private readonly VoteService $voteService,
 		private readonly MarkupRenderService $markupService,
 		private readonly ServiceCatalogueService $objects,
 	) {
@@ -281,96 +274,6 @@ class CommunityController extends Controller {
 	}//end setStatus()
 
 	/**
-	 * Ask to be told when a component changes state.
-	 *
-	 * The subscription is created unconfirmed and the one-time token goes to
-	 * the address, never back to the caller: returning it here would let anyone
-	 * confirm a subscription for an address that is not theirs.
-	 *
-	 * @return JSONResponse That the confirmation was sent.
-	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-reader-subscribes-to-changes-on-the-status-page-req-pcs-102
-	 */
-	#[AnonRateLimit(limit: 10, period: 60)]
-	public function subscribe(): JSONResponse {
-		try {
-			$requested = $this->subscriptionService->request(
-				address: (string)$this->request->getParam('address', ''),
-				scope: (string)$this->request->getParam('scope', 'status')
-			);
-		} catch (\DomainException $e) {
-			return $this->withCors(
-				response: new JSONResponse(
-					data: ['error' => 'subscription-refused', 'message' => $e->getMessage()],
-					statusCode: Http::STATUS_BAD_REQUEST
-				)
-			);
-		}
-
-		try {
-			$config = $this->configurationFor(schemaKey: 'status_subscription_schema');
-			$this->objects->getObjectService()->saveObject(
-				object: $requested['subscription'],
-				extend: [],
-				register: $config['register'],
-				schema: $config['schema']
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return $this->withCors(
-				response: new JSONResponse(data: ['error' => 'status-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE)
-			);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		return $this->withCors(
-			response: new JSONResponse(
-				data: [
-					'pending' => true,
-					'message' => $this->l10n->t('Confirm the address before anything is sent to it.'),
-				],
-				statusCode: Http::STATUS_ACCEPTED
-			)
-		);
-
-	}//end subscribe()
-
-	/**
-	 * The addresses a state change may be sent to.
-	 *
-	 * Admin only, and it exists because the confirmed set is the thing worth
-	 * checking: an unconfirmed address that appears here is a way to send mail
-	 * on somebody's behalf.
-	 *
-	 * @return JSONResponse The confirmed recipients for a scope.
-	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-reader-subscribes-to-changes-on-the-status-page-req-pcs-102
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function subscriptionRecipients(): JSONResponse {
-		try {
-			$subscriptions = $this->readAll(schemaKey: 'status_subscription_schema');
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(data: ['error' => 'status-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		$scope = (string)$this->request->getParam('scope', 'status');
-
-		return new JSONResponse(
-			[
-				'scope' => $scope,
-				'recipients' => $this->subscriptionService->recipients(subscriptions: $subscriptions, scope: $scope),
-			]
-		);
-
-	}//end subscriptionRecipients()
-
-	/**
 	 * A catalogue's activity as an Atom feed.
 	 *
 	 * The publication rules own the access decision and it runs per entry, so a
@@ -419,98 +322,6 @@ class CommunityController extends Controller {
 		return $response;
 
 	}//end feed()
-
-	/**
-	 * Cast a vote on a published record.
-	 *
-	 * @param string $id The record.
-	 *
-	 * @return JSONResponse The distribution, and whether this vote counted.
-	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-reader-who-is-not-staff-votes-on-a-published-record-req-pcs-106
-	 */
-	#[AnonRateLimit(limit: 10, period: 60)]
-	public function vote(string $id): JSONResponse {
-		$value = trim((string)$this->request->getParam('value', ''));
-		if ($value === '') {
-			return $this->withCors(
-				response: new JSONResponse(
-					data: ['error' => 'missing-value', 'message' => $this->l10n->t('Say what you are voting.')],
-					statusCode: Http::STATUS_BAD_REQUEST
-				)
-			);
-		}
-
-		try {
-			$recordConfig = $this->configurationFor(schemaKey: 'publication_schema');
-			$voteConfig = $this->configurationFor(schemaKey: 'record_vote_schema');
-			$objectService = $this->objects->getObjectService();
-			$record = $this->asArray(
-				object: $objectService->find(
-					id: $id,
-					register: $recordConfig['register'],
-					schema: $recordConfig['schema']
-				)
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return $this->withCors(
-				response: new JSONResponse(data: ['error' => 'record-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE)
-			);
-		} catch (\Throwable $e) {
-			return $this->withCors(response: new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
-		}
-
-		if ($this->voteService->acceptsVotes(record: $record) === false) {
-			// An unpublished record answers the same 404 as one that does not
-			// exist: a different answer would let a reader confirm that a draft
-			// exists.
-			return $this->withCors(response: new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
-		}
-
-		$existing = $this->readAll(schemaKey: 'record_vote_schema', filters: ['record' => $id]);
-
-		try {
-			$outcome = $this->voteService->cast(
-				recordId: $id,
-				existingVotes: $existing,
-				readerToken: $this->readerToken(),
-				value: $value,
-				allowedValues: array_map('strval', (array)($record['voteValues'] ?? []))
-			);
-		} catch (\DomainException $e) {
-			return $this->withCors(
-				response: new JSONResponse(
-					data: ['error' => 'vote-refused', 'message' => $e->getMessage()],
-					statusCode: Http::STATUS_BAD_REQUEST
-				)
-			);
-		}
-
-		if ($outcome['counted'] === true) {
-			$objectService->saveObject(
-				object: $outcome['vote'],
-				extend: [],
-				register: $voteConfig['register'],
-				schema: $voteConfig['schema']
-			);
-			$existing[] = $outcome['vote'];
-		}
-
-		// Only the distribution leaves this app. The votes themselves, which
-		// carry a reader hash that is stable across records, never do.
-		return $this->withCors(
-			response: new JSONResponse(
-				array_merge(
-					$this->voteService->distribution(votes: $existing),
-					['counted' => $outcome['counted']]
-				)
-			)
-		);
-
-	}//end vote()
 
 	/**
 	 * Render this app's markup the way this app renders it.

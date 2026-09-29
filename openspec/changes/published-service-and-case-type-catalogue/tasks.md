@@ -20,9 +20,9 @@
 
 ## 4. Knowledge articles
 
-- [x] 4.1 An article is a published record in a catalogue (REQ-PSC-104)
-- [x] 4.2 A reader's verdict counted and shown on the article (REQ-PSC-104)
-- [x] 4.3 Extract an answer into a draft article that links back to the case, leaving the case unchanged (REQ-PSC-105)
+- [x] 4.1 An article is a published record in a catalogue (REQ-PSC-104) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
+- [x] 4.2 A reader's verdict counted and shown on the article (REQ-PSC-104) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
+- [x] 4.3 Extract an answer into a draft article that links back to the case, leaving the case unchanged (REQ-PSC-105) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
 
 ## 5. Quality
 

@@ -1,7 +1,7 @@
 # The public and community surface
 
 The parts of the app a reader meets without an account: a status page, a notice
-board, a feed, a vote, and an endpoint that renders this app's markup the way
+board, a feed, and an endpoint that renders this app's markup the way
 this app renders it.
 
 ## The status page
@@ -23,19 +23,6 @@ checked since Tuesday.
 A status page this app could not read answers 503 with `status-unreadable`. It
 never answers 200 with an empty list, because an empty status page reads as
 "nothing is wrong".
-
-### Subscribing
-
-`POST /api/status/subscribe` records a request, unconfirmed, and the one-time
-token goes to the address rather than back to the caller. Returning it would let
-anyone confirm a subscription for an address that is not theirs.
-
-An unconfirmed address is never a recipient. Subscribing somebody else to an
-alert stream is a way to send mail on their behalf.
-
-This app builds no second mailing mechanism. The `serviceStatus` schema declares
-its state change under `x-openregister-notifications`, and `SubscriptionService`
-decides who is eligible; the sending is the engine's.
 
 ## The banner
 
@@ -74,22 +61,6 @@ The access check is the publication's, run per entry, not a rule of the feed's
 own. A draft is absent because it is not published. Two access decisions
 disagree eventually, so there is only one.
 
-## The vote
-
-`POST /api/records/{id}/vote` records one vote per reader per record.
-Participatie and inspraak are the use, and both are acts where the count is the
-point.
-
-The distribution is readable and an individual vote is not: a vote on an
-inspraak item is an opinion attached to a person. The reader is held as a salted
-hash of their token, and the hashes never leave this app, because a reader hash
-is stable across records and publishing them would let anyone correlate one
-person's votes across every item they voted on.
-
-A record that accepts no votes, including a draft, answers the same 404 as a
-record that does not exist. A different answer would let a reader confirm that a
-draft exists.
-
 ## The markup endpoint
 
 `POST /api/markup/render` takes this app's markup and returns the HTML this app
@@ -122,7 +93,7 @@ Bodies over 64000 characters are truncated, and the response says so.
 
 ### What is not claimed
 
-`ViewObject.vue` and `WooRedactionView.vue` still render markdown in the browser
-with `marked`, so byte-parity between those two views and this endpoint is not
-claimed. Migrating them to call this endpoint is follow-up work; until then the
-endpoint is the contract and those two views are the exception.
+`ViewObject.vue` still renders markdown in the browser with `marked`, so
+byte-parity between that view and this endpoint is not claimed. Migrating it to
+call this endpoint is follow-up work; until then the endpoint is the contract
+and that view is the exception.

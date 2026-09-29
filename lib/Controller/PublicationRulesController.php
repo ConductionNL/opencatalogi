@@ -47,10 +47,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
-use OCA\OpenCatalogi\Service\Publication\PublicationProcessService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
-use OCA\OpenCatalogi\Service\Publication\ZienswijzeService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -83,8 +81,6 @@ class PublicationRulesController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param PublicationRuleService $ruleService The rule evaluator.
 	 * @param DecisionPublicationValidator $decisionValidator The decision type validation.
-	 * @param PublicationProcessService $processService The walked process.
-	 * @param ZienswijzeService $zienswijzeService The consultation round.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -96,27 +92,10 @@ class PublicationRulesController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly PublicationRuleService $ruleService,
 		private readonly DecisionPublicationValidator $decisionValidator,
-		private readonly PublicationProcessService $processService,
-		private readonly ZienswijzeService $zienswijzeService,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Who is acting, for the record.
-	 *
-	 * @return string The user id, or an empty string.
-	 */
-	private function actor(): string {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return '';
-		}
-
-		return $user->getUID();
-
-	}//end actor()
 
 	/**
 	 * Answer a CORS preflight.
@@ -230,120 +209,6 @@ class PublicationRulesController extends Controller {
 		return new JSONResponse($validation);
 
 	}//end validateDecision()
-
-	/**
-	 * Start the walked process for one publication.
-	 *
-	 * @return JSONResponse The process.
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-publication-runs-as-a-walked-process-req-pin-104
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function startProcess(): JSONResponse {
-		$publicationId = trim((string)$this->request->getParam('publication', ''));
-		if ($publicationId === '') {
-			return new JSONResponse(
-				data: ['error' => 'missing-publication'],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		$enabled = json_decode(
-			$this->config->getValueString($this->appName, 'publication_process_steps', '{}'),
-			true
-		);
-		if (is_array($enabled) === false) {
-			$enabled = [];
-		}
-
-		return new JSONResponse(
-			$this->processService->start(publicationId: $publicationId, enabledSteps: $enabled)
-		);
-
-	}//end startProcess()
-
-	/**
-	 * Record that a step of the process was completed.
-	 *
-	 * The publication is held while a zienswijze ask is open inside its term,
-	 * and the open ask is named in the refusal.
-	 *
-	 * @return JSONResponse The process, or the hold with what holds it.
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-publication-runs-as-a-walked-process-req-pin-104
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function completeStep(): JSONResponse {
-		$process = $this->request->getParam('process', []);
-		$step = trim((string)$this->request->getParam('step', ''));
-		$asks = $this->request->getParam('asks', []);
-
-		if (is_array($process) === false || $process === [] || $step === '') {
-			return new JSONResponse(data: ['error' => 'missing-parameters'], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		if (is_array($asks) === false) {
-			$asks = [];
-		}
-
-		$advance = $this->processService->mayAdvance(
-			asks: array_values(array_filter($asks, 'is_array'))
-		);
-
-		if ($advance['mayAdvance'] === false) {
-			return new JSONResponse(
-				data: [
-					'error' => 'held',
-					'message' => $this->l10n->t('This publication is held while a zienswijze is still open.'),
-					'heldBy' => $advance['heldBy'],
-				],
-				statusCode: Http::STATUS_CONFLICT
-			);
-		}
-
-		try {
-			$updated = $this->processService->complete(
-				process: $process,
-				step: $step,
-				completedBy: $this->actor()
-			);
-		} catch (\DomainException $e) {
-			return new JSONResponse(
-				data: ['error' => 'step-refused', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		return new JSONResponse($updated);
-
-	}//end completeStep()
-
-	/**
-	 * Raise a zienswijze ask to an interested party.
-	 *
-	 * @return JSONResponse The ask, or the refusal.
-	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-interested-parties-are-consulted-before-information-about-them-is-published-req-pin-105
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function raiseZienswijze(): JSONResponse {
-		try {
-			$ask = $this->zienswijzeService->raise(
-				publicationId: trim((string)$this->request->getParam('publication', '')),
-				party: trim((string)$this->request->getParam('party', '')),
-				channel: trim((string)$this->request->getParam('channel', '')),
-				termDays: (int)$this->request->getParam('termDays', 0)
-			);
-		} catch (\DomainException $e) {
-			return new JSONResponse(
-				data: ['error' => 'ask-refused', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		return new JSONResponse($ask, Http::STATUS_CREATED);
-
-	}//end raiseZienswijze()
 
 	/**
 	 * Search published information in plain words, without an account.
