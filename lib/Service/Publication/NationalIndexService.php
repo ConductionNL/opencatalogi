@@ -461,6 +461,33 @@ class NationalIndexService {
 	}//end registerWithWooIndex()
 
 	/**
+	 * Deliver one publication to PLOOI, the delivery API of open.overheid.nl.
+	 *
+	 * @param array<string, mixed> $document The DiWoo metadata and document links.
+	 *
+	 * @return array{answer: string, identifier: string|null} The platform's answer and the identifier it gave.
+	 *
+	 * @throws IndexUnreachableException When PLOOI has no source, could not be reached, or refused.
+	 *
+	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
+	 */
+	public function deliverToPlooi(array $document): array {
+		$answer = $this->handOver(channel: self::CHANNEL_PLOOI, endpoint: '', payload: $document);
+
+		$identifier = null;
+		$decoded = json_decode($answer, true);
+		if (is_array($decoded) === true) {
+			$found = ($decoded['identificatie'] ?? $decoded['identifier'] ?? $decoded['id'] ?? null);
+			if (is_scalar($found) === true && (string)$found !== '') {
+				$identifier = (string)$found;
+			}
+		}
+
+		return ['answer' => $answer, 'identifier' => $identifier];
+
+	}//end deliverToPlooi()
+
+	/**
 	 * Withdraw a publication from one channel.
 	 *
 	 * @param string $channel The channel.

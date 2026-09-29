@@ -33,6 +33,7 @@ use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
+use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
@@ -121,6 +122,13 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: ObjectUpdatedEventListener::class
+		);
+
+		// PLOOI delivery (woo-national-delivery-repair, REQ-WND-003): queue a
+		// delivery when a publication has just become public.
+		$context->registerEventListener(
+			event: ObjectUpdatedEvent::class,
+			listener: PlooiDeliveryListener::class
 		);
 
 		// Register catalog cache event listeners.
