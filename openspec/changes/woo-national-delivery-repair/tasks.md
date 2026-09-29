@@ -2,9 +2,9 @@
 
 ## 1. Repair the hand-over
 
-- [ ] 1.1 Add the `channel_sources` setting and its editor in the Woo settings section (REQ-WND-001). Verify: `tests/Unit/Service/SettingsServiceTest.php` and `tests/e2e/woo-delivery.spec.ts`.
-- [ ] 1.2 Make `handOver()` resolve the source object and call the real signature (REQ-WND-001). Verify: `tests/Unit/Service/Publication/NationalIndexServiceTest.php` with a double that extends the real `CallService` signature via `onlyMethods`, plus one case with no source set.
-- [ ] 1.3 Send official notices as `GatewayDeliveryRequestedEvent` for the `publicatie` gateway and handle a null delivery and a refusal (REQ-WND-002). Verify: same test class, constructing the real event.
+- [x] 1.1 Add the `channel_sources` setting and its editor in the Woo settings section (REQ-WND-001). Verify: `tests/Unit/Service/SettingsServiceTest.php` and `tests/e2e/woo-delivery.spec.ts`.
+- [x] 1.2 Make `handOver()` resolve the source object and call the real signature (REQ-WND-001). Verify: `tests/Unit/Service/Publication/NationalIndexServiceTest.php` with a double that extends the real `CallService` signature via `onlyMethods`, plus one case with no source set.
+- [x] 1.3 Send official notices as `GatewayDeliveryRequestedEvent` for the `publicatie` gateway and handle a null delivery and a refusal (REQ-WND-002). Verify: same test class, constructing the real event.
 
 ## 2. PLOOI
 
@@ -14,7 +14,7 @@
 
 ## 3. Announce
 
-- [ ] 3.1 Add the Announce action on the publication page calling `POST /api/publications/announce` (REQ-WND-004). Verify: e2e spec from 1.1.
+- [x] 3.1 Add the Announce action on the publication page calling `POST /api/publications/announce` (REQ-WND-004). Verify: e2e spec from 1.1.
 
 ## 4. Docs and strings
 
