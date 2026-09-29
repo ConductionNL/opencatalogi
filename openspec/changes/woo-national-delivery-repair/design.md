@@ -16,7 +16,9 @@ Changed at build time (29 Sep): the map holds source SLUGS, not uuids, and `hand
 
 ## PLOOI
 
-A listener on the publication update event (built the same way as the readiness trigger in `woo-index-harvester-connection`, on the real `ObjectUpdatedEvent`) delivers when `publicationDate` has just become at most now and the catalogue has `plooiDelivery` on. The body reuses `SitemapService::mapDiwooDocument()`. Stored on the publication: `plooiStatus`, `plooiDeliveredAt`, `plooiIdentifier`, added as optional properties.
+A listener on the publication update event, built on the real `ObjectUpdatedEvent`, queues a `PlooiDelivery` background job when `publicationDate` has just become at most now (and no `depublicationDate` has passed). It reads and writes nothing else on the save path (ADR-078). The job asks OpenRegister for catalogues with `plooiDelivery` on whose `registers` and `schemas` hold the publication; with none, it does nothing. With one, it posts the DiWoo metadata (identifier, title, description, publication date, organisation) and the document links from the publication's files to the PLOOI source, and stores `plooiStatus` (delivered or failed), `plooiDeliveredAt`, `plooiIdentifier` and `plooiReason` on the publication with a silent save, so the write does not trigger the listener again.
+
+Changed at build time: `plooiReason` is a fourth property, because the spec asks for a failure stored "with the reason" and the three planned fields had nowhere to hold it. The body is built in `PlooiDeliveryService::document()`, not by reusing `SitemapService::mapDiwooDocument()`, which is private and maps one file per sitemap entry rather than one publication.
 
 ## Announce screen
 

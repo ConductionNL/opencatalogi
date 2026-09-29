@@ -8,9 +8,9 @@
 
 ## 2. PLOOI
 
-- [ ] 2.1 Add the optional `plooiStatus`, `plooiDeliveredAt`, `plooiIdentifier` properties and the catalogue flag `plooiDelivery` (REQ-WND-003). Verify: real payload validated against the real fragment.
-- [ ] 2.2 Add the listener that delivers when a publication turns public (REQ-WND-003). Verify: `tests/Unit/Listener/PloOiDeliveryListenerTest.php` built on a real `ObjectUpdatedEvent` with an old and a new object.
-- [ ] 2.3 Show the delivery status on the publication page (REQ-WND-003). Verify: e2e spec from 1.1.
+- [x] 2.1 Add the optional `plooiStatus`, `plooiDeliveredAt`, `plooiIdentifier` properties and the catalogue flag `plooiDelivery` (REQ-WND-003). Verify: real payload validated against the real fragment.
+- [x] 2.2 Add the listener that delivers when a publication turns public (REQ-WND-003). Verify: `tests/Unit/Listener/PlooiDeliveryListenerTest.php` built on a real `ObjectUpdatedEvent` with an old and a new object.
+- [x] 2.3 Show the delivery status on the publication page (REQ-WND-003). Verify: e2e spec from 1.1.
 
 ## 3. Announce
 
@@ -18,5 +18,5 @@
 
 ## 4. Docs and strings
 
-- [ ] 4.1 English and Dutch strings, docs, `openspec validate woo-national-delivery-repair --strict`.
+- [x] 4.1 English and Dutch strings, docs, `openspec validate woo-national-delivery-repair --strict`.
 - [ ] 4.2 Live check after merge: with an integriq source pointed at a local echo endpoint, publish one publication and read `plooiStatus` back.

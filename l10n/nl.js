@@ -1140,7 +1140,18 @@ OC.L10N.register(
         "Timestamp of the last synchronization attempt, successful or not": "Tijdstip van de laatste synchronisatiepoging, geslaagd of niet",
         "Timestamp of the last successful synchronization; a failed attempt leaves it unchanged": "Tijdstip van de laatste geslaagde synchronisatie; een mislukte poging laat dit ongewijzigd",
         "Error of the last synchronization attempt when it failed, without credentials or query strings; empty after a success": "Fout van de laatste synchronisatiepoging als die mislukte, zonder inloggegevens of querystrings; leeg na een geslaagde poging",
-        "Last Sync": "Laatste synchronisatie"
+        "Last Sync": "Laatste synchronisatie",
+        "PLOOI status": "PLOOI-status",
+        "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered or failed. Empty until a catalogue with PLOOI delivery on delivers it.": "Of deze publicatie PLOOI, de aanlever-API van open.overheid.nl, heeft bereikt: afgeleverd of mislukt. Leeg tot een catalogus met PLOOI-aflevering aan haar aflevert.",
+        "PLOOI delivered at": "Afgeleverd bij PLOOI op",
+        "When the PLOOI delivery was last attempted.": "Wanneer de aflevering bij PLOOI het laatst is geprobeerd.",
+        "PLOOI identifier": "PLOOI-kenmerk",
+        "The identifier PLOOI gave this publication.": "Het kenmerk dat PLOOI aan deze publicatie gaf.",
+        "PLOOI failure reason": "Reden mislukte PLOOI-aflevering",
+        "Why the last PLOOI delivery failed, as the platform or the connection said it.": "Waarom de laatste aflevering bij PLOOI mislukte, zoals het platform of de verbinding dat meldde.",
+        "Deliver to PLOOI": "Afleveren bij PLOOI",
+        "Deliver every publication in this catalogue to PLOOI, the delivery API of open.overheid.nl, when it becomes public.": "Lever elke publicatie in deze catalogus af bij PLOOI, de aanlever-API van open.overheid.nl, zodra die openbaar wordt.",
+        "PLOOI delivery": "PLOOI-aflevering"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1196,7 +1196,18 @@ OC.L10N.register(
         "Timestamp of the last synchronization attempt, successful or not": "Timestamp of the last synchronization attempt, successful or not",
         "Timestamp of the last successful synchronization; a failed attempt leaves it unchanged": "Timestamp of the last successful synchronization; a failed attempt leaves it unchanged",
         "Error of the last synchronization attempt when it failed, without credentials or query strings; empty after a success": "Error of the last synchronization attempt when it failed, without credentials or query strings; empty after a success",
-        "Last Sync": "Last Sync"
+        "Last Sync": "Last Sync",
+        "PLOOI status": "PLOOI status",
+        "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered or failed. Empty until a catalogue with PLOOI delivery on delivers it.": "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered or failed. Empty until a catalogue with PLOOI delivery on delivers it.",
+        "PLOOI delivered at": "PLOOI delivered at",
+        "When the PLOOI delivery was last attempted.": "When the PLOOI delivery was last attempted.",
+        "PLOOI identifier": "PLOOI identifier",
+        "The identifier PLOOI gave this publication.": "The identifier PLOOI gave this publication.",
+        "PLOOI failure reason": "PLOOI failure reason",
+        "Why the last PLOOI delivery failed, as the platform or the connection said it.": "Why the last PLOOI delivery failed, as the platform or the connection said it.",
+        "Deliver to PLOOI": "Deliver to PLOOI",
+        "Deliver every publication in this catalogue to PLOOI, the delivery API of open.overheid.nl, when it becomes public.": "Deliver every publication in this catalogue to PLOOI, the delivery API of open.overheid.nl, when it becomes public.",
+        "PLOOI delivery": "PLOOI delivery"
     },
     "nplurals=2; plural=(n != 1);"
 )
