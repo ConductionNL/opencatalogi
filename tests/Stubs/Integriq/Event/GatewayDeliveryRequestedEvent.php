@@ -40,7 +40,6 @@ use OCP\EventDispatcher\Event;
  * by the other side (replayable). Refusal codes: `unknown-gateway` and
  * `invalid-request` (the request lacks the fields its gateway reads).
  *
- * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
  */
 class GatewayDeliveryRequestedEvent extends Event {
 
@@ -80,7 +79,6 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
 	 */
 	public function getGatewayId(): string {
 		return $this->gatewayId;
@@ -91,7 +89,6 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
 	 */
 	public function getRequest(): array {
 		return $this->request;
@@ -102,7 +99,6 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
 	 */
 	public function getSourceApp(): string {
 		return $this->sourceApp;
@@ -113,7 +109,6 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
 	 */
 	public function getConfig(): array {
 		return $this->config;
@@ -126,7 +121,6 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
 	 */
 	public function setDelivery(array $delivery): void {
 		$this->delivery = $delivery;
@@ -137,7 +131,6 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
 	 */
 	public function getDelivery(): ?array {
 		return $this->delivery;
@@ -148,7 +141,6 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
 	 */
 	public function isHandled(): bool {
 		return $this->delivery !== null;
@@ -162,7 +154,6 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
 	 */
 	public function refuse(string $reason, string $code): void {
 		$this->refusal = ['code' => $code, 'reason' => $reason];
@@ -173,7 +164,6 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 *
 	 * @return array{code: string, reason: string}|null
 	 *
-	 * @spec openspec/changes/statutory-gateways-and-frameworks/specs/statutory-gateways/spec.md#requirement-a-sibling-app-sends-through-a-gateway-with-a-typed-event-req-sg-010
 	 */
 	public function getRefusal(): ?array {
 		return $this->refusal;

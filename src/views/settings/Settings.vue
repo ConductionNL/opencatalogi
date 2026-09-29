@@ -637,7 +637,7 @@ export default defineComponent({
 		 * The national channels a source can be set for, with their labels.
 		 *
 		 * @return {Array<object>} Array of {label, value}.
-		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 		 */
 		channelSourceFields() {
 			return [
@@ -1408,7 +1408,7 @@ export default defineComponent({
 		 *
 		 * @param {string} value The stored JSON.
 		 * @return {object} Channel name to source slug.
-		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 		 */
 		parseChannelSources(value) {
 			try {
@@ -1424,7 +1424,7 @@ export default defineComponent({
 		 *
 		 * @async
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+		 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 		 */
 		async saveChannelSources() {
 			this.savingChannelSources = true

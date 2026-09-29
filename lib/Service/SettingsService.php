@@ -658,7 +658,7 @@ class SettingsService {
 	 *
 	 * @return string The map as JSON.
 	 *
-	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 	 */
 	private function normaliseChannelSources(mixed $value): string {
 		if (is_string($value) === true) {

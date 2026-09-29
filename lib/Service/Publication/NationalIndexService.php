@@ -254,7 +254,7 @@ class NationalIndexService {
 	 *
 	 * @throws IndexUnreachableException When the delivery could not be made.
 	 *
-	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-official-notices-travel-by-reference-through-the-publication-gateway-req-wnd-002
+	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-official-notices-travel-by-reference-through-the-publication-gateway-req-wnd-002
 	 */
 	public function deliver(array $notice, ?DateTimeInterface $now = null): array {
 		$channel = (string)($notice['channel'] ?? '');
@@ -292,7 +292,7 @@ class NationalIndexService {
 	 *
 	 * @return array<string, string> Channel name to integriq source slug; unreadable or empty entries are left out.
 	 *
-	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 	 */
 	public function channelSources(): array {
 		$decoded = json_decode($this->config->getValueString('opencatalogi', self::CHANNEL_SOURCES_KEY, '{}'), true);
@@ -510,7 +510,7 @@ class NationalIndexService {
 	 *
 	 * @throws IndexUnreachableException When the call failed or answered nothing readable.
 	 *
-	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-national-delivery-repair/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+	 * @spec openspec/changes/woo-national-delivery-repair/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 	 */
 	private function handOver(string $channel, string $endpoint, array $payload): string {
 		$slug = $this->sourceSlugFor(channel: $channel);
