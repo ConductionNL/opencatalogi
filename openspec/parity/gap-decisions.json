@@ -80,14 +80,6 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
-		"row": "int-cmis",
-		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "No competitor rated yes and no tender, featureRequest or roadmap demand; outside opencatalogi's core area (publications, catalogues and woo, the areas of the matrix's first 30 rows).",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
 		"row": "int-consumer-keys",
 		"matrix": "opencatalogi",
 		"decision": "build",
@@ -208,26 +200,10 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
-		"row": "od-request",
-		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "No competitor rated yes and no tender, featureRequest or roadmap demand; outside opencatalogi's core area (publications, catalogues and woo, the areas of the matrix's first 30 rows).",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
 		"row": "od-schemaorg",
 		"matrix": "opencatalogi",
 		"decision": "defer",
 		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (CKAN), so the missing half has no case under the rule.",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
-		"row": "od-spatial",
-		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "No competitor rated yes and no tender, featureRequest or roadmap demand; outside opencatalogi's core area (publications, catalogues and woo, the areas of the matrix's first 30 rows).",
 		"change": null,
 		"decidedOn": "2026-09-27"
 	},
@@ -320,14 +296,6 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
-		"row": "pub-reuse",
-		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "No competitor rated yes and no tender, featureRequest or roadmap demand; outside opencatalogi's core area (publications, catalogues and woo, the areas of the matrix's first 30 rows).",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
 		"row": "pub-status",
 		"matrix": "opencatalogi",
 		"decision": "build",
@@ -372,22 +340,6 @@
 		"matrix": "opencatalogi",
 		"decision": "defer",
 		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
-		"row": "srch-widget",
-		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "No competitor rated yes and no tender, featureRequest or roadmap demand; outside opencatalogi's core area (publications, catalogues and woo, the areas of the matrix's first 30 rows).",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
-		"row": "svc-apis",
-		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "No competitor rated yes and no tender, featureRequest or roadmap demand; outside opencatalogi's core area (publications, catalogues and woo, the areas of the matrix's first 30 rows).",
 		"change": null,
 		"decidedOn": "2026-09-27"
 	},
@@ -604,6 +556,214 @@
 		"matrix": "decidiq",
 		"decision": "decided-no",
 		"reason": "Rendering a publication's timeline array as a timeline on the public publication page, the half decidiq publication-theme-pages names (row decidiq pub-20). It is not opencatalogi's: opencatalogi renders no public page (UiController serves only the Nextcloud app), and the public publication page is portaliq's src/site/components/PublicationDetailBlock.vue (portaliq development 8934e73be3), which reads opencatalogi's public federation endpoint /api/federation/publications and renders every field, an array as plain list items. ADR-086 and ADR-109 (both Proposed) put public rendering in portaliq, and opencatalogi's own matrix rows pub-wcag and od-visualise already carry portaliq as owner. opencatalogi already serves the timeline as data, as decidiq's design expects. The half belongs to portaliq.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-categories",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Core Woo area and three competitors rated yes (xxllnc Publiceren, iprox.open, Decos JOIN Woo Portaal). The category exists only as a sitemap file name; no property stores it and no register is provisioned.",
+		"change": "woo-publication-category",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-plooi",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Core Woo area. Nothing calls PLOOI and every hand-over to a national channel fails on a source type mismatch, so the repair and the PLOOI delivery are one change.",
+		"change": "woo-national-delivery-repair",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "dec-announce",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "No competitor rated yes and outside the core area, so on its own it would be decided-no. It joins woo-national-delivery-repair because the same defect blocks it and the repair adds no scope for it. Reversible.",
+		"change": "woo-national-delivery-repair",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-obligations",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Core Woo area. The assembler, the obligationSource schema and the setting exist; nothing reads a source and nothing calls the assembler.",
+		"change": "woo-obligation-overview",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "ops-roles",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Two competitors rated yes (DKAN, xxllnc Publiceren). OpenRegister already enforces property-level update authorization, so the right can be set on the two properties that make a publication public.",
+		"change": "operations-publish-rights",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-09",
+		"matrix": "decidiq",
+		"decision": "build",
+		"reason": "Two competitors rated yes (NotuBiz, iBabs). The search endpoint already forwards filters and returns facets; the contract, the date range and a test with the real council fragment are missing. The page is Portaliq's (portal-public-search).",
+		"change": "search-council-document-filters",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-harvest",
+		"matrix": "opencatalogi",
+		"decision": "existing",
+		"reason": "Covered by the open change harvest-feed-intake.",
+		"change": "harvest-feed-intake",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-harvest-conflict",
+		"matrix": "opencatalogi",
+		"decision": "existing",
+		"reason": "Covered by the open change harvest-conflict-policies.",
+		"change": "harvest-conflict-policies",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-oai",
+		"matrix": "opencatalogi",
+		"decision": "existing",
+		"reason": "Covered by the open change oai-pmh-endpoint.",
+		"change": "oai-pmh-endpoint",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-languages",
+		"matrix": "opencatalogi",
+		"decision": "existing",
+		"reason": "Covered by the open change register-i18n.",
+		"change": "register-i18n",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-publish",
+		"matrix": "filinq",
+		"decision": "existing",
+		"reason": "filinq built the publication pipeline (archived there as woo-publicatie-pipeline). The opencatalogi side is the publication schema and the Woo sitemaps, both built; delivery registration is repaired in woo-national-delivery-repair.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-index",
+		"matrix": "filinq",
+		"decision": "existing",
+		"reason": "The Woo index feed is the sitemap harvest (built) plus registration, specified in woo-index-harvester-connection and repaired in woo-national-delivery-repair.",
+		"change": "woo-index-harvester-connection",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-process",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "Single competitor rated yes (xxllnc Publiceren), no demand row, outside the core area. The service returns arrays that nothing stores or shows; that dead code is a cleanup, not a feature.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-zienswijze",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes, no demand row, outside the core area.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "wr-redact",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "Single competitor rated yes (xxllnc Publiceren), no demand row. Redaction is filinq's (RedactionAnnotator); opencatalogi should call it, not rebuild it.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "wr-board",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "dec-stamp",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes, no demand row, outside the core area.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-status-subscribe",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes, no demand row, and the app sends no mail itself by design.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-vote",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "svc-articles",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row, outside the core area.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-spatial",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "Single competitor rated partial (CKAN), no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-request",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "srch-widget",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-reuse",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "svc-apis",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "Two competitors rated partial, none yes, no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "int-cmis",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row. Was defer, retired.",
 		"change": null,
 		"decidedOn": "2026-09-28"
 	}
