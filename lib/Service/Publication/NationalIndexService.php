@@ -259,6 +259,7 @@ class NationalIndexService {
 	public function deliver(array $notice, ?DateTimeInterface $now = null): array {
 		$channel = (string)($notice['channel'] ?? '');
 		$delivery = null;
+		$answer = '';
 		if ($channel === self::CHANNEL_NATIONAL) {
 			$delivery = $this->deliverThroughPublicationGateway(notice: $notice);
 			$answer = (string)json_encode($delivery);
@@ -332,6 +333,27 @@ class NationalIndexService {
 	}//end sourceSlugFor()
 
 	/**
+	 * The gateway delivery event class to instantiate, or null when integriq does not ship it.
+	 *
+	 * Named by string so this app stays installable without integriq (ADR-041).
+	 *
+	 * @param array<int, string> $candidates Fully qualified class names, in order.
+	 *
+	 * @return string|null The class name, or null when none exists.
+	 */
+	private function resolveDeliveryEvent(array $candidates): ?string {
+		foreach ($candidates as $candidate) {
+			$qualified = '\\' . $candidate;
+			if (class_exists($qualified) === true) {
+				return $qualified;
+			}
+		}
+
+		return null;
+
+	}//end resolveDeliveryEvent()
+
+	/**
 	 * Send an official notice through integriq's `publicatie` gateway.
 	 *
 	 * The notice travels as a document reference and a publication
@@ -347,14 +369,7 @@ class NationalIndexService {
 	private function deliverThroughPublicationGateway(array $notice): array {
 		$slug = $this->sourceSlugFor(channel: self::CHANNEL_NATIONAL);
 
-		$eventClass = null;
-		foreach (self::DELIVERY_EVENTS as $candidate) {
-			if (class_exists($candidate) === true) {
-				$eventClass = $candidate;
-				break;
-			}
-		}
-
+		$eventClass = $this->resolveDeliveryEvent(candidates: self::DELIVERY_EVENTS);
 		if ($eventClass === null) {
 			throw new IndexUnreachableException(
 				message: 'integriq is not installed, so the channel "' . self::CHANNEL_NATIONAL . '" cannot be reached.'
@@ -385,7 +400,8 @@ class NationalIndexService {
 		$refusal = $event->getRefusal();
 		if (is_array($refusal) === true) {
 			throw new IndexUnreachableException(
-				message: 'The channel "' . self::CHANNEL_NATIONAL . '" refused the notice (' . (string)($refusal['code'] ?? '') . '): ' . (string)($refusal['reason'] ?? '')
+				message: 'The channel "' . self::CHANNEL_NATIONAL . '" refused the notice ('
+					. (string)($refusal['code'] ?? '') . '): ' . (string)($refusal['reason'] ?? '')
 			);
 		}
 

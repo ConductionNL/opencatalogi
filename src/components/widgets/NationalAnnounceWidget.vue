@@ -231,13 +231,12 @@ export default {
 					),
 				)
 
+				const type = this.publicationType ? this.publicationType.value : ''
 				const decision = {
 					...publication,
 					id: this.resolvedObjectId,
 					url: window.location.href,
-					publicationType: this.publicationType
-						? this.publicationType.value
-						: '',
+					publicationType: type,
 					effectiveDate: this.effectiveDate,
 				}
 
