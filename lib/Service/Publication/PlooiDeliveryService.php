@@ -171,17 +171,7 @@ class PlooiDeliveryService {
 		);
 
 		foreach (($result['results'] ?? []) as $catalog) {
-			if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
-				$catalog = $catalog->jsonSerialize();
-			}
-
-			if (is_array($catalog) === false || ($catalog['plooiDelivery'] ?? false) !== true) {
-				continue;
-			}
-
-			$registers = array_map('strval', (array)($catalog['registers'] ?? []));
-			$schemas = array_map('strval', (array)($catalog['schemas'] ?? []));
-			if (in_array($register, $registers, true) === true && in_array($schema, $schemas, true) === true) {
+			if ($this->covers(catalog: $catalog, register: $register, schema: $schema) === true) {
 				return true;
 			}
 		}
@@ -189,4 +179,28 @@ class PlooiDeliveryService {
 		return false;
 
 	}//end isInPlooiCatalogue()
+
+	/**
+	 * Whether one catalogue has PLOOI on and holds this register and schema.
+	 *
+	 * @param mixed $catalog The catalogue, as an entity or an array.
+	 * @param string $register The register id.
+	 * @param string $schema The schema id.
+	 *
+	 * @return bool True when it does.
+	 */
+	private function covers(mixed $catalog, string $register, string $schema): bool {
+		if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+			$catalog = $catalog->jsonSerialize();
+		}
+
+		if (is_array($catalog) === false || ($catalog['plooiDelivery'] ?? false) !== true) {
+			return false;
+		}
+
+		$registers = array_map('strval', (array)($catalog['registers'] ?? []));
+		$schemas = array_map('strval', (array)($catalog['schemas'] ?? []));
+		return in_array($register, $registers, true) === true && in_array($schema, $schemas, true) === true;
+
+	}//end covers()
 }//end class
