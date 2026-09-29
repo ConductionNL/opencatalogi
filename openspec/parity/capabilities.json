@@ -1263,7 +1263,8 @@
 			"built": {
 				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Service/SitemapService.php:77-93 INFO_CAT holds the 17 categories; :400-450 maps a category to a schema TITLED after it inside a register titled 'woo'; lib/Settings/publication_register.json publication schema has no category property; no 'woo' register is provisioned by the app (grep 'Jaarplan of jaarverslag' only hits SitemapService + test)"
+				"evidence": "lib/Service/SitemapService.php:77-93 INFO_CAT holds the 17 categories; :400-450 maps a category to a schema TITLED after it inside a register titled 'woo'; lib/Settings/publication_register.json publication schema has no category property; no 'woo' register is provisioned by the app (grep 'Jaarplan of jaarverslag' only hits SitemapService + test)",
+				"change": "openspec/changes/woo-publication-category"
 			},
 			"reachedOn": "nothing in opencatalogi: filing happens by creating the record in a per-category schema of an externally imported 'woo' register; no opencatalogi page picks a category",
 			"note": "openspec/changes/woo-category-mapping-intake specifies a WooCategoryMapping schema; not built. WooService.php:973 hardcodes wooCategory 'verzoek' on batch publish.",
@@ -1505,7 +1506,8 @@
 			"built": {
 				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "searched lib for plooi/open.overheid: none; NationalIndexService.php:219 registerWithWooIndex (no caller) and :302 handOver passes a string source to integriq CallService::call(ObjectEntity $source) (openconnector lib/Service/CallService.php:2957-2958), which throws TypeError, caught as IndexUnreachableException"
+				"evidence": "searched lib for plooi/open.overheid: none; NationalIndexService.php:219 registerWithWooIndex (no caller) and :302 handOver passes a string source to integriq CallService::call(ObjectEntity $source) (openconnector lib/Service/CallService.php:2957-2958), which throws TypeError, caught as IndexUnreachableException",
+				"change": "openspec/changes/woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no route or page calls registerWithWooIndex",
 			"note": "Even when wired, every hand-over through the integriq gateway fails on the signature mismatch.",
@@ -1564,7 +1566,8 @@
 			"built": {
 				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Service/Publication/ObligationOverviewService.php:71 assemble has no caller; PublicationRulesController.php:17-22 docblock says there is no obligation overview until harvest-feed-intake lands (REQ-PIN-110 unmet)"
+				"evidence": "lib/Service/Publication/ObligationOverviewService.php:71 assemble has no caller; PublicationRulesController.php:17-22 docblock says there is no obligation overview until harvest-feed-intake lands (REQ-PIN-110 unmet)",
+				"change": "openspec/changes/woo-obligation-overview"
 			},
 			"reachedOn": "nothing: no route, no page",
 			"provider": "opencatalogi",
@@ -1620,12 +1623,12 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:79-80 startProcess/completeStep (admin) -> PublicationProcessService.php:84/130 return arrays; PublicationRulesController.php:259-261 returns the process without saving it (publicationProcess schema declared, never written); no src caller of /api/publication-process"
 			},
 			"reachedOn": "nothing: no page, and the process is not persisted between steps",
-			"note": "The WOO batch ready-for-review/approval gate (WooService.php:813/870) is a separate, narrower path for Woo requests.",
+			"note": "Decided no 2026-09-28: Single competitor rated yes (xxllnc Publiceren), no demand row, outside the core area. The service returns arrays that nothing stores or shows; that dead code is a cleanup, not a feature. The WOO batch ready-for-review/approval gate (WooService.php:813/870) is a separate, narrower path for Woo requests.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "woo-compliance-basics",
@@ -1650,7 +1653,7 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:81 raiseZienswijze (admin) -> ZienswijzeService.php:75 raise builds and returns an ask array; controller returns it (PublicationRulesController.php:331-345) without storing or sending it; zienswijzeAsk schema never written; no src caller"
 			},
@@ -1670,7 +1673,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"ask an interested party for their view before information about them is published\"; the product page describes a publication workflow and anonymisation only; nothing public covers decision types, inspection periods, notices or signing. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"ask an interested party for their view before information about them is published\"; the product pages mention terinzageleggingen and bekendmakingen only in passing; nothing public covers this decision function. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"ask an interested party for their view before information about them is published\"; nothing public covers decision types, inspection periods, notices or signing in the JOIN Woo Portaal. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Decided no 2026-09-28: No competitor rated yes, no demand row, outside the core area."
 		},
 		{
 			"id": "woo-from-case",
@@ -1858,12 +1862,12 @@
 			"source": "own-code",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "WooRedactionView.vue:1-160 per-entity selection with a ground each, but never mounted (WooBatchDetail.vue:37), POSTs to a PUT route (:146 vs routes.php:62), and WooController.php:189-191 reads only assessment+weigeringsgronden, dropping redactionInstructions; no call to filinq"
 			},
 			"reachedOn": "nothing",
-			"note": "filinq has lib/Service/Comparison/RedactionAnnotator.php; opencatalogi does not use it.",
+			"note": "Decided no 2026-09-28: Single competitor rated yes (xxllnc Publiceren), no demand row. Redaction is filinq's (RedactionAnnotator); opencatalogi should call it, not rebuild it. filinq has lib/Service/Comparison/RedactionAnnotator.php; opencatalogi does not use it.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "woo-disclosure-workflow",
@@ -1977,7 +1981,7 @@
 			"source": "own-code",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "WooService.php:378 cards only provisioned when a boardId is passed (createBatch has no page caller); :486-491 resolveStackId returns 0; :581-597 moveCardToStack only reads cards; WooBatchDetail.vue:212-222 shows a placeholder text, no deck widget"
 			},
@@ -1997,7 +2001,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"track the documents of a batch as cards on a task board\"; the public pages describe anonymisation and publication, not a Woo-request assessment workflow; that lives in xxllnc Zaken, which was not in scope. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"track the documents of a batch as cards on a task board\"; no public page describes a Woo-request assessment workflow in iprox.open; requests are prepared in the customer's case system or SharePoint. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"track the documents of a batch as cards on a task board\"; the public pages describe intake via eFormulieren, handling as a case and anonymisation, not this step of the request workflow. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Decided no 2026-09-28: No competitor rated yes and no demand row."
 		},
 		{
 			"id": "wr-publish",
@@ -2185,7 +2190,8 @@
 			"built": {
 				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:84 announce (admin) -> PublicationDisclosureController.php:127-139 composeNotices + deliver -> NationalIndexService.php:302 gateway->call(source: string) vs integriq CallService::call(ObjectEntity $source) (openconnector lib/Service/CallService.php:2958): TypeError caught as unreachable; no src caller"
+				"evidence": "routes.php:84 announce (admin) -> PublicationDisclosureController.php:127-139 composeNotices + deliver -> NationalIndexService.php:302 gateway->call(source: string) vs integriq CallService::call(ObjectEntity $source) (openconnector lib/Service/CallService.php:2958): TypeError caught as unreachable; no src caller",
+				"change": "openspec/changes/woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no page, and every delivery reports the channel unreachable",
 			"provider": "opencatalogi",
@@ -2212,12 +2218,12 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "DocumentStampService.php:109 stamp() has no caller (grep '->stamp(' lib); signing key read from appconfig publication_signing_key (Application.php:302), which nothing sets"
 			},
 			"reachedOn": "nothing: no publish path stamps a document",
-			"note": "Stamp is an HMAC with an instance secret, so a reader cannot verify offline.",
+			"note": "Decided no 2026-09-28: No competitor rated yes, no demand row, outside the core area. Stamp is an HMAC with an instance secret, so a reader cannot verify offline.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "woo-compliance-basics",
@@ -2725,7 +2731,7 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "grep spatial/bbox/geojson/leaflet in lib/src: only a DCAT theme label (DcatVocabularyService.php:68) and an open-format token (QualityService.php:68); portaliq: nothing"
 			},
@@ -2745,7 +2751,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"find datasets by drawing an area on a map\"; xxllnc Publiceren is positioned for Woo document publication; no public page mentions datasets or DCAT and the Vught API client has no dataset or DCAT route. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"find datasets by drawing an area on a map\"; iprox.open is positioned for Woo publication; no page mentions DCAT or datasets and the public API exposes search, dossier-categories and dossier-metrics only. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"find datasets by drawing an area on a map\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Decided no 2026-09-28: Single competitor rated partial (CKAN), no demand row. Was defer, retired."
 		},
 		{
 			"id": "od-dictionary",
@@ -2785,7 +2792,7 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "CommunityController.php:205-533 offers status page, subscribe, feed, vote and markup only; register.d/the-public-and-community-surface.json has no request schema; grep 'dataset request' in openspec: 0"
 			},
@@ -2805,7 +2812,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"let the public ask for a dataset that is not published yet\"; xxllnc Publiceren is positioned for Woo document publication; no public page mentions datasets or DCAT and the Vught API client has no dataset or DCAT route. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"let the public ask for a dataset that is not published yet\"; iprox.open is positioned for Woo publication; no page mentions DCAT or datasets and the public API exposes search, dossier-categories and dossier-metrics only. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"let the public ask for a dataset that is not published yet\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Decided no 2026-09-28: No competitor rated yes and no demand row. Was defer, retired."
 		},
 		{
 			"id": "fed-directory",
@@ -3382,7 +3390,7 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "grep customElements/embed snippet/iframe in opencatalogi src/lib: 0; portaliq PortalEmbedSnippetDescription.php embeds intake forms only, not search"
 			},
@@ -3402,7 +3410,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"put a publication search box on the organisation's own website\"; the public search behaviour visible on the Vught instance does not settle this row and no page describes it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"put a publication search box on the organisation's own website\"; the public search on the Limburg instance does not settle this row and no page describes it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"put a publication search box on the organisation's own website\"; the public pages say only that the portal makes publications findable; search behaviour is described only in the login-gated wiki and no live instance was found. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Decided no 2026-09-28: No competitor rated yes and no demand row. Was defer, retired."
 		},
 		{
 			"id": "srch-follow",
@@ -3622,12 +3631,12 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Controller/CommunityController.php:298 subscribe stores an unconfirmed subscription and drops the one-time token from SubscriptionService::request; no confirm route in appinfo/routes.php; SubscriptionService::confirm is never called outside tests; recipients() returns only confirmed addresses"
 			},
 			"reachedOn": "nothing: POST /api/status/subscribe answers 202 'confirm the address', but no mail is sent and no confirm route exists",
-			"note": "No subscription can reach the confirmed state, so the recipient list is always empty. openspec/changes/the-public-and-community-surface/tasks.md:38 also says the app sends nothing itself.",
+			"note": "Decided no 2026-09-28: No competitor rated yes, no demand row, and the app sends no mail itself by design. No subscription can reach the confirmed state, so the recipient list is always empty. openspec/changes/the-public-and-community-surface/tasks.md:38 also says the app sends nothing itself.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "public-cms",
@@ -3742,12 +3751,12 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:219 POST /api/records/{id}/vote @PublicPage; lib/Service/Community/VoteService.php:188 accepts votes only when record.votingEnabled is true; votingEnabled and voteValues are declared in no schema under lib/Settings (grep finds them only in VoteService and a unit test)"
 			},
 			"reachedOn": "nothing: every vote on a shipped publication answers 404, because no schema can set votingEnabled",
-			"note": "The endpoint, throttling and one-vote-per-token logic are built, but on shipped schemas the gate always refuses. Empty value: votingEnabled.",
+			"note": "Decided no 2026-09-28: No competitor rated yes and no demand row. The endpoint, throttling and one-vote-per-token logic are built, but on shipped schemas the gate always refuses. Empty value: votingEnabled.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "public-cms",
@@ -3802,7 +3811,7 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "searched lib/, src/manifest.json, openspec/ and the portaliq src/site and lib/Settings for reuse|showcase|toepassing|hergebruik|dataset: no schema, route or page records something built on a dataset; publications#uses/used (appinfo/routes.php:253-254) are object relations, not reader submissions"
 			},
@@ -3822,7 +3831,8 @@
 				"xxllnc": "not checked: searched the public xxllnc Publiceren material for \"let people register what they built with a dataset, such as an app or an article\"; the Vught reading room does not show this feature and no public page mentions it. Sources read: https://xxllnc.nl/applicaties/publiceren/ (product page and its FAQ accordion), https://xxllnc.nl/applicaties/anonimiseren/, the xxllnc news, blog and application sitemaps (151 URLs, 17 on Woo, publiceren or anonimiseren), and the public Vught instance https://vught.woopublicaties.nl with its /publicationbackend API client (30 methods read from the frontend bundle)",
 				"iprox": "not checked: searched the public iprox.open material for \"let people register what they built with a dataset, such as an app or an article\"; the Limburg and Vechtstromen reading rooms do not show this feature and no public page mentions it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"let people register what they built with a dataset, such as an app or an article\"; the public pages do not mention this reading-room feature and no live instance was found to look at. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Decided no 2026-09-28: No competitor rated yes and no demand row. Was defer, retired."
 		},
 		{
 			"id": "pub-restricted",
@@ -4012,12 +4022,12 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "building",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Settings/register.d/published-service-and-case-type-catalogue.json declares knowledgeArticle; knowledge_article_schema is used only by ServiceCatalogueController.php:525 (verdict) and :627 (extract); no route lists or searches articles in appinfo/routes.php"
 			},
 			"reachedOn": "nothing: no public read or search route for articles, and no page",
-			"note": "Articles can be stored, but readers have no opencatalogi endpoint to find or read them. The tasks mark 4.1 done without such a route.",
+			"note": "Decided no 2026-09-28: No competitor rated yes and no demand row, outside the core area. Articles can be stored, but readers have no opencatalogi endpoint to find or read them. The tasks mark 4.1 done without such a route.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
@@ -4102,12 +4112,12 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "searched lib/ for DataService, endpointURL and servesDataset (DCAT API records), and the lib/Settings schemas: publication_register.json has only publication, catalog, listing, theme, glossary and usageCounter, with no API type"
 			},
 			"reachedOn": "nothing",
-			"note": "A catalogue can include any OpenRegister schema, so an organisation could model APIs itself. Nothing is built for it.",
+			"note": "Decided no 2026-09-28: Two competitors rated partial, none yes, no demand row. Was defer, retired. A catalogue can include any OpenRegister schema, so an organisation could model APIs itself. Nothing is built for it.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
@@ -4372,7 +4382,7 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "searched opencatalogi lib/ and openspec/ and integriq/openregister/filinq lib/ for cmis: no match"
 			},
@@ -4392,7 +4402,8 @@
 				"dkan": "source read at 4.1.3: no CMIS client; grepped -iE 'cmis|alfresco' across modules/ and docs/, no hits. File fetchers are http(s) and local only (modules/dkan_common/src/FileFetcher).",
 				"iprox": "not checked: searched the public iprox.open material for \"read documents from a document management system over CMIS\"; the public pages name SharePoint, case, VTH and DMS koppelingen only; nothing public covers this integration. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"read documents from a document management system over CMIS\"; the public pages name JOIN Zaak & Document over its RestAPI and iBabs as a source; nothing public covers this integration. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
-			}
+			},
+			"note": "Decided no 2026-09-28: No competitor rated yes and no demand row. Was defer, retired."
 		},
 		{
 			"id": "int-sso",
@@ -5030,9 +5041,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "Searched publication_register.json authorization blocks: publication (:291) has read rules only, no create/update/publish split; no role or group concept in lib/; publishing is a plain publicationDate write (EventService.php:381), so no separate publish right can exist"
+				"evidence": "Searched publication_register.json authorization blocks: publication (:291) has read rules only, no create/update/publish split; no role or group concept in lib/; publishing is a plain publicationDate write (EventService.php:381), so no separate publish right can exist",
+				"change": "openspec/changes/operations-publish-rights"
 			},
 			"reachedOn": "nothing: no editor/publisher split",
 			"note": "An admin could set CRUD rights per group in OR's schema editor, but that cannot tell editing from publishing. Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-06-15-rbac-and-lifecycle-enforcement (per-transition authorization on x-openregister-lifecycle); opencatalogi's half is not done, since lib/Settings/publication_register.json declares only an archive transition and no publish transition limited to publishers, so the owner moved to ConductionNL/opencatalogi (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister).",
