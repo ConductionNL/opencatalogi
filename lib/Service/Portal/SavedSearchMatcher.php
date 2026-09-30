@@ -141,7 +141,10 @@ class SavedSearchMatcher {
 				$stats['notices'] += $this->notify(saved: $saved, matches: $matches, until: $nowUtc);
 			} catch (Throwable $e) {
 				$stats['failed']++;
-				$this->logger->warning('OpenCatalogi: a saved search was not handled; the next run tries again', ['savedSearch' => $saved['id'], 'reason' => $e->getMessage()]);
+				$this->logger->warning(
+					'OpenCatalogi: a saved search was not handled; the next run tries again',
+					['savedSearch' => $saved['id'], 'reason' => $e->getMessage()]
+				);
 			}//end try
 		}//end foreach
 
@@ -197,17 +200,19 @@ class SavedSearchMatcher {
 		$params['_order'] = ['publicationDate' => 'asc'];
 
 		$filters = (array)($saved['query']['filters'] ?? []);
-		$periodFrom = $this->moment(value: ($filters['periodFrom'] ?? null));
-		$periodTo = $this->moment(value: ($filters['periodTo'] ?? null));
+		$window = [
+			'from' => $from,
+			'until' => $until,
+			'periodFrom' => $this->moment(value: ($filters['periodFrom'] ?? null)),
+			'periodTo' => $this->moment(value: ($filters['periodTo'] ?? null))?->setTime(23, 59, 59),
+		];
 
 		$found = [];
 		foreach ($this->search->search(params: $params) as $row) {
 			$self = (array)($row['@self'] ?? []);
 			$id = (string)($self['id'] ?? ($row['id'] ?? ''));
 			$date = $this->moment(value: ($row['publicationDate'] ?? null));
-			if ($id === '' || ($self['schema'] ?? null) !== PortalObjectStore::PUBLICATION_SCHEMA || $date === null
-				|| $date <= $from || $date > $until
-				|| ($periodFrom !== null && $date < $periodFrom) || ($periodTo !== null && $date > $periodTo->setTime(23, 59, 59))
+			if ($id === '' || ($self['schema'] ?? null) !== PortalObjectStore::PUBLICATION_SCHEMA || $this->inWindow(date: $date, window: $window) === false
 				|| $this->publications->isObjectPublic(objectData: $row) === false
 			) {
 				continue;
@@ -226,6 +231,27 @@ class SavedSearchMatcher {
 		return $found;
 
 	}//end matches()
+
+	/**
+	 * Whether a publication date lies in the run's window and the saved period.
+	 *
+	 * @param DateTimeImmutable|null                $date   The publication date.
+	 * @param array<string, DateTimeImmutable|null> $window from, until (exclusive, inclusive), periodFrom, periodTo.
+	 *
+	 * @return bool
+	 */
+	private function inWindow(?DateTimeImmutable $date, array $window): bool {
+		if ($date === null || $date <= $window['from'] || $date > $window['until']) {
+			return false;
+		}
+
+		if ($window['periodFrom'] !== null && $date < $window['periodFrom']) {
+			return false;
+		}
+
+		return $window['periodTo'] === null || $date <= $window['periodTo'];
+
+	}//end inWindow()
 
 	/**
 	 * Save the notices, and move `lastRunAt` in the last save.
