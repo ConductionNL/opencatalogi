@@ -417,26 +417,27 @@ class SitemapServiceTest extends TestCase {
 		$doc = $result['diwoo:Document']['diwoo:DiWoo'];
 
 		$this->assertEquals('https://example.com/files/doc.pdf', $doc['loc']);
-		$this->assertEquals(date('Y-m-d H:i:s', strtotime('2024-05-10 12:00:00')), $doc['lastmod']);
+		// REQ-WSD-001: the publication was updated after the file was published, so lastmod follows the metadata.
+		$this->assertEquals('2024-06-20 14:30:00', $doc['lastmod']);
 		$this->assertEquals('2024-01-15', $doc['diwoo:creatiedatum']);
 
 		// Publisher @resource is bound to the TOOI organisatie identifier (WOO-TOOI-002).
-		$this->assertEquals('https://identifier.overheid.nl/tooi/id/gemeente/gm0855', $doc['diwoo:publisher']['@resource']);
+		$this->assertEquals('https://identifier.overheid.nl/tooi/id/gemeente/gm0855', $doc['diwoo:publisher']['@attributes']['resource']);
 		$this->assertEquals('file-owner', $doc['diwoo:publisher']['#text']);
 
 		// Format.
-		$this->assertStringContainsString('PDF', $doc['diwoo:format']['@resource']);
+		$this->assertStringContainsString('PDF', $doc['diwoo:format']['@attributes']['resource']);
 		$this->assertEquals('pdf', $doc['diwoo:format']['#text']);
 
 		// Classification bound to the official TOOI category URI (WOO-TOOI-001).
 		$classification = $doc['diwoo:classificatiecollectie']['diwoo:informatiecategorieen']['diwoo:informatiecategorie'];
 		$this->assertEquals('Woo-verzoeken en -besluiten', $classification['#text']);
-		$this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_3baef532', $classification['@resource']);
+		$this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_3baef532', $classification['@attributes']['resource']);
 
 		// Document handling — declared handling type resolves through the value list (WOO-TOOI-003).
 		$handling = $doc['diwoo:documenthandelingen']['diwoo:documenthandeling'];
 		$this->assertEquals('vaststelling', $handling['diwoo:soortHandeling']['#text']);
-		$this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_641ecd76', $handling['diwoo:soortHandeling']['@resource']);
+		$this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_641ecd76', $handling['diwoo:soortHandeling']['@attributes']['resource']);
 		$this->assertEquals('2024-05-10 12:00:00', $handling['diwoo:atTime']);
 	}
 
@@ -489,7 +490,7 @@ class SitemapServiceTest extends TestCase {
 		$doc = $result['diwoo:Document']['diwoo:DiWoo'];
 
 		// Publisher @resource omitted (no TOOI id); human-readable #text still present.
-		$this->assertArrayNotHasKey('@resource', $doc['diwoo:publisher']);
+		$this->assertArrayNotHasKey('@attributes', $doc['diwoo:publisher']);
 
 		// Unresolved informatiecategorie omitted entirely — no free-text @resource.
 		$this->assertArrayNotHasKey('diwoo:classificatiecollectie', $doc);
@@ -497,10 +498,10 @@ class SitemapServiceTest extends TestCase {
 		// soortHandeling still binds to the default value-list member.
 		$handling = $doc['diwoo:documenthandelingen']['diwoo:documenthandeling'];
 		$this->assertEquals('ontvangst', $handling['diwoo:soortHandeling']['#text']);
-		$this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535', $handling['diwoo:soortHandeling']['@resource']);
+		$this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535', $handling['diwoo:soortHandeling']['@attributes']['resource']);
 
 		// Format should be uppercase extension in URI.
-		$this->assertStringContainsString('DOCX', $doc['diwoo:format']['@resource']);
+		$this->assertStringContainsString('DOCX', $doc['diwoo:format']['@attributes']['resource']);
 		$this->assertEquals('docx', $doc['diwoo:format']['#text']);
 
 		// Both unresolved axes reported by the validator.
@@ -1228,5 +1229,83 @@ class SitemapServiceTest extends TestCase {
 			$this->container->method('get')
 				->willReturn($objectService);
 		}
+	}
+
+	/**
+	 * A resource is an XML attribute, not a child element, once rendered.
+	 *
+	 * The mapping used to write `'@resource'`, which XMLResponse renders as a
+	 * `<resource>` child element, so every TOOI and DiWoo URI reached the
+	 * harvester as text inside the element instead of as its `resource`.
+	 */
+	public function testAResourceIsRenderedAsAnAttribute(): void {
+		$publication = [
+			'id' => 'pub-1',
+			'category' => 'infocat014',
+			'soortHandeling' => 'vaststelling',
+			'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855',
+			'@self' => ['created' => '2024-01-15 10:00:00', 'updated' => '2024-06-20 14:30:00', 'owner' => 'admin'],
+		];
+		$file = ['downloadUrl' => 'https://example.com/files/doc.pdf', 'extension' => 'pdf', 'published' => '2024-05-10 12:00:00'];
+
+		$document = $this->getPrivateMethod('mapDiwooDocument')->invoke($this->service, $publication, $file);
+		$xml = (new \OCA\OpenCatalogi\Http\XMLResponse([]))->arrayToXml($document['diwoo:Document'], 'diwoo:Document');
+
+		$this->assertStringContainsString('resource="https://identifier.overheid.nl/tooi/id/gemeente/gm0855"', $xml);
+		$this->assertStringContainsString('resource="https://identifier.overheid.nl/tooi/def/thes/kern/c_3baef532"', $xml);
+		$this->assertStringNotContainsString('<resource>', $xml);
+	}
+
+	/** REQ-WSD-003: the sitemap page links a main document and its annex. */
+	public function testTheMappedDocumentsCarryTheirRelations(): void {
+		$publication = [
+			'id' => 'pub-1',
+			'title' => 'Besluit',
+			'@self' => [
+				'updated' => '2024-06-20 14:30:00',
+				'files' => [
+					['downloadUrl' => 'https://example.com/files/besluit.pdf', 'title' => 'Besluit', 'labels' => ['main-document'], 'extension' => 'pdf'],
+					['downloadUrl' => 'https://example.com/files/bijlage.pdf', 'title' => 'Bijlage', 'labels' => [], 'extension' => 'pdf'],
+				],
+			],
+		];
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com');
+
+		$relations = $this->getPrivateMethod('documentRelations')->invoke($this->service, $publication, 'woo');
+		$annex = $this->getPrivateMethod('mapDiwooDocument')->invoke(
+			$this->service,
+			$publication,
+			$publication['@self']['files'][1],
+			[],
+			$relations['relations']['https://example.com/files/bijlage.pdf']
+		)['diwoo:Document']['diwoo:DiWoo'];
+
+		$this->assertSame('https://example.com/files/besluit.pdf', $annex['diwoo:isPartOf']['@attributes']['resource']);
+		$keys = array_keys($annex);
+		$this->assertLessThan(array_search('diwoo:documenthandelingen', $keys, true) ?: PHP_INT_MAX, array_search('diwoo:isPartOf', $keys, true));
+	}
+
+	/** REQ-WSD-003: two files marked by mistake are reported once, naming the publication. */
+	public function testValidatorReportsTwoMainDocuments(): void {
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com');
+		$publication = [
+			'id' => 'pub-1',
+			'title' => 'Besluit',
+			'@self' => [
+				'files' => [
+					['downloadUrl' => 'https://example.com/files/a.pdf', 'labels' => ['main-document'], 'extension' => 'pdf'],
+					['downloadUrl' => 'https://example.com/files/b.pdf', 'labels' => ['main-document'], 'extension' => 'pdf'],
+				],
+			],
+		];
+
+		$violations = array_values(array_filter(
+			$this->service->collectDiwooViolations([$publication], 'woo'),
+			static fn (array $violation): bool => $violation['axis'] === 'hasParts'
+		));
+
+		$this->assertCount(1, $violations);
+		$this->assertSame('https://example.com/apps/opencatalogi/api/woo/pub-1', $violations[0]['documentLoc']);
+		$this->assertStringContainsString('main document', $violations[0]['reason']);
 	}
 }

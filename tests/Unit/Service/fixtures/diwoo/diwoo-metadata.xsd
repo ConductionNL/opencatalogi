@@ -1,0 +1,601 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema elementFormDefault="qualified"
+  targetNamespace="https://standaarden.overheid.nl/diwoo/metadata/" version="0.9.1"
+  xmlns:diwoo="https://standaarden.overheid.nl/diwoo/metadata/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:annotation>
+    <xs:documentation>
+      <div>
+        <p>DiWoo-metadata.xsd</p>
+        <p>XSD voor extensie van sitemaps ten behoeve van de Digitale infrastructuur voor de Wet
+          open overheid</p>
+        <p>Versie 0.9.1</p>
+      </div>
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- 
+    =====================================
+    == schema voor de waardelijsten  ====
+    =====================================
+  --> 
+  <xs:include
+    schemaLocation="diwoo-metadata-lijsten.xsd"/>
+
+  <!-- 
+    =====================================
+    == elementdeclaraties            ====
+    =====================================
+  --> 
+  <xs:element name="Document" type="diwoo:DocumentType"/>
+
+  <!-- 
+    =====================================
+    == complex types                 ====
+    =====================================
+  --> 
+  <xs:complexType name="DocumentType">
+    <xs:sequence>
+      <xs:element name="DiWoo" maxOccurs="1" minOccurs="0" type="diwoo:DiWooType">
+        <xs:annotation>
+          <xs:documentation>container-element voor de metadata van een document volgens
+            DIWOO</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="extraMetadata" minOccurs="0" maxOccurs="unbounded"
+        type="diwoo:extraMetadataType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DiWooType">
+    <xs:annotation>
+      <xs:documentation>de elementen die de metadata van een document beschrijven volgens de
+        DiWoo-standaard, gebaseerd op TOOI</xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="identifiers" type="diwoo:identifiersType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor identifiers</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="publisher" type="diwoo:organisatieType" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-publisher"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="verantwoordelijke" type="diwoo:organisatieType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-verantwoordelijke"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="medeverantwoordelijken" type="diwoo:medeverantwoordelijkenType" minOccurs="0"
+        maxOccurs="1"/>
+      <xs:element name="opsteller" type="diwoo:organisatieType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-opsteller"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="naamOpsteller" type="xs:string" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-naamopsteller"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="titelcollectie" type="diwoo:titelcollectieType" maxOccurs="1" minOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor titel-elementen</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="omschrijvingen" type="diwoo:omschrijvingenType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor omschrijvingen</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="classificatiecollectie" type="diwoo:classificatiecollectieType" maxOccurs="1"
+        minOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor classificaties</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="creatiedatum" type="xs:date" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-creatiedatum"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="geldigheid" type="diwoo:geldigheidType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor geldigheid</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="language" type="diwoo:languageType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-language"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="format" type="diwoo:formatType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-format"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="aggregatiekenmerk" type="xs:string" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-aggregatiekenmerk"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="isPartOf" type="diwoo:documentverwijzingType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-ispartof"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="hasParts" type="diwoo:hasPartsType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor onderdelen</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="documenthandelingen" type="diwoo:documenthandelingenType" maxOccurs="1"
+        minOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor documenthandelingen</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="documentrelaties" type="diwoo:documentrelatiesType" minOccurs="0"
+        maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor documentrelaties</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="redenVerwijderingVervanging" type="diwoo:redenVerwijderingVervangingType"
+        minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-redenvervanging"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="identifiersType">
+    <xs:sequence>
+      <xs:element name="identifier" maxOccurs="unbounded" minOccurs="1" type="xs:string">
+        <xs:annotation id="TOOI">
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-identifier-notation"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="medeverantwoordelijkenType">
+    <xs:sequence>
+      <xs:element name="medeverantwoordelijke" type="diwoo:organisatieType" minOccurs="1"
+        maxOccurs="unbounded"/>      
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="titelcollectieType">
+    <xs:all>
+      <xs:element name="officieleTitel" type="xs:string" maxOccurs="1" minOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-officieletitel"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="verkorteTitels" type="diwoo:verkorteTitelsType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor verkorte titels</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="alternatieveTitels" type="diwoo:alternatieveTitelsType" minOccurs="0"
+        maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor alternatieve titels</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="verkorteTitelsType">
+    <xs:sequence>
+      <xs:element name="verkorteTitel" type="xs:string" minOccurs="1" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-verkortetitel"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="alternatieveTitelsType">
+    <xs:sequence>
+      <xs:element name="alternatieveTitel" type="xs:string" minOccurs="1" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-alternatievetitel"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="omschrijvingenType">
+    <xs:sequence>
+      <xs:element name="omschrijving" type="xs:string" minOccurs="1" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-omschrijving"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="classificatiecollectieType">
+    <xs:all>
+      <xs:element name="informatiecategorieen" type="diwoo:informatiecategorieenType" minOccurs="1"
+        maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor informatiecategorieën</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="documentsoorten" type="diwoo:documentsoortenType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor documentsoorten</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="themas" type="diwoo:themasType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor thema's</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="trefwoorden" type="diwoo:trefwoordenType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>container-element voor trefwoorden</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="informatiecategorieenType">
+    <xs:sequence>
+      <xs:element name="informatiecategorie" type="diwoo:informatiecategorieType" minOccurs="1"
+        maxOccurs="unbounded"/>      
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="informatiecategorieType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI voor de informatiecategorie</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:informatiecategorielijst"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="documentsoortenType">
+    <xs:sequence>
+      <xs:element name="documentsoort" type="diwoo:documentsoortType" minOccurs="1"
+        maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-documentsoort"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="documentsoortType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI voor de documentsoort</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:documentsoortlijst"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="themasType">
+    <xs:sequence>
+      <xs:element name="thema" type="diwoo:themaType" minOccurs="1" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-theme"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="themaType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI voor het thema</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:themalijst"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="trefwoordenType">
+    <xs:sequence>
+      <xs:element name="trefwoord" type="xs:string" minOccurs="1" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-informatieobject-keyword"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="geldigheidType">
+    <xs:all>
+      <xs:element name="begindatum" type="xs:dateTime" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="einddatum" type="xs:dateTime" minOccurs="0" maxOccurs="1"/>      
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="languageType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI voor de taal</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:taallijst"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="formatType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI voor het formaat</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:formatlijst"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="hasPartsType">
+    <xs:sequence>
+      <xs:element name="hasPart" type="diwoo:documentverwijzingType" minOccurs="1"
+        maxOccurs="unbounded"/>      
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="documenthandelingenType">
+    <xs:sequence>
+      <xs:element name="documenthandeling" type="diwoo:documenthandelingType" minOccurs="1"
+        maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#klasse-documenthandeling"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="documenthandelingType">
+    <xs:all>
+      <xs:element name="soortHandeling" type="diwoo:soortHandelingType" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-documenthandeling-soorthandeling"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="atTime" type="xs:dateTime" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-documenthandeling-attime"
+          />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="wasAssociatedWith" type="diwoo:organisatieType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://standaarden.overheid.nl/tooi/doc/tooi-ontologie/#property-shape-documenthandeling-wasassociatedwith"
+          />
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="soortHandelingType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI voor de soort handeling</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:soorthandelinglijst"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="documentrelatiesType">
+    <xs:sequence>
+      <xs:element name="documentrelatie" type="diwoo:documentrelatieType" minOccurs="1"
+        maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation source="https://www.w3.org/TR/vocab-dcat-2/#Class:Relationship"/>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="documentrelatieType">
+    <xs:all>
+      <xs:element name="role" type="diwoo:roleType" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://www.w3.org/TR/vocab-dcat-2/#Property:relationship_hadRole"/>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="relation" type="diwoo:documentverwijzingType" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation
+            source="https://www.w3.org/TR/vocab-dcat-2/#Property:relationship_relation"/>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="roleType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI voor de rol van het gerelateerde document</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:documentrelatielijst"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="redenVerwijderingVervangingType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI voor de reden van verwijdering of vervanging</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:redenverwijderingvervanginglijst"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="extraMetadataType">
+    <xs:sequence>
+      <xs:sequence minOccurs="0" maxOccurs="1">
+        <xs:element name="namespace" type="xs:anyURI" minOccurs="1" maxOccurs="1"/>
+        <xs:element name="prefix" type="xs:string"/>
+      </xs:sequence>
+      <xs:element name="extraMetadatavelden" type="diwoo:extraMetadataveldenType"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="extraMetadataveldenType">
+    <xs:sequence>
+      <xs:element name="extraMetadataveld" type="diwoo:extraMetadataveldType" minOccurs="1" maxOccurs="unbounded"/>     
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="extraMetadataveldType">
+    <xs:sequence>
+      <xs:element name="key" type="xs:string" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="values" type="diwoo:valuesType" minOccurs="1" maxOccurs="1"/>    
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="valuesType">
+    <xs:sequence>
+      <xs:element name="value" type="xs:string" minOccurs="1"
+        maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <!-- 
+    =====================================
+    == generieke types               ====
+    =====================================
+  -->
+  <xs:complexType name="organisatieType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI voor de organisatie</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:organisatielijst"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  
+  <xs:complexType name="documentverwijzingType">
+    <xs:simpleContent>
+      <xs:extension base="diwoo:label">
+        <xs:attribute name="resource">
+          <xs:annotation>
+            <xs:documentation>de URI van het document waarnaar verwezen wordt</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="diwoo:geidentificeerdDocument"/>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <!-- 
+    =====================================
+    == simple types                  ====
+    =====================================
+  -->
+  <xs:simpleType name="label">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="geidentificeerdDocument">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+</xs:schema>
