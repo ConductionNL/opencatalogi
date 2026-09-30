@@ -97,7 +97,6 @@ class WooJourneyRegisterTest extends TestCase {
 				[
 					'id' => '0b6d0b1e-3e0b-4b0b-9b0b-0b0b0b0b0b01',
 					'publication' => '0b6d0b1e-3e0b-4b0b-9b0b-0b0b0b0b0b02',
-					'attachment' => null,
 					'note' => 'Lees paragraaf 3',
 					'addedAt' => '2026-09-30T10:00:00+00:00',
 					'addedBy' => 'resident',
