@@ -267,6 +267,24 @@ class CitizenCollectionServiceTest extends TestCase {
 		$this->assertSame([], ($this->store->objects['collection'] ?? []));
 	}
 
+	/**
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-opencatalogi-contributes-dossiers-to-the-portal-for-citizen-and-client-req-ccol-006
+	 */
+	public function testTheItemListForPortaliqMarksADepublishedItem(): void {
+		$view = $this->dossierOf('subject-1', [self::PUB_A, self::PUB_B]);
+		$this->store->publication(self::PUB_B, 'Advies windpark', '-10 days', '-1 day');
+
+		$provider = new \OCA\OpenCatalogi\Portal\PortalContributionProvider(collections: $this->service);
+		$items = $provider->dossierItems($view['id']);
+		$this->assertCount(2, $items);
+		$this->assertSame(['id', 'title', 'url', 'note', 'public', 'addedAt'], array_keys($items[0]));
+		$this->assertTrue($items[0]['public']);
+		$this->assertFalse($items[1]['public']);
+		$this->assertSame('Advies windpark', $items[1]['title']);
+		$this->assertSame([], $provider->dossierItems('does-not-exist'));
+		$this->assertSame([], (new \OCA\OpenCatalogi\Portal\PortalContributionProvider())->dossierItems($view['id']));
+	}
+
 	public function testDeleteRemovesTheDossier(): void {
 		$view = $this->dossierOf('subject-1', [self::PUB_A]);
 		$this->service->delete(owner: 'subject-1', collectionId: $view['id']);

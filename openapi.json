@@ -2611,7 +2611,7 @@
                   "collection": {
                     "type": "string"
                   },
-                  "item": {
+                  "itemId": {
                     "type": "string"
                   }
                 }
@@ -2734,10 +2734,10 @@
                   "collection": {
                     "type": "string"
                   },
-                  "item": {
+                  "note": {
                     "type": "string"
                   },
-                  "note": {
+                  "itemId": {
                     "type": "string"
                   }
                 }

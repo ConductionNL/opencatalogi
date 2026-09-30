@@ -124,7 +124,7 @@ class PortalCollectionController extends Controller {
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function removeItem(): JSONResponse {
 		return $this->asSubject(
-			action: fn (string $owner): array => $this->collections->removeItem(owner: $owner, collectionId: $this->param(name: 'collection'), itemId: $this->param(name: 'item'))
+			action: fn (string $owner): array => $this->collections->removeItem(owner: $owner, collectionId: $this->param(name: 'collection'), itemId: $this->param(name: 'itemId'))
 		);
 
 	}//end removeItem()
@@ -144,7 +144,7 @@ class PortalCollectionController extends Controller {
 			action: fn (string $owner): array => $this->collections->note(
 				owner: $owner,
 				collectionId: $this->param(name: 'collection'),
-				itemId: $this->param(name: 'item'),
+				itemId: $this->param(name: 'itemId'),
 				note: $this->param(name: 'note')
 			)
 		);

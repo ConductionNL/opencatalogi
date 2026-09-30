@@ -22,6 +22,7 @@ Item: `{ id (uuid), publication (uuid), attachment (string or null, a Nextcloud 
 `OCA\OpenCatalogi\Portal\PortalContributionProvider` is plain: no portaliq import, no constructor dependencies. `getAudiences()` answers `['citizen', 'client']`. Any other audience gets null.
 
 - Collection `myDossiers`: register `publication`, schema `collection`, `scopeField: owner`, fields `title`, `description`, `items`, `share`, `sourceOf`, row actions `viewDossier`, `removeFromDossier`, `noteOnDossier`, `shareDossier`, `unshareDossier`, `deleteDossier`.
+- The same entry carries `itemList: { label: "Documenten", provider: "dossierItems", removeAction: "removeFromDossier" }` (hydra C7). `dossierItems(string $collectionId)` is a public method on the provider that returns `[{ id, title, url, note, public, addedAt }]`. portaliq calls it only after the resident's own scoped read of that dossier succeeded, so the method does not check the owner again.
 - Action `createDossier`: `type: create`, fields `title`, `description`, `scopeField: owner`, defaults `items: []`, `sourceOf: []`.
 - Action `addToDossier`: endpoint `POST /index.php/apps/opencatalogi/api/portal/collections/items`, fields `collection`, `title`, `publication`, `attachment`, `note`. Called by the public site block through `/portal/api/actions/opencatalogi/addToDossier`.
 - Row actions, each an endpoint with `rowField: collection`:
@@ -29,9 +30,9 @@ Item: `{ id (uuid), publication (uuid), attachment (string or null, a Nextcloud 
 | Action | Endpoint (POST) | Extra fields |
 |---|---|---|
 | `viewDossier` | `/index.php/apps/opencatalogi/api/portal/collections/view` | none |
-| `removeFromDossier` | `/index.php/apps/opencatalogi/api/portal/collections/items/remove` | `item` |
-| `noteOnDossier` | `/index.php/apps/opencatalogi/api/portal/collections/note` | `item` (empty: the dossier's own description), `note` |
-| `shareDossier` | `/index.php/apps/opencatalogi/api/portal/collections/share` | none |
+| `removeFromDossier` | `/index.php/apps/opencatalogi/api/portal/collections/items/remove` | `itemId` |
+| `noteOnDossier` | `/index.php/apps/opencatalogi/api/portal/collections/note` | `itemId` (empty: the dossier's own description), `note` |
+| `shareDossier` | `/index.php/apps/opencatalogi/api/portal/collections/share` | none; answers `{ token, createdAt, link }`, `link` the absolute share URL portaliq shows |
 | `unshareDossier` | `/index.php/apps/opencatalogi/api/portal/collections/unshare` | none |
 | `deleteDossier` | `/index.php/apps/opencatalogi/api/portal/collections/delete` | none |
 

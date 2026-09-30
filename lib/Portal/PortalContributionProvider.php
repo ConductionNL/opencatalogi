@@ -35,6 +35,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Portal;
 
+use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
+
 /**
  * Declares what a resident may see and do in opencatalogi through the portal.
  *
@@ -71,6 +73,39 @@ class PortalContributionProvider {
 	 * Where the endpoint actions live, instance-local.
 	 */
 	private const API = '/index.php/apps/opencatalogi/api/portal';
+
+	/**
+	 * Constructor. The manifest itself needs nothing; the dossier service is
+	 * only for `dossierItems()`, which portaliq calls after its own scoped read.
+	 *
+	 * @param CitizenCollectionService|null $collections The dossiers.
+	 */
+	public function __construct(
+		private readonly ?CitizenCollectionService $collections=null,
+	) {
+
+	}//end __construct()
+
+	/**
+	 * The items of one dossier, for portaliq's `itemList` (hydra C7).
+	 *
+	 * portaliq calls this only after the resident's own scoped read of the
+	 * dossier succeeded, so it does not check the owner again.
+	 *
+	 * @param string $collectionId The dossier id.
+	 *
+	 * @return array<int, array{id: string, title: string, url: string, note: string, public: bool, addedAt: string}>
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-opencatalogi-contributes-dossiers-to-the-portal-for-citizen-and-client-req-ccol-006
+	 */
+	public function dossierItems(string $collectionId): array {
+		if ($this->collections === null) {
+			return [];
+		}
+
+		return $this->collections->itemList(collectionId: $collectionId);
+
+	}//end dossierItems()
 
 	/**
 	 * The audiences this provider contributes to (contract v2).
@@ -150,6 +185,7 @@ class PortalContributionProvider {
 			],
 			'detail' => ['layout' => 'card', 'fields' => ['title', 'description', 'items']],
 			'rowActions' => ['viewDossier', 'removeFromDossier', 'noteOnDossier', 'shareDossier', 'unshareDossier', 'deleteDossier'],
+			'itemList' => ['label' => 'Documenten', 'provider' => 'dossierItems', 'removeAction' => 'removeFromDossier'],
 		];
 
 	}//end dossierCollection()
@@ -212,8 +248,8 @@ class PortalContributionProvider {
 				'successMessage' => 'Bewaard in uw dossier',
 			],
 			$this->rowAction(id: 'viewDossier', label: 'Openen', path: '/collections/view', rowField: 'collection', fields: []),
-			$this->rowAction(id: 'removeFromDossier', label: 'Uit dossier halen', path: '/collections/items/remove', rowField: 'collection', fields: ['item']),
-			$this->rowAction(id: 'noteOnDossier', label: 'Notitie schrijven', path: '/collections/note', rowField: 'collection', fields: ['item', 'note']),
+			$this->rowAction(id: 'removeFromDossier', label: 'Uit dossier halen', path: '/collections/items/remove', rowField: 'collection', fields: ['itemId']),
+			$this->rowAction(id: 'noteOnDossier', label: 'Notitie schrijven', path: '/collections/note', rowField: 'collection', fields: ['itemId', 'note']),
 			$this->rowAction(id: 'shareDossier', label: 'Deellink maken', path: '/collections/share', rowField: 'collection', fields: []),
 			$this->rowAction(id: 'unshareDossier', label: 'Deellink intrekken', path: '/collections/unshare', rowField: 'collection', fields: []),
 			$this->rowAction(id: 'deleteDossier', label: 'Dossier verwijderen', path: '/collections/delete', rowField: 'collection', fields: []),
