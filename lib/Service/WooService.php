@@ -43,6 +43,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IUserSession;
@@ -160,6 +161,7 @@ class WooService {
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translated refusal messages for the publish gate.
+	 * @param BatchPublicationWriter|null $publications Makes the batch's publication (woo-batch-creates-publications).
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -167,6 +169,7 @@ class WooService {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
+		private readonly ?BatchPublicationWriter $publications=null,
 	) {
 
 	}//end __construct()
@@ -924,6 +927,7 @@ class WooService {
 	 * @throws RuntimeException When the batch is not ready or OpenRegister is unavailable.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 */
 	public function publishBatch(string $batchId): array {
 		$objectService = $this->getObjectService();
@@ -966,11 +970,20 @@ class WooService {
 		}
 
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
+
+		// The batch becomes a real publication with its documents attached
+		// (woo-batch-creates-publications). Every document is found first, so a
+		// missing one stops the publish before anything is written.
+		$publication = $this->createPublication(batch: $batch, listings: $listings, now: $now, objectService: $objectService, register: $register, batchSchema: $batchSchema);
+
 		$publishedCount = count($publishable);
 		$publicationMeta = [
 			'wooDecisionDate' => substr($now, 0, 10),
 			'wooRequestReference' => (string)($batch['caseReference'] ?? ''),
-			'wooCategory' => WooCategory::WOO_REQUEST,
+			'wooCategory' => $publication['wooCategory'],
+			'publication' => $publication['id'],
+			'publicationUrl' => $publication['url'],
+			'attached' => $publication['attached'],
 			'documentCount' => (int)($batch['documentSummary']['total'] ?? 0),
 			'publishedCount' => $publishedCount,
 			'decisionLetter' => (string)($batch['decisionLetter'] ?? ''),
@@ -996,6 +1009,62 @@ class WooService {
 
 		return $saved;
 	}//end publishBatch()
+
+	/**
+	 * Create the batch's publication and attach its documents.
+	 *
+	 * On a failure part way, the batch keeps the publication and the files
+	 * attached so far (status stays ready_for_review), so publishing again
+	 * continues instead of making a second publication.
+	 *
+	 * @param array<string, mixed>             $batch         The batch.
+	 * @param array<int, array<string, mixed>> $listings      The publishable documents.
+	 * @param string                           $now           The moment of publishing.
+	 * @param object                           $objectService The OR ObjectService.
+	 * @param string                           $register      The batch register.
+	 * @param string                           $batchSchema   The batch schema.
+	 *
+	 * @return array{id: string, url: string, wooCategory: string, attached: array<int, string>}
+	 *
+	 * @throws RuntimeException When a document is missing or an attachment fails.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	private function createPublication(array $batch, array $listings, string $now, object $objectService, string $register, string $batchSchema): array {
+		if ($this->publications === null) {
+			throw new RuntimeException('The Woo publication writer is unavailable');
+		}
+
+		$files = $this->publications->resolveAll(listings: $listings, owner: (string)($batch['createdBy'] ?? ''));
+		$publication = $this->publications->publication(batch: $batch, now: $now);
+		$attached = array_values(array_map('strval', (array)($batch['wooPublication']['attached'] ?? [])));
+
+		foreach ($files as $file) {
+			if (in_array($file->getName(), $attached, true) === true) {
+				continue;
+			}
+
+			try {
+				$this->publications->attach(publication: $publication, file: $file);
+			} catch (\Throwable $e) {
+				$batch['wooPublication'] = array_merge((array)($batch['wooPublication'] ?? []), ['publication' => $publication['id'], 'attached' => $attached]);
+				unset($batch['documentSummary']);
+				$this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch);
+				$this->logger->error('[WooService] attaching a document failed: '.$e->getMessage(), ['batch' => ($batch['id'] ?? '')]);
+				throw new RuntimeException($this->l10n->t('Publishing stopped at %s. Publish again to continue.', [$file->getName()]), 0, $e);
+			}
+
+			$attached[] = $file->getName();
+		}//end foreach
+
+		return [
+			'id' => $publication['id'],
+			'url' => $this->publications->url(id: $publication['id']),
+			'wooCategory' => $this->publications->category(batch: $batch),
+			'attached' => $attached,
+		];
+
+	}//end createPublication()
 
 	/**
 	 * Persist an object through the consumed OpenRegister ObjectService.
