@@ -24,7 +24,7 @@
 				"published": "2026-09-30T00:00:00+00:00",
 				"summary": "Publications and documents a resident keeps together",
 				"description": "A resident's private dossier of Woo publications (hydra woo-citizen-journey, contract C1). The owner is the portal subject reference, set by the server. Only the owner reads it through the portal, and anyone reads it through a share link while the link exists, then only its public items.",
-				"icon": "FolderStar",
+				"icon": "FolderMultiple",
 				"type": "object",
 				"required": [
 					"title",
@@ -80,7 +80,8 @@
 								"id": {
 									"type": "string",
 									"format": "uuid",
-									"title": "Item id"
+									"title": "Item id",
+									"description": "The id of this item in the dossier."
 								},
 								"publication": {
 									"type": "string",
@@ -99,12 +100,14 @@
 								"note": {
 									"type": "string",
 									"title": "Note",
-									"maxLength": 2000
+									"maxLength": 2000,
+									"description": "The resident's note on this item."
 								},
 								"addedAt": {
 									"type": "string",
 									"format": "date-time",
-									"title": "Added at"
+									"title": "Added at",
+									"description": "When the item was added."
 								},
 								"addedBy": {
 									"type": "string",
@@ -133,7 +136,8 @@
 							"createdAt": {
 								"type": "string",
 								"format": "date-time",
-								"title": "Created at"
+								"title": "Created at",
+								"description": "When the link was made."
 							}
 						}
 					},

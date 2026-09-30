@@ -137,5 +137,9 @@ class PortalCollectionControllerTest extends TestCase {
 		$this->assertSame(404, $this->controller(['savedSearch' => $id], PortalAssertionVerifierTest::mint(['sub' => 'subject-2']))->pauseSearch()->getStatus());
 		$this->assertSame(200, $this->controller(['savedSearch' => $id], $owner)->pauseSearch()->getStatus());
 		$this->assertFalse($this->store->objects['savedSearch'][$id]['active']);
+
+		$this->assertSame(404, $this->controller(['savedSearch' => $id], PortalAssertionVerifierTest::mint(['sub' => 'subject-2']))->deleteSearch()->getStatus());
+		$this->assertSame(200, $this->controller(['savedSearch' => $id], $owner)->deleteSearch()->getStatus());
+		$this->assertSame([], $this->store->objects['savedSearch']);
 	}
 }
