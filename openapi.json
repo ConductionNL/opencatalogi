@@ -1504,7 +1504,7 @@
       "get": {
         "operationId": "search-index",
         "summary": "Public full-text search",
-        "description": "Anonymous-reachable full-text search across publications and documents (WOO-506). Metadata matching always runs; pass `_content=true` to also match OR-extracted document body text (WOO-517). Only publicly-visible rows are ever returned, regardless of caller identity.",
+        "description": "Anonymous-reachable full-text search across publications and documents (WOO-506). Metadata matching always runs; pass `_content=true` to also match OR-extracted document body text (WOO-517). Only publicly-visible rows are ever returned, regardless of caller identity. Property filters are forwarded to OpenRegister: `documentType=minutes` and `bodyName=Gemeenteraad` match exactly, and `meetingDate[gte]` / `meetingDate[lte]` select a date range, both ends included. A range bound that is not a date or a number answers 400 and names the parameter.",
         "tags": [
           "Search"
         ],
@@ -1526,6 +1526,44 @@
           },
           {
             "$ref": "#/components/parameters/FacetsParam"
+          },
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": false,
+            "description": "Council documents: agenda, decision, minutes or activity.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bodyName",
+            "in": "query",
+            "required": false,
+            "description": "Council documents: the name of the council or committee.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "meetingDate[gte]",
+            "in": "query",
+            "required": false,
+            "description": "Council documents: meetings on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "meetingDate[lte]",
+            "in": "query",
+            "required": false,
+            "description": "Council documents: meetings on or before this date.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
           }
         ],
         "responses": {
@@ -1535,6 +1573,25 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A range bound is not a date or a number.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "parameter": {
+                      "type": "string",
+                      "example": "meetingDate[gte]"
+                    }
+                  }
                 }
               }
             }

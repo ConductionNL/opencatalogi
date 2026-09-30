@@ -265,11 +265,11 @@ class PublicationQueryServiceTest extends TestCase {
 	public function testMalformedRangeParameterNamesTheBadBound(): void {
 		$this->assertSame(
 			'meetingDate[gte]',
-			PublicationQueryService::malformedRangeParameter(['meetingDate' => ['gte' => 'tomorrow-ish', 'lte' => '2026-06-30']])
+			\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter(['meetingDate' => ['gte' => 'tomorrow-ish', 'lte' => '2026-06-30']])
 		);
 		$this->assertSame(
 			'meetingDate[lte]',
-			PublicationQueryService::malformedRangeParameter(['meetingDate' => ['gte' => '2026-04-01', 'lte' => '30-06-2026']])
+			\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter(['meetingDate' => ['gte' => '2026-04-01', 'lte' => '30-06-2026']])
 		);
 	}
 
@@ -279,7 +279,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * @spec openspec/changes/search-council-document-filters/specs/search/spec.md
 	 */
 	public function testWellFormedFiltersAndRangesPass(): void {
-		$this->assertNull(PublicationQueryService::malformedRangeParameter([
+		$this->assertNull(\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter([
 			'documentType' => 'minutes',
 			'bodyName' => 'Gemeenteraad',
 			'meetingDate' => ['gte' => '2026-04-01', 'lte' => '2026-06-30T23:59:59+02:00'],

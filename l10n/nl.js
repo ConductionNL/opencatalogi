@@ -1153,7 +1153,8 @@ OC.L10N.register(
         "Woo requests and decisions": "Woo-verzoeken en -besluiten",
         "Research reports": "Onderzoeksrapporten",
         "Individual decisions": "Beschikkingen",
-        "Complaint rulings": "Klachtoordelen"
+        "Complaint rulings": "Klachtoordelen",
+        "%s must be a date, such as 2026-04-01, or a number.": "%s moet een datum zijn, zoals 2026-04-01, of een getal."
     },
     "nplurals=2; plural=(n != 1);"
 )

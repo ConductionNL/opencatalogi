@@ -1209,7 +1209,8 @@ OC.L10N.register(
         "Woo requests and decisions": "Woo requests and decisions",
         "Research reports": "Research reports",
         "Individual decisions": "Individual decisions",
-        "Complaint rulings": "Complaint rulings"
+        "Complaint rulings": "Complaint rulings",
+        "%s must be a date, such as 2026-04-01, or a number.": "%s must be a date, such as 2026-04-01, or a number."
     },
     "nplurals=2; plural=(n != 1);"
 )

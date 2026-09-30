@@ -23,6 +23,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -145,9 +146,18 @@ class PublicationQueryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.StaticAccess) SearchRangeGuard::malformedParameter() is a pure function over the query.
      */
     public function assemblePublicSearchResults(array $queryParams, object $objectService): array
     {
+        // A range bound that is neither a date nor a number would reach
+        // OpenRegister and come back as an empty result that reads as "nothing
+        // found". Refuse it by name instead (REQ-SCF-002).
+        $malformed = SearchRangeGuard::malformedParameter(queryParams: $queryParams);
+        if ($malformed !== null) {
+            throw new MalformedSearchParameterException(parameter: $malformed);
+        }
+
         // ONE anonymous scope around the WHOLE assembly, not just the object reads.
         // Scope resolution asks OpenRegister's SchemaMapper and RegisterMapper which
         // schemas and registers exist, and those honour multitenancy by default — so

@@ -137,6 +137,7 @@ class SearchControllerTest extends TestCase {
 	 * @spec openspec/changes/search-council-document-filters/specs/search/spec.md
 	 */
 	public function testIndexReturns400NamingAMalformedRangeBound(): void {
+		$this->container->method('get')->willReturn(new \stdClass());
 		$this->request->method('getParams')->willReturn(['meetingDate' => ['gte' => 'tomorrow-ish']]);
 		$this->queryService->method('assemblePublicSearchResults')
 			->willThrowException(new \OCA\OpenCatalogi\Exception\MalformedSearchParameterException('meetingDate[gte]'));
