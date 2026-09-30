@@ -6,8 +6,8 @@
 
 ## 2. Search
 
-- [ ] 2.1 `SearchQueryTranslator::translateSearchParams()` wired into `SearchController::index()` (REQ-WDP-002). Verify: `tests/Unit/Service/SearchQueryTranslatorTest.php`.
+- [x] 2.1 `SearchQueryTranslator::translateSearchParams()` wired into `SearchController::index()` (REQ-WDP-002). Verify: `tests/Unit/Service/SearchQueryTranslatorTest.php`, `tests/Unit/Controller/SearchControllerTest.php`.
 
 ## 3. Docs
 
-- [ ] 3.1 `openspec validate woo-dossier-publication --strict`.
+- [x] 3.1 `openspec validate woo-dossier-publication --strict`.
