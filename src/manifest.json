@@ -673,8 +673,7 @@
 						"type": "national-announce",
 						"title": "Official notice",
 						"icon": "Bullhorn"
-					}
-			,
+					},
 					{
 						"id": "pub-plooi",
 						"type": "data",
@@ -703,6 +702,12 @@
 								}
 							}
 						}
+					},
+					{
+						"id": "pub-visibility",
+						"type": "publication-visibility",
+						"title": "Publication status",
+						"icon": "EyeOutline"
 					}
 				],
 				"layout": [
@@ -783,6 +788,14 @@
 						"widgetId": "pub-plooi",
 						"gridX": 0,
 						"gridY": 23,
+						"gridWidth": 12,
+						"gridHeight": 3
+					},
+					{
+						"id": "12",
+						"widgetId": "pub-visibility",
+						"gridX": 0,
+						"gridY": 26,
 						"gridWidth": 12,
 						"gridHeight": 3
 					}

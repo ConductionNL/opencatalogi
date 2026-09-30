@@ -35,6 +35,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
+import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import appIcons from './icons.js'
 import bundledManifest from './manifest.json'
@@ -94,6 +95,17 @@ registerDashboardWidget('national-announce', {
 	defaultContent: {},
 	displayName: 'Official notice',
 	icon: 'Bullhorn',
+	surfaces: ['detail-page'],
+})
+// Publish now, withdraw with a reason, publish again
+// (publications-publish-and-withdraw-action, REQ-PPW-001..004): the screen
+// for GET .../visibility and POST .../publish, .../withdraw.
+registerDashboardWidget('publication-visibility', {
+	renderer: PublicationVisibilityWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Publication status',
+	icon: 'EyeOutline',
 	surfaces: ['detail-page'],
 })
 // `theme-preview` is registered with the local `ThemePreviewWidget` adapter,
