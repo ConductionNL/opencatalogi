@@ -24,7 +24,7 @@
 				"published": "2026-09-30T00:00:00+00:00",
 				"summary": "A search a resident wants to hear about",
 				"description": "A resident's saved search (hydra woo-citizen-journey, contract C2). The matching job finds publications that became public since the last run and hands the notice to portaliq by changing lastNotifiedAt.",
-				"icon": "BellRing",
+				"icon": "Magnify",
 				"type": "object",
 				"required": [
 					"title",
@@ -49,7 +49,8 @@
 					"title": {
 						"type": "string",
 						"title": "Title",
-						"maxLength": 200
+						"maxLength": 200,
+						"description": "The name the resident gave the search."
 					},
 					"owner": {
 						"type": "string",
@@ -64,7 +65,9 @@
 						"properties": {
 							"text": {
 								"type": "string",
-								"maxLength": 500
+								"maxLength": 500,
+								"title": "Search text",
+								"description": "The words searched for."
 							},
 							"filters": {
 								"type": "object",
@@ -73,24 +76,36 @@
 										"type": "array",
 										"items": {
 											"type": "string"
-										}
+										},
+										"title": "Information categories",
+										"description": "The Woo information categories searched in."
 									},
 									"organisation": {
 										"type": "array",
 										"items": {
 											"type": "string"
-										}
+										},
+										"title": "Organisations",
+										"description": "The organisations searched in."
 									},
 									"periodFrom": {
-										"type": "string"
+										"type": "string",
+										"title": "Published from",
+										"description": "The first publication date searched."
 									},
 									"periodTo": {
-										"type": "string"
+										"type": "string",
+										"title": "Published until",
+										"description": "The last publication date searched."
 									}
-								}
+								},
+								"title": "Filters",
+								"description": "The filters of the search."
 							},
 							"catalog": {
-								"type": "string"
+								"type": "string",
+								"title": "Catalogue",
+								"description": "The catalogue searched in, or empty for all."
 							}
 						}
 					},
@@ -103,12 +118,14 @@
 							"weekly"
 						],
 						"default": "daily",
-						"facetable": true
+						"facetable": true,
+						"description": "How often the resident hears about new results."
 					},
 					"active": {
 						"type": "boolean",
 						"title": "Active",
-						"default": true
+						"default": true,
+						"description": "Whether the resident gets messages about this search."
 					},
 					"lastRunAt": {
 						"type": "string",
@@ -131,16 +148,24 @@
 							"type": "object",
 							"properties": {
 								"publication": {
-									"type": "string"
+									"type": "string",
+									"title": "Publication",
+									"description": "The publication found."
 								},
 								"title": {
-									"type": "string"
+									"type": "string",
+									"title": "Title",
+									"description": "Its title."
 								},
 								"url": {
-									"type": "string"
+									"type": "string",
+									"title": "Link",
+									"description": "Where it can be read."
 								},
 								"publicationDate": {
-									"type": "string"
+									"type": "string",
+									"title": "Publication date",
+									"description": "When it became public."
 								}
 							}
 						}

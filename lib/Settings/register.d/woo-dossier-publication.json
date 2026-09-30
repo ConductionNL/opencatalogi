@@ -28,11 +28,15 @@
 						"properties": {
 							"from": {
 								"type": "string",
-								"format": "date"
+								"format": "date",
+								"title": "From",
+								"description": "The first day the documents cover."
 							},
 							"to": {
 								"type": "string",
-								"format": "date"
+								"format": "date",
+								"title": "Until",
+								"description": "The last day the documents cover."
 							}
 						}
 					}
