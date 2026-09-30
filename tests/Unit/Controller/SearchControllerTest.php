@@ -134,7 +134,7 @@ class SearchControllerTest extends TestCase {
 	/**
 	 * REQ-SCF-002 scenario "A bad date": 400, naming the parameter.
 	 *
-	 * @spec openspec/changes/search-council-document-filters/specs/search/spec.md
+	 * @spec openspec/specs/search/spec.md
 	 */
 	public function testIndexReturns400NamingAMalformedRangeBound(): void {
 		$this->container->method('get')->willReturn(new \stdClass());

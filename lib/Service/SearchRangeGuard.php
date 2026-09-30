@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/search-council-document-filters/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
+ * @spec openspec/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -26,7 +26,7 @@ namespace OCA\OpenCatalogi\Service;
  * A range bound that is neither a date nor a number would reach OpenRegister and
  * come back as an empty result that reads as "nothing found".
  *
- * @spec openspec/changes/search-council-document-filters/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
+ * @spec openspec/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
  */
 final class SearchRangeGuard {
 
@@ -42,7 +42,7 @@ final class SearchRangeGuard {
 	 *
 	 * @return string|null The bad parameter as the caller wrote it, e.g. `meetingDate[gte]`, or null.
 	 *
-	 * @spec openspec/changes/search-council-document-filters/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
+	 * @spec openspec/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
 	 */
 	public static function malformedParameter(array $queryParams): ?string {
 		foreach ($queryParams as $name => $value) {
@@ -68,7 +68,7 @@ final class SearchRangeGuard {
 	 *
 	 * @return bool True when OpenRegister can compare on it.
 	 *
-	 * @spec openspec/changes/search-council-document-filters/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
+	 * @spec openspec/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
 	 */
 	private static function isRangeBound(mixed $value): bool {
 		if (is_int($value) === true || is_float($value) === true) {

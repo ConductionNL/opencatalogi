@@ -23,7 +23,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/search-council-document-filters/specs/search/spec.md
+ * @spec openspec/specs/search/spec.md
  */
 
 declare(strict_types=1);

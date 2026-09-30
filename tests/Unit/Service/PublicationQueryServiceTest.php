@@ -260,7 +260,7 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * REQ-SCF-002: a range bound that is neither a date nor a number is named.
 	 *
-	 * @spec openspec/changes/search-council-document-filters/specs/search/spec.md
+	 * @spec openspec/specs/search/spec.md
 	 */
 	public function testMalformedRangeParameterNamesTheBadBound(): void {
 		$this->assertSame(
@@ -276,7 +276,7 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * REQ-SCF-001/002: the council filters and a well-formed range pass.
 	 *
-	 * @spec openspec/changes/search-council-document-filters/specs/search/spec.md
+	 * @spec openspec/specs/search/spec.md
 	 */
 	public function testWellFormedFiltersAndRangesPass(): void {
 		$this->assertNull(\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter([
@@ -291,7 +291,7 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * REQ-SCF-002: the scope strip keeps the three council filters.
 	 *
-	 * @spec openspec/changes/search-council-document-filters/specs/search/spec.md
+	 * @spec openspec/specs/search/spec.md
 	 */
 	public function testTheScopeStripKeepsTheCouncilFilters(): void {
 		$fake = $this->wireHappyPath();

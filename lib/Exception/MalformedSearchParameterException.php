@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/search-council-document-filters/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
+ * @spec openspec/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
  */
 
 namespace OCA\OpenCatalogi\Exception;
@@ -27,7 +27,7 @@ use InvalidArgumentException;
 /**
  * Thrown when a range bound of the public search is neither a date nor a number.
  *
- * @spec openspec/changes/search-council-document-filters/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
+ * @spec openspec/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
  */
 class MalformedSearchParameterException extends InvalidArgumentException {
 	/**
@@ -45,7 +45,7 @@ class MalformedSearchParameterException extends InvalidArgumentException {
 	 *
 	 * @return string The parameter, e.g. meetingDate[gte].
 	 *
-	 * @spec openspec/changes/search-council-document-filters/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
+	 * @spec openspec/specs/search/spec.md#requirement-the-public-search-filters-council-documents-by-meeting-date-range-req-scf-002
 	 */
 	public function getParameter(): string {
 		return $this->parameter;
