@@ -1,0 +1,158 @@
+{
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"savedSearch"
+				],
+				"configuration": {
+					"schemas": {
+						"savedSearch": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "A resident's saved search. The matching job reads it every 15 minutes"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"savedSearch": {
+				"slug": "savedSearch",
+				"title": "Saved search",
+				"version": "0.1.0",
+				"published": "2026-09-30T00:00:00+00:00",
+				"summary": "A search a resident wants to hear about",
+				"description": "A resident's saved search (hydra woo-citizen-journey, contract C2). The matching job finds publications that became public since the last run and hands the notice to portaliq by changing lastNotifiedAt.",
+				"icon": "BellRing",
+				"type": "object",
+				"required": [
+					"title",
+					"owner",
+					"query"
+				],
+				"authorization": {
+					"read": [
+						"admin"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin"
+					],
+					"delete": [
+						"admin"
+					]
+				},
+				"properties": {
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"maxLength": 200
+					},
+					"owner": {
+						"type": "string",
+						"title": "Owner",
+						"description": "The portal subject reference of the resident. Set by the server. Never a BSN.",
+						"maxLength": 255
+					},
+					"query": {
+						"type": "object",
+						"title": "Query",
+						"description": "The search as the portal search block sends it.",
+						"properties": {
+							"text": {
+								"type": "string",
+								"maxLength": 500
+							},
+							"filters": {
+								"type": "object",
+								"properties": {
+									"informatiecategorie": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									},
+									"organisation": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									},
+									"periodFrom": {
+										"type": "string"
+									},
+									"periodTo": {
+										"type": "string"
+									}
+								}
+							},
+							"catalog": {
+								"type": "string"
+							}
+						}
+					},
+					"frequency": {
+						"type": "string",
+						"title": "Frequency",
+						"enum": [
+							"immediate",
+							"daily",
+							"weekly"
+						],
+						"default": "daily",
+						"facetable": true
+					},
+					"active": {
+						"type": "boolean",
+						"title": "Active",
+						"default": true
+					},
+					"lastRunAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Last run",
+						"description": "Written by the matching job only."
+					},
+					"lastNotifiedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Last notice",
+						"description": "Written by the matching job only. A change is the notice to portaliq."
+					},
+					"lastMatches": {
+						"type": "array",
+						"title": "Last matches",
+						"description": "The publications of the last notice, at most 20.",
+						"maxItems": 20,
+						"items": {
+							"type": "object",
+							"properties": {
+								"publication": {
+									"type": "string"
+								},
+								"title": {
+									"type": "string"
+								},
+								"url": {
+									"type": "string"
+								},
+								"publicationDate": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"matchCount": {
+						"type": "integer",
+						"title": "Matches",
+						"description": "All matches of the last notice.",
+						"minimum": 0
+					}
+				}
+			}
+		}
+	}
+}
