@@ -21,6 +21,7 @@ import ChartBar from 'vue-material-design-icons/ChartBar.vue'
 import ChartBoxOutline from 'vue-material-design-icons/ChartBoxOutline.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 import CogOutline from 'vue-material-design-icons/CogOutline.vue'
+import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import FileDocument from 'vue-material-design-icons/FileDocument.vue'
 import Folder from 'vue-material-design-icons/Folder.vue'
 import FolderMultiple from 'vue-material-design-icons/FolderMultiple.vue'
@@ -53,6 +54,7 @@ export default {
 	ChartBoxOutline,
 	Cog,
 	CogOutline,
+	EyeOutline,
 	FileDocument,
 	Folder,
 	FolderMultiple,

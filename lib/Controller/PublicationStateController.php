@@ -124,23 +124,9 @@ class PublicationStateController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function publish(string $id): JSONResponse {
-		$denied = $this->requireUser();
-		if ($denied !== null) {
-			return $denied;
-		}
-
-		try {
-			$publication = $this->load(id: $id);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		if ($publication === null) {
-			return $this->notFound();
-		}
-
-		if ($this->rights->mayUpdate(publication: $publication) === false) {
-			return $this->forbidden();
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$properties = $this->asArray(object: $publication);
@@ -170,28 +156,14 @@ class PublicationStateController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function withdraw(string $id): JSONResponse {
-		$denied = $this->requireUser();
-		if ($denied !== null) {
-			return $denied;
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$reason = trim((string)$this->request->getParam('reason', ''));
 		if ($reason === '') {
 			return $this->reasonMissing();
-		}
-
-		try {
-			$publication = $this->load(id: $id);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		if ($publication === null) {
-			return $this->notFound();
-		}
-
-		if ($this->rights->mayUpdate(publication: $publication) === false) {
-			return $this->forbidden();
 		}
 
 		$properties = $this->asArray(object: $publication);
@@ -242,28 +214,14 @@ class PublicationStateController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function withdrawFile(string $id, string $fileId): JSONResponse {
-		$denied = $this->requireUser();
-		if ($denied !== null) {
-			return $denied;
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$reason = trim((string)$this->request->getParam('reason', ''));
 		if ($reason === '') {
 			return $this->reasonMissing();
-		}
-
-		try {
-			$publication = $this->load(id: $id);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		if ($publication === null) {
-			return $this->notFound();
-		}
-
-		if ($this->rights->mayUpdate(publication: $publication) === false) {
-			return $this->forbidden();
 		}
 
 		try {
@@ -286,6 +244,41 @@ class PublicationStateController extends Controller {
 		return $this->record(depublication: $depublication);
 
 	}//end withdrawFile()
+
+	/**
+	 * Load the publication for a write, or the answer that refuses it.
+	 *
+	 * Refuses a caller without a session (401), a publication the caller
+	 * cannot read (404) and one the caller may not update (403), in that
+	 * order and before anything is sent or saved.
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return array{0: object|null, 1: JSONResponse|null} The publication, or the refusal.
+	 */
+	private function guardWrite(string $id): array {
+		$denied = $this->requireUser();
+		if ($denied !== null) {
+			return [null, $denied];
+		}
+
+		try {
+			$publication = $this->load(id: $id);
+		} catch (\Throwable $e) {
+			return [null, $this->registerConfigErrorResponse(e: $e)];
+		}
+
+		if ($publication === null) {
+			return [null, $this->notFound()];
+		}
+
+		if ($this->rights->mayUpdate(publication: $publication) === false) {
+			return [null, $this->forbidden()];
+		}
+
+		return [$publication, null];
+
+	}//end guardWrite()
 
 	/**
 	 * Store the depublication and answer it with the outstanding channels.
@@ -354,7 +347,7 @@ class PublicationStateController extends Controller {
 		} catch (\Throwable $e) {
 			// Not there, or not readable by this caller: both answer 404, so
 			// an id nobody may read does not confirm that it exists.
-			if ($e instanceof \OCP\AppFramework\Db\DoesNotExistException || str_ends_with(get_class($e), 'NotAuthorizedException') === true) {
+			if (str_ends_with(get_class($e), 'DoesNotExistException') === true || str_ends_with(get_class($e), 'NotAuthorizedException') === true) {
 				return null;
 			}
 

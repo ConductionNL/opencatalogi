@@ -98,6 +98,12 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * Start empty every time the dialog opens.
+		 *
+		 * @param {boolean} value Whether the dialog is open.
+		 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
+		 */
 		open(value) {
 			if (value) {
 				this.reason = ''

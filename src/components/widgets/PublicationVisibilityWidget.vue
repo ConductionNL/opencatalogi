@@ -135,6 +135,12 @@ export default {
 	watch: {
 		resolvedObjectId: {
 			immediate: true,
+			/**
+			 * Load the state once the object id is known.
+			 *
+			 * @param {string} id The publication id.
+			 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
+			 */
 			handler(id) {
 				if (id) {
 					this.load()
