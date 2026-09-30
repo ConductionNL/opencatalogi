@@ -27,6 +27,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Service\SearchQueryTranslator;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -135,6 +136,9 @@ class SearchController extends Controller {
 	 *
 	 * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-3
 	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
+	 * @spec openspec/changes/woo-dossier-publication/specs/publications/spec.md#requirement-public-search-takes-the-portals-filter-names-req-wdp-002
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SearchQueryTranslator is a pure function over the query.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -144,7 +148,7 @@ class SearchController extends Controller {
 			$objectService = $this->getObjectService();
 
 			$result = $this->queryService->assemblePublicSearchResults(
-				queryParams: $this->request->getParams(),
+				queryParams: SearchQueryTranslator::translateSearchParams(params: $this->request->getParams()),
 				objectService: $objectService
 			);
 

@@ -8,9 +8,9 @@
 
 ## 2. Matching
 
-- [ ] 2.1 `SearchQueryTranslator` (REQ-SSA-002). Verify: `tests/Unit/Service/SearchQueryTranslatorTest.php`.
-- [ ] 2.2 `SavedSearchMatcher` + `SavedSearchMatchingJob`: due rules, window, notices, `lastRunAt` after hand-over (REQ-SSA-002..004). Verify: `tests/Unit/Service/SavedSearchMatcherTest.php`.
+- [x] 2.1 `SearchQueryTranslator` (REQ-SSA-002). Verify: `tests/Unit/Service/SearchQueryTranslatorTest.php`.
+- [x] 2.2 `SavedSearchMatcher` + `SavedSearchMatchingJob`: due rules, window, notices, `lastRunAt` after hand-over (REQ-SSA-002..004). Verify: `tests/Unit/Service/Portal/SavedSearchMatcherTest.php`, `tests/Unit/BackgroundJob/SavedSearchMatchingJobTest.php`.
 
 ## 3. Docs
 
-- [ ] 3.1 Dutch and English strings, `openspec validate saved-searches-and-alerts --strict`.
+- [x] 3.1 Dutch and English strings, `openspec validate saved-searches-and-alerts --strict`.
