@@ -463,6 +463,23 @@ class WooServiceTest extends TestCase {
 	}//end testPublishExcludesNietOpenbaar()
 
 	/**
+	 * REQ-WPC-004: a batch published from a Woo request is filed under
+	 * infocat014 (Woo-verzoeken en -besluiten), read back from the store.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testPublishFilesTheBatchUnderTheWooRequestCategory(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->sequences->status = 'completed';
+		$this->service->publishBatch('batch-1');
+
+		$stored = $this->service->getBatch('batch-1');
+		$this->assertSame('infocat014', $stored['wooPublication']['wooCategory']);
+
+	}//end testPublishFilesTheBatchUnderTheWooRequestCategory()
+
+	/**
 	 * Seed a batch + 4 assessments. By default one stays "te_beoordelen"; when
 	 * $leaveUnassessed is false all four are assessed (2 openbaar, 1 deels, 1 niet).
 	 *

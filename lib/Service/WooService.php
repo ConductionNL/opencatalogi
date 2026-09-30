@@ -970,7 +970,7 @@ class WooService {
 		$publicationMeta = [
 			'wooDecisionDate' => substr($now, 0, 10),
 			'wooRequestReference' => (string)($batch['caseReference'] ?? ''),
-			'wooCategory' => 'verzoek',
+			'wooCategory' => WooCategory::WOO_REQUEST,
 			'documentCount' => (int)($batch['documentSummary']['total'] ?? 0),
 			'publishedCount' => $publishedCount,
 			'decisionLetter' => (string)($batch['decisionLetter'] ?? ''),

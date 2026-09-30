@@ -564,6 +564,7 @@
 								"description",
 								"publicationDate",
 								"depublicationDate",
+								"wooCategory",
 								"status"
 							],
 							"overrides": {

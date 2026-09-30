@@ -1133,7 +1133,26 @@
         "Why the last PLOOI delivery failed, as the platform or the connection said it.": "Waarom de laatste aflevering bij PLOOI mislukte, zoals het platform of de verbinding dat meldde.",
         "Deliver to PLOOI": "Afleveren bij PLOOI",
         "Deliver every publication in this catalogue to PLOOI, the delivery API of open.overheid.nl, when it becomes public.": "Lever elke publicatie in deze catalogus af bij PLOOI, de aanlever-API van open.overheid.nl, zodra die openbaar wordt.",
-        "PLOOI delivery": "PLOOI-aflevering"
+        "PLOOI delivery": "PLOOI-aflevering",
+        "Woo information category": "Woo-informatiecategorie",
+        "The information category of the Woo this publication is filed under. The sitemap of that category lists it for the national Woo index.": "De informatiecategorie van de Woo waaronder deze publicatie valt. De sitemap van die categorie toont haar aan de landelijke Woo-index.",
+        "Laws and generally binding regulations": "Wetten en algemeen verbindende voorschriften",
+        "Other decisions of general scope": "Overige besluiten van algemene strekking",
+        "Draft legislation sent out for advice": "Ontwerpen van wet- en regelgeving met adviesaanvraag",
+        "Organisation and working methods": "Organisatie en werkwijze",
+        "Contact details": "Bereikbaarheidsgegevens",
+        "Documents received by representative bodies": "Bij vertegenwoordigende organen ingekomen stukken",
+        "Meeting documents of the States General": "Vergaderstukken Staten-Generaal",
+        "Meeting documents of local and regional governments": "Vergaderstukken decentrale overheden",
+        "Agendas and decision lists of executive boards": "Agenda's en besluitenlijsten bestuurscolleges",
+        "Advice": "Adviezen",
+        "Covenants": "Convenanten",
+        "Annual plans and annual reports": "Jaarplannen en jaarverslagen",
+        "Subsidy obligations other than by decision": "Subsidieverplichtingen anders dan met beschikking",
+        "Woo requests and decisions": "Woo-verzoeken en -besluiten",
+        "Research reports": "Onderzoeksrapporten",
+        "Individual decisions": "Beschikkingen",
+        "Complaint rulings": "Klachtoordelen"
     },
     "plurals": {}
 }

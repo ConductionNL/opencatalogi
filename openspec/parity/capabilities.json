@@ -1261,13 +1261,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "building",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Service/SitemapService.php:77-93 INFO_CAT holds the 17 categories; :400-450 maps a category to a schema TITLED after it inside a register titled 'woo'; lib/Settings/publication_register.json publication schema has no category property; no 'woo' register is provisioned by the app (grep 'Jaarplan of jaarverslag' only hits SitemapService + test)",
-				"change": "openspec/changes/woo-publication-category"
+				"evidence": "publication.wooCategory (enum infocat001-017, x-enum-labels) in lib/Settings/publication_register.json; SitemapService::sitemapQueries filters the catalogue's registers and schemas on wooCategory, the 'woo' register title lookup stays as a second source; mapDiwooDocument reads wooCategory first; GET /api/woo/categories (WooController::categories, WooService::WOO_CATEGORIES); batch publish files under infocat014; field in the Publication data widget of src/manifest.json PublicationDetail",
+				"change": "openspec/changes/archive/2026-09-30-woo-publication-category"
 			},
-			"reachedOn": "nothing in opencatalogi: filing happens by creating the record in a per-category schema of an externally imported 'woo' register; no opencatalogi page picks a category",
-			"note": "openspec/changes/woo-category-mapping-intake specifies a WooCategoryMapping schema; not built. WooService.php:973 hardcodes wooCategory 'verzoek' on batch publish.",
+			"reachedOn": "publication page (/publications/:catalogSlug/:id), Publication block, Woo information category select; the category sitemaps /api/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocatNNN.xml",
+			"note": "openspec/changes/woo-category-mapping-intake (a per-type default) is still not built; this row does not need it.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "woo-compliance-basics",
