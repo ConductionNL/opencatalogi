@@ -150,4 +150,20 @@ class PublicationStateServiceTest extends TestCase {
 		$this->assertFalse($this->validates($raw, $schema), 'The raw record with nulls should be refused, or this test proves nothing.');
 		$this->assertTrue($this->validates($this->states->storable($raw), $schema));
 	}
+
+	/** REQ-PPW-003: a fresh install carries one withdrawn seed publication and its depublication, so Publish again shows. */
+	public function testTheSeedCarriesAWithdrawnPublicationAndItsDepublication(): void {
+		$register = json_decode((string)file_get_contents(__DIR__ . '/../../../../lib/Settings/publication_register.json'), true);
+		$objects = $register['components']['objects'];
+		$withdrawn = array_values(array_filter($objects, static fn (array $o): bool => ($o['@self']['slug'] ?? '') === 'example-conduction-quarterly-report'))[0];
+		$depublication = array_values(array_filter($objects, static fn (array $o): bool => ($o['@self']['schema'] ?? '') === 'depublication'))[0];
+
+		unset($withdrawn['@self'], $depublication['@self']);
+		$this->assertSame('withdrawn', $this->states->stateOf($withdrawn, $this->now));
+		// Only the dates this change sets: `organization` is a seed slug the import resolves to a uuid.
+		$dates = array_intersect_key($withdrawn, ['title' => true, 'publicationDate' => true, 'depublicationDate' => true]);
+		$this->assertTrue($this->validates($dates, $this->schema('publication_register.json', 'publication')));
+		$this->assertSame('example-conduction-quarterly-report', $depublication['publication']);
+		$this->assertTrue($this->validates($depublication, $this->schema('register.d/publication-inspection-and-the-national-indexes.json', 'depublication')));
+	}
 }

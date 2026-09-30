@@ -1260,7 +1260,8 @@
         "summary": "Voorbeeld-publicatie (seed data) — kwartaalrapport van Conduction B.V., de maintainer van OpenCatalogi. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
         "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is.",
         "organization": "default-org",
-        "publicationDate": "2024-04-01T00:00:00+00:00"
+        "publicationDate": "2024-04-01T00:00:00+00:00",
+        "depublicationDate": "2026-06-01T09:00:00+00:00"
       },
       {
         "@self": {
@@ -1297,6 +1298,24 @@
         },
         "organization": "default-org",
         "publicationDate": "2024-04-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "depublication",
+          "slug": "example-conduction-quarterly-report-withdrawn"
+        },
+        "publication": "example-conduction-quarterly-report",
+        "reason": "Voorbeeld: teruggetrokken omdat er een verkeerde bijlage bij zat. Kies Opnieuw publiceren om het terug te zetten.",
+        "depublishedBy": "admin",
+        "depublishedAt": "2026-06-01T09:00:00+00:00",
+        "withdrawals": [
+          {
+            "channel": "national-woo-index",
+            "sentAt": "2026-06-01T09:00:00+00:00",
+            "answer": "not delivered: no integriq source is set for the channel"
+          }
+        ]
       }
     ]
   }

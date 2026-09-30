@@ -78,6 +78,12 @@ return [
 		['name' => 'publicationRules#validateDecision', 'url' => '/api/publication-rules/validate-decision', 'verb' => 'POST'],
 		['name' => 'depublication#depublish', 'url' => '/api/publications/depublish', 'verb' => 'POST'],
 		['name' => 'depublication#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
+		// Publish now, withdraw with a reason, publish again, withdraw one document
+		// (publications-publish-and-withdraw-action, REQ-PPW-001..004).
+		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
+		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
+		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
+		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		['name' => 'publicationDisclosure#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
 		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
