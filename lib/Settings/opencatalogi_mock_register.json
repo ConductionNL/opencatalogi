@@ -1784,6 +1784,135 @@
         ],
         "hideAfterLogin": true,
         "hideBeforeLogin": true
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "collection",
+          "slug": "collection-windpark-noord"
+        },
+        "title": "Windpark Noord",
+        "description": "Alles over de plannen voor het windpark aan de noordkant.",
+        "owner": "demo-inwoner-1",
+        "items": [
+          {
+            "id": "5b1d7c52-3a8e-4c0e-9d51-0c7d2f1a6e01",
+            "publication": "8f3c2a10-6b1e-4d7a-9c2f-1a2b3c4d5e01",
+            "attachment": null,
+            "note": "Lees vooral paragraaf 3.",
+            "addedAt": "2026-09-01T10:00:00+00:00",
+            "addedBy": "resident",
+            "title": "Besluit op het Woo-verzoek over windpark Noord"
+          }
+        ],
+        "share": null,
+        "sourceOf": []
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "collection",
+          "slug": "collection-bouwplannen-centrum"
+        },
+        "title": "Bouwplannen centrum",
+        "description": "",
+        "owner": "demo-inwoner-1",
+        "items": [
+          {
+            "id": "5b1d7c52-3a8e-4c0e-9d51-0c7d2f1a6e02",
+            "publication": "8f3c2a10-6b1e-4d7a-9c2f-1a2b3c4d5e02",
+            "attachment": "4711",
+            "note": "",
+            "addedAt": "2026-09-10T14:30:00+00:00",
+            "addedBy": "resident",
+            "title": "Advies over het bestemmingsplan centrum"
+          }
+        ],
+        "share": null,
+        "sourceOf": []
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "collection",
+          "slug": "collection-subsidies-sport"
+        },
+        "title": "Subsidies sportverenigingen",
+        "description": "Voor de ledenvergadering.",
+        "owner": "demo-inwoner-2",
+        "items": [],
+        "share": null,
+        "sourceOf": [
+          "ZAAK-2026-0042"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "savedSearch",
+          "slug": "savedsearch-windpark"
+        },
+        "title": "Windpark",
+        "owner": "demo-inwoner-1",
+        "query": {
+          "text": "windpark",
+          "filters": {
+            "informatiecategorie": [
+              "infocat014"
+            ],
+            "organisation": [],
+            "periodFrom": "",
+            "periodTo": ""
+          },
+          "catalog": ""
+        },
+        "frequency": "daily",
+        "active": true,
+        "lastRunAt": "2026-09-30T05:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "savedSearch",
+          "slug": "savedsearch-raadsbesluiten"
+        },
+        "title": "Raadsbesluiten over wonen",
+        "owner": "demo-inwoner-1",
+        "query": {
+          "text": "wonen",
+          "filters": {
+            "informatiecategorie": [
+              "infocat009"
+            ],
+            "organisation": [],
+            "periodFrom": "2026-01-01",
+            "periodTo": ""
+          },
+          "catalog": ""
+        },
+        "frequency": "weekly",
+        "active": true
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "savedSearch",
+          "slug": "savedsearch-subsidies"
+        },
+        "title": "Subsidies",
+        "owner": "demo-inwoner-2",
+        "query": {
+          "text": "subsidie",
+          "filters": {
+            "informatiecategorie": [],
+            "organisation": [],
+            "periodFrom": "",
+            "periodTo": ""
+          },
+          "catalog": ""
+        },
+        "frequency": "immediate",
+        "active": false
       }
     ]
   }
