@@ -425,9 +425,12 @@ class NationalIndexService {
 	}//end deliverThroughPublicationGateway()
 
 	/**
-	 * Register a published record with the national Woo index.
+	 * Register this instance with the national Woo index.
 	 *
-	 * @param array<string, mixed> $publication The published record.
+	 * The request names the organisation, the root robots.txt and every sitemap
+	 * index (WooRegistrationService::compose()); the index harvests from there.
+	 *
+	 * @param array<string, mixed> $request The composed registration request.
 	 * @param DateTimeInterface|null $now The moment.
 	 *
 	 * @return array{channel: string, registeredAt: string, answer: string}
@@ -436,15 +439,11 @@ class NationalIndexService {
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
 	 */
-	public function registerWithWooIndex(array $publication, ?DateTimeInterface $now = null): array {
+	public function registerWithWooIndex(array $request, ?DateTimeInterface $now = null): array {
 		$answer = $this->handOver(
 			channel: self::CHANNEL_WOO_INDEX,
 			endpoint: 'registrations',
-			payload: [
-				'reference' => (string)($publication['id'] ?? ''),
-				'title' => (string)($publication['title'] ?? ''),
-				'publicationDate' => (string)($publication['publicationDate'] ?? ''),
-			]
+			payload: $request
 		);
 
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));

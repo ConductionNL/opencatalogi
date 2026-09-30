@@ -36,6 +36,7 @@ use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
+use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
@@ -125,6 +126,16 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: PlooiDeliveryListener::class
+		);
+
+		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: WooReadinessTriggerListener::class
+		);
+		$context->registerEventListener(
+			event: ObjectUpdatedEvent::class,
+			listener: WooReadinessTriggerListener::class
 		);
 
 		// Register catalog cache event listeners.

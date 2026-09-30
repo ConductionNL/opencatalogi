@@ -1177,7 +1177,26 @@
         "Say why it is being withdrawn.": "Geef aan waarom het wordt teruggetrokken.",
         "Publication status": "Publicatiestatus",
         "Document": "Document",
-        "The one document that was taken down, when the depublication is about a single document rather than the whole publication.": "Het ene document dat offline is gehaald, als de intrekking over één document gaat en niet over de hele publicatie."
+        "The one document that was taken down, when the depublication is about a single document rather than the whole publication.": "Het ene document dat offline is gehaald, als de intrekking over één document gaat en niet over de hele publicatie.",
+        "Answer from the Woo-index: {answer}": "Antwoord van de Woo-index: {answer}",
+        "Apache": "Apache",
+        "Copied": "Gekopieerd",
+        "Copying did not work. Select the rule and copy it by hand.": "Kopiëren lukte niet. Selecteer de regel en kopieer hem zelf.",
+        "For Apache, add it to the .htaccess of Nextcloud or to the virtual host. When the reading room runs on its own domain, add the rule on that domain.": "Voor Apache zet je de regel in de .htaccess van Nextcloud of in de virtual host. Draait de leeszaal op een eigen domein? Zet de regel dan op dat domein.",
+        "Mark as registered": "Markeren als aangemeld",
+        "No gateway took the request, so nothing was sent. Send this request to the Woo-index another way:": "Geen gateway nam het verzoek aan, dus er is niets verstuurd. Stuur dit verzoek op een andere manier naar de Woo-index:",
+        "Not registered yet.": "Nog niet aangemeld.",
+        "Registered on {date} for {url}.": "Aangemeld op {date} voor {url}.",
+        "Request registration": "Aanmelding aanvragen",
+        "Requested on {date}. Waiting for the Woo-index to confirm.": "Aangevraagd op {date}. De Woo-index moet nog bevestigen.",
+        "See the rules that serve robots.txt at the domain root.": "Bekijk de regels die robots.txt op de hoofdmap van het domein serveren.",
+        "Serve robots.txt at the domain root": "robots.txt serveren op de hoofdmap van het domein",
+        "The Woo-index connection could not be loaded.": "De koppeling met de Woo-index kon niet worden geladen.",
+        "The Woo-index reads /robots.txt at the root of your domain. Nextcloud answers that path itself and tells crawlers to stay away. Add one of these rules to your web server, so the root file comes from OpenCatalogi.": "De Woo-index leest /robots.txt in de hoofdmap van je domein. Nextcloud beantwoordt dat pad zelf en houdt crawlers buiten. Zet een van deze regels in je webserver, zodat het bestand uit OpenCatalogi komt.",
+        "The registration could not be requested. Try again.": "De aanmelding kon niet worden aangevraagd. Probeer het opnieuw.",
+        "The root robots.txt does not reach the app: it names no Woo sitemap.": "De robots.txt in de hoofdmap bereikt de app niet: er staat geen Woo-sitemap in.",
+        "Woo-index registration": "Aanmelding bij de Woo-index",
+        "nginx": "nginx"
     },
     "plurals": {}
 }

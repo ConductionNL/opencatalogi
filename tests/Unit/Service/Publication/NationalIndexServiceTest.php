@@ -104,12 +104,12 @@ class NationalIndexServiceTest extends TestCase {
 		$this->connectionStore->expects($this->once())->method('findSourceBySlug')->with('woo-index')->willReturn($source);
 		$this->callService->expects($this->once())->method('call')
 			->with($this->identicalTo($source), 'registrations', 'POST', $this->callback(
-				fn (array $config): bool => json_decode($config['body'], true)['reference'] === 'pub-1'
+				fn (array $config): bool => json_decode($config['body'], true)['robotsTxt'] === 'https://woo.example.nl/robots.txt'
 			))
 			->willReturn($this->callLog(201, '{"id":"idx-9"}'));
 
 		$result = $this->service(['national-woo-index' => 'woo-index'])
-			->registerWithWooIndex(publication: ['id' => 'pub-1', 'title' => 'Besluit']);
+			->registerWithWooIndex(request: ['robotsTxt' => 'https://woo.example.nl/robots.txt', 'sitemapIndexes' => []]);
 
 		$this->assertSame(NationalIndexService::CHANNEL_WOO_INDEX, $result['channel']);
 		$this->assertSame('{"id":"idx-9"}', $result['answer']);
@@ -136,7 +136,7 @@ class NationalIndexServiceTest extends TestCase {
 
 		$this->expectException(IndexUnreachableException::class);
 		$this->expectExceptionMessage('gone-source');
-		$this->service(['national-woo-index' => 'gone-source'])->registerWithWooIndex(publication: ['id' => 'pub-1']);
+		$this->service(['national-woo-index' => 'gone-source'])->registerWithWooIndex(request: ['robotsTxt' => 'https://woo.example.nl/robots.txt']);
 	}
 
 	/** REQ-WND-001: an error status from the platform is not an acknowledgement. */
@@ -146,7 +146,7 @@ class NationalIndexServiceTest extends TestCase {
 
 		$this->expectException(IndexUnreachableException::class);
 		$this->expectExceptionMessage('500');
-		$this->service(['national-woo-index' => 'woo-index'])->registerWithWooIndex(publication: ['id' => 'pub-1']);
+		$this->service(['national-woo-index' => 'woo-index'])->registerWithWooIndex(request: ['robotsTxt' => 'https://woo.example.nl/robots.txt']);
 	}
 
 	/** REQ-WND-002: a notice for the national platform is a `publicatie` delivery request by reference. */

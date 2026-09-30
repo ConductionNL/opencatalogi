@@ -67,6 +67,10 @@ return [
 		// Woo-index harvester-readiness self-check (woo-index-harvester-readiness)
 		['name' => 'wooReadiness#report', 'url' => '/api/woo/readiness', 'verb' => 'GET'],
 		['name' => 'wooReadiness#run', 'url' => '/api/woo/readiness/run', 'verb' => 'POST'],
+		// Woo-index registration and the root robots.txt rules (woo-index-harvester-connection).
+		['name' => 'wooRegistration#show', 'url' => '/api/woo/registration', 'verb' => 'GET'],
+		['name' => 'wooRegistration#request', 'url' => '/api/woo/registration', 'verb' => 'POST'],
+		['name' => 'wooRegistration#confirm', 'url' => '/api/woo/registration/confirm', 'verb' => 'POST'],
 		// The public and community surface: the admin surfaces.
 		['name' => 'community#setStatus', 'url' => '/api/status', 'verb' => 'POST'],
 		['name' => 'noticeBoard#banners', 'url' => '/api/banners', 'verb' => 'GET'],

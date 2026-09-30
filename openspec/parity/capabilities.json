@@ -1382,10 +1382,10 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:33 robots#index at /api/robots.txt; RobotsController.php:93-140 lists 17 sitemap URLs per catalog but does not filter hasWooSitemap, and :131 joins catalogs with single-quoted '\\n' (literal backslash-n); WooReadinessService.php:280 checks $baseUrl/robots.txt at the root",
-				"change": "openspec/changes/woo-index-harvester-connection"
+				"evidence": "RobotsController::index asks OpenRegister for hasWooSitemap catalogues only (and re-checks the flag), one Sitemap line per line with a real line break, User-agent and Allow lines for /apps/opencatalogi/api/ and /index.php/apps/opencatalogi/api/; WooRegistrationService::rootRules renders the nginx and Apache rules that serve it at the domain root, shown with copy buttons in src/views/settings/WooIndexConnection.vue",
+				"change": "openspec/changes/archive/2026-09-30-woo-index-harvester-connection"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/robots.txt (public, harvester); root /robots.txt needs a proxy rewrite (Settings.vue:1395 tells the admin so)",
 			"note": "A harvester reads /robots.txt at the domain root, which the app does not serve without web-server config. Specified in openspec/changes/woo-index-harvester-connection (OpenSpec pass 2026-09-27).",
@@ -1473,10 +1473,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "Harvest model: SitemapService.php:179/297 + RobotsController.php:93 expose all publications; Settings.vue:234-280 records Woo-index registration status by hand; NationalIndexService.php:219 registerWithWooIndex has no caller (grep registerWithWooIndex lib)",
-				"change": "openspec/changes/woo-index-harvester-connection"
+				"evidence": "POST /api/woo/registration (WooRegistrationController, admin) composes organisation, TOOI identifier, root robots.txt and every sitemap index and hands it to NationalIndexService::registerWithWooIndex (national-woo-index channel); status moves to requested only on an answer, answer stored; readiness check daily (BackgroundJob/WooReadinessCheck) and once when a catalogue is switched on (WooReadinessTriggerListener -> WooReadinessCheckNow)",
+				"change": "openspec/changes/archive/2026-09-30-woo-index-harvester-connection"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/robots.txt and /api/{catalogSlug}/sitemaps/* (public, KOOP harvester)",
 			"note": "Works only as far as woo-sitemap works (external 'woo' register) and root robots.txt is rewritten. Specified in openspec/changes/woo-index-harvester-connection (OpenSpec pass 2026-09-27).",
