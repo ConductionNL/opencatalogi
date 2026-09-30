@@ -34,6 +34,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
+use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -77,11 +78,13 @@ class CitizenCollectionService {
 	 * @param PortalObjectStore $store  Reads and writes as the system.
 	 * @param PublicationLinker $linker The public link to a publication.
 	 * @param LoggerInterface   $logger The logger.
+	 * @param IURLGenerator|null $urlGenerator Makes the share link absolute.
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
 		private readonly PublicationLinker $linker,
 		private readonly LoggerInterface $logger,
+		private readonly ?IURLGenerator $urlGenerator=null,
 	) {
 
 	}//end __construct()
@@ -233,7 +236,7 @@ class CitizenCollectionService {
 	 * @param string $owner        The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
-	 * @return array{token: string, createdAt: string, url: string}
+	 * @return array{token: string, createdAt: string, url: string, link: string}
 	 *
 	 * @throws PortalNotFoundException When the dossier is not the owner's.
 	 *
@@ -245,7 +248,13 @@ class CitizenCollectionService {
 		$dossier['share'] = $share;
 		$this->store->save(schema: self::SCHEMA, data: $dossier, id: $collectionId);
 
-		return $share + ['url' => '/index.php/apps/opencatalogi/api/collections/shared/'.$share['token']];
+		$path = '/index.php/apps/opencatalogi/api/collections/shared/'.$share['token'];
+		$link = $path;
+		if ($this->urlGenerator !== null) {
+			$link = $this->urlGenerator->getAbsoluteURL($path);
+		}
+
+		return $share + ['url' => $path, 'link' => $link];
 
 	}//end share()
 
@@ -353,6 +362,38 @@ class CitizenCollectionService {
 		];
 
 	}//end shared()
+
+	/**
+	 * The items of a dossier for portaliq's `itemList`, without an owner check:
+	 * portaliq calls it only after the resident's own scoped read succeeded.
+	 *
+	 * @param string $collectionId The dossier.
+	 *
+	 * @return array<int, array{id: string, title: string, url: string, note: string, public: bool, addedAt: string}>
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-opencatalogi-contributes-dossiers-to-the-portal-for-citizen-and-client-req-ccol-006
+	 */
+	public function itemList(string $collectionId): array {
+		$dossier = $this->store->find(schema: self::SCHEMA, id: $collectionId);
+		if ($dossier === null) {
+			return [];
+		}
+
+		$items = [];
+		foreach ($this->ownerView(dossier: $dossier)['items'] as $item) {
+			$items[] = [
+				'id' => $item['id'],
+				'title' => $item['title'],
+				'url' => $item['url'],
+				'note' => $item['note'],
+				'public' => $item['public'],
+				'addedAt' => $item['addedAt'],
+			];
+		}
+
+		return $items;
+
+	}//end itemList()
 
 	/**
 	 * Delete every dossier and saved search of one resident.
