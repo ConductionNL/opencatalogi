@@ -190,27 +190,4 @@ class StatusPageService {
 
 	}//end render()
 
-	/**
-	 * Whether a state change happened between two statuses.
-	 *
-	 * Used to decide whether the notification dialect has anything to announce.
-	 * A saved status whose state did not move is not a change, and telling
-	 * every subscriber otherwise is how a status page trains people to ignore
-	 * it.
-	 *
-	 * @param array<string, mixed>|null $before The status before.
-	 * @param array<string, mixed> $after The status after.
-	 *
-	 * @return boolean True when the state moved.
-	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-reader-subscribes-to-changes-on-the-status-page-req-pcs-102
-	 */
-	public function stateChanged(?array $before, array $after): bool {
-		if ($before === null) {
-			return true;
-		}
-
-		return ((string)($before['state'] ?? '') !== (string)($after['state'] ?? ''));
-
-	}//end stateChanged()
 }//end class

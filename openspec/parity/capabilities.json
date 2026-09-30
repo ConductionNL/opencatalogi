@@ -868,10 +868,10 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:737 PublicationDetail lifecycleActions {field: status} -> nextcloud-vue CnDetailPage.vue:163 CnLifecycleActions; publication_register.json:218 only transition archive (published->archived, final); PublicationQueryService.php:453 hides archived publicly; publishing itself = setting publicationDate (PublicationQueryService.php:1008-1040)",
-				"change": "openspec/changes/publications-publish-and-withdraw-action"
+				"evidence": "PublicationStateController (GET /api/publications/{id}/visibility, POST .../publish, .../withdraw, .../files/{fileId}/withdraw), rights from OpenRegister's PermissionHandler via PublicationRights before any side effect; PublicationStateService computes draft/scheduled/public/withdrawn/archived from the dates; publication-visibility widget in src/manifest.json PublicationDetail with src/dialogs/publication/WithdrawPublicationDialog.vue; depublication.file for a single document; Archive stays the final lifecycle step",
+				"change": "openspec/changes/archive/2026-09-30-publications-publish-and-withdraw-action"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id header Archive action",
 			"note": "Withdrawing is one action (Archive) but cannot be undone. Publishing is a date field, not a status change. DepublicationController (/api/publications/depublish) and PublishPublicationDialog have no mounted caller. Specified in openspec/changes/publications-publish-and-withdraw-action (OpenSpec pass 2026-09-27).",
@@ -1261,13 +1261,13 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "building",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Service/SitemapService.php:77-93 INFO_CAT holds the 17 categories; :400-450 maps a category to a schema TITLED after it inside a register titled 'woo'; lib/Settings/publication_register.json publication schema has no category property; no 'woo' register is provisioned by the app (grep 'Jaarplan of jaarverslag' only hits SitemapService + test)",
-				"change": "openspec/changes/woo-publication-category"
+				"evidence": "publication.wooCategory (enum infocat001-017, x-enum-labels) in lib/Settings/publication_register.json; SitemapService::sitemapQueries filters the catalogue's registers and schemas on wooCategory, the 'woo' register title lookup stays as a second source; mapDiwooDocument reads wooCategory first; GET /api/woo/categories (WooController::categories, WooService::WOO_CATEGORIES); batch publish files under infocat014; field in the Publication data widget of src/manifest.json PublicationDetail",
+				"change": "openspec/changes/archive/2026-09-30-woo-publication-category"
 			},
-			"reachedOn": "nothing in opencatalogi: filing happens by creating the record in a per-category schema of an externally imported 'woo' register; no opencatalogi page picks a category",
-			"note": "openspec/changes/woo-category-mapping-intake specifies a WooCategoryMapping schema; not built. WooService.php:973 hardcodes wooCategory 'verzoek' on batch publish.",
+			"reachedOn": "publication page (/publications/:catalogSlug/:id), Publication block, Woo information category select; the category sitemaps /api/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocatNNN.xml",
+			"note": "openspec/changes/woo-category-mapping-intake (a per-type default) is still not built; this row does not need it.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "woo-compliance-basics",
@@ -1504,10 +1504,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "searched lib for plooi/open.overheid: none; NationalIndexService.php:219 registerWithWooIndex (no caller) and :302 handOver passes a string source to integriq CallService::call(ObjectEntity $source) (openconnector lib/Service/CallService.php:2957-2958), which throws TypeError, caught as IndexUnreachableException",
-				"change": "openspec/changes/woo-national-delivery-repair"
+				"evidence": "lib/Listener/PlooiDeliveryListener.php queues lib/BackgroundJob/PlooiDelivery.php -> lib/Service/Publication/PlooiDeliveryService.php::deliver -> NationalIndexService::deliverToPlooi (integriq source from channel_sources); catalog.plooiDelivery + publication.plooi* in lib/Settings/publication_register.json; PLOOI delivery block in src/manifest.json PublicationDetail",
+				"change": "openspec/changes/archive/2026-09-29-woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no route or page calls registerWithWooIndex",
 			"note": "Even when wired, every hand-over through the integriq gateway fails on the signature mismatch.",
@@ -1625,7 +1625,7 @@
 			"built": {
 				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:79-80 startProcess/completeStep (admin) -> PublicationProcessService.php:84/130 return arrays; PublicationRulesController.php:259-261 returns the process without saving it (publicationProcess schema declared, never written); no src caller of /api/publication-process"
+				"evidence": "Code removed 2026-09-29 (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code, DECISIONS row 9); before removal: appinfo/routes.php:79-80 startProcess/completeStep (admin) -> PublicationProcessService.php:84/130 return arrays; PublicationRulesController.php:259-261 returns the process without saving it (publicationProcess schema declared, never written); no src caller of /api/publication-process"
 			},
 			"reachedOn": "nothing: no page, and the process is not persisted between steps",
 			"note": "Decided no 2026-09-28: Single competitor rated yes (xxllnc Publiceren), no demand row, outside the core area. The service returns arrays that nothing stores or shows; that dead code is a cleanup, not a feature. The WOO batch ready-for-review/approval gate (WooService.php:813/870) is a separate, narrower path for Woo requests.",
@@ -1655,7 +1655,7 @@
 			"built": {
 				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:81 raiseZienswijze (admin) -> ZienswijzeService.php:75 raise builds and returns an ask array; controller returns it (PublicationRulesController.php:331-345) without storing or sending it; zienswijzeAsk schema never written; no src caller"
+				"evidence": "Code removed 2026-09-29 (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code, DECISIONS row 9); before removal: appinfo/routes.php:81 raiseZienswijze (admin) -> ZienswijzeService.php:75 raise builds and returns an ask array; controller returns it (PublicationRulesController.php:331-345) without storing or sending it; zienswijzeAsk schema never written; no src caller"
 			},
 			"reachedOn": "nothing: no page, no delivery to the party, no stored ask",
 			"provider": "opencatalogi",
@@ -1864,7 +1864,7 @@
 			"built": {
 				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "WooRedactionView.vue:1-160 per-entity selection with a ground each, but never mounted (WooBatchDetail.vue:37), POSTs to a PUT route (:146 vs routes.php:62), and WooController.php:189-191 reads only assessment+weigeringsgronden, dropping redactionInstructions; no call to filinq"
+				"evidence": "Code removed 2026-09-29 (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code, DECISIONS row 9); before removal: WooRedactionView.vue:1-160 per-entity selection with a ground each, but never mounted (WooBatchDetail.vue:37), POSTs to a PUT route (:146 vs routes.php:62), and WooController.php:189-191 reads only assessment+weigeringsgronden, dropping redactionInstructions; no call to filinq"
 			},
 			"reachedOn": "nothing",
 			"note": "Decided no 2026-09-28: Single competitor rated yes (xxllnc Publiceren), no demand row. Redaction is filinq's (RedactionAnnotator); opencatalogi should call it, not rebuild it. filinq has lib/Service/Comparison/RedactionAnnotator.php; opencatalogi does not use it.",
@@ -2188,10 +2188,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:84 announce (admin) -> PublicationDisclosureController.php:127-139 composeNotices + deliver -> NationalIndexService.php:302 gateway->call(source: string) vs integriq CallService::call(ObjectEntity $source) (openconnector lib/Service/CallService.php:2958): TypeError caught as unreachable; no src caller",
-				"change": "openspec/changes/woo-national-delivery-repair"
+				"evidence": "src/components/widgets/NationalAnnounceWidget.vue (publication page) -> POST /api/publications/announce -> NationalIndexService::deliver: publicatie gateway via GatewayDeliveryRequestedEvent (national) and handOver with the ConnectionStore source object (other channels)",
+				"change": "openspec/changes/archive/2026-09-29-woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no page, and every delivery reports the channel unreachable",
 			"provider": "opencatalogi",
@@ -2220,7 +2220,7 @@
 			"built": {
 				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "DocumentStampService.php:109 stamp() has no caller (grep '->stamp(' lib); signing key read from appconfig publication_signing_key (Application.php:302), which nothing sets"
+				"evidence": "Code removed 2026-09-29 (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code, DECISIONS row 9); before removal: DocumentStampService.php:109 stamp() has no caller (grep '->stamp(' lib); signing key read from appconfig publication_signing_key (Application.php:302), which nothing sets"
 			},
 			"reachedOn": "nothing: no publish path stamps a document",
 			"note": "Decided no 2026-09-28: No competitor rated yes, no demand row, outside the core area. Stamp is an HMAC with an instance secret, so a reader cannot verify offline.",
@@ -3633,7 +3633,7 @@
 			"built": {
 				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Controller/CommunityController.php:298 subscribe stores an unconfirmed subscription and drops the one-time token from SubscriptionService::request; no confirm route in appinfo/routes.php; SubscriptionService::confirm is never called outside tests; recipients() returns only confirmed addresses"
+				"evidence": "Code removed 2026-09-29 (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code, DECISIONS row 9); before removal: lib/Controller/CommunityController.php:298 subscribe stores an unconfirmed subscription and drops the one-time token from SubscriptionService::request; no confirm route in appinfo/routes.php; SubscriptionService::confirm is never called outside tests; recipients() returns only confirmed addresses"
 			},
 			"reachedOn": "nothing: POST /api/status/subscribe answers 202 'confirm the address', but no mail is sent and no confirm route exists",
 			"note": "Decided no 2026-09-28: No competitor rated yes, no demand row, and the app sends no mail itself by design. No subscription can reach the confirmed state, so the recipient list is always empty. openspec/changes/the-public-and-community-surface/tasks.md:38 also says the app sends nothing itself.",
@@ -3753,7 +3753,7 @@
 			"built": {
 				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:219 POST /api/records/{id}/vote @PublicPage; lib/Service/Community/VoteService.php:188 accepts votes only when record.votingEnabled is true; votingEnabled and voteValues are declared in no schema under lib/Settings (grep finds them only in VoteService and a unit test)"
+				"evidence": "Code removed 2026-09-29 (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code, DECISIONS row 9); before removal: appinfo/routes.php:219 POST /api/records/{id}/vote @PublicPage; lib/Service/Community/VoteService.php:188 accepts votes only when record.votingEnabled is true; votingEnabled and voteValues are declared in no schema under lib/Settings (grep finds them only in VoteService and a unit test)"
 			},
 			"reachedOn": "nothing: every vote on a shipped publication answers 404, because no schema can set votingEnabled",
 			"note": "Decided no 2026-09-28: No competitor rated yes and no demand row. The endpoint, throttling and one-vote-per-token logic are built, but on shipped schemas the gate always refuses. Empty value: votingEnabled.",
@@ -4024,7 +4024,7 @@
 			"built": {
 				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Settings/register.d/published-service-and-case-type-catalogue.json declares knowledgeArticle; knowledge_article_schema is used only by ServiceCatalogueController.php:525 (verdict) and :627 (extract); no route lists or searches articles in appinfo/routes.php"
+				"evidence": "Code removed 2026-09-29 (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code, DECISIONS row 9); before removal: lib/Settings/register.d/published-service-and-case-type-catalogue.json declares knowledgeArticle; knowledge_article_schema is used only by ServiceCatalogueController.php:525 (verdict) and :627 (extract); no route lists or searches articles in appinfo/routes.php"
 			},
 			"reachedOn": "nothing: no public read or search route for articles, and no page",
 			"note": "Decided no 2026-09-28: No competitor rated yes and no demand row, outside the core area. Articles can be stored, but readers have no opencatalogi endpoint to find or read them. The tasks mark 4.1 done without such a route.",

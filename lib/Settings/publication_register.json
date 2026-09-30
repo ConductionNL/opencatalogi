@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "x-openregister": {
     "type": "application",
@@ -94,7 +94,7 @@
         "slug": "publication",
         "x-schema-org": "schema:CreativeWork",
         "title": "Publication",
-        "version": "0.0.4",
+        "version": "0.0.5",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A single publication entry within the catalog",
         "description": "A publication represents an individual piece of content within the catalog. It can be associated with themes and schemas, and is the primary unit of content that users can view and interact with. Publications can be linked to specific organizations and can be either public or private.",
@@ -143,6 +143,50 @@
             "description": "List of themes associated with this publication",
             "facetable": true,
             "title": "Themes"
+          },
+          "wooCategory": {
+            "type": "string",
+            "title": "Woo information category",
+            "description": "The information category of the Woo this publication is filed under. The sitemap of that category lists it for the national Woo index.",
+            "enum": [
+              "infocat001",
+              "infocat002",
+              "infocat003",
+              "infocat004",
+              "infocat005",
+              "infocat006",
+              "infocat007",
+              "infocat008",
+              "infocat009",
+              "infocat010",
+              "infocat011",
+              "infocat012",
+              "infocat013",
+              "infocat014",
+              "infocat015",
+              "infocat016",
+              "infocat017"
+            ],
+            "x-enum-labels": {
+              "infocat001": "Laws and generally binding regulations",
+              "infocat002": "Other decisions of general scope",
+              "infocat003": "Draft legislation sent out for advice",
+              "infocat004": "Organisation and working methods",
+              "infocat005": "Contact details",
+              "infocat006": "Documents received by representative bodies",
+              "infocat007": "Meeting documents of the States General",
+              "infocat008": "Meeting documents of local and regional governments",
+              "infocat009": "Agendas and decision lists of executive boards",
+              "infocat010": "Advice",
+              "infocat011": "Covenants",
+              "infocat012": "Annual plans and annual reports",
+              "infocat013": "Subsidy obligations other than by decision",
+              "infocat014": "Woo requests and decisions",
+              "infocat015": "Research reports",
+              "infocat016": "Individual decisions",
+              "infocat017": "Complaint rulings"
+            },
+            "facetable": true
           },
           "publicationDate": {
             "type": "string",
@@ -213,6 +257,35 @@
             ],
             "facetable": true,
             "title": "Status"
+          },
+          "plooiStatus": {
+            "type": "string",
+            "description": "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered or failed. Empty until a catalogue with PLOOI delivery on delivers it.",
+            "enum": [
+              "delivered",
+              "failed"
+            ],
+            "facetable": true,
+            "title": "PLOOI status"
+          },
+          "plooiDeliveredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the PLOOI delivery was last attempted.",
+            "facetable": false,
+            "title": "PLOOI delivered at"
+          },
+          "plooiIdentifier": {
+            "type": "string",
+            "description": "The identifier PLOOI gave this publication.",
+            "facetable": false,
+            "title": "PLOOI identifier"
+          },
+          "plooiReason": {
+            "type": "string",
+            "description": "Why the last PLOOI delivery failed, as the platform or the connection said it.",
+            "facetable": false,
+            "title": "PLOOI failure reason"
           }
         },
         "x-openregister-lifecycle": {
@@ -374,7 +447,7 @@
           }
         },
         "title": "Catalog",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A collection of publications organized by theme and schema",
         "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
@@ -512,6 +585,13 @@
             "format": "date-time",
             "facetable": true,
             "title": "Published Date"
+          },
+          "plooiDelivery": {
+            "type": "boolean",
+            "description": "Deliver every publication in this catalogue to PLOOI, the delivery API of open.overheid.nl, when it becomes public.",
+            "default": false,
+            "facetable": false,
+            "title": "Deliver to PLOOI"
           }
         },
         "configuration": {
@@ -1180,7 +1260,8 @@
         "summary": "Voorbeeld-publicatie (seed data) — kwartaalrapport van Conduction B.V., de maintainer van OpenCatalogi. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
         "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is.",
         "organization": "default-org",
-        "publicationDate": "2024-04-01T00:00:00+00:00"
+        "publicationDate": "2024-04-01T00:00:00+00:00",
+        "depublicationDate": "2026-06-01T09:00:00+00:00"
       },
       {
         "@self": {
@@ -1217,6 +1298,24 @@
         },
         "organization": "default-org",
         "publicationDate": "2024-04-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "depublication",
+          "slug": "example-conduction-quarterly-report-withdrawn"
+        },
+        "publication": "example-conduction-quarterly-report",
+        "reason": "Voorbeeld: teruggetrokken omdat er een verkeerde bijlage bij zat. Kies Opnieuw publiceren om het terug te zetten.",
+        "depublishedBy": "admin",
+        "depublishedAt": "2026-06-01T09:00:00+00:00",
+        "withdrawals": [
+          {
+            "channel": "national-woo-index",
+            "sentAt": "2026-06-01T09:00:00+00:00",
+            "answer": "not delivered: no integriq source is set for the channel"
+          }
+        ]
       }
     ]
   }

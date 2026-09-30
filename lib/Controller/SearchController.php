@@ -24,6 +24,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\App\IAppManager;
@@ -148,6 +149,15 @@ class SearchController extends Controller {
 			);
 
 			return new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
+		} catch (MalformedSearchParameterException $e) {
+			// A range bound that is not a date or a number (REQ-SCF-002).
+			return new JSONResponse(
+				data: [
+					'error' => $this->l10n->t('%s must be a date, such as 2026-04-01, or a number.', [$e->getParameter()]),
+					'parameter' => $e->getParameter(),
+				],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
 		} catch (RuntimeException $e) {
 			// OR isn't installed — this is a deploy issue, not a code bug. Callers
 			// (and operators) benefit from a 503 that distinguishes "backend not

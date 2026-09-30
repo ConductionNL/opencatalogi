@@ -257,6 +257,59 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame(['outer' => ['keep' => 'x']], $this->service->stripEmptyValues($in));
 	}
 
+	/**
+	 * REQ-SCF-002: a range bound that is neither a date nor a number is named.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	public function testMalformedRangeParameterNamesTheBadBound(): void {
+		$this->assertSame(
+			'meetingDate[gte]',
+			\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter(['meetingDate' => ['gte' => 'tomorrow-ish', 'lte' => '2026-06-30']])
+		);
+		$this->assertSame(
+			'meetingDate[lte]',
+			\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter(['meetingDate' => ['gte' => '2026-04-01', 'lte' => '30-06-2026']])
+		);
+	}
+
+	/**
+	 * REQ-SCF-001/002: the council filters and a well-formed range pass.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	public function testWellFormedFiltersAndRangesPass(): void {
+		$this->assertNull(\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter([
+			'documentType' => 'minutes',
+			'bodyName' => 'Gemeenteraad',
+			'meetingDate' => ['gte' => '2026-04-01', 'lte' => '2026-06-30T23:59:59+02:00'],
+			'count' => ['gt' => '3'],
+			'_order' => ['updated' => 'desc'],
+		]));
+	}
+
+	/**
+	 * REQ-SCF-002: the scope strip keeps the three council filters.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	public function testTheScopeStripKeepsTheCouncilFilters(): void {
+		$fake = $this->wireHappyPath();
+		$this->service->assemblePublicSearchResults(
+			queryParams: $this->withDefaultCatalog([
+				'documentType' => 'minutes',
+				'bodyName' => 'Gemeenteraad',
+				'meetingDate' => ['gte' => '2026-04-01', 'lte' => '2026-06-30'],
+			]),
+			objectService: $fake
+		);
+
+		$query = $fake->capturedCalls[0]['query'];
+		$this->assertSame('minutes', $query['documentType']);
+		$this->assertSame('Gemeenteraad', $query['bodyName']);
+		$this->assertSame(['gte' => '2026-04-01', 'lte' => '2026-06-30'], $query['meetingDate']);
+	}
+
 	public function testNormalizeIdsAcceptsJsonStringAndArrayAndCastsToInt(): void {
 		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', ['[1,2]']));
 		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', ['["1","2"]']));

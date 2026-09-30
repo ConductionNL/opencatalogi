@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use DateTimeZone;
 use DomainException;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
-use OCA\OpenCatalogi\Service\Publication\DocumentStampService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\ObligationOverviewService;
@@ -23,7 +22,6 @@ use Psr\Log\LoggerInterface;
  *
  * @covers \OCA\OpenCatalogi\Service\Publication\DepublicationService
  * @covers \OCA\OpenCatalogi\Service\Publication\NationalIndexService
- * @covers \OCA\OpenCatalogi\Service\Publication\DocumentStampService
  * @covers \OCA\OpenCatalogi\Service\Publication\ObligationOverviewService
  */
 class DepublicationAndIndexTest extends TestCase {
@@ -160,7 +158,7 @@ class DepublicationAndIndexTest extends TestCase {
 	}//end testADepublicationWithoutAReasonIsRefused()
 
 	public function testTheNoticeIsComposedForBothChannels(): void {
-		$service = new NationalIndexService($this->container, $this->logger);
+		$service = $this->indexWithSources();
 
 		$notices = $service->composeNotices(
 			decision: [
@@ -187,7 +185,7 @@ class DepublicationAndIndexTest extends TestCase {
 	 */
 	public function testWithNoGatewayADeliveryIsUnreachableAndNotSilentlyDone(): void {
 		$this->container->method('get')->willThrowException(new \RuntimeException('not installed'));
-		$service = new NationalIndexService($this->container, $this->logger);
+		$service = $this->indexWithSources();
 
 		$this->expectException(IndexUnreachableException::class);
 
@@ -197,7 +195,7 @@ class DepublicationAndIndexTest extends TestCase {
 
 	public function testRegisteringWithTheWooIndexWithoutAGatewayIsUnreachable(): void {
 		$this->container->method('get')->willThrowException(new \RuntimeException('not installed'));
-		$service = new NationalIndexService($this->container, $this->logger);
+		$service = $this->indexWithSources();
 
 		$this->expectException(IndexUnreachableException::class);
 
@@ -205,59 +203,28 @@ class DepublicationAndIndexTest extends TestCase {
 
 	}//end testRegisteringWithTheWooIndexWithoutAGatewayIsUnreachable()
 
-	public function testAReaderVerifiesAPublishedDocumentAndAChangedOneFails(): void {
-		$service = new DocumentStampService(signingKey: 'organisation-key', keyId: 'gemeente-2026');
-		$metadata = ['id' => 'd1', 'title' => 'Besluit', 'publicationDate' => '2026-09-18', 'organisation' => 'Zuiderdorp'];
-
-		$stamp = $service->stamp(documentBytes: 'de inhoud van het document', metadata: $metadata);
-
-		$this->assertTrue($service->verify(documentBytes: 'de inhoud van het document', metadata: $metadata, stamp: $stamp)['valid']);
-
-		$altered = $service->verify(documentBytes: 'de inhoud van het document.', metadata: $metadata, stamp: $stamp);
-		$this->assertFalse($altered['valid']);
-		$this->assertSame('does-not-match', $altered['reason']);
-
-	}//end testAReaderVerifiesAPublishedDocumentAndAChangedOneFails()
-
 	/**
-	 * The stamp covers the publication metadata too: a correct document
-	 * published under a false date is its own kind of falsehood.
+	 * The index service with a source set for every channel, so a test reaches the gateway lookup.
+	 *
+	 * @return NationalIndexService
 	 */
-	public function testChangedPublicationMetadataAlsoFailsTheCheck(): void {
-		$service = new DocumentStampService(signingKey: 'organisation-key');
-		$metadata = ['id' => 'd1', 'title' => 'Besluit', 'publicationDate' => '2026-09-18'];
-		$stamp = $service->stamp(documentBytes: 'inhoud', metadata: $metadata);
+	private function indexWithSources(): NationalIndexService {
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturn(
+			json_encode([
+				NationalIndexService::CHANNEL_NATIONAL => 'national',
+				NationalIndexService::CHANNEL_WOO_INDEX => 'woo-index',
+			])
+		);
 
-		$metadata['publicationDate'] = '2026-01-01';
+		return new NationalIndexService(
+			container: $this->container,
+			config: $config,
+			dispatcher: $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class),
+			logger: $this->logger
+		);
 
-		$this->assertFalse($service->verify(documentBytes: 'inhoud', metadata: $metadata, stamp: $stamp)['valid']);
-
-	}//end testChangedPublicationMetadataAlsoFailsTheCheck()
-
-	/**
-	 * With no key, stamping refuses. A stamp made with an empty key verifies
-	 * against an empty key, so every reader would be told the document is
-	 * authentic and nobody would have checked anything.
-	 */
-	public function testWithNoKeyStampingRefusesAndVerificationIsNotGreen(): void {
-		$service = new DocumentStampService(signingKey: '');
-
-		$this->assertNull($service->publishedKey());
-		$this->assertSame('no-key', $service->verify(documentBytes: 'x', metadata: [], stamp: ['signature' => 'y'])['reason']);
-
-		$this->expectException(DomainException::class);
-		$service->stamp(documentBytes: 'x', metadata: []);
-
-	}//end testWithNoKeyStampingRefusesAndVerificationIsNotGreen()
-
-	public function testThePublishedKeyIsAFingerprintAndNotTheKey(): void {
-		$service = new DocumentStampService(signingKey: 'organisation-key', keyId: 'gemeente-2026');
-		$published = $service->publishedKey();
-
-		$this->assertSame('gemeente-2026', $published['keyId']);
-		$this->assertStringNotContainsString('organisation-key', (string)json_encode($published));
-
-	}//end testThePublishedKeyIsAFingerprintAndNotTheKey()
+	}//end indexWithSources()
 
 	public function testASecondApplicationsObligationsAppearBesideThisApps(): void {
 		$service = new ObligationOverviewService();

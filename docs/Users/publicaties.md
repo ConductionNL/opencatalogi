@@ -34,6 +34,21 @@ Na het opslaan van de publicatie, is deze zichtbaar onder de catalogi "Woo". Om 
 
 Onder is een voorbeeld van een publicatie en de Actie-mogelijkheden.
 
+
+## Publiceren en terugtrekken
+
+Op de pagina van een publicatie staat het blok Publicatiestatus. Daar zie je of de publicatie een concept is, gepland, openbaar, teruggetrokken of gearchiveerd. Je ziet alleen de knoppen die op dat moment kunnen.
+
+- **Nu publiceren** maakt een concept of geplande publicatie meteen openbaar.
+- **Terugtrekken** vraagt om een reden. De publicatie verdwijnt meteen van de publieke site. Elk landelijk kanaal dat haar had, krijgt een intrekking: altijd de Woo-index, en PLOOI als ze daar was afgeleverd. De melding noemt elk kanaal dat nog niet heeft bevestigd.
+- **Opnieuw publiceren** maakt een teruggetrokken publicatie weer openbaar. Eerdere intrekkingen blijven in de geschiedenis staan.
+
+Wil je één document terugtrekken? Kies het dan in het venster Terugtrekken. Alleen dat document verdwijnt van de publieke site en uit de sitemap. De rest van de publicatie blijft openbaar.
+
+Archiveren blijft de laatste stap voor bewaren. Het is geen manier om terug te trekken.
+
+Je hebt het recht nodig om de publicatie te wijzigen. Zonder dat recht weigert de server, en er gebeurt niets.
+
 ## Eigenschappen
 
 @todo

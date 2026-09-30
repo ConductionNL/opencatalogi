@@ -343,7 +343,7 @@
 			"depublication": {
 				"slug": "depublication",
 				"title": "Depublication",
-				"version": "0.1.0",
+				"version": "0.2.0",
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "Taking a publication back, honestly",
 				"description": "One action takes a publication down, records who did it and why, and sends a withdrawal to every channel it reached, including the national ones. A withdrawal a channel has not acknowledged is shown as outstanding, because an undo that leaves the document in a harvester's copy is not one.",
@@ -408,6 +408,11 @@
 							}
 						},
 						"description": "One withdrawal per channel the publication reached, including the national ones."
+					},
+					"file": {
+						"type": "string",
+						"title": "Document",
+						"description": "The one document that was taken down, when the depublication is about a single document rather than the whole publication."
 					}
 				}
 			},

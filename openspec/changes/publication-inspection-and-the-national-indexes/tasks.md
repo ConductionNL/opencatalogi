@@ -21,10 +21,10 @@
 
 ## 4. The process around a publication
 
-- [x] 4.1 The four steps: documents, zienswijze round, approval, channels, each recorded (REQ-PIN-104)
-- [x] 4.2 Configure the steps away for a municipality that wants one click (REQ-PIN-104)
-- [x] 4.3 The zienswijze ask over an identifying channel, with the answer recorded against the publication (REQ-PIN-105)
-- [x] 4.4 Hold the publication while an ask is open inside its term (REQ-PIN-105)
+- [x] 4.1 The four steps: documents, zienswijze round, approval, channels, each recorded (REQ-PIN-104) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
+- [x] 4.2 Configure the steps away for a municipality that wants one click (REQ-PIN-104) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
+- [x] 4.3 The zienswijze ask over an identifying channel, with the answer recorded against the publication (REQ-PIN-105) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
+- [x] 4.4 Hold the publication while an ask is open inside its term (REQ-PIN-105) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
 
 ## 5. Taking it back
 
@@ -40,8 +40,8 @@
 
 ## 7. The stamp, the overview and the search
 
-- [x] 7.1 Sign the published document and its publication metadata; publish the verification key (REQ-PIN-109)
-- [x] 7.2 A reader verifies a published document against the published key (REQ-PIN-109)
+- [x] 7.1 Sign the published document and its publication metadata; publish the verification key (REQ-PIN-109) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
+- [x] 7.2 A reader verifies a published document against the published key (REQ-PIN-109) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
 - [x] 7.3 The obligation overview over every registered source, showing what must be published, what is, and what is late (REQ-PIN-110)
 - [x] 7.4 Public plain-word search over published information, naming the dossier each document belongs to (REQ-PIN-111)
 

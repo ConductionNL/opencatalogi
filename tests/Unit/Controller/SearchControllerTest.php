@@ -131,6 +131,24 @@ class SearchControllerTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * REQ-SCF-002 scenario "A bad date": 400, naming the parameter.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	public function testIndexReturns400NamingAMalformedRangeBound(): void {
+		$this->container->method('get')->willReturn(new \stdClass());
+		$this->request->method('getParams')->willReturn(['meetingDate' => ['gte' => 'tomorrow-ish']]);
+		$this->queryService->method('assemblePublicSearchResults')
+			->willThrowException(new \OCA\OpenCatalogi\Exception\MalformedSearchParameterException('meetingDate[gte]'));
+
+		$response = $this->controller->index();
+
+		$this->assertSame(400, $response->getStatus());
+		$this->assertSame('meetingDate[gte]', $response->getData()['parameter']);
+		$this->assertNotEmpty($response->getData()['error']);
+	}
+
 	public function testIndexReturns503WhenOpenRegisterUnavailable(): void {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('getInstalledApps')->willReturn([]);

@@ -100,53 +100,6 @@ Evidence: documented only (rx-mission, `/modules/` Inzien).
 - **WHEN** an inspection is opened on one of its records
 - **THEN** it behaves as the first, with that type's term.
 
-### Requirement: Publication runs as a walked process (REQ-PIN-104)
-
-Publishing MUST run as a recorded process with four steps: choosing the
-documents, the zienswijze round, the approval, and the channels. Each step
-MUST record who completed it and when. A configuration MUST be able to
-skip steps, so a municipality that wants one action has one.
-
-Evidence: documented only (visma-circle, Djuma OpenInfo).
-
-#### Scenario: Every step is recorded
-
-- **GIVEN** a publication walked through all four steps
-- **WHEN** its history is read
-- **THEN** each step names who completed it and when.
-
-#### Scenario: Steps can be configured away
-
-- **GIVEN** a configuration that skips the zienswijze round and the approval
-- **WHEN** a publication is made
-- **THEN** it completes in one action and the skipped steps are recorded as configured off.
-
-### Requirement: Interested parties are consulted before information about them is published (REQ-PIN-105)
-
-Before a publication that carries information about an interested party,
-the app MUST be able to ask that party over a channel that identifies
-them, record the answer against the publication, and hold the publication
-while an ask is open inside its term.
-
-Evidence: documented only (visma-circle).
-
-#### Scenario: The publication waits for an open ask
-
-- **GIVEN** a publication with an unanswered zienswijze ask inside its term
-- **WHEN** someone tries to advance it
-- **THEN** it is held and the open ask is named.
-
-#### Scenario: The answer is recorded against the publication
-
-- **GIVEN** an answered ask
-- **WHEN** the publication is read
-- **THEN** the answer and who gave it are recorded on it.
-
-#### Scenario: An unidentified channel is refused
-
-- **WHEN** a zienswijze ask is sent over a channel that does not identify the recipient
-- **THEN** it is refused.
-
 ### Requirement: Something published in error is depublished with one action (REQ-PIN-106)
 
 Depublication MUST be one action. It MUST record who did it and why, MUST
@@ -215,27 +168,6 @@ Evidence: documented only (decos-join).
 - **GIVEN** a published collection with a condition on a property
 - **WHEN** a record fails the condition
 - **THEN** it is not published.
-
-### Requirement: A published document carries a verifiable stamp (REQ-PIN-109)
-
-A published document MUST carry a digital stamp over the document and its
-publication metadata. The organisation's verification key MUST be
-published. A reader MUST be able to verify a document against that key,
-and a document that has changed since publication MUST fail the check.
-
-Evidence: documented only (visma-circle).
-
-#### Scenario: A reader verifies the published document
-
-- **GIVEN** a published document with its stamp
-- **WHEN** a reader verifies it against the published key
-- **THEN** the check passes.
-
-#### Scenario: A changed document fails the check
-
-- **GIVEN** a published document whose bytes were altered
-- **WHEN** it is verified
-- **THEN** the check fails.
 
 ### Requirement: One overview of what must be published, fed from every source (REQ-PIN-110)
 

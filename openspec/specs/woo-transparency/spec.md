@@ -17,6 +17,7 @@ inventarislijst, reading-room rendering) lives in OpenCatalogi.
 @e2e exclude WOO-specific logic is verified by the WooService PHPUnit suite (batch/assessment/inventarislijst/publish, 13 tests) and the wooHelpers vitest suite (redaction-instruction + progress derivation, 10 tests); the queue/board UI is the consumed OpenRegister deck-leaf widget (its own e2e coverage, ADR-022) and notifications are workflow-integration triggers (not an OpenCatalogi UI surface). No bespoke Playwright e2e is owned by this change.
 
 ## Requirements
+
 ### Requirement: WOO document queue (consumes the OpenRegister deck leaf)
 The system MUST provide the WOO document processing queue by **consuming the OpenRegister deck leaf** (`nextcloud-entity-relations` `DeckCardService`, `openregister_deck_links`, `nl.openregister.object.deck.*` events) — NOT by building a bespoke queue table or kanban UI (hydra ADR-022). A disclosure batch is represented as a Deck board whose stacks are the assessment stages; each document is a Deck card linked to its OpenRegister assessment object. WOO contributes only the assessment status vocabulary and the per-document assessment metadata stored on the linked object; board/card mechanics (drag, bulk move, progress, sort/filter/search) are delivered by the leaf and surfaced as the deck widget on the batch object detail page (ADR-019 / ADR-024).
 
@@ -98,44 +99,6 @@ The system MUST support tagging documents with legal grounds for withholding, co
 - WHEN the user changes the assessment to "Openbaar"
 - THEN the weigeringsgronden MUST be cleared
 - AND the user MUST be warned that changing the assessment will remove the grounds
-
-### Requirement: Redaction with WOO context
-Document redaction MUST be coordinated through Docudesk's anonymization pipeline with WOO-specific context, allowing selective entity redaction with legal ground attribution.
-
-#### Scenario: Selective entity redaction
-- GIVEN a document with 15 detected entities (detected by Docudesk)
-- WHEN the user reviews the entities in the WOO redaction view
-- THEN they MUST be able to select which entities to redact (not all-or-nothing)
-- AND they MUST be able to add manual redaction regions (mark areas not detected by AI)
-- AND each redaction MUST be linkable to a weigeringsgrond
-- AND the redaction instructions MUST be sent to Docudesk for execution
-
-#### Scenario: Redaction preview
-- GIVEN a document with selected redactions
-- WHEN the user clicks "Voorbeeld"
-- THEN a preview MUST show the document with redacted areas blacked out
-- AND the user MUST be able to approve or adjust before finalizing
-
-#### Scenario: Redaction produces clean document
-- GIVEN a finalized redaction
-- WHEN Docudesk generates the anonymized document
-- THEN redacted text MUST be irrecoverably removed (not just visually hidden)
-- AND redacted areas MUST show black bars (standard WOO convention)
-- AND the original document MUST be preserved unchanged
-
-#### Scenario: Redaction audit trail (via OpenRegister audit-trail abstraction)
-- GIVEN a document with 5 redacted entities
-- WHEN the redaction is finalized
-- THEN an audit record MUST be created listing each redacted entity, its page/position, the weigeringsgrond applied, and the user who approved the redaction
-- AND immutability MUST be provided by the OpenRegister immutable audit-trail abstraction on the assessment object (ADR-022) — NOT a bespoke immutable events table in OpenCatalogi
-- AND the WOO-specific entity→ground→position payload is the in-app contribution recorded against that audit event
-
-#### Scenario: Redaction of multi-page document
-- GIVEN a 50-page PDF document with entities detected on 12 pages
-- WHEN the user reviews the redaction view
-- THEN they MUST be able to navigate between pages with detected entities
-- AND they MUST see entity highlights on each page
-- AND page numbers with entities MUST be highlighted in the page navigation
 
 ### Requirement: WOO batch data model
 The system MUST store WOO batch and document assessment data in OpenRegister using well-defined schemas.
@@ -372,8 +335,6 @@ The system MUST support notifications for WOO workflow events by **consuming the
 - THEN a scheduled `workflow-integration` (flow / n8n) workflow MUST send a warning to assigned users
 - AND the notification MUST indicate how many documents remain unassessed
 - AND the deadline-timer logic MUST live in the workflow leaf, not as bespoke in-app cron code
-
-
 
 ### Requirement: WOO batch and assessment objects have shipped storage schemas (WOO-PROV-001)
 

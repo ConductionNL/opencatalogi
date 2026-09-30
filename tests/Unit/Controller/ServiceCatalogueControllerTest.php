@@ -29,7 +29,6 @@ use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Service\CaseTypeCatalogueService;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
-use OCA\OpenCatalogi\Service\KnowledgeArticleService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -101,10 +100,8 @@ class ServiceCatalogueControllerTest extends TestCase {
 			$this->config,
 			$this->container,
 			$this->l10n,
-			$this->userSession,
 			$this->catalogueService,
-			$this->caseTypeService,
-			new KnowledgeArticleService(salt: 'test-salt')
+			$this->caseTypeService
 		);
 
 	}//end setUp()
@@ -197,15 +194,6 @@ class ServiceCatalogueControllerTest extends TestCase {
 		$this->assertSame('missing-parameters', $response->getData()['error']);
 
 	}//end testAnImportWithoutItsParametersIsRefused()
-
-	public function testAnExtractionByAnUnauthenticatedCallerIsRefused(): void {
-		$this->userSession->method('getUser')->willReturn(null);
-
-		$response = $this->controller->extractArticle();
-
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-
-	}//end testAnExtractionByAnUnauthenticatedCallerIsRefused()
 
 	/**
 	 * A published case type is answered with the links it publishes.
@@ -477,156 +465,6 @@ class ServiceCatalogueControllerTest extends TestCase {
 		$this->assertSame([], $store->saved);
 
 	}//end testApplyingAResyncToADefinitionThatWasNeverImportedWritesNothing()
-
-	/**
-	 * An OMITTED verdict is refused, and nothing is stored.
-	 *
-	 * This is the case the endpoint used to get wrong. `filter_var(null, ...)`
-	 * returns false rather than null even with FILTER_NULL_ON_FAILURE, so a
-	 * caller who sent no `helpful` at all had a "not helpful" recorded against
-	 * the article in their name, and the refusal below was unreachable by
-	 * omission. The raw value is now tested for absence first.
-	 */
-	/**
-	 * A verdict nobody can read as yes or no is refused, and stores nothing.
-	 */
-	public function testAnUnreadableVerdictIsRefusedAndStoresNothing(): void {
-		$store = $this->objectStore(['id' => 'art-1', 'draft' => false]);
-		$this->catalogueService->method('getObjectService')->willReturn($store);
-		$this->request->method('getParam')->willReturnCallback(
-			static function (string $key, $default = null) {
-				if ($key === 'helpful') {
-					return 'maybe';
-				}
-
-				return $default;
-			}
-		);
-
-		$response = $this->controller->recordVerdict('art-1');
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame('missing-verdict', $response->getData()['error']);
-		$this->assertSame([], $store->saved);
-
-	}//end testAnUnreadableVerdictIsRefusedAndStoresNothing()
-
-	public function testAVerdictWithoutAnAnswerIsRefusedAndStoresNothing(): void {
-		$store = $this->objectStore(['id' => 'art-1', 'draft' => false]);
-		$this->catalogueService->method('getObjectService')->willReturn($store);
-		$this->request->method('getParam')->willReturnCallback(
-			static fn (string $key, $default = null) => $default
-		);
-
-		$response = $this->controller->recordVerdict('art-1');
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame('missing-verdict', $response->getData()['error']);
-		$this->assertSame([], $store->saved);
-
-	}//end testAVerdictWithoutAnAnswerIsRefusedAndStoresNothing()
-
-	/**
-	 * A draft article is not there as far as an anonymous reader is concerned.
-	 *
-	 * The verdict endpoint is public, so answering anything but 404 on a draft
-	 * would confirm the draft exists.
-	 */
-	public function testAVerdictOnADraftArticleIsNotFoundAndStoresNothing(): void {
-		$store = $this->objectStore(['id' => 'art-1', 'draft' => true]);
-		$this->catalogueService->method('getObjectService')->willReturn($store);
-		$this->request->method('getParam')->willReturnCallback(
-			static function (string $key, $default = null) {
-				if ($key === 'helpful') {
-					return 'true';
-				}
-
-				return $default;
-			}
-		);
-		$this->request->method('getRemoteAddress')->willReturn('203.0.113.7');
-
-		$response = $this->controller->recordVerdict('art-1');
-
-		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-		$this->assertSame([], $store->saved);
-
-	}//end testAVerdictOnADraftArticleIsNotFoundAndStoresNothing()
-
-	/**
-	 * A first verdict counts, and both the verdict and the article are stored.
-	 */
-	public function testAFirstVerdictIsCountedAndBothHalvesAreStored(): void {
-		$store = $this->objectStore(['id' => 'art-1', 'draft' => false, 'helpfulCount' => 2]);
-		$this->catalogueService->method('getObjectService')->willReturn($store);
-		$this->request->method('getParam')->willReturnCallback(
-			static function (string $key, $default = null) {
-				if ($key === 'helpful') {
-					return 'true';
-				}
-
-				if ($key === 'readerToken') {
-					return 'reader-abc';
-				}
-
-				return $default;
-			}
-		);
-
-		$response = $this->controller->recordVerdict('art-1');
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$data = $response->getData();
-		$this->assertTrue($data['counted']);
-		$this->assertSame(3, $data['helpful']);
-
-		// The verdict row and the article, in that order, and the verdict
-		// carries a hash rather than the token the reader sent.
-		$this->assertCount(2, $store->saved);
-		$this->assertArrayHasKey('readerHash', $store->saved[0]);
-		$this->assertNotSame('reader-abc', $store->saved[0]['readerHash']);
-		$this->assertSame(3, $store->saved[1]['helpfulCount']);
-
-	}//end testAFirstVerdictIsCountedAndBothHalvesAreStored()
-
-	/**
-	 * The same reader voting twice changes nothing and stores nothing.
-	 *
-	 * The count is the published number, so a second vote that landed would
-	 * let one reader move it as far as they liked.
-	 */
-	public function testASecondVerdictFromTheSameReaderIsNotCountedAndStoresNothing(): void {
-		$articleService = new KnowledgeArticleService(salt: 'test-salt');
-		$hash = $articleService->readerHash(readerToken: 'token:reader-abc');
-
-		$store = $this->objectStore(
-			['id' => 'art-1', 'draft' => false, 'helpfulCount' => 2],
-			[['readerHash' => $hash, 'helpful' => true]]
-		);
-		$this->catalogueService->method('getObjectService')->willReturn($store);
-		$this->request->method('getParam')->willReturnCallback(
-			static function (string $key, $default = null) {
-				if ($key === 'helpful') {
-					return 'true';
-				}
-
-				if ($key === 'readerToken') {
-					return 'reader-abc';
-				}
-
-				return $default;
-			}
-		);
-
-		$response = $this->controller->recordVerdict('art-1');
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$data = $response->getData();
-		$this->assertFalse($data['counted']);
-		$this->assertSame(2, $data['helpful']);
-		$this->assertSame([], $store->saved);
-
-	}//end testASecondVerdictFromTheSameReaderIsNotCountedAndStoresNothing()
 
 	/**
 	 * The preflight answers the browser without touching the catalogue.

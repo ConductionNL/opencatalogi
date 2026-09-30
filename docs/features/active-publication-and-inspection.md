@@ -59,25 +59,6 @@ learns the period is over rather than that something is broken.
 A window whose dates cannot be read refuses. Read as open it publishes past the
 term; read as closed it withholds what is owed.
 
-## The process around a publication
-
-Publish as a button hides four decisions: which documents, whether a zienswijze
-round is needed, who approves, and which channels receive it. So publication is
-a small process with those four steps, each recording who completed it and
-when.
-
-A municipality that wants one action configures the steps away. A skipped step
-is recorded as configured off, never as done, so a later reading can tell an
-approval that happened from one that was never asked for.
-
-### The zienswijze round
-
-An ask goes out over a channel that identifies the recipient. A channel that
-cannot say who answered is refused, because the answer is what permits the
-publication to go ahead. While an ask is open inside its term the publication
-is held and the open ask is named. An ask past its term no longer holds it: the
-party was asked and did not answer.
-
 ## Taking a publication back
 
 `POST /api/publications/depublish` is one action. It records who and why, and
@@ -98,6 +79,48 @@ composed notices are returned anyway so an operator can see what would have
 been sent. A 200 with nothing delivered would let a partial announcement read
 as a complete one.
 
+An administrator announces a decision from the publication page, in the
+Official notice block. They choose the publication type and the effective date,
+and the block lists each channel with its result.
+
+### Channel sources
+
+Each national channel is sent through an integriq source. You choose it in the
+admin settings, Woo section, under National delivery channels: enter the slug
+of the source as integriq shows it, for the Woo index, the national publication
+platform and PLOOI. A channel without a source fails at once, with a message
+that names the channel and the `channel_sources` setting.
+
+The official notice for the national publication platform goes through
+integriq's `publicatie` gateway as a reference to the document plus a
+publication instruction, never as the document itself.
+
+### PLOOI
+
+Turn on Deliver to PLOOI on a catalogue, and every publication in it is sent
+to PLOOI, the delivery API of open.overheid.nl, when it becomes public. The
+delivery runs in a background job, so publishing never waits for PLOOI. The
+publication page shows the result in the PLOOI delivery block: the status, the
+time, the identifier PLOOI gave, and the reason when it failed. A failed
+delivery does not undo the publishing.
+
+### Woo information categories
+
+You file a publication under one of the 17 information categories of the Woo
+(Wet open overheid). Pick it in the Woo information category field of the
+Publication block on the publication page. The field stores a code from
+`infocat001` to `infocat017`. A publication with any other code appears in no
+category sitemap.
+
+Each category has its own sitemap, which the national Woo index reads. That
+sitemap lists the catalogue's publications filed under the category. An
+instance that still runs a register titled `woo` keeps its old lookup too: the
+schema named after the category adds its publications to the same sitemap.
+
+`GET /api/woo/categories` returns the 17 codes with their Dutch and English
+names. A Woo request batch you publish is filed under `infocat014`, Woo requests
+and decisions.
+
 ## Which collections publish
 
 `GET` and `POST /api/published-collections` hold the configured set. A
@@ -106,31 +129,34 @@ without a release. A configuration that cannot be read refuses: read as
 "publish nothing" it silently stops a statutory publication, and read as
 "publish everything" it publishes what nobody approved.
 
-## The stamp
-
-A published document carries a stamp over the document and its publication
-metadata. A document whose bytes changed fails the check, and so does one whose
-publication metadata was edited, because a correct document published under a
-false date is its own kind of falsehood.
-
-`GET /api/publications/verification-key` publishes a fingerprint of the key,
-and `POST /api/publications/verify` checks a document against it. With no key
-configured, stamping refuses rather than producing a stamp made with an empty
-key, which would verify against an empty key and tell every reader a document
-is authentic while nobody checked anything.
-
 ## Which parts of the published standards this implements
 
-- **Woo actieve openbaarmaking** as a rule engine, a walked process and an
-  obligation overview. The DIWOO and TPOD payload profiles themselves belong to
+- **Woo actieve openbaarmaking** as a rule engine and an obligation overview. The DIWOO and TPOD payload profiles themselves belong to
   the sitemap and DCAT surfaces, not here.
 - **Terinzagelegging** as a window with a per-case document set and a link
   checked at the read. The statutory terms themselves are declared per record
   type by the organisation; this app computes from them and asserts none.
-- **The stamp** is a symmetric seal under the organisation's own key, verified
-  through this app. A detached signature a third party could check offline, and
-  anything from the eIDAS qualified-seal family, are not implemented:
-  `eidas-koppeling-publicatie` is where that belongs.
 - **The national publication platform and the national Woo index** are reached
   through integriq's gateway. This app composes the notice and the
   registration, records the answer, and holds no transport.
+
+## Publish, withdraw and publish again
+
+The publication page has a Publication status section. It says whether the publication is a draft, scheduled, public, withdrawn or archived. It shows only the buttons that apply.
+
+- **Publish now** makes a draft or scheduled publication public at once.
+- **Withdraw** asks for a reason and takes the publication off the public site at once. Every national channel it reached gets a withdrawal: the Woo-index always, PLOOI when it was delivered there. The message names any channel that has not confirmed.
+- **Publish again** makes a withdrawn publication public. Earlier depublications stay in its history.
+
+To take down one document, choose it in the Withdraw dialog. That document leaves the public site and the sitemap. The rest of the publication stays public.
+
+Archive stays the final retention step. It is not a way to withdraw.
+
+You need the right to change the publication. Without it the server refuses, and nothing is sent or changed.
+
+| call | what it does |
+|---|---|
+| `GET /api/publications/{id}/visibility` | answers `{state}` |
+| `POST /api/publications/{id}/publish` | publish now or again; 409 when it is already public |
+| `POST /api/publications/{id}/withdraw` | body `{reason}`; 409 when it is not public or scheduled |
+| `POST /api/publications/{id}/files/{fileId}/withdraw` | body `{reason}`; withdraws one document |

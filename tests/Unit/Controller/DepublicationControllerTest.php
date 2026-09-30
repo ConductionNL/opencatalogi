@@ -96,8 +96,13 @@ class DepublicationControllerTest extends TestCase {
 
 		$indexService = $this->getMockBuilder(NationalIndexService::class)
 			->disableOriginalConstructor()
-			->onlyMethods(['composeNotices', 'deliver'])
+			->onlyMethods(['composeNotices', 'deliver', 'withdraw'])
 			->getMock();
+		// No channel source is set in these tests, so every withdrawal is
+		// unreachable, as the real service answers without a source.
+		$indexService->method('withdraw')->willThrowException(
+			new \OCA\OpenCatalogi\Service\Publication\IndexUnreachableException('No integriq source is set for the channel.')
+		);
 
 		$this->controller = new DepublicationController(
 			'opencatalogi',

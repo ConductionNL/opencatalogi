@@ -4,7 +4,7 @@
 
 - [x] 1.1 `serviceStatus` schema: component, state, message, updated at (REQ-PCS-101)
 - [x] 1.2 The public status page, rendering components with their history and the date each state was set (REQ-PCS-101)
-- [x] 1.3 Subscriptions to the status page through the notification dialect, with a confirmed address for an anonymous reader (REQ-PCS-102)
+- [x] 1.3 Subscriptions to the status page through the notification dialect, with a confirmed address for an anonymous reader (REQ-PCS-102) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
 
 ## 2. The banner
 
@@ -19,8 +19,8 @@
 
 ## 4. The reader's answer
 
-- [x] 4.1 `vote` on a published record: one per reader token, distribution readable, individual votes not (REQ-PCS-106)
-- [x] 4.2 Throttle the vote and comment endpoints per address under ADR-082 (REQ-PCS-106)
+- [x] 4.1 `vote` on a published record: one per reader token, distribution readable, individual votes not (REQ-PCS-106) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
+- [x] 4.2 Throttle the vote and comment endpoints per address under ADR-082 (REQ-PCS-106) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
 
 ## 5. The markup endpoint
 

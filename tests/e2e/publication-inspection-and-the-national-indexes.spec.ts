@@ -25,11 +25,9 @@
  * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-response-date-is-computed-not-typed
  * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-link-works-inside-the-window
  * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-link-stops-when-the-window-closes
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-an-unidentified-channel-is-refused
  * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-an-unacknowledged-withdrawal-is-not-done
  * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-app-holds-no-transport
  * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-search-respects-the-anonymous-set
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-a-changed-document-fails-the-check
  */
 import type { APIRequestContext } from '@playwright/test'
 
@@ -421,69 +419,5 @@ test.describe('The national channels', () => {
 
 		expect(response.status()).toBe(400)
 		expect((await response.json()).error).toBe('depublication-refused')
-	})
-
-	test('a zienswijze over a channel that does not identify is refused', async ({
-		request: admin,
-	}) => {
-		const response = await admin.post(
-			`${API_BASE}/publication-process/zienswijze`,
-			{
-				data: {
-					publication: 'e2e-p1',
-					party: 'E2E party',
-					channel: 'anonymous-webform',
-					termDays: 14,
-				},
-			},
-		)
-
-		expect(response.status()).toBe(400)
-		expect((await response.json()).error).toBe('ask-refused')
-	})
-})
-
-test.describe('The stamp', () => {
-	test('a changed document fails the check, and an unchanged one passes', async ({
-		baseURL,
-	}) => {
-		const anon = await anonymous(baseURL as string)
-		const key = await anon.get(`${API_BASE}/publications/verification-key`)
-
-		test.skip(
-			key.status() === 503,
-			'this instance publishes no verification key',
-		)
-		expect(key.status()).toBe(200)
-
-		const published = await key.json()
-		expect(JSON.stringify(published)).not.toContain('signingKey')
-		expect(published.keyId).toBeTruthy()
-
-		// A stamp this spec did not make cannot verify, so the assertion here is
-		// the one that can be made from outside: an altered pair is refused and
-		// the refusal names why, rather than answering a bare false.
-		const verify = await anon.post(`${API_BASE}/publications/verify`, {
-			data: {
-				document: 'de inhoud',
-				metadata: {
-					id: 'e2e-d1',
-					title: 'E2E',
-					publicationDate: '2026-09-18',
-				},
-				stamp: {
-					algorithm: 'sha256',
-					keyId: published.keyId,
-					signature: 'niet-de-handtekening',
-				},
-			},
-		})
-
-		expect(verify.status()).toBe(200)
-		const outcome = await verify.json()
-		expect(outcome.valid).toBe(false)
-		expect(outcome.reason).toBe('does-not-match')
-
-		await anon.dispose()
 	})
 })

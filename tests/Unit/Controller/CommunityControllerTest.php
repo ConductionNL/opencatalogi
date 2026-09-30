@@ -30,8 +30,6 @@ use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
-use OCA\OpenCatalogi\Service\Community\SubscriptionService;
-use OCA\OpenCatalogi\Service\Community\VoteService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCP\AppFramework\Http;
@@ -92,9 +90,7 @@ class CommunityControllerTest extends TestCase {
 			$l10n,
 			$this->userSession,
 			new StatusPageService(),
-			new SubscriptionService(salt: 'test-salt'),
 			new AtomFeedService(new PublicationRuleService(), new NoticeBoardService()),
-			new VoteService(salt: 'test-salt'),
 			new MarkupRenderService(),
 			$this->objects
 		);
@@ -166,26 +162,6 @@ class CommunityControllerTest extends TestCase {
 		$this->assertSame('missing-markup', $response->getData()['error']);
 
 	}//end testRenderingWithoutAnyMarkupIsRefused()
-
-	public function testASubscriptionToAnUnusableAddressIsRefused(): void {
-		$this->withParams(['address' => 'niet-een-adres', 'scope' => 'status']);
-
-		$response = $this->controller->subscribe();
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame('subscription-refused', $response->getData()['error']);
-
-	}//end testASubscriptionToAnUnusableAddressIsRefused()
-
-	public function testAVoteWithoutAValueIsRefused(): void {
-		$this->withParams([]);
-
-		$response = $this->controller->vote(id: 'r1');
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame('missing-value', $response->getData()['error']);
-
-	}//end testAVoteWithoutAValueIsRefused()
 
 	/**
 	 * An object service stand-in that records what it was asked to store.
@@ -278,50 +254,6 @@ class CommunityControllerTest extends TestCase {
 		$this->assertSame([], $store->saved);
 
 	}//end testAnUnknownStateIsRefusedAndStoresNothing()
-
-	/**
-	 * The recipient list holds only confirmed subscriptions in that scope.
-	 *
-	 * An unconfirmed address is one nobody proved they own, so sending to it
-	 * is the thing the confirmation step exists to prevent.
-	 */
-	public function testTheRecipientListHoldsOnlyConfirmedAddressesInScope(): void {
-		$store = $this->readWriteStore(
-			[
-				['scope' => 'status', 'address' => 'confirmed@example.org', 'confirmedAt' => '2026-09-01T00:00:00+00:00'],
-				['scope' => 'status', 'address' => 'pending@example.org', 'confirmedAt' => ''],
-				['scope' => 'releases', 'address' => 'other-scope@example.org', 'confirmedAt' => '2026-09-01T00:00:00+00:00'],
-			]
-		);
-		$this->objects->method('getObjectService')->willReturn($store);
-		$this->withParams(['scope' => 'status']);
-
-		$response = $this->controller->subscriptionRecipients();
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$data = $response->getData();
-		$this->assertSame('status', $data['scope']);
-		$this->assertSame(['confirmed@example.org'], $data['recipients']);
-
-	}//end testTheRecipientListHoldsOnlyConfirmedAddressesInScope()
-
-	/**
-	 * A recipient list this app cannot read answers 503, never an empty list.
-	 *
-	 * An empty recipient list reads as "nobody asked to be told", which would
-	 * silently stop every notification.
-	 */
-	public function testAnUnreadableRecipientListAnswers503RatherThanNobody(): void {
-		$this->objects->method('getObjectService')
-			->willThrowException(new CatalogueUnreadableException('OpenRegister is unavailable'));
-		$this->withParams(['scope' => 'status']);
-
-		$response = $this->controller->subscriptionRecipients();
-
-		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
-		$this->assertSame('status-unreadable', $response->getData()['error']);
-
-	}//end testAnUnreadableRecipientListAnswers503RatherThanNobody()
 
 	/**
 	 * The preflight answers the browser without reading anything.

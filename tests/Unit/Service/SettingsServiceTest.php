@@ -618,6 +618,28 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testUpdateSettingsUnknownKeyIsSilentlyFiltered()
 
 	/**
+	 * The channel sources keep only known channels with a source slug (REQ-WND-001).
+	 *
+	 * @return void
+	 */
+	public function testChannelSourcesKeepOnlyKnownChannelsWithASlug(): void {
+		$stored = null;
+		$this->config->expects($this->once())->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored = [$key, $value];
+				return true;
+			}
+		);
+
+		$this->service->updateSettings(
+			['channel_sources' => ['plooi' => ' plooi-api ', 'national-woo-index' => '', 'somewhere-else' => 'x']]
+		);
+
+		$this->assertSame(['channel_sources', '{"plooi":"plooi-api"}'], $stored);
+
+	}//end testChannelSourcesKeepOnlyKnownChannelsWithASlug()
+
+	/**
 	 * Returns empty array when no settings are passed.
 	 *
 	 * @return void

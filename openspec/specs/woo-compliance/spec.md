@@ -9,7 +9,9 @@ status: in-progress
 @e2e exclude pure backend/API spec — all scenarios test server-side PHP XML sitemap generation, DIWOO metadata mapping, robots.txt rendering, and catalog schema queries; no browser-observable UI surface; covered by Newman API tests instead.
 
 OpenCatalogi supports Dutch WOO (Wet Open Overheid) compliance by generating XML sitemaps and robots.txt files that conform to the DIWOO metadata standard. This enables government organizations to make their publications discoverable by the Dutch government's central search index (KOOP/DIWOO). Sitemaps are generated per catalog and per WOO information category (informatiecategorie), mapping publications to the DIWOO XML schema with proper metadata including creation dates, publishers, file formats, and document handling information.
+
 ## Requirements
+
 ### Requirement: Generate XML sitemap index per catalog per WOO information category (WOO-001)
 The system MUST generate an XML sitemap index per catalog per WOO information category.
 
@@ -309,6 +311,130 @@ and MUST NOT perform any outbound request.
 - AND no outbound HTTP request may be made.
 
 > @e2e exclude Backend auth/fail-mode contract; covered by PHPUnit.
+
+### Requirement: A hand-over to a national channel calls the gateway with a real source (REQ-WND-001)
+
+The hand-over to any national channel SHALL resolve the channel to an integriq source object named in the `channel_sources` setting and call the gateway with that object. A channel with no source configured SHALL fail before any call, with a message that names the channel and the setting.
+
+#### Scenario: A configured channel is reached
+
+- **GIVEN** the Woo index channel has a source set in the Woo settings
+- **WHEN** an admin requests registration with the Woo index
+- **THEN** the gateway is called with that source object and the stored answer is the platform's reply
+
+#### Scenario: A channel with no source
+
+- **GIVEN** the PLOOI channel has no source set
+- **WHEN** a delivery to PLOOI is attempted
+- **THEN** it fails with a message naming the PLOOI channel and the `channel_sources` setting
+- **AND** nothing is recorded as delivered
+
+### Requirement: Official notices travel by reference through the publication gateway (REQ-WND-002)
+
+An official notice for the national publication platform SHALL be sent by dispatching a gateway delivery request for the `publicatie` gateway that carries a document reference and a publication instruction, and never the document itself. A request that integriq does not take SHALL be reported as unreachable and never as acknowledged.
+
+#### Scenario: A notice is announced
+
+- **GIVEN** a decision with a publication type and an effective date
+- **WHEN** an admin announces it
+- **THEN** a `publicatie` delivery request is dispatched with the reference and the instruction
+- **AND** the response shows the delivery returned by integriq
+
+#### Scenario: integriq is not installed
+
+- **GIVEN** no integriq app answers the request
+- **WHEN** an admin announces a decision
+- **THEN** the response says the channel could not be reached
+- **AND** the notice is not marked as sent
+
+### Requirement: A publication that turns public is delivered to PLOOI when the catalogue asks for it (REQ-WND-003)
+
+When a publication in a catalogue with `plooiDelivery` on becomes public, the app SHALL post its DiWoo metadata and document links to the PLOOI source and store `plooiStatus`, `plooiDeliveredAt` and `plooiIdentifier` on the publication. A failed delivery SHALL store `plooiStatus` as failed with the reason, and SHALL NOT block publishing.
+
+#### Scenario: A publication is published
+
+- **GIVEN** a catalogue with `plooiDelivery` on and a PLOOI source set
+- **WHEN** an editor publishes a publication in it
+- **THEN** the publication shows the PLOOI delivery status and the identifier returned by the platform
+
+#### Scenario: PLOOI refuses
+
+- **GIVEN** the PLOOI source answers with an error
+- **WHEN** an editor publishes a publication
+- **THEN** the publication is public
+- **AND** its `plooiStatus` is failed with the platform's reason
+
+### Requirement: The announce endpoint has a screen (REQ-WND-004)
+
+The publication page SHALL offer an Announce action for an admin that calls `POST /api/publications/announce` and shows the delivery result per channel.
+
+#### Scenario: An admin announces a decision
+
+- **GIVEN** an admin on the page of a publication that is a decision
+- **WHEN** the admin chooses Announce
+- **THEN** the page lists each channel with its delivery result
+
+### Requirement: A publication stores the Woo information category it belongs to (REQ-WPC-001)
+
+The publication schema SHALL carry an optional property `wooCategory` whose value is one of the codes `infocat001` to `infocat017`. A value outside that list SHALL fail validation against the publication schema, and no category sitemap SHALL list it.
+
+#### Scenario: An editor files a publication
+
+- **GIVEN** an editor on a publication in a Woo-enabled catalogue
+- **WHEN** the editor chooses "Jaarplannen en jaarverslagen" in the category select and saves
+- **THEN** the stored publication has `wooCategory` equal to `infocat012`
+
+> @e2e exclude The value is written by the generic nc-vue data widget into OpenRegister; the stored property and its enum are proven by PHPUnit against the shipped schema fragment (PublicationWooCategoryTest).
+
+#### Scenario: An unknown code is refused
+
+- **GIVEN** a publication with `wooCategory` set to `infocat099`
+- **WHEN** it is validated against the publication schema
+- **THEN** validation fails with an error naming the property
+
+> @e2e exclude Schema validation contract; PHPUnit validates the payload with the Opis validator against the shipped fragment (PublicationWooCategoryTest).
+
+### Requirement: Each category sitemap lists the publications filed under it (REQ-WPC-002)
+
+`GET` on the sitemap of category `infocat012` for a Woo catalogue SHALL list the publications of that catalogue whose `wooCategory` is `infocat012` and no others. On an instance that still runs a register titled `woo`, the schema-title lookup SHALL contribute its rows as well. The DiWoo information category of a listed document SHALL come from `wooCategory` when it is set.
+
+#### Scenario: The harvester reads one category
+
+- **GIVEN** three publications, two with `infocat012` and one with `infocat004`
+- **WHEN** the national Woo index harvester requests the sitemap of `infocat012`
+- **THEN** the sitemap lists exactly the two publications filed under it
+
+> @e2e exclude Server-side XML sitemap generation with no browser surface; PHPUnit (SitemapServiceTest) builds the sitemap from three filed publications.
+
+### Requirement: The editor is offered the 17 categories (REQ-WPC-003)
+
+`GET /api/woo/categories` SHALL return the 17 codes with their Dutch and English names for an admin or an editor, and the publication form SHALL show them in a labelled select.
+
+#### Scenario: The select lists all categories
+
+- **GIVEN** an editor opening a new publication in a Woo-enabled catalogue
+- **WHEN** the category select is opened
+- **THEN** it lists 17 options, each named in the user's language
+
+> @e2e exclude The options come from the schema enum and its x-enum-labels through the generic nc-vue select; the enum, labels and Dutch names are asserted by PHPUnit (PublicationWooCategoryTest), the API list by tests/e2e/woo-category.spec.ts.
+
+#### Scenario: The category list is read over the API
+
+- **GIVEN** a signed-in user
+- **WHEN** they call `GET /api/woo/categories`
+- **THEN** the response lists 17 categories, each with its code, Dutch name and English name
+
+### Requirement: A batch publish from a Woo request files under the decision category (REQ-WPC-004)
+
+Publishing a batch from a Woo request SHALL set `wooCategory` to `infocat014` on the publication record it stores on the batch.
+
+#### Scenario: A batch is published
+
+- **GIVEN** an approved Woo request batch
+- **WHEN** the batch is published
+- **THEN** the publication record stored on the batch has `wooCategory` equal to `infocat014`
+
+> @e2e exclude Needs an approved batch with a completed approval chain, which the e2e harness does not seed; PHPUnit (WooServiceTest) publishes a batch and reads it back.
 
 ## Data Model
 
