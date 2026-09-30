@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Portal;
 
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -40,10 +41,12 @@ class PublicSearchRunner {
 	 *
 	 * @param PublicationQueryService $queries   The public search.
 	 * @param ContainerInterface      $container Resolves OpenRegister.
+	 * @param IAppManager             $appManager Whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly PublicationQueryService $queries,
 		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -58,6 +61,11 @@ class PublicSearchRunner {
 	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-matching-finds-only-publications-the-resident-could-have-found-new-since-the-last-run-req-ssa-002
 	 */
 	public function search(array $params): array {
+		// ADR-083: without OpenRegister there is nothing to search.
+		if ($this->appManager->isInstalled('openregister') === false) {
+			return [];
+		}
+
 		$result = $this->queries->assemblePublicSearchResults(
 			queryParams: $params,
 			objectService: $this->container->get('OCA\OpenRegister\Service\ObjectService')
