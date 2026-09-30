@@ -51,3 +51,12 @@ None. No schema changes.
 
 - An operator who adds the rule to the vhost but not to `.htaccess` (or the reverse) still sees a failing check. The panel names both places.
 - The KOOP registration process may stay a form and an e-mail. Then the gateway source composes that e-mail; the contract here stays the same.
+
+## As built (30 Sep 2026)
+
+- **The registration has its own service and controller.** `WooRegistrationService` composes, sends and records; `WooRegistrationController` serves `GET /api/woo/registration` (the stored registration, the composed request and the two root rules), `POST /api/woo/registration` and `POST /api/woo/registration/confirm`. `WooReadinessService` stays under phpmd's class length; it only gains a public `getWooEnabledCatalogs()` and `runWhenEnabled()`.
+- **The rules are rendered on the server,** from `IURLGenerator::getBaseUrl()`, so an instance under a sub-path gets a rule for its own route. The nginx rule is an internal `rewrite ... last` inside `location = /robots.txt`, not a redirect, so a harvester reads the file at the root URL.
+- **An unreachable gateway answers 502** with the composed request and the unchanged registration.
+- **The organisation comes from each Woo-enabled catalogue's `organization`,** read from OpenRegister for its name and `tooiIdentifier`, the same lookup the DiWoo sitemap uses for the publisher.
+- **The one-off check is a `QueuedJob`** (`WooReadinessCheckNow`), queued by `WooReadinessTriggerListener` on `ObjectCreatedEvent` and on an `ObjectUpdatedEvent` whose old catalogue did not publish Woo and whose new one does. The daily `TimedJob` (`WooReadinessCheck`) is registered in `appinfo/info.xml`.
+- **robots.txt starts with `User-agent: *`** and the two `Allow:` lines, then the `Sitemap:` lines. The sitemap index names keep their existing form (`sitemapindex-diwoo-infocat001.xml`).
