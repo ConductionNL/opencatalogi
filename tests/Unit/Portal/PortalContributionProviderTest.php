@@ -79,6 +79,8 @@ class PortalContributionProviderTest extends TestCase {
 		$this->assertArrayNotHasKey('scopeClaim', $dossiers);
 		$this->assertNotContains('owner', $dossiers['fields']);
 		$this->assertSame(['viewDossier', 'removeFromDossier', 'noteOnDossier', 'shareDossier', 'unshareDossier', 'deleteDossier'], $dossiers['rowActions']);
+		$this->assertSame(['label' => 'Documenten', 'provider' => 'dossierItems', 'removeAction' => 'removeFromDossier'], $dossiers['itemList']);
+		$this->assertTrue(method_exists(PortalContributionProvider::class, 'dossierItems'));
 
 		$searches = $collections['mySavedSearches'];
 		$this->assertSame('savedSearch', $searches['schema']);
@@ -104,6 +106,8 @@ class PortalContributionProviderTest extends TestCase {
 		$this->assertSame('/index.php/apps/opencatalogi/api/portal/collections/items', $actions['addToDossier']['endpoint']);
 		$this->assertSame(['collection', 'title', 'publication', 'attachment', 'note'], $actions['addToDossier']['fields']);
 		$this->assertSame('/index.php/apps/opencatalogi/api/portal/saved-searches', $actions['saveSearch']['endpoint']);
+		$this->assertSame(['itemId'], $actions['removeFromDossier']['fields']);
+		$this->assertSame(['itemId', 'note'], $actions['noteOnDossier']['fields']);
 		$this->assertSame(['title', 'query', 'frequency'], $actions['saveSearch']['fields']);
 
 		foreach (['viewDossier', 'removeFromDossier', 'noteOnDossier', 'shareDossier', 'unshareDossier', 'deleteDossier'] as $id) {

@@ -113,6 +113,10 @@ class PortalCollectionControllerTest extends TestCase {
 		$owner = PortalAssertionVerifierTest::mint(['sub' => 'subject-1']);
 		$made = $this->controller(['title' => 'Windpark', 'publication' => self::PUB], $owner)->addItem()->getData();
 		$share = $this->controller(['collection' => $made['id']], $owner)->share()->getData();
+		$this->assertSame('/index.php/apps/opencatalogi/api/collections/shared/'.$share['token'], $share['link']);
+
+		$removed = $this->controller(['collection' => $made['id'], 'itemId' => $made['items'][0]['id']], PortalAssertionVerifierTest::mint(['sub' => 'subject-2']))->removeItem();
+		$this->assertSame(404, $removed->getStatus());
 
 		$shared = new SharedCollectionController(appName: 'opencatalogi', request: $this->createMock(IRequest::class), collections: $this->collections, logger: new NullLogger());
 		$response = $shared->show(token: $share['token']);
