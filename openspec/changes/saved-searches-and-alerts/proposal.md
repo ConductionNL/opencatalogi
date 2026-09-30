@@ -9,7 +9,7 @@ depends_on: [citizen-collections, woo-dossier-publication]
 
 A resident who follows a subject, say a wind farm or the council's decisions on housing, has to search again every week to see what is new. The Woo citizen journey (hydra `openspec/changes/woo-citizen-journey`, contracts C2 and C3, journey J6) lets them save a search and hear about new publications that match it.
 
-Ruben decided on 30 September 2026: alerts reach the portal inbox, email and Berichtenbox, daily by default, with immediate and weekly per saved search.
+Ruben decided on 30 September 2026: alerts reach the portal inbox and email, daily by default, with immediate and weekly per saved search. There is no Berichtenbox delivery in this journey: it needs a BSN, and nothing here stores one.
 
 ## What changes
 
@@ -26,7 +26,7 @@ Ruben decided on 30 September 2026: alerts reach the portal inbox, email and Ber
 
 ## Deviations from the contract, found in the code
 
-- C3 says the sender writes a `portalMessage`. portaliq does not dispatch email or Berichtenbox for a message another app writes: `PortalRecordChangeListener::onCreated()` skips portaliq's own messages, and `portalMessage` has no rule key. The path that delivers today is a change rule in the sender's manifest, which portaliq turns into the inbox message plus the email and push dispatch. opencatalogi uses that path and keeps the contract's rule key. Berichtenbox for change rules is the portaliq lane's.
+- C3 says the sender writes a `portalMessage`. portaliq does not send email for a message another app writes today: `PortalRecordChangeListener::onCreated()` skips portaliq's own messages, and `portalMessage` has no rule key (the portaliq lane adds an optional one). The path that delivers today, and stays valid, is a change rule in the sender's manifest, which portaliq turns into the inbox message plus the email and push dispatch. opencatalogi uses that path and keeps the contract's rule key.
 - `lastMatches` (at most 20 `{ publication, title, url, publicationDate }`) and `matchCount` are added to C2. portaliq's change-rule message carries no body of the sender's, so the saved search itself lists what was found.
 - One-click unsubscribe (J6.5) is `pauseSavedSearch` on the saved search the notice opens. portaliq's email carries no sender content, so a signed link in the email is not possible on this path.
 
