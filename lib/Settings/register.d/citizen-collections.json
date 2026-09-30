@@ -20,7 +20,7 @@
 			"collection": {
 				"slug": "collection",
 				"title": "Dossier",
-				"version": "0.1.0",
+				"version": "0.1.1",
 				"published": "2026-09-30T00:00:00+00:00",
 				"summary": "Publications and documents a resident keeps together",
 				"description": "A resident's private dossier of Woo publications (hydra woo-citizen-journey, contract C1). The owner is the portal subject reference, set by the server. Only the owner reads it through the portal, and anyone reads it through a share link while the link exists, then only its public items.",
@@ -90,10 +90,7 @@
 									"description": "The publication this item points at."
 								},
 								"attachment": {
-									"type": [
-										"string",
-										"null"
-									],
+									"type": "string",
 									"title": "Document",
 									"description": "The file id of one document of the publication, or null for the whole publication."
 								},
