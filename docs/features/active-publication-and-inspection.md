@@ -139,3 +139,24 @@ without a release. A configuration that cannot be read refuses: read as
 - **The national publication platform and the national Woo index** are reached
   through integriq's gateway. This app composes the notice and the
   registration, records the answer, and holds no transport.
+
+## Publish, withdraw and publish again
+
+The publication page has a Publication status section. It says whether the publication is a draft, scheduled, public, withdrawn or archived. It shows only the buttons that apply.
+
+- **Publish now** makes a draft or scheduled publication public at once.
+- **Withdraw** asks for a reason and takes the publication off the public site at once. Every national channel it reached gets a withdrawal: the Woo-index always, PLOOI when it was delivered there. The message names any channel that has not confirmed.
+- **Publish again** makes a withdrawn publication public. Earlier depublications stay in its history.
+
+To take down one document, choose it in the Withdraw dialog. That document leaves the public site and the sitemap. The rest of the publication stays public.
+
+Archive stays the final retention step. It is not a way to withdraw.
+
+You need the right to change the publication. Without it the server refuses, and nothing is sent or changed.
+
+| call | what it does |
+|---|---|
+| `GET /api/publications/{id}/visibility` | answers `{state}` |
+| `POST /api/publications/{id}/publish` | publish now or again; 409 when it is already public |
+| `POST /api/publications/{id}/withdraw` | body `{reason}`; 409 when it is not public or scheduled |
+| `POST /api/publications/{id}/files/{fileId}/withdraw` | body `{reason}`; withdraws one document |

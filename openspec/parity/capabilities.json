@@ -868,10 +868,10 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:737 PublicationDetail lifecycleActions {field: status} -> nextcloud-vue CnDetailPage.vue:163 CnLifecycleActions; publication_register.json:218 only transition archive (published->archived, final); PublicationQueryService.php:453 hides archived publicly; publishing itself = setting publicationDate (PublicationQueryService.php:1008-1040)",
-				"change": "openspec/changes/publications-publish-and-withdraw-action"
+				"evidence": "PublicationStateController (GET /api/publications/{id}/visibility, POST .../publish, .../withdraw, .../files/{fileId}/withdraw), rights from OpenRegister's PermissionHandler via PublicationRights before any side effect; PublicationStateService computes draft/scheduled/public/withdrawn/archived from the dates; publication-visibility widget in src/manifest.json PublicationDetail with src/dialogs/publication/WithdrawPublicationDialog.vue; depublication.file for a single document; Archive stays the final lifecycle step",
+				"change": "openspec/changes/archive/2026-09-30-publications-publish-and-withdraw-action"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id header Archive action",
 			"note": "Withdrawing is one action (Archive) but cannot be undone. Publishing is a date field, not a status change. DepublicationController (/api/publications/depublish) and PublishPublicationDialog have no mounted caller. Specified in openspec/changes/publications-publish-and-withdraw-action (OpenSpec pass 2026-09-27).",

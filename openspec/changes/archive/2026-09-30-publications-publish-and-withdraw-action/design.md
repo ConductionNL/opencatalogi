@@ -50,3 +50,14 @@ The second seed publication gets a past `depublicationDate` and one `depublicati
 
 - `headerActions` on `CnDetailPage` may be newer than the pinned library version. Task 1.1 checks it first; if absent, the change waits for the library bump rather than adding a custom component.
 - Two editors withdraw at once. The second call finds the state `withdrawn` and answers 409 without a second depublication.
+
+## As built (30 Sep 2026): where the design did not fit the code
+
+Read at `@conduction/nextcloud-vue` 2.57.1, the version the app resolves.
+
+- **The actions are a body widget, not `headerActions`.** `CnDetailPage` does take `headerActions`, but two things the design leaned on are not there. `visibleWhen` in `endpoint` mode fetches the URL as written (`src/utils/visibleWhen.js`, `readVisibleWhenValue`), so `@objectId` stays a literal and every publication page would ask the same wrong URL. And `open-form` opens a create form for a register schema (`CnActionButtons.openForm`); it cannot post a reason to an app endpoint. So Publish now, Withdraw and Publish again live in the `publication-visibility` widget on the publication page, the same shape as the Official notice widget. The widget reads `GET /api/publications/{id}/visibility` and shows each button only when its move applies. The reason dialog is `src/dialogs/publication/WithdrawPublicationDialog.vue`.
+- **One document is withdrawn from the same dialog.** The Attachments section is OpenRegister's files integration, which offers no row action a leaf app can add to. The Withdraw dialog lists the publication's documents; leaving the choice empty withdraws the whole publication.
+- **The rights check comes first, from OpenRegister.** `PublicationRights::mayUpdate()` asks OpenRegister's `PermissionHandler::hasPermission()` for `update` on the loaded object before anything is sent or saved; the publication save itself also runs with RBAC on. A withdrawal writes the publication's `depublicationDate` first and sends the channel withdrawals after, so a mistake is off the public API even when a channel cannot be reached.
+- **The channels come from the publication.** A publication that was public reached the national Woo-index, which harvests the DiWoo sitemap. PLOOI is added when `plooiStatus` is `delivered`.
+- **A depublication is stored without null values.** An outstanding withdrawal has no `acknowledgedAt` and no answer yet. The schema types both as strings, so the stored record leaves them out; the raw record with nulls would be refused (`PublicationStateServiceTest::testTheStoredDepublicationIsOneTheRegisterAccepts`).
+- **Publish now and Publish again have no confirm step.** Both are undone by one click on Withdraw; only Withdraw, which writes to national channels, asks first.
