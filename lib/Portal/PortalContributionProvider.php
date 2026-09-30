@@ -3,11 +3,12 @@
 /**
  * OpenCatalogi Portal Contribution Provider.
  *
- * opencatalogi's contribution to portaliq, the shared portal for residents
+ * OpenCatalogi's contribution to portaliq, the shared portal for residents
  * (hydra ADR-046, contract v2 and manifest v3). portaliq finds this class by
  * its conventional name `OCA\OpenCatalogi\Portal\PortalContributionProvider`
  * and duck-types it, so the class is plain: no portaliq import, no
- * `implements`, no constructor dependencies. Without portaliq it is inert.
+ * `implements`, and only an optional service for `dossierItems()`. Without
+ * portaliq it is inert.
  *
  * It gives a signed-in resident, in the audience `citizen` or `client` (DigiD
  * currently maps to `client`), two things of the Woo citizen journey (hydra
@@ -89,7 +90,7 @@ class PortalContributionProvider {
 	/**
 	 * The items of one dossier, for portaliq's `itemList` (hydra C7).
 	 *
-	 * portaliq calls this only after the resident's own scoped read of the
+	 * Portaliq calls this only after the resident's own scoped read of the
 	 * dossier succeeded, so it does not check the owner again.
 	 *
 	 * @param string $collectionId The dossier id.
@@ -248,7 +249,13 @@ class PortalContributionProvider {
 				'successMessage' => 'Bewaard in uw dossier',
 			],
 			$this->rowAction(id: 'viewDossier', label: 'Openen', path: '/collections/view', rowField: 'collection', fields: []),
-			$this->rowAction(id: 'removeFromDossier', label: 'Uit dossier halen', path: '/collections/items/remove', rowField: 'collection', fields: ['itemId']),
+			$this->rowAction(
+				id: 'removeFromDossier',
+				label: 'Uit dossier halen',
+				path: '/collections/items/remove',
+				rowField: 'collection',
+				fields: ['itemId']
+			),
 			$this->rowAction(id: 'noteOnDossier', label: 'Notitie schrijven', path: '/collections/note', rowField: 'collection', fields: ['itemId', 'note']),
 			$this->rowAction(id: 'shareDossier', label: 'Deellink maken', path: '/collections/share', rowField: 'collection', fields: []),
 			$this->rowAction(id: 'unshareDossier', label: 'Deellink intrekken', path: '/collections/unshare', rowField: 'collection', fields: []),

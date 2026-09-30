@@ -62,6 +62,18 @@ final class SearchQueryTranslator {
 	 * @spec openspec/changes/woo-dossier-publication/specs/publications/spec.md#requirement-public-search-takes-the-portals-filter-names-req-wdp-002
 	 */
 	public static function translateSearchParams(array $params): array {
+		return self::periodToRange(params: self::renameFilters(params: $params));
+
+	}//end translateSearchParams()
+
+	/**
+	 * Rename the portal's filter names to the publication's properties.
+	 *
+	 * @param array<string, mixed> $params The parameters.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function renameFilters(array $params): array {
 		foreach (self::RENAMES as $portal => $property) {
 			if (array_key_exists($portal, $params) === false) {
 				continue;
@@ -74,6 +86,18 @@ final class SearchQueryTranslator {
 			unset($params[$portal]);
 		}
 
+		return $params;
+
+	}//end renameFilters()
+
+	/**
+	 * Turn `periodFrom` and `periodTo` into a `publicationDate` range.
+	 *
+	 * @param array<string, mixed> $params The parameters.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function periodToRange(array $params): array {
 		foreach (self::PERIOD as $portal => $operator) {
 			if (array_key_exists($portal, $params) === false) {
 				continue;
@@ -99,7 +123,7 @@ final class SearchQueryTranslator {
 
 		return $params;
 
-	}//end translateSearchParams()
+	}//end periodToRange()
 
 	/**
 	 * The search parameters for a saved query (contract C2 shape).
