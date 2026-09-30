@@ -1805,7 +1805,6 @@
             "title": "Besluit op het Woo-verzoek over windpark Noord"
           }
         ],
-        "share": null,
         "sourceOf": []
       },
       {
@@ -1828,7 +1827,6 @@
             "title": "Advies over het bestemmingsplan centrum"
           }
         ],
-        "share": null,
         "sourceOf": []
       },
       {
@@ -1841,7 +1839,6 @@
         "description": "Voor de ledenvergadering.",
         "owner": "demo-inwoner-2",
         "items": [],
-        "share": null,
         "sourceOf": [
           "ZAAK-2026-0042"
         ]
