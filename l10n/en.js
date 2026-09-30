@@ -1311,7 +1311,9 @@ OC.L10N.register(
         "From": "From",
         "The first day the documents cover.": "The first day the documents cover.",
         "Until": "Until",
-        "The last day the documents cover.": "The last day the documents cover."
+        "The last day the documents cover.": "The last day the documents cover.",
+        "The information category the publication is filed under. Without one it is filed under Woo requests and decisions.": "The information category the publication is filed under. Without one it is filed under Woo requests and decisions.",
+        "The title the publication gets. Without one it is named after the case reference.": "The title the publication gets. Without one it is named after the case reference."
     },
     "nplurals=2; plural=(n != 1);"
 )

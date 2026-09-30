@@ -48,7 +48,7 @@ class WooFakeObjectService {
 
 	public int $counter = 0;
 
-	public function find(string $id) {
+	public function find(string $id, mixed ...$rest) {
 		foreach ($this->objects as $object) {
 			if ((string)($object['id'] ?? '') === $id) {
 				return $object;
@@ -58,7 +58,11 @@ class WooFakeObjectService {
 		throw new \RuntimeException('not found');
 	}//end find()
 
+	/** @var array<int, array{register: mixed, schema: mixed}> */
+	public array $saveTargets = [];
+
 	public function saveObject(array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true) {
+		$this->saveTargets[] = ['register' => $register, 'schema' => $schema];
 		if (($uuid === null || $uuid === '') && empty($object['id']) === true) {
 			$this->counter++;
 			$object['id'] = 'obj-' . $this->counter;
@@ -77,6 +81,41 @@ class WooFakeObjectService {
 		$this->objects[] = $object;
 		return $object;
 	}//end saveObject()
+}//end class
+
+/**
+ * Duck-typed fake of the consumed OpenRegister FileService.
+ */
+class WooFakeFileService {
+
+	/** @var array<int, array{target: mixed, name: string, content: string}> */
+	public array $added = [];
+
+	/** @var array<int, int> */
+	public array $published = [];
+
+	public ?string $failOn = null;
+
+	public function addFile(mixed $objectEntity, string $fileName, mixed $content, bool $share = false, array $tags = [], mixed $_schema = null, mixed $_register = null, mixed $registerId = null): object {
+		if ($this->failOn === $fileName) {
+			throw new \RuntimeException('disk full');
+		}
+
+		$this->added[] = ['target' => $objectEntity, 'name' => $fileName, 'content' => (string)stream_get_contents($content)];
+		$id = (100 + count($this->added));
+		return new class($id) {
+			public function __construct(private int $id) {
+			}
+			public function getId(): int {
+				return $this->id;
+			}
+		};
+	}//end addFile()
+
+	public function publishFile(mixed $object, string|int $file): object {
+		$this->published[] = (int)$file;
+		return new \stdClass();
+	}//end publishFile()
 }//end class
 
 /**
@@ -180,6 +219,11 @@ class WooServiceTest extends TestCase {
 
 	private WooFakeTaskSequenceMapper $sequences;
 
+	private WooFakeFileService $files;
+
+	/** @var array<string, \OCP\Files\File> Documents the root folder knows, by reference. */
+	private array $documents = [];
+
 	private WooService $service;
 
 	/** @var array<string, string> */
@@ -194,6 +238,10 @@ class WooServiceTest extends TestCase {
 		$this->objects = new WooFakeObjectService();
 		$this->deck = new WooFakeDeckService();
 		$this->sequences = new WooFakeTaskSequenceMapper();
+		$this->files = new WooFakeFileService();
+		foreach (['doc-a' => 'a.pdf', 'doc-b' => 'b.pdf', 'doc-c-anon' => 'c-gelakt.pdf'] as $reference => $name) {
+			$this->documents['/alice/files/'.$reference] = $this->document($name);
+		}
 
 		$this->store = [
 			'woo_register' => '1',
@@ -220,6 +268,10 @@ class WooServiceTest extends TestCase {
 					return $this->sequences;
 				}
 
+				if ($id === 'OCA\OpenRegister\Service\FileService') {
+					return $this->files;
+				}
+
 				throw new \RuntimeException('unknown service ' . $id);
 			}
 		);
@@ -239,12 +291,28 @@ class WooServiceTest extends TestCase {
 		$user->method('getUID')->willReturn('alice');
 		$this->userSession->method('getUser')->willReturn($user);
 
+		$userFolder = $this->createMock(\OCP\Files\Folder::class);
+		$userFolder->method('get')->willReturnCallback(
+			fn (string $path) => ($this->documents['/alice/files/'.$path] ?? throw new \OCP\Files\NotFoundException($path))
+		);
+		$root = $this->createMock(\OCP\Files\IRootFolder::class);
+		$root->method('getUserFolder')->with('alice')->willReturn($userFolder);
+		$root->method('get')->willReturnCallback(
+			fn (string $path) => ($this->documents[$path] ?? throw new \OCP\Files\NotFoundException($path))
+		);
+		$root->method('getFirstNodeById')->willReturnCallback(
+			fn (int $id) => ($this->documents['id:'.$id] ?? null)
+		);
+		$linker = $this->createMock(\OCA\OpenCatalogi\Service\Portal\PublicationLinker::class);
+		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/'.$id);
+
 		$this->service = new WooService(
 			$this->config,
 			$this->container,
 			$this->userSession,
 			$this->logger,
 			$this->l10n,
+			new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $linker, $this->l10n),
 		);
 
 	}//end setUp()
@@ -480,6 +548,188 @@ class WooServiceTest extends TestCase {
 	}//end testPublishFilesTheBatchUnderTheWooRequestCategory()
 
 	/**
+	 * A Nextcloud file double with a name and content.
+	 *
+	 * @param string $name The file name.
+	 *
+	 * @return \OCP\Files\File
+	 */
+	private function document(string $name): \OCP\Files\File {
+		$file = $this->createMock(\OCP\Files\File::class);
+		$file->method('getName')->willReturn($name);
+		$file->method('fopen')->willReturnCallback(static function () use ($name) {
+			$stream = fopen('php://memory', 'r+');
+			fwrite($stream, 'inhoud van '.$name);
+			rewind($stream);
+			return $stream;
+		});
+		return $file;
+	}//end document()
+
+	/**
+	 * Get a batch ready and approved for publishing.
+	 *
+	 * @return void
+	 */
+	private function approvedBatch(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->sequences->status = 'completed';
+	}//end approvedBatch()
+
+	/**
+	 * The publications the batch publish created.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function createdPublications(): array {
+		return array_values(array_filter($this->objects->objects, static fn (array $o): bool => (($o['publicationKind'] ?? '') === 'actief')));
+	}//end createdPublications()
+
+	/**
+	 * REQ-WBP-001: a published batch is a public publication with its documents attached.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
+	 */
+	public function testPublishingCreatesAnActivePublicationWithTheDisclosableDocumentsAttached(): void {
+		$this->approvedBatch();
+		$result = $this->service->publishBatch('batch-1');
+
+		$publications = $this->createdPublications();
+		$this->assertCount(1, $publications);
+		$publication = $publications[0];
+		$this->assertSame('infocat014', $publication['wooCategory']);
+		$this->assertSame('WOO-2026-009', $publication['caseReference']);
+		$this->assertSame('Woo-publicatie WOO-2026-009', $publication['title']);
+		$this->assertNotEmpty($publication['publicationDate']);
+		$this->assertContains(['register' => 'publication', 'schema' => 'publication'], $this->objects->saveTargets);
+
+		$this->assertSame(['a.pdf', 'b.pdf', 'c-gelakt.pdf'], array_column($this->files->added, 'name'));
+		$this->assertSame('inhoud van c-gelakt.pdf', $this->files->added[2]['content']);
+		$this->assertSame([101, 102, 103], $this->files->published);
+
+		$this->assertSame($publication['id'], $result['wooPublication']['publication']);
+		$this->assertSame('https://example.org/p/'.$publication['id'], $result['wooPublication']['publicationUrl']);
+		$this->assertSame('published', $result['status']);
+
+		// The payload passes the real, merged publication schema.
+		$root = dirname(__DIR__, 3);
+		$base = json_decode((string)file_get_contents($root.'/lib/Settings/publication_register.json'), true)['components']['schemas']['publication'];
+		$fields = json_decode((string)file_get_contents($root.'/lib/Settings/register.d/woo-dossier-publication.json'), true)['components']['schemas']['publication']['properties'];
+		$schema = ['type' => 'object', 'properties' => array_merge($base['properties'], $fields), 'required' => $base['required']];
+		$payload = $publication;
+		unset($payload['id']);
+		$this->assertTrue((new \Opis\JsonSchema\Validator())->validate(json_decode((string)json_encode($payload)), (string)json_encode($schema))->isValid());
+	}//end testPublishingCreatesAnActivePublicationWithTheDisclosableDocumentsAttached()
+
+	/**
+	 * REQ-WBP-001: the batch's own category and title win.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
+	 */
+	public function testTheBatchsCategoryAndTitleAreUsed(): void {
+		$this->approvedBatch();
+		foreach ($this->objects->objects as $i => $object) {
+			if ($object['id'] === 'batch-1') {
+				$this->objects->objects[$i]['wooCategory'] = 'infocat010';
+				$this->objects->objects[$i]['title'] = 'Adviezen windpark';
+			}
+		}
+
+		$result = $this->service->publishBatch('batch-1');
+		$this->assertSame('infocat010', $this->createdPublications()[0]['wooCategory']);
+		$this->assertSame('Adviezen windpark', $this->createdPublications()[0]['title']);
+		$this->assertSame('infocat010', $result['wooPublication']['wooCategory']);
+	}//end testTheBatchsCategoryAndTitleAreUsed()
+
+	/**
+	 * REQ-WBP-002: a missing document stops the publish before anything is written.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	public function testAMissingDocumentStopsThePublishAndCreatesNothing(): void {
+		$this->approvedBatch();
+		unset($this->documents['/alice/files/doc-b']);
+
+		try {
+			$this->service->publishBatch('batch-1');
+			$this->fail('Expected the publish to be refused');
+		} catch (\RuntimeException $e) {
+			$this->assertStringContainsString('b.pdf', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->createdPublications());
+		$this->assertSame([], $this->files->added);
+		$this->assertSame('ready_for_review', $this->service->getBatch('batch-1')['status']);
+	}//end testAMissingDocumentStopsThePublishAndCreatesNothing()
+
+	/**
+	 * REQ-WBP-002: publishing again after a partial failure reuses the publication.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	public function testPublishingAgainAfterAFailedAttachmentContinuesTheSamePublication(): void {
+		$this->approvedBatch();
+		$this->files->failOn = 'b.pdf';
+		try {
+			$this->service->publishBatch('batch-1');
+			$this->fail('Expected the publish to stop');
+		} catch (\RuntimeException $e) {
+			$this->assertStringContainsString('b.pdf', $e->getMessage());
+		}
+
+		$this->assertSame('ready_for_review', $this->service->getBatch('batch-1')['status']);
+		$this->files->failOn = null;
+		$this->service->publishBatch('batch-1');
+
+		$this->assertCount(1, $this->createdPublications());
+		$this->assertSame(['a.pdf', 'b.pdf', 'c-gelakt.pdf'], array_column($this->files->added, 'name'));
+	}//end testPublishingAgainAfterAFailedAttachmentContinuesTheSamePublication()
+
+	/**
+	 * REQ-WBP-002: a reference is a file id, an absolute path or a path in the
+	 * creator's files; a folder or nothing is not a document.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	public function testDocumentReferencesResolveByIdPathAndUserPathButNeverToAFolder(): void {
+		$this->documents['id:42'] = $this->document('by-id.pdf');
+		$this->documents['/alice/files/map'] = $this->createMock(\OCP\Files\Folder::class);
+		$root = $this->createMock(\OCP\Files\IRootFolder::class);
+		$root->method('getFirstNodeById')->willReturnCallback(fn (int $id) => ($this->documents['id:'.$id] ?? null));
+		$root->method('get')->willReturnCallback(fn (string $path) => ($this->documents[$path] ?? throw new \OCP\Files\NotFoundException($path)));
+		$userFolder = $this->createMock(\OCP\Files\Folder::class);
+		$userFolder->method('get')->willReturnCallback(fn (string $path) => ($this->documents['/alice/files/'.$path] ?? throw new \OCP\Files\NotFoundException($path)));
+		$root->method('getUserFolder')->willReturn($userFolder);
+		$writer = new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $this->createMock(\OCA\OpenCatalogi\Service\Portal\PublicationLinker::class), $this->l10n);
+
+		$this->assertSame('by-id.pdf', $writer->resolve('42', 'alice')?->getName());
+		$this->assertSame('a.pdf', $writer->resolve('/alice/files/doc-a', '')?->getName());
+		$this->assertSame('b.pdf', $writer->resolve('doc-b', 'alice')?->getName());
+		$this->assertNull($writer->resolve('/alice/files/map', 'alice'));
+		$this->assertNull($writer->resolve('doc-b', ''));
+		$this->assertNull($writer->resolve('7', 'alice'));
+		$this->assertNull($writer->resolve('', 'alice'));
+	}//end testDocumentReferencesResolveByIdPathAndUserPathButNeverToAFolder()
+
+	/**
+	 * REQ-WBP-002: without an approval nothing is created.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	public function testNoApprovalNoPublication(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		try {
+			$this->service->publishBatch('batch-1');
+		} catch (\RuntimeException) {
+			$this->addToAssertionCount(1);
+		}
+
+		$this->assertSame([], $this->createdPublications());
+	}//end testNoApprovalNoPublication()
+
+	/**
 	 * Seed a batch + 4 assessments. By default one stays "te_beoordelen"; when
 	 * $leaveUnassessed is false all four are assessed (2 openbaar, 1 deels, 1 niet).
 	 *
@@ -502,6 +752,7 @@ class WooServiceTest extends TestCase {
 				'status' => 'in_progress',
 				'caseReference' => 'WOO-2026-009',
 				'documents' => ['a1', 'a2', 'a3', 'a4'],
+				'createdBy' => 'alice',
 			],
 		];
 

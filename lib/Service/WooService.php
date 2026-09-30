@@ -43,6 +43,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IUserSession;
@@ -160,6 +161,7 @@ class WooService {
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translated refusal messages for the publish gate.
+	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -167,6 +169,7 @@ class WooService {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
+		private readonly BatchPublicationWriter $publications,
 	) {
 
 	}//end __construct()
@@ -924,6 +927,7 @@ class WooService {
 	 * @throws RuntimeException When the batch is not ready or OpenRegister is unavailable.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 */
 	public function publishBatch(string $batchId): array {
 		$objectService = $this->getObjectService();
@@ -942,35 +946,26 @@ class WooService {
 		$this->assertPublishApproved(batchId: $batchId);
 
 		$assessments = $this->loadAssessments(batch: $batch);
-		$publishable = array_values(
-			array_filter(
-				$assessments,
-				static fn (array $a): bool => in_array((string)($a['assessment'] ?? ''), ['openbaar', 'deels_openbaar'], true)
-			)
-		);
-
-		$listings = [];
-		foreach ($publishable as $assessment) {
-			$isPartial = ((string)($assessment['assessment'] ?? '') === 'deels_openbaar');
-
-			$document = (string)($assessment['documentReference'] ?? '');
-			if ($isPartial === true) {
-				$document = (string)($assessment['anonymizedDocument'] ?? '');
-			}
-
-			$listings[] = [
-				'title' => (string)($assessment['fileName'] ?? ''),
-				'assessment' => (string)($assessment['assessment'] ?? ''),
-				'document' => $document,
-			];
-		}
+		$listings = $this->publications->listings(assessments: $assessments);
 
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-		$publishedCount = count($publishable);
+
+		// The batch becomes a real publication with its documents attached (woo-batch-creates-publications).
+		$publication = $this->publications->publishDocuments(
+			batch: $batch,
+			listings: $listings,
+			now: $now,
+			keepProgress: fn (array $progress): mixed => $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $progress)
+		);
+
+		$publishedCount = count($listings);
 		$publicationMeta = [
 			'wooDecisionDate' => substr($now, 0, 10),
 			'wooRequestReference' => (string)($batch['caseReference'] ?? ''),
-			'wooCategory' => WooCategory::WOO_REQUEST,
+			'wooCategory' => $publication['wooCategory'],
+			'publication' => $publication['id'],
+			'publicationUrl' => $publication['url'],
+			'attached' => $publication['attached'],
 			'documentCount' => (int)($batch['documentSummary']['total'] ?? 0),
 			'publishedCount' => $publishedCount,
 			'decisionLetter' => (string)($batch['decisionLetter'] ?? ''),

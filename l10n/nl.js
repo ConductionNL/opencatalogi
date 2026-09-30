@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "From": "Van",
         "The first day the documents cover.": "De eerste dag waarover de documenten gaan.",
         "Until": "Tot en met",
-        "The last day the documents cover.": "De laatste dag waarover de documenten gaan."
+        "The last day the documents cover.": "De laatste dag waarover de documenten gaan.",
+        "The information category the publication is filed under. Without one it is filed under Woo requests and decisions.": "De informatiecategorie van de publicatie. Zonder categorie komt die onder Woo-verzoeken en -besluiten.",
+        "The title the publication gets. Without one it is named after the case reference.": "De titel van de publicatie. Zonder titel krijgt die de naam van de zaakreferentie."
     },
     "nplurals=2; plural=(n != 1);"
 )

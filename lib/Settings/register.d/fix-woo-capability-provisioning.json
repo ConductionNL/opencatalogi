@@ -26,7 +26,7 @@
       "wooBatch": {
         "slug": "wooBatch",
         "title": "WooBatch",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "published": null,
         "summary": "A Woo disclosure batch grouping the documents released for one Woo-verzoek case",
         "description": "A Woo disclosure batch represents one Woo-verzoek (Wet open overheid request) case moving through document collection, per-document assessment, review and publication to the public reading room. It is the OpenRegister-backed storage WooService reads and writes; the document queue itself is provisioned as a Deck board via the consumed deck leaf (ADR-022) rather than a bespoke queue table.",
@@ -42,6 +42,55 @@
             "maxLength": 255,
             "facetable": true,
             "title": "Case Reference"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "The title the publication gets. Without one it is named after the case reference.",
+            "maxLength": 500
+          },
+          "wooCategory": {
+            "type": "string",
+            "title": "Woo information category",
+            "description": "The information category the publication is filed under. Without one it is filed under Woo requests and decisions.",
+            "enum": [
+              "infocat001",
+              "infocat002",
+              "infocat003",
+              "infocat004",
+              "infocat005",
+              "infocat006",
+              "infocat007",
+              "infocat008",
+              "infocat009",
+              "infocat010",
+              "infocat011",
+              "infocat012",
+              "infocat013",
+              "infocat014",
+              "infocat015",
+              "infocat016",
+              "infocat017"
+            ],
+            "x-enum-labels": {
+              "infocat001": "Laws and generally binding regulations",
+              "infocat002": "Other decisions of general scope",
+              "infocat003": "Draft legislation sent out for advice",
+              "infocat004": "Organisation and working methods",
+              "infocat005": "Contact details",
+              "infocat006": "Documents received by representative bodies",
+              "infocat007": "Meeting documents of the States General",
+              "infocat008": "Meeting documents of local and regional governments",
+              "infocat009": "Agendas and decision lists of executive boards",
+              "infocat010": "Advice",
+              "infocat011": "Covenants",
+              "infocat012": "Annual plans and annual reports",
+              "infocat013": "Subsidy obligations other than by decision",
+              "infocat014": "Woo requests and decisions",
+              "infocat015": "Research reports",
+              "infocat016": "Individual decisions",
+              "infocat017": "Complaint rulings"
+            }
           },
           "status": {
             "type": "string",
