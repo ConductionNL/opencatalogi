@@ -77,22 +77,22 @@ class SavedSearchService {
 	public function save(string $owner, array $input): array {
 		$title = $input['title'] ?? '';
 		if (is_string($title) === false || trim($title) === '' || mb_strlen(trim($title)) > 200) {
-			throw new PortalInputException('A saved search needs a title of at most 200 characters');
+			throw new PortalInputException(message: 'A saved search needs a title of at most 200 characters');
 		}
 
 		$frequency = ($input['frequency'] ?? '');
-		if ($frequency === '' || $frequency === null) {
+		if ($frequency === '') {
 			$frequency = self::FREQUENCIES[0];
 		}
 
 		if (in_array($frequency, self::FREQUENCIES, true) === false) {
-			throw new PortalInputException('frequency must be immediate, daily or weekly');
+			throw new PortalInputException(message: 'frequency must be immediate, daily or weekly');
 		}
 
 		$query = $this->query(value: ($input['query'] ?? null));
 
 		if (count($this->store->findByOwner(schema: self::SCHEMA, owner: $owner)) >= self::MAX_PER_OWNER) {
-			throw new PortalInputException('You have the most saved searches you can have');
+			throw new PortalInputException(message: 'You have the most saved searches you can have');
 		}
 
 		return $this->store->save(
@@ -160,7 +160,7 @@ class SavedSearchService {
 	private function owned(string $owner, string $savedSearchId): array {
 		$saved = $this->store->find(schema: self::SCHEMA, id: $savedSearchId);
 		if ($owner === '' || $saved === null || ($saved['owner'] ?? null) !== $owner) {
-			throw new PortalNotFoundException('Not found');
+			throw new PortalNotFoundException(message: 'Not found');
 		}
 
 		return $saved;
@@ -172,7 +172,11 @@ class SavedSearchService {
 	 *
 	 * @param mixed $value An array, or the same as JSON.
 	 *
-	 * @return array{text: string, filters: array{informatiecategorie: array<int, string>, organisation: array<int, string>, periodFrom: string, periodTo: string}, catalog: string}
+	 * @return array{
+	 *     text: string,
+	 *     filters: array{informatiecategorie: array<int, string>, organisation: array<int, string>, periodFrom: string, periodTo: string},
+	 *     catalog: string
+	 * }
 	 *
 	 * @throws PortalInputException When it is not the contract's shape.
 	 *
@@ -184,12 +188,12 @@ class SavedSearchService {
 		}
 
 		if (is_array($value) === false) {
-			throw new PortalInputException('query must be an object');
+			throw new PortalInputException(message: 'query must be an object');
 		}
 
 		$filters = ($value['filters'] ?? []);
 		if (is_array($filters) === false) {
-			throw new PortalInputException('query.filters must be an object');
+			throw new PortalInputException(message: 'query.filters must be an object');
 		}
 
 		$text = $this->string(value: ($value['text'] ?? ''), max: 500, field: 'query.text');
@@ -197,7 +201,7 @@ class SavedSearchService {
 		$categories = $this->list(value: ($filters['informatiecategorie'] ?? []), field: 'informatiecategorie');
 		foreach ($categories as $category) {
 			if (array_key_exists($category, WooCategory::ALL) === false) {
-				throw new PortalInputException('Unknown information category: '.$category);
+				throw new PortalInputException(message: 'Unknown information category: '.$category);
 			}
 		}
 
@@ -205,7 +209,7 @@ class SavedSearchService {
 		foreach (['periodFrom', 'periodTo'] as $bound) {
 			$period[$bound] = $this->string(value: ($filters[$bound] ?? ''), max: 10, field: $bound);
 			if ($period[$bound] !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $period[$bound]) !== 1) {
-				throw new PortalInputException($bound.' must be a date like 2026-01-31');
+				throw new PortalInputException(message: $bound.' must be a date like 2026-01-31');
 			}
 		}
 
@@ -239,7 +243,7 @@ class SavedSearchService {
 		}
 
 		if (is_string($value) === false || mb_strlen(trim($value)) > $max) {
-			throw new PortalInputException($field.' must be text of at most '.$max.' characters');
+			throw new PortalInputException(message: $field.' must be text of at most '.$max.' characters');
 		}
 
 		return trim($value);
@@ -258,13 +262,13 @@ class SavedSearchService {
 	 */
 	private function list(mixed $value, string $field): array {
 		if (is_array($value) === false || array_is_list($value) === false || count($value) > 50) {
-			throw new PortalInputException($field.' must be a list');
+			throw new PortalInputException(message: $field.' must be a list');
 		}
 
 		$out = [];
 		foreach ($value as $entry) {
 			if (is_string($entry) === false || $entry === '' || mb_strlen($entry) > 255) {
-				throw new PortalInputException($field.' must hold text values');
+				throw new PortalInputException(message: $field.' must hold text values');
 			}
 
 			$out[] = $entry;

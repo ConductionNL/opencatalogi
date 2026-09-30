@@ -26,6 +26,7 @@ require_once __DIR__.'/FakePortalObjectStore.php';
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
 use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
+use OCA\OpenCatalogi\Service\Portal\CollectionShareService;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use Opis\JsonSchema\Validator;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +45,8 @@ class CitizenCollectionServiceTest extends TestCase {
 
 	private CitizenCollectionService $service;
 
+	private CollectionShareService $shares;
+
 	protected function setUp(): void {
 		$this->store = new FakePortalObjectStore();
 		$this->store->publication(self::PUB_A, 'Besluit windpark');
@@ -54,6 +57,7 @@ class CitizenCollectionServiceTest extends TestCase {
 		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/'.$id);
 
 		$this->service = new CitizenCollectionService(store: $this->store, linker: $linker, logger: new NullLogger());
+		$this->shares = new CollectionShareService(store: $this->store, linker: $linker);
 	}
 
 	/**
@@ -139,7 +143,7 @@ class CitizenCollectionServiceTest extends TestCase {
 			fn () => $this->service->view(owner: 'subject-2', collectionId: $view['id']),
 			fn () => $this->service->addItem(owner: 'subject-2', input: ['collection' => $view['id'], 'publication' => self::PUB_B]),
 			fn () => $this->service->removeItem(owner: 'subject-2', collectionId: $view['id'], itemId: $view['items'][0]['id']),
-			fn () => $this->service->share(owner: 'subject-2', collectionId: $view['id']),
+			fn () => $this->shares->share(owner: 'subject-2', collectionId: $view['id']),
 			fn () => $this->service->delete(owner: 'subject-2', collectionId: $view['id']),
 			fn () => $this->service->view(owner: 'subject-1', collectionId: 'does-not-exist'),
 		] as $call) {
@@ -207,12 +211,12 @@ class CitizenCollectionServiceTest extends TestCase {
 	 */
 	public function testASharedDossierShowsOnlyPublicItemsAndNoOwner(): void {
 		$view = $this->dossierOf('subject-1', [self::PUB_A, self::PUB_B]);
-		$share = $this->service->share(owner: 'subject-1', collectionId: $view['id']);
+		$share = $this->shares->share(owner: 'subject-1', collectionId: $view['id']);
 		$this->assertMatchesRegularExpression('/^'.preg_quote($view['id'], '/').'\.[0-9a-f]{48}$/', $share['token']);
 		$this->assertStoredDossierIsValid($view['id']);
 
 		$this->store->publication(self::PUB_B, 'Advies windpark', '-10 days', '-1 day');
-		$shared = $this->service->shared(token: $share['token']);
+		$shared = $this->shares->shared(token: $share['token']);
 
 		$this->assertSame('Windpark', $shared['title']);
 		$this->assertCount(1, $shared['items']);
@@ -230,23 +234,23 @@ class CitizenCollectionServiceTest extends TestCase {
 	 */
 	public function testARevokedOrForgedLinkAnswersNotFound(): void {
 		$view = $this->dossierOf('subject-1', [self::PUB_A]);
-		$share = $this->service->share(owner: 'subject-1', collectionId: $view['id']);
-		$this->service->unshare(owner: 'subject-1', collectionId: $view['id']);
+		$share = $this->shares->share(owner: 'subject-1', collectionId: $view['id']);
+		$this->shares->unshare(owner: 'subject-1', collectionId: $view['id']);
 		$this->assertNull($this->store->objects['collection'][$view['id']]['share']);
 		$this->assertStoredDossierIsValid($view['id']);
 
 		foreach ([$share['token'], $view['id'].'.'.str_repeat('0', 48), 'nonsense', ''] as $token) {
 			try {
-				$this->service->shared(token: $token);
+				$this->shares->shared(token: $token);
 				$this->fail('Expected not found for '.$token);
 			} catch (PortalNotFoundException) {
 				$this->addToAssertionCount(1);
 			}
 		}
 
-		$again = $this->service->share(owner: 'subject-1', collectionId: $view['id']);
+		$again = $this->shares->share(owner: 'subject-1', collectionId: $view['id']);
 		$this->assertNotSame($share['token'], $again['token']);
-		$this->assertSame('Windpark', $this->service->shared(token: $again['token'])['title']);
+		$this->assertSame('Windpark', $this->shares->shared(token: $again['token'])['title']);
 	}
 
 	public function testInputIsCheckedBeforeAnythingIsWritten(): void {

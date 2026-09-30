@@ -250,9 +250,12 @@ class PortalObjectStore {
 			}
 		};
 
+		$entity = null;
 		if (method_exists($service, 'runAsAnonymous') === true) {
 			$entity = $service->runAsAnonymous($read);
-		} else {
+		}
+
+		if (method_exists($service, 'runAsAnonymous') === false) {
 			$entity = $read();
 		}
 

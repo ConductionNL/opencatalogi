@@ -119,7 +119,10 @@ class PortalAccountRemovedListener implements IEventListener {
 			$deleted = $this->collections->removeEverythingOf(owner: $subjectRef);
 			$this->logger->info('OpenCatalogi: removed a closed portal account\'s dossiers and saved searches', ['deleted' => $deleted]);
 		} catch (Throwable $e) {
-			$this->logger->warning('OpenCatalogi: could not clean up after a removed portal account; the removal itself stands', ['reason' => $e->getMessage()]);
+			$this->logger->warning(
+				'OpenCatalogi: could not clean up after a removed portal account; the removal itself stands',
+				['reason' => $e->getMessage()]
+			);
 		}//end try
 
 	}//end handle()

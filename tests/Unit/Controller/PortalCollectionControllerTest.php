@@ -22,9 +22,11 @@ require_once __DIR__.'/../Service/Portal/FakePortalObjectStore.php';
 require_once __DIR__.'/../Portal/PortalAssertionVerifierTest.php';
 
 use OCA\OpenCatalogi\Controller\PortalCollectionController;
+use OCA\OpenCatalogi\Controller\PortalSavedSearchController;
 use OCA\OpenCatalogi\Controller\SharedCollectionController;
 use OCA\OpenCatalogi\Portal\PortalAssertionVerifier;
 use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
+use OCA\OpenCatalogi\Service\Portal\CollectionShareService;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Portal\SavedSearchService;
 use OCP\IRequest;
@@ -46,12 +48,15 @@ class PortalCollectionControllerTest extends TestCase {
 
 	private CitizenCollectionService $collections;
 
+	private CollectionShareService $shares;
+
 	protected function setUp(): void {
 		$this->store = new FakePortalObjectStore();
 		$this->store->publication(self::PUB, 'Besluit windpark');
 		$linker = $this->createMock(PublicationLinker::class);
 		$linker->method('url')->willReturn('https://example.org/p');
 		$this->collections = new CitizenCollectionService(store: $this->store, linker: $linker, logger: new NullLogger());
+		$this->shares = new CollectionShareService(store: $this->store, linker: $linker);
 	}
 
 	/**
@@ -63,18 +68,48 @@ class PortalCollectionControllerTest extends TestCase {
 	 * @return PortalCollectionController
 	 */
 	private function controller(array $params, ?string $header): PortalCollectionController {
+		return new PortalCollectionController(
+			appName: 'opencatalogi',
+			request: $this->request(params: $params, header: $header),
+			verifier: new PortalAssertionVerifier(secretOverride: self::SECRET),
+			collections: $this->collections,
+			shares: $this->shares,
+			logger: new NullLogger()
+		);
+	}
+
+	/**
+	 * A saved-search controller for a request.
+	 *
+	 * @param array<string, mixed> $params The params.
+	 * @param string|null          $header The X-Portal-Subject header.
+	 *
+	 * @return PortalSavedSearchController
+	 */
+	private function searches(array $params, ?string $header): PortalSavedSearchController {
+		return new PortalSavedSearchController(
+			appName: 'opencatalogi',
+			request: $this->request(params: $params, header: $header),
+			verifier: new PortalAssertionVerifier(secretOverride: self::SECRET),
+			searches: new SavedSearchService(store: $this->store),
+			logger: new NullLogger()
+		);
+	}
+
+	/**
+	 * A request with params and the assertion header.
+	 *
+	 * @param array<string, mixed> $params The params.
+	 * @param string|null          $header The X-Portal-Subject header.
+	 *
+	 * @return IRequest
+	 */
+	private function request(array $params, ?string $header): IRequest {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParam')->willReturnCallback(static fn (string $name, $default=null) => ($params[$name] ?? $default));
 		$request->method('getHeader')->willReturnCallback(static fn (string $name): string => ($name === 'X-Portal-Subject' ? (string)$header : ''));
 
-		return new PortalCollectionController(
-			appName: 'opencatalogi',
-			request: $request,
-			verifier: new PortalAssertionVerifier(secretOverride: self::SECRET),
-			collections: $this->collections,
-			searches: new SavedSearchService(store: $this->store),
-			logger: new NullLogger()
-		);
+		return $request;
 	}
 
 	public function testWithoutAValidAssertionTheAnswerIs401(): void {
@@ -118,7 +153,7 @@ class PortalCollectionControllerTest extends TestCase {
 		$removed = $this->controller(['collection' => $made['id'], 'itemId' => $made['items'][0]['id']], PortalAssertionVerifierTest::mint(['sub' => 'subject-2']))->removeItem();
 		$this->assertSame(404, $removed->getStatus());
 
-		$shared = new SharedCollectionController(appName: 'opencatalogi', request: $this->createMock(IRequest::class), collections: $this->collections, logger: new NullLogger());
+		$shared = new SharedCollectionController(appName: 'opencatalogi', request: $this->createMock(IRequest::class), shares: $this->shares, logger: new NullLogger());
 		$response = $shared->show(token: $share['token']);
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame('no-store', $response->getHeaders()['Cache-Control']);
@@ -130,16 +165,16 @@ class PortalCollectionControllerTest extends TestCase {
 
 	public function testSaveAndPauseASearch(): void {
 		$owner = PortalAssertionVerifierTest::mint(['sub' => 'subject-1']);
-		$saved = $this->controller(['title' => 'Windpark', 'query' => ['text' => 'windpark']], $owner)->saveSearch();
+		$saved = $this->searches(['title' => 'Windpark', 'query' => ['text' => 'windpark']], $owner)->save();
 		$this->assertSame(201, $saved->getStatus());
 
 		$id = $saved->getData()['id'];
-		$this->assertSame(404, $this->controller(['savedSearch' => $id], PortalAssertionVerifierTest::mint(['sub' => 'subject-2']))->pauseSearch()->getStatus());
-		$this->assertSame(200, $this->controller(['savedSearch' => $id], $owner)->pauseSearch()->getStatus());
+		$this->assertSame(404, $this->searches(['savedSearch' => $id], PortalAssertionVerifierTest::mint(['sub' => 'subject-2']))->pause()->getStatus());
+		$this->assertSame(200, $this->searches(['savedSearch' => $id], $owner)->pause()->getStatus());
 		$this->assertFalse($this->store->objects['savedSearch'][$id]['active']);
 
-		$this->assertSame(404, $this->controller(['savedSearch' => $id], PortalAssertionVerifierTest::mint(['sub' => 'subject-2']))->deleteSearch()->getStatus());
-		$this->assertSame(200, $this->controller(['savedSearch' => $id], $owner)->deleteSearch()->getStatus());
+		$this->assertSame(404, $this->searches(['savedSearch' => $id], PortalAssertionVerifierTest::mint(['sub' => 'subject-2']))->delete()->getStatus());
+		$this->assertSame(200, $this->searches(['savedSearch' => $id], $owner)->delete()->getStatus());
 		$this->assertSame([], $this->store->objects['savedSearch']);
 	}
 }

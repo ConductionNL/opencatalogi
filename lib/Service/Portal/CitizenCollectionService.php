@@ -34,7 +34,6 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
-use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -78,13 +77,13 @@ class CitizenCollectionService {
 	 * @param PortalObjectStore $store  Reads and writes as the system.
 	 * @param PublicationLinker $linker The public link to a publication.
 	 * @param LoggerInterface   $logger The logger.
-	 * @param IURLGenerator|null $urlGenerator Makes the share link absolute.
+	 * @param PortalInput       $input  Checks the resident's input.
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
 		private readonly PublicationLinker $linker,
 		private readonly LoggerInterface $logger,
-		private readonly ?IURLGenerator $urlGenerator=null,
+		private readonly PortalInput $input=new PortalInput(),
 	) {
 
 	}//end __construct()
@@ -106,34 +105,20 @@ class CitizenCollectionService {
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-resident-adds-a-public-publication-or-one-of-its-documents-to-a-dossier-req-ccol-002
 	 */
 	public function addItem(string $owner, array $input): array {
-		$collectionId = $this->text(value: ($input['collection'] ?? ''), max: 64, field: 'collection');
-		$publicationId = $this->text(value: ($input['publication'] ?? ''), max: 64, field: 'publication');
-		$attachment = $this->attachment(value: ($input['attachment'] ?? null));
-		$note = $this->text(value: ($input['note'] ?? ''), max: self::MAX_NOTE, field: 'note');
+		$collectionId = $this->input->text(value: ($input['collection'] ?? ''), max: 64, field: 'collection');
+		$publicationId = $this->input->text(value: ($input['publication'] ?? ''), max: 64, field: 'publication');
+		$attachment = $this->input->attachment(value: ($input['attachment'] ?? null));
+		$note = $this->input->text(value: ($input['note'] ?? ''), max: self::MAX_NOTE, field: 'note');
 
-		$dossier = null;
-		if ($collectionId === '') {
-			$title = $this->text(value: ($input['title'] ?? ''), max: self::MAX_TITLE, field: 'title');
-			if ($title === '') {
-				throw new PortalInputException('A new dossier needs a title');
-			}
-
-			if (count($this->store->findByOwner(schema: self::SCHEMA, owner: $owner)) >= self::MAX_DOSSIERS) {
-				throw new PortalInputException('You have the most dossiers you can have');
-			}
-
-			$dossier = ['title' => $title, 'description' => '', 'owner' => $owner, 'items' => [], 'share' => null, 'sourceOf' => []];
-		} else {
-			$dossier = $this->owned(owner: $owner, collectionId: $collectionId);
-		}
+		$dossier = $this->targetDossier(owner: $owner, collectionId: $collectionId, title: ($input['title'] ?? ''));
 
 		if ($publicationId === '') {
-			throw new PortalInputException('A publication is needed');
+			throw new PortalInputException(message: 'A publication is needed');
 		}
 
 		$publication = $this->store->publicPublication(id: $publicationId);
 		if ($publication === null) {
-			throw new PortalNotFoundException('Not found');
+			throw new PortalNotFoundException(message: 'Not found');
 		}
 
 		$items = (array)($dossier['items'] ?? []);
@@ -144,7 +129,7 @@ class CitizenCollectionService {
 		}
 
 		if (count($items) >= self::MAX_ITEMS) {
-			throw new PortalInputException('This dossier is full');
+			throw new PortalInputException(message: 'This dossier is full');
 		}
 
 		$items[] = [
@@ -161,6 +146,36 @@ class CitizenCollectionService {
 		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: ($dossier['id'] ?? null)));
 
 	}//end addItem()
+
+	/**
+	 * The dossier to add to: the owner's own, or a new one with a title.
+	 *
+	 * @param string $owner        The subject reference.
+	 * @param string $collectionId The dossier, or '' for a new one.
+	 * @param mixed  $title        The title of a new dossier.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @throws PortalNotFoundException When the dossier is not the owner's.
+	 * @throws PortalInputException    When a new dossier has no title or the owner has too many.
+	 */
+	private function targetDossier(string $owner, string $collectionId, mixed $title): array {
+		if ($collectionId !== '') {
+			return $this->owned(owner: $owner, collectionId: $collectionId);
+		}
+
+		$title = $this->input->text(value: $title, max: self::MAX_TITLE, field: 'title');
+		if ($title === '') {
+			throw new PortalInputException(message: 'A new dossier needs a title');
+		}
+
+		if (count($this->store->findByOwner(schema: self::SCHEMA, owner: $owner)) >= self::MAX_DOSSIERS) {
+			throw new PortalInputException(message: 'You have the most dossiers you can have');
+		}
+
+		return ['title' => $title, 'description' => '', 'owner' => $owner, 'items' => [], 'share' => null, 'sourceOf' => []];
+
+	}//end targetDossier()
 
 	/**
 	 * Remove one item from a dossier.
@@ -180,7 +195,7 @@ class CitizenCollectionService {
 		$items = (array)($dossier['items'] ?? []);
 		$kept = array_values(array_filter($items, static fn (array $item): bool => ($item['id'] ?? '') !== $itemId));
 		if ($itemId === '' || count($kept) === count($items)) {
-			throw new PortalNotFoundException('Not found');
+			throw new PortalNotFoundException(message: 'Not found');
 		}
 
 		$dossier['items'] = $kept;
@@ -204,7 +219,7 @@ class CitizenCollectionService {
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-resident-removes-items-and-writes-notes-req-ccol-003
 	 */
 	public function note(string $owner, string $collectionId, string $itemId, string $note): array {
-		$note = $this->text(value: $note, max: self::MAX_NOTE, field: 'note');
+		$note = $this->input->text(value: $note, max: self::MAX_NOTE, field: 'note');
 		$dossier = $this->owned(owner: $owner, collectionId: $collectionId);
 
 		if ($itemId === '') {
@@ -222,62 +237,13 @@ class CitizenCollectionService {
 		}
 
 		if ($found === false) {
-			throw new PortalNotFoundException('Not found');
+			throw new PortalNotFoundException(message: 'Not found');
 		}
 
 		$dossier['items'] = $items;
 		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: $collectionId));
 
 	}//end note()
-
-	/**
-	 * Make a new read-only link. An earlier link stops working.
-	 *
-	 * @param string $owner        The subject reference.
-	 * @param string $collectionId The dossier.
-	 *
-	 * @return array{token: string, createdAt: string, url: string, link: string}
-	 *
-	 * @throws PortalNotFoundException When the dossier is not the owner's.
-	 *
-	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-shared-dossier-shows-only-what-is-public-now-and-a-revoked-link-answers-404-req-ccol-005
-	 */
-	public function share(string $owner, string $collectionId): array {
-		$dossier = $this->owned(owner: $owner, collectionId: $collectionId);
-		$share = ['token' => $collectionId.'.'.bin2hex(random_bytes(24)), 'createdAt' => $this->now()];
-		$dossier['share'] = $share;
-		$this->store->save(schema: self::SCHEMA, data: $dossier, id: $collectionId);
-
-		$path = '/index.php/apps/opencatalogi/api/collections/shared/'.$share['token'];
-		$link = $path;
-		if ($this->urlGenerator !== null) {
-			$link = $this->urlGenerator->getAbsoluteURL($path);
-		}
-
-		return $share + ['url' => $path, 'link' => $link];
-
-	}//end share()
-
-	/**
-	 * Revoke the read-only link.
-	 *
-	 * @param string $owner        The subject reference.
-	 * @param string $collectionId The dossier.
-	 *
-	 * @return array{shared: bool}
-	 *
-	 * @throws PortalNotFoundException When the dossier is not the owner's.
-	 *
-	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-shared-dossier-shows-only-what-is-public-now-and-a-revoked-link-answers-404-req-ccol-005
-	 */
-	public function unshare(string $owner, string $collectionId): array {
-		$dossier = $this->owned(owner: $owner, collectionId: $collectionId);
-		$dossier['share'] = null;
-		$this->store->save(schema: self::SCHEMA, data: $dossier, id: $collectionId);
-
-		return ['shared' => false];
-
-	}//end unshare()
 
 	/**
 	 * Delete a dossier.
@@ -313,55 +279,6 @@ class CitizenCollectionService {
 		return $this->ownerView(dossier: $this->owned(owner: $owner, collectionId: $collectionId));
 
 	}//end view()
-
-	/**
-	 * The shared view: title, description and the items public right now.
-	 *
-	 * @param string $token The share token.
-	 *
-	 * @return array<string, mixed>
-	 *
-	 * @throws PortalNotFoundException When the token is not a live share.
-	 *
-	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-shared-dossier-shows-only-what-is-public-now-and-a-revoked-link-answers-404-req-ccol-005
-	 */
-	public function shared(string $token): array {
-		$parts = explode('.', $token, 2);
-		if (count($parts) !== 2 || preg_match('/^[0-9a-f]{48}$/', $parts[1]) !== 1) {
-			throw new PortalNotFoundException('Not found');
-		}
-
-		$dossier = $this->store->find(schema: self::SCHEMA, id: $parts[0]);
-		$stored = (string)($dossier['share']['token'] ?? '');
-		if ($dossier === null || $stored === '' || hash_equals($stored, $token) === false) {
-			throw new PortalNotFoundException('Not found');
-		}
-
-		$items = [];
-		foreach ((array)($dossier['items'] ?? []) as $item) {
-			$publication = $this->store->publicPublication(id: (string)($item['publication'] ?? ''));
-			if ($publication === null) {
-				continue;
-			}
-
-			$items[] = [
-				'id' => (string)($item['id'] ?? ''),
-				'publication' => (string)$item['publication'],
-				'attachment' => ($item['attachment'] ?? null),
-				'note' => (string)($item['note'] ?? ''),
-				'addedAt' => (string)($item['addedAt'] ?? ''),
-				'title' => (string)($publication['title'] ?? ($item['title'] ?? '')),
-				'url' => $this->linker->url(id: (string)$item['publication']),
-			];
-		}
-
-		return [
-			'title' => (string)($dossier['title'] ?? ''),
-			'description' => (string)($dossier['description'] ?? ''),
-			'items' => $items,
-		];
-
-	}//end shared()
 
 	/**
 	 * The items of a dossier for portaliq's `itemList`, without an owner check:
@@ -444,7 +361,7 @@ class CitizenCollectionService {
 	private function owned(string $owner, string $collectionId): array {
 		$dossier = $this->store->find(schema: self::SCHEMA, id: $collectionId);
 		if ($owner === '' || $dossier === null || ($dossier['owner'] ?? null) !== $owner) {
-			throw new PortalNotFoundException('Not found');
+			throw new PortalNotFoundException(message: 'Not found');
 		}
 
 		$dossier['id'] = $collectionId;
@@ -487,58 +404,6 @@ class CitizenCollectionService {
 		];
 
 	}//end ownerView()
-
-	/**
-	 * A trimmed string within a length, or a refusal.
-	 *
-	 * @param mixed  $value The value.
-	 * @param int    $max   The most characters.
-	 * @param string $field The field, for the message.
-	 *
-	 * @return string
-	 *
-	 * @throws PortalInputException When it is not a string or too long.
-	 */
-	private function text(mixed $value, int $max, string $field): string {
-		if ($value === null) {
-			return '';
-		}
-
-		if (is_string($value) === false) {
-			throw new PortalInputException($field.' must be text');
-		}
-
-		$value = trim($value);
-		if (mb_strlen($value) > $max) {
-			throw new PortalInputException($field.' is too long');
-		}
-
-		return $value;
-
-	}//end text()
-
-	/**
-	 * A Nextcloud file id, or null for the whole publication.
-	 *
-	 * @param mixed $value The value.
-	 *
-	 * @return string|null
-	 *
-	 * @throws PortalInputException When it is not a file id.
-	 */
-	private function attachment(mixed $value): ?string {
-		if ($value === null || $value === '') {
-			return null;
-		}
-
-		$value = (string)(is_int($value) === true ? $value : (is_string($value) === true ? $value : ''));
-		if (preg_match('/^\d{1,20}$/', $value) !== 1) {
-			throw new PortalInputException('attachment must be a file id');
-		}
-
-		return $value;
-
-	}//end attachment()
 
 	/**
 	 * The current moment, ISO 8601 in UTC.
