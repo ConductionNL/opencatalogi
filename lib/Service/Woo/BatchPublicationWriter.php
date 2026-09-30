@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\WooCategory;
+use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\IL10N;
@@ -60,12 +61,14 @@ class BatchPublicationWriter {
 	 * @param ContainerInterface $container  Resolves OpenRegister.
 	 * @param PublicationLinker  $linker     The public link to the publication.
 	 * @param IL10N              $l10n       The refusal message.
+	 * @param IAppManager|null   $appManager Whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly IRootFolder $rootFolder,
 		private readonly ContainerInterface $container,
 		private readonly PublicationLinker $linker,
 		private readonly IL10N $l10n,
+		private readonly ?IAppManager $appManager=null,
 	) {
 
 	}//end __construct()
@@ -151,6 +154,7 @@ class BatchPublicationWriter {
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 */
 	public function publication(array $batch, string $now): array {
+		$this->requireOpenRegister();
 		$objects = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$earlier = (string)($batch['wooPublication']['publication'] ?? '');
 		if ($earlier !== '') {
@@ -238,6 +242,7 @@ class BatchPublicationWriter {
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 */
 	public function attach(array $publication, File $file): void {
+		$this->requireOpenRegister();
 		$files = $this->container->get('OCA\OpenRegister\Service\FileService');
 		$target = $publication['entity'];
 		if (is_object($target) === false) {
@@ -277,6 +282,20 @@ class BatchPublicationWriter {
 		return $this->linker->url(id: $id);
 
 	}//end url()
+
+	/**
+	 * ADR-083: establish OpenRegister before any lookup of it.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When OpenRegister is not installed.
+	 */
+	private function requireOpenRegister(): void {
+		if ($this->appManager !== null && $this->appManager->isInstalled('openregister') === false) {
+			throw new RuntimeException('OpenRegister is not installed');
+		}
+
+	}//end requireOpenRegister()
 
 	/**
 	 * The uuid of a saved entity or array.
