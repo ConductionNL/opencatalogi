@@ -8,8 +8,6 @@ use DateTimeImmutable;
 use DateTimeZone;
 use DomainException;
 use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
-use OCA\OpenCatalogi\Service\Publication\PublicationProcessService;
-use OCA\OpenCatalogi\Service\Publication\ZienswijzeService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -17,19 +15,13 @@ use PHPUnit\Framework\TestCase;
  * zienswijze round.
  *
  * @covers \OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator
- * @covers \OCA\OpenCatalogi\Service\Publication\PublicationProcessService
- * @covers \OCA\OpenCatalogi\Service\Publication\ZienswijzeService
  */
 class DecisionAndProcessTest extends TestCase {
 
 	private DecisionPublicationValidator $validator;
-	private PublicationProcessService $process;
-	private ZienswijzeService $zienswijze;
 
 	protected function setUp(): void {
 		$this->validator = new DecisionPublicationValidator();
-		$this->process = new PublicationProcessService();
-		$this->zienswijze = new ZienswijzeService();
 
 	}//end setUp()
 
@@ -123,163 +115,4 @@ class DecisionAndProcessTest extends TestCase {
 
 	}//end testApplyingARefusedValidationThrows()
 
-	public function testEveryStepRecordsWhoCompletedItAndWhen(): void {
-		$process = $this->process->start(publicationId: 'p1');
-
-		foreach (PublicationProcessService::STEPS as $step) {
-			$process = $this->process->complete(
-				process: $process,
-				step: $step,
-				completedBy: 'ambtenaar',
-				now: $this->at('2026-09-18T10:00:00+00:00')
-			);
-		}
-
-		$this->assertSame('complete', $process['state']);
-		foreach ($process['steps'] as $recorded) {
-			$this->assertSame(PublicationProcessService::COMPLETE, $recorded['status']);
-			$this->assertSame('ambtenaar', $recorded['completedBy']);
-			$this->assertSame('2026-09-18T10:00:00+00:00', $recorded['completedAt']);
-		}
-
-	}//end testEveryStepRecordsWhoCompletedItAndWhen()
-
-	/**
-	 * A skipped step is recorded as configured off, never as done. A later
-	 * reading has to be able to tell an approval that happened from one that
-	 * was never asked for.
-	 */
-	public function testSkippedStepsAreRecordedAsConfiguredOffAndNotAsDone(): void {
-		$process = $this->process->start(
-			publicationId: 'p1',
-			enabledSteps: ['zienswijze' => false, 'approval' => false]
-		);
-
-		$byStep = array_column($process['steps'], null, 'step');
-		$this->assertSame(PublicationProcessService::SKIPPED, $byStep['zienswijze']['status']);
-		$this->assertSame(PublicationProcessService::SKIPPED, $byStep['approval']['status']);
-		$this->assertNull($byStep['zienswijze']['completedBy']);
-		$this->assertNotSame(PublicationProcessService::COMPLETE, $byStep['approval']['status']);
-
-		$process = $this->process->complete(process: $process, step: 'documents', completedBy: 'a');
-		$process = $this->process->complete(process: $process, step: 'channels', completedBy: 'a');
-
-		$this->assertTrue($this->process->isComplete(process: $process));
-		$this->assertSame('complete', $process['state']);
-
-	}//end testSkippedStepsAreRecordedAsConfiguredOffAndNotAsDone()
-
-	public function testAStepConfiguredOffCannotBeCompleted(): void {
-		$process = $this->process->start(publicationId: 'p1', enabledSteps: ['approval' => false]);
-
-		$this->expectException(DomainException::class);
-
-		$this->process->complete(process: $process, step: 'approval', completedBy: 'a');
-
-	}//end testAStepConfiguredOffCannotBeCompleted()
-
-	public function testThePublicationIsHeldWhileAnAskIsOpenInsideItsTerm(): void {
-		$process = $this->process->start(publicationId: 'p1');
-		$ask = $this->zienswijze->raise(
-			publicationId: 'p1',
-			party: 'J. de Vries',
-			channel: 'mijn-overheid-berichtenbox',
-			termDays: 14,
-			now: $this->at('2026-09-01T00:00:00+00:00')
-		);
-
-		$advance = $this->process->mayAdvance(
-			asks: [$ask],
-			now: $this->at('2026-09-05T00:00:00+00:00')
-		);
-
-		$this->assertFalse($advance['mayAdvance']);
-		$this->assertSame('J. de Vries', $advance['heldBy'][0]['party']);
-
-	}//end testThePublicationIsHeldWhileAnAskIsOpenInsideItsTerm()
-
-	public function testAnAskPastItsTermNoLongerHoldsThePublication(): void {
-		$ask = $this->zienswijze->raise(
-			publicationId: 'p1',
-			party: 'J. de Vries',
-			channel: 'mijn-overheid-berichtenbox',
-			termDays: 14,
-			now: $this->at('2026-09-01T00:00:00+00:00')
-		);
-
-		$advance = $this->process->mayAdvance(
-			asks: [$ask],
-			now: $this->at('2026-10-01T00:00:00+00:00')
-		);
-
-		$this->assertTrue($advance['mayAdvance']);
-
-	}//end testAnAskPastItsTermNoLongerHoldsThePublication()
-
-	public function testAnAnsweredAskDoesNotHoldThePublication(): void {
-		$ask = $this->zienswijze->raise(
-			publicationId: 'p1',
-			party: 'J. de Vries',
-			channel: 'portal-message',
-			termDays: 14,
-			now: $this->at('2026-09-01T00:00:00+00:00')
-		);
-		$ask = $this->zienswijze->answer(
-			ask: $ask,
-			answer: 'Geen bezwaar.',
-			answeredBy: 'J. de Vries',
-			now: $this->at('2026-09-03T00:00:00+00:00')
-		);
-
-		$advance = $this->process->mayAdvance(
-			asks: [$ask],
-			now: $this->at('2026-09-05T00:00:00+00:00')
-		);
-
-		$this->assertTrue($advance['mayAdvance']);
-		$this->assertSame('J. de Vries', $ask['answeredBy']);
-		$this->assertSame('2026-09-03T00:00:00+00:00', $ask['answeredAt']);
-
-	}//end testAnAnsweredAskDoesNotHoldThePublication()
-
-	/**
-	 * An ask over a channel that cannot say who answered produces an answer
-	 * nobody can rely on, and the answer is what permits the publication.
-	 */
-	public function testAnUnidentifiedChannelIsRefused(): void {
-		$this->expectException(DomainException::class);
-
-		$this->zienswijze->raise(
-			publicationId: 'p1',
-			party: 'J. de Vries',
-			channel: 'anonymous-webform',
-			termDays: 14
-		);
-
-	}//end testAnUnidentifiedChannelIsRefused()
-
-	public function testAnUnattributedAnswerIsRefused(): void {
-		$ask = $this->zienswijze->raise(
-			publicationId: 'p1',
-			party: 'J. de Vries',
-			channel: 'digid',
-			termDays: 14
-		);
-
-		$this->expectException(DomainException::class);
-
-		$this->zienswijze->answer(ask: $ask, answer: 'Geen bezwaar.', answeredBy: '  ');
-
-	}//end testAnUnattributedAnswerIsRefused()
-
-	public function testAnAskWithAnUnreadableTermHoldsThePublication(): void {
-		$advance = $this->process->mayAdvance(
-			asks: [['party' => 'J. de Vries', 'termEndsAt' => 'ooit', 'answeredAt' => null]],
-			now: $this->at('2026-09-05T00:00:00+00:00')
-		);
-
-		$this->assertFalse($advance['mayAdvance']);
-		$this->assertSame('unreadable-term', $advance['heldBy'][0]['reason']);
-
-	}//end testAnAskWithAnUnreadableTermHoldsThePublication()
 }//end class

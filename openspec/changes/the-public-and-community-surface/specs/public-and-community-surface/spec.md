@@ -32,26 +32,6 @@ rather than as current.
 - **WHEN** the status page is rendered
 - **THEN** no health probe is made to the named components.
 
-### Requirement: A reader subscribes to changes on the status page (REQ-PCS-102)
-
-A reader MUST be able to subscribe to a status page and be told when a
-component changes state. The subscription MUST run through the
-notification dialect rather than a mailing mechanism of this app. An
-anonymous reader's subscription MUST require a confirmation of the
-address before anything is sent to it.
-
-#### Scenario: A change reaches a subscriber
-
-- **GIVEN** a confirmed subscription to a status page
-- **WHEN** a component changes state
-- **THEN** the subscriber is notified once.
-
-#### Scenario: An unconfirmed address receives nothing
-
-- **GIVEN** a subscription request for an address that was never confirmed
-- **WHEN** a component changes state
-- **THEN** nothing is sent to that address.
-
 ### Requirement: An administrator shows a dated banner to every user (REQ-PCS-103)
 
 An instance banner MUST carry a body, a start and end date, a severity
@@ -120,31 +100,6 @@ the publication.
 - **GIVEN** a catalogue with one published record and one draft
 - **WHEN** the feed is fetched
 - **THEN** only the published record is an entry.
-
-### Requirement: A reader who is not staff votes on a published record (REQ-PCS-106)
-
-A published record MUST be able to accept votes from readers who are not
-staff. A reader MUST be able to vote once per record. The distribution
-MUST be readable, and an individual reader's vote MUST NOT be readable by
-another reader. The vote endpoint MUST be throttled.
-
-#### Scenario: The count is readable
-
-- **GIVEN** a published record with voting enabled and three votes cast
-- **WHEN** a reader opens it
-- **THEN** the distribution is shown.
-
-#### Scenario: One reader, one vote
-
-- **GIVEN** a reader who has already voted on a record
-- **WHEN** they vote again
-- **THEN** the count does not change.
-
-#### Scenario: Who voted stays private
-
-- **GIVEN** a record with votes
-- **WHEN** a reader reads the record and its distribution
-- **THEN** no individual voter is identifiable in the response.
 
 ### Requirement: A client renders our markup the way we render it (REQ-PCS-107)
 

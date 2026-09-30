@@ -67,22 +67,6 @@ When the source cannot be reached, both calls answer 502 with
 to look at the national catalogue; one told "unreachable" goes to look at the
 gateway.
 
-## Knowledge articles
-
-An article is a published record in a catalogue, so it is searchable and
-public by the rules that already govern publications.
-
-A reader records whether it helped, once. The verdict is stored as a salted
-hash of the reader's token, so the counts can be published without any reader
-being identifiable from what is stored. The counts are on the article; the
-verdicts are not.
-
-`POST /api/knowledge-articles/extract` turns an answer on a case into a draft
-article that links back to the case. The draft is not public and the case is
-not written to: the extraction copies, it never moves. An answer written to
-one applicant is rarely the wording that belongs in public, so a person reads
-the draft and decides.
-
 ## Which standards this implements
 
 - The catalogue is the producten- en dienstencatalogue a gemeente publishes.

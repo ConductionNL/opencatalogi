@@ -37,7 +37,6 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Service\CaseTypeCatalogueService;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
-use OCA\OpenCatalogi\Service\KnowledgeArticleService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -49,7 +48,6 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -61,7 +59,6 @@ use Psr\Container\ContainerInterface;
  */
 class ServiceCatalogueController extends Controller {
 	use AnswersCrossOriginRequests;
-	use IdentifiesTheReader;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
 
@@ -73,10 +70,8 @@ class ServiceCatalogueController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
-	 * @param IUserSession $userSession The current session.
 	 * @param ServiceCatalogueService $catalogueService The catalogue reader.
 	 * @param CaseTypeCatalogueService $caseTypeService The case type importer.
-	 * @param KnowledgeArticleService $articleService The knowledge articles.
 	 * @param string $corsMethods Allowed CORS methods.
 	 * @param string $corsAllowedHeaders Allowed CORS headers.
 	 * @param integer $corsMaxAge CORS max age.
@@ -89,10 +84,8 @@ class ServiceCatalogueController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
-		private readonly IUserSession $userSession,
 		private readonly ServiceCatalogueService $catalogueService,
 		private readonly CaseTypeCatalogueService $caseTypeService,
-		private readonly KnowledgeArticleService $articleService,
 		private readonly string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
 		private readonly string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
 		private readonly int $corsMaxAge = 1728000,
@@ -482,166 +475,6 @@ class ServiceCatalogueController extends Controller {
 		return new JSONResponse($this->asArray(object: $saved));
 
 	}//end applyResync()
-
-	/**
-	 * Record a reader's verdict on a knowledge article.
-	 *
-	 * @param string $id The article id.
-	 *
-	 * @return JSONResponse The counts after the verdict.
-	 *
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-reader-says-whether-an-article-helped-and-the-count-is-visible-req-psc-104
-	 */
-	#[AnonRateLimit(limit: 20, period: 60)]
-	public function recordVerdict(string $id): JSONResponse {
-		// Absence is decided BEFORE filter_var sees the value. filter_var(null)
-		// and filter_var('') both return false rather than null, even with
-		// FILTER_NULL_ON_FAILURE, so a caller who sent no `helpful` at all had
-		// a "not helpful" recorded against the article in their name, and the
-		// refusal below could not be reached by omitting the parameter. The
-		// comparison is strict and against null and '' only, so a real boolean
-		// from a JSON body still reaches filter_var and still counts.
-		$rawVerdict = $this->request->getParam('helpful', null);
-		$helpful = null;
-		if (in_array($rawVerdict, [null, ''], true) === false) {
-			$helpful = filter_var($rawVerdict, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-		}
-
-		if ($helpful === null) {
-			return $this->withCors(
-				response: new JSONResponse(
-					data: ['error' => 'missing-verdict', 'message' => $this->l10n->t('Say whether the article helped.')],
-					statusCode: Http::STATUS_BAD_REQUEST
-				)
-			);
-		}
-
-		$readerToken = $this->readerToken();
-
-		try {
-			$articleConfig = $this->configurationFor(schemaKey: 'knowledge_article_schema');
-			$verdictConfig = $this->configurationFor(schemaKey: 'article_verdict_schema');
-			$objectService = $this->catalogueService->getObjectService();
-			$article = $this->asArray(
-				object: $objectService->find(
-					id: $id,
-					register: $articleConfig['register'],
-					schema: $articleConfig['schema']
-				)
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return $this->withCors(
-				response: new JSONResponse(data: ['error' => 'catalogue-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE)
-			);
-		} catch (\Throwable $e) {
-			return $this->withCors(response: new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
-		}
-
-		if ($this->articleService->isPublic(article: $article) === false) {
-			return $this->withCors(response: new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND));
-		}
-
-		$existing = $objectService->searchObjects(
-			[
-				'@self' => ['register' => $verdictConfig['register'], 'schema' => $verdictConfig['schema']],
-				'article' => $id,
-				'_limit' => 1000,
-			],
-			_rbac: false
-		);
-
-		$outcome = $this->articleService->recordVerdict(
-			article: array_merge($article, ['id' => $id]),
-			existingVerdicts: array_map([$this, 'asArray'], $existing),
-			readerToken: $readerToken,
-			helpful: $helpful
-		);
-
-		if ($outcome['counted'] === true) {
-			$objectService->saveObject(
-				object: $outcome['verdict'],
-				extend: [],
-				register: $verdictConfig['register'],
-				schema: $verdictConfig['schema']
-			);
-			$objectService->saveObject(
-				object: $outcome['article'],
-				extend: [],
-				register: $articleConfig['register'],
-				schema: $articleConfig['schema'],
-				uuid: $id
-			);
-		}
-
-		return $this->withCors(
-			response: new JSONResponse(
-				array_merge(
-					$this->articleService->publicCounts(article: $outcome['article']),
-					['counted' => $outcome['counted']]
-				)
-			)
-		);
-
-	}//end recordVerdict()
-
-	/**
-	 * Turn an answer on a case into a draft knowledge article.
-	 *
-	 * Authenticated. The draft is not public and the case is not written to:
-	 * the extraction copies, it never moves.
-	 *
-	 * @return JSONResponse The draft article.
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-the-answer-on-a-case-becomes-an-article-in-one-action-req-psc-105
-	 */
-	public function extractArticle(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(data: ['error' => 'not-logged-in'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		$case = $this->request->getParam('case', []);
-		if (is_array($case) === false || $case === []) {
-			return new JSONResponse(
-				data: ['error' => 'missing-case', 'message' => $this->l10n->t('Name the case the answer comes from.')],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		$answerProperty = (string)$this->request->getParam('answerProperty', 'answer');
-
-		try {
-			$draft = $this->articleService->extractDraft(case: $case, answerProperty: $answerProperty);
-		} catch (\InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['error' => 'no-answer', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		try {
-			$articleConfig = $this->configurationFor(schemaKey: 'knowledge_article_schema');
-			$objectService = $this->catalogueService->getObjectService();
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(data: ['error' => 'catalogue-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		$saved = $objectService->saveObject(
-			object: $draft,
-			extend: [],
-			register: $articleConfig['register'],
-			schema: $articleConfig['schema']
-		);
-
-		return new JSONResponse($this->asArray(object: $saved), Http::STATUS_CREATED);
-
-	}//end extractArticle()
 
 	/**
 	 * The unreachable answer for an external catalogue we could not ask.

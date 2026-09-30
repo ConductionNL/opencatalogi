@@ -29,7 +29,6 @@
  * @e2e openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#scenario-an-integrator-finds-the-interface-from-the-type
  * @e2e openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#scenario-a-definition-arrives-from-the-national-catalogue
  * @e2e openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#scenario-a-resync-shows-what-changed-before-it-applies
- * @e2e openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#scenario-the-extraction-produces-a-draft-not-a-publication
  */
 import type { APIRequestContext } from '@playwright/test'
 
@@ -207,64 +206,6 @@ test.describe('The case type catalogue', () => {
 			expect(definition).toHaveProperty('links')
 			expect(definition).toHaveProperty('syncedAt')
 		}
-
-		await anon.dispose()
-	})
-})
-
-test.describe('Knowledge articles', () => {
-	test('an extracted article is a draft, and an anonymous reader cannot read it', async ({
-		baseURL,
-		request: admin,
-	}) => {
-		const created = await admin.post(`${API_BASE}/knowledge-articles/extract`, {
-			data: {
-				case: {
-					id: 'e2e-case-1',
-					title: 'E2E: vraag over de Woo',
-					answer: 'E2E: dit antwoord hoort in een concept te belanden, niet in publicatie.',
-				},
-			},
-		})
-
-		test.skip(
-			created.status() === 503,
-			'the catalogue is not configured on this instance',
-		)
-		expect([201, 401, 403]).toContain(created.status())
-
-		if (created.status() !== 201) {
-			return
-		}
-
-		const draft = await created.json()
-		expect(draft.draft).toBe(true)
-		expect(draft.sourceCase).toBe('e2e-case-1')
-
-		// The failure that matters: an answer written to one applicant reaching
-		// the public catalogue because an action said "article".
-		const anon = await anonymous(baseURL as string)
-		const verdict = await anon.post(
-			`${API_BASE}/knowledge-articles/${draft.id}/verdict`,
-			{
-				data: { helpful: true },
-			},
-		)
-		expect(verdict.status()).toBe(404)
-
-		await anon.dispose()
-	})
-
-	test('an anonymous reader must say whether the article helped', async ({
-		baseURL,
-	}) => {
-		const anon = await anonymous(baseURL as string)
-		const response = await anon.post(
-			`${API_BASE}/knowledge-articles/does-not-exist/verdict`,
-			{ data: {} },
-		)
-
-		expect([400, 404, 503]).toContain(response.status())
 
 		await anon.dispose()
 	})
