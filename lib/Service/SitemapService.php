@@ -347,7 +347,7 @@ class SitemapService {
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
 	 */
 	private function sitemapQueries(mixed $registerId, mixed $schemaId, object $catalog, string $categoryCode): array {
 		$queries = [];
@@ -377,7 +377,7 @@ class SitemapService {
 	 *
 	 * @return array{registers: array<int, mixed>, schemas: array<int, mixed>}
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
 	 */
 	private function catalogScope(object $catalog): array {
 		$object = [];
@@ -402,7 +402,7 @@ class SitemapService {
 	 *
 	 * @return string|null The code, e.g. infocat012, or null.
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
 	 */
 	private static function categoryOf(string $categoryCode): ?string {
 		if (preg_match('/infocat\d{3}/', $categoryCode, $match) === 1) {
@@ -422,7 +422,7 @@ class SitemapService {
 	 * @return array{results: array<int, object>, lastMod: string|null, continuing: array<int, array<string, mixed>>}
 	 *   The rows, the newest update among them, and the sources that have a next page.
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
 	 */
 	private function searchSitemapPage(object $objectService, array $queries, int $page): array {
 		$results = [];

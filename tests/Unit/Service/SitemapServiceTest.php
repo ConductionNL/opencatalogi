@@ -994,7 +994,7 @@ class SitemapServiceTest extends TestCase {
 	 * REQ-WPC-002 scenario "The harvester reads one category": the sitemap of
 	 * infocat012 lists exactly the two publications filed under it.
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md
+	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function testTheCategorySitemapListsExactlyThePublicationsFiledUnderIt(): void {
 		$queries = [];
@@ -1020,7 +1020,7 @@ class SitemapServiceTest extends TestCase {
 	 * The sitemap index of a category is built from the filed publications,
 	 * without a `woo` register.
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md
+	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function testTheCategorySitemapIndexNeedsNoWooRegister(): void {
 		$queries = [];
@@ -1038,7 +1038,7 @@ class SitemapServiceTest extends TestCase {
 	 * On an instance that still runs a `woo` register, its title-matched schema
 	 * contributes its rows as well; a row found both ways is listed once.
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md
+	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function testTheLegacyWooRegisterStillContributesItsRows(): void {
 		$queries = [];
@@ -1069,7 +1069,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * mapDiwooDocument() reads wooCategory before the older category fields.
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md
+	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function testTheDiwooCategoryComesFromWooCategoryFirst(): void {
 		$publication = [

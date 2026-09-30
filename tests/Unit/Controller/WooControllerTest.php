@@ -173,7 +173,7 @@ class WooControllerTest extends TestCase {
 	 * REQ-WPC-003: the 17 Woo information categories, each with its Dutch and
 	 * English name and a label in the reader's language.
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md
+	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function testCategoriesListsTheSeventeenWithBothNames(): void {
 		$this->authenticate();

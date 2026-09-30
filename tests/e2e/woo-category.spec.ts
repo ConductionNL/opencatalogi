@@ -9,7 +9,7 @@
  * on the publication page and the sitemap per category agree on one set of
  * codes. Anonymous callers get nothing.
  *
- * @e2e openspec/changes/woo-publication-category/specs/woo-compliance/spec.md#scenario-the-category-list-is-read-over-the-api
+ * @e2e openspec/specs/woo-compliance/spec.md#scenario-the-category-list-is-read-over-the-api
  */
 import { expect, test } from './authenticated-request.ts'
 

@@ -466,7 +466,7 @@ class WooServiceTest extends TestCase {
 	 * REQ-WPC-004: a batch published from a Woo request is filed under
 	 * infocat014 (Woo-verzoeken en -besluiten), read back from the store.
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md
+	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function testPublishFilesTheBatchUnderTheWooRequestCategory(): void {
 		$this->seedBatchWithAssessments(false);

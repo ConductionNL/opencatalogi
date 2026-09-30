@@ -19,7 +19,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md
+ * @spec openspec/specs/woo-compliance/spec.md
  */
 
 declare(strict_types=1);

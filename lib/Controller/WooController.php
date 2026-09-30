@@ -116,7 +116,7 @@ class WooController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 *
-	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md#requirement-the-editor-is-offered-the-17-categories-req-wpc-003
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-editor-is-offered-the-17-categories-req-wpc-003
 	 *
 	 * @no-admin-idor-exempt Returns the `WooService::WOO_CATEGORIES` class CONSTANT,
 	 *   the 17 categories of the Woo, the same rows for every caller. No storage is
