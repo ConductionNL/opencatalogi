@@ -1282,7 +1282,9 @@ OC.L10N.register(
         "Written by the matching job only.": "Written by the matching job only.",
         "Written by the matching job only. A change is the notice to portaliq.": "Written by the matching job only. A change is the notice to portaliq.",
         "resident, or the app id that added it, for example dossiq.": "resident, or the app id that added it, for example dossiq.",
-        "woo-besluit for a decision on a Woo request, actief for active disclosure.": "woo-besluit for a decision on a Woo request, actief for active disclosure."
+        "woo-besluit for a decision on a Woo request, actief for active disclosure.": "woo-besluit for a decision on a Woo request, actief for active disclosure.",
+        "The information category the publication is filed under. Without one it is filed under Woo requests and decisions.": "The information category the publication is filed under. Without one it is filed under Woo requests and decisions.",
+        "The title the publication gets. Without one it is named after the case reference.": "The title the publication gets. Without one it is named after the case reference."
     },
     "nplurals=2; plural=(n != 1);"
 )

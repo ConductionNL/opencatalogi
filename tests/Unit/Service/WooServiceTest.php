@@ -687,6 +687,32 @@ class WooServiceTest extends TestCase {
 	}//end testPublishingAgainAfterAFailedAttachmentContinuesTheSamePublication()
 
 	/**
+	 * REQ-WBP-002: a reference is a file id, an absolute path or a path in the
+	 * creator's files; a folder or nothing is not a document.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	public function testDocumentReferencesResolveByIdPathAndUserPathButNeverToAFolder(): void {
+		$this->documents['id:42'] = $this->document('by-id.pdf');
+		$this->documents['/alice/files/map'] = $this->createMock(\OCP\Files\Folder::class);
+		$root = $this->createMock(\OCP\Files\IRootFolder::class);
+		$root->method('getFirstNodeById')->willReturnCallback(fn (int $id) => ($this->documents['id:'.$id] ?? null));
+		$root->method('get')->willReturnCallback(fn (string $path) => ($this->documents[$path] ?? throw new \OCP\Files\NotFoundException($path)));
+		$userFolder = $this->createMock(\OCP\Files\Folder::class);
+		$userFolder->method('get')->willReturnCallback(fn (string $path) => ($this->documents['/alice/files/'.$path] ?? throw new \OCP\Files\NotFoundException($path)));
+		$root->method('getUserFolder')->willReturn($userFolder);
+		$writer = new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $this->createMock(\OCA\OpenCatalogi\Service\Portal\PublicationLinker::class), $this->l10n);
+
+		$this->assertSame('by-id.pdf', $writer->resolve('42', 'alice')?->getName());
+		$this->assertSame('a.pdf', $writer->resolve('/alice/files/doc-a', '')?->getName());
+		$this->assertSame('b.pdf', $writer->resolve('doc-b', 'alice')?->getName());
+		$this->assertNull($writer->resolve('/alice/files/map', 'alice'));
+		$this->assertNull($writer->resolve('doc-b', ''));
+		$this->assertNull($writer->resolve('7', 'alice'));
+		$this->assertNull($writer->resolve('', 'alice'));
+	}//end testDocumentReferencesResolveByIdPathAndUserPathButNeverToAFolder()
+
+	/**
 	 * REQ-WBP-002: without an approval nothing is created.
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
