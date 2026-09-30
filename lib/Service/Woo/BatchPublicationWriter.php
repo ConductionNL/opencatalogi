@@ -74,6 +74,45 @@ class BatchPublicationWriter {
 	}//end __construct()
 
 	/**
+	 * The documents of a batch that may be published: every `openbaar` one as
+	 * it is, every `deels_openbaar` one as its redacted version. `niet_openbaar`
+	 * stays out.
+	 *
+	 * @param array<int, array<string, mixed>> $assessments The batch's assessments.
+	 *
+	 * @return array<int, array{title: string, assessment: string, document: string}>
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
+	 */
+	public function listings(array $assessments): array {
+		$publishable = array_values(
+			array_filter(
+				$assessments,
+				static fn (array $a): bool => in_array((string)($a['assessment'] ?? ''), ['openbaar', 'deels_openbaar'], true)
+			)
+		);
+
+		$listings = [];
+		foreach ($publishable as $assessment) {
+			$isPartial = ((string)($assessment['assessment'] ?? '') === 'deels_openbaar');
+
+			$document = (string)($assessment['documentReference'] ?? '');
+			if ($isPartial === true) {
+				$document = (string)($assessment['anonymizedDocument'] ?? '');
+			}
+
+			$listings[] = [
+				'title' => (string)($assessment['fileName'] ?? ''),
+				'assessment' => (string)($assessment['assessment'] ?? ''),
+				'document' => $document,
+			];
+		}
+
+		return $listings;
+
+	}//end listings()
+
+	/**
 	 * Resolve every document, refusing the publish when one cannot be found.
 	 *
 	 * @param array<int, array<string, mixed>> $listings The publishable documents ({title, document}).
@@ -91,7 +130,12 @@ class BatchPublicationWriter {
 		foreach ($listings as $listing) {
 			$file = $this->resolve(reference: (string)($listing['document'] ?? ''), owner: $owner);
 			if ($file === null) {
-				$missing[] = ((string)($listing['title'] ?? '') !== '' ? (string)$listing['title'] : (string)($listing['document'] ?? ''));
+				$name = (string)($listing['title'] ?? '');
+				if ($name === '') {
+					$name = (string)($listing['document'] ?? '');
+				}
+
+				$missing[] = $name;
 				continue;
 			}
 
@@ -142,6 +186,57 @@ class BatchPublicationWriter {
 		return null;
 
 	}//end resolve()
+
+	/**
+	 * Create the batch's publication and attach its documents.
+	 *
+	 * Every document is found first, so a missing one stops the publish before
+	 * anything is written. On a failure part way, `keepProgress` stores the
+	 * batch with the publication and the files attached so far (its status
+	 * unchanged), so publishing again continues instead of making a second
+	 * publication.
+	 *
+	 * @param array<string, mixed>             $batch        The batch.
+	 * @param array<int, array<string, mixed>> $listings     The publishable documents.
+	 * @param string                           $now          The moment of publishing.
+	 * @param callable                         $keepProgress Stores the batch with its progress.
+	 *
+	 * @return array{id: string, url: string, wooCategory: string, attached: array<int, string>}
+	 *
+	 * @throws RuntimeException When a document is missing or an attachment fails.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	public function publishDocuments(array $batch, array $listings, string $now, callable $keepProgress): array {
+		$files = $this->resolveAll(listings: $listings, owner: (string)($batch['createdBy'] ?? ''));
+		$publication = $this->publication(batch: $batch, now: $now);
+		$attached = array_values(array_map('strval', (array)($batch['wooPublication']['attached'] ?? [])));
+
+		foreach ($files as $file) {
+			if (in_array($file->getName(), $attached, true) === true) {
+				continue;
+			}
+
+			try {
+				$this->attach(publication: $publication, file: $file);
+			} catch (Throwable $e) {
+				$batch['wooPublication'] = array_merge((array)($batch['wooPublication'] ?? []), ['publication' => $publication['id'], 'attached' => $attached]);
+				unset($batch['documentSummary']);
+				$keepProgress($batch);
+				throw new RuntimeException($this->l10n->t('Publishing stopped at %s. Publish again to continue.', [$file->getName()]), 0, $e);
+			}
+
+			$attached[] = $file->getName();
+		}//end foreach
+
+		return [
+			'id' => $publication['id'],
+			'url' => $this->url(id: $publication['id']),
+			'wooCategory' => $this->category(batch: $batch),
+			'attached' => $attached,
+		];
+
+	}//end publishDocuments()
 
 	/**
 	 * Create the batch's publication, or take the one an earlier attempt made.
