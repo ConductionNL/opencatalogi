@@ -169,6 +169,39 @@ class WooControllerTest extends TestCase {
 	 * ------------------------------------------------------------------
 	 */
 
+	/**
+	 * REQ-WPC-003: the 17 Woo information categories, each with its Dutch and
+	 * English name and a label in the reader's language.
+	 *
+	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md
+	 */
+	public function testCategoriesListsTheSeventeenWithBothNames(): void {
+		$this->authenticate();
+
+		$response = $this->controller->categories();
+
+		$this->assertSame(200, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame(17, $data['total']);
+		$this->assertCount(17, $data['results']);
+		$first = $data['results'][0];
+		$this->assertSame('infocat001', $first['code']);
+		$this->assertSame('Wetten en algemeen verbindende voorschriften', $first['nl']);
+		$this->assertSame('Laws and generally binding regulations', $first['en']);
+		$this->assertSame('Laws and generally binding regulations', $first['label']);
+		$codes = array_column($data['results'], 'code');
+		$this->assertContains('infocat012', $codes);
+		$this->assertContains('infocat017', $codes);
+
+	}//end testCategoriesListsTheSeventeenWithBothNames()
+
+	public function testCategoriesAnonymousReturns401(): void {
+		$this->userSession->method('getUser')->willReturn(null);
+
+		$this->assertSame(401, $this->controller->categories()->getStatus());
+
+	}//end testCategoriesAnonymousReturns401()
+
 	public function testWeigeringsgrondenAnonymousReturns401(): void {
 		$this->userSession->method('getUser')->willReturn(null);
 		$this->wooService->expects($this->never())->method('getWeigeringsgronden');
