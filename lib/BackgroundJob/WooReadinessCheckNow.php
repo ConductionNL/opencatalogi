@@ -63,6 +63,8 @@ class WooReadinessCheckNow extends QueuedJob {
 	 *
 	 * @return void
 	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The framework passes an argument this job does not take.
+	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-readiness-verdict-stays-current-without-anyone-running-it-req-wih-004
 	 */
 	protected function run($argument): void {
