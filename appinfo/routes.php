@@ -243,6 +243,21 @@ return [
 		['name' => 'setup#status', 'url' => '/api/setup/status', 'verb' => 'GET'],
 		['name' => 'setup#config', 'url' => '/api/setup/config', 'verb' => 'POST'],
 		['name' => 'setup#action', 'url' => '/api/setup/action/{actionId}', 'verb' => 'POST', 'requirements' => ['actionId' => '[a-z-]+']],
+		// Woo citizen journey (citizen-collections, saved-searches-and-alerts): the
+		// endpoint actions portaliq forwards with its signed X-Portal-Subject
+		// assertion, and the public read of a shared dossier. Before the wildcard
+		// catalog routes below.
+		['name' => 'portalCollection#addItem', 'url' => '/api/portal/collections/items', 'verb' => 'POST'],
+		['name' => 'portalCollection#removeItem', 'url' => '/api/portal/collections/items/remove', 'verb' => 'POST'],
+		['name' => 'portalCollection#view', 'url' => '/api/portal/collections/view', 'verb' => 'POST'],
+		['name' => 'portalCollection#note', 'url' => '/api/portal/collections/note', 'verb' => 'POST'],
+		['name' => 'portalCollection#share', 'url' => '/api/portal/collections/share', 'verb' => 'POST'],
+		['name' => 'portalCollection#unshare', 'url' => '/api/portal/collections/unshare', 'verb' => 'POST'],
+		['name' => 'portalCollection#delete', 'url' => '/api/portal/collections/delete', 'verb' => 'POST'],
+		['name' => 'portalCollection#saveSearch', 'url' => '/api/portal/saved-searches', 'verb' => 'POST'],
+		['name' => 'portalCollection#pauseSearch', 'url' => '/api/portal/saved-searches/pause', 'verb' => 'POST'],
+		['name' => 'portalCollection#deleteSearch', 'url' => '/api/portal/saved-searches/delete', 'verb' => 'POST'],
+		['name' => 'sharedCollection#show', 'url' => '/api/collections/shared/{token}', 'verb' => 'GET', 'requirements' => ['token' => '[0-9a-f-]{36}\.[0-9a-f]{48}']],
 		// Publications (wildcard catalog-based endpoints - MUST BE ABSOLUTE LAST to avoid catching any specific routes)
 		['name' => 'publications#index', 'url' => '/api/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#show', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
