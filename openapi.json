@@ -103,6 +103,10 @@
     {
       "name": "Service catalogue",
       "description": "The public request catalogue, the case types it publishes, and reader verdicts on knowledge articles."
+    },
+    {
+      "name": "Portal",
+      "description": "A resident's dossiers and saved searches. Called by portaliq's server-to-server forward with its signed X-Portal-Subject assertion."
     }
   ],
   "components": {
@@ -2502,6 +2506,671 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/items": {
+      "post": {
+        "operationId": "portal-collection-add-item",
+        "summary": "Add to a dossier",
+        "description": "Adds a public publication, or one of its documents, to the resident's dossier, or to a new dossier when no collection is given.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "publication": {
+                    "type": "string"
+                  },
+                  "attachment": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/items/remove": {
+      "post": {
+        "operationId": "portal-collection-remove-item",
+        "summary": "Remove from a dossier",
+        "description": "Removes one item from the resident's dossier.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  },
+                  "itemId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/view": {
+      "post": {
+        "operationId": "portal-collection-view",
+        "summary": "Open a dossier",
+        "description": "The resident's own view of a dossier, each item marked public or not.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/note": {
+      "post": {
+        "operationId": "portal-collection-note",
+        "summary": "Write a note",
+        "description": "Sets the note of one item, or of the dossier when no item is given.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "itemId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/share": {
+      "post": {
+        "operationId": "portal-collection-share",
+        "summary": "Make a share link",
+        "description": "Makes a new read-only link to the dossier. An earlier link stops working.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/unshare": {
+      "post": {
+        "operationId": "portal-collection-unshare",
+        "summary": "Revoke the share link",
+        "description": "Revokes the read-only link.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/delete": {
+      "post": {
+        "operationId": "portal-collection-delete",
+        "summary": "Delete a dossier",
+        "description": "Deletes the resident's dossier.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/saved-searches": {
+      "post": {
+        "operationId": "portal-saved-search-save",
+        "summary": "Save a search",
+        "description": "Saves a search for the resident, daily by default.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "query": {
+                    "type": "object"
+                  },
+                  "frequency": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/saved-searches/pause": {
+      "post": {
+        "operationId": "portal-saved-search-pause",
+        "summary": "Stop notices",
+        "description": "Stops the notices of a saved search.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "savedSearch": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/saved-searches/delete": {
+      "post": {
+        "operationId": "portal-saved-search-delete",
+        "summary": "Delete a saved search",
+        "description": "Deletes the resident's saved search.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "savedSearch": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/collections/shared/{token}": {
+      "get": {
+        "operationId": "shared-collection-show",
+        "summary": "A shared dossier",
+        "description": "The title, description and the items that are public at this moment, with their notes. Never the owner. A revoked or unknown token answers 404.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }

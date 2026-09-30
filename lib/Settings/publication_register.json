@@ -23,7 +23,7 @@
       "publication": {
         "slug": "publication",
         "title": "Publication",
-        "version": "0.4.0",
+        "version": "0.5.0",
         "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website, including catalogs, listings, organizations, publications, themes, pages, menus, and glossary items. This register enables the creation of rich, navigable catalog websites with proper content organization and user-friendly navigation.",
         "published": "2025-01-01T00:00:00+00:00",
         "schemas": [

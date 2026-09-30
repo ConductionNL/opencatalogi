@@ -2,7 +2,7 @@
 
 ## 1. Schema
 
-- [ ] 1.1 Fragment `lib/Settings/register.d/woo-dossier-publication.json` with `publicationKind`, `caseReference`, `period`; bump the publication schema and register versions (REQ-WDP-001). Verify: `tests/Unit/Settings/WooDossierPublicationFragmentTest.php` validates real payloads against the merged schema.
+- [x] 1.1 Fragment `lib/Settings/register.d/woo-dossier-publication.json` with `publicationKind`, `caseReference`, `period`; bump the publication schema and register versions (REQ-WDP-001). Verify: `tests/Unit/Settings/WooJourneyRegisterTest.php` validates real payloads against the merged schema.
 
 ## 2. Search
 

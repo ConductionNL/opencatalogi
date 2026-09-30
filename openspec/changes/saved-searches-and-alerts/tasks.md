@@ -2,9 +2,9 @@
 
 ## 1. Schema and actions
 
-- [ ] 1.1 Add `savedSearch` in `lib/Settings/register.d/saved-searches-and-alerts.json`, bump the register version (REQ-SSA-001). Verify: fragment test validating a real payload.
-- [ ] 1.2 Manifest: `mySavedSearches`, the four actions, the page and the change rule (REQ-SSA-001, REQ-SSA-004). Verify: `tests/Unit/Portal/PortalContributionProviderTest.php`.
-- [ ] 1.3 `SavedSearchService` + `PortalSavedSearchController`: save, pause, delete (REQ-SSA-001). Verify: `tests/Unit/Service/SavedSearchServiceTest.php`.
+- [x] 1.1 Add `savedSearch` in `lib/Settings/register.d/saved-searches-and-alerts.json`, bump the register version (REQ-SSA-001). Verify: `tests/Unit/Settings/WooJourneyRegisterTest.php`.
+- [x] 1.2 Manifest: `mySavedSearches`, the four actions, the page and the change rule (REQ-SSA-001, REQ-SSA-004). Verify: `tests/Unit/Portal/PortalContributionProviderTest.php`.
+- [x] 1.3 `SavedSearchService` + `PortalCollectionController`: save, pause, delete (REQ-SSA-001). Verify: `tests/Unit/Service/Portal/SavedSearchServiceTest.php`, `tests/Unit/Controller/PortalCollectionControllerTest.php`.
 
 ## 2. Matching
 

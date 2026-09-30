@@ -1,0 +1,47 @@
+{
+	"components": {
+		"schemas": {
+			"publication": {
+				"version": "0.0.6",
+				"properties": {
+					"publicationKind": {
+						"type": "string",
+						"title": "Kind of publication",
+						"description": "woo-besluit for a decision on a Woo request, actief for active disclosure.",
+						"enum": [
+							"woo-besluit",
+							"actief"
+						],
+						"facetable": true
+					},
+					"caseReference": {
+						"type": "string",
+						"title": "Case reference",
+						"description": "The case this publication came from.",
+						"maxLength": 255,
+						"facetable": false
+					},
+					"period": {
+						"type": "object",
+						"title": "Period",
+						"description": "The period the documents cover.",
+						"properties": {
+							"from": {
+								"type": "string",
+								"format": "date",
+								"title": "From",
+								"description": "The first day the documents cover."
+							},
+							"to": {
+								"type": "string",
+								"format": "date",
+								"title": "Until",
+								"description": "The last day the documents cover."
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
