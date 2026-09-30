@@ -34,6 +34,7 @@ use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
+use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
@@ -119,6 +120,14 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: ObjectUpdatedEventListener::class
+		);
+
+		// Woo citizen journey (citizen-collections, REQ-CCOL-007): when portaliq
+		// marks a portal account removed, delete that resident's dossiers and
+		// saved searches. portaliq has no removal event; the account update is it.
+		$context->registerEventListener(
+			event: ObjectUpdatedEvent::class,
+			listener: PortalAccountRemovedListener::class
 		);
 
 		// PLOOI delivery (woo-national-delivery-repair, REQ-WND-003): queue a
