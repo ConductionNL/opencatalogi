@@ -36,6 +36,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\WooCategory;
 use OCA\OpenCatalogi\Service\WooService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -118,7 +119,7 @@ class WooController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-editor-is-offered-the-17-categories-req-wpc-003
 	 *
-	 * @no-admin-idor-exempt Returns the `WooService::WOO_CATEGORIES` class CONSTANT,
+	 * @no-admin-idor-exempt Returns the `WooCategory::ALL` class CONSTANT,
 	 *   the 17 categories of the Woo, the same rows for every caller. No storage is
 	 *   touched and the endpoint takes no parameter, so there is no object id to scope.
 	 */
@@ -128,7 +129,7 @@ class WooController extends Controller {
 		}
 
 		$rows = [];
-		foreach (WooService::WOO_CATEGORIES as $code => $names) {
+		foreach (WooCategory::ALL as $code => $names) {
 			$rows[] = [
 				'code' => $code,
 				'nl' => $names['nl'],

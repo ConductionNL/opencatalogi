@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace Unit\Settings;
 
 use OCA\OpenCatalogi\Service\SitemapService;
-use OCA\OpenCatalogi\Service\WooService;
+use OCA\OpenCatalogi\Service\WooCategory;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Validator;
 use PHPUnit\Framework\TestCase;
@@ -83,9 +83,9 @@ class PublicationWooCategoryTest extends TestCase {
 		}
 
 		$this->assertSame($expected, $property['enum']);
-		$this->assertSame($expected, array_keys(WooService::WOO_CATEGORIES));
+		$this->assertSame($expected, array_keys(WooCategory::ALL));
 		$this->assertSame(array_keys($property['x-enum-labels']), $expected);
-		foreach (WooService::WOO_CATEGORIES as $code => $names) {
+		foreach (WooCategory::ALL as $code => $names) {
 			$this->assertSame($names['en'], $property['x-enum-labels'][$code]);
 		}
 	}
