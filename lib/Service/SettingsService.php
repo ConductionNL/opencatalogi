@@ -522,6 +522,7 @@ class SettingsService {
 		$defaults['woo_index_registration_status'] = 'not_registered';
 		$defaults['woo_index_registration_url'] = '';
 		$defaults['woo_index_registration_at'] = '';
+		$defaults['woo_index_registration_answer'] = '';
 
 		// National channel sources (woo-national-delivery-repair, REQ-WND-001): a
 		// JSON map from channel to the slug of the integriq source it is sent through.
@@ -737,6 +738,7 @@ class SettingsService {
 			$allowedKeys[] = 'woo_index_registration_status';
 			$allowedKeys[] = 'woo_index_registration_url';
 			$allowedKeys[] = 'woo_index_registration_at';
+			$allowedKeys[] = 'woo_index_registration_answer';
 
 			// National channel sources (REQ-WND-001).
 			$allowedKeys[] = 'channel_sources';

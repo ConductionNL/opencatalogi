@@ -112,7 +112,7 @@ class WooRegistrationServiceTest extends TestCase {
 		$this->assertSame([['name' => 'Gemeente Voorbeeld', 'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm9999']], $request['organisations']);
 		$this->assertSame('https://woo.example.nl/robots.txt', $request['robotsTxt']);
 		$this->assertCount(17, $request['sitemapIndexes']);
-		$this->assertSame('https://woo.example.nl/apps/opencatalogi/api/woo-a/sitemaps/infocat001', $request['sitemapIndexes'][0]);
+		$this->assertSame('https://woo.example.nl/apps/opencatalogi/api/woo-a/sitemaps/sitemapindex-diwoo-infocat001.xml', $request['sitemapIndexes'][0]);
 	}
 
 	/** REQ-WIH-003: the gateway takes the request, and the status follows its answer. */

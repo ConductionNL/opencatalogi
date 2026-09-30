@@ -295,8 +295,8 @@ class RobotsControllerTest extends TestCase {
 		$this->assertTrue($query['hasWooSitemap'], 'OpenRegister is asked for Woo-enabled catalogues only.');
 		$lines = array_values(array_filter(explode("\n", $text), static fn (string $line): bool => str_starts_with($line, 'Sitemap: ')));
 		$this->assertCount(34, $lines);
-		$this->assertSame('Sitemap: https://example.com/apps/opencatalogi/api/woo-a/sitemaps/infocat001', $lines[0]);
-		$this->assertSame('Sitemap: https://example.com/apps/opencatalogi/api/woo-b/sitemaps/infocat017', $lines[33]);
+		$this->assertSame('Sitemap: https://example.com/apps/opencatalogi/api/woo-a/sitemaps/sitemapindex-diwoo-infocat001.xml', $lines[0]);
+		$this->assertSame('Sitemap: https://example.com/apps/opencatalogi/api/woo-b/sitemaps/sitemapindex-diwoo-infocat017.xml', $lines[33]);
 		$this->assertStringNotContainsString('/news/', $text);
 		$this->assertStringNotContainsString('\n', $text);
 		$this->assertStringEndsWith("\n", $text);

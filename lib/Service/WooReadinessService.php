@@ -125,6 +125,26 @@ class WooReadinessService {
 	}//end hasWooEnabledCatalogs()
 
 	/**
+	 * Run the check only while at least one catalogue is Woo-enabled.
+	 *
+	 * With none, no outbound request is made and the stored report stays as
+	 * it is (WOO-HR-004). Used by the daily job and by the one queued when a
+	 * catalogue is switched on.
+	 *
+	 * @return array<string, mixed>|null The report, or null when nothing is Woo-enabled.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-readiness-verdict-stays-current-without-anyone-running-it-req-wih-004
+	 */
+	public function runWhenEnabled(): ?array {
+		if ($this->hasWooEnabledCatalogs() === false) {
+			return null;
+		}
+
+		return $this->runCheck();
+
+	}//end runWhenEnabled()
+
+	/**
 	 * Run the full outside-in harvester-readiness self-check and persist the report.
 	 *
 	 * Caller MUST have already verified {@see hasWooEnabledCatalogs()} (WOO-HR-004) —
@@ -221,7 +241,7 @@ class WooReadinessService {
 	 *
 	 * @spec exclude Local catalog-lookup plumbing shared by hasWooEnabledCatalogs() and runCheck(); no outbound behavior.
 	 */
-	private function getWooEnabledCatalogs(): array {
+	public function getWooEnabledCatalogs(): array {
 		try {
 			$settings = $this->settingsService->getSettings();
 		} catch (\Throwable $e) {
