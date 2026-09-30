@@ -104,6 +104,23 @@ publication page shows the result in the PLOOI delivery block: the status, the
 time, the identifier PLOOI gave, and the reason when it failed. A failed
 delivery does not undo the publishing.
 
+### Woo information categories
+
+You file a publication under one of the 17 information categories of the Woo
+(Wet open overheid). Pick it in the Woo information category field of the
+Publication block on the publication page. The field stores a code from
+`infocat001` to `infocat017`. A publication with any other code appears in no
+category sitemap.
+
+Each category has its own sitemap, which the national Woo index reads. That
+sitemap lists the catalogue's publications filed under the category. An
+instance that still runs a register titled `woo` keeps its old lookup too: the
+schema named after the category adds its publications to the same sitemap.
+
+`GET /api/woo/categories` returns the 17 codes with their Dutch and English
+names. A Woo request batch you publish is filed under `infocat014`, Woo requests
+and decisions.
+
 ## Which collections publish
 
 `GET` and `POST /api/published-collections` hold the configured set. A

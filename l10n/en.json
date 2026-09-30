@@ -1189,7 +1189,26 @@
         "Why the last PLOOI delivery failed, as the platform or the connection said it.": "Why the last PLOOI delivery failed, as the platform or the connection said it.",
         "Deliver to PLOOI": "Deliver to PLOOI",
         "Deliver every publication in this catalogue to PLOOI, the delivery API of open.overheid.nl, when it becomes public.": "Deliver every publication in this catalogue to PLOOI, the delivery API of open.overheid.nl, when it becomes public.",
-        "PLOOI delivery": "PLOOI delivery"
+        "PLOOI delivery": "PLOOI delivery",
+        "Woo information category": "Woo information category",
+        "The information category of the Woo this publication is filed under. The sitemap of that category lists it for the national Woo index.": "The information category of the Woo this publication is filed under. The sitemap of that category lists it for the national Woo index.",
+        "Laws and generally binding regulations": "Laws and generally binding regulations",
+        "Other decisions of general scope": "Other decisions of general scope",
+        "Draft legislation sent out for advice": "Draft legislation sent out for advice",
+        "Organisation and working methods": "Organisation and working methods",
+        "Contact details": "Contact details",
+        "Documents received by representative bodies": "Documents received by representative bodies",
+        "Meeting documents of the States General": "Meeting documents of the States General",
+        "Meeting documents of local and regional governments": "Meeting documents of local and regional governments",
+        "Agendas and decision lists of executive boards": "Agendas and decision lists of executive boards",
+        "Advice": "Advice",
+        "Covenants": "Covenants",
+        "Annual plans and annual reports": "Annual plans and annual reports",
+        "Subsidy obligations other than by decision": "Subsidy obligations other than by decision",
+        "Woo requests and decisions": "Woo requests and decisions",
+        "Research reports": "Research reports",
+        "Individual decisions": "Individual decisions",
+        "Complaint rulings": "Complaint rulings"
     },
     "plurals": {}
 }

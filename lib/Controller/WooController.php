@@ -106,6 +106,41 @@ class WooController extends Controller {
 	}//end weigeringsgronden()
 
 	/**
+	 * Return the 17 Woo information categories a publication can be filed under.
+	 *
+	 * Read-only; authenticated. Each row carries the code `wooCategory` stores,
+	 * the Dutch and English name, and a label in the reader's language.
+	 *
+	 * @return JSONResponse The categories and their count.
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/woo-publication-category/specs/woo-compliance/spec.md#requirement-the-editor-is-offered-the-17-categories-req-wpc-003
+	 *
+	 * @no-admin-idor-exempt Returns the `WooService::WOO_CATEGORIES` class CONSTANT,
+	 *   the 17 categories of the Woo, the same rows for every caller. No storage is
+	 *   touched and the endpoint takes no parameter, so there is no object id to scope.
+	 */
+	public function categories(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$rows = [];
+		foreach (WooService::WOO_CATEGORIES as $code => $names) {
+			$rows[] = [
+				'code' => $code,
+				'nl' => $names['nl'],
+				'en' => $names['en'],
+				'label' => $this->l10n->t($names['en']),
+			];
+		}
+
+		return new JSONResponse(['results' => $rows, 'total' => count($rows)]);
+	}//end categories()
+
+	/**
 	 * Create a WOO disclosure batch and provision its Deck board + cards.
 	 *
 	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). Acts on the

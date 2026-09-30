@@ -107,6 +107,38 @@ class WooService {
 	public const BATCH_STATUSES = ['in_progress', 'ready_for_review', 'published'];
 
 	/**
+	 * The 17 information categories of the Woo (art. 3.3), keyed by the code the
+	 * publication schema's `wooCategory` stores and the sitemap file names carry
+	 * (`SitemapService::INFO_CAT`), with the Dutch and English name of each.
+	 *
+	 * @var array<string, array{nl: string, en: string}>
+	 */
+	public const WOO_CATEGORIES = [
+		'infocat001' => ['nl' => 'Wetten en algemeen verbindende voorschriften', 'en' => 'Laws and generally binding regulations'],
+		'infocat002' => ['nl' => 'Overige besluiten van algemene strekking', 'en' => 'Other decisions of general scope'],
+		'infocat003' => ['nl' => 'Ontwerpen van wet- en regelgeving met adviesaanvraag', 'en' => 'Draft legislation sent out for advice'],
+		'infocat004' => ['nl' => 'Organisatie en werkwijze', 'en' => 'Organisation and working methods'],
+		'infocat005' => ['nl' => 'Bereikbaarheidsgegevens', 'en' => 'Contact details'],
+		'infocat006' => ['nl' => 'Bij vertegenwoordigende organen ingekomen stukken', 'en' => 'Documents received by representative bodies'],
+		'infocat007' => ['nl' => 'Vergaderstukken Staten-Generaal', 'en' => 'Meeting documents of the States General'],
+		'infocat008' => ['nl' => 'Vergaderstukken decentrale overheden', 'en' => 'Meeting documents of local and regional governments'],
+		'infocat009' => ['nl' => 'Agenda\'s en besluitenlijsten bestuurscolleges', 'en' => 'Agendas and decision lists of executive boards'],
+		'infocat010' => ['nl' => 'Adviezen', 'en' => 'Advice'],
+		'infocat011' => ['nl' => 'Convenanten', 'en' => 'Covenants'],
+		'infocat012' => ['nl' => 'Jaarplannen en jaarverslagen', 'en' => 'Annual plans and annual reports'],
+		'infocat013' => ['nl' => 'Subsidieverplichtingen anders dan met beschikking', 'en' => 'Subsidy obligations other than by decision'],
+		'infocat014' => ['nl' => 'Woo-verzoeken en -besluiten', 'en' => 'Woo requests and decisions'],
+		'infocat015' => ['nl' => 'Onderzoeksrapporten', 'en' => 'Research reports'],
+		'infocat016' => ['nl' => 'Beschikkingen', 'en' => 'Individual decisions'],
+		'infocat017' => ['nl' => 'Klachtoordelen', 'en' => 'Complaint rulings'],
+	];
+
+	/**
+	 * The category a publication made from a Woo request is filed under.
+	 */
+	public const WOO_REQUEST_CATEGORY = 'infocat014';
+
+	/**
 	 * The WOO Art. 5.1/5.2 weigeringsgronden (refusal grounds) catalogue. Each
 	 * entry is the article reference (stored value) mapped to a short Dutch
 	 * description. Absolute grounds (5.1) and relative grounds (5.2).
@@ -970,7 +1002,7 @@ class WooService {
 		$publicationMeta = [
 			'wooDecisionDate' => substr($now, 0, 10),
 			'wooRequestReference' => (string)($batch['caseReference'] ?? ''),
-			'wooCategory' => 'verzoek',
+			'wooCategory' => self::WOO_REQUEST_CATEGORY,
 			'documentCount' => (int)($batch['documentSummary']['total'] ?? 0),
 			'publishedCount' => $publishedCount,
 			'decisionLetter' => (string)($batch['decisionLetter'] ?? ''),

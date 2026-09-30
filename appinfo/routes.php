@@ -57,6 +57,7 @@ return [
 		['name' => 'retention#exportReport', 'url' => '/api/retention/report', 'verb' => 'GET'],
 		// WOO transparency (woo-transparency)
 		['name' => 'woo#weigeringsgronden', 'url' => '/api/woo/weigeringsgronden', 'verb' => 'GET'],
+		['name' => 'woo#categories', 'url' => '/api/woo/categories', 'verb' => 'GET'],
 		['name' => 'woo#createBatch', 'url' => '/api/woo/batches', 'verb' => 'POST'],
 		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
 		['name' => 'woo#updateAssessment', 'url' => '/api/woo/batches/{batchId}/documents/{docId}', 'verb' => 'PUT'],
