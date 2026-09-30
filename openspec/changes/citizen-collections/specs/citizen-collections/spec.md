@@ -76,7 +76,7 @@ The owner's view SHALL return every item with `public: true` or `public: false`,
 
 Implements hydra `woo-citizen-journey`: A shared dossier MUST show only what is public at the moment it is read.
 
-`shareDossier` SHALL set `share` to `{ token, createdAt }` with at least 128 random bits in the token. `GET /api/collections/shared/{token}` SHALL be readable without sign-in and SHALL return the title, description and only the items whose publication is public at that moment, with their notes. It SHALL NOT return `owner`, `share` or `sourceOf`. `unshareDossier` SHALL set `share` to null, after which the old token SHALL answer 404.
+`shareDossier` SHALL set `share` to `{ token, createdAt }` with at least 128 random bits in the token, and answer the absolute share URL as `link`. `GET /api/collections/shared/{token}` SHALL be readable without sign-in and SHALL return the title, description and only the items whose publication is public at that moment, with their notes. It SHALL NOT return `owner`, `share` or `sourceOf`. `unshareDossier` SHALL set `share` to null, after which the old token SHALL answer 404.
 
 #### Scenario: A depublished item disappears from the shared view
 
@@ -95,13 +95,19 @@ Implements hydra `woo-citizen-journey`: A shared dossier MUST show only what is 
 
 Implements hydra `woo-citizen-journey` design C1 and C7 (the Mijn dossiers page).
 
-`OCA\OpenCatalogi\Portal\PortalContributionProvider` SHALL answer a manifest for the audiences `citizen` and `client`, and null for any other. The manifest SHALL declare the `myDossiers` collection scoped by `owner`, the actions `createDossier`, `addToDossier`, `viewDossier`, `removeFromDossier`, `noteOnDossier`, `shareDossier`, `unshareDossier` and `deleteDossier`, and a page `dossiers` labelled "Mijn dossiers".
+`OCA\OpenCatalogi\Portal\PortalContributionProvider` SHALL answer a manifest for the audiences `citizen` and `client`, and null for any other. The manifest SHALL declare the `myDossiers` collection scoped by `owner`, the actions `createDossier`, `addToDossier`, `viewDossier`, `removeFromDossier`, `noteOnDossier`, `shareDossier`, `unshareDossier` and `deleteDossier`, and a page `dossiers` labelled "Mijn dossiers". The `myDossiers` entry SHALL declare `itemList` with the provider method `dossierItems`, which returns the dossier's items as `{ id, title, url, note, public, addedAt }`, and `removeAction: removeFromDossier`, whose item field is `itemId`.
 
 #### Scenario: A DigiD resident in the client audience
 
 - **GIVEN** a subject with audience `client`
 - **WHEN** portaliq asks for opencatalogi's contribution
 - **THEN** the manifest offers `addToDossier` and the page "Mijn dossiers"
+
+#### Scenario: portaliq lists a dossier's items
+
+- **GIVEN** a dossier with one public and one depublished item
+- **WHEN** portaliq calls `dossierItems` with the dossier id
+- **THEN** both items come back, the second with `public: false`
 
 #### Scenario: A supplier
 
