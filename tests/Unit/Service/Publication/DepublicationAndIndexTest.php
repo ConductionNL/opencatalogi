@@ -199,7 +199,7 @@ class DepublicationAndIndexTest extends TestCase {
 
 		$this->expectException(IndexUnreachableException::class);
 
-		$service->registerWithWooIndex(publication: ['id' => 'p1']);
+		$service->registerWithWooIndex(request: ['robotsTxt' => 'https://woo.example.nl/robots.txt']);
 
 	}//end testRegisteringWithTheWooIndexWithoutAGatewayIsUnreachable()
 
