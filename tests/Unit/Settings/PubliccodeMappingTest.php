@@ -178,7 +178,7 @@ class PubliccodeMappingTest extends TestCase {
 		$result = (new Validator())->validate(json_decode((string)json_encode($component)), $this->schema());
 		$this->assertTrue($result->isValid(), (string)json_encode($result->error()?->args()));
 
-		$this->assertSame('conductionnl-opencatalogi', $component['slug']);
+		$this->assertSame('github-com-conductionnl-opencatalogi', $component['slug']);
 		$this->assertSame('OpenCatalogi', $component['name']);
 		$this->assertSame('https://github.com/ConductionNL/opencatalogi', $component['url']);
 		$this->assertSame('EUPL-1.2', $component['legalLicense']);
@@ -232,8 +232,89 @@ class PubliccodeMappingTest extends TestCase {
 	public function testAFileBelowTheRootAddsItsDirectoryToTheSlug(): void {
 		$component = $this->map(item: $this->item(yaml: $this->ownPubliccode(), path: 'apps/Search_UI/publiccode.yml'));
 
-		$this->assertSame('conductionnl-opencatalogi-apps-search-ui', $component['slug']);
+		$this->assertSame('github-com-conductionnl-opencatalogi-apps-search-ui', $component['slug']);
 	}//end testAFileBelowTheRootAddsItsDirectoryToTheSlug()
+
+	/**
+	 * The identity is the url the file declares, not the repository the file was
+	 * found in. A fork or a copy of the same publiccode.yml therefore maps onto the
+	 * SAME slug as the original, and the upsert keeps one component.
+	 *
+	 * Measured on the first real crawl (WOO-585): 253 of the first 1,000 objects
+	 * were copies of another repository's file, nine of them for one project.
+	 *
+	 * @return void
+	 */
+	public function testACopyInAnotherRepositoryMapsOntoTheOriginalSlug(): void {
+		$item = $this->item(yaml: $this->ownPubliccode());
+		$item['hit']['repository']['full_name'] = 'someone-else/hack-day-fork';
+		$component = $this->map(item: $item);
+		$this->assertSame('github-com-conductionnl-opencatalogi', $component['slug']);
+		$this->assertSame('https://github.com/ConductionNL/opencatalogi', $component['url']);
+	}//end testACopyInAnotherRepositoryMapsOntoTheOriginalSlug()
+
+	/**
+	 * `.git`, `www.`, the scheme and a trailing slash do not change the identity.
+	 *
+	 * @return void
+	 */
+	public function testTheUrlIsNormalisedBeforeItBecomesTheSlug(): void {
+		$yaml = str_replace(
+			'url: "https://github.com/ConductionNL/opencatalogi"',
+			'url: "http://www.github.com/ConductionNL/opencatalogi.git/"',
+			$this->ownPubliccode()
+		);
+		$this->assertStringContainsString('opencatalogi.git/', $yaml, 'The fixture must exercise the normalisation.');
+		$this->assertSame('github-com-conductionnl-opencatalogi', $this->map(item: $this->item(yaml: $yaml))['slug']);
+	}//end testTheUrlIsNormalisedBeforeItBecomesTheSlug()
+
+	/**
+	 * A releaseDate that is not a date is dropped. It used to throw inside the
+	 * mapping and fail the whole run: one template repository on GitHub ships
+	 * `releaseDate: ${RELEASE_DATE}`.
+	 *
+	 * @return void
+	 */
+	public function testAReleaseDateThatIsNotADateIsDroppedNotFatal(): void {
+		$yaml = str_replace('releaseDate: "2026-05-26"', 'releaseDate: "${RELEASE_DATE}"', $this->ownPubliccode());
+		$component = $this->map(item: $this->item(yaml: $yaml));
+		$this->assertArrayNotHasKey('releaseDate', $component);
+		$this->assertSame('OpenCatalogi', $component['name'], 'The rest of the file still maps.');
+	}//end testAReleaseDateThatIsNotADateIsDroppedNotFatal()
+
+	/**
+	 * A date with a time part is cut to the date.
+	 *
+	 * @return void
+	 */
+	public function testAReleaseDateWithATimeIsCutToTheDate(): void {
+		$yaml = str_replace('releaseDate: "2026-05-26"', 'releaseDate: "2026-05-26T10:00:00Z"', $this->ownPubliccode());
+		$this->assertSame('2026-05-26', $this->map(item: $this->item(yaml: $yaml))['releaseDate']);
+	}//end testAReleaseDateWithATimeIsCutToTheDate()
+
+	/**
+	 * A structured field that arrives as plain text is dropped instead of being
+	 * written into a json column. Code search also matches files such as
+	 * `publiccodeyml__publiccode.yml.json`, whose `description` is one string;
+	 * that write failed with a database error and stopped the run.
+	 *
+	 * @return void
+	 */
+	public function testAStructuredFieldThatIsPlainTextIsDropped(): void {
+		$body = Yaml::parse($this->ownPubliccode());
+		$body['description'] = 'A metadata standard for public software';
+		$body['platforms'] = 'web';
+		$body['categories'] = 7;
+		$body['maintenance'] = 'none';
+		$body['localisation'] = 'nl';
+		$component = $this->map(item: $this->item(yaml: Yaml::dump($body, 4)));
+		foreach (['description', 'platforms', 'categories', 'maintainers', 'localisationAvailableLanguages'] as $field) {
+			$this->assertTrue(
+				isset($component[$field]) === false || $component[$field] === [],
+				$field . ' arrived as text and must not be written as structure.'
+			);
+		}
+	}//end testAStructuredFieldThatIsPlainTextIsDropped()
 
 	/**
 	 * Italian conformance flags become the list of standards that are met.

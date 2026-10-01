@@ -4425,7 +4425,7 @@
                     "component.url": "{{ publiccode.body.url|default('') }}",
                     "component.landingURL": "{{ publiccode.body.landingURL|default('') }}",
                     "component.softwareVersion": "{{ publiccode.body.softwareVersion|default('') }}",
-                    "component.releaseDate": "{{ publiccode.body.releaseDate is defined and publiccode.body.releaseDate is not iterable and (publiccode.body.releaseDate ~ '') matches '/^[0-9]{4}-[0-9]{2}-[0-9]{2}/' ? (publiccode.body.releaseDate ~ '')|slice(0, 10) : '' }}",
+                    "component.releaseDate": "{% set rd = publiccode.body.releaseDate is defined and publiccode.body.releaseDate is not iterable ? (publiccode.body.releaseDate ~ '') : '' %}{{ rd matches '/^[0-9]{4}-[0-9]{2}-[0-9]{2}/' ? rd|slice(0, 10) : (rd matches '/^[0-9]{9,11}$/' ? rd|date('Y-m-d', false) : '') }}",
                     "component.logo": "{{ publiccode.body.logo|default('') }}",
                     "component.platforms": "{{ (publiccode.body.platforms is defined and publiccode.body.platforms is iterable ? publiccode.body.platforms : [])|json_encode }}",
                     "component.categories": "{{ (publiccode.body.categories is defined and publiccode.body.categories is iterable ? publiccode.body.categories : [])|json_encode }}",

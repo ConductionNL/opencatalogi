@@ -37,3 +37,12 @@
 
 - [ ] 6.1 Authenticated full crawl against github.com with Ruben's token (coordinator).
 - [ ] 6.2 OpenRegister's `github` credential provider allows `GET /search/code` (coordinator, see lane iq).
+
+## 7. After the first real crawl (WOO-585, 2026-10-01)
+
+- [x] 7.1 `releaseDate` is taken only when it is a date; `${RELEASE_DATE}` no longer fails the run.
+- [x] 7.2 The filter keeps only files named `publiccode.yml`; structured fields are taken only when structured; every `write-NN` has `onError: continue`.
+- [x] 7.3 The slug derives from the `url` in the file; a copy in another GitHub repository is dropped by the filter.
+- [x] 7.4 Tests for 7.1–7.3 in `PubliccodeMappingTest` and `PubliccodeHarvestFlowTest`; spec scenarios under REQ-PGH-003 and REQ-PGH-004.
+- [x] 7.5 Live on the WOO-585 rig against real GitHub: 24 of 24 shards, 698 components, a second run updates them.
+

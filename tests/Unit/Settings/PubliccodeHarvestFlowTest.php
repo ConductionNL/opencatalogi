@@ -218,6 +218,15 @@ class PubliccodeHarvestFlowTest extends TestCase {
 			$this->assertSame('upsert', $nodes['write-' . $n]['config']['operation']);
 			$this->assertSame('publiccode', $nodes['write-' . $n]['config']['schema']);
 			$this->assertSame(['@self.slug' => '{{ component.slug }}'], $nodes['write-' . $n]['config']['match']);
+			// A failed write ends its own shard, not the run: one unwritable file
+			// used to stop the harvest after 13 of 24 shards (WOO-585).
+			$this->assertSame('continue', $nodes['write-' . $n]['onError']);
+			// The filter keeps only files that ARE a publiccode.yml and are not a
+			// copy of a GitHub component sitting in another GitHub repository.
+			$conditions = $nodes['decoded-' . $n]['config']['condition']['and'];
+			$this->assertCount(4, $conditions, 'name, url, file name, not-a-copy');
+			$this->assertStringContainsString('/publiccode.yml', json_encode($conditions[2]));
+			$this->assertStringContainsString('json.hit.repository.full_name', json_encode($conditions[3]));
 			$this->assertGreaterThanOrEqual(1000, $nodes['write-' . $n]['config']['maxWrites']);
 		}
 
