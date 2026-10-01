@@ -1303,6 +1303,26 @@ class CatalogiServiceTest extends TestCase {
 	}//end testComputeRewrittenSchemasStayInsideTheCataloguesRegisters()
 
 	/**
+	 * A catalogue without a register keeps the global schema lookup: nothing to scope it to.
+	 *
+	 * @return void
+	 */
+	public function testComputeRewrittenSchemasWithoutARegisterLookUpGlobally(): void {
+		$schema = new Schema();
+		$schema->setId(7);
+		$schema->setSlug('my-schema');
+
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->expects($this->never())->method('find');
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->expects($this->once())->method('find')->with('my-schema')->willReturn($schema);
+
+		$this->injectMappers($registerMapper, $schemaMapper);
+
+		$this->assertSame(['schemas' => [7]], $this->service->computeRewrittenRegistersAndSchemas(['schemas' => ['my-schema']]));
+	}//end testComputeRewrittenSchemasWithoutARegisterLookUpGlobally()
+
+	/**
 	 * A schema slug the catalogue's register does not list throws, so the listener keeps the slug for the backfill.
 	 *
 	 * @return void
