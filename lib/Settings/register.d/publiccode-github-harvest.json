@@ -1,0 +1,811 @@
+{
+    "$comment": "openspec/changes/publiccode-github-harvest. The harvest flow on the publiccode schema, the OpenRegister mapping it writes through, and the Componenten catalogue that makes harvested components searchable. The shard synchronizations the flow names are NOT seeded here: OpenRegister skips an object whose register is missing, so an install without integriq would never get them. PubliccodeHarvestService::setUp() writes them from lib/Settings/publiccode-github-shards.json when an administrator asks.",
+    "components": {
+        "schemas": {
+            "publiccode": {
+                "configuration": {
+                    "x-openregister-flows": [
+                        {
+                            "name": "GitHub publiccode harvest",
+                            "app": "opencatalogi",
+                            "description": "Reads every publiccode.yml on GitHub into the publiccode schema (openspec/changes/publiccode-github-harvest). Each shard searches one file size range, because a GitHub code search stops at 1,000 results. The shards hang directly off the triggers and never off each other: chained, each shard reruns its search once per page the previous shard found (12 runs became 3,472 on 2026-08-13). Ships disabled; set it up and switch it on in the OpenCatalogi admin settings, section GitHub harvest. Needs integriq with its github-api and github-raw sources.",
+                            "trigger": "schedule",
+                            "enabled": false,
+                            "executionMode": "async",
+                            "limits": {
+                                "maxRuntimeMinutes": 240
+                            },
+                            "nodes": [
+                                {
+                                    "id": "nightly",
+                                    "type": "openregister.trigger-schedule",
+                                    "config": {
+                                        "cron": "15 3 * * *",
+                                        "runAs": "admin"
+                                    }
+                                },
+                                {
+                                    "id": "on-demand",
+                                    "type": "openregister.trigger-manual",
+                                    "config": {}
+                                },
+                                {
+                                    "id": "shard-01",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-01",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-02",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-02",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-03",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-03",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-04",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-04",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-05",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-05",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-06",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-06",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-07",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-07",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-08",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-08",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-09",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-09",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-10",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-10",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-11",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-11",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-12",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-12",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-13",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-13",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-14",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-14",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-15",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-15",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-16",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-16",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-17",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-17",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-18",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-18",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-19",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-19",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-20",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-20",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-21",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-21",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-22",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-22",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-23",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-23",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "shard-24",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-github-24",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "hits",
+                                    "type": "openregister.explode",
+                                    "config": {
+                                        "path": "page.results",
+                                        "as": "hit",
+                                        "keepRecord": false
+                                    }
+                                },
+                                {
+                                    "id": "fetch",
+                                    "type": "openconnector.source-call",
+                                    "onError": "continue",
+                                    "config": {
+                                        "source": "github-raw",
+                                        "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
+                                        "method": "GET",
+                                        "decode": "yaml",
+                                        "output": "publiccode"
+                                    }
+                                },
+                                {
+                                    "id": "decoded",
+                                    "type": "openregister.filter",
+                                    "config": {
+                                        "condition": {
+                                            "and": [
+                                                {
+                                                    "!!": [
+                                                        {
+                                                            "var": "json.publiccode.body.name"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "!!": [
+                                                        {
+                                                            "var": "json.publiccode.body.url"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "id": "map",
+                                    "type": "openregister.map",
+                                    "config": {
+                                        "mapping": "publiccode-github-hit"
+                                    }
+                                },
+                                {
+                                    "id": "write",
+                                    "type": "openregister.object-write",
+                                    "config": {
+                                        "operation": "upsert",
+                                        "register": "publication",
+                                        "schema": "publiccode",
+                                        "payloadFrom": "component",
+                                        "match": {
+                                            "@self.slug": "{{ component.slug }}"
+                                        },
+                                        "maxWrites": 25000
+                                    }
+                                },
+                                {
+                                    "id": "end",
+                                    "type": "openregister.end",
+                                    "config": {}
+                                }
+                            ],
+                            "edges": [
+                                {
+                                    "id": "e-nightly-shard-01",
+                                    "from": "nightly",
+                                    "to": "shard-01"
+                                },
+                                {
+                                    "id": "e-nightly-shard-02",
+                                    "from": "nightly",
+                                    "to": "shard-02"
+                                },
+                                {
+                                    "id": "e-nightly-shard-03",
+                                    "from": "nightly",
+                                    "to": "shard-03"
+                                },
+                                {
+                                    "id": "e-nightly-shard-04",
+                                    "from": "nightly",
+                                    "to": "shard-04"
+                                },
+                                {
+                                    "id": "e-nightly-shard-05",
+                                    "from": "nightly",
+                                    "to": "shard-05"
+                                },
+                                {
+                                    "id": "e-nightly-shard-06",
+                                    "from": "nightly",
+                                    "to": "shard-06"
+                                },
+                                {
+                                    "id": "e-nightly-shard-07",
+                                    "from": "nightly",
+                                    "to": "shard-07"
+                                },
+                                {
+                                    "id": "e-nightly-shard-08",
+                                    "from": "nightly",
+                                    "to": "shard-08"
+                                },
+                                {
+                                    "id": "e-nightly-shard-09",
+                                    "from": "nightly",
+                                    "to": "shard-09"
+                                },
+                                {
+                                    "id": "e-nightly-shard-10",
+                                    "from": "nightly",
+                                    "to": "shard-10"
+                                },
+                                {
+                                    "id": "e-nightly-shard-11",
+                                    "from": "nightly",
+                                    "to": "shard-11"
+                                },
+                                {
+                                    "id": "e-nightly-shard-12",
+                                    "from": "nightly",
+                                    "to": "shard-12"
+                                },
+                                {
+                                    "id": "e-nightly-shard-13",
+                                    "from": "nightly",
+                                    "to": "shard-13"
+                                },
+                                {
+                                    "id": "e-nightly-shard-14",
+                                    "from": "nightly",
+                                    "to": "shard-14"
+                                },
+                                {
+                                    "id": "e-nightly-shard-15",
+                                    "from": "nightly",
+                                    "to": "shard-15"
+                                },
+                                {
+                                    "id": "e-nightly-shard-16",
+                                    "from": "nightly",
+                                    "to": "shard-16"
+                                },
+                                {
+                                    "id": "e-nightly-shard-17",
+                                    "from": "nightly",
+                                    "to": "shard-17"
+                                },
+                                {
+                                    "id": "e-nightly-shard-18",
+                                    "from": "nightly",
+                                    "to": "shard-18"
+                                },
+                                {
+                                    "id": "e-nightly-shard-19",
+                                    "from": "nightly",
+                                    "to": "shard-19"
+                                },
+                                {
+                                    "id": "e-nightly-shard-20",
+                                    "from": "nightly",
+                                    "to": "shard-20"
+                                },
+                                {
+                                    "id": "e-nightly-shard-21",
+                                    "from": "nightly",
+                                    "to": "shard-21"
+                                },
+                                {
+                                    "id": "e-nightly-shard-22",
+                                    "from": "nightly",
+                                    "to": "shard-22"
+                                },
+                                {
+                                    "id": "e-nightly-shard-23",
+                                    "from": "nightly",
+                                    "to": "shard-23"
+                                },
+                                {
+                                    "id": "e-nightly-shard-24",
+                                    "from": "nightly",
+                                    "to": "shard-24"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-01",
+                                    "from": "on-demand",
+                                    "to": "shard-01"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-02",
+                                    "from": "on-demand",
+                                    "to": "shard-02"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-03",
+                                    "from": "on-demand",
+                                    "to": "shard-03"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-04",
+                                    "from": "on-demand",
+                                    "to": "shard-04"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-05",
+                                    "from": "on-demand",
+                                    "to": "shard-05"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-06",
+                                    "from": "on-demand",
+                                    "to": "shard-06"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-07",
+                                    "from": "on-demand",
+                                    "to": "shard-07"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-08",
+                                    "from": "on-demand",
+                                    "to": "shard-08"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-09",
+                                    "from": "on-demand",
+                                    "to": "shard-09"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-10",
+                                    "from": "on-demand",
+                                    "to": "shard-10"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-11",
+                                    "from": "on-demand",
+                                    "to": "shard-11"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-12",
+                                    "from": "on-demand",
+                                    "to": "shard-12"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-13",
+                                    "from": "on-demand",
+                                    "to": "shard-13"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-14",
+                                    "from": "on-demand",
+                                    "to": "shard-14"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-15",
+                                    "from": "on-demand",
+                                    "to": "shard-15"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-16",
+                                    "from": "on-demand",
+                                    "to": "shard-16"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-17",
+                                    "from": "on-demand",
+                                    "to": "shard-17"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-18",
+                                    "from": "on-demand",
+                                    "to": "shard-18"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-19",
+                                    "from": "on-demand",
+                                    "to": "shard-19"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-20",
+                                    "from": "on-demand",
+                                    "to": "shard-20"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-21",
+                                    "from": "on-demand",
+                                    "to": "shard-21"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-22",
+                                    "from": "on-demand",
+                                    "to": "shard-22"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-23",
+                                    "from": "on-demand",
+                                    "to": "shard-23"
+                                },
+                                {
+                                    "id": "e-on-demand-shard-24",
+                                    "from": "on-demand",
+                                    "to": "shard-24"
+                                },
+                                {
+                                    "id": "e-shard-01-hits",
+                                    "from": "shard-01",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-02-hits",
+                                    "from": "shard-02",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-03-hits",
+                                    "from": "shard-03",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-04-hits",
+                                    "from": "shard-04",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-05-hits",
+                                    "from": "shard-05",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-06-hits",
+                                    "from": "shard-06",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-07-hits",
+                                    "from": "shard-07",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-08-hits",
+                                    "from": "shard-08",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-09-hits",
+                                    "from": "shard-09",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-10-hits",
+                                    "from": "shard-10",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-11-hits",
+                                    "from": "shard-11",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-12-hits",
+                                    "from": "shard-12",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-13-hits",
+                                    "from": "shard-13",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-14-hits",
+                                    "from": "shard-14",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-15-hits",
+                                    "from": "shard-15",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-16-hits",
+                                    "from": "shard-16",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-17-hits",
+                                    "from": "shard-17",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-18-hits",
+                                    "from": "shard-18",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-19-hits",
+                                    "from": "shard-19",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-20-hits",
+                                    "from": "shard-20",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-21-hits",
+                                    "from": "shard-21",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-22-hits",
+                                    "from": "shard-22",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-23-hits",
+                                    "from": "shard-23",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-shard-24-hits",
+                                    "from": "shard-24",
+                                    "to": "hits"
+                                },
+                                {
+                                    "id": "e-hits-fetch",
+                                    "from": "hits",
+                                    "to": "fetch"
+                                },
+                                {
+                                    "id": "e-fetch-decoded",
+                                    "from": "fetch",
+                                    "to": "decoded"
+                                },
+                                {
+                                    "id": "e-decoded-map",
+                                    "from": "decoded",
+                                    "to": "map"
+                                },
+                                {
+                                    "id": "e-map-write",
+                                    "from": "map",
+                                    "to": "write"
+                                },
+                                {
+                                    "id": "e-write-end",
+                                    "from": "write",
+                                    "to": "end"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "mappings": {
+            "publiccode-github-hit": {
+                "slug": "publiccode-github-hit",
+                "name": "GitHub publiccode.yml to publiccode",
+                "description": "Turns one GitHub code search hit with its decoded publiccode.yml (at publiccode.body) into a publiccode object under `component`. Optional fields use |default('') and the cast unsetIfValue==, because a bare dot path whose key is missing renders the path itself as a literal string. Lists pass through json_encode and jsonToArray.",
+                "version": "1.0.0",
+                "passThrough": false,
+                "mapping": {
+                    "component.slug": "{{ (hit.repository.full_name ~ (hit.path != 'publiccode.yml' ? '-' ~ hit.path|replace({'/publiccode.yml': ''}) : ''))|lower|replace({'/': '-', '.': '-', '_': '-', ' ': '-'}) }}",
+                    "component.name": "{{ publiccode.body.name|default('') }}",
+                    "component.applicationSuite": "{{ publiccode.body.applicationSuite|default('') }}",
+                    "component.url": "{{ publiccode.body.url|default('') }}",
+                    "component.landingURL": "{{ publiccode.body.landingURL|default('') }}",
+                    "component.softwareVersion": "{{ publiccode.body.softwareVersion|default('') }}",
+                    "component.releaseDate": "{{ publiccode.body.releaseDate is defined and publiccode.body.releaseDate ? publiccode.body.releaseDate|date('Y-m-d', false) : '' }}",
+                    "component.logo": "{{ publiccode.body.logo|default('') }}",
+                    "component.platforms": "{{ publiccode.body.platforms|default([])|json_encode }}",
+                    "component.categories": "{{ publiccode.body.categories|default([])|json_encode }}",
+                    "component.developmentStatus": "{{ publiccode.body.developmentStatus|default('') }}",
+                    "component.softwareType": "{{ publiccode.body.softwareType|default('') }}",
+                    "component.description": "{{ publiccode.body.description|default({})|json_encode }}",
+                    "component.maintenanceType": "{{ publiccode.body.maintenance.type|default('') }}",
+                    "component.maintainers": "{{ (publiccode.body.maintenance.contractors|default([]))|merge(publiccode.body.maintenance.contacts|default([]))|json_encode }}",
+                    "component.legalLicense": "{{ publiccode.body.legal.license|default('') }}",
+                    "component.legalRepoOwner": "{{ publiccode.body.legal.repoOwner|default('') }}",
+                    "component.localisationAvailableLanguages": "{{ publiccode.body.localisation.availableLanguages|default([])|json_encode }}",
+                    "component.itConformsTo": "{% set conforms = [] %}{% for standard, conforms_to in publiccode.body.it.conforme|default({}) %}{% if conforms_to %}{% set conforms = conforms|merge([standard]) %}{% endif %}{% endfor %}{{ conforms|json_encode }}",
+                    "component.publiccodeYmlVersion": "{{ publiccode.body.publiccodeYmlVersion|default('') }}",
+                    "component.harvestedFrom": "github.com",
+                    "component.harvestedAt": "{{ 'now'|date('c', 'UTC') }}",
+                    "component.rawPubliccode": "publiccode.body"
+                },
+                "cast": {
+                    "component.name": [
+                        "unsetIfValue=="
+                    ],
+                    "component.applicationSuite": [
+                        "unsetIfValue=="
+                    ],
+                    "component.url": [
+                        "unsetIfValue=="
+                    ],
+                    "component.landingURL": [
+                        "unsetIfValue=="
+                    ],
+                    "component.softwareVersion": [
+                        "unsetIfValue=="
+                    ],
+                    "component.releaseDate": [
+                        "unsetIfValue=="
+                    ],
+                    "component.logo": [
+                        "unsetIfValue=="
+                    ],
+                    "component.platforms": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.categories": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.developmentStatus": [
+                        "unsetIfValue=="
+                    ],
+                    "component.softwareType": [
+                        "unsetIfValue=="
+                    ],
+                    "component.description": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.maintenanceType": [
+                        "unsetIfValue=="
+                    ],
+                    "component.maintainers": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.legalLicense": [
+                        "unsetIfValue=="
+                    ],
+                    "component.legalRepoOwner": [
+                        "unsetIfValue=="
+                    ],
+                    "component.localisationAvailableLanguages": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.itConformsTo": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.publiccodeYmlVersion": [
+                        "unsetIfValue=="
+                    ]
+                },
+                "unset": []
+            }
+        },
+        "objects": [
+            {
+                "@self": {
+                    "register": "publication",
+                    "schema": "catalog",
+                    "slug": "componenten"
+                },
+                "title": "Componenten",
+                "summary": "Herbruikbare software met een publiccode.yml, gevonden op GitHub",
+                "description": "Elke publiccode.yml op GitHub die de GitHub-harvest van OpenCatalogi vindt. Zoek op naam, licentie, platform of status, en lees per component wie het onderhoudt.",
+                "listed": true,
+                "status": "stable",
+                "slug": "componenten",
+                "registers": [
+                    "publication"
+                ],
+                "schemas": [
+                    "publiccode"
+                ],
+                "published": "2026-10-01T00:00:00+00:00"
+            }
+        ]
+    }
+}
