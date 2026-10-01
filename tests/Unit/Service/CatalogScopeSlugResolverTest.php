@@ -34,7 +34,7 @@ class CatalogScopeSlugResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function testSlugsBecomeIdsAndIdsStay(): void {
-		[$resolved, $changed] = CatalogScopeSlugResolver::resolve(
+		[$resolved, $changed] = (new CatalogScopeSlugResolver())->resolve(
 			entries: ['publiccode', '12', 7],
 			resolve: static fn (string $slug): ?int => ($slug === 'publiccode' ? 41 : null)
 		);
@@ -50,7 +50,7 @@ class CatalogScopeSlugResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnUnknownSlugIsKeptAndNothingChanges(): void {
-		[$resolved, $changed] = CatalogScopeSlugResolver::resolve(
+		[$resolved, $changed] = (new CatalogScopeSlugResolver())->resolve(
 			entries: ['not-imported-yet'],
 			resolve: static function (string $slug): ?int {
 				throw new RuntimeException('no schema ' . $slug);
@@ -70,7 +70,7 @@ class CatalogScopeSlugResolverTest extends TestCase {
 		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Service/SettingsService.php');
 
 		$this->assertMatchesRegularExpression('/function backfillCatalogScopes\(\).*\$this->resolveScopeSlugs\(/s', $source);
-		$this->assertMatchesRegularExpression('/function resolveScopeSlugs\(.*CatalogScopeSlugResolver::resolveScope\(/s', $source);
+		$this->assertMatchesRegularExpression('/function resolveScopeSlugs\(.*new CatalogScopeSlugResolver\(\)\)->resolveScope\(/s', $source);
 	}//end testTheSettingsImportCallsTheResolver()
 
 	/**
@@ -101,7 +101,7 @@ class CatalogScopeSlugResolverTest extends TestCase {
 	public function testASchemaSlugResolvesInsideTheCataloguesRegisters(): void {
 		[$findRegister, $schemasOf, $slugOf] = $this->world();
 
-		$scope = CatalogScopeSlugResolver::resolveScope(
+		$scope = (new CatalogScopeSlugResolver())->resolveScope(
 			registers: ['stackiq'],
 			schemas: ['organization', 'module'],
 			findRegisterId: $findRegister,
@@ -124,7 +124,7 @@ class CatalogScopeSlugResolverTest extends TestCase {
 	public function testASlugTheRegisterDoesNotListYetStaysPending(): void {
 		[$findRegister, $schemasOf, $slugOf] = $this->world();
 
-		$scope = CatalogScopeSlugResolver::resolveScope(
+		$scope = (new CatalogScopeSlugResolver())->resolveScope(
 			registers: ['stackiq'],
 			schemas: ['module', 'usage'],
 			findRegisterId: $findRegister,
@@ -144,7 +144,7 @@ class CatalogScopeSlugResolverTest extends TestCase {
 	public function testWithoutTheRegisterNothingResolves(): void {
 		[, $schemasOf, $slugOf] = $this->world();
 
-		$scope = CatalogScopeSlugResolver::resolveScope(
+		$scope = (new CatalogScopeSlugResolver())->resolveScope(
 			registers: ['stackiq'],
 			schemas: ['organization'],
 			findRegisterId: static function (string $slug): ?int {
@@ -170,7 +170,7 @@ class CatalogScopeSlugResolverTest extends TestCase {
 	public function testAResolvedScopeIsLeftAlone(): void {
 		[$findRegister, $schemasOf, $slugOf] = $this->world();
 
-		$scope = CatalogScopeSlugResolver::resolveScope(
+		$scope = (new CatalogScopeSlugResolver())->resolveScope(
 			registers: ['20'],
 			schemas: ['33', '34'],
 			findRegisterId: $findRegister,
@@ -180,6 +180,6 @@ class CatalogScopeSlugResolverTest extends TestCase {
 
 		$this->assertFalse($scope['changed']);
 		$this->assertSame([], $scope['pending']);
-		$this->assertFalse(CatalogScopeSlugResolver::hasSlug(entries: $scope['schemas']));
+		$this->assertFalse((new CatalogScopeSlugResolver())->hasSlug(entries: $scope['schemas']));
 	}//end testAResolvedScopeIsLeftAlone()
 }//end class

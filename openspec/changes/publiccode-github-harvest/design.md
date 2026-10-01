@@ -9,7 +9,8 @@ manual ───────────────────┤   ...       
 ```
 
 - **Both triggers fan out to every shard directly.** A shard node is `openconnector.source-paginate`, which runs its search once per input item. A chain hands shard 2 every page of shard 1 as input and multiplies (12 runs became 3,472 on 2026-08-13). Side by side, each shard receives the trigger's single item and runs once. `PubliccodeHarvestFlowTest` asserts that no edge runs from one shard to another.
-- **Every shard has its own tail.** The first build converged all 24 shards on one shared tail. On :8095 that tail processed the pages of 3 of the 24 shards: OpenRegister's `FlowItemPlacement::advanceItems()` ASSIGNS a step's items to its output place, so when several shards fire before the shared consumer does, each one overwrites the last. The tokens add up and the items do not. Separate tails have no shared place before `end`, so nothing is overwritten. The test asserts that only `end` has more than one way in. The engine defect is reported to the coordinator; the per-shard tails are right either way.
+- **Every shard has its own tail.** The first build converged all 24 shards on one shared tail. On :8095 that tail processed the pages of 3 of the 24 shards: OpenRegister's `FlowItemPlacement::advanceItems()` ASSIGNS a step's items to its output place, so when several shards fire before the shared consumer does, each one overwrites the last. The tokens add up and the items do not. Separate tails have no shared place before `end`, and `end` is a join that keeps one place per incoming edge, so nothing is overwritten. The test asserts that only `end` has more than one way in. The engine defect is reported to the coordinator; the per-shard tails are right either way.
+- **The end node waits for every shard (`join: true`).** `openregister.end` stops the whole run, not just its branch. Without the join, the first shard to reach it stopped the run while 13 shards were still waiting out the rate limit (run 88f9d039 on :8095). With the join, the run ends once all 24 tails have written.
 - **Why `source-paginate` and not `synchronization-run`.** `synchronization-run` writes each hit to a target through its own mapping, and a code search hit is not a component: the component is in the file the hit points at. `source-paginate` only fetches, and emits one item per page with the hits under `page.results`.
 - **Each tail:**
   - `hits-NN`: `openregister.explode` on `page.results` as `hit`, not keeping the page record.
@@ -62,7 +63,7 @@ An OpenRegister mapping (`components.mappings`, slug `publiccode-github-hit`), b
 
 ## D6. Admin section
 
-`GET /api/settings/publiccode-harvest` answers with `integriq` (installed), `source` (exists, enabled, link), `shards` (how many of the 24 exist), `flow` (uuid, enabled, owner, runAs, cron) and `lastRun` (status, started, finished, error). `POST .../setup` writes the synchronizations, `POST .../enable` adopts and switches the flow on or off, `POST .../run` queues a manual run. All four are admin only. The section lives in `src/views/settings/PubliccodeHarvest.vue`, under `#section-publiccode-harvest`.
+`GET /api/settings/publiccode-harvest` answers with `integriq` (installed), `source` (exists, enabled, link), `shards` (how many of the 24 exist), `flow` (uuid, enabled, owner, runAs, cron) and `lastRun` (status, started, finished, error). `POST .../setup` writes the synchronizations, `POST .../enable` adopts the flow and switches it on, `POST .../disable` switches it off, `POST .../run` queues a manual run. All five are admin only. The section lives in `src/views/settings/PubliccodeHarvest.vue`, under `#section-publiccode-harvest`.
 
 ## D7. Tests
 

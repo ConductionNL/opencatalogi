@@ -175,6 +175,14 @@ class PubliccodeHarvestFlowTest extends TestCase {
 			$this->assertCount(1, $into[$node['id']], 'Only the end node may have more than one way in: ' . $node['id']);
 		}
 
+		// The end node stops the WHOLE run, so it must wait for every shard.
+		// Without the join the first shard to finish stopped the other 23
+		// (measured 2026-10-01: run stopped with 13 shards still suspended).
+		$end = array_column($flow['nodes'], null, 'id')['end'];
+		$this->assertSame('openregister.end', $end['type']);
+		$this->assertTrue($end['join']);
+		$this->assertCount(24, $into['end']);
+
 	}//end testEveryShardHangsDirectlyOffBothTriggersAndNeverOffAnotherShard()
 
 	/**

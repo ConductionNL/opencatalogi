@@ -1749,18 +1749,18 @@ class SettingsService {
 	 *
 	 * @return bool
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeSlugResolver is a pure function over the scope.
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
 	 */
 	private function shouldPublishResolvedSeed(array $catalog, mixed $registers, mixed $schemas): bool {
 		$slug = ($catalog['slug'] ?? null);
+		$scopeResolver = new CatalogScopeSlugResolver();
 		if (in_array($slug, self::PUBLISH_WHEN_RESOLVED, true) === false
 			|| empty($catalog['published']) === false
 			|| is_array($registers) === false || $registers === []
 			|| is_array($schemas) === false || $schemas === []
-			|| CatalogScopeSlugResolver::hasSlug(entries: $registers) === true
-			|| CatalogScopeSlugResolver::hasSlug(entries: $schemas) === true
+			|| $scopeResolver->hasSlug(entries: $registers) === true
+			|| $scopeResolver->hasSlug(entries: $schemas) === true
 		) {
 			return false;
 		}
@@ -1812,7 +1812,6 @@ class SettingsService {
 	 *
 	 * @return array{registers: array<int, mixed>, schemas: array<int, mixed>, changed: bool, pending: list<string>}
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeSlugResolver is a pure function over the scope.
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
 	 */
@@ -1820,7 +1819,7 @@ class SettingsService {
 		$registerMapper = $this->getRegisterMapper();
 		$schemaMapper = $this->getSchemaMapper();
 
-		return CatalogScopeSlugResolver::resolveScope(
+		return (new CatalogScopeSlugResolver())->resolveScope(
 			registers: $registers,
 			schemas: $schemas,
 			findRegisterId: static fn (string $slug) => $registerMapper?->find($slug, _rbac: false, _multitenancy: false)?->getId(),

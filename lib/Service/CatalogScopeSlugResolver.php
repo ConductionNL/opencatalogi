@@ -46,7 +46,7 @@ class CatalogScopeSlugResolver {
 	 *
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-007-harvested-components-are-found-in-search-and-in-the-public-api
 	 */
-	public static function resolve(array $entries, callable $resolve): array {
+	public function resolve(array $entries, callable $resolve): array {
 		$changed = false;
 		$resolved = [];
 		foreach ($entries as $entry) {
@@ -97,14 +97,14 @@ class CatalogScopeSlugResolver {
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
 	 */
-	public static function resolveScope(
+	public function resolveScope(
 		array $registers,
 		array $schemas,
 		callable $findRegisterId,
 		callable $schemaIdsOfRegister,
 		callable $schemaSlugOf,
 	): array {
-		[$registers, $registersChanged] = self::resolve(entries: $registers, resolve: $findRegisterId);
+		[$registers, $registersChanged] = $this->resolve(entries: $registers, resolve: $findRegisterId);
 
 		$registerIds = [];
 		foreach ($registers as $register) {
@@ -114,9 +114,9 @@ class CatalogScopeSlugResolver {
 		}
 
 		$slugToId = null;
-		$lookup = static function (string $slug) use (&$slugToId, $registerIds, $schemaIdsOfRegister, $schemaSlugOf): ?int {
+		$lookup = function (string $slug) use (&$slugToId, $registerIds, $schemaIdsOfRegister, $schemaSlugOf): ?int {
 			if ($slugToId === null) {
-				$slugToId = self::schemaSlugMap(
+				$slugToId = $this->schemaSlugMap(
 					registerIds: $registerIds,
 					schemaIdsOfRegister: $schemaIdsOfRegister,
 					schemaSlugOf: $schemaSlugOf
@@ -126,7 +126,7 @@ class CatalogScopeSlugResolver {
 			return ($slugToId[strtolower($slug)] ?? null);
 		};
 
-		[$schemas, $schemasChanged] = self::resolve(entries: $schemas, resolve: $lookup);
+		[$schemas, $schemasChanged] = $this->resolve(entries: $schemas, resolve: $lookup);
 
 		$pending = [];
 		foreach ($registers as $register) {
@@ -135,7 +135,7 @@ class CatalogScopeSlugResolver {
 			}
 		}
 
-		if (self::hasSlug(entries: $schemas) === true) {
+		if ($this->hasSlug(entries: $schemas) === true) {
 			foreach ($registerIds as $registerId) {
 				$pending[] = (string)$registerId;
 			}
@@ -163,7 +163,7 @@ class CatalogScopeSlugResolver {
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
 	 */
-	public static function schemaSlugMap(array $registerIds, callable $schemaIdsOfRegister, callable $schemaSlugOf): array {
+	public function schemaSlugMap(array $registerIds, callable $schemaIdsOfRegister, callable $schemaSlugOf): array {
 		$map = [];
 		foreach ($registerIds as $registerId) {
 			try {
@@ -201,7 +201,7 @@ class CatalogScopeSlugResolver {
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
 	 */
-	public static function hasSlug(array $entries): bool {
+	public function hasSlug(array $entries): bool {
 		foreach ($entries as $entry) {
 			if (is_string($entry) === true && $entry !== '' && is_numeric($entry) === false) {
 				return true;

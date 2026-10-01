@@ -279,7 +279,11 @@ class PubliccodeHarvestService {
 	 */
 	public function shardDefinitions(): array {
 		$path = $this->appManager->getAppPath('opencatalogi') . self::SHARDS_FILE;
-		$content = @file_get_contents($path);
+		$content = false;
+		if (is_readable($path) === true) {
+			$content = file_get_contents($path);
+		}
+
 		if ($content === false) {
 			throw new RuntimeException('The shard file ' . self::SHARDS_FILE . ' is missing.');
 		}

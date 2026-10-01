@@ -71,6 +71,7 @@ return [
 		['name' => 'publiccodeHarvest#status', 'url' => '/api/settings/publiccode-harvest', 'verb' => 'GET'],
 		['name' => 'publiccodeHarvest#setup', 'url' => '/api/settings/publiccode-harvest/setup', 'verb' => 'POST'],
 		['name' => 'publiccodeHarvest#enable', 'url' => '/api/settings/publiccode-harvest/enable', 'verb' => 'POST'],
+		['name' => 'publiccodeHarvest#disable', 'url' => '/api/settings/publiccode-harvest/disable', 'verb' => 'POST'],
 		['name' => 'publiccodeHarvest#run', 'url' => '/api/settings/publiccode-harvest/run', 'verb' => 'POST'],
 		// Woo-index registration and the root robots.txt rules (woo-index-harvester-connection).
 		['name' => 'wooRegistration#show', 'url' => '/api/woo/registration', 'verb' => 'GET'],

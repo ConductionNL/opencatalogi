@@ -318,7 +318,6 @@ class CatalogiService {
 	 *
 	 * @return callable(string): (int|null) Slug to schema id, null when not found.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeSlugResolver is a pure function over the scope.
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
 	 */
@@ -345,7 +344,7 @@ class CatalogiService {
 			if ($slugMap === null) {
 				$registerMapper = $this->getRegisterMapper();
 				$schemaMapper = $this->getSchemaMapper();
-				$slugMap = CatalogScopeSlugResolver::schemaSlugMap(
+				$slugMap = (new CatalogScopeSlugResolver())->schemaSlugMap(
 					registerIds: $registerIds,
 					schemaIdsOfRegister: static fn (int $registerId): array => $registerMapper->find($registerId, _rbac: false, _multitenancy: false)->getSchemas(),
 					schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper->find($schemaId, _rbac: false, _multitenancy: false)->getSlug()
