@@ -97,7 +97,6 @@ class WooJourneyRegisterTest extends TestCase {
 				[
 					'id' => '0b6d0b1e-3e0b-4b0b-9b0b-0b0b0b0b0b01',
 					'publication' => '0b6d0b1e-3e0b-4b0b-9b0b-0b0b0b0b0b02',
-					'attachment' => null,
 					'note' => 'Lees paragraaf 3',
 					'addedAt' => '2026-09-30T10:00:00+00:00',
 					'addedBy' => 'resident',
@@ -121,7 +120,36 @@ class WooJourneyRegisterTest extends TestCase {
 		$register = $this->register();
 		$this->assertContains('collection', $register['components']['registers']['publication']['schemas']);
 		$this->assertContains('savedSearch', $register['components']['registers']['publication']['schemas']);
-		$this->assertSame('0.5.0', $register['components']['registers']['publication']['version']);
+		$this->assertSame('0.5.1', $register['components']['registers']['publication']['version']);
+	}
+
+	/**
+	 * OpenRegister's import takes one type name per property and REJECTS the
+	 * whole schema otherwise, logging a PARTIAL IMPORT while the app's
+	 * re-import still reports success. `collection` 0.1.0 typed an item's
+	 * attachment as ["string","null"] and never reached a live instance; this
+	 * test's JSON Schema validator accepts a type list, so only this check
+	 * sees it.
+	 *
+	 * @return void
+	 */
+	public function testEveryPropertyTypeIsOneTypeName(): void {
+		$lists = [];
+		$walk  = static function (mixed $node, string $path) use (&$walk, &$lists): void {
+			if (is_array($node) === false) {
+				return;
+			}
+
+			if (isset($node['type']) === true && is_array($node['type']) === true) {
+				$lists[] = $path;
+			}
+
+			foreach ($node as $key => $child) {
+				$walk($child, $path.'/'.$key);
+			}
+		};
+		$walk($this->register()['components']['schemas'], '');
+		$this->assertSame([], $lists, 'A property type is a list; OpenRegister rejects the whole schema on import.');
 	}
 
 	public function testADossierAsTheServiceWritesItIsAccepted(): void {
