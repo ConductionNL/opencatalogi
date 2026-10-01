@@ -30,7 +30,10 @@
 							v-if="sourceReady"
 							:size="20"
 							fillColor="var(--color-success)" />
-						<CloseCircle v-else :size="20" fillColor="var(--color-error)" />
+						<CloseCircle
+							v-else
+							:size="20"
+							fillColor="var(--color-error)" />
 						<span>{{ sourceLabel }}</span>
 						<a
 							v-if="status.source && status.source.uuid"
@@ -44,13 +47,20 @@
 							v-if="shardsReady"
 							:size="20"
 							fillColor="var(--color-success)" />
-						<CloseCircle v-else :size="20" fillColor="var(--color-error)" />
+						<CloseCircle
+							v-else
+							:size="20"
+							fillColor="var(--color-error)" />
 						<span>
 							{{
-								t('opencatalogi', '{present} of {expected} search shards are set up', {
-									present: status.shards.present,
-									expected: status.shards.expected,
-								})
+								t(
+									'opencatalogi',
+									'{present} of {expected} search shards are set up',
+									{
+										present: status.shards.present,
+										expected: status.shards.expected,
+									},
+								)
 							}}
 						</span>
 					</li>
@@ -161,13 +171,17 @@ export default {
 	computed: {
 		/** @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi */
 		sourceReady() {
-			return Boolean(this.status?.source?.exists && this.status?.source?.enabled)
+			return Boolean(
+				this.status?.source?.exists && this.status?.source?.enabled,
+			)
 		},
 
 		/** @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi */
 		shardsReady() {
 			const shards = this.status?.shards
-			return Boolean(shards && shards.expected > 0 && shards.present === shards.expected)
+			return Boolean(
+				shards && shards.expected > 0 && shards.present === shards.expected,
+			)
 		},
 
 		/** @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi */
@@ -194,9 +208,13 @@ export default {
 					{ slug: source.slug },
 				)
 			}
-			return this.t('opencatalogi', 'The GitHub source {slug} is switched on.', {
-				slug: source.slug,
-			})
+			return this.t(
+				'opencatalogi',
+				'The GitHub source {slug} is switched on.',
+				{
+					slug: source.slug,
+				},
+			)
 		},
 
 		/** @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi */
@@ -240,13 +258,21 @@ export default {
 				)
 			}
 			if (run.status === 'completed') {
-				return this.t('opencatalogi', 'Last run started {started} and finished.', {
-					started,
-				})
+				return this.t(
+					'opencatalogi',
+					'Last run started {started} and finished.',
+					{
+						started,
+					},
+				)
 			}
-			return this.t('opencatalogi', 'Last run started {started} and is still running.', {
-				started,
-			})
+			return this.t(
+				'opencatalogi',
+				'Last run started {started} and is still running.',
+				{
+					started,
+				},
+			)
 		},
 	},
 
@@ -291,7 +317,8 @@ export default {
 				await axios.post(generateUrl(BASE + '/' + action), payload)
 				this.error = ''
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					?? this.t('opencatalogi', 'That did not work. Try again.')
 			} finally {
 				this.busy = false

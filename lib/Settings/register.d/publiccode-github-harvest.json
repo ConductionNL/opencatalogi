@@ -8,7 +8,7 @@
                         {
                             "name": "GitHub publiccode harvest",
                             "app": "opencatalogi",
-                            "description": "Reads every publiccode.yml on GitHub into the publiccode schema (openspec/changes/publiccode-github-harvest). Each shard searches one file size range, because a GitHub code search stops at 1,000 results. The shards hang directly off the triggers and never off each other: chained, each shard reruns its search once per page the previous shard found (12 runs became 3,472 on 2026-08-13). Each shard has its own fetch, decode, map and write steps rather than one shared tail: a place that several steps write into keeps only the last step's items, so a shared tail processed 3 of 24 shards' pages on 2026-10-01. Ships disabled; set it up and switch it on in the OpenCatalogi admin settings, section GitHub harvest. Needs integriq with its github-api and github-raw sources.",
+                            "description": "Reads every publiccode.yml on GitHub into the publiccode schema (openspec/changes/publiccode-github-harvest). Each shard searches one file size range, because a GitHub code search stops at 1,000 results. The shards hang directly off the triggers and never off each other: chained, each shard reruns its search once per page the previous shard found (12 runs became 3,472 on 2026-08-13). Each shard has its own fetch, decode, map and write steps rather than one shared tail: a place that several steps write into keeps only the last step's items, so a shared tail processed 3 of 24 shards' pages on 2026-10-01. The end node waits for every shard (join): an end node stops the whole run, so without the join the first shard to finish stopped the other 23. Ships disabled; set it up and switch it on in the OpenCatalogi admin settings, section GitHub harvest. Needs integriq with its github-api and github-raw sources.",
                             "trigger": "schedule",
                             "enabled": false,
                             "executionMode": "async",
@@ -1808,7 +1808,8 @@
                                 {
                                     "id": "end",
                                     "type": "openregister.end",
-                                    "config": {}
+                                    "config": {},
+                                    "join": true
                                 }
                             ],
                             "edges": [
