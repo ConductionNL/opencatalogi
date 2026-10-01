@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.7.0"
+    "version": "0.7.1"
   },
   "x-openregister": {
     "type": "application",
@@ -23,7 +23,7 @@
       "publication": {
         "slug": "publication",
         "title": "Publication",
-        "version": "0.5.0",
+        "version": "0.5.1",
         "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website, including catalogs, listings, organizations, publications, themes, pages, menus, and glossary items. This register enables the creation of rich, navigable catalog websites with proper content organization and user-friendly navigation.",
         "published": "2025-01-01T00:00:00+00:00",
         "schemas": [
@@ -1232,22 +1232,12 @@
       {
         "@self": {
           "register": "publication",
-          "schema": "organization",
-          "slug": "default-org"
-        },
-        "name": "Default Organization",
-        "summary": "The default organization for this OpenCatalogi instance"
-      },
-      {
-        "@self": {
-          "register": "publication",
           "schema": "publication",
           "slug": "example-municipality-annual-report"
         },
         "title": "Voorbeeld: Jaarverslag 2024 — Gemeente Voorbeeld",
         "summary": "Voorbeeld-publicatie (seed data) — fictief jaarverslag van een fictieve gemeente. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
         "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is. Gemeente Voorbeeld is een fictieve gemeente en representeert geen echte overheidsorganisatie.",
-        "organization": "default-org",
         "publicationDate": "2024-01-01T00:00:00+00:00"
       },
       {
@@ -1259,7 +1249,6 @@
         "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026",
         "summary": "Voorbeeld-publicatie (seed data) — kwartaalrapport van Conduction B.V., de maintainer van OpenCatalogi. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
         "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is.",
-        "organization": "default-org",
         "publicationDate": "2024-04-01T00:00:00+00:00",
         "depublicationDate": "2026-06-01T09:00:00+00:00"
       },
@@ -1278,7 +1267,6 @@
           "slug": "example-municipality-annual-report",
           "title": "Voorbeeld: Jaarverslag 2024 — Gemeente Voorbeeld"
         },
-        "organization": "default-org",
         "publicationDate": "2024-01-01T00:00:00+00:00"
       },
       {
@@ -1296,7 +1284,6 @@
           "slug": "example-conduction-quarterly-report",
           "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026"
         },
-        "organization": "default-org",
         "publicationDate": "2024-04-01T00:00:00+00:00"
       },
       {

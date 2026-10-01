@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "opencatalogi demo data",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Demo data covering every schema this app supplies, offered as the first step of the app's setup walkthrough. Generated from the schemas themselves, so every object satisfies the schema that will validate it."
   },
   "x-openregister": {
@@ -1662,54 +1662,6 @@
       {
         "@self": {
           "register": "publication",
-          "schema": "organization",
-          "slug": "organization-voorbeeld-name-1-1"
-        },
-        "name": "Voorbeeld Name 1",
-        "summary": "Voorbeeld Summary 1",
-        "description": "Voorbeeld Description 1",
-        "oin": "00000000123456789000",
-        "tooi": "AB0123",
-        "tooiIdentifier": "Voorbeeld Tooiidentifier 1",
-        "rsin": "012345678",
-        "pki": "0",
-        "image": "Voorbeeld Image 1"
-      },
-      {
-        "@self": {
-          "register": "publication",
-          "schema": "organization",
-          "slug": "organization-voorbeeld-name-2-2"
-        },
-        "name": "Voorbeeld Name 2",
-        "summary": "Voorbeeld Summary 2",
-        "description": "Voorbeeld Description 2",
-        "oin": "00000001234567890000",
-        "tooi": "BC1234",
-        "tooiIdentifier": "Voorbeeld Tooiidentifier 2",
-        "rsin": "123456789",
-        "pki": "1",
-        "image": "Voorbeeld Image 2"
-      },
-      {
-        "@self": {
-          "register": "publication",
-          "schema": "organization",
-          "slug": "organization-voorbeeld-name-3-3"
-        },
-        "name": "Voorbeeld Name 3",
-        "summary": "Voorbeeld Summary 3",
-        "description": "Voorbeeld Description 3",
-        "oin": "00000002345678901000",
-        "tooi": "CD2345",
-        "tooiIdentifier": "Voorbeeld Tooiidentifier 3",
-        "rsin": "234567890",
-        "pki": "2",
-        "image": "Voorbeeld Image 3"
-      },
-      {
-        "@self": {
-          "register": "publication",
           "schema": "page",
           "slug": "page-voorbeeld-title-1-1"
         },
@@ -1798,7 +1750,6 @@
           {
             "id": "5b1d7c52-3a8e-4c0e-9d51-0c7d2f1a6e01",
             "publication": "8f3c2a10-6b1e-4d7a-9c2f-1a2b3c4d5e01",
-            "attachment": null,
             "note": "Lees vooral paragraaf 3.",
             "addedAt": "2026-09-01T10:00:00+00:00",
             "addedBy": "resident",

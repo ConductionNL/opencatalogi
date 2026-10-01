@@ -34,3 +34,11 @@ broken install.
 - **GIVEN** an instance whose OpenRegister has no `nc-organisation`
 - **WHEN** the configuration is resolved
 - **THEN** the import succeeds and the organisation keys are absent.
+
+#### Scenario: The app ships no organisation seed
+
+- **GIVEN** stackiq is installed with its own `organization` schema, in either install order
+- **WHEN** opencatalogi's register descriptors and demo data are imported
+- **THEN** no seed object names schema `organization`
+- **AND** no seed publication or document carries an `organization` slug, because the property holds an `nc-organisation` uuid
+- **AND** every seed the descriptors ship is saved

@@ -132,15 +132,20 @@ class CitizenCollectionService {
 			throw new PortalInputException(message: 'This dossier is full');
 		}
 
-		$items[] = [
-			'id' => $this->uuid(),
-			'publication' => $publicationId,
-			'attachment' => $attachment,
-			'note' => $note,
-			'addedAt' => $this->now(),
-			'addedBy' => 'resident',
-			'title' => mb_substr((string)($publication['title'] ?? ''), 0, 500),
-		];
+		// A missing attachment or note is left out rather than written as null:
+		// the schema types them as plain strings.
+		$items[] = array_filter(
+			[
+				'id' => $this->uuid(),
+				'publication' => $publicationId,
+				'attachment' => $attachment,
+				'note' => $note,
+				'addedAt' => $this->now(),
+				'addedBy' => 'resident',
+				'title' => mb_substr((string)($publication['title'] ?? ''), 0, 500),
+			],
+			static fn (mixed $value): bool => $value !== null
+		);
 		$dossier['items'] = $items;
 
 		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: ($dossier['id'] ?? null)));
