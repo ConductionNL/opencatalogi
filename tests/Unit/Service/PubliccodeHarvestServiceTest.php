@@ -71,6 +71,7 @@ class PubliccodeHarvestServiceTest extends TestCase {
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('isEnabledForAnyone')->willReturnCallback(static fn (string $app): bool => in_array($app, $enabled, true));
 		$apps->method('getAppPath')->willReturn(__DIR__ . '/../../..');
+		$apps->method('isInstalled')->willReturnCallback(static fn (string $app): bool => in_array($app, $enabled, true));
 
 		return $apps;
 	}//end apps()
@@ -184,7 +185,7 @@ class PubliccodeHarvestServiceTest extends TestCase {
 	 */
 	public function testSettingUpTwiceUpdatesInPlace(): void {
 		$service = new PubliccodeHarvestService(
-			$this->apps(enabled: ['integriq']),
+			$this->apps(enabled: ['integriq', 'openregister']),
 			$this->container(services: ['OCA\OpenRegister\Service\ObjectService' => $this->objects()]),
 			$this->createMock(LoggerInterface::class)
 		);

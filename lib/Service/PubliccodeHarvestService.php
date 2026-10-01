@@ -316,6 +316,13 @@ class PubliccodeHarvestService {
 		if ($this->integriqInstalled() === false) {
 			throw new RuntimeException('The GitHub harvest needs integriq. Install and enable integriq first.');
 		}
+
+		// Every action reaches OpenRegister's services through the container
+		// (ADR-083: an optional capability establishes availability first, so
+		// this class stays constructible on an instance without OpenRegister).
+		if ($this->appManager->isInstalled('openregister') === false) {
+			throw new RuntimeException('The GitHub harvest needs OpenRegister. Install and enable OpenRegister first.');
+		}
 	}//end assertIntegriq()
 
 	/**
