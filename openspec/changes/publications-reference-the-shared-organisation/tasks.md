@@ -19,6 +19,13 @@
 - [x] 2.3 Fail soft when OpenRegister or the projection is absent: leave the
       keys unset rather than failing an import.
 
+- [x] 2.4 Drop the stale seeds the schema left behind: `default-org` and the four
+      `"organization": "default-org"` values in `publication_register.json`
+      (0.7.0 -> 0.7.1), and the three `organization` demo seeds in
+      `opencatalogi_mock_register.json` (1.0.0 -> 1.0.1). With stackiq installed
+      the slug resolved to stackiq's schema and the seed failed NOT NULL on its
+      required `type` (Rotterdam stack, register 23 x schema 109).
+
 ## 3. Frontend
 
 - [x] 3.1 Nothing. `getCollection('organization')` resolves through the three
