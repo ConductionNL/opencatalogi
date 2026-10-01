@@ -280,17 +280,19 @@ class CatalogiService {
 		}
 
 		if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
+			$schemaLookup = $this->schemaLookupFor(registers: ($modified['registers'] ?? ($object['registers'] ?? [])));
 			$rewrittenSchemas = array_map(
-				function ($schema) {
+				function ($schema) use ($schemaLookup) {
 					if ($this->isNumericId(value: $schema) === true) {
 						return $schema;
 					}
 
-					try {
-						return $this->getSchemaMapper()->find($schema)->getId();
-					} catch (NotFoundException $e) {
+					$schemaId = $schemaLookup((string)$schema);
+					if ($schemaId === null) {
 						throw new RuntimeException('Schema ' . $schema . ' not found.');
 					}
+
+					return $schemaId;
 				},
 				$object['schemas']
 			);
@@ -302,6 +304,55 @@ class CatalogiService {
 
 		return $modified;
 	}//end computeRewrittenRegistersAndSchemas()
+
+	/**
+	 * Build the schema slug lookup for one catalogue.
+	 *
+	 * When the catalogue names at least one register by id, a schema slug only
+	 * resolves to a schema one of those registers lists. A bare slug such as
+	 * `module` can name a schema of another app, and the catalogue would then
+	 * publish that app's objects. A catalogue without a register keeps the old
+	 * global lookup, because there is nothing to scope it to.
+	 *
+	 * @param array<int, mixed> $registers The catalogue's registers, after rewriting.
+	 *
+	 * @return callable(string): (int|null) Slug to schema id, null when not found.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
+	 */
+	private function schemaLookupFor(array $registers): callable {
+		$registerIds = [];
+		foreach ($registers as $register) {
+			if ($this->isNumericId(value: $register) === true) {
+				$registerIds[] = (int)$register;
+			}
+		}
+
+		if ($registerIds === []) {
+			return function (string $slug): ?int {
+				try {
+					return $this->getSchemaMapper()->find($slug)->getId();
+				} catch (\Exception) {
+					return null;
+				}
+			};
+		}
+
+		$slugMap = null;
+		return function (string $slug) use (&$slugMap, $registerIds): ?int {
+			if ($slugMap === null) {
+				$registerMapper = $this->getRegisterMapper();
+				$schemaMapper = $this->getSchemaMapper();
+				$slugMap = (new CatalogScopeSlugResolver())->schemaSlugMap(
+					registerIds: $registerIds,
+					schemaIdsOfRegister: static fn (int $registerId): array => $registerMapper->find($registerId, _rbac: false, _multitenancy: false)->getSchemas(),
+					schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper->find($schemaId, _rbac: false, _multitenancy: false)->getSlug()
+				);
+			}
+
+			return ($slugMap[strtolower($slug)] ?? null);
+		};
+	}//end schemaLookupFor()
 
 	/**
 	 * Determine whether a value is already a numeric integer ID (not a slug).

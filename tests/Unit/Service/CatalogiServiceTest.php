@@ -13,6 +13,7 @@ use OCA\OpenRegister\Db\SchemaMapper;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Common\Exception\NotFoundException;
 use OCP\IAppConfig;
@@ -1210,19 +1211,26 @@ class CatalogiServiceTest extends TestCase {
 	// triggering a second save.
 	// ──────────────────────────────────────────────────────────
 	public function testComputeRewrittenRegistersAndSchemasResolvesSlugsToIds(): void {
-		$register = $this->createEntityMock(Register::class, 42);
-		$registerMapper = $this->createMock(RegisterMapper::class);
-		$registerMapper->expects($this->once())
-			->method('find')
-			->with('my-register')
-			->willReturn($register);
+		$register = new Register();
+		$register->setId(42);
+		$register->setSlug('my-register');
+		$register->setSchemas([7]);
 
-		$schema = $this->createEntityMock(Schema::class, 7);
+		$schema = new Schema();
+		$schema->setId(7);
+		$schema->setSlug('my-schema');
+
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->method('find')
+			->willReturnCallback(
+				static fn (string|int $id): Register => ((string)$id === 'my-register' || (string)$id === '42') ? $register : throw new DoesNotExistException('no register ' . $id)
+			);
+
 		$schemaMapper = $this->createMock(SchemaMapper::class);
-		$schemaMapper->expects($this->once())
-			->method('find')
-			->with('my-schema')
-			->willReturn($schema);
+		$schemaMapper->method('find')
+			->willReturnCallback(
+				static fn (string|int $id): Schema => ((string)$id === '7') ? $schema : throw new DoesNotExistException('no schema ' . $id)
+			);
 
 		$this->injectMappers($registerMapper, $schemaMapper);
 
@@ -1235,6 +1243,112 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->assertSame(['registers' => [42], 'schemas' => [7]], $result);
 	}//end testComputeRewrittenRegistersAndSchemasResolvesSlugsToIds()
+
+	/**
+	 * A schema slug only resolves to a schema the catalogue's own register lists (REQ-PFS-002).
+	 *
+	 * Register `stackiq` (20) lists schema 33 `organization`. Schema 9 carries the
+	 * same slug but belongs to another register, and a global lookup would return
+	 * it first (lower id). The rewrite must take 33, and must never ask the
+	 * schema mapper for the bare slug.
+	 *
+	 * @return void
+	 */
+	public function testComputeRewrittenSchemasStayInsideTheCataloguesRegisters(): void {
+		$stackiq = new Register();
+		$stackiq->setId(20);
+		$stackiq->setSlug('stackiq');
+		$stackiq->setSchemas([33]);
+
+		$theirs = new Schema();
+		$theirs->setId(9);
+		$theirs->setSlug('organization');
+		$ours = new Schema();
+		$ours->setId(33);
+		$ours->setSlug('organization');
+
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->method('find')
+			->willReturnCallback(
+				static fn (string|int $id): Register => ((string)$id === 'stackiq' || (string)$id === '20') ? $stackiq : throw new DoesNotExistException('no register ' . $id)
+			);
+
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')
+			->willReturnCallback(
+				static function (string|int $id) use ($theirs, $ours): Schema {
+					if ((string)$id === 'organization') {
+						// What a global slug lookup answers: the lowest id.
+						return $theirs;
+					}
+
+					if ((string)$id === '33') {
+						return $ours;
+					}
+
+					throw new DoesNotExistException('no schema ' . $id);
+				}
+			);
+
+		$this->injectMappers($registerMapper, $schemaMapper);
+
+		$result = $this->service->computeRewrittenRegistersAndSchemas(
+			[
+				'registers' => ['stackiq'],
+				'schemas' => ['organization'],
+			]
+		);
+
+		$this->assertSame(['registers' => [20], 'schemas' => [33]], $result);
+	}//end testComputeRewrittenSchemasStayInsideTheCataloguesRegisters()
+
+	/**
+	 * A catalogue without a register keeps the global schema lookup: nothing to scope it to.
+	 *
+	 * @return void
+	 */
+	public function testComputeRewrittenSchemasWithoutARegisterLookUpGlobally(): void {
+		$schema = new Schema();
+		$schema->setId(7);
+		$schema->setSlug('my-schema');
+
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->expects($this->never())->method('find');
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->expects($this->once())->method('find')->with('my-schema')->willReturn($schema);
+
+		$this->injectMappers($registerMapper, $schemaMapper);
+
+		$this->assertSame(['schemas' => [7]], $this->service->computeRewrittenRegistersAndSchemas(['schemas' => ['my-schema']]));
+	}//end testComputeRewrittenSchemasWithoutARegisterLookUpGlobally()
+
+	/**
+	 * A schema slug the catalogue's register does not list throws, so the listener keeps the slug for the backfill.
+	 *
+	 * @return void
+	 */
+	public function testComputeRewrittenSchemasThrowsOnASlugOutsideTheRegisters(): void {
+		$stackiq = new Register();
+		$stackiq->setId(20);
+		$stackiq->setSchemas([]);
+
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->method('find')->willReturn($stackiq);
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->expects($this->never())->method('find');
+
+		$this->injectMappers($registerMapper, $schemaMapper);
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Schema usage not found.');
+
+		$this->service->computeRewrittenRegistersAndSchemas(
+			[
+				'registers' => ['20'],
+				'schemas' => ['usage'],
+			]
+		);
+	}//end testComputeRewrittenSchemasThrowsOnASlugOutsideTheRegisters()
 
 	public function testComputeRewrittenRegistersAndSchemasIsIdempotentOnIntegerIds(): void {
 		// No mapper lookups should happen when everything is already an integer id.
