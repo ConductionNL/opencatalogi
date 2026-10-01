@@ -78,6 +78,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -102,7 +168,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-02",
@@ -153,6 +220,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -177,7 +310,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-03",
@@ -228,6 +362,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -252,7 +452,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-04",
@@ -303,6 +504,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -327,7 +594,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-05",
@@ -378,6 +646,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -402,7 +736,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-06",
@@ -453,6 +788,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -477,7 +878,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-07",
@@ -528,6 +930,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -552,7 +1020,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-08",
@@ -603,6 +1072,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -627,7 +1162,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-09",
@@ -678,6 +1214,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -702,7 +1304,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-10",
@@ -753,6 +1356,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -777,7 +1446,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-11",
@@ -828,6 +1498,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -852,7 +1588,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-12",
@@ -903,6 +1640,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -927,7 +1730,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-13",
@@ -978,6 +1782,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1002,7 +1872,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-14",
@@ -1053,6 +1924,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1077,7 +2014,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-15",
@@ -1128,6 +2066,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1152,7 +2156,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-16",
@@ -1203,6 +2208,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1227,7 +2298,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-17",
@@ -1278,6 +2350,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1302,7 +2440,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-18",
@@ -1353,6 +2492,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1377,7 +2582,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-19",
@@ -1428,6 +2634,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1452,7 +2724,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-20",
@@ -1503,6 +2776,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1527,7 +2866,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-21",
@@ -1578,6 +2918,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1602,7 +3008,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-22",
@@ -1653,6 +3060,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1677,7 +3150,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-23",
@@ -1728,6 +3202,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1752,7 +3292,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "shard-24",
@@ -1803,6 +3344,72 @@
                                                             "var": "json.publiccode.body.url"
                                                         }
                                                     ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "var": "json.hit.path"
+                                                                },
+                                                                "publiccode.yml"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "var": "json.hit.path"
+                                                                        },
+                                                                        -15
+                                                                    ]
+                                                                },
+                                                                "/publiccode.yml"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    "github.com/",
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            "github.com/",
+                                                                            {
+                                                                                "var": "json.hit.repository.full_name"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }
@@ -1827,7 +3434,8 @@
                                             "@self.slug": "{{ component.slug }}"
                                         },
                                         "maxWrites": 25000
-                                    }
+                                    },
+                                    "onError": "continue"
                                 },
                                 {
                                     "id": "end",
@@ -2811,25 +4419,25 @@
                 "version": "1.0.0",
                 "passThrough": false,
                 "mapping": {
-                    "component.slug": "{{ (hit.repository.full_name ~ (hit.path != 'publiccode.yml' ? '-' ~ hit.path|replace({'/publiccode.yml': ''}) : ''))|lower|replace({'/': '-', '.': '-', '_': '-', ' ': '-'}) }}",
+                    "component.slug": "{% set u = publiccode.body.url|lower|trim|replace({'https://': '', 'http://': '', 'www.': ''})|trim('/') %}{% if u ends with '.git' %}{% set u = u|slice(0, -4) %}{% endif %}{% if u == ('github.com/' ~ hit.repository.full_name|lower) and hit.path != 'publiccode.yml' %}{% set u = u ~ '/' ~ hit.path|lower|replace({'/publiccode.yml': ''}) %}{% endif %}{{ u|replace({'/': '-', '.': '-', '_': '-', ' ': '-', ':': '-', '~': '-'}) }}",
                     "component.name": "{{ publiccode.body.name|default('') }}",
                     "component.applicationSuite": "{{ publiccode.body.applicationSuite|default('') }}",
                     "component.url": "{{ publiccode.body.url|default('') }}",
                     "component.landingURL": "{{ publiccode.body.landingURL|default('') }}",
                     "component.softwareVersion": "{{ publiccode.body.softwareVersion|default('') }}",
-                    "component.releaseDate": "{{ publiccode.body.releaseDate is defined and publiccode.body.releaseDate ? publiccode.body.releaseDate|date('Y-m-d', false) : '' }}",
+                    "component.releaseDate": "{{ publiccode.body.releaseDate is defined and publiccode.body.releaseDate is not iterable and (publiccode.body.releaseDate ~ '') matches '/^[0-9]{4}-[0-9]{2}-[0-9]{2}/' ? (publiccode.body.releaseDate ~ '')|slice(0, 10) : '' }}",
                     "component.logo": "{{ publiccode.body.logo|default('') }}",
-                    "component.platforms": "{{ publiccode.body.platforms|default([])|json_encode }}",
-                    "component.categories": "{{ publiccode.body.categories|default([])|json_encode }}",
+                    "component.platforms": "{{ (publiccode.body.platforms is defined and publiccode.body.platforms is iterable ? publiccode.body.platforms : [])|json_encode }}",
+                    "component.categories": "{{ (publiccode.body.categories is defined and publiccode.body.categories is iterable ? publiccode.body.categories : [])|json_encode }}",
                     "component.developmentStatus": "{{ publiccode.body.developmentStatus|default('') }}",
                     "component.softwareType": "{{ publiccode.body.softwareType|default('') }}",
-                    "component.description": "{{ publiccode.body.description|default({})|json_encode }}",
+                    "component.description": "{{ (publiccode.body.description is defined and publiccode.body.description is iterable ? publiccode.body.description : {})|json_encode }}",
                     "component.maintenanceType": "{{ publiccode.body.maintenance.type|default('') }}",
-                    "component.maintainers": "{{ (publiccode.body.maintenance.contractors|default([]))|merge(publiccode.body.maintenance.contacts|default([]))|json_encode }}",
+                    "component.maintainers": "{% set m = publiccode.body.maintenance is defined and publiccode.body.maintenance is iterable ? publiccode.body.maintenance : {} %}{{ ((m.contractors is defined and m.contractors is iterable ? m.contractors : [])|merge(m.contacts is defined and m.contacts is iterable ? m.contacts : []))|json_encode }}",
                     "component.legalLicense": "{{ publiccode.body.legal.license|default('') }}",
                     "component.legalRepoOwner": "{{ publiccode.body.legal.repoOwner|default('') }}",
-                    "component.localisationAvailableLanguages": "{{ publiccode.body.localisation.availableLanguages|default([])|json_encode }}",
-                    "component.itConformsTo": "{% set conforms = [] %}{% for standard, conforms_to in publiccode.body.it.conforme|default({}) %}{% if conforms_to %}{% set conforms = conforms|merge([standard]) %}{% endif %}{% endfor %}{{ conforms|json_encode }}",
+                    "component.localisationAvailableLanguages": "{% set l = publiccode.body.localisation is defined and publiccode.body.localisation is iterable ? publiccode.body.localisation : {} %}{{ (l.availableLanguages is defined and l.availableLanguages is iterable ? l.availableLanguages : [])|json_encode }}",
+                    "component.itConformsTo": "{% set conforms = [] %}{% set itb = publiccode.body.it is defined and publiccode.body.it is iterable ? publiccode.body.it : {} %}{% for standard, conforms_to in (itb.conforme is defined and itb.conforme is iterable ? itb.conforme : {}) %}{% if conforms_to %}{% set conforms = conforms|merge([standard]) %}{% endif %}{% endfor %}{{ conforms|json_encode }}",
                     "component.publiccodeYmlVersion": "{{ publiccode.body.publiccodeYmlVersion|default('') }}",
                     "component.harvestedFrom": "github.com",
                     "component.harvestedAt": "{{ 'now'|date('c', 'UTC') }}",
