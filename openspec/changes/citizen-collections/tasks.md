@@ -21,3 +21,8 @@
 ## 5. Docs
 
 - [x] 5.1 Dutch and English strings, `openspec validate citizen-collections --strict`.
+
+## 6. The dossier screen and the shared page (Woo screens programme)
+
+- [x] 6.1 The `dossiers` page carries a `detail` block for `myDossiers`; the card lists `title` and `description`; `viewDossier` and `noteOnDossier` leave the row actions (REQ-CCOL-008). Verify: `tests/Unit/Portal/PortalContributionProviderTest.php` `testTheDossierPageShowsTheSelectedDossier`, `testNoTableButtonOpensOrEmptiesADossier`.
+- [x] 6.2 `shareDossier` answers `link` as the shared-dossier page of portaliq's site (REQ-CCOL-009). Verify: `tests/Unit/Service/Portal/CitizenCollectionServiceTest.php` `testTheShareLinkOpensTheSharedDossierPageOfTheSite`. The page itself is portaliq's (`feat/site-shared-dossier`).

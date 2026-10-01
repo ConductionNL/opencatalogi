@@ -78,7 +78,7 @@ class PortalContributionProviderTest extends TestCase {
 		$this->assertSame('owner', $dossiers['scopeField']);
 		$this->assertArrayNotHasKey('scopeClaim', $dossiers);
 		$this->assertNotContains('owner', $dossiers['fields']);
-		$this->assertSame(['viewDossier', 'removeFromDossier', 'noteOnDossier', 'shareDossier', 'unshareDossier', 'deleteDossier'], $dossiers['rowActions']);
+		$this->assertSame(['removeFromDossier', 'shareDossier', 'unshareDossier', 'deleteDossier'], $dossiers['rowActions']);
 		$this->assertSame(['label' => 'Documenten', 'provider' => 'dossierItems', 'removeAction' => 'removeFromDossier'], $dossiers['itemList']);
 		$this->assertTrue(method_exists(PortalContributionProvider::class, 'dossierItems'));
 
@@ -164,6 +164,43 @@ class PortalContributionProviderTest extends TestCase {
 				}
 			}
 		}
+	}
+
+	/**
+	 * The dossier page shows the selected dossier: its title and note, its
+	 * items through the item list, and the actions other apps attach to it.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-the-dossier-page-shows-one-dossier-in-full-req-ccol-008
+	 */
+	public function testTheDossierPageShowsTheSelectedDossier(): void {
+		$manifest = $this->manifest('citizen');
+		$blocks = $this->byId($manifest['pages'])['dossiers']['blocks'];
+		$types = array_map(static fn (array $block): string => $block['type'].':'.($block['collection'] ?? ($block['action'] ?? '')), $blocks);
+		$this->assertSame(['richText:', 'action:createDossier', 'collection:myDossiers', 'detail:myDossiers'], $types);
+
+		$dossiers = $this->byId($manifest['collections'])['myDossiers'];
+		// The items are the item list's, so the card does not print them raw.
+		$this->assertSame(['layout' => 'card', 'fields' => ['title', 'description']], $dossiers['detail']);
+		foreach (['title', 'description'] as $field) {
+			$this->assertContains($field, $dossiers['fields']);
+		}
+	}
+
+	/**
+	 * A table button sends only the row id. Opening is the detail block's
+	 * job, and a note sent without its fields would erase the dossier's note,
+	 * so neither is a table button. Both stay declared for the API.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-the-dossier-page-shows-one-dossier-in-full-req-ccol-008
+	 */
+	public function testNoTableButtonOpensOrEmptiesADossier(): void {
+		$manifest = $this->manifest('citizen');
+		$dossiers = $this->byId($manifest['collections'])['myDossiers'];
+		$this->assertNotContains('viewDossier', $dossiers['rowActions']);
+		$this->assertNotContains('noteOnDossier', $dossiers['rowActions']);
+		$actions = $this->byId($manifest['actions']);
+		$this->assertArrayHasKey('viewDossier', $actions);
+		$this->assertArrayHasKey('noteOnDossier', $actions);
 	}
 
 	public function testNoLabelUsesAnEmDashOrTitleCase(): void {

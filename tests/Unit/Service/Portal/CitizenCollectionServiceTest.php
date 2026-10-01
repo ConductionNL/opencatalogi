@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Exception\PortalNotFoundException;
 use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
 use OCA\OpenCatalogi\Service\Portal\CollectionShareService;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
+use OCP\IURLGenerator;
 use Opis\JsonSchema\Validator;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -204,6 +205,26 @@ class CitizenCollectionServiceTest extends TestCase {
 		$this->assertTrue($view['items'][0]['public']);
 		$this->assertFalse($view['items'][1]['public']);
 		$this->assertSame('Advies windpark', $view['items'][1]['title']);
+	}
+
+	/**
+	 * The link a resident hands out opens the shared-dossier page of the
+	 * portal site, not the JSON behind it; `url` stays the API path.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-the-share-link-opens-a-page-on-the-portal-site-req-ccol-009
+	 */
+	public function testTheShareLinkOpensTheSharedDossierPageOfTheSite(): void {
+		$view = $this->dossierOf('subject-1', [self::PUB_A]);
+		$share = $this->shares->share(owner: 'subject-1', collectionId: $view['id']);
+
+		$this->assertSame('/index.php/apps/opencatalogi/api/collections/shared/'.$share['token'], $share['url']);
+		$this->assertSame('/index.php/apps/portaliq/site?route=/gedeeld-dossier/'.$share['token'], $share['link']);
+
+		$urls = $this->createMock(IURLGenerator::class);
+		$urls->method('getAbsoluteURL')->willReturnCallback(static fn (string $path): string => 'https://gemeente.example'.$path);
+		$absolute = (new CollectionShareService(store: $this->store, linker: $this->createMock(PublicationLinker::class), urlGenerator: $urls))
+			->share(owner: 'subject-1', collectionId: $view['id']);
+		$this->assertSame('https://gemeente.example/index.php/apps/portaliq/site?route=/gedeeld-dossier/'.$absolute['token'], $absolute['link']);
 	}
 
 	/**

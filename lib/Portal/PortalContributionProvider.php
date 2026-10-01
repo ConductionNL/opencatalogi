@@ -170,6 +170,8 @@ class PortalContributionProvider {
 	 * The resident's dossiers.
 	 *
 	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-the-dossier-page-shows-one-dossier-in-full-req-ccol-008
 	 */
 	private function dossierCollection(): array {
 		return [
@@ -184,8 +186,15 @@ class PortalContributionProvider {
 				['field' => 'title', 'label' => 'Dossier'],
 				['field' => 'description', 'label' => 'Notitie'],
 			],
-			'detail' => ['layout' => 'card', 'fields' => ['title', 'description', 'items']],
-			'rowActions' => ['viewDossier', 'removeFromDossier', 'noteOnDossier', 'shareDossier', 'unshareDossier', 'deleteDossier'],
+			// The items are shown by the item list below, with their links,
+			// notes and a "no longer public" mark, so the card does not print
+			// them raw.
+			'detail' => ['layout' => 'card', 'fields' => ['title', 'description']],
+			// A table button sends only the row id. Opening a dossier is the
+			// detail block's job, and `noteOnDossier` sent without `itemId`
+			// and `note` would erase the dossier's own note, so neither is a
+			// button. Both stay declared for the API.
+			'rowActions' => ['removeFromDossier', 'shareDossier', 'unshareDossier', 'deleteDossier'],
 			'itemList' => ['label' => 'Documenten', 'provider' => 'dossierItems', 'removeAction' => 'removeFromDossier'],
 		];
 
@@ -339,6 +348,8 @@ class PortalContributionProvider {
 	 * The pages: Mijn dossiers and Mijn zoekopdrachten.
 	 *
 	 * @return array<int, array<string, mixed>>
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-the-dossier-page-shows-one-dossier-in-full-req-ccol-008
 	 */
 	private function pages(): array {
 		return [
@@ -353,6 +364,9 @@ class PortalContributionProvider {
 					],
 					['type' => 'action', 'action' => 'createDossier'],
 					['type' => 'collection', 'collection' => 'myDossiers'],
+					// The selected dossier in full: title, note, the items and
+					// the actions pipelinq and dossiq attach to a dossier.
+					['type' => 'detail', 'collection' => 'myDossiers'],
 				],
 			],
 			[

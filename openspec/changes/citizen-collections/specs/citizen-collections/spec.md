@@ -76,7 +76,7 @@ The owner's view SHALL return every item with `public: true` or `public: false`,
 
 Implements hydra `woo-citizen-journey`: A shared dossier MUST show only what is public at the moment it is read.
 
-`shareDossier` SHALL set `share` to `{ token, createdAt }` with at least 128 random bits in the token, and answer the absolute share URL as `link`. `GET /api/collections/shared/{token}` SHALL be readable without sign-in and SHALL return the title, description and only the items whose publication is public at that moment, with their notes. It SHALL NOT return `owner`, `share` or `sourceOf`. `unshareDossier` SHALL set `share` to null, after which the old token SHALL answer 404.
+`shareDossier` SHALL set `share` to `{ token, createdAt }` with at least 128 random bits in the token, and answer the JSON path as `url` and the address of the shared-dossier page as `link` (REQ-CCOL-009). `GET /api/collections/shared/{token}` SHALL be readable without sign-in and SHALL return the title, description and only the items whose publication is public at that moment, with their notes. It SHALL NOT return `owner`, `share` or `sourceOf`. `unshareDossier` SHALL set `share` to null, after which the old token SHALL answer 404.
 
 #### Scenario: A depublished item disappears from the shared view
 
@@ -114,6 +114,39 @@ Implements hydra `woo-citizen-journey` design C1 and C7 (the Mijn dossiers page)
 - **GIVEN** a subject with audience `supplier`
 - **WHEN** portaliq asks for the contribution
 - **THEN** the answer is null
+
+### Requirement: The dossier page shows one dossier in full (REQ-CCOL-008)
+
+Implements hydra `woo-citizen-journey` J3.3 to J3.5 and C7: the resident MUST be able to open one dossier and see everything in it.
+
+The `dossiers` page SHALL carry a `detail` block for `myDossiers` after its `collection` block, so the dossier the resident selects shows its title and note, its items through the item list (title, link, note, and "no longer public" for an item whose publication is not public now), and the actions other apps attach to the `collection` schema (pipelinq `askAboutDossier`, dossiq `startWooVerzoek`). The detail card SHALL list only `title` and `description`; the items are the item list's. The `myDossiers` row actions SHALL be `removeFromDossier`, `shareDossier`, `unshareDossier` and `deleteDossier`. `viewDossier` and `noteOnDossier` SHALL stay declared actions but SHALL NOT be row actions, because a table button sends only the row id, and `noteOnDossier` without `itemId` and `note` empties the dossier's note.
+
+#### Scenario: The resident opens a dossier
+
+- **GIVEN** a resident with a dossier holding one public and one depublished item
+- **WHEN** they select the dossier on "Mijn dossiers"
+- **THEN** the page shows its title and note
+- **AND** both items with their notes, the depublished one marked as no longer public
+- **AND** the actions to ask a question about the dossier and to start a Woo request
+
+#### Scenario: No table button empties the note
+
+- **GIVEN** the `myDossiers` collection in the manifest
+- **WHEN** portaliq renders its table buttons
+- **THEN** none of them is `noteOnDossier` or `viewDossier`
+
+### Requirement: The share link opens a page on the portal site (REQ-CCOL-009)
+
+Implements hydra `woo-citizen-journey` J3.4: the link a resident hands out MUST open a page a person can read, not raw JSON.
+
+`shareDossier` SHALL answer `link` as the absolute address of `/index.php/apps/portaliq/site?route=/gedeeld-dossier/{token}`, the public page of portaliq's site that reads `GET /api/collections/shared/{token}` and shows it to anyone. `url` SHALL stay the JSON path `/index.php/apps/opencatalogi/api/collections/shared/{token}`.
+
+#### Scenario: The resident shares a dossier
+
+- **GIVEN** a resident's dossier
+- **WHEN** they share it
+- **THEN** the answer's `link` ends in `/index.php/apps/portaliq/site?route=/gedeeld-dossier/` and the token
+- **AND** the answer's `url` is the JSON path with the same token
 
 ### Requirement: Removing a portal account deletes that resident's dossiers (REQ-CCOL-007)
 
