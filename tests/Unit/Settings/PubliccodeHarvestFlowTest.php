@@ -149,12 +149,32 @@ class PubliccodeHarvestFlowTest extends TestCase {
 			}
 		}
 
-		// Each shard leads into the one shared tail and nowhere else.
+		// Each shard leads into its OWN tail and nowhere else. A shared tail
+		// loses pages: a place several steps write into keeps only the last
+		// step's items (measured 2026-10-01: 3 of 24 shards' pages processed).
 		foreach ($shardIds as $shard) {
 			$out = array_values(array_filter($flow['edges'], static fn (array $e): bool => $e['from'] === $shard));
 			$this->assertCount(1, $out);
-			$this->assertSame('hits', $out[0]['to']);
+			$this->assertSame('hits-' . substr($shard, -2), $out[0]['to']);
 		}
+
+		$into = [];
+		foreach ($flow['edges'] as $edge) {
+			$into[$edge['to']][] = $edge['from'];
+		}
+
+		foreach ($flow['nodes'] as $node) {
+			if (in_array($node['type'], ['openregister.end', 'openconnector.source-paginate'], true) === true) {
+				continue;
+			}
+
+			if (str_starts_with($node['type'], 'openregister.trigger-') === true) {
+				continue;
+			}
+
+			$this->assertCount(1, $into[$node['id']], 'Only the end node may have more than one way in: ' . $node['id']);
+		}
+
 	}//end testEveryShardHangsDirectlyOffBothTriggersAndNeverOffAnotherShard()
 
 	/**
@@ -170,24 +190,28 @@ class PubliccodeHarvestFlowTest extends TestCase {
 			$next[$edge['from']][] = $edge['to'];
 		}
 
-		$chain = ['hits'];
-		while (isset($next[end($chain)]) === true) {
-			$this->assertCount(1, $next[end($chain)], 'The tail is linear.');
-			$chain[] = $next[end($chain)][0];
+		foreach ($this->nodeIdsOfType('openconnector.source-paginate') as $shard) {
+			$n = substr($shard, -2);
+			$chain = [$shard];
+			while (isset($next[end($chain)]) === true) {
+				$this->assertCount(1, $next[end($chain)], 'The tail is linear.');
+				$chain[] = $next[end($chain)][0];
+			}
+
+			$this->assertSame([$shard, 'hits-' . $n, 'fetch-' . $n, 'decoded-' . $n, 'map-' . $n, 'write-' . $n, 'end'], $chain);
+			$this->assertSame('openconnector.source-call', $nodes['fetch-' . $n]['type']);
+			$this->assertSame('github-raw', $nodes['fetch-' . $n]['config']['source']);
+			$this->assertSame('yaml', $nodes['fetch-' . $n]['config']['decode']);
+			$this->assertSame('continue', $nodes['fetch-' . $n]['onError']);
+			$this->assertSame('openregister.map', $nodes['map-' . $n]['type']);
+			$this->assertSame('publiccode-github-hit', $nodes['map-' . $n]['config']['mapping']);
+			$this->assertSame('upsert', $nodes['write-' . $n]['config']['operation']);
+			$this->assertSame('publiccode', $nodes['write-' . $n]['config']['schema']);
+			$this->assertSame(['@self.slug' => '{{ component.slug }}'], $nodes['write-' . $n]['config']['match']);
+			$this->assertGreaterThanOrEqual(1000, $nodes['write-' . $n]['config']['maxWrites']);
 		}
 
-		$this->assertSame(['hits', 'fetch', 'decoded', 'map', 'write', 'end'], $chain);
-		$this->assertSame('openconnector.source-call', $nodes['fetch']['type']);
-		$this->assertSame('github-raw', $nodes['fetch']['config']['source']);
-		$this->assertSame('yaml', $nodes['fetch']['config']['decode']);
-		$this->assertSame('continue', $nodes['fetch']['onError']);
-		$this->assertSame('openregister.map', $nodes['map']['type']);
-		$this->assertSame('publiccode-github-hit', $nodes['map']['config']['mapping']);
 		$this->assertArrayHasKey('publiccode-github-hit', $this->fragment['components']['mappings']);
-		$this->assertSame('upsert', $nodes['write']['config']['operation']);
-		$this->assertSame('publiccode', $nodes['write']['config']['schema']);
-		$this->assertSame(['@self.slug' => '{{ component.slug }}'], $nodes['write']['config']['match']);
-		$this->assertGreaterThanOrEqual(24 * 1000, $nodes['write']['config']['maxWrites']);
 	}//end testTheTailFetchesFiltersMapsAndWritesBySlug()
 
 	/**

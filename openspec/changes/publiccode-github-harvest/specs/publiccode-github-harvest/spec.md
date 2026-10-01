@@ -13,7 +13,7 @@ Every `publiccode.yml` on GitHub becomes a searchable component in OpenCatalogi,
 
 ### Requirement: REQ-PGH-001 The harvest flow ships with the app and stays inert until adopted
 
-OpenCatalogi SHALL declare one flow named "GitHub publiccode harvest" on the `publiccode` schema under `x-openregister-flows`. It SHALL ship disabled. It SHALL carry a schedule trigger and a manual trigger, and each trigger SHALL have an edge to every shard node. No edge SHALL run from one shard node to another. Every shard SHALL lead into one shared tail that fetches, decodes, maps and writes.
+OpenCatalogi SHALL declare one flow named "GitHub publiccode harvest" on the `publiccode` schema under `x-openregister-flows`. It SHALL ship disabled. It SHALL carry a schedule trigger and a manual trigger, and each trigger SHALL have an edge to every shard node. No edge SHALL run from one shard node to another. Every shard SHALL lead into its own tail that fetches, decodes, maps and writes. Only the end node MAY be shared, because a place several steps write into keeps only the last step's items.
 
 #### Scenario: The shipped flow has the parallel shape
 @e2e exclude A register fragment with no browser surface; tests/Unit/Settings/PubliccodeHarvestFlowTest.php asserts the topology.

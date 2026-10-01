@@ -3,21 +3,21 @@
 ## D1. The flow's shape
 
 ```
-schedule (03:15 nightly) ─┬─> shard-01 ─┐
-manual ───────────────────┤   ...       ├─> hits ─> fetch ─> decoded ─> map ─> write ─> end
-                          └─> shard-24 ─┘
+schedule (03:15 nightly) ─┬─> shard-01 ─> hits-01 ─> fetch-01 ─> decoded-01 ─> map-01 ─> write-01 ─┐
+manual ───────────────────┤   ...                                                                   ├─> end
+                          └─> shard-24 ─> hits-24 ─> fetch-24 ─> decoded-24 ─> map-24 ─> write-24 ─┘
 ```
 
 - **Both triggers fan out to every shard directly.** A shard node is `openconnector.source-paginate`, which runs its search once per input item. A chain hands shard 2 every page of shard 1 as input and multiplies (12 runs became 3,472 on 2026-08-13). Side by side, each shard receives the trigger's single item and runs once. `PubliccodeHarvestFlowTest` asserts that no edge runs from one shard to another.
-- **The shards converge on one tail.** Converging edges merge by default in the flow engine (`openspec/specs/flow-engine/spec.md`, "Converging edges MERGE by default"), so `hits` fires for each shard's pages without waiting for all 24. The tail runs once per page, never once per shard per page.
+- **Every shard has its own tail.** The first build converged all 24 shards on one shared tail. On :8095 that tail processed the pages of 3 of the 24 shards: OpenRegister's `FlowItemPlacement::advanceItems()` ASSIGNS a step's items to its output place, so when several shards fire before the shared consumer does, each one overwrites the last. The tokens add up and the items do not. Separate tails have no shared place before `end`, so nothing is overwritten. The test asserts that only `end` has more than one way in. The engine defect is reported to the coordinator; the per-shard tails are right either way.
 - **Why `source-paginate` and not `synchronization-run`.** `synchronization-run` writes each hit to a target through its own mapping, and a code search hit is not a component: the component is in the file the hit points at. `source-paginate` only fetches, and emits one item per page with the hits under `page.results`.
-- **The tail:**
-  - `hits`: `openregister.explode` on `page.results` as `hit`, not keeping the page record.
-  - `fetch`: `openconnector.source-call` on source `github-raw`, endpoint `/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}`, `decode: "yaml"`, output `publiccode`, `onError: "continue"`. Raw files cost no API quota.
-  - `decoded`: `openregister.filter` keeping items whose `publiccode.body.name` and `publiccode.body.url` are set. An undecodable file carries `_error` and no `publiccode` key, so it drops here. The two fields are the schema's `required` list.
-  - `map`: `openregister.map` with mapping `publiccode-github-hit` (D3).
-  - `write`: `openregister.object-write`, operation `upsert`, register `publication`, schema `publiccode`, match `@self.slug` on `{{ slug }}`.
-- **`limits.maxTransitions`** is raised for this flow: 24 shards and a five-step tail per page is far past the default. The value is in the fragment and asserted in the test.
+- **Each tail:**
+  - `hits-NN`: `openregister.explode` on `page.results` as `hit`, not keeping the page record.
+  - `fetch-NN`: `openconnector.source-call` on source `github-raw`, endpoint `/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}`, `decode: "yaml"`, output `publiccode`, `onError: "continue"`. Raw files cost no API quota.
+  - `decoded-NN`: `openregister.filter` keeping items whose `publiccode.body.name` and `publiccode.body.url` are set. An undecodable file carries `_error` and no `publiccode` key, so it drops here. The two fields are the schema's `required` list.
+  - `map-NN`: `openregister.map` with mapping `publiccode-github-hit` (D3), writing the component under `component`.
+  - `write-NN`: `openregister.object-write`, operation `upsert`, register `publication`, schema `publiccode`, `payloadFrom: component`, match `@self.slug` on `{{ component.slug }}`, `maxWrites` 25000.
+- **`limits.maxRuntimeMinutes: 240`.** The runtime guard times one walk of the run, not the time it spends suspended, so this bounds one stretch of fetching and writing between two rate-limit pauses.
 
 ## D2. Shards
 
@@ -66,7 +66,7 @@ An OpenRegister mapping (`components.mappings`, slug `publiccode-github-hit`), b
 
 ## D7. Tests
 
-- `tests/Unit/Settings/PubliccodeHarvestFlowTest.php`: topology (both triggers to every shard, no shard to shard edge, one tail, end node), shard file and flow agree, ranges contiguous, the flow ships disabled, every node type is one OpenRegister or integriq registers.
+- `tests/Unit/Settings/PubliccodeHarvestFlowTest.php`: topology (both triggers to every shard, no shard to shard edge, one tail per shard, only `end` shared), shard file and flow agree, ranges contiguous, the flow ships disabled, every node type is one OpenRegister or integriq registers.
 - `tests/Unit/Settings/PubliccodeMappingTest.php`: a real `publiccode.yml` (this repository's own) decoded with symfony/yaml, run through OpenRegister's real `MappingService` with the shipped mapping, and validated with opis/json-schema against the `publiccode` properties. Skipped with a named reason where OpenRegister's source is not next to the app.
 - `tests/Unit/Service/PubliccodeHarvestServiceTest.php`: inert without integriq, set-up is idempotent by slug, status reads the flow.
 - Live on :8095: the flow imports and passes OpenRegister's preflight, a run against a GitHub code search mock creates components, a second run updates them, they are found in search and anonymously through the public API.
