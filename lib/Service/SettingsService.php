@@ -142,6 +142,11 @@ class SettingsService {
 	private const PUBLISH_WHEN_RESOLVED = ['applicatielandschap'];
 
 	/**
+	 * App config key listing the seeded catalogues already published automatically.
+	 */
+	private const SEEDS_PUBLISHED_KEY = 'catalog_seeds_published';
+
+	/**
 	 * This property holds the name of the application, which is used for identification and configuration purposes.
 	 *
 	 * @var string $appName The name of the app.
@@ -1646,7 +1651,9 @@ class SettingsService {
 				$needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
 				$needsSchemas = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
 
-				if ($needsRegisters === false && $needsSchemas === false && $slugsResolved === false) {
+				if ($needsRegisters === false && $needsSchemas === false && $slugsResolved === false
+					&& $this->shouldPublishResolvedSeed(catalog: $catalogData, registers: $registers, schemas: $schemas) === false
+				) {
 					// Admin has already configured a scope; leave it alone.
 					continue;
 				}
@@ -1672,16 +1679,12 @@ class SettingsService {
 
 				// A seeded catalogue that ships unpublished because it names
 				// another app (applicatielandschap names stackiq) is published
-				// the first time its scope resolves completely. Without that app
+				// once, the first time its scope holds ids only. Without that app
 				// it stays hidden instead of showing an empty catalogue. What it
 				// then publishes is still decided per object by the other app's
 				// read rules, which OpenRegister's own public API already applies.
-				if ($slugsResolved === true
-					&& in_array(($catalogData['slug'] ?? null), self::PUBLISH_WHEN_RESOLVED, true) === true
-					&& empty($catalogData['published']) === true
-					&& CatalogScopeSlugResolver::hasSlug(entries: (array)$registers) === false
-					&& CatalogScopeSlugResolver::hasSlug(entries: (array)$schemas) === false
-				) {
+				$publishNow = $this->shouldPublishResolvedSeed(catalog: $catalogData, registers: $registers, schemas: $schemas);
+				if ($publishNow === true) {
 					$merged['published'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(DATE_ATOM);
 				}
 
@@ -1708,6 +1711,9 @@ class SettingsService {
 						_rbac: false,
 						_multitenancy: false,
 					);
+					if ($publishNow === true) {
+						$this->markSeedPublished(slug: (string)$catalogData['slug']);
+					}
 				} catch (\Exception) {
 					// Per-catalog failure must not abort the whole settings
 					// import; the admin can retro-fit via the catalog edit view.
@@ -1729,6 +1735,69 @@ class SettingsService {
 		}//end try
 
 	}//end backfillCatalogScopes()
+
+	/**
+	 * Whether a seeded catalogue is due its one automatic publication.
+	 *
+	 * True only for a slug in PUBLISH_WHEN_RESOLVED that has no `published`
+	 * date, whose scope holds ids only, and that was never published this way
+	 * before. The last condition keeps an administrator's later unpublish.
+	 *
+	 * @param array<string, mixed> $catalog The catalogue as stored.
+	 * @param mixed $registers The scope's registers after resolution.
+	 * @param mixed $schemas The scope's schemas after resolution.
+	 *
+	 * @return bool
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeSlugResolver is a pure function over the scope.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 */
+	private function shouldPublishResolvedSeed(array $catalog, mixed $registers, mixed $schemas): bool {
+		$slug = ($catalog['slug'] ?? null);
+		if (in_array($slug, self::PUBLISH_WHEN_RESOLVED, true) === false
+			|| empty($catalog['published']) === false
+			|| is_array($registers) === false || $registers === []
+			|| is_array($schemas) === false || $schemas === []
+			|| CatalogScopeSlugResolver::hasSlug(entries: $registers) === true
+			|| CatalogScopeSlugResolver::hasSlug(entries: $schemas) === true
+		) {
+			return false;
+		}
+
+		return in_array($slug, $this->publishedSeeds(), true) === false;
+	}//end shouldPublishResolvedSeed()
+
+	/**
+	 * The seeded catalogues already published automatically once.
+	 *
+	 * @return list<string>
+	 */
+	private function publishedSeeds(): array {
+		$done = json_decode($this->config->getValueString($this->appName, self::SEEDS_PUBLISHED_KEY, '[]'), true);
+		if (is_array($done) === false) {
+			return [];
+		}
+
+		return array_values(array_filter($done, 'is_string'));
+	}//end publishedSeeds()
+
+	/**
+	 * Remember that a seeded catalogue had its one automatic publication.
+	 *
+	 * @param string $slug The catalogue slug.
+	 *
+	 * @return void
+	 */
+	private function markSeedPublished(string $slug): void {
+		$done = $this->publishedSeeds();
+		$done[] = $slug;
+		$this->config->setValueString(
+			$this->appName,
+			self::SEEDS_PUBLISHED_KEY,
+			(string)json_encode(array_values(array_unique($done)))
+		);
+	}//end markSeedPublished()
 
 	/**
 	 * Resolve the slugs in one catalogue scope against OpenRegister.

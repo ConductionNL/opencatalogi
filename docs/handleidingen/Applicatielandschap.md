@@ -11,7 +11,6 @@ De catalogus Applicatielandschap toont deze onderdelen uit StackIQ:
 | Onderdeel | Openbaar als |
 |---|---|
 | Applicaties (modules) | ze een publicatiedatum hebben die voorbij is, of door een leverancier zijn geregistreerd |
-| Versies | altijd |
 | Suites | altijd |
 | Diensten | ze een publicatiedatum hebben die voorbij is |
 | Koppelingen | ze een publicatiedatum hebben die voorbij is |

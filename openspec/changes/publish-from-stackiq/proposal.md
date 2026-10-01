@@ -17,7 +17,7 @@ Three things stand in the way of doing it safely:
 
 ## What changes
 
-1. **The Applicatielandschap catalogue.** A register fragment seeds catalogue `applicatielandschap` over register `stackiq` and schemas `module`, `moduleVersion`, `suite`, `catalogService`, `connection` and `usage`, all by slug. It ships unpublished, so without stackiq nobody sees an empty catalogue. The import backfill publishes it the first time its scope resolves completely. That publishes nothing new by itself: every stackiq object still needs its own publication date, and OpenRegister's public API already serves those objects.
+1. **The Applicatielandschap catalogue.** A register fragment seeds catalogue `applicatielandschap` over register `stackiq` and schemas `module`, `suite`, `catalogService`, `connection` and `usage`, all by slug. It ships unpublished, so without stackiq nobody sees an empty catalogue. The import backfill publishes it the first time its scope resolves completely. That publishes nothing new by itself: every stackiq object still needs its own publication date, and OpenRegister's public API already serves those objects.
 2. **Schema slugs resolve inside the catalogue's own registers.** Both the import backfill and the pre-save catalogue listener resolve a schema slug only among the schemas the catalogue's registers list. A slug found nowhere there stays a slug, and a slug matches no object.
 3. **Installing stackiq later completes the scope.** The backfill records which register slugs and ids a catalogue still waits for. A listener on OpenRegister's register created and updated events runs the backfill again when one of those registers appears or changes.
 4. **What is public stays stackiq's decision.** The catalogue adds no field filter of its own. Which stackiq objects an anonymous visitor sees follows stackiq's object read rules (`publicationDate <= now` on module, catalogService, connection). Which fields they see follows OpenRegister property-level read rules on stackiq's schemas, which strip a field from the API, from search results and from facets. stackiq has to declare those rules; this change names the fields and tests the outcome against a live response.
@@ -31,6 +31,7 @@ Three things stand in the way of doing it safely:
 ## Out of scope
 
 - A per-catalogue field filter in OpenCatalogi. It would hide fields in OpenCatalogi while OpenRegister's own public API kept serving them.
+- Publishing `moduleVersion`. stackiq reads every version as public, also the versions of an unpublished application, so the catalogue would surface those. It joins the catalogue once stackiq ties a version's visibility to its module.
 - Publishing `organization` and the GEMMA reference register. stackiq already exposes both through OpenRegister; they are not the application landscape.
 - A publication date field in the catalogue form. The form has none today for any catalogue.
 

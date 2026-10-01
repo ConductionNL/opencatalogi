@@ -13,14 +13,14 @@ An organisation that keeps its application landscape in stackiq publishes it thr
 
 ### Requirement: REQ-PFS-001 OpenCatalogi seeds an unpublished Applicatielandschap catalogue over stackiq
 
-OpenCatalogi SHALL seed catalogue `applicatielandschap` with register `stackiq` and schemas `module`, `moduleVersion`, `suite`, `catalogService`, `connection` and `usage`, named by slug. The seed SHALL NOT carry a `published` date. The import backfill SHALL set `published` once, the first time the scope resolves to ids only. The seed SHALL NOT name `catalogContract`, `contactPerson`, `aiSystem` or `technologyComponent`.
+OpenCatalogi SHALL seed catalogue `applicatielandschap` with register `stackiq` and schemas `module`, `suite`, `catalogService`, `connection` and `usage`, named by slug. The seed SHALL NOT carry a `published` date. The import backfill SHALL set `published` once, the first time the scope resolves to ids only. The seed SHALL NOT name `catalogContract`, `contactPerson`, `aiSystem` or `technologyComponent`.
 
 #### Scenario: The seed names stackiq's real slugs and nothing stackiq keeps private
 @e2e exclude A register fragment with no browser surface; tests/Unit/Settings/PublishFromStackiqSeedTest.php reads it.
 
 - **GIVEN** `lib/Settings/register.d/publish-from-stackiq.json`
 - **WHEN** its catalogue seed is read
-- **THEN** `registers` is `["stackiq"]` and `schemas` lists the six application-level slugs
+- **THEN** `registers` is `["stackiq"]` and `schemas` lists the five application-level slugs
 - **AND** it has no `published` key
 - **AND** none of `catalogContract`, `contactPerson`, `aiSystem`, `technologyComponent` appears in it
 
@@ -36,7 +36,7 @@ OpenCatalogi SHALL seed catalogue `applicatielandschap` with register `stackiq` 
 @e2e exclude Checked live on :8096 by reading the catalogue after stackiq is enabled.
 
 - **GIVEN** the seeded catalogue without `published`
-- **WHEN** the backfill resolves `stackiq` and all six schema slugs
+- **WHEN** the backfill resolves `stackiq` and all five schema slugs
 - **THEN** the catalogue has a `published` date of that moment
 - **AND** a later backfill leaves that date alone
 
@@ -91,7 +91,7 @@ The backfill SHALL record which register slugs and ids a catalogue scope still w
 
 - **GIVEN** OpenCatalogi installed and the Applicatielandschap scope still on slugs
 - **WHEN** stackiq is enabled
-- **THEN** the scope holds stackiq's register id and the ids of the six schemas
+- **THEN** the scope holds stackiq's register id and the ids of the five schemas
 - **AND** OpenCatalogi's configuration was not imported again
 
 #### Scenario: An unrelated register event does nothing

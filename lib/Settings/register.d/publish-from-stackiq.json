@@ -10,7 +10,7 @@
         },
         "title": "Applicatielandschap",
         "summary": "Applicaties, koppelingen en diensten uit StackIQ die je organisatie openbaar maakt",
-        "description": "Hier vind je de applicaties, versies, suites, diensten en koppelingen die StackIQ openbaar maakt. Ook het gebruik dat je organisatie publiceert staat hier. Contracten, licenties, contactpersonen en interne notities blijven in StackIQ.",
+        "description": "Hier vind je de applicaties, suites, diensten en koppelingen die StackIQ openbaar maakt. Ook het gebruik dat je organisatie publiceert staat hier. Contracten, licenties, contactpersonen en interne notities blijven in StackIQ.",
         "listed": true,
         "status": "stable",
         "slug": "applicatielandschap",
@@ -19,7 +19,6 @@
         ],
         "schemas": [
           "module",
-          "moduleVersion",
           "suite",
           "catalogService",
           "connection",

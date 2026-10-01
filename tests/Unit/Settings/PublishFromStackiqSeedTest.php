@@ -29,7 +29,7 @@ class PublishFromStackiqSeedTest extends TestCase {
 	/**
 	 * The schemas stackiq keeps private as a whole (lane sq, 2026-10-01).
 	 */
-	private const NEVER_PUBLIC = ['catalogContract', 'contactPerson', 'aiSystem', 'technologyComponent'];
+	private const NEVER_PUBLIC = ['catalogContract', 'contactPerson', 'aiSystem', 'technologyComponent', 'moduleVersion'];
 
 	/**
 	 * The catalogue seed from the fragment.
@@ -55,7 +55,10 @@ class PublishFromStackiqSeedTest extends TestCase {
 	}//end seed()
 
 	/**
-	 * The seed names stackiq's register and its six application-level schemas by slug.
+	 * The seed names stackiq's register and its five application-level schemas by slug.
+	 *
+	 * Not `moduleVersion`: stackiq reads it as public whatever its module's publication
+	 * date, so it would surface versions (and the uuid) of unpublished applications.
 	 *
 	 * The slugs are stackiq's on origin/development (lib/Settings/softwarecatalogus_register.json,
 	 * components.registers.stackiq.schemas). The live run on :8096 resolves them.
@@ -67,7 +70,7 @@ class PublishFromStackiqSeedTest extends TestCase {
 
 		$this->assertSame(['register' => 'publication', 'schema' => 'catalog', 'slug' => 'applicatielandschap'], $seed['@self']);
 		$this->assertSame(['stackiq'], $seed['registers']);
-		$this->assertSame(['module', 'moduleVersion', 'suite', 'catalogService', 'connection', 'usage'], $seed['schemas']);
+		$this->assertSame(['module', 'suite', 'catalogService', 'connection', 'usage'], $seed['schemas']);
 	}//end testTheSeedNamesStackiqsSlugs()
 
 	/**

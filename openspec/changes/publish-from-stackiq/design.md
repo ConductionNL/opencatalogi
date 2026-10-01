@@ -23,7 +23,7 @@ The backfill now reads catalogues with `_rbac: false` and `_multitenancy: false`
 
 ## Inert without stackiq
 
-The seed is created in register `publication`, which always exists. Its scope stays `["stackiq"]` and the six schema slugs. `PublicationService` reads scope entries with `intval` (a slug becomes 0) and `applySchemaScopeReadRuleGuard()` drops non-numeric schemas for anonymous callers, so nothing is published. The catalogue has no `published` date, so the catalogue read rule (`published <= now`) hides it from anonymous visitors.
+The seed is created in register `publication`, which always exists. Its scope stays `["stackiq"]` and the five schema slugs. `PublicationService` reads scope entries with `intval` (a slug becomes 0) and `applySchemaScopeReadRuleGuard()` drops non-numeric schemas for anonymous callers, so nothing is published. The catalogue has no `published` date, so the catalogue read rule (`published <= now`) hides it from anonymous visitors.
 
 ## Published once resolved
 
@@ -33,7 +33,7 @@ The catalogue form has no publication date field, so "an administrator publishes
 
 OpenCatalogi's search, its public API and its facets go through OpenRegister `searchObjectsPaginated(_rbac: true)`:
 
-- Object level: stackiq's schema read rules. `module`, `catalogService` and `connection` are public when `publicationDate <= now`; `module` also when `registeredBy` is `Supplier`. `moduleVersion` and `suite` are public. `usage` has no public rule until stackiq adds one on `usage.publicationDate`.
+- Object level: stackiq's schema read rules. `module`, `catalogService` and `connection` are public when `publicationDate <= now`; `module` also when `registeredBy` is `Supplier`. `suite` is public. `usage` has no public rule until stackiq adds one on `usage.publicationDate`.
 - Field level: `PropertyRbacHandler::filterReadableProperties()` strips a property whose `authorization.read` the caller does not meet, in `RenderObject`. `MagicFacetHandler` and `AggregateVisibility` withhold a facet over such a property. Admins bypass both, so every check of this change runs anonymously.
 
 A rule of `read: ["authenticated"]` keeps a field for every signed-in user and strips it for anonymous visitors. Every stackiq writer is signed in, so no writer loses a field it cannot read (the or#4170 erase case does not arise).
@@ -43,7 +43,6 @@ The fields come from lane sq's answer. stackiq gives each of these `authorizatio
 | schema | fields hidden from anonymous visitors |
 |---|---|
 | module | contactPerson, usages, dpiaDocumentRef, verwerkingsregisterRef |
-| moduleVersion | usages (same reason as module: it says who uses the version) |
 | suite | contactPerson |
 | catalogService | contactPerson |
 | connection | longDescription, dateInDevelopment, dateInUse, dateEndSupport, dateWithdrawn, nonMunicipalProvision, realisedWithIntermediaryModule, provider, service, registeredBy, serviceDeskSystem, serviceDeskRecordId, serviceDeskUrl, serviceDeskSyncedAt |
@@ -56,3 +55,13 @@ The fields come from lane sq's answer. stackiq gives each of these `authorizatio
 - **A field filter on the catalogue.** OpenCatalogi would hide fields, OpenRegister's own public object API would keep serving them. Rejected.
 - **OpenCatalogi writing property rules onto stackiq's schemas.** Another app's schemas, overwritten again by stackiq's next import. Rejected.
 - **Creating the catalogue in code only when stackiq is installed.** A second mechanism beside the seeded `componenten` catalogue. Rejected.
+
+## Found live on :8096 (2026-10-01): three OpenRegister gaps
+
+With the property rules from the table applied to stackiq's `module` and `connection` schemas, the object bodies lost the ruled fields, for OpenCatalogi and for OpenRegister's own API. Three copies of the same values still reached anonymous callers. All three are in OpenRegister, and OpenCatalogi cannot close them:
+
+1. `@self.relations` keeps the values. `RenderObject` applies `stripWriteOnlyProperties()` to the relations mirror (lines 821 and 860), not `filterReadableProperties()`. A string field such as `dpiaDocumentRef` is mirrored there too.
+2. `@self.description` copies `longDescription` through the schema's `objectDescriptionField`, past the property rule.
+3. An explicitly requested facet (`_facets[contactPerson][type]=terms`) returns the values. `MagicFacetHandler::callerMayFacet()` only guards the facetable auto-discovery loop.
+
+REQ-PFS-003 is met once those are fixed and stackiq ships the rules (tasks 6.1 to 6.3).
