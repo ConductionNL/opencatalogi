@@ -39,6 +39,11 @@ use OCP\IURLGenerator;
 class CollectionShareService {
 
 	/**
+	 * The shared-dossier page of portaliq's public site, before the token.
+	 */
+	public const SITE_PAGE = '/index.php/apps/portaliq/site?route=/gedeeld-dossier/';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PortalObjectStore  $store        Reads and writes as the system.
@@ -56,6 +61,9 @@ class CollectionShareService {
 	/**
 	 * Make a new read-only link. An earlier link stops working.
 	 *
+	 * Answers `url`, the JSON path, and `link`, the absolute address of the
+	 * page on the portal site that shows the shared dossier.
+	 *
 	 * @param string $owner        The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
@@ -64,6 +72,7 @@ class CollectionShareService {
 	 * @throws PortalNotFoundException When the dossier is not the owner's.
 	 *
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-shared-dossier-shows-only-what-is-public-now-and-a-revoked-link-answers-404-req-ccol-005
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-the-share-link-opens-a-page-on-the-portal-site-req-ccol-009
 	 */
 	public function share(string $owner, string $collectionId): array {
 		$dossier = $this->owned(owner: $owner, collectionId: $collectionId);
@@ -71,10 +80,14 @@ class CollectionShareService {
 		$dossier['share'] = $share;
 		$this->store->save(schema: CitizenCollectionService::SCHEMA, data: $dossier, id: $collectionId);
 
+		// `url` is the JSON a program reads; `link` is what a resident hands
+		// out: the shared-dossier page of the portal site, which reads that
+		// JSON and shows it to anyone. Shares are made through portaliq, so
+		// its site is there to open the link.
 		$path = '/index.php/apps/opencatalogi/api/collections/shared/'.$share['token'];
-		$link = $path;
+		$link = self::SITE_PAGE.$share['token'];
 		if ($this->urlGenerator !== null) {
-			$link = $this->urlGenerator->getAbsoluteURL($path);
+			$link = $this->urlGenerator->getAbsoluteURL($link);
 		}
 
 		return $share + ['url' => $path, 'link' => $link];
