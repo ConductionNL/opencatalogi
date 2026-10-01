@@ -24,7 +24,10 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
 use OCA\OpenCatalogi\Service\PubliccodeHarvestService;
+use DateTime;
 use OCA\OpenRegister\Db\Flow;
+use OCA\OpenRegister\Db\FlowRun;
+use OCA\OpenRegister\Db\FlowRunMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\Flow\FlowService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -276,4 +279,281 @@ class PubliccodeHarvestServiceTest extends TestCase {
 		$this->expectExceptionMessage('Set the harvest up');
 		$service->runNow();
 	}//end testARunNeedsTheFlowOnAndEveryShardPresent()
+	/**
+	 * A stored integriq object.
+	 *
+	 * @param string $slug The slug it is found by.
+	 * @param array<string, mixed> $data Its data.
+	 *
+	 * @return void
+	 */
+	private function stored(string $slug, array $data): void {
+		$entity = new ObjectEntity();
+		$entity->setUuid('uuid-' . $slug);
+		$entity->setObject($data);
+		$this->store[$slug] = $entity;
+	}//end stored()
+
+	/**
+	 * Every shard of the shipped shard file, stored.
+	 *
+	 * @return void
+	 */
+	private function storeAllShards(): void {
+		$definitions = (array)json_decode(
+			(string)file_get_contents(__DIR__ . '/../../..' . PubliccodeHarvestService::SHARDS_FILE),
+			true
+		);
+		foreach ($definitions['shards'] as $shard) {
+			$this->stored(slug: $shard['synchronization'], data: ['slug' => $shard['synchronization']]);
+		}
+	}//end storeAllShards()
+
+	/**
+	 * A FlowService double that lists the given flows.
+	 *
+	 * @param array<int, Flow> $flows The flows findAll returns.
+	 * @param array<int, string> $methods Further methods to double.
+	 *
+	 * @return FlowService
+	 */
+	private function flows(array $flows, array $methods = []): FlowService {
+		$service = $this->getMockBuilder(FlowService::class)
+			->disableOriginalConstructor()
+			->onlyMethods(array_merge(['findAll'], $methods))
+			->getMock();
+		$service->method('findAll')->willReturn($flows);
+
+		return $service;
+	}//end flows()
+
+	/**
+	 * A FlowRunMapper double returning the given runs.
+	 *
+	 * @param array<int, FlowRun> $runs The runs.
+	 *
+	 * @return FlowRunMapper
+	 */
+	private function runs(array $runs): FlowRunMapper {
+		$mapper = $this->getMockBuilder(FlowRunMapper::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['findAllRuns'])
+			->getMock();
+		$mapper->method('findAllRuns')->willReturnCallback(
+			function (?string $flowId = null, ?string $status = null, int $limit = 50) use ($runs): array {
+				$this->assertSame('flow-1', $flowId, 'The last run is read for the harvest flow only.');
+				$this->assertSame(1, $limit);
+				return $runs;
+			}
+		);
+
+		return $mapper;
+	}//end runs()
+
+	/**
+	 * A run paused on the rate limit.
+	 *
+	 * @return FlowRun
+	 */
+	private function suspendedRun(): FlowRun {
+		$run = new FlowRun();
+		$run->setUuid('run-1');
+		$run->setStatus('suspended');
+		$run->setTrigger('manual');
+		$run->setCreated(new DateTime('2026-10-01T05:47:14+00:00'));
+		$run->setResumeAt(new DateTime('2026-10-01T05:48:34+00:00'));
+
+		return $run;
+	}//end suspendedRun()
+
+	/**
+	 * The status shows the source, every shard, the flow and the last run.
+	 *
+	 * @return void
+	 */
+	public function testTheStatusReportsSourceShardsFlowAndLastRun(): void {
+		$this->stored(slug: 'github-api', data: ['isEnabled' => true]);
+		$this->storeAllShards();
+
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(
+				services: [
+					'OCA\OpenRegister\Service\ObjectService' => $this->objects(),
+					'OCA\OpenRegister\Service\Flow\FlowService' => $this->flows(flows: [$this->flow(enabled: true)]),
+					'OCA\OpenRegister\Db\FlowRunMapper' => $this->runs(runs: [$this->suspendedRun()]),
+				]
+			),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$status = $service->status();
+
+		$this->assertTrue($status['integriq']);
+		$this->assertSame(['slug' => 'github-api', 'exists' => true, 'enabled' => true, 'uuid' => 'uuid-github-api'], $status['source']);
+		$this->assertSame(['expected' => 24, 'present' => 24], $status['shards']);
+		$this->assertSame(
+			['uuid' => 'flow-1', 'imported' => true, 'enabled' => true, 'owner' => null, 'runAs' => 'admin', 'cron' => '15 3 * * *'],
+			$status['flow']
+		);
+		$this->assertSame('suspended', $status['lastRun']['status']);
+		$this->assertSame('2026-10-01T05:47:14+00:00', $status['lastRun']['started']);
+		$this->assertSame('2026-10-01T05:48:34+00:00', $status['lastRun']['resumeAt']);
+		$this->assertNull($status['lastRun']['updated']);
+	}//end testTheStatusReportsSourceShardsFlowAndLastRun()
+
+	/**
+	 * A missing source, a disabled one and a flow that never ran each read as such.
+	 *
+	 * @return void
+	 */
+	public function testAMissingSourceAndANeverRunFlowReadAsSuch(): void {
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(
+				services: [
+					'OCA\OpenRegister\Service\ObjectService' => $this->objects(),
+					'OCA\OpenRegister\Service\Flow\FlowService' => $this->flows(flows: [$this->flow(enabled: false)]),
+					'OCA\OpenRegister\Db\FlowRunMapper' => $this->runs(runs: []),
+				]
+			),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$status = $service->status();
+		$this->assertSame(['slug' => 'github-api', 'exists' => false, 'enabled' => false, 'uuid' => null], $status['source']);
+		$this->assertSame(0, $status['shards']['present']);
+		$this->assertNull($status['lastRun']);
+
+		$this->stored(slug: 'github-api', data: ['isEnabled' => false]);
+		$this->assertFalse($service->status()['source']['enabled']);
+	}//end testAMissingSourceAndANeverRunFlowReadAsSuch()
+
+	/**
+	 * A flow store that cannot be read reads as "not imported", and says so in the log.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableFlowStoreReadsAsNotImported(): void {
+		$flows = $this->getMockBuilder(FlowService::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['findAll'])
+			->getMock();
+		$flows->method('findAll')->willThrowException(new RuntimeException('no organisation'));
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())->method('warning')->with($this->stringContains('no organisation'));
+
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['openregister']),
+			$this->container(services: ['OCA\OpenRegister\Service\Flow\FlowService' => $flows]),
+			$logger
+		);
+
+		$this->assertFalse($service->status()['flow']['imported']);
+	}//end testAnUnreadableFlowStoreReadsAsNotImported()
+
+	/**
+	 * Run now queues a run of the harvest flow and reports it.
+	 *
+	 * @return void
+	 */
+	public function testRunNowQueuesTheHarvestFlow(): void {
+		$this->storeAllShards();
+		$queued = new FlowRun();
+		$queued->setUuid('run-2');
+		$queued->setStatus('queued');
+		$queued->setTrigger('manual');
+		$queued->setCreated(new DateTime('2026-10-01T06:00:00+00:00'));
+
+		$flows = $this->flows(flows: [$this->flow(enabled: true)], methods: ['run']);
+		$flows->expects($this->once())->method('run')->with('flow-1')->willReturn($queued);
+
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(
+				services: [
+					'OCA\OpenRegister\Service\ObjectService' => $this->objects(),
+					'OCA\OpenRegister\Service\Flow\FlowService' => $flows,
+				]
+			),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$run = $service->runNow();
+		$this->assertSame('run-2', $run['uuid']);
+		$this->assertSame('queued', $run['status']);
+		$this->assertSame('2026-10-01T06:00:00+00:00', $run['started']);
+		$this->assertNull($run['resumeAt']);
+	}//end testRunNowQueuesTheHarvestFlow()
+
+	/**
+	 * With integriq but without OpenRegister nothing reaches for OpenRegister's services.
+	 *
+	 * @return void
+	 */
+	public function testWithoutOpenRegisterEveryActionRefuses(): void {
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq']),
+			$this->container(services: []),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		foreach (['setUp', 'runNow'] as $action) {
+			try {
+				$service->$action();
+				$this->fail($action . ' must refuse without OpenRegister.');
+			} catch (RuntimeException $e) {
+				$this->assertStringContainsString('needs OpenRegister', $e->getMessage());
+			}
+		}
+	}//end testWithoutOpenRegisterEveryActionRefuses()
+
+	/**
+	 * Switching on a flow that was never imported says what to do.
+	 *
+	 * @return void
+	 */
+	public function testSwitchingOnAFlowThatIsNotImportedSaysToReimport(): void {
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(services: ['OCA\OpenRegister\Service\Flow\FlowService' => $this->flows(flows: [])]),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$this->expectExceptionMessage('Reimport the OpenCatalogi configuration');
+		$service->setEnabled(enabled: true);
+	}//end testSwitchingOnAFlowThatIsNotImportedSaysToReimport()
+
+	/**
+	 * A missing or broken shard file is reported, never read as zero shards.
+	 *
+	 * @return void
+	 */
+	public function testAMissingOrBrokenShardFileIsReported(): void {
+		$root = sys_get_temp_dir() . '/oc-shards-' . bin2hex(random_bytes(4));
+		mkdir($root . '/lib/Settings', 0777, true);
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('getAppPath')->willReturn($root);
+		$service = new PubliccodeHarvestService($apps, $this->container(services: []), $this->createMock(LoggerInterface::class));
+
+		try {
+			$service->shardDefinitions();
+			$this->fail('A missing shard file must be reported.');
+		} catch (RuntimeException $e) {
+			$this->assertStringContainsString('is missing', $e->getMessage());
+		}
+
+		file_put_contents($root . PubliccodeHarvestService::SHARDS_FILE, '{"source": "github-api"}');
+		try {
+			$service->shardDefinitions();
+			$this->fail('A shard file without shards must be reported.');
+		} catch (RuntimeException $e) {
+			$this->assertStringContainsString('is not valid', $e->getMessage());
+		} finally {
+			unlink($root . PubliccodeHarvestService::SHARDS_FILE);
+			rmdir($root . '/lib/Settings');
+			rmdir($root . '/lib');
+			rmdir($root);
+		}
+	}//end testAMissingOrBrokenShardFileIsReported()
 }//end class
