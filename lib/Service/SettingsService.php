@@ -135,6 +135,13 @@ class SettingsService {
 	public const CATALOG_SCOPE_PENDING_KEY = 'catalog_scope_pending';
 
 	/**
+	 * Seeded catalogues that ship unpublished and are published once their scope resolves.
+	 *
+	 * @var list<string>
+	 */
+	private const PUBLISH_WHEN_RESOLVED = ['applicatielandschap'];
+
+	/**
 	 * This property holds the name of the application, which is used for identification and configuration purposes.
 	 *
 	 * @var string $appName The name of the app.
@@ -1661,6 +1668,21 @@ class SettingsService {
 
 				if ($needsSchemas === true) {
 					$merged['schemas'] = [$publicationSchema];
+				}
+
+				// A seeded catalogue that ships unpublished because it names
+				// another app (applicatielandschap names stackiq) is published
+				// the first time its scope resolves completely. Without that app
+				// it stays hidden instead of showing an empty catalogue. What it
+				// then publishes is still decided per object by the other app's
+				// read rules, which OpenRegister's own public API already applies.
+				if ($slugsResolved === true
+					&& in_array(($catalogData['slug'] ?? null), self::PUBLISH_WHEN_RESOLVED, true) === true
+					&& empty($catalogData['published']) === true
+					&& CatalogScopeSlugResolver::hasSlug(entries: (array)$registers) === false
+					&& CatalogScopeSlugResolver::hasSlug(entries: (array)$schemas) === false
+				) {
+					$merged['published'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(DATE_ATOM);
 				}
 
 				// Persisted date-time fields can come back in the SQL-style

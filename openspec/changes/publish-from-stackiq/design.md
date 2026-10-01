@@ -25,6 +25,10 @@ The backfill now reads catalogues with `_rbac: false` and `_multitenancy: false`
 
 The seed is created in register `publication`, which always exists. Its scope stays `["stackiq"]` and the six schema slugs. `PublicationService` reads scope entries with `intval` (a slug becomes 0) and `applySchemaScopeReadRuleGuard()` drops non-numeric schemas for anonymous callers, so nothing is published. The catalogue has no `published` date, so the catalogue read rule (`published <= now`) hides it from anonymous visitors.
 
+## Published once resolved
+
+The catalogue form has no publication date field, so "an administrator publishes it" would need the API. Instead the backfill sets `published` to now when, in one run, it resolved slugs and nothing is left on a slug, the catalogue has no `published` yet, and its slug is in `SettingsService::PUBLISH_WHEN_RESOLVED` (only `applicatielandschap`). It never touches `published` again, and never on a catalogue made in the form (those store ids, so nothing resolves). Publishing the catalogue adds no new disclosure: an anonymous visitor can already read every stackiq object it shows through OpenRegister's public API. To stop showing the landscape, remove the catalogue or its schemas.
+
 ## What is public
 
 OpenCatalogi's search, its public API and its facets go through OpenRegister `searchObjectsPaginated(_rbac: true)`:

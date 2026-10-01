@@ -17,7 +17,7 @@ Three things stand in the way of doing it safely:
 
 ## What changes
 
-1. **The Applicatielandschap catalogue.** A register fragment seeds catalogue `applicatielandschap` over register `stackiq` and schemas `module`, `moduleVersion`, `suite`, `catalogService`, `connection` and `usage`, all by slug. It ships unpublished. An administrator publishes it by giving it a publication date: one click in the catalogue form.
+1. **The Applicatielandschap catalogue.** A register fragment seeds catalogue `applicatielandschap` over register `stackiq` and schemas `module`, `moduleVersion`, `suite`, `catalogService`, `connection` and `usage`, all by slug. It ships unpublished, so without stackiq nobody sees an empty catalogue. The import backfill publishes it the first time its scope resolves completely. That publishes nothing new by itself: every stackiq object still needs its own publication date, and OpenRegister's public API already serves those objects.
 2. **Schema slugs resolve inside the catalogue's own registers.** Both the import backfill and the pre-save catalogue listener resolve a schema slug only among the schemas the catalogue's registers list. A slug found nowhere there stays a slug, and a slug matches no object.
 3. **Installing stackiq later completes the scope.** The backfill records which register slugs and ids a catalogue still waits for. A listener on OpenRegister's register created and updated events runs the backfill again when one of those registers appears or changes.
 4. **What is public stays stackiq's decision.** The catalogue adds no field filter of its own. Which stackiq objects an anonymous visitor sees follows stackiq's object read rules (`publicationDate <= now` on module, catalogService, connection). Which fields they see follows OpenRegister property-level read rules on stackiq's schemas, which strip a field from the API, from search results and from facets. stackiq has to declare those rules; this change names the fields and tests the outcome against a live response.
@@ -32,12 +32,12 @@ Three things stand in the way of doing it safely:
 
 - A per-catalogue field filter in OpenCatalogi. It would hide fields in OpenCatalogi while OpenRegister's own public API kept serving them.
 - Publishing `organization` and the GEMMA reference register. stackiq already exposes both through OpenRegister; they are not the application landscape.
-- Publishing the catalogue automatically. Publishing a landscape is an administrator's decision.
+- A publication date field in the catalogue form. The form has none today for any catalogue.
 
 ## Impact
 
 - New: `lib/Settings/register.d/publish-from-stackiq.json`, `lib/Listener/CatalogScopePendingListener.php`.
-- Changed: `CatalogScopeSlugResolver` (scoped scope resolution), `SettingsService::backfillCatalogScopes()` (public, scoped, records what is pending, reads catalogues past RBAC), `CatalogiService::computeRewrittenRegistersAndSchemas()` (scoped schema lookup), `Application` (two listener registrations), the catalogue manual.
+- Changed: `CatalogScopeSlugResolver` (scoped scope resolution), `SettingsService::backfillCatalogScopes()` (public, scoped, records what is pending, reads catalogues past RBAC, publishes the seed once resolved), `CatalogiService::computeRewrittenRegistersAndSchemas()` (scoped schema lookup), `Application` (two listener registrations), the catalogue manual.
 - No migration. Without stackiq the catalogue exists, unpublished, and resolves to nothing.
 
 ## Rollback

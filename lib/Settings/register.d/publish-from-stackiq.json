@@ -1,5 +1,5 @@
 {
-  "$comment": "openspec/changes/publish-from-stackiq. Seeds the Applicatielandschap catalogue over stackiq's application-level schemas, named by slug. Without stackiq the slugs stay unresolved and the catalogue publishes nothing; CatalogScopePendingListener completes the scope when stackiq's register appears later. It ships unpublished: an administrator publishes it by setting its publication date. Which stackiq objects and fields an anonymous visitor sees is decided by stackiq's own read rules (object level and property level), never by this catalogue.",
+  "$comment": "openspec/changes/publish-from-stackiq. Seeds the Applicatielandschap catalogue over stackiq's application-level schemas, named by slug. Without stackiq the slugs stay unresolved and the catalogue publishes nothing; CatalogScopePendingListener completes the scope when stackiq's register appears later. It ships unpublished; SettingsService::backfillCatalogScopes() publishes it the first time its scope resolves completely (PUBLISH_WHEN_RESOLVED). Which stackiq objects and fields an anonymous visitor sees is decided by stackiq's own read rules (object level and property level), never by this catalogue.",
   "components": {
     "objects": [
       {

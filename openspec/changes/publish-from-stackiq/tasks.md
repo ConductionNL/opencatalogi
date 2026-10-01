@@ -3,6 +3,7 @@
 ## 1. Catalogue
 
 - [ ] 1.1 `lib/Settings/register.d/publish-from-stackiq.json` seeds `applicatielandschap` by slug, unpublished.
+- [ ] 1.2 The backfill publishes it once its scope resolves completely.
 
 ## 2. Scope resolution
 
