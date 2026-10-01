@@ -46,7 +46,7 @@ The shard definitions SHALL cover `size:0..393216` in contiguous ranges that nei
 
 ### Requirement: REQ-PGH-003 Each harvested file becomes one publiccode object, and a re-harvest updates it
 
-For every hit the flow SHALL fetch the file from `github-raw`, decode it as YAML, map it onto `publiccode` with mapping `publiccode-github-hit` and upsert it by slug. The object SHALL keep the decoded document in `rawPubliccode`, carry `harvestedFrom: "github.com"` and the time of the write in `harvestedAt`. The slug SHALL derive from the repository full name, plus the directory when the file is not at the repository root. A field the file does not declare SHALL be absent, never the text of its own path.
+For every hit the flow SHALL fetch the file from `github-raw`, decode it as YAML, map it onto `publiccode` with mapping `publiccode-github-hit` and upsert it by slug. The object SHALL keep the decoded document in `rawPubliccode`, carry `harvestedFrom: "github.com"` and the time of the write in `harvestedAt`. The slug SHALL derive from the `url` the file declares (scheme, `www.`, `.git` and a trailing slash removed), plus the directory when the file is a second publiccode.yml below the root of that same repository. The repository the file was found in SHALL NOT be the identity: a fork or a copy of a file maps onto the original's slug. A field the file does not declare SHALL be absent, never the text of its own path. A `releaseDate` SHALL be taken only when it is a date (`YYYY-MM-DD…`, or the timestamp YAML makes of an unquoted date), cut to the day; anything else is dropped.
 
 #### Scenario: A real publiccode.yml maps onto the schema
 @e2e exclude Mapping fidelity has no browser surface; tests/Unit/Settings/PubliccodeMappingTest.php runs the real mapping and validates against the real schema.
@@ -54,7 +54,7 @@ For every hit the flow SHALL fetch the file from `github-raw`, decode it as YAML
 - **GIVEN** this repository's own `publiccode.yml`, decoded
 - **WHEN** it runs through mapping `publiccode-github-hit` as a hit from `ConductionNL/opencatalogi`
 - **THEN** the result validates against the `publiccode` schema properties
-- **AND** `slug` is `conductionnl-opencatalogi`, `name` is `OpenCatalogi` and `legalLicense` is `EUPL-1.2`
+- **AND** `slug` is `github-com-conductionnl-opencatalogi`, `name` is `OpenCatalogi` and `legalLicense` is `EUPL-1.2`
 - **AND** `applicationSuite`, which the file does not declare, is absent
 
 #### Scenario: A second harvest updates instead of duplicating
@@ -65,9 +65,25 @@ For every hit the flow SHALL fetch the file from `github-raw`, decode it as YAML
 - **THEN** the schema still holds one object with that slug
 - **AND** its `harvestedAt` moved forward
 
+#### Scenario: A copy of the file in another repository is not a second component
+@e2e exclude Mapping identity; tests/Unit/Settings/PubliccodeMappingTest.php maps the same file as a hit from another repository. Measured on the first real crawl: 253 of the first 1,000 objects were such copies.
+
+- **GIVEN** `ConductionNL/opencatalogi`'s publiccode.yml, copied unchanged into `someone-else/hack-day-fork`
+- **WHEN** the hit from the fork runs through the mapping
+- **THEN** its `slug` is `github-com-conductionnl-opencatalogi`, the same as the original's
+- **AND** the flow's filter drops the hit before the write, because the file's `url` names another GitHub repository than the one it was found in
+
+#### Scenario: A releaseDate that is not a date does not fail the run
+@e2e exclude One template repository on GitHub ships `releaseDate: ${RELEASE_DATE}`; tests/Unit/Settings/PubliccodeMappingTest.php covers it.
+
+- **GIVEN** a publiccode.yml whose `releaseDate` is `${RELEASE_DATE}`
+- **WHEN** it runs through the mapping
+- **THEN** the component has no `releaseDate`
+- **AND** the mapping does not throw, so the other hits of the page are still written
+
 ### Requirement: REQ-PGH-004 A file that cannot be read is skipped, not written
 
-A hit whose file does not decode, or decodes without `name` and `url`, SHALL be dropped before the mapping. The run SHALL continue with the other hits.
+A hit whose file does not decode, or decodes without `name` and `url`, SHALL be dropped before the mapping. A hit whose path is not a file named `publiccode.yml` SHALL be dropped too: code search for `filename:publiccode.yml` also returns files such as `publiccodeyml__publiccode.yml.json`. A structured field (`description`, `platforms`, `categories`, `maintenance`, `localisation`, `it.conforme`) that arrives as plain text SHALL be dropped, never written into a json column. A write that fails SHALL end its own shard only; the other shards and the run SHALL continue.
 
 #### Scenario: A broken YAML file in the middle of a page
 @e2e exclude Engine behaviour; verified live with a mock hit that points at a non-YAML file.
@@ -76,6 +92,14 @@ A hit whose file does not decode, or decodes without `name` and `url`, SHALL be 
 - **WHEN** the tail runs
 - **THEN** every other hit is written
 - **AND** no object is written for the broken file
+
+#### Scenario: A file that is not a publiccode.yml is dropped before the write
+@e2e exclude Found on the first real crawl: `xuhongxu96/bazel-repos search_repos/repos/publiccodeyml__publiccode.yml.json`, whose string `description` failed the json column and stopped the run after 13 of 24 shards. tests/Unit/Settings/PubliccodeHarvestFlowTest.php asserts the filter and the write policy.
+
+- **GIVEN** a hit whose path ends in `publiccode.yml.json`
+- **WHEN** the tail runs
+- **THEN** the filter drops the hit
+- **AND** had a write failed anyway, only that shard ends; the other 23 shards complete
 
 ### Requirement: REQ-PGH-005 A rate-limited search pauses the run and never repeats finished shards
 
