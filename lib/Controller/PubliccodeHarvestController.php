@@ -96,22 +96,36 @@ class PubliccodeHarvestController extends Controller {
 	}//end setup()
 
 	/**
-	 * Switch the harvest on or off.
-	 *
-	 * @param bool $enabled Whether the harvest should run.
+	 * Switch the harvest on. The calling administrator adopts the flow.
 	 *
 	 * @return JSONResponse The flow status after the switch.
 	 *
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function enable(bool $enabled = true): JSONResponse {
+	public function enable(): JSONResponse {
 		try {
-			return new JSONResponse($this->harvest->setEnabled(enabled: $enabled));
+			return new JSONResponse($this->harvest->setEnabled(enabled: true));
 		} catch (Throwable $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
 		}
 	}//end enable()
+
+	/**
+	 * Switch the harvest off.
+	 *
+	 * @return JSONResponse The flow status after the switch.
+	 *
+	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function disable(): JSONResponse {
+		try {
+			return new JSONResponse($this->harvest->setEnabled(enabled: false));
+		} catch (Throwable $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+		}
+	}//end disable()
 
 	/**
 	 * Queue a run now.

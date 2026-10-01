@@ -103,7 +103,7 @@
 						variant="primary"
 						:disabled="busy || !status.flow.imported"
 						data-testid="publiccode-harvest-enable"
-						@click="act('enable', { enabled: true })">
+						@click="act('enable')">
 						{{ t('opencatalogi', 'Switch on') }}
 					</NcButton>
 					<NcButton
@@ -111,7 +111,7 @@
 						variant="secondary"
 						:disabled="busy"
 						data-testid="publiccode-harvest-disable"
-						@click="act('enable', { enabled: false })">
+						@click="act('disable')">
 						{{ t('opencatalogi', 'Switch off') }}
 					</NcButton>
 					<NcButton
@@ -311,7 +311,7 @@ export default {
 		/**
 		 * Run one action, then read the status again.
 		 *
-		 * @param {string} action setup, enable or run.
+		 * @param {string} action setup, enable, disable or run.
 		 * @param {object} payload The request body.
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi

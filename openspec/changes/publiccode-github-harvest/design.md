@@ -63,7 +63,7 @@ An OpenRegister mapping (`components.mappings`, slug `publiccode-github-hit`), b
 
 ## D6. Admin section
 
-`GET /api/settings/publiccode-harvest` answers with `integriq` (installed), `source` (exists, enabled, link), `shards` (how many of the 24 exist), `flow` (uuid, enabled, owner, runAs, cron) and `lastRun` (status, started, finished, error). `POST .../setup` writes the synchronizations, `POST .../enable` adopts and switches the flow on or off, `POST .../run` queues a manual run. All four are admin only. The section lives in `src/views/settings/PubliccodeHarvest.vue`, under `#section-publiccode-harvest`.
+`GET /api/settings/publiccode-harvest` answers with `integriq` (installed), `source` (exists, enabled, link), `shards` (how many of the 24 exist), `flow` (uuid, enabled, owner, runAs, cron) and `lastRun` (status, started, finished, error). `POST .../setup` writes the synchronizations, `POST .../enable` adopts the flow and switches it on, `POST .../disable` switches it off, `POST .../run` queues a manual run. All five are admin only. The section lives in `src/views/settings/PubliccodeHarvest.vue`, under `#section-publiccode-harvest`.
 
 ## D7. Tests
 

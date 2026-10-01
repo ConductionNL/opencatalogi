@@ -46,7 +46,7 @@ class CatalogScopeSlugResolver {
 	 *
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-007-harvested-components-are-found-in-search-and-in-the-public-api
 	 */
-	public static function resolve(array $entries, callable $resolve): array {
+	public function resolve(array $entries, callable $resolve): array {
 		$changed = false;
 		$resolved = [];
 		foreach ($entries as $entry) {

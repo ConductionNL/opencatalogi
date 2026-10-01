@@ -34,7 +34,7 @@ class CatalogScopeSlugResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function testSlugsBecomeIdsAndIdsStay(): void {
-		[$resolved, $changed] = CatalogScopeSlugResolver::resolve(
+		[$resolved, $changed] = (new CatalogScopeSlugResolver())->resolve(
 			entries: ['publiccode', '12', 7],
 			resolve: static fn (string $slug): ?int => ($slug === 'publiccode' ? 41 : null)
 		);
@@ -50,7 +50,7 @@ class CatalogScopeSlugResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnUnknownSlugIsKeptAndNothingChanges(): void {
-		[$resolved, $changed] = CatalogScopeSlugResolver::resolve(
+		[$resolved, $changed] = (new CatalogScopeSlugResolver())->resolve(
 			entries: ['not-imported-yet'],
 			resolve: static function (string $slug): ?int {
 				throw new RuntimeException('no schema ' . $slug);
@@ -69,6 +69,6 @@ class CatalogScopeSlugResolverTest extends TestCase {
 	public function testTheSettingsImportCallsTheResolver(): void {
 		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Service/SettingsService.php');
 
-		$this->assertMatchesRegularExpression('/function backfillCatalogScopes\(\).*CatalogScopeSlugResolver::resolve\(/s', $source);
+		$this->assertMatchesRegularExpression('/function backfillCatalogScopes\(\).*new CatalogScopeSlugResolver\(\).*\$scopeResolver->resolve\(/s', $source);
 	}//end testTheSettingsImportCallsTheResolver()
 }//end class

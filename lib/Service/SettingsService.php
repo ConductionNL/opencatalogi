@@ -1597,8 +1597,9 @@ class SettingsService {
 				// check below would never see them and the scope would stay
 				// unreadable to isObjectInCatalogScope(), which intvals it.
 				$slugsResolved = false;
+				$scopeResolver = new CatalogScopeSlugResolver();
 				if (is_array($registers) === true) {
-					[$registers, $registersChanged] = CatalogScopeSlugResolver::resolve(
+					[$registers, $registersChanged] = $scopeResolver->resolve(
 						entries: $registers,
 						resolve: fn (string $slug) => $this->getRegisterMapper()?->find($slug)?->getId()
 					);
@@ -1606,7 +1607,7 @@ class SettingsService {
 				}
 
 				if (is_array($schemas) === true) {
-					[$schemas, $schemasChanged] = CatalogScopeSlugResolver::resolve(
+					[$schemas, $schemasChanged] = $scopeResolver->resolve(
 						entries: $schemas,
 						resolve: fn (string $slug) => $this->getSchemaMapper()?->find($slug)?->getId()
 					);
