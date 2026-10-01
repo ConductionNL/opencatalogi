@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
+use OCA\OpenCatalogi\Listener\CatalogScopePendingListener;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
@@ -53,6 +54,8 @@ use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\OpenRegister\Event\RegisterCreatedEvent;
+use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -167,6 +170,13 @@ class Application extends App implements IBootstrap {
 		// infinite event loop on every catalog update/soft-delete.
 		$context->registerEventListener(ObjectCreatingEvent::class, CatalogSchemaEventListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, CatalogSchemaEventListener::class);
+
+		// A seeded catalogue can name another app's register by slug (the
+		// applicatielandschap catalogue names stackiq's). When that app is
+		// installed after OpenCatalogi, its register event completes the scope
+		// (publish-from-stackiq, REQ-PFS-004).
+		$context->registerEventListener(RegisterCreatedEvent::class, CatalogScopePendingListener::class);
+		$context->registerEventListener(RegisterUpdatedEvent::class, CatalogScopePendingListener::class);
 
 		// Register tool registration listener for OpenRegister agents.
 		$context->registerEventListener(

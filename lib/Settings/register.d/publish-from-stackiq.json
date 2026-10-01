@@ -1,0 +1,31 @@
+{
+  "$comment": "openspec/changes/publish-from-stackiq. Seeds the Applicatielandschap catalogue over stackiq's application-level schemas, named by slug. Without stackiq the slugs stay unresolved and the catalogue publishes nothing; CatalogScopePendingListener completes the scope when stackiq's register appears later. It ships unpublished: an administrator publishes it by setting its publication date. Which stackiq objects and fields an anonymous visitor sees is decided by stackiq's own read rules (object level and property level), never by this catalogue.",
+  "components": {
+    "objects": [
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "catalog",
+          "slug": "applicatielandschap"
+        },
+        "title": "Applicatielandschap",
+        "summary": "Applicaties, koppelingen en diensten uit StackIQ die je organisatie openbaar maakt",
+        "description": "Hier vind je de applicaties, versies, suites, diensten en koppelingen die StackIQ openbaar maakt. Ook het gebruik dat je organisatie publiceert staat hier. Contracten, licenties, contactpersonen en interne notities blijven in StackIQ.",
+        "listed": true,
+        "status": "stable",
+        "slug": "applicatielandschap",
+        "registers": [
+          "stackiq"
+        ],
+        "schemas": [
+          "module",
+          "moduleVersion",
+          "suite",
+          "catalogService",
+          "connection",
+          "usage"
+        ]
+      }
+    ]
+  }
+}
