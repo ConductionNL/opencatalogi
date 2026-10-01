@@ -35,6 +35,8 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OC_App;
 use OCA\OpenCatalogi\AppInfo\Application;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -1685,7 +1687,7 @@ class SettingsService {
 				// read rules, which OpenRegister's own public API already applies.
 				$publishNow = $this->shouldPublishResolvedSeed(catalog: $catalogData, registers: $registers, schemas: $schemas);
 				if ($publishNow === true) {
-					$merged['published'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(DATE_ATOM);
+					$merged['published'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM);
 				}
 
 				// Persisted date-time fields can come back in the SQL-style
@@ -1749,7 +1751,6 @@ class SettingsService {
 	 *
 	 * @return bool
 	 *
-	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
 	 */
 	private function shouldPublishResolvedSeed(array $catalog, mixed $registers, mixed $schemas): bool {
@@ -1812,7 +1813,6 @@ class SettingsService {
 	 *
 	 * @return array{registers: array<int, mixed>, schemas: array<int, mixed>, changed: bool, pending: list<string>}
 	 *
-	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
 	 */
 	private function resolveScopeSlugs(array $registers, array $schemas): array {
@@ -1823,7 +1823,9 @@ class SettingsService {
 			registers: $registers,
 			schemas: $schemas,
 			findRegisterId: static fn (string $slug) => $registerMapper?->find($slug, _rbac: false, _multitenancy: false)?->getId(),
-			schemaIdsOfRegister: static fn (int $registerId): array => ($registerMapper?->find($registerId, _rbac: false, _multitenancy: false)?->getSchemas() ?? []),
+			schemaIdsOfRegister: static fn (int $registerId): array => (
+				$registerMapper?->find($registerId, _rbac: false, _multitenancy: false)?->getSchemas() ?? []
+			),
 			schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper?->find($schemaId, _rbac: false, _multitenancy: false)?->getSlug()
 		);
 	}//end resolveScopeSlugs()

@@ -106,12 +106,7 @@ class CatalogScopeSlugResolver {
 	): array {
 		[$registers, $registersChanged] = $this->resolve(entries: $registers, resolve: $findRegisterId);
 
-		$registerIds = [];
-		foreach ($registers as $register) {
-			if (is_numeric($register) === true) {
-				$registerIds[] = (int)$register;
-			}
-		}
+		$registerIds = array_values(array_map('intval', array_filter($registers, 'is_numeric')));
 
 		$slugToId = null;
 		$lookup = function (string $slug) use (&$slugToId, $registerIds, $schemaIdsOfRegister, $schemaSlugOf): ?int {
@@ -128,6 +123,26 @@ class CatalogScopeSlugResolver {
 
 		[$schemas, $schemasChanged] = $this->resolve(entries: $schemas, resolve: $lookup);
 
+		return [
+			'registers' => $registers,
+			'schemas' => $schemas,
+			'changed' => ($registersChanged || $schemasChanged),
+			'pending' => $this->pending(registers: $registers, schemas: $schemas, registerIds: $registerIds),
+		];
+	}//end resolveScope()
+
+	/**
+	 * What a later register event can still complete in a resolved scope.
+	 *
+	 * @param array<int, mixed> $registers The scope's registers after resolution.
+	 * @param array<int, mixed> $schemas The scope's schemas after resolution.
+	 * @param array<int, int> $registerIds The registers that did resolve.
+	 *
+	 * @return list<string> Lowercased register slugs, plus register ids while a schema slug remains.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+	 */
+	private function pending(array $registers, array $schemas, array $registerIds): array {
 		$pending = [];
 		foreach ($registers as $register) {
 			if (is_string($register) === true && $register !== '' && is_numeric($register) === false) {
@@ -141,13 +156,8 @@ class CatalogScopeSlugResolver {
 			}
 		}
 
-		return [
-			'registers' => $registers,
-			'schemas' => $schemas,
-			'changed' => ($registersChanged || $schemasChanged),
-			'pending' => array_values(array_unique($pending)),
-		];
-	}//end resolveScope()
+		return array_values(array_unique($pending));
+	}//end pending()
 
 	/**
 	 * Map the slug of every schema the given registers list to its id.

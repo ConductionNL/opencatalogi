@@ -44,7 +44,7 @@ use Throwable;
 /**
  * Re-runs the catalogue scope backfill when a pending register is created or updated.
  *
- * @template-implements IEventListener<RegisterCreatedEvent|RegisterUpdatedEvent>
+ * @template-implements IEventListener<Event>
  */
 class CatalogScopePendingListener implements IEventListener {
 

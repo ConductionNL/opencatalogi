@@ -318,7 +318,6 @@ class CatalogiService {
 	 *
 	 * @return callable(string): (int|null) Slug to schema id, null when not found.
 	 *
-	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
 	 */
 	private function schemaLookupFor(array $registers): callable {
