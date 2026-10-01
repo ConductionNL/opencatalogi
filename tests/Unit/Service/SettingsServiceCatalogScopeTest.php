@@ -33,9 +33,11 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\SettingsService
+ * @covers \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
  */
 class SettingsServiceCatalogScopeTest extends TestCase {
 
@@ -52,6 +54,13 @@ class SettingsServiceCatalogScopeTest extends TestCase {
 	 * @var list<array<string, mixed>>
 	 */
 	private array $saved = [];
+
+	/**
+	 * Every saveObject call of the publication harness, as [object, uuid].
+	 *
+	 * @var array<int, array{0: array<string, mixed>, 1: string|null}>
+	 */
+	private array $savedWithUuid = [];
 
 	/**
 	 * The stored catalogues the ObjectService double returns.
@@ -251,4 +260,191 @@ class SettingsServiceCatalogScopeTest extends TestCase {
 
 		$this->assertSame([], $this->saved);
 	}//end testAHandMadeCatalogueIsLeftAlone()
+
+	/**
+	 * Run the backfill over the given catalogues.
+	 *
+	 * @param array<int, array<string, mixed>> $catalogues The catalogues searchObjects returns.
+	 * @param array<string, string> $config App config values.
+	 *
+	 * @return void
+	 */
+	private function backfillPublication(array $catalogues, array $config = []): void {
+		$config = array_merge(
+			[
+				'publication_register' => '23',
+				'publication_schema' => '7',
+				'catalog_register' => '23',
+				'catalog_schema' => '8',
+			],
+			$config
+		);
+
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ($config[$key] ?? $default)
+		);
+
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('getInstalledApps')->willReturn(['openregister', 'opencatalogi']);
+
+		$objects = $this->getMockBuilder(ObjectService::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['searchObjects', 'saveObject'])
+			->getMock();
+		$objects->method('searchObjects')->willReturn($catalogues);
+		$objects->method('saveObject')->willReturnCallback(
+			function (mixed $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): ObjectEntity {
+				$this->assertSame('23', $register);
+				$this->assertSame('8', $schema);
+				$this->savedWithUuid[] = [$object, $uuid];
+				return new ObjectEntity();
+			}
+		);
+
+		$registers = $this->getMockBuilder(RegisterMapper::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['find'])
+			->getMock();
+		$registers->method('find')->willReturnCallback(
+			static function (string|int $id): Register {
+				if ($id !== 'publication' && (string)$id !== '23') {
+					throw new RuntimeException('no register ' . $id);
+				}
+
+				$register = new Register();
+				$register->setId(23);
+				$register->setSchemas([7, 143]);
+				return $register;
+			}
+		);
+
+		$schemas = $this->getMockBuilder(SchemaMapper::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['find'])
+			->getMock();
+		$schemas->method('find')->willReturnCallback(
+			static function (string|int $id): Schema {
+				$slugs = [7 => 'publication', 143 => 'publiccode'];
+				if (isset($slugs[(int)$id]) === false) {
+					throw new RuntimeException('no schema ' . $id);
+				}
+
+				$schema = new Schema();
+				$schema->setId((int)$id);
+				$schema->setSlug($slugs[(int)$id]);
+				return $schema;
+			}
+		);
+
+		$services = [
+			'OCA\OpenRegister\Service\ObjectService' => $objects,
+			'OCA\OpenRegister\Db\RegisterMapper' => $registers,
+			'OCA\OpenRegister\Db\SchemaMapper' => $schemas,
+		];
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(static fn (string $id): object => $services[$id]);
+
+		$service = new SettingsService(
+			$appConfig,
+			$container,
+			$apps,
+			$this->createMock(LoggerInterface::class),
+			$this->createMock(RegisterSchemaLinkService::class)
+		);
+
+		$service->backfillCatalogScopes();
+	}//end backfill()
+
+	/**
+	 * The seeded Componenten catalogue ends up with ids, and keeps its other fields.
+	 *
+	 * @return void
+	 */
+	public function testASeededCatalogueGetsItsSlugsReplacedByIds(): void {
+		$this->backfillPublication(
+			catalogues: [
+				[
+					'@self' => ['id' => 'cat-componenten'],
+					'title' => 'Componenten',
+					'registers' => ['publication'],
+					'schemas' => ['publiccode'],
+					'published' => '2026-10-01 00:00:00',
+				],
+			]
+		);
+
+		$this->assertCount(1, $this->savedWithUuid);
+		[$object, $uuid] = $this->savedWithUuid[0];
+		$this->assertSame('cat-componenten', $uuid);
+		$this->assertSame(['23'], $object['registers']);
+		$this->assertSame(['143'], $object['schemas']);
+		$this->assertSame('Componenten', $object['title']);
+		$this->assertArrayNotHasKey('@self', $object);
+		$this->assertSame('2026-10-01T00:00:00+00:00', $object['published'], 'The SQL-style date is saved back as ISO 8601.');
+	}//end testASeededCatalogueGetsItsSlugsReplacedByIds()
+
+	/**
+	 * A catalogue whose scope already holds ids is left alone.
+	 *
+	 * @return void
+	 */
+	public function testACatalogueWithIdsIsNotSaved(): void {
+		$this->backfillPublication(
+			catalogues: [
+				['@self' => ['id' => 'cat-woo'], 'title' => 'Woo', 'registers' => ['23'], 'schemas' => [7, '9']],
+			]
+		);
+
+		$this->assertSame([], $this->savedWithUuid);
+	}//end testACatalogueWithIdsIsNotSaved()
+
+	/**
+	 * A slug that resolves to nothing stays, and is not saved as if resolved.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownSlugIsLeftForTheNextImport(): void {
+		$this->backfillPublication(
+			catalogues: [
+				['@self' => ['id' => 'cat-later'], 'registers' => ['23'], 'schemas' => ['not-imported-yet']],
+			]
+		);
+
+		$this->assertSame([], $this->savedWithUuid);
+	}//end testAnUnknownSlugIsLeftForTheNextImport()
+
+	/**
+	 * A catalogue without a scope still gets the publication register and schema.
+	 *
+	 * @return void
+	 */
+	public function testACatalogueWithoutAScopeGetsThePublicationScope(): void {
+		$this->backfillPublication(
+			catalogues: [
+				['@self' => ['id' => 'cat-publications'], 'title' => 'Publications'],
+				['@self' => ['id' => 'cat-half'], 'registers' => ['publication'], 'schemas' => []],
+			]
+		);
+
+		$this->assertCount(2, $this->savedWithUuid);
+		$this->assertSame(['23'], $this->savedWithUuid[0][0]['registers']);
+		$this->assertSame(['7'], $this->savedWithUuid[0][0]['schemas']);
+		$this->assertSame(['23'], $this->savedWithUuid[1][0]['registers'], 'The slug is resolved.');
+		$this->assertSame(['7'], $this->savedWithUuid[1][0]['schemas'], 'The empty schema list is backfilled.');
+	}//end testACatalogueWithoutAScopeGetsThePublicationScope()
+
+	/**
+	 * Without the publication configuration nothing is read or saved.
+	 *
+	 * @return void
+	 */
+	public function testNothingHappensBeforeThePublicationTypeIsConfigured(): void {
+		$this->backfillPublication(
+			catalogues: [['@self' => ['id' => 'cat-x'], 'registers' => ['publication'], 'schemas' => ['publiccode']]],
+			config: ['publication_schema' => '']
+		);
+
+		$this->assertSame([], $this->savedWithUuid);
+	}//end testNothingHappensBeforeThePublicationTypeIsConfigured()
 }//end class
