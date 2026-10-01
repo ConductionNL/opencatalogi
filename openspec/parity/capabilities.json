@@ -5758,13 +5758,13 @@
 			"area": "services",
 			"name": "Publish a catalogue of software components from their publiccode.yml files.",
 			"source": "own-code",
-			"opencatalogi": "partial",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Settings/register.d/publiccode-software.json:2 declares the publiccode schema and says it is 'harvested by the publiccode-harvest flow'; no flow, job or service named publiccode-harvest exists (grep of the repo finds only that comment)"
+				"evidence": "lib/Settings/register.d/publiccode-github-harvest.json ships the harvest flow (24 code search shards off the triggers -> fetch -> decode YAML -> map publiccode-github-hit -> upsert by slug) and the Componenten catalogue; PubliccodeHarvestService::setUp() writes the shard synchronizations into integriq (openspec/changes/publiccode-github-harvest)"
 			},
-			"reachedOn": "nothing: no harvester fills the schema",
+			"reachedOn": "Admin settings > OpenCatalogi > GitHub harvest (Set up, Switch on, Run now); harvested components in the Componenten catalogue and /api/{catalogSlug}",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
@@ -5774,7 +5774,7 @@
 			"xxllnc": "unknown",
 			"iprox": "unknown",
 			"decos": "unknown",
-			"pendingReason": "Only the schema exists. Nobody has shown a harvest that reads publiccode.yml files into it.",
+			"pendingReason": "The authenticated crawl of all of GitHub waits for a GitHub token on the instance; verified against a code search mock.",
 			"evidence": {
 				"ckan": "source read at ckan-2.12.0: no software catalogue; grepped -i 'publiccode' across ckan/ckan and the four extensions with no hit, and no harvester or schema reads publiccode.yml (ckanext-dcat harvesters/, ckanext-scheming schemas).",
 				"dkan": "source read at 4.1.3: no software catalogue; grepped -i 'publiccode' across the tree, no hits, and item kinds are fixed to the DCAT-US set (modules/dkan_metastore/src/SchemaRetriever.php:52-67).",

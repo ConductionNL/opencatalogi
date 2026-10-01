@@ -291,6 +291,18 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-publiccode-harvest"
+			:name="t('opencatalogi', 'GitHub harvest')"
+			:description="
+				t(
+					'opencatalogi',
+					'Read every publiccode.yml on GitHub into the Componenten catalogue, every night.',
+				)
+			">
+			<PubliccodeHarvest />
+		</NcSettingsSection>
+
+		<NcSettingsSection
 			:name="t('opencatalogi', 'Publishing Options')"
 			:description="
 				t(
@@ -491,6 +503,7 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 
 import '@nextcloud/dialogs/style.css'
@@ -529,6 +542,7 @@ export default defineComponent({
 		MinusCircle,
 		InformationOutline,
 		WooIndexConnection,
+		PubliccodeHarvest,
 	},
 
 	/**

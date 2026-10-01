@@ -11,13 +11,16 @@
       "publiccode": {
         "slug": "publiccode",
         "title": "Public code component",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "published": true,
         "summary": "A software component described by a publiccode.yml file",
         "description": "One harvested publiccode.yml. The identity of a component is its repository URL, not its name: names collide across forges and change on rebrand, while the URL is what the harvest actually dereferenced. `slug` is derived from the repository full name so a re-harvest UPDATES rather than duplicates — the flow engine has no synchronisation contracts yet, so idempotency has to come from a deterministic identifier.",
         "icon": "PackageVariantClosed",
         "searchable": true,
         "hardValidation": false,
+        "authorization": {
+          "read": ["public"]
+        },
         "required": ["name", "url"],
         "properties": {
           "name": {

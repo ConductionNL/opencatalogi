@@ -1,0 +1,154 @@
+{
+    "$comment": "GitHub code search shards for the publiccode-github-harvest flow (openspec/changes/publiccode-github-harvest, design D2). Code search returns at most 1,000 results per query and indexes files under 384 KB (393216 bytes), so the file size range is split into contiguous shards, finer where publiccode.yml files cluster. A shard whose search reports total_count 1000 or more is losing results: split its range here. Each entry becomes one integriq synchronization when the administrator sets the harvest up (PubliccodeHarvestService::setUp); the flow's shard node with the same `node` id names it. tests/Unit/Settings/PubliccodeHarvestFlowTest.php keeps this file and the flow in step.",
+    "source": "github-api",
+    "endpoint": "/search/code",
+    "query": "filename:publiccode.yml",
+    "perPage": 100,
+    "maxPages": 10,
+    "shards": [
+        {
+            "node": "shard-01",
+            "synchronization": "opencatalogi-publiccode-github-01",
+            "min": 0,
+            "max": 999
+        },
+        {
+            "node": "shard-02",
+            "synchronization": "opencatalogi-publiccode-github-02",
+            "min": 1000,
+            "max": 1499
+        },
+        {
+            "node": "shard-03",
+            "synchronization": "opencatalogi-publiccode-github-03",
+            "min": 1500,
+            "max": 1999
+        },
+        {
+            "node": "shard-04",
+            "synchronization": "opencatalogi-publiccode-github-04",
+            "min": 2000,
+            "max": 2499
+        },
+        {
+            "node": "shard-05",
+            "synchronization": "opencatalogi-publiccode-github-05",
+            "min": 2500,
+            "max": 2999
+        },
+        {
+            "node": "shard-06",
+            "synchronization": "opencatalogi-publiccode-github-06",
+            "min": 3000,
+            "max": 3499
+        },
+        {
+            "node": "shard-07",
+            "synchronization": "opencatalogi-publiccode-github-07",
+            "min": 3500,
+            "max": 3999
+        },
+        {
+            "node": "shard-08",
+            "synchronization": "opencatalogi-publiccode-github-08",
+            "min": 4000,
+            "max": 4499
+        },
+        {
+            "node": "shard-09",
+            "synchronization": "opencatalogi-publiccode-github-09",
+            "min": 4500,
+            "max": 4999
+        },
+        {
+            "node": "shard-10",
+            "synchronization": "opencatalogi-publiccode-github-10",
+            "min": 5000,
+            "max": 5499
+        },
+        {
+            "node": "shard-11",
+            "synchronization": "opencatalogi-publiccode-github-11",
+            "min": 5500,
+            "max": 5999
+        },
+        {
+            "node": "shard-12",
+            "synchronization": "opencatalogi-publiccode-github-12",
+            "min": 6000,
+            "max": 6499
+        },
+        {
+            "node": "shard-13",
+            "synchronization": "opencatalogi-publiccode-github-13",
+            "min": 6500,
+            "max": 6999
+        },
+        {
+            "node": "shard-14",
+            "synchronization": "opencatalogi-publiccode-github-14",
+            "min": 7000,
+            "max": 7499
+        },
+        {
+            "node": "shard-15",
+            "synchronization": "opencatalogi-publiccode-github-15",
+            "min": 7500,
+            "max": 7999
+        },
+        {
+            "node": "shard-16",
+            "synchronization": "opencatalogi-publiccode-github-16",
+            "min": 8000,
+            "max": 8999
+        },
+        {
+            "node": "shard-17",
+            "synchronization": "opencatalogi-publiccode-github-17",
+            "min": 9000,
+            "max": 9999
+        },
+        {
+            "node": "shard-18",
+            "synchronization": "opencatalogi-publiccode-github-18",
+            "min": 10000,
+            "max": 11999
+        },
+        {
+            "node": "shard-19",
+            "synchronization": "opencatalogi-publiccode-github-19",
+            "min": 12000,
+            "max": 13999
+        },
+        {
+            "node": "shard-20",
+            "synchronization": "opencatalogi-publiccode-github-20",
+            "min": 14000,
+            "max": 15999
+        },
+        {
+            "node": "shard-21",
+            "synchronization": "opencatalogi-publiccode-github-21",
+            "min": 16000,
+            "max": 19999
+        },
+        {
+            "node": "shard-22",
+            "synchronization": "opencatalogi-publiccode-github-22",
+            "min": 20000,
+            "max": 29999
+        },
+        {
+            "node": "shard-23",
+            "synchronization": "opencatalogi-publiccode-github-23",
+            "min": 30000,
+            "max": 49999
+        },
+        {
+            "node": "shard-24",
+            "synchronization": "opencatalogi-publiccode-github-24",
+            "min": 50000,
+            "max": 393216
+        }
+    ]
+}

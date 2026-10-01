@@ -1591,10 +1591,38 @@ class SettingsService {
 
 				$registers = ($catalogData['registers'] ?? null);
 				$schemas = ($catalogData['schemas'] ?? null);
+
+				// A seeded catalogue names its scope by slug (the ids only exist
+				// after the import). Resolve those first, or the empty-looking
+				// check below would never see them and the scope would stay
+				// unreadable to isObjectInCatalogScope(), which intvals it.
+				$slugsResolved = false;
+				$scopeResolver = new CatalogScopeSlugResolver();
+				if (is_array($registers) === true) {
+					[$registers, $registersChanged] = $scopeResolver->resolve(
+						entries: $registers,
+						resolve: fn (string $slug) => $this->getRegisterMapper()?->find($slug)?->getId()
+					);
+					$slugsResolved = $registersChanged;
+				}
+
+				if (is_array($schemas) === true) {
+					[$schemas, $schemasChanged] = $scopeResolver->resolve(
+						entries: $schemas,
+						resolve: fn (string $slug) => $this->getSchemaMapper()?->find($slug)?->getId()
+					);
+					$slugsResolved = ($slugsResolved || $schemasChanged);
+				}
+
+				if ($slugsResolved === true) {
+					$catalogData['registers'] = $registers;
+					$catalogData['schemas'] = $schemas;
+				}
+
 				$needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
 				$needsSchemas = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
 
-				if ($needsRegisters === false && $needsSchemas === false) {
+				if ($needsRegisters === false && $needsSchemas === false && $slugsResolved === false) {
 					// Admin has already configured a scope; leave it alone.
 					continue;
 				}
