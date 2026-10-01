@@ -250,14 +250,19 @@ export default {
 					{ started, resume: new Date(run.resumeAt).toLocaleString() },
 				)
 			}
-			if (run.status === 'failed' || run.status === 'stopped') {
+			// The end node stops the run on purpose once every shard has written,
+			// so a clean stop without an error is a finished harvest.
+			const finished =
+				run.status === 'completed'
+				|| (run.status === 'stopped' && !run.error)
+			if (run.status === 'failed' || (run.status === 'stopped' && !finished)) {
 				return this.t(
 					'opencatalogi',
 					'Last run started {started} and stopped: {error}',
 					{ started, error: run.error ?? '' },
 				)
 			}
-			if (run.status === 'completed') {
+			if (finished) {
 				return this.t(
 					'opencatalogi',
 					'Last run started {started} and finished.',
