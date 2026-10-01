@@ -55,7 +55,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -129,7 +130,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -203,7 +205,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -277,7 +280,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -351,7 +355,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -425,7 +430,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -499,7 +505,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -573,7 +580,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -647,7 +655,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -721,7 +730,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -795,7 +805,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -869,7 +880,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -943,7 +955,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1017,7 +1030,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1091,7 +1105,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1165,7 +1180,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1239,7 +1255,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1313,7 +1330,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1387,7 +1405,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1461,7 +1480,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1535,7 +1555,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1609,7 +1630,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1683,7 +1705,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
@@ -1757,7 +1780,8 @@
                                         "endpoint": "/{{ hit.repository.full_name }}/HEAD/{{ hit.path }}",
                                         "method": "GET",
                                         "decode": "yaml",
-                                        "output": "publiccode"
+                                        "output": "publiccode",
+                                        "onError": "continue"
                                     }
                                 },
                                 {
