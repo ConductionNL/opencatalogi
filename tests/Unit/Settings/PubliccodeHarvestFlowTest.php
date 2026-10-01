@@ -211,6 +211,8 @@ class PubliccodeHarvestFlowTest extends TestCase {
 			$this->assertSame('github-raw', $nodes['fetch-' . $n]['config']['source']);
 			$this->assertSame('yaml', $nodes['fetch-' . $n]['config']['decode']);
 			$this->assertSame('continue', $nodes['fetch-' . $n]['onError']);
+			// source-call reads onError from its config: a node-level key alone lets one bad file fail the whole page.
+			$this->assertSame('continue', $nodes['fetch-' . $n]['config']['onError']);
 			$this->assertSame('openregister.map', $nodes['map-' . $n]['type']);
 			$this->assertSame('publiccode-github-hit', $nodes['map-' . $n]['config']['mapping']);
 			$this->assertSame('upsert', $nodes['write-' . $n]['config']['operation']);
