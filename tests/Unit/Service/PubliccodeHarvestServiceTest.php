@@ -367,6 +367,45 @@ class PubliccodeHarvestServiceTest extends TestCase {
 	}//end suspendedRun()
 
 	/**
+	 * The status counts the steps of the last run that failed and were carried
+	 * past, so a finished run that lost a shard's page does not read as clean.
+	 *
+	 * @return void
+	 */
+	public function testTheStatusCountsTheFailedStepsOfTheLastRun(): void {
+		$this->stored(slug: 'github-api', data: ['isEnabled' => true]);
+		$run = new FlowRun();
+		$run->setUuid('run-2');
+		$run->setStatus('stopped');
+		$run->setTrigger('manual');
+		$run->setCreated(new DateTime('2026-10-02T09:00:00+00:00'));
+		$run->setLog(
+			[
+				['transition' => 'shard-01', 'status' => 'completed'],
+				['transition' => 'write-07', 'status' => 'failed', 'error' => 'releaseDate is not a date'],
+				['transition' => 'write-12', 'status' => 'failed', 'error' => 'url is not a uri'],
+				['transition' => 'end', 'status' => 'completed'],
+			]
+		);
+
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(
+				services: [
+					'OCA\OpenRegister\Service\ObjectService' => $this->objects(),
+					'OCA\OpenRegister\Service\Flow\FlowService' => $this->flows(flows: [$this->flow(enabled: true)]),
+					'OCA\OpenRegister\Db\FlowRunMapper' => $this->runs(runs: [$run]),
+				]
+			),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$status = $service->status();
+		$this->assertSame(2, $status['lastRun']['failedSteps']);
+		$this->assertSame('stopped', $status['lastRun']['status']);
+	}//end testTheStatusCountsTheFailedStepsOfTheLastRun()
+
+	/**
 	 * The status shows the source, every shard, the flow and the last run.
 	 *
 	 * @return void

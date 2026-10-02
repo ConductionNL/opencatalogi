@@ -46,7 +46,7 @@ The shard definitions SHALL cover `size:0..393216` in contiguous ranges that nei
 
 ### Requirement: REQ-PGH-003 Each harvested file becomes one publiccode object, and a re-harvest updates it
 
-For every hit the flow SHALL fetch the file from `github-raw`, decode it as YAML, map it onto `publiccode` with mapping `publiccode-github-hit` and upsert it by slug. The object SHALL keep the decoded document in `rawPubliccode`, carry `harvestedFrom: "github.com"` and the time of the write in `harvestedAt`. The slug SHALL derive from the `url` the file declares (scheme, `www.`, `.git` and a trailing slash removed), plus the directory when the file is a second publiccode.yml below the root of that same repository. The repository the file was found in SHALL NOT be the identity: a fork or a copy of a file maps onto the original's slug. A field the file does not declare SHALL be absent, never the text of its own path. A `releaseDate` SHALL be taken only when it is a date (`YYYY-MM-DD…`, or the timestamp YAML makes of an unquoted date), cut to the day; anything else is dropped.
+For every hit the flow SHALL fetch the file from `github-raw`, decode it as YAML, map it onto `publiccode` with mapping `publiccode-github-hit` and upsert it by slug. The object SHALL keep the decoded document in `rawPubliccode`, carry `harvestedFrom: "github.com"` and the time of the write in `harvestedAt`. The slug SHALL derive from the `url` the file declares (scheme, a leading `www.`, a `.git` suffix, a `#fragment`, a `?query` and a trailing slash removed), plus the directory when the file is a second publiccode.yml below the root of that same repository. The repository the file was found in SHALL NOT be the identity: a fork or a copy of a file maps onto the original's slug. A field the file does not declare SHALL be absent, never the text of its own path. A `releaseDate` SHALL be taken only when it is a date (`YYYY-MM-DD…`, or the timestamp YAML makes of an unquoted date), cut to the day; anything else is dropped.
 
 #### Scenario: A real publiccode.yml maps onto the schema
 @e2e exclude Mapping fidelity has no browser surface; tests/Unit/Settings/PubliccodeMappingTest.php runs the real mapping and validates against the real schema.
@@ -83,7 +83,7 @@ For every hit the flow SHALL fetch the file from `github-raw`, decode it as YAML
 
 ### Requirement: REQ-PGH-004 A file that cannot be read is skipped, not written
 
-A hit whose file does not decode, or decodes without `name` and `url`, SHALL be dropped before the mapping. A hit whose path is not a file named `publiccode.yml` SHALL be dropped too: code search for `filename:publiccode.yml` also returns files such as `publiccodeyml__publiccode.yml.json`. A structured field (`description`, `platforms`, `categories`, `maintenance`, `localisation`, `it.conforme`) that arrives as plain text SHALL be dropped, never written into a json column. A write that fails SHALL end its own shard only; the other shards and the run SHALL continue.
+A hit whose file does not decode, or decodes without `name` and `url`, SHALL be dropped before the mapping. A hit whose path is not a file named `publiccode.yml` SHALL be dropped too: code search for `filename:publiccode.yml` also returns files such as `publiccodeyml__publiccode.yml.json`. A hit whose `url` is not text that starts with `http` and contains a dot, or whose `name` is not text, SHALL be dropped before the mapping. The mapping SHALL shape every value for its column: a scalar column takes only a scalar, a list of strings keeps only its scalar items, `description` keeps only language-keyed sub-documents, `landingURL` only a web address and `releaseDate` only a calendar date; anything else is dropped, never written. A write that the schema still refuses SHALL end the write step of its own shard only (OpenRegister writes a shard's page in one step and stops at the first refused item, so the rest of that page is not written in that run); the mapping step and the other shards SHALL continue, and the admin section SHALL show how many steps of the last run failed.
 
 #### Scenario: A broken YAML file in the middle of a page
 @e2e exclude Engine behaviour; verified live with a mock hit that points at a non-YAML file.
@@ -92,6 +92,30 @@ A hit whose file does not decode, or decodes without `name` and `url`, SHALL be 
 - **WHEN** the tail runs
 - **THEN** every other hit is written
 - **AND** no object is written for the broken file
+
+#### Scenario: A url that is a list is dropped before the mapping
+@e2e exclude Filter behaviour; tests/Unit/Settings/PubliccodeHarvestFlowTest.php runs the shard filter through JSON Logic.
+
+- **GIVEN** a decoded file whose `url` is a YAML list
+- **WHEN** the shard filter runs
+- **THEN** the hit is dropped
+- **AND** the mapping step never sees it, so the run reaches `end`
+
+#### Scenario: An original whose url ends in .git or carries a fragment is kept
+@e2e exclude Filter behaviour; tests/Unit/Settings/PubliccodeHarvestFlowTest.php runs the shard filter through JSON Logic.
+
+- **GIVEN** a file in `ConductionNL/opencatalogi` whose `url` is `https://github.com/ConductionNL/opencatalogi.git` or `…/opencatalogi#readme`
+- **WHEN** the shard filter runs
+- **THEN** the hit is kept
+- **AND** it maps onto slug `github-com-conductionnl-opencatalogi`
+
+#### Scenario: A value the column would refuse is dropped, not written
+@e2e exclude Mapping fidelity; tests/Unit/Settings/PubliccodeMappingTest.php runs the real mapping.
+
+- **GIVEN** a file with `releaseDate: 2026-13-45`, `landingURL: not a url`, `logo` as a list, a `categories` list with one map in it and `description` as a list
+- **WHEN** it runs through mapping `publiccode-github-hit`
+- **THEN** `releaseDate`, `landingURL`, `logo` and `description` are absent
+- **AND** `categories` keeps only its string items
 
 #### Scenario: A file that is not a publiccode.yml is dropped before the write
 @e2e exclude Found on the first real crawl: `xuhongxu96/bazel-repos search_repos/repos/publiccodeyml__publiccode.yml.json`, whose string `description` failed the json column and stopped the run after 13 of 24 shards. tests/Unit/Settings/PubliccodeHarvestFlowTest.php asserts the filter and the write policy.

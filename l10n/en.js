@@ -1319,6 +1319,7 @@ OC.L10N.register(
         "The GitHub harvest needs integriq. Install and enable integriq, then come back here.": "The GitHub harvest needs integriq. Install and enable integriq, then come back here.",
         "Open the source in integriq": "Open the source in integriq",
         "{present} of {expected} search shards are set up": "{present} of {expected} search shards are set up",
+        "{count} step(s) of the last run failed and were skipped, so their shards did not finish. The run log in OpenRegister names them.": "{count} step(s) of the last run failed and were skipped, so their shards did not finish. The run log in OpenRegister names them.",
         "OpenCatalogi never sees the GitHub token. integriq keeps it with the source.": "OpenCatalogi never sees the GitHub token. integriq keeps it with the source.",
         "Set up": "Set up",
         "Switch on": "Switch on",

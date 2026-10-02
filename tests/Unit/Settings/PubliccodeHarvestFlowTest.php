@@ -215,6 +215,8 @@ class PubliccodeHarvestFlowTest extends TestCase {
 			$this->assertSame('continue', $nodes['fetch-' . $n]['config']['onError']);
 			$this->assertSame('openregister.map', $nodes['map-' . $n]['type']);
 			$this->assertSame('publiccode-github-hit', $nodes['map-' . $n]['config']['mapping']);
+			// A url that passes the filter but still trips Twig must not end the run.
+			$this->assertSame('continue', $nodes['map-' . $n]['onError']);
 			$this->assertSame('upsert', $nodes['write-' . $n]['config']['operation']);
 			$this->assertSame('publiccode', $nodes['write-' . $n]['config']['schema']);
 			$this->assertSame(['@self.slug' => '{{ component.slug }}'], $nodes['write-' . $n]['config']['match']);
@@ -224,14 +226,78 @@ class PubliccodeHarvestFlowTest extends TestCase {
 			// The filter keeps only files that ARE a publiccode.yml and are not a
 			// copy of a GitHub component sitting in another GitHub repository.
 			$conditions = $nodes['decoded-' . $n]['config']['condition']['and'];
-			$this->assertCount(4, $conditions, 'name, url, file name, not-a-copy');
+			$this->assertCount(6, $conditions, 'name, url, file name, url is a web address, name is text, not-a-copy');
 			$this->assertStringContainsString('/publiccode.yml', json_encode($conditions[2]));
-			$this->assertStringContainsString('json.hit.repository.full_name', json_encode($conditions[3]));
+			$this->assertStringContainsString('"http"', json_encode($conditions[3]));
+			$this->assertStringContainsString('"array"', json_encode($conditions[4]));
+			$this->assertStringContainsString('json.hit.repository.full_name', json_encode($conditions[5]));
+			$this->assertStringContainsString('.git', json_encode($conditions[5]));
+			$this->assertStringContainsString('"#"', json_encode($conditions[5]));
 			$this->assertGreaterThanOrEqual(1000, $nodes['write-' . $n]['config']['maxWrites']);
 		}
 
 		$this->assertArrayHasKey('publiccode-github-hit', $this->fragment['components']['mappings']);
 	}//end testTheTailFetchesFiltersMapsAndWritesBySlug()
+
+	/**
+	 * The shard filter, run through JSON Logic with the operations OpenRegister
+	 * registers, keeps originals in every spelling and drops copies and non-text.
+	 *
+	 * @return void
+	 */
+	public function testTheShardFilterKeepsOriginalsAndDropsCopiesAndNonText(): void {
+		if (class_exists(\JWadhams\JsonLogic::class) === false) {
+			$this->markTestSkipped('json-logic-php (an OpenRegister dependency) is not installed here.');
+		}
+
+		// The same casts FlowExpression registers: PHP's (string) cast of a list
+		// yields "Array" (with a warning the engine's logger absorbs), so a list
+		// reads as "array" here too, spelled out to keep the test run clean.
+		$text = static fn (mixed $a): string => is_array($a) === true ? 'Array' : (string)$a;
+		\JWadhams\JsonLogic::add_operation('lower', static fn ($a) => mb_strtolower($text($a)));
+		\JWadhams\JsonLogic::add_operation('trim', static fn ($a) => trim($text($a)));
+
+		$flow = $this->flow();
+		$nodes = array_column($flow['nodes'], null, 'id');
+		$rule = $nodes['decoded-01']['config']['condition'];
+		$hit = static fn (mixed $url, mixed $name = 'OpenCatalogi', string $repo = 'ConductionNL/opencatalogi', string $path = 'publiccode.yml'): array => [
+			'json' => [
+				'hit' => ['path' => $path, 'repository' => ['full_name' => $repo]],
+				'publiccode' => ['body' => ['name' => $name, 'url' => $url]],
+			],
+		];
+
+		$kept = [
+			'canonical' => 'https://github.com/ConductionNL/opencatalogi',
+			'trailing slash' => 'https://github.com/ConductionNL/opencatalogi/',
+			'.git suffix' => 'https://github.com/ConductionNL/opencatalogi.git',
+			'fragment' => 'https://github.com/ConductionNL/opencatalogi#readme',
+			'query' => 'https://github.com/ConductionNL/opencatalogi?ref=x',
+			'www and http' => 'http://www.github.com/ConductionNL/OpenCatalogi',
+			'monorepo sub-path' => 'https://github.com/ConductionNL/opencatalogi/tree/main/apps/search-ui',
+			'not on GitHub' => 'https://gitlab.com/some-org/some-component',
+		];
+		foreach ($kept as $case => $url) {
+			$this->assertTrue(\JWadhams\JsonLogic::apply($rule, $hit($url)), 'kept: ' . $case);
+		}
+
+		$dropped = [
+			'copy of another GitHub repository' => $hit('https://github.com/suitenumerique/docs'),
+			'another repository with the same prefix' => $hit('https://github.com/ConductionNL/opencatalogi-extra'),
+			'url is a list' => $hit(['https://github.com/ConductionNL/opencatalogi']),
+			'url is a map' => $hit(['href' => 'https://github.com/ConductionNL/opencatalogi']),
+			'url is not a web address' => $hit('ftp://github.com/ConductionNL/opencatalogi'),
+			'url has a space' => $hit('https://github.com/ConductionNL/open catalogi'),
+			'url is only a scheme' => $hit('https://'),
+			'url is empty' => $hit(''),
+			'name is a list' => $hit('https://github.com/ConductionNL/opencatalogi', ['OpenCatalogi']),
+			'name is empty' => $hit('https://github.com/ConductionNL/opencatalogi', ''),
+			'not a publiccode.yml' => $hit('https://github.com/ConductionNL/opencatalogi', 'OpenCatalogi', 'ConductionNL/opencatalogi', 'repos/publiccodeyml__publiccode.yml.json'),
+		];
+		foreach ($dropped as $case => $item) {
+			$this->assertFalse(\JWadhams\JsonLogic::apply($rule, $item), 'dropped: ' . $case);
+		}
+	}//end testTheShardFilterKeepsOriginalsAndDropsCopiesAndNonText()
 
 	/**
 	 * Every shard node names a synchronization in the shard file, and the other way round.
