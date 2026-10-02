@@ -28,7 +28,10 @@ use DateTimeZone;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Portal\PublicSearchRunner;
 use OCA\OpenCatalogi\Service\Portal\SavedSearchMatcher;
+use OCA\OpenCatalogi\Service\Portal\SavedSearchNoticeWriter;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCP\IL10N;
+use OCP\L10N\IFactory;
 use Opis\JsonSchema\Validator;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -76,8 +79,45 @@ class SavedSearchMatcherTest extends TestCase {
 			search: $search,
 			linker: $linker,
 			publications: new PublicationQueryService(container: $this->createMock(ContainerInterface::class)),
+			notices: new SavedSearchNoticeWriter(store: $this->store, l10nFactory: $this->dutch()),
 			logger: new NullLogger()
 		);
+	}
+
+	/**
+	 * An l10n factory that answers with the shipped Dutch translations, so a
+	 * missing translation shows as English in the assertion.
+	 *
+	 * @return IFactory
+	 */
+	private function dutch(): IFactory {
+		$translations = json_decode((string)file_get_contents(dirname(__DIR__, 4).'/l10n/nl.json'), true)['translations'];
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(
+			static fn (string $text, array $parameters=[]): string => vsprintf((string)($translations[$text] ?? $text), $parameters)
+		);
+		$factory = $this->createMock(IFactory::class);
+		$factory->method('get')->willReturnCallback(
+			function (string $app, ?string $lang=null) use ($l10n): IL10N {
+				$this->assertSame(['opencatalogi', 'nl'], [$app, $lang]);
+				return $l10n;
+			}
+		);
+
+		return $factory;
+	}
+
+	/**
+	 * Every portal message passes portaliq's portalMessage schema.
+	 *
+	 * @return void
+	 */
+	private function assertMessagesAreValid(): void {
+		$fragment = json_decode((string)file_get_contents(dirname(__DIR__, 3).'/fixtures/portaliq-portal-message-schema.json'), true);
+		$schema = (string)json_encode(['type' => 'object', 'properties' => $fragment['properties'], 'required' => $fragment['required'], 'additionalProperties' => false]);
+		foreach ($this->store->messages as $message) {
+			$this->assertTrue((new Validator())->validate(json_decode((string)json_encode($message)), $schema)->isValid(), json_encode($message));
+		}
 	}
 
 	/**
@@ -296,5 +336,107 @@ class SavedSearchMatcherTest extends TestCase {
 		$this->assertCount(20, $notice['lastMatches']);
 		$this->assertSame(25, $notice['matchCount']);
 		$this->assertSavesAreValid();
+	}
+	/**
+	 * An immediate search writes one match notice per publication, naming the
+	 * search and the publication, in Dutch only, with the rule key and a link.
+	 *
+	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-notice-reaches-the-resident-through-portaliq-and-a-crash-sends-late-not-never-req-ssa-004
+	 */
+	public function testImmediateWritesOneMatchMessagePerPublication(): void {
+		$this->saved('s1', 'immediate', '2026-09-30T06:00:00+00:00');
+		$this->rows = [$this->row('p1', '2026-09-30T07:00:00+00:00'), $this->row('p2', '2026-09-30T07:30:00+00:00')];
+
+		$this->matcher->run(now: $this->at('2026-09-30 10:00'));
+
+		$this->assertCount(2, $this->store->messages);
+		$first = $this->store->messages[0];
+		$this->assertSame('subject-1', $first['subjectRef']);
+		$this->assertSame('opencatalogi.savedSearch.matched', $first['ruleKey']);
+		$this->assertSame('Nieuwe publicatie voor uw zoekopdracht "Windpark": Publicatie p1', $first['subject']);
+		$this->assertSame(
+			"Er is een nieuwe publicatie die past bij uw zoekopdracht \"Windpark\".\n\n- Publicatie p1: https://example.org/p/p1",
+			$first['body']
+		);
+		$this->assertSame(['app' => 'opencatalogi', 'collection' => 'mySavedSearches', 'id' => 's1'], $first['recordLink']);
+		$this->assertFalse($first['read']);
+		$this->assertStringContainsString('Publicatie p2', $this->store->messages[1]['subject']);
+		$this->assertMessagesAreValid();
+	}
+
+	/**
+	 * A digest is one message with at most twenty publications, and says how
+	 * many more there were.
+	 *
+	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-frequency-decides-when-and-how-the-resident-hears-req-ssa-003
+	 */
+	public function testADigestIsOneMessageWithAtMostTwentyPublications(): void {
+		$this->saved('s1', 'weekly', '2026-09-28T07:05:00+02:00');
+		for ($i = 1; $i <= 25; $i++) {
+			$this->rows[] = $this->row('p'.$i, sprintf('2026-09-29T%02d:%02d:00+00:00', ($i % 20), $i));
+		}
+
+		$this->matcher->run(now: $this->at('2026-10-05 08:00'));
+
+		$this->assertCount(1, $this->store->messages);
+		$message = $this->store->messages[0];
+		$this->assertSame('25 nieuwe publicaties voor uw zoekopdracht "Windpark"', $message['subject']);
+		$this->assertStringStartsWith('Deze publicaties passen bij uw zoekopdracht "Windpark".', $message['body']);
+		$this->assertSame(20, substr_count($message['body'], "\n- "));
+		$this->assertStringEndsWith('En nog 5. Zoek opnieuw om ze allemaal te zien.', $message['body']);
+		$this->assertMessagesAreValid();
+	}
+
+	/**
+	 * A digest of one names the publication, as an immediate notice does.
+	 *
+	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-frequency-decides-when-and-how-the-resident-hears-req-ssa-003
+	 */
+	public function testADigestOfOneNamesThePublication(): void {
+		$this->saved('s1', 'daily', '2026-09-29T07:05:00+02:00');
+		$this->rows = [$this->row('p1', '2026-09-29T09:00:00+00:00')];
+
+		$this->matcher->run(now: $this->at('2026-09-30 07:10'));
+
+		$this->assertSame('Nieuwe publicatie voor uw zoekopdracht "Windpark": Publicatie p1', $this->store->messages[0]['subject']);
+	}
+
+	/**
+	 * The message is written before the save that moves lastRunAt, and a failed
+	 * message leaves lastRunAt, so the next run sends it late, not never.
+	 *
+	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-notice-reaches-the-resident-through-portaliq-and-a-crash-sends-late-not-never-req-ssa-004
+	 */
+	public function testLastRunAtMovesOnlyAfterTheMessageWasWritten(): void {
+		$this->saved('s1', 'immediate', '2026-09-30T06:00:00+00:00');
+		$this->rows = [$this->row('p1', '2026-09-30T07:00:00+00:00')];
+		$this->store->failMessages = true;
+
+		$stats = $this->matcher->run(now: $this->at('2026-09-30 10:00'));
+		$this->assertSame(1, $stats['failed']);
+		$this->assertSame('2026-09-30T06:00:00+00:00', $this->store->objects['savedSearch']['s1']['lastRunAt']);
+		$this->assertSame([], $this->store->saves);
+
+		$this->store->failMessages = false;
+		$this->matcher->run(now: $this->at('2026-09-30 10:15'));
+		$this->assertSame(['message', 'save:savedSearch'], $this->store->writes);
+		$this->assertCount(1, $this->store->messages);
+	}
+
+	/**
+	 * A saved search without an owner has nobody to tell: no message, and the
+	 * run still moves on.
+	 *
+	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-notice-reaches-the-resident-through-portaliq-and-a-crash-sends-late-not-never-req-ssa-004
+	 */
+	public function testASearchWithoutAnOwnerGetsNoMessage(): void {
+		$this->saved('s1', 'immediate', '2026-09-30T06:00:00+00:00');
+		unset($this->store->objects['savedSearch']['s1']['owner']);
+		$this->rows = [$this->row('p1', '2026-09-30T07:00:00+00:00')];
+
+		$stats = $this->matcher->run(now: $this->at('2026-09-30 10:00'));
+		$this->assertSame([], $this->store->messages);
+		$this->assertSame(0, $stats['failed']);
+		$this->assertSame('2026-09-30T08:00:00+00:00', $this->store->objects['savedSearch']['s1']['lastRunAt']);
 	}
 }
