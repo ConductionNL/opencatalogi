@@ -269,6 +269,79 @@ class PubliccodeMappingTest extends TestCase {
 	}//end testTheUrlIsNormalisedBeforeItBecomesTheSlug()
 
 	/**
+	 * A fragment or a query on the url does not change the identity either.
+	 *
+	 * @return void
+	 */
+	public function testAFragmentOrQueryOnTheUrlDoesNotChangeTheSlug(): void {
+		foreach (['https://github.com/ConductionNL/opencatalogi#readme', 'https://github.com/ConductionNL/opencatalogi?ref=main', 'https://github.com/ConductionNL/opencatalogi.git#readme'] as $url) {
+			$yaml = str_replace('url: "https://github.com/ConductionNL/opencatalogi"', 'url: "' . $url . '"', $this->ownPubliccode());
+			$this->assertSame('github-com-conductionnl-opencatalogi', $this->map(item: $this->item(yaml: $yaml))['slug'], $url);
+		}
+	}//end testAFragmentOrQueryOnTheUrlDoesNotChangeTheSlug()
+
+	/**
+	 * `www.` is stripped only at the start of the host, not inside a path.
+	 *
+	 * @return void
+	 */
+	public function testWwwInsideThePathIsPartOfTheSlug(): void {
+		$yaml = str_replace('url: "https://github.com/ConductionNL/opencatalogi"', 'url: "https://github.com/ConductionNL/mywww.site"', $this->ownPubliccode());
+		$this->assertSame('github-com-conductionnl-mywww-site', $this->map(item: $this->item(yaml: $yaml))['slug']);
+	}//end testWwwInsideThePathIsPartOfTheSlug()
+
+	/**
+	 * A value the column would refuse is dropped before the write, because the
+	 * write step stops at the first item the schema refuses and the rest of the
+	 * shard's page would be lost with it.
+	 *
+	 * @return void
+	 */
+	public function testAValueTheColumnWouldRefuseIsDroppedNotWritten(): void {
+		$body = Yaml::parse($this->ownPubliccode());
+		$body['releaseDate'] = '2026-13-45';
+		$body['landingURL'] = 'not a url';
+		$body['logo'] = ['logo.png'];
+		$body['softwareType'] = ['standalone/web'];
+		$body['categories'] = ['collaboration', ['name' => 'not a string'], 'document-management'];
+		$body['platforms'] = ['web', 42];
+		$body['description'] = ['a list', 'not a map of languages'];
+		$body['maintenance'] = ['type' => ['internal'], 'contacts' => ['a bare string', ['name' => 'Someone']]];
+		$body['legal'] = ['license' => ['EUPL-1.2'], 'repoOwner' => 'Conduction'];
+
+		$component = $this->map(item: $this->item(yaml: Yaml::dump($body)));
+
+		foreach (['releaseDate', 'landingURL', 'logo', 'softwareType', 'description', 'maintenanceType', 'legalLicense'] as $dropped) {
+			$this->assertArrayNotHasKey($dropped, $component, $dropped);
+		}
+		$this->assertSame(['collaboration', 'document-management'], $component['categories']);
+		$this->assertSame(['web', '42'], $component['platforms']);
+		$this->assertSame([['name' => 'Someone']], $component['maintainers']);
+		$this->assertSame('Conduction', $component['legalRepoOwner']);
+		$this->assertSame('OpenCatalogi', $component['name'], 'The rest of the file still maps.');
+		$result = (new Validator())->validate(json_decode((string)json_encode($component)), $this->schema());
+		$this->assertTrue($result->isValid(), (string)json_encode($result->error()?->args()));
+	}//end testAValueTheColumnWouldRefuseIsDroppedNotWritten()
+
+	/**
+	 * A description keyed by language stays; a description that is a map of
+	 * something else is dropped.
+	 *
+	 * @return void
+	 */
+	public function testOnlyLanguageKeyedDescriptionsAreKept(): void {
+		$body = Yaml::parse($this->ownPubliccode());
+		$body['description'] = [
+			'nl' => ['shortDescription' => 'Kort'],
+			'en-GB' => ['shortDescription' => 'Short'],
+			'shortDescription' => 'a field where a language belongs',
+			'de' => 'plain text where a map belongs',
+		];
+		$component = $this->map(item: $this->item(yaml: Yaml::dump($body)));
+		$this->assertSame(['nl' => ['shortDescription' => 'Kort'], 'en-GB' => ['shortDescription' => 'Short']], $component['description']);
+	}//end testOnlyLanguageKeyedDescriptionsAreKept()
+
+	/**
 	 * A releaseDate that is not a date is dropped. It used to throw inside the
 	 * mapping and fail the whole run: one template repository on GitHub ships
 	 * `releaseDate: ${RELEASE_DATE}`.

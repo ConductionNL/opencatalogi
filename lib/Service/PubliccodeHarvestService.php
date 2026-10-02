@@ -499,6 +499,8 @@ class PubliccodeHarvestService {
 	 * @param object $run A FlowRun entity.
 	 *
 	 * @return array<string, mixed> The summary.
+	 *
+	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
 	 */
 	private static function runSummary(object $run): array {
 		return [
@@ -509,8 +511,37 @@ class PubliccodeHarvestService {
 			'updated' => self::atom(value: $run->getUpdated()),
 			'resumeAt' => self::atom(value: $run->getResumeAt()),
 			'error' => $run->getError(),
+			'failedSteps' => self::failedSteps(log: $run->getLog()),
 		];
 	}//end runSummary()
+
+	/**
+	 * How many steps of a run failed and were carried past by `onError: continue`.
+	 *
+	 * A shard whose write the schema refused ends with a failed step and the run
+	 * still reads as finished; without this count an administrator cannot tell
+	 * 24 clean shards from 24 shards of which three lost a page.
+	 *
+	 * @param mixed $log The run log, a list of step entries each with a `status`.
+	 *
+	 * @return int The number of entries whose status is `failed`.
+	 *
+	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-004-a-file-that-cannot-be-read-is-skipped-not-written
+	 */
+	private static function failedSteps(mixed $log): int {
+		if (is_array($log) === false) {
+			return 0;
+		}
+
+		$failed = 0;
+		foreach ($log as $entry) {
+			if (is_array($entry) === true && ($entry['status'] ?? null) === 'failed') {
+				$failed++;
+			}
+		}
+
+		return $failed;
+	}//end failedSteps()
 
 	/**
 	 * A date as ISO 8601, or null.
