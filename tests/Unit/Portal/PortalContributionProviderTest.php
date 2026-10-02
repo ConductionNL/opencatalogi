@@ -132,18 +132,10 @@ class PortalContributionProviderTest extends TestCase {
 	/**
 	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-notice-reaches-the-resident-through-portaliq-and-a-crash-sends-late-not-never-req-ssa-004
 	 */
-	public function testTheSavedSearchNoticeIsAChangeRule(): void {
-		$this->assertSame(
-			[
-				[
-					'ruleKey' => 'opencatalogi.savedSearch.matched',
-					'collection' => 'mySavedSearches',
-					'on' => ['field' => 'lastNotifiedAt', 'operator' => 'changed'],
-					'titleField' => 'title',
-				],
-			],
-			$this->manifest('citizen')['notifications']
-		);
+	public function testTheSavedSearchNoticeIsADeclaredRuleKeyNotAChangeRule(): void {
+		// opencatalogi writes the match message itself; a change rule on the
+		// saved search would add portaliq's generic "has been updated" notice.
+		$this->assertSame(['opencatalogi.savedSearch.matched'], $this->manifest('citizen')['notifications']);
 	}
 
 	public function testThePagesComposeOnlyOwnBlocks(): void {

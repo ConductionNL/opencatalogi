@@ -47,6 +47,27 @@ class FakePortalObjectStore extends PortalObjectStore {
 	 */
 	public array $saves = [];
 
+	/**
+	 * Every portal message written, in order.
+	 *
+	 * @var array<int, array<string, mixed>>
+	 */
+	public array $messages = [];
+
+	/**
+	 * Whether writing a portal message throws.
+	 *
+	 * @var bool
+	 */
+	public bool $failMessages = false;
+
+	/**
+	 * Every write, in order: `message` or `save:<schema>`.
+	 *
+	 * @var array<int, string>
+	 */
+	public array $writes = [];
+
 	private int $sequence = 0;
 
 	/**
@@ -73,7 +94,17 @@ class FakePortalObjectStore extends PortalObjectStore {
 		$data['id'] = $id;
 		$this->objects[$schema][$id] = $data;
 		$this->saves[] = ['schema' => $schema, 'data' => $data];
+		$this->writes[] = 'save:'.$schema;
 		return $data;
+	}
+
+	public function writePortalMessage(array $message): void {
+		if ($this->failMessages === true) {
+			throw new RuntimeException('message write failed');
+		}
+
+		$this->messages[] = $message;
+		$this->writes[] = 'message';
 	}
 
 	public function delete(string $schema, string $id): bool {

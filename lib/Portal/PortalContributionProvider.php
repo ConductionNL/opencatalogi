@@ -154,14 +154,10 @@ class PortalContributionProvider {
 			],
 			'actions' => array_merge($this->dossierActions(), $this->savedSearchActions()),
 			'pages' => $this->pages(),
-			'notifications' => [
-				[
-					'ruleKey' => self::RULE_SAVED_SEARCH_MATCHED,
-					'collection' => 'mySavedSearches',
-					'on' => ['field' => 'lastNotifiedAt', 'operator' => 'changed'],
-					'titleField' => 'title',
-				],
-			],
+			// A declared rule key, not a change rule: opencatalogi writes the
+			// match message itself (SavedSearchNoticeWriter), so portaliq sends
+			// its e-mail. A change rule would add a generic notice per save.
+			'notifications' => [self::RULE_SAVED_SEARCH_MATCHED],
 		];
 
 	}//end getContribution()

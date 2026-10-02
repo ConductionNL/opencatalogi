@@ -51,6 +51,16 @@ class PortalObjectStore {
 	public const PUBLICATION_SCHEMA = 'publication';
 
 	/**
+	 * The register of the resident's portal inbox (portaliq's own).
+	 */
+	public const PORTAL_MESSAGE_REGISTER = 'portaliq';
+
+	/**
+	 * The schema of one message in the resident's portal inbox.
+	 */
+	public const PORTAL_MESSAGE_SCHEMA = 'portalMessage';
+
+	/**
 	 * The most rows one owner query returns.
 	 */
 	private const OWNER_LIMIT = 1000;
@@ -141,6 +151,34 @@ class PortalObjectStore {
 		return $saved;
 
 	}//end save()
+
+	/**
+	 * Write a message into the resident's portal inbox (portaliq's
+	 * `portalMessage`), as the system. portaliq sends the e-mail for it when
+	 * the message carries a rule key this app declares.
+	 *
+	 * @param array<string, mixed> $message The message: subjectRef, subject, body, ruleKey, recordLink.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the message was not stored.
+	 *
+	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-notice-reaches-the-resident-through-portaliq-and-a-crash-sends-late-not-never-req-ssa-004
+	 */
+	public function writePortalMessage(array $message): void {
+		$entity = $this->objectService()->saveObject(
+			object: $message,
+			register: self::PORTAL_MESSAGE_REGISTER,
+			schema: self::PORTAL_MESSAGE_SCHEMA,
+			_rbac: false,
+			_multitenancy: false
+		);
+
+		if ($this->toArray(entity: $entity) === null) {
+			throw new RuntimeException('OpenRegister returned nothing for the portal message');
+		}
+
+	}//end writePortalMessage()
 
 	/**
 	 * Delete an object as the system.
