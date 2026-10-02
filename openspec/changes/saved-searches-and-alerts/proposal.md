@@ -16,7 +16,7 @@ Ruben decided on 30 September 2026: alerts reach the portal inbox and email, dai
 - A new schema `savedSearch` in the `publication` register, shaped as contract C2: `title`, `owner`, `query`, `frequency`, `active`, `lastRunAt`, `lastNotifiedAt`. The job also writes `lastMatches` and `matchCount`, so the notice has something to open.
 - Portal actions for `citizen` and `client`: `saveSearch` (from the search block), `updateSavedSearch`, `pauseSavedSearch`, `deleteSavedSearch`, a collection `mySavedSearches` and a page "Mijn zoekopdrachten".
 - `SavedSearchMatchingJob`, every 15 minutes: `immediate` searches every run, `daily` once after 07:00, `weekly` on Monday after 07:00. It runs each query through the same anonymous path as `GET /api/search` and keeps only publications that became public since `lastRunAt`.
-- The notice goes through portaliq's change rule: opencatalogi declares `opencatalogi.savedSearch.matched` on `lastNotifiedAt` of `mySavedSearches`. portaliq writes the inbox message and sends email and push by the resident's preferences.
+- opencatalogi writes the notice itself as a `portalMessage` with the rule key `opencatalogi.savedSearch.matched`, which its manifest declares, so portaliq sends the e-mail by the resident's preferences. (The first version used a change rule on `lastNotifiedAt`; its generic notice named no publication, see design D4.)
 
 ## Hydra requirements implemented
 
@@ -26,7 +26,7 @@ Ruben decided on 30 September 2026: alerts reach the portal inbox and email, dai
 
 ## Deviations from the contract, found in the code
 
-- C3 says the sender writes a `portalMessage`. portaliq does not send email for a message another app writes today: `PortalRecordChangeListener::onCreated()` skips portaliq's own messages, and `portalMessage` has no rule key (the portaliq lane adds an optional one). The path that delivers today, and stays valid, is a change rule in the sender's manifest, which portaliq turns into the inbox message plus the email and push dispatch. opencatalogi uses that path and keeps the contract's rule key.
+- C3 says the sender writes a `portalMessage`. portaliq does not send email for a message another app writes today: `PortalRecordChangeListener::onCreated()` skips portaliq's own messages, and `portalMessage` has no rule key (the portaliq lane adds an optional one). The path that delivers today, and stays valid, is a change rule in the sender's manifest, which portaliq turns into the inbox message plus the email and push dispatch. opencatalogi uses that path and keeps the contract's rule key. Since 2 October portaliq sends the e-mail for a message another app writes with a declared rule key, so opencatalogi now writes the message itself (design D4).
 - `lastMatches` (at most 20 `{ publication, title, url, publicationDate }`) and `matchCount` are added to C2. portaliq's change-rule message carries no body of the sender's, so the saved search itself lists what was found.
 - One-click unsubscribe (J6.5) is `pauseSavedSearch` on the saved search the notice opens. portaliq's email carries no sender content, so a signed link in the email is not possible on this path.
 

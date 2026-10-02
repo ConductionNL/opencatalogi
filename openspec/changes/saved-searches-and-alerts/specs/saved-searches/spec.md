@@ -64,7 +64,26 @@ The job SHALL run every 15 minutes. `immediate` searches SHALL be handled every 
 
 Implements hydra `woo-citizen-journey`: Every answer, decision and alert MUST reach the resident through portaliq's notice path.
 
-opencatalogi's manifest SHALL declare the change rule `opencatalogi.savedSearch.matched` on field `lastNotifiedAt` of `mySavedSearches`. A notice SHALL be handed over by saving the new `lastNotifiedAt`. `lastRunAt` SHALL move to the end of the window only in the save of the last notice, or alone when nothing matched. When portaliq is not installed the job SHALL do nothing and SHALL NOT fail.
+For each notice opencatalogi SHALL write a `portalMessage` into portaliq's register for the search's owner, with the rule key `opencatalogi.savedSearch.matched` and a `recordLink` to the saved search in `mySavedSearches`. The subject SHALL name the search, and the publication when the notice holds one. The subject and body SHALL be in Dutch only. The body SHALL list each publication with its link, and say how many more there are past twenty. opencatalogi's manifest SHALL declare the rule key as a plain key, and SHALL NOT declare a change rule on the saved search, so saving the search's own bookkeeping never sends a notice. `lastRunAt` SHALL move to the end of the window only in the save after the last message, or alone when nothing matched. When portaliq is not installed the job SHALL do nothing and SHALL NOT fail.
+
+#### Scenario: One message per new publication for an immediate search
+
+- **GIVEN** an immediate saved search "Windpark" of subject `subject-1` and two new matching publications
+- **WHEN** the job runs
+- **THEN** two messages are written for `subject-1`, each with rule key `opencatalogi.savedSearch.matched`
+- **AND** the first has subject `Nieuwe publicatie voor uw zoekopdracht "Windpark": Publicatie p1` and a link to the saved search
+
+#### Scenario: A digest is one message
+
+- **GIVEN** a weekly saved search with 25 new matches
+- **WHEN** the job runs on Monday after 07:00
+- **THEN** one message is written with subject `25 nieuwe publicaties voor uw zoekopdracht "Windpark"`, twenty publication lines and the line `En nog 5. Zoek opnieuw om ze allemaal te zien.`
+
+#### Scenario: The message cannot be written
+
+- **GIVEN** an immediate saved search with a new match
+- **WHEN** writing the message throws
+- **THEN** the saved search is not saved, `lastRunAt` is unchanged, and the next run writes the message
 
 #### Scenario: The save of a notice fails
 
@@ -72,8 +91,8 @@ opencatalogi's manifest SHALL declare the change rule `opencatalogi.savedSearch.
 - **WHEN** saving the notice throws
 - **THEN** `lastRunAt` is unchanged and the next run finds the same matches
 
-#### Scenario: The manifest declares the rule
+#### Scenario: The manifest declares the rule key, not a change rule
 
 - **GIVEN** a subject with audience `citizen`
 - **WHEN** portaliq asks for opencatalogi's contribution
-- **THEN** its notifications hold the rule `opencatalogi.savedSearch.matched` on `lastNotifiedAt`
+- **THEN** its notifications are exactly `["opencatalogi.savedSearch.matched"]`

@@ -14,3 +14,7 @@
 ## 3. Docs
 
 - [x] 3.1 Dutch and English strings, `openspec validate saved-searches-and-alerts --strict`.
+
+## 4. The match message (found while filming J6, 2 October)
+
+- [x] 4.1 `SavedSearchNoticeWriter` writes one Dutch `portalMessage` per notice with the rule key and a link to the search; the manifest declares the key without a change rule (REQ-SSA-004). Verify: `tests/Unit/Service/Portal/SavedSearchMatcherTest.php`, `tests/Unit/Service/Portal/PortalObjectStoreMessageTest.php`, `tests/Unit/Portal/PortalContributionProviderTest.php`.

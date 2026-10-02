@@ -12,12 +12,14 @@
  * - A match is a `publication` from the anonymous public search whose
  *   `publicationDate` lies after `lastRunAt` and at or before now, and that is
  *   public now.
- * - The notice is a save that changes `lastNotifiedAt`. opencatalogi's portal
- *   manifest declares the change rule `opencatalogi.savedSearch.matched` on
- *   that field, so portaliq writes the inbox message and sends email and push
- *   by the resident's preferences. `lastMatches` holds what was found.
- * - `lastRunAt` moves only in the save of the last notice (or alone when there
- *   was nothing), so a failure sends late, never not at all.
+ * - The notice is a message in the resident's portal inbox, written by
+ *   SavedSearchNoticeWriter with the rule key `opencatalogi.savedSearch.matched`,
+ *   which the portal manifest declares, so portaliq also sends the e-mail by
+ *   the resident's preferences. The save after it records `lastNotifiedAt`,
+ *   and `lastMatches` holds what was found. That save is bookkeeping: no
+ *   change rule listens to it, so it tells the resident nothing.
+ * - `lastRunAt` moves only in the save after the last message (or alone when
+ *   there was nothing), so a failure sends late, never not at all.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service\Portal
@@ -36,7 +38,6 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Portal;
 
 use DateTimeImmutable;
-use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SearchQueryTranslator;
@@ -89,6 +90,7 @@ class SavedSearchMatcher {
 	 * @param PublicSearchRunner      $search       The anonymous public search.
 	 * @param PublicationLinker       $linker       The public link to a publication.
 	 * @param PublicationQueryService $publications The public-ness rule.
+	 * @param SavedSearchNoticeWriter $notices      Writes the message to the resident.
 	 * @param LoggerInterface         $logger       The logger.
 	 */
 	public function __construct(
@@ -96,6 +98,7 @@ class SavedSearchMatcher {
 		private readonly PublicSearchRunner $search,
 		private readonly PublicationLinker $linker,
 		private readonly PublicationQueryService $publications,
+		private readonly SavedSearchNoticeWriter $notices,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -254,7 +257,8 @@ class SavedSearchMatcher {
 	}//end inWindow()
 
 	/**
-	 * Save the notices, and move `lastRunAt` in the last save.
+	 * Write each notice's message, then record it on the saved search, and
+	 * move `lastRunAt` in the save after the last message.
 	 *
 	 * @param array<string, mixed>             $saved   The saved search.
 	 * @param array<int, array<string, mixed>> $matches The matches.
@@ -281,6 +285,9 @@ class SavedSearchMatcher {
 
 		$last = (count($batches) - 1);
 		foreach ($batches as $index => $batch) {
+			// The message first: when it fails, nothing below moves, and the
+			// next run finds the same matches.
+			$this->notices->write(saved: $saved, batch: $batch, count: $counts[$index]);
 			$saved['lastMatches'] = $batch;
 			$saved['matchCount'] = $counts[$index];
 			$saved['lastNotifiedAt'] = $this->stamp();
@@ -321,7 +328,7 @@ class SavedSearchMatcher {
 	 * @return string
 	 */
 	private function utc(DateTimeImmutable $moment): string {
-		return $moment->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM);
+		return $moment->setTimezone(new DateTimeZone('UTC'))->format(DATE_ATOM);
 
 	}//end utc()
 

@@ -48,22 +48,22 @@ The job does nothing when portaliq is not installed. Nobody can own a saved sear
 
 ## D4 · The notice (C3)
 
-The manifest declares, for both audiences:
+The manifest declares the rule key, for both audiences, as a plain key and not as a change rule:
 
 ```php
-'notifications' => [
-    ['ruleKey' => 'opencatalogi.savedSearch.matched', 'collection' => 'mySavedSearches',
-     'on' => ['field' => 'lastNotifiedAt', 'operator' => 'changed'], 'titleField' => 'title'],
-],
+'notifications' => ['opencatalogi.savedSearch.matched'],
 ```
 
-portaliq's `PortalRecordChangeListener` sees the update, writes the inbox message linking to the saved search, and dispatches the rule key, which sends email and push by the resident's preferences.
+opencatalogi writes the message itself (`SavedSearchNoticeWriter`), as C3 describes: a `portalMessage` in portaliq's register with `subjectRef` (the search's `owner`), `subject`, `body`, `read: false`, `receivedAt`, `ruleKey: opencatalogi.savedSearch.matched` and `recordLink: {app: opencatalogi, collection: mySavedSearches, id}`. portaliq's listener sees a new message with a rule key this app declares, and sends the e-mail by the resident's preferences (portaliq `woo-journey-entry-points` D4).
 
-- `immediate`: one save per publication, each with `lastMatches: [that one]`, `matchCount: 1` and a new `lastNotifiedAt`.
-- `daily`, `weekly`: one save with the first 20 matches in `lastMatches`, `matchCount` the total, a new `lastNotifiedAt`.
-- `lastNotifiedAt` carries microseconds, so two notices in one second are still two changes.
-- No match: only `lastRunAt` moves, so no notice.
-- `lastRunAt` moves to the end of the window in the same save as the last notice. A crash before it sends late, never not at all.
+- `immediate`: one message per publication. The subject names the search and the publication: `Nieuwe publicatie voor uw zoekopdracht "<search>": <publication>`.
+- `daily`, `weekly`: one message with the first 20 matches, each as a line with its title and link. The subject gives the count, `<n> nieuwe publicaties voor uw zoekopdracht "<search>"`, or names the publication when there is one. Past 20 the body says how many more there are.
+- The message is Dutch only. A Woo portal speaks Dutch, and opencatalogi does not know the resident's language.
+- After the message, the job saves `lastMatches`, `matchCount` and a new `lastNotifiedAt` on the saved search. That save is bookkeeping, and nothing listens to it.
+- No match: only `lastRunAt` moves, so no message.
+- `lastRunAt` moves to the end of the window in the save after the last message. A failed message stops the run for that search, so it sends late, never not at all. A crash between a message and its save can send that message twice; twice is better than never.
+
+Why not the change rule (the first version of this design): portaliq's change-rule notice is generic. It said "<search> is bijgewerkt / <search> has been updated" in two languages, with no publication in it, so a resident with six matches got six identical messages that named nothing (found while filming J6, 2 October).
 
 ## D5 · Portal actions
 

@@ -1289,7 +1289,12 @@
         "Last run started {started} and stopped: {error}": "De laatste run startte {started} en stopte: {error}",
         "Last run started {started} and finished.": "De laatste run startte {started} en is klaar.",
         "Last run started {started} and is still running.": "De laatste run startte {started} en loopt nog.",
-        "The GitHub harvest status could not be loaded.": "De status van de GitHub-harvest kon niet worden geladen."
+        "The GitHub harvest status could not be loaded.": "De status van de GitHub-harvest kon niet worden geladen.",
+        "New publication for your search \"%1$s\": %2$s": "Nieuwe publicatie voor uw zoekopdracht \"%1$s\": %2$s",
+        "%1$d new publications for your search \"%2$s\"": "%1$d nieuwe publicaties voor uw zoekopdracht \"%2$s\"",
+        "These publications match your search \"%1$s\".": "Deze publicaties passen bij uw zoekopdracht \"%1$s\".",
+        "A new publication matches your search \"%1$s\".": "Er is een nieuwe publicatie die past bij uw zoekopdracht \"%1$s\".",
+        "And %1$d more. Search again to see them all.": "En nog %1$d. Zoek opnieuw om ze allemaal te zien."
     },
     "plurals": {}
 }

@@ -1335,7 +1335,12 @@ OC.L10N.register(
         "Last run started {started} and stopped: {error}": "Last run started {started} and stopped: {error}",
         "Last run started {started} and finished.": "Last run started {started} and finished.",
         "Last run started {started} and is still running.": "Last run started {started} and is still running.",
-        "The GitHub harvest status could not be loaded.": "The GitHub harvest status could not be loaded."
+        "The GitHub harvest status could not be loaded.": "The GitHub harvest status could not be loaded.",
+        "New publication for your search \"%1$s\": %2$s": "New publication for your search \"%1$s\": %2$s",
+        "%1$d new publications for your search \"%2$s\"": "%1$d new publications for your search \"%2$s\"",
+        "These publications match your search \"%1$s\".": "These publications match your search \"%1$s\".",
+        "A new publication matches your search \"%1$s\".": "A new publication matches your search \"%1$s\".",
+        "And %1$d more. Search again to see them all.": "And %1$d more. Search again to see them all."
     },
     "nplurals=2; plural=(n != 1);"
 )
