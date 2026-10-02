@@ -66,6 +66,20 @@ class PortalContributionProvider {
 	public const RULE_SAVED_SEARCH_MATCHED = 'opencatalogi.savedSearch.matched';
 
 	/**
+	 * The menu heading over the resident's dossiers and saved searches (portaliq `group`).
+	 */
+	public const GROUP = 'Openbare informatie';
+
+	/**
+	 * What a resident reads for how often a saved search tells them, per stored value.
+	 */
+	public const FREQUENCY_LABELS = [
+		'immediate' => 'Direct',
+		'daily' => 'Dagelijks',
+		'weekly' => 'Wekelijks',
+	];
+
+	/**
 	 * The audiences served. DigiD currently maps to `client`.
 	 */
 	private const AUDIENCES = ['citizen', 'client'];
@@ -147,7 +161,7 @@ class PortalContributionProvider {
 		}
 
 		return [
-			'label' => 'Openbare informatie',
+			'label' => self::GROUP,
 			'collections' => [
 				$this->dossierCollection(),
 				$this->savedSearchCollection(),
@@ -212,7 +226,7 @@ class PortalContributionProvider {
 			'fields' => ['title', 'query', 'frequency', 'active', 'lastNotifiedAt', 'lastMatches', 'matchCount'],
 			'columns' => [
 				['field' => 'title', 'label' => 'Zoekopdracht'],
-				['field' => 'frequency', 'label' => 'Hoe vaak', 'render' => 'badge'],
+				['field' => 'frequency', 'label' => 'Hoe vaak', 'render' => 'badge', 'valueLabels' => self::FREQUENCY_LABELS],
 				['field' => 'active', 'label' => 'Actief', 'render' => 'boolean'],
 				['field' => 'lastNotifiedAt', 'label' => 'Laatste bericht', 'render' => 'datetime'],
 			],
@@ -301,9 +315,9 @@ class PortalContributionProvider {
 					'frequency' => [
 						'type' => 'static',
 						'options' => [
-							['value' => 'immediate', 'label' => 'Direct'],
-							['value' => 'daily', 'label' => 'Elke dag'],
-							['value' => 'weekly', 'label' => 'Elke week'],
+							['value' => 'immediate', 'label' => self::FREQUENCY_LABELS['immediate']],
+							['value' => 'daily', 'label' => self::FREQUENCY_LABELS['daily']],
+							['value' => 'weekly', 'label' => self::FREQUENCY_LABELS['weekly']],
 						],
 					],
 				],
@@ -352,11 +366,12 @@ class PortalContributionProvider {
 			[
 				'id' => 'dossiers',
 				'label' => 'Mijn dossiers',
+				'group' => self::GROUP,
 				'icon' => 'FolderStar',
 				'blocks' => [
 					[
 						'type' => 'richText',
-						'markdown' => "## Mijn dossiers\nBewaar openbare documenten in uw eigen dossier. Alleen u ziet het, tot u een deellink maakt.",
+						'markdown' => "Bewaar openbare documenten in uw eigen dossier. Alleen u ziet het, tot u een deellink maakt.",
 					],
 					['type' => 'action', 'action' => 'createDossier'],
 					['type' => 'collection', 'collection' => 'myDossiers'],
@@ -368,11 +383,12 @@ class PortalContributionProvider {
 			[
 				'id' => 'zoekopdrachten',
 				'label' => 'Mijn zoekopdrachten',
+				'group' => self::GROUP,
 				'icon' => 'BellRing',
 				'blocks' => [
 					[
 						'type' => 'richText',
-						'markdown' => "## Mijn zoekopdrachten\nU krijgt bericht als er nieuwe documenten zijn die bij uw zoekopdracht passen.",
+						'markdown' => "U krijgt bericht als er nieuwe documenten zijn die bij uw zoekopdracht passen.",
 					],
 					['type' => 'collection', 'collection' => 'mySavedSearches'],
 				],
