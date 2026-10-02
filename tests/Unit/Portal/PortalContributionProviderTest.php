@@ -207,4 +207,39 @@ class PortalContributionProviderTest extends TestCase {
 			}
 		}
 	}
+	/**
+	 * Both pages sit under one menu group, and each shows its name once.
+	 *
+	 * The page's own heading names it; a collection named like its page is
+	 * titled by that heading alone (portaliq ContributionPage showsHeading).
+	 * A `##` line in the intro printed the name a second time.
+	 *
+	 * @spec openspec/changes/saved-search-link-to-the-site/specs/saved-searches/spec.md#requirement-the-portal-pages-name-their-group-and-say-their-name-once
+	 */
+	public function testThePagesShareAGroupAndSayTheirNameOnce(): void {
+		foreach ($this->manifest('citizen')['pages'] as $page) {
+			$this->assertSame('Openbare informatie', $page['group'], $page['id']);
+			foreach ($page['blocks'] as $block) {
+				if ($block['type'] === 'richText') {
+					$this->assertStringNotContainsString('#', $block['markdown'], $page['id']);
+				}
+			}
+		}
+	}
+
+	/**
+	 * A resident reads how often they hear about a search in words, in the list, the card and the form.
+	 *
+	 * @spec openspec/changes/saved-search-link-to-the-site/specs/saved-searches/spec.md#requirement-the-frequency-reads-in-words
+	 */
+	public function testTheFrequencyReadsInWords(): void {
+		$manifest = $this->manifest('citizen');
+		$words = ['immediate' => 'Direct', 'daily' => 'Dagelijks', 'weekly' => 'Wekelijks'];
+
+		$columns = array_column($this->byId($manifest['collections'])['mySavedSearches']['columns'], null, 'field');
+		$this->assertSame($words, $columns['frequency']['valueLabels']);
+
+		$options = $this->byId($manifest['actions'])['updateSavedSearch']['optionsProviders']['frequency']['options'];
+		$this->assertSame($words, array_column($options, 'label', 'value'));
+	}
 }
