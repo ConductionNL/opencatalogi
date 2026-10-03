@@ -56,7 +56,24 @@ use ReflectionClass;
  * WOO-551: signatures mirror the current OR API after commit `31687c6f3`
  * removed the `_rbacAsPublic` primitive — see the file docblock.
  */
-class FakeSearchObjectService {
+/**
+ * An OpenRegister WITHOUT `runAsAnonymous()` — the API before WOO-578. The
+ * service must keep working against it (WOO-551 lesson) and say so in the log.
+ */
+class FakeLegacySearchObjectService {
+
+	/**
+	 * Anonymous-scope nesting depth, maintained by the subclass that implements
+	 * `runAsAnonymous()`. Stays zero on this legacy fake, which has no such method.
+	 */
+	public int $scopeDepth = 0;
+
+	/**
+	 * Every read that ran with `scopeDepth === 0`. This is the real WOO-578
+	 * assertion: counting scopes proves a method was called, this proves each
+	 * READ was inside one. An unwrapped callsite lands here by name.
+	 */
+	public array $readsOutsideScope = [];
 
 	/** @var array<int, array<string, mixed>> Captured (query, flags) per invocation. */
 	public array $capturedCalls = [];
@@ -78,6 +95,10 @@ class FakeSearchObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): array {
+		if ($this->scopeDepth === 0) {
+			$this->readsOutsideScope[] = 'searchObjectsPaginated';
+		}
+
 		$this->capturedCalls[] = [
 			'query'         => $query,
 			'_rbac'         => $_rbac,
@@ -106,6 +127,10 @@ class FakeSearchObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): ?array {
+		if ($this->scopeDepth === 0) {
+			$this->readsOutsideScope[] = 'find';
+		}
+
 		return $this->findResponses[$id] ?? null;
 	}
 }
@@ -114,6 +139,24 @@ class FakeSearchObjectService {
  * Fake OC CatalogiService double so `resolveCatalogScope` can enumerate
  * a canned catalog set without touching the DB.
  */
+/**
+ * An OpenRegister WITH `runAsAnonymous()` (WOO-578): counts how often the
+ * service asked for an anonymous evaluation and runs the read inside it.
+ */
+class FakeSearchObjectService extends FakeLegacySearchObjectService {
+	public int $anonymousScopes = 0;
+
+	public function runAsAnonymous(callable $operation): mixed {
+		$this->anonymousScopes++;
+		$this->scopeDepth++;
+		try {
+			return $operation();
+		} finally {
+			$this->scopeDepth--;
+		}
+	}
+}
+
 class FakeCatalogiService {
 
 	/** @var array<string, array<string, mixed>> Catalogs to return, keyed by slug. */
@@ -214,6 +257,59 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame(['outer' => ['keep' => 'x']], $this->service->stripEmptyValues($in));
 	}
 
+	/**
+	 * REQ-SCF-002: a range bound that is neither a date nor a number is named.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	public function testMalformedRangeParameterNamesTheBadBound(): void {
+		$this->assertSame(
+			'meetingDate[gte]',
+			\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter(['meetingDate' => ['gte' => 'tomorrow-ish', 'lte' => '2026-06-30']])
+		);
+		$this->assertSame(
+			'meetingDate[lte]',
+			\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter(['meetingDate' => ['gte' => '2026-04-01', 'lte' => '30-06-2026']])
+		);
+	}
+
+	/**
+	 * REQ-SCF-001/002: the council filters and a well-formed range pass.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	public function testWellFormedFiltersAndRangesPass(): void {
+		$this->assertNull(\OCA\OpenCatalogi\Service\SearchRangeGuard::malformedParameter([
+			'documentType' => 'minutes',
+			'bodyName' => 'Gemeenteraad',
+			'meetingDate' => ['gte' => '2026-04-01', 'lte' => '2026-06-30T23:59:59+02:00'],
+			'count' => ['gt' => '3'],
+			'_order' => ['updated' => 'desc'],
+		]));
+	}
+
+	/**
+	 * REQ-SCF-002: the scope strip keeps the three council filters.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	public function testTheScopeStripKeepsTheCouncilFilters(): void {
+		$fake = $this->wireHappyPath();
+		$this->service->assemblePublicSearchResults(
+			queryParams: $this->withDefaultCatalog([
+				'documentType' => 'minutes',
+				'bodyName' => 'Gemeenteraad',
+				'meetingDate' => ['gte' => '2026-04-01', 'lte' => '2026-06-30'],
+			]),
+			objectService: $fake
+		);
+
+		$query = $fake->capturedCalls[0]['query'];
+		$this->assertSame('minutes', $query['documentType']);
+		$this->assertSame('Gemeenteraad', $query['bodyName']);
+		$this->assertSame(['gte' => '2026-04-01', 'lte' => '2026-06-30'], $query['meetingDate']);
+	}
+
 	public function testNormalizeIdsAcceptsJsonStringAndArrayAndCastsToInt(): void {
 		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', ['[1,2]']));
 		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', ['["1","2"]']));
@@ -284,7 +380,69 @@ class PublicationQueryServiceTest extends TestCase {
 		$first = $fake->capturedCalls[0];
 		$this->assertTrue($first['_rbac'], '_rbac must be true');
 		$this->assertFalse($first['_multitenancy'], 'multitenancy must be false on public endpoint');
-		$this->assertArrayNotHasKey('_rbacAsPublic', $first, 'WOO-551: `_rbacAsPublic` must no longer be forwarded — primitive removed on OR main');
+		$this->assertArrayNotHasKey('_rbacAsPublic', $first, 'WOO-578: anonymity is a scope on OR, never a query key');
+	}
+
+	/**
+	 * SCH-PFTS-001 / WOO-578: every OR read behind the public search runs inside
+	 * OR's anonymous scope, so a signed-in administrator gets the same rows and
+	 * the same `total` as an anonymous caller.
+	 */
+	public function testAssembleEvaluatesTheSearchAsAnAnonymousCaller(): void {
+		$fake = $this->wireHappyPath();
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+		$this->assertNotEmpty($fake->capturedCalls, 'searchObjectsPaginated was not called');
+		$this->assertSame([], $fake->readsOutsideScope, 'every OR read must run inside runAsAnonymous()');
+		$this->assertTrue($fake->capturedCalls[0]['_rbac'], '_rbac stays on: the public read rules ARE the filter');
+	}
+
+	/**
+	 * A document row drives a further OR read (the relations refinement).
+	 * Counting scopes cannot tell whether it ran inside one; `readsOutsideScope`
+	 * can, and the row loop has to actually execute for it to be reached at all.
+	 * Unwrap that callsite and this test names it.
+	 */
+	public function testEveryReadBehindADocumentRowAlsoRunsInsideTheScope(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-uuid-anon', 'schema' => 2, 'relations' => ['organization' => 'x']],
+			'title' => 'A document',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+			// The per-document refinement: no publicly visible publication -> drop.
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+
+		$this->assertGreaterThan(1, count($fake->capturedCalls), 'the document row must drive a second OR read');
+		$this->assertSame([], $fake->readsOutsideScope, 'the refinement read must run inside runAsAnonymous() too');
+	}
+
+	/**
+	 * WOO-551 lesson: a hard dependency on an OR primitive took `/api/search`
+	 * down with `Unknown named parameter`. Against an OpenRegister without
+	 * `runAsAnonymous()` the search still answers — with the caller's session,
+	 * and a warning that says so.
+	 */
+	public function testAssembleStillAnswersOnAnOpenRegisterWithoutTheAnonymousScope(): void {
+		$legacy = new FakeLegacySearchObjectService();
+		$legacy->queuedResponses = [['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []]];
+		$this->wireHappyPath();
+		// `error`, not `warning`: the contract is silently not being kept, and a
+		// warning is routinely filtered on a busy public deployment.
+		$this->logger->expects($this->once())
+			->method('error')
+			->with($this->stringContains('runAsAnonymous'));
+		$result = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $legacy);
+		$this->assertNotEmpty($legacy->capturedCalls, 'the read must still reach OpenRegister');
+		// And the tracker is not vacuously empty: on an OpenRegister WITHOUT the
+		// scope the very same read is recorded as having run outside one. Without
+		// this, `assertSame([], $fake->readsOutsideScope)` elsewhere would pass
+		// even if the recording never fired.
+		$this->assertSame(['searchObjectsPaginated'], $legacy->readsOutsideScope, 'the legacy path runs with the caller session, by design');
+		$this->assertSame(0, $result['total']);
 	}
 
 	/**
@@ -321,6 +479,241 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertArrayHasKey('_schemas', $captured);
 		$this->assertContains(1, $captured['_schemas']);
 	}
+
+	/**
+	 * The query OR's `buildSearchQuery()` makes of an anonymous
+	 * `?schema=56&register=20&@self[owner]=alice&_register=99`: `schema` and
+	 * `register` land in `@self`, where MagicMapper prefers them over `_schemas`.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function callerScopeOverride(): array {
+		return [
+			'@self'     => ['schema' => 56, 'register' => 20, 'schemas' => [56], 'registers' => [20], 'owner' => 'alice'],
+			'schema'    => 56,
+			'register'  => 20,
+			'_register' => 99,
+			'_schemas'  => [56],
+		];
+	}
+
+	/**
+	 * WOO-581 review f2: on `/api/search` a caller's `schema=` / `register=`
+	 * reached OR as `@self.schema`, won the precedence chain over the guarded
+	 * `_schemas` and read a schema without an `authorization` block — even one
+	 * in no catalog. Every scope key goes; non-scope `@self` filters stay.
+	 *
+	 * @return void
+	 */
+	public function testAssembleStripsACallerSuppliedSchemaAndRegister(): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog($this->callerScopeOverride()), $fake);
+
+		$captured = $fake->capturedCalls[0]['query'];
+		$this->assertSame(['owner' => 'alice'], $captured['@self']);
+		$this->assertArrayNotHasKey('schema', $captured);
+		$this->assertArrayNotHasKey('register', $captured);
+		$this->assertSame([1, 2], $captured['_schemas']);
+		$this->assertSame(1, $captured['_register']);
+	}//end testAssembleStripsACallerSuppliedSchemaAndRegister()
+
+	/**
+	 * WOO-581 review f2, `/api/{catalogSlug}`: the guarded catalog is the scope,
+	 * whatever `schema=` / `register=` the caller sends.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryStripsACallerSuppliedSchemaAndRegister(): void {
+		$fake = new FakeSearchObjectService();
+
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [28], 'registers' => [20]],
+			queryParams: $this->callerScopeOverride(),
+			objectService: $fake
+		);
+
+		$this->assertSame(['owner' => 'alice'], $query['@self']);
+		$this->assertArrayNotHasKey('schema', $query);
+		$this->assertArrayNotHasKey('register', $query);
+		$this->assertSame([28], $query['_schemas']);
+		$this->assertSame(28, $query['_schema']);
+		$this->assertSame(20, $query['_register']);
+	}//end testCatalogSearchQueryStripsACallerSuppliedSchemaAndRegister()
+
+	/**
+	 * A scalar `@self` (`?@self=x`) is not a filter set; it goes rather than
+	 * reaching OR, which would read `@self['schema']` off a string.
+	 *
+	 * @return void
+	 */
+	public function testStripCallerScopeDropsANonArraySelf(): void {
+		$this->assertSame(['_limit' => 5], \OCA\OpenCatalogi\Service\CallerScope::strip(query: ['@self' => 'x', '_limit' => 5, '_schema' => 56]));
+	}//end testStripCallerScopeDropsANonArraySelf()
+
+	/**
+	 * Catalog shapes for {@see testCatalogSearchQueryNeverEmitsAScalarSchemaWithoutAScalarRegister()}.
+	 *
+	 * @return array<string, array{0: array<int, int>|string, 1: bool}>
+	 */
+	public static function catalogRegisterShapes(): array {
+		return [
+			'one register'         => [[20], true],
+			'several registers'    => [[20, 21], false],
+			'no register'          => [[], false],
+			'JSON-string, several' => ['[20,21]', false],
+		];
+	}
+
+	/**
+	 * WOO-581 review round 2 (f1/f6): a scalar `_schema` without a scalar
+	 * register takes neither OR's multi-schema route nor its single-schema one,
+	 * and a caller's `_ids` then reaches the all-tables lookup. `_schema` is only
+	 * set for ONE schema in ONE register; every other shape leaves the scope to
+	 * `_schemas` (OR's multi-schema route resolves each schema's register).
+	 *
+	 * @dataProvider catalogRegisterShapes
+	 *
+	 * @param array<int, int>|string $registers     The catalog's registers.
+	 * @param bool                   $scalarSchema  Whether `_schema` is expected.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryNeverEmitsAScalarSchemaWithoutAScalarRegister(array|string $registers, bool $scalarSchema): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [28], 'registers' => $registers],
+			queryParams: ['_ids' => ['uuid-x']],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame([28], $query['_schemas']);
+		$this->assertSame($scalarSchema, array_key_exists('_schema', $query));
+		if ($scalarSchema === true) {
+			$this->assertSame(20, $query['_register']);
+		}
+	}//end testCatalogSearchQueryNeverEmitsAScalarSchemaWithoutAScalarRegister()
+
+	/**
+	 * WOO-581 review round 2 (f3): the rows of a relation result go through the
+	 * read-rule guard for an anonymous caller. A row of a schema without an
+	 * `authorization` block goes, a row without a numeric schema id goes (fail
+	 * closed), a row of a ruled schema stays — whether or not that schema is in
+	 * any catalog. `total` drops by the rows removed from this page.
+	 *
+	 * @return void
+	 */
+	public function testRowGuardDropsRowsOfSchemasWithoutReadRulesForAnAnonymousCaller(): void {
+		$this->wireHappyPath(authorizationById: [56 => null]);
+		$entity = new class {
+			public function jsonSerialize(): array { return ['id' => 'doc-entity', '@self' => ['schema' => 3]]; }
+		};
+
+		$out = $this->service->applyReadRuleGuardToRows(result: [
+			'results' => [
+				['id' => 'doc-ok', '@self' => ['schema' => '3']],
+				['id' => 'secret', '@self' => ['schema' => '56']],
+				['id' => 'no-schema', '@self' => []],
+				$entity,
+			],
+			'total' => 10,
+			'limit' => 30,
+		]);
+
+		$this->assertSame(['doc-ok', 'doc-entity'], array_map(static fn ($r) => is_array($r) ? $r['id'] : $r->jsonSerialize()['id'], $out['results']));
+		$this->assertSame(8, $out['total']);
+		$this->assertSame(30, $out['limit']);
+	}//end testRowGuardDropsRowsOfSchemasWithoutReadRulesForAnAnonymousCaller()
+
+	/**
+	 * Anonymous-only: a signed-in caller gets OR's relation result untouched.
+	 *
+	 * @return void
+	 */
+	public function testRowGuardLeavesTheResultUntouchedForASignedInCaller(): void {
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$this->service = new PublicationQueryService(container: $this->container, userSession: $session, config: $this->config, logger: $this->logger);
+		$this->wireHappyPath(authorizationById: [56 => null]);
+
+		$result = ['results' => [['id' => 'secret', '@self' => ['schema' => '56']]], 'total' => 1];
+		$this->assertSame($result, $this->service->applyReadRuleGuardToRows(result: $result));
+	}//end testRowGuardLeavesTheResultUntouchedForASignedInCaller()
+
+	/**
+	 * WOO-581 review round 3 (f2): with `$page` the result is the caller's whole
+	 * relation list. The guard runs over all of it, `total` is the number of rows
+	 * kept — not OR's count, which included the hidden rows of every page — and
+	 * the page is cut after the guard, so a hidden row never shifts or shortens it.
+	 *
+	 * @return void
+	 */
+	public function testRowGuardCutsThePageAfterFilteringTheWholeList(): void {
+		$this->wireHappyPath(authorizationById: [56 => null]);
+
+		$out = $this->service->applyReadRuleGuardToRows(
+			result: [
+				'results' => [
+					['id' => 'a', '@self' => ['schema' => 3]],
+					['id' => 'secret-1', '@self' => ['schema' => 56]],
+					['id' => 'b', '@self' => ['schema' => 3]],
+					['id' => 'secret-2', '@self' => ['schema' => 56]],
+					['id' => 'c', '@self' => ['schema' => 3]],
+				],
+				'total' => 5,
+				'limit' => PHP_INT_MAX,
+				'offset' => 0,
+			],
+			page: ['limit' => 1, 'offset' => 1]
+		);
+
+		$this->assertSame(['b'], array_column($out['results'], 'id'));
+		$this->assertSame(3, $out['total']);
+		$this->assertSame(1, $out['limit']);
+		$this->assertSame(1, $out['offset']);
+	}//end testRowGuardCutsThePageAfterFilteringTheWholeList()
+
+	/**
+	 * A signed-in caller keeps every row; with `$page` only the page is cut, and
+	 * `total` is the whole list.
+	 *
+	 * @return void
+	 */
+	public function testRowGuardOnlyCutsThePageForASignedInCaller(): void {
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$this->service = new PublicationQueryService(container: $this->container, userSession: $session, config: $this->config, logger: $this->logger);
+		$this->wireHappyPath(authorizationById: [56 => null]);
+
+		$out = $this->service->applyReadRuleGuardToRows(
+			result: ['results' => [['id' => 'a', '@self' => ['schema' => 3]], ['id' => 'secret', '@self' => ['schema' => 56]]], 'total' => 2],
+			page: ['limit' => 1, 'offset' => 1]
+		);
+
+		$this->assertSame(['secret'], array_column($out['results'], 'id'));
+		$this->assertSame(2, $out['total']);
+	}//end testRowGuardOnlyCutsThePageForASignedInCaller()
+
+	/**
+	 * WOO-581 review round 2 (f5): `_content=true` widens the scope to the
+	 * registers' document schemas AFTER the SCH-PFTS-CAT-002 guard ran, so the
+	 * widening gets the same guard: a document schema without an
+	 * `authorization` block is not added; a ruled one is.
+	 *
+	 * @return void
+	 */
+	public function testContentSearchDoesNotWidenToADocumentSchemaWithoutReadRules(): void {
+		$fake = $this->wireHappyPath(
+			authorizationById: [7 => null],
+			registerSchemas: [1 => [1, 2, 7, 8]],
+			slugById: [7 => 'document', 8 => 'document']
+		);
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x', '_content' => 'true']), $fake);
+
+		$schemas = $fake->capturedCalls[0]['query']['_schemas'];
+		$this->assertContains(8, $schemas);
+		$this->assertNotContains(7, $schemas);
+	}//end testContentSearchDoesNotWidenToADocumentSchemaWithoutReadRules()
 
 	/**
 	 * SCH-PFTS-CAT-002: default-scope catalog fixture in wireHappyPath declares
@@ -809,7 +1202,12 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame([], $fakeObjectService->capturedCalls, 'OR must not be queried at all when the anonymous scope is empty (fail-closed)');
 	}
 
-	public function testAuthenticatedCallerKeepsSchemaWithoutReadRulesInScope(): void {
+	/**
+	 * WOO-578: the read behind this endpoint runs as an anonymous caller for
+	 * every session, so the read-rule guard holds for a signed-in caller too.
+	 * Before WOO-578 this test asserted the opposite ([1, 2]) under WOO-551.
+	 */
+	public function testSignedInCallerIsHeldToTheSameReadRuleGuard(): void {
 		$user = $this->createMock(\OCP\IUser::class);
 		$session = $this->createMock(\OCP\IUserSession::class);
 		$session->method('getUser')->willReturn($user);
@@ -824,10 +1222,189 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$this->service->assemblePublicSearchResults(['_search' => 'x', '_catalog' => 'default-catalog'], $fakeObjectService);
 
-		$this->assertSame([1, 2], $fakeObjectService->capturedCalls[0]['query']['_schemas'], 'signed-in callers are evaluated by OR RBAC (WOO-551), the guard is anonymous-only');
+		$this->assertSame([1], $fakeObjectService->capturedCalls[0]['query']['_schemas'], 'WOO-578: uniform visibility — the guard drops the rule-less schema for signed-in callers as well');
 	}
 
-	private function wireHappyPath(array $authorizationById = []): FakeSearchObjectService {
+	// -------------------------------------------------------------------------
+	// WOO-580 — the same read-rule guard on the per-catalog routes.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * The leak this ticket closes. `/api/{catalogSlug}` and its siblings build
+	 * their scope straight from the catalog, so the WOO-574 guard never reached
+	 * them. A schema whose `authorization` block is EMPTY is filtered by
+	 * OpenRegister down to owner-admits OR not-private only, so an anonymous
+	 * caller read every non-private row of it here. (A non-empty block that
+	 * merely omits `read` fails closed in OpenRegister; it is dropped too, for a
+	 * uniform anonymous scope, not because it leaks.)
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardDropsSchemaWithoutReadRulesForAnonymousCaller(): void {
+		$this->wireHappyPath(authorizationById: [2 => ['create' => ['authenticated']]]);
+
+		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
+			$this->stringContains('no authorization.read rules'),
+			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
+		);
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
+
+		$this->assertSame([1], $guarded['schemas'], 'schema 2 heeft geen leesregels en hoort niet in de anonieme scope');
+		$this->assertSame([1], $guarded['registers'], 'de registers blijven ongemoeid');
+	}//end testCatalogGuardDropsSchemaWithoutReadRulesForAnonymousCaller()
+
+	/**
+	 * A catalog in which nothing survives the guard hands back an empty scope.
+	 * Every per-catalog route already refuses on an empty schema list, and
+	 * index() turns it into the empty envelope rather than an unscoped search.
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardEmptiesTheScopeWhenNoSchemaHasReadRules(): void {
+		$this->wireHappyPath(authorizationById: [1 => null, 2 => []]);
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
+
+		$this->assertSame([], $guarded['schemas']);
+	}//end testCatalogGuardEmptiesTheScopeWhenNoSchemaHasReadRules()
+
+	/**
+	 * Anonymous-only, deliberately: these routes are where WOO-578 points staff
+	 * when it narrows `/api/search`. A signed-in caller keeps normal RBAC
+	 * evaluation (WOO-551 semantics) — which since WOO-578 is a DIFFERENCE from
+	 * `/api/search`, not a match: that guard now drops rule-less schemas for
+	 * every caller. This test pins the asymmetry, so it must not be read as
+	 * asserting parity.
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardLeavesTheScopeAloneForASignedInCaller(): void {
+		$user = $this->createMock(\OCP\IUser::class);
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$this->service = new PublicationQueryService(
+			container: $this->container,
+			userSession: $session,
+			config: $this->config,
+			logger: $this->logger,
+		);
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
+
+		$this->assertSame([1, 2], $guarded['schemas'], 'ingelogde callers worden door OR RBAC beoordeeld, de guard is anoniem-only');
+	}//end testCatalogGuardLeavesTheScopeAloneForASignedInCaller()
+
+	/**
+	 * A catalog whose schema list arrives as a JSON string — the shape the
+	 * catalog object carries in the database — is normalised to ints before the
+	 * guard looks at it, so the guard cannot be sidestepped by the encoding.
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardNormalisesAJsonEncodedSchemaList(): void {
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => '[1,2]', 'registers' => [1]]);
+
+		$this->assertSame([1], $guarded['schemas']);
+	}//end testCatalogGuardNormalisesAJsonEncodedSchemaList()
+
+	/**
+	 * The negative control: a catalog whose schemas all carry read rules comes
+	 * back untouched, so the guard cannot be the reason a working catalog goes
+	 * quiet.
+	 *
+	 * @return void
+	 */
+	public function testCatalogGuardKeepsEverySchemaThatCarriesReadRules(): void {
+		$this->wireHappyPath();
+
+		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
+
+		$this->assertSame([1, 2], $guarded['schemas']);
+	}//end testCatalogGuardKeepsEverySchemaThatCarriesReadRules()
+
+	/**
+	 * WOO-581: the union readers (`/api/federation/publications`,
+	 * `/api/catalogi/{id}`) hand in a bare schema list, not a catalog. A schema
+	 * without an `authorization` block — the shape that actually leaks — is
+	 * dropped for an anonymous caller, with the same SCH-PFTS-CAT-002 warning.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardDropsSchemaWithoutAuthorizationBlockForAnonymousCaller(): void {
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
+			$this->stringContains('no authorization.read rules'),
+			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2)
+		);
+
+		$this->assertSame([1], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
+	}//end testSchemaScopeGuardDropsSchemaWithoutAuthorizationBlockForAnonymousCaller()
+
+	/**
+	 * The unions arrive as whatever the catalog objects stored — numeric strings
+	 * included. They are normalised before the guard looks, so the encoding
+	 * cannot sidestep it.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardNormalisesNumericStringIds(): void {
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$this->assertSame([1], $this->service->applySchemaScopeReadRuleGuard(schemaIds: ['1', '2']));
+	}//end testSchemaScopeGuardNormalisesNumericStringIds()
+
+	/**
+	 * Nothing survives → an empty scope. Every caller must read that as
+	 * "nothing to search", which their own tests pin.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardEmptiesTheScopeWhenNoSchemaHasReadRules(): void {
+		$this->wireHappyPath(authorizationById: [1 => null, 2 => []]);
+
+		$this->assertSame([], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
+	}//end testSchemaScopeGuardEmptiesTheScopeWhenNoSchemaHasReadRules()
+
+	/**
+	 * Anonymous-only, and for a signed-in caller the list comes back UNTOUCHED —
+	 * not even normalised — so session RBAC on the union paths does not move.
+	 * The non-numeric entry is the proof: normalising would have dropped it.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardLeavesTheListUntouchedForASignedInCaller(): void {
+		$user = $this->createMock(\OCP\IUser::class);
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$this->service = new PublicationQueryService(
+			container: $this->container,
+			userSession: $session,
+			config: $this->config,
+			logger: $this->logger,
+		);
+		$this->wireHappyPath(authorizationById: [2 => null]);
+
+		$this->assertSame(['1', '2', 'legacy-slug'], $this->service->applySchemaScopeReadRuleGuard(schemaIds: ['1', '2', 'legacy-slug']));
+	}//end testSchemaScopeGuardLeavesTheListUntouchedForASignedInCaller()
+
+	/**
+	 * Negative control: every schema carries read rules → nothing changes, so
+	 * the guard cannot be why a working federation feed goes quiet.
+	 *
+	 * @return void
+	 */
+	public function testSchemaScopeGuardKeepsEverySchemaThatCarriesReadRules(): void {
+		$this->wireHappyPath();
+
+		$this->assertSame([1, 2], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
+	}//end testSchemaScopeGuardKeepsEverySchemaThatCarriesReadRules()
+
+	private function wireHappyPath(array $authorizationById = [], array $registerSchemas = [], array $slugById = []): FakeSearchObjectService {
 		$fakeObjectService = new FakeSearchObjectService();
 
 		$catalog = [
@@ -843,7 +1420,7 @@ class PublicationQueryServiceTest extends TestCase {
 		$fakeCatalogiService->catalogsBySlug = ['default-catalog' => $catalog];
 
 		$fakeSchemaMapper = new FakeSchemaMapper();
-		$fakeSchemaMapper->slugById = [1 => 'publication', 2 => 'document'];
+		$fakeSchemaMapper->slugById = ($slugById + [1 => 'publication', 2 => 'document']);
 		$fakeSchemaMapper->authorizationById = $authorizationById;
 
 		// Config keys needed by the default-scope enumeration path; safe to set
@@ -857,11 +1434,22 @@ class PublicationQueryServiceTest extends TestCase {
 		);
 
 		$this->container->method('get')->willReturnCallback(
-			function (string $key) use ($fakeCatalogiService, $fakeSchemaMapper, $fakeObjectService) {
+			function (string $key) use ($fakeCatalogiService, $fakeSchemaMapper, $fakeObjectService, $registerSchemas) {
 				return match ($key) {
 					'OCA\\OpenCatalogi\\Service\\CatalogiService' => $fakeCatalogiService,
 					'OCA\\OpenRegister\\Db\\SchemaMapper'         => $fakeSchemaMapper,
 					'OCA\\OpenRegister\\Service\\ObjectService'   => $fakeObjectService,
+					'OCA\\OpenRegister\\Db\\RegisterMapper' => ($registerSchemas !== []
+						? new class ($registerSchemas) {
+							public function __construct(private array $map) {}
+							public function find(int $id): object {
+								return new class (($this->map[$id] ?? [])) {
+									public function __construct(private array $schemas) {}
+									public function getSchemas(): array { return $this->schemas; }
+								};
+							}
+						}
+						: throw new \RuntimeException("Unmocked container key: {$key}")),
 					default => throw new \RuntimeException("Unmocked container key: {$key}"),
 				};
 			}
@@ -1081,6 +1669,281 @@ class PublicationQueryServiceTest extends TestCase {
 
 	}//end wireMappers()
 
+
+	// -------------------------------------------------------------------------
+	// WOO-577 — pagination guards.
+	//
+	// The envelope is the only pagination contract the public FTS surface has:
+	// there is no `has_more`, no `page`, no `pages` key, so a consumer derives
+	// "is there another page" purely from `total` versus what it has collected.
+	// That makes every one of these cheap to break and expensive to notice —
+	// `_limit` silently swallowed by the scope stripper, or the DoS clamp
+	// removed, both look fine in a smoke test and only show up as a UI that
+	// pages forever or a public CPU amplifier. These tests pin the behaviour so
+	// a regression fails here instead of on acato.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * `assemblePublicSearchResults()` deliberately strips scope-widening keys
+	 * (`_schema`, `_registers`, `_catalog`, `fq`, …) before handing the query to
+	 * OpenRegister. The pagination keys MUST survive that strip untouched —
+	 * losing them collapses every page to OR's default window while `total`
+	 * keeps advertising the global count, which is exactly the shape of a
+	 * pagination outage that no unit test would otherwise catch.
+	 */
+	public function testPaginationParametersSurviveTheScopeStrip(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog(['_search' => 'x', '_limit' => 25, '_page' => 3, '_offset' => 50]),
+			$fake
+		);
+
+		$this->assertNotEmpty($fake->capturedCalls, 'OR must be called for a resolved scope');
+		$query = $fake->capturedCalls[0]['query'];
+
+		$this->assertSame(25, $query['_limit'], '_limit must reach OR unchanged');
+		$this->assertSame(3, $query['_page'], '_page must reach OR unchanged');
+		$this->assertSame(50, $query['_offset'], '_offset must reach OR unchanged');
+	}
+
+	/**
+	 * The `_limit` clamp is a security control, not a nicety: review #147 found
+	 * that an anonymous `?_limit=1000000&_content=true` fanned out unbounded
+	 * into OR's chunk-search path. A regression here reads as "pagination got a
+	 * bit more generous" while actually restoring a public CPU/memory
+	 * amplifier, so the cap gets its own guard.
+	 */
+	public function testLimitAboveThePublicMaximumIsClampedBeforeReachingOpenRegister(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog(['_search' => 'x', '_limit' => 1000000]),
+			$fake
+		);
+
+		$this->assertSame(
+			PublicationQueryService::PUBLIC_LIMIT_MAX,
+			$fake->capturedCalls[0]['query']['_limit'],
+			'_limit must be clamped to PUBLIC_LIMIT_MAX for anonymous callers'
+		);
+	}
+
+	/**
+	 * A `_limit` at or below the cap is the caller's choice and must not be
+	 * rewritten — clamping everything to the maximum would quietly turn a
+	 * five-row page into a hundred-row one.
+	 */
+	public function testLimitAtOrBelowThePublicMaximumIsLeftAlone(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog(['_search' => 'x', '_limit' => PublicationQueryService::PUBLIC_LIMIT_MAX]),
+			$fake
+		);
+
+		$this->assertSame(
+			PublicationQueryService::PUBLIC_LIMIT_MAX,
+			$fake->capturedCalls[0]['query']['_limit']
+		);
+	}
+
+	/**
+	 * `total >= count(results)` on every page, whatever combination of drops and
+	 * dedups the row loop performed. A consumer that sees `total` dip below the
+	 * rows it is holding cannot compute anything sensible, and the floor is the
+	 * one guarantee the envelope comment promises unconditionally.
+	 *
+	 * @dataProvider provideEnvelopeShapes
+	 *
+	 * @param array $candidateRows Rows OR returns for the candidate call.
+	 * @param int   $orTotal       Global total OR reports.
+	 */
+	public function testTotalIsNeverBelowTheNumberOfRowsShipped(array $candidateRows, int $orTotal): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => $candidateRows, 'total' => $orTotal, 'facets' => [], 'facetable' => []],
+			['results' => [], 'total' => 0, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertGreaterThanOrEqual(
+			count($out['results']),
+			$out['total'],
+			'total must never claim fewer items than the envelope actually ships'
+		);
+	}
+
+	/**
+	 * Envelope shapes for the floor invariant: a clean page, a page whose rows
+	 * all collapse on dedup, and a page where OR reports a total it returns no
+	 * rows for at all (the shape measured on the rig: total 8, results []).
+	 *
+	 * @return array<string, array{0: array, 1: int}>
+	 */
+	public static function provideEnvelopeShapes(): array {
+		$pub = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'p1', 'schema' => 1],
+			'title' => 'A publication',
+		];
+
+		return [
+			'clean page'              => [[$pub], 42],
+			'every row dedups to one' => [[$pub, $pub, $pub], 10],
+			'or reports rows it does not return' => [[], 8],
+		];
+	}
+
+	/**
+	 * KNOWN DEFECT — the measured WOO-577 case, kept in the suite so it is not
+	 * forgotten and so the fix has a home to land in.
+	 *
+	 * Measured 2026-09-15 on the NC 32 rig (OpenCatalogi 1.0.9-woo-2 +
+	 * OpenRegister 1.1.5, the acato combination): an anonymous
+	 * `_search=Nextcloud&_content=true` answers `total: 8` with an EMPTY
+	 * `results` array. Working back through this method, that is only reachable
+	 * when OR returns no rows at all while reporting a non-zero total: with
+	 * rows present the floor would have shown them, and with rows dropped
+	 * `$droppedCount` would have pulled the total down. So OR's count query and
+	 * its (deduplicated) row stream disagree, and the assembler forwards that
+	 * disagreement untouched.
+	 *
+	 * The surrounding envelope comment already names this exact shape as "the
+	 * SCH-PFTS-004 bug pattern" and guards against it for row-loop drops; the
+	 * case where OR itself supplies the mismatch is not covered.
+	 *
+	 * An empty page is the end of the line: the caller has nothing to page
+	 * towards and no consumer is helped by a count it can never reach, so the
+	 * assembler reports 0 and logs a warning. Pages that DO carry rows keep OR's
+	 * total untouched — whether THAT number should be deduplicated is the open
+	 * question in WOO-577 and belongs in OR's count, not in a per-page guess.
+	 */
+	public function testTotalIsZeroWhenOpenRegisterReturnsNoRowsAtAll(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 8, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->logger->expects($this->atLeastOnce())
+			->method('warning')
+			->with($this->stringContains('WOO-577'), $this->anything());
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertSame([], $out['results'], 'nothing to ship');
+		$this->assertSame(0, $out['total'], 'the envelope must not advertise results it cannot deliver');
+	}
+
+	/**
+	 * The guard above must stay narrow: a page that carries rows keeps OR's
+	 * global total, because that is the only "there are more pages" signal the
+	 * envelope has. Guards against over-correcting WOO-577 into a pagination
+	 * outage.
+	 */
+	public function testTotalOnAPageThatCarriesRowsIsLeftAlone(): void {
+		$publicationRow = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'p1', 'schema' => 1],
+			'title' => 'A publication',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [$publicationRow], 'total' => 42, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertCount(1, $out['results']);
+		$this->assertSame(42, $out['total'], 'pagination signal must survive the WOO-577 guard');
+	}
+
+	/**
+	 * WOO-577 follow-up: the guard must NOT fire on an ordinary page past the end
+	 * of the results. A caller asking for `_offset=40` of 31 real matches gets
+	 * `{results: [], total: 31}` from a perfectly healthy search — zeroing that
+	 * would make `total` collapse on the last page of every paginated query, and a
+	 * UI that redraws its count per response would show "0 results" for a search
+	 * that found 31.
+	 *
+	 * @dataProvider provideLaterPageParams
+	 *
+	 * @param array $paginationParams The pagination params that place the request past page one.
+	 */
+	public function testTotalSurvivesAnEmptyPagePastTheEnd(array $paginationParams): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 31, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog($paginationParams),
+			$fake
+		);
+
+		$this->assertSame([], $out['results']);
+		$this->assertSame(31, $out['total'], 'an empty page past the end is ordinary — total must not be zeroed');
+	}
+
+	/**
+	 * Pagination params that place a request beyond the first page.
+	 *
+	 * @return array<string, array{0: array<string, mixed>}>
+	 */
+	public static function provideLaterPageParams(): array {
+		return [
+			'explicit offset' => [['_offset' => 40, '_limit' => 10]],
+			'page two'        => [['_page' => 2, '_limit' => 10]],
+			'page two, no limit' => [['_page' => 2]],
+			'offset without limit' => [['_offset' => 5]],
+		];
+	}
+
+	/**
+	 * The guard still fires where it was written to: the FIRST page, where
+	 * `results: []` with a non-zero total and no local drops cannot be explained
+	 * by an offset. `_offset: 0` and `_page: 1` are the first page too.
+	 *
+	 * @dataProvider provideFirstPageParams
+	 *
+	 * @param array $paginationParams Params that still address page one.
+	 */
+	public function testTotalIsZeroedOnAnImpossibleFirstPage(array $paginationParams): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [], 'total' => 8, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults(
+			$this->withDefaultCatalog($paginationParams),
+			$fake
+		);
+
+		$this->assertSame([], $out['results']);
+		$this->assertSame(0, $out['total'], 'OR reported rows it did not return on page one — report 0');
+	}
+
+	/**
+	 * Params that all mean "start at the beginning".
+	 *
+	 * @return array<string, array{0: array<string, mixed>}>
+	 */
+	public static function provideFirstPageParams(): array {
+		return [
+			'no pagination params' => [[]],
+			'explicit offset zero' => [['_offset' => 0]],
+			'page one'             => [['_page' => 1]],
+			'page one with limit'  => [['_page' => 1, '_limit' => 10]],
+		];
+	}
 
 	/**
 	 * Invoke a private/protected method by name via reflection.

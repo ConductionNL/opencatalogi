@@ -1,0 +1,31 @@
+{
+    "app": "opencatalogi",
+    "connections": [
+        {
+            "key": "directory",
+            "title": "Federation directories",
+            "description": "Reads listings from directory.opencatalogi.nl and every peer directory it knows, on the federation sync interval.",
+            "order": 10,
+            "settingsUrl": "/settings/admin/opencatalogi#section-federation-sync",
+            "reportedOnly": true,
+            "unconfiguredMessage": "Not checked yet. Choose Sync directories now in the Federation sync section."
+        },
+        {
+            "key": "broadcast",
+            "title": "Directory broadcast",
+            "description": "Tells peer directories that this catalogue exists, every four hours and when a sync finds a new directory.",
+            "order": 20,
+            "reportedOnly": true,
+            "unconfiguredMessage": "Not checked yet. OpenCatalogi reports here after its next broadcast."
+        },
+        {
+            "key": "woo-index",
+            "title": "Woo-index harvester",
+            "description": "The KOOP harvester reads robots.txt, the DIWOO sitemaps and the publications of this instance for the national Woo-index.",
+            "order": 30,
+            "settingsUrl": "/settings/admin/opencatalogi#section-woo-index",
+            "reportedOnly": true,
+            "unconfiguredMessage": "Not checked yet. Choose Run check in the Woo-index harvester readiness section."
+        }
+    ]
+}

@@ -34,7 +34,7 @@ by status, attachment counts, etc.) MUST source those counts from OR schema
 aggregations (`x-openregister-aggregations`) rather than from hand-rolled PHP
 count queries.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: dashboard widgets consume OR aggregations (DSH-OR-001)
 
@@ -60,8 +60,6 @@ results in PHP.
 - **WHEN** the widget loads,
 - **THEN** the widget degrades gracefully (e.g. shows "N/A") rather than
   falling back to a bespoke PHP count query.
-
-## Requirements
 
 ### Requirement: Serve the Vue SPA template for the main app page (DSH-001)
 The system MUST serve the Vue SPA template for the main app page.
@@ -477,7 +475,7 @@ a `DeleteListingDialog`.
 - WHEN they edit or delete it
 - THEN the `EditListingModal` and `DeleteListingDialog` MUST be available to perform those actions
 
-## REMOVED Requirements
+## Change history
 
 | ID | Title | Reason removed |
 |----|-------|----------------|

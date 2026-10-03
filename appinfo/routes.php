@@ -57,6 +57,7 @@ return [
 		['name' => 'retention#exportReport', 'url' => '/api/retention/report', 'verb' => 'GET'],
 		// WOO transparency (woo-transparency)
 		['name' => 'woo#weigeringsgronden', 'url' => '/api/woo/weigeringsgronden', 'verb' => 'GET'],
+		['name' => 'woo#categories', 'url' => '/api/woo/categories', 'verb' => 'GET'],
 		['name' => 'woo#createBatch', 'url' => '/api/woo/batches', 'verb' => 'POST'],
 		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
 		['name' => 'woo#updateAssessment', 'url' => '/api/woo/batches/{batchId}/documents/{docId}', 'verb' => 'PUT'],
@@ -66,47 +67,93 @@ return [
 		// Woo-index harvester-readiness self-check (woo-index-harvester-readiness)
 		['name' => 'wooReadiness#report', 'url' => '/api/woo/readiness', 'verb' => 'GET'],
 		['name' => 'wooReadiness#run', 'url' => '/api/woo/readiness/run', 'verb' => 'POST'],
+		// GitHub publiccode harvest (publiccode-github-harvest). Admin only.
+		['name' => 'publiccodeHarvest#status', 'url' => '/api/settings/publiccode-harvest', 'verb' => 'GET'],
+		['name' => 'publiccodeHarvest#setup', 'url' => '/api/settings/publiccode-harvest/setup', 'verb' => 'POST'],
+		['name' => 'publiccodeHarvest#enable', 'url' => '/api/settings/publiccode-harvest/enable', 'verb' => 'POST'],
+		['name' => 'publiccodeHarvest#disable', 'url' => '/api/settings/publiccode-harvest/disable', 'verb' => 'POST'],
+		['name' => 'publiccodeHarvest#run', 'url' => '/api/settings/publiccode-harvest/run', 'verb' => 'POST'],
+		// Woo-index registration and the root robots.txt rules (woo-index-harvester-connection).
+		['name' => 'wooRegistration#show', 'url' => '/api/woo/registration', 'verb' => 'GET'],
+		['name' => 'wooRegistration#request', 'url' => '/api/woo/registration', 'verb' => 'POST'],
+		['name' => 'wooRegistration#confirm', 'url' => '/api/woo/registration/confirm', 'verb' => 'POST'],
+		// The public and community surface: the admin surfaces.
+		['name' => 'community#setStatus', 'url' => '/api/status', 'verb' => 'POST'],
+		['name' => 'noticeBoard#banners', 'url' => '/api/banners', 'verb' => 'GET'],
+		['name' => 'noticeBoard#dismissBanner', 'url' => '/api/banners/dismiss', 'verb' => 'POST'],
+		['name' => 'noticeBoard#saveNoticeBoard', 'url' => '/api/notice-boards', 'verb' => 'POST'],
+		['name' => 'noticeBoard#saveNotice', 'url' => '/api/notices', 'verb' => 'POST'],
+		// Active publication, inspection and the national indexes: the admin surfaces.
+		['name' => 'publicationRules#previewRule', 'url' => '/api/publication-rules/preview', 'verb' => 'POST'],
+		['name' => 'publicationRules#validateDecision', 'url' => '/api/publication-rules/validate-decision', 'verb' => 'POST'],
+		['name' => 'depublication#depublish', 'url' => '/api/publications/depublish', 'verb' => 'POST'],
+		['name' => 'depublication#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
+		// Publish now, withdraw with a reason, publish again, withdraw one document
+		// (publications-publish-and-withdraw-action, REQ-PPW-001..004).
+		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
+		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
+		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
+		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
+		['name' => 'publicationDisclosure#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
+		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
+		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
+		['name' => 'inspection#open', 'url' => '/api/inspections', 'verb' => 'POST'],
+		// Published service and case type catalogue: the admin surfaces.
+		['name' => 'serviceCatalogue#unavailableEntries', 'url' => '/api/service-catalogue/unavailable', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#importCaseType', 'url' => '/api/case-types/import', 'verb' => 'POST'],
+		['name' => 'serviceCatalogue#previewResync', 'url' => '/api/case-types/{id}/resync', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#applyResync', 'url' => '/api/case-types/{id}/resync', 'verb' => 'POST'],
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */
 		
 		// Publications CORS (wildcard catalog-based endpoints)
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// DCAT-AP-NL CORS (public harvest endpoints)
-		['name' => 'dcat#preflightedCors', 'url' => '/api/dcat', 'verb' => 'OPTIONS'],
-		['name' => 'dcat#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'dcat#preflightedCors', 'postfix' => '-dcat', 'url' => '/api/dcat', 'verb' => 'OPTIONS'],
+		['name' => 'dcat#preflightedCors', 'postfix' => '-catalogs-catalogslug-dcat', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// OOAPI 5.0 CORS (consumer-credential authenticated endpoints — OOAPI-001/COR-001)
-		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/organizations', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/organizations/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/programs', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/programs/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses/{courseId}/offerings', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/offerings/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'postfix' => '-catalogs-catalogslug-ooapi-v5-organizations', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/organizations', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'postfix' => '-catalogs-catalogslug-ooapi-v5-organizations-id', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/organizations/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'postfix' => '-catalogs-catalogslug-ooapi-v5-programs', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/programs', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'postfix' => '-catalogs-catalogslug-ooapi-v5-programs-id', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/programs/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'postfix' => '-catalogs-catalogslug-ooapi-v5-courses', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'postfix' => '-catalogs-catalogslug-ooapi-v5-courses-id', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'postfix' => '-catalogs-catalogslug-ooapi-v5-courses-courseid-offerings', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses/{courseId}/offerings', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'postfix' => '-catalogs-catalogslug-ooapi-v5-offerings-id', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/offerings/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// Catalogi CORS
-		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi', 'verb' => 'OPTIONS'],
-		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'catalogi#preflightedCors', 'postfix' => '-catalogi', 'url' => '/api/catalogi', 'verb' => 'OPTIONS'],
+		['name' => 'catalogi#preflightedCors', 'postfix' => '-catalogi-id', 'url' => '/api/catalogi/{id}', 'verb' => 'OPTIONS'],
 		// Glossary CORS
-		['name' => 'glossary#preflightedCors', 'url' => '/api/glossary', 'verb' => 'OPTIONS'],
-		['name' => 'glossary#preflightedCors', 'url' => '/api/glossary/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'glossary#preflightedCors', 'postfix' => '-glossary', 'url' => '/api/glossary', 'verb' => 'OPTIONS'],
+		['name' => 'glossary#preflightedCors', 'postfix' => '-glossary-id', 'url' => '/api/glossary/{id}', 'verb' => 'OPTIONS'],
 		// Themes CORS
-		['name' => 'themes#preflightedCors', 'url' => '/api/themes', 'verb' => 'OPTIONS'],
-		['name' => 'themes#preflightedCors', 'url' => '/api/themes/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'themes#preflightedCors', 'postfix' => '-themes', 'url' => '/api/themes', 'verb' => 'OPTIONS'],
+		['name' => 'themes#preflightedCors', 'postfix' => '-themes-id', 'url' => '/api/themes/{id}', 'verb' => 'OPTIONS'],
 		// Menus CORS
 		// Pages CORS
 		// Directory CORS
 		['name' => 'directory#preflightedCors', 'url' => '/api/directory', 'verb' => 'OPTIONS'],
+		// Community surface CORS (status page, subscriptions, the feed, votes, the renderer)
+		['name' => 'community#preflightedCors', 'postfix' => '-status', 'url' => '/api/status', 'verb' => 'OPTIONS'],
+		['name' => 'community#preflightedCors', 'postfix' => '-feeds-catalogslug', 'url' => '/api/feeds/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'community#preflightedCors', 'postfix' => '-markup-render', 'url' => '/api/markup/render', 'verb' => 'OPTIONS'],
+		// Active publication CORS (public search, the stamp, the inspection link)
+		['name' => 'publicationRules#preflightedCors', 'postfix' => '-publications-search', 'url' => '/api/publications/search', 'verb' => 'OPTIONS'],
+		['name' => 'inspection#preflightedCors', 'url' => '/api/inspections/{id}', 'verb' => 'OPTIONS'],
+		// Service catalogue CORS (public request catalogue, published case types, article verdicts)
+		['name' => 'serviceCatalogue#preflightedCors', 'postfix' => '-service-catalogue', 'url' => '/api/service-catalogue', 'verb' => 'OPTIONS'],
+		['name' => 'serviceCatalogue#preflightedCors', 'postfix' => '-case-types-id', 'url' => '/api/case-types/{id}', 'verb' => 'OPTIONS'],
 		// Listings CORS
-		['name' => 'listings#preflightedCors', 'url' => '/api/listings', 'verb' => 'OPTIONS'],
-		['name' => 'listings#preflightedCors', 'url' => '/api/listings/{id}', 'verb' => 'OPTIONS'],
-		['name' => 'listings#preflightedCors', 'url' => '/api/listings/sync', 'verb' => 'OPTIONS'],
-		['name' => 'listings#preflightedCors', 'url' => '/api/listings/add', 'verb' => 'OPTIONS'],
+		['name' => 'listings#preflightedCors', 'postfix' => '-listings', 'url' => '/api/listings', 'verb' => 'OPTIONS'],
+		['name' => 'listings#preflightedCors', 'postfix' => '-listings-id', 'url' => '/api/listings/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'listings#preflightedCors', 'postfix' => '-listings-sync', 'url' => '/api/listings/sync', 'verb' => 'OPTIONS'],
+		['name' => 'listings#preflightedCors', 'postfix' => '-listings-add', 'url' => '/api/listings/add', 'verb' => 'OPTIONS'],
 		/**
 		 * And here we have the public endpoints, the part of the API that is used by the frontend and publicly accessible
 		 * 
@@ -172,6 +219,16 @@ return [
 		// checks} contract. URL unchanged. (Specific route - must be before
 		// wildcard catalog routes.)
 		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericHealth#index', 'url' => '/api/health', 'verb' => 'GET'],
+		// Community surface public routes (specific routes - must be before wildcard catalog routes)
+		['name' => 'community#statusPage', 'url' => '/api/status', 'verb' => 'GET'],
+		['name' => 'community#feed', 'url' => '/api/feeds/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'community#renderMarkup', 'url' => '/api/markup/render', 'verb' => 'POST'],
+		// Active publication public surfaces (specific routes - must be before wildcard catalog routes)
+		['name' => 'publicationRules#publicSearch', 'url' => '/api/publications/search', 'verb' => 'POST'],
+		['name' => 'inspection#follow', 'url' => '/api/inspections/{id}', 'verb' => 'GET'],
+		// Published service catalogue (public; specific routes - must be before wildcard catalog routes)
+		['name' => 'serviceCatalogue#index', 'url' => '/api/service-catalogue', 'verb' => 'GET'],
+		['name' => 'serviceCatalogue#caseType', 'url' => '/api/case-types/{id}', 'verb' => 'GET'],
 		// Search (specific route - must be before wildcard catalog routes)
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
 		['name' => 'search#show', 'url' => '/api/search/{id}', 'verb' => 'GET'],
@@ -192,6 +249,21 @@ return [
 		['name' => 'setup#status', 'url' => '/api/setup/status', 'verb' => 'GET'],
 		['name' => 'setup#config', 'url' => '/api/setup/config', 'verb' => 'POST'],
 		['name' => 'setup#action', 'url' => '/api/setup/action/{actionId}', 'verb' => 'POST', 'requirements' => ['actionId' => '[a-z-]+']],
+		// Woo citizen journey (citizen-collections, saved-searches-and-alerts): the
+		// endpoint actions portaliq forwards with its signed X-Portal-Subject
+		// assertion, and the public read of a shared dossier. Before the wildcard
+		// catalog routes below.
+		['name' => 'portalCollection#addItem', 'url' => '/api/portal/collections/items', 'verb' => 'POST'],
+		['name' => 'portalCollection#removeItem', 'url' => '/api/portal/collections/items/remove', 'verb' => 'POST'],
+		['name' => 'portalCollection#view', 'url' => '/api/portal/collections/view', 'verb' => 'POST'],
+		['name' => 'portalCollection#note', 'url' => '/api/portal/collections/note', 'verb' => 'POST'],
+		['name' => 'portalCollection#share', 'url' => '/api/portal/collections/share', 'verb' => 'POST'],
+		['name' => 'portalCollection#unshare', 'url' => '/api/portal/collections/unshare', 'verb' => 'POST'],
+		['name' => 'portalCollection#delete', 'url' => '/api/portal/collections/delete', 'verb' => 'POST'],
+		['name' => 'portalSavedSearch#save', 'url' => '/api/portal/saved-searches', 'verb' => 'POST'],
+		['name' => 'portalSavedSearch#pause', 'url' => '/api/portal/saved-searches/pause', 'verb' => 'POST'],
+		['name' => 'portalSavedSearch#delete', 'url' => '/api/portal/saved-searches/delete', 'verb' => 'POST'],
+		['name' => 'sharedCollection#show', 'url' => '/api/collections/shared/{token}', 'verb' => 'GET', 'requirements' => ['token' => '[0-9a-f-]{36}\.[0-9a-f]{48}']],
 		// Publications (wildcard catalog-based endpoints - MUST BE ABSOLUTE LAST to avoid catching any specific routes)
 		['name' => 'publications#index', 'url' => '/api/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#show', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],

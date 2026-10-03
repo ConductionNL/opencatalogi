@@ -1,0 +1,770 @@
+[
+	{
+		"row": "cat-overview",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (CKAN), so the missing half has no case under the rule.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "dec-inspection",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "dec-inspection-link",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "dec-public-type",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "dec-validate",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "dec-verify",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "dec-withdraw-ack",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "fed-open-remote",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (CKAN and DKAN open a harvested dataset locally with its resources). No change covers opening a remote publication with its attachments in the app.",
+		"change": "federation-open-remote-publication",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "fed-status",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (ckanext-harvest job list, DKAN harvest overview). Open change dashboard covers staleness checks during sync (DIR-010) and adopt-connection-registry reports to integriq; neither shows a listing's last success on the directory page.",
+		"change": "federation-connection-last-success",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "int-cli",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (the ckan CLI, DKAN drush commands). No change adds maintenance commands beyond the two single-purpose occ commands.",
+		"change": "integration-maintenance-commands",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "int-consumer-keys",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (CKAN per-user API tokens, DKAN per-consumer accounts). The archived ooapi-catalog-publication change left per-catalogue credential scoping out (SettingsService says it is not implemented).",
+		"change": "integration-feed-consumer-credentials",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "int-link-not-copy",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Tender demand: TenderNed 407973 wish DMK-07 and requirement that the publication service does not store documents itself (https://www.tenderned.nl/aankondigingen/overzicht/407973). No change covers publishing a document by reference; attachments-are-files makes every attachment a stored file.",
+		"change": "integration-publish-by-reference",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "lc-decide",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "lc-defaults",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half. Open change retention-defaults-on-shared-decision-tables moves the rule matching to OpenRegister's decision tables and leaves the settings screen out of scope.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "lc-depublish",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half. The one-action depublish screen is written in publications-publish-and-withdraw-action for pub-status and woo-withdraw; what that leaves of this row is the channel notices, which need integriq.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "lc-queue",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "lc-report",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-datastore",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Two competitors rated yes (CKAN datastore_search, DKAN datastore query API). No change covers querying the rows of a published table.",
+		"change": "open-data-table-query-and-dictionary",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-dcat",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (CKAN), so the missing half has no case under the rule.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-dcat-catalogue",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (CKAN), so the missing half has no case under the rule.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-dcat-formats",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (CKAN), so the missing half has no case under the rule.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-dcat-validate",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-dictionary",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Two competitors rated yes (CKAN data dictionary on datastore tables, DKAN data-dictionary items). No change covers describing a dataset's columns; it shares the table store with od-datastore.",
+		"change": "open-data-table-query-and-dictionary",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-donl",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-mqa",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "od-schemaorg",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (CKAN), so the missing half has no case under the rule.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ops-cdn-cache",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "featureRequest demand (https://github.com/GetDKAN/dkan/issues/4783) plus one competitor rated yes (CKAN sets public max-age for anonymous responses). No change covers cache headers on the public publications or search API.",
+		"change": "operations-public-api-cache-headers",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ops-dashboard",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (iprox.open), so the missing half has no case under the rule.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ops-most-viewed",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ops-usage",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ops-usage-series",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-auto",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half. Open change auto-publishing documents the create and update trigger and rules out new triggers, so the conditional rule is not in it.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-banner",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-feed",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (CKAN), so the missing half has no case under the rule.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-markup",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-notice-board",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-quality",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-status",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (CKAN unpublishes and switches visibility in one save, DKAN has a publish and archive workflow). Open change publication-inspection-and-the-national-indexes shipped DepublicationController with every task checked, but no screen calls it and archive is final, so it is treated as the archived case.",
+		"change": "publications-publish-and-withdraw-action",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-status-page",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-unpublished",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Rated no with both widgets registered but always empty, and the row is in the core area (publications). Open change dashboard-consume-or-aggregations names the widgets (DSH-011), but its tasks for them are blocked on the attachment schema that attachments-are-files retired, and both widgets filter on a Concept status the publication schema no longer has.",
+		"change": "publications-unpublished-overview",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "srch-cors",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (CKAN origin whitelist, xxllnc access-control-allow-origin). No change adds CORS to /api/search or the federation endpoints, and the allowlist has no settings screen.",
+		"change": "search-cors-on-every-public-endpoint",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "srch-follow",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (CKAN), so the missing half has no case under the rule.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "srch-pid",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "svc-catalogue",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "svc-extract",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "svc-form-link",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "svc-repair",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "svc-resync",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half. The preview and accept logic is opencatalogi's own (ServiceCatalogueController previewResync and applyResync), so built.owner moves from integriq to opencatalogi; the missing half is a staff screen.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "svc-verdict",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-annual",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-collections",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (Decos JOIN Woo Portaal), so the missing half has no case under the rule.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-index-delivery",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes on the missing half (xxllnc Publiceren and iprox.open connect to the Woo-index without manual steps). Open change publication-inspection-and-the-national-indexes shipped NationalIndexService::registerWithWooIndex with every task checked, but nothing calls it (read at 1694b05), so it is treated as the archived case: shipped without the capability.",
+		"change": "woo-index-harvester-connection",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-metadata-derive",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Tender demand: TenderNed 407973 wishes VPB-02-KW-03, VPB-04, VPB-04-KW-02 and VPB-04-KW-03 (https://www.tenderned.nl/aankondigingen/overzicht/407973). No change proposes metadata a person confirms; woo-category-mapping-intake is a type-level category default, not a suggestion.",
+		"change": "woo-metadata-suggestions",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-robots",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Partial and built, and two competitors rated yes (xxllnc and iprox serve robots.txt with Sitemap lines at the domain root). Open change woo-compliance covers only the hasWooSitemap filter (REQ-WOO-004, REQ-WOO-008); the root robots.txt and the literal backslash-n join in RobotsController are not in any change.",
+		"change": "woo-index-harvester-connection",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-rules",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half. Open change woo-category-mapping-intake adds a type-level category default, not a rule screen with a preview.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-sitemap-lastmod",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Tender demand: TenderNed 407973 requirement POW-03 (https://www.tenderned.nl/aankondigingen/overzicht/407973). Open change woo-compliance codifies a document's lastmod as the file's published time, with the publication's updated time only as a fallback (REQ-WOO-002-B and -C), so no change covers a metadata-only update.",
+		"change": "woo-sitemap-document-signals",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-sitemap-parts",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Tender demand: TenderNed 407973 wish POW-06 (https://www.tenderned.nl/aankondigingen/overzicht/407973), and the row is in the core area (woo). No change mentions hasPart or isPartOf; woo-compliance maps every file to a separate document (WOO-010).",
+		"change": "woo-sitemap-document-signals",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-tooi",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half. The remaining defect (SitemapService reads tooiIdentifier while the organisation form names the field tooi) is a bug for the issue tracker, not a capability gap.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "wr-assess",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "wr-batch",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "wr-grounds",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "wr-inventory",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "wr-progress",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "wr-publish",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "wr-review",
+		"matrix": "opencatalogi",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "woo-withdraw",
+		"matrix": "filinq",
+		"decision": "build",
+		"reason": "Tender demand: TenderNed 407973 (https://www.tenderned.nl/aankondigingen/overzicht/407973). Owned by opencatalogi. Its half is the same stranded depublish action as pub-status: POST /api/publications/depublish has no screen. filinq's hand-off stays in filinq's change woo-publicatie-pipeline.",
+		"change": "publications-publish-and-withdraw-action",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "share-federation-announce",
+		"matrix": "stackiq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half. The announce call into OpenCatalogi works; it is off by default and switched on with occ only, which is stackiq's setting.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "share-federation-pull",
+		"matrix": "stackiq",
+		"decision": "defer",
+		"reason": "Rated no with the pull built but not reaching the peer: no competitor rated yes, the origin is own-code (not demand), and sharing is outside stackiq's core area (landscape, connections, architecture). The defect sits at stackiq's call site: FederationService::fetchPeerCatalog passes a url to DirectoryService::getDirectory, which reads only filters, limit and offset, while DirectoryService::syncDirectory(url) is the method that reads a peer (DirectoryService.php:471, 2423 at 1694b05).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "4.21",
+		"matrix": "dossiq",
+		"decision": "existing",
+		"reason": "Matrix corrected. Rated yes with built.state none: dossiq publishes a Woo decision's disclosable documents to OpenCatalogi from the case (POST /api/cases/{id}/woo/publish, appinfo/routes.php:820, WOOAssessmentController.php:229, BesluitPublicatiePanel.vue via src/services/wooPublicationApi.js:33, read at dossiq 96b8ef8). built.state should be built; the row lives in dossiq's matrix, so the edit is handed to the coordinator.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "publication-theme-pages",
+		"matrix": "decidiq",
+		"decision": "decided-no",
+		"reason": "Rendering a publication's timeline array as a timeline on the public publication page, the half decidiq publication-theme-pages names (row decidiq pub-20). It is not opencatalogi's: opencatalogi renders no public page (UiController serves only the Nextcloud app), and the public publication page is portaliq's src/site/components/PublicationDetailBlock.vue (portaliq development 8934e73be3), which reads opencatalogi's public federation endpoint /api/federation/publications and renders every field, an array as plain list items. ADR-086 and ADR-109 (both Proposed) put public rendering in portaliq, and opencatalogi's own matrix rows pub-wcag and od-visualise already carry portaliq as owner. opencatalogi already serves the timeline as data, as decidiq's design expects. The half belongs to portaliq.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-categories",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Core Woo area and three competitors rated yes (xxllnc Publiceren, iprox.open, Decos JOIN Woo Portaal). The category exists only as a sitemap file name; no property stores it and no register is provisioned.",
+		"change": "woo-publication-category",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-plooi",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Core Woo area. Nothing calls PLOOI and every hand-over to a national channel fails on a source type mismatch, so the repair and the PLOOI delivery are one change.",
+		"change": "woo-national-delivery-repair",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "dec-announce",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "No competitor rated yes and outside the core area, so on its own it would be decided-no. It joins woo-national-delivery-repair because the same defect blocks it and the repair adds no scope for it. Reversible.",
+		"change": "woo-national-delivery-repair",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-obligations",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Core Woo area. The assembler, the obligationSource schema and the setting exist; nothing reads a source and nothing calls the assembler.",
+		"change": "woo-obligation-overview",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "ops-roles",
+		"matrix": "opencatalogi",
+		"decision": "build",
+		"reason": "Two competitors rated yes (DKAN, xxllnc Publiceren). OpenRegister already enforces property-level update authorization, so the right can be set on the two properties that make a publication public.",
+		"change": "operations-publish-rights",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-09",
+		"matrix": "decidiq",
+		"decision": "build",
+		"reason": "Two competitors rated yes (NotuBiz, iBabs). The search endpoint already forwards filters and returns facets; the contract, the date range and a test with the real council fragment are missing. The page is Portaliq's (portal-public-search).",
+		"change": "search-council-document-filters",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-harvest",
+		"matrix": "opencatalogi",
+		"decision": "existing",
+		"reason": "Covered by the open change harvest-feed-intake.",
+		"change": "harvest-feed-intake",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-harvest-conflict",
+		"matrix": "opencatalogi",
+		"decision": "existing",
+		"reason": "Covered by the open change harvest-conflict-policies.",
+		"change": "harvest-conflict-policies",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-oai",
+		"matrix": "opencatalogi",
+		"decision": "existing",
+		"reason": "Covered by the open change oai-pmh-endpoint.",
+		"change": "oai-pmh-endpoint",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-languages",
+		"matrix": "opencatalogi",
+		"decision": "existing",
+		"reason": "Covered by the open change register-i18n.",
+		"change": "register-i18n",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-publish",
+		"matrix": "filinq",
+		"decision": "existing",
+		"reason": "filinq built the publication pipeline (archived there as woo-publicatie-pipeline). The opencatalogi side is the publication schema and the Woo sitemaps, both built; delivery registration is repaired in woo-national-delivery-repair.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-index",
+		"matrix": "filinq",
+		"decision": "existing",
+		"reason": "The Woo index feed is the sitemap harvest (built) plus registration, specified in woo-index-harvester-connection and repaired in woo-national-delivery-repair.",
+		"change": "woo-index-harvester-connection",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-process",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "Single competitor rated yes (xxllnc Publiceren), no demand row, outside the core area. The service returns arrays that nothing stores or shows; that dead code is a cleanup, not a feature.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "woo-zienswijze",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes, no demand row, outside the core area.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "wr-redact",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "Single competitor rated yes (xxllnc Publiceren), no demand row. Redaction is filinq's (RedactionAnnotator); opencatalogi should call it, not rebuild it.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "wr-board",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "dec-stamp",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes, no demand row, outside the core area.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-status-subscribe",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes, no demand row, and the app sends no mail itself by design.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-vote",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "svc-articles",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row, outside the core area.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-spatial",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "Single competitor rated partial (CKAN), no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "od-request",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "srch-widget",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "pub-reuse",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "svc-apis",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "Two competitors rated partial, none yes, no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "int-cmis",
+		"matrix": "opencatalogi",
+		"decision": "decided-no",
+		"reason": "No competitor rated yes and no demand row. Was defer, retired.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	}
+]

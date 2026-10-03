@@ -6,7 +6,7 @@
   -
   - Surfaces the OpenRegister deck-board widget (the queue/board — NOT a bespoke
   - table; ADR-022) plus the WOO-specific surfaces OpenCatalogi owns: the
-  - per-status progress summary, the redaction review (WooRedactionView), the
+  - per-status progress summary, the
   - inventarislijst download, and the ready-for-review / publish actions (the
   - publish transition is gated by the OpenRegister approval-workflow chain).
   -->
@@ -15,7 +15,6 @@ import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import WooRedactionView from './WooRedactionView.vue'
 import { canMarkReadyForReview } from '../../services/wooHelpers.js'
 
 export default {
@@ -25,7 +24,6 @@ export default {
 		NcEmptyContent,
 		NcLoadingIcon,
 		NcNoteCard,
-		WooRedactionView,
 	},
 
 	data() {
@@ -34,7 +32,6 @@ export default {
 			loading: false,
 			error: null,
 			batch: null,
-			activeDocument: null,
 		}
 	},
 
@@ -222,12 +219,6 @@ export default {
 					}}
 				</p>
 			</section>
-
-			<WooRedactionView
-				v-if="activeDocument"
-				:documentId="activeDocument.id"
-				:batchId="batchId"
-				:entities="activeDocument.entities || []" />
 
 			<div class="woo-batch__actions">
 				<NcButton :href="inventarislijstUrl('csv')">

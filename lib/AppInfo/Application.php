@@ -31,12 +31,19 @@ use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
+use OCA\OpenCatalogi\Listener\CatalogScopePendingListener;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
+use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
+use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
+use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
+use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
+use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
+use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
 use OCA\OpenRegister\AppHost\Controller\GenericHealthController;
 use OCA\OpenRegister\AppHost\Controller\GenericMetricsController;
@@ -47,6 +54,8 @@ use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\OpenRegister\Event\RegisterCreatedEvent;
+use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -116,6 +125,31 @@ class Application extends App implements IBootstrap {
 			listener: ObjectUpdatedEventListener::class
 		);
 
+		// Woo citizen journey (citizen-collections, REQ-CCOL-007): when portaliq
+		// marks a portal account removed, delete that resident's dossiers and
+		// saved searches. portaliq has no removal event; the account update is it.
+		$context->registerEventListener(
+			event: ObjectUpdatedEvent::class,
+			listener: PortalAccountRemovedListener::class
+		);
+
+		// PLOOI delivery (woo-national-delivery-repair, REQ-WND-003): queue a
+		// delivery when a publication has just become public.
+		$context->registerEventListener(
+			event: ObjectUpdatedEvent::class,
+			listener: PlooiDeliveryListener::class
+		);
+
+		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: WooReadinessTriggerListener::class
+		);
+		$context->registerEventListener(
+			event: ObjectUpdatedEvent::class,
+			listener: WooReadinessTriggerListener::class
+		);
+
 		// Register catalog cache event listeners.
 		$context->registerEventListener(
 			event: ObjectCreatedEvent::class,
@@ -136,6 +170,13 @@ class Application extends App implements IBootstrap {
 		// infinite event loop on every catalog update/soft-delete.
 		$context->registerEventListener(ObjectCreatingEvent::class, CatalogSchemaEventListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, CatalogSchemaEventListener::class);
+
+		// A seeded catalogue can name another app's register by slug (the
+		// applicatielandschap catalogue names stackiq's). When that app is
+		// installed after OpenCatalogi, its register event completes the scope
+		// (publish-from-stackiq, REQ-PFS-004).
+		$context->registerEventListener(RegisterCreatedEvent::class, CatalogScopePendingListener::class);
+		$context->registerEventListener(RegisterUpdatedEvent::class, CatalogScopePendingListener::class);
 
 		// Register tool registration listener for OpenRegister agents.
 		$context->registerEventListener(
@@ -255,6 +296,29 @@ class Application extends App implements IBootstrap {
 					request: $c->get('OCP\\IRequest'),
 					config: $c->get('OCP\\IConfig'),
 					userSession: $c->get('OCP\\IUserSession')
+				);
+			}
+		);
+
+		// The external case type catalogue is read through integriq's gateway;
+		// this app composes the ask and reads the answer, and holds no
+		// transport. The reader raises rather than answering an empty list when
+		// there is no gateway to ask with.
+		$context->registerServiceAlias(
+			'OCA\\OpenCatalogi\\Service\\Catalogue\\CaseTypeSourceReader',
+			GatewayCaseTypeSourceReader::class
+		);
+
+		// The published-collection configuration lives in this app's config, so
+		// adding a collection takes effect on a running instance without a
+		// release.
+		$context->registerService(
+			PublishedCollectionsService::class,
+			static function ($c) {
+				return new PublishedCollectionsService(
+					config: $c->get(\OCP\IAppConfig::class),
+					ruleService: $c->get(PublicationRuleService::class),
+					appName: self::APP_ID
 				);
 			}
 		);

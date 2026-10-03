@@ -564,6 +564,7 @@
 								"description",
 								"publicationDate",
 								"depublicationDate",
+								"wooCategory",
 								"status"
 							],
 							"overrides": {
@@ -666,6 +667,47 @@
 						"integrationId": "bookmarks",
 						"title": "Links",
 						"icon": "LinkVariant"
+					},
+					{
+						"id": "pub-announce",
+						"type": "national-announce",
+						"title": "Official notice",
+						"icon": "Bullhorn"
+					},
+					{
+						"id": "pub-plooi",
+						"type": "data",
+						"title": "PLOOI delivery",
+						"icon": "Bullhorn",
+						"content": {
+							"columns": 2,
+							"include": [
+								"plooiStatus",
+								"plooiDeliveredAt",
+								"plooiIdentifier",
+								"plooiReason"
+							],
+							"overrides": {
+								"plooiStatus": {
+									"editable": false
+								},
+								"plooiDeliveredAt": {
+									"editable": false
+								},
+								"plooiIdentifier": {
+									"editable": false
+								},
+								"plooiReason": {
+									"editable": false
+								}
+							}
+						}
+					},
+					{
+						"id": "pub-visibility",
+						"type": "publication-visibility",
+						"title": "Publication status",
+						"icon": "EyeOutline"
 					}
 				],
 				"layout": [
@@ -732,6 +774,30 @@
 						"gridY": 15,
 						"gridWidth": 6,
 						"gridHeight": 4
+					},
+					{
+						"id": "10",
+						"widgetId": "pub-announce",
+						"gridX": 0,
+						"gridY": 19,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "11",
+						"widgetId": "pub-plooi",
+						"gridX": 0,
+						"gridY": 23,
+						"gridWidth": 12,
+						"gridHeight": 3
+					},
+					{
+						"id": "12",
+						"widgetId": "pub-visibility",
+						"gridX": 0,
+						"gridY": 26,
+						"gridWidth": 12,
+						"gridHeight": 3
 					}
 				],
 				"lifecycleActions": {

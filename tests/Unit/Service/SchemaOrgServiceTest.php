@@ -313,6 +313,38 @@ class SchemaOrgServiceTest extends TestCase {
 	}//end testCatalogNodeListsVisiblePublications()
 
 	/**
+	 * WOO-581 review round 4 (r3-f1): one schema over two registers. A scalar
+	 * `@self.schema` next to the register list sent OR to `find((int) [1, 2])` —
+	 * register 1 only. The schema stays a list and both lists go to the top-level
+	 * `_schemas` / `_registers`, which OR's router reads.
+	 *
+	 * @return void
+	 */
+	public function testCatalogNodeKeepsTheSchemaAListOverSeveralRegisters(): void {
+		$double = new class {
+			/** @var array<int, array<string, mixed>> */
+			public array $queries = [];
+
+			/**
+			 * @param array<string, mixed> $query
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function searchObjectsPaginated(array $query = [], bool $_rbac = true, bool $_multitenancy = true, bool $deleted = false): array {
+				$this->queries[] = $query;
+				return ['results' => [], 'total' => 0];
+			}
+		};
+		$this->services['OCA\OpenRegister\Service\ObjectService'] = $double;
+
+		$this->service()->buildCatalogNode(['title' => 'WOO', 'registers' => [1, 2], 'schemas' => [11]], 'woo');
+
+		$this->assertSame(['register' => [1, 2], 'schema' => [11]], $double->queries[0]['@self']);
+		$this->assertSame([1, 2], $double->queries[0]['_registers']);
+		$this->assertSame([11], $double->queries[0]['_schemas']);
+	}//end testCatalogNodeKeepsTheSchemaAListOverSeveralRegisters()
+
+	/**
 	 * The dataset election defaults to off.
 	 *
 	 * @return void

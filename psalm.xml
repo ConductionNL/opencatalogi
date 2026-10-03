@@ -17,6 +17,11 @@
     </projectFiles>
     <stubs>
         <file name="vendor/nextcloud/ocp/OCP/Capabilities/ICapability.php" preloadClasses="true" />
+        <!-- Integriq's connection-registry events (adopt-connection-registry).
+             ConnectionReporter names them by string behind class_exists
+             (ADR-041). The stubs mirror integriq/lib/Event/ on development. -->
+        <file name="tests/Stubs/Integriq/Event/ConnectionStatusReportedEvent.php" />
+        <file name="tests/Stubs/Integriq/Event/ConnectionRefreshRequestedEvent.php" />
     </stubs>
     <issueHandlers>
         <UndefinedDocblockClass errorLevel="suppress"/>
@@ -72,6 +77,8 @@
                 <referencedClass name="OCA\OpenRegister\Event\ObjectUpdatingEvent"/>
                 <referencedClass name="OCA\OpenRegister\Event\ObjectUpdatedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Event\ObjectDeletedEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\RegisterCreatedEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\RegisterUpdatedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
                 <referencedClass name="OCA\OpenRegister\Db\FileMapper"/>

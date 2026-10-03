@@ -36,7 +36,7 @@ interface. After Phase 8:
   context, merging results and facets) remains a legitimate in-app
   orchestration with no OR leaf equivalent.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: federation outbound retry follows OR webhook retry policy (FED-OR-001)
 
@@ -81,8 +81,6 @@ opencatalogi MUST NOT define its own dead-letter logic.
 - **WHEN** the next retry fires,
 - **THEN** the push is marked dead-letter per OR's policy,
 - **AND** opencatalogi does NOT apply a different or longer retry sequence.
-
-## Requirements
 
 ### Requirement: List all publications from local and federated sources (FED-001)
 
@@ -232,7 +230,7 @@ All federation publication endpoints MUST have corresponding routes in
 - **WHEN** the app's routes are loaded,
 - **THEN** each endpoint MUST have a corresponding entry in `appinfo/routes.php`.
 
-## REMOVED Requirements
+## Change history
 
 | ID | Title | Reason removed |
 |----|-------|----------------|

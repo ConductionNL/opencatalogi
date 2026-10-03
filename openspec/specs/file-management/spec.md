@@ -152,7 +152,7 @@ The `useFileSelection` composable (drop-zone state, file list, tag setters, dupl
 - **THEN** the composable MUST manage only frontend selection state,
 - **AND** file content MUST still be sent to the OR file endpoint, not stored by the composable.
 
-## REMOVED Requirements
+## Change history
 
 The following requirements described bespoke implementations that OR's file
 capability now owns. They are retained here for traceability; implementation

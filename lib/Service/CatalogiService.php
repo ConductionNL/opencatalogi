@@ -280,17 +280,19 @@ class CatalogiService {
 		}
 
 		if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
+			$schemaLookup = $this->schemaLookupFor(registers: ($modified['registers'] ?? ($object['registers'] ?? [])));
 			$rewrittenSchemas = array_map(
-				function ($schema) {
+				function ($schema) use ($schemaLookup) {
 					if ($this->isNumericId(value: $schema) === true) {
 						return $schema;
 					}
 
-					try {
-						return $this->getSchemaMapper()->find($schema)->getId();
-					} catch (NotFoundException $e) {
+					$schemaId = $schemaLookup((string)$schema);
+					if ($schemaId === null) {
 						throw new RuntimeException('Schema ' . $schema . ' not found.');
 					}
+
+					return $schemaId;
 				},
 				$object['schemas']
 			);
@@ -302,6 +304,55 @@ class CatalogiService {
 
 		return $modified;
 	}//end computeRewrittenRegistersAndSchemas()
+
+	/**
+	 * Build the schema slug lookup for one catalogue.
+	 *
+	 * When the catalogue names at least one register by id, a schema slug only
+	 * resolves to a schema one of those registers lists. A bare slug such as
+	 * `module` can name a schema of another app, and the catalogue would then
+	 * publish that app's objects. A catalogue without a register keeps the old
+	 * global lookup, because there is nothing to scope it to.
+	 *
+	 * @param array<int, mixed> $registers The catalogue's registers, after rewriting.
+	 *
+	 * @return callable(string): (int|null) Slug to schema id, null when not found.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
+	 */
+	private function schemaLookupFor(array $registers): callable {
+		$registerIds = [];
+		foreach ($registers as $register) {
+			if ($this->isNumericId(value: $register) === true) {
+				$registerIds[] = (int)$register;
+			}
+		}
+
+		if ($registerIds === []) {
+			return function (string $slug): ?int {
+				try {
+					return $this->getSchemaMapper()->find($slug)->getId();
+				} catch (\Exception) {
+					return null;
+				}
+			};
+		}
+
+		$slugMap = null;
+		return function (string $slug) use (&$slugMap, $registerIds): ?int {
+			if ($slugMap === null) {
+				$registerMapper = $this->getRegisterMapper();
+				$schemaMapper = $this->getSchemaMapper();
+				$slugMap = (new CatalogScopeSlugResolver())->schemaSlugMap(
+					registerIds: $registerIds,
+					schemaIdsOfRegister: static fn (int $registerId): array => $registerMapper->find($registerId, _rbac: false, _multitenancy: false)->getSchemas(),
+					schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper->find($schemaId, _rbac: false, _multitenancy: false)->getSlug()
+				);
+			}
+
+			return ($slugMap[strtolower($slug)] ?? null);
+		};
+	}//end schemaLookupFor()
 
 	/**
 	 * Determine whether a value is already a numeric integer ID (not a slug).
@@ -434,8 +485,14 @@ class CatalogiService {
 		$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
 		// Remove duplicate values and assign to class properties.
+		// SCH-PFTS-CAT-002 (WOO-581): this scope serves `#[PublicPage]`
+		// `/api/catalogi/{id}`, which searched it with `_rbac: true` unguarded, so an
+		// anonymous caller read the full record of a schema without an
+		// `authorization` block. Same anonymous-only rule as every other public
+		// catalog reader; signed-in callers get the list back untouched.
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
-		$this->availableSchemas = $this->collectUnique(catalogs: $catalogs, property: 'schemas');
+		$this->availableSchemas = $this->container->get(PublicationQueryService::class)
+			->applySchemaScopeReadRuleGuard(schemaIds: $this->collectUnique(catalogs: $catalogs, property: 'schemas'));
 
 		return [
 			'registers' => array_values($this->availableRegisters),
@@ -792,6 +849,7 @@ class CatalogiService {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	public function index(null|string|int $catalogId = null): JSONResponse {
 		// Get config and fetch objects.
@@ -800,37 +858,33 @@ class CatalogiService {
 		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
+		// FAIL CLOSED on an empty schema or register scope (WOO-581): nothing
+		// configured, or every schema dropped by the read-rule guard. Without this the
+		// query below carries only a register filter — a search across every schema in
+		// it — or no register at all, which OR reads as "every register" (round 4).
+		if (empty($context['schemas']) === true || empty($context['registers']) === true) {
+			return new JSONResponse(['results' => [], 'total' => 0]);
+		}
+
 		$objectService = $this->getObjectService();
 
-		// Build search query from config using _register and _schema for magic mapper routing.
+		// Copy the request filters FIRST and strip every register/schema key from them,
+		// then write the (guarded) scope. The loop used to run after the scope and to
+		// skip only `register` / `schema`, so `?@self[register]=R&@self[schema]=S`
+		// replaced the whole `@self` block and an anonymous caller read any schema on
+		// the instance (WOO-581 review). Non-scope `@self` filters survive the strip.
 		$query = [];
-		if (empty($context['registers']) === false || empty($context['schemas']) === false) {
-			$query['@self'] = [];
-			if (empty($context['registers']) === false) {
-				// Use scalar value when only one register to avoid magic_mapper overhead.
-				$query['@self']['register'] = $context['registers'];
-				if (count($context['registers']) === 1) {
-					$query['@self']['register'] = $context['registers'][0];
-				}
-			}
-
-			if (empty($context['schemas']) === false) {
-				// Use scalar value when only one schema to avoid magic_mapper overhead.
-				$query['@self']['schema'] = $context['schemas'];
-				if (count($context['schemas']) === 1) {
-					$query['@self']['schema'] = $context['schemas'][0];
-				}
-			}
-		}
-
-		// Add other filters from config.
 		if (empty($config['filters']) === false) {
 			foreach ($config['filters'] as $key => $value) {
-				if (in_array($key, ['register', 'schema']) === false) {
-					$query[$key] = $value;
-				}
+				$query[$key] = $value;
 			}
 		}
+
+		// Scope for magic mapper routing. Both scopes are non-empty here (see the
+		// fail-closed above). writeScope() keeps the schema a list unless the scope is
+		// one schema in one register (WOO-581 review rounds 3 and 4).
+		$query = CallerScope::strip(query: $query);
+		$query = CallerScope::writeScope(query: $query, registers: $context['registers'], schemas: $context['schemas']);
 
 		// Add special parameters.
 		if (isset($config['limit']) === true) {

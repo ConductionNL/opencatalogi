@@ -13,6 +13,7 @@ use OCA\OpenRegister\Db\SchemaMapper;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Common\Exception\NotFoundException;
 use OCP\IAppConfig;
@@ -1210,19 +1211,26 @@ class CatalogiServiceTest extends TestCase {
 	// triggering a second save.
 	// ──────────────────────────────────────────────────────────
 	public function testComputeRewrittenRegistersAndSchemasResolvesSlugsToIds(): void {
-		$register = $this->createEntityMock(Register::class, 42);
-		$registerMapper = $this->createMock(RegisterMapper::class);
-		$registerMapper->expects($this->once())
-			->method('find')
-			->with('my-register')
-			->willReturn($register);
+		$register = new Register();
+		$register->setId(42);
+		$register->setSlug('my-register');
+		$register->setSchemas([7]);
 
-		$schema = $this->createEntityMock(Schema::class, 7);
+		$schema = new Schema();
+		$schema->setId(7);
+		$schema->setSlug('my-schema');
+
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->method('find')
+			->willReturnCallback(
+				static fn (string|int $id): Register => ((string)$id === 'my-register' || (string)$id === '42') ? $register : throw new DoesNotExistException('no register ' . $id)
+			);
+
 		$schemaMapper = $this->createMock(SchemaMapper::class);
-		$schemaMapper->expects($this->once())
-			->method('find')
-			->with('my-schema')
-			->willReturn($schema);
+		$schemaMapper->method('find')
+			->willReturnCallback(
+				static fn (string|int $id): Schema => ((string)$id === '7') ? $schema : throw new DoesNotExistException('no schema ' . $id)
+			);
 
 		$this->injectMappers($registerMapper, $schemaMapper);
 
@@ -1235,6 +1243,112 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->assertSame(['registers' => [42], 'schemas' => [7]], $result);
 	}//end testComputeRewrittenRegistersAndSchemasResolvesSlugsToIds()
+
+	/**
+	 * A schema slug only resolves to a schema the catalogue's own register lists (REQ-PFS-002).
+	 *
+	 * Register `stackiq` (20) lists schema 33 `organization`. Schema 9 carries the
+	 * same slug but belongs to another register, and a global lookup would return
+	 * it first (lower id). The rewrite must take 33, and must never ask the
+	 * schema mapper for the bare slug.
+	 *
+	 * @return void
+	 */
+	public function testComputeRewrittenSchemasStayInsideTheCataloguesRegisters(): void {
+		$stackiq = new Register();
+		$stackiq->setId(20);
+		$stackiq->setSlug('stackiq');
+		$stackiq->setSchemas([33]);
+
+		$theirs = new Schema();
+		$theirs->setId(9);
+		$theirs->setSlug('organization');
+		$ours = new Schema();
+		$ours->setId(33);
+		$ours->setSlug('organization');
+
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->method('find')
+			->willReturnCallback(
+				static fn (string|int $id): Register => ((string)$id === 'stackiq' || (string)$id === '20') ? $stackiq : throw new DoesNotExistException('no register ' . $id)
+			);
+
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')
+			->willReturnCallback(
+				static function (string|int $id) use ($theirs, $ours): Schema {
+					if ((string)$id === 'organization') {
+						// What a global slug lookup answers: the lowest id.
+						return $theirs;
+					}
+
+					if ((string)$id === '33') {
+						return $ours;
+					}
+
+					throw new DoesNotExistException('no schema ' . $id);
+				}
+			);
+
+		$this->injectMappers($registerMapper, $schemaMapper);
+
+		$result = $this->service->computeRewrittenRegistersAndSchemas(
+			[
+				'registers' => ['stackiq'],
+				'schemas' => ['organization'],
+			]
+		);
+
+		$this->assertSame(['registers' => [20], 'schemas' => [33]], $result);
+	}//end testComputeRewrittenSchemasStayInsideTheCataloguesRegisters()
+
+	/**
+	 * A catalogue without a register keeps the global schema lookup: nothing to scope it to.
+	 *
+	 * @return void
+	 */
+	public function testComputeRewrittenSchemasWithoutARegisterLookUpGlobally(): void {
+		$schema = new Schema();
+		$schema->setId(7);
+		$schema->setSlug('my-schema');
+
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->expects($this->never())->method('find');
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->expects($this->once())->method('find')->with('my-schema')->willReturn($schema);
+
+		$this->injectMappers($registerMapper, $schemaMapper);
+
+		$this->assertSame(['schemas' => [7]], $this->service->computeRewrittenRegistersAndSchemas(['schemas' => ['my-schema']]));
+	}//end testComputeRewrittenSchemasWithoutARegisterLookUpGlobally()
+
+	/**
+	 * A schema slug the catalogue's register does not list throws, so the listener keeps the slug for the backfill.
+	 *
+	 * @return void
+	 */
+	public function testComputeRewrittenSchemasThrowsOnASlugOutsideTheRegisters(): void {
+		$stackiq = new Register();
+		$stackiq->setId(20);
+		$stackiq->setSchemas([]);
+
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->method('find')->willReturn($stackiq);
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->expects($this->never())->method('find');
+
+		$this->injectMappers($registerMapper, $schemaMapper);
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Schema usage not found.');
+
+		$this->service->computeRewrittenRegistersAndSchemas(
+			[
+				'registers' => ['20'],
+				'schemas' => ['usage'],
+			]
+		);
+	}//end testComputeRewrittenSchemasThrowsOnASlugOutsideTheRegisters()
 
 	public function testComputeRewrittenRegistersAndSchemasIsIdempotentOnIntegerIds(): void {
 		// No mapper lookups should happen when everything is already an integer id.
@@ -1448,6 +1562,9 @@ class CatalogiServiceTest extends TestCase {
 		// Object visibility is enforced by OpenRegister RBAC, not by this service, so no
 		// published-predicate stub is needed — the mock is returned for its class id below.
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
+		// are about: pass the schema scope through. The guard has its own tests.
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 
 		$this->container->method('get')
 			->willReturnCallback(
@@ -1524,4 +1641,173 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('schemaVersion', $first['@self']);
 		$this->assertSame('reg-1', $first['@self']['register']);
 	}
+
+	// =======================================================================
+	// WOO-581 — `/api/catalogi/{id}` holds its schema scope to the read-rule guard
+	// =======================================================================
+
+	/**
+	 * Wire the container with an ObjectService mock and a query-service mock
+	 * whose read-rule guard the test decides.
+	 *
+	 * @param ObjectService|MockObject $objectService The ObjectService mock.
+	 * @param \Closure                 $guard         What applySchemaScopeReadRuleGuard() returns.
+	 *
+	 * @return void
+	 */
+	private function injectObjectServiceWithGuard(ObjectService|MockObject $objectService, \Closure $guard): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnCallback($guard);
+
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => $id === \OCA\OpenCatalogi\Service\PublicationQueryService::class ? $queryService : $objectService
+		);
+	}//end injectObjectServiceWithGuard()
+
+	/**
+	 * WOO-581 review f1: `?@self[register]=20&@self[schema]=56` used to replace
+	 * the whole `@self` block AFTER the guarded scope was written, so an
+	 * anonymous caller read any schema on the instance — here 56, which is in
+	 * no catalog. The guarded scope wins; a non-scope `@self` filter survives.
+	 *
+	 * @return void
+	 */
+	public function testIndexIgnoresACallerSuppliedSelfScope(): void {
+		$this->request->method('getParams')->willReturn([
+			'@self' => ['register' => 20, 'schema' => 56, 'owner' => 'alice'],
+			'_schemas' => [56],
+			'_register' => 99,
+		]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [21], 'schemas' => [28]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => $q['@self'] === ['owner' => 'alice', 'register' => 21, 'schema' => 28]
+				&& isset($q['_schemas']) === false
+				&& isset($q['_register']) === false))
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => $schemas);
+
+		$this->assertSame(200, $this->service->index('publications')->getStatus());
+	}//end testIndexIgnoresACallerSuppliedSelfScope()
+
+	/**
+	 * The catalog's schema list goes through the SCH-PFTS-CAT-002 guard before
+	 * it is searched. Before WOO-581 an anonymous caller read the full record of
+	 * a schema without an `authorization` block here.
+	 *
+	 * @return void
+	 */
+	public function testIndexSearchesOnlyTheReadRuleGuardedSchemas(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [20], 'schemas' => [28, 56]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => $q['@self']['schema'] === 28))
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => array_values(array_diff($schemas, [56])));
+
+		$this->assertSame(200, $this->service->index('publications')->getStatus());
+	}//end testIndexSearchesOnlyTheReadRuleGuardedSchemas()
+
+	/**
+	 * WOO-581 review round 3 (f1): the guard turns [28, 56] × [20, 21] into
+	 * [28] × [20, 21]. A scalar `@self.schema` next to that register list sent OR
+	 * to `find((int) [20, 21])` — register 1 — or past the scope to the all-tables
+	 * `_ids` lookup. The schema stays a list, and both lists reach OR's routers as
+	 * the top-level `_schemas` / `_registers` (round 4: `@self.registers` is a
+	 * column filter to OR, and it rejects the unknown column).
+	 *
+	 * @return void
+	 */
+	public function testIndexKeepsTheSchemaAListWhenTheScopeHasSeveralRegisters(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [20, 21], 'schemas' => [28, 56]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28]
+				&& $q['_schemas'] === [28]
+				&& $q['_registers'] === [20, 21]
+				&& isset($q['@self']['registers']) === false))
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => array_values(array_diff($schemas, [56])));
+
+		$this->assertSame(200, $this->service->index('publications')->getStatus());
+	}//end testIndexKeepsTheSchemaAListWhenTheScopeHasSeveralRegisters()
+
+	/**
+	 * WOO-581 review round 4 (f3): a catalog union without registers is an empty
+	 * scope too. Without a register OR resolves each schema to its owning
+	 * register on the whole instance; an empty page, no search.
+	 *
+	 * @return void
+	 */
+	public function testIndexFailsClosedWithoutARegisterScope(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [], 'schemas' => [28]]),
+		]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => $schemas);
+
+		$response = $this->service->index('publications');
+		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
+	}//end testIndexFailsClosedWithoutARegisterScope()
+
+	/**
+	 * Everything dropped → an empty page and NO search. Without the fail-closed
+	 * the query would carry only a register filter: every schema in it.
+	 *
+	 * @return void
+	 */
+	public function testIndexFailsClosedWhenTheGuardEmptiesTheScope(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [20], 'schemas' => [56]]),
+		]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => []);
+
+		$response = $this->service->index('publications');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
+	}//end testIndexFailsClosedWhenTheGuardEmptiesTheScope()
 }//end class
