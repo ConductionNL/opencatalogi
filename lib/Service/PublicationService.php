@@ -43,6 +43,8 @@ namespace OCA\OpenCatalogi\Service;
 
 use Exception;
 use InvalidArgumentException;
+use OCA\OpenRegister\Exception\RegisterNotFoundException;
+use OCA\OpenRegister\Exception\SchemaNotFoundException;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -586,7 +588,6 @@ class PublicationService {
 		// register: a scalar schema next to a register list sends OR to register 1, or
 		// past the scope to the all-tables `_ids` lookup (WOO-581 review round 3).
 		$searchQuery = CallerScope::strip(query: $searchQuery);
-		$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $registers, schemas: $schemas);
 
 		$searchQuery['_includeDeleted'] = false;
 
@@ -601,10 +602,11 @@ class PublicationService {
 		// (RBAC rules determine what each user/anonymous can see).
 		$result = array_merge(
 			['results' => [], 'facets' => []],
-			$objectService->searchObjectsPaginated(
+			$this->searchObjectsWithinScope(
+				objectService: $objectService,
 				query: $searchQuery,
-				_rbac: true,
-				_multitenancy: false
+				registers: $registers,
+				schemas: $schemas
 			)
 		);
 
@@ -624,6 +626,81 @@ class PublicationService {
 
 		return $result;
 	}//end searchPublications()
+
+	/**
+	 * Search OpenRegister within the catalogue scope, leaving out the slugs it refuses.
+	 *
+	 * A seeded catalogue names its register and schemas by slug until the import
+	 * that owns them has run; CatalogScopeSlugResolver keeps an unresolved slug
+	 * so a later import can finish the scope. Such an entry matches nothing (the
+	 * scope check reads it through intval), and since openregister#3996
+	 * OpenRegister refuses an unknown register or schema reference on the read
+	 * path instead of answering an empty page. So one unresolved catalogue — the
+	 * Applicatielandschap seed on an instance without stackiq — turned every
+	 * federated search into a 500 (WOO-585). On that refusal the slugs leave the
+	 * scope for this search and it runs once more over the ids; the catalogue
+	 * keeps its slugs for the next import. A scope with nothing left is the empty
+	 * page, as everywhere else here (WOO-581, fail closed). A refusal of a scope
+	 * that holds ids only travels on: an id OpenRegister does not know is not a
+	 * pending seed.
+	 *
+	 * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service.
+	 * @param array<string, mixed>                    $query         The query, stripped of the caller's scope keys.
+	 * @param array<int, mixed>                       $registers     The register scope.
+	 * @param array<int, mixed>                       $schemas       The schema scope.
+	 *
+	 * @return array<string, mixed> The paginated result.
+	 *
+	 * @throws RegisterNotFoundException When an id in the scope names no register.
+	 * @throws SchemaNotFoundException   When an id in the scope names no schema.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function searchObjectsWithinScope($objectService, array $query, array $registers, array $schemas): array {
+		try {
+			return $objectService->searchObjectsPaginated(
+				query: CallerScope::writeScope(query: $query, registers: $registers, schemas: $schemas),
+				_rbac: true,
+				_multitenancy: false
+			);
+		} catch (RegisterNotFoundException | SchemaNotFoundException $e) {
+			$registerIds = $this->withoutSlugs(entries: $registers);
+			$schemaIds = $this->withoutSlugs(entries: $schemas);
+			if (count($registerIds) === count($registers) && count($schemaIds) === count($schemas)) {
+				throw $e;
+			}
+
+			if ($registerIds === [] || $schemaIds === []) {
+				return ['results' => [], 'facets' => [], 'total' => 0];
+			}
+
+			return $objectService->searchObjectsPaginated(
+				query: CallerScope::writeScope(query: $query, registers: $registerIds, schemas: $schemaIds),
+				_rbac: true,
+				_multitenancy: false
+			);
+		}//end try
+	}//end searchObjectsWithinScope()
+
+	/**
+	 * The entries of a scope list that are ids: everything but a non-numeric string.
+	 *
+	 * Same reading of "slug" as {@see CatalogScopeSlugResolver::hasSlug()}.
+	 *
+	 * @param array<int, mixed> $entries The scope list as stored on the catalogues.
+	 *
+	 * @return array<int, mixed> The list without its slugs, re-indexed.
+	 *
+	 * @spec exclude Pure list filter for searchObjectsWithinScope(); carries no behaviour of its own.
+	 */
+	private function withoutSlugs(array $entries): array {
+		return array_values(
+			array_filter(
+				$entries,
+				static fn (mixed $entry): bool => is_string($entry) === false || $entry === '' || is_numeric($entry) === true
+			)
+		);
+	}//end withoutSlugs()
 
 	/**
 	 * Get external catalogs from listings stored in the directory service
@@ -2185,11 +2262,6 @@ class PublicationService {
 		// steered the facets to any schema. See CallerScope::strip().
 		// See searchPublications() for why the scope goes through writeScope().
 		$searchQuery = CallerScope::strip(query: $searchQuery);
-		$searchQuery = CallerScope::writeScope(
-			query: $searchQuery,
-			registers: $catalogContext['registers'],
-			schemas: $catalogContext['schemas']
-		);
 
 		$searchQuery['_includeDeleted'] = false;
 
@@ -2206,10 +2278,11 @@ class PublicationService {
 		// searchPublications(). No extra published filtering — the schemas' conditional
 		// public-read rules (with $now) already gate published-vs-draft for anonymous callers.
 		$objectService = $this->getObjectService();
-		$result = $objectService->searchObjectsPaginated(
+		$result = $this->searchObjectsWithinScope(
+			objectService: $objectService,
 			query: $searchQuery,
-			_rbac: true,
-			_multitenancy: false
+			registers: $catalogContext['registers'],
+			schemas: $catalogContext['schemas']
 		);
 
 		$timings['objectservice'] = ((microtime(true) - $objectServiceStart) * 1000);

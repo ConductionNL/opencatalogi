@@ -1404,6 +1404,124 @@ class PublicationServiceTest extends TestCase {
 		$this->assertArrayHasKey('results', $result);
 	}
 
+	// =======================================================================
+	// A seeded catalogue whose scope OpenRegister refuses (WOO-585)
+	// =======================================================================
+
+	/**
+	 * Two catalogues: Componenten with ids, and the Applicatielandschap seed still on
+	 * slugs because stackiq is not installed. OpenRegister refuses the slug
+	 * (openregister#3996); the search runs again over the ids alone.
+	 */
+	public function testAnUnresolvedSeedSlugLeavesTheScopeWhenOpenRegisterRefusesIt(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+		$this->mockConfiguredCatalogScope();
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => ['21'], 'schemas' => ['122']]),
+			$this->createSerializableObject(['registers' => ['stackiq'], 'schemas' => ['module', 'suite']]),
+		]);
+		$queries = [];
+		$objectService->method('searchObjectsPaginated')
+			->willReturnCallback(static function (array $query) use (&$queries): array {
+				$queries[] = $query;
+				if (count($queries) === 1) {
+					throw new \OCA\OpenRegister\Exception\RegisterNotFoundException(registerSlugOrId: 'stackiq');
+				}
+
+				return ['results' => [], 'total' => 0];
+			});
+		$this->request->method('getParams')->willReturn([]);
+		$this->directoryService->method('getUniqueDirectories')->willReturn([]);
+
+		$result = $this->service->getAggregatedPublications([], [], '');
+
+		$this->assertCount(2, $queries);
+		$this->assertSame(['21', 'stackiq'], $queries[0]['@self']['register']);
+		$this->assertSame('21', $queries[1]['@self']['register']);
+		$this->assertSame('122', $queries[1]['@self']['schema']);
+		$this->assertArrayNotHasKey('_registers', $queries[1]);
+		$this->assertArrayNotHasKey('_schemas', $queries[1]);
+		$this->assertSame(0, $result['total']);
+		$this->assertTrue($result['_performance']['ultra_fast_path']);
+	}
+
+	/**
+	 * The same refusal on the facet path: the aggregated search runs again over the ids.
+	 */
+	public function testTheAggregatedSearchAlsoRunsAgainWithoutTheRefusedSlug(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+		$this->mockConfiguredCatalogScope();
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => ['21'], 'schemas' => ['122']]),
+			$this->createSerializableObject(['registers' => ['stackiq'], 'schemas' => ['module']]),
+		]);
+		$queries = [];
+		$objectService->method('searchObjectsPaginated')
+			->willReturnCallback(static function (array $query) use (&$queries): array {
+				$queries[] = $query;
+				if (count($queries) === 1) {
+					throw new \OCA\OpenRegister\Exception\SchemaNotFoundException(schemaSlugOrId: 'module');
+				}
+
+				return ['results' => [], 'total' => 0, 'facets' => []];
+			});
+		$this->request->method('getParams')->willReturn([]);
+		$this->directoryService->method('getUniqueDirectories')->willReturn([]);
+
+		$result = $this->service->getAggregatedPublications(['_facetable' => 'true', '_aggregate' => 'true'], [], '');
+
+		$this->assertCount(2, $queries);
+		$this->assertSame('21', $queries[1]['@self']['register']);
+		$this->assertSame('122', $queries[1]['@self']['schema']);
+		$this->assertSame(0, $result['total']);
+	}
+
+	/**
+	 * Only the seed is there and it is still on slugs: the empty page, not a 500
+	 * (WOO-581, fail closed), and OpenRegister is not asked a second time.
+	 */
+	public function testASeedOnlyScopeAnswersTheEmptyPage(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+		$this->mockConfiguredCatalogScope();
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => ['stackiq'], 'schemas' => ['module']]),
+		]);
+		$objectService->expects($this->once())->method('searchObjectsPaginated')
+			->willThrowException(new \OCA\OpenRegister\Exception\RegisterNotFoundException(registerSlugOrId: 'stackiq'));
+		$this->request->method('getParams')->willReturn([]);
+		$this->directoryService->method('getUniqueDirectories')->willReturn([]);
+
+		$result = $this->service->getAggregatedPublications([], [], '');
+
+		$this->assertSame([], $result['results']);
+		$this->assertSame(0, $result['total']);
+	}
+
+	/**
+	 * A scope of ids that OpenRegister refuses is not a pending seed; the refusal travels on.
+	 */
+	public function testARefusedIdScopeIsNotHidden(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+		$this->mockConfiguredCatalogScope();
+		$objectService->method('searchObjects')->willReturn([
+			$this->createSerializableObject(['registers' => ['21'], 'schemas' => ['122']]),
+		]);
+		// No call count here: getAggregatedPublications() gives the local path one
+		// more try when it throws, and that try is refused the same way.
+		$objectService->method('searchObjectsPaginated')
+			->willThrowException(new \OCA\OpenRegister\Exception\RegisterNotFoundException(registerSlugOrId: '21'));
+		$this->request->method('getParams')->willReturn([]);
+		$this->directoryService->method('getUniqueDirectories')->willReturn([]);
+
+		$this->expectException(\OCA\OpenRegister\Exception\RegisterNotFoundException::class);
+
+		$this->service->getAggregatedPublications([], [], '');
+	}
+
 	public function testGetAggregatedPublicationsWithFederatedDirectories(): void {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
