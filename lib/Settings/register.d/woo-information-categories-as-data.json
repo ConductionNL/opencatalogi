@@ -88,6 +88,9 @@
 				"version": "0.0.7",
 				"properties": {
 					"wooCategory": {
+						"type": "string",
+						"title": "Woo information category",
+						"description": "The information category of the Woo this publication is filed under. The sitemap of that category lists it for the national Woo index. Seventeen are the categories of article 3.3; infocat018 is the inspanningsverplichting of article 3.1.",
 						"enum": [
 							"infocat018"
 						],

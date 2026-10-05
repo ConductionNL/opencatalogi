@@ -24,6 +24,44 @@
       {
         "@self": {
           "register": "publication",
+          "schema": "informationCategory",
+          "slug": "informationcategory-aanbestedingen"
+        },
+        "code": "aanbestedingen",
+        "title": "Aanbestedingen",
+        "titleEn": "Tenders",
+        "mapsTo": "infocat013",
+        "schemas": []
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "informationCategory",
+          "slug": "informationcategory-omgevingsplannen"
+        },
+        "code": "omgevingsplannen",
+        "title": "Omgevingsplannen",
+        "titleEn": "Environment plans",
+        "mapsTo": "infocat002",
+        "schemas": [
+          "publication"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "informationCategory",
+          "slug": "informationcategory-participatietrajecten"
+        },
+        "code": "participatietrajecten",
+        "title": "Participatietrajecten",
+        "titleEn": "Participation processes",
+        "mapsTo": "infocat018",
+        "schemas": []
+      },
+      {
+        "@self": {
+          "register": "publication",
           "schema": "articleVerdict",
           "slug": "articleverdict-articleverdict-1-1"
         },

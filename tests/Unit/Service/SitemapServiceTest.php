@@ -1080,6 +1080,156 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * The service answers with the file names the registry serves (REQ-WIC-001).
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-information-categories-are-data-not-code-req-wic-001
+	 */
+	public function testTheServiceAnswersWithTheRegistrysSitemapFiles(): void {
+		$this->assertSame($this->wooCategories->sitemapFiles(), $this->service->sitemapFiles());
+	}
+
+	/**
+	 * A category that names its schemas restricts its own sitemap to them, and the
+	 * waardelijst members, which name none, keep searching the whole catalogue
+	 * scope (REQ-WIC-003).
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-category-names-the-schemas-its-sitemap-lists-req-wic-003
+	 */
+	public function testACategoryNamingItsSchemasRestrictsItsSitemapToThem(): void {
+		$queries = [];
+		$this->wireCategoryCatalog(
+			[
+				[
+					'title' => 'publication',
+					'id' => 'reg-pub',
+					'schemas' => [
+						['id' => 'sch-pub', 'slug' => 'publication'],
+						['id' => 'sch-tender', 'slug' => 'tender'],
+					],
+				],
+			],
+			['sch-pub', 'sch-tender'],
+			static fn (array $query): array => [['id' => 'aanbesteding-1', '@self' => ['updated' => '2026-01-01']]],
+			$queries
+		);
+
+		$service = $this->serviceWithLocalCategory(
+			['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat010', 'schemas' => ['tender']]
+		);
+
+		$result = $service->buildSitemap('woo', 'sitemapindex-diwoo-aanbestedingen.xml', 1);
+
+		$this->assertSame(200, $result->getStatus());
+		$this->assertCount(1, $queries);
+		$this->assertSame('aanbestedingen', $queries[0]['wooCategory']);
+		$this->assertSame('sch-tender', $queries[0]['@self']['schema'], 'The named schema is not the one searched.');
+	}
+
+	/**
+	 * A category that names no schemas searches the catalogue's whole scope.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-category-names-the-schemas-its-sitemap-lists-req-wic-003
+	 */
+	public function testACategoryNamingNoSchemasSearchesTheWholeScope(): void {
+		$queries = [];
+		$this->wireCategoryCatalog(
+			[
+				[
+					'title' => 'publication',
+					'id' => 'reg-pub',
+					'schemas' => [
+						['id' => 'sch-pub', 'slug' => 'publication'],
+						['id' => 'sch-tender', 'slug' => 'tender'],
+					],
+				],
+			],
+			['sch-pub', 'sch-tender'],
+			static fn (array $query): array => [],
+			$queries
+		);
+
+		$service = $this->serviceWithLocalCategory(
+			['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat010']
+		);
+
+		$service->buildSitemap('woo', 'sitemapindex-diwoo-aanbestedingen.xml', 1);
+
+		$this->assertCount(1, $queries);
+		$this->assertSame(['sch-pub', 'sch-tender'], $queries[0]['@self']['schema']);
+	}
+
+	/**
+	 * A named slug no register declares narrows the search to nothing rather than
+	 * widening it back to the whole catalogue.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-category-names-the-schemas-its-sitemap-lists-req-wic-003
+	 */
+	public function testASchemaSlugNoRegisterDeclaresListsNothing(): void {
+		$queries = [];
+		$this->wireCategoryCatalog(
+			[['title' => 'publication', 'id' => 'reg-pub', 'schemas' => [['id' => 'sch-pub', 'slug' => 'publication']]]],
+			['sch-pub'],
+			static fn (array $query): array => [['id' => 'anything', '@self' => ['updated' => '2026-01-01']]],
+			$queries
+		);
+
+		$service = $this->serviceWithLocalCategory(
+			['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat010', 'schemas' => ['tender']]
+		);
+
+		$result = $service->buildSitemap('woo', 'sitemapindex-diwoo-aanbestedingen.xml', 1);
+
+		$this->assertSame(200, $result->getStatus());
+		$this->assertSame([], $queries, 'A slug nothing declares still produced a search.');
+		$this->assertStringNotContainsString('<diwoo:Document>', $result->render());
+	}
+
+	/**
+	 * A sitemap service whose registry holds one stored local category.
+	 *
+	 * The row is handed in through a mocked OpenRegister object service, the way the
+	 * registry reads it in production.
+	 *
+	 * @param array<string, mixed> $stored The stored category.
+	 *
+	 * @return SitemapService The service.
+	 */
+	private function serviceWithLocalCategory(array $stored): SitemapService {
+		$row = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$row->method('jsonSerialize')->willReturn($stored);
+
+		$schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
+		$schema->method('getId')->willReturn(42);
+		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(['results' => [$row]]);
+
+		$registrySettings = $this->createMock(SettingsService::class);
+		$registrySettings->method('getObjectService')->willReturn($objectService);
+		$registrySettings->method('getSchemaMapper')->willReturn($schemaMapper);
+
+		$tooi = new \OCA\OpenCatalogi\Service\TooiVocabularyService();
+
+		return new SitemapService(
+			$this->container,
+			$this->appManager,
+			$this->settingsService,
+			$this->urlGenerator,
+			$this->config,
+			$tooi,
+			$this->queryService,
+			new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+				$tooi,
+				$registrySettings,
+				$this->createMock(\Psr\Log\LoggerInterface::class),
+				new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission($tooi),
+			),
+		);
+	}
+
+	/**
 	 * mapDiwooDocument() reads wooCategory before the older category fields.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md

@@ -111,6 +111,24 @@ class TooiVocabularyServiceTest extends TestCase {
 	}//end testResolveSoortHandeling()
 
 	/**
+	 * A blank stored soortHandeling falls back to the default, not to null.
+	 *
+	 * An empty string is what a form leaves behind when the field is cleared, and
+	 * reading it as "no member" would drop the axis from every document on that
+	 * publication instead of claiming receipt.
+	 *
+	 * @return void
+	 */
+	public function testABlankSoortHandelingFallsBackToTheDefault(): void {
+		foreach (['', '   '] as $blank) {
+			$resolved = $this->service->resolveSoortHandeling($blank);
+			$this->assertNotNull($resolved, 'A blank handling type resolved to nothing.');
+			$this->assertSame(TooiVocabularyService::DEFAULT_SOORTHANDELING, $resolved['label']);
+		}
+
+	}//end testABlankSoortHandelingFallsBackToTheDefault()
+
+	/**
 	 * Only a well-formed TOOI organisatie URI is accepted; a UUID is rejected.
 	 *
 	 * @return void

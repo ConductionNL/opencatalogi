@@ -360,14 +360,14 @@ class SitemapService {
 		}
 
 		$code = WooCategoryRegistry::codeOf(sitemapFile: $categoryCode);
-		if ($code !== null) {
+		if ($code !== null && $this->categories->schemasFor(code: $code) !== []) {
 			// A category may name the schemas its own sitemap lists (REQ-WIC-003).
-			// Naming one the catalogue does not publish narrows to nothing, which is
-			// the operator's instruction, so it is not widened back.
-			$declared = $this->declaredSchemaIds(code: $code);
-			if ($declared !== []) {
-				$schemas = array_values(array_intersect($schemas, $declared));
-			}
+			// Whether a named slug RESOLVES is not the test: the test is whether the
+			// category named any. A slug no register declares resolves to no id and
+			// must leave the search empty, because reading "resolved to nothing" as
+			// "names nothing" would widen the sitemap back to the whole catalogue —
+			// the opposite of the instruction, and silently.
+			$schemas = array_values(array_intersect($schemas, $this->declaredSchemaIds(code: $code)));
 		}
 
 		if ($code !== null && $scope['registers'] !== [] && $schemas !== []) {
@@ -388,21 +388,18 @@ class SitemapService {
 	 * and what survives a reinstall; the search needs ids. Every register in the
 	 * settings carries its schemas as full objects, so the slugs resolve from data
 	 * already loaded. A slug no register declares resolves to nothing and is
-	 * therefore absent from the result, never silently treated as "all schemas".
+	 * therefore absent from the result. The caller asks this only of a category that
+	 * named slugs, and treats an empty answer as "no schema to search", never as
+	 * "every schema".
 	 *
 	 * @param string $code The category code.
 	 *
-	 * @return array<int, mixed> The schema ids, empty when the category names none.
+	 * @return array<int, mixed> The schema ids the named slugs resolved to.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-category-names-the-schemas-its-sitemap-lists-req-wic-003
 	 */
 	private function declaredSchemaIds(string $code): array {
-		$slugs = $this->categories->schemasFor(code: $code);
-		if ($slugs === []) {
-			return [];
-		}
-
-		$wanted = array_map('strtolower', $slugs);
+		$wanted = array_map('strtolower', $this->categories->schemasFor(code: $code));
 		$ids = [];
 		foreach (($this->settingsService->getSettings()['availableRegisters'] ?? []) as $register) {
 			foreach (($register['schemas'] ?? []) as $schema) {

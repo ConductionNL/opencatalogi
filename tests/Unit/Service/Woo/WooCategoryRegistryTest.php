@@ -30,6 +30,10 @@ use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
+use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Db\Schema;
+use OCA\OpenRegister\Db\SchemaMapper;
+use OCA\OpenRegister\Service\ObjectService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -39,47 +43,61 @@ use Psr\Log\LoggerInterface;
 class WooCategoryRegistryTest extends TestCase {
 
 	/**
-	 * A registry whose stored categories are the given rows.
+	 * A registry that reads the given rows from OpenRegister.
 	 *
-	 * The rows are handed in where OpenRegister would hand them in, so the admission
-	 * rules under test are the production ones and not a copy.
+	 * The rows are handed in where OpenRegister hands them in, through the object
+	 * service, so the production read path and the production admission rules are
+	 * both under test. An earlier revision of this file subclassed the registry and
+	 * overrode the read instead, which left the whole storage read uncovered and
+	 * untested: the schema lookup, the query and the fail-soft catch.
 	 *
 	 * @param array<int, array<string, mixed>> $stored The stored local categories.
 	 *
 	 * @return WooCategoryRegistry The registry.
 	 */
 	private function registry(array $stored = []): WooCategoryRegistry {
-		$settings = $this->createMock(SettingsService::class);
+		$rows = array_map(
+			function (array $row): ObjectEntity {
+				$object = $this->createMock(ObjectEntity::class);
+				$object->method('jsonSerialize')->willReturn($row);
 
+				return $object;
+			},
+			$stored
+		);
+
+		$schema = $this->createMock(Schema::class);
+		$schema->method('getId')->willReturn(42);
+
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(['results' => $rows, 'total' => count($rows)]);
+
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getObjectService')->willReturn($objectService);
+		$settings->method('getSchemaMapper')->willReturn($schemaMapper);
+
+		return $this->registryOver(settings: $settings);
+	}
+
+	/**
+	 * A registry over a given settings service.
+	 *
+	 * @param SettingsService $settings The settings service.
+	 *
+	 * @return WooCategoryRegistry The registry.
+	 */
+	private function registryOver(SettingsService $settings): WooCategoryRegistry {
 		$tooi = new TooiVocabularyService();
 
-		$registry = new class($tooi, $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission($tooi), $stored) extends WooCategoryRegistry {
-			/**
-			 * @param TooiVocabularyService $tooi The waardelijst resolver.
-			 * @param SettingsService $settings The settings service.
-			 * @param LoggerInterface $logger The logger.
-			 * @param LocalCategoryAdmission $admission The admission rules.
-			 * @param array<int, array<string, mixed>> $stored The stored rows.
-			 */
-			public function __construct(
-				TooiVocabularyService $tooi,
-				SettingsService $settings,
-				LoggerInterface $logger,
-				LocalCategoryAdmission $admission,
-				private readonly array $stored,
-			) {
-				parent::__construct($tooi, $settings, $logger, $admission);
-			}
-
-			/**
-			 * @return array<int, array<string, mixed>> The stored rows.
-			 */
-			protected function readStoredCategories(): array {
-				return $this->stored;
-			}
-		};
-
-		return $registry;
+		return new WooCategoryRegistry(
+			$tooi,
+			$settings,
+			$this->createMock(LoggerInterface::class),
+			new LocalCategoryAdmission($tooi),
+		);
 	}
 
 	public function testTheEighteenWaardelijstMembersNeedNoStoredRow(): void {
@@ -215,6 +233,114 @@ class WooCategoryRegistryTest extends TestCase {
 		$this->assertSame(['tender', 'award'], $registry->schemasFor(code: 'aanbestedingen'));
 		$this->assertSame([], $registry->schemasFor(code: 'infocat012'));
 		$this->assertSame([], $registry->schemasFor(code: 'nonexistent'));
+	}
+
+	public function testALocalCategoryAlsoResolvesByItsOwnNameForADocument(): void {
+		// A record written before the code existed can hold the category's name
+		// rather than its code, so the name resolves too.
+		$registry = $this->registry(
+			[['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat010']]
+		);
+
+		$member = $registry->resolveForDocument('Aanbestedingen');
+		$this->assertNotNull($member);
+		$this->assertSame('Adviezen', $member['label']);
+	}
+
+	public function testAStoredRowThatIsAPlainArrayIsReadToo(): void {
+		// OpenRegister hands back entities, but a caller that already serialised them
+		// must not silently lose its categories.
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(
+			['results' => [['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat010']]]
+		);
+
+		$schema = $this->createMock(Schema::class);
+		$schema->method('getId')->willReturn(42);
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getObjectService')->willReturn($objectService);
+		$settings->method('getSchemaMapper')->willReturn($schemaMapper);
+
+		$this->assertArrayHasKey('aanbestedingen', $this->registryOver(settings: $settings)->all());
+	}
+
+	public function testAnInstanceWithoutTheSchemaServesTheWaardelijstMembersOnly(): void {
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn(null);
+
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getObjectService')->willReturn($this->createMock(ObjectService::class));
+		$settings->method('getSchemaMapper')->willReturn($schemaMapper);
+
+		$registry = $this->registryOver(settings: $settings);
+		$this->assertCount(18, $registry->all());
+		$this->assertSame([], $registry->rejected());
+	}
+
+	public function testAnInstanceWithoutOpenRegisterServesTheWaardelijstMembersOnly(): void {
+		// The mock answers null for both accessors, which is what an instance without
+		// OpenRegister looks like to this service.
+		$this->assertCount(18, $this->registryOver(settings: $this->createMock(SettingsService::class))->all());
+	}
+
+	public function testAFailingStorageReadLeavesTheWaardelijstMembersStanding(): void {
+		// Fail soft, not closed: the 18 statutory categories must keep publishing
+		// when the lookup for the local extras throws.
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getObjectService')->willReturn($this->createMock(ObjectService::class));
+		$settings->method('getSchemaMapper')->willThrowException(new \RuntimeException('SchemaMapper is not available.'));
+
+		$registry = $this->registryOver(settings: $settings);
+		$this->assertCount(18, $registry->all());
+		$this->assertArrayHasKey('sitemapindex-diwoo-infocat001.xml', $registry->sitemapFiles());
+	}
+
+	public function testTheMergedSetIsReadOncePerRequest(): void {
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->expects($this->once())->method('searchObjectsPaginated')->willReturn(['results' => []]);
+
+		$schema = $this->createMock(Schema::class);
+		$schema->method('getId')->willReturn(42);
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getObjectService')->willReturn($objectService);
+		$settings->method('getSchemaMapper')->willReturn($schemaMapper);
+
+		$registry = $this->registryOver(settings: $settings);
+		$registry->all();
+		$registry->sitemapFiles();
+		$registry->find(code: 'infocat001');
+	}
+
+	public function testTheShippedDemoCategoriesAreOnesThisAppAdmits(): void {
+		// Demo data the app's own admission rules refuse would publish nothing on a
+		// fresh install, and the walkthrough that loads it would look like it worked.
+		$register = json_decode(
+			(string)file_get_contents(__DIR__ . '/../../../../lib/Settings/opencatalogi_mock_register.json'),
+			true
+		);
+		$demo = array_values(
+			array_filter(
+				($register['components']['objects'] ?? []),
+				static fn (array $row): bool => (($row['@self']['schema'] ?? null) === WooCategoryRegistry::SCHEMA_SLUG)
+			)
+		);
+
+		$this->assertNotSame([], $demo, 'The demo register ships no information category.');
+
+		$registry = $this->registry($demo);
+		$this->assertSame([], $registry->rejected(), 'A shipped demo category is refused by this app.');
+		foreach ($demo as $row) {
+			$record = $registry->find(code: $row['code']);
+			$this->assertNotNull($record, 'Demo category ' . $row['code'] . ' is absent from the registry.');
+			$this->assertSame(WooCategoryRegistry::ORIGIN_LOCAL, $record['origin']);
+			$this->assertStringStartsWith(TooiVocabularyService::KERN_BASE, $record['tooiUri']);
+		}
 	}
 
 	public function testASitemapFileNameOutsideTheConventionResolvesToNothing(): void {

@@ -200,7 +200,7 @@ class WooCategoryRegistry {
 		$this->refused = [];
 		$categories = $this->bundled();
 
-		foreach ($this->readStoredCategories() as $stored) {
+		foreach ($this->storedCategories() as $stored) {
 			$decision = $this->admission->admit(stored: $stored, bundled: $categories);
 			if ($decision['record'] === null) {
 				$this->refuse(code: $decision['code'], reason: (string)$decision['reason']);
@@ -405,14 +405,11 @@ class WooCategoryRegistry {
 	 * list: the registry then serves the 18 waardelijst members, which is the
 	 * behaviour the two constants had.
 	 *
-	 * Protected so a test can supply the rows where OpenRegister would, which keeps
-	 * the admission rules under test the production ones.
-	 *
 	 * @return array<int, array<string, mixed>> The stored objects as arrays.
 	 *
 	 * @spec exclude Storage read; the admission rules that carry the behavior are in admit().
 	 */
-	protected function readStoredCategories(): array {
+	private function storedCategories(): array {
 		try {
 			$objectService = $this->settingsService->getObjectService();
 			$schemaMapper = $this->settingsService->getSchemaMapper();
@@ -452,7 +449,7 @@ class WooCategoryRegistry {
 
 		return $rows;
 
-	}//end readStoredCategories()
+	}//end storedCategories()
 
 
 }//end class
