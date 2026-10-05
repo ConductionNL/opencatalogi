@@ -1364,7 +1364,25 @@ OC.L10N.register(
         "Why the term was extended. An extension without a reason is one nobody can answer for.": "Waarom de termijn is verdaagd. Een verdaging zonder reden kan niemand verantwoorden.",
         "Withdraw automatically": "Automatisch intrekken",
         "Withdrawn at": "Ingetrokken op",
-        "Woo request": "Woo-verzoek"
+        "Woo request": "Woo-verzoek",
+        "These partly public documents cannot be published until they have a verified redacted version.": "Deze deels openbare documenten kunnen pas worden gepubliceerd als er een gecontroleerde gelakte versie is.",
+        "Redaction is unavailable because OpenRegister is not installed.": "Lakken is niet beschikbaar omdat OpenRegister niet is geïnstalleerd.",
+        "The original document cannot be found, so it cannot be redacted.": "Het originele document is niet gevonden, dus het kan niet worden gelakt.",
+        "Redaction is unavailable in OpenRegister.": "Lakken is niet beschikbaar in OpenRegister.",
+        "The findings for this document cannot be read.": "De bevindingen voor dit document kunnen niet worden gelezen.",
+        "There are no findings to redact. Run text extraction and review the findings first.": "Er zijn geen bevindingen om te lakken. Voer eerst tekstextractie uit en beoordeel de bevindingen.",
+        "Redaction failed in OpenRegister. The document stays unpublished.": "Lakken is mislukt in OpenRegister. Het document blijft ongepubliceerd.",
+        "OpenRegister did not return a separate redacted file.": "OpenRegister gaf geen apart gelakt bestand terug.",
+        "The redacted file cannot be verified.": "Het gelakte bestand kan niet worden gecontroleerd.",
+        "%s findings are still readable in the redacted file. Review the findings and assess again.": "%s bevindingen zijn nog leesbaar in het gelakte bestand. Beoordeel de bevindingen en beoordeel het document opnieuw.",
+        "Publishing is blocked: these partly public documents have no verified redacted version: %s": "Publiceren is geblokkeerd: deze deels openbare documenten hebben geen gecontroleerde gelakte versie: %s",
+        "No verified redacted version exists yet.": "Er is nog geen gecontroleerde gelakte versie.",
+        "Redacted file checksum": "Controlegetal gelakt bestand",
+        "SHA-256 of the redacted file when it was verified. Publishing refuses a redacted file whose bytes changed since.": "SHA-256 van het gelakte bestand bij de controle. Publiceren weigert een gelakt bestand dat sindsdien is gewijzigd.",
+        "Redaction status": "Status lakken",
+        "Whether a verified redacted version exists: verified, failed, or empty when the document is not partly public": "Of er een gecontroleerde gelakte versie is: verified, failed, of leeg als het document niet deels openbaar is",
+        "Redaction message": "Melding lakken",
+        "Why the partly public document cannot be published yet": "Waarom het deels openbare document nog niet kan worden gepubliceerd"
     },
     "nplurals=2; plural=(n != 1);"
 )
