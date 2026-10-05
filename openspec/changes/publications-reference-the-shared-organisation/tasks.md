@@ -49,7 +49,7 @@ not run:
 
 ## 6. Amendment 2026-10-05: rights follow the named unit (row 12.34)
 
-Build only after `openregister/object-organisation-from-a-property` has merged on OpenRegister `development`; before that the annotation is dropped on import. Groups 1 to 5 keep their own state. Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`.
+Build only after `openregister/object-organisation-from-a-property` has merged on OpenRegister `development`; before that the annotation is dropped on import. Groups 1 to 4 above (and the items numbered 5.x inside group 4) keep their own state. Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`.
 
 - [ ] 6.1 Declare `x-openregister-organisation: {fromProperty: "organization"}` on `#publication` and bump the schema and register versions (REQ-SHO-102). Verify: `tests/Unit/Settings/PublicationOrganisationAnnotationTest.php::testTheFromPropertyAnnotationSurvivesTheImport` (fails today) and `::testANonMemberIsRefused`.
 - [ ] 6.2 Limit the organisation picker on the publication form to the user's organisations (all for an administrator) (REQ-SHO-102). Verify: `tests/e2e/shared-organisation.spec.ts` "naming the unit is what scopes the rights", carrying `@e2e` REQ-SHO-102, with two seeded organisations and two users.
