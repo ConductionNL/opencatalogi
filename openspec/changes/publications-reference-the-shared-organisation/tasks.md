@@ -46,3 +46,14 @@ not run:
 
 - [ ] 4.1 Run on the fleet. The descriptor change alone removes nothing:
       `ImportHandler` unions schema ids.
+
+## 6. Amendment 2026-10-05: rights follow the named unit (row 12.34)
+
+Build only after `openregister/object-organisation-from-a-property` has merged on OpenRegister `development`; before that the annotation is dropped on import. Groups 1 to 5 keep their own state. Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`.
+
+- [ ] 6.1 Declare `x-openregister-organisation: {fromProperty: "organization"}` on `#publication` and bump the schema and register versions (REQ-SHO-102). Verify: `tests/Unit/Settings/PublicationOrganisationAnnotationTest.php::testTheFromPropertyAnnotationSurvivesTheImport` (fails today) and `::testANonMemberIsRefused`.
+- [ ] 6.2 Limit the organisation picker on the publication form to the user's organisations (all for an administrator) (REQ-SHO-102). Verify: `tests/e2e/shared-organisation.spec.ts` "naming the unit is what scopes the rights", carrying `@e2e` REQ-SHO-102, with two seeded organisations and two users.
+- [ ] 6.3 Add the reconcile step to the upgrade notes in `docs/`, and run it on the dev instance as a dry run; paste the listed count in the PR body (REQ-SHO-102). Verify: the pasted dry-run output; a grep for U+2014 on the doc.
+- [ ] 6.4 Verification: `TMPDIR` a sibling directory outside the clone; PHPUnit by the `Tests:` line or `--no-coverage`; `run-hydra-gates.sh --base origin/development` counting the gates that ran; once before push `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict` and `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`; one PR with `--base development`, merge development in, never rebase, no `Co-Authored-By`.
+
+Done when merged on `development` with CI green. Row 12.34 becomes `production` only once store releases ship this and the OpenRegister change.

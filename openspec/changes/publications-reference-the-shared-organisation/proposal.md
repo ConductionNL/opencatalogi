@@ -44,3 +44,13 @@ changing one alone never applies.
 OpenRegister may be absent, or an older version may not carry the projection.
 Neither is a reason to fail an import, so the keys are simply left unset. That
 surfaces as a picker with nothing to offer, rather than a broken install.
+
+## Amendment 2026-10-05: Woo capability programme
+
+Row 12.34, from `opencatalogi/_round1/compare/M1-rows.md`: "A publication names the organisational unit it was published for, and rights can be scoped to that unit". Ours (`baseline/openwoo.tsv`): partial, production. Evidence: "opencatalogi #publication.organization ($ref nc-organisation) names the organisation, which can be a unit because openregister lib/Db/Organisation.php carries a parent and children inherit access. Rights are scoped by OR multitenancy on the object's @self.organisation (MultiTenancyTrait), a separate field the publication's organization property does not set or follow, so naming the unit and scoping rights to it are two values nothing ties together". Re-checked on development at 35999c296: this change stands at 9 of 10 tasks plus the fleet run; nothing in it ties the two values.
+
+What is added (REQ-SHO-102): the publication schema declares `x-openregister-organisation: {fromProperty: "organization"}`, the annotation `openregister/object-organisation-from-a-property` (OpenRegister, planned in this programme, wave 1) adds as REQ-OOP-001. OpenRegister then sets `@self.organisation` from `organization` on every save, refuses a contradicting `@self.organisation` (422) and a save by a non-member of the named unit (403), and fills an empty property. Existing publications are reconciled once with that change's `occ openregister:organisation:reconcile --schema publication`, dry run first. Fail closed: no fallback to the caller's active organisation when the named unit is not theirs, as REQ-OOP-001 states. Without the OpenRegister change merged, the annotation would be dropped on import as unknown (an unknown `x-openregister-*` key is dropped silently), so this amendment is built only after it, and a test asserts the annotation survives the import. Wave 2. No decision of D1 to D13 applies.
+
+| row | text | rating today | what makes it yes |
+|---|---|---|---|
+| 12.34 | A publication names the organisational unit it was published for, and rights can be scoped to that unit | partial | REQ-SHO-102, scenario "Naming the unit is what scopes the rights" |
