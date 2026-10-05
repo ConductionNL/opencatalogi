@@ -44,6 +44,8 @@ use Psr\Log\LoggerInterface;
  * Daily comment-period withdrawal job.
  *
  * @see https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
+ *
+ * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-closed-period-can-withdraw-its-publication-req-pcp-005
  */
 class CommentPeriodWithdrawal extends TimedJob {
 

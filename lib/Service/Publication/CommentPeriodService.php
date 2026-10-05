@@ -295,6 +295,13 @@ class CommentPeriodService {
 	public function publicView(array $period, ?DateTimeInterface $now = null): array {
 		$state = $this->state(period: $period, now: $now);
 
+		// Only while the period is open. A form offered on a closed period
+		// collects a reaction nobody is obliged to read.
+		$reactionFormUrl = null;
+		if ($state === 'open') {
+			$reactionFormUrl = (string)($period['reactionFormUrl'] ?? '');
+		}
+
 		return [
 			'publication' => (string)($period['publication'] ?? ''),
 			'state' => $state,
@@ -302,9 +309,7 @@ class CommentPeriodService {
 			'endDate' => ($period['endDate'] ?? null),
 			'termDays' => (int)($period['termDays'] ?? 0),
 			'legalRemedy' => (string)($period['legalRemedy'] ?? ''),
-			// Only while the period is open. A form offered on a closed period
-			// collects a reaction nobody is obliged to read.
-			'reactionFormUrl' => ($state === 'open') ? (string)($period['reactionFormUrl'] ?? '') : null,
+			'reactionFormUrl' => $reactionFormUrl,
 			'announcementUrl' => (string)($period['announcementUrl'] ?? ''),
 			'unrolledEndDate' => ($period['unrolledEndDate'] ?? null),
 			'rolledBy' => ($period['rolledBy'] ?? null),

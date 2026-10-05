@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
+use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -143,10 +144,10 @@ class WooRequestControllerTest extends TestCase {
 		$this->controller = new WooRequestController(
 			'opencatalogi',
 			$this->request,
-			$container,
 			$l10n,
 			$userSession,
 			new WooRequestService(),
+			new WooRequestStore($config, $container),
 			$this->terms
 		);
 

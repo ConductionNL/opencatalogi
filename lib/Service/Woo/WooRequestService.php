@@ -155,11 +155,10 @@ class WooRequestService {
 		// Set only when the engine gave one. A suspended term has no fire
 		// moment at all, and writing null into a `date-time` property is how a
 		// unit-green write gets refused live.
+		unset($request['dueAt']);
 		$dueAt = ($term['dueAt'] ?? null);
 		if (is_string($dueAt) === true && trim($dueAt) !== '') {
 			$request['dueAt'] = $dueAt;
-		} else {
-			unset($request['dueAt']);
 		}
 
 		$request['extensionCount'] = (int)($term['extensionCount'] ?? 0);

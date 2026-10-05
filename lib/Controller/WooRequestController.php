@@ -33,10 +33,12 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
+use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -48,7 +50,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * Mints Woo requests and works their statutory term.
@@ -58,18 +59,16 @@ use Psr\Container\ContainerInterface;
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
 class WooRequestController extends Controller {
-	use ResolvesRegisterConfiguration;
-	use ReadsOpenRegisterResults;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param WooRequestService $requests Builds and reads the request record.
+	 * @param WooRequestStore $store Reads and writes the stored requests.
 	 * @param StatutoryTerm $terms Arms, extends, pauses and reads the statutory term.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -77,46 +76,17 @@ class WooRequestController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly WooRequestService $requests,
+		private readonly WooRequestStore $store,
 		private readonly StatutoryTerm $terms,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 
-	/**
-	 * The register and schema the requests live in.
-	 *
-	 * @return array<string, string> The register and schema identifiers.
-	 *
-	 * @spec exclude pure config plumbing — resolves the configured request register.
-	 */
-	private function requestConfiguration(): array {
-		return $this->resolveRegisterConfiguration(
-			registerKey: 'publication_register',
-			schemaKey: 'woo_request_schema'
-		);
 
-	}//end requestConfiguration()
-
-	/**
-	 * Resolve the consumed OpenRegister ObjectService.
-	 *
-	 * @return object|null The service, or null when OpenRegister is unavailable.
-	 *
-	 * @spec exclude pure framework plumbing — resolves the consumed OR ObjectService.
-	 */
-	private function objects(): ?object {
-		try {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		} catch (\Throwable $e) {
-			return null;
-		}
-
-	}//end objects()
 
 	/**
 	 * The signed-in user id, or an empty string.
@@ -134,6 +104,27 @@ class WooRequestController extends Controller {
 		return $user->getUID();
 
 	}//end actor()
+
+	/**
+	 * The operator-actionable 503 for a register that could not be resolved.
+	 *
+	 * The store's message names the missing config key, so it is carried through
+	 * rather than replaced: an admin who sees the key can fix it, and an admin
+	 * who sees "service unavailable" cannot.
+	 *
+	 * @param \Throwable $e The failure.
+	 *
+	 * @return JSONResponse A 503 with the detail.
+	 *
+	 * @spec exclude internal helper — shapes the unresolved-register response.
+	 */
+	private function registerConfigErrorResponse(\Throwable $e): JSONResponse {
+		return new JSONResponse(
+			['error' => 'register_not_configured', 'detail' => $e->getMessage()],
+			Http::STATUS_SERVICE_UNAVAILABLE
+		);
+
+	}//end registerConfigErrorResponse()
 
 	/**
 	 * Receive a Woo request, arm its statutory term, and answer with the
@@ -165,26 +156,8 @@ class WooRequestController extends Controller {
 			);
 		}
 
-		$objectService = $this->objects();
-		if ($objectService === null) {
-			return new JSONResponse(
-				data: ['error' => 'register-unreadable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		}
-
 		try {
-			$record = $this->requests->receive(
-				input: [
-					'requestedInformation' => $this->request->getParam('requestedInformation', ''),
-					'requesterName' => $this->request->getParam('requesterName', ''),
-					'requesterEmail' => $this->request->getParam('requesterEmail', ''),
-					'requesterPhone' => $this->request->getParam('requesterPhone', ''),
-					'requesterAddress' => $this->request->getParam('requesterAddress', ''),
-					'channel' => $this->request->getParam('channel', 'web'),
-				],
-				receivedBy: $this->actor()
-			);
+			$record = $this->requests->receive(input: $this->intakeInput(), receivedBy: $this->actor());
 		} catch (\DomainException $e) {
 			return new JSONResponse(
 				data: ['error' => 'request-refused', 'message' => $e->getMessage()],
@@ -193,16 +166,7 @@ class WooRequestController extends Controller {
 		}
 
 		try {
-			$config = $this->requestConfiguration();
-			$saved = $this->asArray(
-				object: $objectService->saveObject(
-					object: $record,
-					register: $config['register'],
-					schema: $config['schema'],
-					_rbac: false,
-					_multitenancy: false
-				)
-			);
+			$saved = $this->store->save(record: $record);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
@@ -213,7 +177,7 @@ class WooRequestController extends Controller {
 			$term = $this->terms->arm(
 				requestUuid: $requestId,
 				reference: (string)($saved['reference'] ?? ''),
-				receivedAt: new \DateTimeImmutable((string)($saved['receivedAt'] ?? 'now')),
+				receivedAt: new DateTimeImmutable((string)($saved['receivedAt'] ?? 'now')),
 				actor: $this->actor()
 			);
 		} catch (TermEngineUnavailableException | TermRefusedException $e) {
@@ -232,19 +196,10 @@ class WooRequestController extends Controller {
 			);
 		}
 
-		$withTerm = $this->requests->withTerm(request: $saved, term: $term);
-
 		try {
-			$config = $this->requestConfiguration();
-			$stored = $this->asArray(
-				object: $objectService->saveObject(
-					object: $withTerm,
-					register: $config['register'],
-					schema: $config['schema'],
-					uuid: $requestId,
-					_rbac: false,
-					_multitenancy: false
-				)
+			$stored = $this->store->save(
+				record: $this->requests->withTerm(request: $saved, term: $term),
+				uuid: $requestId
 			);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
@@ -262,6 +217,26 @@ class WooRequestController extends Controller {
 	}//end receive()
 
 	/**
+	 * The intake body, read off the request.
+	 *
+	 * @return array<string, mixed> What arrived.
+	 *
+	 * @spec exclude internal helper — reads the intake body.
+	 */
+	private function intakeInput(): array {
+		return [
+			'requestedInformation' => $this->request->getParam('requestedInformation', ''),
+			'requesterName' => $this->request->getParam('requesterName', ''),
+			'requesterEmail' => $this->request->getParam('requesterEmail', ''),
+			'requesterPhone' => $this->request->getParam('requesterPhone', ''),
+			'requesterAddress' => $this->request->getParam('requesterAddress', ''),
+			'channel' => $this->request->getParam('channel', 'web'),
+		];
+
+	}//end intakeInput()
+
+
+	/**
 	 * Terms met and missed, over every request.
 	 *
 	 * With the term armed this is a query, which is why it is here and not a
@@ -275,31 +250,10 @@ class WooRequestController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function termsReport(): JSONResponse {
-		$objectService = $this->objects();
-		if ($objectService === null) {
-			return new JSONResponse(
-				data: ['error' => 'register-unreadable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		}
-
 		try {
-			$config = $this->requestConfiguration();
-			$result = $objectService->searchObjectsPaginated(
-				query: [
-					'@self' => ['register' => $config['register'], 'schema' => $config['schema']],
-					'_limit' => 1000,
-				],
-				_rbac: false,
-				_multitenancy: false
-			);
+			$requests = $this->store->all();
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
-		}
-
-		$requests = [];
-		foreach ((array)($result['results'] ?? []) as $row) {
-			$requests[] = $this->asArray(object: $row);
 		}
 
 		return new JSONResponse($this->requests->termsReport(requests: $requests));
@@ -501,11 +455,7 @@ class WooRequestController extends Controller {
 		}
 
 		try {
-			if ($operation === 'pause') {
-				$term = $this->terms->pause(timerUuid: $timer, reason: $reason, actor: $this->actor());
-			} else {
-				$term = $this->terms->resume(timerUuid: $timer, reason: $reason, actor: $this->actor());
-			}
+			$term = $this->workTerm(operation: $operation, timer: $timer, reason: $reason);
 		} catch (TermRefusedException $e) {
 			return new JSONResponse(
 				data: ['error' => $operation . '-refused', 'message' => $e->getMessage()],
@@ -526,6 +476,32 @@ class WooRequestController extends Controller {
 	}//end move()
 
 	/**
+	 * Suspend or resume the term, whichever was asked for.
+	 *
+	 * Split out so the caller has no else branch and no path on which the term
+	 * is undefined.
+	 *
+	 * @param string $operation Either pause or resume.
+	 * @param string $timer The term.
+	 * @param string $reason Why.
+	 *
+	 * @return array<string, mixed> The term.
+	 *
+	 * @throws TermRefusedException When the engine refuses.
+	 * @throws TermEngineUnavailableException When the engine is unavailable.
+	 *
+	 * @spec exclude internal helper — dispatches to the term adapter.
+	 */
+	private function workTerm(string $operation, string $timer, string $reason): array {
+		if ($operation === 'pause') {
+			return $this->terms->pause(timerUuid: $timer, reason: $reason, actor: $this->actor());
+		}
+
+		return $this->terms->resume(timerUuid: $timer, reason: $reason, actor: $this->actor());
+
+	}//end workTerm()
+
+	/**
 	 * Load a request, or the response that says why it could not be loaded.
 	 *
 	 * @param string $requestId The request.
@@ -535,40 +511,15 @@ class WooRequestController extends Controller {
 	 * @spec exclude internal helper — loads one request.
 	 */
 	private function load(string $requestId): array|JSONResponse {
-		$objectService = $this->objects();
-		if ($objectService === null) {
-			return new JSONResponse(
-				data: ['error' => 'register-unreadable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		}
-
 		try {
-			$config = $this->requestConfiguration();
+			$loaded = $this->store->find(requestId: $requestId);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		try {
-			$loaded = $this->asArray(
-				object: $objectService->find(
-					id: $requestId,
-					register: $config['register'],
-					schema: $config['schema']
-				)
-			);
-		} catch (\Throwable $e) {
-			return new JSONResponse(
-				data: ['error' => 'unknown-request'],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
-		}
-
-		if ($loaded === []) {
+		if ($loaded === null) {
 			return new JSONResponse(data: ['error' => 'unknown-request'], statusCode: Http::STATUS_NOT_FOUND);
 		}
-
-		$loaded['id'] = ($loaded['id'] ?? $requestId);
 
 		return $loaded;
 
@@ -609,26 +560,8 @@ class WooRequestController extends Controller {
 	 * @spec exclude internal helper — persists one request.
 	 */
 	private function persist(array $request, string $requestId, ?array $term): JSONResponse {
-		$objectService = $this->objects();
-		if ($objectService === null) {
-			return new JSONResponse(
-				data: ['error' => 'register-unreadable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		}
-
 		try {
-			$config = $this->requestConfiguration();
-			$stored = $this->asArray(
-				object: $objectService->saveObject(
-					object: $request,
-					register: $config['register'],
-					schema: $config['schema'],
-					uuid: $requestId,
-					_rbac: false,
-					_multitenancy: false
-				)
-			);
+			$stored = $this->store->save(record: $request, uuid: $requestId);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
