@@ -661,6 +661,7 @@ class PublicationService {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure function over the query (WOO-581)
 	 */
 	private function searchObjectsWithinScope($objectService, array $query, array $registers, array $schemas): array {
 		try {
