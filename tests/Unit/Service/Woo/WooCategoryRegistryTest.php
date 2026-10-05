@@ -28,6 +28,7 @@ namespace Unit\Service\Woo;
 
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
+use OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -50,20 +51,24 @@ class WooCategoryRegistryTest extends TestCase {
 	private function registry(array $stored = []): WooCategoryRegistry {
 		$settings = $this->createMock(SettingsService::class);
 
-		$registry = new class(new TooiVocabularyService(), $settings, $this->createMock(LoggerInterface::class), $stored) extends WooCategoryRegistry {
+		$tooi = new TooiVocabularyService();
+
+		$registry = new class($tooi, $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission($tooi), $stored) extends WooCategoryRegistry {
 			/**
 			 * @param TooiVocabularyService $tooi The waardelijst resolver.
 			 * @param SettingsService $settings The settings service.
 			 * @param LoggerInterface $logger The logger.
+			 * @param LocalCategoryAdmission $admission The admission rules.
 			 * @param array<int, array<string, mixed>> $stored The stored rows.
 			 */
 			public function __construct(
 				TooiVocabularyService $tooi,
 				SettingsService $settings,
 				LoggerInterface $logger,
+				LocalCategoryAdmission $admission,
 				private readonly array $stored,
 			) {
-				parent::__construct($tooi, $settings, $logger);
+				parent::__construct($tooi, $settings, $logger, $admission);
 			}
 
 			/**

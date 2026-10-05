@@ -106,6 +106,7 @@ class WooRegistrationServiceTest extends TestCase {
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
 			$this->createMock(\Psr\Log\LoggerInterface::class),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 		);
 
 		return new WooRegistrationService($this->readiness, $this->index, $settings, $this->config, $urls, $categories);

@@ -63,6 +63,7 @@ class SitemapServiceTest extends TestCase {
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->settingsService,
 			$this->createMock(\Psr\Log\LoggerInterface::class),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 		);
 
 		$this->service = new SitemapService(

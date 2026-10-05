@@ -123,11 +123,13 @@ class WooCategoryRegistry {
 	 * @param TooiVocabularyService $tooiVocabulary The waardelijst resolver, which owns the bundled 18.
 	 * @param SettingsService $settingsService The settings service, used to reach OpenRegister.
 	 * @param LoggerInterface $logger The logger, which records every refused local category.
+	 * @param LocalCategoryAdmission $admission The decision about one stored category.
 	 */
 	public function __construct(
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly SettingsService $settingsService,
 		private readonly LoggerInterface $logger,
+		private readonly LocalCategoryAdmission $admission,
 	) {
 
 	}//end __construct()
@@ -184,8 +186,9 @@ class WooCategoryRegistry {
 	 * sitemap: there is no record for it, so there is no sitemap file for it and no
 	 * query that lists its publications.
 	 *
-	 * @return array<string, array{code: string, label: string, labelEn: string, tooiUri: string, tooiLabel: string, mapsTo: string, origin: string, sitemapFile: string, schemas: array<int, string>}>
-	 *   The categories.
+	 * @return array<string, array<string, mixed>> The categories, each with `code`,
+	 *   `label`, `labelEn`, `tooiUri`, `tooiLabel`, `mapsTo`, `origin`,
+	 *   `sitemapFile` and `schemas`.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-information-categories-are-data-not-code-req-wic-001
 	 */
@@ -198,12 +201,13 @@ class WooCategoryRegistry {
 		$categories = $this->bundled();
 
 		foreach ($this->readStoredCategories() as $stored) {
-			$record = $this->admit(stored: $stored, bundled: $categories);
-			if ($record === null) {
+			$decision = $this->admission->admit(stored: $stored, bundled: $categories);
+			if ($decision['record'] === null) {
+				$this->refuse(code: $decision['code'], reason: (string)$decision['reason']);
 				continue;
 			}
 
-			$categories[$record['code']] = $record;
+			$categories[$decision['record']['code']] = $decision['record'];
 		}
 
 		$this->categories = $categories;
@@ -342,6 +346,27 @@ class WooCategoryRegistry {
 	}//end resolveForDocument()
 
 	/**
+	 * Record and log one refusal.
+	 *
+	 * A refusal is a configuration fault an operator must see, so it is logged as a
+	 * warning and reported by {@see rejected()}, never dropped.
+	 *
+	 * @param string $code The category code, or a placeholder when it had none.
+	 * @param string $reason Why the category was refused.
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Bookkeeping for the refusals LocalCategoryAdmission decides.
+	 */
+	private function refuse(string $code, string $reason): void {
+		$this->refused[$code] = $reason;
+		$this->logger->warning(
+			'OpenCatalogi refused an information category, so it publishes to no sitemap: ' . $code . ': ' . $reason,
+			['app' => 'opencatalogi']
+		);
+	}//end refuse()
+
+	/**
 	 * The 18 waardelijst members as category records.
 	 *
 	 * @return array<string, array<string, mixed>> The records, keyed by code.
@@ -369,105 +394,8 @@ class WooCategoryRegistry {
 
 	}//end bundled()
 
-	/**
-	 * Turn one stored local category into a record, or refuse it.
-	 *
-	 * Every refusal is recorded in {@see $refused} and logged as a warning. The four
-	 * refusals are: no usable code, a code shaped so it cannot be a sitemap file
-	 * name, a code that shadows a waardelijst member, and no resolvable `mapsTo`.
-	 *
-	 * @param array<string, mixed> $stored The stored object.
-	 * @param array<string, array<string, mixed>> $bundled The waardelijst records, to check for shadowing.
-	 *
-	 * @return array<string, mixed>|null The record, or null when refused.
-	 *
-	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-locally-added-category-publishes-under-a-waardelijst-member-req-wic-002
-	 */
-	private function admit(array $stored, array $bundled): ?array {
-		$code = strtolower(trim((string)($stored['code'] ?? '')));
-		if ($code === '') {
-			$this->refuse(code: '(no code)', reason: 'the category stores no code');
-			return null;
-		}
 
-		if (self::codeOf(sitemapFile: self::sitemapFileFor(code: $code)) !== $code) {
-			$this->refuse(code: $code, reason: 'the code cannot be part of a sitemap file name');
-			return null;
-		}
 
-		if (isset($bundled[$code]) === true) {
-			$this->refuse(code: $code, reason: 'the code is already a waardelijst member');
-			return null;
-		}
-
-		$member = $this->tooiVocabulary->resolveInformatiecategorie($this->stringOrNull(value: ($stored['mapsTo'] ?? null)));
-		if ($member === null) {
-			$this->refuse(code: $code, reason: 'mapsTo names no member of the informatiecategorieen waardelijst');
-			return null;
-		}
-
-		$title = trim((string)($stored['title'] ?? ''));
-		if ($title === '') {
-			$title = $member['label'];
-		}
-
-		$titleEn = trim((string)($stored['titleEn'] ?? ''));
-		if ($titleEn === '') {
-			$titleEn = $title;
-		}
-
-		return [
-			'code' => $code,
-			'label' => $title,
-			'labelEn' => $titleEn,
-			'tooiUri' => $member['uri'],
-			'tooiLabel' => $member['label'],
-			'mapsTo' => $this->codeOfMember(uri: $member['uri']),
-			'origin' => self::ORIGIN_LOCAL,
-			'sitemapFile' => self::sitemapFileFor(code: $code),
-			'schemas' => $this->schemaSlugs(value: ($stored['schemas'] ?? [])),
-		];
-
-	}//end admit()
-
-	/**
-	 * The waardelijst code behind a resolved member URI.
-	 *
-	 * @param string $uri The member URI.
-	 *
-	 * @return string The code, or an empty string when the URI is not a member.
-	 *
-	 * @spec exclude Reverse lookup over the already-resolved waardelijst.
-	 */
-	private function codeOfMember(string $uri): string {
-		foreach ($this->tooiVocabulary->informatiecategorieList() as $code => $member) {
-			if ($member['uri'] === $uri) {
-				return $code;
-			}
-		}
-
-		return '';
-
-	}//end codeOfMember()
-
-	/**
-	 * Record and log one refusal.
-	 *
-	 * @param string $code The category code, or a placeholder when it had none.
-	 * @param string $reason Why the category was refused.
-	 *
-	 * @return void
-	 *
-	 * @spec exclude Bookkeeping for the refusals admit() decides.
-	 */
-	private function refuse(string $code, string $reason): void {
-		$this->refused[$code] = $reason;
-		$this->logger->warning(
-			'OpenCatalogi refused an information category, so it publishes to no sitemap: ' . $code . ': ' . $reason,
-			['app' => 'opencatalogi']
-		);
-
-	}//end refuse()
 
 	/**
 	 * The stored local information categories, or an empty list when there are none.
@@ -526,44 +454,5 @@ class WooCategoryRegistry {
 
 	}//end readStoredCategories()
 
-	/**
-	 * A stored `schemas` value as a list of non-empty slugs.
-	 *
-	 * @param mixed $value The stored value.
-	 *
-	 * @return array<int, string> The slugs.
-	 *
-	 * @spec exclude Input normalisation.
-	 */
-	private function schemaSlugs(mixed $value): array {
-		$slugs = [];
-		foreach ((array)$value as $slug) {
-			if (is_string($slug) === false || trim($slug) === '') {
-				continue;
-			}
 
-			$slugs[] = trim($slug);
-		}
-
-		return array_values(array_unique($slugs));
-
-	}//end schemaSlugs()
-
-	/**
-	 * A stored value as a non-empty string, or null.
-	 *
-	 * @param mixed $value The stored value.
-	 *
-	 * @return string|null The string, or null.
-	 *
-	 * @spec exclude Input normalisation.
-	 */
-	private function stringOrNull(mixed $value): ?string {
-		if (is_string($value) === false || trim($value) === '') {
-			return null;
-		}
-
-		return trim($value);
-
-	}//end stringOrNull()
 }//end class

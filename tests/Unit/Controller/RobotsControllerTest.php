@@ -44,6 +44,7 @@ class RobotsControllerTest extends TestCase {
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
 			$this->createMock(\Psr\Log\LoggerInterface::class),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 		);
 
 		$this->controller = new RobotsController(

@@ -1340,7 +1340,21 @@ OC.L10N.register(
         "%1$d new publications for your search \"%2$s\"": "%1$d new publications for your search \"%2$s\"",
         "These publications match your search \"%1$s\".": "These publications match your search \"%1$s\".",
         "A new publication matches your search \"%1$s\".": "A new publication matches your search \"%1$s\".",
-        "And %1$d more. Search again to see them all.": "And %1$d more. Search again to see them all."
+        "And %1$d more. Search again to see them all.": "And %1$d more. Search again to see them all.",
+        "Information category": "Information category",
+        "Name in English": "Name in English",
+        "Publishes under": "Publishes under",
+        "Document handling": "Document handling",
+        "Received": "Received",
+        "Adopted": "Adopted",
+        "Signed": "Signed",
+        "Best-efforts obligation under art. 3.1 Woo": "Best-efforts obligation under art. 3.1 Woo",
+        "The Dutch name of the category, as readers see it.": "The Dutch name of the category, as readers see it.",
+        "The English name. Left empty, the Dutch name is used.": "The English name. Left empty, the Dutch name is used.",
+        "The code a publication stores and the sitemap file name carries. Lowercase letters, digits and hyphens, at most 48 characters. Pick one that is not an infocat code, because those are taken.": "The code a publication stores and the sitemap file name carries. Lowercase letters, digits and hyphens, at most 48 characters. Pick one that is not an infocat code, because those are taken.",
+        "The schemas this category's sitemap lists, by slug. Left empty, every schema of the catalogue is listed, which is what the 18 bundled categories do.": "The schemas this category's sitemap lists, by slug. Left empty, every schema of the catalogue is listed, which is what the 18 bundled categories do.",
+        "The waardelijst member this category is offered to the national index as. Give an infocat code, the official name, or the TOOI identifier. A value that is not a member means the category publishes nothing.": "The waardelijst member this category is offered to the national index as. Give an infocat code, the official name, or the TOOI identifier. A value that is not a member means the category publishes nothing.",
+        "What happened to the document on the publication date. The national index takes one of three values from the DiWoo documenthandelingen list. Left empty, receipt is used.": "What happened to the document on the publication date. The national index takes one of three values from the DiWoo documenthandelingen list. Left empty, receipt is used."
     },
     "nplurals=2; plural=(n != 1);"
 )

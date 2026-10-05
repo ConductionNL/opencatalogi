@@ -71,6 +71,7 @@ XML;
 				new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 				$this->createMock(SettingsService::class),
 				$this->createMock(\Psr\Log\LoggerInterface::class),
+				new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 			))->sitemapFiles()
 		);
 		$this->settingsService = $this->createMock(SettingsService::class);

@@ -105,7 +105,11 @@ class TooiVocabularyService {
 		'infocat010' => ['id' => 'c_99a836c7', 'label' => 'Adviezen', 'aliases' => ['advies']],
 		'infocat011' => ['id' => 'c_8fc2335c', 'label' => 'Convenanten', 'aliases' => ['convenant']],
 		'infocat012' => ['id' => 'c_c6cd1213', 'label' => 'Jaarplannen en jaarverslagen', 'aliases' => ['jaarplan of jaarverslag']],
-		'infocat013' => ['id' => 'c_cf268088', 'label' => 'Subsidieverplichtingen anders dan met beschikking', 'aliases' => ['subsidieverplichting', 'subsidieverplichting anders dan met beschikking']],
+		'infocat013' => [
+			'id' => 'c_cf268088',
+			'label' => 'Subsidieverplichtingen anders dan met beschikking',
+			'aliases' => ['subsidieverplichting', 'subsidieverplichting anders dan met beschikking'],
+		],
 		'infocat014' => ['id' => 'c_3baef532', 'label' => 'Woo-verzoeken en -besluiten', 'aliases' => ['woo-verzoek', 'woo-verzoek of -besluit']],
 		'infocat015' => ['id' => 'c_fdaee95e', 'label' => 'Onderzoeksrapporten', 'aliases' => ['onderzoeksrapport']],
 		'infocat016' => ['id' => 'c_46a81018', 'label' => 'Beschikkingen', 'aliases' => ['beschikking']],
