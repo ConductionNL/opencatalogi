@@ -44,6 +44,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
+use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IUserSession;
@@ -162,6 +163,7 @@ class WooService {
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translated refusal messages for the publish gate.
 	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
+	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -170,6 +172,7 @@ class WooService {
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 		private readonly BatchPublicationWriter $publications,
+		private readonly DocumentRedactor $redactor,
 	) {
 
 	}//end __construct()
@@ -358,6 +361,9 @@ class WooService {
 				'weigeringsgronden' => [],
 				'redactionInstructions' => '',
 				'anonymizedDocument' => '',
+				'anonymizedDocumentHash' => '',
+				'redactionStatus' => '',
+				'redactionMessage' => '',
 				'caseReference' => $caseReference,
 				'assessedBy' => '',
 				'assessedAt' => '',
@@ -501,14 +507,16 @@ class WooService {
 	 * @param string $assessmentId The document-assessment object uuid.
 	 * @param string $assessment The new assessment enum value.
 	 * @param array<int,string> $weigeringsgronden Selected grounds (required for niet_openbaar).
+	 * @param string|null $batchId The batch the document belongs to (whose creator owns relative references).
 	 *
 	 * @return array<string, mixed> The updated assessment object.
 	 *
 	 * @throws RuntimeException When inputs are invalid or OpenRegister is unavailable.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
 	 */
-	public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden = []): array {
+	public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden = [], ?string $batchId = null): array {
 		if (array_key_exists($assessment, self::ASSESSMENTS) === false) {
 			throw new RuntimeException('Unknown assessment: ' . $assessment);
 		}
@@ -558,6 +566,21 @@ class WooService {
 		$data['assessedBy'] = $assessedBy;
 		$data['assessedAt'] = $now;
 
+		// A partly public document is published only as its redacted version,
+		// produced and verified now through OpenRegister (woo-redaction-pipeline).
+		// Any other assessment drops a redaction an earlier one left behind.
+		$redaction = [
+			'anonymizedDocument' => '',
+			'anonymizedDocumentHash' => '',
+			'redactionStatus' => '',
+			'redactionMessage' => '',
+		];
+		if ($assessment === 'deels_openbaar') {
+			$redaction = $this->redactor->redact(assessment: $data, owner: $this->documentOwner(batchId: $batchId, fallback: $assessedBy));
+		}
+
+		$data = array_merge($data, $redaction);
+
 		$saved = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
 
 		// Move the linked Deck card to the matching stack via the leaf (best
@@ -566,6 +589,37 @@ class WooService {
 
 		return $saved;
 	}//end updateAssessment()
+
+	/**
+	 * Whose files a relative document reference lives in: the batch's creator,
+	 * the same owner the publish resolves against.
+	 *
+	 * @param string|null $batchId  The batch uuid, when known.
+	 * @param string      $fallback The acting user.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	private function documentOwner(?string $batchId, string $fallback): string {
+		$objectService = $this->getObjectService();
+		if ($batchId === null || $batchId === '' || $objectService === null) {
+			return $fallback;
+		}
+
+		try {
+			$owner = (string)($this->normalise(object: $objectService->find($batchId))['createdBy'] ?? '');
+		} catch (\Throwable) {
+			$owner = '';
+		}
+
+		if ($owner === '') {
+			return $fallback;
+		}
+
+		return $owner;
+
+	}//end documentOwner()
 
 	/**
 	 * Ask the deck leaf to move the card(s) linked to an assessment object into
@@ -607,6 +661,7 @@ class WooService {
 	 * @throws RuntimeException When OpenRegister is unavailable or the batch is missing.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-the-officer-sees-why-a-partly-public-document-cannot-be-published-req-wrp-002
 	 */
 	public function getBatch(string $batchId): array {
 		$objectService = $this->getObjectService();
@@ -622,12 +677,26 @@ class WooService {
 
 		$assessments = $this->loadAssessments(batch: $batch);
 		$counts = array_fill_keys(array_keys(self::ASSESSMENTS), 0);
+		$unredacted = [];
 		foreach ($assessments as $assessment) {
 			$status = (string)($assessment['assessment'] ?? 'te_beoordelen');
 			if (array_key_exists($status, $counts) === true) {
 				$counts[$status]++;
 			}
-		}
+
+			// Tell the officer which partly public documents cannot be published yet, and why.
+			if ($status === 'deels_openbaar' && (string)($assessment['redactionStatus'] ?? '') !== DocumentRedactor::VERIFIED) {
+				$reason = (string)($assessment['redactionMessage'] ?? '');
+				if ($reason === '') {
+					$reason = $this->l10n->t('No verified redacted version exists yet.');
+				}
+
+				$unredacted[] = [
+					'fileName' => (string)($assessment['fileName'] ?? ($assessment['documentReference'] ?? '')),
+					'reason' => $reason,
+				];
+			}
+		}//end foreach
 
 		$total = array_sum($counts);
 		$assessed = ($total - $counts['te_beoordelen']);
@@ -637,6 +706,7 @@ class WooService {
 			'total' => $total,
 			'assessed' => $assessed,
 			'progressLabel' => $assessed . '/' . $total,
+			'unredacted' => $unredacted,
 		];
 
 		return $batch;

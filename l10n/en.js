@@ -1409,7 +1409,25 @@ OC.L10N.register(
         "Why the term was extended. An extension without a reason is one nobody can answer for.": "Why the term was extended. An extension without a reason is one nobody can answer for.",
         "Withdraw automatically": "Withdraw automatically",
         "Withdrawn at": "Withdrawn at",
-        "Woo request": "Woo request"
+        "Woo request": "Woo request",
+        "These partly public documents cannot be published until they have a verified redacted version.": "These partly public documents cannot be published until they have a verified redacted version.",
+        "Redaction is unavailable because OpenRegister is not installed.": "Redaction is unavailable because OpenRegister is not installed.",
+        "The original document cannot be found, so it cannot be redacted.": "The original document cannot be found, so it cannot be redacted.",
+        "Redaction is unavailable in OpenRegister.": "Redaction is unavailable in OpenRegister.",
+        "The findings for this document cannot be read.": "The findings for this document cannot be read.",
+        "There are no findings to redact. Run text extraction and review the findings first.": "There are no findings to redact. Run text extraction and review the findings first.",
+        "Redaction failed in OpenRegister. The document stays unpublished.": "Redaction failed in OpenRegister. The document stays unpublished.",
+        "OpenRegister did not return a separate redacted file.": "OpenRegister did not return a separate redacted file.",
+        "The redacted file cannot be verified.": "The redacted file cannot be verified.",
+        "%s findings are still readable in the redacted file. Review the findings and assess again.": "%s findings are still readable in the redacted file. Review the findings and assess again.",
+        "Publishing is blocked: these partly public documents have no verified redacted version: %s": "Publishing is blocked: these partly public documents have no verified redacted version: %s",
+        "No verified redacted version exists yet.": "No verified redacted version exists yet.",
+        "Redacted file checksum": "Redacted file checksum",
+        "SHA-256 of the redacted file when it was verified. Publishing refuses a redacted file whose bytes changed since.": "SHA-256 of the redacted file when it was verified. Publishing refuses a redacted file whose bytes changed since.",
+        "Redaction status": "Redaction status",
+        "Whether a verified redacted version exists: verified, failed, or empty when the document is not partly public": "Whether a verified redacted version exists: verified, failed, or empty when the document is not partly public",
+        "Redaction message": "Redaction message",
+        "Why the partly public document cannot be published yet": "Why the partly public document cannot be published yet"
     },
     "nplurals=2; plural=(n != 1);"
 )

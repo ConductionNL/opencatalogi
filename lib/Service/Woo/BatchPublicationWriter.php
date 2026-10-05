@@ -80,7 +80,7 @@ class BatchPublicationWriter {
 	 *
 	 * @param array<int, array<string, mixed>> $assessments The batch's assessments.
 	 *
-	 * @return array<int, array{title: string, assessment: string, document: string}>
+	 * @return array<int, array<string, string>>
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 */
@@ -97,15 +97,20 @@ class BatchPublicationWriter {
 			$isPartial = ((string)($assessment['assessment'] ?? '') === 'deels_openbaar');
 
 			$document = (string)($assessment['documentReference'] ?? '');
-			if ($isPartial === true) {
-				$document = (string)($assessment['anonymizedDocument'] ?? '');
-			}
-
-			$listings[] = [
+			$listing = [
 				'title' => (string)($assessment['fileName'] ?? ''),
 				'assessment' => (string)($assessment['assessment'] ?? ''),
 				'document' => $document,
 			];
+			if ($isPartial === true) {
+				// Only the verified redacted version, never the original.
+				$listing['document'] = (string)($assessment['anonymizedDocument'] ?? '');
+				$listing['original'] = $document;
+				$listing['redactionStatus'] = (string)($assessment['redactionStatus'] ?? '');
+				$listing['redactionHash'] = (string)($assessment['anonymizedDocumentHash'] ?? '');
+			}
+
+			$listings[] = $listing;
 		}
 
 		return $listings;
@@ -125,6 +130,8 @@ class BatchPublicationWriter {
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
 	 */
 	public function resolveAll(array $listings, string $owner): array {
+		$this->assertRedacted(listings: $listings, owner: $owner);
+
 		$files = [];
 		$missing = [];
 		foreach ($listings as $listing) {
@@ -149,6 +156,88 @@ class BatchPublicationWriter {
 		return $files;
 
 	}//end resolveAll()
+
+	/**
+	 * Refuse the publish while a partly public document has no verified
+	 * redacted version (fail closed).
+	 *
+	 * A `deels_openbaar` document passes only when its redaction was verified,
+	 * its redacted file still exists, is not the original, and still has the
+	 * bytes that were verified. Anything else names the document and stops
+	 * the publish before anything is written.
+	 *
+	 * @param array<int, array<string, mixed>> $listings The publishable documents.
+	 * @param string                           $owner    The batch's creator.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException Naming every partly public document without a verified redacted version.
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	public function assertRedacted(array $listings, string $owner): void {
+		$unredacted = [];
+		foreach ($listings as $listing) {
+			if ((string)($listing['assessment'] ?? '') !== 'deels_openbaar') {
+				continue;
+			}
+
+			if ($this->isVerifiedRedaction(listing: $listing, owner: $owner) === false) {
+				$name = (string)($listing['title'] ?? '');
+				if ($name === '') {
+					$name = (string)($listing['original'] ?? '');
+				}
+
+				$unredacted[] = $name;
+			}
+		}
+
+		if ($unredacted !== []) {
+			throw new RuntimeException(
+				$this->l10n->t('Publishing is blocked: these partly public documents have no verified redacted version: %s', [implode(', ', $unredacted)])
+			);
+		}
+
+	}//end assertRedacted()
+
+	/**
+	 * Whether a partly public listing points at its verified redacted file.
+	 *
+	 * @param array<string, mixed> $listing The listing.
+	 * @param string               $owner   The batch's creator.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	private function isVerifiedRedaction(array $listing, string $owner): bool {
+		$reference = (string)($listing['document'] ?? '');
+		$expected = (string)($listing['redactionHash'] ?? '');
+		if ((string)($listing['redactionStatus'] ?? '') !== DocumentRedactor::VERIFIED
+			|| $reference === ''
+			|| $expected === ''
+			|| $reference === (string)($listing['original'] ?? '')
+		) {
+			return false;
+		}
+
+		$redacted = $this->resolve(reference: $reference, owner: $owner);
+		if ($redacted === null) {
+			return false;
+		}
+
+		$original = $this->resolve(reference: (string)($listing['original'] ?? ''), owner: $owner);
+		if ($original !== null && $original->getId() === $redacted->getId()) {
+			return false;
+		}
+
+		try {
+			return hash_equals($expected, (string)$redacted->hash('sha256'));
+		} catch (Throwable) {
+			return false;
+		}
+
+	}//end isVerifiedRedaction()
 
 	/**
 	 * One document reference as a file, or null.

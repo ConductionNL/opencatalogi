@@ -116,6 +116,37 @@ class WooFakeFileService {
 		$this->published[] = (int)$file;
 		return new \stdClass();
 	}//end publishFile()
+
+	/** What the redaction returns; null makes it throw, as a broken pipeline does. */
+	public ?\OCP\Files\Node $redacted = null;
+
+	public int $redactions = 0;
+
+	/** Mirrors openregister FileService::anonymizeDocument. */
+	public function anonymizeDocument(\OCP\Files\Node $node, array $entities, string $scope='document', ?string $fileKey=null, ?bool $preserveStructure=null): \OCP\Files\Node {
+		$this->redactions++;
+		if ($this->redacted === null) {
+			throw new \RuntimeException('Presidio unreachable');
+		}
+
+		return $this->redacted;
+	}//end anonymizeDocument()
+
+	/** Mirrors openregister FileService::getLastResidualEntities. */
+	public function getLastResidualEntities(): array {
+		return [];
+	}//end getLastResidualEntities()
+}//end class
+
+/**
+ * Duck-typed fake of the consumed OpenRegister EntityRelationMapper.
+ */
+class WooFakeEntityRelationMapper {
+
+	/** Mirrors openregister EntityRelationMapper::findEntitiesForAnonymization. */
+	public function findEntitiesForAnonymization(int $fileId): array {
+		return [['entity_value' => 'Jan Jansen', 'entity_type' => 'PERSON']];
+	}//end findEntitiesForAnonymization()
 }//end class
 
 /**
@@ -200,6 +231,8 @@ class WooFakeTaskSequenceMapper {
 
 /**
  * @covers \OCA\OpenCatalogi\Service\WooService
+ * @covers \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
+ * @covers \OCA\OpenCatalogi\Service\Woo\DocumentRedactor
  */
 class WooServiceTest extends TestCase {
 
@@ -239,8 +272,10 @@ class WooServiceTest extends TestCase {
 		$this->deck = new WooFakeDeckService();
 		$this->sequences = new WooFakeTaskSequenceMapper();
 		$this->files = new WooFakeFileService();
-		foreach (['doc-a' => 'a.pdf', 'doc-b' => 'b.pdf', 'doc-c-anon' => 'c-gelakt.pdf'] as $reference => $name) {
-			$this->documents['/alice/files/'.$reference] = $this->document($name);
+		$id = 0;
+		foreach (['doc-a' => 'a.pdf', 'doc-b' => 'b.pdf', 'doc-c' => 'c.pdf', 'doc-c-anon' => 'c-gelakt.pdf'] as $reference => $name) {
+			$id++;
+			$this->documents['/alice/files/'.$reference] = $this->document($name, $id);
 		}
 
 		$this->store = [
@@ -270,6 +305,10 @@ class WooServiceTest extends TestCase {
 
 				if ($id === 'OCA\OpenRegister\Service\FileService') {
 					return $this->files;
+				}
+
+				if ($id === 'OCA\OpenRegister\Db\EntityRelationMapper') {
+					return new WooFakeEntityRelationMapper();
 				}
 
 				throw new \RuntimeException('unknown service ' . $id);
@@ -306,13 +345,15 @@ class WooServiceTest extends TestCase {
 		$linker = $this->createMock(\OCA\OpenCatalogi\Service\Portal\PublicationLinker::class);
 		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/'.$id);
 
+		$writer = new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $linker, $this->l10n);
 		$this->service = new WooService(
 			$this->config,
 			$this->container,
 			$this->userSession,
 			$this->logger,
 			$this->l10n,
-			new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $linker, $this->l10n),
+			$writer,
+			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($writer, $this->container, $this->l10n, $this->logger),
 		);
 
 	}//end setUp()
@@ -551,12 +592,15 @@ class WooServiceTest extends TestCase {
 	 * A Nextcloud file double with a name and content.
 	 *
 	 * @param string $name The file name.
+	 * @param int    $id   The file id.
 	 *
 	 * @return \OCP\Files\File
 	 */
-	private function document(string $name): \OCP\Files\File {
+	private function document(string $name, int $id=0): \OCP\Files\File {
 		$file = $this->createMock(\OCP\Files\File::class);
 		$file->method('getName')->willReturn($name);
+		$file->method('getId')->willReturn($id);
+		$file->method('hash')->willReturnCallback(static fn (string $type): string => hash($type, 'inhoud van '.$name));
 		$file->method('fopen')->willReturnCallback(static function () use ($name) {
 			$stream = fopen('php://memory', 'r+');
 			fwrite($stream, 'inhoud van '.$name);
@@ -730,6 +774,170 @@ class WooServiceTest extends TestCase {
 	}//end testNoApprovalNoPublication()
 
 	/**
+	 * Names of the files the publish attached.
+	 *
+	 * @return array<int, string>
+	 */
+	private function attachedNames(): array {
+		return array_column($this->files->added, 'name');
+	}//end attachedNames()
+
+	/**
+	 * REQ-WRP-001, the fail-closed half: when the redaction call breaks, the
+	 * original of a partly public document never reaches the publication.
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	public function testABrokenRedactionNeverPublishesTheOriginal(): void {
+		$this->approvedBatch();
+		$this->files->redacted = null;
+
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$this->assertSame(1, $this->files->redactions);
+		$this->assertSame('failed', $assessed['redactionStatus']);
+		$this->assertSame('', $assessed['anonymizedDocument']);
+		$this->assertNotSame('', $assessed['redactionMessage']);
+
+		// No fail() inside the try: PHPUnit's own failure is a RuntimeException too.
+		$refusal = null;
+		try {
+			$this->service->publishBatch('batch-1');
+		} catch (\RuntimeException $e) {
+			$refusal = $e->getMessage();
+		}
+
+		$this->assertNotNull($refusal, 'A partly public document without a redacted version must block the publish');
+		$this->assertStringContainsString('no verified redacted version', (string)$refusal);
+		$this->assertStringContainsString('c.pdf', (string)$refusal);
+
+		$this->assertNotContains('c.pdf', $this->attachedNames());
+		$this->assertSame([], $this->files->added);
+		$this->assertSame([], $this->createdPublications());
+		$this->assertSame('ready_for_review', $this->service->getBatch('batch-1')['status']);
+	}//end testABrokenRedactionNeverPublishesTheOriginal()
+
+	/**
+	 * REQ-WRP-001: a working redaction publishes the redacted file in place of the original.
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	public function testAVerifiedRedactionIsWhatGetsPublished(): void {
+		$this->approvedBatch();
+		$redacted = $this->documents['/alice/files/doc-c-anon'];
+		$this->documents['id:4'] = $redacted;
+		$this->files->redacted = $redacted;
+
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$this->assertSame('verified', $assessed['redactionStatus']);
+		$this->assertSame('4', $assessed['anonymizedDocument']);
+
+		$this->service->publishBatch('batch-1');
+		$this->assertSame(['a.pdf', 'b.pdf', 'c-gelakt.pdf'], $this->attachedNames());
+	}//end testAVerifiedRedactionIsWhatGetsPublished()
+
+	/**
+	 * REQ-WRP-001: a redacted file whose bytes changed since it was verified blocks the publish.
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	public function testARedactedFileChangedSinceVerificationBlocksThePublish(): void {
+		$this->approvedBatch();
+		foreach ($this->objects->objects as $i => $object) {
+			if ($object['id'] === 'a3') {
+				$this->objects->objects[$i]['anonymizedDocumentHash'] = hash('sha256', 'iets anders');
+			}
+		}
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('no verified redacted version: c.pdf');
+		try {
+			$this->service->publishBatch('batch-1');
+		} finally {
+			$this->assertSame([], $this->files->added);
+		}
+	}//end testARedactedFileChangedSinceVerificationBlocksThePublish()
+
+	/**
+	 * REQ-WRP-001: a "redacted version" that is the original itself blocks the publish.
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	public function testARedactedVersionThatIsTheOriginalBlocksThePublish(): void {
+		$this->approvedBatch();
+		$this->documents['id:3'] = $this->documents['/alice/files/doc-c'];
+		foreach ($this->objects->objects as $i => $object) {
+			if ($object['id'] === 'a3') {
+				// Same file reached two ways: by id and by path.
+				$this->objects->objects[$i]['anonymizedDocument'] = '3';
+				$this->objects->objects[$i]['anonymizedDocumentHash'] = hash('sha256', 'inhoud van c.pdf');
+			}
+		}
+
+		$refusal = null;
+		try {
+			$this->service->publishBatch('batch-1');
+		} catch (\RuntimeException $e) {
+			$refusal = $e->getMessage();
+		}
+
+		$this->assertNotNull($refusal, 'The original must not pass as its own redacted version');
+		$this->assertStringContainsString('no verified redacted version: c.pdf', (string)$refusal);
+
+		$this->assertSame([], $this->files->added);
+	}//end testARedactedVersionThatIsTheOriginalBlocksThePublish()
+
+	/**
+	 * REQ-WRP-002: the batch tells the officer which partly public documents cannot be published, and why.
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-the-officer-sees-why-a-partly-public-document-cannot-be-published-req-wrp-002
+	 */
+	public function testTheBatchNamesEveryUnredactedDocumentWithItsReason(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->assertSame([], $this->service->getBatch('batch-1')['documentSummary']['unredacted']);
+
+		$this->files->redacted = null;
+		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$this->objects->objects[] = ['id' => 'a5', 'assessment' => 'deels_openbaar', 'fileName' => 'e.pdf'];
+		foreach ($this->objects->objects as $i => $object) {
+			if ($object['id'] === 'batch-1') {
+				$this->objects->objects[$i]['documents'][] = 'a5';
+			}
+		}
+
+		$unredacted = $this->service->getBatch('batch-1')['documentSummary']['unredacted'];
+		$this->assertSame(['c.pdf', 'e.pdf'], array_column($unredacted, 'fileName'));
+		$this->assertStringContainsString('Redaction failed in OpenRegister', $unredacted[0]['reason']);
+		$this->assertSame('No verified redacted version exists yet.', $unredacted[1]['reason']);
+	}//end testTheBatchNamesEveryUnredactedDocumentWithItsReason()
+
+	/**
+	 * REQ-WRP-001: assessing away from partly public drops the redaction and runs none.
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	public function testAssessingAwayFromPartlyPublicDropsTheRedaction(): void {
+		$this->seedBatchWithAssessments(false);
+		$result = $this->service->updateAssessment('a3', 'openbaar', []);
+
+		$this->assertSame(0, $this->files->redactions);
+		$this->assertSame('', $result['anonymizedDocument']);
+		$this->assertSame('', $result['redactionStatus']);
+	}//end testAssessingAwayFromPartlyPublicDropsTheRedaction()
+
+	/**
+	 * REQ-WRP-001: without a batch the acting officer owns relative references.
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	public function testWithoutABatchTheOfficersFilesAreSearched(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->files->redacted = $this->documents['/alice/files/doc-c-anon'];
+
+		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'])['redactionStatus']);
+		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'no-such-batch')['redactionStatus']);
+	}//end testWithoutABatchTheOfficersFilesAreSearched()
+
+	/**
 	 * Seed a batch + 4 assessments. By default one stays "te_beoordelen"; when
 	 * $leaveUnassessed is false all four are assessed (2 openbaar, 1 deels, 1 niet).
 	 *
@@ -745,7 +953,16 @@ class WooServiceTest extends TestCase {
 		$this->objects->objects = [
 			['id' => 'a1', 'assessment' => 'openbaar', 'fileName' => 'a.pdf', 'documentReference' => 'doc-a'],
 			['id' => 'a2', 'assessment' => 'openbaar', 'fileName' => 'b.pdf', 'documentReference' => 'doc-b'],
-			['id' => 'a3', 'assessment' => 'deels_openbaar', 'fileName' => 'c.pdf', 'anonymizedDocument' => 'doc-c-anon', 'weigeringsgronden' => ['5.2.e']],
+			[
+				'id' => 'a3',
+				'assessment' => 'deels_openbaar',
+				'fileName' => 'c.pdf',
+				'documentReference' => 'doc-c',
+				'anonymizedDocument' => 'doc-c-anon',
+				'anonymizedDocumentHash' => hash('sha256', 'inhoud van c-gelakt.pdf'),
+				'redactionStatus' => 'verified',
+				'weigeringsgronden' => ['5.2.e'],
+			],
 			$fourth,
 			[
 				'id' => 'batch-1',
