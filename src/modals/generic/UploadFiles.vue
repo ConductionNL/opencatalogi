@@ -1391,16 +1391,6 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal,
 div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	z-index: 13000 !important;
 }
-
-.modal-mask[aria-labelledby='AddAttachmentModal'] {
-	z-index: 13020 !important;
-}
-
-.modal-mask[aria-labelledby='AddAttachmentModal'] .modal-container,
-.modal-mask[aria-labelledby='AddAttachmentModal'] .modal,
-.modal-mask[aria-labelledby='AddAttachmentModal'] .modal__content {
-	z-index: 13021 !important;
-}
 </style>
 
 <style scoped>
