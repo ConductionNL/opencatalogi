@@ -309,8 +309,14 @@ class WooCategoryRegistryTest extends TestCase {
 	}
 
 	public function testAnInstanceWithoutTheSchemaServesTheWaardelijstMembersOnly(): void {
+		// The real SchemaMapper::find() returns a non-nullable Schema and THROWS when
+		// the schema is absent. Only the local stub widens that to ?Schema, so a test
+		// that returns null here asserts a path production cannot take, and CI refuses
+		// it outright: "Method find may not return value of type null".
 		$schemaMapper = $this->createMock(SchemaMapper::class);
-		$schemaMapper->method('find')->willReturn(null);
+		$schemaMapper->method('find')->willThrowException(
+			new \OCP\AppFramework\Db\DoesNotExistException('schema not imported')
+		);
 
 		$settings = $this->createMock(SettingsService::class);
 		$settings->method('getObjectService')->willReturn($this->createMock(ObjectService::class));

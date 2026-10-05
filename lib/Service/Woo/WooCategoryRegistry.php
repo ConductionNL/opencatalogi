@@ -417,10 +417,11 @@ class WooCategoryRegistry {
 				return [];
 			}
 
+			// No null guard on the result: OpenRegister's SchemaMapper::find() returns a
+			// non-nullable Schema and throws DoesNotExistException when the schema has
+			// not been imported. The catch below is what answers that case, and a
+			// `=== null` guard here is dead code that reads as if it were the handler.
 			$schema = $schemaMapper->find(self::SCHEMA_SLUG, _rbac: false, _multitenancy: false);
-			if ($schema === null) {
-				return [];
-			}
 
 			$found = $objectService->searchObjectsPaginated(
 				query: ['@self' => ['schema' => $schema->getId()], '_limit' => 500],
