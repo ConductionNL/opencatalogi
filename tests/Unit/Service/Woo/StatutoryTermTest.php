@@ -37,6 +37,7 @@ use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
+use OCP\App\IAppManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -229,9 +230,28 @@ class StatutoryTermTest extends TestCase {
 			}
 		);
 
-		$this->terms = new StatutoryTerm($container, $this->createMock(LoggerInterface::class));
+		$this->terms = new StatutoryTerm(
+			$container,
+			$this->createMock(LoggerInterface::class),
+			$this->appManager(installed: true)
+		);
 
 	}//end setUp()
+
+	/**
+	 * An app manager that answers whether OpenRegister is installed.
+	 *
+	 * @param bool $installed What it answers.
+	 *
+	 * @return IAppManager The app manager.
+	 */
+	private function appManager(bool $installed): IAppManager {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isInstalled')->willReturn($installed);
+
+		return $appManager;
+
+	}//end appManager()
 
 	/**
 	 * The configuration handed to the engine IS the Dutch Woo term.
@@ -418,7 +438,11 @@ class StatutoryTermTest extends TestCase {
 	public function testAnUnavailableEngineIsNotARefusal(): void {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willThrowException(new \RuntimeException('not installed'));
-		$terms = new StatutoryTerm($container, $this->createMock(LoggerInterface::class));
+		$terms = new StatutoryTerm(
+			$container,
+			$this->createMock(LoggerInterface::class),
+			$this->appManager(installed: true)
+		);
 
 		$this->expectException(TermEngineUnavailableException::class);
 		$terms->arm(
@@ -445,4 +469,247 @@ class StatutoryTermTest extends TestCase {
 		$this->engine->calls = [];
 
 	}//end arm()
+	/**
+	 * Build a term service over a container that answers only what the test asks
+	 * it to.
+	 *
+	 * @param bool $engineBound Whether the FlowTimerService resolves.
+	 * @param bool $storeBound  Whether the FlowTimerMapper resolves.
+	 * @param bool $installed   Whether OpenRegister is installed.
+	 *
+	 * @return StatutoryTerm The service.
+	 */
+	private function buildTerms(
+		bool $engineBound = true,
+		bool $storeBound = true,
+		bool $installed = true
+	): StatutoryTerm {
+		$store = new FakeTermStore($this->engine);
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			function (string $id) use ($store, $engineBound, $storeBound) {
+				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\FlowTimerService') {
+					if ($engineBound === false) {
+						throw new \RuntimeException('not bound');
+					}
+
+					return $this->engine;
+				}
+
+				if ($id === 'OCA\OpenRegister\Db\FlowTimerMapper') {
+					if ($storeBound === false) {
+						throw new \RuntimeException('not bound');
+					}
+
+					return $store;
+				}
+
+				throw new \RuntimeException('not bound: ' . $id);
+			}
+		);
+
+		return new StatutoryTerm(
+			$container,
+			$this->createMock(LoggerInterface::class),
+			$this->appManager(installed: $installed)
+		);
+
+	}//end buildTerms()
+
+	/**
+	 * ADR-083: without OpenRegister installed the engine refuses by name, so the
+	 * refusal reads as a missing app rather than a container key.
+	 *
+	 * @return void
+	 */
+	public function testWithoutOpenRegisterInstalledTheEngineRefusesByName(): void {
+		$terms = $this->buildTerms(installed: false);
+
+		$this->expectException(TermEngineUnavailableException::class);
+		$this->expectExceptionMessageMatches('/OpenRegister is not installed/');
+		$terms->describe(timerUuid: 'timer-1');
+
+	}//end testWithoutOpenRegisterInstalledTheEngineRefusesByName()
+
+	/**
+	 * An unreadable term store is unavailability, not a refusal: one is the
+	 * system working and the other is a term nobody counts.
+	 *
+	 * @return void
+	 */
+	public function testAnUnresolvableTermStoreIsUnavailabilityNotARefusal(): void {
+		$terms = $this->buildTerms(storeBound: false);
+
+		$this->expectException(TermEngineUnavailableException::class);
+		$this->expectExceptionMessageMatches('/term store is unavailable/');
+		$terms->describe(timerUuid: 'timer-1');
+
+	}//end testAnUnresolvableTermStoreIsUnavailabilityNotARefusal()
+
+	/**
+	 * A term the store does not hold is a refusal, and the engine's own message
+	 * is carried through.
+	 *
+	 * @return void
+	 */
+	public function testReadingATermThatIsNotThereIsARefusal(): void {
+		$this->expectException(TermRefusedException::class);
+		$this->terms->describe(timerUuid: 'timer-nope');
+
+	}//end testReadingATermThatIsNotThereIsARefusal()
+
+	/**
+	 * Arming against an engine that refuses is a refusal carrying the engine's
+	 * message, not a silent success.
+	 *
+	 * @return void
+	 */
+	public function testAnEngineThatRefusesToArmIsReportedAsARefusal(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id): object {
+				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\FlowTimerService') {
+					return new class {
+						public function arm(array $config, ?string $actor): object {
+							throw new \RuntimeException('the anchor event is unknown to this engine');
+						}
+					};
+				}
+
+				throw new \RuntimeException('not bound: ' . $id);
+			}
+		);
+		$terms = new StatutoryTerm(
+			$container,
+			$this->createMock(LoggerInterface::class),
+			$this->appManager(installed: true)
+		);
+
+		$this->expectException(TermRefusedException::class);
+		$this->expectExceptionMessageMatches('/anchor event is unknown/');
+		$terms->arm(
+			requestUuid: 'req-1',
+			reference: 'WOO-2026-ABCDEF',
+			receivedAt: new DateTimeImmutable('2026-03-02T09:00:00+00:00'),
+			actor: 'alice'
+		);
+
+	}//end testAnEngineThatRefusesToArmIsReportedAsARefusal()
+
+	/**
+	 * A suspension without a reason is refused by the engine, and the refusal
+	 * reaches the caller rather than being swallowed.
+	 *
+	 * @return void
+	 */
+	public function testASuspensionWithoutAReasonIsRefused(): void {
+		$this->arm();
+
+		$this->expectException(TermRefusedException::class);
+		$this->terms->pause(timerUuid: 'timer-1', reason: '   ', actor: 'alice');
+
+	}//end testASuspensionWithoutAReasonIsRefused()
+
+	/**
+	 * Every term armed against one request is reported, with the engine's
+	 * derivation and the two numbers an officer answers for.
+	 *
+	 * @return void
+	 */
+	public function testEveryTermOfOneRequestIsReported(): void {
+		$this->arm();
+
+		$rows = $this->terms->forRequest(requestUuid: 'req-1');
+
+		$this->assertCount(1, $rows);
+		$this->assertSame('timer-1', $rows[0]['timer']);
+		$this->assertSame('2026-03-30T09:00:00+00:00', $rows[0]['dueAt']);
+		$this->assertSame(0, $rows[0]['extensionCount']);
+		$this->assertSame(1, $rows[0]['extensionMax']);
+		$this->assertTrue($rows[0]['extendable']);
+
+	}//end testEveryTermOfOneRequestIsReported()
+
+	/**
+	 * A request with no term reports no rows rather than a row of zeroes.
+	 *
+	 * @return void
+	 */
+	public function testARequestWithNoTermReportsNoRows(): void {
+		$this->assertSame([], $this->terms->forRequest(requestUuid: 'req-1'));
+
+	}//end testARequestWithNoTermReportsNoRows()
+
+	/**
+	 * A store that answers with something other than terms is skipped rather
+	 * than read as a term.
+	 *
+	 * @return void
+	 */
+	public function testAStoreRowThatIsNotATermIsSkipped(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			function (string $id): object {
+				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\FlowTimerService') {
+					return $this->engine;
+				}
+
+				return new class {
+					public function findBySubject(string $subjectType, string $subjectUuid, array $states = []): array {
+						return ['not a term at all'];
+					}
+				};
+			}
+		);
+		$terms = new StatutoryTerm(
+			$container,
+			$this->createMock(LoggerInterface::class),
+			$this->appManager(installed: true)
+		);
+
+		$this->assertSame([], $terms->forRequest(requestUuid: 'req-1'));
+
+	}//end testAStoreRowThatIsNotATermIsSkipped()
+
+	/**
+	 * An engine that describes a term with something other than an array still
+	 * reports the two numbers, rather than failing on the derivation.
+	 *
+	 * @return void
+	 */
+	public function testATermIsStillReportedWhenTheEngineDescribesNothing(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id): object {
+				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\FlowTimerService') {
+					return new class {
+						public function describe(object $timer, mixed $now = null): mixed {
+							return null;
+						}
+					};
+				}
+
+				return new class {
+					public function findByUuid(string $uuid): object {
+						return new class {
+						};
+					}
+				};
+			}
+		);
+		$terms = new StatutoryTerm(
+			$container,
+			$this->createMock(LoggerInterface::class),
+			$this->appManager(installed: true)
+		);
+
+		$report = $terms->describe(timerUuid: 'timer-1');
+
+		$this->assertSame('', $report['timer']);
+		$this->assertNull($report['dueAt']);
+		$this->assertSame(0, $report['extensionCount']);
+		$this->assertSame(1, $report['extensionMax']);
+
+	}//end testATermIsStillReportedWhenTheEngineDescribesNothing()
 }//end class

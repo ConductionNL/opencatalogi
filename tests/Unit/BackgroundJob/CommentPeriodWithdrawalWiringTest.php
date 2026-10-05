@@ -29,8 +29,12 @@ namespace Unit\BackgroundJob;
 use OCA\OpenCatalogi\BackgroundJob\CommentPeriodWithdrawal;
 use OCA\OpenCatalogi\Controller\CommentPeriodController;
 use OCA\OpenCatalogi\Controller\WooRequestController;
+use OCA\OpenCatalogi\Service\Publication\CommentPeriodWithdrawalService;
+use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use ReflectionClass;
+use ReflectionMethod;
 
 /**
  * Asserts the wiring from the caller.
@@ -163,4 +167,73 @@ class CommentPeriodWithdrawalWiringTest extends TestCase {
 		}
 
 	}//end testRefusalsSurviveBecauseNeitherControllerIsAnOcsController()
+	/**
+	 * Running the job runs the withdrawal pass and logs what it did.
+	 *
+	 * Asserted through the real `run()` rather than by reading the source, so a
+	 * pass that is wired but never invoked cannot read as a success.
+	 *
+	 * @return void
+	 */
+	public function testRunningTheJobRunsTheWithdrawalPass(): void {
+		// onlyMethods against the real class, so a double cannot invent a method
+		// the real withdrawal service lacks.
+		$withdrawals = $this->getMockBuilder(CommentPeriodWithdrawalService::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['withdrawClosedPeriods'])
+			->getMock();
+		$withdrawals->expects($this->once())
+			->method('withdrawClosedPeriods')
+			->willReturn(['considered' => 3, 'withdrawn' => 1, 'failed' => 0]);
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('info')
+			->with(
+				$this->stringContains('withdrawal pass complete'),
+				['considered' => 3, 'withdrawn' => 1, 'failed' => 0]
+			);
+		$logger->expects($this->never())->method('error');
+
+		$job = new CommentPeriodWithdrawal(
+			$this->createMock(ITimeFactory::class),
+			$withdrawals,
+			$logger
+		);
+
+		(new ReflectionMethod(CommentPeriodWithdrawal::class, 'run'))->invoke($job, []);
+
+	}//end testRunningTheJobRunsTheWithdrawalPass()
+
+	/**
+	 * A pass that throws is logged as a failure, not swallowed.
+	 *
+	 * A cron pass that dies silently looks exactly like one that found nothing
+	 * to withdraw, and only one of those is fine.
+	 *
+	 * @return void
+	 */
+	public function testAFailedPassIsLoggedRatherThanSwallowed(): void {
+		$withdrawals = $this->getMockBuilder(CommentPeriodWithdrawalService::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['withdrawClosedPeriods'])
+			->getMock();
+		$withdrawals->method('withdrawClosedPeriods')
+			->willThrowException(new \RuntimeException('the register could not be read'));
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('error')
+			->with($this->stringContains('the register could not be read'), $this->anything());
+		$logger->expects($this->never())->method('info');
+
+		$job = new CommentPeriodWithdrawal(
+			$this->createMock(ITimeFactory::class),
+			$withdrawals,
+			$logger
+		);
+
+		(new ReflectionMethod(CommentPeriodWithdrawal::class, 'run'))->invoke($job, []);
+
+	}//end testAFailedPassIsLoggedRatherThanSwallowed()
 }//end class

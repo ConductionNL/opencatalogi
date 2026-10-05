@@ -30,6 +30,7 @@ use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
 use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -147,11 +148,26 @@ class WooRequestControllerTest extends TestCase {
 			$l10n,
 			$userSession,
 			new WooRequestService(),
-			new WooRequestStore($config, $container),
+			new WooRequestStore($config, $container, $this->appManager(installed: true)),
 			$this->terms
 		);
 
 	}//end setUp()
+
+	/**
+	 * An app manager that answers whether OpenRegister is installed.
+	 *
+	 * @param bool $installed What it answers.
+	 *
+	 * @return IAppManager The app manager.
+	 */
+	private function appManager(bool $installed): IAppManager {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isInstalled')->willReturn($installed);
+
+		return $appManager;
+
+	}//end appManager()
 
 	/**
 	 * Make the request answer the given parameters.
@@ -483,4 +499,372 @@ class WooRequestControllerTest extends TestCase {
 		$this->assertSame(1.0, $data['metShare']);
 
 	}//end testTheTermsReportReadsTheStoredRequests()
+	/**
+	 * Build a controller variant, over the same faked register.
+	 *
+	 * @param bool                 $signedIn   Whether a user is signed in.
+	 * @param string               $configured What the register and schema keys answer.
+	 * @param WooRequestStore|null $store      A store double, or null for the real store.
+	 *
+	 * @return WooRequestController The controller.
+	 */
+	private function buildController(
+		bool $signedIn = true,
+		string $configured = '42',
+		?WooRequestStore $store = null
+	): WooRequestController {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn($configured);
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			function (string $id) use ($config) {
+				if ($id === 'OCA\OpenRegister\Service\ObjectService') {
+					return $this->objects;
+				}
+
+				if ($id === IAppConfig::class) {
+					return $config;
+				}
+
+				throw new \RuntimeException('not bound: ' . $id);
+			}
+		);
+
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
+
+		$userSession = $this->createMock(IUserSession::class);
+		if ($signedIn === true) {
+			$user = $this->createMock(IUser::class);
+			$user->method('getUID')->willReturn('alice');
+			$userSession->method('getUser')->willReturn($user);
+		} else {
+			$userSession->method('getUser')->willReturn(null);
+		}
+
+		if ($store === null) {
+			$store = new WooRequestStore($config, $container, $this->appManager(installed: true));
+		}
+
+		return new WooRequestController(
+			'opencatalogi',
+			$this->request,
+			$l10n,
+			$userSession,
+			new WooRequestService(),
+			$store,
+			$this->terms
+		);
+
+	}//end buildController()
+
+	/**
+	 * A store double over the real class, so it cannot answer a method the real
+	 * store lacks.
+	 *
+	 * @return WooRequestStore|MockObject The double.
+	 */
+	private function storeDouble(): WooRequestStore|MockObject {
+		return $this->getMockBuilder(WooRequestStore::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['save', 'find', 'all'])
+			->getMock();
+
+	}//end storeDouble()
+
+	/**
+	 * Intake without a session is 401, not an anonymous request nobody can
+	 * answer.
+	 *
+	 * @return void
+	 */
+	public function testIntakeWithoutASessionIs401(): void {
+		$controller = $this->buildController(signedIn: false);
+		$this->params(['requestedInformation' => 'Everything.']);
+
+		$response = $controller->receive();
+
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testIntakeWithoutASessionIs401()
+
+	/**
+	 * An unconfigured register names the missing key rather than reporting a
+	 * request that was never stored.
+	 *
+	 * @return void
+	 */
+	public function testIntakeOnAnUnconfiguredRegisterNamesTheMissingKey(): void {
+		$controller = $this->buildController(configured: '');
+		$this->params(['requestedInformation' => 'Everything.']);
+
+		$response = $controller->receive();
+		$data = $response->getData();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('register_not_configured', $data['error']);
+		$this->assertStringContainsString('woo_request_schema', $data['detail']);
+
+	}//end testIntakeOnAnUnconfiguredRegisterNamesTheMissingKey()
+
+	/**
+	 * A register that accepts the request and then refuses the term write is
+	 * reported, not answered 201 over a request with no term on it.
+	 *
+	 * @return void
+	 */
+	public function testIntakeReportsARegisterThatFailsOnTheSecondWrite(): void {
+		$store = $this->storeDouble();
+		$calls = 0;
+		$store->method('save')->willReturnCallback(
+			static function (array $record, string $uuid = '') use (&$calls): array {
+				$calls++;
+				if ($calls > 1) {
+					throw new \RuntimeException('the register went away');
+				}
+
+				$record['id'] = 'req-1';
+
+				return $record;
+			}
+		);
+		$controller = $this->buildController(store: $store);
+		$this->params(['requestedInformation' => 'Everything.']);
+		$this->terms->method('arm')->willReturn(
+			['timer' => 'timer-1', 'dueAt' => '2026-03-30T09:00:00+00:00', 'state' => 'armed', 'extensionCount' => 0, 'extensionMax' => 1, 'extendable' => true]
+		);
+
+		$response = $controller->receive();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('register_not_configured', $response->getData()['error']);
+
+	}//end testIntakeReportsARegisterThatFailsOnTheSecondWrite()
+
+	/**
+	 * A report that cannot read the requests says so, rather than reporting
+	 * zero terms missed.
+	 *
+	 * @return void
+	 */
+	public function testTheReportRefusesRatherThanReportingAnEmptyBacklog(): void {
+		$controller = $this->buildController(configured: '');
+
+		$response = $controller->termsReport();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('register_not_configured', $response->getData()['error']);
+
+	}//end testTheReportRefusesRatherThanReportingAnEmptyBacklog()
+
+	/**
+	 * Reading a request back quotes the term as the engine reports it now.
+	 *
+	 * @return void
+	 */
+	public function testAReadQuotesTheTermTheEngineReportsNow(): void {
+		$this->storedRequest(['dueAt' => '2026-03-30T09:00:00+00:00']);
+		$this->terms->method('describe')->willReturn(
+			['timer' => 'timer-1', 'dueAt' => '2026-04-13T09:00:00+00:00', 'state' => 'running', 'extensionCount' => 1, 'extensionMax' => 1, 'extendable' => false]
+		);
+
+		$response = $this->controller->show(requestId: 'req-1');
+		$data = $response->getData();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('WOO-2026-ABCDEF', $data['request']['reference']);
+		$this->assertSame('2026-04-13T09:00:00+00:00', $data['term']['dueAt']);
+		$this->assertSame('running', $data['term']['state']);
+		$this->assertArrayHasKey('receipt', $data);
+
+	}//end testAReadQuotesTheTermTheEngineReportsNow()
+
+	/**
+	 * A request with no term reads back with no term, rather than a term of
+	 * zeroes.
+	 *
+	 * @return void
+	 */
+	public function testARequestWithNoTermReadsBackWithNoTerm(): void {
+		$this->storedRequest(['termTimer' => '']);
+
+		$data = $this->controller->show(requestId: 'req-1')->getData();
+
+		$this->assertNull($data['term']);
+
+	}//end testARequestWithNoTermReadsBackWithNoTerm()
+
+	/**
+	 * When the engine cannot answer, the read says there is no term to quote
+	 * rather than quoting a stale one.
+	 *
+	 * @return void
+	 */
+	public function testAReadIsHonestWhenTheEngineCannotAnswer(): void {
+		$this->storedRequest();
+		$this->terms->method('describe')->willThrowException(new TermEngineUnavailableException('no engine'));
+
+		$data = $this->controller->show(requestId: 'req-1')->getData();
+
+		$this->assertNull($data['term']);
+
+	}//end testAReadIsHonestWhenTheEngineCannotAnswer()
+
+	/**
+	 * A read on an unconfigured register names the key instead of answering
+	 * 404, because the request may well exist.
+	 *
+	 * @return void
+	 */
+	public function testAReadOnAnUnconfiguredRegisterNamesTheKey(): void {
+		$controller = $this->buildController(configured: '');
+
+		$response = $controller->show(requestId: 'req-1');
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('register_not_configured', $response->getData()['error']);
+
+	}//end testAReadOnAnUnconfiguredRegisterNamesTheKey()
+
+	/**
+	 * An extension the engine cannot reach is 503, told apart from the 409 a
+	 * refused second extension gets.
+	 *
+	 * @return void
+	 */
+	public function testAnExtensionWithoutAnEngineIs503NotARefusal(): void {
+		$this->storedRequest();
+		$this->params(['rationale' => 'Third parties were heard.']);
+		$this->terms->method('extendOnce')->willThrowException(new TermEngineUnavailableException('no engine'));
+
+		$response = $this->controller->extend(requestId: 'req-1');
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('term-engine-unavailable', $response->getData()['error']);
+
+	}//end testAnExtensionWithoutAnEngineIs503NotARefusal()
+
+	/**
+	 * Without a session the extension is recorded against no actor rather than
+	 * a guessed one.
+	 *
+	 * @return void
+	 */
+	public function testAnExtensionWithoutASessionRecordsNoActor(): void {
+		$controller = $this->buildController(signedIn: false);
+		$this->storedRequest();
+		$this->params(['rationale' => 'Third parties were heard.']);
+		$this->terms->expects($this->once())
+			->method('extendOnce')
+			->with('timer-1', 'Third parties were heard.', '')
+			->willReturn(
+				['timer' => 'timer-1', 'dueAt' => '2026-04-13T09:00:00+00:00', 'state' => 'running', 'extensionCount' => 1, 'extensionMax' => 1, 'extendable' => false]
+			);
+
+		$response = $controller->extend(requestId: 'req-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+
+	}//end testAnExtensionWithoutASessionRecordsNoActor()
+
+	/**
+	 * A batch of nothing is refused with 400.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyBatchIsRefusedWith400(): void {
+		$this->storedRequest();
+		$this->params(['batch' => '']);
+
+		$response = $this->controller->attachBatch(requestId: 'req-1');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('batch-refused', $response->getData()['error']);
+
+	}//end testAnEmptyBatchIsRefusedWith400()
+
+	/**
+	 * A batch cannot be attached to a request that is not there.
+	 *
+	 * @return void
+	 */
+	public function testABatchOnAnUnknownRequestAnswers404(): void {
+		$this->params(['batch' => 'batch-7']);
+
+		$response = $this->controller->attachBatch(requestId: 'nope');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame('unknown-request', $response->getData()['error']);
+
+	}//end testABatchOnAnUnknownRequestAnswers404()
+
+	/**
+	 * A register that refuses the write is reported rather than answered 200
+	 * over a request that was not stored.
+	 *
+	 * @return void
+	 */
+	public function testAWriteTheRegisterRefusesIsReported(): void {
+		$store = $this->storeDouble();
+		$store->method('find')->willReturn(
+			['id' => 'req-1', 'reference' => 'WOO-2026-ABCDEF', 'status' => 'received', 'termTimer' => 'timer-1', 'extensionCount' => 0]
+		);
+		$store->method('save')->willThrowException(new \RuntimeException('the register went away'));
+		$controller = $this->buildController(store: $store);
+		$this->params(['batch' => 'batch-7']);
+
+		$response = $controller->attachBatch(requestId: 'req-1');
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('register_not_configured', $response->getData()['error']);
+
+	}//end testAWriteTheRegisterRefusesIsReported()
+
+	/**
+	 * A pause on a request that is not there answers 404.
+	 *
+	 * @return void
+	 */
+	public function testAPauseOnAnUnknownRequestAnswers404(): void {
+		$this->params(['reason' => 'The question is unclear.']);
+
+		$response = $this->controller->pause(requestId: 'nope');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testAPauseOnAnUnknownRequestAnswers404()
+
+	/**
+	 * A request with no term has nothing to pause, and says so with 409.
+	 *
+	 * @return void
+	 */
+	public function testARequestWithNoTermCannotBePaused(): void {
+		$this->storedRequest(['termTimer' => '']);
+		$this->params(['reason' => 'The question is unclear.']);
+
+		$response = $this->controller->pause(requestId: 'req-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('no-term', $response->getData()['error']);
+
+	}//end testARequestWithNoTermCannotBePaused()
+
+	/**
+	 * A pause the engine cannot reach is 503, told apart from a refusal.
+	 *
+	 * @return void
+	 */
+	public function testAPauseWithoutAnEngineIs503(): void {
+		$this->storedRequest();
+		$this->params(['reason' => 'The question is unclear.']);
+		$this->terms->method('pause')->willThrowException(new TermEngineUnavailableException('no engine'));
+
+		$response = $this->controller->pause(requestId: 'req-1');
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('term-engine-unavailable', $response->getData()['error']);
+
+	}//end testAPauseWithoutAnEngineIs503()
 }//end class

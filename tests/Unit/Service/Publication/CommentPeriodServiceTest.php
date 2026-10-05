@@ -36,6 +36,7 @@ use DomainException;
 use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
@@ -132,9 +133,29 @@ class CommentPeriodServiceTest extends TestCase {
 			static fn (string $path): string => 'https://example.org' . $path
 		);
 
-		return new CommentPeriodService(new TermRoll($container), $config, $urls);
+		return new CommentPeriodService(
+			new TermRoll($container, $this->appManager(installed: true)),
+			$config,
+			$urls
+		);
 
 	}//end build()
+
+	/**
+	 * An app manager that answers whether OpenRegister is installed.
+	 *
+	 * @param bool $installed What it answers.
+	 *
+	 * @return IAppManager The app manager.
+	 */
+	private function appManager(bool $installed): IAppManager {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isInstalled')->willReturn($installed);
+
+		return $appManager;
+
+	}//end appManager()
+
 
 	/**
 	 * A period opens with its computed end, its remedy and its form.
@@ -429,4 +450,201 @@ class CommentPeriodServiceTest extends TestCase {
 		);
 
 	}//end period()
+	/**
+	 * A configured form template wins over the in-app path, so an instance that
+	 * collects reactions elsewhere can point at its own form.
+	 *
+	 * @return void
+	 */
+	public function testAConfiguredTemplateWinsOverTheInAppForm(): void {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn('https://forms.example.org/{remedy}?zaak={id}');
+
+		$urls = $this->createMock(IURLGenerator::class);
+		$urls->method('getAbsoluteURL')->willReturnArgument(0);
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id) {
+				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\SlaCalculator') {
+					return new FakeSlaCalculator();
+				}
+
+				return new FakeCalendarService();
+			}
+		);
+
+		$service = new CommentPeriodService(
+			new TermRoll($container, $this->appManager(installed: true)),
+			$config,
+			$urls
+		);
+
+		$this->assertSame(
+			'https://forms.example.org/bezwaar?zaak=pub%2F1',
+			$service->reactionFormUrl(publicationId: 'pub/1', legalRemedy: 'bezwaar')
+		);
+
+	}//end testAConfiguredTemplateWinsOverTheInAppForm()
+
+	/**
+	 * No form is derived for a remedy the app does not know, because a reader
+	 * handed the wrong form loses a right.
+	 *
+	 * @return void
+	 */
+	public function testNoFormIsDerivedForAnUnknownRemedy(): void {
+		$this->expectException(\DomainException::class);
+		$this->expectExceptionMessageMatches('/No reaction form can be derived/');
+		$this->service->reactionFormUrl(publicationId: 'pub-1', legalRemedy: 'beroep');
+
+	}//end testNoFormIsDerivedForAnUnknownRemedy()
+
+	/**
+	 * An announcement that is not an absolute https url is refused, because a
+	 * relative link announces nothing.
+	 *
+	 * @return void
+	 */
+	public function testAnAnnouncementThatIsNotAbsoluteHttpsIsRefused(): void {
+		$this->expectException(\DomainException::class);
+		$this->expectExceptionMessageMatches('/absolute https url/');
+		$this->service->open(
+			publication: ['id' => 'pub-1'],
+			termDays: 42,
+			legalRemedy: 'zienswijze',
+			announcementUrl: 'http://www.officielebekendmakingen.nl/stcrt-2026-1',
+			automaticWithdrawal: false,
+			openedBy: 'alice'
+		);
+
+	}//end testAnAnnouncementThatIsNotAbsoluteHttpsIsRefused()
+
+	/**
+	 * A period whose end does not come after its start is refused, because it
+	 * would read as closed from the moment it opened.
+	 *
+	 * @return void
+	 */
+	public function testAPeriodThatEndsBeforeItStartsIsRefused(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id): object {
+				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\SlaCalculator') {
+					// An engine that lands the term on its own start, which the
+					// real one cannot do and which is asserted against anyway.
+					return new class {
+						public function add(\DateTimeInterface $from, float $value, string $unit, ?object $calendar): DateTimeImmutable {
+							return DateTimeImmutable::createFromInterface($from);
+						}
+
+						public function roll(\DateTimeInterface $moment, string $roll, ?object $calendar): array {
+							return ['at' => DateTimeImmutable::createFromInterface($moment), 'unrolledAt' => null, 'rolledBy' => null];
+						}
+					};
+				}
+
+				return new FakeCalendarService();
+			}
+		);
+
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn('');
+		$urls = $this->createMock(IURLGenerator::class);
+		$urls->method('getAbsoluteURL')->willReturnArgument(0);
+
+		$service = new CommentPeriodService(
+			new TermRoll($container, $this->appManager(installed: true)),
+			$config,
+			$urls
+		);
+
+		$this->expectException(\DomainException::class);
+		$this->expectExceptionMessageMatches('/end after it starts/');
+		$service->open(
+			publication: ['id' => 'pub-1'],
+			termDays: 42,
+			legalRemedy: 'zienswijze',
+			announcementUrl: 'https://www.officielebekendmakingen.nl/stcrt-2026-1',
+			automaticWithdrawal: false,
+			openedBy: 'alice'
+		);
+
+	}//end testAPeriodThatEndsBeforeItStartsIsRefused()
+
+	/**
+	 * ADR-083: without OpenRegister installed the roll refuses by name rather
+	 * than computing the Algemene termijnenwet a second time here.
+	 *
+	 * @return void
+	 */
+	public function testWithoutOpenRegisterInstalledTheRollRefusesByName(): void {
+		$roll = new TermRoll(
+			$this->createMock(ContainerInterface::class),
+			$this->appManager(installed: false)
+		);
+
+		$this->expectException(TermRollUnavailableException::class);
+		$this->expectExceptionMessageMatches('/OpenRegister is not installed/');
+		$roll->endDate(start: new DateTimeImmutable('2026-03-02T09:00:00+00:00'), days: 42);
+
+	}//end testWithoutOpenRegisterInstalledTheRollRefusesByName()
+
+	/**
+	 * A calculator that resolves while the calendar does not is still a refusal,
+	 * because the roll has no calendar to ask.
+	 *
+	 * @return void
+	 */
+	public function testACalculatorWithoutACalendarStillRefuses(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id): object {
+				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\SlaCalculator') {
+					return new FakeSlaCalculator();
+				}
+
+				throw new \RuntimeException('not bound: ' . $id);
+			}
+		);
+		$roll = new TermRoll($container, $this->appManager(installed: true));
+
+		$this->expectException(TermRollUnavailableException::class);
+		$this->expectExceptionMessageMatches('/No working calendar can be resolved/');
+		$roll->endDate(start: new DateTimeImmutable('2026-03-02T09:00:00+00:00'), days: 42);
+
+	}//end testACalculatorWithoutACalendarStillRefuses()
+
+	/**
+	 * An engine that answers with no end date is refused, not defaulted: a
+	 * comment period with no close has no close it can defend.
+	 *
+	 * @return void
+	 */
+	public function testAnEngineThatAnswersWithNoEndDateIsRefused(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id): object {
+				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\SlaCalculator') {
+					return new class {
+						public function add(\DateTimeInterface $from, float $value, string $unit, ?object $calendar): DateTimeImmutable {
+							return DateTimeImmutable::createFromInterface($from);
+						}
+
+						public function roll(\DateTimeInterface $moment, string $roll, ?object $calendar): array {
+							return ['at' => 'not a moment', 'unrolledAt' => null, 'rolledBy' => null];
+						}
+					};
+				}
+
+				return new FakeCalendarService();
+			}
+		);
+		$roll = new TermRoll($container, $this->appManager(installed: true));
+
+		$this->expectException(TermRollUnavailableException::class);
+		$this->expectExceptionMessageMatches('/no close it can defend/');
+		$roll->endDate(start: new DateTimeImmutable('2026-03-02T09:00:00+00:00'), days: 42);
+
+	}//end testAnEngineThatAnswersWithNoEndDateIsRefused()
 }//end class

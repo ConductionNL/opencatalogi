@@ -268,4 +268,44 @@ class WooRequestServiceTest extends TestCase {
 		$this->assertNull($report['metShare']);
 
 	}//end testAShareOfNothingIsNotFullCompliance()
+	/**
+	 * A receipt whose due date is an empty string quotes no due date, rather
+	 * than an empty one a requester cannot read.
+	 *
+	 * @return void
+	 */
+	public function testAReceiptWithAnEmptyDueDateQuotesNone(): void {
+		$receipt = $this->service->receipt(
+			request: ['reference' => 'WOO-2026-ABCDEF', 'receivedAt' => '2026-03-02T09:00:00+00:00', 'dueAt' => '   ']
+		);
+
+		$this->assertNull($receipt['dueAt']);
+		$this->assertFalse($receipt['termArmed']);
+
+	}//end testAReceiptWithAnEmptyDueDateQuotesNone()
+
+	/**
+	 * A request decided against a term nobody can read is a named gap, neither
+	 * met nor missed.
+	 *
+	 * @return void
+	 */
+	public function testADecisionWithNoReadableTermIsANamedGap(): void {
+		$report = $this->service->termsReport(
+			requests: [
+				[
+					'reference' => 'WOO-2026-ABCDEF',
+					'status' => 'decided',
+					'decidedAt' => '2026-03-20T09:00:00+00:00',
+					'dueAt' => 'not a date at all',
+				],
+			]
+		);
+
+		$this->assertSame(1, $report['total']);
+		$this->assertSame(1, $report['counts']['unknown']);
+		$this->assertSame(0, $report['counts']['met']);
+		$this->assertSame(0, $report['counts']['missed']);
+
+	}//end testADecisionWithNoReadableTermIsANamedGap()
 }//end class
