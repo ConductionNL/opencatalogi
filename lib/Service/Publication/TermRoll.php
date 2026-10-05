@@ -34,6 +34,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -61,9 +62,11 @@ class TermRoll {
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container Server container, for the consumed term engine.
+	 * @param IAppManager $appManager Answers whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -145,6 +148,15 @@ class TermRoll {
 	 */
 	private function calculator(): object {
 		if ($this->calculator === null) {
+			// ADR-083: establish availability before the reach, so the refusal
+			// names the missing app rather than a container key.
+			if ($this->appManager->isInstalled('openregister') === false) {
+				throw new TermRollUnavailableException(
+					message: 'OpenRegister is not installed, so the end date of this period cannot be rolled off a '
+						. 'non-working day. It is not computed here instead.'
+				);
+			}
+
 			try {
 				$this->calculator = $this->container->get('OCA\OpenRegister\Service\Flow\Timer\SlaCalculator');
 			} catch (\Throwable $e) {
@@ -172,6 +184,10 @@ class TermRoll {
 	 */
 	private function calendars(): object {
 		if ($this->calendars === null) {
+			// No second availability check: endDate() resolves the calculator
+			// first, so this method is only reached once ADR-083's check in
+			// calculator() has passed. A duplicate guard here would be a branch
+			// no run can take.
 			try {
 				$this->calendars = $this->container->get('OCA\OpenRegister\Service\Flow\Timer\WorkingCalendarService');
 			} catch (\Throwable $e) {

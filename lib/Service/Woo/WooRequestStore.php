@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
@@ -59,10 +60,12 @@ class WooRequestStore {
 	 *
 	 * @param IAppConfig $config Holds the register and schema identifiers.
 	 * @param ContainerInterface $container Server container, for the consumed OR ObjectService.
+	 * @param IAppManager $appManager Answers whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -78,6 +81,15 @@ class WooRequestStore {
 	 */
 	private function objects(): object {
 		if ($this->objectService === null) {
+			// ADR-083: ask the app manager before reaching into the container, so
+			// an instance without OpenRegister gets a named refusal instead of a
+			// container error nobody can act on.
+			if ($this->appManager->isInstalled('openregister') === false) {
+				throw new RuntimeException(
+					message: 'OpenRegister is not installed, so Woo requests cannot be read or written.'
+				);
+			}
+
 			try {
 				$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			} catch (\Throwable $e) {

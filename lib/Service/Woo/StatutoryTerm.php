@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeInterface;
+use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -135,10 +136,12 @@ class StatutoryTerm {
 	 *
 	 * @param ContainerInterface $container Server container, for the consumed term engine.
 	 * @param LoggerInterface $logger Logger.
+	 * @param IAppManager $appManager Answers whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -197,6 +200,16 @@ class StatutoryTerm {
 	 */
 	private function engine(): object {
 		if ($this->timerService === null) {
+			// ADR-083: ask the app manager first, so an instance without
+			// OpenRegister refuses by name instead of failing in the container.
+			if ($this->appManager->isInstalled('openregister') === false) {
+				throw new TermEngineUnavailableException(
+					message: 'OpenRegister is not installed, so no Woo term can be armed or read. The date is not '
+						. 'computed here instead: a second implementation of the Algemene termijnenwet behind a '
+						. 'legal deadline is worse than an honest refusal.'
+				);
+			}
+
 			try {
 				$this->timerService = $this->container->get('OCA\OpenRegister\Service\Flow\Timer\FlowTimerService');
 			} catch (\Throwable $e) {
@@ -226,6 +239,10 @@ class StatutoryTerm {
 	 */
 	private function store(): object {
 		if ($this->timerMapper === null) {
+			// No second availability check: every public method resolves the
+			// engine before the store, so this method is only reached on an
+			// instance where ADR-083's check in engine() already passed. A
+			// duplicate guard here would be a branch no run can take.
 			try {
 				$this->timerMapper = $this->container->get('OCA\OpenRegister\Db\FlowTimerMapper');
 			} catch (\Throwable $e) {
