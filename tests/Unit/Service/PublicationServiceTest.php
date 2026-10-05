@@ -1470,8 +1470,6 @@ class PublicationServiceTest extends TestCase {
 				return ['results' => [], 'total' => 0, 'facets' => []];
 			});
 		$this->request->method('getParams')->willReturn([]);
-		$this->directoryService->method('getUniqueDirectories')->willReturn([]);
-		$this->directoryService->method('getDirectory')->willReturn(['results' => []]);
 
 		$result = $this->service->getAggregatedPublications(
 			['_aggregate' => 'false', '_include_catalogs' => 'true'],

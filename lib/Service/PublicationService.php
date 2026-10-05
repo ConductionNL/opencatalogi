@@ -645,8 +645,8 @@ class PublicationService {
 	 * finds nothing, so what it refuses in such a scope (a `'0'`, a negative
 	 * number) is not a pending seed. The per-catalogue readers of the same stored
 	 * scope — CatalogiService::index(), and buildCatalogSearchQuery() and
-	 * normalizeIds() in PublicationQueryService — do not have this yet:
-	 * https://github.com/ConductionNL/opencatalogi/issues/1783.
+	 * normalizeIds() in PublicationQueryService — do not have this yet
+	 * (ConductionNL/opencatalogi#1783).
 	 *
 	 * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service.
 	 * @param array<string, mixed>                    $query         The query, stripped of the caller's scope keys.
