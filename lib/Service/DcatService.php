@@ -64,6 +64,7 @@ class DcatService {
 	 * @param IURLGenerator $urlGenerator Nextcloud URL generator (absolute IRIs).
 	 * @param IAppConfig $appConfig App config (publisher defaults).
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param StandardsVersionService $standardsVersions Declared DCAT-AP-NL profile version, and the published one.
 	 * @param QualityService|null $qualityService Optional MQA/FAIR scorer for DQV exposure (PQM-002).
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -76,6 +77,7 @@ class DcatService {
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly StandardsVersionService $standardsVersions,
 		private readonly ?QualityService $qualityService = null,
 	) {
 
@@ -334,10 +336,14 @@ class DcatService {
 			}
 		}//end foreach
 
+		// Declare the profile we target, so a harvester and our own validator read the
+		// same version. The feed used to name no profile version at all, which left the
+		// mandatory-property checklist with nothing to be a checklist of.
 		$catalogNode = [
 			'@id' => $catalogIri,
 			'@type' => 'dcat:Catalog',
 			'dct:title' => ($catalog['title'] ?? $catalogSlug),
+			'dct:conformsTo' => ['@id' => StandardsVersionService::DCAT_AP_NL_PROFILE],
 			'dcat:dataset' => $datasetRefs,
 		];
 
@@ -489,7 +495,7 @@ class DcatService {
 	 */
 	public function validateCatalog(array $catalog, string $catalogSlug): array {
 		$document = $this->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: 1);
-		$violations = [];
+		$violations = $this->profileVersionViolations();
 		foreach ($this->serializer->graphNodes($document) as $node) {
 			if (($node['@type'] ?? '') !== 'dcat:Dataset') {
 				continue;
@@ -506,6 +512,34 @@ class DcatService {
 
 		return $violations;
 	}//end validateCatalog()
+
+	/**
+	 * The profile-version violation, when the publisher has moved past the version we target.
+	 *
+	 * A feed that declares a superseded profile is a feed whose mandatory-property
+	 * checklist is the wrong checklist, so it is reported as a violation rather than
+	 * left to a reader to notice. An unreadable release index yields no violation but
+	 * is still reported by the controller as `unknown`, never as current.
+	 *
+	 * @return array<int, array<string, mixed>> One entry when behind, empty otherwise.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+	 */
+	private function profileVersionViolations(): array {
+		$profile = $this->standardsVersions->dcatApNlVersion();
+		if ($profile['status'] !== StandardsVersionService::STATUS_BEHIND) {
+			return [];
+		}
+
+		return [
+			[
+				'axis' => 'profile-version',
+				'declared' => $profile['declared'],
+				'published' => $profile['published'],
+			],
+		];
+
+	}//end profileVersionViolations()
 
 	/**
 	 * The canonical instance-level harvest-source URL for data.overheid.nl (DONL).
@@ -543,7 +577,7 @@ class DcatService {
 			violations: $themeViolations
 		);
 
-		$violations = $themeViolations;
+		$violations = array_merge($this->profileVersionViolations(), $themeViolations);
 		foreach ($this->serializer->graphNodes($document) as $node) {
 			if (($node['@type'] ?? '') !== 'dcat:Dataset') {
 				continue;

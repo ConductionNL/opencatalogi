@@ -257,6 +257,9 @@ class SitemapService {
 	 *
 	 * @return XMLResponse The publications sitemap XML response.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) StandardsVersionService::diwooSchemaLocation()
+	 *                is a pure static builder over constants, like CallerScope::writeScope().
+	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse {
@@ -306,18 +309,16 @@ class SitemapService {
 			}
 		}
 
-		$schemaLoc = 'http://www.sitemaps.org/schemas/sitemap/0.9 ';
-		$schemaLoc .= 'http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd ';
-		$schemaLoc .= 'https://standaarden.overheid.nl/diwoo/metadata/ ';
-		$schemaLoc .= 'https://standaarden.overheid.nl/diwoo/metadata/0.9.1/xsd/diwoo-metadata.xsd';
-
+		// The emitted DiWoo version is declared once, on StandardsVersionService, so the
+		// readiness self-check can compare it with the version the publisher publishes.
+		// It used to be a literal here, which made that comparison impossible.
 		$xmlContent = [
 			'@root' => 'diwoo:Documents',
 			'@attributes' => [
-				'xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9',
+				'xmlns' => StandardsVersionService::SITEMAP_NAMESPACE,
 				'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
-				'xmlns:diwoo' => 'https://standaarden.overheid.nl/diwoo/metadata/',
-				'xsi:schemaLocation' => $schemaLoc,
+				'xmlns:diwoo' => StandardsVersionService::DIWOO_NAMESPACE,
+				'xsi:schemaLocation' => StandardsVersionService::diwooSchemaLocation(),
 				'xmlns:xhtml' => 'http://www.w3.org/1999/xhtml',
 				'xmlns:image' => 'http://www.google.com/schemas/sitemap-image/1.1',
 				'xmlns:video' => 'http://www.google.com/schemas/sitemap-video/1.1',

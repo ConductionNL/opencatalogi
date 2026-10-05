@@ -89,6 +89,13 @@ class WooReadinessService {
 	private int $requestCount = 0;
 
 	/**
+	 * The DiWoo version comparison for the current run, resolved once per run.
+	 *
+	 * @var array{declared: string, published: string|null, status: string}|null
+	 */
+	private ?array $diwooVersion = null;
+
+	/**
 	 * Constructor for WooReadinessService.
 	 *
 	 * @param IClientService $clientService The Nextcloud HTTP client factory used for outbound checks.
@@ -97,6 +104,7 @@ class WooReadinessService {
 	 * @param SettingsService $settingsService The settings service, used to resolve WOO-enabled catalogs.
 	 * @param IAppConfig $config App configuration (report persistence + registration status).
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
+	 * @param StandardsVersionService $standardsVersions Compares the emitted DiWoo version with the published one.
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
@@ -105,6 +113,7 @@ class WooReadinessService {
 		private readonly SettingsService $settingsService,
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
+		private readonly StandardsVersionService $standardsVersions,
 	) {
 
 	}//end __construct()
@@ -158,11 +167,13 @@ class WooReadinessService {
 	 */
 	public function runCheck(): array {
 		$this->requestCount = 0;
+		$this->diwooVersion = null;
 
 		$catalogs = $this->getWooEnabledCatalogs();
 		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
 		$checks = [];
+		$checks[] = $this->checkDiwooStandardVersion();
 		$robotsOk = $this->checkRobotsTxt(baseUrl: $baseUrl, checks: $checks);
 
 		foreach ($catalogs as $catalog) {
@@ -417,6 +428,31 @@ class WooReadinessService {
 	private function checkDiwooXsd(string $slug, string $categoryCode, array &$checks): void {
 		$checkId = "diwoo-xsd:$slug";
 
+		// A pass here means "our output conforms to the DiWoo version we emit". That is
+		// only worth reporting when the version we emit is the version the publisher
+		// publishes. When it is not, or when we could not find out, this check must not
+		// report a pass, because the rules it validated against are the wrong ones.
+		$version = $this->resolveDiwooVersion();
+		if ($version['status'] === StandardsVersionService::STATUS_BEHIND) {
+			$checks[] = $this->buildCheck(
+				id: $checkId,
+				status: 'fail',
+				reason: 'diwoo-version-behind:' . $version['published'],
+				catalogSlug: $slug
+			);
+			return;
+		}
+
+		if ($version['status'] === StandardsVersionService::STATUS_UNKNOWN) {
+			$checks[] = $this->buildCheck(
+				id: $checkId,
+				status: 'skipped',
+				reason: 'diwoo-version-unknown',
+				catalogSlug: $slug
+			);
+			return;
+		}
+
 		try {
 			$report = $this->sitemapService->validateDiwooOutput(
 				catalogSlug: $slug,
@@ -441,6 +477,58 @@ class WooReadinessService {
 		$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: 'diwoo-xsd-invalid', catalogSlug: $slug);
 
 	}//end checkDiwooXsd()
+
+	/**
+	 * Check 0: the DiWoo version this instance emits is the version the publisher publishes.
+	 *
+	 * This is the check that makes the DIWOO conformance report able to fail. The
+	 * expected version comes from the standard's own version index, not from our
+	 * renderer, so a superseded release is detected instead of validated against.
+	 * It is fail-closed in both directions: unreachable reports `skipped`, never
+	 * `pass`, and behind reports `fail` with the published version in the reason.
+	 *
+	 * @return array<string, mixed> The check entry.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function checkDiwooStandardVersion(): array {
+		$version = $this->resolveDiwooVersion();
+
+		if ($version['status'] === StandardsVersionService::STATUS_BEHIND) {
+			return $this->buildCheck(
+				id: 'diwoo-standard-version',
+				status: 'fail',
+				reason: 'declared-' . $version['declared'] . '-published-' . $version['published']
+			);
+		}
+
+		if ($version['status'] === StandardsVersionService::STATUS_UNKNOWN) {
+			return $this->buildCheck(
+				id: 'diwoo-standard-version',
+				status: 'skipped',
+				reason: 'standard-version-unreadable'
+			);
+		}
+
+		return $this->buildCheck(id: 'diwoo-standard-version', status: 'pass');
+
+	}//end checkDiwooStandardVersion()
+
+	/**
+	 * Resolve the DiWoo version comparison once per run.
+	 *
+	 * @return array{declared: string, published: string|null, status: string} The comparison.
+	 *
+	 * @spec exclude Per-run memoisation around StandardsVersionService::diwooVersion().
+	 */
+	private function resolveDiwooVersion(): array {
+		if ($this->diwooVersion === null) {
+			$this->diwooVersion = $this->standardsVersions->diwooVersion();
+		}
+
+		return $this->diwooVersion;
+
+	}//end resolveDiwooVersion()
 
 	/**
 	 * Check 5: fetch a single sampled publication URL and verify it resolves publicly with HTTP 200.
