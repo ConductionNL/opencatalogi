@@ -641,8 +641,12 @@ class PublicationService {
 	 * scope for this search and it runs once more over the ids; the catalogue
 	 * keeps its slugs for the next import. A scope with nothing left is the empty
 	 * page, as everywhere else here (WOO-581, fail closed). A refusal of a scope
-	 * that holds ids only travels on: an id OpenRegister does not know is not a
-	 * pending seed.
+	 * that holds ids only travels on: OpenRegister searches an unknown id and
+	 * finds nothing, so what it refuses in such a scope (a `'0'`, a negative
+	 * number) is not a pending seed. The per-catalogue readers of the same stored
+	 * scope — CatalogiService::index(), and buildCatalogSearchQuery() and
+	 * normalizeIds() in PublicationQueryService — do not have this yet:
+	 * https://github.com/ConductionNL/opencatalogi/issues/1783.
 	 *
 	 * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service.
 	 * @param array<string, mixed>                    $query         The query, stripped of the caller's scope keys.
@@ -651,10 +655,12 @@ class PublicationService {
 	 *
 	 * @return array<string, mixed> The paginated result.
 	 *
-	 * @throws RegisterNotFoundException When an id in the scope names no register.
-	 * @throws SchemaNotFoundException   When an id in the scope names no schema.
+	 * @throws RegisterNotFoundException When OpenRegister refuses a non-slug register entry (such as `'0'`);
+	 *                                   a plain unknown id is searched, not refused.
+	 * @throws SchemaNotFoundException   When OpenRegister refuses a non-slug schema entry the same way.
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
 	 */
 	private function searchObjectsWithinScope($objectService, array $query, array $registers, array $schemas): array {
 		try {
@@ -683,9 +689,11 @@ class PublicationService {
 	}//end searchObjectsWithinScope()
 
 	/**
-	 * The entries of a scope list that are ids: everything but a non-numeric string.
+	 * The entries of a scope list that are ids: ints and numeric strings.
 	 *
-	 * Same reading of "slug" as {@see CatalogScopeSlugResolver::hasSlug()}.
+	 * A non-numeric string is a slug, as {@see CatalogScopeSlugResolver::hasSlug()}
+	 * reads it. An empty string goes too: OpenRegister reads `''` as "no register
+	 * filter", and the retry has to stay a list of ids.
 	 *
 	 * @param array<int, mixed> $entries The scope list as stored on the catalogues.
 	 *
@@ -697,7 +705,7 @@ class PublicationService {
 		return array_values(
 			array_filter(
 				$entries,
-				static fn (mixed $entry): bool => is_string($entry) === false || $entry === '' || is_numeric($entry) === true
+				static fn (mixed $entry): bool => is_string($entry) === false || is_numeric($entry) === true
 			)
 		);
 	}//end withoutSlugs()
