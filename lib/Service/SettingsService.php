@@ -1304,6 +1304,15 @@ class SettingsService {
 			'obligation_source_schema' => 'obligationSource',
 		];
 
+		// Woo request intake and the comment period: two more schemas in the
+		// same shared publication register, same key convention. A Woo request
+		// is minted here rather than assumed to exist elsewhere, which is what
+		// gives a statutory term a subject.
+		$wooRequestSchemaMap = [
+			'woo_request_schema' => 'wooRequest',
+			'comment_period_schema' => 'commentPeriod',
+		];
+
 		// The public and community surface: the status page, the banner, the
 		// notice boards and the reader's vote. A notice is deliberately its own
 		// schema rather than a publication, so it never enters the sitemap.
@@ -1380,6 +1389,7 @@ class SettingsService {
 			array_values($wooSchemaMap),
 			array_values($catalogueSchemaMap),
 			array_values($publicationSchemaMap),
+			array_values($wooRequestSchemaMap),
 			array_values($communitySchemaMap)
 		);
 		$missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
@@ -1485,6 +1495,16 @@ class SettingsService {
 		// stays unset makes the inspection controller answer 503 rather than
 		// pretending there are no inspections.
 		foreach ($publicationSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The Woo request and the comment period share the same register. An
+		// unset key makes the intake answer 503 rather than minting a request
+		// nothing can read back, and a request nobody can read back is a
+		// statutory term counted against nothing.
+		foreach ($wooRequestSchemaMap as $configKey => $schemaSlug) {
 			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
 			}

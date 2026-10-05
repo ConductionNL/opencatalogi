@@ -1,0 +1,307 @@
+{
+	"_note": "Register fragment for woo-request-intake-and-comment-periods. A Woo request is minted here rather than assumed to exist somewhere else, so a statutory term has a subject to attach to. A comment period is a sibling of inspection, not an extension of it: inspection is an unguessable link to a chosen document set, a comment period is an announced public window with a named legal remedy.",
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"wooRequest",
+					"commentPeriod"
+				],
+				"configuration": {
+					"schemas": {
+						"wooRequest": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "One Woo request, with the reference the requester quotes and the statutory term armed against it"
+						},
+						"commentPeriod": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Terinzagelegging: one announced public comment period on one publication, with its legal remedy"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"wooRequest": {
+				"slug": "wooRequest",
+				"title": "Woo request",
+				"version": "0.1.0",
+				"published": null,
+				"summary": "One Woo request, from the day it arrived to the day it was decided",
+				"description": "A Woo request is a record of its own, minted when it arrives. Without it the stack has a batch whose case reference points at a number nobody here mints, so there is nothing for a statutory term to hang on. The request carries the reference the requester quotes, the day it was received, what was asked for, who asked, the state it is in, and the disclosure batch it produces. A batch still works without a request, so an organisation that keeps its cases elsewhere loses nothing.",
+				"icon": null,
+				"required": [
+					"reference",
+					"receivedAt",
+					"requestedInformation",
+					"status"
+				],
+				"properties": {
+					"reference": {
+						"type": "string",
+						"title": "Reference",
+						"description": "The reference the requester quotes when they ask how their request is going.",
+						"maxLength": 255,
+						"facetable": true
+					},
+					"receivedAt": {
+						"type": "string",
+						"title": "Received at",
+						"description": "The day the request arrived. The statutory term is counted from this moment and from nothing else.",
+						"format": "date-time",
+						"facetable": true
+					},
+					"requestedInformation": {
+						"type": "string",
+						"title": "Requested information",
+						"description": "What the requester asked for, in their own words."
+					},
+					"requesterName": {
+						"type": "string",
+						"title": "Requester name",
+						"description": "The name the requester gave.",
+						"maxLength": 255
+					},
+					"requesterEmail": {
+						"type": "string",
+						"title": "Requester email",
+						"description": "The email address the decision and the term are sent to.",
+						"maxLength": 255
+					},
+					"requesterPhone": {
+						"type": "string",
+						"title": "Requester phone",
+						"description": "A phone number, when the requester gave one.",
+						"maxLength": 64
+					},
+					"requesterAddress": {
+						"type": "string",
+						"title": "Requester address",
+						"description": "A postal address, for a requester who wants the decision on paper.",
+						"maxLength": 500
+					},
+					"channel": {
+						"type": "string",
+						"title": "Channel",
+						"description": "How the request came in. A request on paper is still a request and still starts the term.",
+						"enum": [
+							"web",
+							"email",
+							"post",
+							"counter",
+							"phone"
+						],
+						"facetable": true
+					},
+					"status": {
+						"type": "string",
+						"title": "Status",
+						"description": "Where the request stands. A request awaiting clarification has its term suspended, which is why that is a state rather than a note.",
+						"enum": [
+							"received",
+							"in_progress",
+							"awaiting_clarification",
+							"decided",
+							"withdrawn"
+						],
+						"facetable": true
+					},
+					"dueAt": {
+						"type": "string",
+						"title": "Due at",
+						"description": "The day the decision is owed, as the term engine computed it. Told to the requester at intake and recomputed by the engine, never typed.",
+						"format": "date-time",
+						"facetable": true
+					},
+					"termTimer": {
+						"type": "string",
+						"title": "Term timer",
+						"description": "The identifier of the statutory term armed against this request. The term itself lives in the term engine, so the arithmetic is not repeated here.",
+						"maxLength": 255,
+						"facetable": true
+					},
+					"termBasis": {
+						"type": "string",
+						"title": "Term basis",
+						"description": "The legal ground the term rests on, so a date a requester challenges can be defended.",
+						"maxLength": 255
+					},
+					"extensionCount": {
+						"type": "integer",
+						"title": "Extensions granted",
+						"description": "How many times the term was extended. The law allows one, and a second is refused rather than accepted.",
+						"minimum": 0,
+						"facetable": true
+					},
+					"extensionReason": {
+						"type": "string",
+						"title": "Extension reason",
+						"description": "Why the term was extended. An extension without a reason is one nobody can answer for."
+					},
+					"batch": {
+						"type": "string",
+						"title": "Disclosure batch",
+						"description": "The disclosure batch this request produced, once documents are being assessed.",
+						"maxLength": 255,
+						"facetable": true
+					},
+					"decidedAt": {
+						"type": "string",
+						"title": "Decided at",
+						"description": "When the decision went out. A term is met or missed by comparing this with the due date.",
+						"format": "date-time",
+						"facetable": true
+					},
+					"receivedBy": {
+						"type": "string",
+						"title": "Received by",
+						"description": "Who registered the request, or the channel that registered it without a signed-in user.",
+						"maxLength": 255
+					}
+				},
+				"configuration": {
+					"autoPublish": false
+				},
+				"hardValidation": false,
+				"searchable": false,
+				"authorization": {
+					"read": [
+						"admin"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin"
+					],
+					"delete": [
+						"admin"
+					]
+				}
+			},
+			"commentPeriod": {
+				"slug": "commentPeriod",
+				"title": "Comment period",
+				"version": "0.1.0",
+				"published": null,
+				"summary": "One announced public comment period on one publication",
+				"description": "A draft decision goes out for public comment for a bounded period, announced on the official announcement platform, with one named legal remedy and the reaction form that belongs to it. This is a sibling of inspection rather than a longer inspection: an inspection is an unguessable link to a chosen set of documents, checked at the read, while a comment period is public, announced and dated, and its close can withdraw the publication.",
+				"icon": null,
+				"required": [
+					"publication",
+					"startDate",
+					"endDate",
+					"legalRemedy"
+				],
+				"properties": {
+					"publication": {
+						"type": "string",
+						"title": "Publication",
+						"description": "The publication the period belongs to. One period per publication.",
+						"maxLength": 255,
+						"facetable": true
+					},
+					"startDate": {
+						"type": "string",
+						"title": "Start date",
+						"description": "The day the period opens. It has to fall before the end date.",
+						"format": "date-time",
+						"facetable": true
+					},
+					"endDate": {
+						"type": "string",
+						"title": "End date",
+						"description": "The day the period closes, rolled off a non-working day by the Algemene termijnenwet. Computed, never typed.",
+						"format": "date-time",
+						"facetable": true
+					},
+					"termDays": {
+						"type": "integer",
+						"title": "Term in days",
+						"description": "How many days the period runs before the roll is applied.",
+						"minimum": 1
+					},
+					"legalRemedy": {
+						"type": "string",
+						"title": "Legal remedy",
+						"description": "The remedy open to a reader during the period. The reaction form follows from this choice.",
+						"enum": [
+							"zienswijze",
+							"bezwaar"
+						],
+						"facetable": true
+					},
+					"reactionFormUrl": {
+						"type": "string",
+						"title": "Reaction form",
+						"description": "Where a reader goes to react. Derived from the remedy, so an officer cannot paste the form for the other one."
+					},
+					"announcementUrl": {
+						"type": "string",
+						"title": "Announcement",
+						"description": "The official announcement of this period, which is what makes the period public."
+					},
+					"automaticWithdrawal": {
+						"type": "boolean",
+						"title": "Withdraw automatically",
+						"description": "Whether the publication is withdrawn when the period closes. Off unless somebody asked for it.",
+						"default": false,
+						"facetable": true
+					},
+					"unrolledEndDate": {
+						"type": "string",
+						"title": "End date before the roll",
+						"description": "Where the end date landed before the roll moved it. Empty unless a roll actually moved it.",
+						"format": "date-time"
+					},
+					"rolledBy": {
+						"type": "string",
+						"title": "Rolled by",
+						"description": "Why the end date moved, naming the non-working day. A date that moved with no reason given is one nobody can defend.",
+						"maxLength": 255
+					},
+					"withdrawnAt": {
+						"type": "string",
+						"title": "Withdrawn at",
+						"description": "When the close withdrew the publication. Empty while nothing was withdrawn.",
+						"format": "date-time",
+						"facetable": true
+					},
+					"depublication": {
+						"type": "string",
+						"title": "Depublication",
+						"description": "The depublication the automatic withdrawal recorded, with its withdrawal per channel.",
+						"maxLength": 255
+					},
+					"openedBy": {
+						"type": "string",
+						"title": "Opened by",
+						"description": "Who opened the period.",
+						"maxLength": 255
+					}
+				},
+				"configuration": {
+					"autoPublish": false
+				},
+				"hardValidation": false,
+				"searchable": false,
+				"authorization": {
+					"read": [
+						"admin"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin"
+					],
+					"delete": [
+						"admin"
+					]
+				}
+			}
+		}
+	}
+}
