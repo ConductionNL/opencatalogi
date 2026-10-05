@@ -157,12 +157,17 @@ class LocalCategoryAdmission {
 	 * @spec exclude Input normalisation.
 	 */
 	private function schemaSlugs(mixed $value): array {
-		$slugs = array_map(
-			static fn (mixed $slug): string => trim((string)(is_string($slug) === true ? $slug : '')),
-			(array)$value
-		);
+		$slugs = [];
+		foreach ((array)$value as $slug) {
+			$text = $this->text(value: $slug);
+			if ($text === null) {
+				continue;
+			}
 
-		return array_values(array_unique(array_filter($slugs, static fn (string $slug): bool => $slug !== '')));
+			$slugs[] = $text;
+		}
+
+		return array_values(array_unique($slugs));
 
 	}//end schemaSlugs()
 
