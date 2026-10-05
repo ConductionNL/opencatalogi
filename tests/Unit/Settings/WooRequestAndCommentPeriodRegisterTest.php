@@ -240,8 +240,11 @@ class WooRequestAndCommentPeriodRegisterTest extends TestCase {
 		$urls = $this->createMock(\OCP\IURLGenerator::class);
 		$urls->method('getAbsoluteURL')->willReturnCallback(static fn (string $p): string => 'https://example.org' . $p);
 
+		$appManager = $this->createMock(\OCP\App\IAppManager::class);
+		$appManager->method('isInstalled')->willReturn(true);
+
 		$service = new \OCA\OpenCatalogi\Service\Publication\CommentPeriodService(
-			new \OCA\OpenCatalogi\Service\Publication\TermRoll($container),
+			new \OCA\OpenCatalogi\Service\Publication\TermRoll($container, $appManager),
 			$config,
 			$urls
 		);
@@ -323,4 +326,97 @@ class WooRequestAndCommentPeriodRegisterTest extends TestCase {
 		}
 
 	}//end assertPayloadFits()
+	/**
+	 * Every demo row the app ships for these two schemas is one the app admits.
+	 *
+	 * ADR-111 rule 1 asks for three rows per schema, and counting them only
+	 * proves somebody wrote something. Demo data that fails its own schema is
+	 * dropped in silence on a fresh install, in front of whoever asked for the
+	 * demo, so each row is held to the same shape the writer is held to.
+	 *
+	 * @return void
+	 */
+	public function testEveryShippedDemoRowIsOneTheAppAdmits(): void {
+		$root = dirname(__DIR__, 3);
+		$mock = json_decode(
+			(string)file_get_contents($root . '/lib/Settings/opencatalogi_mock_register.json'),
+			true
+		);
+		$this->assertIsArray($mock, 'opencatalogi_mock_register.json must parse as JSON');
+
+		$schemas = $this->effectiveRegister()['components']['schemas'];
+		$seen = ['wooRequest' => 0, 'commentPeriod' => 0];
+
+		foreach (($mock['components']['objects'] ?? []) as $index => $row) {
+			$slug = (string)($row['@self']['schema'] ?? '');
+			if (array_key_exists($slug, $seen) === false) {
+				continue;
+			}
+
+			$seen[$slug]++;
+
+			$this->assertSame(
+				'publication',
+				(string)($row['@self']['register'] ?? ''),
+				$slug . ' demo row ' . (string)$index . ' names a register this app does not supply.'
+			);
+			$this->assertNotSame(
+				'',
+				trim((string)($row['@self']['slug'] ?? '')),
+				$slug . ' demo row ' . (string)$index . ' has no slug, and a fragment without one is refused on import.'
+			);
+
+			$body = $row;
+			unset($body['@self']);
+			$this->assertPayloadFits($schemas[$slug], $body, $slug);
+
+			foreach ($body as $key => $value) {
+				$maxLength = ($schemas[$slug]['properties'][$key]['maxLength'] ?? null);
+				if ($maxLength === null || is_string($value) === false) {
+					continue;
+				}
+
+				$this->assertLessThanOrEqual(
+					$maxLength,
+					mb_strlen($value),
+					$slug . '.' . $key . ' is longer than its maxLength, so the column truncates or the save fails.'
+				);
+			}
+		}
+
+		foreach ($seen as $slug => $count) {
+			$this->assertSame(
+				3,
+				$count,
+				$slug . ' ships ' . (string)$count . ' demo row(s). ADR-111 rule 1 asks for three: one row cannot show '
+				. 'a list as a list and leaves a detail page with no sibling to page to.'
+			);
+		}
+
+	}//end testEveryShippedDemoRowIsOneTheAppAdmits()
+
+	/**
+	 * The demo dataset version moves forward, never back.
+	 *
+	 * A version that moves backwards reads as an older dataset than the one
+	 * already imported, and the importer then declines to replace it.
+	 *
+	 * @return void
+	 */
+	public function testTheDemoDatasetVersionMovesForward(): void {
+		$root = dirname(__DIR__, 3);
+		$mock = json_decode(
+			(string)file_get_contents($root . '/lib/Settings/opencatalogi_mock_register.json'),
+			true
+		);
+
+		$this->assertIsArray($mock);
+		$this->assertGreaterThanOrEqual(
+			0,
+			version_compare((string)($mock['info']['version'] ?? '0.0.0'), '1.0.2'),
+			'The demo dataset version must be at least 1.0.2, the version that shipped the Woo request and comment '
+			. 'period rows.'
+		);
+
+	}//end testTheDemoDatasetVersionMovesForward()
 }//end class

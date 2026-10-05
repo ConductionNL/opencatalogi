@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "opencatalogi demo data",
-    "version": "1.0.1",
-    "description": "Demo data covering every schema this app supplies, offered as the first step of the app's setup walkthrough. Generated from the schemas themselves, so every object satisfies the schema that will validate it."
+    "version": "1.0.2",
+    "description": "Demo data covering every schema this app supplies, offered as the first step of the app's setup walkthrough. Every object satisfies the schema that will validate it."
   },
   "x-openregister": {
     "type": "mock",
@@ -1861,6 +1861,120 @@
         },
         "frequency": "immediate",
         "active": false
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooRequest",
+          "slug": "woorequest-woorequest-1-1"
+        },
+        "reference": "WOO-2026-0001",
+        "receivedAt": "2026-03-02T09:00:00+00:00",
+        "requestedInformation": "Alle e-mails tussen de gemeente en de aannemer over de brug, van januari tot maart 2026.",
+        "requesterName": "Sanne de Groot",
+        "requesterEmail": "sanne.degroot@example.org",
+        "channel": "web",
+        "status": "received",
+        "dueAt": "2026-03-30T09:00:00+00:00",
+        "termTimer": "woo-term-0001",
+        "termBasis": "Woo artikel 4.4 lid 1: vier weken na ontvangst",
+        "extensionCount": 0,
+        "receivedBy": "intake"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooRequest",
+          "slug": "woorequest-woorequest-2-2"
+        },
+        "reference": "WOO-2026-0002",
+        "receivedAt": "2026-02-09T11:30:00+00:00",
+        "requestedInformation": "De adviezen van de welstandscommissie over het bouwplan aan de Kade.",
+        "requesterName": "Ahmed Yilmaz",
+        "requesterEmail": "a.yilmaz@example.org",
+        "requesterPhone": "+31 20 123 4567",
+        "channel": "email",
+        "status": "in_progress",
+        "dueAt": "2026-04-06T11:30:00+00:00",
+        "termTimer": "woo-term-0002",
+        "termBasis": "Woo artikel 4.4 lid 2: eenmaal verlengd met twee weken",
+        "extensionCount": 1,
+        "extensionReason": "Het dossier is omvangrijk en raakt belangen van derden, die eerst zijn gehoord.",
+        "batch": "woobatch-woobatch-1-1",
+        "receivedBy": "admin"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooRequest",
+          "slug": "woorequest-woorequest-3-3"
+        },
+        "reference": "WOO-2026-0003",
+        "receivedAt": "2026-01-12T14:00:00+00:00",
+        "requestedInformation": "De besluitenlijsten van het college over het parkeerbeleid in 2025.",
+        "requesterName": "Pieter Vos",
+        "requesterAddress": "Postbus 1234, 1000 AA Amsterdam",
+        "channel": "post",
+        "status": "decided",
+        "dueAt": "2026-02-09T14:00:00+00:00",
+        "termTimer": "woo-term-0003",
+        "termBasis": "Woo artikel 4.4 lid 1: vier weken na ontvangst",
+        "extensionCount": 0,
+        "batch": "woobatch-woobatch-2-2",
+        "decidedAt": "2026-02-05T10:15:00+00:00",
+        "receivedBy": "balie"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "commentPeriod",
+          "slug": "commentperiod-commentperiod-1-1"
+        },
+        "publication": "publication-publication-1-1",
+        "startDate": "2026-03-02T09:00:00+00:00",
+        "endDate": "2026-04-13T09:00:00+00:00",
+        "termDays": 42,
+        "legalRemedy": "zienswijze",
+        "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/publication-publication-1-1/zienswijze",
+        "announcementUrl": "https://www.officielebekendmakingen.nl/stcrt-2026-10001",
+        "automaticWithdrawal": false,
+        "openedBy": "admin"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "commentPeriod",
+          "slug": "commentperiod-commentperiod-2-2"
+        },
+        "publication": "publication-publication-2-2",
+        "startDate": "2026-02-02T09:00:00+00:00",
+        "endDate": "2026-03-16T09:00:00+00:00",
+        "termDays": 40,
+        "legalRemedy": "bezwaar",
+        "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/publication-publication-2-2/bezwaar",
+        "announcementUrl": "https://www.officielebekendmakingen.nl/stcrt-2026-10002",
+        "automaticWithdrawal": true,
+        "unrolledEndDate": "2026-03-14T09:00:00+00:00",
+        "rolledBy": "weekend",
+        "withdrawnAt": "2026-03-16T09:05:00+00:00",
+        "depublication": "depublication-depublication-1-1",
+        "openedBy": "admin"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "commentPeriod",
+          "slug": "commentperiod-commentperiod-3-3"
+        },
+        "publication": "publication-publication-3-3",
+        "startDate": "2026-01-05T09:00:00+00:00",
+        "endDate": "2026-02-16T09:00:00+00:00",
+        "termDays": 42,
+        "legalRemedy": "zienswijze",
+        "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/publication-publication-3-3/zienswijze",
+        "announcementUrl": "https://www.officielebekendmakingen.nl/stcrt-2026-10003",
+        "automaticWithdrawal": false,
+        "openedBy": "admin"
       }
     ]
   }
