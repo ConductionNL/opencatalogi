@@ -46,3 +46,10 @@
 - [x] 7.4 Tests for 7.1–7.3 in `PubliccodeMappingTest` and `PubliccodeHarvestFlowTest`; spec scenarios under REQ-PGH-003 and REQ-PGH-004.
 - [x] 7.5 Live on the WOO-585 rig against real GitHub: 24 of 24 shards, 698 components, a second run updates them.
 
+## 8. Review leftovers of opencatalogi#1711 (WOO-585, 2026-10-02)
+
+- [x] 8.1 `map-NN` has `onError: continue`; the shard filter drops a `url` that is not a web address and a `name` that is not text.
+- [x] 8.2 The copy filter normalises like the slug: `.git`, `#fragment` and `?query` on the repository's own url keep the original.
+- [x] 8.3 The mapping shapes every value for its column (scalars, lists of strings, `description`, `landingURL`, a calendar `releaseDate`); a leading `www.` is stripped only at the start of the url.
+- [x] 8.4 `PubliccodeHarvestService` reports the failed steps of the last run; the admin section shows the count.
+- [x] 8.5 design.md describes the url-based slug and the shard-granular write; spec scenarios and tests cover 8.1–8.3.
