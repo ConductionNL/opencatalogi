@@ -61,7 +61,7 @@ Amendment 2026-10-05, Woo capability programme, rows 13.19, 14.1 and 14.2.
 
 ### Requirement: A field with one lawful value for this officer fills itself (REQ-WMS-004)
 
-When a publication is created, `OCA\OpenCatalogi\Service\Woo\SingleLawfulValue::fill(array $publication, IUser $officer): array` SHALL compute, for `organization`, the catalogue and `wooCategory`, the set of values this officer may lawfully choose: the organisations the officer is a member of (OpenRegister's organisation membership), the catalogues whose schemas include the publication's schema and that the officer may write to, and the categories `WooCategoryRegistry` declares for the publication's schema. When a field is empty and its set has exactly one member, it SHALL fill the field and record `filledByRule: [{field, value, rule, at}]` on the publication. When a set is empty, has more than one member, or cannot be computed, it SHALL fill nothing for that field. The publication page SHALL label such a field "Filled automatically: the only value you can choose". A pre-save listener on `ObjectCreatingEvent` for the publication schema SHALL call it.
+When a publication is created, `OCA\OpenCatalogi\Service\Woo\SingleLawfulValue::fill(array $publication, IUser $officer): array` SHALL compute, for `organization`, the catalogue and `wooCategory`, the set of values this officer may lawfully choose: the organisations the officer is a member of (OpenRegister's organisation membership), the catalogues whose schemas include the publication's schema and that the officer may write to, and the categories `WooCategoryRegistry` declares for the publication's schema. When a field is empty and its set has exactly one member, it SHALL fill the field and record `filledByRule: [{field, value, rule, at}]` on the publication. This is the one exception to REQ-WMS-003 (decision D5): REQ-WMS-003 keeps applying to every suggestion, and a Hermiq suggestion is never filled without a person accepting it, even when it has one possible value. When a set is empty, has more than one member, or cannot be computed, it SHALL fill nothing for that field. The publication page SHALL label such a field "Filled automatically: the only value you can choose". A pre-save listener on `ObjectCreatingEvent` for the publication schema SHALL call it.
 
 #### Scenario: An officer of one organisation does not pick it
 
@@ -75,6 +75,13 @@ When a publication is created, `OCA\OpenCatalogi\Service\Woo\SingleLawfulValue::
 - **GIVEN** an officer who is a member of two organisations
 - **WHEN** a publication is created without an organisation
 - **THEN** `organization` stays empty
+
+#### Scenario: A Hermiq suggestion with one possible value is still not filled
+<!-- @e2e exclude Service rule; proven by SingleLawfulValueTest::testAHermiqSuggestionIsNeverAutoFilled. -->
+
+- **GIVEN** a Hermiq suggestion for a field
+- **WHEN** no editor has accepted it
+- **THEN** the field is unchanged
 
 #### Scenario: The set cannot be computed
 <!-- @e2e exclude Fail-closed path; proven by SingleLawfulValueTest::testAnUncomputableSetFillsNothing. -->
@@ -106,29 +113,3 @@ The Hermiq path SHALL be able to suggest `summary` written at language level B1 
 - **GIVEN** Hermiq installed and a publication without a summary
 - **WHEN** an editor asks Hermiq
 - **THEN** a summary suggestion labelled as AI-made appears, and nothing is stored until the editor accepts it
-
-## MODIFIED Requirements
-
-### Requirement: Nothing is written until a person accepts (REQ-WMS-003)
-
-A suggestion SHALL change the publication only when a person with the right to update that publication accepts it. Accepting SHALL write the value and record who accepted it and when. Rejecting SHALL leave the publication unchanged. A user without update rights SHALL be refused. The one exception is a field with exactly one lawful value for the officer, filled by rule at create time and labelled so (REQ-WMS-004, decision D5); a Hermiq suggestion is never filled without acceptance.
-
-#### Scenario: An editor accepts a category
-
-- **GIVEN** a pending category suggestion on a publication
-- **WHEN** the editor presses Accept
-- **THEN** the publication's category holds the value
-- **AND** the suggestion shows accepted with the editor's name and the time
-
-#### Scenario: A reader without update rights
-
-- **GIVEN** a user who can read but not update the publication
-- **WHEN** they call `POST /api/metadata-suggestions/{id}/accept`
-- **THEN** the call is refused and the publication is unchanged
-
-#### Scenario: A Hermiq suggestion with one possible value is still not filled
-<!-- @e2e exclude Service rule; proven by SingleLawfulValueTest::testAHermiqSuggestionIsNeverAutoFilled. -->
-
-- **GIVEN** a Hermiq suggestion for a field
-- **WHEN** no editor has accepted it
-- **THEN** the field is unchanged

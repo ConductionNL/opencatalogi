@@ -8,6 +8,8 @@ status: proposed
 
 ### Requirement: An inspection period ends on a working day (REQ-IPR-001)
 
+This extends REQ-PIN-103 of the open change `publication-inspection-and-the-national-indexes` (its end is "computed from the statutory term"): that end SHALL be the rolled one.
+
 `InspectionService::open()` SHALL compute `endDate` with `TermRoll::endDate(start, termDays)`, in calendar days, rolled to the next working day per the Algemene termijnenwet, article 1 paragraph 1. When the roll moved the date it SHALL store `unrolledEndDate` and `rolledBy`. When the term engine cannot be reached it SHALL throw `TermRollUnavailableException` and the inspection SHALL NOT be opened. `isOpen()` and `resolveLink()` SHALL read the rolled `endDate`.
 
 #### Scenario: An inspection ending on a Sunday ends on Monday
@@ -49,41 +51,3 @@ status: proposed
 - **GIVEN** a term engine that cannot be reached
 - **WHEN** an integrator writes an `endDate`
 - **THEN** the save is refused and the stored date is unchanged
-
-## MODIFIED Requirements
-
-### Requirement: Documents go on public inspection for exactly the statutory period (REQ-PIN-103)
-
-An inspection MUST carry the record, the documents chosen for it, a start,
-an end computed from the statutory term and rolled to the next working day
-under the Algemene termijnenwet (REQ-IPR-001), and a link. An end date
-written through any API MUST be rolled the same way (REQ-IPR-002). The link
-MUST be refused once the window has closed, checked at the read rather than
-by a scheduled job. Any record type that declares an inspection term MUST be
-able to use it.
-
-Evidence: documented only (rx-mission, `/modules/` Inzien).
-
-#### Scenario: The link works inside the window
-
-- **GIVEN** an inspection whose window is open
-- **WHEN** an anonymous reader follows its link
-- **THEN** the chosen documents are readable.
-
-#### Scenario: The link stops when the window closes
-
-- **GIVEN** the same inspection after its end date
-- **WHEN** the link is followed
-- **THEN** access is refused and the end date is stated.
-
-#### Scenario: The inspection set is chosen at publication
-
-- **GIVEN** a record with five documents
-- **WHEN** an inspection is opened choosing two of them
-- **THEN** only those two are readable through the link.
-
-#### Scenario: A second record type uses the same mechanism
-
-- **GIVEN** a second record type declaring an inspection term
-- **WHEN** an inspection is opened on one of its records
-- **THEN** its end is computed from that type's term and rolled to a working day.

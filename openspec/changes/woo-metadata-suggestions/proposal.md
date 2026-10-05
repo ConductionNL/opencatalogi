@@ -55,7 +55,7 @@ Rows, from `opencatalogi/_round1/compare/M1-rows.md`, with our column from `base
 
 Re-checked on development at 35999c296: this change is unbuilt (0 of 7 tasks) and unchanged. It still waits on `woo-category-mapping-intake` (open, outside this plan, 0 of 14) for the category rules.
 
-Decision D5, row 13.19: "Row wins narrowly: when exactly one lawful value exists it fills itself, labelled as such. AI suggestions stay accept-only." This amends REQ-WMS-003, quoted in full under `## MODIFIED Requirements` in the delta: the one exception to "nothing is written until a person accepts" is a field with exactly one lawful value for this officer, filled at create time by rule and labelled so. Hermiq suggestions are never auto-filled.
+Decision D5, row 13.19: "Row wins narrowly: when exactly one lawful value exists it fills itself, labelled as such. AI suggestions stay accept-only." REQ-WMS-003 and REQ-WMS-004 sit in the same delta, so REQ-WMS-003 is left as written and REQ-WMS-004 states the one exception to "nothing is written until a person accepts" is a field with exactly one lawful value for this officer, filled at create time by rule and labelled so. Hermiq suggestions are never auto-filled.
 
 What is added: REQ-WMS-004 (the single-lawful-value fill, built). REQ-WMS-005 (14.1, suggestions on upload) and REQ-WMS-006 (14.2, a B1 summary suggestion labelled as AI-made) are written and gated on D10: the builder skips them unless Ruben keeps the rows. Fail closed: a field is filled by rule only when the set of lawful values is computed and has exactly one member; an error or an empty set fills nothing. Hermiq absent: REQ-WMS-004 needs no Hermiq; the gated requirements are offered only with Hermiq, as REQ-WMS-002 already says. Wave 2.
 

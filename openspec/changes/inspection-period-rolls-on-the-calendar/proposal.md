@@ -18,7 +18,7 @@ Row, from `opencatalogi/_round1/compare/M1-rows.md`, with our column from `basel
 - `InspectionService::open()` computes the end through `TermRoll::endDate()`, as `CommentPeriodService` does, and stores `unrolledEndDate` and `rolledBy` when the roll moved it.
 - `TermRoll` gains `roll(DateTimeInterface $at, ?string $calendarSlug, ?string $organisation): array` for a date that is already given.
 - A pre-save listener on the `inspection` and `commentPeriod` schemas rolls an `endDate` written through any API (OpenRegister's object API included) the same way, and records where it landed before the roll.
-- REQ-PIN-103 is modified to say the end is rolled.
+- REQ-PIN-103 (in the open, fully built change `publication-inspection-and-the-national-indexes`, not yet archived into `openspec/specs/`) is extended by REQ-IPR-001: its computed end is the rolled end. It is extended rather than quoted as MODIFIED because its spec is not archived yet, so an archive of this delta could not apply a MODIFIED block.
 
 ## Fail closed
 
