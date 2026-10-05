@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
@@ -31,6 +32,7 @@ class WooReadinessServiceTest extends TestCase {
 	private MockObject&SettingsService $settingsService;
 	private MockObject&IAppConfig $config;
 	private MockObject&IURLGenerator $urlGenerator;
+	private MockObject&StandardsVersionService $standardsVersionService;
 	private WooReadinessService $service;
 
 	private const BASE_URL = 'https://example.org';
@@ -63,6 +65,17 @@ XML;
 		$this->settingsService = $this->createMock(SettingsService::class);
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->urlGenerator = $this->createMock(IURLGenerator::class);
+		$this->standardsVersionService = $this->createMock(StandardsVersionService::class);
+
+		// By default the emitted DiWoo version is the published one, so the existing
+		// expectations describe an instance that is not behind the standard.
+		$this->standardsVersionService->method('diwooVersion')->willReturn(
+			[
+				'declared' => StandardsVersionService::DIWOO_VERSION,
+				'published' => StandardsVersionService::DIWOO_VERSION,
+				'status' => StandardsVersionService::STATUS_CURRENT,
+			]
+		);
 
 		$this->clientService->method('newClient')->willReturn($this->client);
 		$this->urlGenerator->method('getBaseUrl')->willReturn(self::BASE_URL);
@@ -76,7 +89,8 @@ XML;
 			$this->sitemapService,
 			$this->settingsService,
 			$this->config,
-			$this->urlGenerator
+			$this->urlGenerator,
+			$this->standardsVersionService
 		);
 	}
 
@@ -397,6 +411,115 @@ XML;
 		$this->assertSame('url-mismatch', $byId['registration']['reason']);
 		$this->assertSame('not-ready', $report['verdict']);
 		$this->assertSame('https://old.example.org', $report['registration']['registeredUrl']);
+	}
+
+	/**
+	 * Build a service whose DiWoo version comparison returns the given result.
+	 *
+	 * @param array{declared: string, published: string|null, status: string} $version The comparison.
+	 *
+	 * @return WooReadinessService
+	 */
+	private function serviceWithDiwooVersion(array $version): WooReadinessService {
+		$versions = $this->createMock(StandardsVersionService::class);
+		$versions->method('diwooVersion')->willReturn($version);
+
+		return new WooReadinessService(
+			$this->clientService,
+			$this->directoryService,
+			$this->sitemapService,
+			$this->settingsService,
+			$this->config,
+			$this->urlGenerator,
+			$versions
+		);
+	}
+
+	public function testBeingBehindTheDiwooStandardFailsTheReport(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+
+		$report = $this->serviceWithDiwooVersion(
+			[
+				'declared' => '0.9.1',
+				'published' => '0.9.8',
+				'status' => StandardsVersionService::STATUS_BEHIND,
+			]
+		)->runCheck();
+
+		$byId = [];
+		foreach ($report['checks'] as $check) {
+			$byId[$check['id']] = $check;
+		}
+
+		$this->assertSame('fail', $byId['diwoo-standard-version']['status']);
+		$this->assertSame('declared-0.9.1-published-0.9.8', $byId['diwoo-standard-version']['reason']);
+		$this->assertSame('not-ready', $report['verdict']);
+	}
+
+	public function testDiwooConformanceDoesNotPassAgainstASupersededVersion(): void {
+		$this->configureCatalogs([$this->mockCatalog('demo-catalog')]);
+
+		$this->client->method('get')->willReturnCallback(
+			function (string $url) {
+				if (str_ends_with($url, '/robots.txt') === true) {
+					return $this->mockResponse(200, "Sitemap: $url/apps/opencatalogi/api/demo-catalog/sitemaps/x\n");
+				}
+
+				if (str_contains($url, 'publications') === false) {
+					return $this->mockResponse(200, self::SITEMAPINDEX_XML);
+				}
+
+				return $this->mockResponse(200, self::CATEGORY_SITEMAP_XML);
+			}
+		);
+
+		// The renderer's own validator says the output is valid. It validated against
+		// the superseded version, so that green must not reach the report.
+		$this->sitemapService->method('validateDiwooOutput')->willReturn([
+			'catalogSlug' => 'demo-catalog',
+			'categoryCode' => 'sitemapindex-diwoo-infocat001.xml',
+			'valid' => true,
+			'violations' => [],
+		]);
+
+		$report = $this->serviceWithDiwooVersion(
+			[
+				'declared' => '0.9.1',
+				'published' => '0.9.8',
+				'status' => StandardsVersionService::STATUS_BEHIND,
+			]
+		)->runCheck();
+
+		$byId = [];
+		foreach ($report['checks'] as $check) {
+			$byId[$check['id']] = $check;
+		}
+
+		$this->assertSame('fail', $byId['diwoo-xsd:demo-catalog']['status']);
+		$this->assertSame('diwoo-version-behind:0.9.8', $byId['diwoo-xsd:demo-catalog']['reason']);
+		$this->assertSame('not-ready', $report['verdict']);
+	}
+
+	public function testAnUnreachableStandardIndexIsReportedAsUncheckedNotAsPass(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+
+		$report = $this->serviceWithDiwooVersion(
+			[
+				'declared' => StandardsVersionService::DIWOO_VERSION,
+				'published' => null,
+				'status' => StandardsVersionService::STATUS_UNKNOWN,
+			]
+		)->runCheck();
+
+		$byId = [];
+		foreach ($report['checks'] as $check) {
+			$byId[$check['id']] = $check;
+		}
+
+		$this->assertSame('skipped', $byId['diwoo-standard-version']['status']);
+		$this->assertSame('standard-version-unreadable', $byId['diwoo-standard-version']['reason']);
 	}
 
 	public function testRunCheckUnconfiguredProducesNoCatalogChecks(): void {

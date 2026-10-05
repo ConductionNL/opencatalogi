@@ -28,6 +28,7 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Service\DcatMappingService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
+use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenRegister\Db\SchemaMapper;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -48,6 +49,7 @@ class DcatServiceTest extends TestCase {
 	private IAppManager|MockObject $appManager;
 	private IURLGenerator|MockObject $urlGenerator;
 	private IAppConfig|MockObject $appConfig;
+	private StandardsVersionService|MockObject $standardsVersions;
 	private DcatService $service;
 
 	protected function setUp(): void {
@@ -58,6 +60,16 @@ class DcatServiceTest extends TestCase {
 
 		$this->urlGenerator->method('getBaseUrl')->willReturn('https://host');
 
+		$this->standardsVersions = $this->createMock(StandardsVersionService::class);
+		$this->standardsVersions->method('dcatApNlVersion')->willReturn(
+			[
+				'declared' => StandardsVersionService::DCAT_AP_NL_VERSION,
+				'published' => StandardsVersionService::DCAT_AP_NL_VERSION,
+				'status' => StandardsVersionService::STATUS_CURRENT,
+				'profile' => StandardsVersionService::DCAT_AP_NL_PROFILE,
+			]
+		);
+
 		$this->service = new DcatService(
 			$this->container,
 			$this->appManager,
@@ -65,7 +77,8 @@ class DcatServiceTest extends TestCase {
 			new DcatSerializer(),
 			$this->urlGenerator,
 			$this->appConfig,
-			$this->createMock(LoggerInterface::class)
+			$this->createMock(LoggerInterface::class),
+			$this->standardsVersions
 		);
 	}
 
@@ -174,6 +187,57 @@ class DcatServiceTest extends TestCase {
 
 		return $objectService;
 	}//end wireOpenRegister()
+
+	public function testTheCatalogNodeDeclaresTheProfileItTargets(): void {
+		$this->wireOpenRegister();
+
+		$document = $this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => []],
+			catalogSlug: 'woo'
+		);
+
+		$this->assertSame(
+			['@id' => StandardsVersionService::DCAT_AP_NL_PROFILE],
+			$document['@graph'][0]['dct:conformsTo']
+		);
+	}//end testTheCatalogNodeDeclaresTheProfileItTargets()
+
+	public function testADeclaredProfileBehindThePublishedOneIsAViolation(): void {
+		$versions = $this->createMock(StandardsVersionService::class);
+		$versions->method('dcatApNlVersion')->willReturn(
+			[
+				'declared' => '3.0',
+				'published' => '3.1',
+				'status' => StandardsVersionService::STATUS_BEHIND,
+				'profile' => StandardsVersionService::DCAT_AP_NL_PROFILE,
+			]
+		);
+
+		$service = new DcatService(
+			$this->container,
+			$this->appManager,
+			new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService()),
+			new DcatSerializer(),
+			$this->urlGenerator,
+			$this->appConfig,
+			$this->createMock(LoggerInterface::class),
+			$versions
+		);
+
+		$this->wireOpenRegister();
+
+		// A feed with zero datasets has nothing to be missing, so the only violation
+		// left is the one the profile comparison reports.
+		$violations = $service->validateCatalog(
+			['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => []],
+			'woo'
+		);
+
+		$this->assertSame(
+			[['axis' => 'profile-version', 'declared' => '3.0', 'published' => '3.1']],
+			$violations
+		);
+	}//end testADeclaredProfileBehindThePublishedOneIsAViolation()
 
 	/**
 	 * WOO-581: a catalog whose schema list is empty — nothing configured, or all

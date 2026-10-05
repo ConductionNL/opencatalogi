@@ -21,6 +21,7 @@ use OCA\OpenCatalogi\BackgroundJob\WooReadinessCheck;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Http\Client\IClientService;
@@ -52,7 +53,8 @@ class WooReadinessCheckTest extends TestCase {
 			$this->createMock(SitemapService::class),
 			$settings,
 			$config,
-			$this->createMock(IURLGenerator::class)
+			$this->createMock(IURLGenerator::class),
+			$this->createMock(StandardsVersionService::class)
 		);
 
 		$this->assertNull($readiness->runWhenEnabled());
