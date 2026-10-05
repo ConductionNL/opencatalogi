@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Няма файлове, прикачени към изходния обект",
         "No files have been attached to this object": "Към този обект не са прикачени файлове",
         "No files selected": "Няма избрани файлове",
+        "No label": "Без етикет",
         "No labels": "Няма етикети",
         "No listing": "Няма запис",
         "No listing selected. You can discover listings via (external) directories.": "Не е избран запис. Можете да откривате записи чрез (външни) директории.",

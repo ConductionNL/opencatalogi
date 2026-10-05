@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Ingen filer vedhæftet kildeobjektet",
         "No files have been attached to this object": "Ingen filer er blevet vedhæftet dette objekt",
         "No files selected": "Ingen filer valgt",
+        "No label": "Ingen etiket",
         "No labels": "Ingen etiketter",
         "No listing": "Ingen liste",
         "No listing selected. You can discover listings via (external) directories.": "Ingen liste valgt. Du kan opdage lister via (eksterne) biblioteker.",

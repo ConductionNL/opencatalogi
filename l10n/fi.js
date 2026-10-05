@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Lähdeobjektiin ei ole liitetty tiedostoja",
         "No files have been attached to this object": "Tähän objektiin ei ole liitetty tiedostoja",
         "No files selected": "Tiedostoja ei ole valittu",
+        "No label": "Ei nimikettä",
         "No labels": "Ei nimikkeitä",
         "No listing": "Ei listausta",
         "No listing selected. You can discover listings via (external) directories.": "Listausta ei ole valittu. Voit löytää listauksia (ulkoisten) hakemistojen kautta.",

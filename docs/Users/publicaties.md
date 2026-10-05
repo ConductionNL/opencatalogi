@@ -67,6 +67,6 @@ Klik daarna op **Bestand toevoegen** om het venster **Bijlage toevoegen** te ope
 
 </div>
 
-In de `Bijlage toevoegen`-modal worden er gevraagd om een aantal velden. Er zijn twee mogelijkheden een bijlage toe te voegen. De eerste manier is via een  `Toegangs URL`. Dit zorgt ervoor dat het bestand vanuit een andere plek automatisch gedownload wordt.  Een `Titel` is dan verplicht.&#x20;
+In het venster `Bijlage toevoegen` kies of maak je eerst een of meer `Labels`, of kies je `Geen label`. Zonder label kun je geen bestanden toevoegen. Zet `Automatisch publiceren` aan als de bestanden meteen openbaar moeten worden.
 
-De tweede manier is door zelf een bestand up te loaden. De bestandsnaam wordt dan meegegeven.&#x20;
+Sleep daarna een of meer bestanden naar het venster, of klik op `Voeg een of meer bestanden toe` om ze van je computer te kiezen. De bestandsnaam wordt meegegeven. De nieuwe bestanden verschijnen daarna op het tabblad Bestanden.

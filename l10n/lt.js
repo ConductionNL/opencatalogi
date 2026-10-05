@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Prie šaltinio objekto nepridėta jokių failų",
         "No files have been attached to this object": "Prie šio objekto nepridėta jokių failų",
         "No files selected": "Nepasirinkta jokių failų",
+        "No label": "Nėra etiketės",
         "No labels": "Nėra etikečių",
         "No listing": "Nėra sąvado įrašo",
         "No listing selected. You can discover listings via (external) directories.": "Nepasirinktas joks sąvado įrašas. Sąvado įrašus galite atrasti per (išorinius) katalogų sąvadus.",

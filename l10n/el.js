@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Δεν υπάρχουν αρχεία συνημμένα στο αντικείμενο προέλευσης",
         "No files have been attached to this object": "Δεν έχουν επισυναφθεί αρχεία σε αυτό το αντικείμενο",
         "No files selected": "Δεν επιλέχθηκαν αρχεία",
+        "No label": "Καμία ετικέτα",
         "No labels": "Χωρίς ετικέτες",
         "No listing": "Καμία καταχώριση",
         "No listing selected. You can discover listings via (external) directories.": "Δεν επιλέχθηκε καταχώριση. Μπορείτε να ανακαλύψετε καταχωρίσεις μέσω (εξωτερικών) καταλόγων.",

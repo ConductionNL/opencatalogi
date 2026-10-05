@@ -13,14 +13,14 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 			<div class="labelAndShareContainer">
 				<NcSelect
-					v-bind="labelOptions"
-					v-model="labelOptions.value"
+					:modelValue="labelOptions.value"
+					:options="labelOptions.options"
 					:inputLabel="t('opencatalogi', 'Labels')"
 					:disabled="loading || retryLoading || tagsLoading"
 					:loading="tagsLoading"
 					:taggable="true"
 					:multiple="true"
-					:selectable="(option) => isSelectable(option)" />
+					@update:modelValue="onLabelSelectionChange" />
 				<NcCheckboxRadioSwitch
 					v-model="share"
 					:disabled="loading || retryLoading"
@@ -502,6 +502,14 @@ const { openFileUpload, files, reset, setTags, rejectedDuplicates } =
 	})
 
 /**
+ * The labels-select option that uploads files without tags. Options are plain
+ * strings, so this translated text is also the option's identity.
+ *
+ * @return {string}
+ */
+const noLabelOption = () => t('opencatalogi', 'No label')
+
+/**
  * UploadFiles — upload files to a publication's OpenRegister files endpoint.
  *
  * @spec openspec/specs/file-management/spec.md
@@ -536,8 +544,8 @@ export default {
 			editingTags: null,
 			editedTags: [],
 			labelOptions: {
-				inputLabel: 'Labels',
-				multiple: true,
+				options: [noLabelOption()],
+				value: [noLabelOption()],
 			},
 
 			labelOptionsEdit: {
@@ -788,29 +796,29 @@ export default {
 		},
 
 		/**
-		 * @param option
+		 * Apply a labels-select change. "No label" and real labels exclude each
+		 * other: picking "No label" clears the labels, and picking a label while
+		 * "No label" is selected replaces it.
+		 *
+		 * @param {Array<string>|null} selected The select's new value.
+		 * @return {void}
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
 		 */
-		isSelectable(option) {
-			if (
-				this.labelOptions.value?.includes('No label')
-				&& option !== 'No label'
-			) {
-				return false
+		onLabelSelectionChange(selected) {
+			const noLabel = noLabelOption()
+			const list = Array.isArray(selected) ? selected : []
+			if (list.includes(noLabel) && list.length > 1) {
+				this.labelOptions.value = this.labelOptions.value?.includes(noLabel)
+					? list.filter((label) => label !== noLabel)
+					: [noLabel]
+				return
 			}
-			if (
-				this.labelOptions.value?.length >= 1
-				&& !this.labelOptions.value?.includes('No label')
-				&& option === 'No label'
-			) {
-				return false
-			}
-			return true
+			this.labelOptions.value = list
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		getLabels() {
-			if (this.labelOptions.value?.includes('No label')) {
+			if (this.labelOptions.value?.includes(noLabelOption())) {
 				return null
 			} else {
 				return this.labelOptions.value
@@ -857,7 +865,11 @@ export default {
 
 				const tags = Array.from(tagSet).sort()
 
-				const newLabelOptions = ['No label', ...tags]
+				const noLabel = noLabelOption()
+				const newLabelOptions = [
+					noLabel,
+					...tags.filter((tag) => tag !== noLabel),
+				]
 				const newLabelOptionsEdit = [...tags]
 
 				this.labelOptions.options = newLabelOptions
@@ -891,6 +903,7 @@ export default {
 			this.initialTags = []
 			this.latestTags = []
 			this.newTags = []
+			this.labelOptions.value = [noLabelOption()]
 			EventBus.$emit('upload-files:opened')
 			this.getAllTags()
 			this.applySchemaDefaults()

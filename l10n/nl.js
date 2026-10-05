@@ -491,6 +491,7 @@ OC.L10N.register(
         "No files attached to source object": "Geen bestanden gekoppeld aan bronobject",
         "No files have been attached to this object": "Er zijn geen bestanden gekoppeld aan dit object",
         "No files selected": "Geen bestanden geselecteerd",
+        "No label": "Geen label",
         "No labels": "Geen labels",
         "No listing": "Geen listing",
         "No listing selected. You can discover listings via (external) directories.": "Geen listing geselecteerd. U kunt listings ontdekken via (externe) directories.",

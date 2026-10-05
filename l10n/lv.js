@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Avota objektam nav pievienots neviens fails",
         "No files have been attached to this object": "Šim objektam nav pievienots neviens fails",
         "No files selected": "Nav atlasīts neviens fails",
+        "No label": "Nav etiķetes",
         "No labels": "Nav etiķešu",
         "No listing": "Nav saraksta",
         "No listing selected. You can discover listings via (external) directories.": "Nav atlasīts neviens saraksts. Sarakstus varat atklāt, izmantojot (ārējos) direktorijus.",

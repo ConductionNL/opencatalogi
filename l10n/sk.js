@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "K zdrojovému objektu nie sú pripojené žiadne súbory",
         "No files have been attached to this object": "K tomuto objektu neboli pripojené žiadne súbory",
         "No files selected": "Nie sú vybrané žiadne súbory",
+        "No label": "Žiadna menovka",
         "No labels": "Žiadne menovky",
         "No listing": "Žiadny záznam",
         "No listing selected. You can discover listings via (external) directories.": "Nie je vybraný žiadny záznam. Záznamy môžete objaviť prostredníctvom (externých) adresárov.",

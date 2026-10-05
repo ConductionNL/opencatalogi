@@ -506,6 +506,7 @@ OC.L10N.register(
         "No files attached to source object": "No files attached to source object",
         "No files have been attached to this object": "No files have been attached to this object",
         "No files selected": "No files selected",
+        "No label": "No label",
         "No labels": "No labels",
         "No listing": "No listing",
         "No listing selected. You can discover listings via (external) directories.": "No listing selected. You can discover listings via (external) directories.",

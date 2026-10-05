@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Да зыходнага аб'екта не прымацаваны файлы",
         "No files have been attached to this object": "Да гэтага аб'екта не прымацаваны файлы",
         "No files selected": "Файлы не выбраны",
+        "No label": "Без меткі",
         "No labels": "Няма метак",
         "No listing": "Няма лістынга",
         "No listing selected. You can discover listings via (external) directories.": "Лістынг не выбраны. Вы можаце выявіць лістынгі праз (знешнія) дырэкторыі.",

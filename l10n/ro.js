@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Niciun fișier atașat obiectului sursă",
         "No files have been attached to this object": "Niciun fișier nu a fost atașat acestui obiect",
         "No files selected": "Niciun fișier selectat",
+        "No label": "Nicio etichetă",
         "No labels": "Nicio etichetă",
         "No listing": "Nicio listare",
         "No listing selected. You can discover listings via (external) directories.": "Nicio listare selectată. Puteți descoperi listări prin directoare (externe).",

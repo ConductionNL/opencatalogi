@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "No hay archivos adjuntos al objeto de origen",
         "No files have been attached to this object": "No se ha adjuntado ningún archivo a este objeto",
         "No files selected": "No hay archivos seleccionados",
+        "No label": "Sin etiqueta",
         "No labels": "Sin etiquetas",
         "No listing": "Sin listado",
         "No listing selected. You can discover listings via (external) directories.": "No hay ningún listado seleccionado. Puede descubrir listados a través de directorios (externos).",

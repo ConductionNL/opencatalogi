@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "До вихідного об’єкта не прикріплено файлів",
         "No files have been attached to this object": "До цього об’єкта не прикріплено файлів",
         "No files selected": "Файли не вибрано",
+        "No label": "Без мітки",
         "No labels": "Немає міток",
         "No listing": "Немає запису",
         "No listing selected. You can discover listings via (external) directories.": "Запис не вибрано. Ви можете знаходити записи через (зовнішні) каталоги-довідники.",

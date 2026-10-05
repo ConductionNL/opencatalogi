@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Na izvorni objekt ni pripetih datotek",
         "No files have been attached to this object": "Na ta objekt ni pripetih datotek",
         "No files selected": "Izbrana ni nobena datoteka",
+        "No label": "Brez oznake",
         "No labels": "Ni oznak",
         "No listing": "Ni vnosa",
         "No listing selected. You can discover listings via (external) directories.": "Izbran ni noben vnos. Vnose lahko odkrijete prek (zunanjih) imenikov.",

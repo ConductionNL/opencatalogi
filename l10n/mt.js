@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "L-ebda fajl mehmuż mal-oġġett sors",
         "No files have been attached to this object": "L-ebda fajl ma ġie mehmuż ma' dan l-oġġett",
         "No files selected": "L-ebda fajl magħżul",
+        "No label": "L-ebda tikketta",
         "No labels": "L-ebda tikketta",
         "No listing": "L-ebda lista",
         "No listing selected. You can discover listings via (external) directories.": "L-ebda lista magħżula. Tista' tiskopri l-listi permezz ta' direttorji (esterni).",

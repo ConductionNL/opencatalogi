@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Keng Dateien um Quellobjet ugehaangen",
         "No files have been attached to this object": "Et goufe keng Dateien un dësen Objet ugehaangen",
         "No files selected": "Keng Dateien ausgewielt",
+        "No label": "Keng Etikett",
         "No labels": "Keng Etiketten",
         "No listing": "Keng Entrée",
         "No listing selected. You can discover listings via (external) directories.": "Keng Entrée ausgewielt. Dir kënnt Entréen iwwer (extern) Verzeechnesser entdecken.",

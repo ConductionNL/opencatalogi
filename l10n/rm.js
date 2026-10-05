@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Naginas datotecas agiuntadas a l'object da funtauna",
         "No files have been attached to this object": "Naginas datotecas èn vegnidas agiuntadas a quest object",
         "No files selected": "Naginas datotecas tschernidas",
+        "No label": "Nagina etichetta",
         "No labels": "Naginas etichettas",
         "No listing": "Nagina endataziun",
         "No listing selected. You can discover listings via (external) directories.": "Nagina endataziun tschernida. Vus pudais scuvrir endataziuns via registers (externs).",

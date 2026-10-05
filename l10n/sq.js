@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Asnjë skedar i bashkëngjitur objektit burimor",
         "No files have been attached to this object": "Asnjë skedar nuk është bashkëngjitur këtij objekti",
         "No files selected": "Asnjë skedar i zgjedhur",
+        "No label": "Asnjë etiketë",
         "No labels": "Asnjë etiketë",
         "No listing": "Asnjë listim",
         "No listing selected. You can discover listings via (external) directories.": "Asnjë listim i zgjedhur. Mund të zbuloni listime përmes direktorive (të jashtme).",

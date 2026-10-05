@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Nincsenek a forrásobjektumhoz csatolt fájlok",
         "No files have been attached to this object": "Ehhez az objektumhoz nem csatoltak fájlokat",
         "No files selected": "Nincsenek fájlok kiválasztva",
+        "No label": "Nincs címke",
         "No labels": "Nincsenek címkék",
         "No listing": "Nincs bejegyzés",
         "No listing selected. You can discover listings via (external) directories.": "Nincs bejegyzés kiválasztva. Bejegyzéseket (külső) címtárakon keresztül fedezhet fel.",

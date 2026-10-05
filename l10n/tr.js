@@ -436,6 +436,7 @@ OC.L10N.register(
         "No files attached to source object": "Kaynak nesneye ekli dosya yok",
         "No files have been attached to this object": "Bu nesneye hiçbir dosya eklenmedi",
         "No files selected": "Hiçbir dosya seçilmedi",
+        "No label": "Etiket yok",
         "No labels": "Etiket yok",
         "No listing": "Liste yok",
         "No listing selected. You can discover listings via (external) directories.": "Hiçbir liste seçilmedi. (Dış) dizinler aracılığıyla listeleri keşfedebilirsiniz.",
