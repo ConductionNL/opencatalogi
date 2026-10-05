@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Προβεβλημένο:",
         "File Actions": "Ενέργειες Αρχείου",
         "File name": "Όνομα αρχείου",
+        "File list": "Λίστα αρχείων",
         "Filename": "Όνομα αρχείου",
         "Files added successfully": "Τα αρχεία προστέθηκαν με επιτυχία",
         "Files attached to source object: ({count})": "Αρχεία συνημμένα στο αντικείμενο προέλευσης: ({count})",

@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Esillä:",
         "File Actions": "Tiedostotoiminnot",
         "File name": "Tiedostonimi",
+        "File list": "Tiedostoluettelo",
         "Filename": "Tiedostonimi",
         "Files added successfully": "Tiedostot lisättiin onnistuneesti",
         "Files attached to source object: ({count})": "Lähdeobjektiin liitetyt tiedostot: ({count})",

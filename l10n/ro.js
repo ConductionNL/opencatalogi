@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Recomandat:",
         "File Actions": "Acțiuni Fișier",
         "File name": "Nume fișier",
+        "File list": "Listă de fișiere",
         "Filename": "Nume fișier",
         "Files added successfully": "Fișiere adăugate cu succes",
         "Files attached to source object: ({count})": "Fișiere atașate obiectului sursă: ({count})",

@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Imdaħħal:",
         "File Actions": "Azzjonijiet tal-Fajl",
         "File name": "Isem tal-fajl",
+        "File list": "Lista tal-fajls",
         "Filename": "Isem tal-fajl",
         "Files added successfully": "Il-fajls ġew miżjuda b'suċċess",
         "Files attached to source object: ({count})": "Fajls mehmuża mal-oġġett sors: ({count})",

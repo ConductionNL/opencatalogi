@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Рэкамендаваныя:",
         "File Actions": "Дзеянні з файлам",
         "File name": "Назва файла",
+        "File list": "Спіс файлаў",
         "Filename": "Назва файла",
         "Files added successfully": "Файлы паспяхова дададзены",
         "Files attached to source object: ({count})": "Файлы, прымацаваныя да зыходнага аб'екта: ({count})",

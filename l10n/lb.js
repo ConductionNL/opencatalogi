@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Featured:",
         "File Actions": "Dateiaktiounen",
         "File name": "Dateinumm",
+        "File list": "Dateilëscht",
         "Filename": "Dateinumm",
         "Files added successfully": "Dateie erfollegräich bäigesat",
         "Files attached to source object: ({count})": "Dateien um Quellobjet ugehaangen: ({count})",

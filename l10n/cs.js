@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Vybrané:",
         "File Actions": "Akce souboru",
         "File name": "Název souboru",
+        "File list": "Seznam souborů",
         "Filename": "Název souboru",
         "Files added successfully": "Soubory úspěšně přidány",
         "Files attached to source object: ({count})": "Soubory připojené ke zdrojovému objektu: ({count})",

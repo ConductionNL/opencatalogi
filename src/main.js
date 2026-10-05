@@ -42,6 +42,7 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import customComponents from './registry.js'
+import { translateActionLabels } from './services/translateActionLabels.js'
 
 // gridstack v12 sizes dashboard items with `width: var(--gs-column-width)`.
 // Without this stylesheet every dashboard item renders 0 px wide, with no
@@ -279,7 +280,10 @@ function resolveManifestSentinelsSync(manifest) {
 	}
 }
 
-const resolvedManifest = resolveManifestSentinelsSync(mergedManifest)
+const resolvedManifest = translateActionLabels(
+	resolveManifestSentinelsSync(mergedManifest),
+	(key) => t('opencatalogi', key),
+)
 
 /**
  * Build the vue-router config from the manifest. Each manifest page becomes

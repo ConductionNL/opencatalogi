@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Fremhævet:",
         "File Actions": "Filhandlinger",
         "File name": "Filnavn",
+        "File list": "Filliste",
         "Filename": "Filnavn",
         "Files added successfully": "Filer blev tilføjet",
         "Files attached to source object: ({count})": "Filer vedhæftet kildeobjektet: ({count})",

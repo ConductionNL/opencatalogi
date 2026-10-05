@@ -409,6 +409,7 @@ OC.L10N.register(
         "Federation sync": "Federation-synchronisatie",
         "File Actions": "Bestandsacties",
         "File name": "Bestandsnaam",
+        "File list": "Bestandenlijst",
         "Filename": "Bestandsnaam",
         "Files added successfully": "Bestanden succesvol toegevoegd",
         "Files attached to source object: ({count})": "Bestanden gekoppeld aan bronobject: ({count})",

@@ -416,6 +416,7 @@ OC.L10N.register(
         "Federation sync": "Federation sync",
         "File Actions": "File Actions",
         "File name": "File name",
+        "File list": "File list",
         "Filename": "Filename",
         "Files added successfully": "Files added successfully",
         "Files attached to source object: ({count})": "Files attached to source object: ({count})",

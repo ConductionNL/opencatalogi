@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Destacado:",
         "File Actions": "Ações de Ficheiro",
         "File name": "Nome do ficheiro",
+        "File list": "Lista de ficheiros",
         "Filename": "Nome do ficheiro",
         "Files added successfully": "Ficheiros adicionados com sucesso",
         "Files attached to source object: ({count})": "Ficheiros anexados ao objeto de origem: ({count})",

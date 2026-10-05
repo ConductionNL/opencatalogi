@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Destacat:",
         "File Actions": "Accions de fitxer",
         "File name": "Nom del fitxer",
+        "File list": "Llista de fitxers",
         "Filename": "Nom del fitxer",
         "Files added successfully": "Els fitxers s'han afegit correctament",
         "Files attached to source object: ({count})": "Fitxers adjunts a l'objecte d'origen: ({count})",

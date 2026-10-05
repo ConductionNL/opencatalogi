@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Izpostavljeno:",
         "File Actions": "Dejanja datoteke",
         "File name": "Ime datoteke",
+        "File list": "Seznam datotek",
         "Filename": "Ime datoteke",
         "Files added successfully": "Datoteke so bile uspešno dodane",
         "Files attached to source object: ({count})": "Datoteke, pripete na izvorni objekt: ({count})",

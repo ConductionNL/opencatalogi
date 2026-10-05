@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Izceltie:",
         "File Actions": "Faila darbības",
         "File name": "Faila nosaukums",
+        "File list": "Failu saraksts",
         "Filename": "Faila nosaukums",
         "Files added successfully": "Faili veiksmīgi pievienoti",
         "Files attached to source object: ({count})": "Avota objektam pievienotie faili: ({count})",

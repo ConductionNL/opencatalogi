@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Öne çıkan:",
         "File Actions": "Dosya Eylemleri",
         "File name": "Dosya adı",
+        "File list": "Dosya listesi",
         "Filename": "Dosya adı",
         "Files added successfully": "Dosyalar başarıyla eklendi",
         "Files attached to source object: ({count})": "Kaynak nesneye eklenen dosyalar: ({count})",

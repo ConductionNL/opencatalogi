@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Истакнуто:",
         "File Actions": "Радње над датотекама",
         "File name": "Назив датотеке",
+        "File list": "Списак датотека",
         "Filename": "Назив датотеке",
         "Files added successfully": "Датотеке су успешно додате",
         "Files attached to source object: ({count})": "Датотеке приложене изворном објекту: ({count})",

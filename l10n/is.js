@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Áberandi:",
         "File Actions": "Skráaaðgerðir",
         "File name": "Skráarheiti",
+        "File list": "Skráalisti",
         "Filename": "Skráarheiti",
         "Files added successfully": "Skrám bætt við með góðum árangri",
         "Files attached to source object: ({count})": "Skrár tengdar upprunahlut: ({count})",

@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Utvald:",
         "File Actions": "Filåtgärder",
         "File name": "Filnamn",
+        "File list": "Fillista",
         "Filename": "Filnamn",
         "Files added successfully": "Filerna lades till",
         "Files attached to source object: ({count})": "Filer bifogade till källobjektet: ({count})",

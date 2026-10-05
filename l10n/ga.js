@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Mol:",
         "File Actions": "Gníomhartha Comhaid",
         "File name": "Ainm comhaid",
+        "File list": "Liosta comhad",
         "Filename": "Ainm comhaid",
         "Files added successfully": "Cuireadh na comhaid leis go rathúil",
         "Files attached to source object: ({count})": "Comhaid ceangailte leis an réad foinse: ({count})",

@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Rekomenduojama:",
         "File Actions": "Failo veiksmai",
         "File name": "Failo pavadinimas",
+        "File list": "Failų sąrašas",
         "Filename": "Failo pavadinimas",
         "Files added successfully": "Failai sėkmingai pridėti",
         "Files attached to source object: ({count})": "Prie šaltinio objekto pridėti failai: ({count})",

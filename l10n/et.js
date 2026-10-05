@@ -361,6 +361,7 @@ OC.L10N.register(
         "Featured:": "Esiletõstetud:",
         "File Actions": "Failitoimingud",
         "File name": "Faili nimi",
+        "File list": "Failide loend",
         "Filename": "Failinimi",
         "Files added successfully": "Failid edukalt lisatud",
         "Files attached to source object: ({count})": "Lähteobjektile lisatud failid: ({count})",

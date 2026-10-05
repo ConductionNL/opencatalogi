@@ -13,16 +13,17 @@
 //   1 — manifest fails validation (or schema/manifest cannot be loaded)
 //
 // src/manifest.json declares the v2 schema ($schema → app-manifest-v2.schema.json),
-// so we validate against v2. The canonical v2 schema is vendored under
-// tests/schemas/ so the gate is self-contained (CI does not depend on a fresh
-// node_modules copy, and the published @conduction/nextcloud-vue v2 schema can
-// lag the canonical hydra one — e.g. the metric `cacheTtl` property).
+// so we validate against v2.
 //
 // Schema lookup order (first hit wins):
 //   1. Env var APP_MANIFEST_SCHEMA — explicit absolute path to a schema JSON
-//   2. tests/schemas/app-manifest-v2.schema.json (vendored canonical v2)
-//   3. node_modules/@conduction/nextcloud-vue/src/schemas/app-manifest-v2.schema.json
+//   2. node_modules/@conduction/nextcloud-vue/src/schemas/app-manifest-v2.schema.json
+//   3. tests/schemas/app-manifest-v2.schema.json (vendored fallback)
 //   4. ../nextcloud-vue/src/schemas/app-manifest-v2.schema.json (sibling worktree)
+//
+// After a schema pass it also runs the installed library's validateManifest()
+// and prints its non-fatal warnings (e.g. a row-action order with Delete not
+// last). They never change the exit code.
 
 'use strict'
 
@@ -179,7 +180,35 @@ function structuralLint(manifest) {
 	return errors
 }
 
-function main() {
+// Print the installed library validator's warnings. A library that cannot be
+// loaded, or whose validator returns no `warnings`, is reported and skipped.
+async function printLibraryWarnings(manifest) {
+	let validateManifest
+	try {
+		;({ validateManifest } =
+			await import('@conduction/nextcloud-vue/dist/esm/utils/validateManifest.js'))
+	} catch (err) {
+		console.warn(
+			`[validate-manifest] library validator unavailable (${err.message}); skipping its warnings`,
+		)
+		return
+	}
+	const result = validateManifest(manifest)
+	if (!Array.isArray(result?.warnings)) {
+		console.log(
+			'[validate-manifest] library validator reports no warnings field',
+		)
+		return
+	}
+	if (result.warnings.length === 0) {
+		console.log('[validate-manifest] library warnings: none')
+		return
+	}
+	console.warn(`[validate-manifest] library warnings: ${result.warnings.length}`)
+	for (const warning of result.warnings) console.warn(`  - ${warning}`)
+}
+
+async function main() {
 	if (!fs.existsSync(MANIFEST_PATH)) {
 		console.error(`[validate-manifest] manifest not found: ${MANIFEST_PATH}`)
 		process.exit(1)
@@ -236,6 +265,7 @@ function main() {
 	const ok = validate(manifest)
 	if (ok) {
 		console.log('[validate-manifest] Ajv validation: PASS (0 errors)')
+		await printLibraryWarnings(manifest)
 		process.exit(0)
 	}
 	console.error('[validate-manifest] Ajv validation: FAIL')

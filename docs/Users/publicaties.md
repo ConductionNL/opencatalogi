@@ -55,7 +55,9 @@ Je hebt het recht nodig om de publicatie te wijzigen. Zonder dat recht weigert d
 
 ## Bijlagen
 
-Publicaties hebben vaak bijlagen, zoals een verslag of een besluit. Deze zijn eenvoudig toe te voegen door op de Actie-knop te klikken bij een geselecteerde publicatie, of de drie bolletjes naast een publicatie. Dit opent de Bijlage toevoegen modal.
+Publicaties hebben vaak bijlagen, zoals een verslag of een besluit. Klik in het overzicht van publicaties op de drie bolletjes naast een publicatie en kies **Bestandenlijst**. Dit opent de publicatie op het tabblad **Bestanden**, met de bestanden die al aan de publicatie gekoppeld zijn. Controleer die eerst, zodat je geen bestand dubbel toevoegt.
+
+Klik daarna op **Bestand toevoegen** om het venster **Bijlage toevoegen** te openen.
 
 <div>
 
