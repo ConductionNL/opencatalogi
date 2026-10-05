@@ -524,10 +524,70 @@
 			"route": "/publications/:catalogSlug",
 			"type": "index",
 			"title": "Publications",
-			"_note": "The `filter: { catalog: @route.catalogSlug }` clause used to sit here, but the publication schema declares NO `catalog` property (see openregister schemas/1) — publications are catalog-scoped structurally via the catalog's own `registers`/`schemas` arrays, exactly like the /api/federation/publications endpoint resolves them. With the filter active every publication was dropped by the OpenRegister query and the page rendered empty even after successful create. KNOWN LIMITATION (WOO-527b tracking): with the filter removed the page shows publications across ALL catalogs, not scoped to `:catalogSlug`. Two fix paths, both out-of-scope here — (1) grow the publication schema an explicit `catalog` FK so a schema-supported filter can be reinstated, or (2) rehost the page on the bespoke `/api/{catalogSlug}` endpoint (which already resolves the same scope correctly). Neither the current manifest resolvers (`@resolve:catalog_register`, `@resolve:catalog_schema`, `@resolve:listing_register`, `@resolve:woo_register`) target per-catalog publication registers, so the `@resolve` route also needs a new resolver.",
+			"_note": "The `filter: { catalog: @route.catalogSlug }` clause used to sit here, but the publication schema declares NO `catalog` property (see openregister schemas/1) — publications are catalog-scoped structurally via the catalog's own `registers`/`schemas` arrays, exactly like the /api/federation/publications endpoint resolves them. With the filter active every publication was dropped by the OpenRegister query and the page rendered empty even after successful create. KNOWN LIMITATION (WOO-527b tracking): with the filter removed the page shows publications across ALL catalogs, not scoped to `:catalogSlug`. Two fix paths, both out-of-scope here — (1) grow the publication schema an explicit `catalog` FK so a schema-supported filter can be reinstated, or (2) rehost the page on the bespoke `/api/{catalogSlug}` endpoint (which already resolves the same scope correctly). Neither the current manifest resolvers (`@resolve:catalog_register`, `@resolve:catalog_schema`, `@resolve:listing_register`, `@resolve:woo_register`) target per-catalog publication registers, so the `@resolve` route also needs a new resolver. SORT: newest first by default; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`. Bare-string columns take their label from the live schema; fragment-only properties carry a label so an install without them shows a named column.",
 			"config": {
 				"register": "publication",
 				"schema": "publication",
+				"sortKeys": [
+					{
+						"key": "@self.created",
+						"order": "desc"
+					},
+					{
+						"key": "_uuid",
+						"order": "asc"
+					}
+				],
+				"sortKey": "@self.created",
+				"sortOrder": "desc",
+				"columns": [
+					"title",
+					"status",
+					{
+						"key": "@self.created",
+						"label": "Created",
+						"format": "date-time",
+						"sortable": true
+					},
+					{
+						"key": "@self.updated",
+						"label": "Updated",
+						"format": "date-time",
+						"sortable": true
+					},
+					{
+						"key": "caseReference",
+						"label": "Case reference",
+						"sortable": true
+					},
+					"depublicationDate",
+					"description",
+					"organization",
+					"plooiDeliveredAt",
+					"plooiIdentifier",
+					"plooiReason",
+					"plooiStatus",
+					"publicationDate",
+					{
+						"key": "publicationKind",
+						"label": "Kind of publication",
+						"sortable": true
+					},
+					"retentionAction",
+					"retentionCategory",
+					"retentionExpiresAt",
+					"retentionLastEvaluatedAt",
+					"retentionNote",
+					"retentionTermMonths",
+					{
+						"key": "soortHandeling",
+						"label": "Document handling",
+						"sortable": true
+					},
+					"summary",
+					"themes",
+					"wooCategory"
+				],
 				"actionToggles": {
 					"showAdd": true,
 					"showEditAction": true,
