@@ -227,14 +227,8 @@ jobs:
       playwright-seed-command: 'bash apps/opencatalogi/tests/e2e/ci-seed.sh'
 
       # ── Integration tests ────────────────────────────────────────────────
-      # Was explicitly `false`. tests/integration ships six
-      # *.postman_collection.json files (dcat-ap-harvest,
-      # dcat-national-portal-federation, diwoo-tooi-vocabulary-binding,
-      # ooapi-catalog-publication, publication-quality-metrics,
-      # structured-data-discoverability) that had never executed in CI. They sit
-      # at the default `newman-collection-path` (tests/integration), which is
-      # both the directory the validator counts collections in and the directory
-      # the run step globs flat.
+      # tests/integration ships the app's *.postman_collection.json files; Newman runs all of them.
+      # They sit at the default `newman-collection-path` (tests/integration), which the validator counts and the run step searches recursively.
       enable-newman: true
 
       # ── Frontend Check legs ──────────────────────────────────────────────

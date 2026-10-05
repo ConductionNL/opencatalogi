@@ -536,6 +536,9 @@
 					"showViewToggle": true,
 					"selectable": true
 				},
+				"inlineSearch": true,
+				"showCountWithSearch": true,
+				"emptyText": "No publications found",
 				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},

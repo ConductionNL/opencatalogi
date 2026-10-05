@@ -18,6 +18,20 @@ Een publicatie leeft altijd binnen één catalogus en wordt gedefinieerd door é
 
 Eigenschappen en bijlagen kunnen worden toegevoegd nadat de publicatie is toegevoegd.
 
+## Publicaties zoeken
+
+Boven de publicatielijst staat een zoekbalk. Typ een deel van een titel, samenvatting of beschrijving, en de lijst toont alleen de publicaties waarin die tekst voorkomt. De andere tekstvelden van een publicatie doen ook mee, datumvelden niet. Hoofdletters en kleine letters maken geen verschil.
+
+Haakjes, dubbele aanhalingstekens, het sterretje (`*`) en de woorden `AND`, `OR` en `NOT` in hoofdletters werken als zoekoperatoren. Een haakje of aanhalingsteken zonder tegenhanger is daarom geen geldige zoekopdracht.
+
+De server doorzoekt alle publicaties, niet alleen de rijen die op het scherm staan. De zoekopdracht start pas als je even stopt met typen, dus niet bij elke toetsaanslag. Een nieuwe zoekterm brengt je terug naar pagina 1, en de teller boven de lijst toont hoeveel publicaties er gevonden zijn.
+
+Maak je de zoekbalk leeg, dan zie je de volledige lijst weer.
+
+De zoekterm blijft staan terwijl je bladert en wanneer je wisselt tussen de kaart- en de tabelweergave. De zoekterm staat ook in de adresbalk (URL), zodat je na het herladen of via een gekopieerde link dezelfde resultaten ziet.
+
+Vindt de zoekbalk niets, dan meldt de lijst "Geen publicaties gevonden".
+
 ## Publicaties beheren
 
 De gebruikersbeheerinterface werkt intuïtief. Aan de linkerkant van de pagina bevindt zich een overzicht van catalogi. Met de blauwe knop bovenaan kun je een publicatie aanmaken. Dit opent een modal genaamd "Publicatie toevoegen". Er wordt eerst gevraagd aan welke catalogus deze behoort en welke publicatietype het heeft (metadata)

@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 title: Browse a catalogue
-description: Open a catalogue, look through its publications, and use the filter panel to narrow the list.
+description: Open a catalogue, look through its publications, use the filter panel to narrow the list, and search it by text.
 ---
 
 # Browse a catalogue
@@ -10,7 +10,7 @@ A *catalogue* groups related items — *publications*, *components*, *organisati
 
 ## Goal
 
-By the end you will have opened a catalogue, narrowed its list with a filter, sorted the rows, and reached the detail page of one item.
+By the end you will have opened a catalogue, narrowed its list with a filter, sorted the rows, searched it by text, and reached the detail page of one item.
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ By the end you will have opened a catalogue, narrowed its list with a filter, so
 
    ![Catalogue detail page, Publications tab](/screenshots/tutorials/user/02-browse-catalogue-02.png)
 
-3. Use the **filter panel** on the right to narrow the list — by *theme*, *organisation*, *publication type*, *language*, *publication date range*. Filters AND together. Use the search box in the toolbar for full-text search within this catalogue.
+3. Use the **filter panel** on the right to narrow the list — by *theme*, *organisation*, *publication type*, *language*, *publication date range*. Filters AND together.
 
    ![Filter panel applied](/screenshots/tutorials/user/02-browse-catalogue-03.png)
 
@@ -35,13 +35,15 @@ By the end you will have opened a catalogue, narrowed its list with a filter, so
 
    ![Sorted table view](/screenshots/tutorials/user/02-browse-catalogue-04.png)
 
-5. Click any row to open the **item detail page**. The right-hand sidebar shows the item's properties, attached files, related items, and a comments thread.
+5. **Search by text.** On the Publications list, which you reach with the **View Publications** button on a catalogue's page, type in the search box in the toolbar above the list. The search starts once you stop typing for a moment, not on every keystroke. It matches title, summary, description and the other text fields, ignoring case, and the server searches the whole list rather than only the page on screen. Brackets, double quotes, `*` and the upper-case words `AND`, `OR` and `NOT` act as search operators, so a bracket or quote without its partner is not a valid search. A new term takes you back to page 1 and the counter shows how many publications match. Clearing the box brings the full list back. The term stays while you page and switch between cards and table, and it is kept in the address bar (URL), so a reload or a copied link shows the same results. When nothing matches, the list says "No publications found".
+
+6. Click any row to open the **item detail page**. The right-hand sidebar shows the item's properties, attached files, related items, and a comments thread.
 
    ![Item detail page](/screenshots/tutorials/user/02-browse-catalogue-05.png)
 
 ## Verification
 
-The catalogue detail page renders without errors, the filter panel narrows the list when you tick a value, the sort arrows in the table header reorder the rows, and clicking a row opens its detail page with a populated sidebar.
+The catalogue detail page renders without errors, the filter panel narrows the list when you tick a value, the sort arrows in the table header reorder the rows, a term in the search box narrows the list and clearing it brings the full list back, and clicking a row opens its detail page with a populated sidebar.
 
 ## Common issues
 
