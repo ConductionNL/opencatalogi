@@ -10,7 +10,7 @@ status: proposed
 
 OpenCatalogi SHALL ship a seed object `woo-jaarverslag` for OpenRegister's `report-templates` schema in `lib/Settings/register.d/woo-annual-report.json`, imported only when that schema exists. It SHALL declare these sections, each naming its data source (register, schema, filters) and aggregation in the template format `rapportage-bi-export` defines:
 
-1. Publications per information category: the publication schemas each category's `WooCategoryRegistry::schemasFor()` lists, counted for public publications with `publicationDate` in the year, grouped by `wooCategory`, one row per category of `WooCategoryRegistry::all()` (17), zero rows included.
+1. Publications per information category: the publication schemas each category's `WooCategoryRegistry::schemasFor()` lists, counted for public publications with `publicationDate` in the year, grouped by `wooCategory`, one row per category `WooCategoryRegistry::all()` returns (today the 18 waardelijst members, the 17 categories of art. 3.3 and the art. 3.1 member, plus any local category), zero rows included.
 2. Publications per month in the year.
 3. Timeliness: days from `creationDate` to `publicationDate`, median and the share within 14 days; publications without `creationDate` counted on a separate line.
 4. Withdrawals: `depublication` records in the year, counted per reason.
@@ -22,9 +22,9 @@ The template SHALL be generated per year and catalogue, with formats `pdf`, `ods
 #### Scenario: Every category is in the report, zero included
 <!-- @e2e exclude Template contract; proven by WooAnnualReportTemplateTest::testEveryRegistryCategoryHasARowIncludingZero, which fails on today's code because no template exists. -->
 
-- **GIVEN** the registry's 17 categories and publications in only three of them in 2026
+- **GIVEN** the registry's 18 members and publications in only three of them in 2026
 - **WHEN** the template's category section is evaluated for 2026
-- **THEN** it has 17 rows, 14 of them 0
+- **THEN** it has 18 rows, 15 of them 0
 
 #### Scenario: Timeliness never uses the save moment
 <!-- @e2e exclude Template contract; proven by WooAnnualReportTemplateTest::testAPublicationWithoutCreationDateIsCountedApart. -->
@@ -41,7 +41,7 @@ The publications report page (`PublicationsReport` in `src/manifest.json`) SHALL
 
 - **GIVEN** a catalogue with publications in 2025 and 2026 and OpenRegister's report generation available
 - **WHEN** an officer chooses Generate annual report for 2026 and PDF
-- **THEN** a PDF downloads with the 17 categories, the months, the timeliness, the withdrawals and 2025 beside each
+- **THEN** a PDF downloads with every category, the months, the timeliness, the withdrawals and 2025 beside each
 
 #### Scenario: OpenRegister cannot generate reports
 <!-- @e2e exclude Absent-capability path; proven by WooAnnualReportCapabilityTest::testWithoutReportGenerationTheActionIsAbsent. -->
