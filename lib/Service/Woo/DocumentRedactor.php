@@ -36,6 +36,7 @@ use OCP\Files\File;
 use OCP\IL10N;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -73,6 +74,68 @@ class DocumentRedactor {
 	) {
 
 	}//end __construct()
+
+	/**
+	 * The redaction fields an assessment carries after an officer's decision.
+	 *
+	 * A partly public document is redacted and verified now. Any other
+	 * assessment drops a redaction an earlier one left behind.
+	 *
+	 * @param array<string, mixed> $assessment    The assessment, already carrying the new decision.
+	 * @param string|null          $batchId       The batch, whose creator owns relative references.
+	 * @param string               $fallbackOwner The acting officer, when the batch names no creator.
+	 *
+	 * @return array{anonymizedDocument: string, anonymizedDocumentHash: string, redactionStatus: string, redactionMessage: string}
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	public function forAssessment(array $assessment, ?string $batchId, string $fallbackOwner): array {
+		if ((string)($assessment['assessment'] ?? '') !== 'deels_openbaar') {
+			return [
+				'anonymizedDocument' => '',
+				'anonymizedDocumentHash' => '',
+				'redactionStatus' => '',
+				'redactionMessage' => '',
+			];
+		}
+
+		return $this->redact(assessment: $assessment, owner: $this->ownerOf(batchId: $batchId, fallback: $fallbackOwner));
+
+	}//end forAssessment()
+
+	/**
+	 * Every partly public document without a verified redacted version, with
+	 * the reason, so the officer sees why it cannot be published yet.
+	 *
+	 * @param array<int, array<string, mixed>> $assessments The batch's assessments.
+	 *
+	 * @return array<int, array{fileName: string, reason: string}>
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-the-officer-sees-why-a-partly-public-document-cannot-be-published-req-wrp-002
+	 */
+	public function unredacted(array $assessments): array {
+		$out = [];
+		foreach ($assessments as $assessment) {
+			if ((string)($assessment['assessment'] ?? '') !== 'deels_openbaar'
+				|| (string)($assessment['redactionStatus'] ?? '') === self::VERIFIED
+			) {
+				continue;
+			}
+
+			$reason = (string)($assessment['redactionMessage'] ?? '');
+			if ($reason === '') {
+				$reason = $this->l10n->t('No verified redacted version exists yet.');
+			}
+
+			$out[] = [
+				'fileName' => (string)($assessment['fileName'] ?? ($assessment['documentReference'] ?? '')),
+				'reason' => $reason,
+			];
+		}//end foreach
+
+		return $out;
+
+	}//end unredacted()
 
 	/**
 	 * Redact one assessed document and verify the result.
@@ -123,14 +186,9 @@ class DocumentRedactor {
 			$redacted = $files->anonymizeDocument(node: $original, entities: $entities);
 			$residuals = $files->getLastResidualEntities();
 		} catch (Throwable $e) {
-			// Log the class and the structured reason only: an exception
-			// message may quote the text that was meant to be redacted.
-			$reason = '';
-			if (method_exists($e, 'getReason') === true) {
-				$reason = (string)$e->getReason();
-			}
-
-			$this->logger->warning('[DocumentRedactor] redaction failed for file '.$original->getId().': '.get_class($e).' '.$reason);
+			// Log the class only: an exception message may quote the text
+			// that was meant to be redacted.
+			$this->logger->warning('[DocumentRedactor] redaction failed for file '.$original->getId().': '.get_class($e));
 			return $this->failed(reason: $this->l10n->t('Redaction failed in OpenRegister. The document stays unpublished.'));
 		}
 
@@ -151,7 +209,7 @@ class DocumentRedactor {
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
 	 */
 	public function verify(File $original, mixed $redacted, mixed $residuals): array {
-		if (($redacted instanceof File) === false || $redacted->getId() <= 0 || $redacted->getId() === $original->getId()) {
+		if (($redacted instanceof File) === false || $redacted->getId() === $original->getId()) {
 			return $this->failed(reason: $this->l10n->t('OpenRegister did not return a separate redacted file.'));
 		}
 
@@ -189,6 +247,86 @@ class DocumentRedactor {
 	}//end verify()
 
 	/**
+	 * Refuse the publish while a partly public document has no verified
+	 * redacted version (fail closed).
+	 *
+	 * A `deels_openbaar` document passes only when its redaction was verified,
+	 * its redacted file still exists, is not the original, and still has the
+	 * bytes that were verified. Anything else names the document and stops
+	 * the publish before anything is written.
+	 *
+	 * @param array<int, array<string, mixed>> $listings The publishable documents.
+	 * @param string                           $owner    The batch's creator.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException Naming every partly public document without a verified redacted version.
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	public function assertPublishable(array $listings, string $owner): void {
+		$unredacted = [];
+		foreach ($listings as $listing) {
+			if ((string)($listing['assessment'] ?? '') !== 'deels_openbaar') {
+				continue;
+			}
+
+			if ($this->isVerified(listing: $listing, owner: $owner) === false) {
+				$name = (string)($listing['title'] ?? '');
+				if ($name === '') {
+					$name = (string)($listing['original'] ?? '');
+				}
+
+				$unredacted[] = $name;
+			}
+		}
+
+		if ($unredacted !== []) {
+			throw new RuntimeException(
+				$this->l10n->t('Publishing is blocked: these partly public documents have no verified redacted version: %s', [implode(', ', $unredacted)])
+			);
+		}
+
+	}//end assertPublishable()
+
+	/**
+	 * Whether a partly public listing points at its verified redacted file.
+	 *
+	 * @param array<string, mixed> $listing The listing.
+	 * @param string               $owner   The batch's creator.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 */
+	private function isVerified(array $listing, string $owner): bool {
+		$reference = (string)($listing['document'] ?? '');
+		$expected = (string)($listing['redactionHash'] ?? '');
+		// The original reached under its own reference, or under another
+		// one, is caught by the file id comparison below.
+		if ((string)($listing['redactionStatus'] ?? '') !== self::VERIFIED || $expected === '') {
+			return false;
+		}
+
+		$redacted = $this->writer->resolve(reference: $reference, owner: $owner);
+		if ($redacted === null) {
+			return false;
+		}
+
+		$original = $this->writer->resolve(reference: (string)($listing['original'] ?? ''), owner: $owner);
+		if ($original !== null && $original->getId() === $redacted->getId()) {
+			return false;
+		}
+
+		try {
+			return hash_equals($expected, (string)$redacted->hash('sha256'));
+		} catch (Throwable) {
+			return false;
+		}
+
+	}//end isVerified()
+
+	/**
 	 * OpenRegister's finding rows as the entity list `anonymizeDocument`
 	 * takes, one per distinct value, exactly as its own endpoint builds it.
 	 *
@@ -219,6 +357,39 @@ class DocumentRedactor {
 		return $entities;
 
 	}//end entities()
+
+	/**
+	 * Whose files a relative document reference lives in: the batch's
+	 * creator, the same owner the publish resolves against.
+	 *
+	 * @param string|null $batchId  The batch uuid, when known.
+	 * @param string      $fallback The acting officer.
+	 *
+	 * @return string
+	 */
+	private function ownerOf(?string $batchId, string $fallback): string {
+		if ((string)$batchId === '') {
+			return $fallback;
+		}
+
+		try {
+			$batch = $this->container->get('OCA\OpenRegister\Service\ObjectService')->find($batchId);
+			if (is_object($batch) === true && method_exists($batch, 'jsonSerialize') === true) {
+				$batch = $batch->jsonSerialize();
+			}
+
+			$owner = (string)($batch['createdBy'] ?? '');
+		} catch (Throwable) {
+			$owner = '';
+		}
+
+		if ($owner === '') {
+			return $fallback;
+		}
+
+		return $owner;
+
+	}//end ownerOf()
 
 	/**
 	 * The fields a failed redaction leaves on the assessment.

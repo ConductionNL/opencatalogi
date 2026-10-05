@@ -361,9 +361,6 @@ class WooService {
 				'weigeringsgronden' => [],
 				'redactionInstructions' => '',
 				'anonymizedDocument' => '',
-				'anonymizedDocumentHash' => '',
-				'redactionStatus' => '',
-				'redactionMessage' => '',
 				'caseReference' => $caseReference,
 				'assessedBy' => '',
 				'assessedAt' => '',
@@ -566,20 +563,8 @@ class WooService {
 		$data['assessedBy'] = $assessedBy;
 		$data['assessedAt'] = $now;
 
-		// A partly public document is published only as its redacted version,
-		// produced and verified now through OpenRegister (woo-redaction-pipeline).
-		// Any other assessment drops a redaction an earlier one left behind.
-		$redaction = [
-			'anonymizedDocument' => '',
-			'anonymizedDocumentHash' => '',
-			'redactionStatus' => '',
-			'redactionMessage' => '',
-		];
-		if ($assessment === 'deels_openbaar') {
-			$redaction = $this->redactor->redact(assessment: $data, owner: $this->documentOwner(batchId: $batchId, fallback: $assessedBy));
-		}
-
-		$data = array_merge($data, $redaction);
+		// A partly public document is published only as its verified redacted version (woo-redaction-pipeline).
+		$data = array_merge($data, $this->redactor->forAssessment(assessment: $data, batchId: $batchId, fallbackOwner: $assessedBy));
 
 		$saved = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
 
@@ -589,37 +574,6 @@ class WooService {
 
 		return $saved;
 	}//end updateAssessment()
-
-	/**
-	 * Whose files a relative document reference lives in: the batch's creator,
-	 * the same owner the publish resolves against.
-	 *
-	 * @param string|null $batchId  The batch uuid, when known.
-	 * @param string      $fallback The acting user.
-	 *
-	 * @return string
-	 *
-	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
-	 */
-	private function documentOwner(?string $batchId, string $fallback): string {
-		$objectService = $this->getObjectService();
-		if ($batchId === null || $batchId === '' || $objectService === null) {
-			return $fallback;
-		}
-
-		try {
-			$owner = (string)($this->normalise(object: $objectService->find($batchId))['createdBy'] ?? '');
-		} catch (\Throwable) {
-			$owner = '';
-		}
-
-		if ($owner === '') {
-			return $fallback;
-		}
-
-		return $owner;
-
-	}//end documentOwner()
 
 	/**
 	 * Ask the deck leaf to move the card(s) linked to an assessment object into
@@ -677,26 +631,12 @@ class WooService {
 
 		$assessments = $this->loadAssessments(batch: $batch);
 		$counts = array_fill_keys(array_keys(self::ASSESSMENTS), 0);
-		$unredacted = [];
 		foreach ($assessments as $assessment) {
 			$status = (string)($assessment['assessment'] ?? 'te_beoordelen');
 			if (array_key_exists($status, $counts) === true) {
 				$counts[$status]++;
 			}
-
-			// Tell the officer which partly public documents cannot be published yet, and why.
-			if ($status === 'deels_openbaar' && (string)($assessment['redactionStatus'] ?? '') !== DocumentRedactor::VERIFIED) {
-				$reason = (string)($assessment['redactionMessage'] ?? '');
-				if ($reason === '') {
-					$reason = $this->l10n->t('No verified redacted version exists yet.');
-				}
-
-				$unredacted[] = [
-					'fileName' => (string)($assessment['fileName'] ?? ($assessment['documentReference'] ?? '')),
-					'reason' => $reason,
-				];
-			}
-		}//end foreach
+		}
 
 		$total = array_sum($counts);
 		$assessed = ($total - $counts['te_beoordelen']);
@@ -706,7 +646,7 @@ class WooService {
 			'total' => $total,
 			'assessed' => $assessed,
 			'progressLabel' => $assessed . '/' . $total,
-			'unredacted' => $unredacted,
+			'unredacted' => $this->redactor->unredacted(assessments: $assessments),
 		];
 
 		return $batch;
@@ -1017,6 +957,7 @@ class WooService {
 
 		$assessments = $this->loadAssessments(batch: $batch);
 		$listings = $this->publications->listings(assessments: $assessments);
+		$this->redactor->assertPublishable(listings: $listings, owner: (string)($batch['createdBy'] ?? ''));
 
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
