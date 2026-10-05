@@ -34,6 +34,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Db\Schema;
 use OCA\OpenRegister\Db\SchemaMapper;
 use OCA\OpenRegister\Service\ObjectService;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -41,6 +42,46 @@ use Psr\Log\LoggerInterface;
  * Tests for WooCategoryRegistry.
  */
 class WooCategoryRegistryTest extends TestCase {
+
+	/**
+	 * Double a class whose method set differs between this tree and CI.
+	 *
+	 * `Schema::getId()` is a magic `Entity` accessor in the real OpenRegister, so
+	 * `createMock()` cannot configure it and PHPUnit raises
+	 * MethodCannotBeConfiguredException. The local stub under tests/Stubs declares
+	 * it as a real method, so the same call succeeds here and fails in CI. Splitting
+	 * the list by `method_exists` at run time satisfies both: `onlyMethods` for what
+	 * the class really declares, `addMethods` for what it resolves magically.
+	 *
+	 * Same helper as RegisterSchemaLinkServiceTest::environmentAwareDouble().
+	 *
+	 * @param class-string         $class   The class to double.
+	 * @param array<int, string>   $methods The methods to configure.
+	 *
+	 * @return MockObject The double.
+	 */
+	private function environmentAwareDouble(string $class, array $methods): MockObject {
+		$existing = [];
+		$absent   = [];
+		foreach ($methods as $method) {
+			if (method_exists($class, $method) === true) {
+				$existing[] = $method;
+			} else {
+				$absent[] = $method;
+			}
+		}
+
+		$builder = $this->getMockBuilder($class)->disableOriginalConstructor();
+		if ($existing !== []) {
+			$builder->onlyMethods($existing);
+		}
+
+		if ($absent !== []) {
+			$builder->addMethods($absent);
+		}
+
+		return $builder->getMock();
+	}//end environmentAwareDouble()
 
 	/**
 	 * A registry that reads the given rows from OpenRegister.
@@ -66,7 +107,7 @@ class WooCategoryRegistryTest extends TestCase {
 			$stored
 		);
 
-		$schema = $this->createMock(Schema::class);
+		$schema = $this->environmentAwareDouble(Schema::class, ['getId']);
 		$schema->method('getId')->willReturn(42);
 
 		$schemaMapper = $this->createMock(SchemaMapper::class);
@@ -255,7 +296,7 @@ class WooCategoryRegistryTest extends TestCase {
 			['results' => [['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat010']]]
 		);
 
-		$schema = $this->createMock(Schema::class);
+		$schema = $this->environmentAwareDouble(Schema::class, ['getId']);
 		$schema->method('getId')->willReturn(42);
 		$schemaMapper = $this->createMock(SchemaMapper::class);
 		$schemaMapper->method('find')->willReturn($schema);
@@ -302,7 +343,7 @@ class WooCategoryRegistryTest extends TestCase {
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->expects($this->once())->method('searchObjectsPaginated')->willReturn(['results' => []]);
 
-		$schema = $this->createMock(Schema::class);
+		$schema = $this->environmentAwareDouble(Schema::class, ['getId']);
 		$schema->method('getId')->willReturn(42);
 		$schemaMapper = $this->createMock(SchemaMapper::class);
 		$schemaMapper->method('find')->willReturn($schema);

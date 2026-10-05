@@ -21,6 +21,46 @@ use RuntimeException;
  */
 class SitemapServiceTest extends TestCase {
 
+	/**
+	 * Double a class whose method set differs between this tree and CI.
+	 *
+	 * `Schema::getId()` is a magic `Entity` accessor in the real OpenRegister, so
+	 * `createMock()` cannot configure it and PHPUnit raises
+	 * MethodCannotBeConfiguredException. The local stub under tests/Stubs declares
+	 * it as a real method, so the same call succeeds here and fails in CI. Splitting
+	 * the list by `method_exists` at run time satisfies both: `onlyMethods` for what
+	 * the class really declares, `addMethods` for what it resolves magically.
+	 *
+	 * Same helper as RegisterSchemaLinkServiceTest::environmentAwareDouble().
+	 *
+	 * @param class-string       $class   The class to double.
+	 * @param array<int, string> $methods The methods to configure.
+	 *
+	 * @return MockObject The double.
+	 */
+	private function environmentAwareDouble(string $class, array $methods): MockObject {
+		$existing = [];
+		$absent   = [];
+		foreach ($methods as $method) {
+			if (method_exists($class, $method) === true) {
+				$existing[] = $method;
+			} else {
+				$absent[] = $method;
+			}
+		}
+
+		$builder = $this->getMockBuilder($class)->disableOriginalConstructor();
+		if ($existing !== []) {
+			$builder->onlyMethods($existing);
+		}
+
+		if ($absent !== []) {
+			$builder->addMethods($absent);
+		}
+
+		return $builder->getMock();
+	}//end environmentAwareDouble()
+
 	private ContainerInterface|MockObject $container;
 	private IAppManager|MockObject $appManager;
 	private SettingsService|MockObject $settingsService;
@@ -1198,7 +1238,7 @@ class SitemapServiceTest extends TestCase {
 		$row = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
 		$row->method('jsonSerialize')->willReturn($stored);
 
-		$schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
+		$schema = $this->environmentAwareDouble(\OCA\OpenRegister\Db\Schema::class, ['getId']);
 		$schema->method('getId')->willReturn(42);
 		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
 		$schemaMapper->method('find')->willReturn($schema);
