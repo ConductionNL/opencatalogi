@@ -1,0 +1,121 @@
+{
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"informationCategory"
+				],
+				"configuration": {
+					"schemas": {
+						"informationCategory": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "An information category this instance added. WooCategoryRegistry reads it, and refuses one that names no waardelijst member"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"informationCategory": {
+				"slug": "informationCategory",
+				"title": "Information category",
+				"version": "0.1.0",
+				"published": "2026-10-05T00:00:00+00:00",
+				"summary": "An information category this instance added itself",
+				"description": "The 18 information categories of the Woo come from the scw_woo_informatiecategorieen waardelijst and need no row here. A row adds a category of your own, with its own sitemap and its own schemas. It must say which waardelijst member it publishes under, because the national index accepts no other value. A row that does not is refused: it gets no sitemap, so nothing it holds is offered to the index.",
+				"icon": "FolderOutline",
+				"type": "object",
+				"required": [
+					"code",
+					"title",
+					"mapsTo"
+				],
+				"authorization": {
+					"read": [
+						"admin"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin"
+					],
+					"delete": [
+						"admin"
+					]
+				},
+				"properties": {
+					"code": {
+						"type": "string",
+						"title": "Code",
+						"description": "The code a publication stores and the sitemap file name carries. Lowercase letters, digits and hyphens, at most 48 characters. Pick one that is not an infocat code, because those are taken.",
+						"maxLength": 48,
+						"pattern": "^[a-z0-9]([a-z0-9-]{0,46}[a-z0-9])?$",
+						"facetable": true
+					},
+					"title": {
+						"type": "string",
+						"title": "Name",
+						"description": "The Dutch name of the category, as readers see it.",
+						"maxLength": 200
+					},
+					"titleEn": {
+						"type": "string",
+						"title": "Name in English",
+						"description": "The English name. Left empty, the Dutch name is used.",
+						"maxLength": 200
+					},
+					"mapsTo": {
+						"type": "string",
+						"title": "Publishes under",
+						"description": "The waardelijst member this category is offered to the national index as. Give an infocat code, the official name, or the TOOI identifier. A value that is not a member means the category publishes nothing.",
+						"maxLength": 255,
+						"facetable": true
+					},
+					"schemas": {
+						"type": "array",
+						"title": "Schemas",
+						"description": "The schemas this category's sitemap lists, by slug. Left empty, every schema of the catalogue is listed, which is what the 18 bundled categories do.",
+						"items": {
+							"type": "string",
+							"maxLength": 255
+						}
+					}
+				}
+			},
+			"publication": {
+				"version": "0.0.7",
+				"properties": {
+					"wooCategory": {
+						"type": "string",
+						"title": "Woo information category",
+						"description": "The information category of the Woo this publication is filed under. The sitemap of that category lists it for the national Woo index. Seventeen are the categories of article 3.3; infocat018 is the inspanningsverplichting of article 3.1.",
+						"enum": [
+							"infocat018"
+						],
+						"x-enum-labels": {
+							"infocat018": "Best-efforts obligation under art. 3.1 Woo"
+						}
+					},
+					"soortHandeling": {
+						"type": "string",
+						"title": "Document handling",
+						"description": "What happened to the document on the publication date. The national index takes one of three values from the DiWoo documenthandelingen list. Left empty, receipt is used.",
+						"enum": [
+							"ontvangst",
+							"vaststelling",
+							"ondertekening"
+						],
+						"x-enum-labels": {
+							"ontvangst": "Received",
+							"vaststelling": "Adopted",
+							"ondertekening": "Signed"
+						},
+						"facetable": true
+					}
+				}
+			}
+		}
+	}
+}

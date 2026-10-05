@@ -3,9 +3,12 @@
 /**
  * The publication schema stores a Woo information category (REQ-WPC-001).
  *
- * Validates real payloads against the SHIPPED `publication` fragment in
- * lib/Settings/publication_register.json with the same Opis validator
- * OpenRegister uses, so a value the schema refuses can never pass here.
+ * Validates real payloads against the SHIPPED `publication` schema with the same
+ * Opis validator OpenRegister uses, so a value the schema refuses can never pass
+ * here. The schema is the monolith in lib/Settings/publication_register.json with
+ * every lib/Settings/register.d fragment merged onto it through the production
+ * merge, because that merge is what the instance imports: reading the monolith
+ * alone asserts a schema nobody runs.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests
@@ -26,7 +29,9 @@ declare(strict_types=1);
 
 namespace Unit\Settings;
 
-use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Service\TooiVocabularyService;
+use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Service\WooCategory;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Validator;
@@ -38,13 +43,28 @@ use PHPUnit\Framework\TestCase;
 class PublicationWooCategoryTest extends TestCase {
 
 	/**
-	 * The shipped publication schema fragment.
+	 * The shipped publication schema, monolith plus every register.d fragment.
+	 *
+	 * Merged with SettingsService::deepMergeConfig() itself, by filename order, so
+	 * the test cannot pass against a merge of its own invention.
 	 *
 	 * @return array<string, mixed>
 	 */
 	private function publicationSchema(): array {
-		$register = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/publication_register.json'), true);
-		return $register['components']['schemas']['publication'];
+		$settings = __DIR__ . '/../../../lib/Settings';
+		$merged = json_decode((string)file_get_contents($settings . '/publication_register.json'), true);
+
+		$merge = new \ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$merge->setAccessible(true);
+
+		$fragments = glob($settings . '/register.d/*.json');
+		sort($fragments);
+		foreach ($fragments as $fragment) {
+			$overlay = json_decode((string)file_get_contents($fragment), true);
+			$merged = $merge->invoke(null, $merged, $overlay);
+		}
+
+		return $merged['components']['schemas']['publication'];
 	}
 
 	/**
@@ -70,17 +90,16 @@ class PublicationWooCategoryTest extends TestCase {
 		return [$result->isValid(), $errors];
 	}
 
-	public function testTheSchemaDeclaresTheSeventeenCodes(): void {
+	public function testTheSchemaDeclaresEveryWaardelijstCode(): void {
 		$property = ($this->publicationSchema()['properties']['wooCategory'] ?? null);
 		$this->assertNotNull($property, 'The publication schema declares no wooCategory.');
 		$this->assertSame('string', $property['type']);
 		$this->assertArrayNotHasKey('format', $property);
 
-		$expected = [];
-		foreach (array_keys(SitemapService::INFO_CAT) as $file) {
-			preg_match('/infocat\d{3}/', $file, $match);
-			$expected[] = $match[0];
-		}
+		// The waardelijst resolver is the one authority for the member list.
+		$expected = array_keys((new TooiVocabularyService())->informatiecategorieList());
+		$this->assertCount(18, $expected);
+		$this->assertContains('infocat018', $expected, 'The art 3.1 category is missing.');
 
 		$this->assertSame($expected, $property['enum']);
 		$this->assertSame($expected, array_keys(WooCategory::ALL));
@@ -88,6 +107,45 @@ class PublicationWooCategoryTest extends TestCase {
 		foreach (WooCategory::ALL as $code => $names) {
 			$this->assertSame($names['en'], $property['x-enum-labels'][$code]);
 		}
+	}
+
+	public function testEveryCodeRoundTripsThroughItsSitemapFileName(): void {
+		// The national harvester matches the file name, so the convention is
+		// load-bearing: a code whose file name does not parse back is not published.
+		foreach (array_keys((new TooiVocabularyService())->informatiecategorieList()) as $code) {
+			$file = WooCategoryRegistry::sitemapFileFor(code: $code);
+			$this->assertSame('sitemapindex-diwoo-' . $code . '.xml', $file);
+			$this->assertSame($code, WooCategoryRegistry::codeOf(sitemapFile: $file));
+		}
+	}
+
+	public function testTheSchemaStoresADocumenthandeling(): void {
+		$property = ($this->publicationSchema()['properties']['soortHandeling'] ?? null);
+		$this->assertNotNull($property, 'The publication schema stores no soortHandeling.');
+		$this->assertSame('string', $property['type']);
+
+		// The enum is the DiWoo documenthandelingen value list, nothing else.
+		$expected = array_keys((new TooiVocabularyService())->soortHandelingList());
+		$this->assertSame($expected, $property['enum']);
+		$this->assertSame($expected, array_keys($property['x-enum-labels']));
+	}
+
+	public function testAStoredDocumenthandelingIsAccepted(): void {
+		[$valid] = $this->validate(
+			['title' => 'Besluit', 'wooCategory' => 'infocat016', 'soortHandeling' => 'vaststelling']
+		);
+		$this->assertTrue($valid);
+	}
+
+	public function testADocumenthandelingOutsideTheValueListIsRefused(): void {
+		[$valid, $errors] = $this->validate(['title' => 'Besluit', 'soortHandeling' => 'inzage']);
+		$this->assertFalse($valid);
+		$this->assertArrayHasKey('/soortHandeling', $errors);
+	}
+
+	public function testTheArt31CategoryIsAccepted(): void {
+		[$valid] = $this->validate(['title' => 'Inspanningsverplichting', 'wooCategory' => 'infocat018']);
+		$this->assertTrue($valid);
 	}
 
 	public function testAFiledPublicationIsAccepted(): void {

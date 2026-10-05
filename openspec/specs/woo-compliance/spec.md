@@ -169,6 +169,11 @@ default MUST remain `ontvangst` (a value-list member) for backwards
 compatibility, but a publication or catalog MAY declare a different handling
 type, which MUST resolve to a value-list member before it is emitted.
 
+The publication schema MUST carry the property that holds that declaration,
+`soortHandeling`, with the three members of the DiWoo documenthandelingen value
+list as its enum. Without the property the renderer reads a value nothing can
+store, so every document claims the default.
+
 #### Scenario: default handling type resolves through the value list
 
 - **GIVEN** a publication that declares no explicit handling type
@@ -180,6 +185,15 @@ type, which MUST resolve to a value-list member before it is emitted.
 - **GIVEN** a publication declaring handling type `vaststelling`
 - **WHEN** its `diwoo:Document` is generated
 - **THEN** `diwoo:soortHandeling` MUST be `vaststelling` from the value list
+
+#### Scenario: the handling type is a stored choice on the publication
+
+- **GIVEN** the shipped publication schema
+- **WHEN** a publication is saved with `soortHandeling` set to `vaststelling`
+- **THEN** validation passes and the value is stored
+- **AND** a value outside the documenthandelingen list fails validation naming the property
+
+> @e2e exclude Schema validation contract; PHPUnit validates the real payload with the Opis validator against the merged shipped schema (PublicationWooCategoryTest).
 
 ### Requirement: Bundled TOOI/DiWoo value lists and a DIWOO validator (WOO-TOOI-004)
 
@@ -376,7 +390,7 @@ The publication page SHALL offer an Announce action for an admin that calls `POS
 
 ### Requirement: A publication stores the Woo information category it belongs to (REQ-WPC-001)
 
-The publication schema SHALL carry an optional property `wooCategory` whose value is one of the codes `infocat001` to `infocat017`. A value outside that list SHALL fail validation against the publication schema, and no category sitemap SHALL list it.
+The publication schema SHALL carry an optional property `wooCategory` whose value is one of the codes `infocat001` to `infocat018`, the members of version 4 of the `scw_woo_informatiecategorieen` waardelijst, or a code this instance added as data (REQ-WIC-001). A value outside that list SHALL fail validation against the publication schema, and no category sitemap SHALL list it.
 
 #### Scenario: An editor files a publication
 
@@ -408,13 +422,13 @@ The publication schema SHALL carry an optional property `wooCategory` whose valu
 
 ### Requirement: The editor is offered the 17 categories (REQ-WPC-003)
 
-`GET /api/woo/categories` SHALL return the 17 codes with their Dutch and English names for an admin or an editor, and the publication form SHALL show them in a labelled select.
+`GET /api/woo/categories` SHALL return every information category this instance serves, with its Dutch and English name, the waardelijst URI it publishes under and whether it is a waardelijst member or a local addition, for an admin or an editor. The publication form SHALL show them in a labelled select.
 
 #### Scenario: The select lists all categories
 
 - **GIVEN** an editor opening a new publication in a Woo-enabled catalogue
 - **WHEN** the category select is opened
-- **THEN** it lists 17 options, each named in the user's language
+- **THEN** it lists every category this instance serves, each named in the user's language
 
 > @e2e exclude The options come from the schema enum and its x-enum-labels through the generic nc-vue select; the enum, labels and Dutch names are asserted by PHPUnit (PublicationWooCategoryTest), the API list by tests/e2e/woo-category.spec.ts.
 
@@ -422,7 +436,64 @@ The publication schema SHALL carry an optional property `wooCategory` whose valu
 
 - **GIVEN** a signed-in user
 - **WHEN** they call `GET /api/woo/categories`
-- **THEN** the response lists 17 categories, each with its code, Dutch name and English name
+- **THEN** the response lists every category, each with its code, Dutch name, English name, waardelijst URI and origin
+
+### Requirement: The information categories are data, not code (REQ-WIC-001)
+
+Adding an information category SHALL need no code change. `WooCategoryRegistry` SHALL serve the 18 members of the `scw_woo_informatiecategorieen` waardelijst together with every category stored as an `informationCategory` object, and the sitemap routes, the `robots.txt` lines, the national-index registration request and `GET /api/woo/categories` SHALL all be built from that one set. The sitemap file name of a category SHALL be `sitemapindex-diwoo-{code}.xml`, because the national harvester matches that name.
+
+#### Scenario: An operator adds a category of their own
+
+- **GIVEN** an admin stores an `informationCategory` with code `aanbestedingen` that publishes under `infocat018`
+- **WHEN** the registry is read
+- **THEN** `sitemapindex-diwoo-aanbestedingen.xml` is served, appears in `robots.txt` and is offered by `GET /api/woo/categories`
+- **AND** no code was changed to get it
+
+> @e2e exclude Server-side registry over an OpenRegister schema with no browser surface of its own; PHPUnit (WooCategoryRegistryTest) hands the registry the stored rows where OpenRegister hands them in.
+
+#### Scenario: The art 3.1 category is one of the bundled members
+
+- **GIVEN** a publication filed under `infocat018`
+- **WHEN** the harvester requests `sitemapindex-diwoo-infocat018.xml`
+- **THEN** the publication is listed with the TOOI URI `…/kern/c_816e508d`
+
+> @e2e exclude The emitted XML carries this; PHPUnit (SitemapServiceTest, WooCategoryRegistryTest) asserts the file name and the URI.
+
+### Requirement: A locally added category publishes under a waardelijst member (REQ-WIC-002)
+
+A stored `informationCategory` SHALL name, in `mapsTo`, the waardelijst member it is offered to the national index as. One whose `mapsTo` resolves to no member SHALL be refused: it SHALL get no record, no sitemap file and no route, its publications SHALL be listed by no sitemap, and the refusal SHALL be logged and reported by `rejected()`. A category whose code is already a waardelijst member SHALL be refused the same way, and the waardelijst member SHALL stay as it was. No category SHALL reach a sitemap without a waardelijst URI.
+
+#### Scenario: A category that names no member publishes nothing
+
+- **GIVEN** a stored `informationCategory` with code `verzonnen` whose `mapsTo` is `iets anders`
+- **WHEN** the harvester requests `sitemapindex-diwoo-verzonnen.xml`
+- **THEN** the request is refused with 400
+- **AND** the category is absent from `robots.txt` and from the registration request
+- **AND** `rejected()` names it with the reason
+
+> @e2e exclude The refusal happens in the registry before any HTTP surface; PHPUnit (WooCategoryRegistryTest) asserts the absent record, the absent sitemap file and the recorded reason.
+
+#### Scenario: A document filed under a refused category emits no category axis
+
+- **GIVEN** a publication whose `wooCategory` is a refused local code
+- **WHEN** its DiWoo document is rendered
+- **THEN** `diwoo:informatiecategorie` is omitted and a violation is recorded
+- **AND** no free-text `@resource` is emitted
+
+> @e2e exclude Render-time fail-closed path; PHPUnit (WooCategoryRegistryTest, SitemapServiceTest) asserts the null resolution and the omitted axis.
+
+### Requirement: A category names the schemas its sitemap lists (REQ-WIC-003)
+
+A stored `informationCategory` MAY name schema slugs in `schemas`. When it does, the category's sitemap SHALL list publications from those schemas only, within the catalogue's own scope. When it names none, the catalogue's whole schema scope SHALL be searched, which is what the waardelijst members do. A named slug that no register declares SHALL narrow the search rather than widen it.
+
+#### Scenario: Two categories list different schemas
+
+- **GIVEN** a catalogue publishing the `publication` and `tender` schemas
+- **AND** a stored category `aanbestedingen` naming `tender` only
+- **WHEN** the harvester requests that category's sitemap
+- **THEN** only `tender` rows filed under `aanbestedingen` are listed
+
+> @e2e exclude Server-side query scoping with no browser surface; PHPUnit (WooCategoryRegistryTest) asserts the declared slugs and SitemapServiceTest the query they produce.
 
 ### Requirement: A batch publish from a Woo request files under the decision category (REQ-WPC-004)
 
@@ -506,9 +577,9 @@ The harvester readiness check (WOO-HR-001) SHALL run once a day while at least o
 
 ## Data Model
 
-### WOO Information Categories (INFO_CAT)
+### WOO information categories
 
-The 17 mandatory WOO categories mapped to sitemap codes:
+The waardelijst members mapped to sitemap file names. The set is served by `WooCategoryRegistry`, not by a constant, so a category this instance added appears beside these without a code change.
 
 | Code | Category (Dutch) |
 |------|-----------------|
@@ -529,6 +600,7 @@ The 17 mandatory WOO categories mapped to sitemap codes:
 | sitemapindex-diwoo-infocat015.xml | Onderzoeksrapporten |
 | sitemapindex-diwoo-infocat016.xml | Beschikkingen |
 | sitemapindex-diwoo-infocat017.xml | Klachtoordelen |
+| sitemapindex-diwoo-infocat018.xml | Inspanningsverplichting art 3.1 Woo |
 
 ### DIWOO Document Metadata Mapping
 

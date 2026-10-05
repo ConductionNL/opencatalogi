@@ -27,4 +27,17 @@ class Schema implements \JsonSerializable {
 		return [];
 	}//end jsonSerialize()
 
+	/**
+	 * The schema's numeric id, which a search query addresses it by.
+	 *
+	 * Declared so a mock of this stub can answer it. A method absent from the stub
+	 * cannot be stubbed, and PHPUnit's error for that names the method, not the
+	 * stub, which sends the reader looking in the wrong file.
+	 *
+	 * @return integer|null
+	 */
+	public function getId(): ?int {
+		return null;
+	}//end getId()
+
 }//end class

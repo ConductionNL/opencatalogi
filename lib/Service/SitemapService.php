@@ -29,6 +29,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -73,25 +74,6 @@ class SitemapService {
 	 */
 	private const APP_NAME = 'opencatalogi';
 
-	public const INFO_CAT = [
-		'sitemapindex-diwoo-infocat001.xml' => 'Wetten en algemeen verbindende voorschriften',
-		'sitemapindex-diwoo-infocat002.xml' => 'Overige besluiten van algemene strekking',
-		'sitemapindex-diwoo-infocat003.xml' => 'Ontwerpen van wet- en regelgeving met adviesaanvraag',
-		'sitemapindex-diwoo-infocat004.xml' => 'Organisatie en werkwijze',
-		'sitemapindex-diwoo-infocat005.xml' => 'Bereikbaarheidsgegevens',
-		'sitemapindex-diwoo-infocat006.xml' => 'Bij vertegenwoordigende organen ingekomen stukken',
-		'sitemapindex-diwoo-infocat007.xml' => 'Vergaderstukken Staten-Generaal',
-		'sitemapindex-diwoo-infocat008.xml' => 'Vergaderstukken decentrale overheden',
-		'sitemapindex-diwoo-infocat009.xml' => "Agenda's en besluitenlijsten bestuurscolleges",
-		'sitemapindex-diwoo-infocat010.xml' => 'Adviezen',
-		'sitemapindex-diwoo-infocat011.xml' => 'Convenanten',
-		'sitemapindex-diwoo-infocat012.xml' => 'Jaarplannen en jaarverslagen',
-		'sitemapindex-diwoo-infocat013.xml' => 'Subsidieverplichtingen anders dan met beschikking',
-		'sitemapindex-diwoo-infocat014.xml' => 'Woo-verzoeken en -besluiten',
-		'sitemapindex-diwoo-infocat015.xml' => 'Onderzoeksrapporten',
-		'sitemapindex-diwoo-infocat016.xml' => 'Beschikkingen',
-		'sitemapindex-diwoo-infocat017.xml' => 'Klachtoordelen',
-	];
 
 	/**
 	 * Constructor for SitemapService.
@@ -103,6 +85,7 @@ class SitemapService {
 	 * @param IAppConfig $config App configuration (operator-tunable page size)
 	 * @param TooiVocabularyService $tooiVocabulary The TOOI value-list resolver
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
+	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -112,6 +95,7 @@ class SitemapService {
 		private readonly IAppConfig $config,
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly PublicationQueryService $queryService,
+		private readonly WooCategoryRegistry $categories,
 	) {
 
 	}//end __construct()
@@ -122,6 +106,22 @@ class SitemapService {
 	 * @var array<string, string|null>
 	 */
 	private array $orgTooiCache = [];
+
+	/**
+	 * The sitemap file names this instance serves, and the title each one carries.
+	 *
+	 * The categories are data (REQ-WIC-001), so this is a method over
+	 * {@see WooCategoryRegistry} rather than the former `INFO_CAT` constant. A
+	 * category an operator added appears here without a code change, and one the
+	 * registry refused does not appear at all.
+	 *
+	 * @return array<string, string> File name → category title.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-information-categories-are-data-not-code-req-wic-001
+	 */
+	public function sitemapFiles(): array {
+		return $this->categories->sitemapFiles();
+	}//end sitemapFiles()
 
 	/**
 	 * Resolve the operator-configured maximum publications per sitemap page.
@@ -359,7 +359,17 @@ class SitemapService {
 			$schemas = array_values($this->queryService->applySchemaScopeReadRuleGuard(schemaIds: $scope['schemas']));
 		}
 
-		$code = self::categoryOf(categoryCode: $categoryCode);
+		$code = WooCategoryRegistry::codeOf(sitemapFile: $categoryCode);
+		if ($code !== null && $this->categories->schemasFor(code: $code) !== []) {
+			// A category may name the schemas its own sitemap lists (REQ-WIC-003).
+			// Whether a named slug RESOLVES is not the test: the test is whether the
+			// category named any. A slug no register declares resolves to no id and
+			// must leave the search empty, because reading "resolved to nothing" as
+			// "names nothing" would widen the sitemap back to the whole catalogue —
+			// the opposite of the instruction, and silently.
+			$schemas = array_values(array_intersect($schemas, $this->declaredSchemaIds(code: $code)));
+		}
+
 		if ($code !== null && $scope['registers'] !== [] && $schemas !== []) {
 			$queries[] = CallerScope::writeScope(query: ['wooCategory' => $code], registers: $scope['registers'], schemas: $schemas);
 		}
@@ -370,6 +380,44 @@ class SitemapService {
 
 		return $queries;
 	}//end sitemapQueries()
+
+	/**
+	 * The schema ids a category names for its own sitemap (REQ-WIC-003).
+	 *
+	 * The category stores schema slugs, because a slug is what an operator writes
+	 * and what survives a reinstall; the search needs ids. Every register in the
+	 * settings carries its schemas as full objects, so the slugs resolve from data
+	 * already loaded. A slug no register declares resolves to nothing and is
+	 * therefore absent from the result. The caller asks this only of a category that
+	 * named slugs, and treats an empty answer as "no schema to search", never as
+	 * "every schema".
+	 *
+	 * @param string $code The category code.
+	 *
+	 * @return array<int, mixed> The schema ids the named slugs resolved to.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-category-names-the-schemas-its-sitemap-lists-req-wic-003
+	 */
+	private function declaredSchemaIds(string $code): array {
+		$wanted = array_map('strtolower', $this->categories->schemasFor(code: $code));
+		$ids = [];
+		foreach (($this->settingsService->getSettings()['availableRegisters'] ?? []) as $register) {
+			foreach (($register['schemas'] ?? []) as $schema) {
+				if (is_array($schema) === false) {
+					continue;
+				}
+
+				$slug = strtolower(trim((string)($schema['slug'] ?? '')));
+				if ($slug === '' || in_array($slug, $wanted, true) === false) {
+					continue;
+				}
+
+				$ids[] = ($schema['id'] ?? null);
+			}
+		}
+
+		return array_values(array_filter($ids, static fn (mixed $id): bool => $id !== null));
+	}//end declaredSchemaIds()
 
 	/**
 	 * The registers and schemas a catalogue publishes from.
@@ -396,22 +444,6 @@ class SitemapService {
 		];
 	}//end catalogScope()
 
-	/**
-	 * The category code in a sitemap file name.
-	 *
-	 * @param string $categoryCode The sitemap file name, e.g. sitemapindex-diwoo-infocat012.xml.
-	 *
-	 * @return string|null The code, e.g. infocat012, or null.
-	 *
-	 * @spec openspec/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
-	 */
-	private static function categoryOf(string $categoryCode): ?string {
-		if (preg_match('/infocat\d{3}/', $categoryCode, $match) === 1) {
-			return $match[0];
-		}
-
-		return null;
-	}//end categoryOf()
 
 	/**
 	 * Page N of every sitemap source, merged and listed once per publication.
@@ -537,7 +569,12 @@ class SitemapService {
 			}
 		}
 
-		if (isset($this::INFO_CAT[$categoryCode]) === false) {
+		// The categories are data (REQ-WIC-001): a file name nothing is served at,
+		// and a local category the registry refused for want of a waardelijst
+		// member, are the same 400 here. That is the guarantee an unmapped local
+		// category cannot reach a sitemap: it has no record, so it has no route.
+		$category = $this->categories->findBySitemapFile(sitemapFile: $categoryCode);
+		if ($category === null) {
 			return new XMLResponse(data: 'Invalid category code', status: 400);
 		}
 
@@ -554,7 +591,7 @@ class SitemapService {
 		);
 
 		// Have to trim whitespace because of typo in schema title definition.
-		$needle = trim($this::INFO_CAT[$categoryCode]);
+		$needle = trim($category['label']);
 		$haystack = array_map(
 			function ($sch) {
 				return trim($sch['title']);
@@ -562,10 +599,12 @@ class SitemapService {
 			$schemas
 		);
 
-		// Get current schema belonging to requested category code.
+		// Get current schema belonging to requested category code. A category that
+		// names its own schemas (REQ-WIC-003) does not also get the title-matched
+		// schema of the legacy `woo` register: the named list is the whole answer.
 		$index = array_search(needle: $needle, haystack: $haystack);
 		$schemaId = null;
-		if ($index !== false && isset($schemas[$index]) === true) {
+		if ($index !== false && isset($schemas[$index]) === true && $category['schemas'] === []) {
 			$schemaId = $schemas[$index]['id'];
 		}
 
@@ -674,7 +713,7 @@ class SitemapService {
 			$publication['wooCategory'] ?? $publication['category']
 			?? $publication['tooiCategorieUri'] ?? $publication['tooiCategorieNaam'] ?? null
 		);
-		$category = $this->tooiVocabulary->resolveInformatiecategorie($this->stringOrNull(value: $categoryRaw));
+		$category = $this->categories->resolveForDocument($this->stringOrNull(value: $categoryRaw));
 		if ($category !== null) {
 			$diwoo['diwoo:classificatiecollectie'] = [
 				'diwoo:informatiecategorieen' => [
@@ -689,7 +728,7 @@ class SitemapService {
 				violations: $violations,
 				loc: $loc,
 				axis: 'informatiecategorie',
-				reason: 'category does not resolve to a TOOI value-list member'
+				reason: 'category resolves to no member of the informatiecategorieen waardelijst'
 			);
 		}
 

@@ -62,6 +62,19 @@ XML;
 		$this->client = $this->createMock(IClient::class);
 		$this->directoryService = $this->createMock(DirectoryService::class);
 		$this->sitemapService = $this->createMock(SitemapService::class);
+
+		// The readiness check samples the FIRST category sitemap. The categories are
+		// data now, so that name comes from SitemapService::sitemapFiles(), which
+		// this mock answers with a literal on purpose: building it from a real
+		// WooCategoryRegistry would execute three classes outside this class's
+		// `@covers`, and PHPUnit then marks the test risky and DISCARDS its whole
+		// coverage report. That is how an earlier revision of this file dropped
+		// WooReadinessService from 254 covered statements to 9 while every test
+		// stayed green. What the real list holds is asserted by
+		// WooCategoryRegistryTest and SitemapServiceTest.
+		$this->sitemapService->method('sitemapFiles')->willReturn(
+			['sitemapindex-diwoo-infocat001.xml' => 'Wetten en algemeen verbindende voorschriften']
+		);
 		$this->settingsService = $this->createMock(SettingsService::class);
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->urlGenerator = $this->createMock(IURLGenerator::class);

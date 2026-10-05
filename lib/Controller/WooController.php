@@ -36,7 +36,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\WooCategory;
+use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Service\WooService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -60,6 +60,7 @@ class WooController extends Controller {
 	 * @param WooService $wooService The WOO workflow service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
+	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		$appName,
@@ -67,6 +68,7 @@ class WooController extends Controller {
 		private readonly WooService $wooService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
+		private readonly WooCategoryRegistry $categories,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -107,10 +109,12 @@ class WooController extends Controller {
 	}//end weigeringsgronden()
 
 	/**
-	 * Return the 17 Woo information categories a publication can be filed under.
+	 * Return the Woo information categories a publication can be filed under.
 	 *
-	 * Read-only; authenticated. Each row carries the code `wooCategory` stores,
-	 * the Dutch and English name, and a label in the reader's language.
+	 * Read-only; authenticated. Each row carries the code `wooCategory` stores, the
+	 * Dutch and English name, the waardelijst URI it publishes under, and whether it
+	 * is a waardelijst member or a category this instance added as data. An operator
+	 * who adds one gets it here without a code change (REQ-WIC-001).
 	 *
 	 * @return JSONResponse The categories and their count.
 	 *
@@ -119,9 +123,10 @@ class WooController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-editor-is-offered-the-17-categories-req-wpc-003
 	 *
-	 * @no-admin-idor-exempt Returns the `WooCategory::ALL` class CONSTANT,
-	 *   the 17 categories of the Woo, the same rows for every caller. No storage is
-	 *   touched and the endpoint takes no parameter, so there is no object id to scope.
+	 * @no-admin-idor-exempt Returns the information categories, the same rows for
+	 *   every caller: a controlled vocabulary plus this instance's own additions,
+	 *   which are public configuration. The endpoint takes no parameter, so there is
+	 *   no object id to scope.
 	 */
 	public function categories(): JSONResponse {
 		if ($this->userSession->getUser() === null) {
@@ -129,12 +134,16 @@ class WooController extends Controller {
 		}
 
 		$rows = [];
-		foreach (WooCategory::ALL as $code => $names) {
+		foreach ($this->categories->all() as $code => $category) {
 			$rows[] = [
 				'code' => $code,
-				'nl' => $names['nl'],
-				'en' => $names['en'],
-				'label' => $this->l10n->t($names['en']),
+				'nl' => $category['label'],
+				'en' => $category['labelEn'],
+				'label' => $this->l10n->t($category['labelEn']),
+				'uri' => $category['tooiUri'],
+				'mapsTo' => $category['mapsTo'],
+				'origin' => $category['origin'],
+				'sitemap' => $category['sitemapFile'],
 			];
 		}
 

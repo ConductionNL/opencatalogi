@@ -30,6 +30,8 @@ This can be toggled on or off on the create catalog modal and is turned off by d
 This option is called hasWooSitemap on a Catalog.
 
 If enabled the robots.txt will be expanded with urls foreach Woo informatiecategorie.
+The list comes from `WooCategoryRegistry`, so a category this instance added as data
+gets a line too, at `sitemapindex-diwoo-{code}.xml`.
 That expansion on the robots.txt will look like:
 
 ```
@@ -65,7 +67,9 @@ That expansion on the robots.txt will look like:
 
  Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat016.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat017.xml 
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat017.xml  
+
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat018.xml 
 ```
 
 ${DOMAIN} is placed here so it can be replaced by NGINX with a configured frontend domain.

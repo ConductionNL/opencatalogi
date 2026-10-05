@@ -1295,7 +1295,22 @@ OC.L10N.register(
         "%1$d new publications for your search \"%2$s\"": "%1$d nieuwe publicaties voor uw zoekopdracht \"%2$s\"",
         "These publications match your search \"%1$s\".": "Deze publicaties passen bij uw zoekopdracht \"%1$s\".",
         "A new publication matches your search \"%1$s\".": "Er is een nieuwe publicatie die past bij uw zoekopdracht \"%1$s\".",
-        "And %1$d more. Search again to see them all.": "En nog %1$d. Zoek opnieuw om ze allemaal te zien."
+        "And %1$d more. Search again to see them all.": "En nog %1$d. Zoek opnieuw om ze allemaal te zien.",
+        "Information category": "Informatiecategorie",
+        "Name in English": "Naam in het Engels",
+        "Publishes under": "Publiceert onder",
+        "Document handling": "Documenthandeling",
+        "Received": "Ontvangst",
+        "Adopted": "Vaststelling",
+        "Signed": "Ondertekening",
+        "Best-efforts obligation under art. 3.1 Woo": "Inspanningsverplichting art 3.1 Woo",
+        "The Dutch name of the category, as readers see it.": "De Nederlandse naam van de categorie, zoals lezers die zien.",
+        "The English name. Left empty, the Dutch name is used.": "De Engelse naam. Laat je dit leeg, dan wordt de Nederlandse naam gebruikt.",
+        "The code a publication stores and the sitemap file name carries. Lowercase letters, digits and hyphens, at most 48 characters. Pick one that is not an infocat code, because those are taken.": "De code die een publicatie opslaat en die in de naam van het sitemapbestand staat. Kleine letters, cijfers en streepjes, maximaal 48 tekens. Kies geen infocat-code, die zijn vergeven.",
+        "The schemas this category's sitemap lists, by slug. Left empty, every schema of the catalogue is listed, which is what the 18 bundled categories do.": "De schema's die het sitemap van deze categorie opsomt, op slug. Laat je dit leeg, dan wordt elk schema van de catalogus opgesomd, net als bij de 18 meegeleverde categorieën.",
+        "The waardelijst member this category is offered to the national index as. Give an infocat code, the official name, or the TOOI identifier. A value that is not a member means the category publishes nothing.": "De waardelijstcategorie waaronder deze categorie aan de landelijke index wordt aangeboden. Geef een infocat-code, de officiële naam of de TOOI-identificatie. Een waarde die geen lid is, betekent dat de categorie niets publiceert.",
+        "What happened to the document on the publication date. The national index takes one of three values from the DiWoo documenthandelingen list. Left empty, receipt is used.": "Wat er met het document is gebeurd op de publicatiedatum. De landelijke index neemt een van de drie waarden uit de DiWoo-lijst documenthandelingen. Laat je dit leeg, dan wordt ontvangst gebruikt.",
+        "The information category of the Woo this publication is filed under. The sitemap of that category lists it for the national Woo index. Seventeen are the categories of article 3.3; infocat018 is the inspanningsverplichting of article 3.1.": "De informatiecategorie van de Woo waaronder deze publicatie valt. Het sitemap van die categorie somt haar op voor de landelijke Woo-index. Zeventien zijn de categorieën van artikel 3.3; infocat018 is de inspanningsverplichting van artikel 3.1."
     },
     "nplurals=2; plural=(n != 1);"
 )

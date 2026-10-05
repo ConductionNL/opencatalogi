@@ -5,7 +5,7 @@
  *
  * Bundled reference data for the three DIWOO metadata axes the national Woo-index
  * (KOOP/DiWoo) requires as official value-list URIs rather than free text:
- * `informatiecategorie` (the 17 Woo categories), `publisher` (a TOOI organisatie
+ * `informatiecategorie` (the 18 Woo categories), `publisher` (a TOOI organisatie
  * identifier), and `soortHandeling` (the DiWoo handling-type list). Values are the
  * official TOOI kern-thesaurus identifiers
  * (`https://identifier.overheid.nl/tooi/def/thes/kern/c_…`) and organisatie
@@ -53,9 +53,18 @@ class TooiVocabularyService {
 	public const ORG_ID_BASE = 'https://identifier.overheid.nl/tooi/id/';
 
 	/**
-	 * The 17 Woo informatiecategorieën → official TOOI kern identifier + canonical
-	 * label, keyed by the sitemap route code (WOO-003). Sourced from the
-	 * `scw_woo_informatiecategorieen` waardelijst.
+	 * The 18 Woo informatiecategorieën → official TOOI kern identifier + canonical
+	 * label, keyed by the sitemap route code (WOO-003). Sourced from version 4 of
+	 * the `scw_woo_informatiecategorieen` waardelijst, which is the version DiWoo
+	 * 0.9.8 binds in `diwoo-metadata-lijsten.xsd` (`informatiecategorielijst`).
+	 *
+	 * Version 4 is where `inspanningsverplichting art 3.1 Woo` (`c_816e508d`,
+	 * `infocat018`) comes from. The list held 17 members while we declared DiWoo
+	 * 0.9.8, so a publication filed under the art 3.1 category had nowhere to go.
+	 *
+	 * Each entry's `aliases` carry the version 1 and version 2 `skos:prefLabel`
+	 * forms as well as the current one, because a label written into a stored
+	 * record years ago must keep resolving.
 	 *
 	 * @var array<string, array{id: string, label: string, aliases: array<int, string>}>
 	 */
@@ -73,20 +82,20 @@ class TooiVocabularyService {
 		'infocat003' => [
 			'id' => 'c_759721e2',
 			'label' => 'Ontwerpen van wet- en regelgeving met adviesaanvraag',
-			'aliases' => ['ontwerp wet- en regelgeving'],
+			'aliases' => ['ontwerp wet- en regelgeving', 'ontwerp van wet- en regelgeving met adviesaanvraag'],
 		],
 		'infocat004' => ['id' => 'c_40a05794', 'label' => 'Organisatie en werkwijze', 'aliases' => []],
 		'infocat005' => ['id' => 'c_89ee6784', 'label' => 'Bereikbaarheidsgegevens', 'aliases' => []],
 		'infocat006' => [
 			'id' => 'c_8c840238',
 			'label' => 'Bij vertegenwoordigende organen ingekomen stukken',
-			'aliases' => ['bij vertegenwoordigend lichaam ingekomen stuk'],
+			'aliases' => ['bij vertegenwoordigend lichaam ingekomen stuk', 'bij vertegenwoordigend orgaan ingekomen stuk'],
 		],
 		'infocat007' => ['id' => 'c_c76862ab', 'label' => 'Vergaderstukken Staten-Generaal', 'aliases' => ['vergaderstuk staten-generaal']],
 		'infocat008' => [
 			'id' => 'c_db4862c3',
 			'label' => 'Vergaderstukken decentrale overheden',
-			'aliases' => ['vergaderstuk lager vertegenwoordigend of openbaar lichaam'],
+			'aliases' => ['vergaderstuk lager vertegenwoordigend of openbaar lichaam', 'vergaderstuk decentrale overheid'],
 		],
 		'infocat009' => [
 			'id' => 'c_3a248e3a',
@@ -96,11 +105,20 @@ class TooiVocabularyService {
 		'infocat010' => ['id' => 'c_99a836c7', 'label' => 'Adviezen', 'aliases' => ['advies']],
 		'infocat011' => ['id' => 'c_8fc2335c', 'label' => 'Convenanten', 'aliases' => ['convenant']],
 		'infocat012' => ['id' => 'c_c6cd1213', 'label' => 'Jaarplannen en jaarverslagen', 'aliases' => ['jaarplan of jaarverslag']],
-		'infocat013' => ['id' => 'c_cf268088', 'label' => 'Subsidieverplichtingen anders dan met beschikking', 'aliases' => ['subsidieverplichting']],
-		'infocat014' => ['id' => 'c_3baef532', 'label' => 'Woo-verzoeken en -besluiten', 'aliases' => ['woo-verzoek']],
+		'infocat013' => [
+			'id' => 'c_cf268088',
+			'label' => 'Subsidieverplichtingen anders dan met beschikking',
+			'aliases' => ['subsidieverplichting', 'subsidieverplichting anders dan met beschikking'],
+		],
+		'infocat014' => ['id' => 'c_3baef532', 'label' => 'Woo-verzoeken en -besluiten', 'aliases' => ['woo-verzoek', 'woo-verzoek of -besluit']],
 		'infocat015' => ['id' => 'c_fdaee95e', 'label' => 'Onderzoeksrapporten', 'aliases' => ['onderzoeksrapport']],
 		'infocat016' => ['id' => 'c_46a81018', 'label' => 'Beschikkingen', 'aliases' => ['beschikking']],
 		'infocat017' => ['id' => 'c_a870c43d', 'label' => 'Klachtoordelen', 'aliases' => ['klachtoordeel']],
+		'infocat018' => [
+			'id' => 'c_816e508d',
+			'label' => 'Inspanningsverplichting art 3.1 Woo',
+			'aliases' => ['inspanningsverplichting art 3.1 woo', 'inspanningsverplichting'],
+		],
 	];
 
 	/**
