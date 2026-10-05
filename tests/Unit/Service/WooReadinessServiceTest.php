@@ -62,6 +62,17 @@ XML;
 		$this->client = $this->createMock(IClient::class);
 		$this->directoryService = $this->createMock(DirectoryService::class);
 		$this->sitemapService = $this->createMock(SitemapService::class);
+
+		// The readiness check samples the FIRST category sitemap, and the categories
+		// are data now, so the mock must answer with the file names the registry
+		// serves rather than with an empty list.
+		$this->sitemapService->method('sitemapFiles')->willReturn(
+			(new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+				new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+				$this->createMock(SettingsService::class),
+				$this->createMock(\Psr\Log\LoggerInterface::class),
+			))->sitemapFiles()
+		);
 		$this->settingsService = $this->createMock(SettingsService::class);
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->urlGenerator = $this->createMock(IURLGenerator::class);

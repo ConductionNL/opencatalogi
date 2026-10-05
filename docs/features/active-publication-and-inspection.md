@@ -106,20 +106,44 @@ delivery does not undo the publishing.
 
 ### Woo information categories
 
-You file a publication under one of the 17 information categories of the Woo
+You file a publication under one of the 18 information categories of the Woo
 (Wet open overheid). Pick it in the Woo information category field of the
 Publication block on the publication page. The field stores a code from
-`infocat001` to `infocat017`. A publication with any other code appears in no
-category sitemap.
+`infocat001` to `infocat018`. Seventeen are the categories of article 3.3;
+`infocat018` is the inspanningsverplichting of article 3.1. A publication with
+any other code appears in no category sitemap.
 
 Each category has its own sitemap, which the national Woo index reads. That
 sitemap lists the catalogue's publications filed under the category. An
 instance that still runs a register titled `woo` keeps its old lookup too: the
 schema named after the category adds its publications to the same sitemap.
 
-`GET /api/woo/categories` returns the 17 codes with their Dutch and English
-names. A Woo request batch you publish is filed under `infocat014`, Woo requests
-and decisions.
+`GET /api/woo/categories` returns every category with its Dutch and English
+name, the official URI it publishes under, and whether it came from the national
+value list or from this instance. A Woo request batch you publish is filed under
+`infocat014`, Woo requests and decisions.
+
+### A category of your own
+
+The 18 categories come from the national value list and are always there. You
+can add one of your own without a release: store an Information category with a
+code, a name, and the value-list category it publishes under. It then gets its
+own sitemap at `sitemapindex-diwoo-{code}.xml` and its own line in `robots.txt`.
+
+The value-list category is not optional. The national index takes no other
+value, so a category that names none publishes nothing: it gets no sitemap, and
+its publications are offered to no index. Refusing to publish is the safer of
+the two failures, and the log says which category was refused and why.
+
+You can also name the schemas a category's sitemap lists. Name none and the
+whole catalogue is listed, which is what the 18 bundled categories do.
+
+### What happened to the document
+
+The national index records what happened to a document on the date it became
+public: it was received, adopted, or signed. Pick it in the Document handling
+field. Left empty, received is used, which is what every publication claimed
+before the field existed.
 
 ## Which collections publish
 

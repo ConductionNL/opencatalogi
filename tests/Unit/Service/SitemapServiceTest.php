@@ -27,6 +27,7 @@ class SitemapServiceTest extends TestCase {
 	private IURLGenerator|MockObject $urlGenerator;
 	private IAppConfig|MockObject $config;
 	private PublicationQueryService|MockObject $queryService;
+	private \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry $wooCategories;
 
 	/** @var \Closure(array): array What the read-rule guard returns; pass-through by default. */
 	private \Closure $guard;
@@ -55,6 +56,15 @@ class SitemapServiceTest extends TestCase {
 		$this->queryService->method('applySchemaScopeReadRuleGuard')
 			->willReturnCallback(fn (array $schemaIds): array => ($this->guard)($schemaIds));
 
+		// A real registry over a mocked SettingsService: getObjectService() returns
+		// null on the mock, so no local category is read and the registry serves the
+		// 18 waardelijst members, which is what the two constants used to hold.
+		$this->wooCategories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->settingsService,
+			$this->createMock(\Psr\Log\LoggerInterface::class),
+		);
+
 		$this->service = new SitemapService(
 			$this->container,
 			$this->appManager,
@@ -63,35 +73,37 @@ class SitemapServiceTest extends TestCase {
 			$this->config,
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
+			$this->wooCategories,
 		);
 	}
 
 	// ──────────────────────────────────────────────────────────
-	// INFO_CAT constant
+	// The sitemap files the category registry serves
 	// ──────────────────────────────────────────────────────────
 
-	public function testInfoCatHas17Entries(): void {
-		$this->assertCount(17, SitemapService::INFO_CAT);
+	public function testTheRegistryServesOneSitemapPerWaardelijstMember(): void {
+		$this->assertCount(18, $this->wooCategories->sitemapFiles());
 	}
 
-	public function testInfoCatAllKeysPresent(): void {
-		for ($i = 1; $i <= 17; $i++) {
+	public function testEveryWaardelijstMemberHasItsSitemapFile(): void {
+		$files = $this->wooCategories->sitemapFiles();
+		for ($i = 1; $i <= 18; $i++) {
 			$key = sprintf('sitemapindex-diwoo-infocat%03d.xml', $i);
-			$this->assertArrayHasKey($key, SitemapService::INFO_CAT, "Missing key: $key");
+			$this->assertArrayHasKey($key, $files, "Missing key: $key");
 		}
 	}
 
-	public function testInfoCatFirstEntry(): void {
+	public function testTheFirstSitemapFileCarriesTheFirstCategoryTitle(): void {
 		$this->assertEquals(
 			'Wetten en algemeen verbindende voorschriften',
-			SitemapService::INFO_CAT['sitemapindex-diwoo-infocat001.xml']
+			$this->wooCategories->sitemapFiles()['sitemapindex-diwoo-infocat001.xml']
 		);
 	}
 
-	public function testInfoCatLastEntry(): void {
+	public function testTheArt31CategoryIsTheEighteenthSitemapFile(): void {
 		$this->assertEquals(
-			'Klachtoordelen',
-			SitemapService::INFO_CAT['sitemapindex-diwoo-infocat017.xml']
+			'Inspanningsverplichting art 3.1 Woo',
+			$this->wooCategories->sitemapFiles()['sitemapindex-diwoo-infocat018.xml']
 		);
 	}
 
@@ -1110,6 +1122,7 @@ class SitemapServiceTest extends TestCase {
 			$config,
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
+			$this->wooCategories,
 		);
 
 		$reflection = new \ReflectionClass($service);
@@ -1130,6 +1143,7 @@ class SitemapServiceTest extends TestCase {
 			$config,
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
+			$this->wooCategories,
 		);
 
 		$reflection = new \ReflectionClass($service);

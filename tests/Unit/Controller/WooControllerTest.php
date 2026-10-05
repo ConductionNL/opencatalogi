@@ -56,12 +56,19 @@ class WooControllerTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
+		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
+			$this->createMock(\Psr\Log\LoggerInterface::class),
+		);
+
 		$this->controller = new WooController(
 			'opencatalogi',
 			$this->request,
 			$this->wooService,
 			$l10n,
-			$this->userSession
+			$this->userSession,
+			$categories
 		);
 
 	}//end setUp()
@@ -175,15 +182,15 @@ class WooControllerTest extends TestCase {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	public function testCategoriesListsTheSeventeenWithBothNames(): void {
+	public function testCategoriesListsEveryWaardelijstMemberWithBothNames(): void {
 		$this->authenticate();
 
 		$response = $this->controller->categories();
 
 		$this->assertSame(200, $response->getStatus());
 		$data = $response->getData();
-		$this->assertSame(17, $data['total']);
-		$this->assertCount(17, $data['results']);
+		$this->assertSame(18, $data['total']);
+		$this->assertCount(18, $data['results']);
 		$first = $data['results'][0];
 		$this->assertSame('infocat001', $first['code']);
 		$this->assertSame('Wetten en algemeen verbindende voorschriften', $first['nl']);
@@ -192,8 +199,25 @@ class WooControllerTest extends TestCase {
 		$codes = array_column($data['results'], 'code');
 		$this->assertContains('infocat012', $codes);
 		$this->assertContains('infocat017', $codes);
+		$this->assertContains('infocat018', $codes);
 
-	}//end testCategoriesListsTheSeventeenWithBothNames()
+	}//end testCategoriesListsEveryWaardelijstMemberWithBothNames()
+
+	public function testEveryCategoryRowSaysWhatItPublishesUnderAndWhereItCameFrom(): void {
+		$this->authenticate();
+
+		$rows = $this->controller->categories()->getData()['results'];
+		foreach ($rows as $row) {
+			$this->assertStringStartsWith(
+				'https://identifier.overheid.nl/tooi/def/thes/kern/c_',
+				$row['uri'],
+				$row['code'] . ' carries no waardelijst URI.'
+			);
+			$this->assertSame('waardelijst', $row['origin']);
+			$this->assertSame('sitemapindex-diwoo-' . $row['code'] . '.xml', $row['sitemap']);
+		}
+
+	}//end testEveryCategoryRowSaysWhatItPublishesUnderAndWhereItCameFrom()
 
 	public function testCategoriesAnonymousReturns401(): void {
 		$this->userSession->method('getUser')->willReturn(null);

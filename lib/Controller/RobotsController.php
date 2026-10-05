@@ -26,7 +26,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Http\TextResponse;
 use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -63,6 +63,7 @@ class RobotsController extends Controller {
 	 * @param IAppManager $appManager The app manager.
 	 * @param IURLGenerator $urlGenerator The URL generator.
 	 * @param IL10N $l10n The localization service.
+	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		$appName,
@@ -72,6 +73,7 @@ class RobotsController extends Controller {
 		private readonly IAppManager $appManager,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IL10N $l10n,
+		private readonly WooCategoryRegistry $categories,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -131,7 +133,9 @@ class RobotsController extends Controller {
 				continue;
 			}
 
-			foreach (array_keys(SitemapService::INFO_CAT) as $categoryCode) {
+			// One line per category the registry serves, so a category an operator
+			// added as data is crawled without a code change (REQ-WIC-001).
+			foreach (array_keys($this->categories->sitemapFiles()) as $categoryCode) {
 				$text .= "Sitemap: $baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode\n";
 			}
 		}

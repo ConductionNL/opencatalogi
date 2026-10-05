@@ -40,6 +40,12 @@ class RobotsControllerTest extends TestCase {
 		$this->l10n->method('t')
 			->willReturnCallback(fn (string $text) => $text);
 
+		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
+			$this->createMock(\Psr\Log\LoggerInterface::class),
+		);
+
 		$this->controller = new RobotsController(
 			'opencatalogi',
 			$this->request,
@@ -47,7 +53,8 @@ class RobotsControllerTest extends TestCase {
 			$this->container,
 			$this->appManager,
 			$this->urlGenerator,
-			$this->l10n
+			$this->l10n,
+			$categories
 		);
 	}
 
@@ -294,9 +301,9 @@ class RobotsControllerTest extends TestCase {
 
 		$this->assertTrue($query['hasWooSitemap'], 'OpenRegister is asked for Woo-enabled catalogues only.');
 		$lines = array_values(array_filter(explode("\n", $text), static fn (string $line): bool => str_starts_with($line, 'Sitemap: ')));
-		$this->assertCount(34, $lines);
+		$this->assertCount(36, $lines);
 		$this->assertSame('Sitemap: https://example.com/apps/opencatalogi/api/woo-a/sitemaps/sitemapindex-diwoo-infocat001.xml', $lines[0]);
-		$this->assertSame('Sitemap: https://example.com/apps/opencatalogi/api/woo-b/sitemaps/sitemapindex-diwoo-infocat017.xml', $lines[33]);
+		$this->assertSame('Sitemap: https://example.com/apps/opencatalogi/api/woo-b/sitemaps/sitemapindex-diwoo-infocat018.xml', $lines[35]);
 		$this->assertStringNotContainsString('/news/', $text);
 		$this->assertStringNotContainsString('\n', $text);
 		$this->assertStringEndsWith("\n", $text);

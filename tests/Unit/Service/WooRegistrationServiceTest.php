@@ -102,7 +102,13 @@ class WooRegistrationServiceTest extends TestCase {
 		$urls = $this->createMock(IURLGenerator::class);
 		$urls->method('getBaseUrl')->willReturn($baseUrl);
 
-		return new WooRegistrationService($this->readiness, $this->index, $settings, $this->config, $urls);
+		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
+			$this->createMock(\Psr\Log\LoggerInterface::class),
+		);
+
+		return new WooRegistrationService($this->readiness, $this->index, $settings, $this->config, $urls, $categories);
 	}
 
 	/** REQ-WIH-003: the request carries the organisation, the root robots.txt and every sitemap index. */
@@ -111,7 +117,7 @@ class WooRegistrationServiceTest extends TestCase {
 
 		$this->assertSame([['name' => 'Gemeente Voorbeeld', 'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm9999']], $request['organisations']);
 		$this->assertSame('https://woo.example.nl/robots.txt', $request['robotsTxt']);
-		$this->assertCount(17, $request['sitemapIndexes']);
+		$this->assertCount(18, $request['sitemapIndexes']);
 		$this->assertSame('https://woo.example.nl/apps/opencatalogi/api/woo-a/sitemaps/sitemapindex-diwoo-infocat001.xml', $request['sitemapIndexes'][0]);
 	}
 
@@ -140,7 +146,7 @@ class WooRegistrationServiceTest extends TestCase {
 		$this->assertSame([], $this->written);
 		$this->assertSame('not_registered', $result['registration']['status']);
 		$this->assertSame('https://woo.example.nl/robots.txt', $result['request']['robotsTxt']);
-		$this->assertCount(17, $result['request']['sitemapIndexes']);
+		$this->assertCount(18, $result['request']['sitemapIndexes']);
 	}
 
 	/** REQ-WIH-002: the nginx and Apache rules target the app's route on the instance's own base URL. */

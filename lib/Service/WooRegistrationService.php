@@ -36,6 +36,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
+use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 
@@ -66,6 +67,7 @@ class WooRegistrationService {
 	 * @param SettingsService      $settings     The OpenRegister reader, for the organisations.
 	 * @param IAppConfig           $config       The registration status keys.
 	 * @param IURLGenerator        $urlGenerator The instance's base URL.
+	 * @param WooCategoryRegistry  $categories   The information categories, bundled plus local.
 	 */
 	public function __construct(
 		private readonly WooReadinessService $readiness,
@@ -73,6 +75,7 @@ class WooRegistrationService {
 		private readonly SettingsService $settings,
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
+		private readonly WooCategoryRegistry $categories,
 	) {
 
 	}//end __construct()
@@ -115,7 +118,9 @@ class WooRegistrationService {
 				continue;
 			}
 
-			foreach (array_keys(SitemapService::INFO_CAT) as $categoryCode) {
+			// One sitemap per category the registry serves, so a category this instance
+			// added as data is registered with the index too (REQ-WIC-001).
+			foreach (array_keys($this->categories->sitemapFiles()) as $categoryCode) {
 				$sitemaps[] = $baseUrl . '/apps/opencatalogi/api/' . $slug . '/sitemaps/' . $categoryCode;
 			}
 

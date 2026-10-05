@@ -76,14 +76,21 @@ class TooiVocabularyServiceTest extends TestCase {
 	}//end testResolveInformatiecategorieFailsClosed()
 
 	/**
-	 * The bundled list contains all 17 Woo categories.
+	 * The bundled list contains all 18 Woo categories.
 	 *
 	 * @return void
 	 */
-	public function testInformatiecategorieListHas17Members(): void {
-		$this->assertCount(17, $this->service->informatiecategorieList());
+	public function testInformatiecategorieListHas18Members(): void {
+		// Version 4 of the scw_woo_informatiecategorieen waardelijst, which DiWoo
+		// 0.9.8 binds, has 18 members: the 17 art. 3.3 categories plus the art. 3.1
+		// inspanningsverplichting.
+		$this->assertCount(18, $this->service->informatiecategorieList());
+		$this->assertSame(
+			'https://identifier.overheid.nl/tooi/def/thes/kern/c_816e508d',
+			$this->service->informatiecategorieList()['infocat018']['uri']
+		);
 
-	}//end testInformatiecategorieListHas17Members()
+	}//end testInformatiecategorieListHas18Members()
 
 	/**
 	 * soortHandeling defaults to ontvangst and honours a declared member.

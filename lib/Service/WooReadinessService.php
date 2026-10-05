@@ -337,7 +337,7 @@ class WooReadinessService {
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
 	 */
 	private function checkCatalog(string $baseUrl, string $slug, array &$checks): void {
-		$categoryCode = (string)array_key_first(SitemapService::INFO_CAT);
+		$categoryCode = (string)array_key_first($this->sitemapService->sitemapFiles());
 		$sitemapIndexUrl = "$baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode";
 		$checkId = "sitemapindex:$slug";
 
