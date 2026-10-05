@@ -1447,9 +1447,11 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	/**
-	 * The same refusal on the facet path: the aggregated search runs again over the ids.
+	 * The same refusal on the Fast path, where index() → searchPublications() searches
+	 * (`_include_catalogs` keeps a request off the ultra-fast path): the search runs
+	 * again over the ids there too.
 	 */
-	public function testTheAggregatedSearchAlsoRunsAgainWithoutTheRefusedSlug(): void {
+	public function testTheFastPathAlsoRunsAgainWithoutTheRefusedSlug(): void {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
 		$this->mockConfiguredCatalogScope();
@@ -1469,12 +1471,21 @@ class PublicationServiceTest extends TestCase {
 			});
 		$this->request->method('getParams')->willReturn([]);
 		$this->directoryService->method('getUniqueDirectories')->willReturn([]);
+		$this->directoryService->method('getDirectory')->willReturn(['results' => []]);
 
-		$result = $this->service->getAggregatedPublications(['_facetable' => 'true', '_aggregate' => 'true'], [], '');
+		$result = $this->service->getAggregatedPublications(
+			['_aggregate' => 'false', '_include_catalogs' => 'true'],
+			[],
+			''
+		);
 
+		$this->assertFalse($result['_performance']['ultra_fast_path']);
 		$this->assertCount(2, $queries);
+		$this->assertSame(['21', 'stackiq'], $queries[0]['@self']['register']);
 		$this->assertSame('21', $queries[1]['@self']['register']);
 		$this->assertSame('122', $queries[1]['@self']['schema']);
+		$this->assertArrayNotHasKey('_registers', $queries[1]);
+		$this->assertArrayNotHasKey('_schemas', $queries[1]);
 		$this->assertSame(0, $result['total']);
 	}
 
@@ -1501,7 +1512,9 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	/**
-	 * A scope of ids that OpenRegister refuses is not a pending seed; the refusal travels on.
+	 * A scope of ids that OpenRegister refuses is not a pending seed; the refusal travels
+	 * on, and OpenRegister is not asked a second time. With `_aggregate=false` the
+	 * ultra-fast path runs once, so a second call here means the rethrow is gone.
 	 */
 	public function testARefusedIdScopeIsNotHidden(): void {
 		$objectService = $this->createObjectServiceMock();
@@ -1510,16 +1523,13 @@ class PublicationServiceTest extends TestCase {
 		$objectService->method('searchObjects')->willReturn([
 			$this->createSerializableObject(['registers' => ['21'], 'schemas' => ['122']]),
 		]);
-		// No call count here: getAggregatedPublications() gives the local path one
-		// more try when it throws, and that try is refused the same way.
-		$objectService->method('searchObjectsPaginated')
+		$objectService->expects($this->once())->method('searchObjectsPaginated')
 			->willThrowException(new \OCA\OpenRegister\Exception\RegisterNotFoundException(registerSlugOrId: '21'));
 		$this->request->method('getParams')->willReturn([]);
-		$this->directoryService->method('getUniqueDirectories')->willReturn([]);
 
 		$this->expectException(\OCA\OpenRegister\Exception\RegisterNotFoundException::class);
 
-		$this->service->getAggregatedPublications([], [], '');
+		$this->service->getAggregatedPublications(['_aggregate' => 'false'], [], '');
 	}
 
 	public function testGetAggregatedPublicationsWithFederatedDirectories(): void {
