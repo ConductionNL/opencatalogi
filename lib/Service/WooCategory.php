@@ -1,7 +1,7 @@
 <?php
 
 /**
- * The 17 information categories of the Woo.
+ * The 18 information categories of the Woo.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -23,15 +23,21 @@
 namespace OCA\OpenCatalogi\Service;
 
 /**
- * The Woo information categories (art. 3.3), keyed by the code a publication's
- * `wooCategory` stores and the sitemap file names carry (`SitemapService::INFO_CAT`).
+ * The Woo information categories, keyed by the code a publication's `wooCategory`
+ * stores and the sitemap file names carry. `infocat001` to `infocat017` are the
+ * art. 3.3 categories; `infocat018` is the art. 3.1 inspanningsverplichting.
  *
  * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-stores-the-woo-information-category-it-belongs-to-req-wpc-001
  */
 final class WooCategory {
 
 	/**
-	 * The 17 categories with the Dutch and English name of each.
+	 * The 18 categories with the Dutch and English name of each.
+	 *
+	 * This holds the English naming only. The value list itself, its TOOI URIs and
+	 * the resolver are in {@see TooiVocabularyService}. The set a sitemap is built
+	 * from is {@see Woo\WooCategoryRegistry}, which merges these value-list members
+	 * with the categories an operator added as data.
 	 *
 	 * @var array<string, array{nl: string, en: string}>
 	 */
@@ -53,6 +59,7 @@ final class WooCategory {
 		'infocat015' => ['nl' => 'Onderzoeksrapporten', 'en' => 'Research reports'],
 		'infocat016' => ['nl' => 'Beschikkingen', 'en' => 'Individual decisions'],
 		'infocat017' => ['nl' => 'Klachtoordelen', 'en' => 'Complaint rulings'],
+		'infocat018' => ['nl' => 'Inspanningsverplichting art 3.1 Woo', 'en' => 'Best-efforts obligation under art. 3.1 Woo'],
 	];
 
 	/**
