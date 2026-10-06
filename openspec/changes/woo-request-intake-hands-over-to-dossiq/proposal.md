@@ -5,6 +5,16 @@ depends_on: [dossiq/woo-request-takes-over-from-opencatalogi]
 
 # Proposal: woo-request-intake-hands-over-to-dossiq
 
+## Summary
+
+OpenCatalogi forwards every new Woo request to dossiq, migrates the stored ones with no request left without an armed term, then removes its own intake.
+
+- Rows: supports 7.1 to 7.6 and 10.8 (statutory term, Woo art. 4.4 lid 1 and 2, art. 4.5); they stay yes in dossiq.
+- Wave: 3.
+- Depends on: `dossiq/woo-request-takes-over-from-opencatalogi` (https://github.com/ConductionNL/dossiq/issues/3289): `OCA\Dossiq\Woo\WooRequestIntake::receive(array $answers, string $receivedAt = '', string $origin = 'portal-form'): array` and `OCA\Dossiq\Woo\OpenCatalogiWooImport::run(bool $dryRun = false): array`, which stamps `migratedTo` and `migratedAt` on `wooRequest`. Runs beside `portaliq/woo-intake-delivers-to-dossiq` (https://github.com/ConductionNL/portaliq/issues/1223).
+- Decision: D1 (dossiq owns the request and its term); D12 (no fallback: without dossiq the request routes answer 404).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 Decision D1 (Ruben, 2026-10-05) gives the Woo request, its intake and its statutory term to dossiq. Decision D12 adds that Woo requests require dossiq, with no fallback. OpenCatalogi built a statutory-green intake (PR #1736): it mints a request, arms the term of Woo art. 4.4 lid 1 (four weeks from receipt), extends it once by two weeks (art. 4.4 lid 2) and pauses it while clarification is awaited (art. 4.5). Moving the request must not leave a single request without an armed term in between, and must not regress any of that.
