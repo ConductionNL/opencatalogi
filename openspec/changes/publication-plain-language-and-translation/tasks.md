@@ -1,6 +1,6 @@
 # Tasks: publication-plain-language-and-translation
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Mock `OCP\TaskProcessing\IManager` against the real OCP interface in `vendor/nextcloud/ocp` (`getAvailableTaskTypes()`, `scheduleTask(Task)`, `getTask(int)`); check the signatures there before writing the double. Group 4 is gated on decision D10: skip it unless the PR author has Ruben's written keep of row 14.7, and say in the PR body that it was skipped.
+Read `openspec/woo-build-rules.md` first. Mock `OCP\TaskProcessing\IManager` against the real OCP interface in `vendor/nextcloud/ocp` (`getAvailableTaskTypes()`, `scheduleTask(Task)`, `getTask(int)`); check the signatures there before writing the double. Group 4 is gated on decision D10: skip it unless the PR author has Ruben's written keep of row 14.7, and say in the PR body that it was skipped.
 
 ## 1. Field
 

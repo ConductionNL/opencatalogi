@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: publication-plain-language-and-translation
 
+## Summary
+
+A publication carries a plain-language (taalniveau B1) summary that an officer writes or accepts from a draft, and optionally a translation.
+
+- Rows: 15.4; 14.7 gated on D10 (REQ-PPL-003 and task group 4 are skipped unless Ruben keeps 14.7).
+- Wave: 1.
+- Depends on: nothing to build. Uses Nextcloud `OCP\TaskProcessing\IManager` with any provider, and manual entry without one. Reads `language` from `opencatalogi/diwoo-metadata-on-the-publication` (https://github.com/ConductionNL/opencatalogi/issues/1753) when present, `nl` otherwise.
+- Decision: D10 (14.7 flagged); D5 followed (every draft is a suggestion a person accepts).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 A Woo decision is written for lawyers. The government's own standard for citizen text is taalniveau B1, and a reader who cannot follow the decision cannot use the right the Woo gives them. A publication has no place to say in plain words what it is about.
