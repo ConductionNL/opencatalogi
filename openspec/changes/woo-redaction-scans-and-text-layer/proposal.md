@@ -5,6 +5,16 @@ depends_on: [openregister/anonymisation-image-seam, openregister/redaction-relea
 
 # Proposal: woo-redaction-scans-and-text-layer
 
+## Summary
+
+Scanned documents can be redacted on the Woo path through OpenRegister's image seam, and every redacted PDF gets a searchable, invisible OCR text layer.
+
+- Rows: 4.14, 4.15.
+- Wave: 2.
+- Depends on: `openregister/anonymisation-image-seam` (https://github.com/ConductionNL/openregister/issues/4380); `openregister/redaction-release-safeguards` (https://github.com/ConductionNL/openregister/issues/4392); `opencatalogi/woo-review-surface` (https://github.com/ConductionNL/opencatalogi/issues/1766). Cross-app: filinq `OcrService::processFile()` with `words` boxes and a new `OcrService::addTextLayer()`, to be added by `filinq/image-redaction` (https://github.com/ConductionNL/filinq/issues/1347) or `filinq/redaction-guarantees-from-the-engine` (https://github.com/ConductionNL/filinq/issues/1348). Without filinq, scans are blocked with that reason.
+- Decision: D2, option 1 (the pipeline gates on the engine's verdict; filinq is called for OCR only).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 Many documents a Woo request or an active-disclosure batch collects are scans: a signed letter, a fax, a printed memo. The Woo path cannot redact them today, because it finds names only in text and a scan has none. And a redacted file that cannot be searched fails readers who rely on assistive technology and fails the Woo-index's full-text search.
