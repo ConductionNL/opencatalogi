@@ -68,3 +68,5 @@ Publicaties hebben vaak bijlagen, zoals een verslag of een besluit. Deze zijn ee
 In de `Bijlage toevoegen`-modal worden er gevraagd om een aantal velden. Er zijn twee mogelijkheden een bijlage toe te voegen. De eerste manier is via een  `Toegangs URL`. Dit zorgt ervoor dat het bestand vanuit een andere plek automatisch gedownload wordt.  Een `Titel` is dan verplicht.&#x20;
 
 De tweede manier is door zelf een bestand up te loaden. De bestandsnaam wordt dan meegegeven.&#x20;
+
+Voordat je bestanden kunt toevoegen, kies je in het veld `Labels` één of meer labels, of de optie `No label`. Tot je een keuze maakt, blijft het uploadvak uitgeschakeld. De labelkeuze is bij elke opening van de modal leeg, ook als je eerder bij dezelfde of een andere publicatie labels hebt gekozen. De lijst met beschikbare labels blijft wel staan.

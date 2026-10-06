@@ -726,17 +726,7 @@ export default {
 				objectStore.getActiveObject('publication'),
 			)
 			catalogStore.fetchPublications()
-			this.success = null
-			this.error = null
-			this.duplicateWarning = null
-			if (this._duplicateWarningTimer) {
-				clearTimeout(this._duplicateWarningTimer)
-				this._duplicateWarningTimer = null
-			}
-			reset()
-			this.initialTags = []
-			this.latestTags = []
-			this.newTags = []
+			this.resetDialogState()
 			setTimeout(() => {
 				this.__uploadFilesClosingInternally = false
 			}, 0)
@@ -956,7 +946,7 @@ export default {
 					objectStore.getCollection && objectStore.getCollection('tags')
 				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
 			}
-			// mirror close behavior when dialog is toggled from outside
+			// emit the same close events as closeDialog
 			EventBus.$emit('upload-files:closed', {
 				tags: tagsToEmit,
 				newTags: this.newTags || [],
@@ -967,6 +957,28 @@ export default {
 					newTags: this.newTags || [],
 				})
 			}
+			this.resetDialogState()
+		},
+
+		/**
+		 * Clear the file selection, messages, label selection, per-file label editing and tag bookkeeping.
+		 * The fetched label options are kept.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/file-management/spec.md
+		 */
+		resetDialogState() {
+			this.success = null
+			this.error = null
+			this.duplicateWarning = null
+			if (this._duplicateWarningTimer) {
+				clearTimeout(this._duplicateWarningTimer)
+				this._duplicateWarningTimer = null
+			}
+			reset()
+			this.labelOptions.value = []
+			this.editingTags = null
+			this.editedTags = []
 			this.initialTags = []
 			this.latestTags = []
 			this.newTags = []
