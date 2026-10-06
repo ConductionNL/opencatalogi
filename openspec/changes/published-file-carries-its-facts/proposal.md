@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: published-file-carries-its-facts
 
+## Summary
+
+A published file's format is detected by the product and its embedded title is set to the publication's official title, instead of whatever the uploader or authoring tool left.
+
+- Rows: 2.20, 4.29.
+- Wave: 1.
+- Depends on: nothing to build. Reads `title`, which `opencatalogi/diwoo-metadata-on-the-publication` (https://github.com/ConductionNL/opencatalogi/issues/1753) makes the official title; works either way.
+- Decision: none of D1 to D13. REQ-WRP-001 (the verified redacted file) is respected, not modified.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 What a file is and what it is called should be facts the product establishes, not what whoever uploaded it typed. The Woo-index lists each document with its format, taken from our DiWoo record. A reader who downloads the file and opens it later sees whatever title the authoring tool left in it, often "Microsoft Word - concept v3".

@@ -1,6 +1,6 @@
 # Tasks: published-file-carries-its-facts
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Mock `OCP\Files\File` and `OCP\Files\IMimeTypeDetector` against the real OCP interfaces in `vendor/nextcloud/ocp`; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Do not loosen `DocumentRedactor::isVerified()` or `assertPublishable()`; the writer runs only after them.
+Read `openspec/woo-build-rules.md` first. Mock `OCP\Files\File` and `OCP\Files\IMimeTypeDetector` against the real OCP interfaces in `vendor/nextcloud/ocp`; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Do not loosen `DocumentRedactor::isVerified()` or `assertPublishable()`; the writer runs only after them.
 
 ## 1. Type from the bytes
 
