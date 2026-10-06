@@ -8,6 +8,17 @@ module.exports = {
 		'.+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$':
 			'jest-transform-stub',
 	},
+	globals: {
+		'vue-jest': {
+			// vue3-jest babel-compiles <script> and <template> separately and
+			// concatenates them, so both `import ... from 'vue'` (template) and
+			// `import ... from '@nextcloud/vue'` (script) become `var _vue` and the
+			// template's wins: every Nc* component resolves to undefined. Importing
+			// the template helpers from @vue/runtime-dom (the same instance `vue`
+			// re-exports) gives that require a different name.
+			compilerOptions: { runtimeModuleName: '@vue/runtime-dom' },
+		},
+	},
 	moduleFileExtensions: ['js', 'json', 'vue', 'ts'],
 	testEnvironment: 'jest-environment-jsdom',
 	// Jest owns the unit specs under src/**. tests/e2e/** belongs to Playwright

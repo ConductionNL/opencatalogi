@@ -22,6 +22,8 @@ Eigenschappen en bijlagen kunnen worden toegevoegd nadat de publicatie is toegev
 
 De gebruikersbeheerinterface werkt intuïtief. Aan de linkerkant van de pagina bevindt zich een overzicht van catalogi. Met de blauwe knop bovenaan kun je een publicatie aanmaken. Dit opent een modal genaamd "Publicatie toevoegen". Er wordt eerst gevraagd aan welke catalogus deze behoort en welke publicatietype het heeft (metadata)
 
+De publicatietypen (schema's) in de keuzelijst staan alfabetisch op titel, ongeacht hoofdletters en met getallen in natuurlijke volgorde ("Schema 2" vóór "Schema 10"). Typ in de keuzelijst om de lijst te filteren.
+
 Hieronder is een voorbeeld van een ingevulde modal voor het aanmaken van een Woo-publicatie.
 
 <div align="center">

@@ -29,6 +29,56 @@ const NcEmptyContent = {
 	},
 }
 
+/**
+ * A container stub that renders only its default slot and swallows every prop.
+ *
+ * @param {string} name - The component name, so specs can find it by name.
+ * @return {object} The stub component.
+ */
+function slotStub(name) {
+	return {
+		name,
+		inheritAttrs: false,
+		render() {
+			return h('div', { class: `${name}-stub` }, this.$slots.default?.())
+		},
+	}
+}
+
+// Renders its options as a list labelled by `inputLabel` or
+// `ariaLabelCombobox`, so specs can assert the option order a user would see.
+const NcSelect = {
+	name: 'NcSelect',
+	props: {
+		options: { type: Array, default: () => [] },
+		inputLabel: { type: String, default: '' },
+		ariaLabelCombobox: { type: String, default: '' },
+		modelValue: { type: [Object, Array, String, Number], default: null },
+	},
+	emits: ['update:modelValue'],
+	render() {
+		return h(
+			'ul',
+			{
+				class: 'nc-select-stub',
+				'aria-label': this.inputLabel || this.ariaLabelCombobox,
+			},
+			this.options.map((option) => h('li', option?.label)),
+		)
+	},
+}
+
 module.exports = {
+	NcActionButton: slotStub('NcActionButton'),
+	NcActions: slotStub('NcActions'),
+	NcButton: slotStub('NcButton'),
+	NcCheckboxRadioSwitch: slotStub('NcCheckboxRadioSwitch'),
+	NcCounterBubble: slotStub('NcCounterBubble'),
+	NcDialog: slotStub('NcDialog'),
 	NcEmptyContent,
+	NcLoadingIcon: slotStub('NcLoadingIcon'),
+	NcModal: slotStub('NcModal'),
+	NcNoteCard: slotStub('NcNoteCard'),
+	NcSelect,
+	NcTextField: slotStub('NcTextField'),
 }

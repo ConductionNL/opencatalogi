@@ -944,6 +944,7 @@ import PropertiesPanel from '../../components/PropertiesPanel.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
+import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 import '@toast-ui/editor/dist/toastui-editor.css'
 
@@ -1320,19 +1321,21 @@ export default {
 			// register AND the `opencatalogi` magic-mapper register). Keep
 			// the first match per id.
 			const seenIds = new Set()
-			return objectStore.availableSchemas
-				.filter((schema) => validSchemaIds.includes(String(schema.id)))
-				.filter((schema) => this.hasSchemaReadRight(schema))
-				.filter((schema) => {
-					const key = String(schema.id)
-					if (seenIds.has(key)) return false
-					seenIds.add(key)
-					return true
-				})
-				.map((schema) => ({
-					id: schema.id,
-					label: schema.title,
-				}))
+			return sortOptionsByLabel(
+				objectStore.availableSchemas
+					.filter((schema) => validSchemaIds.includes(String(schema.id)))
+					.filter((schema) => this.hasSchemaReadRight(schema))
+					.filter((schema) => {
+						const key = String(schema.id)
+						if (seenIds.has(key)) return false
+						seenIds.add(key)
+						return true
+					})
+					.map((schema) => ({
+						id: schema.id,
+						label: schema.title,
+					})),
+			)
 		},
 
 		hasSelectedSchema() {
