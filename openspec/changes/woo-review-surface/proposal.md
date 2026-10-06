@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: woo-review-surface
 
+## Summary
+
+The approver of a Woo publication batch sees what the public will see, a rejection goes back to its author with a reason, and the log of what was blacked out and why exists.
+
+- Rows: 4.2, 4.7, 4.12.
+- Wave: 1.
+- Depends on: nothing to build. Uses OpenRegister `TransitionEngine`, `x-openregister-approval-chains`, `TaskTerminalEvent`, `EntityRelationMapper::findAnonymisedEntitiesWithBasesForFile()`. Row 4.27 ("require review") ships off by default until this change lands.
+- Decision: D1 (this is the publication batch review; a Woo request's review is dossiq's); D2 respected (no second redaction path).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The person who approves a Woo publication batch is the last one to see it before the public does. Today that person sees the assessment form, not what the public will see. A rejection has nowhere to go: the batch stays where it is and its author is not told. And the log of what was blacked out, and why, does not exist, although the main spec says it does.
