@@ -5,6 +5,16 @@ depends_on: [openregister/end-date-roll-on-the-calendar]
 
 # Proposal: inspection-period-rolls-on-the-calendar
 
+## Summary
+
+The end of a public inspection period, and any end date written through the API, rolls past weekends and holidays as Algemene termijnenwet art. 1 lid 1 and art. 3 require, as the comment period already does.
+
+- Rows: supports 10.9 (statutory, Algemene termijnenwet art. 1 lid 1); `dossiq/woo-term-is-computed-and-reported-right` (https://github.com/ConductionNL/dossiq/issues/3287) closes 10.9 for the decision term.
+- Wave: 2.
+- Depends on: `openregister/end-date-roll-on-the-calendar` (open change outside this plan, 5 of 6 tasks; no `[OpenSpec]` issue found).
+- Decision: D1 (the decision term is dossiq's; this rolls only OpenCatalogi's own terms).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The Algemene termijnenwet (Atw), article 1 paragraph 1, extends a term set by law that ends on a Saturday, a Sunday or a generally recognised holiday to the next working day; article 3 names those holidays. A public inspection period (terinzagelegging) is such a term. OpenCatalogi already rolls the end of a comment period this way (REQ-PCP-002, through `TermRoll`). It does not roll the end of an inspection period, and it does not roll an end date someone writes through the API.

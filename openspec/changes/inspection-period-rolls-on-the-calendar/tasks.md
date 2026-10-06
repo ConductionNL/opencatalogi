@@ -1,6 +1,6 @@
 # Tasks: inspection-period-rolls-on-the-calendar
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Mirror the existing `CommentPeriodService` use of `TermRoll` and its tests (`tests/Unit/Service/Publication/CommentPeriodServiceTest.php`). Use real dates in the tests: Sunday 13 December 2026, Saturday 12 December 2026, Christmas Friday 25 December 2026; a fixed clock, never "now". For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; the calendar calculator's `add()` and `roll()` are the real methods behind `TermRoll`, check their signatures in openregister before mocking.
+Read `openspec/woo-build-rules.md` first. Mirror the existing `CommentPeriodService` use of `TermRoll` and its tests (`tests/Unit/Service/Publication/CommentPeriodServiceTest.php`). Use real dates in the tests: Sunday 13 December 2026, Saturday 12 December 2026, Christmas Friday 25 December 2026; a fixed clock, never "now". For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; the calendar calculator's `add()` and `roll()` are the real methods behind `TermRoll`, check their signatures in openregister before mocking.
 
 ## 1. Inspection opens on a rolled end
 
