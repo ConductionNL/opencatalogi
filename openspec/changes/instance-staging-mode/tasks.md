@@ -1,6 +1,6 @@
 # Tasks: instance-staging-mode
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Use a recording Guzzle `MockHandler` and a recording `IEventDispatcher` to prove nothing leaves; a mock that is never asked proves nothing.
+Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Use a recording Guzzle `MockHandler` and a recording `IEventDispatcher` to prove nothing leaves; a mock that is never asked proves nothing.
 
 ## 1. Mode
 

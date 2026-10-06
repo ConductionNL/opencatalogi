@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: instance-staging-mode
 
+## Summary
+
+An instance can run in staging mode, where every national hand-over (Woo-index, PLOOI, federation partners) records a dry run instead of sending, so the Woo flow can be rehearsed end to end.
+
+- Rows: 13.5.
+- Wave: 1.
+- Depends on: nothing to build. Uses `nextcloud-vue/environment-banner` (https://github.com/ConductionNL/nextcloud-vue/issues/1320) when present; without it an OpenCatalogi notice shows the same text. Without integriq the dry run is recorded before the reachability check.
+- Decision: none of D1 to D13.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 An officer learning the Woo flow, or an organisation testing a new catalogue, needs to run it end to end: publish, see the sitemap, run the readiness check, hand over to the national index. On a production-like instance today every one of those steps is real. A mistake reaches the Woo-index, PLOOI or a federation partner, and it cannot be taken back quietly.
