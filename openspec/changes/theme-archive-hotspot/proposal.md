@@ -5,6 +5,16 @@ depends_on: [subjects-as-first-class-records, openregister/appraisal-inherited-f
 
 # Proposal: theme-archive-hotspot
 
+## Summary
+
+A subject can be designated an archive hotspot, so every publication filed under it, including those filed before, is kept permanently whatever its own selection list says.
+
+- Rows: 11.14.
+- Wave: 2.
+- Depends on: `openregister/appraisal-inherited-from-a-parent` (https://github.com/ConductionNL/openregister/issues/4382), contract REQ-AIP-001 (`x-openregister-retention.inheritAppraisalFrom`, declared here as `themes`); `opencatalogi/subjects-as-first-class-records` (https://github.com/ConductionNL/opencatalogi/issues/1764).
+- Decision: D5, row 11.14 (a hotspot is its own rule; RET-004 keeps governing defaults).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 An archive hotspot (archiefhotspot) is a subject of such public weight that everything about it is kept permanently, whatever the selection list says for each record on its own. The Archiefwet selection practice lets an organisation designate one; once it does, records already filed under the subject must be kept too. OpenCatalogi cannot express this.

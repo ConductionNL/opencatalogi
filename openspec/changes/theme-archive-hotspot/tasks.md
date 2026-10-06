@@ -1,6 +1,6 @@
 # Tasks: theme-archive-hotspot
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Start once `openregister/appraisal-inherited-from-a-parent` and `subjects-as-first-class-records` are merged. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real classes checked in openregister `development`: `ObjectEntity::getRetention()` and `setRetention()` (magic), `OCA\OpenRegister\Service\Archival\Appraisal::RETAIN_PERMANENTLY_ALIASES` (`retain_permanently`, `bewaren`, `blijvend_bewaren`), `OCA\OpenRegister\Service\RetentionService::destructionRefusal(ObjectEntity $object, string $today, array $excludeUuids): ?string`, `ObjectUpdatingEvent`.
+Read `openspec/woo-build-rules.md` first. Start once `openregister/appraisal-inherited-from-a-parent` and `subjects-as-first-class-records` are merged. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real classes checked in openregister `development`: `ObjectEntity::getRetention()` and `setRetention()` (magic), `OCA\OpenRegister\Service\Archival\Appraisal::RETAIN_PERMANENTLY_ALIASES` (`retain_permanently`, `bewaren`, `blijvend_bewaren`), `OCA\OpenRegister\Service\RetentionService::destructionRefusal(ObjectEntity $object, string $today, array $excludeUuids): ?string`, `ObjectUpdatingEvent`.
 
 ## 1. Mark a subject
 
