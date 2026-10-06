@@ -130,7 +130,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
         cannot function there. Declaring 31 advertised a range this app cannot
         deliver. Same defect as openconnector#1173.
         -->
-		<nextcloud min-version="32" max-version="34"/>
+		<nextcloud min-version="32" max-version="35"/>
 	</dependencies>
 
 	<background-jobs>
