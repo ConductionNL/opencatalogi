@@ -1,6 +1,6 @@
 # Tasks: woo-value-list-curation
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Start once `woo-value-lists-on-the-concept-register` is merged. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; listener tests construct the REAL `ObjectCreatingEvent` and `ObjectUpdatingEvent`. Check how `openregister/local-changes-to-app-shipped-configuration` (REQ-LCA-001 to 003) keeps an administrator's change to shipped data before shipping the applicability table; if it is not merged, keep the administrator's confirmations in `valueListChoice` only (never in the shipped file) so an upgrade cannot overwrite them.
+Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-concept-register` is merged. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; listener tests construct the REAL `ObjectCreatingEvent` and `ObjectUpdatingEvent`. Check how `openregister/local-changes-to-app-shipped-configuration` (REQ-LCA-001 to 003) keeps an administrator's change to shipped data before shipping the applicability table; if it is not merged, keep the administrator's confirmations in `valueListChoice` only (never in the shipped file) so an upgrade cannot overwrite them.
 
 ## 1. Overlay
 

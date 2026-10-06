@@ -5,6 +5,16 @@ depends_on: [woo-value-lists-on-the-concept-register, publications-reference-the
 
 # Proposal: woo-value-list-curation
 
+## Summary
+
+An organisation curates how it uses the national value lists (hide, order, explain in its own words, activate a subset of organisations) in an overlay that a refresh of the list never overwrites.
+
+- Rows: 13.12, 13.13, 13.14, 13.15, 13.32.
+- Wave: 3.
+- Depends on: `opencatalogi/woo-value-lists-on-the-concept-register` (https://github.com/ConductionNL/opencatalogi/issues/1780); `opencatalogi/publications-reference-the-shared-organisation` (https://github.com/ConductionNL/opencatalogi/issues/1774); `openregister/local-changes-to-app-shipped-configuration` (open change outside this plan, 12 of 19 tasks; no `[OpenSpec]` issue found). `opencatalogi/publications-name-their-responsible-organisation` (https://github.com/ConductionNL/opencatalogi/issues/1773) uses the same activated set.
+- Decision: D5, row 13.14 (normative fields refreshed, the organisation's own text kept); D5, row 13.32 (a hidden category serves an empty, valid sitemap index).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The national lists are the same for every organisation; how an organisation uses them is not. A water board never publishes some categories a municipality does, wants its most used categories first, wants to explain a category in its own words to a citizen, and publishes for a handful of organisations out of the thousands in the TOOI register. Today none of that can be set, and anything set by hand would be overwritten by the next refresh of the list.
