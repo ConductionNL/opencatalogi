@@ -1,6 +1,6 @@
 # Tasks: api-says-what-it-filtered
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Do not loosen `evaluateAsAnonymous()` or `CallerScope::strip()` while instrumenting them; the WOO-551 and WOO-581 comments explain why they exist. Group 4 is gated on decision D10: skip it unless the PR author has Ruben's written keep of row 13.26, and say in the PR body that it was skipped.
+Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Do not loosen `evaluateAsAnonymous()` or `CallerScope::strip()` while instrumenting them; the WOO-551 and WOO-581 comments explain why they exist. Group 4 is gated on decision D10: skip it unless the PR author has Ruben's written keep of row 13.26, and say in the PR body that it was skipped.
 
 ## 1. Collector
 

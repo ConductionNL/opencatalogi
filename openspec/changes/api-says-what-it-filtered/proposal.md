@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: api-says-what-it-filtered
 
+## Summary
+
+Every public list response says which filters narrowed it, so a short list no longer reads the same as a complete one.
+
+- Rows: 13.27; 13.26 gated on D10 (REQ-ASF-003 and task group 4 are skipped unless Ruben keeps 13.26).
+- Wave: 1.
+- Depends on: nothing to build. `opencatalogi/publication-lifecycle-on-or` (https://github.com/ConductionNL/opencatalogi/issues/1754) adds the `unlisted` filter; whichever lands second adds its entry.
+- Decision: D10 (13.26 flagged, awaiting strike or keep).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 An integrator who asks for "all publications" and gets 412 has no way to know whether that is all of them. The public API narrows every list on its own: to the catalogue's schemas and registers, to what an anonymous reader may see, and past archived records. It ignores a scope a caller sends. None of that is said in the response, so a short list reads the same as a complete one.
