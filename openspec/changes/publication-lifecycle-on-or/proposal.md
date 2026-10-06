@@ -9,7 +9,7 @@ depends_on: []
 
 A publication gets one declared lifecycle on OpenRegister's engine (draft, in review, approved, published, archived) that an editor can follow and a caller can reconcile against, plus an unlisted state that keeps a public record off every machine surface while its link works.
 
-- Rows: 5.9, 5.16, 5.17, 9.21. Row 5.14 moved to the follow-up `opencatalogi/publication-lifecycle-on-or-draft-purge` (split off 2026-10-06).
+- Rows: 5.9, 5.16, 5.17, 9.21. Row 5.14 moved to the follow-up `opencatalogi/publication-lifecycle-on-or-draft-purge` (https://github.com/ConductionNL/opencatalogi/issues/1796, split off 2026-10-06).
 - Wave: 1.
 - Depends on: nothing to build. Uses OpenRegister on `development`: `TransitionEngine`, `LifecycleValidationListener`, `LifecycleActionExecutor`, the `immutable` keyword. `publication-schedule-guards`, `publication-withdrawal-aftercare` and `publication-relations-place-and-source-ids` build on it.
 - Decision: none of D1 to D13 implemented; RET-001's single visibility predicate is extended, not duplicated (D5 context).
