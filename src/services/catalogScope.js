@@ -18,6 +18,8 @@
  *
  * @param {Array<number|string>|string|null|undefined} raw The catalog field.
  * @return {Array<number>} The ids, in their original order.
+ *
+ * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
  */
 export function normaliseIdList(raw) {
 	let list = raw
@@ -52,6 +54,8 @@ export function normaliseIdList(raw) {
  *
  * @param {{register: number, schema: number}} pair The pair.
  * @return {string} The key.
+ *
+ * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
  */
 export function pairKey(pair) {
 	return `${pair.register}-${pair.schema}`
@@ -62,6 +66,8 @@ export function pairKey(pair) {
  *
  * @param {{registers?: Array<number|string>|string, schemas?: Array<number|string>|string}|null} catalog The catalog.
  * @return {Array<{register: number, schema: number, key: string}>} The pairs; empty when either side has no numeric id.
+ *
+ * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
  */
 export function catalogScopePairs(catalog) {
 	const registers = normaliseIdList(catalog?.registers)

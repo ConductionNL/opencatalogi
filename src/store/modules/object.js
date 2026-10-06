@@ -1212,6 +1212,8 @@ export const useObjectStore = defineStore('object', {
 		 *
 		 * @param {string} slug The catalog slug.
 		 * @return {Promise<{id: string|null, slug: string, title: string, registers: Array<number>, schemas: Array<number>}|null>} The catalog, or null when no catalog has this slug.
+		 *
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
 		 */
 		async fetchMenuCatalogBySlug(slug) {
 			if (!this.settings) {

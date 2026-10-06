@@ -154,10 +154,12 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		menuCatalogs() {
 			return objectStore.menuCatalogs
 		},
 
+		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		menuCatalog() {
 			return (
 				this.menuCatalogs.find(
@@ -166,6 +168,7 @@ export default {
 			)
 		},
 
+		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		catalog() {
 			if (this.menuCatalog) {
 				return this.menuCatalog
@@ -175,7 +178,11 @@ export default {
 				: null
 		},
 
-		/** @return {'loading'|'error'|'not-found'|'ready'} */
+		/**
+		 * @return {'loading'|'error'|'not-found'|'ready'}
+		 *
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+		 */
 		status() {
 			if (this.catalog) {
 				return 'ready'
@@ -186,10 +193,12 @@ export default {
 			return this.failed ? 'error' : 'not-found'
 		},
 
+		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		pairs() {
 			return catalogScopePairs(this.catalog)
 		},
 
+		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		activePair() {
 			const key = this.$route?.query?.[PAIR_QUERY_KEY]
 			return (
@@ -197,12 +206,17 @@ export default {
 			)
 		},
 
+		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		indexKey() {
 			const pair = this.activePair
 			return `${this.catalogSlug}:${pair?.register}:${pair?.schema}`
 		},
 
-		/** Whether the active pair is the publication pair, which has a detail page. */
+		/**
+		 * Whether the active pair is the publication pair, which has a detail page.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 */
 		opensDetail() {
 			const [register] = normaliseIdList([this.register])
 			const [schema] = normaliseIdList([this.schema])
@@ -216,6 +230,7 @@ export default {
 			)
 		},
 
+		/** @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003 */
 		indexProps() {
 			const attrs = { ...this.$attrs }
 			for (const listener of RENDERER_ROW_LISTENERS) {
@@ -226,6 +241,7 @@ export default {
 			return { ...this.actionToggles, ...attrs, ...view }
 		},
 
+		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		pairOptions() {
 			return this.pairs.map((pair) => ({
 				key: pair.key,
@@ -238,6 +254,7 @@ export default {
 			}))
 		},
 
+		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		activeOption() {
 			return (
 				this.pairOptions.find(
@@ -246,6 +263,7 @@ export default {
 			)
 		},
 
+		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		catalogRoute() {
 			const id = this.catalog?.id
 			return id ? { name: 'CatalogDetail', params: { id: String(id) } } : null
@@ -255,6 +273,7 @@ export default {
 	watch: {
 		catalogSlug: {
 			immediate: true,
+			/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 			handler() {
 				this.resolveCatalog()
 			},
@@ -264,6 +283,8 @@ export default {
 		 * A reloaded menu list can drop the catalog or change its scope. A
 		 * catalog the list holds updates through `menuCatalog`; one it lacks is
 		 * looked up again.
+		 *
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
 		 */
 		menuCatalogs() {
 			if (!this.resolving && !this.menuCatalog) {
@@ -273,6 +294,10 @@ export default {
 
 		pairs: {
 			immediate: true,
+			/**
+			 * @param {Array<{register: number, schema: number}>} pairs The pairs.
+			 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+			 */
 			handler(pairs) {
 				if (pairs.length > 1) {
 					this.loadScopeTitles(pairs)
@@ -341,6 +366,7 @@ export default {
 		 *
 		 * @param {Array<{register: number, schema: number}>} pairs The pairs.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
 		 */
 		async loadScopeTitles(pairs) {
 			const wanted = new Set()
@@ -386,6 +412,7 @@ export default {
 		 *
 		 * @param {{key: string}|null} option The selected option.
 		 * @return {void}
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
 		 */
 		onPairSelected(option) {
 			if (!option || option.key === this.activePair?.key) {
@@ -401,6 +428,7 @@ export default {
 		 *
 		 * @param {object} row The row.
 		 * @return {object|null} The router location, or null for a row of another pair or without an id.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
 		rowTarget(row) {
 			if (!this.opensDetail) {
@@ -424,6 +452,7 @@ export default {
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
 		 * @return {void}
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
 		onRowOpen(row, event) {
 			const nativeEvent =
