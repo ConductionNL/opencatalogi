@@ -14,7 +14,7 @@ Extend the harvest handler beyond DCAT JSON-LD with three more inbound
 protocols behind the same feed/item/run model:
 
 - **DCAT Turtle / RDF-XML** (an RDF parsing dependency enters here, not
-  earlier — the JSON-LD slice needs none)
+  earlier; the JSON-LD slice needs none)
 - **OAI-PMH client**: Identify probe, ListRecords with resumption-token
   following, `from` incremental harvesting, deleted-status handling; the
   outbound `oai-pmh-endpoint` capability is the natural integration fixture
@@ -27,6 +27,14 @@ Each protocol is a plugin behind one interface; feed `protocol` becomes an
 open enum. Everything else (scheduling, mapping, checksums, conflicts,
 provenance, tombstones) is already owned by the earlier slices and MUST NOT
 be re-implemented per protocol.
+
+Woo capability programme (amendment 2026-10-05):
+
+- Rows: 1.6 (the website and CMS half: REQ-HPP-001 to REQ-HPP-003, plugins `website-sitemap` and `wordpress-rest`).
+- Wave: 2.
+- Depends on: `harvest-feed-intake` (opencatalogi, open change, 0 of 9 tasks; no `[OpenSpec]` issue found) for the feed, item and run model and its outbound-URL guard.
+- Decision: D10 struck OAI-PMH as an endpoint we serve (row 9.10), so task 2.2 harvests a recorded OAI-PMH fixture, not `oai-pmh-endpoint`.
+- Build rules: openspec/woo-build-rules.md
 
 ## Non-Goals
 
