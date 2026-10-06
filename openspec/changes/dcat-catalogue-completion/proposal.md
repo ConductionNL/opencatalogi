@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: dcat-catalogue-completion
 
+## Summary
+
+The DCAT feed carries a licence the national portal reads as a licence, records whether data.overheid.nl harvests us, and can be queried as linked data.
+
+- Rows: 8.5, 8.6, 8.8.
+- Wave: 1.
+- Depends on: nothing to build. The SPARQL engine is a maintained PHP library over an in-memory graph (check `semsol/arc2` first); if none qualifies, stop and report.
+- Decision: none of D1 to D13.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The DCAT feed is what puts a catalogue on data.overheid.nl and, through it, on data.europa.eu. Three things are missing to make that complete: a licence that the national portal can read as a licence, a record of whether the national portal actually harvests us, and a way to query the catalogue as linked data rather than only download it.

@@ -1,6 +1,6 @@
 # Tasks: dcat-catalogue-completion
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. The value list and the DONL API are authorities: fetch them, do not reconstruct them from memory.
+Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. The value list and the DONL API are authorities: fetch them, do not reconstruct them from memory.
 
 ## 1. Licence list
 
