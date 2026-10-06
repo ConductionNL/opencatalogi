@@ -452,8 +452,10 @@ describe('ObjectStore', () => {
 
 		const respond = (body) => ({ ok: true, json: () => Promise.resolve(body) })
 		const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
-		const pageOf = (url) => Number(new URL(url, 'http://test').searchParams.get('_page'))
-		const isCatalogUrl = (url) => url.startsWith('/index.php/apps/openregister/api/objects/14/54?')
+		const pageOf = (url) =>
+			Number(new URL(url, 'http://test').searchParams.get('_page'))
+		const isCatalogUrl = (url) =>
+			url.startsWith('/index.php/apps/openregister/api/objects/14/54?')
 
 		beforeEach(async () => {
 			fetch.mockResolvedValueOnce(respond(catalogSettings))
@@ -463,21 +465,32 @@ describe('ObjectStore', () => {
 
 		it('walks every page and keeps only catalogs with a slug', async () => {
 			const pages = {
-				1: [{ id: '1', slug: 'woo', title: 'Woo' }, { id: '2', title: 'No slug' }],
+				1: [
+					{ id: '1', slug: 'woo', title: 'Woo' },
+					{ id: '2', title: 'No slug' },
+				],
 				2: [{ id: '3', slug: 'data', title: 'Open data' }],
 				3: [{ '@self': { id: '4' }, slug: 'archive', title: 'Archive' }],
 			}
-			fetch.mockImplementation((url) => Promise.resolve(respond({
-				results: pages[pageOf(url)] ?? [],
-				total: 4,
-				page: pageOf(url),
-				pages: 3,
-			})))
+			fetch.mockImplementation((url) =>
+				Promise.resolve(
+					respond({
+						results: pages[pageOf(url)] ?? [],
+						total: 4,
+						page: pageOf(url),
+						pages: 3,
+					}),
+				),
+			)
 
 			await store.fetchMenuCatalogs()
 
 			expect(fetch.mock.calls.map(([url]) => pageOf(url))).toEqual([1, 2, 3])
-			expect(fetch.mock.calls.every(([url]) => isCatalogUrl(url) && url.includes('_limit=100'))).toBe(true)
+			expect(
+				fetch.mock.calls.every(
+					([url]) => isCatalogUrl(url) && url.includes('_limit=100'),
+				),
+			).toBe(true)
 			expect(store.menuCatalogs).toEqual([
 				{ id: '1', slug: 'woo', title: 'Woo' },
 				{ id: '3', slug: 'data', title: 'Open data' },
@@ -486,23 +499,36 @@ describe('ObjectStore', () => {
 		})
 
 		it('stops when a page comes back empty', async () => {
-			fetch.mockImplementation((url) => Promise.resolve(respond({
-				results: pageOf(url) === 1 ? [{ id: '1', slug: 'woo', title: 'Woo' }] : [],
-				pages: 5,
-			})))
+			fetch.mockImplementation((url) =>
+				Promise.resolve(
+					respond({
+						results:
+							pageOf(url) === 1
+								? [{ id: '1', slug: 'woo', title: 'Woo' }]
+								: [],
+						pages: 5,
+					}),
+				),
+			)
 
 			await store.fetchMenuCatalogs()
 
 			expect(fetch).toHaveBeenCalledTimes(2)
-			expect(store.menuCatalogs.map((catalog) => catalog.slug)).toEqual(['woo'])
+			expect(store.menuCatalogs.map((catalog) => catalog.slug)).toEqual([
+				'woo',
+			])
 		})
 
 		it('is refreshed by a catalog collection fetch', async () => {
-			fetch.mockImplementation(() => Promise.resolve(respond({
-				results: [{ id: '1', slug: 'woo', title: 'Woo' }],
-				total: 1,
-				pages: 1,
-			})))
+			fetch.mockImplementation(() =>
+				Promise.resolve(
+					respond({
+						results: [{ id: '1', slug: 'woo', title: 'Woo' }],
+						total: 1,
+						pages: 1,
+					}),
+				),
+			)
 
 			await store.fetchCollection('catalog')
 			await flush()
@@ -510,14 +536,26 @@ describe('ObjectStore', () => {
 			// One call for the collection, one for the menu walk.
 			expect(fetch).toHaveBeenCalledTimes(2)
 			expect(fetch.mock.calls[1][0]).toContain('_limit=100')
-			expect(store.menuCatalogs).toEqual([{ id: '1', slug: 'woo', title: 'Woo' }])
+			expect(store.menuCatalogs).toEqual([
+				{ id: '1', slug: 'woo', title: 'Woo' },
+			])
 		})
 
 		it('derives the page count from total when the response has no pages', async () => {
-			fetch.mockImplementation((url) => Promise.resolve(respond({
-				results: [{ id: String(pageOf(url)), slug: `c${pageOf(url)}`, title: 'C' }],
-				total: 250,
-			})))
+			fetch.mockImplementation((url) =>
+				Promise.resolve(
+					respond({
+						results: [
+							{
+								id: String(pageOf(url)),
+								slug: `c${pageOf(url)}`,
+								title: 'C',
+							},
+						],
+						total: 250,
+					}),
+				),
+			)
 
 			await store.fetchMenuCatalogs()
 
@@ -526,10 +564,20 @@ describe('ObjectStore', () => {
 		})
 
 		it('stops at the page cap', async () => {
-			fetch.mockImplementation((url) => Promise.resolve(respond({
-				results: [{ id: String(pageOf(url)), slug: `c${pageOf(url)}`, title: 'C' }],
-				pages: 1000,
-			})))
+			fetch.mockImplementation((url) =>
+				Promise.resolve(
+					respond({
+						results: [
+							{
+								id: String(pageOf(url)),
+								slug: `c${pageOf(url)}`,
+								title: 'C',
+							},
+						],
+						pages: 1000,
+					}),
+				),
+			)
 
 			await store.fetchMenuCatalogs()
 
@@ -538,19 +586,29 @@ describe('ObjectStore', () => {
 		})
 
 		it('is not refreshed by a paged, searched or appended catalog fetch', async () => {
-			fetch.mockImplementation(() => Promise.resolve(respond({
-				results: [{ id: '1', slug: 'woo', title: 'Woo' }],
-				total: 1,
-				pages: 1,
-			})))
+			fetch.mockImplementation(() =>
+				Promise.resolve(
+					respond({
+						results: [{ id: '1', slug: 'woo', title: 'Woo' }],
+						total: 1,
+						pages: 1,
+					}),
+				),
+			)
 
 			await store.fetchCollection('catalog', { _limit: 20, _page: 2 })
-			await store.fetchCollection('catalog', { _limit: 20, _page: 1, _search: 'woo' })
+			await store.fetchCollection('catalog', {
+				_limit: 20,
+				_page: 1,
+				_search: 'woo',
+			})
 			await store.fetchCollection('catalog', {}, true)
 			await flush()
 
 			expect(fetch).toHaveBeenCalledTimes(3)
-			expect(fetch.mock.calls.some(([url]) => url.includes('_limit=100'))).toBe(false)
+			expect(
+				fetch.mock.calls.some(([url]) => url.includes('_limit=100')),
+			).toBe(false)
 			expect(store.menuCatalogs).toEqual([])
 		})
 
@@ -559,7 +617,15 @@ describe('ObjectStore', () => {
 			fetch.mockImplementation((url) => {
 				if (url.includes('_limit=100')) {
 					return new Promise((resolve) => {
-						releaseWalk = () => resolve(respond({ results: [{ id: '1', slug: 'woo', title: 'Woo' }], pages: 1 }))
+						releaseWalk = () =>
+							resolve(
+								respond({
+									results: [
+										{ id: '1', slug: 'woo', title: 'Woo' },
+									],
+									pages: 1,
+								}),
+							)
 					})
 				}
 				return Promise.resolve(respond({ results: [], total: 0, pages: 1 }))
@@ -573,19 +639,38 @@ describe('ObjectStore', () => {
 			releaseWalk()
 			await flush()
 
-			expect(fetch.mock.calls.filter(([url]) => url.includes('_limit=100'))).toHaveLength(1)
-			expect(store.menuCatalogs).toEqual([{ id: '1', slug: 'woo', title: 'Woo' }])
+			expect(
+				fetch.mock.calls.filter(([url]) => url.includes('_limit=100')),
+			).toHaveLength(1)
+			expect(store.menuCatalogs).toEqual([
+				{ id: '1', slug: 'woo', title: 'Woo' },
+			])
 		})
 
 		it('starts a new walk for a reload that began after the running walk', async () => {
 			let releaseFirst
-			fetch.mockImplementationOnce(() => new Promise((resolve) => {
-				releaseFirst = () => resolve(respond({ results: [{ id: '1', slug: 'old', title: 'Old' }], pages: 1 }))
-			}))
-			fetch.mockImplementation(() => Promise.resolve(respond({
-				results: [{ id: '2', slug: 'new', title: 'New' }],
-				pages: 1,
-			})))
+			fetch.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						releaseFirst = () =>
+							resolve(
+								respond({
+									results: [
+										{ id: '1', slug: 'old', title: 'Old' },
+									],
+									pages: 1,
+								}),
+							)
+					}),
+			)
+			fetch.mockImplementation(() =>
+				Promise.resolve(
+					respond({
+						results: [{ id: '2', slug: 'new', title: 'New' }],
+						pages: 1,
+					}),
+				),
+			)
 
 			const first = store.fetchMenuCatalogs()
 			await store.fetchCollection('catalog')
@@ -593,11 +678,15 @@ describe('ObjectStore', () => {
 			releaseFirst()
 			await first
 
-			expect(fetch.mock.calls.filter(([url]) => url.includes('_limit=100'))).toHaveLength(2)
-			expect(store.menuCatalogs).toEqual([{ id: '2', slug: 'new', title: 'New' }])
+			expect(
+				fetch.mock.calls.filter(([url]) => url.includes('_limit=100')),
+			).toHaveLength(2)
+			expect(store.menuCatalogs).toEqual([
+				{ id: '2', slug: 'new', title: 'New' },
+			])
 		})
 
-		it('is not refreshed by another type\'s collection fetch', async () => {
+		it("is not refreshed by another type's collection fetch", async () => {
 			fetch.mockImplementation(() => Promise.resolve(respond(mockCollection)))
 
 			await store.fetchCollection('character')
@@ -615,27 +704,47 @@ describe('ObjectStore', () => {
 			await expect(store.fetchCollection('catalog')).resolves.toBeUndefined()
 			await flush()
 
-			expect(warn).toHaveBeenCalledWith('Failed to refresh the catalog menu entries:', expect.any(Error))
+			expect(warn).toHaveBeenCalledWith(
+				'Failed to refresh the catalog menu entries:',
+				expect.any(Error),
+			)
 			expect(store.menuCatalogs).toEqual([])
 			warn.mockRestore()
 		})
 
 		it('drops a response that a newer call has overtaken', async () => {
 			let releaseFirst
-			fetch.mockImplementationOnce(() => new Promise((resolve) => {
-				releaseFirst = () => resolve(respond({ results: [{ id: '1', slug: 'old', title: 'Old' }], pages: 1 }))
-			}))
-			fetch.mockImplementationOnce(() => Promise.resolve(respond({
-				results: [{ id: '2', slug: 'new', title: 'New' }],
-				pages: 1,
-			})))
+			fetch.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						releaseFirst = () =>
+							resolve(
+								respond({
+									results: [
+										{ id: '1', slug: 'old', title: 'Old' },
+									],
+									pages: 1,
+								}),
+							)
+					}),
+			)
+			fetch.mockImplementationOnce(() =>
+				Promise.resolve(
+					respond({
+						results: [{ id: '2', slug: 'new', title: 'New' }],
+						pages: 1,
+					}),
+				),
+			)
 
 			const first = store.fetchMenuCatalogs()
 			await store.fetchMenuCatalogs()
 			releaseFirst()
 			await first
 
-			expect(store.menuCatalogs).toEqual([{ id: '2', slug: 'new', title: 'New' }])
+			expect(store.menuCatalogs).toEqual([
+				{ id: '2', slug: 'new', title: 'New' },
+			])
 		})
 	})
 })

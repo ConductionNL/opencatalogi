@@ -125,6 +125,8 @@ export default {
 		 * finishes.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-app-shell-settings/spec.md#requirement-catalog-driven-main-menu-req-shell-004
 		 */
 		onSetupComplete() {
 			objectStore.fetchMenuCatalogs().catch((error) => {

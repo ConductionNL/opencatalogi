@@ -40,7 +40,11 @@ function manifest() {
 
 describe('catalogMenuEntries', () => {
 	it('builds one Publications entry per catalog, keyed by slug', () => {
-		expect(catalogMenuEntries([{ id: 'a1', slug: 'woo', title: 'Woo publications' }])).toEqual([
+		expect(
+			catalogMenuEntries([
+				{ id: 'a1', slug: 'woo', title: 'Woo publications' },
+			]),
+		).toEqual([
 			{
 				id: 'catalog-woo',
 				label: 'Woo publications',
@@ -79,7 +83,10 @@ describe('catalogMenuEntries', () => {
 			{ slug: 'no-title' },
 			{ slug: 'blank-title', title: '   ' },
 		])
-		expect(entries.map((entry) => entry.label)).toEqual(['no-title', 'blank-title'])
+		expect(entries.map((entry) => entry.label)).toEqual([
+			'no-title',
+			'blank-title',
+		])
 	})
 
 	it('keeps the first catalog of a duplicated slug and the server order', () => {
@@ -98,7 +105,8 @@ describe('catalogMenuEntries', () => {
 
 describe('catalog entry order', () => {
 	it('sorts between Dashboard and Search in the bundled manifest', () => {
-		const order = (id) => bundledManifest.menu.find((item) => item.id === id).order
+		const order = (id) =>
+			bundledManifest.menu.find((item) => item.id === id).order
 		expect(CATALOG_MENU_ORDER).toBeGreaterThan(order('Dashboard'))
 		expect(CATALOG_MENU_ORDER).toBeLessThan(order('Search'))
 	})
@@ -139,6 +147,8 @@ describe('withCatalogEntries', () => {
 	})
 
 	it('handles a manifest without a menu', () => {
-		expect(withCatalogEntries({}, [{ slug: 'woo' }]).menu.map((item) => item.id)).toEqual(['catalog-woo'])
+		expect(
+			withCatalogEntries({}, [{ slug: 'woo' }]).menu.map((item) => item.id),
+		).toEqual(['catalog-woo'])
 	})
 })

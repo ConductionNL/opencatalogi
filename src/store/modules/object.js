@@ -81,7 +81,11 @@ let menuCatalogsWalk = null
  * @return {boolean} True when no params were given.
  */
 function isBareFetch(params) {
-	return params === null || params === undefined || (typeof params === 'object' && Object.keys(params).length === 0)
+	return (
+		params === null
+		|| params === undefined
+		|| (typeof params === 'object' && Object.keys(params).length === 0)
+	)
 }
 
 /**
@@ -1086,7 +1090,10 @@ export const useObjectStore = defineStore('object', {
 				if (type === 'catalog' && !append && isBareFetch(params)) {
 					this.fetchMenuCatalogs(fetchStarted).catch((error) => {
 						// eslint-disable-next-line no-console
-						console.warn('Failed to refresh the catalog menu entries:', error)
+						console.warn(
+							'Failed to refresh the catalog menu entries:',
+							error,
+						)
 					})
 				}
 			} catch (error) {
@@ -1113,6 +1120,8 @@ export const useObjectStore = defineStore('object', {
 		 *
 		 * @param {number} [freshAfter] Sequence number the joined walk must have started after; by default the call always starts a new walk.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-app-shell-settings/spec.md#requirement-catalog-driven-main-menu-req-shell-004
 		 */
 		fetchMenuCatalogs(freshAfter = ++menuCatalogsSequence) {
 			if (menuCatalogsWalk && menuCatalogsWalk.started > freshAfter) {
@@ -1141,6 +1150,8 @@ export const useObjectStore = defineStore('object', {
 		 *
 		 * @return {Promise<Array<{id: string|null, slug: string, title: string}>>}
 		 * @private
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-app-shell-settings/spec.md#requirement-catalog-driven-main-menu-req-shell-004
 		 */
 		async _walkMenuCatalogs() {
 			if (!this.settings) {

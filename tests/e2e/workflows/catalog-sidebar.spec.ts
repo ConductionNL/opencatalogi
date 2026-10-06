@@ -85,7 +85,11 @@ async function seedCatalog(
 	extra: Record<string, unknown> = {},
 ): Promise<SeededCatalog> {
 	const slug = slugFor(name)
-	const seeded = await fx.createCatalog(name, { slug, status: 'development', ...extra })
+	const seeded = await fx.createCatalog(name, {
+		slug,
+		status: 'development',
+		...extra,
+	})
 	return { ...seeded, slug }
 }
 
@@ -96,7 +100,10 @@ async function seedCatalog(
  * @param kind `registers` or `schemas`.
  * @param id The register or schema id.
  */
-async function titleOf(kind: 'registers' | 'schemas', id: number | string): Promise<string> {
+async function titleOf(
+	kind: 'registers' | 'schemas',
+	id: number | string,
+): Promise<string> {
 	const res = await fx.api.get(`/index.php/apps/openregister/api/${kind}/${id}`)
 	expect(res.ok(), `${kind} ${id} readable`).toBe(true)
 	return String((await res.json()).title)
@@ -115,9 +122,12 @@ async function userLanguage(): Promise<string> {
  * @param language The language code.
  */
 async function setUserLanguage(language: string): Promise<void> {
-	const res = await fx.api.put(`/ocs/v2.php/cloud/users/${ADMIN_USER}?format=json`, {
-		data: { key: 'language', value: language },
-	})
+	const res = await fx.api.put(
+		`/ocs/v2.php/cloud/users/${ADMIN_USER}?format=json`,
+		{
+			data: { key: 'language', value: language },
+		},
+	)
 	expect(res.ok(), `language set to ${language}`).toBe(true)
 }
 
@@ -198,7 +208,10 @@ async function navEntryIds(page: Page): Promise<string[]> {
 		.locator('[data-testid="cn-nav"] [data-testid^="cn-nav-entry-"]')
 		.evaluateAll((elements) =>
 			elements.map((element) =>
-				(element.getAttribute('data-testid') ?? '').replace(/^cn-nav-entry-/, ''),
+				(element.getAttribute('data-testid') ?? '').replace(
+					/^cn-nav-entry-/,
+					'',
+				),
 			),
 		)
 }
@@ -248,7 +261,7 @@ test.describe('catalog entries in the navigation', () => {
 		expect(fatalErrors(errors)).toHaveLength(0)
 	})
 
-	test('an entry opens its catalog\'s publications and is the active entry there', async ({
+	test("an entry opens its catalog's publications and is the active entry there", async ({
 		page,
 	}) => {
 		const errors = trackPageErrors(page)
@@ -259,23 +272,39 @@ test.describe('catalog entries in the navigation', () => {
 		await catalogEntry(page, slugA).click()
 
 		await expect(page).toHaveURL(new RegExp(`/publications/${slugA}$`))
-		await expect(catalogLink(page, slugA)).toHaveAttribute('aria-current', 'page')
-		await expect(catalogLink(page, slugB)).not.toHaveAttribute('aria-current', 'page')
+		await expect(catalogLink(page, slugA)).toHaveAttribute(
+			'aria-current',
+			'page',
+		)
+		await expect(catalogLink(page, slugB)).not.toHaveAttribute(
+			'aria-current',
+			'page',
+		)
 		await expect(
-			page.locator('[data-testid="cn-nav-entry-Dashboard"] a.app-navigation-entry-link').first(),
+			page
+				.locator(
+					'[data-testid="cn-nav-entry-Dashboard"] a.app-navigation-entry-link',
+				)
+				.first(),
 		).not.toHaveAttribute('aria-current', 'page')
 
 		const index = page.locator('[data-testid="cn-index-page"]').first()
 		await expect(index).toBeVisible({ timeout: 15000 })
-		await expect(index.locator('[data-testid="cn-cta-primary"]').first()).toHaveAccessibleName(
-			'Add Publication',
-		)
+		await expect(
+			index.locator('[data-testid="cn-cta-primary"]').first(),
+		).toHaveAccessibleName('Add Publication')
 
 		// Switching catalogs moves the active state with it.
 		await catalogEntry(page, slugB).click()
 		await expect(page).toHaveURL(new RegExp(`/publications/${slugB}$`))
-		await expect(catalogLink(page, slugB)).toHaveAttribute('aria-current', 'page')
-		await expect(catalogLink(page, slugA)).not.toHaveAttribute('aria-current', 'page')
+		await expect(catalogLink(page, slugB)).toHaveAttribute(
+			'aria-current',
+			'page',
+		)
+		await expect(catalogLink(page, slugA)).not.toHaveAttribute(
+			'aria-current',
+			'page',
+		)
 
 		expect(fatalErrors(errors)).toHaveLength(0)
 	})
@@ -303,13 +332,20 @@ test.describe('catalog entries in the navigation', () => {
 			await expect(
 				builtInSearch.locator('.app-navigation-entry__name').first(),
 			).not.toHaveText('Search')
-			await expect(entry.locator('.app-navigation-entry__name').first()).toHaveText('Search')
+			await expect(
+				entry.locator('.app-navigation-entry__name').first(),
+			).toHaveText('Search')
 			const ids = await navEntryIds(page)
-			expect(ids.indexOf(`catalog-${slug}`)).toBeLessThan(ids.indexOf('Search'))
+			expect(ids.indexOf(`catalog-${slug}`)).toBeLessThan(
+				ids.indexOf('Search'),
+			)
 
 			await entry.click()
 			await expect(page).toHaveURL(new RegExp(`/publications/${slug}$`))
-			await expect(catalogLink(page, slug)).toHaveAttribute('aria-current', 'page')
+			await expect(catalogLink(page, slug)).toHaveAttribute(
+				'aria-current',
+				'page',
+			)
 			await expect(
 				builtInSearch.locator('a.app-navigation-entry-link').first(),
 			).not.toHaveAttribute('aria-current', 'page')
@@ -320,7 +356,9 @@ test.describe('catalog entries in the navigation', () => {
 		expect(fatalErrors(errors)).toHaveLength(0)
 	})
 
-	test('a publication detail page keeps its catalog\'s entry active', async ({ page }) => {
+	test("a publication detail page keeps its catalog's entry active", async ({
+		page,
+	}) => {
 		const errors = trackPageErrors(page)
 		const slugA = catalogA.slug
 		const slugB = catalogB.slug
@@ -332,9 +370,17 @@ test.describe('catalog entries in the navigation', () => {
 		await waitIndexBody(page)
 		await rowByTitle(page, publication.title).click()
 
-		await expect(page).toHaveURL(new RegExp(`/publications/${slugA}/${publication.id}(\\?|$)`))
-		await expect(catalogLink(page, slugA)).toHaveAttribute('aria-current', 'page')
-		await expect(catalogLink(page, slugB)).not.toHaveAttribute('aria-current', 'page')
+		await expect(page).toHaveURL(
+			new RegExp(`/publications/${slugA}/${publication.id}(\\?|$)`),
+		)
+		await expect(catalogLink(page, slugA)).toHaveAttribute(
+			'aria-current',
+			'page',
+		)
+		await expect(catalogLink(page, slugB)).not.toHaveAttribute(
+			'aria-current',
+			'page',
+		)
 
 		expect(fatalErrors(errors)).toHaveLength(0)
 	})
@@ -352,7 +398,9 @@ test.describe('catalog entries in the navigation', () => {
 		await bootApp(page)
 		// A full page load would drop this marker.
 		await page.evaluate(() => {
-			;(window as unknown as { __catalogSidebarSpec: boolean }).__catalogSidebarSpec = true
+			;(
+				window as unknown as { __catalogSidebarSpec: boolean }
+			).__catalogSidebarSpec = true
 		})
 
 		// Create through the Catalogs page's Add Catalog dialog.
@@ -368,12 +416,19 @@ test.describe('catalog entries in the navigation', () => {
 		await fillField(createDialog, 'Title', title)
 		await fillField(createDialog, 'Slug', slugC)
 		await pickOption(page, createDialog, 'Registers*', registerTitle)
-		await pickOption(page, createDialog, 'Schemas*', `${schemaTitle} (${registerTitle})`)
+		await pickOption(
+			page,
+			createDialog,
+			'Schemas*',
+			`${schemaTitle} (${registerTitle})`,
+		)
 		await expect(catalogEntry(page, slugC)).toHaveCount(0)
 		const add = createDialog.getByRole('button', { name: /^add$/i }).first()
 		await expect(add).toBeEnabled()
 		await add.click()
-		await expect(catalogEntry(page, slugC)).toContainText(title, { timeout: 15000 })
+		await expect(catalogEntry(page, slugC)).toContainText(title, {
+			timeout: 15000,
+		})
 		await expect(createDialog).toBeHidden({ timeout: 15000 })
 		const created = { id: await catalogIdBySlug(slugC), title }
 
@@ -389,8 +444,13 @@ test.describe('catalog entries in the navigation', () => {
 		const editDialog = dialog(page)
 		await expect(editDialog).toBeVisible({ timeout: 10000 })
 		await fillField(editDialog, 'Title', renamed)
-		await editDialog.getByRole('button', { name: /^save$/i }).first().click()
-		await expect(catalogEntry(page, slugC)).toContainText(renamed, { timeout: 15000 })
+		await editDialog
+			.getByRole('button', { name: /^save$/i })
+			.first()
+			.click()
+		await expect(catalogEntry(page, slugC)).toContainText(renamed, {
+			timeout: 15000,
+		})
 
 		// Delete through the delete dialog. The original title is a prefix of the
 		// new one, so the row matches whether or not the table shows the rename.
@@ -400,7 +460,9 @@ test.describe('catalog entries in the navigation', () => {
 		const relatedLoaded = Promise.all(
 			['audit-trails', 'uses', 'used', 'files'].map((related) =>
 				page.waitForResponse((response) =>
-					new URL(response.url()).pathname.endsWith(`/${created.id}/${related}`),
+					new URL(response.url()).pathname.endsWith(
+						`/${created.id}/${related}`,
+					),
 				),
 			),
 		)
@@ -408,12 +470,17 @@ test.describe('catalog entries in the navigation', () => {
 		const deleteDialog = dialog(page)
 		await expect(deleteDialog).toBeVisible({ timeout: 10000 })
 		await relatedLoaded
-		await deleteDialog.getByRole('button', { name: /^delete$/i }).first().click()
+		await deleteDialog
+			.getByRole('button', { name: /^delete$/i })
+			.first()
+			.click()
 		await expect(catalogEntry(page, slugC)).toHaveCount(0, { timeout: 15000 })
 
 		expect(
 			await page.evaluate(
-				() => (window as unknown as { __catalogSidebarSpec?: boolean }).__catalogSidebarSpec,
+				() =>
+					(window as unknown as { __catalogSidebarSpec?: boolean })
+						.__catalogSidebarSpec,
 			),
 			'no page reload happened',
 		).toBe(true)
