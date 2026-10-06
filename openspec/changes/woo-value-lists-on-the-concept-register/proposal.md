@@ -5,6 +5,16 @@ depends_on: [dossiq/woo-refusal-grounds-list, openregister/property-code-list-fr
 
 # Proposal: woo-value-lists-on-the-concept-register
 
+## Summary
+
+The TOOI and DiWoo value lists live once, in OpenRegister's concept register, refreshed daily from the national source; the 17 Woo categories become audited data; and the refusal grounds are read from dossiq.
+
+- Rows: 13.16, 13.17; supports 12.30 (the categories half: REQ-WVC-005, added 2026-10-06; the organisation half is `openregister/history-schema-and-settings-edits-audited`).
+- Wave: 2.
+- Depends on: `dossiq/woo-refusal-grounds-list` (https://github.com/ConductionNL/dossiq/issues/3288), `WooRefusalGrounds::list()` and `byCode()` (REQ-WRG-007) and its snapshot (REQ-WRG-008); `openregister/property-code-list-from-concept-scheme` (open change outside this plan, 5 of 9 tasks; no `[OpenSpec]` issue found); `opencatalogi/diwoo-metadata-on-the-publication` (https://github.com/ConductionNL/opencatalogi/issues/1753).
+- Decision: D3 (grounds in dossiq; TOOI lists once in OpenRegister); D12 (the grounds snapshot serves redaction only, never a Woo request path).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The national value lists a Woo publication cites (information categories, kinds of handling, organisations, document types, languages) change. Today OpenCatalogi carries its own copy in a JSON file, so a change waits for a release, and OpenRegister carries a second copy of some of the same lists. The refusal grounds exist in four versions across three apps. One copy of each list, kept current from its source, is what the rows ask.

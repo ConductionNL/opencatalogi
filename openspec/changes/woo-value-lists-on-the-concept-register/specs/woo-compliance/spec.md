@@ -83,6 +83,32 @@ A daily `TimedJob` `TooiSchemeRefresh` SHALL, for each scheme OpenCatalogi uses,
 - **WHEN** `GET /api/value-lists` is requested anonymously
 - **THEN** it answers entries for every scheme OpenCatalogi uses, each with a URI
 
+### Requirement: The Woo information categories are audited data, not a constant (REQ-WVC-005)
+
+`WooCategory::ALL` SHALL no longer be the source of the Woo information categories. `Woo\WooCategoryRegistry` SHALL read the categories (code, Dutch and English label, URI, status) from the informatiecategorieën scheme in OpenRegister's vocabulary register, and SHALL merge the categories an operator added as data as it does today. The English label SHALL come from the concept's English label when the scheme carries one, and otherwise from the app's translation of the Dutch label in `l10n/`; it SHALL NOT come from a PHP constant. `BatchPublicationWriter` and `SavedSearchService` SHALL test membership through `WooCategoryRegistry::find()` instead of `WooCategory::ALL`. `WooCategory::WOO_REQUEST` MAY stay as a code. Every create, update and deprecation of an informatiecategorie concept, whether written by `TooiSchemeRefresh` or by an administrator, and every create, update and delete of an operator-added category, SHALL leave an OpenRegister audit trail row with who (the administrator, or `system` for the refresh job), when, and the values before and after. When audit trails are switched off for the vocabulary register, `TooiSchemeRefresh` SHALL NOT import the informatiecategorieën scheme; it SHALL keep the scheme as it is and raise the failure, because a category change nobody can trace is what the row forbids. This is the OpenCatalogi half of row 12.30; the organisation half is `openregister/history-schema-and-settings-edits-audited`.
+
+#### Scenario: A category label changed at the source is on the audit trail
+<!-- @e2e exclude Background job against a recorded source; proven by TooiSchemeRefreshTest::testACategoryChangeIsOnTheAuditTrailWithBeforeAndAfter, which fails on today's code because the categories are a PHP constant and no job exists. -->
+
+- **GIVEN** the informatiecategorieën source renames infocat012
+- **WHEN** the refresh job runs
+- **THEN** the register holds the new label
+- **AND** the audit trail of that concept holds one row with actor `system`, the time, the old label and the new label
+
+#### Scenario: The categories no longer come from the constant
+<!-- @e2e exclude Source of a registry; proven by WooCategoryRegistryTest::testTheCategoriesComeFromTheRegisterNotTheConstant, which fails on today's code because the registry merges WooCategory::ALL. -->
+
+- **GIVEN** the vocabulary register holds 17 art. 3.3 categories and one deprecated category
+- **WHEN** the registry lists the categories for a new publication
+- **THEN** it answers the 17 from the register plus the operator's own, and not the deprecated one
+
+#### Scenario: No audit trail, no refresh of the categories
+<!-- @e2e exclude Fail-closed path; proven by TooiSchemeRefreshTest::testWithoutAuditTrailsTheCategoriesAreNotRefreshed. -->
+
+- **GIVEN** audit trails switched off for the vocabulary register
+- **WHEN** the refresh job runs with a changed category at the source
+- **THEN** the informatiecategorieën scheme is not imported and a failure is raised
+
 ## MODIFIED Requirements
 
 ### Requirement: Bundled TOOI/DiWoo value lists and a DIWOO validator (WOO-TOOI-004)
