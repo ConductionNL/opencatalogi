@@ -1,6 +1,6 @@
 # Tasks: publications-name-their-responsible-organisation
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Start once `diwoo-metadata-on-the-publication` is merged. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Read the `nc-organisation` projection's real keys in openregister (`OrganisationObjectSourceProvider`: `tooi`, `rsin`, `kvk`) and the real signature of OpenRegister's file metadata write behind `files#updateMetadata` before mocking. Use a valid test RSIN that passes the 11-proef (for example 002220647) and an invalid one (123456789); assert the check in a test rather than trusting the example.
+Read `openspec/woo-build-rules.md` first. Start once `diwoo-metadata-on-the-publication` is merged. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Read the `nc-organisation` projection's real keys in openregister (`OrganisationObjectSourceProvider`: `tooi`, `rsin`, `kvk`) and the real signature of OpenRegister's file metadata write behind `files#updateMetadata` before mocking. Use a valid test RSIN that passes the 11-proef (for example 002220647) and an invalid one (123456789); assert the check in a test rather than trusting the example.
 
 ## 1. Responsible organisation
 

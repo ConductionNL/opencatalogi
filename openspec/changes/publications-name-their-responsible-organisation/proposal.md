@@ -5,6 +5,16 @@ depends_on: [diwoo-metadata-on-the-publication, openregister/consolidate-organis
 
 # Proposal: publications-name-their-responsible-organisation
 
+## Summary
+
+A publication names the organisation answerable for it (`diwoo:verantwoordelijke`) apart from the publisher, and its files carry that organisation's RSIN.
+
+- Rows: 2.21, 2.22.
+- Wave: 2.
+- Depends on: `opencatalogi/diwoo-metadata-on-the-publication` (https://github.com/ConductionNL/opencatalogi/issues/1753); `openregister/consolidate-organisation-on-or` (open change outside this plan, 14 of 15 tasks; no `[OpenSpec]` issue found); `opencatalogi/publications-reference-the-shared-organisation` (https://github.com/ConductionNL/opencatalogi/issues/1774); optionally `opencatalogi/published-file-carries-its-facts` (https://github.com/ConductionNL/opencatalogi/issues/1763).
+- Decision: none of D1 to D13.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The organisation that puts a document online is not always the one answerable for it. A shared service centre or a regional body publishes for a municipality; the Woo-index then needs to know who is responsible (`diwoo:verantwoordelijke`) apart from who published (`diwoo:publisher`). And a document that leaves its publication, downloaded or passed on, should still say whose it is, by the organisation's legal number (RSIN).
