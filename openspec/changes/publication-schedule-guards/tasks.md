@@ -1,6 +1,6 @@
 # Tasks: publication-schedule-guards
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Start only once `publication-lifecycle-on-or` is merged on `development`; the guard attaches to its transitions. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real classes checked in openregister `development`: `ObjectUpdatingEvent` (`getNewObject()`, `getOldObject()`, `setErrors()`, `stopPropagation()`), `ScheduledFilterParser`, `ScheduledFilterEvaluator`, `AuditTrailMapper::createAuditTrail(?ObjectEntity $old, ?ObjectEntity $new, ?string $action, ?array $cascadeContext)`. `ObjectEntity` getters are magic.
+Read `openspec/woo-build-rules.md` first. Start only once `publication-lifecycle-on-or` is merged on `development`; the guard attaches to its transitions. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real classes checked in openregister `development`: `ObjectUpdatingEvent` (`getNewObject()`, `getOldObject()`, `setErrors()`, `stopPropagation()`), `ScheduledFilterParser`, `ScheduledFilterEvaluator`, `AuditTrailMapper::createAuditTrail(?ObjectEntity $old, ?ObjectEntity $new, ?string $action, ?array $cascadeContext)`. `ObjectEntity` getters are magic.
 
 ## 1. Embargo guard
 

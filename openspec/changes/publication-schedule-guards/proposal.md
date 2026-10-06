@@ -5,6 +5,16 @@ depends_on: [publication-lifecycle-on-or, integration-publish-by-reference]
 
 # Proposal: publication-schedule-guards
 
+## Summary
+
+An embargoed publication cannot be published early except by a named right that is logged, the officer is warned before a depublication date takes a record down, and a publication without any document is refused.
+
+- Rows: 5.11, 5.13, 5.21.
+- Wave: 2.
+- Depends on: `opencatalogi/publication-lifecycle-on-or` (https://github.com/ConductionNL/opencatalogi/issues/1754); `opencatalogi/integration-publish-by-reference` (https://github.com/ConductionNL/opencatalogi/issues/1631, built as written; until it lands the reference count is 0).
+- Decision: D5, row 5.11 (a refusal on the publish action, overridable only by a named right and logged); amends REQ-PPW-002.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 A publication date in the future already keeps a record off every public surface (RET-001). But it is a schedule, not a hold. Anyone who may update the record can press Publish now (REQ-PPW-002) or write an earlier date, and the record is out before the embargo. A depublication date is equally silent: nothing tells the officer that the record will disappear by itself. And nothing stops an officer from publishing a record that carries no document at all.
