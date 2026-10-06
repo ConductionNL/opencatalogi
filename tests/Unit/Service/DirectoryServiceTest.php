@@ -89,6 +89,7 @@ class DirectoryServiceTest extends TestCase {
 			// No reporter (adopt-connection-registry): doCronSync() reads it, and an
 			// uninitialised readonly property throws even behind `?->`.
 			'connectionReporter' => null,
+			'logger' => null,
 		];
 
 		foreach ($props as $name => $value) {
@@ -4630,5 +4631,123 @@ class DirectoryServiceTest extends TestCase {
 		$this->assertSame('/index.php/apps/opencatalogi/api/federation/publications/pub-1/used', $uri->getPath());
 		parse_str($uri->getQuery(), $query);
 		$this->assertSame('false', $query['_aggregate'] ?? null);
+	}
+
+	/**
+	 * A full directory URL is used as-is: no capabilities request is made.
+	 *
+	 * @spec openspec/changes/discover-peers-by-hostname/specs/federation/spec.md
+	 */
+	public function testResolveDirectoryUrlLeavesAFullUrlUntouched(): void {
+		$this->client->expects($this->never())->method('get');
+		$service = $this->createServiceWithMockClient();
+
+		$url = 'https://93.184.216.34/index.php/apps/opencatalogi/api/directory';
+		$this->assertSame($url, $service->resolveDirectoryUrl($url));
+	}
+
+	/**
+	 * A bare host is resolved through the public discovery capability.
+	 *
+	 * @spec openspec/changes/discover-peers-by-hostname/specs/federation/spec.md
+	 */
+	public function testResolveDirectoryUrlReadsTheDiscoveryCapability(): void {
+		$seen = [];
+		$this->client->method('get')->willReturnCallback(function (string $url, array $options) use (&$seen) {
+			$seen[] = [$url, $options];
+			return new Response(200, [], json_encode(['ocs' => ['data' => ['capabilities' => [
+				'core' => ['mod-rewrite-working' => true],
+				'opencatalogi' => ['discovery' => ['links' => ['directory' => '/apps/opencatalogi/api/directory']]],
+			]]]]));
+		});
+		$service = $this->createServiceWithMockClient();
+
+		$this->assertSame(
+			'https://93.184.216.34:8443/apps/opencatalogi/api/directory',
+			$service->resolveDirectoryUrl('93.184.216.34:8443')
+		);
+		$this->assertSame('https://93.184.216.34:8443/ocs/v2.php/cloud/capabilities?format=json', $seen[0][0]);
+		$this->assertSame('true', $seen[0][1][\GuzzleHttp\RequestOptions::HEADERS]['OCS-APIRequest']);
+	}
+
+	/**
+	 * Without pretty URLs the advertised path is reached through /index.php.
+	 *
+	 * @spec openspec/changes/discover-peers-by-hostname/specs/federation/spec.md
+	 */
+	public function testResolveDirectoryUrlAddsIndexPhpWithoutPrettyUrls(): void {
+		$this->client->method('get')->willReturn(new Response(200, [], json_encode(['ocs' => ['data' => ['capabilities' => [
+			'core' => ['mod-rewrite-working' => false],
+			'opencatalogi' => ['discovery' => ['links' => ['directory' => '/apps/opencatalogi/api/directory']]],
+		]]]])));
+		$service = $this->createServiceWithMockClient();
+
+		$this->assertSame(
+			'https://93.184.216.34/index.php/apps/opencatalogi/api/directory',
+			$service->resolveDirectoryUrl('https://93.184.216.34/')
+		);
+	}
+
+	/**
+	 * No discovery capability (older peer, or discovery switched off): conventional path.
+	 *
+	 * @spec openspec/changes/discover-peers-by-hostname/specs/federation/spec.md
+	 */
+	public function testResolveDirectoryUrlFallsBackToTheConventionalPath(): void {
+		$this->client->method('get')->willReturn(new Response(200, [], json_encode(['ocs' => ['data' => ['capabilities' => ['core' => []]]]])));
+		$service = $this->createServiceWithMockClient();
+
+		$this->assertSame(
+			'https://93.184.216.34/index.php/apps/opencatalogi/api/directory',
+			$service->resolveDirectoryUrl('93.184.216.34')
+		);
+	}
+
+	/**
+	 * An unreachable capabilities endpoint also falls back rather than failing the sync.
+	 *
+	 * @spec openspec/changes/discover-peers-by-hostname/specs/federation/spec.md
+	 */
+	public function testResolveDirectoryUrlFallsBackWhenCapabilitiesFail(): void {
+		$this->client->method('get')->willThrowException(
+			new RequestException('timeout', new Request('GET', 'https://93.184.216.34/'))
+		);
+		$service = $this->createServiceWithMockClient();
+
+		$this->assertSame(
+			'https://93.184.216.34/index.php/apps/opencatalogi/api/directory',
+			$service->resolveDirectoryUrl('93.184.216.34')
+		);
+	}
+
+	/**
+	 * A peer cannot point us at another host or a traversal path through its capability.
+	 *
+	 * @spec openspec/changes/discover-peers-by-hostname/specs/federation/spec.md
+	 */
+	public function testResolveDirectoryUrlIgnoresAnUnsafeAdvertisedPath(): void {
+		$this->client->method('get')->willReturn(new Response(200, [], json_encode(['ocs' => ['data' => ['capabilities' => [
+			'opencatalogi' => ['discovery' => ['links' => ['directory' => '//evil.example/api/directory']]],
+		]]]])));
+		$service = $this->createServiceWithMockClient();
+
+		$this->assertSame(
+			'https://93.184.216.34/index.php/apps/opencatalogi/api/directory',
+			$service->resolveDirectoryUrl('93.184.216.34')
+		);
+	}
+
+	/**
+	 * A local host is refused before any request is made.
+	 *
+	 * @spec openspec/changes/discover-peers-by-hostname/specs/federation/spec.md
+	 */
+	public function testResolveDirectoryUrlRefusesALocalHost(): void {
+		$this->config->method('getValueString')->willReturn('');
+		$this->client->expects($this->never())->method('get');
+		$service = $this->createServiceWithMockClient();
+
+		$this->expectException(\InvalidArgumentException::class);
+		$service->resolveDirectoryUrl('localhost:8080');
 	}
 }

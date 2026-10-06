@@ -443,6 +443,102 @@ class DirectoryService {
 	}//end getKnownDirectoryUrls()
 
 	/**
+	 * Resolve what an admin or a peer typed into an OpenCatalogi directory URL.
+	 *
+	 * A full URL with a path is returned unchanged: that is what every peer and
+	 * every stored listing sends today, and it must keep working byte for byte.
+	 *
+	 * A bare host ("cloud.example.org", optionally with a scheme or port) is
+	 * resolved the way any other server would discover it: the instance's
+	 * PUBLIC Nextcloud capabilities, where the OpenRegister AppHost publishes
+	 * `opencatalogi.discovery.links.directory` for an OpenCatalogi that declares
+	 * it in its manifest. When the instance runs without pretty URLs
+	 * (`core.mod-rewrite-working` false) the path gets the `/index.php` prefix.
+	 *
+	 * When the capability is missing (an older OpenCatalogi, discovery switched
+	 * off, or no OpenRegister discovery engine) the conventional path
+	 * `/index.php/apps/opencatalogi/api/directory` is used, which is what an
+	 * admin had to type by hand before. The fetch goes through the same SSRF
+	 * guard and per-hop redirect validation as the directory sync itself.
+	 *
+	 * @param string $input A hostname or URL.
+	 *
+	 * @return string The directory URL to sync with.
+	 *
+	 * @throws InvalidArgumentException When the host is not a safe outbound target.
+	 *
+	 * @spec openspec/changes/discover-peers-by-hostname/specs/federation/spec.md
+	 */
+	public function resolveDirectoryUrl(string $input): string {
+		$input = trim($input);
+		if ($input === '') {
+			return $input;
+		}
+
+		$candidate = $input;
+		if (preg_match('#^https?://#i', $candidate) !== 1) {
+			$candidate = 'https://' . $candidate;
+		}
+
+		$parts = parse_url($candidate);
+		if ($parts === false || isset($parts['host']) === false || $parts['host'] === '') {
+			return $input;
+		}
+
+		// Only something that names a host is resolved: a dotted name, an IP
+		// literal or an explicit port. Anything else ("not-a-url") falls through
+		// unchanged to the URL validation, which rejects it as it always has.
+		$host = trim($parts['host'], '[]');
+		if (str_contains($host, '.') === false && filter_var($host, FILTER_VALIDATE_IP) === false
+			&& isset($parts['port']) === false
+		) {
+			return $input;
+		}
+
+		$path = ($parts['path'] ?? '');
+		if (($path !== '' && $path !== '/') || isset($parts['query']) === true) {
+			return $input;
+		}
+
+		$base = strtolower($parts['scheme'] ?? 'https') . '://' . $parts['host'];
+		if (isset($parts['port']) === true) {
+			$base .= ':' . $parts['port'];
+		}
+
+		$fallback = $base . '/index.php/apps/opencatalogi/api/directory';
+
+		$this->assertSafeOutboundUrl(url: $base . '/');
+
+		try {
+			$response = $this->safeGet(
+				url: $base . '/ocs/v2.php/cloud/capabilities?format=json',
+				headers: ['OCS-APIRequest' => 'true', 'Accept' => 'application/json']
+			);
+			$decoded = json_decode((string)$response->getBody(), true);
+		} catch (\Throwable $e) {
+			$this->logger?->info(
+				message: '[DirectoryService] capabilities of ' . $base . ' unreadable, using the conventional directory path: ' . $e->getMessage()
+			);
+			return $fallback;
+		}
+
+		$capabilities = ($decoded['ocs']['data']['capabilities'] ?? null);
+		$directory = ($capabilities['opencatalogi']['discovery']['links']['directory'] ?? null);
+		if (is_string($directory) === false || str_starts_with($directory, '/') === false
+			|| str_starts_with($directory, '//') === true || str_contains($directory, '..') === true
+		) {
+			return $fallback;
+		}
+
+		$prettyUrls = (($capabilities['core']['mod-rewrite-working'] ?? true) !== false);
+		if ($prettyUrls === false && str_starts_with($directory, '/index.php/') === false) {
+			$directory = '/index.php' . $directory;
+		}
+
+		return $base . $directory;
+	}//end resolveDirectoryUrl()
+
+	/**
 	 * Synchronize a specific directory (asynchronous)
 	 *
 	 * Synchronizes listings and catalogs from a specific external directory URL
@@ -485,6 +581,11 @@ class DirectoryService {
 		if (empty($directoryUrl) === true) {
 			throw new InvalidArgumentException('Directory URL cannot be empty');
 		}
+
+		// A bare hostname ("cloud.example.org") is resolved to that instance's
+		// directory through its public discovery capability. A full URL passes
+		// through unchanged, so every existing caller and peer behaves as before.
+		$directoryUrl = $this->resolveDirectoryUrl(input: $directoryUrl);
 
 		if (filter_var($directoryUrl, FILTER_VALIDATE_URL) === false) {
 			throw new InvalidArgumentException('Invalid directory URL provided');
@@ -2022,7 +2123,8 @@ class DirectoryService {
 	 * can be re-validated by {@see self::assertSafeOutboundUrl()} before it is fetched,
 	 * preventing a public URL from redirecting into an internal address.
 	 *
-	 * @param string $url The (already validated) initial URL to fetch.
+	 * @param string                $url     The (already validated) initial URL to fetch.
+	 * @param array<string, string> $headers Extra request headers (sent on every hop).
 	 *
 	 * @return \Psr\Http\Message\ResponseInterface The final HTTP response.
 	 *
@@ -2033,7 +2135,7 @@ class DirectoryService {
 	 * @spec exclude SSRF-safe fetch helper with bounded, per-hop-validated redirects;
 	 *       security plumbing wrapping the existing Guzzle client.
 	 */
-	private function safeGet(string $url): \Psr\Http\Message\ResponseInterface {
+	private function safeGet(string $url, array $headers = []): \Psr\Http\Message\ResponseInterface {
 		$maxRedirects = 5;
 		$current = $url;
 
@@ -2044,6 +2146,7 @@ class DirectoryService {
 					RequestOptions::ALLOW_REDIRECTS => false,
 					RequestOptions::TIMEOUT => 10,
 					RequestOptions::CONNECT_TIMEOUT => 5,
+					RequestOptions::HEADERS => $headers,
 				]
 			);
 
