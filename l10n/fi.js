@@ -722,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Mitä ihmiset katsoivat ja mitä he latasivat.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kuinka kypsiä luettelot ovat ja kuinka syvälle hakemistomerkinnät on integroitu.",
         "Store": "Kauppa",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Asenna muiden organisaatioiden julkaisemia rekistereitä, skeemoja ja vuokaavioita."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Asenna muiden organisaatioiden julkaisemia rekistereitä, skeemoja ja vuokaavioita.",
+        "Could not load the catalog": "Luetteloa ei voitu ladata",
+        "Reload the page to try again.": "Lataa sivu uudelleen ja yritä uudelleen.",
+        "No catalog has the slug {slug}.": "Millään luettelolla ei ole slugia {slug}.",
+        "This catalog has no registers or schemas configured": "Tälle luettelolle ei ole määritetty rekistereitä tai skeemoja",
+        "Add a register and a schema to the catalog to list its publications here.": "Lisää luetteloon rekisteri ja skeema, jotta sen julkaisut näkyvät tässä.",
+        "Open catalog": "Avaa luettelo",
+        "Register and schema": "Rekisteri ja skeema",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Luo ensimmäinen luettelosi. Se on säiliö, johon julkaisusi tallentuvat. Valitse rekisteri Publication ja skeema Publication, jotta luettelo näyttää lisäämäsi julkaisut."
     },
     "nplurals=2; plural=(n != 1);"
 )

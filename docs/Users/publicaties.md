@@ -9,9 +9,9 @@ Publicaties voeg je toe op de publicatiepagina, met de knop om een publicatie to
 * Een catalogus in het hoofdmenu (links): direct onder Dashboard staat elke catalogus waar je toegang toe hebt, onder zijn eigen titel
 * De knop "Publicaties bekijken" op de detailpagina van een catalogus
 
-De knop opent een formulier dat is opgebouwd uit het publicatieschema. Je vult de publicatiedetails in en slaat op; er wordt daarbij niet om een catalogus of publicatietype gevraagd. De publicatie komt in het publicatieregister.
+De knop opent een formulier dat is opgebouwd uit het schema dat de pagina op dat moment toont. Je vult de publicatiedetails in en slaat op; er wordt daarbij niet om een catalogus of publicatietype gevraagd. De publicatie komt in het register dat de pagina op dat moment toont.
 
-Let op: de publicatiepagina toont op dit moment de publicaties van alle catalogi, niet alleen die van de catalogus die je in het menu hebt gekozen. Het publicatieschema heeft nog geen veld dat een publicatie aan één catalogus koppelt, dus de pagina kan daar niet op filteren.
+De publicatiepagina toont alleen de publicaties van de gekozen catalogus: de objecten in de registers en schema's die bij die catalogus zijn ingesteld. Heeft de catalogus meer dan één combinatie van register en schema, dan kies je bovenaan de pagina welke combinatie je ziet. Heeft de catalogus geen register of schema ingesteld, dan meldt de pagina dat en kun je vandaar de catalogus openen om dat in te stellen.
 
 Eigenschappen en bijlagen kunnen worden toegevoegd nadat de publicatie is toegevoegd.
 
@@ -19,7 +19,7 @@ Eigenschappen en bijlagen kunnen worden toegevoegd nadat de publicatie is toegev
 
 De gebruikersbeheerinterface werkt intuïtief. In het hoofdmenu aan de linkerkant staat elke catalogus waar je toegang toe hebt; de catalogus die je open hebt is gemarkeerd. Hoe je een publicatie toevoegt, staat hierboven.
 
-Na het opslaan is de publicatie zichtbaar op de publicatiepagina; zoals hierboven beschreven toont die pagina op dit moment de publicaties van alle catalogi. Om de publicatie aan te passen, te depubliceren of andere acties uit te voeren, klik je op de blauwe "Actie"-knop rechtsboven bij de getoonde publicatie, of de drie puntjes rechts van de publicatie zelf.\\
+Na het opslaan is de publicatie zichtbaar op de publicatiepagina van de catalogus. Om de publicatie aan te passen, te depubliceren of andere acties uit te voeren, klik je op de blauwe "Actie"-knop rechtsboven bij de getoonde publicatie, of de drie puntjes rechts van de publicatie zelf.\\
 
 Onder is een voorbeeld van een publicatie en de Actie-mogelijkheden.
 

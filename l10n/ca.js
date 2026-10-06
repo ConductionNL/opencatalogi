@@ -722,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Què ha mirat la gent i què s'ha baixat.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Com de madurs són els catàlegs i com d'integrades estan les entrades del directori.",
         "Store": "Botiga",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instal·leu registres, esquemes i fluxos publicats per altres organitzacions."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instal·leu registres, esquemes i fluxos publicats per altres organitzacions.",
+        "Could not load the catalog": "No s'ha pogut carregar el catàleg",
+        "Reload the page to try again.": "Torneu a carregar la pàgina per tornar-ho a provar.",
+        "No catalog has the slug {slug}.": "Cap catàleg no té l'slug {slug}.",
+        "This catalog has no registers or schemas configured": "Aquest catàleg no té cap registre ni esquema configurat",
+        "Add a register and a schema to the catalog to list its publications here.": "Afegiu un registre i un esquema al catàleg per mostrar-ne aquí les publicacions.",
+        "Open catalog": "Obre el catàleg",
+        "Register and schema": "Registre i esquema",
+        "{schema} in {register}": "{schema} a {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creeu el vostre primer catàleg. És el contenidor on viuran les vostres publicacions. Trieu el registre Publication i l'esquema Publication perquè el catàleg mostri les publicacions que afegiu."
     },
     "nplurals=2; plural=(n != 1);"
 )

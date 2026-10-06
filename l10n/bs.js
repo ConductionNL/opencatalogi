@@ -722,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Šta su ljudi gledali i šta su preuzeli.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Koliko su katalozi zreli i koliko su duboko integrisani unosi u imeniku.",
         "Store": "Trgovina",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalirajte registre, šeme i tokove koje su objavile druge organizacije."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalirajte registre, šeme i tokove koje su objavile druge organizacije.",
+        "Could not load the catalog": "Katalog nije moguće učitati",
+        "Reload the page to try again.": "Ponovo učitajte stranicu da biste pokušali ponovo.",
+        "No catalog has the slug {slug}.": "Nijedan katalog nema slug {slug}.",
+        "This catalog has no registers or schemas configured": "Za ovaj katalog nisu podešeni registri ni sheme",
+        "Add a register and a schema to the catalog to list its publications here.": "Dodajte registar i shemu katalogu da bi se ovdje prikazale njegove objave.",
+        "Open catalog": "Otvori katalog",
+        "Register and schema": "Registar i shema",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Napravite svoj prvi katalog. To je spremnik u kojem će biti vaše objave. Odaberite registar Publication i shemu Publication kako bi katalog prikazivao objave koje dodate."
     },
     "nplurals=2; plural=(n != 1);"
 )

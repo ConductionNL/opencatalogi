@@ -830,7 +830,6 @@
         "Catalogue": "Catalogue",
         "Connect to the federated network": "Connect to the federated network",
         "Create your first catalog": "Create your first catalog",
-        "Create your first catalog. It's the container your publications will live in.": "Create your first catalog. It's the container your publications will live in.",
         "Default catalog scope": "Default catalog scope",
         "Everything you publish lives in a catalog. Open Catalogs from the menu.": "Everything you publish lives in a catalog. Open Catalogs from the menu.",
         "Features & roadmap": "Features & roadmap",
@@ -1425,7 +1424,16 @@
         "Redaction status": "Redaction status",
         "Whether a verified redacted version exists: verified, failed, or empty when the document is not partly public": "Whether a verified redacted version exists: verified, failed, or empty when the document is not partly public",
         "Redaction message": "Redaction message",
-        "Why the partly public document cannot be published yet": "Why the partly public document cannot be published yet"
+        "Why the partly public document cannot be published yet": "Why the partly public document cannot be published yet",
+        "Could not load the catalog": "Could not load the catalog",
+        "Reload the page to try again.": "Reload the page to try again.",
+        "No catalog has the slug {slug}.": "No catalog has the slug {slug}.",
+        "This catalog has no registers or schemas configured": "This catalog has no registers or schemas configured",
+        "Add a register and a schema to the catalog to list its publications here.": "Add a register and a schema to the catalog to list its publications here.",
+        "Open catalog": "Open catalog",
+        "Register and schema": "Register and schema",
+        "{schema} in {register}": "{schema} in {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add."
     },
     "plurals": {}
 }

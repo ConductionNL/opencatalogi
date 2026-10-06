@@ -721,7 +721,16 @@
         "What people looked at and what they downloaded.": "Mit néztek meg az emberek, és mit töltöttek le.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Mennyire érettek a katalógusok, és mennyire mélyen integráltak a címtárbejegyzések.",
         "Store": "Áruház",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Telepítsen más szervezetek által közzétett nyilvántartásokat, sémákat és folyamatokat."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Telepítsen más szervezetek által közzétett nyilvántartásokat, sémákat és folyamatokat.",
+        "Could not load the catalog": "A katalógust nem sikerült betölteni",
+        "Reload the page to try again.": "Töltse újra az oldalt, és próbálja újra.",
+        "No catalog has the slug {slug}.": "Egyik katalógus slugja sem {slug}.",
+        "This catalog has no registers or schemas configured": "Ehhez a katalógushoz nincs nyilvántartás vagy séma beállítva",
+        "Add a register and a schema to the catalog to list its publications here.": "Adjon hozzá egy nyilvántartást és egy sémát a katalógushoz, hogy itt megjelenjenek a közzétételei.",
+        "Open catalog": "Katalógus megnyitása",
+        "Register and schema": "Nyilvántartás és séma",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Hozza létre az első katalógusát. Ez az a tároló, amelyben a közzétételei lesznek. Válassza a Publication nyilvántartást és a Publication sémát, hogy a katalógus megjelenítse a hozzáadott közzétételeket."
     },
     "plurals": {}
 }

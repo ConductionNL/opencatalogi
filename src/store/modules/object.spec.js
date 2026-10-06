@@ -457,6 +457,24 @@ describe('ObjectStore', () => {
 		const isCatalogUrl = (url) =>
 			url.startsWith('/index.php/apps/openregister/api/objects/14/54?')
 
+		/**
+		 * A menu entry as the store keeps it.
+		 *
+		 * @param {string} id The catalog id.
+		 * @param {string} slug The catalog slug.
+		 * @param {string} title The catalog title.
+		 * @param {Array<number>} [registers] The numeric register ids.
+		 * @param {Array<number>} [schemas] The numeric schema ids.
+		 * @return {object} The entry.
+		 */
+		const entry = (id, slug, title, registers = [], schemas = []) => ({
+			id,
+			slug,
+			title,
+			registers,
+			schemas,
+		})
+
 		beforeEach(async () => {
 			fetch.mockResolvedValueOnce(respond(catalogSettings))
 			await store.fetchSettings()
@@ -466,10 +484,16 @@ describe('ObjectStore', () => {
 		it('walks every page and keeps only catalogs with a slug', async () => {
 			const pages = {
 				1: [
-					{ id: '1', slug: 'woo', title: 'Woo' },
+					{
+						id: '1',
+						slug: 'woo',
+						title: 'Woo',
+						registers: ['19', 19, 'publication'],
+						schemas: [173, '184'],
+					},
 					{ id: '2', title: 'No slug' },
 				],
-				2: [{ id: '3', slug: 'data', title: 'Open data' }],
+				2: [{ id: '3', slug: 'data', title: 'Open data', registers: '[7]' }],
 				3: [{ '@self': { id: '4' }, slug: 'archive', title: 'Archive' }],
 			}
 			fetch.mockImplementation((url) =>
@@ -492,9 +516,9 @@ describe('ObjectStore', () => {
 				),
 			).toBe(true)
 			expect(store.menuCatalogs).toEqual([
-				{ id: '1', slug: 'woo', title: 'Woo' },
-				{ id: '3', slug: 'data', title: 'Open data' },
-				{ id: '4', slug: 'archive', title: 'Archive' },
+				entry('1', 'woo', 'Woo', [19], [173, 184]),
+				entry('3', 'data', 'Open data', [7], []),
+				entry('4', 'archive', 'Archive'),
 			])
 		})
 
@@ -536,9 +560,7 @@ describe('ObjectStore', () => {
 			// One call for the collection, one for the menu walk.
 			expect(fetch).toHaveBeenCalledTimes(2)
 			expect(fetch.mock.calls[1][0]).toContain('_limit=100')
-			expect(store.menuCatalogs).toEqual([
-				{ id: '1', slug: 'woo', title: 'Woo' },
-			])
+			expect(store.menuCatalogs).toEqual([entry('1', 'woo', 'Woo')])
 		})
 
 		it('derives the page count from total when the response has no pages', async () => {
@@ -642,9 +664,7 @@ describe('ObjectStore', () => {
 			expect(
 				fetch.mock.calls.filter(([url]) => url.includes('_limit=100')),
 			).toHaveLength(1)
-			expect(store.menuCatalogs).toEqual([
-				{ id: '1', slug: 'woo', title: 'Woo' },
-			])
+			expect(store.menuCatalogs).toEqual([entry('1', 'woo', 'Woo')])
 		})
 
 		it('starts a new walk for a reload that began after the running walk', async () => {
@@ -681,9 +701,7 @@ describe('ObjectStore', () => {
 			expect(
 				fetch.mock.calls.filter(([url]) => url.includes('_limit=100')),
 			).toHaveLength(2)
-			expect(store.menuCatalogs).toEqual([
-				{ id: '2', slug: 'new', title: 'New' },
-			])
+			expect(store.menuCatalogs).toEqual([entry('2', 'new', 'New')])
 		})
 
 		it("is not refreshed by another type's collection fetch", async () => {
@@ -742,9 +760,74 @@ describe('ObjectStore', () => {
 			releaseFirst()
 			await first
 
-			expect(store.menuCatalogs).toEqual([
-				{ id: '2', slug: 'new', title: 'New' },
-			])
+			expect(store.menuCatalogs).toEqual([entry('2', 'new', 'New')])
+		})
+
+		it('joins a walk in flight when asked for any walk', async () => {
+			let releaseWalk
+			fetch.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						releaseWalk = () =>
+							resolve(
+								respond({
+									results: [
+										{ id: '1', slug: 'woo', title: 'Woo' },
+									],
+									pages: 1,
+								}),
+							)
+					}),
+			)
+
+			const first = store.fetchMenuCatalogs()
+			const joined = store.fetchMenuCatalogs(0)
+			releaseWalk()
+			await Promise.all([first, joined])
+
+			expect(fetch).toHaveBeenCalledTimes(1)
+			expect(store.menuCatalogs).toEqual([entry('1', 'woo', 'Woo')])
+		})
+
+		it('looks up one catalog by slug without touching the menu list', async () => {
+			fetch.mockResolvedValueOnce(
+				respond({
+					results: [
+						{
+							id: '9',
+							slug: 'woo',
+							title: 'Woo',
+							registers: ['19'],
+							schemas: ['173', 'publication'],
+						},
+					],
+				}),
+			)
+
+			const catalog = await store.fetchMenuCatalogBySlug('woo')
+
+			expect(fetch).toHaveBeenCalledTimes(1)
+			const url = new URL(fetch.mock.calls[0][0], 'http://test')
+			expect(isCatalogUrl(fetch.mock.calls[0][0])).toBe(true)
+			expect(url.searchParams.get('slug')).toBe('woo')
+			expect(catalog).toEqual(entry('9', 'woo', 'Woo', [19], [173]))
+			expect(store.menuCatalogs).toEqual([])
+		})
+
+		it('answers null for a slug no catalog has', async () => {
+			fetch.mockResolvedValueOnce(
+				respond({ results: [{ id: '9', slug: 'other', title: 'Other' }] }),
+			)
+
+			await expect(store.fetchMenuCatalogBySlug('woo')).resolves.toBeNull()
+		})
+
+		it('rejects when the catalog lookup fails', async () => {
+			fetch.mockResolvedValueOnce({ ok: false })
+
+			await expect(store.fetchMenuCatalogBySlug('woo')).rejects.toThrow(
+				'Failed to fetch the catalog',
+			)
 		})
 	})
 })

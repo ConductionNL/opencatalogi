@@ -721,7 +721,16 @@
         "What people looked at and what they downloaded.": "Çfarë panë njerëzit dhe çfarë shkarkuan.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Sa të pjekur janë katalogët dhe sa thellë janë integruar regjistrimet e direktorisë.",
         "Store": "Dyqani",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instaloni regjistra, skema dhe rrjedha të publikuara nga organizata të tjera."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instaloni regjistra, skema dhe rrjedha të publikuara nga organizata të tjera.",
+        "Could not load the catalog": "Katalogu nuk mund të ngarkohej",
+        "Reload the page to try again.": "Ringarkoni faqen për të provuar përsëri.",
+        "No catalog has the slug {slug}.": "Asnjë katalog nuk ka slug-un {slug}.",
+        "This catalog has no registers or schemas configured": "Ky katalog nuk ka regjistra ose skema të konfiguruara",
+        "Add a register and a schema to the catalog to list its publications here.": "Shtoni një regjistër dhe një skemë në katalog që botimet e tij të shfaqen këtu.",
+        "Open catalog": "Hap katalogun",
+        "Register and schema": "Regjistër dhe skemë",
+        "{schema} in {register}": "{schema} në {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Krijoni katalogun tuaj të parë. Është kontejneri ku do të jenë botimet tuaja. Zgjidhni regjistrin Publication dhe skemën Publication, që katalogu të shfaqë botimet që shtoni."
     },
     "plurals": {}
 }

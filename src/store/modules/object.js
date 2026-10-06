@@ -8,6 +8,7 @@ import {
 	selectionPlugin,
 } from '@conduction/nextcloud-vue'
 import { defineStore } from 'pinia'
+import { normaliseIdList } from '../../services/catalogScope.js'
 
 /**
  * @typedef {object} Schema
@@ -86,6 +87,22 @@ function isBareFetch(params) {
 		|| params === undefined
 		|| (typeof params === 'object' && Object.keys(params).length === 0)
 	)
+}
+
+/**
+ * A catalog as the navigation and the publications page use it.
+ *
+ * @param {object} catalog A catalog object from the API.
+ * @return {{id: string|null, slug: string, title: string, registers: Array<number>, schemas: Array<number>}} The entry.
+ */
+function toMenuCatalog(catalog) {
+	return {
+		id: catalog.id ?? catalog['@self']?.id ?? null,
+		slug: String(catalog.slug),
+		title: typeof catalog.title === 'string' ? catalog.title : '',
+		registers: normaliseIdList(catalog.registers),
+		schemas: normaliseIdList(catalog.schemas),
+	}
 }
 
 /**
@@ -1148,7 +1165,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Fetch every page of the catalog list, as menu entries' source data.
 		 *
-		 * @return {Promise<Array<{id: string|null, slug: string, title: string}>>}
+		 * @return {Promise<Array<{id: string|null, slug: string, title: string, registers: Array<number>, schemas: Array<number>}>>}
 		 * @private
 		 *
 		 * @spec openspec/specs/retrofit-2026-05-26-app-shell-settings/spec.md#requirement-catalog-driven-main-menu-req-shell-004
@@ -1184,11 +1201,38 @@ export const useObjectStore = defineStore('object', {
 
 			return results
 				.filter((catalog) => catalog && catalog.slug)
-				.map((catalog) => ({
-					id: catalog.id ?? catalog['@self']?.id ?? null,
-					slug: String(catalog.slug),
-					title: typeof catalog.title === 'string' ? catalog.title : '',
-				}))
+				.map(toMenuCatalog)
+		},
+
+		/**
+		 * Look up one catalog by slug, in the shape of a `menuCatalogs` entry.
+		 *
+		 * For a catalog the menu list does not hold (yet). Leaves `menuCatalogs`
+		 * alone.
+		 *
+		 * @param {string} slug The catalog slug.
+		 * @return {Promise<{id: string|null, slug: string, title: string, registers: Array<number>, schemas: Array<number>}|null>} The catalog, or null when no catalog has this slug.
+		 */
+		async fetchMenuCatalogBySlug(slug) {
+			if (!this.settings) {
+				await this.fetchSettings()
+			}
+
+			const response = await fetch(
+				this._constructApiUrl('catalog', null, null, {
+					slug,
+					_limit: 2,
+					_source: 'database',
+				}),
+			)
+			if (!response.ok) throw new Error('Failed to fetch the catalog')
+
+			const data = await response.json()
+			const results = Array.isArray(data.results) ? data.results : []
+			const catalog = results.find(
+				(candidate) => candidate && String(candidate.slug) === String(slug),
+			)
+			return catalog ? toMenuCatalog(catalog) : null
 		},
 
 		/**

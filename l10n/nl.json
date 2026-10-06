@@ -788,7 +788,6 @@
         "Let's walk the publishing journey together, from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.": "Laten we samen de publicatiereis doorlopen, van een lege installatie tot een catalogus die de wereld kan vinden. Je maakt elk record zelf aan, in je eigen werkomgeving.",
         "Everything you publish lives in a catalog. Open Catalogs from the menu.": "Alles wat je publiceert staat in een catalogus. Open Catalogi in het menu.",
         "Open Catalogs": "Open Catalogi",
-        "Create your first catalog. It's the container your publications will live in.": "Maak je eerste catalogus aan. Dat is de houder waarin je publicaties komen te staan.",
         "Open the catalog you just created to manage what it publishes. Its publications open inside it.": "Open de catalogus die je zojuist hebt gemaakt om te beheren wat die publiceert. De publicaties openen erbinnen.",
         "Open your catalog and view its Publications": "Open je catalogus en bekijk de Publicaties",
         "A publication is a single thing you make open: a document, dataset or record. Add your first one.": "Een publicatie is één ding dat je openbaar maakt: een document, dataset of record. Voeg je eerste toe.",
@@ -1380,7 +1379,16 @@
         "Redaction status": "Status lakken",
         "Whether a verified redacted version exists: verified, failed, or empty when the document is not partly public": "Of er een gecontroleerde gelakte versie is: verified, failed, of leeg als het document niet deels openbaar is",
         "Redaction message": "Melding lakken",
-        "Why the partly public document cannot be published yet": "Waarom het deels openbare document nog niet kan worden gepubliceerd"
+        "Why the partly public document cannot be published yet": "Waarom het deels openbare document nog niet kan worden gepubliceerd",
+        "Could not load the catalog": "De catalogus kon niet worden geladen",
+        "Reload the page to try again.": "Herlaad de pagina om het opnieuw te proberen.",
+        "No catalog has the slug {slug}.": "Er is geen catalogus met de slug {slug}.",
+        "This catalog has no registers or schemas configured": "Voor deze catalogus zijn geen registers of schema's ingesteld",
+        "Add a register and a schema to the catalog to list its publications here.": "Voeg een register en een schema toe aan de catalogus om de publicaties hier te tonen.",
+        "Open catalog": "Catalogus openen",
+        "Register and schema": "Register en schema",
+        "{schema} in {register}": "{schema} in {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Maak je eerste catalogus aan. Dat is de houder waarin je publicaties komen te staan. Kies het register Publication en het schema Publication, zodat de catalogus de publicaties toont die je toevoegt."
     },
     "plurals": {}
 }

@@ -722,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Mida inimesed vaatasid ja mida alla laadisid.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kui küpsed on kataloogid ja kui sügavalt on kataloogi kirjed lõimitud.",
         "Store": "Pood",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Paigalda registrid, skeemid ja voog, mille teised organisatsioonid on avaldanud."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Paigalda registrid, skeemid ja voog, mille teised organisatsioonid on avaldanud.",
+        "Could not load the catalog": "Kataloogi ei õnnestunud laadida",
+        "Reload the page to try again.": "Laadi leht uuesti ja proovi uuesti.",
+        "No catalog has the slug {slug}.": "Ühelgi kataloogil pole slugi {slug}.",
+        "This catalog has no registers or schemas configured": "Selle kataloogi jaoks pole registreid ega skeeme seadistatud",
+        "Add a register and a schema to the catalog to list its publications here.": "Lisa kataloogile register ja skeem, et selle väljaanded siin kuvataks.",
+        "Open catalog": "Ava kataloog",
+        "Register and schema": "Register ja skeem",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Loo oma esimene kataloog. See on konteiner, kus sinu väljaanded asuvad. Vali register Publication ja skeem Publication, et kataloog näitaks väljaandeid, mida sa lisad."
     },
     "nplurals=2; plural=(n != 1);"
 )

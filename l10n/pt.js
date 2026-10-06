@@ -722,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "O que as pessoas viram e o que transferiram.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Quão maduros são os catálogos e quão integradas estão as entradas do diretório.",
         "Store": "Loja",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instale registos, esquemas e fluxos publicados por outras organizações."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instale registos, esquemas e fluxos publicados por outras organizações.",
+        "Could not load the catalog": "Não foi possível carregar o catálogo",
+        "Reload the page to try again.": "Recarregue a página para tentar novamente.",
+        "No catalog has the slug {slug}.": "Nenhum catálogo tem o slug {slug}.",
+        "This catalog has no registers or schemas configured": "Este catálogo não tem registos nem esquemas configurados",
+        "Add a register and a schema to the catalog to list its publications here.": "Adicione um registo e um esquema ao catálogo para listar aqui as suas publicações.",
+        "Open catalog": "Abrir catálogo",
+        "Register and schema": "Registo e esquema",
+        "{schema} in {register}": "{schema} em {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Crie o seu primeiro catálogo. É o contentor onde ficarão as suas publicações. Escolha o registo Publication e o esquema Publication, para que o catálogo liste as publicações que adicionar."
     },
     "nplurals=2; plural=(n != 1);"
 )
