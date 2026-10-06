@@ -1,6 +1,6 @@
 # Tasks: publication-lifecycle-on-or
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For OpenRegister doubles copy the `environmentAwareDouble()` pattern from `tests/Unit/Service/SitemapServiceTest.php`. Real signatures to mock against, checked in openregister `development`: `OCA\OpenRegister\Service\Lifecycle\TransitionEngine::transition(string $objectId, string $action, array $data = []): ObjectEntity` (throws `RuntimeException` for an action not allowed from the current state, `NotAuthorizedException`, `InvalidTransitionInputException`, `HookStoppedException`), `availableActions(string $objectId): array`, `ObjectService::deleteObject(..., bool $permanent = false)`, `AuditTrailMapper::createAuditTrail(?ObjectEntity $old, ?ObjectEntity $new, ?string $action, ?array $cascadeContext)`. `ObjectEntity` getters are magic.
+Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `environmentAwareDouble()` pattern from `tests/Unit/Service/SitemapServiceTest.php`. Real signatures to mock against, checked in openregister `development`: `OCA\OpenRegister\Service\Lifecycle\TransitionEngine::transition(string $objectId, string $action, array $data = []): ObjectEntity` (throws `RuntimeException` for an action not allowed from the current state, `NotAuthorizedException`, `InvalidTransitionInputException`, `HookStoppedException`), `availableActions(string $objectId): array`, `ObjectService::deleteObject(..., bool $permanent = false)`, `AuditTrailMapper::createAuditTrail(?ObjectEntity $old, ?ObjectEntity $new, ?string $action, ?array $cascadeContext)`. `ObjectEntity` getters are magic.
 
 ## 1. Lifecycle declaration
 
@@ -19,11 +19,6 @@ Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For Ope
 - [ ] 3.1 Add `status: "published"` to the public read rule of `#publication` (REQ-PLC-003, RET-001). Verify: `tests/Unit/Settings/PublicationLifecycleReadRuleTest.php::testADraftWithAPastPublicationDateIsNotPublic`, which reads the shipped rule and evaluates it with OpenRegister's condition matcher; it fails today because the rule matches dates only.
 - [ ] 3.2 Move `PublicationStateController::publish()`, `EventService::publishObject()`, `BatchPublicationWriter` and `MassPublishObjects.vue` onto `TransitionEngine` (the Vue modal through OpenRegister's transition route); a refused transition writes no date (REQ-PLC-003). Verify: `tests/Unit/Controller/PublicationStateControllerTest.php::testPublishRunsTheTransition`, `::testPublishRefusesAnUnreviewedDraftWhenReviewIsRequired`, `tests/Unit/Service/EventServiceTest.php::testPublishObjectRunsTheTransition`, `tests/Unit/Service/Woo/BatchPublicationWriterTest.php::testABatchCreatesAnApprovedPublicationAndPublishesIt`. Then `git grep -n "'publicationDate'" lib src` and list every remaining writer in the PR body with why it is not a publish path.
 - [ ] 3.3 Live: publish an approved publication from its page and see Public. Verify: `tests/e2e/publication-lifecycle.spec.ts` "publish now moves the lifecycle".
-
-## 4. Permanent delete of a draft
-
-- [ ] 4.1 Add `DraftPurgeService` and `DELETE /api/publications/{id}/draft` with the update-right check, the never-released proof, list-then-remove, and the one audit entry (REQ-PLC-004). Verify: `tests/Unit/Service/Publication/DraftPurgeServiceTest.php::testADraftAndEverythingOnItGoes`, `::testAPublicationThatWasEverPublishedIsRefused`, `::testAnUnreadableAuditTrailRefuses`, `::testAFailurePartWayKeepsThePublicationAndNamesWhatWent`, and a controller test through the route.
-- [ ] 4.2 Add Delete permanently to the detail page for a draft or in-review publication, in its own dialog under `src/dialogs/` (REQ-PLC-004). Verify: `tests/e2e/publication-lifecycle.spec.ts` "a draft and everything on it goes", which reads the audit entry afterwards.
 
 ## 5. Ready list
 
@@ -46,7 +41,7 @@ Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For Ope
 ## 9. Verification
 
 - [ ] 9.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. This change touches central publish paths: run the full unit suite once, not a filter.
-- [ ] 9.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. Expect gate-19 to want the three `tests/e2e/publication-lifecycle.spec.ts` references and gate-98 to see the repair step.
+- [ ] 9.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. Expect gate-19 to want the `tests/e2e/publication-lifecycle.spec.ts` references and gate-98 to see the repair step.
 - [ ] 9.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
 - [ ] 9.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 

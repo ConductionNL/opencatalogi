@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: publication-lifecycle-on-or
 
+## Summary
+
+A publication gets one declared lifecycle on OpenRegister's engine (draft, in review, approved, published, archived) that an editor can follow and a caller can reconcile against, plus an unlisted state that keeps a public record off every machine surface while its link works.
+
+- Rows: 5.9, 5.16, 5.17, 9.21. Row 5.14 moved to the follow-up `opencatalogi/publication-lifecycle-on-or-draft-purge` (split off 2026-10-06).
+- Wave: 1.
+- Depends on: nothing to build. Uses OpenRegister on `development`: `TransitionEngine`, `LifecycleValidationListener`, `LifecycleActionExecutor`, the `immutable` keyword. `publication-schedule-guards`, `publication-withdrawal-aftercare` and `publication-relations-place-and-source-ids` build on it.
+- Decision: none of D1 to D13 implemented; RET-001's single visibility predicate is extended, not duplicated (D5 context).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The state of a publication is spread over three places and none of them is a lifecycle an editor can follow. `publication.status` is a two-value enum (`published`, `archived`) with one declared transition (`archive`) in `lib/Settings/publication_register.json`. Its initial value is `published`, so a publication nobody published still reads as published. The richer states exist only as dates (`PublicationStateService::stateOf()` derives draft, scheduled, public, withdrawn and archived from `publicationDate`, `depublicationDate` and `status`) and as two side records (`publicationProcess.state`, `wooBatch.status`) that nothing joins together.
@@ -12,7 +22,6 @@ The state of a publication is spread over three places and none of them is a lif
 Rows, from `opencatalogi/_round1/compare/M1-rows.md`, with our column from `baseline/openwoo.tsv`:
 
 - **5.9** "The state of a record is visible: draft, in review, scheduled, public, gone". Ours: partial. Evidence: "opencatalogi #publication.status is only 'published' or 'archived'; the richer state lives in #publicationProcess.state and #wooBatch.status, so the state of a record is spread over three schemas".
-- **5.14** "A draft record and everything on it is deleted permanently, and the deletion is logged". Ours: partial. Evidence: "openregister deletes an object and lib/Db/AuditTrail.php records it; a draft is not a distinct state in opencatalogi, so there is no draft-and-everything-on-it delete".
 - **5.16** "A state transition the product does not allow is refused by name, and the allowed transitions are published". Ours: no. Evidence: "opencatalogi #publication.status is a two-value enum with no transition table; nothing publishes allowed transitions or refuses one by name".
 - **5.17** "A calling system can list exactly the records that are ready to publish, so it can reconcile its own state". Ours: partial. Evidence: "opencatalogi lib/Controller/PublicationsController.php lists publications with filters; nothing exposes a ready-to-publish set for a caller to reconcile against".
 - **9.21** "A published record is kept out of search, the sitemaps and the national index while its link still works, and can be put back". Ours: no. Evidence: "Nearest: opencatalogi #publication.status 'archived' (PublicationQueryService:474-481, RET-006) removes the record from every public surface including its own link, and `searchable` in lib/Settings/publication_register.json is a whole-schema flag, not per record".
@@ -29,7 +38,7 @@ Read on development at 35999c296. Two facts differ from the evidence and change 
 - The one public read rule gains one clause: a publication is public only while its stored state is `published` and its dates say so. This is RET-001's predicate, extended, not a second visibility check.
 - Every path that writes `publicationDate` today moves the lifecycle instead: `PublicationStateController::publish()`, `EventService::publishObject()`, `BatchPublicationWriter`, and the mass publish modal `src/modals/object/MassPublishObjects.vue`.
 - The state is one value, shown on the publications list and the detail page, served by the server.
-- A draft that was never released is deleted permanently with its files, document references and side records in one action, with one summary audit entry. Anything that was ever released is refused.
+- The permanent delete of a never-released draft (row 5.14) is the follow-up change `publication-lifecycle-on-or-draft-purge`, split off on 2026-10-06 to keep this change at 20 tasks.
 - An authenticated endpoint lists exactly the publications in state `approved`, filterable by case reference and since.
 - A per-publication `unlisted` flag keeps a public record out of search, the DiWoo sitemaps, DCAT, PLOOI delivery and the federation list while its own link keeps working, and clearing it puts the record back.
 - A repair step backfills the stored state on existing publications and rewrites the read rule on installs where the schema import is version-gated.
@@ -38,8 +47,6 @@ Read on development at 35999c296. Two facts differ from the evidence and change 
 
 - A publication whose stored state is not `published` is not public, whatever its dates say. A draft with a past `publicationDate` stays private.
 - A legacy publication with an empty `status` is not public until the repair step has classified it. The repair runs post-migration, so the window is the upgrade itself.
-- The permanent delete refuses when it cannot prove the draft was never released: a `firstReleasedAt` stamp, any `depublication` record for it, or an unreadable audit trail each refuse.
-- The permanent delete removes nothing until it has listed everything it will remove. A failure part way leaves the publication in place and names what was already removed.
 - An unlisted publication is still refused by PLOOI delivery. Unlisting never sends a withdrawal, because the record is not withdrawn.
 
 ## Out of scope
@@ -77,7 +84,6 @@ This change supersedes the state list of REQ-PPW-001 (`publications` spec) and a
 | row | text | rating today | what makes it yes |
 |---|---|---|---|
 | 5.9 | The state of a record is visible: draft, in review, scheduled, public, gone | partial | REQ-PLC-002, scenario "One state on the list and the page" |
-| 5.14 | A draft record and everything on it is deleted permanently, and the deletion is logged | partial | REQ-PLC-004, scenario "A draft and everything on it goes" |
 | 5.16 | A state transition the product does not allow is refused by name, and the allowed transitions are published | no | REQ-PLC-001, scenarios "An illegal move is refused by name" and "The allowed moves are published" |
 | 5.17 | A calling system can list exactly the records that are ready to publish, so it can reconcile its own state | partial | REQ-PLC-005, scenario "A source system reconciles" |
 | 9.21 | A published record is kept out of search, the sitemaps and the national index while its link still works, and can be put back | no | REQ-PLC-006, scenarios "Unlisted, still reachable" and "Put back" |
