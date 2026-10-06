@@ -5,6 +5,16 @@ depends_on: [publication-lifecycle-on-or, openregister/object-archive-state]
 
 # Proposal: publication-withdrawal-aftercare
 
+## Summary
+
+A corrected publication keeps the version a reader cited, a withdrawn one answers with a tombstone about the withdrawal instead of a 404, and a withdrawn record and its files are frozen.
+
+- Rows: 5.4, 5.5, 5.18.
+- Wave: 2.
+- Depends on: `opencatalogi/publication-lifecycle-on-or` (https://github.com/ConductionNL/opencatalogi/issues/1754) for `firstReleasedAt`; `openregister/object-archive-state` (https://github.com/ConductionNL/openregister/issues/4390), whose amendment makes file writes honour the frozen marker.
+- Decision: D5, row 5.5 (the tombstone is a page about the withdrawal, not the record; RET-001 and RET-006 unchanged).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 What happens after a publication changes or comes down is the part a reader and a court see. Today a correction overwrites the public record, so the version a reader cited is gone from the public side. A withdrawn record answers 404, the same as a link that never existed. And a withdrawn record can still be edited, files included, so the record of what was taken down can drift after the fact.
