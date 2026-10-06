@@ -1,6 +1,6 @@
 # Tasks: publication-relations-place-and-source-ids
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real classes checked in openregister `development` at 1dc6a46: `OCA\OpenRegister\Service\Relation\RelationTypeResolver`, `RelationAnnotationValidator`, the `uses` and `used` rows (each carries the property and its `label` or `inverseLabel`), `ObjectCreatingEvent` and `ObjectUpdatingEvent`. `ObjectEntity` getters are magic. Group 5 is gated on decision D10: skip it unless the PR author has Ruben's written keep of row 2.16, and say in the PR body that it was skipped.
+Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real classes checked in openregister `development` at 1dc6a46: `OCA\OpenRegister\Service\Relation\RelationTypeResolver`, `RelationAnnotationValidator`, the `uses` and `used` rows (each carries the property and its `label` or `inverseLabel`), `ObjectCreatingEvent` and `ObjectUpdatingEvent`. `ObjectEntity` getters are magic. Group 5 is gated on decision D10: skip it unless the PR author has Ruben's written keep of row 2.16, and say in the PR body that it was skipped.
 
 ## 1. Relations
 

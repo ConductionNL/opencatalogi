@@ -5,6 +5,16 @@ depends_on: [openregister/relation-types-with-inverses, openregister/geometry-on
 
 # Proposal: publication-relations-place-and-source-ids
 
+## Summary
+
+Publications link to each other with typed relations visible from both sides, and a source system finds its record back by the identifier it knows.
+
+- Rows: 2.15, 2.19; 2.16 gated on D10 (REQ-PRS-004 and task group 5 are skipped unless Ruben keeps 2.16).
+- Wave: 2.
+- Depends on: `openregister/relation-types-with-inverses` (open change outside this plan, 14 of 15 tasks; no `[OpenSpec]` issue found); `openregister/geometry-on-a-map` (open change outside this plan, for the gated 2.16 only; no `[OpenSpec]` issue found); `opencatalogi/publication-lifecycle-on-or` (https://github.com/ConductionNL/opencatalogi/issues/1754), whose ready list gains the `sourceIdentifier` filter.
+- Decision: D10 (2.16 flagged).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 A decision that replaces an earlier one, an amendment to a regulation, a set of documents that belong together: a reader needs to see that link, from both sides. A source system needs to find its own record back by the number it knows. Neither is possible today.
