@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: subjects-as-first-class-records
 
+## Summary
+
+Subjects (the `theme` schema) become records a reader can land on and search for, and the portal can feature them.
+
+- Rows: 16.9; 6.28 (the OpenCatalogi half; portaliq closes the rest).
+- Wave: 1.
+- Depends on: nothing to build first. Consumers: `portaliq/home-and-theme-landing-pages` (https://github.com/ConductionNL/portaliq/issues/1219) and `portaliq/search-filter-by-kind` (https://github.com/ConductionNL/portaliq/issues/1222) match REQ-SUB-002 and REQ-SUB-003. `opencatalogi/theme-archive-hotspot` (https://github.com/ConductionNL/opencatalogi/issues/1775) adds a property to the same schema.
+- Decision: D11 respected (a document hit still resolves to its own page).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 A citizen often looks for a subject, not a document: "parkeren", "de nieuwe sporthal". OpenCatalogi has subjects (the `theme` schema), but they are a vocabulary for filtering, not records a reader can land on. The portal cannot feature one on its home page either.

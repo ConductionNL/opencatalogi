@@ -1,6 +1,6 @@
 # Tasks: subjects-as-first-class-records
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; `ObjectService::findAll()` and `searchObjectsPaginated()` are the real methods to mock, and `ObjectEntity` getters are magic. Public search must stay inside `evaluateAsAnonymous()`: read the WOO-551 comment in `PublicationQueryService::assemblePublicSearchResults()` before touching it.
+Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; `ObjectService::findAll()` and `searchObjectsPaginated()` are the real methods to mock, and `ObjectEntity` getters are magic. Public search must stay inside `evaluateAsAnonymous()`: read the WOO-551 comment in `PublicationQueryService::assemblePublicSearchResults()` before touching it.
 
 ## 1. Schema
 
