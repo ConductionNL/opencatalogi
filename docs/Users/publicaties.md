@@ -4,33 +4,22 @@ Publicaties zijn onderdeel van de [Open Catalogi Standaard](https://github.com/O
 
 ## Publicaties toevoegen
 
-Publicaties kunnen worden toegevoegd via:
+Publicaties voeg je toe op de publicatiepagina, met de knop om een publicatie toe te voegen. Die pagina open je via:
 
-* De publicatie toevoegen knop boven aan het hoofd menu (links)
-* Een catalogus geselecteerd in het hoofdmenu (via het hamburgermenu achter de zoekbalk)
-* Een catalogus detailpagina
+* Een catalogus in het hoofdmenu (links): direct onder Dashboard staat elke catalogus waar je toegang toe hebt, onder zijn eigen titel
+* De knop "Publicaties bekijken" op de detailpagina van een catalogus
 
-Een publicatie leeft altijd binnen één catalogus en wordt gedefinieerd door één publicatietype. Omdat catalogi bepalen welke publicatietypen beschikbaar zijn voor die catalogi moet er eerst een catalogus worden gekozen voordat er een metadatatype kan worden gekozen. Daarmee wordt de volgorde bij het aanmaken van een publicatie:
+De knop opent een formulier dat is opgebouwd uit het publicatieschema. Je vult de publicatiedetails in en slaat op; er wordt daarbij niet om een catalogus of publicatietype gevraagd. De publicatie komt in het publicatieregister.
 
-1. Catalogus kiezen (indien niet opgestart vanuit een specifieke catalogus)
-2. Publicatietype kiezen
-3. Publicatiedetails aanvullen
+Let op: de publicatiepagina toont op dit moment de publicaties van alle catalogi, niet alleen die van de catalogus die je in het menu hebt gekozen. Het publicatieschema heeft nog geen veld dat een publicatie aan één catalogus koppelt, dus de pagina kan daar niet op filteren.
 
 Eigenschappen en bijlagen kunnen worden toegevoegd nadat de publicatie is toegevoegd.
 
 ## Publicaties beheren
 
-De gebruikersbeheerinterface werkt intuïtief. Aan de linkerkant van de pagina bevindt zich een overzicht van catalogi. Met de blauwe knop bovenaan kun je een publicatie aanmaken. Dit opent een modal genaamd "Publicatie toevoegen". Er wordt eerst gevraagd aan welke catalogus deze behoort en welke publicatietype het heeft (metadata)
+De gebruikersbeheerinterface werkt intuïtief. In het hoofdmenu aan de linkerkant staat elke catalogus waar je toegang toe hebt; de catalogus die je open hebt is gemarkeerd. Hoe je een publicatie toevoegt, staat hierboven.
 
-Hieronder is een voorbeeld van een ingevulde modal voor het aanmaken van een Woo-publicatie.
-
-<div align="center">
-
-<figure><img src="../assets/publicatie_toevoegen_modal.png" alt="" width="300" /><figcaption><p>De publicatiemodal</p></figcaption></figure>
-
-</div>
-
-Na het opslaan van de publicatie, is deze zichtbaar onder de catalogi "Woo". Om de publicatie aan te passen, te depubliceren of andere acties uit te voeren, klik je op de blauwe "Actie"-knop rechtsboven bij de getoonde publicatie, of de drie puntjes rechts van de publicatie zelf.\\
+Na het opslaan is de publicatie zichtbaar op de publicatiepagina; zoals hierboven beschreven toont die pagina op dit moment de publicaties van alle catalogi. Om de publicatie aan te passen, te depubliceren of andere acties uit te voeren, klik je op de blauwe "Actie"-knop rechtsboven bij de getoonde publicatie, of de drie puntjes rechts van de publicatie zelf.\\
 
 Onder is een voorbeeld van een publicatie en de Actie-mogelijkheden.
 

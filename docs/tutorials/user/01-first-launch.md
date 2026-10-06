@@ -27,7 +27,7 @@ By the end you will have opened the Catalogi app, recognised the dashboard and t
 
    ![Dashboard counters](/screenshots/tutorials/user/01-first-launch-02.png)
 
-3. Open the left-hand navigation. The entries map onto the things OpenCatalogi tracks: **Catalogi**, **Publications**, **Themes**, **Organisations**, **Glossary**, **Pages**, **Menus**, **Search**, **Directory** (federation peers), plus the admin section.
+3. Open the left-hand navigation. Directly below **Dashboard** you find one entry for every catalogue you have access to, each under the catalogue's own title; when there are no catalogues yet, there are no such entries. Clicking one opens the publications page for that catalogue, where **Add Publication** creates a new one, and keeps the entry highlighted while you work there. For now that page lists the publications of all catalogues, not only the chosen one, because publications do not yet record which catalogue they belong to. The list follows along when a catalogue is created, renamed or deleted, without reloading the page. Below the catalogues sit **Search**, **Catalogi** (managing the catalogues themselves) and **Directory** (federation peers). Documentation, the store, reports and the roadmap are pinned to the bottom of the navigation, and the gear opens the settings.
 
    ![OpenCatalogi navigation](/screenshots/tutorials/user/01-first-launch-03.png)
 

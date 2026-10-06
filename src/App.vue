@@ -8,7 +8,12 @@
 			:pageTypes="pageTypes"
 			appId="opencatalogi"
 			:translate="translateForApp"
-			:permissions="permissions" />
+			:permissions="permissions"
+			@setupComplete="onSetupComplete">
+			<template #menu="menuProps">
+				<CatalogNavigation v-bind="menuProps" />
+			</template>
+		</CnAppRoot>
 		<!-- WOO-525: Modals.vue and Dialogs.vue were previously mounted by
 		     the legacy shell but got dropped in the manifest-v2 CnAppRoot
 		     migration. Custom pages (Dashboard, Publications, Directory,
@@ -27,6 +32,7 @@ import { translate as ncT } from '@nextcloud/l10n'
 import { reactive } from 'vue'
 import Dialogs from './dialogs/Dialogs.vue'
 import Modals from './modals/Modals.vue'
+import CatalogNavigation from './navigation/CatalogNavigation.vue'
 import { objectStore } from './store/store.js'
 
 /**
@@ -37,6 +43,7 @@ import { objectStore } from './store/store.js'
 export default {
 	name: 'App',
 	components: {
+		CatalogNavigation,
 		CnAppRoot,
 		Modals,
 		Dialogs,
@@ -106,13 +113,26 @@ export default {
 
 	/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-2 */
 	async created() {
-		// Pre-load catalog collection so the MainMenu nav items and
-		// the Publications route (publications/:catalogSlug) can resolve
-		// the active catalog slug on first render.
+		// The publication modals read the catalog collection, and loading it
+		// also fills the navigation's per-catalog entries (menuCatalogs).
 		await objectStore.preloadCollections()
 	},
 
 	methods: {
+		/**
+		 * The setup wizard creates catalogs (the first catalog, example data)
+		 * on the server, so reload the navigation's catalog entries once it
+		 * finishes.
+		 *
+		 * @return {void}
+		 */
+		onSetupComplete() {
+			objectStore.fetchMenuCatalogs().catch((error) => {
+				// eslint-disable-next-line no-console
+				console.warn('Failed to refresh the catalog menu entries:', error)
+			})
+		},
+
 		/**
 		 * Translate function passed down to CnAppRoot / CnAppNav /
 		 * CnPageRenderer. Closes over the Nextcloud `translate` import so

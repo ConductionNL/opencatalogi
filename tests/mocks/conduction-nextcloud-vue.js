@@ -155,9 +155,27 @@ const CnThemePreview = {
 	},
 }
 
+// Stub of CnAppNav with its real props, so a wrapper's pass-through can be
+// asserted on the props it receives.
+const CnAppNav = {
+	name: 'CnAppNav',
+	props: {
+		manifest: { type: Object, default: null },
+		translate: { type: Function, default: null },
+		permissions: { type: Array, default: () => [] },
+		isOwner: { type: Boolean, default: false },
+		isAdmin: { type: Boolean, default: false },
+		appId: { type: String, default: null },
+	},
+	render() {
+		return h('nav', { class: 'cn-app-nav-stub' })
+	},
+}
+
 module.exports = {
 	createObjectStore,
 	useObjectStore: createObjectStore('conduction-objects'),
+	CnAppNav,
 	CnThemePreview,
 	auditTrailsPlugin: noopPlugin,
 	filesPlugin: noopPlugin,
