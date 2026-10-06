@@ -1,5 +1,15 @@
 # An attachment is a file on the publication, not an object beside it
 
+## Summary
+
+An attachment is a file on the publication, not an object beside it. Amended 2026-10-05: a withdrawn attachment's withdrawal is recorded on the file's own publication window and no automatic path re-shares it.
+
+- Rows: 4.16 (amendment: REQ-ATT-103, REQ-ATT-104).
+- Wave: 2.
+- Depends on: `openregister/file-publication-window` (open change outside this plan, 10 of 12 tasks; no `[OpenSpec]` issue found).
+- Decision: none of D1 to D13.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 `document` was never a thing in its own right. Measuring the live schema, it is

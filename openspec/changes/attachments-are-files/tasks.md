@@ -87,7 +87,7 @@ and delete it, or accept the loss with `--force`.
 
 ## 7. Amendment 2026-10-05: a withdrawn attachment holds (row 4.16)
 
-Build after `openregister/file-publication-window` has merged on OpenRegister `development`. Groups 1 to 6 above are unchanged and keep their own state. Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`, and check `FileService::unpublishFile()` and the window setter of `file-publication-window` in openregister before mocking them.
+Build after `openregister/file-publication-window` has merged on OpenRegister `development`. Groups 1 to 6 above are unchanged and keep their own state. Read `openspec/woo-build-rules.md` first; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`, and check `FileService::unpublishFile()` and the window setter of `file-publication-window` in openregister before mocking them.
 
 - [ ] 7.1 `withdrawFile()` sets the file's window end and stores the reason and editor on the file (REQ-ATT-103). Verify: `tests/Unit/Controller/PublicationStateControllerTest.php::testWithdrawFileSetsTheFilesDepublicationAndReason` (fails today).
 - [ ] 7.2 `DcatMappingService` leaves an ended file out (REQ-ATT-103). Verify: `tests/Unit/Service/DcatMappingServiceTest.php::testAWithdrawnFileIsNotADistribution`.
