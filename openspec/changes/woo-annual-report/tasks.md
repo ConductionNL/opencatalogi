@@ -1,6 +1,6 @@
 # Tasks: woo-annual-report
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Build after `openregister/rapportage-bi-export` has merged; read its template format and `POST /api/reports/generate` on OpenRegister `development` at that moment and write the template in that exact format. If its format differs from what this spec assumes, follow OpenRegister and note it in the PR body. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`.
+Read `openspec/woo-build-rules.md` first. Build after `openregister/rapportage-bi-export` has merged; read its template format and `POST /api/reports/generate` on OpenRegister `development` at that moment and write the template in that exact format. If its format differs from what this spec assumes, follow OpenRegister and note it in the PR body. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`.
 
 ## 1. Template
 

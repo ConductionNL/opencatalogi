@@ -5,6 +5,16 @@ depends_on: [openregister/rapportage-bi-export]
 
 # Proposal: woo-annual-report
 
+## Summary
+
+An organisation gets its Woo annual figures (published volume, categories, timeliness, comparison with last year) as a generated report instead of counting by hand.
+
+- Rows: 16.5.
+- Wave: 2.
+- Depends on: `openregister/rapportage-bi-export` (open change outside this plan, 0 of 15 tasks; no `[OpenSpec]` issue found); `opencatalogi/diwoo-metadata-on-the-publication` (https://github.com/ConductionNL/opencatalogi/issues/1753) for `creationDate`; dossiq optional, referenced by URL only.
+- Decision: D1 (requests and terms are dossiq's; this report covers publications only and says so).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 Organisations account for their Woo work in their annual report: how much they published, in which categories, how fast, compared with last year. Today an officer counts that by hand.
