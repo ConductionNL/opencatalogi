@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: woo-access-boundary-hardening
 
+## Summary
+
+The boundary between non-public Woo records and the public side is proven by tests, reads of non-public records are logged, the officer side stays out of search indexes, and inspection periods get their own right instead of app admin.
+
+- Rows: 12.5, 12.9, 12.27, 12.32.
+- Wave: 1.
+- Depends on: nothing to build. Uses OpenRegister on `development`: `x-openregister-processing`, `PermissionsDeclaringEvent`, `CustomScopeEvaluatingEvent`, `PermissionHandler::hasPermission()`.
+- Decision: D1 (the Woo request routes get no new rights, because they move to dossiq).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 OpenCatalogi holds records that are not public: assessments with refusal grounds, documents waiting for redaction, drafts. The boundary between those and the public side is enforced today, and a probe showed it holds. But it is observed, not proven, nobody can say who read a non-public record, the officer side is not kept out of search indexes, and the only way to let someone open an inspection period is to make them an administrator of the whole app.
