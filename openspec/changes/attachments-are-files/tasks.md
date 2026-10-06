@@ -84,3 +84,17 @@ and delete it, or accept the loss with `--force`.
       `isPublished === false` on a publication's files, which openregister's
       `file-publication-window` change made a real property. That is a different
       data source (files, not objects), so it needs its own change.
+
+## 7. Amendment 2026-10-05: a withdrawn attachment holds (row 4.16)
+
+Build after `openregister/file-publication-window` has merged on OpenRegister `development`. Groups 1 to 6 above are unchanged and keep their own state. Read `openspec/woo-build-rules.md` first; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`, and check `FileService::unpublishFile()` and the window setter of `file-publication-window` in openregister before mocking them.
+
+- [ ] 7.1 `withdrawFile()` sets the file's window end and stores the reason and editor on the file (REQ-ATT-103). Verify: `tests/Unit/Controller/PublicationStateControllerTest.php::testWithdrawFileSetsTheFilesDepublicationAndReason` (fails today).
+- [ ] 7.2 `DcatMappingService` leaves an ended file out (REQ-ATT-103). Verify: `tests/Unit/Service/DcatMappingServiceTest.php::testAWithdrawnFileIsNotADistribution`.
+- [ ] 7.3 `publishObjectAttachments()` and every other sharing path skip an ended or depublished file; list the paths with `git grep -n "createShareLink\|publishFile" lib` in the PR body (REQ-ATT-104). Verify: `tests/Unit/Service/EventServiceTest.php::testAutoPublishSkipsAWithdrawnFile` (fails today) and one test per other path found.
+- [ ] 7.4 Add `POST /api/publications/{id}/files/{fileId}/republish` with the reason and update-right check (REQ-ATT-104). Verify: `PublicationStateControllerTest::testRepublishFileNeedsAReasonAndReopensTheWindow` and a route-table test.
+- [ ] 7.5 Show withdrawn files as withdrawn with date and reason, and a Republish action, on the publication page (REQ-ATT-103, REQ-ATT-104). Verify: `tests/e2e/publish-and-withdraw.spec.ts` gains "the editor sees it", carrying `@e2e` REQ-ATT-103.
+- [ ] 7.6 Live: withdraw an annex on the dev instance with auto-publish on, save the publication, and paste the annex's share state and the sitemap page in the PR body (REQ-ATT-104). Verify: the pasted output.
+- [ ] 7.7 Verification: `TMPDIR` a sibling directory outside the clone; PHPUnit by the `Tests:` line or `--no-coverage`; `run-hydra-gates.sh --base origin/development` counting the gates that ran; once before push `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict` and `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`; one PR with `--base development`, merge development in, never rebase, no `Co-Authored-By`.
+
+Done when merged on `development` with CI green. Row 4.16 becomes `production` only once a store release ships it.
