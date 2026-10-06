@@ -11,7 +11,7 @@ Every Woo publication stores the metadata the DiWoo standard and the national Wo
 
 - Rows: 2.3 (statutory, Woo art. 3.3, with the DiWoo metadata standard as the shape the Woo-index accepts), 2.13, 2.23, 2.25.
 - Wave: 1.
-- Depends on: nothing to build. Followed by `opencatalogi/diwoo-metadata-on-the-publication-filinq-handoff` (split off 2026-10-06, the filinq contract, REQ-DWP-006). Paired with `filinq/diwoo-documentsoort-to-opencatalogi` (https://github.com/ConductionNL/filinq/issues/1344), which writes the new field.
+- Depends on: nothing to build. Followed by `opencatalogi/diwoo-metadata-on-the-publication-filinq-handoff` (https://github.com/ConductionNL/opencatalogi/issues/1795, split off 2026-10-06, the filinq contract, REQ-DWP-006). Paired with `filinq/diwoo-documentsoort-to-opencatalogi` (https://github.com/ConductionNL/filinq/issues/1344), which writes the new field.
 - Decision: D8 (this change ships the repair step that moves documentsoort out of existing summaries); D3 respected (the new lists sit behind `TooiVocabularyService`).
 - Build rules: openspec/woo-build-rules.md
 
