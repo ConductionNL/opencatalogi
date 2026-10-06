@@ -2037,5 +2037,75 @@
 			"sidebarComponent": "FlowDetailSidebar",
 			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar (sidebarComponent) so the canvas keeps full width; canvas and sidebar share useFlowStore. The _note claimed this before the field existed, so #/flows/new -- and every #/flows/:id -- rendered a bare canvas with no way to name, describe, trigger or step-edit the flow. Mirrors pipelinq#1490."
 		}
-	]
+	],
+	"discovery": {
+		"public": true,
+		"standards": [
+			{
+				"id": "dcat-ap-nl",
+				"name": "DCAT-AP-NL",
+				"version": "3.0",
+				"role": "provides",
+				"access": "public",
+				"endpoint": "/apps/opencatalogi/api/dcat",
+				"specUrl": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+			},
+			{
+				"id": "diwoo",
+				"name": "DiWoo metadata sitemaps for the Woo-index",
+				"version": "0.9.8",
+				"role": "provides",
+				"access": "public",
+				"specUrl": "https://standaarden.overheid.nl/diwoo/metadata"
+			},
+			{
+				"id": "tooi",
+				"name": "TOOI identifiers in published DiWoo and DCAT metadata",
+				"role": "provides",
+				"access": "public",
+				"specUrl": "https://standaarden.overheid.nl/tooi"
+			},
+			{
+				"id": "schema-org",
+				"name": "schema.org JSON-LD per catalog",
+				"role": "provides",
+				"access": "public",
+				"specUrl": "https://schema.org/"
+			},
+			{
+				"id": "ooapi",
+				"name": "Open Education API",
+				"version": "5.0",
+				"role": "provides",
+				"access": "authenticated",
+				"specUrl": "https://openonderwijsapi.nl/"
+			},
+			{
+				"id": "openapi",
+				"name": "OpenAPI description of the public API",
+				"version": "3.1",
+				"role": "provides",
+				"access": "public",
+				"endpoint": "/apps/opencatalogi/api/openapi.json",
+				"specUrl": "https://spec.openapis.org/oas/v3.1.0"
+			},
+			{
+				"id": "opencatalogi-federation",
+				"name": "OpenCatalogi directory and federation protocol",
+				"role": "provides",
+				"access": "public",
+				"endpoint": "/apps/opencatalogi/api/federation/publications"
+			},
+			{
+				"id": "opencatalogi-federation",
+				"name": "OpenCatalogi directory and federation protocol (peer directories)",
+				"role": "consumes"
+			}
+		],
+		"links": {
+			"directory": "/apps/opencatalogi/api/directory",
+			"openapi": "/apps/opencatalogi/api/openapi.json",
+			"robots": "/apps/opencatalogi/api/robots.txt"
+		}
+	}
 }

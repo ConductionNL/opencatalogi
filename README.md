@@ -247,6 +247,23 @@ Full documentation is available at **[documentatie.opencatalogi.nl](https://docu
 | [Installation](docs/Installation/README.md)         | On-premise, SaaS, and upgrade instructions                          |
 | [Schemas](docs/schema/)                             | JSON Schema definitions for publications, catalogs, and attachments |
 
+<!-- discovery:start -->
+## Standards & federation
+
+| Standard | Role | Access |
+|---|---|---|
+| [DCAT-AP-NL](https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/) 3.0 | Provides | Public |
+| [DiWoo metadata sitemaps for the Woo-index](https://standaarden.overheid.nl/diwoo/metadata) 0.9.8 | Provides | Public |
+| [TOOI identifiers in published DiWoo and DCAT metadata](https://standaarden.overheid.nl/tooi) | Provides | Public |
+| [schema.org JSON-LD per catalog](https://schema.org/) | Provides | Public |
+| [Open Education API](https://openonderwijsapi.nl/) 5.0 | Provides | Nextcloud login |
+| [OpenAPI description of the public API](https://spec.openapis.org/oas/v3.1.0) 3.1 | Provides | Public |
+| OpenCatalogi directory and federation protocol | Provides | Public |
+| OpenCatalogi directory and federation protocol (peer directories) | Uses | — |
+
+Other servers can read this list without logging in, from the Nextcloud capabilities endpoint (published by OpenRegister). Details, federation and admin switches: [docs/standards-and-federation.md](docs/standards-and-federation.md).
+<!-- discovery:end -->
+
 ## Standards & Compliance
 
 - **Metadata standard:** DCAT-AP-NL 3.0 (EU/NL open-data profile) for publication metadata interoperability. Every DCAT-enabled catalog is harvestable as a machine-readable catalog document — `GET /apps/opencatalogi/api/dcat` (instance-level list of catalogs) and `GET /apps/opencatalogi/api/catalogs/{catalogSlug}/dcat` (per-catalog datasets). Content-negotiated JSON-LD (default), Turtle, and RDF/XML (`Accept` header or `?format=jsonld|turtle|rdfxml`), with `hydra:PagedCollection` paging and `Last-Modified`/`ETag` conditional-GET caching. National (data.overheid.nl) and EU (data.europa.eu) portals can poll these endpoints directly; enable per catalog via Admin settings (`hasDcat`) and register the instance DCAT URL at data.overheid.nl once. See the `dcat-ap-harvest` spec.
