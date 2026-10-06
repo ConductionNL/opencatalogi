@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: woo-metadata-suggestions
 
+## Summary
+
+Missing Woo metadata is suggested for a person to confirm, and a field with exactly one lawful value fills itself, labelled as such. This change is amended for the Woo capability programme (see the amendment section).
+
+- Rows: 13.19; 14.1 and 14.2 gated on D10 (REQ-WMS-005 and REQ-WMS-006 are skipped unless Ruben keeps the rows).
+- Wave: 2.
+- Depends on: nothing to build. Reads open change `woo-category-mapping-intake` when it exists, without depending on it.
+- Decision: D5, row 13.19 (when exactly one lawful value exists it fills itself, labelled; AI suggestions stay accept-only); D10 (14.1, 14.2 flagged).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 A Woo publication needs an information category, a publisher and a handling type before the Woo-index accepts it. Records that arrive from a source system often lack one of them, and today an editor fills the gap by hand or the document is sent with the field left out.

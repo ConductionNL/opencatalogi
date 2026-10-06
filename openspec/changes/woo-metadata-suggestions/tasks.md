@@ -24,7 +24,7 @@
 
 ## 6. Amendment 2026-10-05: one lawful value fills itself (row 13.19), and two gated rows
 
-Groups 1 to 5 above are unchanged. Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php` and check OpenRegister's organisation membership lookup (`OrganisationService`) before mocking it. Items 6.4 and 6.5 are gated on decision D10: skip them unless the PR author has Ruben's written keep of rows 14.1 and 14.2, and say so in the PR body.
+Groups 1 to 5 above are unchanged. Read `openspec/woo-build-rules.md` first; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php` and check OpenRegister's organisation membership lookup (`OrganisationService`) before mocking it. Items 6.4 and 6.5 are gated on decision D10: skip them unless the PR author has Ruben's written keep of rows 14.1 and 14.2, and say so in the PR body.
 
 - [ ] 6.1 Add `SingleLawfulValue::fill()` and call it from a pre-save listener on `ObjectCreatingEvent` registered in `Application::register()`; add `filledByRule` to `#publication` (REQ-WMS-004). Verify: `tests/Unit/Service/Woo/SingleLawfulValueTest.php::testOneOrganisationAndOneCategoryAreFilled` (fails today), `::testTwoLawfulValuesFillNothing`, `::testAnUncomputableSetFillsNothing`, `::testAHermiqSuggestionIsNeverAutoFilled`, `::testAFieldAlreadySetIsLeftAlone`; a listener test on the REAL event and an `ApplicationRegisterInvariantTest` case.
 - [ ] 6.2 Label a field filled by rule on the publication page (REQ-WMS-004). Verify: `tests/e2e/woo-metadata-suggestions.spec.ts` "an officer of one organisation does not pick it", carrying `@e2e` REQ-WMS-004.
