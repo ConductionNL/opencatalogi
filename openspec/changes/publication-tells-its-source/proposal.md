@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: publication-tells-its-source
 
+## Summary
+
+A system that hands a record to OpenCatalogi learns where it went and when it is public, without polling.
+
+- Rows: 1.17, 1.20.
+- Wave: 1.
+- Depends on: nothing to build first. Reads `PublicationStateService::stateOf()`, which `opencatalogi/publication-lifecycle-on-or` (https://github.com/ConductionNL/opencatalogi/issues/1754) extends when it lands first; no edit needed here for that.
+- Decision: none of D1 to D13; ADR-022 is why the notification is an OpenRegister webhook filter.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 A system that hands a record to OpenCatalogi (filinq, dossiq, integriq, or a municipality's own case system over the API) cannot tell its user where the record went, and cannot tell when it is done. It has to poll.

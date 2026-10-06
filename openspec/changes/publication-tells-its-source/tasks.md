@@ -1,6 +1,6 @@
 # Tasks: publication-tells-its-source
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real signatures, checked in openregister `development`: `ObjectCreatingEvent::getObject(): ObjectEntity` and `setModifiedData(array)`, `ObjectUpdatingEvent::getNewObject()` and `getOldObject()`, `FileMapper::getFilesForObject(ObjectEntity): array` (each row has `share_token`), and the private `WebhookService::passesFilters()` (equality with dot notation; reach it through `WebhookService`'s public preview method rather than reflection where one exists). `ObjectEntity` getters are magic.
+Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real signatures, checked in openregister `development`: `ObjectCreatingEvent::getObject(): ObjectEntity` and `setModifiedData(array)`, `ObjectUpdatingEvent::getNewObject()` and `getOldObject()`, `FileMapper::getFilesForObject(ObjectEntity): array` (each row has `share_token`), and the private `WebhookService::passesFilters()` (equality with dot notation; reach it through `WebhookService`'s public preview method rather than reflection where one exists). `ObjectEntity` getters are magic.
 
 ## 1. Links
 
