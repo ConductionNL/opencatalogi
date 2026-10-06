@@ -1,6 +1,6 @@
 # Tasks: officer-flow-accessibility
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Never `pkill -f playwright`; kill by PID. The shared Playwright MCP service is not this suite: run `npx playwright test` with the repo's `tests/e2e/playwright.config.ts`.
+Read `openspec/woo-build-rules.md` first. Never `pkill -f playwright`; kill by PID. The shared Playwright MCP service is not this suite: run `npx playwright test` with the repo's `tests/e2e/playwright.config.ts`.
 
 ## 1. Axe gate
 

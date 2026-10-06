@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: officer-flow-accessibility
 
+## Summary
+
+The officer side is held to WCAG 2.2 AA like the citizen side: axe in CI, the whole officer flow walked by keyboard in e2e, and a screen reader pass run and published.
+
+- Rows: 15.1, 15.5, 15.6 (accessibility duty under the Besluit digitale toegankelijkheid overheid, EN 301 549).
+- Wave: 1.
+- Depends on: nothing to build. Adds dev dependencies `@axe-core/playwright` and `@guidepup/virtual-screen-reader`. Task 4.3 needs a person with NVDA and VoiceOver.
+- Decision: none of D1 to D13.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 Accessibility for government software is a legal duty for the whole product, not only for the citizen side (Besluit digitale toegankelijkheid overheid, EN 301 549, which takes WCAG 2.1 AA; the programme measures at WCAG 2.2 AA). An officer who uses a screen reader or only a keyboard has to be able to publish. Today the citizen side is measured and the officer side is not.
