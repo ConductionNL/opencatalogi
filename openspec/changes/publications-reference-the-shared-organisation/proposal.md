@@ -1,5 +1,15 @@
 # Publications reference the shared organisation
 
+## Summary
+
+Publications reference OpenRegister's shared organisation instead of their own `organization` schema. Amended 2026-10-05: naming the organisational unit on a publication is what scopes its rights.
+
+- Rows: 12.34 (amendment: REQ-SHO-102).
+- Wave: 2.
+- Depends on: `openregister/object-organisation-from-a-property` (https://github.com/ConductionNL/openregister/issues/4391), the `x-openregister-organisation: {fromProperty}` annotation (REQ-OOP-001) and its `occ openregister:organisation:reconcile` command.
+- Decision: none of D1 to D13.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 `organization` is a cross-app slug collision: opencatalogi and stackiq both
