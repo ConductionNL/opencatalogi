@@ -1,6 +1,6 @@
 # Tasks: woo-national-output-assurance
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. Start once `diwoo-metadata-on-the-publication` is merged. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; listener tests construct the REAL `ObjectUpdatedEvent` (`getNewObject()`, `getOldObject()`). Ask the authority for the current DiWoo version; do not take the version this app declares as proof of anything. Use a recorded authority response in tests.
+Read `openspec/woo-build-rules.md` first. Start once `diwoo-metadata-on-the-publication` is merged. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; listener tests construct the REAL `ObjectUpdatedEvent` (`getNewObject()`, `getOldObject()`). Ask the authority for the current DiWoo version; do not take the version this app declares as proof of anything. Use a recorded authority response in tests.
 
 ## 1. Re-delivery
 

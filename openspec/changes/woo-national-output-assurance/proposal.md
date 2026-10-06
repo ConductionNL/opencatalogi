@@ -5,6 +5,16 @@ depends_on: [diwoo-metadata-on-the-publication]
 
 # Proposal: woo-national-output-assurance
 
+## Summary
+
+OpenCatalogi proves that what it serves the Woo-index and PLOOI is valid, complete and current, and a person hears when a national hand-over breaks.
+
+- Rows: 5.19, 9.13, 9.20, 13.9.
+- Wave: 2.
+- Depends on: `opencatalogi/diwoo-metadata-on-the-publication` (https://github.com/ConductionNL/opencatalogi/issues/1753) for the stored DiWoo fields and the XSD fixture. Without integriq the hand-overs answer unreachable, and this change raises an incident for that.
+- Decision: none of D1 to D13. REQ-WND-003 is amended.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The Woo-index and PLOOI are where the law's active disclosure becomes visible nationally. Today OpenCatalogi serves them, but cannot say whether what it serves is right, complete and current, and when something breaks nobody hears.
