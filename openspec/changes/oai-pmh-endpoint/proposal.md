@@ -10,6 +10,16 @@ change's proposal for the disposition of the whole scope).
 
 ## Summary
 
+A re-user reads only published records through one read-only route per catalogue, `GET /api/{catalogSlug}/changes?since=<moment>`, and learns what changed and what was withdrawn since that moment. Decision D10 struck the OAI-PMH endpoint this change first specified; do not build OAI-PMH.
+
+- Rows: 8.12 (OAI-006, OAI-007). Row 9.10 is struck by D10.
+- Wave: 1.
+- Depends on: nothing new. Reuses `DcatMappingService` and the anonymous public read of `PublicationQueryService`.
+- Decision: D10 (9.10 struck; this change keeps only 8.12). D5, row 5.5, sets the scope of a withdrawn entry (id and date, no title or content).
+- Build rules: openspec/woo-build-rules.md
+
+## Original summary (struck by D10, not to be built)
+
 Expose each WOO/DCAT-enabled catalog as an OAI-PMH 2.0 repository:
 `GET /catalog/{slug}/oai?verb=...` implementing the six protocol verbs
 (Identify, ListMetadataFormats, ListSets, ListIdentifiers, ListRecords,
