@@ -1,6 +1,6 @@
 # Tasks: diwoo-metadata-on-the-publication
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` before the first command. For every OpenRegister double use the `environmentAwareDouble()` pattern from `tests/Unit/Service/SitemapServiceTest.php` (it is a private method per test class, not a shared helper: copy it). Look up the real signature first: `OCA\OpenRegister\Event\ObjectCreatingEvent` and `ObjectUpdatingEvent` (`getObject()`, `setErrors()`, `stopPropagation()`, `setModifiedData()`) and `OCA\OpenRegister\Service\ObjectService::findAll()` / `saveObject()` in `ref-openregister` or `vendor`.
+Read `openspec/woo-build-rules.md` before the first command. For every OpenRegister double use the `environmentAwareDouble()` pattern from `tests/Unit/Service/SitemapServiceTest.php` (it is a private method per test class, not a shared helper: copy it). Look up the real signature first: `OCA\OpenRegister\Event\ObjectCreatingEvent` and `ObjectUpdatingEvent` (`getObject()`, `setErrors()`, `stopPropagation()`, `setModifiedData()`) and `OCA\OpenRegister\Service\ObjectService::findAll()` / `saveObject()` on `ConductionNL/openregister` branch `development` or in `vendor`.
 
 ## 1. Fixture from the authority
 
@@ -37,11 +37,6 @@ Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` before the fir
 
 - [ ] 7.1 Add `OCA\OpenCatalogi\Repair\MoveDocumentsoortOutOfSummary` and register it in `appinfo/info.xml` under `<post-migration>` after `InitializeSettings` (REQ-DWP-005). Verify: `tests/Unit/Repair/MoveDocumentsoortOutOfSummaryTest.php` with `::testASummaryThatIsADocumentTypeIsMoved` (fails today: the class does not exist), `::testARealSummaryIsLeftAlone`, `::testASecondRunMovesNothing`, `::testTheStepIsRegisteredPostMigration` (reads `appinfo/info.xml`). gate-98 checks the registration too.
 - [ ] 7.2 Run the step once on the dev instance against a publication carrying `summary` `besluit`, and record in the PR body the moved count and the object read back with `documentsoort` set (REQ-DWP-005). Verify: the read-back in the PR body. Set `appstoreenabled=false` before any `occ upgrade` on a mounted clone.
-
-## 8. Cross-app contract with filinq (decision D8)
-
-- [ ] 8.1 On this side, save the exact payload filinq's `OCA\FilinQ\Service\Publication\OpenCatalogiPublicationMap::toPublication()` will produce after its paired change (`title`, `publicationDate`, `documentsoort` as label or URI, no `summary`) (REQ-DWP-006). Verify: `DiwooCompletenessListenerTest::testTheFilinqHandoffPayloadIsAccepted` and `::testAFilinqHandoffWithAnUnknownTypeIsRefused`.
-- [ ] 8.2 Open an issue on `ConductionNL/filinq` (or comment on the filinq lane's change) stating the contract of REQ-DWP-006 and that filinq needs its own test that `toPublication()` writes `documentsoort` and never `summary`. Link it in the PR body. With filinq absent nothing in this change depends on it. Verify: the issue link in the PR body.
 
 ## 9. Docs
 

@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: diwoo-metadata-on-the-publication
 
+## Summary
+
+Every Woo publication stores the metadata the DiWoo standard and the national Woo-index require (title, document type, language, creation date, validity dates), a Woo publication missing a mandatory field is refused before it goes public, and the sitemap emits the stored values.
+
+- Rows: 2.3 (statutory, Woo art. 3.3, with the DiWoo metadata standard as the shape the Woo-index accepts), 2.13, 2.23, 2.25.
+- Wave: 1.
+- Depends on: nothing to build. Followed by `opencatalogi/diwoo-metadata-on-the-publication-filinq-handoff` (split off 2026-10-06, the filinq contract, REQ-DWP-006). Paired with `filinq/diwoo-documentsoort-to-opencatalogi` (https://github.com/ConductionNL/filinq/issues/1344), which writes the new field.
+- Decision: D8 (this change ships the repair step that moves documentsoort out of existing summaries); D3 respected (the new lists sit behind `TooiVocabularyService`).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The Woo obliges an organisation to make the information of the categories in Woo art. 3.3 public actively, and the national Woo-index (KOOP) only takes a document whose metadata conforms to the DiWoo metadata standard. OpenCatalogi declares DiWoo 0.9.8 (`StandardsVersionService::DIWOO_VERSION`, schema `StandardsVersionService::DIWOO_METADATA_XSD`). The main spec `woo-compliance` maps a publication to a `diwoo:Document` (WOO-006, WOO-010) and binds three axes to the TOOI and DiWoo value lists (WOO-TOOI-001 to WOO-TOOI-004). It cites no article. This change names the legal basis: Woo art. 3.3 for the duty, the DiWoo metadata standard for the shape the Woo-index accepts.
@@ -29,7 +39,7 @@ There is a second cost. filinq hands a ready Woo record to OpenCatalogi and, bec
 - A pre-save listener on OpenRegister's `ObjectCreatingEvent` and `ObjectUpdatingEvent` normalises a documentsoort given as code or label to its URI, and refuses a save that would make a Woo publication public, now or on a scheduled date, while a field the DiWoo XSD makes mandatory is missing or does not resolve.
 - `SitemapService::mapDiwooDocument()` reads the stored fields. It falls back to today's derivation only for a record written before the migration. A document that still lacks a mandatory field after the fallback is left out of the sitemap page and reported, so the Woo-index never receives a document it would refuse.
 - A Nextcloud repair step, `OCA\OpenCatalogi\Repair\MoveDocumentsoortOutOfSummary`, registered post-migration in `appinfo/info.xml`, moves a documentsoort value out of an existing `summary` into `documentsoort` and empties that summary. It is idempotent.
-- The paired filinq change writes `documentsoort` instead of `summary` (decision D8). The filinq lane owns that PR. This change states the contract it must meet.
+- The paired filinq change writes `documentsoort` instead of `summary` (decision D8). The filinq lane owns that PR. The contract it must meet, and the test on this side, are the follow-up change `diwoo-metadata-on-the-publication-filinq-handoff` (split off on 2026-10-06 to keep this change at 20 tasks).
 
 ## Fail closed
 
