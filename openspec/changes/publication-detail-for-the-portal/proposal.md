@@ -5,6 +5,16 @@ depends_on: []
 
 # Proposal: publication-detail-for-the-portal
 
+## Summary
+
+The public endpoints give portaliq's citizen detail page what it needs: an officer-set document order, a stable document id with its own metadata routes, the comment period state, opt-in withheld documents with grounds, and an opt-in, throttled error report channel.
+
+- Rows: 6.25; supports 6.15, 6.16, 6.19, 6.36, 7.20, which close in portaliq.
+- Wave: 1.
+- Depends on: nothing to build. Consumers: `portaliq/publication-detail-page-complete` (https://github.com/ConductionNL/portaliq/issues/1220) and `portaliq/publication-error-reports-and-withheld-notices` (https://github.com/ConductionNL/portaliq/issues/1221) test against REQ-PDP-002 to REQ-PDP-005. `opencatalogi/woo-decision-shows-what-was-withheld` (https://github.com/ConductionNL/opencatalogi/issues/1797) extends `withheld` to Woo decisions published from dossiq.
+- Decision: D9 (`showWithheld` and `acceptErrorReports` are opt-in per catalogue, off by default); D11 (a document's own page is the target of a content hit).
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 The citizen's publication page lives in portaliq and reads OpenCatalogi's public endpoints. Five things that page needs are not in those endpoints, so portaliq cannot build them however it tries. This change is the OpenCatalogi half: it closes one row itself and gives portaliq the data for five more.

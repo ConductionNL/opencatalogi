@@ -1,6 +1,6 @@
 # Tasks: publication-detail-for-the-portal
 
-Read `/home/rubenlinde/memcap-work/woo-build/LANE-RULES-BUILD.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; OpenRegister's `FileMapper::getFilesForObject()` returns rows with `id`, `share_token` and the file fields, and `ObjectEntity` getters are magic. Every new public route reads inside the anonymous scope used by `PublicationQueryService`.
+Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`; OpenRegister's `FileMapper::getFilesForObject()` returns rows with `id`, `share_token` and the file fields, and `ObjectEntity` getters are magic. Every new public route reads inside the anonymous scope used by `PublicationQueryService`.
 
 ## 1. Order
 
