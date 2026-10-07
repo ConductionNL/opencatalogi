@@ -699,7 +699,7 @@
 			"opencatalogi": "no",
 			"built": {
 				"state": "specified",
-				"owner": "ConductionNL/openregister",
+				"owner": "ConductionNL/opencatalogi",
 				"evidence": "Searched for per-catalog access: publication_register.json:291 authorization is schema-wide (public on publicationDate, else 'authenticated'), with no create/update rules; SetupController.php:460-469 the 'private (granted groups only)' scope choice only sets listed=false; no catalog-level group field in the catalog schema (publication_register.json:380-530)",
 				"change": "catalogue-staff-access"
 			},
@@ -723,7 +723,7 @@
 			},
 			"screen": {
 				"board": null,
-				"reason": "not designed yet: access is set in OpenRegister's authorisation screens, no opencatalogi board"
+				"reason": "not designed yet: the Staff access section goes on the catalogue edit page (OcCatalogusBewerken), which does not draw it; see catalogue-staff-access design D4"
 			}
 		},
 		{
@@ -6338,8 +6338,12 @@
 			},
 			"note": "Specified in ConductionNL/openregister openspec/changes/field-rules-by-state (openregister lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: OpenRegister shipped field rules by state; opencatalogi has neither the draft state nor the rule that makes fields required in published. No opencatalogi change declares that rule yet. Spec round part 3 (2026-10-07): opencatalogi's half (the required-in-published rule on the publication schema and the form hints) is specified in publication-required-at-publish, after publication-lifecycle-on-or; OpenRegister's delivered engine is openregister/field-rules-by-state.",
 			"screen": {
-				"board": null,
-				"reason": "screen belongs to openregister: field rules by state"
+				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"board": [
+					"OcNieuwePublicatie",
+					"OcPublicatieBewerken",
+					"OcPubliceren"
+				]
 			}
 		},
 		{
@@ -6499,7 +6503,7 @@
 			"opencatalogi": "no",
 			"built": {
 				"state": "specified",
-				"owner": "ConductionNL/integriq",
+				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at integriq development 5e903e546: integriq-notifications is archived (2026-09-30, 9 of 9 tasks): job-error is enabled and notifies the job's user and the connection alert recipients (lib/Settings/integriq_register.json:2349-2375, lib/Notification/ConnectionAlertRecipientResolver.php:48), dispatched by OpenRegister's AnnotationNotificationListener; the synchronisation rule sync-failed is still enabled: false (:2584-2590). Source read at opencatalogi development 7a5a8a492: opencatalogi imports no data file yet; the open change open-data-table-query-and-dictionary stores failed with the first refused row (tasks.md 1.3) and sends no alert.",
 				"change": "data-file-import-failure-alert",
 				"readOn": "2026-10-07"
@@ -6525,7 +6529,7 @@
 			},
 			"screen": {
 				"board": null,
-				"reason": "screen belongs to integriq"
+				"reason": "a Nextcloud notification; the failed state sits in the Tables section that open-data-table-query-and-dictionary adds, which no board draws yet"
 			}
 		},
 		{
