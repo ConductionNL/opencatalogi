@@ -21,25 +21,10 @@
 				"display": "cards",
 				"optionsSource": "datasets",
 				"configKey": "demo_dataset",
+				"loadAction": "load-demo-data",
 				"title": "Load example data?",
 				"required": false,
-				"body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install."
-			},
-			{
-				"id": "load-demo-data",
-				"type": "run-action",
-				"action": "load-demo-data",
-				"title": "Load the example data",
-				"required": false,
-				"body": "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards."
-			},
-			{
-				"id": "config-check",
-				"type": "run-action",
-				"action": "reload-settings",
-				"title": "Publishing prerequisites",
-				"required": true,
-				"body": "OpenCatalogi publishes from OpenRegister. The catalog, publication and listing registers are configured automatically on install, so this step just verifies them. If OpenRegister was enabled after OpenCatalogi, running this re-imports the configuration."
+				"body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install."
 			},
 			{
 				"id": "catalog-scope",
