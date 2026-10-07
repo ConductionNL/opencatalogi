@@ -1,81 +1,64 @@
 # Design: harvest-conflict-policies
 
-`harvest-feed-intake` parks every collision as `conflict` and stops there. This change lets each feed say what a collision does, and gives the people who own the local record a queue to decide the ones left to them.
+`harvest-feed-intake` saves every OpenCatalogi source with `conflictStrategy: manual`. This change lets each feed say what a collision does, and gives the people who own the local publication a queue for the ones left to them. Since spec round part 2 (7 October 2026, decision 80) every rule about collisions lives in OpenRegister (`openregister/app-harvest-fetchers-and-flow-node`); OpenCatalogi only chooses and shows.
 
-## D1. What already exists, and what this change uses from it
+## D1. What OpenRegister owns, and what stays here
 
-| Mechanism | Where | What we take |
+| Part | Owner | Where |
 |---|---|---|
-| Conflict strategies `source-wins`, `local-wins`, `newest-wins`, `manual` and outcomes `apply_source`, `keep_local`, `defer` | openregister `data-sync-harvesting` ("Sync MUST support conflict resolution"), `lib/Service/Sync/SyncConflictResolver.php` | The model. Our four policies map onto it (D2). We do not add `newest-wins`: a DCAT `dct:modified` and a local `@self.updated` come from two clocks, and the proposal did not ask for it. |
-| Decision-table step, the shared DMN evaluator, five hit policies, refusal at save, explicit no-match default | openregister `flow-decision-tables`, `lib/Service/Dmn/DecisionTableEvaluator.php`, `DecisionTableValidator.php` | Rule-shaped policies. A feed MAY carry a decision table that picks a policy per item. No app-local rule matcher, same as `retention-defaults-on-shared-decision-tables`. |
-| Per-attribute conflict modal: only differing attributes listed, one choice per row, `inputLabel`, modal in its own file | openregister `mdm-conflict-resolution-ui` | The interaction pattern for the review modal. That modal lives inside OpenRegister's golden-record view and is not a shared component, so OpenCatalogi builds its own modal to the same rules. |
-| Object writes with audit trail and versions | openregister `ObjectService::saveObject()`, audit trail, content versioning | Every resolution write. The audit entry carries the resolving user; the previous object state stays restorable. |
-| Item model, tombstones, run accounting | `harvest-feed-intake` (REQ-HFI-005 to REQ-HFI-010) | Everything. This change adds fields, not schemas. |
+| Collision detection and reasons `pre-existing-claim`, `local-edited`, `local-deleted` | OpenRegister | D-7, REQ-HAF-006 |
+| Strategies `manual`, `source-wins`, `local-wins`, `reject`; `local-deleted` always `conflict` | OpenRegister | D-8, REQ-HAF-007 |
+| Item states and every transition (`conflict`, `shadowed`, `rejected`, re-evaluation on an upstream change) | OpenRegister `SyncRecordStatus` | D-8 |
+| `conflictRules` decision table, validated at save, evaluated per collision, falling back to `conflictStrategy` | OpenRegister with the shared DMN evaluator | D-8, REQ-HAF-007 |
+| Queue listing, filtered to records the caller may update | `GET /api/sources/{id}/sync-records?status=conflict` | D-9, REQ-HAF-009 |
+| Resolution: keep local, use harvested, merge per field, discard; single and bulk; under the caller's rights; append-only `resolutions` | `POST /api/sources/{id}/sync-records/{recordId}/resolve` and `POST /api/sources/{id}/sync-records/resolve` | D-9, REQ-HAF-009 |
+| Protected fields and provenance kept on every resolution, merge included | OpenRegister | REQ-HAF-008 |
+| **Policy choice and per-reason override in the feed modal** | **OpenCatalogi** | D2, D3 |
+| **Review queue page, resolution modal, bulk actions** | **OpenCatalogi** | D4, D5 |
+
+OpenCatalogi adds no schema, no field, no state machine and no resolution service.
 
 ## D2. Policies
 
-| Policy | On a collision | OpenRegister equivalent |
-|---|---|---|
-| `manual-review` (default) | Item `conflict`, harvested payload kept on the item, local object untouched, item in the review queue | `manual` → `defer` |
-| `overlay` | Local object updated with the harvested payload, provenance kept, previous state kept as a version, item `updated` | `source-wins` → `apply_source` |
-| `shadow-local` | Harvested payload kept on the item, never applied or linked, item `shadowed` | `local-wins` → `keep_local` |
-| `reject-on-conflict` | Item `rejected`, payload not kept, never linked | none (new) |
+The feed modal offers four choices with a one-line explanation each and stores the OpenRegister strategy:
 
-`manual-review` is the default because it is what `harvest-feed-intake` already does, so an upgrade changes nothing until an administrator picks another policy.
+| Choice | Stored `conflictStrategy` |
+|---|---|
+| Ask a person (default) | `manual` |
+| Use the harvested version | `source-wins` |
+| Keep ours, store theirs aside | `local-wins` |
+| Drop the harvested version | `reject` |
 
-`overlay` never deletes a local object and never recreates a deleted one: a `deleted-locally` collision is handled as `manual-review` whatever the policy. Recreating something an editor removed is a decision for a person.
+`newest-wins` is not offered: a DCAT `dct:modified` and a local `updated` come from two clocks.
 
-Draft-only still holds under `overlay`. The harvest writes the content fields; it never sets `publicatiedatum`, `status` or `unlisted`. Overlaying a published publication changes its public content, so the feed form says so next to the `overlay` choice.
+Next to "Use the harvested version" the modal says that this changes the public text of a publication that is already published. Draft-only still holds: `protectedFields` from `harvest-feed-intake` keep `publicationDate`, `depublicationDate` and `status` out of every harvest write and every resolution.
 
-## D3. Rule-shaped policies
+## D3. Per-reason override
 
-A feed MAY carry `conflictRules`: an inline decision table in the shape `flow-decision-tables` defines. Inputs are `conflictReason`, `externalUri`, `sourceRevision` and the mapped payload's top-level fields. The single output is `policy`, one of the four. Hit policy is `FIRST` or `UNIQUE`. When no row matches, the feed's `conflictPolicy` applies, which is the explicit default that `flow-decision-tables` requires. The table is checked with OpenRegister's `DecisionTableValidator` when the feed is saved, and evaluated with `DecisionTableEvaluator` in the harvest node.
+Below the default the modal has "Different per situation", with one select per collision reason: "Someone edited the publication here" (`local-edited`) and "A publication here already claims this dataset" (`pre-existing-claim`), each "Same as the default" or one of the four choices. `local-deleted` is not offered: OpenRegister always queues it.
 
-## D4. Item state machine
+The app compiles the chosen overrides into `conflictRules`: a decision table in the `flow-decision-tables` shape, hit policy `FIRST`, one input `conflictReason`, one output `strategy`, one row per overridden reason. No row is written for "Same as the default", and no table at all when nothing is overridden, so the fallback to `conflictStrategy` applies. The modal reads an existing table back into the selects; a table the modal did not write (more inputs than `conflictReason`) is shown as "Set in OpenRegister" and left untouched. OpenRegister validates the table at save; a refusal is shown on the override section.
 
-States: `new`, `updated`, `unchanged`, `conflict`, `shadowed`, `rejected`. `tombstoned` is a flag on any state, set and cleared as `harvest-feed-intake` REQ-HFI-009 says. Every transition:
+## D4. Review queue
 
-| From | Event | To |
-|---|---|---|
-| (none) | first seen, no collision | `new` |
-| (none) or `new`, `updated`, `unchanged` | collision, policy `manual-review` | `conflict` |
-| (none) or `new`, `updated`, `unchanged` | collision, policy `overlay` | `updated` |
-| (none) or `new`, `updated`, `unchanged` | collision, policy `shadow-local` | `shadowed` |
-| (none) or `new`, `updated`, `unchanged` | collision, policy `reject-on-conflict` | `rejected` |
-| `new`, `updated`, `unchanged` | checksum changed, no collision | `updated` |
-| `new`, `updated`, `unchanged` | checksum equal | `unchanged` |
-| `conflict` | checksum changed upstream | `conflict` (payload refreshed, resolver sees the newest) |
-| `conflict` | checksum equal | `conflict` |
-| `conflict` | resolved: keep local | `shadowed` |
-| `conflict` | resolved: use harvested | `updated` |
-| `conflict` | resolved: merge per field | `updated` |
-| `conflict` | resolved: discard | `rejected` |
-| `shadowed`, `rejected` | checksum equal | unchanged state |
-| `shadowed`, `rejected` | checksum changed upstream | the feed's policy is evaluated again, as a fresh collision |
+Page `HarvestReview` at `/harvest/review`, in the navigation for every user who may update publications. It reads `GET /apps/openregister/api/sources/{id}/sync-records?status=conflict` for each OpenCatalogi source (the feed list of `harvest-feed-intake`) and shows one table: feed, dataset title (from the harvested payload), reason, since when, and the local publication with a link. OpenRegister limits the list to records the caller may update, so a user who may not update a publication does not see its conflict. Empty state: "Nothing waits for a decision." The list follows the list-page shape of board `OcWooBatches` (a table with a selection bar for bulk actions) until a board for this page exists.
 
-A bulk resolution is one resolution per item, applied in order, each with its own outcome; one failing item does not roll back the others.
+## D5. Resolution modal
 
-## D5. Fields added
+`src/modals/HarvestConflictModal.vue` (ADR-004). It lists only the properties where the local and the harvested value differ, side by side, each with an `NcSelect` (`inputLabel` "Keep for <field>") choosing local or harvested. Protected fields and the provenance properties are not offered. Actions: "Keep ours", "Use the harvested version", "Save the merge" and "Drop the harvested version", mapped to `keep-local`, `use-harvested`, `merge` with `fields`, and `discard`. A 403 from OpenRegister is shown as "You may not change this publication" and the item stays in the queue.
 
-On `harvest-feed`: `conflictPolicy` (enum of the four, default `manual-review`) and `conflictRules` (optional decision table).
+Bulk: the selection bar offers keep ours, use harvested and drop, through the bulk route. The result lists each item that failed with OpenRegister's reason; the others leave the queue. Merge is not offered in bulk.
 
-On `harvested-item`: `harvestedPayload` (the mapped payload, kept for `conflict` and `shadowed`, cleared on `rejected` and on apply), `policyApplied`, and `resolutions` (list, append only): `resolvedBy`, `resolvedAt`, `action` (`keep-local`, `use-harvested`, `merge`, `discard`), `fields` (for a merge: field name and chosen side), `objectId`, `bulk` (boolean).
+## D6. Open point for OpenRegister
 
-On `harvest-run`: counts for `shadowed` and `rejected`.
+The modal compares the local publication with the harvested payload after mapping. OpenRegister's D-9 says the queue carries `rawData`, the payload as fetched. If that is the raw DCAT node, the modal cannot line it up with publication fields. The preferred fix is one field in OpenRegister's queue response, the mapped payload (`mappedData`), which the pipeline already computes. Until OpenRegister confirms the shape, task 2.2 is blocked; the queue and the whole-record actions (2.1, 2.3) are not.
 
-## D6. Who resolves
+## D7. Screen
 
-The review queue lists `conflict` items whose local object the signed-in user may update under OpenRegister RBAC. Administrators see all. A resolution writes under the resolving user's own rights, not the feed's `runAs`, so the audit trail names the person who decided. A user who loses update rights between opening the modal and saving gets a refusal and the item stays `conflict`.
+No board on the Zuiddrecht canvas (5NkFW28vZUUij43xzxHg5a) draws the review queue or the resolution modal; the row `od-harvest-conflict` records `screen.board: null`. The policy choice sits in the feed modal of `harvest-feed-intake`, which follows board `OcInstellingen`. A board for the queue and the modal is needed before tasks 2.1 and 2.2 start.
 
-## D7. Migration
+## D8. Tests
 
-Items parked `conflict` by `harvest-feed-intake` have no `harvestedPayload`. On the first run after upgrade they keep state `conflict`, and the run fills their payload from the fetch. Until then the review modal says the harvested copy arrives with the next run and offers only "Keep local" and "Discard". Re-running the migration is a no-op: an item that already has a payload is not touched.
-
-## D8. Screen
-
-No board on the Zuiddrecht canvas (5NkFW28vZUUij43xzxHg5a) draws the review queue or the resolution modal. `capabilities-opencatalogi.md` lists no harvest review screen, and the row `od-harvest-conflict` records `screen.board: null` ("not designed yet: no harvest review board"). The feed's policy choice sits in the feed modal of `harvest-feed-intake`, which follows board `OcInstellingen`. Until a board exists, the queue follows the list-page shape of `OcWooBatches` (a table with a selection bar for bulk actions) and the modal follows OpenRegister's `mdm-conflict-resolution-ui` rules. A board for the queue and modal is needed before the frontend tasks start.
-
-## D9. Tests
-
-- Unit: one test per policy, one per row of the D4 table, decision-table selection with and without a match, the `deleted-locally` override, migration idempotency, resolution audit fields, bulk with one failing item.
-- e2e: `tests/e2e/harvest-conflict-review.spec.ts`: a local edit, a re-run, the item in the queue, a per-field merge, the merged publication; then a bulk "Keep local" over two items.
+- Unit: `ConflictPolicyFormTest` (each choice stores its strategy, the overrides compile to the expected table, no table when nothing is overridden, a foreign table is left untouched).
+- vitest: the modal shows only differing fields and never a protected one; a 403 keeps the item.
+- e2e: `tests/e2e/harvest-conflict-review.spec.ts`: a local edit, a re-run, the item in the queue, a per-field merge, the merged publication; then a bulk "Keep ours" over two items.
