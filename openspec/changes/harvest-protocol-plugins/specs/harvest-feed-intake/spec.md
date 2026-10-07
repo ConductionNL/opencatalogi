@@ -49,7 +49,7 @@ The system SHALL register, through OpenRegister's `RegisterSourceFetchersEvent`,
 
 ### Requirement: The other protocols read whole sources incrementally (REQ-HPP-003)
 
-`opencatalogi.oai-pmh` SHALL follow resumption tokens to the end, pass `from` from `since`, key each record by its OAI identifier, and return a record whose header has `status="deleted"` in `errors` with the reason "deleted at the source", so it is not harvested again. `opencatalogi.ckan-api` SHALL page `package_search` and key each package by its `id`. `opencatalogi.dcat-rdf` SHALL parse Turtle and RDF/XML into the same dataset nodes the JSON-LD fetcher returns, keyed by the dataset IRI. `opencatalogi.schema-org-dataset` SHALL do what `website-sitemap` does with type `Dataset` only.
+`opencatalogi.oai-pmh` SHALL follow resumption tokens to the end, pass `from` from `since`, key each record by its OAI identifier, and return a record whose header has `status="deleted"` in `errors` with the reason "deleted at the source" and not as an item, so OpenRegister tombstones its record after a complete run. `opencatalogi.ckan-api` SHALL page `package_search` and key each package by its `id`. `opencatalogi.dcat-rdf` SHALL parse Turtle and RDF/XML into the same dataset nodes the JSON-LD fetcher returns, keyed by the dataset IRI. `opencatalogi.schema-org-dataset` SHALL do what `website-sitemap` does with type `Dataset` only.
 
 #### Scenario: OAI-PMH paging to the end
 <!-- @e2e exclude Fetcher contract; proven by OaiPmhFetcherTest::testResumptionTokensAreFollowedToTheEnd against a recorded fixture. -->

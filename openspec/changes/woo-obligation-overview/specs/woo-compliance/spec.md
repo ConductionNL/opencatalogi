@@ -25,11 +25,11 @@ status: proposed
 
 ### Requirement: Harvested items count as a source (REQ-WOO-002)
 
-The harvest intake SHALL be registered as the source `harvest`, and its obligations SHALL be listed beside those of the other sources.
+The harvest intake SHALL be registered as the source `harvest`, and its obligations SHALL be listed beside those of the other sources. They SHALL be read from OpenRegister: every sync record, not tombstoned, of a source with `application: opencatalogi` whose publication is not public SHALL be an obligation, due `config.publishWithinDays` days after the record was first imported, or with an unknown due date when the source sets none. OpenCatalogi SHALL NOT keep a harvest store of its own for this.
 
 #### Scenario: A harvested obligation appears
 
-- **GIVEN** a harvest feed that produced one item with a due date in the past and no publication
+- **GIVEN** an OpenCatalogi harvest source with `publishWithinDays` 14 and one sync record first imported 20 days ago whose draft publication is not public
 - **WHEN** an admin opens the overview
 - **THEN** the item is listed with source `harvest` and state late
 

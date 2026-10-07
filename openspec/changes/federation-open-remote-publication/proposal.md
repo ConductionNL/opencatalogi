@@ -42,5 +42,5 @@ No demand row. The row is `build` under the rule "two or more competitors rated 
 
 ## Out of scope
 
-- Harvesting remote publications into local copies, which is what CKAN and DKAN do. The federation model here reads the peer live; a copy belongs to the harvest changes (`harvest-feed-intake`).
+- Harvesting remote publications into local copies, which is what CKAN and DKAN do. The federation model here reads the peer live; a copy belongs to harvesting, which runs on OpenRegister (`openregister/app-harvest-fetchers-and-flow-node`): another OpenCatalogi's DCAT feed can be registered as a harvest feed of type `opencatalogi.dcat-jsonld` (`harvest-feed-intake`), and its datasets arrive as draft publications with their source.
 - Proxying remote file downloads through this instance.
