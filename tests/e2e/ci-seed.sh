@@ -12,6 +12,8 @@
 #
 #     playwright-seed-command: 'bash apps/opencatalogi/tests/e2e/ci-seed.sh'
 #
+# The Newman job runs it as `CI_SEED_API_ONLY=1`, which stops after the register check.
+#
 # WHY THIS IS NEEDED
 # ------------------
 # `occ app:enable opencatalogi` runs the `InitializeSettings` post-migration
@@ -165,6 +167,14 @@ curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
 verify "$SCH_BODY" schemas
 
 echo "[ci-seed] OpenCatalogi register + schemas provisioned."
+
+# API-only mode (the Newman job): no frontend is built there, and the collections need only the register.
+# So the setup wizard, the warm-up and the bundle gate below are skipped.
+if [ "${CI_SEED_API_ONLY:-}" = "1" ]; then
+	echo "[ci-seed] CI_SEED_API_ONLY=1: register verified, skipping setup, warm-up and bundle gate."
+	echo "[ci-seed] done."
+	exit 0
+fi
 
 # ── 2b. Complete first-time setup, because this script has just performed it ─
 #
