@@ -1,0 +1,523 @@
+{
+	"info": {
+		"_postman_id": "opencatalogi-publication-list-sort",
+		"name": "OpenCatalogi - Publication list sort",
+		"description": "API contract tests for the Publications index page sort (ConductionNL/opencatalogi#1351). The page asks OpenRegister's objects endpoint for `_order` as a JSON object; these requests assert that every column the page sorts on (title, status, @self.created, @self.updated) orders the whole result set server-side, that paging keeps the order, and that the bracket form `_order[field]=DIR` matches the JSON form.\n\nThe collection creates three publications under a unique run id, isolates them with `_search`, and deletes them at the end.\n\nVariables:\n- baseUrl (default http://localhost:8080)\n- userAuth: Basic auth for an admin",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+		{ "key": "userAuth", "value": "Basic YWRtaW46YWRtaW4=", "type": "string" },
+		{ "key": "runId", "value": "", "type": "string" },
+		{ "key": "idAlpha", "value": "", "type": "string" },
+		{ "key": "idBravo", "value": "", "type": "string" },
+		{ "key": "idCharlie", "value": "", "type": "string" }
+	],
+	"item": [
+		{
+			"name": "Setup: create Bravo (published, oldest)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.collectionVariables.set('runId', 'zsort' + Date.now());"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('created (200/201)', () => pm.expect([200, 201]).to.include(pm.response.code));",
+							"pm.collectionVariables.set('idBravo', pm.response.json().id || '');"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"body": { "mode": "raw", "raw": "{\"title\": \"{{runId}} Bravo\", \"status\": \"published\"}" },
+				"url": { "raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication", "host": ["{{baseUrl}}"], "path": ["apps", "openregister", "api", "objects", "publication", "publication"] }
+			}
+		},
+		{
+			"name": "Setup: create Alpha (archived)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"// Created timestamps have second precision.",
+							"setTimeout(() => {}, 1100);"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('created (200/201)', () => pm.expect([200, 201]).to.include(pm.response.code));",
+							"pm.collectionVariables.set('idAlpha', pm.response.json().id || '');"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"body": { "mode": "raw", "raw": "{\"title\": \"{{runId}} Alpha\", \"status\": \"archived\"}" },
+				"url": { "raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication", "host": ["{{baseUrl}}"], "path": ["apps", "openregister", "api", "objects", "publication", "publication"] }
+			}
+		},
+		{
+			"name": "Setup: create Charlie (published, newest)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"setTimeout(() => {}, 1100);"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('created (200/201)', () => pm.expect([200, 201]).to.include(pm.response.code));",
+							"pm.collectionVariables.set('idCharlie', pm.response.json().id || '');"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"body": { "mode": "raw", "raw": "{\"title\": \"{{runId}} Charlie\", \"status\": \"published\"}" },
+				"url": { "raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication", "host": ["{{baseUrl}}"], "path": ["apps", "openregister", "api", "objects", "publication", "publication"] }
+			}
+		},
+		{
+			"name": "Setup: update Bravo so it is the most recently updated",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"setTimeout(() => {}, 1100);"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('updated (200)', () => pm.response.to.have.status(200));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"body": { "mode": "raw", "raw": "{\"title\": \"{{runId}} Bravo\", \"status\": \"published\", \"summary\": \"updated\"}" },
+				"url": { "raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication/{{idBravo}}", "host": ["{{baseUrl}}"], "path": ["apps", "openregister", "api", "objects", "publication", "publication", "{{idBravo}}"] }
+			}
+		},
+		{
+			"name": "Default page sort: created desc with uuid tie-break",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"const prefix = pm.collectionVariables.get('runId') + ' ';",
+							"const titles = pm.response.json().results.map((r) => r.title.replace(prefix, ''));",
+							"pm.test('newest first', () => pm.expect(titles).to.eql(['Charlie', 'Alpha', 'Bravo']));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication?_search={{runId}}&_limit=10&_order=%7B%22%40self.created%22%3A%22desc%22%2C%22_uuid%22%3A%22asc%22%7D",
+					"host": ["{{baseUrl}}"],
+					"path": ["apps", "openregister", "api", "objects", "publication", "publication"],
+					"query": [
+						{ "key": "_search", "value": "{{runId}}" },
+						{ "key": "_limit", "value": "10" },
+						{ "key": "_order", "value": "%7B%22%40self.created%22%3A%22desc%22%2C%22_uuid%22%3A%22asc%22%7D", "description": "{\"@self.created\":\"desc\",\"_uuid\":\"asc\"}" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Created asc reverses the order",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"const prefix = pm.collectionVariables.get('runId') + ' ';",
+							"const titles = pm.response.json().results.map((r) => r.title.replace(prefix, ''));",
+							"pm.test('oldest first', () => pm.expect(titles).to.eql(['Bravo', 'Alpha', 'Charlie']));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication?_search={{runId}}&_limit=10&_order=%7B%22%40self.created%22%3A%22asc%22%7D",
+					"host": ["{{baseUrl}}"],
+					"path": ["apps", "openregister", "api", "objects", "publication", "publication"],
+					"query": [
+						{ "key": "_search", "value": "{{runId}}" },
+						{ "key": "_limit", "value": "10" },
+						{ "key": "_order", "value": "%7B%22%40self.created%22%3A%22asc%22%7D", "description": "{\"@self.created\":\"asc\"}" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Bracket form matches the JSON form",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"const prefix = pm.collectionVariables.get('runId') + ' ';",
+							"const titles = pm.response.json().results.map((r) => r.title.replace(prefix, ''));",
+							"pm.test('newest first', () => pm.expect(titles).to.eql(['Charlie', 'Alpha', 'Bravo']));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication?_search={{runId}}&_limit=10&_order%5B%40self.created%5D=DESC",
+					"host": ["{{baseUrl}}"],
+					"path": ["apps", "openregister", "api", "objects", "publication", "publication"],
+					"query": [
+						{ "key": "_search", "value": "{{runId}}" },
+						{ "key": "_limit", "value": "10" },
+						{ "key": "_order%5B%40self.created%5D", "value": "DESC", "description": "_order[@self.created]=DESC" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Title asc sorts alphabetically",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"const prefix = pm.collectionVariables.get('runId') + ' ';",
+							"const titles = pm.response.json().results.map((r) => r.title.replace(prefix, ''));",
+							"pm.test('A to Z', () => pm.expect(titles).to.eql(['Alpha', 'Bravo', 'Charlie']));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication?_search={{runId}}&_limit=10&_order=%7B%22title%22%3A%22asc%22%7D",
+					"host": ["{{baseUrl}}"],
+					"path": ["apps", "openregister", "api", "objects", "publication", "publication"],
+					"query": [
+						{ "key": "_search", "value": "{{runId}}" },
+						{ "key": "_limit", "value": "10" },
+						{ "key": "_order", "value": "%7B%22title%22%3A%22asc%22%7D", "description": "{\"title\":\"asc\"}" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Title desc reverses the order",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"const prefix = pm.collectionVariables.get('runId') + ' ';",
+							"const titles = pm.response.json().results.map((r) => r.title.replace(prefix, ''));",
+							"pm.test('Z to A', () => pm.expect(titles).to.eql(['Charlie', 'Bravo', 'Alpha']));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication?_search={{runId}}&_limit=10&_order=%7B%22title%22%3A%22desc%22%7D",
+					"host": ["{{baseUrl}}"],
+					"path": ["apps", "openregister", "api", "objects", "publication", "publication"],
+					"query": [
+						{ "key": "_search", "value": "{{runId}}" },
+						{ "key": "_limit", "value": "10" },
+						{ "key": "_order", "value": "%7B%22title%22%3A%22desc%22%7D", "description": "{\"title\":\"desc\"}" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Status asc puts archived before published",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"const statuses = pm.response.json().results.map((r) => r.status);",
+							"pm.test('archived, then published', () => pm.expect(statuses).to.eql(['archived', 'published', 'published']));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication?_search={{runId}}&_limit=10&_order=%7B%22status%22%3A%22asc%22%7D",
+					"host": ["{{baseUrl}}"],
+					"path": ["apps", "openregister", "api", "objects", "publication", "publication"],
+					"query": [
+						{ "key": "_search", "value": "{{runId}}" },
+						{ "key": "_limit", "value": "10" },
+						{ "key": "_order", "value": "%7B%22status%22%3A%22asc%22%7D", "description": "{\"status\":\"asc\"}" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Updated desc puts the last edited first",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"const prefix = pm.collectionVariables.get('runId') + ' ';",
+							"const titles = pm.response.json().results.map((r) => r.title.replace(prefix, ''));",
+							"pm.test('Bravo was edited last', () => pm.expect(titles[0]).to.eql('Bravo'));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication?_search={{runId}}&_limit=10&_order=%7B%22%40self.updated%22%3A%22desc%22%7D",
+					"host": ["{{baseUrl}}"],
+					"path": ["apps", "openregister", "api", "objects", "publication", "publication"],
+					"query": [
+						{ "key": "_search", "value": "{{runId}}" },
+						{ "key": "_limit", "value": "10" },
+						{ "key": "_order", "value": "%7B%22%40self.updated%22%3A%22desc%22%7D", "description": "{\"@self.updated\":\"desc\"}" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Paging keeps the sort: page 2 of created desc",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"const body = pm.response.json();",
+							"const prefix = pm.collectionVariables.get('runId') + ' ';",
+							"pm.test('page 2 of 3', () => pm.expect([body.page, body.pages]).to.eql([2, 3]));",
+							"pm.test('second-newest on page 2', () => pm.expect(body.results.map((r) => r.title.replace(prefix, ''))).to.eql(['Alpha']));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication?_search={{runId}}&_limit=1&_page=2&_order=%7B%22%40self.created%22%3A%22desc%22%7D",
+					"host": ["{{baseUrl}}"],
+					"path": ["apps", "openregister", "api", "objects", "publication", "publication"],
+					"query": [
+						{ "key": "_search", "value": "{{runId}}" },
+						{ "key": "_limit", "value": "1" },
+						{ "key": "_page", "value": "2" },
+						{ "key": "_order", "value": "%7B%22%40self.created%22%3A%22desc%22%7D", "description": "{\"@self.created\":\"desc\"}" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Teardown: delete Alpha",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('deleted (200/204)', () => pm.expect([200, 204]).to.include(pm.response.code));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": { "raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication/{{idAlpha}}", "host": ["{{baseUrl}}"], "path": ["apps", "openregister", "api", "objects", "publication", "publication", "{{idAlpha}}"] }
+			}
+		},
+		{
+			"name": "Teardown: delete Bravo",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('deleted (200/204)', () => pm.expect([200, 204]).to.include(pm.response.code));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": { "raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication/{{idBravo}}", "host": ["{{baseUrl}}"], "path": ["apps", "openregister", "api", "objects", "publication", "publication", "{{idBravo}}"] }
+			}
+		},
+		{
+			"name": "Teardown: delete Charlie",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('deleted (200/204)', () => pm.expect([200, 204]).to.include(pm.response.code));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": { "raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication/{{idCharlie}}", "host": ["{{baseUrl}}"], "path": ["apps", "openregister", "api", "objects", "publication", "publication", "{{idCharlie}}"] }
+			}
+		},
+		{
+			"name": "Teardown: nothing of this run is left",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"pm.test('no test publications remain', () => pm.expect(pm.response.json().total).to.eql(0));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication?_search={{runId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["apps", "openregister", "api", "objects", "publication", "publication"],
+					"query": [
+						{ "key": "_search", "value": "{{runId}}" }
+					]
+				}
+			}
+		}
+	]
+}

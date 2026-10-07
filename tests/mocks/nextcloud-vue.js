@@ -16,6 +16,7 @@ const NcEmptyContent = {
 	name: 'NcEmptyContent',
 	props: {
 		name: { type: String, default: '' },
+		description: { type: String, default: '' },
 	},
 	// ⚠️ Two Vue 3 breaks in one line. `render()` receives no `h` argument (it is
 	// imported from 'vue'), and `$slots.*` are now FUNCTIONS, not vnode arrays —
@@ -25,6 +26,7 @@ const NcEmptyContent = {
 			this.name,
 			this.$slots.icon?.(),
 			this.$slots.default?.(),
+			this.$slots.action?.(),
 		])
 	},
 }
@@ -43,6 +45,26 @@ function slotStub(name) {
 			return h('div', { class: `${name}-stub` }, this.$slots.default?.())
 		},
 	}
+}
+
+const NcButton = {
+	name: 'NcButton',
+	props: {
+		to: { type: [String, Object], default: null },
+	},
+	render() {
+		return h('button', { class: 'nc-button-stub' }, this.$slots.default?.())
+	},
+}
+
+const NcLoadingIcon = {
+	name: 'NcLoadingIcon',
+	props: {
+		size: { type: Number, default: 20 },
+	},
+	render() {
+		return h('span', { class: 'nc-loading-icon-stub' })
+	},
 }
 
 // Renders its options as a list labelled by `inputLabel` or
@@ -71,12 +93,12 @@ const NcSelect = {
 module.exports = {
 	NcActionButton: slotStub('NcActionButton'),
 	NcActions: slotStub('NcActions'),
-	NcButton: slotStub('NcButton'),
+	NcButton,
 	NcCheckboxRadioSwitch: slotStub('NcCheckboxRadioSwitch'),
 	NcCounterBubble: slotStub('NcCounterBubble'),
 	NcDialog: slotStub('NcDialog'),
 	NcEmptyContent,
-	NcLoadingIcon: slotStub('NcLoadingIcon'),
+	NcLoadingIcon,
 	NcModal: slotStub('NcModal'),
 	NcNoteCard: slotStub('NcNoteCard'),
 	NcSelect,

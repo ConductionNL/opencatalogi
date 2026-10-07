@@ -98,49 +98,26 @@ new Vue(
 
 ## Views Composition
 
-The app host renders the active route via `<router-view />` (default view) and exposes a named view for sidebars (see next section)
-
-Thanks to this both the Views.vue and Sidebars.vue can be deleted as they have become redundant.
+In OpenCatalogi the app host is the library's `CnAppRoot`, which renders the navigation and the active route. `src/App.vue` replaces only the navigation, through CnAppRoot's `#menu` slot, and mounts the modal and dialog hosts next to it:
 
 ```html
-// 1:999:src/App.vue
-    <NcContent app-name="openconnector">
-        <MainMenu />
-        <NcAppContent>
-            <template #default>
-                <router-view />
-            </template>
-        </NcAppContent>
-        <router-view name="sidebar" />
-        <Modals />
-        <Dialogs />
-    </NcContent>
+// src/App.vue
+    <CnAppRoot :manifest="manifest" appId="opencatalogi" ...>
+        <template #menu="menuProps">
+            <CatalogNavigation v-bind="menuProps" />
+        </template>
+    </CnAppRoot>
+    <Modals />
+    <Dialogs />
 ```
 
-## Navigation Without `navigationStore`
+## Navigation From The Manifest
 
-Navigation is now entirely route-driven. The main menu sets `active` based on `$route.path` and navigates via `$router.push()`.
+The main menu is generated from the manifest: `menu[]` in `src/manifest.json`, merged with the `src/manifest.d/` fragments and arranged by `src/menu-layout.json`. The library's `CnAppNav` renders each entry as a link to the named route `{ name: route, params, query }` and marks an entry active from the current route, so no component handles clicks or computes active state itself.
 
-```html
-// 4:9:src/navigation/MainMenu.vue
-            <NcAppNavigationItem :active="$route.path === '/'" :name="t('openconnector', 'Dashboard')" @click="handleNavigate('/')">
-                <template #icon>
-                    <Finance :size="20" />
-                </template>
-            </NcAppNavigationItem>
-```
+`src/navigation/CatalogNavigation.vue` wraps `CnAppNav` and adds one entry per catalog the user can access, between Dashboard and Search. Each entry opens `/publications/<slug>` (route `Publications`, param `catalogSlug`). That page, `src/views/publications/CatalogPublicationsIndex.vue`, lists the catalog's publications with the same scope as the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas`. It shows one register/schema pair at a time; when the catalog has several, a selector switches between them and the active pair is kept in the `_pair` query parameter, so the choice survives a reload and a shared link. The entries come from `objectStore.menuCatalogs`, which the object store refreshes after every bare reload of the catalog collection (boot, and the refetch after a catalog is created, renamed, copied or deleted) and after the setup wizard completes. Paged and searched list fetches do not refresh it. Creating, renaming or deleting a catalog therefore updates the menu without a page reload.
 
-```js
-// 116:121:src/navigation/MainMenu.vue
-        methods: {
-            t,
-            handleNavigate(path) {
-                this.$router.push(path)
-            },
-        }
-```
-
-The legacy `navigationStore` is no longer used.
+`navigationStore` is not used for navigation; it only opens modals and dialogs.
 
 ## Sidebars via Named Router Views
 
@@ -297,9 +274,9 @@ Possible future enhancement:
 ## Adding A New Page With Deeplinking & (Optional) SPOT
 
 1. **Backend route**: Add a page route in `appinfo/routes.php` (`name` = `YourController#page`, `url` = `/your-path`). Ensure a matching controller exists in `lib/Controller/YourController.php` with `page(): TemplateResponse` returning the SPA template.
-2. **Frontend route**: Add a Vue route in `src/router/index.js` with `path: '/your-path'` and a component. Optionally add a `sidebar` component via named views.
-3. **Navigation**: Add an entry in `src/navigation/MainMenu.vue` and set `:active` using `$route.path` or `$route.path.startsWith('/your-path')`. Use `this.$router.push('/your-path')` on click.
-4. **Sidebars**: Define `components: { default, sidebar }` for the route and let `<router-view name="sidebar" />` mount it.
+2. **Frontend route**: Add a page to `pages[]` in `src/manifest.json` with `id` and `route: '/your-path'`. `src/main.js` builds one vue-router route per manifest page, named after its `id`, and `CnAppRoot` renders it.
+3. **Navigation**: Add an entry to `menu[]` in `src/manifest.json` whose `route` is the page id, and register its `icon` in `src/icons.js`. `CnAppNav` derives the link and the active state from the route.
+4. **Sidebars**: Declare the sidebar on the manifest page (as the detail pages such as `PublicationDetail` do); `CnAppRoot` mounts it, so there is no named sidebar view.
 5. **SPOT (optional)**: If the page has filters/state that should be shareable, implement the SPOT pattern:
    - Read from `$route.query` on mount/route change and update component/store state.
    - Write to `$router.replace({ query })` when state changes, with debounce and equality checks.
@@ -310,10 +287,6 @@ Possible future enhancement:
 - Job logs filtered by job and level in a time window:
   - `/index.php/apps/openconnector/jobs/logs?job_id=12&level=ERROR,WARNING&dateFrom=2024-01-01T00:00:00.000Z&dateTo=2024-12-31T23:59:59.999Z`
 - Contracts page: `/index.php/apps/openconnector/synchronizations/contracts`
-
-## Potential Enhancement: Dynamic Main Menu
-
-`src/navigation/MainMenu.vue` can be generated dynamically from routes (e.g. using `this.$router.options.routes`). This would keep navigation in sync with route definitions.
 
 ## Pitfalls and Best Practices
 
@@ -326,9 +299,8 @@ Possible future enhancement:
 ## Quick Checklist
 
 - Backend `appinfo/routes.php` updated with page route and controller exists.
-- Frontend `src/router/index.js` has the corresponding route (and optional named `sidebar`).
-- `src/App.vue` renders `<router-view />` and `<router-view name="sidebar" />`.
-- `src/navigation/MainMenu.vue` uses `$router.push` and `$route.path` for active state.
+- `src/manifest.json` has a `pages[]` entry for the path; `src/main.js` turns it into a route and `CnAppRoot` renders it.
+- `src/manifest.json` has a `menu[]` entry whose `route` is the page id.
 - SPOT implemented where needed: read URL -> state, state -> URL with debounce and equality checks.
 
 
