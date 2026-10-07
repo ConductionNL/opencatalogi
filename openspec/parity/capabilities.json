@@ -2702,9 +2702,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "grep chart/visuali/leaflet/maplibre: opencatalogi hits only dashboard widgets (src/composables/useChartColors.js); portaliq hits only traffic widgets (src/widgets/Traffic*.vue); PublicationDetailBlock.vue has no dataset preview"
+				"evidence": "grep chart/visuali/leaflet/maplibre: opencatalogi hits only dashboard widgets (src/composables/useChartColors.js); portaliq hits only traffic widgets (src/widgets/Traffic*.vue); PublicationDetailBlock.vue has no dataset preview",
+				"change": "dataset-views-on-the-public-page"
 			},
 			"reachedOn": "nothing",
 			"provider": "portaliq",
@@ -3209,9 +3210,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "openregister DocumentProcessingHandler.php:1328 defers text-layer-less PDFs to OCR, and there is no OCR engine in OR lib; filinq OcrService.php (Tesseract) is called only by FinancialExtractionService.php:1001, not the chunk index opencatalogi searches"
+				"evidence": "openregister DocumentProcessingHandler.php:1328 defers text-layer-less PDFs to OCR, and there is no OCR engine in OR lib; filinq OcrService.php (Tesseract) is called only by FinancialExtractionService.php:1001, not the chunk index opencatalogi searches",
+				"change": "scanned-attachments-become-searchable"
 			},
 			"reachedOn": "nothing",
 			"provider": "openregister",
@@ -3844,7 +3846,8 @@
 				"state": "building",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq lib/Controller/ContentController.php:105-125 gates page content by portal.authentication.modes (for example digid, minTrust substantial); portaliq lib/Controller/SessionController.php:284 oidcStart() and :370 oidcCallback() (appinfo/routes.php:153-154, GET /portal/api/session/oidc/start and /oidc/callback) are a working generic OIDC relying party, and lib/Service/OidcClaimMapperService.php:74-91 ships digid, eherkenning and eidas presets (portaliq commit eb85956). The class docblock at SessionController.php:6-11 still calls the DigiD/eHerkenning broker dormant; that docblock is stale; opencatalogi publications reach portaliq only through @PublicPage federation endpoints (FederationController.php:74)",
-				"readOn": "2026-09-26"
+				"readOn": "2026-09-26",
+				"change": "publications-for-signed-in-readers"
 			},
 			"reachedOn": "portaliq portal-level gate. No per-document restriction on opencatalogi publications",
 			"note": "The gate is per portal, not per document. DigiD and eHerkenning login works through portaliq's generic OIDC broker when the organisation fronts it with its own OIDC identity provider (corrected 2026-09-26: the earlier 'broker not wired' rested on a stale SessionController docblock). opencatalogi has no notion of a publication visible only to authenticated citizens.",
@@ -4323,9 +4326,10 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/integriq",
-				"evidence": "integriq lib/BackgroundJob/RISPollJob.php polls iBabs/NotuBiz for updates on ris_sync_record objects this side already synced (outbound besluit sync); grep of opencatalogi lib/ for notubiz|ibabs finds nothing"
+				"evidence": "integriq lib/BackgroundJob/RISPollJob.php polls iBabs/NotuBiz for updates on ris_sync_record objects this side already synced (outbound besluit sync); grep of opencatalogi lib/ for notubiz|ibabs finds nothing",
+				"change": "council-documents-from-notubiz-and-ibabs"
 			},
 			"reachedOn": "nothing: no intake from a council information system into a publication",
 			"provider": "integriq",
