@@ -4,54 +4,65 @@ status: proposed
 
 # Harvest feed intake
 
+## Purpose
+
+Six more inbound protocols for OpenCatalogi harvest feeds, each a fetcher registered with OpenRegister (`openregister/app-harvest-fetchers-and-flow-node`). The pipeline, sync records, tombstones, provenance and outbound guard are OpenRegister's; draft-only and identity come from the source settings `harvest-feed-intake` writes.
+
 ## ADDED Requirements
 
-Amendment 2026-10-05, Woo capability programme, row 1.6. The plugin interface and the other protocols of this change are still authored at pickup (task 0.1); these requirements fix the website and CMS half now.
+### Requirement: OpenCatalogi registers one fetcher per protocol (REQ-HPP-001)
 
-### Requirement: A website or CMS is a standing harvest source (REQ-HPP-001)
+The system SHALL register, through OpenRegister's `RegisterSourceFetchersEvent`, the fetchers `opencatalogi.dcat-rdf`, `opencatalogi.oai-pmh`, `opencatalogi.ckan-api`, `opencatalogi.schema-org-dataset`, `opencatalogi.website-sitemap` and `opencatalogi.wordpress-rest`, each with a display name and a config schema that requires `targetCatalog` and `sourceUrl`. Each SHALL implement `IBatchSourceFetcher`, read only through the `HarvestHttpClient` OpenRegister hands it, return items keyed by a stable external id, and return `complete: false` when any page failed. The feed form SHALL offer exactly the OpenCatalogi types `GET /api/sources/types` lists. The app MUST NOT keep a protocol registry, checksum, tombstone or URL guard of its own.
 
-The protocol plugin registry SHALL offer two protocols for a `HarvestFeed`: `website-sitemap`, which reads a sitemap (or sitemap index) at `sourceUrl`, fetches each listed page and reads its schema.org JSON-LD `<script type="application/ld+json">` blocks of the types the feed names (default `Article`, `NewsArticle`, `WebPage`, `GovernmentService`, `DigitalDocument`); and `wordpress-rest`, which reads `{sourceUrl}/wp-json/wp/v2/posts` and `/pages` with paging, and `modified_after` from the feed's last successful run. Each item SHALL be mapped with the feed's JSON-path `itemMapping` into the target schema. Every fetch SHALL go through the same outbound-URL guard, timeouts and backoff as the DCAT JSON-LD protocol of `harvest-feed-intake`, and SHALL be refused for a private, loopback or link-local address.
+#### Scenario: The six types are offered
+<!-- @e2e exclude Registry contract; proven by RegisterSourceFetchersListenerTest against the real event class. -->
+- **WHEN** an administrator opens the feed form
+- **THEN** the type list holds the six types above beside `opencatalogi.dcat-jsonld`
+
+#### Scenario: A failed page leaves nothing tombstoned
+<!-- @e2e exclude Fetcher contract; proven by CkanApiFetcherTest::testAFailedPageMakesTheBatchIncomplete. -->
+- **GIVEN** a CKAN feed whose second result page answers 500
+- **WHEN** the feed runs
+- **THEN** the batch is `complete: false` and OpenRegister tombstones no record of the feed
+
+### Requirement: A website or CMS is a standing harvest source (REQ-HPP-002)
+
+`opencatalogi.website-sitemap` SHALL read a sitemap or sitemap index at `sourceUrl`, fetch each listed page and return each page's schema.org JSON-LD block of the types in `config.types` (default `Article`, `NewsArticle`, `WebPage`, `GovernmentService`, `DigitalDocument`), keyed by the page's canonical URL; a page without such a block SHALL be reported in `errors` as skipped. `opencatalogi.wordpress-rest` SHALL read `{sourceUrl}/wp-json/wp/v2/posts` and `/pages`, follow the `X-WP-TotalPages` header, pass `modified_after` from the `since` OpenRegister hands in, and key each item by its `link`.
 
 #### Scenario: A WordPress site feeds draft publications
-<!-- @e2e exclude Server-side harvest; proven by WordpressRestPluginTest::testPostsBecomeDraftPublicationsWithTheirSource, against a recorded WordPress REST fixture, which fails on today's code because no such plugin exists. -->
-
-- **GIVEN** a feed with protocol `wordpress-rest`, target the publication schema, and a mapping of `title.rendered` to `title` and `excerpt.rendered` to `summary`
-- **WHEN** its run fetches three posts
+<!-- @e2e exclude Server-side harvest; proven by WordpressRestFetcherTest::testPostsBecomeItemsKeyedByLink and HarvestDraftOnlyTest::testAHarvestedPublicationHasNoPublicationDate, against a recorded WordPress REST fixture. -->
+- **GIVEN** a `wordpress-rest` feed on the publication schema, with a mapping of `title.rendered` to `title` and `excerpt.rendered` to `summary`
+- **WHEN** its run reads three posts
 - **THEN** three draft publications exist with those titles, each carrying the post URL as its source
 
 #### Scenario: A website's pages are read from their JSON-LD
-<!-- @e2e exclude Server-side harvest; proven by WebsiteSitemapPluginTest::testPagesWithJsonLdBecomeItemsAndPagesWithoutAreSkipped. -->
-
+<!-- @e2e exclude Server-side harvest; proven by WebsiteSitemapFetcherTest::testPagesWithJsonLdBecomeItemsAndPagesWithoutAreSkipped. -->
 - **GIVEN** a sitemap listing four pages, three of which carry `GovernmentService` JSON-LD
 - **WHEN** the feed runs
-- **THEN** three items are mapped and the run reports one page skipped for having no matching JSON-LD
+- **THEN** three items are returned and the run summary names one page skipped for having no matching JSON-LD
 
 #### Scenario: An internal address is refused
-<!-- @e2e exclude Fail-closed path; proven by WebsiteSitemapPluginTest::testAPrivateAddressIsRefused. -->
-
+<!-- @e2e exclude Fail-closed path; proven by WebsiteSitemapFetcherTest::testAPrivateAddressIsRefusedByTheGuard. -->
 - **GIVEN** a feed whose sitemap lists a page on `http://10.0.0.5/`
 - **WHEN** the feed runs
-- **THEN** that page is not fetched and the run names it as refused
+- **THEN** the `HarvestHttpClient` refuses that page and the run summary names it
 
-### Requirement: A harvested record stays a draft (REQ-HPP-002)
+### Requirement: The other protocols read whole sources incrementally (REQ-HPP-003)
 
-A publication created or updated by a `website-sitemap` or `wordpress-rest` run SHALL be saved without `publicationDate`, so it is a draft (and in stored state `draft` once `publication-lifecycle-on-or` is merged). A harvest SHALL NOT set or move `publicationDate`, `status` or `unlisted` on an existing publication. An update to a publication an editor has published SHALL be parked as a `conflict` item, as `harvest-feed-intake` parks a locally authored collision, and SHALL NOT change the public record.
+`opencatalogi.oai-pmh` SHALL follow resumption tokens to the end, pass `from` from `since`, key each record by its OAI identifier, and return a record whose header has `status="deleted"` in `errors` with the reason "deleted at the source" and not as an item, so OpenRegister tombstones its record after a complete run. `opencatalogi.ckan-api` SHALL page `package_search` and key each package by its `id`. `opencatalogi.dcat-rdf` SHALL parse Turtle and RDF/XML into the same dataset nodes the JSON-LD fetcher returns, keyed by the dataset IRI. `opencatalogi.schema-org-dataset` SHALL do what `website-sitemap` does with type `Dataset` only.
+
+#### Scenario: OAI-PMH paging to the end
+<!-- @e2e exclude Fetcher contract; proven by OaiPmhFetcherTest::testResumptionTokensAreFollowedToTheEnd against a recorded fixture. -->
+- **GIVEN** a recorded OAI-PMH repository answering three pages
+- **WHEN** the feed runs
+- **THEN** the batch holds the records of all three pages and is complete
+
+### Requirement: A harvested record stays a draft (REQ-HPP-004)
+
+A source of any of these types SHALL be saved by `HarvestFeedService` with the same `protectedFields`, `provenance`, `identityProperty`, `deleteStrategy: flag` and `conflictStrategy: manual` as a DCAT JSON-LD source, so no harvest sets `publicationDate`, `depublicationDate` or `status`, and an update to a publication an editor changed is held as a conflict by OpenRegister.
 
 #### Scenario: A harvest never publishes
-<!-- @e2e exclude Fail-closed contract; proven by HarvestDraftOnlyTest::testAHarvestedPublicationHasNoPublicationDate and HarvestDraftOnlyTest::testAnUpdateToAPublishedRecordIsParkedAsConflict. -->
-
-- **GIVEN** a feed whose source page is updated after an editor published the matching publication
+<!-- @e2e exclude Fail-closed contract; proven by HarvestFeedServiceTest::testEveryTypeGetsTheDraftOnlySettings. -->
+- **GIVEN** a `website-sitemap` feed whose page changed after an editor published the matching publication
 - **WHEN** the feed runs
-- **THEN** the public publication is unchanged and the item is a `conflict`
-
-### Requirement: Change detection and provenance per item (REQ-HPP-003)
-
-Each item SHALL be identified by its canonical page or post URL (`externalUri`) and SHALL carry a SHA-256 checksum over its normalised mapped payload. A run SHALL create a draft for a new URL, update the draft when the checksum changed, leave it when unchanged, and set the soft tombstone flag when a URL disappears from the source. The local publication SHALL carry `dct:source` (the URL) and `prov:wasDerivedFrom` (the feed), as the DCAT protocol does.
-
-#### Scenario: A changed page updates its draft, an unchanged one does nothing
-<!-- @e2e exclude Server-side harvest; proven by WebsiteSitemapPluginTest::testOnlyAChangedPageUpdatesItsDraft. -->
-
-- **GIVEN** a feed that harvested two pages yesterday
-- **WHEN** one page's text changed and the feed runs again
-- **THEN** that page's draft is updated and its item is `updated`
-- **AND** the other item is `unchanged` and its draft untouched
+- **THEN** the public publication is unchanged and its sync record is `conflict`

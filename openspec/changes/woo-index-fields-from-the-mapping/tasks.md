@@ -1,0 +1,10 @@
+# Tasks: woo-index-fields-from-the-mapping
+
+Read `design.md`. integriq's side is on integriq `development` (`lib/Event/MappingExecutionRequestedEvent.php`, the seed in `lib/Settings/register.d/mapping-woo-index-field-mapping.json`). Read `openspec/woo-build-rules.md` for branch and test rules.
+
+- [ ] 1.1 `lib/Service/Woo/WooIndexFieldMapper.php`: dispatch, per-request cache, fallback and origin per field, refusal kept, Throwable as `failed` (REQ-WIM-001, REQ-WIM-002). Verify: `tests/Unit/Service/Woo/WooIndexFieldMapperTest.php::testOutputFieldsAreUsed`, `::testAnEmptyOutputFieldFallsBackForThatFieldOnly`, `::testANotAllowedRefusalFallsBackAndIsKept`, `::testAThrowingListenerCountsAsFailed`, `::testOneDispatchPerPublication`.
+- [ ] 1.2 Call the mapper from `SitemapService::mapDiwooDocument()` and validate mapped values as built-in ones (REQ-WIM-001, REQ-WIM-003). Verify: `tests/Unit/Service/SitemapServiceTest.php::testAMappedOfficialTitleIsInTheSitemap`, `::testWithoutIntegriqTheSitemapIsUnchanged` (byte-identical to a stored fixture), `WooIndexFieldMapperTest::testAMappedCategoryOutsideTheListIsAViolation`.
+- [ ] 1.3 Add `mapping` to the readiness report and the one line on the readiness card in the settings page (REQ-WIM-004). Verify: `tests/Unit/Service/WooReadinessServiceTest.php::testTheReportNamesTheMappingSource`; e2e `tests/e2e/woo-index-mapping.spec.ts` runs the readiness check and reads the line, carrying `@e2e` for "The settings page names the source".
+- [ ] 1.4 Contract test against integriq: link integriq's event test in the PR body and assert in this repo the constructor argument order and the accessor names this side calls.
+- [ ] 2.1 Live: on the dev instance with integriq, change `officieleTitel` in `woo-index-publication` on integriq's Mappings page, fetch one sitemap, and paste the changed `diwoo:officieleTitel` line in the PR body.
+- [ ] 2.2 nl and en strings; `docs/` paragraph on where the Woo-index fields come from; diff check while building; once before push `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, `npm run lint`, `format`. One PR `--base development`, closes opencatalogi#1672.

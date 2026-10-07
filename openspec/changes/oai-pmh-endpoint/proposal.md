@@ -60,8 +60,11 @@ follows the existing `DcatController`.
 
 ## Non-Goals
 
-- No inbound harvesting of any protocol (later slices: `harvest-feed-intake`
-  and `harvest-protocol-plugins`)
+- No inbound harvesting of any protocol. Inbound harvesting runs on
+  OpenRegister (`openregister/app-harvest-fetchers-and-flow-node`, decision 80),
+  with OpenCatalogi's fetchers in `harvest-feed-intake` and
+  `harvest-protocol-plugins`. A re-user who harvests this changes route with
+  an OpenRegister source reads withdrawn entries as records to tombstone.
 - No new schemas or stored state (resumption tokens are stateless)
 - No `oai_datacite`, no EDM
 

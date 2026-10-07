@@ -1,5 +1,7 @@
 # Proposal: register-i18n
 
+> Spec round part 3 (7 October 2026): the publication and catalogue part of this change is carried and built by `publication-translations`, on OpenRegister's translation machinery. Pages, menus, themes and glossary moved to portaliq (ADR-086). Build nothing for publications or catalogues from this change.
+
 ## Summary
 Add multi-language content support to OpenCatalogi, enabling publications, catalogs, pages, themes, menus, and glossary entries to be stored and served in multiple languages.
 
