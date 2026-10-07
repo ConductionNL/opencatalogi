@@ -1,5 +1,7 @@
 # Design: setup-wizard-server-contract
 
+> Delta fix-up 2026-10-07: the spec delta now targets the existing `first-time-setup` main spec with ADDED requirements, since `first-time-onboarding` has no main spec and the wizard already has its home in `first-time-setup`. ONB-001 is dropped: `wizard-dataset-card-load` took `config-check` out of the wizard and moved the register import to the admin settings page, which `first-time-setup` already specifies. The delta also describes what the code grew since: `completed` follows the required steps rather than `onboarding_completed_version`, the config endpoint writes whitelisted keys only, `connect-federation` announces the instance, and the optional `sync-all-directories` step (ONB-009). The text below is the original design.
+
 ## Architecture Overview
 
 `first-time-onboarding` shipped the `manifest.setup` block but no backend, so the
