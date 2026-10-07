@@ -426,3 +426,75 @@ MUST be members of that key set.
   ids and MUST NOT contain any literal `@resolve:` string.
 
 > @e2e exclude Frontend substitution is covered by the parity test plus the existing initial-state provision; a live-instance check is recorded in the change's tasks rather than as an automated e2e (the WOO surface needs a provisioned Deck leaf to be meaningfully driven).
+
+### Requirement: Publishing a Woo batch creates a public publication with its documents attached (REQ-WBP-001)
+
+Implements hydra `woo-citizen-journey`: Both publishing paths MUST create a public, searchable publication.
+
+Publishing an approved batch SHALL create one `publication` with `publicationKind: actief`, the batch's `wooCategory` (default `infocat014`), its `caseReference`, a `publicationDate` of the moment of publishing, and every disclosable document attached as a published file. `niet_openbaar` documents SHALL NOT be attached, and `deels_openbaar` documents SHALL be attached as their redacted version. The batch SHALL record the publication's id and URL.
+
+#### Scenario: A published batch is found
+
+- **GIVEN** an approved Woo batch with one `openbaar`, one `deels_openbaar` and one `niet_openbaar` document
+- **WHEN** the editor publishes it
+- **THEN** a publication with `publicationKind: actief` exists with two published files: the first document and the redacted second
+- **AND** the batch's `wooPublication.publication` names it
+
+### Requirement: The approval gate stays, and a missing document stops the publish (REQ-WBP-002)
+
+Implements hydra `woo-citizen-journey` design C6 (the batch keeps its approval gate).
+
+Publishing SHALL still require `ready_for_review` and a completed approval. Every document SHALL be resolved to a file before anything is written; when one cannot be found, publishing SHALL fail with that document's name and SHALL create no publication. Publishing a batch again after a partial failure SHALL reuse the recorded publication.
+
+#### Scenario: A document is missing
+
+- **GIVEN** an approved batch whose second document no longer exists
+- **WHEN** the editor publishes it
+- **THEN** the publish fails naming that document
+- **AND** no publication is created and the batch stays `ready_for_review`
+
+#### Scenario: Not approved
+
+- **GIVEN** a batch in `ready_for_review` without a completed approval
+- **WHEN** the editor publishes it
+- **THEN** the publish is refused and no publication is created
+
+### Requirement: A partly public document is published only as a verified redacted version (REQ-WRP-001)
+
+Assessing a document as `deels_openbaar` SHALL produce its redacted version through OpenRegister's redaction pipeline (`FileService::anonymizeDocument`). The findings SHALL be the ones OpenRegister selects for its own anonymize endpoint, so a finding the officer rejected is never redacted and OpenCatalogi accepts nothing on the officer's behalf. The result SHALL count as verified only when it is a separate file, its bytes differ from the original, and OpenRegister reports no residual findings. The assessment SHALL store the verified file id and its SHA-256.
+
+Publishing SHALL refuse a batch while any `deels_openbaar` document lacks a verified redacted file, or while that file is the original, is gone, or has changed bytes. When redaction is unavailable or fails, the original SHALL NOT be published in its place.
+
+#### Scenario: Redaction breaks
+<!-- @e2e exclude Server-side fail-closed contract between OpenCatalogi and OpenRegister's redaction service; a browser cannot break that call on demand. Proven by PHPUnit WooServiceTest::testABrokenRedactionNeverPublishesTheOriginal, which fails on a version that publishes the original. -->
+
+- **GIVEN** an approved batch with a document assessed as `deels_openbaar`
+- **AND** OpenRegister's redaction call fails
+- **WHEN** the officer publishes the batch
+- **THEN** the publish is refused, naming that document
+- **AND** no file is attached and the original is not published
+
+#### Scenario: Redaction works
+<!-- @e2e exclude Needs a live redaction backend (OpenAnonymiser or Presidio) on the test instance; covered by PHPUnit WooServiceTest::testAVerifiedRedactionIsWhatGetsPublished. -->
+
+- **GIVEN** a document assessed as `deels_openbaar` whose redaction is verified
+- **WHEN** the officer publishes the batch
+- **THEN** the redacted file is attached in place of the original
+
+#### Scenario: The redacted file changed after verification
+<!-- @e2e exclude Server-side integrity check on file bytes; covered by PHPUnit WooServiceTest::testARedactedFileChangedSinceVerificationBlocksThePublish. -->
+
+- **GIVEN** a verified redacted file whose bytes changed since
+- **WHEN** the officer publishes the batch
+- **THEN** the publish is refused, naming that document
+
+### Requirement: The officer sees why a partly public document cannot be published (REQ-WRP-002)
+
+The batch SHALL list every `deels_openbaar` document without a verified redacted version, each with the reason redaction did not produce one. The batch page SHALL show that list.
+
+#### Scenario: A redaction failed
+<!-- @e2e exclude The list is fed by a failed server-side redaction, which a browser run cannot force; covered by PHPUnit WooServiceTest::testTheBatchNamesEveryUnredactedDocumentWithItsReason. -->
+
+- **GIVEN** a batch with a `deels_openbaar` document whose redaction failed
+- **WHEN** the officer opens the batch
+- **THEN** the page names that document and the reason

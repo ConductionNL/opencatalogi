@@ -1,9 +1,11 @@
 # Tasks: publication-inspection-and-the-national-indexes
 
+> Archive pass 2026-10-07: not archived; open: 1.2 (the anonymous projection runs only in the Atom feed and in `publicSearch`, not on the API read of a record), 6.3 (`PublishedCollectionsService::publishes()` has no caller, so the configured set is stored but never applied), 7.3 (`ObligationOverviewService` has no caller, as this file already says), 7.4 (`PublicationRulesController::publicSearch()` filters records and rules the caller posts; it reads no stored records).
+
 ## 1. Publication as a rule on a record type
 
 - [x] 1.1 `publicationRule`: record type, visible parts, anonymous permission set, conditions (REQ-PIN-101)
-- [x] 1.2 Enforce the anonymous permission set at the read, in the API and in the page alike (REQ-PIN-101)
+- [ ] 1.2 Enforce the anonymous permission set at the read, in the API and in the page alike (REQ-PIN-101)
 - [x] 1.3 Preview a rule against a sample of existing records before it is saved (D1, risks)
 - [x] 1.4 `publicationText` declared per type, rendered with the publication (REQ-PIN-102)
 
@@ -36,14 +38,14 @@
 
 - [x] 6.1 Compose the official notice for the national publication platform and the local channel, and hand it to integriq's gateway (REQ-PIN-107)
 - [x] 6.2 Register published records with the national Woo index through the same gateway, recording the index's answer (REQ-PIN-107)
-- [x] 6.3 Configure which collections are published and on what conditions (REQ-PIN-108)
+- [ ] 6.3 Configure which collections are published and on what conditions (REQ-PIN-108)
 
 ## 7. The stamp, the overview and the search
 
 - [x] 7.1 Sign the published document and its publication metadata; publish the verification key (REQ-PIN-109) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
 - [x] 7.2 A reader verifies a published document against the published key (REQ-PIN-109) Removed 2026-09-29 by remove-decided-no-dead-code (decided no).
-- [x] 7.3 The obligation overview over every registered source, showing what must be published, what is, and what is late (REQ-PIN-110)
-- [x] 7.4 Public plain-word search over published information, naming the dossier each document belongs to (REQ-PIN-111)
+- [ ] 7.3 The obligation overview over every registered source, showing what must be published, what is, and what is late (REQ-PIN-110)
+- [ ] 7.4 Public plain-word search over published information, naming the dossier each document belongs to (REQ-PIN-111)
 
 ## 8. Quality
 

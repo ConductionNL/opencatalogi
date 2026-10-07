@@ -1,5 +1,7 @@
 # Tasks: setup-wizard-server-contract
 
+> Archive pass 2026-10-07: code done, not archived. The delta MODIFIES `first-time-onboarding`, which has no main spec, and its ONB-001 still makes `config-check` a wizard step; `wizard-dataset-card-load` (archived 2026-10-07 into `first-time-setup`) moved that step to the admin settings page. The delta needs reconciling (ADDED instead of MODIFIED, ONB-001 without `config-check`) before it can merge.
+
 ## Implementation Tasks
 
 ### Task 1: Unify the national directory URL behind one constant + config key
