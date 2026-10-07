@@ -43,6 +43,7 @@ import CatalogsIndexView from './views/catalogi/CatalogiIndex.vue'
 import DashboardView from './views/dashboard/Dashboard.vue'
 import FederationDirectory from './views/directory/FederationDirectory.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
+import CatalogPublicationsIndex from './views/publications/CatalogPublicationsIndex.vue'
 import FederationSearch from './views/search/FederationSearch.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
 import { createConnectionHandlers } from './services/connectionRegistry.js'
@@ -68,6 +69,7 @@ export default {
 	DashboardView,
 	CatalogsIndexView,
 	CatalogDetailPageView,
+	CatalogPublicationsIndex,
 	WooBatchDetailView,
 	CnFederationStatus,
 	FederationDirectory,

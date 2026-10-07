@@ -1,13 +1,5 @@
 [
 	{
-		"row": "cat-overview",
-		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and only one competitor rated yes (CKAN), so the missing half has no case under the rule.",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
 		"row": "dec-inspection",
 		"matrix": "opencatalogi",
 		"decision": "defer",

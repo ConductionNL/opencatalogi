@@ -58,6 +58,11 @@ export default {
 			)
 		},
 
+		/** @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-the-officer-sees-why-a-partly-public-document-cannot-be-published-req-wrp-002 */
+		unredacted() {
+			return this.summary.unredacted || []
+		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model */
 		canReview() {
 			return (
@@ -178,6 +183,22 @@ export default {
 				}}
 			</NcNoteCard>
 
+			<NcNoteCard v-if="unredacted.length > 0" type="warning">
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'These partly public documents cannot be published until they have a verified redacted version.',
+						)
+					}}
+				</p>
+				<ul class="woo-batch__unredacted">
+					<li v-for="item in unredacted" :key="item.fileName">
+						{{ item.fileName }}: {{ item.reason }}
+					</li>
+				</ul>
+			</NcNoteCard>
+
 			<h2>{{ t('opencatalogi', 'WOO batch') }} — {{ batch.caseReference }}</h2>
 			<p class="woo-batch__progress">
 				{{
@@ -287,6 +308,11 @@ export default {
 	flex-wrap: wrap;
 	gap: 8px;
 	margin-top: 16px;
+}
+
+.woo-batch__unredacted {
+	margin: 4px 0 0;
+	padding-inline-start: 20px;
 }
 
 .woo-batch__published {

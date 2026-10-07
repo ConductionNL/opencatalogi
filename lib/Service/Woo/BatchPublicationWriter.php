@@ -80,7 +80,7 @@ class BatchPublicationWriter {
 	 *
 	 * @param array<int, array<string, mixed>> $assessments The batch's assessments.
 	 *
-	 * @return array<int, array{title: string, assessment: string, document: string}>
+	 * @return array<int, array<string, string>>
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 */
@@ -97,15 +97,20 @@ class BatchPublicationWriter {
 			$isPartial = ((string)($assessment['assessment'] ?? '') === 'deels_openbaar');
 
 			$document = (string)($assessment['documentReference'] ?? '');
-			if ($isPartial === true) {
-				$document = (string)($assessment['anonymizedDocument'] ?? '');
-			}
-
-			$listings[] = [
+			$listing = [
 				'title' => (string)($assessment['fileName'] ?? ''),
 				'assessment' => (string)($assessment['assessment'] ?? ''),
 				'document' => $document,
 			];
+			if ($isPartial === true) {
+				// Only the verified redacted version, never the original.
+				$listing['document'] = (string)($assessment['anonymizedDocument'] ?? '');
+				$listing['original'] = $document;
+				$listing['redactionStatus'] = (string)($assessment['redactionStatus'] ?? '');
+				$listing['redactionHash'] = (string)($assessment['anonymizedDocumentHash'] ?? '');
+			}
+
+			$listings[] = $listing;
 		}
 
 		return $listings;
