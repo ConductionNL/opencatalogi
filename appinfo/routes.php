@@ -64,6 +64,16 @@ return [
 		['name' => 'woo#markReadyForReview', 'url' => '/api/woo/batches/{batchId}/ready-for-review', 'verb' => 'POST'],
 		['name' => 'woo#inventarislijst', 'url' => '/api/woo/batches/{batchId}/inventarislijst', 'verb' => 'POST'],
 		['name' => 'woo#publishBatch', 'url' => '/api/woo/batches/{batchId}/publish', 'verb' => 'POST'],
+		// Woo request intake and the statutory term (woo-request-intake). The
+		// citizen-facing form is portaliq's; this is the API it calls.
+		// terms-report comes BEFORE {requestId} or the wildcard swallows it.
+		['name' => 'wooRequest#receive', 'url' => '/api/woo/requests', 'verb' => 'POST'],
+		['name' => 'wooRequest#termsReport', 'url' => '/api/woo/requests/terms-report', 'verb' => 'GET'],
+		['name' => 'wooRequest#show', 'url' => '/api/woo/requests/{requestId}', 'verb' => 'GET'],
+		['name' => 'wooRequest#extend', 'url' => '/api/woo/requests/{requestId}/extend', 'verb' => 'POST'],
+		['name' => 'wooRequest#pause', 'url' => '/api/woo/requests/{requestId}/pause', 'verb' => 'POST'],
+		['name' => 'wooRequest#resume', 'url' => '/api/woo/requests/{requestId}/resume', 'verb' => 'POST'],
+		['name' => 'wooRequest#attachBatch', 'url' => '/api/woo/requests/{requestId}/batch', 'verb' => 'POST'],
 		// Woo-index harvester-readiness self-check (woo-index-harvester-readiness)
 		['name' => 'wooReadiness#report', 'url' => '/api/woo/readiness', 'verb' => 'GET'],
 		['name' => 'wooReadiness#run', 'url' => '/api/woo/readiness/run', 'verb' => 'POST'],
@@ -98,6 +108,7 @@ return [
 		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
 		['name' => 'inspection#open', 'url' => '/api/inspections', 'verb' => 'POST'],
+		['name' => 'commentPeriod#open', 'url' => '/api/comment-periods', 'verb' => 'POST'],
 		// Published service and case type catalogue: the admin surfaces.
 		['name' => 'serviceCatalogue#unavailableEntries', 'url' => '/api/service-catalogue/unavailable', 'verb' => 'GET'],
 		['name' => 'serviceCatalogue#importCaseType', 'url' => '/api/case-types/import', 'verb' => 'POST'],
@@ -226,6 +237,7 @@ return [
 		// Active publication public surfaces (specific routes - must be before wildcard catalog routes)
 		['name' => 'publicationRules#publicSearch', 'url' => '/api/publications/search', 'verb' => 'POST'],
 		['name' => 'inspection#follow', 'url' => '/api/inspections/{id}', 'verb' => 'GET'],
+		['name' => 'commentPeriod#show', 'url' => '/api/comment-periods/{id}', 'verb' => 'GET'],
 		// Published service catalogue (public; specific routes - must be before wildcard catalog routes)
 		['name' => 'serviceCatalogue#index', 'url' => '/api/service-catalogue', 'verb' => 'GET'],
 		['name' => 'serviceCatalogue#caseType', 'url' => '/api/case-types/{id}', 'verb' => 'GET'],

@@ -8,6 +8,7 @@ import {
 	selectionPlugin,
 } from '@conduction/nextcloud-vue'
 import { defineStore } from 'pinia'
+import { normaliseIdList } from '../../services/catalogScope.js'
 
 /**
  * @typedef {object} Schema
@@ -66,6 +67,43 @@ const useInnerObjectStore = createObjectStore('opencatalogi-objects-inner', {
 		liveUpdatesPlugin(),
 	],
 })
+
+const MENU_CATALOGS_PAGE_SIZE = 100
+const MENU_CATALOGS_MAX_PAGES = 50
+let menuCatalogsSequence = 0
+/** @type {{started: number, promise: Promise<void>}|null} */
+let menuCatalogsWalk = null
+
+/**
+ * Whether a collection fetch reloads the whole collection rather than one
+ * paged, sorted or searched slice of it.
+ *
+ * @param {object|string|null|undefined} params The fetch params.
+ * @return {boolean} True when no params were given.
+ */
+function isBareFetch(params) {
+	return (
+		params === null
+		|| params === undefined
+		|| (typeof params === 'object' && Object.keys(params).length === 0)
+	)
+}
+
+/**
+ * A catalog as the navigation and the publications page use it.
+ *
+ * @param {object} catalog A catalog object from the API.
+ * @return {{id: string|null, slug: string, title: string, registers: Array<number>, schemas: Array<number>}} The entry.
+ */
+function toMenuCatalog(catalog) {
+	return {
+		id: catalog.id ?? catalog['@self']?.id ?? null,
+		slug: String(catalog.slug),
+		title: typeof catalog.title === 'string' ? catalog.title : '',
+		registers: normaliseIdList(catalog.registers),
+		schemas: normaliseIdList(catalog.schemas),
+	}
+}
 
 /**
  * Store for managing objects in OpenCatalogi.
@@ -261,6 +299,8 @@ export const useObjectStore = defineStore('object', {
 		properties: {},
 		/** @type {{[key: string]: boolean}} */
 		columnFilters: {},
+		/** @type {Array<{id: string|null, slug: string, title: string}>} */
+		menuCatalogs: [],
 	}),
 
 	getters: {
@@ -947,6 +987,7 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async fetchCollection(type, params = {}, append = false) {
+			const fetchStarted = ++menuCatalogsSequence
 			this.setLoading(type, true)
 			this.setState(type, { success: null, error: null })
 
@@ -1059,6 +1100,19 @@ export const useObjectStore = defineStore('object', {
 				data.results.forEach((item) => {
 					this.objects[type][item.id] = { ...item }
 				})
+
+				// Boot and every catalog write reload this collection without
+				// params, so a bare reload refreshes the navigation's catalog
+				// entries. Paged and searched list fetches leave them alone.
+				if (type === 'catalog' && !append && isBareFetch(params)) {
+					this.fetchMenuCatalogs(fetchStarted).catch((error) => {
+						// eslint-disable-next-line no-console
+						console.warn(
+							'Failed to refresh the catalog menu entries:',
+							error,
+						)
+					})
+				}
 			} catch (error) {
 				console.error(`Error fetching ${type} collection:`, error)
 				this.setState(type, { success: false, error: error.message })
@@ -1066,6 +1120,121 @@ export const useObjectStore = defineStore('object', {
 			} finally {
 				this.setLoading(type, false)
 			}
+		},
+
+		/**
+		 * Load every catalog the user can access into `menuCatalogs`, which the
+		 * navigation renders one entry per catalog from.
+		 *
+		 * Kept apart from `collections.catalog` because the Catalogs page
+		 * overwrites that collection with one searched, paged slice. This walks
+		 * every page and keeps only catalogs with a slug (the publications route
+		 * needs one).
+		 *
+		 * A call joins a walk already in flight when that walk started after
+		 * `freshAfter`, so concurrent reloads share one walk. Otherwise it starts
+		 * a new walk, and a walk that a newer one has overtaken is discarded.
+		 *
+		 * @param {number} [freshAfter] Sequence number the joined walk must have started after; by default the call always starts a new walk.
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-app-shell-settings/spec.md#requirement-catalog-driven-main-menu-req-shell-004
+		 */
+		fetchMenuCatalogs(freshAfter = ++menuCatalogsSequence) {
+			if (menuCatalogsWalk && menuCatalogsWalk.started > freshAfter) {
+				return menuCatalogsWalk.promise
+			}
+
+			const started = ++menuCatalogsSequence
+			const isCurrent = () => menuCatalogsWalk?.started === started
+			const promise = this._walkMenuCatalogs()
+				.then((catalogs) => {
+					if (isCurrent()) {
+						this.menuCatalogs = catalogs
+					}
+				})
+				.finally(() => {
+					if (isCurrent()) {
+						menuCatalogsWalk = null
+					}
+				})
+			menuCatalogsWalk = { started, promise }
+			return promise
+		},
+
+		/**
+		 * Fetch every page of the catalog list, as menu entries' source data.
+		 *
+		 * @return {Promise<Array<{id: string|null, slug: string, title: string, registers: Array<number>, schemas: Array<number>}>>}
+		 * @private
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-app-shell-settings/spec.md#requirement-catalog-driven-main-menu-req-shell-004
+		 */
+		async _walkMenuCatalogs() {
+			if (!this.settings) {
+				await this.fetchSettings()
+			}
+
+			const results = []
+			let page = 1
+			let pages
+			do {
+				const response = await fetch(
+					this._constructApiUrl('catalog', null, null, {
+						_limit: MENU_CATALOGS_PAGE_SIZE,
+						_page: page,
+						_source: 'database',
+					}),
+				)
+				if (!response.ok) throw new Error('Failed to fetch menu catalogs')
+
+				const data = await response.json()
+				const pageResults = Array.isArray(data.results) ? data.results : []
+				results.push(...pageResults)
+				pages =
+					data.pages
+					|| Math.ceil((data.total || 0) / MENU_CATALOGS_PAGE_SIZE)
+					|| 1
+				if (pageResults.length === 0) break
+				page++
+			} while (page <= pages && page <= MENU_CATALOGS_MAX_PAGES)
+
+			return results
+				.filter((catalog) => catalog && catalog.slug)
+				.map(toMenuCatalog)
+		},
+
+		/**
+		 * Look up one catalog by slug, in the shape of a `menuCatalogs` entry.
+		 *
+		 * For a catalog the menu list does not hold (yet). Leaves `menuCatalogs`
+		 * alone.
+		 *
+		 * @param {string} slug The catalog slug.
+		 * @return {Promise<{id: string|null, slug: string, title: string, registers: Array<number>, schemas: Array<number>}|null>} The catalog, or null when no catalog has this slug.
+		 *
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+		 */
+		async fetchMenuCatalogBySlug(slug) {
+			if (!this.settings) {
+				await this.fetchSettings()
+			}
+
+			const response = await fetch(
+				this._constructApiUrl('catalog', null, null, {
+					slug,
+					_limit: 2,
+					_source: 'database',
+				}),
+			)
+			if (!response.ok) throw new Error('Failed to fetch the catalog')
+
+			const data = await response.json()
+			const results = Array.isArray(data.results) ? data.results : []
+			const catalog = results.find(
+				(candidate) => candidate && String(candidate.slug) === String(slug),
+			)
+			return catalog ? toMenuCatalog(catalog) : null
 		},
 
 		/**

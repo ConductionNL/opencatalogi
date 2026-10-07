@@ -79,6 +79,12 @@
 						<InformationOutline :size="20" />
 						<span>{{ lastRunLabel }}</span>
 					</li>
+					<li
+						v-if="status.lastRun && status.lastRun.failedSteps > 0"
+						data-testid="publiccode-harvest-failed-steps">
+						<InformationOutline :size="20" />
+						<span>{{ failedStepsLabel }}</span>
+					</li>
 				</ul>
 
 				<p class="publiccode-harvest__hint">
@@ -233,6 +239,16 @@ export default {
 				'opencatalogi',
 				'The harvest is on. It runs as {user} on schedule {cron}.',
 				{ user: flow.runAs ?? '', cron: flow.cron ?? '' },
+			)
+		},
+
+		/** @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-004-a-file-that-cannot-be-read-is-skipped-not-written */
+		failedStepsLabel() {
+			const count = this.status.lastRun?.failedSteps ?? 0
+			return this.t(
+				'opencatalogi',
+				'{count} step(s) of the last run failed and were skipped, so their shards did not finish. The run log in OpenRegister names them.',
+				{ count },
 			)
 		},
 

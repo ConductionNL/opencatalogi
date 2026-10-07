@@ -534,14 +534,14 @@
 			"area": "catalogues",
 			"name": "See every catalogue in one overview and open one to work on its publications.",
 			"source": "own-code",
-			"opencatalogi": "partial",
+			"opencatalogi": "yes",
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:490 Catalogs page (CatalogiIndex.vue:2 CnIndexPage), row click -> CatalogDetail (CatalogiIndex.vue:259); CatalogDetailPage.vue:312 openPublications -> /publications/:catalogSlug; manifest.json:527 _note: page shows publications across ALL catalogs, :catalogSlug is ignored (WOO-527b)"
+				"evidence": "src/manifest.json:488 Catalogs page (CatalogiIndex.vue:2 CnIndexPage), row click -> CatalogDetail (CatalogiIndex.vue:259); CatalogDetailPage.vue:311 openPublications -> /publications/:catalogSlug; manifest.json:521 Publications page -> CatalogPublicationsIndex.vue:190 lists the catalog's registers x schemas (services/catalogScope.js), the same scope as PublicationQueryService::buildCatalogSearchQuery"
 			},
 			"reachedOn": "/catalogi -> /catalogi/:id -> /publications/:catalogSlug",
-			"note": "The overview and the detail page work. Opening a catalogue's publications does not scope to that catalogue: the filter was removed because the publication schema has no catalog property.",
+			"note": "The overview and the detail page work. A catalogue's publications page lists only that catalogue's publications: its numeric registers x schemas, one pair at a time, with a selector when there is more than one pair.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",

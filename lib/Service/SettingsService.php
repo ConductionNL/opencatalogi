@@ -37,7 +37,6 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OC_App;
 use OCA\OpenCatalogi\AppInfo\Application;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCP\App\IAppManager;
@@ -232,56 +231,52 @@ class SettingsService {
 	}//end isOpenRegisterEnabled()
 
 	/**
-	 * Attempts to install or update OpenRegister.
+	 * Attempts to make a compatible OpenRegister available.
+	 *
+	 * Uses only the public app manager. An OpenRegister that is installed but
+	 * disabled is enabled with IAppManager::enableApp(). Downloading/installing
+	 * an app from the App Store or upgrading an installed one has no public API,
+	 * so a missing or too-old OpenRegister yields a RuntimeException that tells
+	 * the administrator what to do instead.
+	 *
+	 * This used to call \OC_App::installApp(), \OC_App::enable() and
+	 * \OC_App::updateApp(). Those are private API and installApp()/enable() do
+	 * not exist on Nextcloud 34 or 35, so the call ended in an \Error that the
+	 * `catch (\Exception)` below could not catch.
 	 *
 	 * @param string|null $minVersion Minimum required version.
 	 *
-	 * @return boolean True if installation/update was successful.
-	 * @throws \RuntimeException If installation/update fails.
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.StaticAccess)         — OC_App is Nextcloud's legacy static API
+	 * @return boolean True when a compatible OpenRegister is enabled.
+	 * @throws \RuntimeException If OpenRegister is missing, too old or cannot be enabled.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	public function installOrUpdateOpenRegister(?string $minVersion = self::MIN_OPENREGISTER_VERSION): bool {
-		try {
-			if ($this->isOpenRegisterInstalled(minVersion: $minVersion) === false) {
-				// Removed problematic download functionality
-				// Then install the downloaded app.
-				if (OC_App::installApp(self::OPENREGISTER_APP_ID) === false) {
-					throw new RuntimeException('Failed to install OpenRegister');
-				}
+		if ($this->isOpenRegisterInstalled(minVersion: null) === false) {
+			try {
+				// Throws when the app is not on disk or was never installed.
+				$this->appManager->enableApp(self::OPENREGISTER_APP_ID);
+			} catch (\Exception $e) {
+				throw new RuntimeException(
+					'Failed to install/update OpenRegister: OpenRegister is not installed on this server and cannot be '
+					. 'installed by OpenCatalogi. Install it from the Nextcloud App Store (or `occ app:install openregister`). '
+					. 'Reason: ' . $e->getMessage()
+				);
+			}//end try
+		}//end if
 
-				// Enable the app after installation.
-				if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
-					throw new RuntimeException('Failed to enable OpenRegister');
-				}
-			}
+		if ($this->isOpenRegisterInstalled(minVersion: $minVersion) === false) {
+			throw new RuntimeException(
+				sprintf(
+					'Failed to install/update OpenRegister: version %s is older than the required %s. '
+					. 'Update it from the Nextcloud App Store (or `occ app:update openregister`).',
+					$this->appManager->getAppVersion(self::OPENREGISTER_APP_ID),
+					(string) $minVersion
+				)
+			);
+		}
 
-			if ($this->isOpenRegisterInstalled(minVersion: $minVersion) === true && $minVersion !== null) {
-				// Check if update is needed.
-				$currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
-				if (version_compare(version1: $currentVersion, version2: $minVersion, operator: '<') === true) {
-					// Removed problematic download functionality
-					// Then update the app.
-					if (OC_App::updateApp(self::OPENREGISTER_APP_ID) === false) {
-						throw new RuntimeException('Failed to update OpenRegister');
-					}
-				}
-
-				// Ensure the app is enabled after update.
-				if ($this->isOpenRegisterEnabled() === false) {
-					if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
-						throw new RuntimeException('Failed to enable OpenRegister after update');
-					}
-				}
-			}
-
-			return true;
-		} catch (\Exception $e) {
-			throw new RuntimeException('Failed to install/update OpenRegister: ' . $e->getMessage());
-		}//end try
+		return true;
 
 	}//end installOrUpdateOpenRegister()
 
@@ -1304,6 +1299,15 @@ class SettingsService {
 			'obligation_source_schema' => 'obligationSource',
 		];
 
+		// Woo request intake and the comment period: two more schemas in the
+		// same shared publication register, same key convention. A Woo request
+		// is minted here rather than assumed to exist elsewhere, which is what
+		// gives a statutory term a subject.
+		$wooRequestSchemaMap = [
+			'woo_request_schema' => 'wooRequest',
+			'comment_period_schema' => 'commentPeriod',
+		];
+
 		// The public and community surface: the status page, the banner, the
 		// notice boards and the reader's vote. A notice is deliberately its own
 		// schema rather than a publication, so it never enters the sitemap.
@@ -1380,6 +1384,7 @@ class SettingsService {
 			array_values($wooSchemaMap),
 			array_values($catalogueSchemaMap),
 			array_values($publicationSchemaMap),
+			array_values($wooRequestSchemaMap),
 			array_values($communitySchemaMap)
 		);
 		$missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
@@ -1485,6 +1490,16 @@ class SettingsService {
 		// stays unset makes the inspection controller answer 503 rather than
 		// pretending there are no inspections.
 		foreach ($publicationSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The Woo request and the comment period share the same register. An
+		// unset key makes the intake answer 503 rather than minting a request
+		// nothing can read back, and a request nobody can read back is a
+		// statutory term counted against nothing.
+		foreach ($wooRequestSchemaMap as $configKey => $schemaSlug) {
 			if (isset($schemaMap[$schemaSlug]) === true) {
 				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
 			}

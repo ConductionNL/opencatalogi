@@ -37,6 +37,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Portal;
 
 use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
+use OCA\OpenCatalogi\Service\Woo\WooRequestIntake;
 
 /**
  * Declares what a resident may see and do in opencatalogi through the portal.
@@ -91,15 +92,47 @@ class PortalContributionProvider {
 
 	/**
 	 * Constructor. The manifest itself needs nothing; the dossier service is
-	 * only for `dossierItems()`, which portaliq calls after its own scoped read.
+	 * only for `dossierItems()`, which portaliq calls after its own scoped read,
+	 * and the Woo intake only for `receiveWooRequest()`.
 	 *
 	 * @param CitizenCollectionService|null $collections The dossiers.
+	 * @param WooRequestIntake|null $wooRequests Mints a Woo request and arms its term.
 	 */
 	public function __construct(
 		private readonly ?CitizenCollectionService $collections=null,
+		private readonly ?WooRequestIntake $wooRequests=null,
 	) {
 
 	}//end __construct()
+
+	/**
+	 * Receive a Woo request a citizen sent through a portal form.
+	 *
+	 * The portal (portaliq) calls this from its intake delivery job for a form bound with
+	 * `deliverTo: wooRequest`. opencatalogi mints the reference and arms the
+	 * statutory term; portaliq only reports the outcome to the citizen.
+	 *
+	 * @param array<string, mixed> $answers The citizen's answers, keyed by the request's field names.
+	 * @param string $receivedAt When the citizen sent it (ISO 8601).
+	 *
+	 * @return array{outcome: string, requestId: string, reference: string, dueAt: string, message: string}
+	 *
+	 * @spec openspec/changes/portal-woo-request-intake/specs/woo-request-intake/spec.md#requirement-a-woo-request-delivered-by-the-portal-arms-its-term-req-wri-008
+	 */
+	public function receiveWooRequest(array $answers, string $receivedAt=''): array {
+		if ($this->wooRequests === null) {
+			return [
+				'outcome' => WooRequestIntake::OUTCOME_UNAVAILABLE,
+				'requestId' => '',
+				'reference' => '',
+				'dueAt' => '',
+				'message' => 'The Woo request intake is not available.',
+			];
+		}
+
+		return $this->wooRequests->receive(answers: $answers, receivedAt: $receivedAt);
+
+	}//end receiveWooRequest()
 
 	/**
 	 * The items of one dossier, for portaliq's `itemList` (hydra C7).

@@ -22,6 +22,11 @@
              (ADR-041). The stubs mirror integriq/lib/Event/ on development. -->
         <file name="tests/Stubs/Integriq/Event/ConnectionStatusReportedEvent.php" />
         <file name="tests/Stubs/Integriq/Event/ConnectionRefreshRequestedEvent.php" />
+        <!-- OpenRegister's search refusals (openregister#3996). PublicationService
+             catches them around the catalogue-scope search; psalm runs without
+             OpenRegister installed. The stubs mirror openregister/lib/Exception/. -->
+        <file name="tests/Stubs/OpenRegister/Exception/RegisterNotFoundException.php" />
+        <file name="tests/Stubs/OpenRegister/Exception/SchemaNotFoundException.php" />
     </stubs>
     <issueHandlers>
         <UndefinedDocblockClass errorLevel="suppress"/>

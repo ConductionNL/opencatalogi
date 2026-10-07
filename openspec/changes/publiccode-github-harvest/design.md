@@ -38,7 +38,9 @@ An OpenRegister mapping (`components.mappings`, slug `publiccode-github-hit`), b
 - `itConformsTo` lists the keys of `it.conforme` whose value is true. That is the only country extension the schema models today.
 - `rawPubliccode` copies the decoded document whole.
 - `harvestedFrom` is `github.com`. `harvestedAt` is the time of the write.
-- `slug`: the repository full name, lower case, every character outside `a-z0-9` replaced by `-`. A `publiccode.yml` below the root adds its directory, so the components of a monorepo do not overwrite each other.
+- `slug`: the `url` the file declares, lower case, without scheme, `www.`, a `.git` suffix, a `#fragment`, a `?query` or a trailing slash, every character outside `a-z0-9` replaced by `-` (`https://github.com/ConductionNL/opencatalogi` → `github-com-conductionnl-opencatalogi`). The repository the file was found in is not the identity, so a fork or a copy maps onto the original. A `publiccode.yml` below the root of the repository the url names adds its directory, so the components of a monorepo do not overwrite each other.
+- The shard filter has no type test, because JSON Logic has none. OpenRegister's `lower` and `trim` operations cast to string, so a `url` that is a list reads as `array` and fails the `http` prefix test, and a `name` that is a list reads as `array` and is dropped by name. A hit whose `url` is on GitHub but names another repository is a copy and is dropped, unless the url is that repository followed by `/`, `.git`, `#` or `?`. A renamed or transferred repository (the file still names the old owner) is dropped as a copy; the run log does not count these.
+- The write step receives a shard's whole page and stops at the first item the schema refuses (OpenRegister writes items in one step, with no per-item error policy). The mapping therefore shapes every value for its column, and `onError: continue` on `map-NN` and `write-NN` keeps a failure inside its shard. `PubliccodeHarvestService` counts the failed steps of the last run for the admin section.
 
 ## D4. Inert until an administrator acts
 

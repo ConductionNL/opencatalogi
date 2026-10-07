@@ -208,7 +208,10 @@ class SetupControllerTest extends TestCase {
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertSame(self::setupVersion(), $body['version']);
-		$this->assertTrue($body['steps']['config-check']['done']);
+		// The register check is an admin settings action now
+		// (wizard-dataset-card-load); its state travels as information.
+		$this->assertArrayNotHasKey('config-check', $body['steps']);
+		$this->assertTrue($body['registersReady']);
 		$this->assertTrue($body['steps']['catalog-scope']['done']);
 		$this->assertTrue($body['steps']['create-catalog']['done']);
 		$this->assertTrue($body['completed']);
@@ -223,7 +226,7 @@ class SetupControllerTest extends TestCase {
 
 		$body = $this->controller->status()->getData();
 
-		$this->assertFalse($body['steps']['config-check']['done']);
+		$this->assertFalse($body['registersReady']);
 		$this->assertFalse($body['completed']);
 	}
 
@@ -548,7 +551,7 @@ class SetupControllerTest extends TestCase {
 
 		$this->assertSame(['none', 'demo'], array_column($data['datasets'], 'id'));
 		$this->assertSame(11, $data['datasets'][1]['objectCount']);
-		$this->assertArrayHasKey('load-demo-data', $data['steps']);
+		$this->assertArrayNotHasKey('load-demo-data', $data['steps'], 'the cards load themselves');
 	}
 
 	/**
@@ -557,13 +560,13 @@ class SetupControllerTest extends TestCase {
 	 * 🔴 THE DEFECT THIS FIXES. This app implemented `skip-demo-data` and no
 	 * manifest step could reach it, so declining was unsayable.
 	 */
-	public function testChoosingNoneClosesBothStepsWithoutRunningAnything(): void {
+	public function testChoosingNoneClosesTheStepWithoutRunningAnything(): void {
 		$this->configValues['demo_dataset'] = 'none';
 
 		$steps = $this->controller->status()->getData()['steps'];
 
 		$this->assertTrue($steps['demo-data']['done']);
-		$this->assertTrue($steps['load-demo-data']['done']);
+		$this->assertArrayNotHasKey('load-demo-data', $steps);
 	}
 
 	/**
@@ -599,5 +602,92 @@ class SetupControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 		$this->assertFalse($response->getData()['success']);
+	}
+
+	/**
+	 * Every manifest step id is reported, and nothing else.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	public function testStatusReportsEveryManifestStepId(): void {
+		$this->mockObjectService([]);
+		$manifest = json_decode((string)file_get_contents(__DIR__ . '/../../../src/manifest.json'), true);
+		$declared = array_column($manifest['setup']['steps'], 'id');
+		$reported = array_keys($this->controller->status()->getData()['steps']);
+		sort($declared);
+		sort($reported);
+
+		$this->assertSame($declared, $reported);
+		$steps = array_column($manifest['setup']['steps'], null, 'id');
+		$this->assertSame('load-demo-data', $steps['demo-data']['loadAction'] ?? null);
+		$this->assertArrayNotHasKey('config-check', $steps);
+	}
+
+	/**
+	 * Let the request answer the given body params.
+	 *
+	 * @param array<string, mixed> $params The posted body.
+	 */
+	private function posting(array $params): void {
+		$this->request->method('getParam')
+			->willReturnCallback(static fn (string $key, $default = null) => ($params[$key] ?? $default));
+	}
+
+	/**
+	 * The card's Load button posts `{ dataset }`; the load records the pick.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	public function testTheCardPostsItsDatasetAndTheLoadRecordsTheChoice(): void {
+		$this->posting(['dataset' => 'demo']);
+		$this->demoDataService->method('listChoices')->willReturn(
+			[['id' => 'demo', 'label' => 'Example data', 'description' => '', 'objectCount' => 11, 'icon' => '']]
+		);
+		$this->demoDataService->expects($this->once())->method('install')->willReturn(['objects' => 11, 'schemas' => 4]);
+
+		$body = $this->controller->action('load-demo-data')->getData();
+
+		$this->assertTrue($body['success']);
+		$this->assertSame('demo', $this->configValues['demo_dataset'] ?? null);
+		$this->assertSame('installed', $this->configValues['demo_data_decided'] ?? null);
+	}
+
+	/**
+	 * A posted dataset no card offers is refused, and nothing loads.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	public function testAnUnknownPostedDatasetIsRefusedAndNothingLoads(): void {
+		$this->posting(['dataset' => 'atlantis']);
+		$this->configValues['demo_dataset'] = 'demo';
+		$this->demoDataService->method('listChoices')->willReturn(
+			[['id' => 'demo', 'label' => 'Example data', 'description' => '', 'objectCount' => 11, 'icon' => '']]
+		);
+		$this->demoDataService->expects($this->never())->method('install');
+
+		$response = $this->controller->action('load-demo-data');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertStringContainsString('atlantis', $response->getData()['message']);
+		$this->assertArrayNotHasKey('demo_data_decided', $this->configValues);
+	}
+
+	/**
+	 * A failed card load stores neither the pick nor the decision.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	public function testAFailedCardLoadStoresNothing(): void {
+		$this->posting(['dataset' => 'demo']);
+		$this->demoDataService->method('listChoices')->willReturn(
+			[['id' => 'demo', 'label' => 'Example data', 'description' => '', 'objectCount' => 11, 'icon' => '']]
+		);
+		$this->demoDataService->method('install')->willThrowException(new \RuntimeException('OpenRegister is not installed.'));
+
+		$body = $this->controller->action('load-demo-data')->getData();
+
+		$this->assertFalse($body['success']);
+		$this->assertArrayNotHasKey('demo_dataset', $this->configValues);
+		$this->assertArrayNotHasKey('demo_data_decided', $this->configValues);
 	}
 }//end class

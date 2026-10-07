@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Lizenz",
         "Listing has no directory URL configured": "Fir dës Entrée ass keng Verzeechnes-URL konfiguréiert",
         "Manage your data catalogs and their configurations": "Verwaltet Är Datekatalogen an hir Konfiguratiounen",
-        "Menus": "Menüen",
         "Metadata": "Metadaten",
         "Metadata facets": "Metadatefacetten",
         "Missing directory URL parameter": "Verzeechnes-URL-Parameter feelt",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Organisatioun",
         "Organizations": "Organisatiounen",
         "Page {current} of {total}": "Säit {current} vun {total}",
-        "Pages": "Säiten",
         "Previous": "Zréck",
         "Private": "Privat",
         "Property": "Eegeschaft",
@@ -724,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Wat d'Leit ugekuckt hunn a wat se erofgelueden hunn.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Wéi reif d'Kataloger sinn a wéi déif d'Verzeechnesandeel integréiert sinn.",
         "Store": "Buttek",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installéiert Registeren, Schemaen a Flows déi aner Organisatiounen publizéiert hunn."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installéiert Registeren, Schemaen a Flows déi aner Organisatiounen publizéiert hunn.",
+        "Could not load the catalog": "De Katalog konnt net geluede ginn",
+        "Reload the page to try again.": "Luet d'Säit nei, fir et nach eng Kéier ze probéieren.",
+        "No catalog has the slug {slug}.": "Kee Katalog huet de Slug {slug}.",
+        "This catalog has no registers or schemas configured": "Fir dëse Katalog si keng Registeren oder Schemaen agestallt",
+        "Add a register and a schema to the catalog to list its publications here.": "Setzt dem Katalog e Register an e Schema bäi, fir seng Verëffentlechungen hei unzeweisen.",
+        "Open catalog": "Katalog opmaachen",
+        "Register and schema": "Register a Schema",
+        "{schema} in {register}": "{schema} an {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Maacht Ären éischte Katalog. Et ass de Container, an deem Är Verëffentlechunge stinn. Wielt de Register Publication an d'Schema Publication, sou datt de Katalog d'Verëffentlechungen weist, déi Dir bäisetzt."
     },
     "nplurals=2; plural=(n != 1);"
 )

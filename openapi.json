@@ -2419,6 +2419,40 @@
         }
       }
     },
+    "/api/comment-periods/{id}": {
+      "get": {
+        "operationId": "comment-period-show",
+        "summary": "Read a public comment period",
+        "description": "The state of a comment period, its legal remedy, its reaction form and its official announcement. The state is derived at the read rather than stored, so a scheduler that has not fired yet cannot leave a closed period inviting comment. The reaction form is answered only while the period is open.",
+        "tags": [
+          "Inspections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The period, with one of the three states: upcoming, open or closed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/service-catalogue": {
       "get": {
         "operationId": "service-catalogue-index",
