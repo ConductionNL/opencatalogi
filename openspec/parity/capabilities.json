@@ -1936,11 +1936,11 @@
 				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at opencatalogi development 7a5a8a492: opencatalogi now redacts a partly public (deels_openbaar) document through OpenRegister: lib/Service/Woo/DocumentRedactor.php:92-104 (forAssessment) runs OpenRegister detection and FileService::anonymizeDocument (:175-186) when an assessment is saved through WooService::updateAssessment (lib/Service/WooService.php:567), and publishBatch refuses a batch with an unverified redaction (WooService.php:960, DocumentRedactor.php:267 assertPublishable); WooBatchDetail.vue:186-196 lists the documents that cannot be published yet. Change woo-redaction-pipeline (open, 4 of 4 tasks ticked, not archived). The filinq change filinq/woo-publicatie-pipeline is archived (2026-09-29) and hands its own redacted derivative to opencatalogi, which is filinq's path. Missing: no page saves an assessment, so the redaction never runs from the app: nothing under src/ calls PUT /api/woo/batches/{batchId}/documents/{docId} (appinfo/routes.php:63) and /woo has no rowRoute to the batch page (src/manifest.json:437-455), opencatalogi#1604. Scans without a text layer are not covered (open change woo-redaction-scans-and-text-layer, 0 of 12 tasks).",
-				"change": "woo-redaction-pipeline",
+				"change": "woo-document-assessment-screen",
 				"readOn": "2026-10-07"
 			},
 			"reachedOn": "nothing: the redaction runs only from PUT /api/woo/batches/{batchId}/documents/{docId}, which no page calls",
-			"note": "dossiq also has WOORedactionService/WOOAnonymisationAssistService for its own case flow. Specified in ConductionNL/filinq openspec/changes/woo-publicatie-pipeline (filinq lane, existing change, OpenSpec pass 2026-09-27). Re-rated 2026-10-07 (spec round part 2): the redaction is built in opencatalogi on OpenRegister (woo-redaction-pipeline) but no screen reaches it, so the rating stays no and the state moves to building. filinq/woo-publicatie-pipeline is archived; it is filinq's own hand-off.",
+			"note": "dossiq also has WOORedactionService/WOOAnonymisationAssistService for its own case flow. Specified in ConductionNL/filinq openspec/changes/woo-publicatie-pipeline (filinq lane, existing change, OpenSpec pass 2026-09-27). Re-rated 2026-10-07 (spec round part 2): the redaction is built in opencatalogi on OpenRegister (woo-redaction-pipeline) but no screen reaches it, so the rating stays no and the state moves to building. filinq/woo-publicatie-pipeline is archived; it is filinq's own hand-off. Spec round part 3 (2026-10-07): the missing screen (assess on the batch page, redaction page, a person marks the redaction verified) is specified in woo-document-assessment-screen; the delivered engine is woo-redaction-pipeline.",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "woo-disclosure-workflow",
@@ -6014,7 +6014,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at integriq development 5e903e546: integriq's half is archived (2026-09-29-mapping-woo-index-field-mapping, 8 of 8 tasks): MappingExecutionRequestedEvent (lib/Event/MappingExecutionRequestedEvent.php:40) runs a mapping by slug for an app named in callableBy, and lib/Settings/register.d/mapping-woo-index-field-mapping.json:23-26 seeds woo-index-publication, editable on integriq's /mappings pages. Source read at opencatalogi development 7a5a8a492: opencatalogi does not use it: git grep MappingExecutionRequested, woo-index-publication and officieleTitel in lib and src finds nothing; the sitemap still maps in code (lib/Service/SitemapService.php mapDiwooDocument).",
-				"change": "integriq/mapping-woo-index-field-mapping",
+				"change": "woo-index-fields-from-the-mapping",
 				"readOn": "2026-10-07"
 			},
 			"reachedOn": "integriq /mappings editor; the fixed DIWOO mapping is reached on /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
@@ -6036,7 +6036,7 @@
 				"iprox": "docs read 2026-09-26: https://iprox.nl/marketing/477/blog-woo-publiceren-koppeling: \"We configureren de koppeling zodat men tijdens interne dossiervorming al de juiste informatiecategorie en metadata toevoegt\"; the mapping is configured by iprox as part of the koppeling (\"Een stuk maatwerk\"), not changed by the customer without a developer",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"map a source system's metadata onto the Woo-index fields (publisher, official title, category, document action) and change that mapping without a developer\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
-			"note": "Specified in ConductionNL/integriq openspec/changes/mapping-woo-index-field-mapping (integriq lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: integriq built its half; opencatalogi's half (read the Woo-index fields from the woo-index-publication mapping) is open as issue opencatalogi#1672 and has no opencatalogi change yet. Stays specified.",
+			"note": "Specified in ConductionNL/integriq openspec/changes/mapping-woo-index-field-mapping (integriq lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: integriq built its half; opencatalogi's half (read the Woo-index fields from the woo-index-publication mapping) is open as issue opencatalogi#1672 and has no opencatalogi change yet. Stays specified. Spec round part 3 (2026-10-07): opencatalogi's half (#1672) is specified in woo-index-fields-from-the-mapping; integriq's delivered half is integriq/mapping-woo-index-field-mapping.",
 			"screen": {
 				"board": null,
 				"reason": "screen belongs to integriq"
