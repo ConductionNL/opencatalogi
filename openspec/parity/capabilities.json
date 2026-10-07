@@ -701,10 +701,10 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "Searched for per-catalog access: publication_register.json:291 authorization is schema-wide (public on publicationDate, else 'authenticated'), with no create/update rules; SetupController.php:460-469 the 'private (granted groups only)' scope choice only sets listed=false; no catalog-level group field in the catalog schema (publication_register.json:380-530)",
-				"change": "openregister/rbac-inherits-to-children"
+				"change": "catalogue-staff-access"
 			},
 			"reachedOn": "nothing: no per-catalogue staff permission exists",
-			"note": "OR schema RBAC could restrict a whole schema per group, but not the publications of one catalogue. The setup wizard offers a 'private, granted groups only' scope that does nothing beyond hiding the catalogue from listings. Specified in ConductionNL/openregister openspec/changes/rbac-inherits-to-children (openregister lane, OpenSpec pass 2026-09-27).",
+			"note": "OR schema RBAC could restrict a whole schema per group, but not the publications of one catalogue. The setup wizard offers a 'private, granted groups only' scope that does nothing beyond hiding the catalogue from listings. Specified in ConductionNL/openregister openspec/changes/rbac-inherits-to-children (openregister lane, OpenSpec pass 2026-09-27). Spec round part 3 (2026-10-07): openregister/rbac-inherits-to-children (8 of 8 ticked) does not reach this row, its parent property must reference the same schema and a publication is not a child of its catalogue. The missing part is opencatalogi's and is specified in catalogue-staff-access, on OpenRegister's conditional rules ({group, match}).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
