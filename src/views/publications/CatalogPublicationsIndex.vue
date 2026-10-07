@@ -109,7 +109,7 @@ const RENDERER_ROW_LISTENERS = [
  * rows of any other pair have no detail page, so a click selects them and
  * Edit uses CnIndexPage's own form for that schema. Takes the page config and
  * route params from CnPageRenderer, and passes the rest of the config through
- * to CnIndexPage.
+ * to CnIndexPage, `publicationPairConfig` on the publication pair only.
  *
  * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
  */
@@ -139,6 +139,12 @@ export default {
 		 */
 		register: { type: String, default: '' },
 		schema: { type: String, default: '' },
+		/**
+		 * CnIndexPage props that only fit the publication schema, such as its
+		 * columns and row actions. Passed on the publication pair only; other
+		 * pairs fall back to CnIndexPage's defaults for their schema.
+		 */
+		publicationPairConfig: { type: Object, default: () => ({}) },
 	},
 
 	data() {
@@ -236,9 +242,15 @@ export default {
 			for (const listener of RENDERER_ROW_LISTENERS) {
 				delete attrs[listener]
 			}
+			if (this.opensDetail) {
+				return {
+					...this.actionToggles,
+					...attrs,
+					...this.publicationPairConfig,
+				}
+			}
 			// CnIndexPage's View only emits; without a detail page it would do nothing.
-			const view = this.opensDetail ? {} : { showViewAction: false }
-			return { ...this.actionToggles, ...attrs, ...view }
+			return { ...this.actionToggles, ...attrs, showViewAction: false }
 		},
 
 		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */

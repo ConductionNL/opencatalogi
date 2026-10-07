@@ -52,6 +52,18 @@ Archiveren blijft de laatste stap voor bewaren. Het is geen manier om terug te t
 
 Je hebt het recht nodig om de publicatie te wijzigen. Zonder dat recht weigert de server, en er gebeurt niets.
 
+## Publicaties sorteren
+
+De publicatielijst opent gesorteerd op aanmaakdatum, de nieuwste bovenaan. De pijl omlaag in de kolom *Gemaakt* laat dat zien.
+
+Een gewone klik op een kolomkop, bijvoorbeeld *Titel*, *Status*, *Gemaakt* of *Bijgewerkt*, maakt die kolom de enige actieve sortering. Klik je nog een keer op dezelfde kolomkop, dan draait de volgorde om. Omdat *Gemaakt* al actief is, zet de eerste klik daar meteen de oudste bovenaan.
+
+Een derde klik haalt de kolomsortering weg. De lijst staat dan in de volgorde waarin de publicaties zijn toegevoegd, en na herladen staat de nieuwste weer bovenaan.
+
+De sortering geldt voor alle publicaties, niet alleen voor de rijen die op het scherm staan. Wie de sortering wijzigt, gaat terug naar pagina 1.
+
+De gekozen sortering staat in het adres van de pagina. Ze blijft dus behouden tijdens het bladeren en na het herladen, en een collega die de gekopieerde link opent, ziet de lijst in dezelfde volgorde.
+
 ## Eigenschappen
 
 @todo

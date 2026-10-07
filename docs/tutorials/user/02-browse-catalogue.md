@@ -31,7 +31,7 @@ By the end you will have opened a catalogue, narrowed its list with a filter, so
 
    ![Filter panel applied](/screenshots/tutorials/user/02-browse-catalogue-03.png)
 
-4. Click a column header to sort — by *title*, *publication date*, *last modified*, or any property the schema marks as sortable. Switch the **Cards / Table** toggle to compare the dense table layout against the card view.
+4. The list opens sorted by *Created*, newest first, shown by the down arrow on that column. A normal click on a column header, for example *Title*, *Status*, *Created* or *Updated*, makes that column the only active sort, and clicking the same header again reverses the direction. Because *Created* is already active, its first click goes straight to oldest first. A third click removes the column sort: the list then falls back to the order the publications were added in, and a reload brings back newest first. The sort covers every publication, not only the rows on screen, and changing it takes you back to page 1. The chosen sort stays in the page address, so it survives paging and reloading, and a colleague who opens a copied link sees the same order. Switch the **Cards / Table** toggle to compare the dense table layout against the card view.
 
    ![Sorted table view](/screenshots/tutorials/user/02-browse-catalogue-04.png)
 
