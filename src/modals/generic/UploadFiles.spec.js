@@ -6,44 +6,17 @@
  *
  * The component is mounted once by `Dialogs.vue` and stays mounted while the dialog opens and closes,
  * so every close path must clear the label selection.
+ * The labels select always offers the translated "No label" option first, starts empty on every opening,
+ * and "No label" uploads files without any `tags[]` field.
  * The specs mount it against the app's real pinia stores; only the network, `@vueuse/core` browser primitives and the NC components are stubbed.
  */
 
-import {
-	NcButton,
-	NcCheckboxRadioSwitch,
-	NcLoadingIcon,
-	NcModal,
-	NcNoteCard,
-	NcSelect,
-} from '@nextcloud/vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { __fileDialog } from '@vueuse/core'
 import axios from 'axios'
 import { nextTick } from 'vue'
 import UploadFiles from './UploadFiles.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
-
-// vue3-jest transpiles the template and the script in separate babel passes that both name their import `_vue`,
-// so the script-setup getters for the '@nextcloud/vue' components read from 'vue' and return undefined.
-// Re-point those bindings at the stubs.
-// List every NC component the template uses: a missing one silently renders as undefined.
-const ncComponents = {
-	NcButton,
-	NcCheckboxRadioSwitch,
-	NcLoadingIcon,
-	NcModal,
-	NcNoteCard,
-	NcSelect,
-}
-const scriptSetup = UploadFiles.setup
-UploadFiles.setup = (props, context) => {
-	const bindings = scriptSetup(props, context)
-	for (const [name, component] of Object.entries(ncComponents)) {
-		Object.defineProperty(bindings, name, { get: () => component })
-	}
-	return bindings
-}
 
 // `@vueuse/core` ships ESM only.
 // The file dialog's change callback is captured so a spec can feed files in the way the browser picker would.
@@ -67,8 +40,9 @@ jest.mock('axios', () => ({
 	default: { post: jest.fn() },
 }))
 
+const NO_LABEL = 'Geen label'
 const AVAILABLE_TAGS = ['Besluit', 'Verslag']
-const LABEL_OPTIONS = ['No label', ...AVAILABLE_TAGS]
+const LABEL_OPTIONS = [NO_LABEL, ...AVAILABLE_TAGS]
 
 const publicationA = {
 	id: 'publication-a',
@@ -80,7 +54,7 @@ const publicationB = {
 }
 
 /**
- * Translation stub matching the app's global `t` mixin signature.
+ * Translation stub matching the app's global `t` mixin signature. "No label" is translated so the specs prove the option is.
  *
  * @param {string} app App id.
  * @param {string} text Source string.
@@ -88,6 +62,7 @@ const publicationB = {
  * @return {string}
  */
 function t(app, text, vars = {}) {
+	if (text === 'No label') return NO_LABEL
 	return text.replace(/{(\w+)}/g, (match, key) =>
 		key in vars ? String(vars[key]) : match,
 	)
@@ -159,6 +134,19 @@ async function openDialog() {
 	await flushPromises()
 }
 
+/**
+ * Pick one file through the file dialog and return the form data of the upload request it triggers.
+ * The file selection outlives a mount and rejects names it has seen, so each caller passes its own name.
+ *
+ * @param {string} name File name.
+ * @return {Promise<FormData>}
+ */
+async function uploadOneFile(name) {
+	__fileDialog.onChange([new File(['content'], name)])
+	await flushPromises()
+	return axios.post.mock.calls.at(-1)[1]
+}
+
 describe('UploadFiles label selection', () => {
 	let wrapper
 
@@ -193,6 +181,63 @@ describe('UploadFiles label selection', () => {
 		delete global.fetch
 		delete global.t
 		jest.restoreAllMocks()
+	})
+
+	describe('the "No label" option', () => {
+		it('is offered translated and first, with nothing selected on open', async () => {
+			await openDialog()
+
+			expect(labelSelect(wrapper).props('options')).toEqual(LABEL_OPTIONS)
+			expect(labelSelect(wrapper).props('modelValue')).toEqual([])
+			expect(dropZoneDisabled(wrapper)).toBe(true)
+		})
+
+		it('is offered before the tags have loaded', async () => {
+			wrapper.unmount()
+			global.fetch = jest.fn(() => new Promise(() => {}))
+			wrapper = mountUploadFiles()
+			await openDialog()
+
+			expect(labelSelect(wrapper).props('options')).toEqual([NO_LABEL])
+			expect(labelSelect(wrapper).props('modelValue')).toEqual([])
+		})
+
+		it('is replaced when a label is picked', async () => {
+			await openDialog()
+			await selectLabels(wrapper, [NO_LABEL])
+			await selectLabels(wrapper, [NO_LABEL, 'Besluit'])
+
+			expect(labelSelect(wrapper).props('modelValue')).toEqual(['Besluit'])
+		})
+
+		it('replaces the labels when it is picked', async () => {
+			await openDialog()
+			await selectLabels(wrapper, ['Besluit'])
+			await selectLabels(wrapper, ['Besluit', NO_LABEL])
+
+			expect(labelSelect(wrapper).props('modelValue')).toEqual([NO_LABEL])
+		})
+
+		it('uploads without tags', async () => {
+			axios.post.mockResolvedValue({ status: 200, data: [{ id: 'file-1' }] })
+			await openDialog()
+			await selectLabels(wrapper, [NO_LABEL])
+
+			const form = await uploadOneFile('without-label.pdf')
+
+			expect(form.getAll('files[]')).toHaveLength(1)
+			expect(form.getAll('tags[]')).toEqual([])
+		})
+
+		it('leaves chosen labels to upload as tags when it is not selected', async () => {
+			axios.post.mockResolvedValue({ status: 200, data: [{ id: 'file-1' }] })
+			await openDialog()
+			await selectLabels(wrapper, ['Besluit', 'Verslag'])
+
+			const form = await uploadOneFile('with-labels.pdf')
+
+			expect(form.getAll('tags[]')).toEqual(['Besluit,Verslag'])
+		})
 	})
 
 	describe('reset on close', () => {
@@ -258,7 +303,7 @@ describe('UploadFiles label selection', () => {
 
 			expect(dropZoneDisabled(wrapper)).toBe(true)
 
-			await selectLabels(wrapper, ['No label'])
+			await selectLabels(wrapper, [NO_LABEL])
 			expect(dropZoneDisabled(wrapper)).toBe(false)
 		})
 	})
@@ -274,7 +319,7 @@ describe('UploadFiles label selection', () => {
 
 			await doneButton(wrapper).trigger('click')
 			await flushPromises()
-			expect(wrapper.find('.nc-modal-stub').exists()).toBe(false)
+			expect(wrapper.findComponent({ name: 'NcModal' }).exists()).toBe(false)
 
 			await openDialog()
 

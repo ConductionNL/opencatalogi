@@ -16,6 +16,7 @@ const NcEmptyContent = {
 	name: 'NcEmptyContent',
 	props: {
 		name: { type: String, default: '' },
+		description: { type: String, default: '' },
 	},
 	// ⚠️ Two Vue 3 breaks in one line. `render()` receives no `h` argument (it is
 	// imported from 'vue'), and `$slots.*` are now FUNCTIONS, not vnode arrays —
@@ -25,21 +26,31 @@ const NcEmptyContent = {
 			this.name,
 			this.$slots.icon?.(),
 			this.$slots.default?.(),
+			this.$slots.action?.(),
 		])
 	},
 }
 
-const NcModal = {
-	name: 'NcModal',
-	emits: ['close'],
-	render() {
-		return h('div', { class: 'nc-modal-stub' }, this.$slots.default?.())
-	},
+/**
+ * A container stub that renders only its default slot and swallows every prop.
+ *
+ * @param {string} name - The component name, so specs can find it by name.
+ * @return {object} The stub component.
+ */
+function slotStub(name) {
+	return {
+		name,
+		inheritAttrs: false,
+		render() {
+			return h('div', { class: `${name}-stub` }, this.$slots.default?.())
+		},
+	}
 }
 
 const NcButton = {
 	name: 'NcButton',
 	props: {
+		to: { type: [String, Object], default: null },
 		disabled: { type: Boolean, default: false },
 		variant: { type: String, default: 'secondary' },
 	},
@@ -51,33 +62,13 @@ const NcButton = {
 	},
 }
 
-// Single and multiple selection both travel through `modelValue`;
-// tests drive a selection by emitting `update:modelValue` on this stub.
-const NcSelect = {
-	name: 'NcSelect',
+const NcLoadingIcon = {
+	name: 'NcLoadingIcon',
 	props: {
-		modelValue: { type: [Array, String, Object, Number], default: null },
-		options: { type: Array, default: () => [] },
-		disabled: { type: Boolean, default: false },
+		size: { type: Number, default: 20 },
 	},
-	emits: ['update:modelValue'],
 	render() {
-		return h('div', { class: 'nc-select-stub' })
-	},
-}
-
-const NcCheckboxRadioSwitch = {
-	name: 'NcCheckboxRadioSwitch',
-	props: {
-		modelValue: { type: Boolean, default: false },
-	},
-	emits: ['update:modelValue'],
-	render() {
-		return h(
-			'div',
-			{ class: 'nc-checkbox-radio-switch-stub' },
-			this.$slots.default?.(),
-		)
+		return h('span', { class: 'nc-loading-icon-stub' })
 	},
 }
 
@@ -95,19 +86,40 @@ const NcNoteCard = {
 	},
 }
 
-const NcLoadingIcon = {
-	name: 'NcLoadingIcon',
+// Renders its options as a list labelled by `inputLabel` or
+// `ariaLabelCombobox`, so specs can assert the option order a user would see.
+const NcSelect = {
+	name: 'NcSelect',
+	props: {
+		options: { type: Array, default: () => [] },
+		inputLabel: { type: String, default: '' },
+		ariaLabelCombobox: { type: String, default: '' },
+		modelValue: { type: [Object, Array, String, Number], default: null },
+	},
+	emits: ['update:modelValue'],
 	render() {
-		return h('span', { class: 'nc-loading-icon-stub' })
+		return h(
+			'ul',
+			{
+				class: 'nc-select-stub',
+				'aria-label': this.inputLabel || this.ariaLabelCombobox,
+			},
+			this.options.map((option) => h('li', option?.label)),
+		)
 	},
 }
 
 module.exports = {
+	NcActionButton: slotStub('NcActionButton'),
+	NcActions: slotStub('NcActions'),
 	NcButton,
-	NcCheckboxRadioSwitch,
+	NcCheckboxRadioSwitch: slotStub('NcCheckboxRadioSwitch'),
+	NcCounterBubble: slotStub('NcCounterBubble'),
+	NcDialog: slotStub('NcDialog'),
 	NcEmptyContent,
 	NcLoadingIcon,
-	NcModal,
+	NcModal: slotStub('NcModal'),
 	NcNoteCard,
 	NcSelect,
+	NcTextField: slotStub('NcTextField'),
 }

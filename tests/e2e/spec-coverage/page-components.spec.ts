@@ -11,6 +11,7 @@ import type { APIRequestContext } from '@playwright/test'
  *   src/views/woo/WooBatchDetail.vue          (manifest page `WooBatchDetail`,
  *                                              registered as `WooBatchDetailView`)
  *   src/views/directory/FederationDirectory.vue (manifest page `Directory`)
+ *   src/views/publications/CatalogPublicationsIndex.vue (manifest page `Publications`)
  *
  * FederationDirectory is here for a reason worth recording. It was NOT in
  * gate-26's finding list, and it was not covered either — a CSS comment in that
@@ -68,6 +69,7 @@ import type { APIRequestContext } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
+import { publicationCatalog } from '../publication-catalog.ts'
 import { APP, bootApp, content, dismissOverlays } from './_nav.ts'
 
 /** OpenRegister object API root for the publication register. */
@@ -386,5 +388,56 @@ test.describe('page component — WooBatchDetail', () => {
 		await expect(root).toBeVisible({ timeout: 20000 })
 		await expect(root).toContainText('Batch not found', { timeout: 20000 })
 		await expect(root.locator('.woo-batch__counts li')).toHaveCount(0)
+	})
+})
+
+// ── src/views/publications/CatalogPublicationsIndex.vue ──────────────────────
+
+test.describe('page component — CatalogPublicationsIndex', () => {
+	/**
+	 * `/publications/:catalogSlug` is a manifest `type: "custom"` page whose
+	 * `component` is `CatalogPublicationsIndex`. For a slug no catalog has, it
+	 * renders its own "Catalog not found" empty state, whose description
+	 * interpolates the slug from the route. The slug is this run's own, so no
+	 * other screen and no stale fixture can produce that text.
+	 */
+	test('CatalogPublicationsIndex shows its not-found state, naming the unknown slug', async ({
+		page,
+	}) => {
+		const slug = `${RUN_ID}-no-such-catalog`
+		await bootApp(page)
+		await gotoHash(page, `/publications/${slug}`)
+
+		await expect(
+			content(page).getByText('Catalog not found').first(),
+		).toBeVisible({ timeout: 20000 })
+		await expect(
+			content(page).getByText(`No catalog has the slug ${slug}.`).first(),
+		).toBeVisible({ timeout: 15000 })
+		await expect(page.locator('[data-testid="cn-index-page"]')).toHaveCount(0)
+	})
+
+	/**
+	 * CONTROL for the assertion above.
+	 *
+	 * The same route with a real catalog scoped to the publication register +
+	 * schema must render the index instead, and the same not-found locator must
+	 * resolve to nothing. A dead locator cannot produce that difference.
+	 */
+	test('CatalogPublicationsIndex renders the index, not the not-found state, for a real catalog', async ({
+		page,
+		request,
+	}) => {
+		const { path } = await publicationCatalog(request, 'page-components')
+		await bootApp(page)
+		await gotoHash(page, path)
+
+		// Positive half: the catalog's publications index rendered.
+		await expect(
+			page.locator('[data-testid="cn-index-page"]').first(),
+		).toBeVisible({ timeout: 15000 })
+
+		// Negative half: same locator, same DOM, no match.
+		await expect(content(page).getByText('Catalog not found')).toHaveCount(0)
 	})
 })

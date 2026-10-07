@@ -25,6 +25,7 @@
 import type { APIRequestContext, Page } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
+import { publicationCatalog } from '../publication-catalog.ts'
 import {
 	APP,
 	bootApp,
@@ -110,71 +111,23 @@ async function gotoRoute(page: Page, route: string): Promise<void> {
 interface CatalogRef {
 	id: string
 	slug: string
+	/** Its publications route, on the publication pair. */
+	path: string
 }
 
 /**
- * Resolve an existing catalog (id + slug) from the live instance, seeding
- * one through OpenRegister (using the app's configured catalog
- * register/schema) when none exists. Assertions are unconditional — if the
- * instance cannot produce a catalog the test must fail, not skip.
+ * Resolve a catalog (id + slug) scoped to the publication register + schema,
+ * seeding one through OpenRegister when none exists, so its publications page
+ * renders the index rather than the empty-scope state. Assertions are
+ * unconditional — if the instance cannot produce a catalog the test must
+ * fail, not skip.
  *
  * @param request The Playwright API request context (authenticated session).
  */
 async function resolveOrSeedCatalog(
 	request: APIRequestContext,
 ): Promise<CatalogRef> {
-	const list = await request.get('/index.php/apps/opencatalogi/api/catalogi')
-	expect(list.status(), 'GET /api/catalogi must succeed').toBe(200)
-	const body = await list.json()
-	const results: Array<Record<string, any>> = Array.isArray(body)
-		? body
-		: (body?.results ?? [])
-	const existing = results.find((c) => c?.slug || c?.['@self']?.slug)
-	if (existing) {
-		return {
-			id: String(existing['@self']?.id ?? existing.id ?? existing.uuid),
-			slug: String(existing.slug ?? existing['@self']?.slug),
-		}
-	}
-
-	const settingsResp = await request.get(
-		'/index.php/apps/opencatalogi/api/settings',
-	)
-	expect(
-		settingsResp.status(),
-		'GET /api/settings must succeed to seed a catalog',
-	).toBe(200)
-	const settings = await settingsResp.json()
-	// The register/schema ids live under `configuration` (SettingsService);
-	// fall back to the OpenRegister slug path when unset.
-	const register =
-		settings?.configuration?.catalog_register
-		?? settings?.catalog_register
-		?? 'publication'
-	const schema =
-		settings?.configuration?.catalog_schema
-		?? settings?.catalog_schema
-		?? 'catalog'
-
-	const slug = `${RUN_ID}-cat`
-	const created = await request.post(
-		`/index.php/apps/openregister/api/objects/${register}/${schema}`,
-		{
-			data: {
-				title: `${RUN_ID} catalog`,
-				summary: 'gate-19 seeded catalog',
-				slug,
-				listed: true,
-			},
-			headers: { 'Content-Type': 'application/json' },
-		},
-	)
-	expect(
-		created.status(),
-		'seeding a catalog via OpenRegister must succeed',
-	).toBeLessThan(300)
-	const obj = await created.json()
-	return { id: String(obj?.['@self']?.id ?? obj?.id ?? obj?.uuid), slug }
+	return publicationCatalog(request, RUN_ID)
 }
 
 // ── SPA deep-link routing ────────────────────────────────────────────────────
@@ -610,9 +563,9 @@ test.describe('catalogs', () => {
 	}) => {
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoRoute(page, `/publications/${cat.slug}`)
-		// The Publications page is a manifest type:index page — its genuine
-		// surface is cn-index-page (not the dashboard).
+		await gotoRoute(page, cat.path)
+		// The Publications page renders CnIndexPage for the catalog's scope — its
+		// genuine surface is cn-index-page (not the dashboard).
 		await expect(
 			page.locator('[data-testid="cn-index-page"]').first(),
 		).toBeVisible({ timeout: 15000 })
@@ -997,7 +950,7 @@ test.describe('publications', () => {
 		const errors = trackPageErrors(page)
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoRoute(page, `/publications/${cat.slug}`)
+		await gotoRoute(page, cat.path)
 		await expect(
 			page.locator('[data-testid="cn-index-page"]').first(),
 		).toBeVisible({ timeout: 15000 })
@@ -1021,7 +974,7 @@ test.describe('publications', () => {
 		const errors = trackPageErrors(page)
 		const cat = await resolveOrSeedCatalog(request)
 		await bootApp(page)
-		await gotoRoute(page, `/publications/${cat.slug}`)
+		await gotoRoute(page, cat.path)
 		await expect(
 			page.locator('[data-testid="cn-index-page"]').first(),
 		).toBeVisible({ timeout: 15000 })

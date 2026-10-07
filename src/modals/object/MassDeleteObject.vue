@@ -248,10 +248,3 @@ export default {
 	color: var(--color-primary-hover);
 }
 </style>
-
-<style>
-/* Ensure mass action dialogs appear on top of other modals */
-.mass-action-dialog {
-	z-index: 10000 !important;
-}
-</style>

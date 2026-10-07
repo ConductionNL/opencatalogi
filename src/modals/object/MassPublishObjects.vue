@@ -626,9 +626,3 @@ export default {
 	cursor: not-allowed;
 }
 </style>
-
-<style>
-.mass-action-dialog {
-	z-index: 10000 !important;
-}
-</style>

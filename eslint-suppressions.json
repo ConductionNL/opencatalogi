@@ -415,7 +415,7 @@
       "count": 12
     },
     "jsdoc/require-param-type": {
-      "count": 16
+      "count": 15
     },
     "no-console": {
       "count": 4
@@ -741,14 +741,6 @@
   },
   "src/modals/theme/ViewThemeModal.vue": {
     "vue/prefer-define-options": {
-      "count": 1
-    }
-  },
-  "src/navigation/MainMenu.vue": {
-    "jsdoc/require-param-type": {
-      "count": 2
-    },
-    "vue/custom-event-name-casing": {
       "count": 1
     }
   },

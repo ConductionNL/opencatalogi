@@ -4,33 +4,38 @@ Publicaties zijn onderdeel van de [Open Catalogi Standaard](https://github.com/O
 
 ## Publicaties toevoegen
 
-Publicaties kunnen worden toegevoegd via:
+Publicaties voeg je toe op de publicatiepagina, met de knop om een publicatie toe te voegen. Die pagina open je via:
 
-* De publicatie toevoegen knop boven aan het hoofd menu (links)
-* Een catalogus geselecteerd in het hoofdmenu (via het hamburgermenu achter de zoekbalk)
-* Een catalogus detailpagina
+* Een catalogus in het hoofdmenu (links): direct onder Dashboard staat elke catalogus waar je toegang toe hebt, onder zijn eigen titel
+* De knop "Publicaties bekijken" op de detailpagina van een catalogus
 
-Een publicatie leeft altijd binnen één catalogus en wordt gedefinieerd door één publicatietype. Omdat catalogi bepalen welke publicatietypen beschikbaar zijn voor die catalogi moet er eerst een catalogus worden gekozen voordat er een metadatatype kan worden gekozen. Daarmee wordt de volgorde bij het aanmaken van een publicatie:
+De knop opent een formulier dat is opgebouwd uit het schema dat de pagina op dat moment toont. Je vult de publicatiedetails in en slaat op; er wordt daarbij niet om een catalogus of publicatietype gevraagd. De publicatie komt in het register dat de pagina op dat moment toont.
 
-1. Catalogus kiezen (indien niet opgestart vanuit een specifieke catalogus)
-2. Publicatietype kiezen
-3. Publicatiedetails aanvullen
+De publicatiepagina toont alleen de publicaties van de gekozen catalogus: de objecten in de registers en schema's die bij die catalogus zijn ingesteld. Heeft de catalogus meer dan één combinatie van register en schema, dan kies je bovenaan de pagina welke combinatie je ziet. Heeft de catalogus geen register of schema ingesteld, dan meldt de pagina dat en kun je vandaar de catalogus openen om dat in te stellen.
 
 Eigenschappen en bijlagen kunnen worden toegevoegd nadat de publicatie is toegevoegd.
 
+## Publicaties zoeken
+
+Boven de publicatielijst staat een zoekbalk. Typ een deel van een titel, samenvatting of beschrijving, en de lijst toont alleen de publicaties waarin die tekst voorkomt. De andere tekstvelden van een publicatie doen ook mee, datumvelden niet. Hoofdletters en kleine letters maken geen verschil.
+
+Haakjes, dubbele aanhalingstekens, het sterretje (`*`) en de woorden `AND`, `OR` en `NOT` in hoofdletters werken als zoekoperatoren. Een haakje of aanhalingsteken zonder tegenhanger is daarom geen geldige zoekopdracht.
+
+De server doorzoekt alle publicaties, niet alleen de rijen die op het scherm staan. De lijst, en dus ook de zoekopdracht, omvat de publicaties van alle catalogi, niet alleen die van één catalogus. De zoekopdracht start pas als je even stopt met typen, dus niet bij elke toetsaanslag. Een nieuwe zoekterm brengt je terug naar pagina 1, en de teller boven de lijst toont hoeveel publicaties er gevonden zijn.
+
+Maak je de zoekbalk leeg, dan zie je de volledige lijst weer.
+
+De zoekterm blijft staan terwijl je bladert en wanneer je wisselt tussen de kaart- en de tabelweergave. De zoekterm staat ook in de adresbalk (URL), zodat je na het herladen of via een gekopieerde link dezelfde resultaten ziet.
+
+Vindt de zoekbalk niets, dan meldt de lijst "Geen publicaties gevonden".
+
 ## Publicaties beheren
 
-De gebruikersbeheerinterface werkt intuïtief. Aan de linkerkant van de pagina bevindt zich een overzicht van catalogi. Met de blauwe knop bovenaan kun je een publicatie aanmaken. Dit opent een modal genaamd "Publicatie toevoegen". Er wordt eerst gevraagd aan welke catalogus deze behoort en welke publicatietype het heeft (metadata)
+De gebruikersbeheerinterface werkt intuïtief. In het hoofdmenu aan de linkerkant staat elke catalogus waar je toegang toe hebt; de catalogus die je open hebt is gemarkeerd. Hoe je een publicatie toevoegt, staat hierboven.
 
-Hieronder is een voorbeeld van een ingevulde modal voor het aanmaken van een Woo-publicatie.
+Waar je een publicatietype (schema) kiest, staan de schema's in de keuzelijst alfabetisch op titel, ongeacht hoofdletters en met getallen in natuurlijke volgorde ("Schema 2" vóór "Schema 10"). Typ in de keuzelijst om de lijst te filteren.
 
-<div align="center">
-
-<figure><img src="../assets/publicatie_toevoegen_modal.png" alt="" width="300" /><figcaption><p>De publicatiemodal</p></figcaption></figure>
-
-</div>
-
-Na het opslaan van de publicatie, is deze zichtbaar onder de catalogi "Woo". Om de publicatie aan te passen, te depubliceren of andere acties uit te voeren, klik je op de blauwe "Actie"-knop rechtsboven bij de getoonde publicatie, of de drie puntjes rechts van de publicatie zelf.\\
+Na het opslaan is de publicatie zichtbaar op de publicatiepagina van de catalogus. Om de publicatie aan te passen, te depubliceren of andere acties uit te voeren, klik je op de blauwe "Actie"-knop rechtsboven bij de getoonde publicatie, of de drie puntjes rechts van de publicatie zelf.\\
 
 Onder is een voorbeeld van een publicatie en de Actie-mogelijkheden.
 
@@ -49,13 +54,27 @@ Archiveren blijft de laatste stap voor bewaren. Het is geen manier om terug te t
 
 Je hebt het recht nodig om de publicatie te wijzigen. Zonder dat recht weigert de server, en er gebeurt niets.
 
+## Publicaties sorteren
+
+De publicatielijst opent gesorteerd op aanmaakdatum, de nieuwste bovenaan. De pijl omlaag in de kolom *Gemaakt* laat dat zien.
+
+Een gewone klik op een kolomkop, bijvoorbeeld *Titel*, *Status*, *Gemaakt* of *Bijgewerkt*, maakt die kolom de enige actieve sortering. Klik je nog een keer op dezelfde kolomkop, dan draait de volgorde om. Omdat *Gemaakt* al actief is, zet de eerste klik daar meteen de oudste bovenaan.
+
+Een derde klik haalt de kolomsortering weg. De lijst staat dan in de volgorde waarin de publicaties zijn toegevoegd, en na herladen staat de nieuwste weer bovenaan.
+
+De sortering geldt voor alle publicaties, niet alleen voor de rijen die op het scherm staan. Wie de sortering wijzigt, gaat terug naar pagina 1.
+
+De gekozen sortering staat in het adres van de pagina. Ze blijft dus behouden tijdens het bladeren en na het herladen, en een collega die de gekopieerde link opent, ziet de lijst in dezelfde volgorde.
+
 ## Eigenschappen
 
 @todo
 
 ## Bijlagen
 
-Publicaties hebben vaak bijlagen, zoals een verslag of een besluit. Deze zijn eenvoudig toe te voegen door op de Actie-knop te klikken bij een geselecteerde publicatie, of de drie bolletjes naast een publicatie. Dit opent de Bijlage toevoegen modal.
+Publicaties hebben vaak bijlagen, zoals een verslag of een besluit. Klik in het overzicht van publicaties op de drie bolletjes naast een publicatie en kies **Bestandenlijst**. Dit opent de publicatie op het tabblad **Bestanden**, met de bestanden die al aan de publicatie gekoppeld zijn. Controleer die eerst, zodat je geen bestand dubbel toevoegt.
+
+Klik daarna op **Bestand toevoegen** om het venster **Bijlage toevoegen** te openen.
 
 <div>
 
@@ -65,8 +84,6 @@ Publicaties hebben vaak bijlagen, zoals een verslag of een besluit. Deze zijn ee
 
 </div>
 
-In de `Bijlage toevoegen`-modal worden er gevraagd om een aantal velden. Er zijn twee mogelijkheden een bijlage toe te voegen. De eerste manier is via een  `Toegangs URL`. Dit zorgt ervoor dat het bestand vanuit een andere plek automatisch gedownload wordt.  Een `Titel` is dan verplicht.&#x20;
+In het venster `Bijlage toevoegen` kies of maak je eerst een of meer `Labels`, of kies je `Geen label`. Tot je een keuze maakt, blijft het uploadvak uitgeschakeld. De labelkeuze is bij elke opening van het venster leeg, ook als je eerder bij dezelfde of een andere publicatie labels hebt gekozen; de lijst met beschikbare labels blijft wel staan. Zet `Automatisch publiceren` aan als de bestanden meteen openbaar moeten worden.
 
-De tweede manier is door zelf een bestand up te loaden. De bestandsnaam wordt dan meegegeven.&#x20;
-
-Voordat je bestanden kunt toevoegen, kies je in het veld `Labels` één of meer labels, of de optie `No label`. Tot je een keuze maakt, blijft het uploadvak uitgeschakeld. De labelkeuze is bij elke opening van de modal leeg, ook als je eerder bij dezelfde of een andere publicatie labels hebt gekozen. De lijst met beschikbare labels blijft wel staan.
+Sleep daarna een of meer bestanden naar het venster, of klik op `Voeg een of meer bestanden toe` om ze van je computer te kiezen. De bestandsnaam wordt meegegeven. De nieuwe bestanden verschijnen daarna op het tabblad Bestanden.

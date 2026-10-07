@@ -43,9 +43,12 @@ import CatalogsIndexView from './views/catalogi/CatalogiIndex.vue'
 import DashboardView from './views/dashboard/Dashboard.vue'
 import FederationDirectory from './views/directory/FederationDirectory.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
+import CatalogPublicationsIndex from './views/publications/CatalogPublicationsIndex.vue'
 import FederationSearch from './views/search/FederationSearch.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
 import { createConnectionHandlers } from './services/connectionRegistry.js'
+import { createPublicationActionHandlers } from './services/publicationActions.js'
+import { navigationStore, objectStore } from './store/store.js'
 
 export default {
 	// Header-action handler: the Integrations page's Add integration
@@ -58,6 +61,9 @@ export default {
 		assign: (url) => window.location.assign(url),
 	}),
 
+	// Row-action handler: the Publications index's File list.
+	...createPublicationActionHandlers({ objectStore, navigationStore }),
+
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
 	//     the list and the canvas are the shared `flows` / `flow-detail`
 	//     manifest page types. CnFlowSidebar has to mount in the NC app
@@ -68,6 +74,7 @@ export default {
 	DashboardView,
 	CatalogsIndexView,
 	CatalogDetailPageView,
+	CatalogPublicationsIndex,
 	WooBatchDetailView,
 	CnFederationStatus,
 	FederationDirectory,

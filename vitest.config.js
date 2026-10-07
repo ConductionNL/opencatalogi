@@ -65,6 +65,13 @@ module.exports = {
 					'tests/vitest/stubs/nextcloud-axios.js',
 				),
 			},
+			{
+				find: /^vue-material-design-icons\/.+\.vue$/,
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/vue-material-design-icon.js',
+				),
+			},
 		],
 	},
 }
