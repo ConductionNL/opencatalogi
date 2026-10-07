@@ -31,6 +31,7 @@ function catalog(slug, registers, schemas) {
  * @param {object} [options] Mount options.
  * @param {string} [options.slug] The route's catalog slug.
  * @param {object} [options.query] The route query.
+ * @param {object} [options.publicationPairConfig] Props for the publication pair only.
  * @return {{wrapper: object, route: object, router: object}} The mounted page and its route doubles.
  */
 function mountPage({
@@ -38,6 +39,7 @@ function mountPage({
 	query = {},
 	register = '19',
 	schema = '173',
+	publicationPairConfig = undefined,
 } = {}) {
 	const route = reactive({ params: { catalogSlug: slug }, query })
 	const router = {
@@ -53,6 +55,7 @@ function mountPage({
 			catalogSlug: slug,
 			register,
 			schema,
+			publicationPairConfig,
 			actionToggles: { showAdd: true, selectable: true },
 			documentationUrl: 'https://example.org/docs',
 			onRowClick: jest.fn(),
@@ -226,6 +229,30 @@ describe('CatalogPublicationsIndex', () => {
 		page.vm.$emit('view', { id: 'abc' })
 
 		expect(router.push).not.toHaveBeenCalled()
+	})
+
+	it('passes the publication pair config on the publication pair only', async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
+		const publicationPairConfig = {
+			columns: ['title', 'wooCategory'],
+			actions: ['builtin:view', { id: 'file-list', handler: 'openPublicationFiles' }],
+		}
+		const { wrapper } = mountPage({ publicationPairConfig })
+		await flushPromises()
+
+		let attrs = indexPage(wrapper).vm.$attrs
+		expect(attrs.columns).toEqual(publicationPairConfig.columns)
+		expect(attrs.actions).toEqual(publicationPairConfig.actions)
+		expect(attrs.publicationPairConfig).toBeUndefined()
+
+		select(wrapper).vm.$emit('update:modelValue', select(wrapper).props('options')[1])
+		await flushPromises()
+
+		attrs = indexPage(wrapper).vm.$attrs
+		expect(indexPage(wrapper).props('schema')).toBe('184')
+		expect(attrs.columns).toBeUndefined()
+		expect(attrs.actions).toBeUndefined()
+		expect(attrs.showAdd).toBe(true)
 	})
 
 	it('opens no detail page while the publication ids are unresolved', async () => {
