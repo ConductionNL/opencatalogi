@@ -92,7 +92,6 @@
         "License": "Лицензия",
         "Listing has no directory URL configured": "Для записи не настроен URL справочника",
         "Manage your data catalogs and their configurations": "Управляйте каталогами данных и их конфигурациями",
-        "Menus": "Меню",
         "Metadata": "Метаданные",
         "Metadata facets": "Фасеты метаданных",
         "Missing directory URL parameter": "Отсутствует параметр URL справочника",
@@ -124,7 +123,6 @@
         "Organization": "Организация",
         "Organizations": "Организации",
         "Page {current} of {total}": "Страница {current} из {total}",
-        "Pages": "Страницы",
         "Previous": "Назад",
         "Private": "Частный",
         "Property": "Свойство",
@@ -723,7 +721,16 @@
         "What people looked at and what they downloaded.": "На что люди смотрели и что скачали.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Насколько зрелы каталоги и насколько глубоко интегрированы записи каталога.",
         "Store": "Магазин",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Установите реестры, схемы и потоки, опубликованные другими организациями."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Установите реестры, схемы и потоки, опубликованные другими организациями.",
+        "Could not load the catalog": "Не удалось загрузить каталог",
+        "Reload the page to try again.": "Перезагрузите страницу, чтобы попробовать снова.",
+        "No catalog has the slug {slug}.": "Нет каталога со slug {slug}.",
+        "This catalog has no registers or schemas configured": "Для этого каталога не настроены реестры или схемы",
+        "Add a register and a schema to the catalog to list its publications here.": "Добавьте в каталог реестр и схему, чтобы здесь отображались его публикации.",
+        "Open catalog": "Открыть каталог",
+        "Register and schema": "Реестр и схема",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Создайте свой первый каталог. Это контейнер, в котором будут ваши публикации. Выберите реестр Publication и схему Publication, чтобы каталог показывал добавляемые вами публикации."
     },
     "plurals": {}
 }

@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Licență",
         "Listing has no directory URL configured": "Listarea nu are configurat niciun URL de director",
         "Manage your data catalogs and their configurations": "Gestionați cataloagele de date și configurațiile lor",
-        "Menus": "Meniuri",
         "Metadata": "Metadate",
         "Metadata facets": "Fațete de metadate",
         "Missing directory URL parameter": "Lipsește parametrul URL al directorului",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Organizație",
         "Organizations": "Organizații",
         "Page {current} of {total}": "Pagina {current} din {total}",
-        "Pages": "Pagini",
         "Previous": "Anterior",
         "Private": "Privat",
         "Property": "Proprietate",
@@ -724,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Ce au privit oamenii și ce au descărcat.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cât de mature sunt cataloagele și cât de profund sunt integrate intrările din director.",
         "Store": "Magazin",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalați registre, scheme și fluxuri publicate de alte organizații."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalați registre, scheme și fluxuri publicate de alte organizații.",
+        "Could not load the catalog": "Catalogul nu a putut fi încărcat",
+        "Reload the page to try again.": "Reîncărcați pagina pentru a încerca din nou.",
+        "No catalog has the slug {slug}.": "Niciun catalog nu are slug-ul {slug}.",
+        "This catalog has no registers or schemas configured": "Acest catalog nu are configurate registre sau scheme",
+        "Add a register and a schema to the catalog to list its publications here.": "Adăugați un registru și o schemă la catalog pentru a-i afișa aici publicațiile.",
+        "Open catalog": "Deschide catalogul",
+        "Register and schema": "Registru și schemă",
+        "{schema} in {register}": "{schema} în {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creați primul dumneavoastră catalog. Este containerul în care vor sta publicațiile dumneavoastră. Alegeți registrul Publication și schema Publication, astfel încât catalogul să afișeze publicațiile pe care le adăugați."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Lisans",
         "Listing has no directory URL configured": "Listede yapılandırılmış bir dizin adresi yok",
         "Manage your data catalogs and their configurations": "Veri kataloglarınızı ve yapılandırmalarını yönetin",
-        "Menus": "Menüler",
         "Metadata": "Üst veri",
         "Metadata facets": "Üst veri yönleri",
         "Missing directory URL parameter": "Eksik dizin adresi parametresi",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Kuruluş",
         "Organizations": "Kuruluşlar",
         "Page {current} of {total}": "Sayfa {current} / {total}",
-        "Pages": "Sayfalar",
         "Previous": "Önceki",
         "Private": "Özel",
         "Property": "Özellik",
@@ -724,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "İnsanların neye baktığı ve ne indirdiği.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Katalogların ne kadar olgun olduğu ve dizin kayıtlarının ne kadar derin entegre olduğu.",
         "Store": "Mağaza",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Diğer kuruluşların yayımladığı kayıtları, şemaları ve akışları yükleyin."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Diğer kuruluşların yayımladığı kayıtları, şemaları ve akışları yükleyin.",
+        "Could not load the catalog": "Katalog yüklenemedi",
+        "Reload the page to try again.": "Yeniden denemek için sayfayı yenileyin.",
+        "No catalog has the slug {slug}.": "Hiçbir kataloğun slug değeri {slug} değil.",
+        "This catalog has no registers or schemas configured": "Bu katalog için yapılandırılmış kayıt veya şema yok",
+        "Add a register and a schema to the catalog to list its publications here.": "Yayınlarının burada listelenmesi için kataloğa bir kayıt ve bir şema ekleyin.",
+        "Open catalog": "Kataloğu aç",
+        "Register and schema": "Kayıt ve şema",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "İlk kataloğunuzu oluşturun. Yayınlarınızın yer alacağı kapsayıcıdır. Kataloğun eklediğiniz yayınları listelemesi için Publication kaydını ve Publication şemasını seçin."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -16,6 +16,7 @@ const NcEmptyContent = {
 	name: 'NcEmptyContent',
 	props: {
 		name: { type: String, default: '' },
+		description: { type: String, default: '' },
 	},
 	// ⚠️ Two Vue 3 breaks in one line. `render()` receives no `h` argument (it is
 	// imported from 'vue'), and `$slots.*` are now FUNCTIONS, not vnode arrays —
@@ -25,10 +26,47 @@ const NcEmptyContent = {
 			this.name,
 			this.$slots.icon?.(),
 			this.$slots.default?.(),
+			this.$slots.action?.(),
 		])
 	},
 }
 
+const NcButton = {
+	name: 'NcButton',
+	props: {
+		to: { type: [String, Object], default: null },
+	},
+	render() {
+		return h('button', { class: 'nc-button-stub' }, this.$slots.default?.())
+	},
+}
+
+const NcLoadingIcon = {
+	name: 'NcLoadingIcon',
+	props: {
+		size: { type: Number, default: 20 },
+	},
+	render() {
+		return h('span', { class: 'nc-loading-icon-stub' })
+	},
+}
+
+const NcSelect = {
+	name: 'NcSelect',
+	props: {
+		modelValue: { type: [Object, Array, String, Number], default: null },
+		options: { type: Array, default: () => [] },
+		inputLabel: { type: String, default: '' },
+	},
+	emits: ['update:modelValue'],
+	render() {
+		return h('div', { class: 'nc-select-stub' })
+	},
+}
+
 module.exports = {
+	NcButton,
 	NcEmptyContent,
+	NcLoadingIcon,
+	NcSelect,
 }

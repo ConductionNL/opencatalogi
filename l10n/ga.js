@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Ceadúnas",
         "Listing has no directory URL configured": "Níl aon URL eolaire cumraithe ag an liosta",
         "Manage your data catalogs and their configurations": "Bainistigh do chatalóga sonraí agus a gcumraíochtaí",
-        "Menus": "Roghchláir",
         "Metadata": "Meiteashonraí",
         "Metadata facets": "Gnéithe meiteashonraí",
         "Missing directory URL parameter": "Paraiméadar URL eolaire ar iarraidh",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Eagraíocht",
         "Organizations": "Eagraíochtaí",
         "Page {current} of {total}": "Leathanach {current} as {total}",
-        "Pages": "Leathanaigh",
         "Previous": "Roimhe seo",
         "Private": "Príobháideach",
         "Property": "Airí",
@@ -724,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Cad a d'fhéach daoine air agus cad a d'íoslódáil siad.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cé chomh haibí is atá na catalóga, agus cé chomh domhain is atá iontrálacha an eolaire comhtháite.",
         "Store": "Siopa",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Suiteáil cláir, scéimeanna agus sruthanna a d'fhoilsigh eagraíochtaí eile."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Suiteáil cláir, scéimeanna agus sruthanna a d'fhoilsigh eagraíochtaí eile.",
+        "Could not load the catalog": "Níorbh fhéidir an catalóg a lódáil",
+        "Reload the page to try again.": "Athlódáil an leathanach chun triail eile a bhaint as.",
+        "No catalog has the slug {slug}.": "Níl an slug {slug} ag aon chatalóg.",
+        "This catalog has no registers or schemas configured": "Níl aon chláir ná scéimrí socraithe don chatalóg seo",
+        "Add a register and a schema to the catalog to list its publications here.": "Cuir clár agus scéimre leis an gcatalóg chun a foilseacháin a liostú anseo.",
+        "Open catalog": "Oscail an catalóg",
+        "Register and schema": "Clár agus scéimre",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cruthaigh do chéad chatalóg. Is é an coimeádán ina mbeidh do chuid foilseachán. Roghnaigh an clár Publication agus an scéimre Publication, ionas go liostóidh an catalóg na foilseacháin a chuireann tú leis."
     },
     "nplurals=2; plural=(n != 1);"
 )

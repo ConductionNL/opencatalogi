@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Licenca",
         "Listing has no directory URL configured": "Popis nema konfiguriran URL direktorija",
         "Manage your data catalogs and their configurations": "Upravljajte svojim podatkovnim katalozima i njihovim konfiguracijama",
-        "Menus": "Izbornici",
         "Metadata": "Metapodaci",
         "Metadata facets": "Fasete metapodataka",
         "Missing directory URL parameter": "Nedostaje parametar URL-a direktorija",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Organizacija",
         "Organizations": "Organizacije",
         "Page {current} of {total}": "Stranica {current} od {total}",
-        "Pages": "Stranice",
         "Previous": "Prethodno",
         "Private": "Privatno",
         "Property": "Svojstvo",
@@ -724,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Što su ljudi gledali i što su preuzeli.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Koliko su katalozi zreli i koliko su duboko integrirani unosi u imeniku.",
         "Store": "Trgovina",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalirajte registre, sheme i tokove koje su objavile druge organizacije."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalirajte registre, sheme i tokove koje su objavile druge organizacije.",
+        "Could not load the catalog": "Katalog nije moguće učitati",
+        "Reload the page to try again.": "Ponovno učitajte stranicu da biste pokušali ponovno.",
+        "No catalog has the slug {slug}.": "Nijedan katalog nema slug {slug}.",
+        "This catalog has no registers or schemas configured": "Za ovaj katalog nisu postavljeni registri ni sheme",
+        "Add a register and a schema to the catalog to list its publications here.": "Dodajte registar i shemu katalogu kako bi se ovdje prikazale njegove objave.",
+        "Open catalog": "Otvori katalog",
+        "Register and schema": "Registar i shema",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Izradite svoj prvi katalog. To je spremnik u kojem će biti vaše objave. Odaberite registar Publication i shemu Publication kako bi katalog prikazivao objave koje dodate."
     },
     "nplurals=2; plural=(n != 1);"
 )

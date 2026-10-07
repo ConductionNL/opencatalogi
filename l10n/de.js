@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Lizenz",
         "Listing has no directory URL configured": "Für den Eintrag ist keine Verzeichnis-URL konfiguriert",
         "Manage your data catalogs and their configurations": "Verwalten Sie Ihre Datenkataloge und deren Konfigurationen",
-        "Menus": "Menüs",
         "Metadata": "Metadaten",
         "Metadata facets": "Metadaten-Facetten",
         "Missing directory URL parameter": "Fehlender Verzeichnis-URL-Parameter",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Organisation",
         "Organizations": "Organisationen",
         "Page {current} of {total}": "Seite {current} von {total}",
-        "Pages": "Seiten",
         "Previous": "Zurück",
         "Private": "Privat",
         "Property": "Eigenschaft",
@@ -724,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Was Menschen angesehen und was sie heruntergeladen haben.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Wie ausgereift die Kataloge sind und wie tief die Verzeichniseinträge integriert sind.",
         "Store": "Store",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installieren Sie Register, Schemata und Flows, die andere Organisationen veröffentlicht haben."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installieren Sie Register, Schemata und Flows, die andere Organisationen veröffentlicht haben.",
+        "Could not load the catalog": "Der Katalog konnte nicht geladen werden",
+        "Reload the page to try again.": "Laden Sie die Seite neu, um es erneut zu versuchen.",
+        "No catalog has the slug {slug}.": "Kein Katalog hat den Slug {slug}.",
+        "This catalog has no registers or schemas configured": "Für diesen Katalog sind keine Register oder Schemas eingerichtet",
+        "Add a register and a schema to the catalog to list its publications here.": "Fügen Sie dem Katalog ein Register und ein Schema hinzu, um seine Veröffentlichungen hier anzuzeigen.",
+        "Open catalog": "Katalog öffnen",
+        "Register and schema": "Register und Schema",
+        "{schema} in {register}": "{schema} in {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Erstellen Sie Ihren ersten Katalog. Er ist der Behälter, in dem Ihre Veröffentlichungen liegen. Wählen Sie das Register Publication und das Schema Publication, damit der Katalog die Veröffentlichungen anzeigt, die Sie hinzufügen."
     },
     "nplurals=2; plural=(n != 1);"
 )

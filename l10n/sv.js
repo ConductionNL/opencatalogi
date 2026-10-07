@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Licens",
         "Listing has no directory URL configured": "Posten har ingen katalog-URL konfigurerad",
         "Manage your data catalogs and their configurations": "Hantera dina datakataloger och deras konfigurationer",
-        "Menus": "Menyer",
         "Metadata": "Metadata",
         "Metadata facets": "Metadatafasetter",
         "Missing directory URL parameter": "Katalog-URL-parameter saknas",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Organisation",
         "Organizations": "Organisationer",
         "Page {current} of {total}": "Sida {current} av {total}",
-        "Pages": "Sidor",
         "Previous": "Föregående",
         "Private": "Privat",
         "Property": "Egenskap",
@@ -724,7 +722,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Vad folk tittade på och vad de laddade ner.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hur mogna katalogerna är, och hur djupt katalogposterna är integrerade.",
         "Store": "Butik",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installera register, scheman och flöden som andra organisationer har publicerat."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installera register, scheman och flöden som andra organisationer har publicerat.",
+        "Could not load the catalog": "Katalogen kunde inte läsas in",
+        "Reload the page to try again.": "Läs in sidan igen för att försöka på nytt.",
+        "No catalog has the slug {slug}.": "Ingen katalog har slug {slug}.",
+        "This catalog has no registers or schemas configured": "Den här katalogen har inga register eller scheman konfigurerade",
+        "Add a register and a schema to the catalog to list its publications here.": "Lägg till ett register och ett schema i katalogen för att visa dess publikationer här.",
+        "Open catalog": "Öppna katalog",
+        "Register and schema": "Register och schema",
+        "{schema} in {register}": "{schema} i {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Skapa din första katalog. Den är behållaren som dina publikationer ska ligga i. Välj registret Publication och schemat Publication, så att katalogen visar publikationerna du lägger till."
     },
     "nplurals=2; plural=(n != 1);"
 )
