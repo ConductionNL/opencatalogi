@@ -6,8 +6,8 @@ depends_on: []
 # Proposal: harvest-feed-intake
 
 Second slice of the re-scoped `dcat-oai-pmh-harvesting` umbrella. The delta
-spec is authored when this change is picked up, so it is written against the
-OR engine surface of that moment instead of going stale here.
+spec and `design.md` were written in the spec round of 2026-10-07, against the
+OpenRegister flow engine as it stands on `development` that day.
 
 ## Summary
 
@@ -37,7 +37,8 @@ vocabulary and review UI are the next slice (`harvest-conflict-policies`).
   timeouts, backoff); if integriq (OpenConnector) is installed its source
   abstraction MAY be the fetch layer, but this slice MUST NOT hard-depend on
   it
-- JSON-path item mapping (no RML — cut), checksum (SHA-256 over normalised
+- Item mapping through an OpenRegister mapping, whose dot paths are the
+  JSON-path subset this slice needs (design D1; no RML, cut), checksum (SHA-256 over normalised
   payload), provenance (`dct:source`, `prov:wasDerivedFrom`) on the local
   object, soft tombstone flag for items that disappear upstream
 - Feed CRUD admin surface (settings section, no dashboard yet)

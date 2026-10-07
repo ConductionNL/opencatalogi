@@ -1,16 +1,15 @@
 # Tasks: harvest-conflict-policies
 
-- [ ] 0.1 Author the delta spec: the four policies, the full item state
-      machine (every transition), resolution actions incl. per-field merge
-      and bulk, resolution audit
-- [ ] 1.1 Policy execution in the harvest handler; evaluate rule-shaped
-      policies via the shared OR decision-table evaluator, never an app-local
-      matcher
-- [ ] 1.2 Idempotent re-entry for items parked `conflict` by
-      harvest-feed-intake
-- [ ] 2.1 Manual-review queue page (pagination >100) + resolution modal with
-      side-by-side and per-field diff
-- [ ] 2.2 Resolution handler: link/update/discard + audit record; bulk apply
-- [ ] 3.1 Unit tests per policy and per state transition
-- [ ] 3.2 e2e: conflict created → reviewed → merged, and a bulk resolution
-- [ ] 4.1 i18n (nl/en) for queue + modal; quality gates as usual
+The delta spec is `specs/harvest-conflict-policies/spec.md` (REQ-HCP-001 to REQ-HCP-008); read `design.md` first. Build after `harvest-feed-intake` has merged. Read `openspec/woo-build-rules.md` for the branch, test and verification rules. The review queue and modal have no board yet (design D8): ask for one before 2.1.
+
+- [x] 0.1 Author the delta spec: the four policies, the full item state machine (every transition), resolution actions incl. per-field merge and bulk, resolution audit (spec round 2026-10-07)
+- [ ] 1.1 Fields of design D5 in `lib/Settings/register.d/harvest.json`: `conflictPolicy` (default `manual-review`) and `conflictRules` on `harvest-feed`; `harvestedPayload`, `policyApplied`, `resolutions` on `harvested-item`; `shadowed` and `rejected` counts on `harvest-run`. Bump the fragment version (REQ-HCP-001). Verify: `HarvestRegisterFragmentTest::testConflictPolicyDefaultsToManualReview`.
+- [ ] 1.2 Policy execution in `lib/Flow/HarvestFeedNode.php` through `lib/Service/Harvest/ConflictPolicyService.php`, with the `deleted-locally` override and draft-only kept (REQ-HCP-002). Verify: `ConflictPolicyTest` methods named in the spec.
+- [ ] 1.3 Rule-shaped policies: validate `conflictRules` at save with OpenRegister `DecisionTableValidator`, evaluate per collision with `DecisionTableEvaluator`, feed default on no match; no app-local matcher (REQ-HCP-003). Verify: `ConflictRulesTest::testTheMatchingRowPicksThePolicy`, `::testAnUnexecutableTableIsRefusedAtSave`.
+- [ ] 1.4 State machine `lib/Service/Harvest/HarvestItemStateMachine.php` with the D4 table as data; every write of `state` goes through it (REQ-HCP-004). Verify: `HarvestItemStateMachineTest`, one data-provider row per D4 row, plus `::testEveryTransitionOutsideTheTableIsRefused`.
+- [ ] 1.5 Idempotent re-entry for items parked `conflict` by harvest-feed-intake: a repair step and the payload fill on the next run (REQ-HCP-008). Verify: `HarvestConflictMigrationTest::testAnOldConflictIsFilledOnTheNextRunAndOnlyOnce`.
+- [ ] 2.1 Review queue: `lib/Controller/HarvestReviewController.php` (`GET /api/harvest/review`, server-side paging at 50, RBAC-filtered), route, page `src/views/harvest/HarvestReview.vue` with selection bar and empty state, menu entry in the manifest (REQ-HCP-005). Verify: `HarvestReviewControllerTest::testTheQueuePagesOnTheServer`, `::testItemsOutsideTheUsersRightsAreHidden`.
+- [ ] 2.2 Resolution modal `src/modals/HarvestConflictModal.vue`: differing fields only, side by side, NcSelect with `inputLabel` per field, the four actions, the "arrives with the next run" state (REQ-HCP-005, REQ-HCP-008). Policy choice with one-line explanations and the `overlay` warning in `src/modals/HarvestFeedModal.vue` (REQ-HCP-001).
+- [ ] 2.3 Resolution handler `lib/Service/Harvest/HarvestResolutionService.php`: keep local, use harvested, merge, discard, and bulk; writes under the resolving user, appends to `resolutions` (REQ-HCP-006, REQ-HCP-007). Verify: `HarvestResolutionServiceTest::testOneFailingItemLeavesTheOthersResolved`, `::testAMergeRecordsUserFieldsAndObject`.
+- [ ] 3.1 e2e `tests/e2e/harvest-conflict-review.spec.ts`: local edit, re-run, per-field merge, then bulk keep-local over two items. Carries `@e2e` for REQ-HCP-001 "An administrator picks a policy", REQ-HCP-005 "An editor merges one field" and REQ-HCP-006 "A bulk keep-local over two items".
+- [ ] 4.1 i18n (nl and en) for the queue, the modal and the policy choice; quality as in `harvest-feed-intake` task 4.1.

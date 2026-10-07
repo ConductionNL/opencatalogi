@@ -1,23 +1,17 @@
 # Tasks: harvest-feed-intake
 
-Authoring order: the delta spec (`specs/harvest-feed-intake/spec.md`) is
-task 0 — write it against the OR flow-engine surface current at pickup
-(`TriggerScheduleNode` contract, contributed-node registration, `runAs`
-scoping per OR `flow-engine-consumer-seams`), then implement.
+The delta spec is `specs/harvest-feed-intake/spec.md` (REQ-HFI-001 to REQ-HFI-010); read `design.md` first, D1 names what is reused from OpenRegister and integriq. Read `openspec/woo-build-rules.md` for the branch, test and verification rules. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`.
 
-- [ ] 0.1 Author the delta spec: feed registration, scheduled flow execution,
-      mapping, checksum skip, provenance, binary conflict parking, tombstone
-- [ ] 1.1 Register fragment with the three schemas (ADR-037), no app tables
-- [ ] 1.2 Feed CRUD settings surface + validation (URL guard, JSON-path
-      syntax, schedule)
-- [ ] 2.1 Flow materialisation per enabled feed: `TriggerScheduleNode` with
-      explicit `runAs`; create/update/retire the flow with the feed
-- [ ] 2.2 Harvest handler (contributed node): fetch → parse DCAT JSON-LD →
-      JSON-path map → checksum compare → save via ObjectService with
-      provenance; park collisions as `conflict`; tombstone disappeared items
-- [ ] 2.3 HarvestRun accounting per execution
-- [ ] 3.1 Unit tests: mapping, checksum skip, conflict parking, tombstone,
-      flow-materialisation idempotency
-- [ ] 3.2 e2e: register a feed against a served fixture, run it, assert the
-      local object + provenance + run counts
-- [ ] 4.1 Quality: linters individually, hydra gates `--scope-to-diff`
+- [x] 0.1 Author the delta spec: feed registration, scheduled flow execution, mapping, checksum skip, provenance, binary conflict parking, tombstone (spec round 2026-10-07)
+- [ ] 1.1 Register fragment `lib/Settings/register.d/harvest.json` (ADR-037) with schemas `harvest-feed`, `harvested-item`, `harvest-run` as design D5 lists them, admin-only read and write, no app tables (REQ-HFI-001). Verify: `tests/Unit/Settings/HarvestRegisterFragmentTest.php` asserts the three schemas, their required fields and the admin-only rule.
+- [ ] 1.2 Shared outbound-URL guard: move `DirectoryService::assertSafeOutboundUrl()` and its per-hop redirect check into `lib/Service/OutboundUrlGuard.php`; `DirectoryService` calls it with no behaviour change (REQ-HFI-004). Verify: the existing DirectoryService tests stay green, `tests/Unit/Service/OutboundUrlGuardTest.php` covers private, loopback, link-local, metadata and a redirect hop.
+- [ ] 1.3 Feed validation and CRUD: `lib/Service/Harvest/HarvestFeedValidator.php` (URL guard, five-field cron, enabled `runAs`, mapping exists, schema in catalog), `lib/Controller/HarvestFeedController.php` admin-only, routes in `appinfo/routes.php` (REQ-HFI-001). Verify: `HarvestFeedValidatorTest::testAPrivateAddressIsRefused`, `::testAMissingRunAsIsRefused`, `HarvestFeedControllerTest::testANonAdminIsRefused`.
+- [ ] 1.4 Settings section "Harvest feeds" in `src/views/settings/HarvestFeeds.vue` under `#section-harvest-feeds`: one card per feed (source, last run with time, status and count, Run now, Switch off) after the GitHub harvest card on board `OcInstellingen`; "New" opens `src/modals/HarvestFeedModal.vue` (NcSelect with `inputLabel`, ADR-004); nl and en strings (REQ-HFI-001, REQ-HFI-003, REQ-HFI-010).
+- [ ] 2.1 Flow materialisation `lib/Service/Harvest/HarvestFlowMaterialiser.php`: one flow per feed keyed by the feed uuid, schedule trigger with `cron` and `runAs`, manual trigger, node `opencatalogi.harvest-feed`, end; update on save, disable on switch-off, delete with the feed (REQ-HFI-002). Verify: `HarvestFlowMaterialiserTest::testEnablingCreatesOneFlowWithScheduleAndRunAs`, `::testASecondSaveUpdatesTheSameFlow`, `::testDisablingDisablesTheFlow`.
+- [ ] 2.2 Contributed node `lib/Flow/HarvestFeedNode.php` registered on `RegisterFlowNodesEvent`: fetch (guard, or `openconnector.source-call` when `sourceSlug` and integriq is installed), `lib/Service/Harvest/DcatJsonLdParser.php`, map through OpenRegister `MappingService`, checksum `lib/Service/Harvest/HarvestChecksum.php`, the item decision table of design D4, save via `ObjectService::saveObject()` with `dct:source` and `prov:wasDerivedFrom` written after mapping, draft-only, tombstone after a complete run only (REQ-HFI-004 to REQ-HFI-009). Verify: `HarvestFetcherTest`, `DcatJsonLdParserTest`, `HarvestChecksumTest` and `HarvestFeedNodeTest` methods named in the spec scenarios; each fails before the change.
+- [ ] 2.3 Run now: `POST /api/harvest/feeds/{id}/run` starts the flow's manual trigger through OpenRegister, refused while a run is in progress (REQ-HFI-003).
+- [ ] 2.4 Run accounting `lib/Service/Harvest/HarvestRunRecorder.php` (REQ-HFI-010). Verify: `HarvestRunRecorderTest::testCountsMatchTheItems`.
+- [ ] 3.1 Fixtures `tests/fixtures/harvest/dcat-catalog.jsonld` (three datasets) and `dcat-catalog-v2.jsonld` (one changed, one removed, one without `@id`).
+- [ ] 3.2 e2e `tests/e2e/harvest-feed.spec.ts`: register a feed against the served fixture, Run now, assert the draft publication, its `dct:source` and the run counts on the card. Carries `@e2e` for REQ-HFI-001 "A valid feed is saved" and REQ-HFI-003.
+- [ ] 3.3 Live: run one feed on the dev instance against a public DCAT JSON-LD catalog and paste the run's counts and one draft in the PR body.
+- [ ] 4.1 Quality: diff check while building; once before push `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, `npm run lint`, `format`, `check:l10n`; hydra gates `--scope-to-diff`. One PR `--base development`.
