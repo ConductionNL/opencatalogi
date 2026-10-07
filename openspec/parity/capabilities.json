@@ -478,7 +478,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:490 Catalogs page -> CatalogiIndex.vue:243 onAdd opens CatalogModal; src/modals/catalog/CatalogModal.vue:63-92 title, summary, slug fields; CatalogModal.vue:466 objectStore.createObject -> OR objects API (object.js:1256); PublicationsController.php:433 serves /api/{catalogSlug}"
+				"evidence": "src/manifest.json:490 Catalogs page -> CatalogiIndex.vue:243 onAdd opens CatalogModal; src/modals/catalog/CatalogModal.vue:63-92 title, summary, slug fields; CatalogModal.vue:466 objectStore.createObject -> OR objects API (object.js:1256); PublicationsController.php:433 serves /api/{catalogSlug}",
+				"change": "retrofit-2026-05-26-catalog-management"
 			},
 			"reachedOn": "/catalogi Add Catalog (CatalogiIndex.vue:31, admin only) -> CatalogModal.vue:466",
 			"note": "The web address is the slug, served as GET /apps/opencatalogi/api/{slug}. Add, edit, copy and delete are admin-only (CatalogiIndex.vue:31,168).",
@@ -508,7 +509,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/modals/catalog/CatalogModal.vue:110-119 registers and schemas pickers, saved at :437-449; lib/Service/PublicationService.php:526 rejects schemas outside the catalog context; lib/Service/EventService.php:317 auto-publish matches catalog registers/schemas"
+				"evidence": "src/modals/catalog/CatalogModal.vue:110-119 registers and schemas pickers, saved at :437-449; lib/Service/PublicationService.php:526 rejects schemas outside the catalog context; lib/Service/EventService.php:317 auto-publish matches catalog registers/schemas",
+				"change": "retrofit-2026-05-26-catalog-management"
 			},
 			"reachedOn": "/catalogi -> CatalogModal (CatalogiIndex.vue:297 editCatalog)",
 			"note": "The choice drives the public /api/{slug} scope. The staff Publications page ignores it: it is hard-wired to register/schema 'publication' (manifest.json:523-531).",
@@ -538,7 +540,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:488 Catalogs page (CatalogiIndex.vue:2 CnIndexPage), row click -> CatalogDetail (CatalogiIndex.vue:259); CatalogDetailPage.vue:311 openPublications -> /publications/:catalogSlug; manifest.json:521 Publications page -> CatalogPublicationsIndex.vue:190 lists the catalog's registers x schemas (services/catalogScope.js), the same scope as PublicationQueryService::buildCatalogSearchQuery"
+				"evidence": "src/manifest.json:488 Catalogs page (CatalogiIndex.vue:2 CnIndexPage), row click -> CatalogDetail (CatalogiIndex.vue:259); CatalogDetailPage.vue:311 openPublications -> /publications/:catalogSlug; manifest.json:521 Publications page -> CatalogPublicationsIndex.vue:190 lists the catalog's registers x schemas (services/catalogScope.js), the same scope as PublicationQueryService::buildCatalogSearchQuery",
+				"change": "retrofit-2026-05-26-catalog-management"
 			},
 			"reachedOn": "/catalogi -> /catalogi/:id -> /publications/:catalogSlug",
 			"note": "The overview and the detail page work. A catalogue's publications page lists only that catalogue's publications: its numeric registers x schemas, one pair at a time, with a selector when there is more than one pair.",
@@ -599,7 +602,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Settings/publication_register.json:136 publication.themes[] $ref theme; src/manifest.json:990 Themes index page and :1015 ThemeDetail; manifest.json:644 pub-related widget renders theme names; appinfo/routes.php:179 public GET /api/themes (ThemesController.php:209); portaliq src/site/components/FederatedSearchBlock.vue:538 facetField default 'themes'"
+				"evidence": "lib/Settings/publication_register.json:136 publication.themes[] $ref theme; src/manifest.json:990 Themes index page and :1015 ThemeDetail; manifest.json:644 pub-related widget renders theme names; appinfo/routes.php:179 public GET /api/themes (ThemesController.php:209); portaliq src/site/components/FederatedSearchBlock.vue:538 facetField default 'themes'",
+				"spec": "openspec/specs/content-management"
 			},
 			"reachedOn": "/themes (staff); GET /apps/opencatalogi/api/themes (public); portaliq FederatedSearchBlock facets on themes",
 			"note": "Readers browse by theme on the portaliq search block, which facets the federation endpoint on themes.",
@@ -629,7 +633,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Settings/publication_register.json:848 glossary schema (title, summary, description, externalLink, keywords); src/manifest.json:1144 Glossary index and :1169 GlossaryDetail with a related-terms graph; appinfo/routes.php:176-177 public GET /api/glossary (GlossaryController.php:212)"
+				"evidence": "lib/Settings/publication_register.json:848 glossary schema (title, summary, description, externalLink, keywords); src/manifest.json:1144 Glossary index and :1169 GlossaryDetail with a related-terms graph; appinfo/routes.php:176-177 public GET /api/glossary (GlossaryController.php:212)",
+				"spec": "openspec/specs/content-management"
 			},
 			"reachedOn": "/glossary (staff, manifest.json:1144); GET /apps/opencatalogi/api/glossary (public)",
 			"provider": "opencatalogi",
@@ -689,7 +694,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "Staff pages read through OR objects API (object.js:890 /apps/openregister/api/objects), where OR applies its default multitenancy; opencatalogi's public reads deliberately disable it (openspec/specs/catalogs/spec.md:26 'no RBAC/multitenancy filters'; PublicationsController.php:1166 only uses/used pass _multitenancy: true)"
+				"evidence": "Staff pages read through OR objects API (object.js:890 /apps/openregister/api/objects), where OR applies its default multitenancy; opencatalogi's public reads deliberately disable it (openspec/specs/catalogs/spec.md:26 'no RBAC/multitenancy filters'; PublicationsController.php:1166 only uses/used pass _multitenancy: true)",
+				"spec": "openspec/specs/opencatalogi-adopt-or-abstractions"
 			},
 			"reachedOn": "/catalogi and /publications/:catalogSlug through OR's active-organisation scoping",
 			"note": "Isolation rests entirely on OR multitenancy. opencatalogi has no org-scoping logic of its own, and its public API serves every organisation's catalogues. Not verified live. Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-03-22-saas-multi-tenant; the missing half is opencatalogi's own work, so the owner moved to ConductionNL/opencatalogi (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister).",
@@ -750,7 +756,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "CatalogiIndex.vue:176-181 Copy row action (admin) -> CatalogiIndex.vue:306 setDialog('copyObject'); src/dialogs/generic/CopyObjectDialog.vue:104-126 -> object.js:2133 copyObject prefixes 'Kopie van' and createObject; Publications page actionToggles showCopyAction true (manifest.json:529-535)"
+				"evidence": "CatalogiIndex.vue:176-181 Copy row action (admin) -> CatalogiIndex.vue:306 setDialog('copyObject'); src/dialogs/generic/CopyObjectDialog.vue:104-126 -> object.js:2133 copyObject prefixes 'Kopie van' and createObject; Publications page actionToggles showCopyAction true (manifest.json:529-535)",
+				"change": "retrofit-2026-05-26-generic-dialogs"
 			},
 			"reachedOn": "/catalogi row Copy -> CopyObjectDialog; /publications/:catalogSlug row Copy (CnIndexPage)",
 			"note": "A copied catalogue keeps the original slug field, so two catalogues can share one web address until someone edits it.",
@@ -780,7 +787,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:523-536 Publications index page, showAdd true, schema 'publication'; publication_register.json:100-217 title, summary, description, themes[], organization; nextcloud-vue CnIndexPage selfModeActions.js:185 handleFormSave -> OR saveObject"
+				"evidence": "src/manifest.json:523-536 Publications index page, showAdd true, schema 'publication'; publication_register.json:100-217 title, summary, description, themes[], organization; nextcloud-vue CnIndexPage selfModeActions.js:185 handleFormSave -> OR saveObject",
+				"spec": "openspec/specs/publications"
 			},
 			"reachedOn": "/publications/:catalogSlug Add (CnIndexPage self-fetch form)",
 			"note": "There is no 'category' property. themes[] is the only categorisation (publication_register.json:136).",
@@ -810,7 +818,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json:650 PublicationDetail pub-files widget, integrationId 'files'; nextcloud-vue src/integrations/builtin/files.js maps it to OR FilesProvider (Nextcloud Files storage), tab CnFilesTab + widget CnFilesCard; PublicationService.php:1003 createObjectFilesZip reads the same files"
+				"evidence": "src/manifest.json:650 PublicationDetail pub-files widget, integrationId 'files'; nextcloud-vue src/integrations/builtin/files.js maps it to OR FilesProvider (Nextcloud Files storage), tab CnFilesTab + widget CnFilesCard; PublicationService.php:1003 createObjectFilesZip reads the same files",
+				"spec": "openspec/specs/file-management"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id Attachments widget",
 			"provider": "openregister",
@@ -840,7 +849,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "object.js:2849/2897 publishAttachment/depublishAttachment -> OR /files/{id}/publish; only caller is dialogs/attachment/MassAttachmentModal.vue:233, opened from modals/object/ViewObject.vue:2328, which is reached only from Dashboard.vue:1066 createPublication (new object) and MergeObject; the PublicationDetail files widget (manifest.json:650) has no publish toggle"
+				"evidence": "object.js:2849/2897 publishAttachment/depublishAttachment -> OR /files/{id}/publish; only caller is dialogs/attachment/MassAttachmentModal.vue:233, opened from modals/object/ViewObject.vue:2328, which is reached only from Dashboard.vue:1066 createPublication (new object) and MergeObject; the PublicationDetail files widget (manifest.json:650) has no publish toggle",
+				"change": "retrofit-2026-05-26-mass-object-actions"
 			},
 			"reachedOn": "nothing on the publication detail page; only the legacy ViewObject modal",
 			"note": "The per-file publish endpoint and store actions exist, but the page staff actually use for a publication does not expose them.",
@@ -871,7 +881,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "PublicationStateController (GET /api/publications/{id}/visibility, POST .../publish, .../withdraw, .../files/{fileId}/withdraw), rights from OpenRegister's PermissionHandler via PublicationRights before any side effect; PublicationStateService computes draft/scheduled/public/withdrawn/archived from the dates; publication-visibility widget in src/manifest.json PublicationDetail with src/dialogs/publication/WithdrawPublicationDialog.vue; depublication.file for a single document; Archive stays the final lifecycle step",
-				"change": "archive/2026-09-30-publications-publish-and-withdraw-action"
+				"change": "publications-publish-and-withdraw-action"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id header Archive action",
 			"note": "Withdrawing is one action (Archive) but cannot be undone. Publishing is a date field, not a status change. DepublicationController (/api/publications/depublish) and PublishPublicationDialog have no mounted caller. Specified in openspec/changes/publications-publish-and-withdraw-action (OpenSpec pass 2026-09-27).",
@@ -901,7 +911,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json:565 publicationDate/depublicationDate editable in pub-data widget; publication_register.json:291-310 public read only when publicationDate <= $now; PublicationQueryService.php:1008-1040 isPublished date check on public reads"
+				"evidence": "src/manifest.json:565 publicationDate/depublicationDate editable in pub-data widget; publication_register.json:291-310 public read only when publicationDate <= $now; PublicationQueryService.php:1008-1040 isPublished date check on public reads",
+				"spec": "openspec/specs/auto-publishing"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id Publication data card (set a future publicationDate)",
 			"note": "Hiding is enforced by OR's conditional RBAC match plus opencatalogi's own date check on the public path.",
@@ -962,7 +973,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json:543 PublicationDetail is a CnDetailPage; nextcloud-vue v2.56.0 CnDetailPage.vue:3320-3337 openEditForm takes the lock via useObjectLock (OR /lock), CnDetailPage.vue:301 CnLockedBanner shows holder and Unlock"
+				"evidence": "src/manifest.json:543 PublicationDetail is a CnDetailPage; nextcloud-vue v2.56.0 CnDetailPage.vue:3320-3337 openEditForm takes the lock via useObjectLock (OR /lock), CnDetailPage.vue:301 CnLockedBanner shows holder and Unlock",
+				"change": "retrofit-2026-05-26-mass-object-actions"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id Edit (lock taken on open)",
 			"note": "The lock is implicit on edit, not a separate Lock button. The app's own LockObject.vue modal has no caller.",
@@ -992,7 +1004,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json:750 PublicationDetail sidebar History tab = audit widget; nextcloud-vue CnAuditTrailTab.vue:78-81 renders each entry's changed fields"
+				"evidence": "src/manifest.json:750 PublicationDetail sidebar History tab = audit widget; nextcloud-vue CnAuditTrailTab.vue:78-81 renders each entry's changed fields",
+				"spec": "openregister/openspec/specs/enhanced-audit-trail"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id sidebar History tab",
 			"note": "You see what changed per edit, but there is no list of versions to open or compare and no revert.",
@@ -1022,7 +1035,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json:750 PublicationDetail sidebar tab 'History' with widgets [{type: audit}]; nextcloud-vue CnAuditTrailTab.vue:43-67 shows user and date per entry, with a user filter (:16)"
+				"evidence": "src/manifest.json:750 PublicationDetail sidebar tab 'History' with widgets [{type: audit}]; nextcloud-vue CnAuditTrailTab.vue:43-67 shows user and date per entry, with a user filter (:16)",
+				"spec": "openregister/openspec/specs/enhanced-audit-trail"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id sidebar History tab",
 			"provider": "openregister",
@@ -1082,7 +1096,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Listener/ObjectCreatedEventListener.php:103-117 -> EventService.php:133 handleObjectCreateEvents when auto_publish_objects is on; EventService.php:277-318 rule = object's register+schema is in some catalog; Settings.vue:688 publishing options (routes.php:46-47); PublicationRuleService.php:180 publishes() conditions are not called from the listener"
+				"evidence": "lib/Listener/ObjectCreatedEventListener.php:103-117 -> EventService.php:133 handleObjectCreateEvents when auto_publish_objects is on; EventService.php:277-318 rule = object's register+schema is in some catalog; Settings.vue:688 publishing options (routes.php:46-47); PublicationRuleService.php:180 publishes() conditions are not called from the listener",
+				"spec": "openspec/specs/auto-publishing"
 			},
 			"reachedOn": "Admin settings publishing options, then any OR object created in a catalogued schema",
 			"note": "Auto-publish works, but the only rule is catalogue membership. The conditional publicationRule engine is used for preview and public search only.",
@@ -1112,7 +1127,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:205 GET /api/catalogs/{slug}/quality -> StatsController.php:223 + QualityService.php:106 scoreDataset; routes.php:28-29 DCAT validate endpoints; grep of src/ finds no caller of /quality; publication_register.json:289 hardValidation false, required only title"
+				"evidence": "appinfo/routes.php:205 GET /api/catalogs/{slug}/quality -> StatsController.php:223 + QualityService.php:106 scoreDataset; routes.php:28-29 DCAT validate endpoints; grep of src/ finds no caller of /quality; publication_register.json:289 hardValidation false, required only title",
+				"change": "publication-quality-metrics"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/quality (authenticated); no page calls it",
 			"note": "The scoring backend exists without a staff page, so nobody sees the missing metadata before publishing.",
@@ -1204,7 +1220,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:256 public GET /api/{catalogSlug}/{id}/download -> PublicationsController.php:992 -> PublicationService.php:1003 createObjectFilesZip plus a metadata PDF added to the ZIP (:1007-1025); federation twin routes.php:243"
+				"evidence": "appinfo/routes.php:256 public GET /api/{catalogSlug}/{id}/download -> PublicationsController.php:992 -> PublicationService.php:1003 createObjectFilesZip plus a metadata PDF added to the ZIP (:1007-1025); federation twin routes.php:243",
+				"spec": "openspec/specs/download-service"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{id}/download (public)",
 			"note": "No staff page or portaliq block links to it (portaliq PublicationDetailBlock does not call /download).",
@@ -1234,7 +1251,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json:529-535 Publications page leaves showMassImport at the CnIndexPage default true; nextcloud-vue CnMassImportDialog.vue:250 accepts .json,.xlsx,.xls,.csv; selfModeActions.js:168-181 handleMassImport -> runSelfImportRequest to OR import"
+				"evidence": "src/manifest.json:529-535 Publications page leaves showMassImport at the CnIndexPage default true; nextcloud-vue CnMassImportDialog.vue:250 accepts .json,.xlsx,.xls,.csv; selfModeActions.js:168-181 handleMassImport -> runSelfImportRequest to OR import",
+				"spec": "nextcloud-vue/openspec/specs/index-page"
 			},
 			"reachedOn": "/publications/:catalogSlug mass import (CnIndexPage)",
 			"provider": "openregister",
@@ -1264,7 +1282,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "publication.wooCategory (enum infocat001-017, x-enum-labels) in lib/Settings/publication_register.json; SitemapService::sitemapQueries filters the catalogue's registers and schemas on wooCategory, the 'woo' register title lookup stays as a second source; mapDiwooDocument reads wooCategory first; GET /api/woo/categories (WooController::categories, WooService::WOO_CATEGORIES); batch publish files under infocat014; field in the Publication data widget of src/manifest.json PublicationDetail",
-				"change": "archive/2026-09-30-woo-publication-category"
+				"change": "woo-publication-category"
 			},
 			"reachedOn": "publication page (/publications/:catalogSlug/:id), Publication block, Woo information category select; the category sitemaps /api/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocatNNN.xml",
 			"note": "openspec/changes/woo-category-mapping-intake (a per-type default) is still not built; this row does not need it.",
@@ -1294,7 +1312,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:24 sitemap#sitemap; SitemapController.php:94 public; SitemapService.php:297 buildSitemap -> :508 mapDiwooDocument emits diwoo:Document with publisher, informatiecategorie, documenthandeling against diwoo-metadata 0.9.1 xsd (:355-370)"
+				"evidence": "appinfo/routes.php:24 sitemap#sitemap; SitemapController.php:94 public; SitemapService.php:297 buildSitemap -> :508 mapDiwooDocument emits diwoo:Document with publisher, informatiecategorie, documenthandeling against diwoo-metadata 0.9.1 xsd (:355-370)",
+				"spec": "openspec/specs/woo-compliance"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/sitemaps/{categoryCode}/publications (public, harvester); WooReadinessService fetches it; portaliq does not call it",
 			"note": "Only yields documents on installs that imported a 'woo' register with category-titled schemas (SitemapService.php:415-450); the app does not provision it.",
@@ -1324,7 +1343,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Service/TooiVocabularyService.php:138 resolveInformatiecategorie, :168 resolveSoortHandeling, :197 resolveOrganisatie from lib/Settings/tooi_waardelijsten.json; SitemapService.php:532,548,568 binds them at output time; no TOOI picker in src (grep -i tooi src: only manifest notes)"
+				"evidence": "lib/Service/TooiVocabularyService.php:138 resolveInformatiecategorie, :168 resolveSoortHandeling, :197 resolveOrganisatie from lib/Settings/tooi_waardelijsten.json; SitemapService.php:532,548,568 binds them at output time; no TOOI picker in src (grep -i tooi src: only manifest notes)",
+				"spec": "openspec/specs/woo-compliance"
 			},
 			"reachedOn": "nothing for tagging: values are resolved from free text/organisation tooiIdentifier at sitemap time, no page lets staff pick a TOOI value",
 			"note": "SitemapService.php:697 reads organisation 'tooiIdentifier' while the organisation note in manifest.json:796 names the field 'tooi'; mock data carries both.",
@@ -1354,7 +1374,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:23-24 sitemap#index/#sitemap; SitemapController.php:72-103 #[PublicPage] AnonRateLimit; SitemapService.php:179 buildSitemapIndex per catalog+category, :456-470 only catalogs with hasWooSitemap; CatalogModal.vue:130 toggles hasWooSitemap"
+				"evidence": "appinfo/routes.php:23-24 sitemap#index/#sitemap; SitemapController.php:72-103 #[PublicPage] AnonRateLimit; SitemapService.php:179 buildSitemapIndex per catalog+category, :456-470 only catalogs with hasWooSitemap; CatalogModal.vue:130 toggles hasWooSitemap",
+				"spec": "openspec/specs/woo-compliance"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/sitemaps/{categoryCode} (public, harvester); robots.txt and WooReadinessService link to it; portaliq does not call it",
 			"note": "Returns 400 'Schema not configured in catalog' unless an external 'woo' register with category-titled schemas exists (SitemapService.php:415-480).",
@@ -1385,7 +1406,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "RobotsController::index asks OpenRegister for hasWooSitemap catalogues only (and re-checks the flag), one Sitemap line per line with a real line break, User-agent and Allow lines for /apps/opencatalogi/api/ and /index.php/apps/opencatalogi/api/; WooRegistrationService::rootRules renders the nginx and Apache rules that serve it at the domain root, shown with copy buttons in src/views/settings/WooIndexConnection.vue",
-				"change": "archive/2026-09-30-woo-index-harvester-connection"
+				"change": "woo-index-harvester-connection"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/robots.txt (public, harvester); root /robots.txt needs a proxy rewrite (Settings.vue:1395 tells the admin so)",
 			"note": "A harvester reads /robots.txt at the domain root, which the app does not serve without web-server config. Specified in openspec/changes/woo-index-harvester-connection (OpenSpec pass 2026-09-27).",
@@ -1415,7 +1436,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:67-68; WooReadinessController.php; WooReadinessService.php:139 runCheck fetches robots.txt, sitemapindex, category sitemaps, DIWOO validity, a sample URL and persists the report; src/views/settings/Settings.vue:150-280 section, :1241 loadWooReadiness, :1261 runWooReadinessCheck"
+				"evidence": "appinfo/routes.php:67-68; WooReadinessController.php; WooReadinessService.php:139 runCheck fetches robots.txt, sitemapindex, category sitemaps, DIWOO validity, a sample URL and persists the report; src/views/settings/Settings.vue:150-280 section, :1241 loadWooReadiness, :1261 runWooReadinessCheck",
+				"change": "woo-index-harvester-readiness"
 			},
 			"reachedOn": "/settings/admin/opencatalogi#section-woo-index (Settings.vue:1244 GET /api/woo/readiness, :1267 POST /api/woo/readiness/run)",
 			"note": "Also feeds the connection registry card 'woo-index' (lib/Settings/connections.json).",
@@ -1445,7 +1467,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "SitemapService.php:745 validateDiwooOutput dry-runs mapDiwooDocument and returns per-document value-list violations; SitemapController.php:122 diwooReport (admin); WooReadinessService.php:401 calls it in the readiness run shown in Settings.vue:188-215"
+				"evidence": "SitemapService.php:745 validateDiwooOutput dry-runs mapDiwooDocument and returns per-document value-list violations; SitemapController.php:122 diwooReport (admin); WooReadinessService.php:401 calls it in the readiness run shown in Settings.vue:188-215",
+				"change": "woo-index-harvester-readiness"
 			},
 			"reachedOn": "/settings/admin/opencatalogi#section-woo-index 'Run check' (diwoo-xsd check); standalone GET /api/{catalogSlug}/sitemaps/{categoryCode}/validate has no page caller",
 			"note": "Advisory only, validates page 1 of one category per catalog in the readiness run; same 'woo' register dependency as woo-sitemap.",
@@ -1476,7 +1499,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "POST /api/woo/registration (WooRegistrationController, admin) composes organisation, TOOI identifier, root robots.txt and every sitemap index and hands it to NationalIndexService::registerWithWooIndex (national-woo-index channel); status moves to requested only on an answer, answer stored; readiness check daily (BackgroundJob/WooReadinessCheck) and once when a catalogue is switched on (WooReadinessTriggerListener -> WooReadinessCheckNow)",
-				"change": "archive/2026-09-30-woo-index-harvester-connection"
+				"change": "woo-index-harvester-connection"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/robots.txt and /api/{catalogSlug}/sitemaps/* (public, KOOP harvester)",
 			"note": "Works only as far as woo-sitemap works (external 'woo' register) and root robots.txt is rewritten. Specified in openspec/changes/woo-index-harvester-connection (OpenSpec pass 2026-09-27).",
@@ -1507,7 +1530,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Listener/PlooiDeliveryListener.php queues lib/BackgroundJob/PlooiDelivery.php -> lib/Service/Publication/PlooiDeliveryService.php::deliver -> NationalIndexService::deliverToPlooi (integriq source from channel_sources); catalog.plooiDelivery + publication.plooi* in lib/Settings/publication_register.json; PLOOI delivery block in src/manifest.json PublicationDetail",
-				"change": "archive/2026-09-29-woo-national-delivery-repair"
+				"change": "woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no route or page calls registerWithWooIndex",
 			"note": "Even when wired, every hand-over through the integriq gateway fails on the signature mismatch.",
@@ -1537,7 +1560,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:77 publicationRules#previewRule (admin) -> PublicationRuleService.php:262 preview; rules stored as publicationRule objects (register.d/publication-inspection-and-the-national-indexes.json); CommunityController.php:392 applies them in the Atom feed; no src caller of /api/publication-rules (grep)"
+				"evidence": "appinfo/routes.php:77 publicationRules#previewRule (admin) -> PublicationRuleService.php:262 preview; rules stored as publicationRule objects (register.d/publication-inspection-and-the-national-indexes.json); CommunityController.php:392 applies them in the Atom feed; no src caller of /api/publication-rules (grep)",
+				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "nothing for staff: no page authors a rule or calls the preview; rules take effect only in GET /api/feeds/{catalogSlug} (public)",
 			"provider": "opencatalogi",
@@ -1596,7 +1620,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:85-86 GET/POST /api/published-collections (admin) -> PublishedCollectionsService.php:102 save to IAppConfig after rule validation; :145 publishes() has no caller (grep '->publishes(' lib); no src caller of /api/published-collections"
+				"evidence": "appinfo/routes.php:85-86 GET/POST /api/published-collections (admin) -> PublishedCollectionsService.php:102 save to IAppConfig after rule validation; :145 publishes() has no caller (grep '->publishes(' lib); no src caller of /api/published-collections",
+				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "nothing: no page reads or writes the collections, and the saved conditions are never consulted at publish or read time",
 			"provider": "opencatalogi",
@@ -1747,7 +1772,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:206 stats#export -> StatsController.php:280 CSV per catalog (publication, category, date, views, downloads) with from/to; src/services/usageStats.js:71 catalogExportUrl has no caller (grep); manifest.json:1524 UsageReport shows totals on screen only"
+				"evidence": "appinfo/routes.php:206 stats#export -> StatsController.php:280 CSV per catalog (publication, category, date, views, downloads) with from/to; src/services/usageStats.js:71 catalogExportUrl has no caller (grep); manifest.json:1524 UsageReport shows totals on screen only",
+				"change": "publication-usage-analytics"
 			},
 			"reachedOn": "nothing links the export: GET /apps/opencatalogi/api/catalogs/{slug}/stats/export works for a logged-in user typing the URL; /reports/usage shows figures without export",
 			"provider": "opencatalogi",
@@ -1776,7 +1802,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:454-472 WooBatches index (showAdd) creates a bare wooBatch object via the generic form; WooService.php:335 createBatch (creates assessments + deck cards) is only reached by POST /api/woo/batches (routes.php:60), which no src file calls"
+				"evidence": "src/manifest.json:454-472 WooBatches index (showAdd) creates a bare wooBatch object via the generic form; WooService.php:335 createBatch (creates assessments + deck cards) is only reached by POST /api/woo/batches (routes.php:60), which no src file calls",
+				"change": "woo-transparency"
 			},
 			"reachedOn": "/woo (generic index + add form); document gathering has no page",
 			"note": "The index has no rowRoute and WooBatchDetail is type custom, so a row click opens nothing (nextcloud-vue 2.56.0 CnPageRenderer.vue:1678-1680).",
@@ -1806,7 +1833,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:62 PUT woo#updateAssessment -> WooService.php:508 stores assessment + grounds + assessedBy; WooBatchDetail.vue:37 activeDocument is never set so WooRedactionView never mounts; WooRedactionView.vue:146 sends POST to the PUT-only route"
+				"evidence": "appinfo/routes.php:62 PUT woo#updateAssessment -> WooService.php:508 stores assessment + grounds + assessedBy; WooBatchDetail.vue:37 activeDocument is never set so WooRedactionView never mounts; WooRedactionView.vue:146 sends POST to the PUT-only route",
+				"change": "woo-transparency"
 			},
 			"reachedOn": "nothing: no page can set a document's assessment",
 			"provider": "opencatalogi",
@@ -1835,7 +1863,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "WooService.php:116 WEIGERINGSGRONDEN (Woo art. 5.1/5.2 list), :517-521 rejects grounds outside it; routes.php:59 GET /api/woo/weigeringsgronden; only caller WooRedactionView.vue:99, which never mounts (WooBatchDetail.vue:37,227)"
+				"evidence": "WooService.php:116 WEIGERINGSGRONDEN (Woo art. 5.1/5.2 list), :517-521 rejects grounds outside it; routes.php:59 GET /api/woo/weigeringsgronden; only caller WooRedactionView.vue:99, which never mounts (WooBatchDetail.vue:37,227)",
+				"change": "woo-transparency"
 			},
 			"reachedOn": "nothing reachable: the selector lives in an unmounted component",
 			"provider": "opencatalogi",
@@ -1894,7 +1923,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "WooService.php:129 getBatch derives counts per status + progressLabel; WooBatchDetail.vue:97-112 loads GET /api/woo/batches/{id}, :185-208 renders the counts"
+				"evidence": "WooService.php:129 getBatch derives counts per status + progressLabel; WooBatchDetail.vue:97-112 loads GET /api/woo/batches/{id}, :185-208 renders the counts",
+				"change": "woo-transparency"
 			},
 			"reachedOn": "/woo/:id (WooBatchDetail) only by typed URL: the /woo index rows do not open it (no rowRoute, detail page is type custom)",
 			"provider": "opencatalogi",
@@ -1923,7 +1953,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "WooService.php:792 canMarkReadyForReview requires zero te_beoordelen and >0 docs, enforced at :813-815; WooBatchDetail.vue:66-71 canReview, :121-131 POST ready-for-review"
+				"evidence": "WooService.php:792 canMarkReadyForReview requires zero te_beoordelen and >0 docs, enforced at :813-815; WooBatchDetail.vue:66-71 canReview, :121-131 POST ready-for-review",
+				"change": "woo-transparency"
 			},
 			"reachedOn": "/woo/:id 'Mark ready for review' button, only by typed URL (index rows dead)",
 			"note": "Server gate is real; but documents cannot be assessed from any page (see wr-assess), so a batch can only pass it via direct API calls.",
@@ -1953,7 +1984,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "WooController.php:244-254 inventarislijst CSV/HTML via WooService.php:715/755; routes.php:64 registers it as POST, but WooBatchDetail.vue:233-238 uses NcButton :href (a GET link) -> 405"
+				"evidence": "WooController.php:244-254 inventarislijst CSV/HTML via WooService.php:715/755; routes.php:64 registers it as POST, but WooBatchDetail.vue:233-238 uses NcButton :href (a GET link) -> 405",
+				"change": "woo-transparency"
 			},
 			"reachedOn": "nothing working: the download buttons on /woo/:id issue GET against a POST-only route",
 			"note": "Output is CSV/HTML, not a spreadsheet file; 'PDF/A' button serves HTML.",
@@ -2013,7 +2045,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "WooService.php:928 publishBatch requires ready_for_review + :870 assertPublishApproved (fails closed if woo_publish_approval_chain unset; no UI sets it); it only writes wooPublication metadata onto the batch (:969-995), creating no publication object; WooBatchDetail.vue:139-149"
+				"evidence": "WooService.php:928 publishBatch requires ready_for_review + :870 assertPublishApproved (fails closed if woo_publish_approval_chain unset; no UI sets it); it only writes wooPublication metadata onto the batch (:969-995), creating no publication object; WooBatchDetail.vue:139-149",
+				"change": "woo-transparency"
 			},
 			"reachedOn": "/woo/:id 'Publish to reading room' (typed URL only); blocked unless an admin sets woo_publish_approval_chain by occ",
 			"note": "readingRoomUrl is /index.php/apps/opencatalogi/<batchId> (:985), not a reading-room page.",
@@ -2043,7 +2076,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/dossiq",
-				"evidence": "ConductionNL/dossiq development 96b8ef8: lib/Settings/templates/woo-verzoek.json (Woo case type, origin indienen); lib/Service/FormsIntakeService.php:94 caseFor() opens a case from a Nextcloud Forms submission for the case type whose intakeFormRef names the form (:186-223), called by lib/Listener/FormSubmittedListener.php:96"
+				"evidence": "ConductionNL/dossiq development 96b8ef8: lib/Settings/templates/woo-verzoek.json (Woo case type, origin indienen); lib/Service/FormsIntakeService.php:94 caseFor() opens a case from a Nextcloud Forms submission for the case type whose intakeFormRef names the form (:186-223), called by lib/Listener/FormSubmittedListener.php:96",
+				"spec": "dossiq/openspec/specs/woo-case-type"
 			},
 			"reachedOn": "dossiq: an administrator binds a Nextcloud Forms form to the Woo case type (caseType.intakeFormRef); a resident submits it and a Woo case opens",
 			"provider": "dossiq",
@@ -2073,7 +2107,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/dossiq",
-				"evidence": "ConductionNL/dossiq development 96b8ef8: lib/Settings/templates/woo-verzoek.json:13 processingDeadline P28D and :17 extensionPeriod P14D on the Woo case type; lib/Service/WOODeadlineService.php:223 checkAndWarn(), run by lib/BackgroundJob/WOODeadlineCheckJob.php:139 for every active Woo case"
+				"evidence": "ConductionNL/dossiq development 96b8ef8: lib/Settings/templates/woo-verzoek.json:13 processingDeadline P28D and :17 extensionPeriod P14D on the Woo case type; lib/Service/WOODeadlineService.php:223 checkAndWarn(), run by lib/BackgroundJob/WOODeadlineCheckJob.php:139 for every active Woo case",
+				"spec": "dossiq/openspec/specs/woo-case-type"
 			},
 			"reachedOn": "dossiq: a Woo request case carries its statutory term; the deadline job warns before it passes",
 			"provider": "dossiq",
@@ -2103,7 +2138,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:78 validateDecision -> PublicationRulesController.php:203 -> DecisionPublicationValidator.php:65 validate against decisionType rules; stateless, caller supplies decision+type; not invoked by any publish path; no src caller"
+				"evidence": "appinfo/routes.php:78 validateDecision -> PublicationRulesController.php:203 -> DecisionPublicationValidator.php:65 validate against decisionType rules; stateless, caller supplies decision+type; not invoked by any publish path; no src caller",
+				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "nothing: POST /api/publication-rules/validate-decision, no page calls it",
 			"provider": "opencatalogi",
@@ -2132,7 +2168,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:87 POST /api/inspections (admin) -> InspectionService.php:68 open computes start/end from recordType.inspectionTermDays + token, InspectionController.php:188 saves it; no src caller of /api/inspections"
+				"evidence": "appinfo/routes.php:87 POST /api/inspections (admin) -> InspectionService.php:68 open computes start/end from recordType.inspectionTermDays + token, InspectionController.php:188 saves it; no src caller of /api/inspections",
+				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "nothing for staff: no page opens an inspection",
 			"provider": "opencatalogi",
@@ -2161,7 +2198,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:225 GET /api/inspections/{id} public -> InspectionController.php:220 follow; InspectionService.php:161 resolveLink hash_equals token, :120 isOpen window -> 410 window-closed after the end date"
+				"evidence": "appinfo/routes.php:225 GET /api/inspections/{id} public -> InspectionController.php:220 follow; InspectionService.php:161 resolveLink hash_equals token, :120 isOpen window -> 410 window-closed after the end date",
+				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/inspections/{id}?token= (public JSON); no portaliq page renders it and no page creates the link",
 			"provider": "opencatalogi",
@@ -2191,7 +2229,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/components/widgets/NationalAnnounceWidget.vue (publication page) -> POST /api/publications/announce -> NationalIndexService::deliver: publicatie gateway via GatewayDeliveryRequestedEvent (national) and handOver with the ConnectionStore source object (other channels)",
-				"change": "archive/2026-09-29-woo-national-delivery-repair"
+				"change": "woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no page, and every delivery reports the channel unreachable",
 			"provider": "opencatalogi",
@@ -2250,7 +2288,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:223-224 public GET /api/publications/verification-key and POST /api/publications/verify -> PublicationDisclosureController.php:226/257 -> DocumentStampService.php:145 verify, :180 publishedKey (null unless publication_signing_key set)"
+				"evidence": "routes.php:223-224 public GET /api/publications/verification-key and POST /api/publications/verify -> PublicationDisclosureController.php:226/257 -> DocumentStampService.php:145 verify, :180 publishedKey (null unless publication_signing_key set)",
+				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/publications/verify (public); no page or portaliq caller, and no stamps are ever issued",
 			"note": "'Published key' is only a SHA fingerprint of a symmetric secret; checking needs the server.",
@@ -2280,7 +2319,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "PublicationRuleService.php:218 projectForAnonymous, :326 projectList; applied at read in CommunityController.php:392-410 (public Atom feed) and PublicationRulesController.php:363 publicSearch (records supplied by the caller); previewRule admin route has no src caller"
+				"evidence": "PublicationRuleService.php:218 projectForAnonymous, :326 projectList; applied at read in CommunityController.php:392-410 (public Atom feed) and PublicationRulesController.php:363 publicSearch (records supplied by the caller); previewRule admin route has no src caller",
+				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/feeds/{catalogSlug} (public); no opencatalogi page to author a publicationRule",
 			"note": "publicSearch filters records the caller posts, it does not read stored records.",
@@ -2310,7 +2350,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:83 POST /api/publications/depublish/acknowledge; lib/Controller/DepublicationController.php:207 acknowledgeWithdrawal checks the channel was sent a withdrawal, then saves acknowledgedAt per channel; lib/Service/Publication/DepublicationService.php outstandingChannels lists unacknowledged ones"
+				"evidence": "appinfo/routes.php:83 POST /api/publications/depublish/acknowledge; lib/Controller/DepublicationController.php:207 acknowledgeWithdrawal checks the channel was sent a withdrawal, then saves acknowledgedAt per channel; lib/Service/Publication/DepublicationService.php outstandingChannels lists unacknowledged ones",
+				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "nothing: admin-only API, no page or store in src/ calls /api/publications/depublish (grep src finds no caller)",
 			"note": "Recording works per channel over the API. No staff screen shows the outstanding channels or records an acknowledgement.",
@@ -2340,7 +2381,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:159 GET /api/dcat -> DcatController.php:163 instance() -> DcatService.php:401 buildInstanceDocument() lists getDcatEnabledCatalogs(); DcatService.php:607 filters on 'hasDcat'=>true; hasDcat is not declared in the catalog schema (publication_register.json:319, hardValidation true :521) and no Vue sets it (grep hasDcat src: 0)"
+				"evidence": "appinfo/routes.php:159 GET /api/dcat -> DcatController.php:163 instance() -> DcatService.php:401 buildInstanceDocument() lists getDcatEnabledCatalogs(); DcatService.php:607 filters on 'hasDcat'=>true; hasDcat is not declared in the catalog schema (publication_register.json:319, hardValidation true :521) and no Vue sets it (grep hasDcat src: 0)",
+				"change": "dcat-ap-harvest"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/dcat (public, harvester); no page or portaliq caller",
 			"note": "The endpoint and serializer work, but the only way into the list is a hasDcat flag the catalog schema does not declare and no UI sets, so the instance document most likely lists zero catalogues. Same shape as the hasOoapi bug #847 described at publication_register.json:504.",
@@ -2370,7 +2412,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:160 GET /api/catalogs/{slug}/dcat -> DcatController.php:202 catalog(): 404 unless DcatService.php:138 isDcatEnabled() (hasDcat) is true; buildCatalogDocument DcatService.php:248 with paging + ETag 304 (DcatController.php:220-232); hasDcat is not declared in the catalog schema (publication_register.json:319, hardValidation true :521) and no Vue sets it (grep hasDcat src: 0)"
+				"evidence": "routes.php:160 GET /api/catalogs/{slug}/dcat -> DcatController.php:202 catalog(): 404 unless DcatService.php:138 isDcatEnabled() (hasDcat) is true; buildCatalogDocument DcatService.php:248 with paging + ETag 304 (DcatController.php:220-232); hasDcat is not declared in the catalog schema (publication_register.json:319, hardValidation true :521) and no Vue sets it (grep hasDcat src: 0)",
+				"change": "dcat-ap-harvest"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/dcat (public, harvester); no page or portaliq caller",
 			"note": "Every catalogue answers 404 'DCAT harvesting is not enabled' unless hasDcat is stored, and there is no toggle for it in CatalogModal.vue (it has hasOoapi at :136, no hasDcat).",
@@ -2400,7 +2443,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "DcatSerializer.php:46-49 FORMATS jsonld/turtle/rdfxml; :66 negotiate() from ?format= or Accept; :118 serialize() -> toTurtle :154, toRdfXml :181; DcatController.php:165,204 call negotiate, 406 on unknown (:370)"
+				"evidence": "DcatSerializer.php:46-49 FORMATS jsonld/turtle/rdfxml; :66 negotiate() from ?format= or Accept; :118 serialize() -> toTurtle :154, toRdfXml :181; DcatController.php:165,204 call negotiate, 406 on unknown (:370)",
+				"change": "dcat-ap-harvest"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/dcat?format=turtle|rdfxml|jsonld and /api/catalogs/{slug}/dcat (public)",
 			"note": "All three serialisations are real; the rating is capped by the same hasDcat gate that keeps the feeds empty or 404 (see od-dcat).",
@@ -2430,7 +2474,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:28 GET /api/catalogs/{slug}/dcat/validate -> DcatController.php:262 validate() (AuthorizedAdminSetting) -> DcatService.php:490 validateCatalog() + :579 mandatoryViolations (title, publisher, landingPage); grep 'dcat' in src/*.vue|js: no caller"
+				"evidence": "routes.php:28 GET /api/catalogs/{slug}/dcat/validate -> DcatController.php:262 validate() (AuthorizedAdminSetting) -> DcatService.php:490 validateCatalog() + :579 mandatoryViolations (title, publisher, landingPage); grep 'dcat' in src/*.vue|js: no caller",
+				"change": "dcat-ap-harvest"
 			},
 			"reachedOn": "nothing: admin-only API route, no page calls it",
 			"note": "Page-less backend. It also only checks three properties, not the full DCAT-AP-NL mandatory set.",
@@ -2460,7 +2505,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:29 GET /api/catalogs/{slug}/dcat/donl-validate -> DcatController.php:301 donlReport() -> DcatService.php:537 validateForDonl(): theme violations + mandatory gaps + harvestSourceUrl (:517); no src caller (grep donl src: 0)"
+				"evidence": "routes.php:29 GET /api/catalogs/{slug}/dcat/donl-validate -> DcatController.php:301 donlReport() -> DcatService.php:537 validateForDonl(): theme violations + mandatory gaps + harvestSourceUrl (:517); no src caller (grep donl src: 0)",
+				"change": "dcat-national-portal-federation"
 			},
 			"reachedOn": "nothing: admin-only API route, no page calls it",
 			"note": "An admin can see what DONL would reject only by calling the API by hand.",
@@ -2490,7 +2536,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:162 GET /api/catalogs/{slug}/schema -> SchemaOrgController.php:165 catalog() -> SchemaOrgService.php:426 buildCatalogNode; PublicationsController.php:822 returns buildPublicationNode on Accept ld+json; Dataset shape needs schemaOrgDataset (SchemaOrgService.php:209), undeclared in catalog schema; portaliq git grep ld+json/schema.org: 0"
+				"evidence": "routes.php:162 GET /api/catalogs/{slug}/schema -> SchemaOrgController.php:165 catalog() -> SchemaOrgService.php:426 buildCatalogNode; PublicationsController.php:822 returns buildPublicationNode on Accept ld+json; Dataset shape needs schemaOrgDataset (SchemaOrgService.php:209), undeclared in catalog schema; portaliq git grep ld+json/schema.org: 0",
+				"spec": "openspec/specs/structured-data-discoverability"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/schema (public JSON-LD); no HTML page embeds it",
 			"note": "Search engines read JSON-LD embedded in HTML pages. Neither opencatalogi nor portaliq embeds it (structured-data-discoverability/spec.md:5 says the embedding frontend is external).",
@@ -2520,7 +2567,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:167-174 8 OOAPI v5 GETs -> OoapiController.php:320-656 organizations/courses/programs/offerings, credential gate :189, isOoapiEnabled OoapiService.php:127; hasOoapi declared publication_register.json:502 and toggled CatalogModal.vue:136; course/program/offering schemas register.d/ooapi-catalog-publication.json"
+				"evidence": "routes.php:167-174 8 OOAPI v5 GETs -> OoapiController.php:320-656 organizations/courses/programs/offerings, credential gate :189, isOoapiEnabled OoapiService.php:127; hasOoapi declared publication_register.json:502 and toggled CatalogModal.vue:136; course/program/offering schemas register.d/ooapi-catalog-publication.json",
+				"change": "ooapi-catalog-publication"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/ooapi/v5/* (authenticated OOAPI consumer); enabled per catalogue in CatalogModal.vue:136",
 			"note": "The course data itself is filled by integriq's ooapi-catalog synchronisation (register.d comment). The consumer allowlist ooapi_consumers can be set only through settings save or occ (SettingsService.php:699).",
@@ -2550,7 +2598,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:205 GET /api/catalogs/{slug}/quality -> StatsController.php:223 quality() -> QualityService.php:48 five EU-MQA dimensions, :106 scoreDataset, admin weights :88; grep 'quality' in src: no caller (src/services/usageStats.js calls only /stats)"
+				"evidence": "routes.php:205 GET /api/catalogs/{slug}/quality -> StatsController.php:223 quality() -> QualityService.php:48 five EU-MQA dimensions, :106 scoreDataset, admin weights :88; grep 'quality' in src: no caller (src/services/usageStats.js calls only /stats)",
+				"change": "publication-quality-metrics"
 			},
 			"reachedOn": "nothing: authenticated API route, no page calls it",
 			"note": "The scoring is real, but no page shows it.",
@@ -2825,7 +2874,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:184 GET /api/directory -> DirectoryController.php:174 index() (PublicPage, CORS) -> DirectoryService.php:2423 getDirectory(); peers read it via DirectoryService.php:471 syncDirectory()"
+				"evidence": "routes.php:184 GET /api/directory -> DirectoryController.php:174 index() (PublicPage, CORS) -> DirectoryService.php:2423 getDirectory(); peers read it via DirectoryService.php:471 syncDirectory()",
+				"spec": "openspec/specs/federation"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/directory (public, peer installations)",
 			"provider": "opencatalogi",
@@ -2854,7 +2904,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "FederationDirectory.vue:18 imports FederationAddDirectoryModal.vue:107 POST /api/listings/add -> routes.php:190 -> ListingsController.php:659 add() (admin) -> DirectoryService.php:471 syncDirectory() with SSRF guard :518"
+				"evidence": "FederationDirectory.vue:18 imports FederationAddDirectoryModal.vue:107 POST /api/listings/add -> routes.php:190 -> ListingsController.php:659 add() (admin) -> DirectoryService.php:471 syncDirectory() with SSRF guard :518",
+				"change": "retrofit-2026-05-26-directory-federation"
 			},
 			"reachedOn": "/directory (FederationDirectory.vue 'Add directory' -> FederationAddDirectoryModal.vue:107)",
 			"provider": "opencatalogi",
@@ -2883,7 +2934,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "info.xml:137 DirectorySync job, DirectorySync.php:83-90 interval from config, :112 doCronSync (DirectoryService.php:192); sync now: Settings.vue:435 button -> :1545 POST /api/listings/sync -> ListingsController.php:592 synchronise()"
+				"evidence": "info.xml:137 DirectorySync job, DirectorySync.php:83-90 interval from config, :112 doCronSync (DirectoryService.php:192); sync now: Settings.vue:435 button -> :1545 POST /api/listings/sync -> ListingsController.php:592 synchronise()",
+				"change": "retrofit-2026-05-26-directory-federation"
 			},
 			"reachedOn": "Admin settings (Settings.vue:435 'sync directories now'); background job",
 			"note": "Per-listing sync is dead: DirectorySideBar.vue:464 posts to /api/listings/synchronise/{id}, which has no route, and the sidebar is not mounted.",
@@ -2913,7 +2965,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "info.xml:148 Broadcast job, Broadcast.php:59 every 4h, :91 broadcastService->broadcast(null) -> BroadcastService.php:425 posts to every known directory, refuses a local self-URL :448; inbound: routes.php:185 POST /api/directory -> DirectoryController.php:232 update()"
+				"evidence": "info.xml:148 Broadcast job, Broadcast.php:59 every 4h, :91 broadcastService->broadcast(null) -> BroadcastService.php:425 posts to every known directory, refuses a local self-URL :448; inbound: routes.php:185 POST /api/directory -> DirectoryController.php:232 update()",
+				"spec": "openspec/specs/federation"
 			},
 			"reachedOn": "background job; peers receive it on POST /apps/opencatalogi/api/directory",
 			"provider": "opencatalogi",
@@ -2942,7 +2995,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "FederationDirectory.vue:51,59 Edit/Delete actions; FederationEditListingModal.vue:108 PUT /api/listings/{id} with integrationLevel (search/sync/none); FederationDeleteListingModal.vue:109 DELETE; DirectoryService.php:328 only integrationLevel=='search' listings feed federated search"
+				"evidence": "FederationDirectory.vue:51,59 Edit/Delete actions; FederationEditListingModal.vue:108 PUT /api/listings/{id} with integrationLevel (search/sync/none); FederationDeleteListingModal.vue:109 DELETE; DirectoryService.php:328 only integrationLevel=='search' listings feed federated search",
+				"change": "retrofit-2026-05-26-directory-federation"
 			},
 			"reachedOn": "/directory (FederationDirectory.vue Edit/Delete)",
 			"note": "Choosing 'Full sync' (sync) takes a listing out of federated search, because DirectoryService.php:328 counts only 'search' as available. That may not be what an admin expects.",
@@ -2972,7 +3026,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "manifest.json /search -> FederationSearch.vue:90,108 searchStore.searchPublications -> search.ts:739 GET /api/federation/publications -> routes.php:238 FederationController.php:81 getAggregatedPublications (local + DirectoryService.php:1036 remote)"
+				"evidence": "manifest.json /search -> FederationSearch.vue:90,108 searchStore.searchPublications -> search.ts:739 GET /api/federation/publications -> routes.php:238 FederationController.php:81 getAggregatedPublications (local + DirectoryService.php:1036 remote)",
+				"spec": "openspec/specs/search"
 			},
 			"reachedOn": "/search (FederationSearch.vue)",
 			"provider": "opencatalogi",
@@ -3032,7 +3087,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "DirectoryService.php:1752 assertSafeOutboundUrl (DNS-resolving) on add/sync :518,:1095; :1863 isBlockedIp blocks 169.254.169.254, loopback, private/reserved; allow_internal_directories opt-in :1946; FederationHostPolicy.php:57 local_federation_hosts allowlist"
+				"evidence": "DirectoryService.php:1752 assertSafeOutboundUrl (DNS-resolving) on add/sync :518,:1095; :1863 isBlockedIp blocks 169.254.169.254, loopback, private/reserved; allow_internal_directories opt-in :1946; FederationHostPolicy.php:57 local_federation_hosts allowlist",
+				"spec": "openspec/specs/federation"
 			},
 			"reachedOn": "enforced on POST /api/listings/add and every sync; configured by occ only",
 			"provider": "opencatalogi",
@@ -3092,7 +3148,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "portaliq FederatedSearchBlock.vue:514 defaults to /index.php/apps/opencatalogi/api/federation/publications, PublicationDetailBlock.vue:140; InitializeDemoPortal.php:344 wires it; opencatalogi FederationController.php:81 PublicPage aggregates local + peers"
+				"evidence": "portaliq FederatedSearchBlock.vue:514 defaults to /index.php/apps/opencatalogi/api/federation/publications, PublicationDetailBlock.vue:140; InitializeDemoPortal.php:344 wires it; opencatalogi FederationController.php:81 PublicPage aggregates local + peers",
+				"spec": "openspec/specs/federation"
 			},
 			"reachedOn": "portaliq public site search + /publicatie/<id> pages -> GET /apps/opencatalogi/api/federation/publications (public)",
 			"provider": "portaliq",
@@ -3121,7 +3178,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "routes.php:231 GET /api/search -> SearchController.php:141 index() #[PublicPage] -> PublicationQueryService.php:149; routes.php:238 federation/publications PublicPage (FederationController.php:81); portaliq FederatedSearchBlock.vue:708 _search"
+				"evidence": "routes.php:231 GET /api/search -> SearchController.php:141 index() #[PublicPage] -> PublicationQueryService.php:149; routes.php:238 federation/publications PublicPage (FederationController.php:81); portaliq FederatedSearchBlock.vue:708 _search",
+				"change": "add-public-fulltext-search"
 			},
 			"reachedOn": "portaliq public search block -> GET /apps/opencatalogi/api/federation/publications?_search= (anonymous)",
 			"provider": "portaliq",
@@ -3334,7 +3392,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:262 ui#publicationsPage /publications/{catalogSlug}/{id} (manifest PublicationDetail); public API routes.php:252 /api/{catalogSlug}/{id}; portaliq FederatedSearchBlock.vue:960 detailHref -> /publicatie/<uuid> rendered by PublicationDetailBlock.vue"
+				"evidence": "routes.php:262 ui#publicationsPage /publications/{catalogSlug}/{id} (manifest PublicationDetail); public API routes.php:252 /api/{catalogSlug}/{id}; portaliq FederatedSearchBlock.vue:960 detailHref -> /publicatie/<uuid> rendered by PublicationDetailBlock.vue",
+				"spec": "openspec/specs/spa-deep-link-routing"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id in the app; portaliq /publicatie/<uuid>",
 			"note": "The in-app URL carries the catalogue slug, so renaming a catalogue breaks old links; the portaliq URL uses only the UUID.",
@@ -3364,7 +3423,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "DcatService.php:197 datasetIri = base/apps/opencatalogi/api/{catalogSlug}/{uuid}; DcatMappingService.php:258 dct:identifier = publication id; grep DOI/handle/ARK in lib: 0"
+				"evidence": "DcatService.php:197 datasetIri = base/apps/opencatalogi/api/{catalogSlug}/{uuid}; DcatMappingService.php:258 dct:identifier = publication id; grep DOI/handle/ARK in lib: 0",
+				"change": "dcat-ap-harvest"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{uuid} (public)",
 			"note": "UUID-based URLs are stable but host- and slug-bound. There is no PID scheme (DOI, Handle or ARK) and no citation output.",
@@ -3424,7 +3484,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:218 GET /api/feeds/{catalogSlug} -> CommunityController.php:390 feed() Atom; it filters publications on 'catalog'=>slug (:394), a property the publication schema (publication_register.json:93) does not declare; no page or portaliq links the feed; statusSubscription covers service status only"
+				"evidence": "routes.php:218 GET /api/feeds/{catalogSlug} -> CommunityController.php:390 feed() Atom; it filters publications on 'catalog'=>slug (:394), a property the publication schema (publication_register.json:93) does not declare; no page or portaliq links the feed; statusSubscription covers service status only",
+				"change": "the-public-and-community-surface"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/feeds/{catalogSlug} (public Atom, feed reader); no subscribe or notify UI",
 			"note": "There is no push notification or e-mail. The feed may come back empty, because OR says a filter on an undeclared property matches nothing (AggregationMetricsAnnotationValidator.php:304). Not verified live.",
@@ -3454,7 +3515,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "portaliq src/site/components/FederatedSearchBlock.vue:514 and PublicationDetailBlock.vue:140 default to /index.php/apps/opencatalogi/api/federation/publications; lib/Controller/FederationController.php:74 @PublicPage"
+				"evidence": "portaliq src/site/components/FederatedSearchBlock.vue:514 and PublicationDetailBlock.vue:140 default to /index.php/apps/opencatalogi/api/federation/publications; lib/Controller/FederationController.php:74 @PublicPage",
+				"spec": "openspec/specs/federation"
 			},
 			"reachedOn": "portaliq public site (FederatedSearchBlock + PublicationDetailBlock) over GET /apps/opencatalogi/api/federation/publications (public)",
 			"note": "opencatalogi supplies the anonymous API. portaliq renders the reading room.",
@@ -3484,7 +3546,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "portaliq lib/Controller/PortalPageController.php:155 and :261 serve a per-portal themeStylesheet resolved by PortalThemeResolver; portaliq src/manifest.json:247 Themes page"
+				"evidence": "portaliq lib/Controller/PortalPageController.php:155 and :261 serve a per-portal themeStylesheet resolved by PortalThemeResolver; portaliq src/manifest.json:247 Themes page",
+				"spec": "portaliq/openspec/specs/portaliq-cms"
 			},
 			"reachedOn": "portaliq /themes page plus the per-portal theme stylesheet on the public site",
 			"note": "The tokens come from the theme app (thematiq). opencatalogi has no public frontend of its own.",
@@ -3514,7 +3577,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "portaliq tests/e2e/site-accessibility.spec.ts:57 runs axe with wcag2a/2aa/21a/21aa/22aa tags; :83,:94,:104 grid, markdown and not-found pages; :116 keyboard-only path; src/site/App.vue:136 aria breadcrumb"
+				"evidence": "portaliq tests/e2e/site-accessibility.spec.ts:57 runs axe with wcag2a/2aa/21a/21aa/22aa tags; :83,:94,:104 grid, markdown and not-found pages; :116 keyboard-only path; src/site/App.vue:136 aria breadcrumb",
+				"spec": "none"
 			},
 			"reachedOn": "portaliq public site root ([data-testid=site-root])",
 			"note": "Automated axe checks and a keyboard test cover three page states. The search and publication-detail blocks are not named in the axe tests. That is evidence of AA work, not a conformance claim.",
@@ -3544,7 +3608,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "portaliq src/manifest.json:1277 Menus index and :1310 Pages index, plus PageLayout editor; opencatalogi openspec/changes/cms-moves-to-portaliq/proposal.md explains the move; opencatalogi lib/Command/MigrateCmsToPortaliqCommand.php:68 migrates old pages/menus"
+				"evidence": "portaliq src/manifest.json:1277 Menus index and :1310 Pages index, plus PageLayout editor; opencatalogi openspec/changes/cms-moves-to-portaliq/proposal.md explains the move; opencatalogi lib/Command/MigrateCmsToPortaliqCommand.php:68 migrates old pages/menus",
+				"change": "cms-moves-to-portaliq"
 			},
 			"reachedOn": "portaliq /pages and /menus (staff), served publicly by portaliq /api/content/pages|menus",
 			"note": "opencatalogi still has ui#pages and ui#menus at appinfo/routes.php:267-268, but no API or manifest page backs them. cms-moves-to-portaliq tasks 4.1-4.4 (remove them) are still open.",
@@ -3605,7 +3670,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:216 GET /api/status (community#statusPage); lib/Controller/CommunityController.php:205 @PublicPage reads serviceStatus and renders it; :244 setStatus is admin-only; lib/Service/SettingsService.php:1243 maps service_status_schema"
+				"evidence": "appinfo/routes.php:216 GET /api/status (community#statusPage); lib/Controller/CommunityController.php:205 @PublicPage reads serviceStatus and renders it; :244 setStatus is admin-only; lib/Service/SettingsService.php:1243 maps service_status_schema",
+				"change": "the-public-and-community-surface"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/status (public, JSON). No opencatalogi page and no portaliq block calls it (grep of both src trees)",
 			"note": "The data endpoint works. No page renders it, and no staff screen sets a component's state. Only the admin API POST /api/status does.",
@@ -3665,7 +3731,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:72-73 GET /api/banners, POST /api/banners/dismiss; lib/Controller/NoticeBoardController.php:142 returns banners current for the user minus that user's dismissals (BannerService::forUser)"
+				"evidence": "appinfo/routes.php:72-73 GET /api/banners, POST /api/banners/dismiss; lib/Controller/NoticeBoardController.php:142 returns banners current for the user minus that user's dismissals (BannerService::forUser)",
+				"change": "the-public-and-community-surface"
 			},
 			"reachedOn": "nothing: no component in src/ fetches /api/banners (grep), so no user ever sees a banner",
 			"note": "Storage, the date window and per-user dismissal work on the server. The part that shows the banner to a user is missing. Banners can only be created through OpenRegister's generic object API.",
@@ -3695,7 +3762,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:74-75 POST /api/notice-boards and /api/notices (admin); lib/Controller/NoticeBoardController.php:220 saveNoticeBoard, :274 saveNotice validate and store; notices surface only inside the Atom feed (lib/Service/Community/AtomFeedService.php)"
+				"evidence": "appinfo/routes.php:74-75 POST /api/notice-boards and /api/notices (admin); lib/Controller/NoticeBoardController.php:220 saveNoticeBoard, :274 saveNotice validate and store; notices surface only inside the Atom feed (lib/Service/Community/AtomFeedService.php)",
+				"change": "the-public-and-community-surface"
 			},
 			"reachedOn": "nothing: admin-only API, no manifest page or component calls it",
 			"note": "Comment bodies are explicitly not built (the-public-and-community-surface/tasks.md:50). The feed includes every current notice, not only those of the requested catalogue.",
@@ -3725,7 +3793,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:218 GET /api/feeds/{catalogSlug} @PublicPage; lib/Controller/CommunityController.php:394 filters publications by 'catalog', a property the publication schema does not declare (lib/Settings/publication_register.json); lib/Service/Publication/PublicationRuleService.php:331 keeps only records whose @type/recordType has a publicationRule"
+				"evidence": "appinfo/routes.php:218 GET /api/feeds/{catalogSlug} @PublicPage; lib/Controller/CommunityController.php:394 filters publications by 'catalog', a property the publication schema does not declare (lib/Settings/publication_register.json); lib/Service/Publication/PublicationRuleService.php:331 keeps only records whose @type/recordType has a publicationRule",
+				"change": "the-public-and-community-surface"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/feeds/{catalogSlug} (public, Atom). Nothing links to it",
 			"note": "Returns valid Atom. On shipped schemas an ordinary publication has no catalog or recordType field, so the feed likely holds notices only. Nobody has shown a record entry in a live feed.",
@@ -3785,7 +3854,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:220 POST /api/markup/render; lib/Controller/CommunityController.php:533 renderMarkup returns MarkupRenderService output; openspec/changes/the-public-and-community-surface/tasks.md:44 says ViewObject.vue and WooRedactionView.vue still render with marked, so byte-parity is not claimed"
+				"evidence": "appinfo/routes.php:220 POST /api/markup/render; lib/Controller/CommunityController.php:533 renderMarkup returns MarkupRenderService output; openspec/changes/the-public-and-community-surface/tasks.md:44 says ViewObject.vue and WooRedactionView.vue still render with marked, so byte-parity is not claimed",
+				"change": "the-public-and-community-surface"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/markup/render (public). No caller in opencatalogi src/ or portaliq",
 			"note": "Renders a documented subset. The app's own views do not use it, so 'exactly as the app renders' is not true today.",
@@ -3877,7 +3947,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:227 GET /api/service-catalogue; lib/Controller/ServiceCatalogueController.php:179 @PublicPage index -> ServiceCatalogueService::readCatalogue (entries carry cost, duration and form binding, and are marked available per ServiceCatalogueService.php:199-223)"
+				"evidence": "appinfo/routes.php:227 GET /api/service-catalogue; lib/Controller/ServiceCatalogueController.php:179 @PublicPage index -> ServiceCatalogueService::readCatalogue (entries carry cost, duration and form binding, and are marked available per ServiceCatalogueService.php:199-223)",
+				"change": "published-service-and-case-type-catalogue"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/service-catalogue (public, JSON). No page calls it; portaliq's PortalCatalogueReader reads OR schema 'publication', not this endpoint",
 			"note": "Staff enter entries only through OpenRegister's generic API, and no opencatalogi page exists. The citizen rendering is deferred to portaliq (published-service-and-case-type-catalogue/tasks.md:37), and portaliq does not consume this endpoint.",
@@ -3907,7 +3978,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:228 GET /api/case-types/{id}; lib/Controller/ServiceCatalogueController.php:273 @PublicPage caseType merges publishedLinks(); lib/Service/CaseTypeCatalogueService.php:260-261 builds the links from formUrl and apiDescriptionUrl"
+				"evidence": "appinfo/routes.php:228 GET /api/case-types/{id}; lib/Controller/ServiceCatalogueController.php:273 @PublicPage caseType merges publishedLinks(); lib/Service/CaseTypeCatalogueService.php:260-261 builds the links from formUrl and apiDescriptionUrl",
+				"change": "published-service-and-case-type-catalogue"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/case-types/{id} (public, JSON). No page or sibling calls it",
 			"note": "The link is emitted when the definition carries the URLs. No staff screen sets them; they arrive by import or OR's generic API.",
@@ -3968,7 +4040,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:91-92 GET/POST /api/case-types/{id}/resync; lib/Controller/ServiceCatalogueController.php:376 previewResync returns diffAgainstSource, :428 applyResync applies only the accepted properties"
+				"evidence": "appinfo/routes.php:91-92 GET/POST /api/case-types/{id}/resync; lib/Controller/ServiceCatalogueController.php:376 previewResync returns diffAgainstSource, :428 applyResync applies only the accepted properties",
+				"change": "published-service-and-case-type-catalogue"
 			},
 			"reachedOn": "nothing: admin API only, no page shows the diff or collects the accepted list",
 			"note": "Preview-then-accept logic is built server-side. A staff member has no screen to do it. Owner corrected from integriq to opencatalogi: previewResync and applyResync live in opencatalogi lib/Controller/ServiceCatalogueController.php (integriq lane, OpenSpec pass 2026-09-27).",
@@ -3998,7 +4071,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:89 GET /api/service-catalogue/unavailable (admin); lib/Controller/ServiceCatalogueController.php:220 unavailableEntries filters entries with available=false and a reason (ServiceCatalogueService.php:203-220)"
+				"evidence": "appinfo/routes.php:89 GET /api/service-catalogue/unavailable (admin); lib/Controller/ServiceCatalogueController.php:220 unavailableEntries filters entries with available=false and a reason (ServiceCatalogueService.php:203-220)",
+				"change": "published-service-and-case-type-catalogue"
 			},
 			"reachedOn": "nothing: admin API only, no page in src/ calls it",
 			"provider": "opencatalogi",
@@ -4057,7 +4131,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:229 POST /api/knowledge-articles/{id}/verdict @PublicPage; lib/Controller/ServiceCatalogueController.php:499 recordVerdict counts one verdict per reader and returns publicCounts; KnowledgeArticleService.php:203 refuses drafts"
+				"evidence": "appinfo/routes.php:229 POST /api/knowledge-articles/{id}/verdict @PublicPage; lib/Controller/ServiceCatalogueController.php:499 recordVerdict counts one verdict per reader and returns publicCounts; KnowledgeArticleService.php:203 refuses drafts",
+				"change": "published-service-and-case-type-catalogue"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/knowledge-articles/{id}/verdict (public). No page or portal calls it or shows the count",
 			"note": "The count is returned in the response, but no page shows it.",
@@ -4087,7 +4162,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:93 POST /api/knowledge-articles/extract; lib/Controller/ServiceCatalogueController.php:602 extractArticle takes the case in the request body and saves KnowledgeArticleService::extractDraft as a draft"
+				"evidence": "appinfo/routes.php:93 POST /api/knowledge-articles/extract; lib/Controller/ServiceCatalogueController.php:602 extractArticle takes the case in the request body and saves KnowledgeArticleService::extractDraft as a draft",
+				"change": "published-service-and-case-type-catalogue"
 			},
 			"reachedOn": "nothing: no opencatalogi page and no dossiq caller (git grep procest origin/development finds no knowledge-articles call)",
 			"note": "There is no one-action button in dossiq. The endpoint expects the caller to post the whole case object.",
@@ -4147,7 +4223,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:20-21 catalogi index/show and :251-256 publications index/show/attachments/download; lib/Controller/PublicationsController.php:430 #[PublicPage] index, :600 show; CORS preflight routes at routes.php:99-104"
+				"evidence": "appinfo/routes.php:20-21 catalogi index/show and :251-256 publications index/show/attachments/download; lib/Controller/PublicationsController.php:430 #[PublicPage] index, :600 show; CORS preflight routes at routes.php:99-104",
+				"spec": "openspec/specs/publications"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug} and /api/catalogi (public); portaliq calls /api/federation/publications",
 			"note": "portaliq's FederatedSearchBlock is a live consumer.",
@@ -4177,7 +4254,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:157 GET /api/openapi.json; lib/Controller/ApiDocumentationController.php:134 @PublicPage serves openapi.json (OpenAPI 3.1.0, 51 paths) with the installed version and CORS"
+				"evidence": "appinfo/routes.php:157 GET /api/openapi.json; lib/Controller/ApiDocumentationController.php:134 @PublicPage serves openapi.json (OpenAPI 3.1.0, 51 paths) with the installed version and CORS",
+				"change": "public-api-openapi-document"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/openapi.json (public, integrator)",
 			"provider": "opencatalogi",
@@ -4206,7 +4284,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/Mcp/OpenCatalogiToolProvider.php:92 'Search catalog' and :121 'Get publication' tools; lib/AppInfo/Application.php:171 registers the alias IMcpToolProvider::opencatalogi, which openregister lib/AppHost/Bootstrap.php:240 resolves"
+				"evidence": "lib/Mcp/OpenCatalogiToolProvider.php:92 'Search catalog' and :121 'Get publication' tools; lib/AppInfo/Application.php:171 registers the alias IMcpToolProvider::opencatalogi, which openregister lib/AppHost/Bootstrap.php:240 resolves",
+				"spec": "none"
 			},
 			"reachedOn": "OpenRegister AI Chat Companion / MCP host via the IMcpToolProvider::opencatalogi alias",
 			"note": "Two read-only tools. Per-object access is delegated to OpenRegister RBAC.",
@@ -4236,7 +4315,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "openregister lib/Service/WebhookService.php and lib/Listener/WebhookEventListener.php fire on object events; openregister src/manifest.json:245 Webhooks page; opencatalogi publications are OR objects (lib/Settings/publication_register.json)"
+				"evidence": "openregister lib/Service/WebhookService.php and lib/Listener/WebhookEventListener.php fire on object events; openregister src/manifest.json:245 Webhooks page; opencatalogi publications are OR objects (lib/Settings/publication_register.json)",
+				"spec": "openregister/openspec/specs/event-driven-architecture"
 			},
 			"reachedOn": "openregister /apps/openregister/webhooks (staff configures a webhook on the publication schema)",
 			"note": "opencatalogi's own BroadcastService (lib/BackgroundJob/Broadcast.php) announces the directory every 4 hours, not individual publications.",
@@ -4358,7 +4438,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/integriq",
-				"evidence": "integriq appinfo/routes.php:204 POST /api/stuf-zkn/inbound; integriq lib/Service/StufZkn/InboundMessageTranslator.php translates zakLk01/edcLk01 into an OR/ZGW-shaped object; nothing maps it onto an opencatalogi publication"
+				"evidence": "integriq appinfo/routes.php:204 POST /api/stuf-zkn/inbound; integriq lib/Service/StufZkn/InboundMessageTranslator.php translates zakLk01/edcLk01 into an OR/ZGW-shaped object; nothing maps it onto an opencatalogi publication",
+				"spec": "integriq/openspec/specs/stuf-zkn-bridge"
 			},
 			"reachedOn": "integriq POST /apps/integriq/api/stuf-zkn/inbound (machine). Not connected to opencatalogi",
 			"note": "StUF-ZKN documents can be received, but they land as case-side objects, not as publications. The translator says it was never verified against a live municipal endpoint.",
@@ -4418,7 +4499,8 @@
 			"built": {
 				"state": "built",
 				"owner": "nextcloud/user_oidc",
-				"evidence": "lib/Controller/RetentionController.php:85 and NoticeBoardController.php:143 take the user from Nextcloud IUserSession; the app has no login of its own, so any Nextcloud SSO backend signs staff in"
+				"evidence": "lib/Controller/RetentionController.php:85 and NoticeBoardController.php:143 take the user from Nextcloud IUserSession; the app has no login of its own, so any Nextcloud SSO backend signs staff in",
+				"spec": "none"
 			},
 			"reachedOn": "Nextcloud login (user_oidc / user_saml) in front of /apps/opencatalogi",
 			"note": "Inherited from the platform. Nothing app-specific to build.",
@@ -4541,7 +4623,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/info.xml:138 registers lib/BackgroundJob/RetentionEvaluation.php (daily, setInterval 86400) -> lib/Service/RetentionService.php:544 evaluate() counts expiring and review-due items, auto-applies depublish or archive, and stamps retentionLastEvaluatedAt"
+				"evidence": "appinfo/info.xml:138 registers lib/BackgroundJob/RetentionEvaluation.php (daily, setInterval 86400) -> lib/Service/RetentionService.php:544 evaluate() counts expiring and review-due items, auto-applies depublish or archive, and stamps retentionLastEvaluatedAt",
+				"change": "publication-retention-lifecycle"
 			},
 			"reachedOn": "Nextcloud cron (background job), with no UI step",
 			"note": "Reads at most 1000 publications per pass (RetentionService.php _limit 1000).",
@@ -4571,7 +4654,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/AppInfo/Application.php:114 registers the RetentionWidget; src/views/widgets/RetentionWidget.vue:137 fetches /api/retention/queue (counts only); :120 opens /apps/opencatalogi/?retention=<status>, but nothing in src/ reads that query"
+				"evidence": "lib/AppInfo/Application.php:114 registers the RetentionWidget; src/views/widgets/RetentionWidget.vue:137 fetches /api/retention/queue (counts only); :120 opens /apps/opencatalogi/?retention=<status>, but nothing in src/ reads that query",
+				"change": "publication-retention-lifecycle"
 			},
 			"reachedOn": "Nextcloud dashboard widget 'retention' (counts). Clicking it lands on the app dashboard unfiltered",
 			"note": "The counts are real. There is no list to work through: the deep link goes nowhere, and src/services/retentionStatus.js is imported by nothing.",
@@ -4601,7 +4685,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:56 POST /api/retention/publications/{id}/decision; lib/Controller/RetentionController.php:166 -> RetentionService.php:720 recordHumanDecision (extend|depublish|archive|dispose, rationale mandatory) -> recordDecision writes retentionDecisionLog"
+				"evidence": "appinfo/routes.php:56 POST /api/retention/publications/{id}/decision; lib/Controller/RetentionController.php:166 -> RetentionService.php:720 recordHumanDecision (extend|depublish|archive|dispose, rationale mandatory) -> recordDecision writes retentionDecisionLog",
+				"change": "publication-retention-lifecycle"
 			},
 			"reachedOn": "nothing: admin API only, no page calls the decision endpoint",
 			"note": "'dispose' only sets status=archived, the same as archive, and deletes nothing. retentionDecisionLog is not declared on the publication schema, so nobody has shown that the log survives the save.",
@@ -4631,7 +4716,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:54-55 GET/POST /api/retention/defaults; lib/Service/RetentionService.php:220/243 per-catalog, per-Woo-category term and action in app config; applied at publication by lib/Listener/ObjectCreatedEventListener.php:175 and ObjectUpdatedEventListener.php:195"
+				"evidence": "appinfo/routes.php:54-55 GET/POST /api/retention/defaults; lib/Service/RetentionService.php:220/243 per-catalog, per-Woo-category term and action in app config; applied at publication by lib/Listener/ObjectCreatedEventListener.php:175 and ObjectUpdatedEventListener.php:195",
+				"change": "publication-retention-lifecycle"
 			},
 			"reachedOn": "nothing: admin API only, no settings section in src/ edits retention defaults",
 			"note": "Defaults are applied automatically once set, but they can only be set over the API.",
@@ -4661,7 +4747,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:57 GET /api/retention/report; lib/Controller/RetentionController.php:199 exportReport returns DataDownloadResponse retention-report.csv from RetentionService::buildReport/renderReportCsv"
+				"evidence": "appinfo/routes.php:57 GET /api/retention/report; lib/Controller/RetentionController.php:199 exportReport returns DataDownloadResponse retention-report.csv from RetentionService::buildReport/renderReportCsv",
+				"change": "publication-retention-lifecycle"
 			},
 			"reachedOn": "nothing: admin API only, no page links to the CSV",
 			"note": "CSV, not xlsx. The decision columns depend on the undeclared retentionDecisionLog.",
@@ -4691,7 +4778,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:82 POST /api/publications/depublish; lib/Controller/DepublicationController.php:126 requires a reason, records depublishedBy, and sends withdrawals per channel through lib/Service/Publication/NationalIndexService.php withdraw() (integriq/openconnector gateway); it saves a depublication record but never updates the publication itself"
+				"evidence": "appinfo/routes.php:82 POST /api/publications/depublish; lib/Controller/DepublicationController.php:126 requires a reason, records depublishedBy, and sends withdrawals per channel through lib/Service/Publication/NationalIndexService.php withdraw() (integriq/openconnector gateway); it saves a depublication record but never updates the publication itself",
+				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "nothing: admin API only, no page calls it",
 			"note": "The who, why and channel notices are built. The publication's own depublicationDate or status is not changed by this action, and channel delivery needs integriq.",
@@ -4721,7 +4809,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "openregister lib/Controller/TransferController.php handles e-Depot transfer lists and dispatches TransferExecutionJob, routes.php:2041; opencatalogi lib/Service/RetentionService.php:763-765 'archive' only sets status=archived"
+				"evidence": "openregister lib/Controller/TransferController.php handles e-Depot transfer lists and dispatches TransferExecutionJob, routes.php:2041; opencatalogi lib/Service/RetentionService.php:763-765 'archive' only sets status=archived",
+				"change": "publication-retention-lifecycle"
 			},
 			"reachedOn": "openregister e-Depot transfer API (/apps/openregister/api/transfers). opencatalogi never triggers it",
 			"note": "OpenRegister can transfer objects to an e-depot, but opencatalogi's archive decision does not hand anything over.",
@@ -4751,7 +4840,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:7 setup wizard (demo data, reload-settings, catalog scope, create-first-catalog, connect-federation); appinfo/routes.php:247-249 -> SetupController.php:280 action switch, :436 createFirstCatalog saves a catalog"
+				"evidence": "src/manifest.json:7 setup wizard (demo data, reload-settings, catalog scope, create-first-catalog, connect-federation); appinfo/routes.php:247-249 -> SetupController.php:280 action switch, :436 createFirstCatalog saves a catalog",
+				"change": "setup-wizard-server-contract"
 			},
 			"reachedOn": "first-run setup wizard (manifest setup block, rendered by nextcloud-vue CnAppRoot)",
 			"provider": "opencatalogi",
@@ -4780,7 +4870,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/views/settings/Settings.vue:110-119 per-object-type schema pickers; Settings.vue:1046 saveAll -> /api/settings (routes.php:35-40, SettingsController); lib/Settings/OpenCatalogiAdmin.php:59 admin section"
+				"evidence": "src/views/settings/Settings.vue:110-119 per-object-type schema pickers; Settings.vue:1046 saveAll -> /api/settings (routes.php:35-40, SettingsController); lib/Settings/OpenCatalogiAdmin.php:59 admin section",
+				"change": "retrofit-2026-05-26-app-shell-settings"
 			},
 			"reachedOn": "Nextcloud admin settings > OpenCatalogi (Settings.vue)",
 			"provider": "opencatalogi",
@@ -4810,7 +4901,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/info.xml:152-153 post-migration InitializeSettings -> loadSettings(force: false) (InitializeSettings.php:112); Settings.vue:12-35 Reimport and Force import buttons -> Settings.vue:1206 POST /api/settings/import -> SettingsController.php:367 manualImport"
+				"evidence": "appinfo/info.xml:152-153 post-migration InitializeSettings -> loadSettings(force: false) (InitializeSettings.php:112); Settings.vue:12-35 Reimport and Force import buttons -> Settings.vue:1206 POST /api/settings/import -> SettingsController.php:367 manualImport",
+				"change": "retrofit-2026-05-26-app-shell-settings"
 			},
 			"reachedOn": "automatic on update; admin settings Reimport configuration button",
 			"provider": "opencatalogi",
@@ -4839,7 +4931,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "PublicationsController.php:205-217 countReach -> UsageCounterService.php:221 increment stores only publication/date/kind/count, crawler UA discarded; called only from PublicationsController.php:831,842,1045; UsageCounterService.php:66 key usageCounter_register is never written by import (SettingsService.php:1185-1191 omits usageCounter), so increment skips (:241)"
+				"evidence": "PublicationsController.php:205-217 countReach -> UsageCounterService.php:221 increment stores only publication/date/kind/count, crawler UA discarded; called only from PublicationsController.php:831,842,1045; UsageCounterService.php:66 key usageCounter_register is never written by import (SettingsService.php:1185-1191 omits usageCounter), so increment skips (:241)",
+				"change": "publication-usage-analytics"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{id} and /download (public)",
 			"note": "Counting is dark until an admin picks the usageCounter schema by hand in settings. It also misses the federation endpoint portaliq reads (FederationController has no countReach).",
@@ -4869,7 +4962,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/views/dashboard/Dashboard.vue:185 usage area chart <- fetchUsageChart -> services/usageStats.js:56 GET /api/stats/series (routes.php:207, StatsController.php:185)"
+				"evidence": "src/views/dashboard/Dashboard.vue:185 usage area chart <- fetchUsageChart -> services/usageStats.js:56 GET /api/stats/series (routes.php:207, StatsController.php:185)",
+				"change": "publication-usage-analytics"
 			},
 			"reachedOn": "/ app dashboard usage card (Dashboard.vue:185)",
 			"note": "The chart is on the app's own dashboard, not the Nextcloud dashboard. It stays empty on a stock install for the provisioning reason on ops-usage.",
@@ -4899,7 +4993,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/AppInfo/Application.php:113 registers MostViewedPublicationsWidget; src/views/widgets/MostViewedPublicationsWidget.vue:66-69 catalogSlug hard-coded 'publications'; :95 shows the publication UUID as the title; :138 row link /publications/{id} lands on the catalogSlug route"
+				"evidence": "lib/AppInfo/Application.php:113 registers MostViewedPublicationsWidget; src/views/widgets/MostViewedPublicationsWidget.vue:66-69 catalogSlug hard-coded 'publications'; :95 shows the publication UUID as the title; :138 row link /publications/{id} lands on the catalogSlug route",
+				"change": "publication-usage-analytics"
 			},
 			"reachedOn": "Nextcloud dashboard 'most viewed' widget",
 			"note": "It renders, but only for one catalogue slug, shows UUIDs not titles, and the row link is broken. It also depends on the unprovisioned counter. Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"See the most viewed publications on the Nextcloud dashboard.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row.",
@@ -4929,7 +5024,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:482 Dashboard -> Dashboard.vue:72-115 publication, concept, published, depublished counts; Dashboard.vue:688 catalogCount computed but never rendered; Dashboard.vue:124 attachments count widget commented out (TODO)"
+				"evidence": "src/manifest.json:482 Dashboard -> Dashboard.vue:72-115 publication, concept, published, depublished counts; Dashboard.vue:688 catalogCount computed but never rendered; Dashboard.vue:124 attachments count widget commented out (TODO)",
+				"change": "retrofit-2026-05-26-dashboard-widgets"
 			},
 			"reachedOn": "/ (DashboardView)",
 			"note": "Only publication counts show. The catalogue count is not rendered and the attachment count was removed.",
@@ -4959,7 +5055,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/nextcloud-vue",
-				"evidence": "src/manifest.json:1241 Reports page with PublicationsReport :1281, UsageReport :1524, FederationReport :1711; every widget source uses register 'opencatalogi' (manifest.json:1303), but the only register the app ships has slug 'publication' (publication_register.json, components.registers.publication)"
+				"evidence": "src/manifest.json:1241 Reports page with PublicationsReport :1281, UsageReport :1524, FederationReport :1711; every widget source uses register 'opencatalogi' (manifest.json:1303), but the only register the app ships has slug 'publication' (publication_register.json, components.registers.publication)",
+				"spec": "none"
 			},
 			"reachedOn": "/reports -> /reports/publications|usage|federation",
 			"note": "The pages exist, but they query a register slug that OR's RegisterMapper (id/uuid/slug match) will not find, so they probably render empty. Not verified live.",
@@ -4989,7 +5086,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "appinfo/routes.php:201 GET /api/metrics -> lib/AppInfo/Application.php:199-209 binds OR GenericMetricsController with appName opencatalogi; src/manifest.json:260 observability.metrics; lib/Observability/OpenCatalogiMetricsProvider.php domain metrics"
+				"evidence": "appinfo/routes.php:201 GET /api/metrics -> lib/AppInfo/Application.php:199-209 binds OR GenericMetricsController with appName opencatalogi; src/manifest.json:260 observability.metrics; lib/Observability/OpenCatalogiMetricsProvider.php domain metrics",
+				"change": "adopt-apphost"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/metrics (admin, Prometheus scrape)",
 			"provider": "openregister",
@@ -5018,7 +5116,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "appinfo/routes.php:214 GET /api/health -> lib/AppInfo/Application.php:188-198 binds OR GenericHealthController; src/manifest.json:260 observability.health checks database (critical) and filesystem (degraded)"
+				"evidence": "appinfo/routes.php:214 GET /api/health -> lib/AppInfo/Application.php:188-198 binds OR GenericHealthController; src/manifest.json:260 observability.health checks database (critical) and filesystem (degraded)",
+				"change": "adopt-apphost"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/health (public, monitor)",
 			"provider": "openregister",
@@ -5078,7 +5177,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/nextcloud-vue",
-				"evidence": "src/manifest.json:97 walkthrough tour 'opencatalogi:getting-started', trigger first-visit; manifest.json:423 Restart tutorial footer menu item (action replay-walkthrough)"
+				"evidence": "src/manifest.json:97 walkthrough tour 'opencatalogi:getting-started', trigger first-visit; manifest.json:423 Restart tutorial footer menu item (action replay-walkthrough)",
+				"change": "retrofit-2026-05-26-app-shell-settings"
 			},
 			"reachedOn": "first visit to the app; footer 'Restart tutorial'",
 			"provider": "nextcloud-vue",
@@ -5107,7 +5207,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/info.xml:60 licence EUPL-1.2, Nextcloud app whose only dependency is openregister (manifest.json dependencies); docker-compose.yml in repo; Application.php:83 default directory URL is only an optional federation peer"
+				"evidence": "appinfo/info.xml:60 licence EUPL-1.2, Nextcloud app whose only dependency is openregister (manifest.json dependencies); docker-compose.yml in repo; Application.php:83 default directory URL is only an optional federation peer",
+				"spec": "openspec/specs/app-packaging"
 			},
 			"reachedOn": "any Nextcloud install",
 			"note": "The one outbound default is the national directory used for federation, which the setup step makes optional.",
@@ -5444,7 +5545,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): a catalogue selects its publications by register and schema plus optional filters rather than holding copies (lib/Settings/publication_register.json catalog.registers, schemas, filters; scope built in lib/Service/CatalogiService.php:796-833), and each catalogue carries its own owning organisation (catalog.organization). Two organisations' catalogues that name the same register and schema therefore both list the same publication object. Across installations, federation shows another organisation's publications live without copying (/api/federation/publications, lib/Controller/FederationController.php:81, called by src/store/modules/search.js:59)."
+				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): a catalogue selects its publications by register and schema plus optional filters rather than holding copies (lib/Settings/publication_register.json catalog.registers, schemas, filters; scope built in lib/Service/CatalogiService.php:796-833), and each catalogue carries its own owning organisation (catalog.organization). Two organisations' catalogues that name the same register and schema therefore both list the same publication object. Across installations, federation shows another organisation's publications live without copying (/api/federation/publications, lib/Controller/FederationController.php:81, called by src/store/modules/search.js:59).",
+				"spec": "openspec/specs/catalogs"
 			},
 			"reachedOn": "/api/{catalogSlug} (publications#index) per catalogue, rendered in the portaliq reading room; /api/federation/publications in the search view",
 			"provider": "opencatalogi",
@@ -5475,7 +5577,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): publications are OpenRegister objects and deletes are soft; the Deleted page (src/manifest.json:165-170, component src/views/deleted/DeletedIndex.vue) offers restore per item and in bulk and permanently delete per item (DeletedIndex.vue:221,633-678; store src/store/modules/deleted.js:285-298 restore, :354 permanentlyDelete), backed by /api/deleted/{id}/restore and DELETE /api/deleted/{id} (appinfo/routes.php:1429-1442). Soft delete keeps the files for restore (lib/Service/Object/DeleteObject.php:363-364). Reached in the OpenRegister app, not inside opencatalogi's own navigation."
+				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): publications are OpenRegister objects and deletes are soft; the Deleted page (src/manifest.json:165-170, component src/views/deleted/DeletedIndex.vue) offers restore per item and in bulk and permanently delete per item (DeletedIndex.vue:221,633-678; store src/store/modules/deleted.js:285-298 restore, :354 permanentlyDelete), backed by /api/deleted/{id}/restore and DELETE /api/deleted/{id} (appinfo/routes.php:1429-1442). Soft delete keeps the files for restore (lib/Service/Object/DeleteObject.php:363-364). Reached in the OpenRegister app, not inside opencatalogi's own navigation.",
+				"spec": "none"
 			},
 			"reachedOn": "openregister /deleted",
 			"provider": "openregister",
@@ -5539,7 +5642,8 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): publication history is OpenRegister's audit trail; the Settings page section RetentionConfiguration (src/views/settings/Settings.vue:53, fields createLogRetention, readLogRetention, updateLogRetention at src/views/settings/sections/RetentionConfiguration.vue:230-288) sets a retention age per kind of change, stored through PUT/PATCH /api/settings/retention (appinfo/routes.php:347,361, ObjectRetentionHandler lib/Service/Settings/ObjectRetentionHandler.php:162-174), and the hourly LogCleanUpTask tombstones audit rows past that age (lib/BackgroundJob/LogCleanUpTask.php:38-40,157). The payload is destroyed while the row and hash-chain link stay."
+				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): publication history is OpenRegister's audit trail; the Settings page section RetentionConfiguration (src/views/settings/Settings.vue:53, fields createLogRetention, readLogRetention, updateLogRetention at src/views/settings/sections/RetentionConfiguration.vue:230-288) sets a retention age per kind of change, stored through PUT/PATCH /api/settings/retention (appinfo/routes.php:347,361, ObjectRetentionHandler lib/Service/Settings/ObjectRetentionHandler.php:162-174), and the hourly LogCleanUpTask tombstones audit rows past that age (lib/BackgroundJob/LogCleanUpTask.php:38-40,157). The payload is destroyed while the row and hash-chain link stay.",
+				"change": "openregister/retrofit-2026-05-24-retention-management"
 			},
 			"reachedOn": "openregister admin settings, retention section",
 			"provider": "openregister",
