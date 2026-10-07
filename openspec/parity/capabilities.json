@@ -4796,7 +4796,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Mcp/OpenCatalogiToolProvider.php:92 'Search catalog' and :121 'Get publication' tools; lib/AppInfo/Application.php:171 registers the alias IMcpToolProvider::opencatalogi, which openregister lib/AppHost/Bootstrap.php:240 resolves",
-				"spec": "none"
+				"spec": "openspec/specs/ai-assistant-tools"
 			},
 			"reachedOn": "OpenRegister AI Chat Companion / MCP host via the IMcpToolProvider::opencatalogi alias",
 			"note": "Two read-only tools. Per-object access is delegated to OpenRegister RBAC.",
@@ -5673,9 +5673,9 @@
 			"opencatalogi": "partial",
 			"built": {
 				"state": "built",
-				"owner": "ConductionNL/nextcloud-vue",
+				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/manifest.json:1241 Reports page with PublicationsReport :1281, UsageReport :1524, FederationReport :1711; every widget source uses register 'opencatalogi' (manifest.json:1303), but the only register the app ships has slug 'publication' (publication_register.json, components.registers.publication)",
-				"spec": "none"
+				"spec": "openspec/specs/reports"
 			},
 			"reachedOn": "/reports -> /reports/publications|usage|federation",
 			"note": "The pages exist, but they query a register slug that OR's RegisterMapper (id/uuid/slug match) will not find, so they probably render empty. Not verified live.",
