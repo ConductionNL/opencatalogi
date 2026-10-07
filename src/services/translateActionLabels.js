@@ -33,6 +33,8 @@ function translateConfigActions(config, translate) {
  * @param {object} manifest The manifest (with `pages[]`).
  * @param {(key: string) => string} translate Maps a source string to its translation.
  * @return {object} A new manifest with translated action labels.
+ *
+ * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
  */
 export function translateActionLabels(manifest, translate) {
 	const pages = Array.isArray(manifest?.pages) ? manifest.pages : null

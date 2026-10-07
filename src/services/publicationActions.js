@@ -9,6 +9,8 @@
  * @param {object} deps.objectStore The app's object store.
  * @param {object} deps.navigationStore The app's navigation store.
  * @return {object} Handlers keyed by the name the manifest uses.
+ *
+ * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
  */
 export function createPublicationActionHandlers({ objectStore, navigationStore }) {
 	return {
@@ -19,6 +21,8 @@ export function createPublicationActionHandlers({ objectStore, navigationStore }
 		 *
 		 * @param {{item: object}} payload The action payload.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
 		openPublicationFiles({ item }) {
 			objectStore.setActiveObject('publication', item)
