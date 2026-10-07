@@ -569,7 +569,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "CatalogModal.vue:105 organisation picker, saved as catalog.organization (:447); SettingsService.php:1179 organisation is OR's nc-organisation projection; openregister lib/Repair/SeedDirectoryVirtualSchemas.php:80-91 declares oin, tooi, rsin, pki; manifest.json:767 Organizations page still targets schema 'organization' in listing_register",
-				"change": "ConductionNL/openregister openspec/changes/the-organisation-projection-is-writable"
+				"change": "openregister/the-organisation-projection-is-writable"
 			},
 			"reachedOn": "/catalogi -> CatalogModal organisation picker; /organizations (manifest.json:767)",
 			"note": "A catalogue can point at an organisation, and the identifier fields exist on OR's nc-organisation. The app's own Organizations page queries schema 'organization', which publication_register.json no longer ships, so where staff edit OIN/TOOI/RSIN is unproven. Specified in ConductionNL/openregister openspec/changes/the-organisation-projection-is-writable (openregister lane, OpenSpec pass 2026-09-27).",
@@ -659,7 +659,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "Searched for per-catalog access: publication_register.json:291 authorization is schema-wide (public on publicationDate, else 'authenticated'), with no create/update rules; SetupController.php:460-469 the 'private (granted groups only)' scope choice only sets listed=false; no catalog-level group field in the catalog schema (publication_register.json:380-530)",
-				"change": "ConductionNL/openregister openspec/changes/rbac-inherits-to-children"
+				"change": "openregister/rbac-inherits-to-children"
 			},
 			"reachedOn": "nothing: no per-catalogue staff permission exists",
 			"note": "OR schema RBAC could restrict a whole schema per group, but not the publications of one catalogue. The setup wizard offers a 'private, granted groups only' scope that does nothing beyond hiding the catalogue from listings. Specified in ConductionNL/openregister openspec/changes/rbac-inherits-to-children (openregister lane, OpenSpec pass 2026-09-27).",
@@ -720,7 +720,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "Publications page is schema-driven CnIndexPage/CnDetailPage (manifest.json:523,543), so properties added to the schema in OR's schema editor render in its form; CatalogModal.vue:116 lets a catalogue hold any extra schema; SettingsService.php:901 re-imports publication_register.json on update",
-				"change": "ConductionNL/openregister openspec/changes/local-changes-to-app-shipped-configuration"
+				"change": "openregister/local-changes-to-app-shipped-configuration"
 			},
 			"reachedOn": "OpenRegister schema editor (outside this app), then /publications/:catalogSlug",
 			"note": "No field editor exists in opencatalogi. Whether an update re-import (InitializeSettings, force=false) keeps fields an admin added to the shipped publication schema is not shown. Specified in ConductionNL/openregister openspec/changes/local-changes-to-app-shipped-configuration (openregister lane, OpenSpec pass 2026-09-27).",
@@ -871,7 +871,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "PublicationStateController (GET /api/publications/{id}/visibility, POST .../publish, .../withdraw, .../files/{fileId}/withdraw), rights from OpenRegister's PermissionHandler via PublicationRights before any side effect; PublicationStateService computes draft/scheduled/public/withdrawn/archived from the dates; publication-visibility widget in src/manifest.json PublicationDetail with src/dialogs/publication/WithdrawPublicationDialog.vue; depublication.file for a single document; Archive stays the final lifecycle step",
-				"change": "openspec/changes/archive/2026-09-30-publications-publish-and-withdraw-action"
+				"change": "archive/2026-09-30-publications-publish-and-withdraw-action"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id header Archive action",
 			"note": "Withdrawing is one action (Archive) but cannot be undone. Publishing is a date field, not a status change. DepublicationController (/api/publications/depublish) and PublishPublicationDialog have no mounted caller. Specified in openspec/changes/publications-publish-and-withdraw-action (OpenSpec pass 2026-09-27).",
@@ -932,7 +932,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/nextcloud-vue",
 				"evidence": "src/manifest.json:529-535 Publications page selectable true, showMassDelete not overridden (nextcloud-vue CnIndexPage.vue default true); modals/object/MassPublishObjects.vue and MassDepublishObjects.vue opened only via ViewObject.vue:2634-2639 openSingleObjectDialog (one object)",
-				"change": "ConductionNL/nextcloud-vue openspec/changes/index-bulk-edit-and-transitions"
+				"change": "nextcloud-vue/index-bulk-edit-and-transitions"
 			},
 			"reachedOn": "/publications/:catalogSlug mass delete (CnIndexPage)",
 			"note": "Bulk delete works. No page offers bulk publish or withdraw. Specified in ConductionNL/nextcloud-vue openspec/changes/index-bulk-edit-and-transitions (nextcloud-vue lane, OpenSpec pass 2026-09-27).",
@@ -1052,7 +1052,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "appinfo/routes.php:253-254 public GET /api/{catalogSlug}/{id}/uses and /used (PublicationsController.php:1099,1209); publication_register.json:100-217 declares no publication-to-publication property; manifest.json:644 pub-related shows only organisation and themes",
-				"change": "ConductionNL/openregister openspec/changes/relation-types-with-inverses"
+				"change": "openregister/relation-types-with-inverses"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{id}/uses|used (public); no staff page",
 			"note": "Back-links are readable over the API, but staff have no field or widget to link one publication to another. Specified in ConductionNL/openregister openspec/changes/relation-types-with-inverses (openregister lane, OpenSpec pass 2026-09-27).",
@@ -1143,7 +1143,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/AppInfo/Application.php:111-112 registers both widgets; src/views/widgets/UnpublishedPublicationsWidget.vue:76 filters status === 'Concept' but publication status enum is published|archived (publication_register.json:207); UnpublishedAttachmentsWidget.vue:96 fetches collection 'attachment', a type no longer provisioned (SettingsService.php:1185-1191)",
-				"change": "openspec/changes/publications-unpublished-overview"
+				"change": "publications-unpublished-overview"
 			},
 			"reachedOn": "Nextcloud dashboard widgets render, but both lists are always empty",
 			"note": "Dead: both widgets filter on a 'Concept' status no current record can carry. Row click also needs a catalog FK that publications do not have (UnpublishedPublicationsWidget.vue:110). Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"See on the Nextcloud dashboard which publications and attachments are not yet published.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row. Specified in openspec/changes/publications-unpublished-overview (OpenSpec pass 2026-09-27).",
@@ -1174,7 +1174,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/nextcloud-vue",
 				"evidence": "src/manifest.json:650 pub-files integration widget; nextcloud-vue CnFilesCard.vue:28-29 renders a plain file.url link; CnFilesTab.vue:76-105 has the image preview and Viewer, but the PublicationDetail sidebar only has the audit tab (manifest.json:750)",
-				"change": "ConductionNL/nextcloud-vue openspec/changes/files-preview-in-place"
+				"change": "nextcloud-vue/files-preview-in-place"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id Attachments widget (link out)",
 			"note": "Not settled whether the detail-page widget renders CnFilesCard (link only) or the CnFilesTab body with Viewer. Nothing public previews data files. Specified in ConductionNL/nextcloud-vue openspec/changes/files-preview-in-place (nextcloud-vue lane, OpenSpec pass 2026-09-27).",
@@ -1264,7 +1264,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "publication.wooCategory (enum infocat001-017, x-enum-labels) in lib/Settings/publication_register.json; SitemapService::sitemapQueries filters the catalogue's registers and schemas on wooCategory, the 'woo' register title lookup stays as a second source; mapDiwooDocument reads wooCategory first; GET /api/woo/categories (WooController::categories, WooService::WOO_CATEGORIES); batch publish files under infocat014; field in the Publication data widget of src/manifest.json PublicationDetail",
-				"change": "openspec/changes/archive/2026-09-30-woo-publication-category"
+				"change": "archive/2026-09-30-woo-publication-category"
 			},
 			"reachedOn": "publication page (/publications/:catalogSlug/:id), Publication block, Woo information category select; the category sitemaps /api/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocatNNN.xml",
 			"note": "openspec/changes/woo-category-mapping-intake (a per-type default) is still not built; this row does not need it.",
@@ -1385,7 +1385,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "RobotsController::index asks OpenRegister for hasWooSitemap catalogues only (and re-checks the flag), one Sitemap line per line with a real line break, User-agent and Allow lines for /apps/opencatalogi/api/ and /index.php/apps/opencatalogi/api/; WooRegistrationService::rootRules renders the nginx and Apache rules that serve it at the domain root, shown with copy buttons in src/views/settings/WooIndexConnection.vue",
-				"change": "openspec/changes/archive/2026-09-30-woo-index-harvester-connection"
+				"change": "archive/2026-09-30-woo-index-harvester-connection"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/robots.txt (public, harvester); root /robots.txt needs a proxy rewrite (Settings.vue:1395 tells the admin so)",
 			"note": "A harvester reads /robots.txt at the domain root, which the app does not serve without web-server config. Specified in openspec/changes/woo-index-harvester-connection (OpenSpec pass 2026-09-27).",
@@ -1476,7 +1476,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "POST /api/woo/registration (WooRegistrationController, admin) composes organisation, TOOI identifier, root robots.txt and every sitemap index and hands it to NationalIndexService::registerWithWooIndex (national-woo-index channel); status moves to requested only on an answer, answer stored; readiness check daily (BackgroundJob/WooReadinessCheck) and once when a catalogue is switched on (WooReadinessTriggerListener -> WooReadinessCheckNow)",
-				"change": "openspec/changes/archive/2026-09-30-woo-index-harvester-connection"
+				"change": "archive/2026-09-30-woo-index-harvester-connection"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/robots.txt and /api/{catalogSlug}/sitemaps/* (public, KOOP harvester)",
 			"note": "Works only as far as woo-sitemap works (external 'woo' register) and root robots.txt is rewritten. Specified in openspec/changes/woo-index-harvester-connection (OpenSpec pass 2026-09-27).",
@@ -1507,7 +1507,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Listener/PlooiDeliveryListener.php queues lib/BackgroundJob/PlooiDelivery.php -> lib/Service/Publication/PlooiDeliveryService.php::deliver -> NationalIndexService::deliverToPlooi (integriq source from channel_sources); catalog.plooiDelivery + publication.plooi* in lib/Settings/publication_register.json; PLOOI delivery block in src/manifest.json PublicationDetail",
-				"change": "openspec/changes/archive/2026-09-29-woo-national-delivery-repair"
+				"change": "archive/2026-09-29-woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no route or page calls registerWithWooIndex",
 			"note": "Even when wired, every hand-over through the integriq gateway fails on the signature mismatch.",
@@ -1567,7 +1567,7 @@
 				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Service/Publication/ObligationOverviewService.php:71 assemble has no caller; PublicationRulesController.php:17-22 docblock says there is no obligation overview until harvest-feed-intake lands (REQ-PIN-110 unmet)",
-				"change": "openspec/changes/woo-obligation-overview"
+				"change": "woo-obligation-overview"
 			},
 			"reachedOn": "nothing: no route, no page",
 			"provider": "opencatalogi",
@@ -1686,7 +1686,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/dossiq",
 				"evidence": "procest appinfo/routes.php:704 wOOAssessment#publishDecision -> lib/Controller/WOOAssessmentController.php:215 -> lib/Service/WooPublicationService.php:217 publish, :363 createPublication in OpenCatalogi's register, :369 attaches disclosable documents; procest src/services/wooPublicationApi.js:32 publishWooDecision has no importer",
-				"change": "ConductionNL/dossiq openspec/changes/woo-publish-decision-from-the-case"
+				"change": "dossiq/woo-publish-decision-from-the-case"
 			},
 			"reachedOn": "nothing in a UI: POST /apps/dossiq/api/cases/{id}/woo/publish exists but no dossiq page calls it; opencatalogi only receives the object",
 			"provider": "dossiq",
@@ -1717,7 +1717,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/filinq",
 				"evidence": "searched opencatalogi lib for anonymi/redact/docudesk/filinq: only WooService.php:357 stores an empty 'anonymizedDocument' and :958 reads it; nothing produces it. filinq has lib/Service/AnonymizationService.php and BatchAnonymizeService.php, not called from opencatalogi",
-				"change": "ConductionNL/filinq openspec/changes/woo-publicatie-pipeline"
+				"change": "filinq/woo-publicatie-pipeline"
 			},
 			"reachedOn": "nothing in opencatalogi",
 			"note": "dossiq also has WOORedactionService/WOOAnonymisationAssistService for its own case flow. Specified in ConductionNL/filinq openspec/changes/woo-publicatie-pipeline (filinq lane, existing change, OpenSpec pass 2026-09-27).",
@@ -2191,7 +2191,7 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/components/widgets/NationalAnnounceWidget.vue (publication page) -> POST /api/publications/announce -> NationalIndexService::deliver: publicatie gateway via GatewayDeliveryRequestedEvent (national) and handOver with the ConnectionStore source object (other channels)",
-				"change": "openspec/changes/archive/2026-09-29-woo-national-delivery-repair"
+				"change": "archive/2026-09-29-woo-national-delivery-repair"
 			},
 			"reachedOn": "nothing: no page, and every delivery reports the channel unreachable",
 			"provider": "opencatalogi",
@@ -2581,7 +2581,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "searched lib/src for harvest/ckan/oai: no inbound harvester. openspec/changes/harvest-feed-intake/tasks.md 0/9 and harvest-protocol-plugins/tasks.md 0/9 open; dcat-oai-pmh-harvesting/tasks.md says superseded",
-				"change": "openspec/changes/harvest-feed-intake"
+				"change": "harvest-feed-intake"
 			},
 			"reachedOn": "nothing: not built",
 			"note": "Sibling building blocks exist (integriq SynchronizationService.php:225 pages CKAN; openregister Sync/HarvestPipelineService.php), but nothing connects them to harvesting a catalogue. corrections round 9 (2026-09-28): carried by openspec/changes/harvest-feed-intake (open, 0 of 9 tasks), the scheduled DCAT JSON-LD feed intake that replaces the superseded dcat-oai-pmh-harvesting umbrella; the CKAN walk follows in openspec/changes/harvest-protocol-plugins (open, 0 of 9 tasks, depends on harvest-feed-intake). The archived 2026-06-14-dcat-ap-harvest is the outbound DCAT feed, not a harvester.",
@@ -2612,7 +2612,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "openspec/changes/harvest-conflict-policies/tasks.md 0/8 open; no harvest code in lib (see od-harvest)",
-				"change": "openspec/changes/harvest-conflict-policies"
+				"change": "harvest-conflict-policies"
 			},
 			"reachedOn": "nothing: no harvest exists to conflict",
 			"provider": "opencatalogi",
@@ -2643,7 +2643,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "grep -i 'oai' lib src: only openspec; no route in appinfo/routes.php; openspec/changes/oai-pmh-endpoint/tasks.md 0/20 open",
-				"change": "openspec/changes/oai-pmh-endpoint"
+				"change": "oai-pmh-endpoint"
 			},
 			"reachedOn": "nothing: no route",
 			"provider": "opencatalogi",
@@ -2674,7 +2674,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "grep -i datastore in opencatalogi lib/src and portaliq src/lib: 0 hits; no row-query route in appinfo/routes.php",
-				"change": "openspec/changes/open-data-table-query-and-dictionary"
+				"change": "open-data-table-query-and-dictionary"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -2765,7 +2765,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "grep 'dictionary|dataDictionary' in opencatalogi lib/src and portaliq: 0 relevant hits; no column-description property on the publication schema (publication_register.json:93)",
-				"change": "openspec/changes/open-data-table-query-and-dictionary"
+				"change": "open-data-table-query-and-dictionary"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -3002,7 +3002,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "FederationSearch.vue:224-268 opens federated results with window.open in a new tab on the peer; PublicationService.php:2683 getFederatedPublication falls back to DirectoryService getPublication for metadata; PublicationService.php:917 attachments() is local-only (catalog-scope gate returns 404 for remote ids); Corrections round 8 (2026-09-28), opencatalogi#1648: the remote metadata fetch builds the peer URL as /api/publications/{id} (lib/Service/DirectoryService.php:2343-2344), which the peer routes to its catalogue with slug publications (appinfo/routes.php:252) and answers 404 once that seed catalogue is renamed or removed (lib/Controller/PublicationsController.php:605-615), instead of calling the peer /api/federation/publications/{id} (appinfo/routes.php:239), at 1a1ca02.",
-				"change": "openspec/changes/federation-open-remote-publication"
+				"change": "federation-open-remote-publication"
 			},
 			"reachedOn": "/search result click opens the peer instance in a new tab; portaliq PublicationDetailBlock.vue:140 reads /api/federation/publications/{id} metadata",
 			"note": "Remote attachments cannot be opened through this app. The peer deep link uses '#/publications/...' (FederationSearch.vue:266) while the app routes are history mode (routes.php:262), so it probably lands on the peer's dashboard. Specified in openspec/changes/federation-open-remote-publication (OpenSpec pass 2026-09-27). Corrections round 8 (2026-09-28): opening a remote publication returns 404 whenever the peer renamed or removed its seed catalogue with slug publications, opencatalogi#1648; rating kept because partial already reflects that attachments and opening inside the app are missing, and metadata still loads from a peer that keeps the seed catalogue.",
@@ -3062,7 +3062,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "DirectoryService.php:862,912 store lastSync + statusCode, :1497 on error; FederationDirectory.vue:149-185 shows up/degraded/down dot and HTTP status per listing, grep lastSync in the view: 0; ConnectionReporter.php reports sync/broadcast to integriq (connections.json); Corrections round 8 (2026-09-28), opencatalogi#1647: lastSync is set to now on every attempt, a failed sync included (lib/Service/DirectoryService.php:996 and :1535, reached from :660 and :692), so the listing sidebar Last synchronisation (src/sidebars/directory/DirectorySideBar.vue:91-94) shows the last attempt and the time of the last success is not kept, at 1a1ca02.",
-				"change": "openspec/changes/federation-connection-last-success"
+				"change": "federation-connection-last-success"
 			},
 			"reachedOn": "/directory (status dot per listing); integriq Integrations page for last sync/broadcast result",
 			"note": "Whether each connection works is visible per listing, but when it last succeeded is stored (lastSync) and not shown on the directory page. Specified in openspec/changes/federation-connection-last-success (OpenSpec pass 2026-09-27). Corrections round 8 (2026-09-28): lastSync records the last attempt, failed or not, so when a connection last succeeded is not stored at all, not only left unshown as said above, opencatalogi#1647; rating kept because whether each connection works is still visible per listing (status dot and HTTP status).",
@@ -3151,7 +3151,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq FederatedSearchBlock.vue:538 one facet field (default 'themes'), :341 facet list; opencatalogi SearchSideBar.vue (facets + sort) mounts only from src/sidebars/SideBars.vue:10, and nothing imports SideBars.vue (grep: 0)",
-				"change": "ConductionNL/portaliq openspec/changes/portal-public-search"
+				"change": "portaliq/portal-public-search"
 			},
 			"reachedOn": "portaliq public search (one facet: themes); nothing in opencatalogi's /search page",
 			"note": "No category, organisation or date filter. The in-app facet sidebar is dead code (SideBars.vue:77 also uses this.$route inside script setup). Specified in ConductionNL/portaliq openspec/changes/portal-public-search (portaliq lane, existing change, OpenSpec pass 2026-09-27).",
@@ -3182,7 +3182,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "PublicationQueryService.php:268-311 turns ?_content=true into OR _content_search; openregister ContentSearchHandler.php unions chunk matches; add-document-content-search/tasks.md 6/8 done; no caller passes _content (grep src, portaliq: 0)",
-				"change": "ConductionNL/openregister openspec/changes/expose-content-search-in-object-service"
+				"change": "openregister/expose-content-search-in-object-service"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/search?_content=true (public API only); no page or portaliq block sends it",
 			"note": "Readers cannot reach it: the opt-in flag is off by default and no search UI sets it. Specified in ConductionNL/openregister openspec/changes/expose-content-search-in-object-service (openregister lane, OpenSpec pass 2026-09-27).",
@@ -3243,7 +3243,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq FederatedSearchBlock.vue:662-670 sortOptions: publicationDate ASC/DESC and title only; the comment above says relevance is absent because nothing ranks; opencatalogi SearchSideBar.vue:63-102 has Relevance/date sort but is never mounted (see srch-facets)",
-				"change": "ConductionNL/portaliq openspec/changes/search-sort-by-relevance"
+				"change": "portaliq/search-sort-by-relevance"
 			},
 			"reachedOn": "portaliq public search sort control (date, name)",
 			"note": "Sorting by date works. Sorting by relevance does not exist anywhere reachable. Specified in ConductionNL/portaliq openspec/changes/search-sort-by-relevance (portaliq lane, OpenSpec pass 2026-09-27).",
@@ -3274,7 +3274,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "cors_allowed_origins CSV allowlist (DcatController.php:91, PublicationsController.php:281, PublicationRulesController.php:391 on POST /api/publications/search, OPTIONS routes.php:99-149); SearchController.php and FederationController.php add no CORS header and have no OPTIONS route",
-				"change": "openspec/changes/search-cors-on-every-public-endpoint"
+				"change": "search-cors-on-every-public-endpoint"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/publications/search and GET /api/{catalogSlug} from a named origin; set by occ config only",
 			"note": "The main search endpoints, /api/search and /api/federation/publications, send no CORS headers, so a browser on another site cannot call them. The allowlist has no settings UI (not in SettingsService allowedKeys). Specified in openspec/changes/search-cors-on-every-public-endpoint (OpenSpec pass 2026-09-27).",
@@ -3575,7 +3575,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "l10n/nl.json has 1110 UI strings (74 l10n files); openspec/changes/register-i18n/tasks.md has only Task 1 'todo'; lib/Settings/publication_register.json publication schema has no language or translation property; portaliq lib/Controller/ContentController.php:212 negotiates a locale for portal pages only",
-				"change": "openspec/changes/register-i18n"
+				"change": "register-i18n"
 			},
 			"reachedOn": "staff UI labels via Nextcloud l10n; publication content: nothing",
 			"note": "Labels are translated. Publications are stored and served in one language. Multilingual content is specified (register-i18n), not built. corrections round 9 (2026-09-28): carried by the open openspec/changes/register-i18n (spec only, Task 1 todo). The archived openspec/changes/archive/2026-03-21-register-i18n ticks 12 of 12 tasks, but at f8c2317120 none of it is in the code (git grep finds no translatable flag in lib/Settings, no lang parameter in lib and no language switcher in src), so that change shipped without the capability; the rating stays partial.",
@@ -3938,7 +3938,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "appinfo/routes.php:90 POST /api/case-types/import (admin); lib/Controller/ServiceCatalogueController.php:324 importCaseType -> CaseTypeCatalogueService::importDefinition via lib/Service/Catalogue/GatewayCaseTypeSourceReader.php:54-55 (integriq/openconnector CallService)",
-				"change": "ConductionNL/integriq openspec/changes/zgw-connectors-for-dossiq"
+				"change": "integriq/zgw-connectors-for-dossiq"
 			},
 			"reachedOn": "nothing: admin API only, no page in src/ calls it",
 			"note": "The transport to the national catalogue is integriq's. With no gateway installed the source is reported unreachable. The e2e test exercises only that unreachable path. Specified in ConductionNL/integriq openspec/changes/zgw-connectors-for-dossiq (integriq lane, existing change, OpenSpec pass 2026-09-27).",
@@ -4267,7 +4267,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/dossiq",
 				"evidence": "dossiq (procest origin/development 00869dd) lib/Service/WooPublicationService.php:244,352 sendPublicationToOpenCatalogi creates the publication and attaches disclosable documents, reached by POST /api/cases/{id}/woo/publish (appinfo/routes.php:704, WOOAssessmentController); src/services/wooPublicationApi.js:32 publishWooDecision has no caller in src/",
-				"change": "ConductionNL/dossiq openspec/changes/woo-publish-decision-from-the-case"
+				"change": "dossiq/woo-publish-decision-from-the-case"
 			},
 			"reachedOn": "nothing in a UI: BesluitPublicatiePanel.vue:190 calls publishBesluit -> POST /api/besluitvorming/cases/{id}/publish (routes.php:737) -> PublicationService.php:163 saveObject in dossiq's own register, not opencatalogi's; the opencatalogi hand-over route has no page caller",
 			"note": "Re-rated by the lane from the pack's yes: the pack credited BesluitPublicatiePanel, but that panel publishes into dossiq's own register. Agrees with woo-from-case. Specified in ConductionNL/dossiq openspec/changes/woo-publish-decision-from-the-case (dossiq lane, OpenSpec pass 2026-09-27).",
@@ -4298,7 +4298,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "integriq lib/AppInfo/Application.php:1473 registers SharePointOnlineAdapter (document-cms reference adapter), but nothing in opencatalogi lib/ or integriq routes its documents into a publication; grep of opencatalogi for sharepoint finds nothing",
-				"change": "ConductionNL/integriq openspec/changes/connectors-sharepoint-publication-intake"
+				"change": "integriq/connectors-sharepoint-publication-intake"
 			},
 			"reachedOn": "nothing: no path from SharePoint into an opencatalogi publication",
 			"provider": "integriq",
@@ -4449,7 +4449,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Controller/OoapiController.php:195 requireAuthenticatedConsumer on every OOAPI action; lib/Service/OoapiService.php:168 isConsumerAllowed reads an instance-wide ooapi_consumers allowlist (empty means every Nextcloud user); lib/Service/SettingsService.php:514 says per-catalog credential scoping is NOT implemented",
-				"change": "openspec/changes/integration-feed-consumer-credentials"
+				"change": "integration-feed-consumer-credentials"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/ooapi/v5/* with a Nextcloud user plus app password. No settings page exposes ooapi_consumers (grep src/)",
 			"note": "Credentials are Nextcloud accounts and app passwords, gated by one instance-wide list. No per-feed key exists, and nothing covers DCAT or other feeds. Specified in openspec/changes/integration-feed-consumer-credentials (OpenSpec pass 2026-09-27).",
@@ -4480,7 +4480,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/info.xml:256-257 registers lib/Command/AttachDocumentsToPublicationsCommand.php:71 (opencatalogi:documents:attach-to-publications) and MigrateCmsToPortaliqCommand.php:68 (opencatalogi:cms:migrate-to-portaliq)",
-				"change": "openspec/changes/integration-maintenance-commands"
+				"change": "integration-maintenance-commands"
 			},
 			"reachedOn": "occ opencatalogi:documents:attach-to-publications, occ opencatalogi:cms:migrate-to-portaliq",
 			"note": "Two single-purpose bulk commands. There is no general maintenance CLI such as republish, reindex or retention run. Specified in openspec/changes/integration-maintenance-commands (OpenSpec pass 2026-09-27).",
@@ -4511,7 +4511,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "src/manifest.json Store page (/store: 'Install catalogue configurations ... a publication type, a set of themes, or the flows behind them') and Flows page (/flows) are OpenRegister AppHost surfaces; openspec/changes/harvest-protocol-plugins/tasks.md has 0 of 9 tasks done",
-				"change": "ConductionNL/openregister openspec/changes/app-leaf-provider-registration"
+				"change": "openregister/app-leaf-provider-registration"
 			},
 			"reachedOn": "/apps/opencatalogi/store and /apps/opencatalogi/flows (OpenRegister-provided)",
 			"note": "Extension works through configuration packages and flows. opencatalogi has no code plugin interface of its own. Specified in ConductionNL/openregister openspec/changes/app-leaf-provider-registration (openregister lane, OpenSpec pass 2026-09-27).",
@@ -5048,7 +5048,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "Searched publication_register.json authorization blocks: publication (:291) has read rules only, no create/update/publish split; no role or group concept in lib/; publishing is a plain publicationDate write (EventService.php:381), so no separate publish right can exist",
-				"change": "openspec/changes/operations-publish-rights"
+				"change": "operations-publish-rights"
 			},
 			"reachedOn": "nothing: no editor/publisher split",
 			"note": "An admin could set CRUD rights per group in OR's schema editor, but that cannot tell editing from publishing. Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-06-15-rbac-and-lifecycle-enforcement (per-transition authorization on x-openregister-lifecycle); opencatalogi's half is not done, since lib/Settings/publication_register.json declares only an archive transition and no publish transition limited to publishers, so the owner moved to ConductionNL/opencatalogi (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister).",
@@ -5139,7 +5139,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): opencatalogi itself only reports three outbound connections (directory sync, broadcast, Woo-index readiness) with a last-checked status, lib/Settings/connections.json:1-30 and lib/Service/Connection/ConnectionReporter.php:170-200, listed on the Integrations page src/manifest.d/connection-registry.json:20-95. Source-system pulls live in integriq: workspace checkout openconnector (integriq, development a9366588): the Sync runs page lists synchronization_run rows with started, status, processed, found, created, updated, invalid (src/manifest.json:4119-4190) and each synchronization has a Run now row action (src/manifest.json:2400-2410, runSynchronizationHandler src/handlers/actionHandlers.js:94-100, POST /api/synchronizations/{id}/run appinfo/routes.php:281). Missing half: the runs list has no source-system column or per-day grouping, so 'per source system which pulls ran each day' needs filtering by synchronization, and none of it is reached from the opencatalogi app beyond the Add integration link.",
-				"change": "ConductionNL/integriq openspec/changes/observability-connection-run-summary"
+				"change": "integriq/observability-connection-run-summary"
 			},
 			"reachedOn": "integriq /synchronization-runs and /synchronizations (Run now); opencatalogi /settings/integrations shows only its own three connections",
 			"provider": "integriq",
@@ -5173,7 +5173,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): grep for IMailer, INotificationManager, notify( and createNotification in lib/ finds nothing; the connection rows (lib/Settings/connections.json) are only shown on the Integrations page. workspace checkout openconnector (integriq, development a9366588): grep for IMailer and digest in lib/ finds no report mail; its sync-failed notification rule is disabled (lib/Settings/integriq_register.json:2274-2280). Nearest thing: workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): ScheduledReportService can mail a daily export of any register/schema (lib/Service/ScheduledReportService.php:92,125,980, routes appinfo/routes.php:1939-1944), but it is a generic object export with no page in openregister src/ (grep scheduled-reports finds no caller), not a connection report.",
-				"change": "ConductionNL/openregister openspec/changes/connections-daily-report-mail"
+				"change": "openregister/connections-daily-report-mail"
 			},
 			"reachedOn": "nothing",
 			"provider": "openregister",
@@ -5207,7 +5207,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): attachments are always uploaded into OpenRegister file storage: the frontend posts files to /api/objects/{register}/{schema}/{id}/files and filesMultipart (src/modals/generic/UploadFiles.vue:1031,1265), and the legacy lib/Service/FileService.php:183-215 writes the upload into Publicaties/<pub>/Bijlagen; the DIWOO sitemap loc is the stored file's downloadUrl (lib/Service/SitemapService.php:512). Searched lib and src for accessURL, downloadURL, externalUrl, sourceUrl and remoteUrl: the only hits are the DCAT distribution mapping (lib/Service/DcatMappingService.php:369-370), which serialises a stored file's URL. Integriq synchronisations copy files too (synchronization_run filesPending, workspace checkout openconnector (integriq, development a9366588): src/manifest.json:4176-4181).",
-				"change": "openspec/changes/integration-publish-by-reference"
+				"change": "integration-publish-by-reference"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -5241,7 +5241,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the Woo-index fields are filled by a fixed mapping in code: lib/Service/SitemapService.php:508-590 reads publisher from the organisation's TOOI id, category from category/tooiCategorieUri/tooiCategorieNaam and soortHandeling from the publication, and emits no official title at all (grep officieleTitel in lib and src finds nothing). The source-to-publication step is configurable without a developer in integriq's mapping editor (workspace checkout openconnector (integriq, development a9366588): Twig-driven lib/Service/MappingService.php:24-64, pages /mappings and /mappings/:id src/manifest.json:2237-2295). Missing half: the publication-to-Woo-index mapping itself cannot be changed without code, and the official title field is not mapped.",
-				"change": "ConductionNL/integriq openspec/changes/mapping-woo-index-field-mapping"
+				"change": "integriq/mapping-woo-index-field-mapping"
 			},
 			"reachedOn": "integriq /mappings editor; the fixed DIWOO mapping is reached on /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
 			"provider": "integriq",
@@ -5275,7 +5275,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): some Woo metadata is derived automatically without a person: publisher @resource from the organisation's TOOI identifier (lib/Service/SitemapService.php:531-538, resolveOrganisationTooiIdentifier :639) and soortHandeling defaulting to ontvangst (lib/Service/TooiVocabularyService.php:168-172); integriq mappings can compute fields from other source data with Twig (workspace checkout openconnector (integriq, development a9366588): lib/Service/MappingService.php:24-64). Missing half: no suggestions a person confirms; grep for suggest, classif, TaskProcessing and llm in lib and src finds only the MCP/CMS tool plumbing (lib/Tool/CMSTool.php:163), nothing that proposes metadata.",
-				"change": "openspec/changes/woo-metadata-suggestions"
+				"change": "woo-metadata-suggestions"
 			},
 			"reachedOn": "/api/{catalogSlug}/sitemaps/{categoryCode}/publications (derived values); integriq /mappings",
 			"provider": "opencatalogi",
@@ -5309,7 +5309,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the sitemap index sorts by @self.updated and sets each page's lastmod to the newest updated time on it (lib/Service/SitemapService.php:202,230-239,280-286), so a metadata change does move the page entry. But each document's own <lastmod> is the file's published time, falling back to the publication's updated time only when the file has none (lib/Service/SitemapService.php:510-512,526), so a metadata-only change leaves the document's lastmod unchanged and the Woo-index has no per-document signal.",
-				"change": "openspec/changes/woo-sitemap-document-signals"
+				"change": "woo-sitemap-document-signals"
 			},
 			"reachedOn": "/api/{catalogSlug}/sitemaps/{categoryCode} and /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
 			"provider": "opencatalogi",
@@ -5343,7 +5343,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): buildSitemap maps every attached file to a separate diwoo:Document (lib/Service/SitemapService.php:343-349, 'Map each file to a separate DIWOO Document'), and mapDiwooDocument emits loc, lastmod, creatiedatum, publisher, format, informatiecategorie and documenthandeling only (:508-590). grep hasPart, isPartOf (any case) in lib, src and in the portaliq and openregister workspace checkouts finds nothing, so a decision and its annexes are not linked in the sitemap.",
-				"change": "openspec/changes/woo-sitemap-document-signals"
+				"change": "woo-sitemap-document-signals"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -5377,7 +5377,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "workspace checkout openconnector (integriq, development a9366588): a full-mode synchronisation garbage-collects target objects whose source record is gone: SynchronizationService::deleteInvalidObjects (lib/Service/SynchronizationService.php:2793-2800 call, :3830 definition, delete via updateTarget action delete :4062-4066), guarded by a deletion-ratio threshold (:3958-3985) and never run in incremental mode (:2793). A publication stored in OpenRegister then leaves every public surface. Missing half: workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): that delete is a soft delete that intentionally leaves the object's files in place for restore (lib/Service/Object/DeleteObject.php:363-364); only a later permanent delete removes them (:272-277). Nothing listens for a destruction event from the source as such; disappearance on the next full run is the trigger.",
-				"change": "ConductionNL/integriq openspec/changes/synchronisation-source-destruction-purge"
+				"change": "integriq/synchronisation-source-destruction-purge"
 			},
 			"reachedOn": "integriq scheduled synchronisation runs (/synchronization-runs shows the deleted count)",
 			"provider": "integriq",
@@ -5411,7 +5411,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/dossiq",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): a Woo disclosure batch is created from a documents list the caller already supplies (lib/Service/WooService.php:335-355, POST /api/woo/batches appinfo/routes.php:60, a path the frontend does not call per _lane/api-paths.tsv, so the caller is a sibling such as dossiq). Nothing searches other systems: grep sharepoint, teams, imap and graph in lib finds nothing relevant. workspace checkout openconnector (integriq, development a9366588): the Microsoft 365 adapter reads calendar and mail metadata only, with no search or document gathering (lib/Service/Adapter/Saas/Microsoft365Adapter.php:23-35).",
-				"change": "ConductionNL/dossiq openspec/changes/woo-requests-gather-documents-from-sources"
+				"change": "dossiq/woo-requests-gather-documents-from-sources"
 			},
 			"reachedOn": "nothing",
 			"provider": "dossiq",
@@ -5507,7 +5507,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the publication schema has no draft state: status is an enum of published and archived with lifecycle initial published (lib/Settings/publication_register.json:207-222), and only title is required. hardValidation is false on it (:289), so an incomplete publication saves, but nothing enforces required fields at publish time. The frontend still calls an object publish endpoint (src/store/modules/object.js:1558) that the workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): routes no longer register (grep publish in appinfo/routes.php finds no objects publish route), and workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): required checks only run when hardValidation is on, at every save alike (lib/Service/ObjectService.php:2192-2222).",
-				"change": "ConductionNL/openregister openspec/changes/field-rules-by-state"
+				"change": "openregister/field-rules-by-state"
 			},
 			"reachedOn": "nothing",
 			"provider": "openregister",
@@ -5571,7 +5571,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): published records can be read publicly as filtered JSON from /api/{catalogSlug} (appinfo/routes.php publications#index, lib/Controller/PublicationsController.php:433), and workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): signed-in users can export a register/schema's objects with the same filters as CSV, XLSX or PDF (GET /api/objects/{register}/{schema}/export appinfo/routes.php:1172, ObjectsController::export lib/Controller/ObjectsController.php:5432-5464, @NoAdminRequired). Missing half: no public CSV, no TSV or XML, and a tabular file attached to a publication is never parsed into rows (grep text/csv and _format in the publication controllers and services finds nothing), so there is no 'published table' to filter.",
-				"change": "ConductionNL/openregister openspec/changes/export-open-formats-and-public-download"
+				"change": "openregister/export-open-formats-and-public-download"
 			},
 			"reachedOn": "/api/{catalogSlug} (public JSON); openregister object export for signed-in users",
 			"provider": "openregister",
@@ -5604,7 +5604,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): schema updates are diffed and classified compatible or breaking, and a breaking change is blocked until an admin acknowledges it, with a versioned changelog (lib/Service/Schema/SchemaVersioningService.php:90,112-121,138,156); OpenRegister's own API versions send Deprecation and Sunset headers (lib/Middleware/ApiVersionMiddleware.php:217-226). Missing half: nobody who builds on the data is told; opencatalogi has no consumer registry or change notice (grep breaking, deprecat and notify( in opencatalogi lib finds only code comments), and the Deprecation headers cover OpenRegister's routes, not opencatalogi's public /api/{catalogSlug}. Corrections round 8 (2026-09-28), openregister#4102: the classification, breaking gate and changelog run only on PUT /api/schemas/{id}, openregister lib/Controller/SchemasController.php:1140-1182 at 555af72 is the only caller of SchemaVersioningService, while a configuration or app import, the path that carries most schema changes in the fleet, saves the schema with no classification or gate (lib/Service/Configuration/ImportHandler.php:2210 and :2224).",
-				"change": "ConductionNL/openregister openspec/changes/schema-breaking-change-notice"
+				"change": "openregister/schema-breaking-change-notice"
 			},
 			"reachedOn": "openregister schema edit (acknowledge breaking change); no consumer-facing surface",
 			"provider": "openregister",
@@ -5637,7 +5637,7 @@
 				"state": "building",
 				"owner": "ConductionNL/integriq",
 				"evidence": "workspace checkout openconnector (integriq, development a9366588): when records vanish from a source, a full synchronisation deletes their targets (lib/Service/SynchronizationService.php:2793-2800), but each source can set deletionRatioThreshold, and above it nothing is deleted until someone reruns with forceDeletion (:3958-3985, forceDeletion read at lib/Controller/SynchronizationsController.php:363), with a SynchronizationDeletionGuardedEvent raised; incremental mode never deletes (:2793). Missing half: the choice is a ratio for the whole run, not a per-record 'keep until I act', and the action is delete, not unpublish. source read at a00f9f8 (lane tip 77fa61f7, no code change since): federated publications are read live from peers (lib/Controller/FederationController.php:81), so a record gone at the peer disappears at once with no choice.",
-				"change": "ConductionNL/integriq openspec/changes/records-owned-by-an-external-source"
+				"change": "integriq/records-owned-by-an-external-source"
 			},
 			"reachedOn": "integriq synchronisation settings and Run now; opencatalogi federation search",
 			"provider": "integriq",
@@ -5670,7 +5670,7 @@
 				"state": "building",
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): opencatalogi does not import data files into rows, so the only import path is an integriq synchronisation. workspace checkout openconnector (integriq, development a9366588): declaration only: the integriq register sends a Nextcloud notification to the synchronisation's user and the openconnector-ops group when a job log with level ERROR is created (job-error, enabled, lib/Settings/integriq_register.json:2102-2115), while the synchronization_log rule sync-failed is disabled (:2274-2280); the rules are dispatched by OpenRegister's AnnotationNotificationDispatcher, not traced end to end here. Missing half: no alert tied to a failed file import, and the recipient group still carries the old openconnector name.",
-				"change": "ConductionNL/integriq openspec/changes/integriq-notifications"
+				"change": "integriq/integriq-notifications"
 			},
 			"reachedOn": "Nextcloud notifications (declared); integriq /synchronization-runs shows failed runs",
 			"provider": "integriq",
@@ -5703,7 +5703,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the DCAT harvest feeds send ETag and Last-Modified and answer a matching If-None-Match with 304 (lib/Controller/DcatController.php:224-233,343-360), which lets a CDN revalidate cheaply. Missing half: grep cacheFor, Cache-Control, max-age and ETag in lib finds no other caching header, so the public publications API /api/{catalogSlug} and /api/search go out with Nextcloud's default no-cache headers and a CDN cannot hold them. workspace checkout portaliq (development 91fa24d): only the reading room's static assets are cacheable (lib/Controller/WooController.php:131-135 cacheFor 86400, TrafficController.php:443 max-age 3600).",
-				"change": "openspec/changes/operations-public-api-cache-headers"
+				"change": "operations-public-api-cache-headers"
 			},
 			"reachedOn": "/api/catalogs/{catalogSlug}/dcat and /api/dcat (conditional GET)",
 			"provider": "opencatalogi",
