@@ -6315,7 +6315,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "source read at openregister development 8ff5ba173b: the engine is archived (2026-10-05-field-rules-by-state, 13 of 13 tasks): x-openregister-lifecycle.states.<state>.fields is evaluated on save by lib/Listener/StateFieldRuleListener.php:74. Source read at opencatalogi development 7a5a8a492: the publication schema still has no draft state and no per-state field rules: status enum published/archived, lifecycle initial published (lib/Settings/publication_register.json, schema publication), required [title]. The draft state comes with the open change publication-lifecycle-on-or (issue opencatalogi#1754), whose tasks do not declare required-at-publish fields.",
-				"change": "openregister/field-rules-by-state",
+				"change": "publication-required-at-publish",
 				"readOn": "2026-10-07"
 			},
 			"reachedOn": "nothing",
@@ -6336,7 +6336,7 @@
 				"iprox": "not checked: searched the public iprox.open material for \"save a publication as a draft with required fields still empty, and have them enforced only when it is published\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"save a publication as a draft with required fields still empty, and have them enforced only when it is published\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
-			"note": "Specified in ConductionNL/openregister openspec/changes/field-rules-by-state (openregister lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: OpenRegister shipped field rules by state; opencatalogi has neither the draft state nor the rule that makes fields required in published. No opencatalogi change declares that rule yet.",
+			"note": "Specified in ConductionNL/openregister openspec/changes/field-rules-by-state (openregister lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: OpenRegister shipped field rules by state; opencatalogi has neither the draft state nor the rule that makes fields required in published. No opencatalogi change declares that rule yet. Spec round part 3 (2026-10-07): opencatalogi's half (the required-in-published rule on the publication schema and the form hints) is specified in publication-required-at-publish, after publication-lifecycle-on-or; OpenRegister's delivered engine is openregister/field-rules-by-state.",
 			"screen": {
 				"board": null,
 				"reason": "screen belongs to openregister: field rules by state"
@@ -6501,7 +6501,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at integriq development 5e903e546: integriq-notifications is archived (2026-09-30, 9 of 9 tasks): job-error is enabled and notifies the job's user and the connection alert recipients (lib/Settings/integriq_register.json:2349-2375, lib/Notification/ConnectionAlertRecipientResolver.php:48), dispatched by OpenRegister's AnnotationNotificationListener; the synchronisation rule sync-failed is still enabled: false (:2584-2590). Source read at opencatalogi development 7a5a8a492: opencatalogi imports no data file yet; the open change open-data-table-query-and-dictionary stores failed with the first refused row (tasks.md 1.3) and sends no alert.",
-				"change": "integriq/integriq-notifications",
+				"change": "data-file-import-failure-alert",
 				"readOn": "2026-10-07"
 			},
 			"reachedOn": "Nextcloud notifications (declared); integriq /synchronization-runs shows failed runs",
@@ -6510,7 +6510,7 @@
 			"feature": null,
 			"featureConfidence": "low",
 			"columnsNote": "row added 2026-09-26 (wave 5); every column rated on that day",
-			"note": "Declaration only: the alerting rests on a notification declaration with no enabled handler, which is rated no per the wave-1 rule, with the reading kept under built.evidence. Being built in ConductionNL/integriq openspec/changes/integriq-notifications (integriq lane, existing change, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: integriq's alerting shipped for job errors, not for a failed data file import. The import itself is open in open-data-table-query-and-dictionary, which specifies no alert. State moved from building to specified.",
+			"note": "Declaration only: the alerting rests on a notification declaration with no enabled handler, which is rated no per the wave-1 rule, with the reading kept under built.evidence. Being built in ConductionNL/integriq openspec/changes/integriq-notifications (integriq lane, existing change, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: integriq's alerting shipped for job errors, not for a failed data file import. The import itself is open in open-data-table-query-and-dictionary, which specifies no alert. State moved from building to specified. Spec round part 3 (2026-10-07): the alert on a failed table import is opencatalogi's and is specified in data-file-import-failure-alert, after open-data-table-query-and-dictionary; integriq's delivered change is integriq/integriq-notifications.",
 			"ckan": "partial",
 			"dkan": "partial",
 			"xxllnc": "unknown",
