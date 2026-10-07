@@ -1933,14 +1933,15 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "specified",
-				"owner": "ConductionNL/filinq",
-				"evidence": "searched opencatalogi lib for anonymi/redact/docudesk/filinq: only WooService.php:357 stores an empty 'anonymizedDocument' and :958 reads it; nothing produces it. filinq has lib/Service/AnonymizationService.php and BatchAnonymizeService.php, not called from opencatalogi",
-				"change": "filinq/woo-publicatie-pipeline"
+				"state": "building",
+				"owner": "ConductionNL/opencatalogi",
+				"evidence": "source read at opencatalogi development 7a5a8a492: opencatalogi now redacts a partly public (deels_openbaar) document through OpenRegister: lib/Service/Woo/DocumentRedactor.php:92-104 (forAssessment) runs OpenRegister detection and FileService::anonymizeDocument (:175-186) when an assessment is saved through WooService::updateAssessment (lib/Service/WooService.php:567), and publishBatch refuses a batch with an unverified redaction (WooService.php:960, DocumentRedactor.php:267 assertPublishable); WooBatchDetail.vue:186-196 lists the documents that cannot be published yet. Change woo-redaction-pipeline (open, 4 of 4 tasks ticked, not archived). The filinq change filinq/woo-publicatie-pipeline is archived (2026-09-29) and hands its own redacted derivative to opencatalogi, which is filinq's path. Missing: no page saves an assessment, so the redaction never runs from the app: nothing under src/ calls PUT /api/woo/batches/{batchId}/documents/{docId} (appinfo/routes.php:63) and /woo has no rowRoute to the batch page (src/manifest.json:437-455), opencatalogi#1604. Scans without a text layer are not covered (open change woo-redaction-scans-and-text-layer, 0 of 12 tasks).",
+				"change": "woo-redaction-pipeline",
+				"readOn": "2026-10-07"
 			},
-			"reachedOn": "nothing in opencatalogi",
-			"note": "dossiq also has WOORedactionService/WOOAnonymisationAssistService for its own case flow. Specified in ConductionNL/filinq openspec/changes/woo-publicatie-pipeline (filinq lane, existing change, OpenSpec pass 2026-09-27).",
-			"provider": "filinq",
+			"reachedOn": "nothing: the redaction runs only from PUT /api/woo/batches/{batchId}/documents/{docId}, which no page calls",
+			"note": "dossiq also has WOORedactionService/WOOAnonymisationAssistService for its own case flow. Specified in ConductionNL/filinq openspec/changes/woo-publicatie-pipeline (filinq lane, existing change, OpenSpec pass 2026-09-27). Re-rated 2026-10-07 (spec round part 2): the redaction is built in opencatalogi on OpenRegister (woo-redaction-pipeline) but no screen reaches it, so the rating stays no and the state moves to building. filinq/woo-publicatie-pipeline is archived; it is filinq's own hand-off.",
+			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "woo-disclosure-workflow",
 			"featureConfidence": "medium",
@@ -3490,13 +3491,14 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "DirectoryService.php:862,912 store lastSync + statusCode, :1497 on error; FederationDirectory.vue:149-185 shows up/degraded/down dot and HTTP status per listing, grep lastSync in the view: 0; ConnectionReporter.php reports sync/broadcast to integriq (connections.json); Corrections round 8 (2026-09-28), opencatalogi#1647: lastSync is set to now on every attempt, a failed sync included (lib/Service/DirectoryService.php:996 and :1535, reached from :660 and :692), so the listing sidebar Last synchronisation (src/sidebars/directory/DirectorySideBar.vue:91-94) shows the last attempt and the time of the last success is not kept, at 1a1ca02.",
-				"change": "federation-connection-last-success"
+				"evidence": "source read at opencatalogi development 7a5a8a492: tasks 1.1 and 1.2 of federation-connection-last-success are done: the listing schema has lastSuccessAt and lastError (lib/Settings/publication_register.json:778) and lib/Service/DirectoryService.php:862-866 moves lastSuccessAt only on success, :999 and :1542 leave it on failure (#1662). Not shown: the only component that renders them, src/sidebars/directory/DirectorySideBar.vue:91-110, is imported nowhere; FederationDirectory.vue (src/manifest.json:1371) shows the status dot per listing. Tasks 2.1, 2.2 and 3.1 are open.",
+				"change": "federation-connection-last-success",
+				"readOn": "2026-10-07"
 			},
 			"reachedOn": "/directory (status dot per listing); integriq Integrations page for last sync/broadcast result",
-			"note": "Whether each connection works is visible per listing, but when it last succeeded is stored (lastSync) and not shown on the directory page. Specified in openspec/changes/federation-connection-last-success (OpenSpec pass 2026-09-27). Corrections round 8 (2026-09-28): lastSync records the last attempt, failed or not, so when a connection last succeeded is not stored at all, not only left unshown as said above, opencatalogi#1647; rating kept because whether each connection works is still visible per listing (status dot and HTTP status).",
+			"note": "Whether each connection works is visible per listing, but when it last succeeded is stored (lastSync) and not shown on the directory page. Specified in openspec/changes/federation-connection-last-success (OpenSpec pass 2026-09-27). Corrections round 8 (2026-09-28): lastSync records the last attempt, failed or not, so when a connection last succeeded is not stored at all, not only left unshown as said above, opencatalogi#1647; rating kept because whether each connection works is still visible per listing (status dot and HTTP status). Re-rated 2026-10-07: the last success is stored now, but no page shows it and Sync now per row is not built.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "federated-directory",
@@ -3633,11 +3635,12 @@
 			"built": {
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "PublicationQueryService.php:268-311 turns ?_content=true into OR _content_search; openregister ContentSearchHandler.php unions chunk matches; add-document-content-search/tasks.md 6/8 done; no caller passes _content (grep src, portaliq: 0)",
-				"change": "openregister/expose-content-search-in-object-service"
+				"evidence": "source read at opencatalogi development 7a5a8a492: lib/Service/PublicationQueryService.php:133 forwards ?_content=true as OpenRegister's _content_search; lib/Controller/SearchController.php:127-131. The OpenRegister half is archived as openregister/2026-10-05-expose-content-search-in-object-service (7 of 7 tasks). Missing: no caller sets _content: git grep _content in opencatalogi src and portaliq src/lib at development finds no search request that sends it. portaliq's open change portal-public-search tasks.md:29 is the one that sends _content_search: true from the public search.",
+				"change": "portaliq/portal-public-search",
+				"readOn": "2026-10-07"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/search?_content=true (public API only); no page or portaliq block sends it",
-			"note": "Readers cannot reach it: the opt-in flag is off by default and no search UI sets it. Specified in ConductionNL/openregister openspec/changes/expose-content-search-in-object-service (openregister lane, OpenSpec pass 2026-09-27).",
+			"note": "Readers cannot reach it: the opt-in flag is off by default and no search UI sets it. Specified in ConductionNL/openregister openspec/changes/expose-content-search-in-object-service (openregister lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: the OpenRegister half shipped (change archived 2026-10-05); the user-facing half is portaliq's public search, open as portaliq/portal-public-search. Link moved there.",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "faceted-search-api",
@@ -5880,14 +5883,15 @@
 			"name": "See per source system which scheduled pulls ran each day and what they delivered, and restart a failed pull with one click.",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
-			"opencatalogi": "partial",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/integriq",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): opencatalogi itself only reports three outbound connections (directory sync, broadcast, Woo-index readiness) with a last-checked status, lib/Settings/connections.json:1-30 and lib/Service/Connection/ConnectionReporter.php:170-200, listed on the Integrations page src/manifest.d/connection-registry.json:20-95. Source-system pulls live in integriq: workspace checkout openconnector (integriq, development a9366588): the Sync runs page lists synchronization_run rows with started, status, processed, found, created, updated, invalid (src/manifest.json:4119-4190) and each synchronization has a Run now row action (src/manifest.json:2400-2410, runSynchronizationHandler src/handlers/actionHandlers.js:94-100, POST /api/synchronizations/{id}/run appinfo/routes.php:281). Missing half: the runs list has no source-system column or per-day grouping, so 'per source system which pulls ran each day' needs filtering by synchronization, and none of it is reached from the opencatalogi app beyond the Add integration link.",
-				"change": "integriq/observability-connection-run-summary"
+				"evidence": "source read at integriq development 5e903e546: the source detail page (/sources/:id, src/manifest.json:1012) carries SourceRunSummaryWidget (src/manifest.json:1336-1340), which shows the source's pulls per day in one table and each run with a Run again button on a failed run (src/components/SourceRunSummaryWidget.vue:17-97), fed by GET /api/sources/{id}/run-summary (appinfo/routes.php:409, lib/Controller/RunSummaryController.php:102 via RunSummaryService); Run again posts /api/synchronizations/{id}/run (src/handlers/runAgain.js:35-37). Shipped by integriq change observability-connection-run-summary, archived 2026-09-29 (10 of 10 tasks). opencatalogi itself still only reports its own three connections (lib/Settings/connections.json, lib/Service/Connection/ConnectionReporter.php).",
+				"change": "integriq/observability-connection-run-summary",
+				"readOn": "2026-10-07"
 			},
-			"reachedOn": "integriq /synchronization-runs and /synchronizations (Run now); opencatalogi /settings/integrations shows only its own three connections",
+			"reachedOn": "integriq /sources/:id (run summary per day, Run again)",
 			"provider": "integriq",
 			"providerHow": "read-from-code",
 			"feature": null,
@@ -5906,7 +5910,7 @@
 				"iprox": "not checked: searched the public iprox.open material for \"see per source system which scheduled pulls ran each day and what they delivered, and restart a failed pull with one click\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see per source system which scheduled pulls ran each day and what they delivered, and restart a failed pull with one click\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
-			"note": "Specified in ConductionNL/integriq openspec/changes/observability-connection-run-summary (integriq lane, OpenSpec pass 2026-09-27).",
+			"note": "Specified in ConductionNL/integriq openspec/changes/observability-connection-run-summary (integriq lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07 (sibling-has): integriq shipped the per source, per day pull summary with Run again; opencatalogi consumes integriq for source-system pulls.",
 			"screen": {
 				"board": null,
 				"reason": "screen belongs to integriq"
@@ -5998,8 +6002,9 @@
 			"built": {
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the Woo-index fields are filled by a fixed mapping in code: lib/Service/SitemapService.php:508-590 reads publisher from the organisation's TOOI id, category from category/tooiCategorieUri/tooiCategorieNaam and soortHandeling from the publication, and emits no official title at all (grep officieleTitel in lib and src finds nothing). The source-to-publication step is configurable without a developer in integriq's mapping editor (workspace checkout openconnector (integriq, development a9366588): Twig-driven lib/Service/MappingService.php:24-64, pages /mappings and /mappings/:id src/manifest.json:2237-2295). Missing half: the publication-to-Woo-index mapping itself cannot be changed without code, and the official title field is not mapped.",
-				"change": "integriq/mapping-woo-index-field-mapping"
+				"evidence": "source read at integriq development 5e903e546: integriq's half is archived (2026-09-29-mapping-woo-index-field-mapping, 8 of 8 tasks): MappingExecutionRequestedEvent (lib/Event/MappingExecutionRequestedEvent.php:40) runs a mapping by slug for an app named in callableBy, and lib/Settings/register.d/mapping-woo-index-field-mapping.json:23-26 seeds woo-index-publication, editable on integriq's /mappings pages. Source read at opencatalogi development 7a5a8a492: opencatalogi does not use it: git grep MappingExecutionRequested, woo-index-publication and officieleTitel in lib and src finds nothing; the sitemap still maps in code (lib/Service/SitemapService.php mapDiwooDocument).",
+				"change": "integriq/mapping-woo-index-field-mapping",
+				"readOn": "2026-10-07"
 			},
 			"reachedOn": "integriq /mappings editor; the fixed DIWOO mapping is reached on /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
 			"provider": "integriq",
@@ -6020,7 +6025,7 @@
 				"iprox": "docs read 2026-09-26: https://iprox.nl/marketing/477/blog-woo-publiceren-koppeling: \"We configureren de koppeling zodat men tijdens interne dossiervorming al de juiste informatiecategorie en metadata toevoegt\"; the mapping is configured by iprox as part of the koppeling (\"Een stuk maatwerk\"), not changed by the customer without a developer",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"map a source system's metadata onto the Woo-index fields (publisher, official title, category, document action) and change that mapping without a developer\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
-			"note": "Specified in ConductionNL/integriq openspec/changes/mapping-woo-index-field-mapping (integriq lane, OpenSpec pass 2026-09-27).",
+			"note": "Specified in ConductionNL/integriq openspec/changes/mapping-woo-index-field-mapping (integriq lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: integriq built its half; opencatalogi's half (read the Woo-index fields from the woo-index-publication mapping) is open as issue opencatalogi#1672 and has no opencatalogi change yet. Stays specified.",
 			"screen": {
 				"board": null,
 				"reason": "screen belongs to integriq"
@@ -6298,8 +6303,9 @@
 			"built": {
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the publication schema has no draft state: status is an enum of published and archived with lifecycle initial published (lib/Settings/publication_register.json:207-222), and only title is required. hardValidation is false on it (:289), so an incomplete publication saves, but nothing enforces required fields at publish time. The frontend still calls an object publish endpoint (src/store/modules/object.js:1558) that the workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): routes no longer register (grep publish in appinfo/routes.php finds no objects publish route), and workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): required checks only run when hardValidation is on, at every save alike (lib/Service/ObjectService.php:2192-2222).",
-				"change": "openregister/field-rules-by-state"
+				"evidence": "source read at openregister development 8ff5ba173b: the engine is archived (2026-10-05-field-rules-by-state, 13 of 13 tasks): x-openregister-lifecycle.states.<state>.fields is evaluated on save by lib/Listener/StateFieldRuleListener.php:74. Source read at opencatalogi development 7a5a8a492: the publication schema still has no draft state and no per-state field rules: status enum published/archived, lifecycle initial published (lib/Settings/publication_register.json, schema publication), required [title]. The draft state comes with the open change publication-lifecycle-on-or (issue opencatalogi#1754), whose tasks do not declare required-at-publish fields.",
+				"change": "openregister/field-rules-by-state",
+				"readOn": "2026-10-07"
 			},
 			"reachedOn": "nothing",
 			"provider": "openregister",
@@ -6319,7 +6325,7 @@
 				"iprox": "not checked: searched the public iprox.open material for \"save a publication as a draft with required fields still empty, and have them enforced only when it is published\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"save a publication as a draft with required fields still empty, and have them enforced only when it is published\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
-			"note": "Specified in ConductionNL/openregister openspec/changes/field-rules-by-state (openregister lane, OpenSpec pass 2026-09-27).",
+			"note": "Specified in ConductionNL/openregister openspec/changes/field-rules-by-state (openregister lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: OpenRegister shipped field rules by state; opencatalogi has neither the draft state nor the rule that makes fields required in published. No opencatalogi change declares that rule yet.",
 			"screen": {
 				"board": null,
 				"reason": "screen belongs to openregister: field rules by state"
@@ -6443,12 +6449,13 @@
 			"originUrl": "https://github.com/GetDKAN/dkan/issues/4581",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "building",
+				"state": "built",
 				"owner": "ConductionNL/integriq",
-				"evidence": "workspace checkout openconnector (integriq, development a9366588): when records vanish from a source, a full synchronisation deletes their targets (lib/Service/SynchronizationService.php:2793-2800), but each source can set deletionRatioThreshold, and above it nothing is deleted until someone reruns with forceDeletion (:3958-3985, forceDeletion read at lib/Controller/SynchronizationsController.php:363), with a SynchronizationDeletionGuardedEvent raised; incremental mode never deletes (:2793). Missing half: the choice is a ratio for the whole run, not a per-record 'keep until I act', and the action is delete, not unpublish. source read at a00f9f8 (lane tip 77fa61f7, no code change since): federated publications are read live from peers (lib/Controller/FederationController.php:81), so a record gone at the peer disappears at once with no choice.",
-				"change": "integriq/records-owned-by-an-external-source"
+				"evidence": "source read at integriq development 5e903e546: each synchronisation now declares what happens to a record that disappears from its source: sourceConfig.disappearancePolicy delete, markEnded, keepAndFlag or purge (lib/Service/Ownership/DisappearancePolicy.php:35-63), applied by lib/Service/SynchronizationService.php:4354-4644 behind the existing deletion-ratio guard, chosen in the synchronisation editor (src/modals/v2/SynchronizationEditorModal.vue:191-206). Shipped by integriq change records-owned-by-an-external-source, archived 2026-09-28 (22 of 23 tasks; the open one is a nightly e2e). keepAndFlag is keep until someone acts; markEnded writes an end date instead of an opencatalogi unpublish. Source read at opencatalogi development 7a5a8a492: federated publications are still read live from peers (lib/Controller/FederationController.php), so a record gone at the peer disappears at once.",
+				"change": "integriq/records-owned-by-an-external-source",
+				"readOn": "2026-10-07"
 			},
-			"reachedOn": "integriq synchronisation settings and Run now; opencatalogi federation search",
+			"reachedOn": "integriq synchronisation editor (disappearance policy)",
 			"provider": "integriq",
 			"providerHow": "read-from-code",
 			"feature": null,
@@ -6466,7 +6473,7 @@
 				"iprox": "not checked: searched the public iprox.open material for \"decide what happens to a harvested record when it disappears from its source: unpublish it straight away, or keep it until you act\"; no public page or live instance shows it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public",
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"decide what happens to a harvested record when it disappears from its source: unpublish it straight away, or keep it until you act\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
-			"note": "Being built in ConductionNL/integriq openspec/changes/records-owned-by-an-external-source (integriq lane, existing change, OpenSpec pass 2026-09-27).",
+			"note": "Being built in ConductionNL/integriq openspec/changes/records-owned-by-an-external-source (integriq lane, existing change, OpenSpec pass 2026-09-27). Re-rated 2026-10-07 (sibling-has, partial): the choice exists per integriq synchronisation; it does not unpublish an opencatalogi publication, and live federation has no choice. The DCAT harvest moves to openregister/app-harvest-fetchers-and-flow-node (od-harvest).",
 			"screen": {
 				"board": null,
 				"reason": "screen belongs to integriq"
@@ -6480,10 +6487,11 @@
 			"originUrl": "https://github.com/GetDKAN/dkan/issues/4598",
 			"opencatalogi": "no",
 			"built": {
-				"state": "building",
+				"state": "specified",
 				"owner": "ConductionNL/integriq",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): opencatalogi does not import data files into rows, so the only import path is an integriq synchronisation. workspace checkout openconnector (integriq, development a9366588): declaration only: the integriq register sends a Nextcloud notification to the synchronisation's user and the openconnector-ops group when a job log with level ERROR is created (job-error, enabled, lib/Settings/integriq_register.json:2102-2115), while the synchronization_log rule sync-failed is disabled (:2274-2280); the rules are dispatched by OpenRegister's AnnotationNotificationDispatcher, not traced end to end here. Missing half: no alert tied to a failed file import, and the recipient group still carries the old openconnector name.",
-				"change": "integriq/integriq-notifications"
+				"evidence": "source read at integriq development 5e903e546: integriq-notifications is archived (2026-09-30, 9 of 9 tasks): job-error is enabled and notifies the job's user and the connection alert recipients (lib/Settings/integriq_register.json:2349-2375, lib/Notification/ConnectionAlertRecipientResolver.php:48), dispatched by OpenRegister's AnnotationNotificationListener; the synchronisation rule sync-failed is still enabled: false (:2584-2590). Source read at opencatalogi development 7a5a8a492: opencatalogi imports no data file yet; the open change open-data-table-query-and-dictionary stores failed with the first refused row (tasks.md 1.3) and sends no alert.",
+				"change": "integriq/integriq-notifications",
+				"readOn": "2026-10-07"
 			},
 			"reachedOn": "Nextcloud notifications (declared); integriq /synchronization-runs shows failed runs",
 			"provider": "integriq",
@@ -6491,7 +6499,7 @@
 			"feature": null,
 			"featureConfidence": "low",
 			"columnsNote": "row added 2026-09-26 (wave 5); every column rated on that day",
-			"note": "Declaration only: the alerting rests on a notification declaration with no enabled handler, which is rated no per the wave-1 rule, with the reading kept under built.evidence. Being built in ConductionNL/integriq openspec/changes/integriq-notifications (integriq lane, existing change, OpenSpec pass 2026-09-27).",
+			"note": "Declaration only: the alerting rests on a notification declaration with no enabled handler, which is rated no per the wave-1 rule, with the reading kept under built.evidence. Being built in ConductionNL/integriq openspec/changes/integriq-notifications (integriq lane, existing change, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: integriq's alerting shipped for job errors, not for a failed data file import. The import itself is open in open-data-table-query-and-dictionary, which specifies no alert. State moved from building to specified.",
 			"ckan": "partial",
 			"dkan": "partial",
 			"xxllnc": "unknown",
