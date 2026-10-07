@@ -208,6 +208,41 @@ async function printLibraryWarnings(manifest) {
 	for (const warning of result.warnings) console.warn(`  - ${warning}`)
 }
 
+// CatalogPublicationsIndex hands `config.publicationPairConfig` to CnIndexPage
+// on the publication pair, merged over the rest of the config. The schema leaves
+// that key open, so each such page is checked again as the type:"index" page
+// CnIndexPage receives there. Returns that manifest and the checked page indexes.
+function withPairConfigAsIndexPages(manifest) {
+	const checked = []
+	const pages = (manifest.pages || []).map((page, i) => {
+		const pairConfig = page?.config?.publicationPairConfig
+		if (!pairConfig || typeof pairConfig !== 'object') return page
+		checked.push(i)
+		const { component, ...rest } = page
+		const { publicationPairConfig, ...config } = page.config
+		return { ...rest, type: 'index', config: { ...config, ...pairConfig } }
+	})
+	return { manifest: { ...manifest, pages }, checked }
+}
+
+// Keeps the errors on the checked pages and points those on a key that came
+// from publicationPairConfig back at it.
+function pairConfigErrors(manifest, checked, errors) {
+	const result = []
+	for (const err of errors) {
+		const [, index, key, tail] =
+			/^\/pages\/(\d+)(?:\/config\/([^/]+))?(.*)$/.exec(err.instancePath) || []
+		if (!checked.includes(Number(index))) continue
+		const pairConfig = manifest.pages[index].config.publicationPairConfig
+		const instancePath =
+			key in pairConfig
+				? `/pages/${index}/config/publicationPairConfig/${key}${tail}`
+				: err.instancePath
+		result.push({ ...err, instancePath })
+	}
+	return result
+}
+
 async function main() {
 	if (!fs.existsSync(MANIFEST_PATH)) {
 		console.error(`[validate-manifest] manifest not found: ${MANIFEST_PATH}`)
@@ -262,14 +297,29 @@ async function main() {
 		}
 	}
 	const validate = ajv.compile(schema)
-	const ok = validate(manifest)
-	if (ok) {
+	const errors = validate(manifest) ? [] : [...validate.errors]
+	const pair = withPairConfigAsIndexPages(manifest)
+	if (pair.checked.length > 0) {
+		console.log(
+			`[validate-manifest] publicationPairConfig checked as type:"index" config on pages: ${pair.checked.join(', ')}`,
+		)
+		if (!validate(pair.manifest)) {
+			const seen = new Set(
+				errors.map((err) => `${err.instancePath} ${err.message}`),
+			)
+			const found = pairConfigErrors(manifest, pair.checked, validate.errors)
+			for (const err of found) {
+				if (!seen.has(`${err.instancePath} ${err.message}`)) errors.push(err)
+			}
+		}
+	}
+	if (errors.length === 0) {
 		console.log('[validate-manifest] Ajv validation: PASS (0 errors)')
 		await printLibraryWarnings(manifest)
 		process.exit(0)
 	}
 	console.error('[validate-manifest] Ajv validation: FAIL')
-	for (const err of validate.errors || []) {
+	for (const err of errors) {
 		console.error(
 			`  - ${err.instancePath || '(root)'} ${err.message} (keyword=${err.keyword})`,
 		)

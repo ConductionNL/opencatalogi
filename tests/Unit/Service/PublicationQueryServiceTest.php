@@ -594,6 +594,25 @@ class PublicationQueryServiceTest extends TestCase {
 	}//end testCatalogSearchQueryNeverEmitsAScalarSchemaWithoutAScalarRegister()
 
 	/**
+	 * The public catalog API (`/api/{catalogSlug}`) passes a caller's `_order` through untouched for a single-register catalog,
+	 * metadata and schema-property keys alike, in the caller's priority order.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryKeepsTheOrderForASingleRegisterCatalog(): void {
+		$order = ['@self.created' => 'DESC', 'title' => 'ASC'];
+
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [28], 'registers' => [20]],
+			queryParams: ['_order' => $order],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame($order, $query['_order']);
+		$this->assertSame(20, $query['_register']);
+	}//end testCatalogSearchQueryKeepsTheOrderForASingleRegisterCatalog()
+
+	/**
 	 * WOO-581 review round 2 (f3): the rows of a relation result go through the
 	 * read-rule guard for an anonymous caller. A row of a schema without an
 	 * `authorization` block goes, a row without a numeric schema id goes (fail

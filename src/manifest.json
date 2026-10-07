@@ -508,19 +508,71 @@
 			"type": "custom",
 			"component": "CatalogPublicationsIndex",
 			"title": "Publications",
-			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage for one register/schema pair, with a selector when the catalog has several, kept in the `_pair` query parameter. It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. `register`/`schema` below name the publication pair: rows of that pair open on PublicationDetail, rows of any other pair (e.g. publiccode) have no detail page, so a click selects them and Edit uses CnIndexPage's form for their schema. CnIndexPage itself lists the catalog's active pair. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Every other config key reaches CnIndexPage for every pair, so it must fit any schema; config that only fits the publication schema, such as `columns` naming its properties or `actions` with a publication handler, goes in `publicationPairConfig`, which CnIndexPage gets on the publication pair only.",
+			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage for one register/schema pair, with a selector when the catalog has several, kept in the `_pair` query parameter. It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. `register`/`schema` below name the publication pair: rows of that pair open on PublicationDetail, rows of any other pair (e.g. publiccode) have no detail page, so a click selects them and Edit uses CnIndexPage's form for their schema. CnIndexPage itself lists the catalog's active pair. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Every other config key reaches CnIndexPage for every pair, so it must fit any schema; config that only fits the publication schema, such as `columns` naming its properties or `actions` with a publication handler, goes in `publicationPairConfig`, which CnIndexPage gets on the publication pair only. SORT: newest first by default, on every pair; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`. The columns name publication properties, so they sit in `publicationPairConfig` and other pairs show CnIndexPage's default columns for their schema. Bare-string columns take their label from the live schema; fragment-only properties carry a label so an install without them shows a named column.",
 			"config": {
 				"register": "@resolve:publication_register",
 				"schema": "@resolve:publication_schema",
-				"actionToggles": {
-					"showAdd": true,
-					"showEditAction": true,
-					"showCopyAction": true,
-					"showDeleteAction": true,
-					"showViewToggle": true,
-					"selectable": true
-				},
+				"sortKeys": [
+					{
+						"key": "@self.created",
+						"order": "desc"
+					},
+					{
+						"key": "_uuid",
+						"order": "asc"
+					}
+				],
+				"sortKey": "@self.created",
+				"sortOrder": "desc",
 				"publicationPairConfig": {
+					"columns": [
+						"title",
+						"status",
+						{
+							"key": "@self.created",
+							"label": "Created",
+							"format": "date-time",
+							"sortable": true
+						},
+						{
+							"key": "@self.updated",
+							"label": "Updated",
+							"format": "date-time",
+							"sortable": true
+						},
+						{
+							"key": "caseReference",
+							"label": "Case reference",
+							"sortable": true
+						},
+						"depublicationDate",
+						"description",
+						"organization",
+						"plooiDeliveredAt",
+						"plooiIdentifier",
+						"plooiReason",
+						"plooiStatus",
+						"publicationDate",
+						{
+							"key": "publicationKind",
+							"label": "Kind of publication",
+							"sortable": true
+						},
+						"retentionAction",
+						"retentionCategory",
+						"retentionExpiresAt",
+						"retentionLastEvaluatedAt",
+						"retentionNote",
+						"retentionTermMonths",
+						{
+							"key": "soortHandeling",
+							"label": "Document handling",
+							"sortable": true
+						},
+						"summary",
+						"themes",
+						"wooCategory"
+					],
 					"actions": [
 						"builtin:view",
 						"builtin:edit",
@@ -534,6 +586,17 @@
 						"builtin:delete"
 					]
 				},
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": true,
+					"showCopyAction": true,
+					"showDeleteAction": true,
+					"showViewToggle": true,
+					"selectable": true
+				},
+				"inlineSearch": true,
+				"showCountWithSearch": true,
+				"emptyText": "No publications found",
 				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},

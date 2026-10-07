@@ -15,6 +15,20 @@ De publicatiepagina toont alleen de publicaties van de gekozen catalogus: de obj
 
 Eigenschappen en bijlagen kunnen worden toegevoegd nadat de publicatie is toegevoegd.
 
+## Publicaties zoeken
+
+Boven de publicatielijst staat een zoekbalk. Typ een deel van een titel, samenvatting of beschrijving, en de lijst toont alleen de publicaties waarin die tekst voorkomt. De andere tekstvelden van een publicatie doen ook mee, datumvelden niet. Hoofdletters en kleine letters maken geen verschil.
+
+Haakjes, dubbele aanhalingstekens, het sterretje (`*`) en de woorden `AND`, `OR` en `NOT` in hoofdletters werken als zoekoperatoren. Een haakje of aanhalingsteken zonder tegenhanger is daarom geen geldige zoekopdracht.
+
+De server doorzoekt alle publicaties, niet alleen de rijen die op het scherm staan. De lijst, en dus ook de zoekopdracht, omvat de publicaties van alle catalogi, niet alleen die van één catalogus. De zoekopdracht start pas als je even stopt met typen, dus niet bij elke toetsaanslag. Een nieuwe zoekterm brengt je terug naar pagina 1, en de teller boven de lijst toont hoeveel publicaties er gevonden zijn.
+
+Maak je de zoekbalk leeg, dan zie je de volledige lijst weer.
+
+De zoekterm blijft staan terwijl je bladert en wanneer je wisselt tussen de kaart- en de tabelweergave. De zoekterm staat ook in de adresbalk (URL), zodat je na het herladen of via een gekopieerde link dezelfde resultaten ziet.
+
+Vindt de zoekbalk niets, dan meldt de lijst "Geen publicaties gevonden".
+
 ## Publicaties beheren
 
 De gebruikersbeheerinterface werkt intuïtief. In het hoofdmenu aan de linkerkant staat elke catalogus waar je toegang toe hebt; de catalogus die je open hebt is gemarkeerd. Hoe je een publicatie toevoegt, staat hierboven.
@@ -37,6 +51,18 @@ Wil je één document terugtrekken? Kies het dan in het venster Terugtrekken. Al
 Archiveren blijft de laatste stap voor bewaren. Het is geen manier om terug te trekken.
 
 Je hebt het recht nodig om de publicatie te wijzigen. Zonder dat recht weigert de server, en er gebeurt niets.
+
+## Publicaties sorteren
+
+De publicatielijst opent gesorteerd op aanmaakdatum, de nieuwste bovenaan. De pijl omlaag in de kolom *Gemaakt* laat dat zien.
+
+Een gewone klik op een kolomkop, bijvoorbeeld *Titel*, *Status*, *Gemaakt* of *Bijgewerkt*, maakt die kolom de enige actieve sortering. Klik je nog een keer op dezelfde kolomkop, dan draait de volgorde om. Omdat *Gemaakt* al actief is, zet de eerste klik daar meteen de oudste bovenaan.
+
+Een derde klik haalt de kolomsortering weg. De lijst staat dan in de volgorde waarin de publicaties zijn toegevoegd, en na herladen staat de nieuwste weer bovenaan.
+
+De sortering geldt voor alle publicaties, niet alleen voor de rijen die op het scherm staan. Wie de sortering wijzigt, gaat terug naar pagina 1.
+
+De gekozen sortering staat in het adres van de pagina. Ze blijft dus behouden tijdens het bladeren en na het herladen, en een collega die de gekopieerde link opent, ziet de lijst in dezelfde volgorde.
 
 ## Eigenschappen
 
