@@ -24,7 +24,7 @@ Boven de publicatielijst staat een zoekbalk. Typ een deel van een titel, samenva
 
 Haakjes, dubbele aanhalingstekens, het sterretje (`*`) en de woorden `AND`, `OR` en `NOT` in hoofdletters werken als zoekoperatoren. Een haakje of aanhalingsteken zonder tegenhanger is daarom geen geldige zoekopdracht.
 
-De server doorzoekt alle publicaties, niet alleen de rijen die op het scherm staan. De zoekopdracht start pas als je even stopt met typen, dus niet bij elke toetsaanslag. Een nieuwe zoekterm brengt je terug naar pagina 1, en de teller boven de lijst toont hoeveel publicaties er gevonden zijn.
+De server doorzoekt alle publicaties, niet alleen de rijen die op het scherm staan. De lijst, en dus ook de zoekopdracht, omvat de publicaties van alle catalogi, niet alleen die van één catalogus. De zoekopdracht start pas als je even stopt met typen, dus niet bij elke toetsaanslag. Een nieuwe zoekterm brengt je terug naar pagina 1, en de teller boven de lijst toont hoeveel publicaties er gevonden zijn.
 
 Maak je de zoekbalk leeg, dan zie je de volledige lijst weer.
 
