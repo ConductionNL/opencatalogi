@@ -12,9 +12,7 @@ function translateConfigActions(config, translate) {
 	return {
 		...config,
 		actions: config.actions.map((action) =>
-			action
-			&& typeof action === 'object'
-			&& typeof action.label === 'string'
+			action && typeof action === 'object' && typeof action.label === 'string'
 				? { ...action, label: translate(action.label) }
 				: action,
 		),
@@ -49,7 +47,10 @@ export function translateActionLabels(manifest, translate) {
 			}
 			let config = translateConfigActions(page.config, translate)
 			const pairConfig = config.publicationPairConfig
-			const translatedPairConfig = translateConfigActions(pairConfig, translate)
+			const translatedPairConfig = translateConfigActions(
+				pairConfig,
+				translate,
+			)
 			if (translatedPairConfig !== pairConfig) {
 				config = { ...config, publicationPairConfig: translatedPairConfig }
 			}

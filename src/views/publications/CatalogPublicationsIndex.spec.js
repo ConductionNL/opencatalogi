@@ -235,7 +235,10 @@ describe('CatalogPublicationsIndex', () => {
 		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
 		const publicationPairConfig = {
 			columns: ['title', 'wooCategory'],
-			actions: ['builtin:view', { id: 'file-list', handler: 'openPublicationFiles' }],
+			actions: [
+				'builtin:view',
+				{ id: 'file-list', handler: 'openPublicationFiles' },
+			],
 		}
 		const { wrapper } = mountPage({ publicationPairConfig })
 		await flushPromises()
@@ -245,7 +248,10 @@ describe('CatalogPublicationsIndex', () => {
 		expect(attrs.actions).toEqual(publicationPairConfig.actions)
 		expect(attrs.publicationPairConfig).toBeUndefined()
 
-		select(wrapper).vm.$emit('update:modelValue', select(wrapper).props('options')[1])
+		select(wrapper).vm.$emit(
+			'update:modelValue',
+			select(wrapper).props('options')[1],
+		)
 		await flushPromises()
 
 		attrs = indexPage(wrapper).vm.$attrs

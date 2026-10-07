@@ -22,8 +22,8 @@ const page = (id) => manifest.pages.find((p) => p.id === id)
  * @return {Array<string|object>} The actions.
  */
 function publicationActions(pages) {
-	return pages.find((p) => p.id === 'Publications').config
-		.publicationPairConfig.actions
+	return pages.find((p) => p.id === 'Publications').config.publicationPairConfig
+		.actions
 }
 
 // What the action does when clicked is covered by
@@ -147,7 +147,10 @@ describe('translateActionLabels', () => {
 							register: 'r',
 							publicationPairConfig: {
 								columns: ['title'],
-								actions: ['builtin:view', { id: 'a', label: 'File list' }],
+								actions: [
+									'builtin:view',
+									{ id: 'a', label: 'File list' },
+								],
 							},
 						},
 					},

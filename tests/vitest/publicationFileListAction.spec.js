@@ -59,14 +59,9 @@ describe('Publications row menu order', () => {
 			onDelete: () => {},
 		},
 	})
-	const { actions, warnings } = resolveRowActions(
-		publicationActions,
-		builtins,
-		{
-			prepare: (a) =>
-				dispatchAction(a, { rowKey: 'id', customComponents: {} }),
-		},
-	)
+	const { actions, warnings } = resolveRowActions(publicationActions, builtins, {
+		prepare: (a) => dispatchAction(a, { rowKey: 'id', customComponents: {} }),
+	})
 
 	it('renders View, Edit, File list, Copy, Delete', () => {
 		expect(actions.map((a) => a.label)).toEqual([

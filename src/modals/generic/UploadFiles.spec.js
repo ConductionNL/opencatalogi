@@ -148,7 +148,8 @@ describe('UploadFiles labels select', () => {
 		mockSetTags.mockReset()
 		global.fetch = jest.fn(async (url) => ({
 			ok: true,
-			json: async () => (url.endsWith('/api/tags') ? ['phone', 'campaign'] : {}),
+			json: async () =>
+				url.endsWith('/api/tags') ? ['phone', 'campaign'] : {},
 		}))
 		navigationStore.dialog = null
 		wrapper = mountDialog()

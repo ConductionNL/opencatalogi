@@ -243,7 +243,11 @@ export default {
 				delete attrs[listener]
 			}
 			if (this.opensDetail) {
-				return { ...this.actionToggles, ...attrs, ...this.publicationPairConfig }
+				return {
+					...this.actionToggles,
+					...attrs,
+					...this.publicationPairConfig,
+				}
 			}
 			// CnIndexPage's View only emits; without a detail page it would do nothing.
 			return { ...this.actionToggles, ...attrs, showViewAction: false }
