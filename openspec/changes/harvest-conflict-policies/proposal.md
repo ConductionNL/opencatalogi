@@ -5,8 +5,8 @@ depends_on: [harvest-feed-intake]
 
 # Proposal: harvest-conflict-policies
 
-Third slice of the re-scoped `dcat-oai-pmh-harvesting` umbrella. Delta spec
-authored at pickup.
+Third slice of the re-scoped `dcat-oai-pmh-harvesting` umbrella. The delta
+spec and `design.md` were written in the spec round of 2026-10-07.
 
 ## Summary
 
