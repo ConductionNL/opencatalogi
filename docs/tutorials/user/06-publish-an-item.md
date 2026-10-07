@@ -19,7 +19,7 @@ By the end you will have one published item in a catalogue, visible to anyone wh
 
 ## Steps
 
-1. Open the catalogue, switch to the **Publications** tab, click **Add publication**. A schema picker opens if the catalogue has more than one publication schema attached — pick the right one (e.g. *Document*, *Dataset*, *Service*).
+1. Open the catalogue, switch to the **Publications** tab, click **Add publication**. A schema picker opens if the catalogue has more than one publication schema attached — pick the right one (e.g. *Document*, *Dataset*, *Service*). The schemas are listed alphabetically on their title, ignoring case and with numbers in natural order (*Schema 2* before *Schema 10*); type in the picker to filter the list.
 
    ![Add publication, schema picker](/screenshots/tutorials/user/06-publish-an-item-01.png)
 

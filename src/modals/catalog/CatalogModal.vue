@@ -199,6 +199,7 @@ import {
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import { Catalogi } from '../../entities/index.js'
+import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 export default {
 	name: 'CatalogModal',
@@ -295,21 +296,23 @@ export default {
 			// so a schema exposed by multiple selected registers would otherwise appear multiple times
 			// and trigger Vue duplicate-key warnings in NcSelect.
 			const seen = new Set()
-			return objectStore.availableSchemas
-				.filter(
-					(schema) =>
-						availableSchemaIds.includes(schema.id)
-						&& !selectedSchemaIds.includes(schema.id),
-				)
-				.filter((schema) => {
-					if (seen.has(schema.id)) return false
-					seen.add(schema.id)
-					return true
-				})
-				.map((schema) => ({
-					id: schema.id,
-					label: `${schema.title} (${schema.registerTitle})`,
-				}))
+			return sortOptionsByLabel(
+				objectStore.availableSchemas
+					.filter(
+						(schema) =>
+							availableSchemaIds.includes(schema.id)
+							&& !selectedSchemaIds.includes(schema.id),
+					)
+					.filter((schema) => {
+						if (seen.has(schema.id)) return false
+						seen.add(schema.id)
+						return true
+					})
+					.map((schema) => ({
+						id: schema.id,
+						label: `${schema.title} (${schema.registerTitle})`,
+					})),
+			)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */

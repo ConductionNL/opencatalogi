@@ -348,6 +348,7 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
 import { getTheme } from '../../services/getTheme.js'
+import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -445,12 +446,14 @@ export default {
 				catalogSchemaIds.includes(id),
 			)
 
-			return objectStore.availableSchemas
-				.filter((schema) => validSchemaIds.includes(schema.id))
-				.map((schema) => ({
-					id: schema.id,
-					label: schema.title,
-				}))
+			return sortOptionsByLabel(
+				objectStore.availableSchemas
+					.filter((schema) => validSchemaIds.includes(schema.id))
+					.map((schema) => ({
+						id: schema.id,
+						label: schema.title,
+					})),
+			)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */

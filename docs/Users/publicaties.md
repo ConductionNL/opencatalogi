@@ -33,6 +33,8 @@ Vindt de zoekbalk niets, dan meldt de lijst "Geen publicaties gevonden".
 
 De gebruikersbeheerinterface werkt intuïtief. In het hoofdmenu aan de linkerkant staat elke catalogus waar je toegang toe hebt; de catalogus die je open hebt is gemarkeerd. Hoe je een publicatie toevoegt, staat hierboven.
 
+Waar je een publicatietype (schema) kiest, staan de schema's in de keuzelijst alfabetisch op titel, ongeacht hoofdletters en met getallen in natuurlijke volgorde ("Schema 2" vóór "Schema 10"). Typ in de keuzelijst om de lijst te filteren.
+
 Na het opslaan is de publicatie zichtbaar op de publicatiepagina van de catalogus. Om de publicatie aan te passen, te depubliceren of andere acties uit te voeren, klik je op de blauwe "Actie"-knop rechtsboven bij de getoonde publicatie, of de drie puntjes rechts van de publicatie zelf.\\
 
 Onder is een voorbeeld van een publicatie en de Actie-mogelijkheden.
