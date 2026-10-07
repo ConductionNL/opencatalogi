@@ -84,6 +84,6 @@ Klik daarna op **Bestand toevoegen** om het venster **Bijlage toevoegen** te ope
 
 </div>
 
-In het venster `Bijlage toevoegen` kies of maak je eerst een of meer `Labels`, of kies je `Geen label`. Zonder label kun je geen bestanden toevoegen. Zet `Automatisch publiceren` aan als de bestanden meteen openbaar moeten worden.
+In het venster `Bijlage toevoegen` kies of maak je eerst een of meer `Labels`, of kies je `Geen label`. Tot je een keuze maakt, blijft het uploadvak uitgeschakeld. De labelkeuze is bij elke opening van het venster leeg, ook als je eerder bij dezelfde of een andere publicatie labels hebt gekozen; de lijst met beschikbare labels blijft wel staan. Zet `Automatisch publiceren` aan als de bestanden meteen openbaar moeten worden.
 
 Sleep daarna een of meer bestanden naar het venster, of klik op `Voeg een of meer bestanden toe` om ze van je computer te kiezen. De bestandsnaam wordt meegegeven. De nieuwe bestanden verschijnen daarna op het tabblad Bestanden.

@@ -51,9 +51,14 @@ const NcButton = {
 	name: 'NcButton',
 	props: {
 		to: { type: [String, Object], default: null },
+		disabled: { type: Boolean, default: false },
+		variant: { type: String, default: 'secondary' },
 	},
 	render() {
-		return h('button', { class: 'nc-button-stub' }, this.$slots.default?.())
+		return h('button', { class: 'nc-button-stub', disabled: this.disabled }, [
+			this.$slots.icon?.(),
+			this.$slots.default?.(),
+		])
 	},
 }
 
@@ -64,6 +69,20 @@ const NcLoadingIcon = {
 	},
 	render() {
 		return h('span', { class: 'nc-loading-icon-stub' })
+	},
+}
+
+const NcNoteCard = {
+	name: 'NcNoteCard',
+	props: {
+		type: { type: String, default: 'info' },
+	},
+	render() {
+		return h(
+			'div',
+			{ class: `nc-note-card-stub nc-note-card-stub--${this.type}` },
+			this.$slots.default?.(),
+		)
 	},
 }
 
@@ -100,7 +119,7 @@ module.exports = {
 	NcEmptyContent,
 	NcLoadingIcon,
 	NcModal: slotStub('NcModal'),
-	NcNoteCard: slotStub('NcNoteCard'),
+	NcNoteCard,
 	NcSelect,
 	NcTextField: slotStub('NcTextField'),
 }
