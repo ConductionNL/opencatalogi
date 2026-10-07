@@ -1,6 +1,6 @@
 # Tasks: setup-wizard-server-contract
 
-> Archive pass 2026-10-07: code done, not archived. The delta MODIFIES `first-time-onboarding`, which has no main spec, and its ONB-001 still makes `config-check` a wizard step; `wizard-dataset-card-load` (archived 2026-10-07 into `first-time-setup`) moved that step to the admin settings page. The delta needs reconciling (ADDED instead of MODIFIED, ONB-001 without `config-check`) before it can merge.
+> Archive pass 2026-10-07: code done. Delta fix-up 2026-10-07: delta reconciled and retargeted to `first-time-setup` (ADDED ONB-005 to ONB-009, ONB-001 dropped because `config-check` left the wizard in `wizard-dataset-card-load`). Task 5's step list describes the manifest as this change left it; `config-check` is gone since. The spec_ref paths below name the original delta file.
 
 ## Implementation Tasks
 
