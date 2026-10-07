@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Ліцензія",
         "Listing has no directory URL configured": "Для запису не налаштовано URL каталогу-довідника",
         "Manage your data catalogs and their configurations": "Керуйте каталогами даних та їхніми конфігураціями",
-        "Menus": "Меню",
         "Metadata": "Метадані",
         "Metadata facets": "Фасети метаданих",
         "Missing directory URL parameter": "Відсутній параметр URL каталогу-довідника",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Організація",
         "Organizations": "Організації",
         "Page {current} of {total}": "Сторінка {current} з {total}",
-        "Pages": "Сторінки",
         "Previous": "Попередня",
         "Private": "Приватний",
         "Property": "Властивість",
@@ -726,7 +724,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "На що люди дивилися і що завантажили.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Наскільки зрілі каталоги і наскільки глибоко інтегровані записи каталогу.",
         "Store": "Магазин",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Встановлюйте реєстри, схеми та потоки, опубліковані іншими організаціями."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Встановлюйте реєстри, схеми та потоки, опубліковані іншими організаціями.",
+        "Could not load the catalog": "Не вдалося завантажити каталог",
+        "Reload the page to try again.": "Перезавантажте сторінку, щоб спробувати знову.",
+        "No catalog has the slug {slug}.": "Немає каталогу зі slug {slug}.",
+        "This catalog has no registers or schemas configured": "Для цього каталогу не налаштовано реєстрів або схем",
+        "Add a register and a schema to the catalog to list its publications here.": "Додайте до каталогу реєстр і схему, щоб тут відображалися його публікації.",
+        "Open catalog": "Відкрити каталог",
+        "Register and schema": "Реєстр і схема",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Створіть свій перший каталог. Це контейнер, у якому будуть ваші публікації. Виберіть реєстр Publication і схему Publication, щоб каталог показував публікації, які ви додаєте."
     },
     "nplurals=2; plural=(n != 1);"
 )

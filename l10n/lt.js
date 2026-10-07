@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Licencija",
         "Listing has no directory URL configured": "Sąvado įrašui nesukonfigūruotas katalogų sąvado URL",
         "Manage your data catalogs and their configurations": "Valdykite savo duomenų katalogus ir jų konfigūracijas",
-        "Menus": "Meniu",
         "Metadata": "Metaduomenys",
         "Metadata facets": "Metaduomenų facetės",
         "Missing directory URL parameter": "Trūksta katalogų sąvado URL parametro",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Organizacija",
         "Organizations": "Organizacijos",
         "Page {current} of {total}": "Puslapis {current} iš {total}",
-        "Pages": "Puslapiai",
         "Previous": "Ankstesnis",
         "Private": "Privatus",
         "Property": "Savybė",
@@ -726,7 +724,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Ką žmonės žiūrėjo ir ką atsisiuntė.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kokie brandūs yra katalogai ir kaip giliai integruoti katalogo įrašai.",
         "Store": "Parduotuvė",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Įdiekite registrus, schemas ir srautus, kuriuos paskelbė kitos organizacijos."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Įdiekite registrus, schemas ir srautus, kuriuos paskelbė kitos organizacijos.",
+        "Could not load the catalog": "Nepavyko įkelti katalogo",
+        "Reload the page to try again.": "Įkelkite puslapį iš naujo ir bandykite dar kartą.",
+        "No catalog has the slug {slug}.": "Nė vienas katalogas neturi slug {slug}.",
+        "This catalog has no registers or schemas configured": "Šiam katalogui nesukonfigūruota jokių registrų ar schemų",
+        "Add a register and a schema to the catalog to list its publications here.": "Pridėkite registrą ir schemą prie katalogo, kad čia būtų rodomos jo publikacijos.",
+        "Open catalog": "Atverti katalogą",
+        "Register and schema": "Registras ir schema",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Sukurkite pirmąjį katalogą. Tai talpykla, kurioje bus jūsų publikacijos. Pasirinkite registrą Publication ir schemą Publication, kad katalogas rodytų jūsų pridedamas publikacijas."
     },
     "nplurals=2; plural=(n != 1);"
 )

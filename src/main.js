@@ -277,8 +277,37 @@ function resolveManifestSentinelsSync(manifest) {
 	}
 }
 
+/**
+ * Translate each page's `config.notFoundRouteLabel`. CnPageRenderer spreads
+ * config onto the page as is, so a label set there would otherwise stay in
+ * English inside the library's translated "Back to {page}".
+ *
+ * @param {object} manifest The manifest.
+ * @return {object} A new manifest with the labels translated.
+ */
+function translateNotFoundRouteLabels(manifest) {
+	const pages = Array.isArray(manifest.pages) ? manifest.pages : []
+	return {
+		...manifest,
+		pages: pages.map((page) =>
+			typeof page?.config?.notFoundRouteLabel === 'string'
+				? {
+						...page,
+						config: {
+							...page.config,
+							notFoundRouteLabel: t(
+								'opencatalogi',
+								page.config.notFoundRouteLabel,
+							),
+						},
+					}
+				: page,
+		),
+	}
+}
+
 const resolvedManifest = translateActionLabels(
-	resolveManifestSentinelsSync(mergedManifest),
+	translateNotFoundRouteLabels(resolveManifestSentinelsSync(mergedManifest)),
 	(key) => t('opencatalogi', key),
 )
 

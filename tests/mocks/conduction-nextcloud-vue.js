@@ -155,9 +155,64 @@ const CnThemePreview = {
 	},
 }
 
+// Stub of CnAppNav with its real props, so a wrapper's pass-through can be
+// asserted on the props it receives.
+const CnAppNav = {
+	name: 'CnAppNav',
+	props: {
+		manifest: { type: Object, default: null },
+		translate: { type: Function, default: null },
+		permissions: { type: Array, default: () => [] },
+		isOwner: { type: Boolean, default: false },
+		isAdmin: { type: Boolean, default: false },
+		appId: { type: String, default: null },
+	},
+	render() {
+		return h('nav', { class: 'cn-app-nav-stub' })
+	},
+}
+
+// Stub of CnIndexPage with the props a wrapper sets; everything else lands in
+// `$attrs`. Renders the `#below-header` slot so a wrapper's header content
+// can be asserted.
+const CnIndexPage = {
+	name: 'CnIndexPage',
+	props: {
+		title: { type: String, required: true },
+		description: { type: String, default: '' },
+		register: { type: String, default: '' },
+		schema: { type: [Object, String], default: null },
+		rowClickToView: { type: Boolean, default: false },
+		viewTo: { type: Function, default: null },
+	},
+	emits: ['row-click', 'row-aux-click', 'view', 'edit-open'],
+	render() {
+		return h('div', { class: 'cn-index-page-stub' }, [
+			this.$slots['below-header']?.(),
+		])
+	},
+}
+
+// The library's row-opening helpers, reduced to a plain router push.
+const newTabHandled = new WeakSet()
+
+function isNewTabHandled(event) {
+	return Boolean(event && newTabHandled.has(event))
+}
+
+function openRowTarget(event, target, router) {
+	if (!target || !router) return false
+	router.push(target)
+	return true
+}
+
 module.exports = {
 	createObjectStore,
 	useObjectStore: createObjectStore('conduction-objects'),
+	CnAppNav,
+	CnIndexPage,
+	isNewTabHandled,
+	openRowTarget,
 	CnThemePreview,
 	auditTrailsPlugin: noopPlugin,
 	filesPlugin: noopPlugin,

@@ -744,14 +744,6 @@
       "count": 1
     }
   },
-  "src/navigation/MainMenu.vue": {
-    "jsdoc/require-param-type": {
-      "count": 2
-    },
-    "vue/custom-event-name-casing": {
-      "count": 1
-    }
-  },
   "src/services/nextcloudGroups.js": {
     "no-console": {
       "count": 2

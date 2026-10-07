@@ -227,6 +227,7 @@ class WooController extends Controller {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function updateAssessment(string $batchId, string $docId): JSONResponse {
@@ -236,7 +237,8 @@ class WooController extends Controller {
 			$result = $this->wooService->updateAssessment(
 				assessmentId: $docId,
 				assessment: $assessment,
-				weigeringsgronden: $weigeringsgronden
+				weigeringsgronden: $weigeringsgronden,
+				batchId: $batchId
 			);
 			return new JSONResponse($result);
 		} catch (\Throwable $e) {

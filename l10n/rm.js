@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Licenza",
         "Listing has no directory URL configured": "L'endataziun n'ha nagin URL da register configurà",
         "Manage your data catalogs and their configurations": "Administrar voss catalogs da datas e lur configuraziuns",
-        "Menus": "Menus",
         "Metadata": "Metadatas",
         "Metadata facets": "Facettas da metadatas",
         "Missing directory URL parameter": "Parameter URL dal register mancant",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Organisaziun",
         "Organizations": "Organisaziuns",
         "Page {current} of {total}": "Pagina {current} da {total}",
-        "Pages": "Paginas",
         "Previous": "Precedent",
         "Private": "Privat",
         "Property": "Proprietad",
@@ -726,7 +724,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Tge che la glieud ha guardà e tge ch'ella ha telechargià.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Quant maturs ch'ils catalogs èn e quant profund ch'las endataziuns dal register èn integradas.",
         "Store": "Butia",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installescha registers, schemas e process ch'autras organisaziuns han publitgà."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installescha registers, schemas e process ch'autras organisaziuns han publitgà.",
+        "Could not load the catalog": "Il catalog n'ha betg pudì vegnir chargià",
+        "Reload the page to try again.": "Chargia danovamain la pagina per empruvar anc ina giada.",
+        "No catalog has the slug {slug}.": "Nagin catalog n'ha il slug {slug}.",
+        "This catalog has no registers or schemas configured": "Per quest catalog n'èn configurads nagins registers u schemas",
+        "Add a register and a schema to the catalog to list its publications here.": "Agiunta in register ed in schema al catalog per mussar qua sias publicaziuns.",
+        "Open catalog": "Avrir il catalog",
+        "Register and schema": "Register e schema",
+        "{schema} in {register}": "{schema} en {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creescha tes emprim catalog. El è il container, en il qual vegnan a star tias publicaziuns. Tscherna il register Publication ed il schema Publication, uschia ch'il catalog mussa las publicaziuns che ti agiuntas."
     },
     "nplurals=2; plural=(n != 1);"
 )

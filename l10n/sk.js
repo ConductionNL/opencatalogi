@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Licencia",
         "Listing has no directory URL configured": "Záznam nemá nakonfigurovanú žiadnu URL adresára",
         "Manage your data catalogs and their configurations": "Spravujte svoje dátové katalógy a ich konfigurácie",
-        "Menus": "Ponuky",
         "Metadata": "Metaúdaje",
         "Metadata facets": "Fasety metaúdajov",
         "Missing directory URL parameter": "Chýba parameter URL adresára",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Organizácia",
         "Organizations": "Organizácie",
         "Page {current} of {total}": "Stránka {current} z {total}",
-        "Pages": "Stránky",
         "Previous": "Predchádzajúca",
         "Private": "Súkromné",
         "Property": "Vlastnosť",
@@ -726,7 +724,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Na čo sa ľudia pozerali a čo si stiahli.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Aké zrelé sú katalógy a ako hlboko sú integrované záznamy v adresári.",
         "Store": "Obchod",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Nainštalujte registre, schémy a toky zverejnené inými organizáciami."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Nainštalujte registre, schémy a toky zverejnené inými organizáciami.",
+        "Could not load the catalog": "Katalóg sa nepodarilo načítať",
+        "Reload the page to try again.": "Obnovte stránku a skúste to znova.",
+        "No catalog has the slug {slug}.": "Žiadny katalóg nemá slug {slug}.",
+        "This catalog has no registers or schemas configured": "Tento katalóg nemá nastavené žiadne registre ani schémy",
+        "Add a register and a schema to the catalog to list its publications here.": "Pridajte do katalógu register a schému, aby sa tu zobrazovali jeho publikácie.",
+        "Open catalog": "Otvoriť katalóg",
+        "Register and schema": "Register a schéma",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvorte svoj prvý katalóg. Je to kontajner, v ktorom budú vaše publikácie. Vyberte register Publication a schému Publication, aby katalóg zobrazoval publikácie, ktoré pridáte."
     },
     "nplurals=2; plural=(n != 1);"
 )

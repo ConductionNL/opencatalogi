@@ -499,6 +499,8 @@ class PubliccodeHarvestService {
 	 * @param object $run A FlowRun entity.
 	 *
 	 * @return array<string, mixed> The summary.
+	 *
+	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-004-a-file-that-cannot-be-read-is-skipped-not-written
 	 */
 	private static function runSummary(object $run): array {
 		return [
@@ -509,6 +511,11 @@ class PubliccodeHarvestService {
 			'updated' => self::atom(value: $run->getUpdated()),
 			'resumeAt' => self::atom(value: $run->getResumeAt()),
 			'error' => $run->getError(),
+			// Steps carried past by `onError: continue`: a shard whose write the
+			// schema refused ends on a failed step while the run still reads as
+			// finished, so without this count 24 clean shards and 24 shards of
+			// which three lost a page look the same (REQ-PGH-004).
+			'failedSteps' => (array_count_values(array_column((array)$run->getLog(), 'status'))['failed'] ?? 0),
 		];
 	}//end runSummary()
 

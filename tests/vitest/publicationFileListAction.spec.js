@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
- * The Publications index "File list" row action (opencatalogi#1583).
+ * The Publications page "File list" row action (opencatalogi#1583).
  *
  * The manifest names its handler by string; CnIndexPage resolves that name
  * against the `customComponents` map through `dispatchAction`. A misspelled
@@ -36,7 +36,9 @@ const manifest = JSON.parse(
 	fs.readFileSync(path.join(ROOT, 'src', 'manifest.json'), 'utf8'),
 )
 const publications = manifest.pages.find((p) => p.id === 'Publications')
-const action = publications.config.actions.find((a) => a.id === 'file-list')
+// File list opens the publication modal, so it only reaches the publication pair.
+const publicationActions = publications.config.publicationPairConfig.actions
+const action = publicationActions.find((a) => a.id === 'file-list')
 
 describe('Publications row menu order', () => {
 	// CnIndexPage's show*Action props default to true; actionToggles only
@@ -58,7 +60,7 @@ describe('Publications row menu order', () => {
 		},
 	})
 	const { actions, warnings } = resolveRowActions(
-		publications.config.actions,
+		publicationActions,
 		builtins,
 		{
 			prepare: (a) =>

@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Licence",
         "Listing has no directory URL configured": "Sarakstam nav konfigurēts direktorija URL",
         "Manage your data catalogs and their configurations": "Pārvaldiet savus datu katalogus un to konfigurācijas",
-        "Menus": "Izvēlnes",
         "Metadata": "Metadati",
         "Metadata facets": "Metadatu fasetes",
         "Missing directory URL parameter": "Trūkst direktorija URL parametra",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Organizācija",
         "Organizations": "Organizācijas",
         "Page {current} of {total}": "Lapa {current} no {total}",
-        "Pages": "Lapas",
         "Previous": "Iepriekšējais",
         "Private": "Privāts",
         "Property": "Īpašība",
@@ -726,7 +724,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Ko cilvēki skatījās un ko lejupielādēja.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cik brieduši ir katalogi un cik dziļi ir integrēti direktorija ieraksti.",
         "Store": "Veikals",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalējiet reģistrus, shēmas un plūsmas, ko publicējušas citas organizācijas."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instalējiet reģistrus, shēmas un plūsmas, ko publicējušas citas organizācijas.",
+        "Could not load the catalog": "Katalogu neizdevās ielādēt",
+        "Reload the page to try again.": "Pārlādējiet lapu un mēģiniet vēlreiz.",
+        "No catalog has the slug {slug}.": "Nevienam katalogam nav slug {slug}.",
+        "This catalog has no registers or schemas configured": "Šim katalogam nav konfigurētu reģistru vai shēmu",
+        "Add a register and a schema to the catalog to list its publications here.": "Pievienojiet katalogam reģistru un shēmu, lai šeit tiktu parādītas tā publikācijas.",
+        "Open catalog": "Atvērt katalogu",
+        "Register and schema": "Reģistrs un shēma",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Izveidojiet savu pirmo katalogu. Tas ir konteiners, kurā būs jūsu publikācijas. Izvēlieties reģistru Publication un shēmu Publication, lai katalogs rādītu jūsu pievienotās publikācijas."
     },
     "nplurals=2; plural=(n != 1);"
 )

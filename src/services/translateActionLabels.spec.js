@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * The Publications index "File list" row action (opencatalogi#1583) and the
+ * The Publications page "File list" row action (opencatalogi#1583) and the
  * label translation it depends on: CnRowActions renders a manifest action's
  * label as-is, so main.js translates it before the manifest reaches the
  * library.
@@ -14,13 +14,24 @@ import manifest from '../manifest.json'
 import { translateActionLabels } from './translateActionLabels.js'
 
 const page = (id) => manifest.pages.find((p) => p.id === id)
+/**
+ * The Publications page's actions. File list opens the publication modal, so
+ * they sit in the config that only reaches the publication pair.
+ *
+ * @param {Array<object>} pages The manifest pages.
+ * @return {Array<string|object>} The actions.
+ */
+function publicationActions(pages) {
+	return pages.find((p) => p.id === 'Publications').config
+		.publicationPairConfig.actions
+}
 
 // What the action does when clicked is covered by
 // tests/vitest/publicationFileListAction.spec.js, through the library's own
 // dispatch.
 describe('Publications "File list" row action', () => {
 	it('declares exactly one file-list action, with the list icon', () => {
-		const fileList = page('Publications').config.actions.filter(
+		const fileList = publicationActions(manifest.pages).filter(
 			(a) => a.id === 'file-list',
 		)
 
@@ -29,7 +40,8 @@ describe('Publications "File list" row action', () => {
 	})
 
 	it('places File list between the built-in Edit and Copy', () => {
-		expect(page('Publications').config.actions).toEqual([
+		expect(page('Publications').config.actions).toBeUndefined()
+		expect(publicationActions(manifest.pages)).toEqual([
 			'builtin:view',
 			'builtin:edit',
 			expect.objectContaining({ id: 'file-list' }),
@@ -125,6 +137,32 @@ describe('translateActionLabels', () => {
 		])
 	})
 
+	it('translates the actions in publicationPairConfig too', () => {
+		const out = translateActionLabels(
+			{
+				pages: [
+					{
+						id: 'Publications',
+						config: {
+							register: 'r',
+							publicationPairConfig: {
+								columns: ['title'],
+								actions: ['builtin:view', { id: 'a', label: 'File list' }],
+							},
+						},
+					},
+				],
+			},
+			(key) => `nl:${key}`,
+		)
+
+		expect(out.pages[0].config.register).toBe('r')
+		expect(out.pages[0].config.publicationPairConfig).toEqual({
+			columns: ['title'],
+			actions: ['builtin:view', { id: 'a', label: 'nl:File list' }],
+		})
+	})
+
 	it('does not mutate its input', () => {
 		const snapshot = JSON.parse(JSON.stringify(input))
 
@@ -139,9 +177,7 @@ describe('translateActionLabels', () => {
 			(key) => nlCatalogue.translations[key] ?? key,
 		)
 		const fileList = (pages) =>
-			pages
-				.find((p) => p.id === 'Publications')
-				.config.actions.find((a) => a.id === 'file-list')
+			publicationActions(pages).find((a) => a.id === 'file-list')
 
 		expect(fileList(out.pages).label).toBe('Bestandenlijst')
 		expect(fileList(manifest.pages).label).toBe('File list')

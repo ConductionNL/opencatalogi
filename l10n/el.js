@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Άδεια χρήσης",
         "Listing has no directory URL configured": "Η καταχώριση δεν έχει διαμορφωμένη διεύθυνση URL καταλόγου",
         "Manage your data catalogs and their configurations": "Διαχειριστείτε τους καταλόγους δεδομένων σας και τις διαμορφώσεις τους",
-        "Menus": "Μενού",
         "Metadata": "Μεταδεδομένα",
         "Metadata facets": "Όψεις μεταδεδομένων",
         "Missing directory URL parameter": "Λείπει η παράμετρος διεύθυνσης URL καταλόγου",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Οργανισμός",
         "Organizations": "Οργανισμοί",
         "Page {current} of {total}": "Σελίδα {current} από {total}",
-        "Pages": "Σελίδες",
         "Previous": "Προηγούμενη",
         "Private": "Ιδιωτικό",
         "Property": "Ιδιότητα",
@@ -726,7 +724,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Τι είδαν οι άνθρωποι και τι κατέβασαν.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Πόσο ώριμοι είναι οι κατάλογοι και πόσο βαθιά είναι ενσωματωμένες οι καταχωρίσεις ευρετηρίου.",
         "Store": "Κατάστημα",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Εγκαταστήστε μητρώα, σχήματα και ροές που έχουν δημοσιεύσει άλλοι οργανισμοί."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Εγκαταστήστε μητρώα, σχήματα και ροές που έχουν δημοσιεύσει άλλοι οργανισμοί.",
+        "Could not load the catalog": "Δεν ήταν δυνατή η φόρτωση του καταλόγου",
+        "Reload the page to try again.": "Φορτώστε ξανά τη σελίδα για να δοκιμάσετε ξανά.",
+        "No catalog has the slug {slug}.": "Κανένας κατάλογος δεν έχει το slug {slug}.",
+        "This catalog has no registers or schemas configured": "Αυτός ο κατάλογος δεν έχει ρυθμισμένα μητρώα ή σχήματα",
+        "Add a register and a schema to the catalog to list its publications here.": "Προσθέστε ένα μητρώο και ένα σχήμα στον κατάλογο για να εμφανίζονται εδώ οι δημοσιεύσεις του.",
+        "Open catalog": "Άνοιγμα καταλόγου",
+        "Register and schema": "Μητρώο και σχήμα",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Δημιουργήστε τον πρώτο σας κατάλογο. Είναι ο χώρος όπου θα βρίσκονται οι δημοσιεύσεις σας. Επιλέξτε το μητρώο Publication και το σχήμα Publication, ώστε ο κατάλογος να εμφανίζει τις δημοσιεύσεις που προσθέτετε."
     },
     "nplurals=2; plural=(n != 1);"
 )

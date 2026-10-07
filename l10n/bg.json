@@ -92,7 +92,6 @@
         "License": "Лиценз",
         "Listing has no directory URL configured": "Записът няма конфигуриран URL адрес на директорията",
         "Manage your data catalogs and their configurations": "Управлявайте вашите каталози с данни и техните конфигурации",
-        "Menus": "Менюта",
         "Metadata": "Метаданни",
         "Metadata facets": "Фасети на метаданните",
         "Missing directory URL parameter": "Липсва параметър за URL адрес на директорията",
@@ -124,7 +123,6 @@
         "Organization": "Организация",
         "Organizations": "Организации",
         "Page {current} of {total}": "Страница {current} от {total}",
-        "Pages": "Страници",
         "Previous": "Предишна",
         "Private": "Частно",
         "Property": "Свойство",
@@ -725,7 +723,16 @@
         "What people looked at and what they downloaded.": "Какво са разглеждали хората и какво са изтеглили.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Колко зрели са каталозите и колко дълбоко са интегрирани записите в директорията.",
         "Store": "Магазин",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Инсталирайте регистри, схеми и потоци, публикувани от други организации."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Инсталирайте регистри, схеми и потоци, публикувани от други организации.",
+        "Could not load the catalog": "Каталогът не можа да бъде зареден",
+        "Reload the page to try again.": "Презаредете страницата, за да опитате отново.",
+        "No catalog has the slug {slug}.": "Няма каталог със slug {slug}.",
+        "This catalog has no registers or schemas configured": "За този каталог не са настроени регистри или схеми",
+        "Add a register and a schema to the catalog to list its publications here.": "Добавете регистър и схема към каталога, за да се показват публикациите му тук.",
+        "Open catalog": "Отвори каталога",
+        "Register and schema": "Регистър и схема",
+        "{schema} in {register}": "{schema} в {register}",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Създайте първия си каталог. Това е контейнерът, в който ще бъдат публикациите ви. Изберете регистъра Publication и схемата Publication, за да показва каталогът публикациите, които добавяте."
     },
     "plurals": {}
 }

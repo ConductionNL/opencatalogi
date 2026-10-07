@@ -93,7 +93,6 @@ OC.L10N.register(
         "License": "Leyfi",
         "Listing has no directory URL configured": "Færsla hefur enga vefslóð skráasafns stillta",
         "Manage your data catalogs and their configurations": "Haltu utan um gagnaskrár þínar og stillingar þeirra",
-        "Menus": "Valmyndir",
         "Metadata": "Lýsigögn",
         "Metadata facets": "Lýsigagnahliðar",
         "Missing directory URL parameter": "Færibreytu fyrir vefslóð skráasafns vantar",
@@ -125,7 +124,6 @@ OC.L10N.register(
         "Organization": "Stofnun",
         "Organizations": "Stofnanir",
         "Page {current} of {total}": "Síða {current} af {total}",
-        "Pages": "Síður",
         "Previous": "Fyrri",
         "Private": "Einkamál",
         "Property": "Eiginleiki",
@@ -726,7 +724,16 @@ OC.L10N.register(
         "What people looked at and what they downloaded.": "Hvað fólk skoðaði og hvað það sótti.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hversu þroskaðar skrárnar eru og hversu djúpt skráningar í skráasafninu eru samþættar.",
         "Store": "Verslun",
-        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Settu upp skrár, skemu og flæði sem aðrar stofnanir hafa birt."
+        "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Settu upp skrár, skemu og flæði sem aðrar stofnanir hafa birt.",
+        "Could not load the catalog": "Ekki tókst að hlaða skránni",
+        "Reload the page to try again.": "Endurhlaðaðu síðuna til að reyna aftur.",
+        "No catalog has the slug {slug}.": "Engin skrá er með slug {slug}.",
+        "This catalog has no registers or schemas configured": "Engar skráningar eða skemu eru stillt fyrir þessa skrá",
+        "Add a register and a schema to the catalog to list its publications here.": "Bættu skráningu og skema við skrána til að birta útgáfur hennar hér.",
+        "Open catalog": "Opna skrá",
+        "Register and schema": "Skráning og skema",
+        "{schema} in {register}": "{schema} ({register})",
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Búðu til fyrstu skrána þína. Hún er ílátið sem útgáfurnar þínar verða í. Veldu skráninguna Publication og skemað Publication svo skráin birti útgáfurnar sem þú bætir við."
     },
     "nplurals=2; plural=(n != 1);"
 )

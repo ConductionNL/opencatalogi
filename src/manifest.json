@@ -21,25 +21,10 @@
 				"display": "cards",
 				"optionsSource": "datasets",
 				"configKey": "demo_dataset",
+				"loadAction": "load-demo-data",
 				"title": "Load example data?",
 				"required": false,
-				"body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install."
-			},
-			{
-				"id": "load-demo-data",
-				"type": "run-action",
-				"action": "load-demo-data",
-				"title": "Load the example data",
-				"required": false,
-				"body": "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards."
-			},
-			{
-				"id": "config-check",
-				"type": "run-action",
-				"action": "reload-settings",
-				"title": "Publishing prerequisites",
-				"required": true,
-				"body": "OpenCatalogi publishes from OpenRegister. The catalog, publication and listing registers are configured automatically on install, so this step just verifies them. If OpenRegister was enabled after OpenCatalogi, running this re-imports the configuration."
+				"body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install."
 			},
 			{
 				"id": "catalog-scope",
@@ -139,7 +124,7 @@
 						"sinceVersion": "2.4.0",
 						"placement": "bottom",
 						"allowManualNext": true,
-						"body": "Create your first catalog. It's the container your publications will live in.",
+						"body": "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.",
 						"task": "Create your first catalog",
 						"target": {
 							"kind": "element",
@@ -183,8 +168,6 @@
 						},
 						"advanceOn": {
 							"type": "object-created",
-							"register": "publication",
-							"schema": "publication",
 							"capture": {
 								"publicationId": ":id"
 							}
@@ -408,7 +391,7 @@
 			"label": "Reports",
 			"icon": "ChartBoxOutline",
 			"route": "Reports",
-			"section": "footer",
+			"section": "settings",
 			"order": 95
 		},
 		{
@@ -522,12 +505,13 @@
 		{
 			"id": "Publications",
 			"route": "/publications/:catalogSlug",
-			"type": "index",
+			"type": "custom",
+			"component": "CatalogPublicationsIndex",
 			"title": "Publications",
-			"_note": "The `filter: { catalog: @route.catalogSlug }` clause used to sit here, but the publication schema declares NO `catalog` property (see openregister schemas/1) — publications are catalog-scoped structurally via the catalog's own `registers`/`schemas` arrays, exactly like the /api/federation/publications endpoint resolves them. With the filter active every publication was dropped by the OpenRegister query and the page rendered empty even after successful create. KNOWN LIMITATION (WOO-527b tracking): with the filter removed the page shows publications across ALL catalogs, not scoped to `:catalogSlug`. Two fix paths, both out-of-scope here — (1) grow the publication schema an explicit `catalog` FK so a schema-supported filter can be reinstated, or (2) rehost the page on the bespoke `/api/{catalogSlug}` endpoint (which already resolves the same scope correctly). Neither the current manifest resolvers (`@resolve:catalog_register`, `@resolve:catalog_schema`, `@resolve:listing_register`, `@resolve:woo_register`) target per-catalog publication registers, so the `@resolve` route also needs a new resolver.",
+			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage for one register/schema pair, with a selector when the catalog has several, kept in the `_pair` query parameter. It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. `register`/`schema` below name the publication pair: rows of that pair open on PublicationDetail, rows of any other pair (e.g. publiccode) have no detail page, so a click selects them and Edit uses CnIndexPage's form for their schema. CnIndexPage itself lists the catalog's active pair. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Every other config key reaches CnIndexPage for every pair, so it must fit any schema; config that only fits the publication schema, such as `columns` naming its properties or `actions` with a publication handler, goes in `publicationPairConfig`, which CnIndexPage gets on the publication pair only.",
 			"config": {
-				"register": "publication",
-				"schema": "publication",
+				"register": "@resolve:publication_register",
+				"schema": "@resolve:publication_schema",
 				"actionToggles": {
 					"showAdd": true,
 					"showEditAction": true,
@@ -536,18 +520,20 @@
 					"showViewToggle": true,
 					"selectable": true
 				},
-				"actions": [
-					"builtin:view",
-					"builtin:edit",
-					{
-						"id": "file-list",
-						"label": "File list",
-						"icon": "FormatListBulleted",
-						"handler": "openPublicationFiles"
-					},
-					"builtin:copy",
-					"builtin:delete"
-				],
+				"publicationPairConfig": {
+					"actions": [
+						"builtin:view",
+						"builtin:edit",
+						{
+							"id": "file-list",
+							"label": "File list",
+							"icon": "FormatListBulleted",
+							"handler": "openPublicationFiles"
+						},
+						"builtin:copy",
+						"builtin:delete"
+					]
+				},
 				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},
@@ -561,6 +547,10 @@
 				"register": "publication",
 				"schema": "publication",
 				"idParam": "@route.id",
+				"notFoundRoute": {
+					"name": "Publications"
+				},
+				"notFoundRouteLabel": "Publications",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
 					{
