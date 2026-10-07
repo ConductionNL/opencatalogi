@@ -5828,6 +5828,96 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"let a CDN cache the public catalogue API so readers get fast answers under load\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"note": "Specified in openspec/changes/operations-public-api-cache-headers (OpenSpec pass 2026-09-27)."
+		},
+		{
+			"id": "dec-comment-period",
+			"area": "decisions",
+			"name": "Put a draft decision out for public comment for a set period, with its legal remedy and official notice.",
+			"source": "spec-round-2026-10-07",
+			"opencatalogi": "partial",
+			"built": {
+				"state": "built",
+				"owner": "ConductionNL/opencatalogi",
+				"evidence": "lib/Service/Publication/CommentPeriodService.php open(), state(), publicView(), withdrawalDue(); lib/Controller/CommentPeriodController.php; lib/BackgroundJob/CommentPeriodWithdrawal.php; schema in lib/Settings/register.d/woo-request-intake-and-comment-periods.json. Main spec status in-progress.",
+				"spec": "openspec/specs/publication-comment-periods"
+			},
+			"ckan": "unknown",
+			"dkan": "unknown",
+			"xxllnc": "unknown",
+			"iprox": "unknown",
+			"decos": "unknown"
+		},
+		{
+			"id": "wr-request-record",
+			"area": "woo-requests",
+			"name": "Register a Woo request with its own reference and statutory term, extend the term once and pause it while clarification is awaited.",
+			"source": "spec-round-2026-10-07",
+			"opencatalogi": "partial",
+			"built": {
+				"state": "built",
+				"owner": "ConductionNL/opencatalogi",
+				"evidence": "lib/Service/Woo/WooRequestService.php receive(), mintReference(), withTerm(), receipt(), termsReport(); lib/Controller/WooRequestController.php; lib/Service/Woo/WooRequestIntake.php. Main spec status in-progress; open change woo-request-intake-hands-over-to-dossiq moves intake to dossiq.",
+				"spec": "openspec/specs/woo-request-intake"
+			},
+			"ckan": "unknown",
+			"dkan": "unknown",
+			"xxllnc": "unknown",
+			"iprox": "unknown",
+			"decos": "unknown"
+		},
+		{
+			"id": "ops-notifications",
+			"area": "operations",
+			"name": "Get a Nextcloud notification when a catalogue publishes or a directory listing fails to sync.",
+			"source": "spec-round-2026-10-07",
+			"opencatalogi": "yes",
+			"built": {
+				"state": "built",
+				"owner": "ConductionNL/opencatalogi",
+				"evidence": "lib/Settings/publication_register.json:308 x-openregister-notifications with nc-notification channels on the catalog and listing schemas; archived change opencatalogi-notifications.",
+				"change": "opencatalogi-notifications"
+			},
+			"ckan": "unknown",
+			"dkan": "unknown",
+			"xxllnc": "unknown",
+			"iprox": "unknown",
+			"decos": "unknown"
+		},
+		{
+			"id": "pub-attach-default",
+			"area": "publications",
+			"name": "Have the attachments of a publication type set to publish automatically on upload, while the uploader can still switch it off.",
+			"source": "spec-round-2026-10-07",
+			"opencatalogi": "yes",
+			"built": {
+				"state": "built",
+				"owner": "ConductionNL/opencatalogi",
+				"evidence": "src/modals/generic/UploadFiles.vue reads the schema configuration.defaultAutoShare to seed the \"Automatically publish\" toggle; archived change feature-2026-05-26-default-auto-share.",
+				"change": "feature-2026-05-26-default-auto-share"
+			},
+			"ckan": "unknown",
+			"dkan": "unknown",
+			"xxllnc": "unknown",
+			"iprox": "unknown",
+			"decos": "unknown"
+		},
+		{
+			"id": "srch-council-filters",
+			"area": "search",
+			"name": "Filter public council documents by document type, body and meeting date.",
+			"source": "spec-round-2026-10-07",
+			"opencatalogi": "yes",
+			"built": {
+				"state": "built",
+				"owner": "ConductionNL/opencatalogi",
+				"evidence": "GET /api/search forwards documentType, bodyName and a meetingDate range to OpenRegister and returns their facets (lib/Controller/SearchController.php, PublicationQueryService::assemblePublicSearchResults()); archived change search-council-document-filters. The row is decidiq pub-09; the public page is portaliq's.",
+				"change": "search-council-document-filters"
+			},
+			"ckan": "unknown",
+			"dkan": "unknown",
+			"xxllnc": "unknown",
+			"iprox": "unknown",
+			"decos": "unknown"
 		}
 	],
 	"pending": [
