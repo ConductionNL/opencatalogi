@@ -1,9 +1,7 @@
 {
     "translations": {
         "Load example data?": "Voorbeeldgegevens laden?",
-        "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.": "Voorbeeldgegevens vullen de lijsten, detailpagina’s en dashboards, zodat je de app meteen ziet werken. Kies \"Geen\" op een productieomgeving.",
-        "Load the example data": "Laad de voorbeeldgegevens",
-        "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards.": "Laadt wat je koos. De gegevens zijn herkenbaar voorbeeldgegevens, je kunt dit meer dan een keer uitvoeren en je kunt ze daarna verwijderen.",
+        "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install.": "Voorbeeldgegevens vullen de lijsten, detailpagina’s en dashboards, zodat je de app meteen ziet werken. Elke kaart heeft een eigen knop Laden. Kies \"Geen\" op een productieomgeving.",
         "None, I will set this up myself": "Geen, ik richt dit zelf in",
         "Nothing is imported. You start with an empty app and add your own data.": "Er wordt niets geïmporteerd. Je begint met een lege app en voegt zelf gegevens toe.",
         "Example data": "Voorbeeldgegevens",
@@ -769,8 +767,6 @@
         "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.": "U heeft minstens één catalogus nodig voordat u een publicatie kunt aanmaken. Maak eerst een catalogus aan vanuit de cataloguspagina.",
         "Welcome to OpenCatalogi": "Welkom bij OpenCatalogi",
         "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications. Let's create your first catalog and connect you to the federated network.": "Een paar snelle stappen om te kunnen publiceren. OpenCatalogi maakt van je catalogi open, vindbare publicaties. Laten we je eerste catalogus aanmaken en je aansluiten op het federatieve netwerk.",
-        "Publishing prerequisites": "Voorwaarden voor publiceren",
-        "OpenCatalogi publishes from OpenRegister. The catalog, publication and listing registers are configured automatically on install, so this step just verifies them. If OpenRegister was enabled after OpenCatalogi, running this re-imports the configuration.": "OpenCatalogi publiceert vanuit OpenRegister. De registers voor catalogus, publicatie en listing worden bij installatie automatisch ingericht, dus deze stap controleert ze alleen. Is OpenRegister na OpenCatalogi ingeschakeld, dan importeert deze stap de configuratie opnieuw.",
         "Default catalog scope": "Standaard reikwijdte van de catalogus",
         "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create. You can still tighten or widen it later.": "Publiceren in OpenCatalogi wordt geregeld via schema-RBAC (niet via een gepubliceerd-vinkje per object), en elke catalogus heeft een reikwijdte nodig. Kies de standaardzichtbaarheid voor de catalogus die je gaat aanmaken. Je kunt die later nog beperken of verruimen.",
         "Public (anyone can discover and read)": "Openbaar (iedereen kan vinden en lezen)",
