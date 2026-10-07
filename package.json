@@ -136,7 +136,7 @@
     "mermaid": ">=11.4.1",
     "json5": "^2.2.3",
     "@braintree/sanitize-url": "^7.0.0",
-    "katex": "^0.16.0",
+    "katex": "^0.18.2",
     "@tootallnate/once": ">=3.0.1",
     "postcss": ">=8.4.47",
     "fast-xml-parser": ">=5.7.0",
