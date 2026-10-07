@@ -15,6 +15,20 @@ De publicatiepagina toont alleen de publicaties van de gekozen catalogus: de obj
 
 Eigenschappen en bijlagen kunnen worden toegevoegd nadat de publicatie is toegevoegd.
 
+## Publicaties zoeken
+
+Boven de publicatielijst staat een zoekbalk. Typ een deel van een titel, samenvatting of beschrijving, en de lijst toont alleen de publicaties waarin die tekst voorkomt. De andere tekstvelden van een publicatie doen ook mee, datumvelden niet. Hoofdletters en kleine letters maken geen verschil.
+
+Haakjes, dubbele aanhalingstekens, het sterretje (`*`) en de woorden `AND`, `OR` en `NOT` in hoofdletters werken als zoekoperatoren. Een haakje of aanhalingsteken zonder tegenhanger is daarom geen geldige zoekopdracht.
+
+De server doorzoekt alle publicaties, niet alleen de rijen die op het scherm staan. De lijst, en dus ook de zoekopdracht, omvat de publicaties van alle catalogi, niet alleen die van één catalogus. De zoekopdracht start pas als je even stopt met typen, dus niet bij elke toetsaanslag. Een nieuwe zoekterm brengt je terug naar pagina 1, en de teller boven de lijst toont hoeveel publicaties er gevonden zijn.
+
+Maak je de zoekbalk leeg, dan zie je de volledige lijst weer.
+
+De zoekterm blijft staan terwijl je bladert en wanneer je wisselt tussen de kaart- en de tabelweergave. De zoekterm staat ook in de adresbalk (URL), zodat je na het herladen of via een gekopieerde link dezelfde resultaten ziet.
+
+Vindt de zoekbalk niets, dan meldt de lijst "Geen publicaties gevonden".
+
 ## Publicaties beheren
 
 De gebruikersbeheerinterface werkt intuïtief. In het hoofdmenu aan de linkerkant staat elke catalogus waar je toegang toe hebt; de catalogus die je open hebt is gemarkeerd. Hoe je een publicatie toevoegt, staat hierboven.
