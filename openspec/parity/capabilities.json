@@ -4092,10 +4092,10 @@
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "l10n/nl.json has 1110 UI strings (74 l10n files); openspec/changes/register-i18n/tasks.md has only Task 1 'todo'; lib/Settings/publication_register.json publication schema has no language or translation property; portaliq lib/Controller/ContentController.php:212 negotiates a locale for portal pages only",
-				"change": "register-i18n"
+				"change": "publication-translations"
 			},
 			"reachedOn": "staff UI labels via Nextcloud l10n; publication content: nothing",
-			"note": "Labels are translated. Publications are stored and served in one language. Multilingual content is specified (register-i18n), not built. corrections round 9 (2026-09-28): carried by the open openspec/changes/register-i18n (spec only, Task 1 todo). The archived openspec/changes/archive/2026-03-21-register-i18n ticks 12 of 12 tasks, but at f8c2317120 none of it is in the code (git grep finds no translatable flag in lib/Settings, no lang parameter in lib and no language switcher in src), so that change shipped without the capability; the rating stays partial.",
+			"note": "Labels are translated. Publications are stored and served in one language. Multilingual content is specified (register-i18n), not built. corrections round 9 (2026-09-28): carried by the open openspec/changes/register-i18n (spec only, Task 1 todo). The archived openspec/changes/archive/2026-03-21-register-i18n ticks 12 of 12 tasks, but at f8c2317120 none of it is in the code (git grep finds no translatable flag in lib/Settings, no lang parameter in lib and no language switcher in src), so that change shipped without the capability; the rating stays partial. Spec round part 3 (2026-10-07): register-i18n is a stub that nobody can build from; the publication and catalogue part is specified in publication-translations on OpenRegister's translation machinery (boards OcPublicatieBewerken, OcPublicatie).",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "public-cms",
