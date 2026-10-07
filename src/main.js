@@ -42,6 +42,7 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import customComponents from './registry.js'
+import { translateActionLabels } from './services/translateActionLabels.js'
 
 // gridstack v12 sizes dashboard items with `width: var(--gs-column-width)`.
 // Without this stylesheet every dashboard item renders 0 px wide, with no
@@ -49,9 +50,6 @@ import customComponents from './registry.js'
 import 'gridstack/dist/gridstack.min.css'
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-// Bump vue-select's dropdown z-index above NcDialog's modal — see the file's
-// own comment for the upstream stacking-order bug this compensates for.
-import './css/vue-select-dialog-z-fix.css'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
 import '@kangc/v-md-editor/lib/theme/style/github.css'
 library.add(fas, fab, far)
@@ -308,8 +306,9 @@ function translateNotFoundRouteLabels(manifest) {
 	}
 }
 
-const resolvedManifest = translateNotFoundRouteLabels(
-	resolveManifestSentinelsSync(mergedManifest),
+const resolvedManifest = translateActionLabels(
+	translateNotFoundRouteLabels(resolveManifestSentinelsSync(mergedManifest)),
+	(key) => t('opencatalogi', key),
 )
 
 /**

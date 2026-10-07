@@ -234,9 +234,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								}
 							">
 							<template #icon>
-								<FilePlusOutline :size="20" />
+								<FormatListBulleted :size="20" />
 							</template>
-							{{ t('opencatalogi', 'Add attachment') }}
+							{{ t('opencatalogi', 'File list') }}
 						</NcActionButton>
 						<NcActionButton
 							closeAfterClick
@@ -292,7 +292,7 @@ import {
 } from '@nextcloud/vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
-import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
+import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 // Icons
 import Magnify from 'vue-material-design-icons/Magnify.vue'
@@ -321,7 +321,7 @@ export default {
 		// Icons
 		Refresh,
 		Plus,
-		FilePlusOutline,
+		FormatListBulleted,
 		ContentCopy,
 		Pencil,
 		Publish,
