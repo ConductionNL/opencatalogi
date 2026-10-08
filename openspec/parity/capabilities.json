@@ -440,7 +440,11 @@
 				"publication-required-at-publish",
 				"publications",
 				"publications-unpublished-overview",
-				"retrofit-2026-05-26-mass-object-actions"
+				"retrofit-2026-05-26-mass-object-actions",
+				"generic-object-modals",
+				"publication-attachment-defaults",
+				"retrofit-2026-05-26-object-modals",
+				"retrofit-2026-05-26-object-table-listing"
 			]
 		},
 		{
@@ -503,7 +507,8 @@
 				"harvest-conflict-policies",
 				"harvest-feed-intake",
 				"oai-pmh-endpoint",
-				"structured-data-discoverability"
+				"structured-data-discoverability",
+				"publication-quality"
 			]
 		},
 		{
@@ -582,7 +587,9 @@
 				"ooapi-catalog-publication",
 				"publication-inspection-and-the-national-indexes",
 				"publications",
-				"search-cors-on-every-public-endpoint"
+				"search-cors-on-every-public-endpoint",
+				"api-documentation",
+				"cross-origin-api-access"
 			]
 		},
 		{
@@ -597,7 +604,11 @@
 				"publication-translations",
 				"publications-for-signed-in-readers",
 				"spa-deep-link-routing",
-				"the-public-and-community-surface"
+				"the-public-and-community-surface",
+				"citizen-collections",
+				"saved-searches",
+				"retrofit-2026-05-26-menu-page-management",
+				"retrofit-2026-05-26-theme-glossary"
 			]
 		},
 		{
@@ -650,7 +661,8 @@
 			"area": "integration",
 			"overlay": "ai-agent-access-mcp",
 			"specs": [
-				"ai-assistant-tools"
+				"ai-assistant-tools",
+				"cms-tool"
 			]
 		},
 		{
@@ -662,7 +674,8 @@
 			"specs": [
 				"auto-publishing",
 				"publication-inspection-and-the-national-indexes",
-				"publication-retention-lifecycle"
+				"publication-retention-lifecycle",
+				"notifications"
 			]
 		},
 		{
@@ -674,7 +687,8 @@
 			"specs": [
 				"publication-usage-analytics",
 				"reports",
-				"retrofit-2026-05-26-dashboard-widgets"
+				"retrofit-2026-05-26-dashboard-widgets",
+				"dashboard"
 			]
 		},
 		{
@@ -684,7 +698,8 @@
 			"area": "operations",
 			"overlay": "monitoring",
 			"specs": [
-				"adopt-apphost"
+				"adopt-apphost",
+				"prometheus-metrics"
 			]
 		},
 		{
@@ -696,10 +711,94 @@
 			"specs": [
 				"app-packaging",
 				"operations-publish-rights",
-				"retrofit-2026-05-26-app-shell-settings"
+				"retrofit-2026-05-26-app-shell-settings",
+				"admin-settings",
+				"first-time-setup"
 			]
 		}
 	],
+	"internalSpecs": [
+		"beta-alignment",
+		"entity-typescript-models",
+		"frontend-performance",
+		"frontend-theming",
+		"opencatalogi-store-migration",
+		"retrofit-2026-05-26-preferences-api"
+	],
+	"specScreens": {
+		"api-documentation": {
+			"board": null,
+			"reason": "An OpenAPI document served by the app for integrators, not a screen."
+		},
+		"cms-tool": {
+			"board": null,
+			"reason": "A tool an AI agent calls through the API; it has no screen of its own."
+		},
+		"cross-origin-api-access": {
+			"board": null,
+			"reason": "CORS headers on the public API, an HTTP contract with no screen."
+		},
+		"prometheus-metrics": {
+			"board": null,
+			"reason": "Metrics and health endpoints read by Prometheus, not by people."
+		},
+		"notifications": {
+			"board": null,
+			"reason": "Delivered as Nextcloud notifications by the OpenRegister engine, in the Nextcloud bell, not on an app screen."
+		},
+		"retrofit-2026-05-26-preferences-api": {
+			"board": null,
+			"reason": "A per-user preferences API the frontend uses behind the scenes."
+		},
+		"beta-alignment": {
+			"board": null,
+			"reason": "Keeps info.xml, the menu, the product page and the docs on one vocabulary; engineering, no screen."
+		},
+		"entity-typescript-models": {
+			"board": null,
+			"reason": "TypeScript entity classes for the frontend code; engineering, no screen."
+		},
+		"frontend-performance": {
+			"board": null,
+			"reason": "Bundle and import hygiene; engineering, no screen."
+		},
+		"frontend-theming": {
+			"board": null,
+			"reason": "Colour hygiene so theming works on every screen; engineering, no screen of its own."
+		},
+		"opencatalogi-store-migration": {
+			"board": null,
+			"reason": "Moves the object store onto the shared factory; engineering, no screen."
+		},
+		"first-time-setup": {
+			"board": [
+				"OcInstallatie"
+			]
+		},
+		"citizen-collections": {
+			"board": [
+				"OcMijnDossiers",
+				"GedeeldDossier"
+			]
+		},
+		"saved-searches": {
+			"board": [
+				"OcMijnZoekopdrachten"
+			]
+		},
+		"retrofit-2026-05-26-theme-glossary": {
+			"board": [
+				"OcThemas",
+				"OcBegrippen"
+			]
+		},
+		"retrofit-2026-05-26-menu-page-management": {
+			"board": [
+				"EditorMenu",
+				"PtPortal"
+			]
+		}
+	},
 	"providers": [
 		{
 			"key": "opencatalogi",
