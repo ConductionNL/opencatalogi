@@ -160,11 +160,15 @@ class PublicationQuerySearchContractTest extends TestCase {
 	/**
 	 * Build the service around the council store, one catalogue with schema 1.
 	 */
-	private function search(array $params, ?CouncilSearchObjectService &$store = null): array {
+	private function search(array $params, ?CouncilSearchObjectService &$store = null, array $catalog = []): array {
 		$store = new CouncilSearchObjectService($this->councilPublications(), $this->schema);
-		$catalogi = new class {
+		$catalog = $catalog + ['slug' => 'raad', 'listed' => true, 'published' => '2020-01-01T00:00:00+00:00', 'registers' => [1], 'schemas' => [1]];
+		$catalogi = new class($catalog) {
+			public function __construct(private array $catalog) {
+			}
+
 			public function getCatalogBySlug(string $slug): ?array {
-				return ['slug' => 'raad', 'listed' => true, 'published' => '2020-01-01T00:00:00+00:00', 'registers' => [1], 'schemas' => [1]];
+				return $this->catalog;
 			}
 		};
 		$schemaMapper = new class {
@@ -250,6 +254,29 @@ class PublicationQuerySearchContractTest extends TestCase {
 
 		$this->assertSame(['verslag-apr', 'agenda-mei'], $this->ids($envelope));
 		$this->assertSame(['gte' => '2026-04-01', 'lte' => '2026-06-30'], $store->queries[0]['meetingDate']);
+	}
+
+	/**
+	 * A catalogue naming a register that is not an id leaves it out of the scope.
+	 *
+	 * The example data ships catalogues whose `registers` and `schemas` are
+	 * placeholder words. Cast to an integer they became register 0, OpenRegister
+	 * refuses a search scoped to a register that does not exist, and every
+	 * public search on the instance answered 500. A reference that is not a
+	 * positive id narrows the scope instead: the catalogue's real ids still
+	 * search, and nothing outside them is added.
+	 */
+	public function testACatalogueReferenceThatIsNotAnIdIsLeftOutOfTheScope(): void {
+		$envelope = $this->search(
+			['documentType' => 'minutes'],
+			$store,
+			['registers' => [1, 'Voorbeeld Registers 1'], 'schemas' => ['1', 'Voorbeeld Schemas 1']]
+		);
+
+		$this->assertSame(['besluitenlijst-jan', 'verslag-apr'], $this->ids($envelope));
+		$this->assertSame(1, $store->queries[0]['_register'] ?? null, 'The scope kept a register that is not an id.');
+		$this->assertArrayNotHasKey('_registers', $store->queries[0]);
+		$this->assertSame([1], $store->queries[0]['_schemas']);
 	}
 
 	/** REQ-SCF-002 scenario "A bad date". */
