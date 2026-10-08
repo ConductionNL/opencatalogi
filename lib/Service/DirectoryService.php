@@ -158,7 +158,7 @@ class DirectoryService {
 	 *
 	 * @return string The resolved default directory URL.
 	 *
-	 * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md#requirement-default-directory-url-single-source-of-truth-onb-008
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-default-directory-url-single-source-of-truth-onb-008
 	 */
 	public function getDefaultDirectoryUrl(): string {
 		return $this->config->getValueString(
