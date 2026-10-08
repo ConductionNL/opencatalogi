@@ -1,0 +1,122 @@
+{
+    "_source": "portaliq lib/Settings/portaliq_register.json, components.schemas.portalMessage version 0.6.0 (development e1655202). Copied so opencatalogi's tests validate the message it writes against the schema portaliq stores it under. Refresh it when portaliq bumps the schema.",
+    "required": [
+        "subjectRef",
+        "subject"
+    ],
+    "properties": {
+        "subjectRef": {
+            "title": "Subject reference",
+            "type": "string",
+            "description": "The recipient subject; the field the inbox is scoped on.",
+            "example": "dev-supplier"
+        },
+        "organisation": {
+            "title": "Organisation",
+            "type": "string",
+            "description": "The tenant this message belongs to.",
+            "example": "dev-org"
+        },
+        "subject": {
+            "title": "Subject",
+            "type": "string",
+            "description": "Message subject line.",
+            "example": "Uw contract verloopt binnenkort"
+        },
+        "body": {
+            "title": "Body",
+            "type": "string",
+            "description": "Message body.",
+            "example": "Contract 12345 verloopt op 1 augustus."
+        },
+        "read": {
+            "title": "Read",
+            "type": "boolean",
+            "description": "Whether the subject has read the message.",
+            "example": false
+        },
+        "receivedAt": {
+            "title": "Received at",
+            "type": "string",
+            "format": "date-time",
+            "description": "When the message arrived."
+        },
+        "nature": {
+            "title": "Aard",
+            "type": "string",
+            "description": "WMEBV art 2:10 (2027 readiness): the nature of the message/decision. Optional — rendered only when the contributing app supplies it; absent means no such field renders.",
+            "example": "Beschikking"
+        },
+        "rechtsgevolg": {
+            "title": "Rechtsgevolg",
+            "type": "string",
+            "description": "WMEBV art 2:10 (2027 readiness): the legal effect of the message/decision. Optional — rendered only when supplied.",
+            "example": "De aanvraag is toegewezen."
+        },
+        "term": {
+            "title": "Termijn",
+            "type": "string",
+            "format": "date-time",
+            "description": "WMEBV art 2:10 (2027 readiness): the deadline associated with the message/decision (e.g. an objection period). Optional — rendered only when supplied."
+        },
+        "referenceId": {
+            "title": "Reference id",
+            "type": "string",
+            "description": "WMEBV ontvangstbevestiging (wmebv-submission-receipts): the receipt's own reference id, shown to the subject and linked from the matching `portalSubmission` proof-log entry's `receiptMessageRef`. Present only on a receipt message; absent on an ordinary domain notification.",
+            "example": "WMEBV-9F3A1B2C4D5E6F70"
+        },
+        "dataCopy": {
+            "title": "Data copy",
+            "type": "object",
+            "description": "WMEBV ontvangstbevestiging (wmebv-submission-receipts): a copy of the WHITELISTED submitted field data — the subject's right to a copy of what they submitted. Present only on a receipt message; never contains a non-whitelisted or raw client field.",
+            "example": {
+                "title": "Voorbeeldaanvraag"
+            }
+        },
+        "taskUuid": {
+            "title": "Task uuid",
+            "type": "string",
+            "description": "The portal task this message announces (portal-task-delivery). The unified inbox renders a deep link into the \"Mijn taken\" surface when present; absent means no such link renders.",
+            "example": "b1946ac9-2ea7-4b1a-9d15-2f4c1e6f2a10"
+        },
+        "recordLink": {
+            "title": "Record link",
+            "type": "object",
+            "description": "The record this message is about, as its app, collection and id. The inbox shows an Open button for it, and the portal reads the record through the resident's own scoped read.",
+            "properties": {
+                "app": {
+                    "title": "App",
+                    "type": "string",
+                    "description": "The app that holds the record."
+                },
+                "collection": {
+                    "title": "Collection",
+                    "type": "string",
+                    "description": "The collection of that app the record belongs to."
+                },
+                "id": {
+                    "title": "Record id",
+                    "type": "string",
+                    "description": "The id of the record."
+                }
+            },
+            "example": {
+                "app": "dossiq",
+                "collection": "mijnZaken",
+                "id": "b1946ac9-2ea7-4b1a-9d15-2f4c1e6f2a10"
+            }
+        },
+        "ruleKey": {
+            "title": "Rule key",
+            "type": "string",
+            "description": "The rule key of the app that wrote this message. Portaliq also sends the email when that app declares the key.",
+            "example": "pipelinq.question.answered"
+        },
+        "deliveryUuid": {
+            "title": "Delivery uuid",
+            "type": "string",
+            "description": "The openregister delivery ledger row this message settles (portal-task-delivery). The idempotency key: the worker probes it before writing, so a crash between write and settle never duplicates the message.",
+            "example": "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        }
+    }
+}

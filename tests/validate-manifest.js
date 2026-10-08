@@ -13,16 +13,17 @@
 //   1 — manifest fails validation (or schema/manifest cannot be loaded)
 //
 // src/manifest.json declares the v2 schema ($schema → app-manifest-v2.schema.json),
-// so we validate against v2. The canonical v2 schema is vendored under
-// tests/schemas/ so the gate is self-contained (CI does not depend on a fresh
-// node_modules copy, and the published @conduction/nextcloud-vue v2 schema can
-// lag the canonical hydra one — e.g. the metric `cacheTtl` property).
+// so we validate against v2.
 //
 // Schema lookup order (first hit wins):
 //   1. Env var APP_MANIFEST_SCHEMA — explicit absolute path to a schema JSON
-//   2. tests/schemas/app-manifest-v2.schema.json (vendored canonical v2)
-//   3. node_modules/@conduction/nextcloud-vue/src/schemas/app-manifest-v2.schema.json
+//   2. node_modules/@conduction/nextcloud-vue/src/schemas/app-manifest-v2.schema.json
+//   3. tests/schemas/app-manifest-v2.schema.json (vendored fallback)
 //   4. ../nextcloud-vue/src/schemas/app-manifest-v2.schema.json (sibling worktree)
+//
+// After a schema pass it also runs the installed library's validateManifest()
+// and prints its non-fatal warnings (e.g. a row-action order with Delete not
+// last). They never change the exit code.
 
 'use strict'
 
@@ -179,7 +180,70 @@ function structuralLint(manifest) {
 	return errors
 }
 
-function main() {
+// Print the installed library validator's warnings. A library that cannot be
+// loaded, or whose validator returns no `warnings`, is reported and skipped.
+async function printLibraryWarnings(manifest) {
+	let validateManifest
+	try {
+		;({ validateManifest } =
+			await import('@conduction/nextcloud-vue/dist/esm/utils/validateManifest.js'))
+	} catch (err) {
+		console.warn(
+			`[validate-manifest] library validator unavailable (${err.message}); skipping its warnings`,
+		)
+		return
+	}
+	const result = validateManifest(manifest)
+	if (!Array.isArray(result?.warnings)) {
+		console.log(
+			'[validate-manifest] library validator reports no warnings field',
+		)
+		return
+	}
+	if (result.warnings.length === 0) {
+		console.log('[validate-manifest] library warnings: none')
+		return
+	}
+	console.warn(`[validate-manifest] library warnings: ${result.warnings.length}`)
+	for (const warning of result.warnings) console.warn(`  - ${warning}`)
+}
+
+// CatalogPublicationsIndex hands `config.publicationPairConfig` to CnIndexPage
+// on the publication pair, merged over the rest of the config. The schema leaves
+// that key open, so each such page is checked again as the type:"index" page
+// CnIndexPage receives there. Returns that manifest and the checked page indexes.
+function withPairConfigAsIndexPages(manifest) {
+	const checked = []
+	const pages = (manifest.pages || []).map((page, i) => {
+		const pairConfig = page?.config?.publicationPairConfig
+		if (!pairConfig || typeof pairConfig !== 'object') return page
+		checked.push(i)
+		const { component, ...rest } = page
+		const { publicationPairConfig, ...config } = page.config
+		return { ...rest, type: 'index', config: { ...config, ...pairConfig } }
+	})
+	return { manifest: { ...manifest, pages }, checked }
+}
+
+// Keeps the errors on the checked pages and points those on a key that came
+// from publicationPairConfig back at it.
+function pairConfigErrors(manifest, checked, errors) {
+	const result = []
+	for (const err of errors) {
+		const [, index, key, tail] =
+			/^\/pages\/(\d+)(?:\/config\/([^/]+))?(.*)$/.exec(err.instancePath) || []
+		if (!checked.includes(Number(index))) continue
+		const pairConfig = manifest.pages[index].config.publicationPairConfig
+		const instancePath =
+			key in pairConfig
+				? `/pages/${index}/config/publicationPairConfig/${key}${tail}`
+				: err.instancePath
+		result.push({ ...err, instancePath })
+	}
+	return result
+}
+
+async function main() {
 	if (!fs.existsSync(MANIFEST_PATH)) {
 		console.error(`[validate-manifest] manifest not found: ${MANIFEST_PATH}`)
 		process.exit(1)
@@ -233,13 +297,29 @@ function main() {
 		}
 	}
 	const validate = ajv.compile(schema)
-	const ok = validate(manifest)
-	if (ok) {
+	const errors = validate(manifest) ? [] : [...validate.errors]
+	const pair = withPairConfigAsIndexPages(manifest)
+	if (pair.checked.length > 0) {
+		console.log(
+			`[validate-manifest] publicationPairConfig checked as type:"index" config on pages: ${pair.checked.join(', ')}`,
+		)
+		if (!validate(pair.manifest)) {
+			const seen = new Set(
+				errors.map((err) => `${err.instancePath} ${err.message}`),
+			)
+			const found = pairConfigErrors(manifest, pair.checked, validate.errors)
+			for (const err of found) {
+				if (!seen.has(`${err.instancePath} ${err.message}`)) errors.push(err)
+			}
+		}
+	}
+	if (errors.length === 0) {
 		console.log('[validate-manifest] Ajv validation: PASS (0 errors)')
+		await printLibraryWarnings(manifest)
 		process.exit(0)
 	}
 	console.error('[validate-manifest] Ajv validation: FAIL')
-	for (const err of validate.errors || []) {
+	for (const err of errors) {
 		console.error(
 			`  - ${err.instancePath || '(root)'} ${err.message} (keyword=${err.keyword})`,
 		)

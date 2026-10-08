@@ -28,6 +28,10 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Service\DcatMappingService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
+use OCA\OpenCatalogi\Service\StandardsVersionService;
+use OCA\OpenRegister\Db\SchemaMapper;
+use OCA\OpenRegister\Service\FileService;
+use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -45,6 +49,7 @@ class DcatServiceTest extends TestCase {
 	private IAppManager|MockObject $appManager;
 	private IURLGenerator|MockObject $urlGenerator;
 	private IAppConfig|MockObject $appConfig;
+	private StandardsVersionService|MockObject $standardsVersions;
 	private DcatService $service;
 
 	protected function setUp(): void {
@@ -55,6 +60,16 @@ class DcatServiceTest extends TestCase {
 
 		$this->urlGenerator->method('getBaseUrl')->willReturn('https://host');
 
+		$this->standardsVersions = $this->createMock(StandardsVersionService::class);
+		$this->standardsVersions->method('dcatApNlVersion')->willReturn(
+			[
+				'declared' => StandardsVersionService::DCAT_AP_NL_VERSION,
+				'published' => StandardsVersionService::DCAT_AP_NL_VERSION,
+				'status' => StandardsVersionService::STATUS_CURRENT,
+				'profile' => StandardsVersionService::DCAT_AP_NL_PROFILE,
+			]
+		);
+
 		$this->service = new DcatService(
 			$this->container,
 			$this->appManager,
@@ -62,7 +77,8 @@ class DcatServiceTest extends TestCase {
 			new DcatSerializer(),
 			$this->urlGenerator,
 			$this->appConfig,
-			$this->createMock(LoggerInterface::class)
+			$this->createMock(LoggerInterface::class),
+			$this->standardsVersions
 		);
 	}
 
@@ -141,4 +157,181 @@ class DcatServiceTest extends TestCase {
 		];
 		$this->assertSame([], $this->service->mandatoryViolations($node));
 	}
+
+	/**
+	 * Wire OpenRegister's ObjectService, FileService and SchemaMapper into the
+	 * container, and return the ObjectService mock so a test can pin the search.
+	 *
+	 * @return ObjectService|MockObject The ObjectService mock.
+	 */
+	private function wireOpenRegister(): ObjectService|MockObject {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static fn ($app, $key, $default = '') => $default
+		);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$fileService = $this->createMock(FileService::class);
+		$fileService->method('getFiles')->willReturn([]);
+		$fileService->method('formatFiles')->willReturn(['results' => []]);
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')->willThrowException(new \RuntimeException('not needed'));
+
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				'OCA\\OpenRegister\\Service\\ObjectService' => $objectService,
+				'OCA\\OpenRegister\\Service\\FileService' => $fileService,
+				'OCA\\OpenRegister\\Db\\SchemaMapper' => $schemaMapper,
+			}
+		);
+
+		return $objectService;
+	}//end wireOpenRegister()
+
+	public function testTheCatalogNodeDeclaresTheProfileItTargets(): void {
+		$this->wireOpenRegister();
+
+		$document = $this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => []],
+			catalogSlug: 'woo'
+		);
+
+		$this->assertSame(
+			['@id' => StandardsVersionService::DCAT_AP_NL_PROFILE],
+			$document['@graph'][0]['dct:conformsTo']
+		);
+	}//end testTheCatalogNodeDeclaresTheProfileItTargets()
+
+	public function testADeclaredProfileBehindThePublishedOneIsAViolation(): void {
+		$versions = $this->createMock(StandardsVersionService::class);
+		$versions->method('dcatApNlVersion')->willReturn(
+			[
+				'declared' => '3.0',
+				'published' => '3.1',
+				'status' => StandardsVersionService::STATUS_BEHIND,
+				'profile' => StandardsVersionService::DCAT_AP_NL_PROFILE,
+			]
+		);
+
+		$service = new DcatService(
+			$this->container,
+			$this->appManager,
+			new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService()),
+			new DcatSerializer(),
+			$this->urlGenerator,
+			$this->appConfig,
+			$this->createMock(LoggerInterface::class),
+			$versions
+		);
+
+		$this->wireOpenRegister();
+
+		// A feed with zero datasets has nothing to be missing, so the only violation
+		// left is the one the profile comparison reports.
+		$violations = $service->validateCatalog(
+			['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => []],
+			'woo'
+		);
+
+		$this->assertSame(
+			[['axis' => 'profile-version', 'declared' => '3.0', 'published' => '3.1']],
+			$violations
+		);
+	}//end testADeclaredProfileBehindThePublishedOneIsAViolation()
+
+	/**
+	 * WOO-581: a catalog whose schema list is empty — nothing configured, or all
+	 * of it dropped by the SCH-PFTS-CAT-002 guard in DcatController — renders a
+	 * VALID catalog with zero datasets and never searches. An empty
+	 * `@self.schema` must not be read as "every schema in the register".
+	 *
+	 * @return void
+	 */
+	public function testBuildCatalogDocumentWithAnEmptySchemaScopeIsAnEmptyCatalogWithoutSearching(): void {
+		$objectService = $this->wireOpenRegister();
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$document = $this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => []],
+			catalogSlug: 'woo'
+		);
+
+		$this->assertSame(0, $document['_meta']['count']);
+		$this->assertFalse($document['_meta']['hasNext']);
+		$this->assertSame('dcat:Catalog', $document['@graph'][0]['@type']);
+		$this->assertSame([], $document['@graph'][0]['dcat:dataset']);
+		$this->assertCount(1, $document['@graph'], 'alleen de catalogus-node, geen datasets');
+	}//end testBuildCatalogDocumentWithAnEmptySchemaScopeIsAnEmptyCatalogWithoutSearching()
+
+	/**
+	 * Negative control: a non-empty scope still searches exactly those schemas,
+	 * with RBAC on, so the fail-closed branch cannot be why a working feed goes
+	 * quiet.
+	 *
+	 * @return void
+	 */
+	public function testBuildCatalogDocumentSearchesExactlyTheCatalogSchemaScope(): void {
+		$objectService = $this->wireOpenRegister();
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with(
+				$this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28, 29] && $q['@self']['register'] === 20),
+				true
+			)
+			->willReturn([
+				'results' => [['@self' => ['uuid' => 'u1', 'schema' => 28, 'updated' => '2026-01-01T00:00:00+00:00'], 'id' => 'u1', 'title' => 'Besluit']],
+				'next' => null,
+			]);
+
+		$document = $this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => [28, 29]],
+			catalogSlug: 'woo'
+		);
+
+		$this->assertSame(1, $document['_meta']['count']);
+		$this->assertSame([['@id' => 'https://host/apps/opencatalogi/api/woo/u1']], $document['@graph'][0]['dcat:dataset']);
+	}//end testBuildCatalogDocumentSearchesExactlyTheCatalogSchemaScope()
+
+	/**
+	 * WOO-581 review round 3 (f1): one schema over two registers. A scalar
+	 * `@self.schema` next to the register list sent OR to `find((int) [20, 21])`
+	 * — register 1. The schema stays a list, and both lists reach OR's routers as
+	 * the top-level `_schemas` / `_registers` (round 4: `@self.registers` is a
+	 * column filter OR rejects).
+	 *
+	 * @return void
+	 */
+	public function testBuildCatalogDocumentKeepsTheSchemaAListOverSeveralRegisters(): void {
+		$objectService = $this->wireOpenRegister();
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with(
+				$this->callback(static fn (array $q): bool => $q['@self']['schema'] === [28] && $q['_schemas'] === [28] && $q['_registers'] === [20, 21] && isset($q['@self']['registers']) === false),
+				true
+			)
+			->willReturn(['results' => [], 'next' => null]);
+
+		$this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20, 21], 'schemas' => [28]],
+			catalogSlug: 'woo'
+		);
+	}//end testBuildCatalogDocumentKeepsTheSchemaAListOverSeveralRegisters()
+
+	/**
+	 * WOO-581 review round 4 (f3): no register is an empty scope too — an empty
+	 * catalog, no search.
+	 *
+	 * @return void
+	 */
+	public function testBuildCatalogDocumentWithoutARegisterScopeDoesNotSearch(): void {
+		$objectService = $this->wireOpenRegister();
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$document = $this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [], 'schemas' => [28]],
+			catalogSlug: 'woo'
+		);
+
+		$this->assertSame([], $document['@graph'][0]['dcat:dataset']);
+	}//end testBuildCatalogDocumentWithoutARegisterScopeDoesNotSearch()
 }//end class

@@ -1,0 +1,354 @@
+{
+	"_note": "Register fragment for the published-service-and-case-type-catalogue change (ADR-037). Four schemas: the public request catalogue entry, the published case type definition, the knowledge article and the reader's verdict on it. The verdict is a separate object so a reader token never lands on the article an anonymous reader can read.",
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"serviceCatalogueEntry",
+					"caseTypeDefinition",
+					"knowledgeArticle",
+					"articleVerdict"
+				],
+				"configuration": {
+					"schemas": {
+						"serviceCatalogueEntry": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Read on every public catalogue request, so it gets a dedicated SQL table"
+						},
+						"caseTypeDefinition": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Published case type, imported from or synchronised with an external case type catalogue"
+						},
+						"knowledgeArticle": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "A knowledge article is a published record, governed by the publication rules"
+						},
+						"articleVerdict": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "One verdict per reader token per article; never read by an anonymous reader"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"serviceCatalogueEntry": {
+				"slug": "serviceCatalogueEntry",
+				"title": "Service catalogue entry",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "One service a resident or a company can request",
+				"description": "An entry in the public request catalogue. It names what the requester gets, what it costs in money and in time, and carries the form binding that starts it. The entry never holds the form itself: the portal resolves the binding and renders.",
+				"icon": null,
+				"required": [
+					"title",
+					"catalog",
+					"formBinding"
+				],
+				"properties": {
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"description": "What the requester asks for, in their words."
+					},
+					"summary": {
+						"type": "string",
+						"title": "Summary",
+						"description": "What the requester gets."
+					},
+					"group": {
+						"type": "string",
+						"title": "Group",
+						"facetable": true,
+						"description": "The grouping the catalogue lists this entry under."
+					},
+					"audience": {
+						"type": "string",
+						"title": "Audience",
+						"facetable": true,
+						"enum": [
+							"resident",
+							"company",
+							"both"
+						],
+						"description": "Who may request this."
+					},
+					"catalog": {
+						"type": "string",
+						"format": "uuid",
+						"$ref": "catalog",
+						"title": "Catalog",
+						"facetable": true,
+						"description": "The catalogue this entry is published in."
+					},
+					"cost": {
+						"type": "object",
+						"title": "Cost",
+						"description": "What it costs the requester.",
+						"properties": {
+							"amount": {
+								"type": "number",
+								"description": "The amount, in the given currency.",
+								"title": "Amount"
+							},
+							"currency": {
+								"type": "string",
+								"description": "ISO 4217 currency code.",
+								"title": "Currency"
+							},
+							"description": {
+								"type": "string",
+								"description": "The cost in words, for a cost that is not a single amount.",
+								"title": "Cost in words"
+							}
+						}
+					},
+					"duration": {
+						"type": "object",
+						"title": "Duration",
+						"description": "How long it takes.",
+						"properties": {
+							"term": {
+								"type": "integer",
+								"description": "The number of units.",
+								"title": "Term"
+							},
+							"unit": {
+								"type": "string",
+								"enum": [
+									"day",
+									"week",
+									"month"
+								],
+								"description": "The unit the term is counted in.",
+								"title": "Unit"
+							},
+							"description": {
+								"type": "string",
+								"description": "The duration in words.",
+								"title": "Duration in words"
+							}
+						}
+					},
+					"formBinding": {
+						"type": "object",
+						"title": "Form binding",
+						"description": "What the portal needs to render the form that starts this. The catalogue holds no field list.",
+						"required": [
+							"caseType",
+							"audience",
+							"formName"
+						],
+						"properties": {
+							"caseType": {
+								"type": "string",
+								"description": "The case type the request opens.",
+								"title": "Case type"
+							},
+							"audience": {
+								"type": "string",
+								"description": "The audience the form is rendered for.",
+								"title": "Audience"
+							},
+							"formName": {
+								"type": "string",
+								"description": "The name of the form in the portal.",
+								"title": "Form name"
+							}
+						}
+					}
+				}
+			},
+			"caseTypeDefinition": {
+				"slug": "caseTypeDefinition",
+				"title": "Case type definition",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "A case type published with its form and its API description",
+				"description": "A case type definition published in a catalogue. It links to the form that starts it and to the API description of the interface behind it. When it came from an external catalogue it also carries where it came from, at what version, when it was imported, and the values it held at that moment, which is what a resynchronisation is compared against.",
+				"icon": null,
+				"required": [
+					"identifier",
+					"title"
+				],
+				"properties": {
+					"identifier": {
+						"type": "string",
+						"title": "Identifier",
+						"description": "The case type identifier, unique within its source."
+					},
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"description": "What this case type is called, in the requester's words."
+					},
+					"description": {
+						"type": "string",
+						"title": "Description",
+						"description": "What the case type covers."
+					},
+					"catalog": {
+						"type": "string",
+						"format": "uuid",
+						"$ref": "catalog",
+						"title": "Catalog",
+						"facetable": true,
+						"description": "The catalogue this definition is published in."
+					},
+					"formUrl": {
+						"type": "string",
+						"title": "Form URL",
+						"description": "The form that starts a case of this type."
+					},
+					"apiDescriptionUrl": {
+						"type": "string",
+						"title": "API description URL",
+						"description": "The OpenAPI description of the interface behind this type."
+					},
+					"publicationText": {
+						"type": "string",
+						"title": "Publication text",
+						"description": "The text published with a record of this type."
+					},
+					"inspectionTermDays": {
+						"type": "integer",
+						"title": "Inspection term in days",
+						"description": "The statutory period a record of this type lies open for inspection."
+					},
+					"source": {
+						"type": "object",
+						"title": "Source",
+						"description": "Where this definition came from, if it was imported.",
+						"properties": {
+							"sourceId": {
+								"type": "string",
+								"description": "The registered external catalogue.",
+								"title": "Source"
+							},
+							"externalId": {
+								"type": "string",
+								"description": "The identifier of the definition at the source.",
+								"title": "Identifier at the source"
+							},
+							"version": {
+								"type": "string",
+								"description": "The version imported.",
+								"title": "Imported version"
+							},
+							"importedAt": {
+								"type": "string",
+								"format": "date-time",
+								"description": "The moment of the import.",
+								"title": "Imported at"
+							}
+						}
+					},
+					"importedSnapshot": {
+						"type": "object",
+						"title": "Imported snapshot",
+						"description": "The values as they arrived. A property that differs from this snapshot was changed locally, and a resynchronisation flags it.",
+						"additionalProperties": true
+					}
+				}
+			},
+			"knowledgeArticle": {
+				"slug": "knowledgeArticle",
+				"title": "Knowledge article",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "An answer written once, published beside the catalogue",
+				"description": "A knowledge article is a published record in a catalogue, searchable and public by the rules that govern publications. A draft extracted from a case answer is not public until it is published.",
+				"icon": null,
+				"required": [
+					"title"
+				],
+				"properties": {
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"description": "The question the article answers."
+					},
+					"body": {
+						"type": "string",
+						"title": "Body",
+						"description": "The answer, in the markup this app renders."
+					},
+					"catalog": {
+						"type": "string",
+						"format": "uuid",
+						"$ref": "catalog",
+						"title": "Catalog",
+						"facetable": true,
+						"description": "The catalogue the article is published in."
+					},
+					"draft": {
+						"type": "boolean",
+						"title": "Draft",
+						"default": true,
+						"facetable": true,
+						"description": "A draft is readable by staff only."
+					},
+					"sourceCase": {
+						"type": "string",
+						"title": "Source case",
+						"description": "The case whose answer this article was extracted from."
+					},
+					"helpfulCount": {
+						"type": "integer",
+						"title": "Helpful count",
+						"default": 0,
+						"description": "How many readers said the article helped."
+					},
+					"notHelpfulCount": {
+						"type": "integer",
+						"title": "Not helpful count",
+						"default": 0,
+						"description": "How many readers said it did not."
+					}
+				}
+			},
+			"articleVerdict": {
+				"slug": "articleVerdict",
+				"title": "Article verdict",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "One reader's verdict on one article",
+				"description": "Whether an article helped one reader. The reader is held as a salted hash of their token, so the article can be counted without the reader being identifiable from it.",
+				"icon": null,
+				"required": [
+					"article",
+					"readerHash",
+					"helpful"
+				],
+				"properties": {
+					"article": {
+						"type": "string",
+						"title": "Article",
+						"facetable": true,
+						"description": "The article this verdict is on."
+					},
+					"readerHash": {
+						"type": "string",
+						"title": "Reader hash",
+						"description": "A salted hash of the reader token. Never the token."
+					},
+					"helpful": {
+						"type": "boolean",
+						"title": "Helpful",
+						"description": "Whether the reader said the article helped."
+					},
+					"recordedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Recorded at",
+						"description": "When the verdict was recorded."
+					}
+				}
+			}
+		}
+	}
+}

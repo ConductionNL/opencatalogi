@@ -34,12 +34,15 @@ import { createApp, h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
+import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
+import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import appIcons from './icons.js'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import customComponents from './registry.js'
+import { translateActionLabels } from './services/translateActionLabels.js'
 
 // gridstack v12 sizes dashboard items with `width: var(--gs-column-width)`.
 // Without this stylesheet every dashboard item renders 0 px wide, with no
@@ -47,9 +50,6 @@ import customComponents from './registry.js'
 import 'gridstack/dist/gridstack.min.css'
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-// Bump vue-select's dropdown z-index above NcDialog's modal — see the file's
-// own comment for the upstream stacking-order bug this compensates for.
-import './css/vue-select-dialog-z-fix.css'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
 import '@kangc/v-md-editor/lib/theme/style/github.css'
 library.add(fas, fab, far)
@@ -83,6 +83,27 @@ registerDashboardWidget('audit-trail', {
 	defaultContent: {},
 	displayName: 'Audit trail',
 	icon: 'History',
+	surfaces: ['detail-page'],
+})
+// The Announce action on the publication page (woo-national-delivery-repair,
+// REQ-WND-004): the only screen that calls POST /api/publications/announce.
+registerDashboardWidget('national-announce', {
+	renderer: NationalAnnounceWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Official notice',
+	icon: 'Bullhorn',
+	surfaces: ['detail-page'],
+})
+// Publish now, withdraw with a reason, publish again
+// (publications-publish-and-withdraw-action, REQ-PPW-001..004): the screen
+// for GET .../visibility and POST .../publish, .../withdraw.
+registerDashboardWidget('publication-visibility', {
+	renderer: PublicationVisibilityWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Publication status',
+	icon: 'EyeOutline',
 	surfaces: ['detail-page'],
 })
 // `theme-preview` is registered with the local `ThemePreviewWidget` adapter,
@@ -256,7 +277,39 @@ function resolveManifestSentinelsSync(manifest) {
 	}
 }
 
-const resolvedManifest = resolveManifestSentinelsSync(mergedManifest)
+/**
+ * Translate each page's `config.notFoundRouteLabel`. CnPageRenderer spreads
+ * config onto the page as is, so a label set there would otherwise stay in
+ * English inside the library's translated "Back to {page}".
+ *
+ * @param {object} manifest The manifest.
+ * @return {object} A new manifest with the labels translated.
+ */
+function translateNotFoundRouteLabels(manifest) {
+	const pages = Array.isArray(manifest.pages) ? manifest.pages : []
+	return {
+		...manifest,
+		pages: pages.map((page) =>
+			typeof page?.config?.notFoundRouteLabel === 'string'
+				? {
+						...page,
+						config: {
+							...page.config,
+							notFoundRouteLabel: t(
+								'opencatalogi',
+								page.config.notFoundRouteLabel,
+							),
+						},
+					}
+				: page,
+		),
+	}
+}
+
+const resolvedManifest = translateActionLabels(
+	translateNotFoundRouteLabels(resolveManifestSentinelsSync(mergedManifest)),
+	(key) => t('opencatalogi', key),
+)
 
 /**
  * Build the vue-router config from the manifest. Each manifest page becomes

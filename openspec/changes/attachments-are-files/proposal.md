@@ -1,5 +1,15 @@
 # An attachment is a file on the publication, not an object beside it
 
+## Summary
+
+An attachment is a file on the publication, not an object beside it. Amended 2026-10-05: a withdrawn attachment's withdrawal is recorded on the file's own publication window and no automatic path re-shares it.
+
+- Rows: 4.16 (amendment: REQ-ATT-103, REQ-ATT-104).
+- Wave: 2.
+- Depends on: `openregister/file-publication-window` (open change outside this plan, 10 of 12 tasks; no `[OpenSpec]` issue found).
+- Decision: none of D1 to D13.
+- Build rules: openspec/woo-build-rules.md
+
 ## Why
 
 `document` was never a thing in its own right. Measuring the live schema, it is
@@ -59,3 +69,18 @@ ran, which is the opposite of preserving what a publisher set.
 This change ships the migration only. Retiring the schema from the descriptor,
 repointing the UI and reverting the WOO-517 widening follow once the migration
 has been run on real data and inspected.
+
+## Amendment 2026-10-05: Woo capability programme
+
+Row 4.16, from `opencatalogi/_round1/compare/M1-rows.md`: "A single attachment is withdrawn without withdrawing its publication". Ours (`baseline/openwoo.tsv`): no. Evidence: "opencatalogi lib/Service/Publication/DepublicationService.php withdraws a publication; nothing withdraws one attachment". Wave 2, after `openregister/file-publication-window` (open, outside this plan, 10 of 12 tasks).
+
+Re-checked on development at 35999c296: the evidence is out of date. `PublicationStateController::withdrawFile()` (route `publicationState#withdrawFile`, `POST /api/publications/{id}/files/{fileId}/withdraw`, main spec `publications` REQ-PPW-004, commit 45e70869a) already withdraws one document with a reason: it removes the file's public share through OpenRegister's `FileService::unpublishFile()` and stores a depublication naming the file. `PublicationVisibilityWidget.vue` calls it. So the row's core is built. Two gaps remain, and they decide whether the withdrawal holds:
+
+- The withdrawal is not on the file. It removes the share, but the file's own publication window (OpenRegister REQ-FPW-101) keeps no end date. Nothing on the file says it was withdrawn, when, or why.
+- It does not stay withdrawn. `EventService::publishObjectAttachments()` shares every file of a publication that has no share token when auto-publishing runs (`auto_publish_attachments`), so the next save of a public publication puts a withdrawn annex back online. The DCAT feed is not named in REQ-PPW-004 either.
+
+What is added (REQ-ATT-103, REQ-ATT-104): withdrawing an attachment sets its depublication on the file's window with the reason; every path that publishes files skips a file whose window has ended; and the DCAT distribution goes with it. Fail closed: a file with an ended window is never re-shared by any automatic path; only an explicit republish of that file by an editor, with a reason, reopens it. No decision of D1 to D13 applies.
+
+| row | text | rating today | what makes it yes |
+|---|---|---|---|
+| 4.16 | A single attachment is withdrawn without withdrawing its publication | no (stale: REQ-PPW-004 is built) | REQ-ATT-103 and REQ-ATT-104, scenarios "A withdrawn annex stays withdrawn when the publication is saved" and "The withdrawal is on the file" |

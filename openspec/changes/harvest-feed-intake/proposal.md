@@ -1,56 +1,45 @@
 ---
 kind: mixed
-depends_on: []
+depends_on: [openregister/app-harvest-fetchers-and-flow-node]
 ---
 
 # Proposal: harvest-feed-intake
 
-Second slice of the re-scoped `dcat-oai-pmh-harvesting` umbrella. The delta
-spec is authored when this change is picked up, so it is written against the
-OR engine surface of that moment instead of going stale here.
+Second slice of the re-scoped `dcat-oai-pmh-harvesting` umbrella. Revised in spec round part 2 (7 October 2026, decision 80): OpenRegister now specifies app harvesting itself in `openregister/app-harvest-fetchers-and-flow-node`, so this change drops the three schemas, the flow materialiser and the harvest node it carried, and keeps only what is OpenCatalogi's.
 
 ## Summary
 
-Inbound harvesting, minimum viable and one protocol only: an admin registers
-an external DCAT feed (JSON-LD), a scheduled OpenRegister flow fetches and
-maps it, harvested items land as local objects with provenance, and
-checksum-based change detection keeps re-runs cheap. Conflict handling in
-this slice is deliberately binary: an incoming item that would collide with
-a locally-authored object is parked as `conflict` and skipped — the policy
-vocabulary and review UI are the next slice (`harvest-conflict-policies`).
+An administrator registers an external DCAT feed (JSON-LD) on the settings page. OpenCatalogi stores it as an OpenRegister `Source` it owns, of type `opencatalogi.dcat-jsonld`, and contributes the fetcher that reads a DCAT catalogue. OpenRegister's harvest node runs it on the source's flow: on a schedule, or when the administrator clicks Run now. Each dataset lands as a draft publication that names its source. A harvest never publishes.
 
-## Scope
+## What OpenCatalogi builds
 
-- OR schemas (register fragment per ADR-037): `HarvestFeed` (name, sourceUrl,
-  protocol [fixed `dcat-jsonld` in this slice], schedule, enabled,
-  targetCatalog, targetSchema, itemMapping [JSON-path only], maxItemsPerRun),
-  `HarvestedItem` (feedId, externalUri, localObjectId, checksum, state
-  [new|updated|unchanged|conflict], firstSeenAt, lastSeenAt, sourceRevision),
-  `HarvestRun` (feedId, startedAt, finishedAt, per-state counts, errors)
-- **Scheduling is the OR flow engine, not an app cron** (One Engine wave 5):
-  each enabled feed materialises a flow whose `TriggerScheduleNode` carries
-  the feed's schedule and an explicit `runAs` (OR requires it — the owner is
-  no fallback); the harvest step is the app's contributed node/handler.
-  The app MUST NOT ship its own cron parser, scheduler or background-job
-  dispatcher — those umbrella tasks are cut.
-- Fetching MUST reuse the fleet HTTP discipline (SSRF outbound-URL guard,
-  timeouts, backoff); if integriq (OpenConnector) is installed its source
-  abstraction MAY be the fetch layer, but this slice MUST NOT hard-depend on
-  it
-- JSON-path item mapping (no RML — cut), checksum (SHA-256 over normalised
-  payload), provenance (`dct:source`, `prov:wasDerivedFrom`) on the local
-  object, soft tombstone flag for items that disappear upstream
-- Feed CRUD admin surface (settings section, no dashboard yet)
+- The DCAT JSON-LD fetcher, registered through OpenRegister's `RegisterSourceFetchersEvent` as a whole-document fetcher (`IBatchSourceFetcher`).
+- The feed settings: a "Harvest feeds" section on the settings page (board `OcInstellingen`), one card per feed with Run now and Switch off, and a modal to add or edit a feed.
+- The source settings that keep harvested datasets drafts: `protectedFields` and `provenance` on every OpenCatalogi source, and two provenance properties on the publication schema.
 
-## Non-Goals
+## What OpenRegister does (not built here)
 
-- Turtle/RDF-XML, OAI-PMH, CKAN, schema.org inbound → `harvest-protocol-plugins`
-- Conflict policies, manual review, restore UI → `harvest-conflict-policies`
-- SHACL validation, run dashboards, log retention → `harvest-observability`
+From `openregister/app-harvest-fetchers-and-flow-node` design D-12:
+
+| Was in this change | Now |
+|---|---|
+| schema `harvest-feed` | OpenRegister `Source` with `application: opencatalogi`, `type: opencatalogi.dcat-jsonld` and the feed settings in `config` |
+| schema `harvested-item` | OpenRegister `SyncRecord` |
+| schema `harvest-run` | the run of the source's flow; the summary is the output of node `openregister.harvest-source` |
+| node `opencatalogi.harvest-feed`, flow materialiser, checksums, tombstones, URL guard | OpenRegister's harvest node, flow per source, pipeline and `HarvestHttpClient` |
+
+## Rows
+
+- `od-harvest`: "Harvest datasets from another DCAT or CKAN portal into a catalogue on a schedule." This change covers DCAT; CKAN follows in `harvest-protocol-plugins`. State stays `specified` until this change and its OpenRegister dependency are built.
+
+## Non-goals
+
+- Turtle, RDF/XML, OAI-PMH, CKAN and schema.org inbound: `harvest-protocol-plugins`.
+- Conflict policies and the review queue: `harvest-conflict-policies`.
+- SHACL validation, run dashboards and log retention: `harvest-observability`.
 
 ## Capabilities
 
-### New Capabilities
+### New capabilities
 
-- `harvest-feed-intake`: registered DCAT JSON-LD feeds harvested on an OR
-  flow schedule into local objects with provenance and change detection.
+- `harvest-feed-intake`: DCAT JSON-LD feeds registered on the settings page and harvested by OpenRegister into draft publications with provenance.

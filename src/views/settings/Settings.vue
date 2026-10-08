@@ -148,6 +148,7 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-woo-index"
 			:name="t('opencatalogi', 'Woo-index harvester readiness')"
 			:description="
 				t(
@@ -208,6 +209,20 @@
 									class="woo-readiness-check-reason">
 									{{ remediationHint(check.reason) }}
 								</span>
+								<a
+									v-if="
+										check.id === 'robots-txt'
+										&& check.status === 'fail'
+									"
+									href="#woo-root-rule"
+									data-testid="woo-root-rule-link">
+									{{
+										t(
+											'opencatalogi',
+											'See the rules that serve robots.txt at the domain root.',
+										)
+									}}
+								</a>
 							</div>
 						</li>
 					</ul>
@@ -230,55 +245,61 @@
 					</NcButton>
 				</div>
 
+				<WooIndexConnection />
+
 				<h3 class="woo-registration-heading">
-					{{ t('opencatalogi', 'Woo-index registration status') }}
+					{{ t('opencatalogi', 'National delivery channels') }}
 				</h3>
 				<p class="option-description">
 					{{
 						t(
 							'opencatalogi',
-							'Track whether this instance is registered with the national Woo-index / Register van Overheidsorganisaties',
+							'Choose the integriq source each national channel is sent through. Enter the source slug as integriq shows it.',
 						)
 					}}
 				</p>
 
-				<div class="woo-registration-fields">
-					<NcSelect
-						v-model="registration.status"
-						:options="registrationStatusOptions"
-						:inputLabel="t('opencatalogi', 'Registration status')"
-						:disabled="savingRegistration" />
-
+				<div class="woo-registration-fields" data-testid="channel-sources">
 					<NcTextField
-						:modelValue="registration.registeredUrl"
-						:label="t('opencatalogi', 'Registered URL')"
-						:disabled="savingRegistration"
+						v-for="channel in channelSourceFields"
+						:key="channel.value"
+						:modelValue="channelSources[channel.value]"
+						:label="channel.label"
+						:disabled="savingChannelSources"
 						@update:modelValue="
-							(v) => (registration.registeredUrl = v)
-						" />
-
-					<NcTextField
-						:modelValue="registration.registeredAt"
-						:label="t('opencatalogi', 'Registered on (date)')"
-						:disabled="savingRegistration"
-						@update:modelValue="
-							(v) => (registration.registeredAt = v)
+							(v) => (channelSources[channel.value] = v)
 						" />
 				</div>
+
+				<NcNoteCard v-if="channelSourcesError" type="error">
+					{{ channelSourcesError }}
+				</NcNoteCard>
 
 				<div class="button-container">
 					<NcButton
 						variant="secondary"
-						:disabled="savingRegistration"
-						@click="saveRegistration">
+						:disabled="savingChannelSources"
+						@click="saveChannelSources">
 						<template #icon>
-							<NcLoadingIcon v-if="savingRegistration" :size="20" />
+							<NcLoadingIcon v-if="savingChannelSources" :size="20" />
 							<Save v-else :size="20" />
 						</template>
-						{{ t('opencatalogi', 'Save registration status') }}
+						{{ t('opencatalogi', 'Save channel sources') }}
 					</NcButton>
 				</div>
 			</div>
+		</NcSettingsSection>
+
+		<NcSettingsSection
+			id="section-publiccode-harvest"
+			:name="t('opencatalogi', 'GitHub harvest')"
+			:description="
+				t(
+					'opencatalogi',
+					'Read every publiccode.yml on GitHub into the Componenten catalogue, every night.',
+				)
+			">
+			<PubliccodeHarvest />
 		</NcSettingsSection>
 
 		<NcSettingsSection
@@ -365,6 +386,7 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-federation-sync"
 			:name="t('opencatalogi', 'Federation sync')"
 			:description="
 				t(
@@ -481,6 +503,8 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import PubliccodeHarvest from './PubliccodeHarvest.vue'
+import WooIndexConnection from './WooIndexConnection.vue'
 
 import '@nextcloud/dialogs/style.css'
 
@@ -517,6 +541,8 @@ export default defineComponent({
 		CloseCircle,
 		MinusCircle,
 		InformationOutline,
+		WooIndexConnection,
+		PubliccodeHarvest,
 	},
 
 	/**
@@ -560,13 +586,15 @@ export default defineComponent({
 			wooReadinessReport: null,
 			wooReadinessError: null,
 			wooReadinessRunning: false,
-			registration: {
-				status: null,
-				registeredUrl: '',
-				registeredAt: '',
+			// National channel sources (REQ-WND-001): channel name to integriq source slug.
+			channelSources: {
+				'national-woo-index': '',
+				'national-publication-platform': '',
+				plooi: '',
 			},
 
-			savingRegistration: false,
+			savingChannelSources: false,
+			channelSourcesError: '',
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
@@ -581,19 +609,25 @@ export default defineComponent({
 
 	computed: {
 		/**
-		 * Options for the Woo-index registration status selector.
+		 * The national channels a source can be set for, with their labels.
 		 *
-		 * @return {Array<object>} Array of {label, value} options.
+		 * @return {Array<object>} Array of {label, value}.
+		 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 		 */
-		/** @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md (Requirement: Woo-index registration status is tracked in configuration (WOO-HR-003)) */
-		registrationStatusOptions() {
+		channelSourceFields() {
 			return [
 				{
-					label: this.t('opencatalogi', 'Not registered'),
-					value: 'not_registered',
+					value: 'national-woo-index',
+					label: this.t('opencatalogi', 'Woo index source'),
 				},
-				{ label: this.t('opencatalogi', 'Requested'), value: 'requested' },
-				{ label: this.t('opencatalogi', 'Registered'), value: 'registered' },
+				{
+					value: 'national-publication-platform',
+					label: this.t(
+						'opencatalogi',
+						'National publication platform source',
+					),
+				},
+				{ value: 'plooi', label: this.t('opencatalogi', 'PLOOI source') },
 			]
 		},
 
@@ -704,27 +738,11 @@ export default defineComponent({
 				// Find and select the Publication register if it exists
 				this.autoSelectOpenCatalogiRegister()
 
-				// Populate the Woo-index registration status editor from the same
-				// settings payload (WOO-HR-003 keys are part of `configuration`).
-				const registrationStatus =
-					(data.configuration
-						&& data.configuration.woo_index_registration_status)
-					|| 'not_registered'
-				this.registration = {
-					status:
-						this.registrationStatusOptions.find(
-							(option) => option.value === registrationStatus,
-						) || this.registrationStatusOptions[0],
-
-					registeredUrl:
-						(data.configuration
-							&& data.configuration.woo_index_registration_url)
-						|| '',
-
-					registeredAt:
-						(data.configuration
-							&& data.configuration.woo_index_registration_at)
-						|| '',
+				this.channelSources = {
+					...this.channelSources,
+					...this.parseChannelSources(
+						data.configuration && data.configuration.channel_sources,
+					),
 				}
 
 				this.loading = false
@@ -1295,28 +1313,43 @@ export default defineComponent({
 		},
 
 		/**
-		 * Saves the Woo-index registration status editor via the existing settings save path.
+		 * Reads the stored channel-to-source map.
+		 *
+		 * @param {string} value The stored JSON.
+		 * @return {object} Channel name to source slug.
+		 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+		 */
+		parseChannelSources(value) {
+			try {
+				const parsed = JSON.parse(value || '{}')
+				return parsed && typeof parsed === 'object' ? parsed : {}
+			} catch {
+				return {}
+			}
+		},
+
+		/**
+		 * Saves which integriq source each national channel is sent through.
 		 *
 		 * @async
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 		 */
-		/** @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md (Requirement: Woo-index registration status is tracked in configuration (WOO-HR-003)) */
-		async saveRegistration() {
-			this.savingRegistration = true
+		async saveChannelSources() {
+			this.savingChannelSources = true
+			this.channelSourcesError = ''
 
 			try {
 				await axios.put(generateUrl('/apps/opencatalogi/api/settings'), {
-					woo_index_registration_status: this.registration.status
-						? this.registration.status.value
-						: 'not_registered',
-					woo_index_registration_url: this.registration.registeredUrl,
-					woo_index_registration_at: this.registration.registeredAt,
+					channel_sources: { ...this.channelSources },
 				})
-			} catch (error) {
-				// eslint-disable-next-line no-console
-				console.error('Failed to save Woo-index registration status:', error)
+			} catch {
+				this.channelSourcesError = this.t(
+					'opencatalogi',
+					'The channel sources could not be saved. Try again.',
+				)
 			} finally {
-				this.savingRegistration = false
+				this.savingChannelSources = false
 			}
 		},
 
@@ -1390,7 +1423,7 @@ export default defineComponent({
 
 				'missing-sitemap-reference': this.t(
 					'opencatalogi',
-					'robots.txt does not reference any Woo sitemap — check the robots.txt rewrite/proxy configuration.',
+					'The root robots.txt does not reach the app: it names no Woo sitemap.',
 				),
 
 				'sitemapindex-unreachable': this.t(

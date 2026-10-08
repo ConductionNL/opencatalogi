@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -51,6 +52,9 @@ class SettingsController extends Controller {
 	 * @param SettingsService $settingsService The settings service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The user session.
+	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
 	public function __construct(
 		$appName,
@@ -58,6 +62,7 @@ class SettingsController extends Controller {
 		private readonly SettingsService $settingsService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
+		private readonly ?ConnectionReporter $connectionReporter = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -127,15 +132,22 @@ class SettingsController extends Controller {
 	 * returns true unconditionally for any request carrying `OCS-APIRequest`,
 	 * which is what `tests/e2e/ci-seed.sh` already sends.
 	 *
+	 * After the write it asks integriq to resolve every connection whose keys
+	 * the save wrote, such as the Woo-index registration status
+	 * (adopt-connection-registry). That never throws, does nothing without
+	 * integriq, and never changes the response.
+	 *
 	 * @return JSONResponse JSON response containing the updated settings.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function update(): JSONResponse {
 		try {
 			$data = $this->request->getParams();
 			$result = $this->settingsService->updateSettings($data);
+			$this->connectionReporter?->refreshFromSave(savedKeys: array_keys($result));
 			return new JSONResponse($result);
 		} catch (\Exception $e) {
 			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);

@@ -76,14 +76,21 @@ class TooiVocabularyServiceTest extends TestCase {
 	}//end testResolveInformatiecategorieFailsClosed()
 
 	/**
-	 * The bundled list contains all 17 Woo categories.
+	 * The bundled list contains all 18 Woo categories.
 	 *
 	 * @return void
 	 */
-	public function testInformatiecategorieListHas17Members(): void {
-		$this->assertCount(17, $this->service->informatiecategorieList());
+	public function testInformatiecategorieListHas18Members(): void {
+		// Version 4 of the scw_woo_informatiecategorieen waardelijst, which DiWoo
+		// 0.9.8 binds, has 18 members: the 17 art. 3.3 categories plus the art. 3.1
+		// inspanningsverplichting.
+		$this->assertCount(18, $this->service->informatiecategorieList());
+		$this->assertSame(
+			'https://identifier.overheid.nl/tooi/def/thes/kern/c_816e508d',
+			$this->service->informatiecategorieList()['infocat018']['uri']
+		);
 
-	}//end testInformatiecategorieListHas17Members()
+	}//end testInformatiecategorieListHas18Members()
 
 	/**
 	 * soortHandeling defaults to ontvangst and honours a declared member.
@@ -102,6 +109,24 @@ class TooiVocabularyServiceTest extends TestCase {
 		$this->assertNull($this->service->resolveSoortHandeling('nonexistent-handling'));
 
 	}//end testResolveSoortHandeling()
+
+	/**
+	 * A blank stored soortHandeling falls back to the default, not to null.
+	 *
+	 * An empty string is what a form leaves behind when the field is cleared, and
+	 * reading it as "no member" would drop the axis from every document on that
+	 * publication instead of claiming receipt.
+	 *
+	 * @return void
+	 */
+	public function testABlankSoortHandelingFallsBackToTheDefault(): void {
+		foreach (['', '   '] as $blank) {
+			$resolved = $this->service->resolveSoortHandeling($blank);
+			$this->assertNotNull($resolved, 'A blank handling type resolved to nothing.');
+			$this->assertSame(TooiVocabularyService::DEFAULT_SOORTHANDELING, $resolved['label']);
+		}
+
+	}//end testABlankSoortHandelingFallsBackToTheDefault()
 
 	/**
 	 * Only a well-formed TOOI organisatie URI is accepted; a UUID is rejected.

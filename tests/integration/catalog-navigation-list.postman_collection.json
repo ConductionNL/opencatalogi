@@ -1,0 +1,478 @@
+{
+  "info": {
+    "_postman_id": "opencatalogi-catalog-navigation-list",
+    "name": "OpenCatalogi - Catalog list behind the navigation",
+    "description": "API contract tests for the catalog list the app navigation renders one entry per catalog from (ConductionNL/opencatalogi#1789). The frontend reads the catalog register and schema from GET /api/settings, then walks every page of the OpenRegister object list with `_source=database`, keeping each catalog's `slug` and `title`. These requests assert that contract: the settings name the catalog register and schema, every listed catalog carries a slug and a title, the paging envelope lets a client walk the whole list, and a create, rename and delete are reflected in that list.\n\nThe collection creates two catalogs with a run-unique slug and deletes both again.\n\nVariables:\n- baseUrl (default http://localhost:8080)\n- adminUsername / adminPassword: an account that may create and delete catalogs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{adminUsername}}",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "{{adminPassword}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "NAV-CAT-001 Settings name the catalog register and schema",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const runId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);",
+              "pm.collectionVariables.set('runId', runId);",
+              "pm.collectionVariables.set('catalogASlug', `newman-${runId}-a`);",
+              "pm.collectionVariables.set('catalogBSlug', `newman-${runId}-b`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const config = pm.response.json().configuration || {};",
+              "pm.test('catalog register configured', () => pm.expect(config.catalog_register).to.not.be.oneOf([undefined, null, '']));",
+              "pm.test('catalog schema configured', () => pm.expect(config.catalog_schema).to.not.be.oneOf([undefined, null, '']));",
+              "pm.collectionVariables.set('catalogRegister', String(config.catalog_register));",
+              "pm.collectionVariables.set('catalogSchema', String(config.catalog_schema));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/index.php/apps/opencatalogi/api/settings",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php",
+            "apps",
+            "opencatalogi",
+            "api",
+            "settings"
+          ]
+        }
+      }
+    },
+    {
+      "name": "NAV-CAT-002 Create catalog A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('created', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+              "const body = pm.response.json();",
+              "const id = body.id || (body['@self'] || {}).id;",
+              "pm.test('returns an id', () => pm.expect(id).to.be.a('string').and.not.empty);",
+              "pm.test('returns the slug', () => pm.expect(body.slug).to.eql(pm.collectionVariables.get('catalogASlug')));",
+              "pm.test('returns the title', () => pm.expect(body.title).to.eql(`Newman ${pm.collectionVariables.get('runId')} A`));",
+              "pm.collectionVariables.set('catalogAId', id);",
+              "pm.collectionVariables.set('catalogAStatus', body.status || 'development');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\t\"title\": \"Newman {{runId}} A\",\n\t\"slug\": \"{{catalogASlug}}\",\n\t\"summary\": \"Created by the catalog navigation list collection.\",\n\t\"status\": \"development\",\n\t\"listed\": false\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/index.php/apps/openregister/api/objects/{{catalogRegister}}/{{catalogSchema}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php",
+            "apps",
+            "openregister",
+            "api",
+            "objects",
+            "{{catalogRegister}}",
+            "{{catalogSchema}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "NAV-CAT-003 Create catalog B",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('created', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+              "const body = pm.response.json();",
+              "const id = body.id || (body['@self'] || {}).id;",
+              "pm.test('returns an id', () => pm.expect(id).to.be.a('string').and.not.empty);",
+              "pm.test('returns the slug', () => pm.expect(body.slug).to.eql(pm.collectionVariables.get('catalogBSlug')));",
+              "pm.collectionVariables.set('catalogBId', id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\t\"title\": \"Newman {{runId}} B\",\n\t\"slug\": \"{{catalogBSlug}}\",\n\t\"summary\": \"Created by the catalog navigation list collection.\",\n\t\"status\": \"development\",\n\t\"listed\": false\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/index.php/apps/openregister/api/objects/{{catalogRegister}}/{{catalogSchema}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php",
+            "apps",
+            "openregister",
+            "api",
+            "objects",
+            "{{catalogRegister}}",
+            "{{catalogSchema}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "NAV-CAT-004 Walk every page of the catalog list",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('walkPage')) {",
+              "  pm.collectionVariables.set('walkPage', '1');",
+              "  pm.collectionVariables.set('walkSlugs', '[]');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const page = Number(pm.collectionVariables.get('walkPage'));",
+              "pm.test(`page ${page}: 200`, () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "const results = Array.isArray(body.results) ? body.results : [];",
+              "pm.test(`page ${page}: results is an array`, () => pm.expect(body.results).to.be.an('array'));",
+              "pm.test(`page ${page}: at most one result per page`, () => pm.expect(results.length).to.be.at.most(1));",
+              "pm.test(`page ${page}: carries pages or total for the walk`, () => pm.expect(typeof body.pages === 'number' || typeof body.total === 'number').to.be.true);",
+              "results.forEach((catalog) => {",
+              "  pm.test(`page ${page}: catalog carries a title`, () => pm.expect(catalog).to.have.property('title'));",
+              "});",
+              "const slugs = JSON.parse(pm.collectionVariables.get('walkSlugs'));",
+              "results.forEach((catalog) => slugs.push(catalog.slug || null));",
+              "pm.collectionVariables.set('walkSlugs', JSON.stringify(slugs));",
+              "const pages = typeof body.pages === 'number' ? body.pages : (body.total || 0);",
+              "if (results.length > 0 && page < pages && page < 500) {",
+              "  pm.collectionVariables.set('walkPage', String(page + 1));",
+              "  postman.setNextRequest(pm.info.requestName);",
+              "} else {",
+              "  pm.collectionVariables.unset('walkPage');",
+              "  pm.test('the walk spans more than one page', () => pm.expect(page).to.be.above(1));",
+              "  pm.test('the walk returns as many catalogs as the total says', () => {",
+              "    if (typeof body.total === 'number') pm.expect(slugs.length).to.eql(body.total);",
+              "  });",
+              "  pm.test('catalog A is listed exactly once, with its slug', () => pm.expect(slugs.filter((s) => s === pm.collectionVariables.get('catalogASlug'))).to.have.lengthOf(1));",
+              "  pm.test('catalog B is listed exactly once, with its slug', () => pm.expect(slugs.filter((s) => s === pm.collectionVariables.get('catalogBSlug'))).to.have.lengthOf(1));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/index.php/apps/openregister/api/objects/{{catalogRegister}}/{{catalogSchema}}?_limit=1&_page={{walkPage}}&_source=database",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php",
+            "apps",
+            "openregister",
+            "api",
+            "objects",
+            "{{catalogRegister}}",
+            "{{catalogSchema}}"
+          ],
+          "query": [
+            {
+              "key": "_limit",
+              "value": "1"
+            },
+            {
+              "key": "_page",
+              "value": "{{walkPage}}"
+            },
+            {
+              "key": "_source",
+              "value": "database"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "NAV-CAT-005 Rename catalog A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('title updated', () => pm.expect(body.title).to.eql(`Newman ${pm.collectionVariables.get('runId')} A renamed`));",
+              "pm.test('slug unchanged', () => pm.expect(body.slug).to.eql(pm.collectionVariables.get('catalogASlug')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\t\"title\": \"Newman {{runId}} A renamed\",\n\t\"slug\": \"{{catalogASlug}}\",\n\t\"summary\": \"Created by the catalog navigation list collection.\",\n\t\"status\": \"{{catalogAStatus}}\",\n\t\"listed\": false\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/index.php/apps/openregister/api/objects/{{catalogRegister}}/{{catalogSchema}}/{{catalogAId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php",
+            "apps",
+            "openregister",
+            "api",
+            "objects",
+            "{{catalogRegister}}",
+            "{{catalogSchema}}",
+            "{{catalogAId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "NAV-CAT-006 The list shows the new title",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const results = pm.response.json().results || [];",
+              "pm.test('the slug filter applies', () => pm.expect(results.every((c) => c.slug === pm.collectionVariables.get('catalogASlug'))).to.be.true);",
+              "const catalog = results.find((c) => (c.id || (c['@self'] || {}).id) === pm.collectionVariables.get('catalogAId'));",
+              "pm.test('catalog A is listed', () => pm.expect(catalog).to.not.be.undefined);",
+              "pm.test('under its new title', () => pm.expect((catalog || {}).title).to.eql(`Newman ${pm.collectionVariables.get('runId')} A renamed`));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/index.php/apps/openregister/api/objects/{{catalogRegister}}/{{catalogSchema}}?slug={{catalogASlug}}&_source=database",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php",
+            "apps",
+            "openregister",
+            "api",
+            "objects",
+            "{{catalogRegister}}",
+            "{{catalogSchema}}"
+          ],
+          "query": [
+            {
+              "key": "slug",
+              "value": "{{catalogASlug}}"
+            },
+            {
+              "key": "_source",
+              "value": "database"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "NAV-CAT-007 Delete catalog A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('deleted', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/index.php/apps/openregister/api/objects/{{catalogRegister}}/{{catalogSchema}}/{{catalogAId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php",
+            "apps",
+            "openregister",
+            "api",
+            "objects",
+            "{{catalogRegister}}",
+            "{{catalogSchema}}",
+            "{{catalogAId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "NAV-CAT-008 The list no longer shows the deleted catalog",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.to.have.status(200));",
+              "const results = pm.response.json().results || [];",
+              "pm.test('catalog A is gone', () => pm.expect(results.some((c) => (c.id || (c['@self'] || {}).id) === pm.collectionVariables.get('catalogAId'))).to.be.false);",
+              "pm.test('no catalog with its slug remains', () => pm.expect(results.some((c) => c.slug === pm.collectionVariables.get('catalogASlug'))).to.be.false);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/index.php/apps/openregister/api/objects/{{catalogRegister}}/{{catalogSchema}}?slug={{catalogASlug}}&_source=database",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php",
+            "apps",
+            "openregister",
+            "api",
+            "objects",
+            "{{catalogRegister}}",
+            "{{catalogSchema}}"
+          ],
+          "query": [
+            {
+              "key": "slug",
+              "value": "{{catalogASlug}}"
+            },
+            {
+              "key": "_source",
+              "value": "database"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "NAV-CAT-009 Clean up catalog B",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('deleted', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/index.php/apps/openregister/api/objects/{{catalogRegister}}/{{catalogSchema}}/{{catalogBId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "index.php",
+            "apps",
+            "openregister",
+            "api",
+            "objects",
+            "{{catalogRegister}}",
+            "{{catalogSchema}}",
+            "{{catalogBId}}"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "adminUsername",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "admin",
+      "type": "string"
+    }
+  ]
+}

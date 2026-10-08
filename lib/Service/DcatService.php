@@ -64,6 +64,7 @@ class DcatService {
 	 * @param IURLGenerator $urlGenerator Nextcloud URL generator (absolute IRIs).
 	 * @param IAppConfig $appConfig App config (publisher defaults).
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param StandardsVersionService $standardsVersions Declared DCAT-AP-NL profile version, and the published one.
 	 * @param QualityService|null $qualityService Optional MQA/FAIR scorer for DQV exposure (PQM-002).
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -76,6 +77,7 @@ class DcatService {
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly StandardsVersionService $standardsVersions,
 		private readonly ?QualityService $qualityService = null,
 	) {
 
@@ -203,9 +205,24 @@ class DcatService {
 	 * Build the per-catalog DCAT-AP-NL document for one page of datasets.
 	 *
 	 * Datasets are selected via OR object search scoped to the catalog's
-	 * registers/schemas with `_rbac: true` — byte-for-byte the PUB-001/WOO-001
-	 * visibility rule (only publicly visible objects appear). Opted-out schemas
+	 * registers/schemas with `_rbac: true` — the PUB-001/WOO-001 visibility rule
+	 * (only publicly visible objects appear). Opted-out schemas
 	 * (`"x-dcat": false`) are skipped.
+	 *
+	 * The CALLER guards the catalog first. For the public feed that is
+	 * {@see \OCA\OpenCatalogi\Controller\DcatController::catalog()}, which runs it
+	 * through
+	 * {@see \OCA\OpenCatalogi\Service\PublicationQueryService::applyCatalogReadRuleGuard()}
+	 * — the SCH-PFTS-CAT-002 guard `/api/{catalogSlug}` has applied since WOO-580
+	 * — so an anonymous harvester never reaches a schema without
+	 * `authorization.read` rules (WOO-581). This method does NOT guard on its own:
+	 * the admin-only validate/donlReport routes and StatsController::quality call
+	 * it too and keep session RBAC. A new public caller must guard the catalog
+	 * before handing it in.
+	 *
+	 * An empty schema list — nothing configured, or everything dropped by that
+	 * guard — yields a valid document with zero datasets, never a register-wide
+	 * search.
 	 *
 	 * @param array<string, mixed> $catalog The catalog object.
 	 * @param string $catalogSlug The catalog slug.
@@ -217,6 +234,7 @@ class DcatService {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
@@ -239,20 +257,27 @@ class DcatService {
 		// PQM-002: attach W3C DQV quality measurements only when the catalog opts in.
 		$dqvExposure = filter_var(($catalog['dqvExposure'] ?? false), FILTER_VALIDATE_BOOLEAN);
 
-		$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
-		$searchQuery['@self']['register'] = $this->scalarOrList(ids: $registers);
-		$searchQuery['@self']['schema'] = $this->scalarOrList(ids: $schemas);
-		$searchQuery['_order']['updated'] = 'desc';
+		// FAIL CLOSED on an empty scope: an empty `@self.schema` must never be
+		// read as "no schema filter", nor no register as "every register" (review
+		// round 4). Zero datasets, same envelope (WOO-581).
+		$result = ['results' => [], 'next' => null];
+		if ($schemas !== [] && $registers !== []) {
+			// One schema in one register → scalar fast path; anything else keeps the
+			// lists OR's routers read (WOO-581 review rounds 3-5, CallerScope::writeScope()).
+			$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
+			$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $registers, schemas: $schemas);
+			$searchQuery['_order']['updated'] = 'desc';
 
-		$objectService = $this->getObjectService();
-		// RBAC governs visibility (PUB-001 / WOO-001): anonymous callers receive only
-		// publicly visible (published, not depublished) objects. No DCAT-local filtering.
-		$result = $objectService->searchObjectsPaginated(
-			query: $searchQuery,
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
+			$objectService = $this->getObjectService();
+			// RBAC governs visibility (PUB-001 / WOO-001): anonymous callers receive only
+			// publicly visible (published, not depublished) objects. No DCAT-local filtering.
+			$result = $objectService->searchObjectsPaginated(
+				query: $searchQuery,
+				_rbac: true,
+				_multitenancy: false,
+				deleted: false
+			);
+		}
 
 		$publications = ($result['results'] ?? []);
 		$hasNext = (($result['next'] ?? null) !== null);
@@ -311,10 +336,14 @@ class DcatService {
 			}
 		}//end foreach
 
+		// Declare the profile we target, so a harvester and our own validator read the
+		// same version. The feed used to name no profile version at all, which left the
+		// mandatory-property checklist with nothing to be a checklist of.
 		$catalogNode = [
 			'@id' => $catalogIri,
 			'@type' => 'dcat:Catalog',
 			'dct:title' => ($catalog['title'] ?? $catalogSlug),
+			'dct:conformsTo' => ['@id' => StandardsVersionService::DCAT_AP_NL_PROFILE],
 			'dcat:dataset' => $datasetRefs,
 		];
 
@@ -466,7 +495,7 @@ class DcatService {
 	 */
 	public function validateCatalog(array $catalog, string $catalogSlug): array {
 		$document = $this->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: 1);
-		$violations = [];
+		$violations = $this->profileVersionViolations();
 		foreach ($this->serializer->graphNodes($document) as $node) {
 			if (($node['@type'] ?? '') !== 'dcat:Dataset') {
 				continue;
@@ -483,6 +512,34 @@ class DcatService {
 
 		return $violations;
 	}//end validateCatalog()
+
+	/**
+	 * The profile-version violation, when the publisher has moved past the version we target.
+	 *
+	 * A feed that declares a superseded profile is a feed whose mandatory-property
+	 * checklist is the wrong checklist, so it is reported as a violation rather than
+	 * left to a reader to notice. An unreadable release index yields no violation but
+	 * is still reported by the controller as `unknown`, never as current.
+	 *
+	 * @return array<int, array<string, mixed>> One entry when behind, empty otherwise.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+	 */
+	private function profileVersionViolations(): array {
+		$profile = $this->standardsVersions->dcatApNlVersion();
+		if ($profile['status'] !== StandardsVersionService::STATUS_BEHIND) {
+			return [];
+		}
+
+		return [
+			[
+				'axis' => 'profile-version',
+				'declared' => $profile['declared'],
+				'published' => $profile['published'],
+			],
+		];
+
+	}//end profileVersionViolations()
 
 	/**
 	 * The canonical instance-level harvest-source URL for data.overheid.nl (DONL).
@@ -520,7 +577,7 @@ class DcatService {
 			violations: $themeViolations
 		);
 
-		$violations = $themeViolations;
+		$violations = array_merge($this->profileVersionViolations(), $themeViolations);
 		foreach ($this->serializer->graphNodes($document) as $node) {
 			if (($node['@type'] ?? '') !== 'dcat:Dataset') {
 				continue;
@@ -699,22 +756,4 @@ class DcatService {
 
 		return [];
 	}//end toArray()
-
-	/**
-	 * Return a scalar when the ID list has exactly one entry, else the list.
-	 *
-	 * Mirrors CatalogiService::index — a scalar register/schema avoids unnecessary
-	 * magic-mapper overhead in OpenRegister object search.
-	 *
-	 * @param array<int, int> $ids The integer ID list.
-	 *
-	 * @return int|array<int, int> A scalar ID or the list.
-	 */
-	private function scalarOrList(array $ids): int|array {
-		if (count($ids) === 1) {
-			return $ids[0];
-		}
-
-		return $ids;
-	}//end scalarOrList()
 }//end class

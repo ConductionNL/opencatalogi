@@ -23,6 +23,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -74,6 +75,14 @@ class PublicationQueryService
     public const PUBLIC_LIMIT_MAX = 100;
 
     /**
+     * Whether the missing-runAsAnonymous() warning has been logged this request.
+     *
+     * @var bool
+     */
+    private bool $warnedAboutMissingAnonymousScope = false;
+
+
+    /**
      * Constructor.
      *
      * @param ContainerInterface   $container   DI container
@@ -106,12 +115,12 @@ class PublicationQueryService
      * `_relations_contains` refinement; documents whose linked publication is not
      * publicly visible are dropped (transitive visibility).
      *
-     * Visibility is enforced in SQL by OR's schema-level RBAC. Anonymous callers see
-     * only `public`-group-eligible rows (SCH-PFTS-001 lower half). The historical
-     * `_rbac_as_public: true` runtime toggle from openregister PR #2855 that also
-     * forced anonymous evaluation on admin sessions has been removed on OR main —
-     * see the Stap 1 comment inside this method + WOO-551 for the semantic-drift
-     * documentation on the admin/owner half of SCH-PFTS-001.
+     * Visibility is enforced in SQL by OR's schema-level RBAC, evaluated as an
+     * anonymous caller for every session (SCH-PFTS-001): the read runs inside OR's
+     * `runAsAnonymous()`, so only `public`-group read rules decide what comes back
+     * and a signed-in administrator sees exactly what an anonymous caller sees.
+     * See the Stap 1 comment inside this method (WOO-578; the interim WOO-551
+     * behaviour applies only on an OpenRegister without that primitive).
      *
      * Scope resolution:
      *   1. `_catalog=<slug>` — that catalog's registers + schemas (SCH-PFTS-CAT-001).
@@ -137,8 +146,65 @@ class PublicationQueryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.StaticAccess) SearchRangeGuard::malformedParameter() is a pure function over the query.
      */
     public function assemblePublicSearchResults(array $queryParams, object $objectService): array
+    {
+        // A range bound that is neither a date nor a number would reach
+        // OpenRegister and come back as an empty result that reads as "nothing
+        // found". Refuse it by name instead (REQ-SCF-002).
+        $malformed = SearchRangeGuard::malformedParameter(queryParams: $queryParams);
+        if ($malformed !== null) {
+            throw new MalformedSearchParameterException(parameter: $malformed);
+        }
+
+        // ONE anonymous scope around the WHOLE assembly, not just the object reads.
+        // Scope resolution asks OpenRegister's SchemaMapper and RegisterMapper which
+        // schemas and registers exist, and those honour multitenancy by default — so
+        // with a session in play they answer from the caller's active organisation.
+        // Wrapping only the object reads left that door open: a signed-in caller
+        // could resolve a WIDER scope than an anonymous one before the anonymous read
+        // ever started, and see rows an anonymous caller does not. That is exactly
+        // what SCH-PFTS-001 forbids. One scope over the whole method closes the
+        // question for every read on this path, including ones added later.
+        //
+        // The inner `evaluateAsAnonymous()` calls stay: the scope is a depth counter,
+        // so nesting composes, and they keep the guarantee attached to each read for
+        // anyone who calls those helpers from somewhere else.
+        return $this->evaluateAsAnonymous(
+            objectService: $objectService,
+            operation: fn (): array => $this->assembleSearchResultsAsAnonymous(
+                queryParams: $queryParams,
+                objectService: $objectService
+            )
+        );
+
+    }//end assemblePublicSearchResults()
+
+
+    /**
+     * The body of {@see assemblePublicSearchResults()}, always run inside the
+     * anonymous evaluation scope that method opens.
+     *
+     * Private on purpose: calling it directly would skip the scope and reinstate
+     * the WOO-551 drift this ticket exists to remove.
+     *
+     * @param array  $queryParams   Raw request query parameters.
+     * @param object $objectService OpenRegister ObjectService instance.
+     *
+     * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
+     *
+     * @psalm-param   array<string, mixed> $queryParams
+     * @phpstan-param array<string, mixed> $queryParams
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/specs/search/spec.md
+     * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
+     */
+    private function assembleSearchResultsAsAnonymous(array $queryParams, object $objectService): array
     {
         // Stap 2 — Catalog-derived scope (SCH-PFTS-CAT-001..003).
         // Replaces the pre-WOO-536 app-config-derived scope (publication_register /
@@ -147,12 +213,36 @@ class PublicationQueryService
         $scope = $this->resolveCatalogScope(queryParams: $queryParams);
 
         // SCH-PFTS-CAT-002 guard (WOO-574, tasks.md 3.5 of the WOO-536 change):
-        // OpenRegister treats a schema WITHOUT `authorization.read` rules as open
-        // to all (`bypass => true` in MagicRbacHandler), so on the anonymous
-        // surface every row of such a schema would be exposed. Drop those
-        // schemas from the anonymous scope and warn the operator; signed-in
-        // callers keep normal RBAC evaluation (WOO-551 semantics).
-        if ($this->isAnonymous() === true && empty($scope['schemas']) === false) {
+        // a schema whose `authorization` block is EMPTY is filtered by
+        // MagicRbacHandler down to owner-admits OR not-private only, so on this
+        // surface every non-private row of it would be exposed. (A non-empty block
+        // that merely omits `read` already fails closed there — it is dropped too,
+        // for a uniform scope, not because it leaks. Full account on
+        // {@see dropSchemasWithoutReadRules()}.) Drop those schemas from the scope
+        // and warn the operator. The guard used to apply to anonymous callers only,
+        // with signed-in callers left to OR's session RBAC (WOO-551 semantics).
+        // Since WOO-578 every read on this endpoint is evaluated as an anonymous
+        // caller, so the guard holds for every caller: a schema that is open for
+        // want of rules is open for nobody here.
+        //
+        // THE SIBLING GAPS. `/api/{catalogSlug}` and its five sibling routes
+        // (PublicationsController) used to build their scope from
+        // `$catalog['schemas']` without this guard; WOO-580 routed them through
+        // `applyCatalogReadRuleGuard()`. WOO-581 did the same for
+        // `/api/catalogs/{slug}/dcat` and `/schema`, and routed the two readers
+        // that build a UNION over all catalogs — `/api/federation/publications`
+        // and `/api/catalogi/{id}` — through `applySchemaScopeReadRuleGuard()`,
+        // as it did the WOO sitemap: that picks its schema by woo-register
+        // category but admits it on `$catalog['schemas']` membership, so it is a
+        // reader of the same source. OOAPI is not guarded here and needs no guard:
+        // `requireAuthenticatedConsumer()` refuses anonymous callers, and this
+        // guard is anonymous-only.
+        //
+        // A GUARDED SCOPE IS ONLY A GUARD IF IT IS THE SCOPE OR SEARCHES. A
+        // caller's `schema=` / `register=` / `@self[schema]=` used to reach OR as
+        // `@self.schema`, which wins over the guarded `_schemas`; every public list
+        // route now runs the request query through `CallerScope::strip()` first.
+        if (empty($scope['schemas']) === false) {
             $scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
         }
 
@@ -201,8 +291,11 @@ class PublicationQueryService
         // Q7 Interpretation A: strip any client-supplied scope-widening params so a
         // request cannot bypass the catalog-derived scope. This preserves the
         // pre-WOO-536 discipline that clients cannot inject their own register/schema
-        // set past the resolved catalog boundary.
-        unset($searchQuery['_schema'], $searchQuery['_registers'], $searchQuery['catalogSlug'], $searchQuery['fq']);
+        // set past the resolved catalog boundary. This used to strip only `_schema` and
+        // `_registers`; `?schema=<S>&register=<R>` reached OR as `@self.schema`, won the
+        // precedence chain and bypassed the SCH-PFTS-CAT-002 guard (WOO-581 review).
+        $searchQuery = CallerScope::strip(query: $searchQuery);
+        unset($searchQuery['catalogSlug'], $searchQuery['fq']);
         unset($searchQuery['_content']);
         // OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
         unset($searchQuery['_catalog'], $searchQuery['_catalogi']);
@@ -265,6 +358,13 @@ class PublicationQueryService
                 registerIds: $scope['registers'],
                 schemas: $searchQuery['_schemas']
             );
+            // The widening runs AFTER the SCH-PFTS-CAT-002 guard, so the schemas it
+            // adds get the same guard; the transitive check below is defence in
+            // depth, not the control (WOO-581 review round 2).
+            if ($documentSchemaIds !== []) {
+                $documentSchemaIds = $this->dropSchemasWithoutReadRules(schemaIds: $documentSchemaIds);
+            }
+
             if ($documentSchemaIds !== []) {
                 $searchQuery['_schemas'] = array_values(
                     array_unique(array_merge($searchQuery['_schemas'], $documentSchemaIds))
@@ -272,29 +372,23 @@ class PublicationQueryService
             }
         }
 
-        // Stap 1 — Enable OR's schema-level RBAC. The `_rbac_as_public: true` runtime
-        // toggle from openregister PR #2855 (WOO-536 precursor) has been REMOVED on
-        // OR main by commit `31687c6f3` (`feat(rbac): graft inheritFromPublic onto dev
-        // RBAC`); the new API does authorization inheritance at the schema/register
-        // level via `authorization.inheritFromPublic` with a tenant-wide default
-        // (`openregister.rbac.inherit_from_public_default`). There is no equivalent
-        // per-call "force anonymous" primitive in the new OR API.
-        //
-        // WOO-551 SEMANTIC DRIFT: SCH-PFTS-001's uniform-visibility contract ("admin
-        // sees the same set as anonymous on this public endpoint") is no longer
-        // enforced at the OR layer. Under the new RBAC model, admin sessions bypass
-        // filters entirely and authenticated callers get their `_owner` clause OR'd
-        // in — so signed-in staff may see per-user draft publications through this
-        // endpoint. Anonymous callers still see only public-group-eligible rows
-        // (which the `read` rules on `publication_register.json` scope to
-        // `publicationDate <= now AND (depublicationDate >= now OR $exists false)`).
-        // Restoring uniform visibility requires a follow-up decision — reintroduce a
-        // `_forceAnonymous`-style primitive in OR, or a client-side session strip on
-        // this endpoint. Tracked as WOO-551 follow-up work.
-        $candidateResult = $objectService->searchObjectsPaginated(
-            query: $searchQuery,
-            _rbac: true,
-            _multitenancy: false
+        // Stap 1 — OR's schema-level RBAC, evaluated AS AN ANONYMOUS CALLER.
+        // SCH-PFTS-001 (WOO-536) promises uniform visibility on this public
+        // endpoint: a signed-in administrator sees exactly what an anonymous
+        // caller sees. The `_rbac_as_public: true` toggle that enforced this was
+        // removed on OR (`31687c6f3`) and WOO-551 accepted the drift to keep the
+        // endpoint alive. WOO-578 brings the guarantee back through OR's
+        // `runAsAnonymous()`: the session subject is cleared for the duration of
+        // the call, so the admin bypass, the `_owner` grant and group rules never
+        // enter the evaluation and only the `public` read rules decide.
+        // `_rbac: true` stays — the public rules ARE the filter.
+        $candidateResult = $this->evaluateAsAnonymous(
+            objectService: $objectService,
+            operation: static fn (): array => $objectService->searchObjectsPaginated(
+                query: $searchQuery,
+                _rbac: true,
+                _multitenancy: false
+            )
         );
 
         // Stap 3 — Dynamic schema-discriminator via SchemaMapper. Replaces the pre-WOO-536
@@ -460,6 +554,47 @@ class PublicationQueryService
         // rules; tracked as follow-up.
         $orTotal        = (int) ($candidateResult['total'] ?? count($rows));
         $adjustedTotal  = max(count($rows), ($orTotal - $droppedCount));
+
+        // WOO-577: OR's count query and its row stream can disagree. OR dedupes
+        // the metadata-match + chunk-match union on object id before returning
+        // `results`, but `total` stays the undeduplicated chunk-join count, so a
+        // `_content=true` query can answer `total: 8` while handing back NOTHING.
+        // Measured on acato and reproduced on the NC 32 rig (OpenCatalogi
+        // 1.0.9-woo-2 + OpenRegister 1.1.5): `_search=Nextcloud&_content=true`
+        // → `{"total": 8, "results": []}`.
+        //
+        // Only the FIRST page's "no rows at all" case is corrected here, and
+        // deliberately so. On page one, `results: []` with `total > 0` and no local
+        // drops is impossible for an honest backend — there is no offset that could
+        // explain it — so it is the `total: X, results: []` shape the envelope
+        // comment above already calls out as the SCH-PFTS-004 bug pattern, and
+        // reporting 0 is the truthful answer.
+        //
+        // ON ANY LATER PAGE THE SAME SHAPE IS ORDINARY. A caller that asks for
+        // `_offset=40` of 31 real matches gets `{results: [], total: 31}` from a
+        // perfectly healthy search — that is what running out of rows looks like.
+        // Zeroing there would make `total` collapse from 31 to 0 on the last page
+        // of every paginated query, and a UI that redraws its count from each
+        // response would show "0 results" at the end of a search that found 31.
+        // The observed WOO-577 desync reproduced on the default first page, so
+        // scoping the correction there loses nothing and costs no honest caller.
+        //
+        // Pages that DO carry rows keep OR's total untouched, so the "more pages"
+        // signal survives; whether that number itself should be deduplicated is
+        // answered in OR's count (openregister#3856), not in a per-page guess here.
+        if ($rows === [] && $droppedCount === 0 && $orTotal > 0 && $this->isFirstPage(searchQuery: $searchQuery) === true) {
+            $this->logger?->warning(
+                'WOO-577: OpenRegister reported a total without returning any rows on the first page; '
+                . 'reporting 0 so the envelope does not advertise unreachable results',
+                [
+                    'orTotal' => $orTotal,
+                    'search' => ($searchQuery['_search'] ?? null),
+                    'contentSearch' => $contentSearchRequested,
+                    'schemas' => $searchQuery['_schemas'],
+                ]
+            );
+            $adjustedTotal = 0;
+        }
         $envelope = [
             'results' => $rows,
             'total'   => $adjustedTotal,
@@ -473,18 +608,61 @@ class PublicationQueryService
         }
         return $envelope;
 
-    }//end assemblePublicSearchResults()
+    }//end assembleSearchResultsAsAnonymous()
+
+    /**
+     * Whether the request addresses the first page of the result set.
+     *
+     * Absent pagination params, `_offset: 0`, or `_page: 1` all mean "start at the
+     * beginning". Anything else may legitimately land past the end of the results,
+     * where an empty page with a non-zero total is ordinary rather than a backend
+     * disagreement (WOO-577). A `_page` without a `_limit` cannot be resolved to an
+     * offset here, so anything above 1 counts as NOT the first page — the
+     * conservative direction, since the cost of guessing wrong is a wrong `total`.
+     *
+     * @param array $searchQuery The query as forwarded to OpenRegister.
+     *
+     * @return bool True when this is the first page.
+     *
+     * @psalm-param   array<string, mixed> $searchQuery
+     * @phpstan-param array<string, mixed> $searchQuery
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function isFirstPage(array $searchQuery): bool
+    {
+        $offset = ($searchQuery['_offset'] ?? null);
+        if ($offset !== null && (int) $offset !== 0) {
+            return false;
+        }
+
+        $page = ($searchQuery['_page'] ?? null);
+        if ($page !== null && (int) $page > 1) {
+            return false;
+        }
+
+        return true;
+
+    }//end isFirstPage()
+
 
     /**
      * Drop every schema that has no `authorization.read` rules from the anonymous scope.
      *
-     * OpenRegister's RBAC engine returns `bypass => true` (no WHERE clause at all)
-     * for a schema whose effective authorization is empty or lacks the `read`
-     * action — see MagicRbacHandler::buildRbacConditionsSql(). On the public
-     * search surface that is a data leak, so the schema is excluded here and a
-     * warning names it (SCH-PFTS-CAT-002). Fail-closed: when the mapper cannot
-     * be consulted the whole scope collapses to empty, which the caller turns
-     * into the empty envelope.
+     * TWO SHAPES, ONE OF WHICH IS THE LEAK. OpenRegister handles them differently
+     * — see MagicRbacHandler::buildRbacConditionsSql():
+     *   - `authorization` EMPTY or absent: `bypass => false`, but the only
+     *     conditions are owner-admits OR not-private. An anonymous caller
+     *     therefore reads every NON-PRIVATE row of the schema. This is the
+     *     exposure, and it is not an unconditional bypass.
+     *   - `authorization` NON-EMPTY but without a `read` action: OpenRegister
+     *     FAILS CLOSED ("Action not configured on a non-empty authorization
+     *     block"), so an anonymous caller already gets nothing.
+     * Both are dropped here — the first because it leaks, the second so the
+     * anonymous scope is uniform rather than because it is unsafe — and a
+     * warning names the schema (SCH-PFTS-CAT-002). Fail-closed: when the mapper
+     * cannot be consulted the whole scope collapses to empty, which the caller
+     * turns into the empty envelope.
      *
      * Trade-off: OR resolves authorization with a register-level cascade; a
      * schema that inherits its rules from the register is dropped here too
@@ -537,6 +715,221 @@ class PublicationQueryService
         return $kept;
 
     }//end dropSchemasWithoutReadRules()
+
+    /**
+     * Apply the SCH-PFTS-CAT-002 read-rule guard to a catalog's schema scope.
+     *
+     * Same DROP as `/api/search` (WOO-574), on a different surface — but no
+     * longer the same RULE: since WOO-578 that endpoint applies it to every
+     * caller, while this guard is anonymous-only (see ANONYMOUS ONLY below).
+     * Which schemas it removes, and which half of that set is the actual leak
+     * rather than a schema OpenRegister already refuses, is set out on
+     * {@see dropSchemasWithoutReadRules()}.
+     * `assemblePublicSearchResults()` has dropped those schemas since WOO-574,
+     * but that method only serves `/api/search`. The
+     * per-catalog routes (`/api/{catalogSlug}` and its `/{id}`, `/uses`,
+     * `/used`, `/attachments`, `/download` siblings) are `#[PublicPage]` too and
+     * build their scope straight from the catalog, so the guard never reached
+     * them and the leak stayed open there (WOO-580).
+     *
+     * Guarding the CATALOG rather than each query is what makes this one rule
+     * instead of six: every one of those routes reads `$catalog['schemas']`,
+     * directly or through {@see buildCatalogSearchQuery()} /
+     * {@see findObjectInCatalog()}, and each already fails closed on an empty
+     * schema list. Handing them a guarded catalog therefore also keeps the
+     * `@catalog.schemas` block in the response from naming a schema the caller
+     * may not read.
+     *
+     * "THE CATALOG IS GUARDED" IS NOT "EVERY READER OF ITS SCHEMAS IS
+     * GUARDED". This guards the catalog ITS CALLER hands in. Its callers are
+     * the six routes in
+     * {@see \OCA\OpenCatalogi\Controller\PublicationsController} plus, since
+     * WOO-581, `/api/catalogs/{slug}/dcat`
+     * ({@see \OCA\OpenCatalogi\Controller\DcatController::catalog()}) and
+     * `/api/catalogs/{slug}/schema`
+     * ({@see \OCA\OpenCatalogi\Controller\SchemaOrgController::catalog()}).
+     * Readers that build a UNION over every catalog instead of taking one
+     * catalog go through {@see applySchemaScopeReadRuleGuard()}:
+     * `/api/federation/publications` and `/api/catalogi/{id}`. A new reader of
+     * `$catalog['schemas']` on a public route needs one of the two; grep for
+     * the source, not the route family — that is how WOO-580 and WOO-581 were
+     * each found after the previous fix.
+     *
+     * ANONYMOUS ONLY, deliberately — and since WOO-578 that is a DIFFERENCE
+     * from `/api/search`, not a match. That endpoint drops rule-less schemas
+     * unconditionally now, and (where the installed OpenRegister carries the
+     * primitive) evaluates every read inside its `runAsAnonymous()`, so its own
+     * SCH-PFTS-CAT-002 guard holds for signed-in callers too. These per-catalog routes keep session RBAC,
+     * and that is the surface WOO-578 leaves staff when it narrows
+     * `/api/search`; widening the guard here would close that door in the same
+     * move.
+     *
+     * @param array $catalog Catalog data array (keys: schemas, registers).
+     *
+     * @return array The catalog with `schemas` normalised to int[] and, for an
+     *               anonymous caller, filtered to the schemas that carry read rules.
+     *
+     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+     */
+    public function applyCatalogReadRuleGuard(array $catalog): array
+    {
+        $schemas = ($catalog['schemas'] ?? []);
+        if (is_string($schemas) === true) {
+            $schemas = (json_decode($schemas, true) ?? []);
+        }
+
+        if (is_array($schemas) === false) {
+            $schemas = [];
+        }
+
+        $schemas = array_values(array_map('intval', array_filter($schemas, 'is_numeric')));
+
+        $catalog['schemas'] = $this->applySchemaScopeReadRuleGuard(schemaIds: $schemas);
+
+        return $catalog;
+
+    }//end applyCatalogReadRuleGuard()
+
+    /**
+     * Apply the SCH-PFTS-CAT-002 read-rule guard to a bare schema-id scope.
+     *
+     * The same anonymous-only drop as {@see applyCatalogReadRuleGuard()}, for
+     * the readers that do not hold one catalog but a UNION of the schema lists
+     * of every catalog on the instance (WOO-581):
+     * {@see \OCA\OpenCatalogi\Service\PublicationService::getCatalogFilters()}
+     * (and its fast-path twin), which serve `/api/federation/publications`, and
+     * {@see \OCA\OpenCatalogi\Service\CatalogiService::getCatalogFilters()},
+     * which serves `/api/catalogi/{id}`. Both are `#[PublicPage]`, both searched
+     * with `_rbac: true` over an unguarded union, and on both an anonymous
+     * caller read the full record of a schema without an `authorization` block.
+     * The WOO sitemap ({@see \OCA\OpenCatalogi\Service\SitemapService}) runs
+     * its single category schema through it too. Through getCatalogFilters() it
+     * also covers `/api/federation/publications/{id}` and its `/uses`, `/used`,
+     * `/attachments` and `/download` siblings.
+     *
+     * A signed-in caller gets the list back UNTOUCHED — not even normalised —
+     * so session-RBAC behaviour on these paths does not move. An anonymous
+     * caller gets int ids, with every schema lacking read rules removed (see
+     * {@see dropSchemasWithoutReadRules()} for which of those is the actual
+     * leak). The caller MUST treat an empty result as "nothing to search", not
+     * as "no schema filter".
+     *
+     * @param array $schemaIds Schema ids (int or numeric string) in the scope.
+     *
+     * @return array The scope, filtered for an anonymous caller.
+     *
+     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+     */
+    public function applySchemaScopeReadRuleGuard(array $schemaIds): array
+    {
+        if ($this->isAnonymous() === false || empty($schemaIds) === true) {
+            return $schemaIds;
+        }
+
+        $schemaIds = array_values(array_map('intval', array_filter($schemaIds, 'is_numeric')));
+
+        return $this->dropSchemasWithoutReadRules(schemaIds: $schemaIds);
+
+    }//end applySchemaScopeReadRuleGuard()
+
+    /**
+     * Apply the SCH-PFTS-CAT-002 read-rule guard to the ROWS of a relation result.
+     *
+     * `/api/{catalogSlug}/{id}/uses` and `/used` guard their root object, then hand
+     * off to OpenRegister's relation handler, which loads the related objects from
+     * every register × schema and filters them by schema RBAC only — and RBAC reads
+     * an empty `authorization` block as open (WOO-581 review round 2). Those rows
+     * are legitimately outside the catalog's schema list (a publication's documents
+     * live in the document schema), so catalog membership is the wrong filter; the
+     * leak class is. For an anonymous caller every row whose schema lacks read rules
+     * (or carries no numeric schema id) is dropped. A signed-in caller keeps every
+     * row (and only gets the page cut when `$page` is given).
+     *
+     * `total` needs the whole list. OR's `getUses()` counts every related object and
+     * then slices the page, so lowering `total` by the rows dropped from one page
+     * still counted the hidden rows on the other pages — and walking `_offset`
+     * showed where they sat (WOO-581 review round 3). With `$page` the envelope is
+     * the caller's FULL relation list (fetched with `_offset` 0 and no limit): the
+     * guard runs over all of it, `total` becomes the number of rows kept, and the
+     * page is cut here. Without `$page` — `getUsedBy()`, whose `total` is already
+     * page-local — `total` is lowered by the rows dropped from the page, which is
+     * exact there.
+     *
+     * @param array                                   $result An OpenRegister relation envelope (`results`, `total`, …).
+     * @param array{limit: int, offset: int}|null     $page   The caller's page when `$result` holds the full list.
+     *
+     * @return array The envelope with the guarded rows.
+     *
+     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+     */
+    public function applyReadRuleGuardToRows(array $result, ?array $page = null): array
+    {
+        $rows = ($result['results'] ?? null);
+        if (is_array($rows) === false || ($page === null && $this->isAnonymous() === false)) {
+            return $result;
+        }
+
+        // A signed-in caller keeps every row; only the page is cut (when asked).
+        $keptRows = array_values($rows);
+        if ($this->isAnonymous() === true) {
+            $rowSchemas = array_map(fn (mixed $row): ?int => $this->rowSchemaId(row: $row), $keptRows);
+            $kept       = array_flip(
+                $this->applySchemaScopeReadRuleGuard(schemaIds: array_values(array_unique(array_filter($rowSchemas, 'is_int'))))
+            );
+            $keptRows   = array_values(
+                array_filter(
+                    $keptRows,
+                    static fn (int $index): bool => $rowSchemas[$index] !== null && isset($kept[$rowSchemas[$index]]) === true,
+                    ARRAY_FILTER_USE_KEY
+                )
+            );
+        }
+
+        $result['results'] = $keptRows;
+        if ($page !== null) {
+            $result['total']   = count($keptRows);
+            $result['results'] = array_slice($keptRows, $page['offset'], $page['limit']);
+            $result['limit']   = $page['limit'];
+            $result['offset']  = $page['offset'];
+            return $result;
+        }
+
+        $dropped = (count($rows) - count($keptRows));
+        if ($dropped > 0 && is_numeric($result['total'] ?? null) === true) {
+            $result['total'] = max(count($keptRows), ((int) $result['total'] - $dropped));
+        }
+
+        return $result;
+
+    }//end applyReadRuleGuardToRows()
+
+    /**
+     * The numeric schema id of a result row (array or serialisable entity).
+     *
+     * @param mixed $row A result row.
+     *
+     * @return int|null The schema id, or null when the row carries none.
+     *
+     * @spec exclude Private helper of applyReadRuleGuardToRows(); no behaviour of its own.
+     */
+    private function rowSchemaId(mixed $row): ?int
+    {
+        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+            $row = $row->jsonSerialize();
+        }
+
+        $schemaId = null;
+        if (is_array($row) === true) {
+            $schemaId = ($row['@self']['schema'] ?? null);
+        }
+
+        if (is_numeric($schemaId) === false) {
+            return null;
+        }
+
+        return (int) $schemaId;
+
+    }//end rowSchemaId()
 
     /**
      * Resolve the register + schema union that /api/search covers for this request.
@@ -1013,9 +1406,8 @@ class PublicationQueryService
      * public-group-eligible linked publication. If OR returns nothing, the linked
      * publication either does not exist, is not public under the caller's effective
      * context, or the document is genuinely unlinked — all three collapse to "drop the
-     * row" (transitive visibility). WOO-551: the historical uniform-visibility guarantee
-     * for admin sessions here (RBA-PUBLIC-006) no longer holds — see the Stap 1 comment
-     * in {@see assemblePublicSearchResults()} for the drift documentation.
+     * row" (transitive visibility). The read runs as an anonymous caller for every
+     * session (WOO-578), so "the caller's effective context" is always the public one.
      *
      * N4b (WOO-536 plan): a document related to multiple publications resolves to the
      * OLDEST-by-created linked publication (most stable link — does not change as new
@@ -1160,9 +1552,7 @@ class PublicationQueryService
         // Build the per-document refinement query. Under OR's schema-level RBAC,
         // anonymous callers only see publications the `public` group is allowed to
         // read — so a non-empty result guarantees the linked pub is public for
-        // anon callers. WOO-551: for authenticated staff the admin bypass /
-        // `_owner` clause may broaden the result set; see the Stap 1 comment in
-        // {@see assemblePublicSearchResults()} for the drift documentation.
+        // every caller, because the read runs as an anonymous caller (WOO-578).
         $refinementQuery = [
             '_schema'             => $publicationSchemaId,
             '_relations_contains' => $documentUuid,
@@ -1174,12 +1564,15 @@ class PublicationQueryService
         }
 
         try {
-            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
-            // in assemblePublicSearchResults() for context.
-            $matches = $objectService->searchObjectsPaginated(
-                query: $refinementQuery,
-                _rbac: true,
-                _multitenancy: false
+            // Same anonymous evaluation as the main search (WOO-578) — the linked
+            // publication must be visible to an anonymous caller, not to the session.
+            $matches = $this->evaluateAsAnonymous(
+                objectService: $objectService,
+                operation: static fn (): array => $objectService->searchObjectsPaginated(
+                    query: $refinementQuery,
+                    _rbac: true,
+                    _multitenancy: false
+                )
             );
         } catch (\Throwable $e) {
             $this->logger?->warning(
@@ -1240,9 +1633,8 @@ class PublicationQueryService
      * depublished, archived under the schema RBAC), so a non-null return guarantees
      * the caller may embed the summary. On any failure the method returns null and
      * the caller falls back to the relations-based path — authoritative but slower.
-     * WOO-551 note: authenticated callers may now see rows that anonymous callers
-     * can't (admin bypass + `_owner` clause) — see the Stap 1 comment in
-     * {@see assemblePublicSearchResults()} for the drift documentation.
+     * The read runs as an anonymous caller (WOO-578), so "publicly visible" holds
+     * for every session — see the Stap 1 comment in {@see assemblePublicSearchResults()}.
      *
      * @param string      $publicationId       The UUID from the document row's carried summary.
      * @param object      $objectService       OpenRegister ObjectService instance.
@@ -1258,16 +1650,18 @@ class PublicationQueryService
         int $publicationSchemaId
     ): ?array {
         try {
-            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
-            // in assemblePublicSearchResults() for context.
-            $publication = $objectService->find(
-                id: $publicationId,
-                _extend: [],
-                files: false,
-                register: $registerId,
-                schema: $publicationSchemaId,
-                _rbac: true,
-                _multitenancy: false
+            // Same anonymous evaluation as the main search (WOO-578).
+            $publication = $this->evaluateAsAnonymous(
+                objectService: $objectService,
+                operation: static fn (): mixed => $objectService->find(
+                    id: $publicationId,
+                    _extend: [],
+                    files: false,
+                    register: $registerId,
+                    schema: $publicationSchemaId,
+                    _rbac: true,
+                    _multitenancy: false
+            )
             );
         } catch (\Throwable $e) {
             return null;
@@ -1309,9 +1703,8 @@ class PublicationQueryService
      * fast-path — for anonymous callers, a non-empty result guarantees the
      * linked publication is publicly visible. Returns null on miss (unknown
      * slug, non-public, archived) so the caller falls through to the
-     * `_relations_contains` path. WOO-551 note: authenticated staff may see
-     * broader results — see the Stap 1 comment in
-     * {@see assemblePublicSearchResults()} for the drift documentation.
+     * `_relations_contains` path. The read runs as an anonymous caller for every
+     * session (WOO-578).
      *
      * @param string      $publicationSlug     The linked publication's slug.
      * @param object      $objectService       OpenRegister ObjectService instance.
@@ -1349,12 +1742,14 @@ class PublicationQueryService
             $slugScanQuery['_register'] = $registerId;
         }
         try {
-            // WOO-551: `_rbacAsPublic` removed on OR main — see the Stap 1 comment
-            // in assemblePublicSearchResults() for context.
-            $matches = $objectService->searchObjectsPaginated(
-                query: $slugScanQuery,
-                _rbac: true,
-                _multitenancy: false
+            // Same anonymous evaluation as the main search (WOO-578).
+            $matches = $this->evaluateAsAnonymous(
+                objectService: $objectService,
+                operation: static fn (): array => $objectService->searchObjectsPaginated(
+                    query: $slugScanQuery,
+                    _rbac: true,
+                    _multitenancy: false
+                )
             );
         } catch (\Throwable $e) {
             $this->logger?->warning(
@@ -1497,6 +1892,53 @@ class PublicationQueryService
     }//end findObjectLocation()
 
     /**
+     * Run an OpenRegister read as an anonymous caller (SCH-PFTS-001 / WOO-578).
+     *
+     * OpenRegister's `ObjectService::runAsAnonymous()` clears the session subject
+     * for the duration of the callable, so admin bypass, owner grants and group
+     * rules stay out of the evaluation and every caller gets the same rows and
+     * the same `total`. It is a server-side primitive: nothing in the request
+     * can switch it on or off.
+     *
+     * The guard exists because this app has been taken down once by a hard
+     * dependency on an OR primitive that was removed (WOO-551, `Unknown named
+     * parameter $_rbacAsPublic`). On an OpenRegister without the method the
+     * read runs with the caller's session — the WOO-551 behaviour — and says
+     * so in the log once per request, so the drift is visible, not silent.
+     *
+     * @param object   $objectService The OpenRegister ObjectService.
+     * @param callable $operation     The read to perform.
+     *
+     * @return mixed Whatever the read returns.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function evaluateAsAnonymous(object $objectService, callable $operation): mixed
+    {
+        if (method_exists($objectService, 'runAsAnonymous') === true) {
+            return $objectService->runAsAnonymous($operation);
+        }
+
+        if ($this->warnedAboutMissingAnonymousScope === false) {
+            $this->warnedAboutMissingAnonymousScope = true;
+            // `error`, not `warning`: the endpoint keeps answering, but its
+            // uniform-visibility contract is silently not being kept, and a warning
+            // is routinely filtered on a busy public deployment. The message names
+            // the fix rather than only the symptom.
+            $this->logger?->error(
+                'WOO-578: this OpenRegister has no ObjectService::runAsAnonymous(), so /api/search '
+                .'evaluates with the caller session and signed-in users may see more than anonymous '
+                .'callers (the WOO-551 behaviour). Upgrade OpenRegister to a build that carries the '
+                .'anonymous evaluation scope to restore uniform visibility.'
+            );
+        }
+
+        return $operation();
+
+    }//end evaluateAsAnonymous()
+
+
+    /**
      * Resolve the OpenRegister ObjectService from the container.
      *
      * @return object|null The OpenRegister ObjectService, or null when OR is unavailable.
@@ -1532,6 +1974,7 @@ class PublicationQueryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
      */
     public function buildCatalogSearchQuery(array $catalog, array $queryParams, object $objectService): array
     {
@@ -1540,6 +1983,11 @@ class PublicationQueryService
             $objectService->buildSearchQuery($queryParams),
             ['_includeDeleted' => false]
         );
+
+        // The scope is the (guarded) catalog's, never the caller's: without this a
+        // `?schema=<S>&register=<R>` became `@self.schema`, which OR prefers over the
+        // `_schemas` set below (WOO-581 review). See CallerScope::strip().
+        $searchQuery = CallerScope::strip(query: $searchQuery);
 
         // Clean up catalog-specific parameters.
         unset($searchQuery['catalogSlug'], $searchQuery['fq']);
@@ -1555,10 +2003,20 @@ class PublicationQueryService
             $schemas = array_map('intval', $schemas);
             // Pass all schemas for both search and faceting.
             $searchQuery['_schemas'] = $schemas;
-            // Only set _schema for single-schema catalogs for magic mapper optimization.
-            // Explicitly unset _schema for multi-schema search to prevent auto-setting.
+            // Only set _schema when the catalog pins ONE schema in ONE register (the
+            // magic-mapper fast path). A scalar schema without a scalar register takes
+            // neither OR's multi-schema route (needs no scalar schema) nor its
+            // single-schema route (needs a register), and falls through to the
+            // all-tables `_ids` lookup — outside the guarded scope (WOO-581 review
+            // round 2). The guard itself produces that shape: [S_ok, S_open] × [R1, R2]
+            // becomes [S_ok] × [R1, R2]. Otherwise `_schemas` carries the scope.
             unset($searchQuery['_schema']);
-            if (count($schemas) === 1) {
+            $catalogRegisters = ($catalog['registers'] ?? []);
+            if (is_string($catalogRegisters) === true) {
+                $catalogRegisters = (json_decode($catalogRegisters, true) ?? []);
+            }
+
+            if (count($schemas) === 1 && is_array($catalogRegisters) === true && count($catalogRegisters) === 1) {
                 $searchQuery['_schema'] = $schemas[0];
             }
         }//end if

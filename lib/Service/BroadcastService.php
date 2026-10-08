@@ -32,6 +32,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
+use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\Federation\FederationHostPolicy;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -126,6 +127,9 @@ class BroadcastService {
 	 * @param LoggerInterface $logger Logger for recording broadcast activities
 	 * @param IAppConfig $config App configuration (local-federation allowlist)
 	 * @param FederationHostPolicy $hostPolicy Decides whether a federation URL is reachable by a peer
+	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a broadcast met, or nothing when absent.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	public function __construct(
 		private readonly IURLGenerator $urlGenerator,
@@ -134,6 +138,9 @@ class BroadcastService {
 		private readonly LoggerInterface $logger,
 		private readonly IAppConfig $config,
 		private readonly FederationHostPolicy $hostPolicy,
+		// The integriq connection report (adopt-connection-registry). Nullable
+		// and last, so every existing construction site keeps working.
+		private readonly ?ConnectionReporter $connectionReporter = null,
 	) {
 		// Initialize HTTP client; the per-request timeout is operator-tunable.
 		$this->client = new Client(
@@ -408,7 +415,12 @@ class BroadcastService {
 	 * @throws ContainerExceptionInterface When container access fails
 	 * @throws NotFoundExceptionInterface When service is not found in container
 	 *
+	 * The outcome is also reported to integriq's connection registry, at most
+	 * once an hour while it stays the same (adopt-connection-registry). The
+	 * report never changes the result.
+	 *
 	 * @spec openspec/specs/dashboard/spec.md
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	public function broadcast(?string $url = null): array {
 		// Get the URL of this directory to include in broadcast payload.
@@ -439,6 +451,7 @@ class BroadcastService {
 				. '). Set overwrite.cli.url to a URL peers can resolve, or add the host to '
 				. 'the opencatalogi `local_federation_hosts` allowlist for a local rig.'
 			);
+			$this->connectionReporter?->reportBroadcastFromLocalAddress();
 			return $results;
 		}
 
@@ -456,6 +469,7 @@ class BroadcastService {
 		// If no target URLs found, log warning and return empty results.
 		if (empty($targetUrls) === true) {
 			$this->logger->warning('No target URLs found for broadcasting');
+			$this->connectionReporter?->reportBroadcast(results: $results);
 			return $results;
 		}
 
@@ -484,6 +498,7 @@ class BroadcastService {
 		$successCount = count(array_filter($results));
 		$totalCount = count($results);
 		$this->logger->info("Broadcast completed: {$successCount}/{$totalCount} successful");
+		$this->connectionReporter?->reportBroadcast(results: $results);
 
 		return $results;
 	}//end broadcast()

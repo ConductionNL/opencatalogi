@@ -16,10 +16,13 @@ import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import BookOpenVariant from 'vue-material-design-icons/BookOpenVariant.vue'
 import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
 import Bookshelf from 'vue-material-design-icons/Bookshelf.vue'
+import Bullhorn from 'vue-material-design-icons/Bullhorn.vue'
 import ChartBar from 'vue-material-design-icons/ChartBar.vue'
 import ChartBoxOutline from 'vue-material-design-icons/ChartBoxOutline.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 import CogOutline from 'vue-material-design-icons/CogOutline.vue'
+import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
+import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import FileDocument from 'vue-material-design-icons/FileDocument.vue'
 import Folder from 'vue-material-design-icons/Folder.vue'
 import FolderMultiple from 'vue-material-design-icons/FolderMultiple.vue'
@@ -33,6 +36,7 @@ import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import Package from 'vue-material-design-icons/Package.vue'
 import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed.vue'
 import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
+import PowerPlugOutline from 'vue-material-design-icons/PowerPlugOutline.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
 import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
@@ -46,10 +50,13 @@ export default {
 	BookOpenVariant,
 	BookOpenVariantOutline,
 	Bookshelf,
+	Bullhorn,
 	ChartBar,
 	ChartBoxOutline,
 	Cog,
 	CogOutline,
+	DatabaseEyeOutline,
+	EyeOutline,
 	FileDocument,
 	Folder,
 	FolderMultiple,
@@ -63,6 +70,7 @@ export default {
 	Package,
 	PackageVariantClosed,
 	PlayCircleOutline,
+	PowerPlugOutline,
 	ShieldAccountOutline,
 	Sitemap,
 	StoreOutline,

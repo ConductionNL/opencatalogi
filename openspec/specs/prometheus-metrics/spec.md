@@ -262,14 +262,6 @@ All metric names MUST follow Prometheus naming best practices.
 - THEN the `# TYPE` declaration MUST be `gauge`
 - AND the value MUST represent the current count (can go up and down)
 
-## MODIFIED Requirements
-
-_None._
-
-## REMOVED Requirements
-
-_None._
-
 ## Current Implementation Status
 - **Partially implemented**: Both `MetricsController.php` and `HealthController.php` exist with basic functionality.
 - **What exists in MetricsController**:

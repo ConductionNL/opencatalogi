@@ -944,6 +944,7 @@ import PropertiesPanel from '../../components/PropertiesPanel.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
+import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 import '@toast-ui/editor/dist/toastui-editor.css'
 
@@ -1320,19 +1321,21 @@ export default {
 			// register AND the `opencatalogi` magic-mapper register). Keep
 			// the first match per id.
 			const seenIds = new Set()
-			return objectStore.availableSchemas
-				.filter((schema) => validSchemaIds.includes(String(schema.id)))
-				.filter((schema) => this.hasSchemaReadRight(schema))
-				.filter((schema) => {
-					const key = String(schema.id)
-					if (seenIds.has(key)) return false
-					seenIds.add(key)
-					return true
-				})
-				.map((schema) => ({
-					id: schema.id,
-					label: schema.title,
-				}))
+			return sortOptionsByLabel(
+				objectStore.availableSchemas
+					.filter((schema) => validSchemaIds.includes(String(schema.id)))
+					.filter((schema) => this.hasSchemaReadRight(schema))
+					.filter((schema) => {
+						const key = String(schema.id)
+						if (seenIds.has(key)) return false
+						seenIds.add(key)
+						return true
+					})
+					.map((schema) => ({
+						id: schema.id,
+						label: schema.title,
+					})),
+			)
 		},
 
 		hasSelectedSchema() {
@@ -3155,16 +3158,6 @@ export default {
 	transition: background-color 0.2s ease;
 }
 
-/* WCAG 2.3.3. Both transitions in this component are decorative hover feedback
-   (row highlight, and the drop-property button fading from 0.3 to 1 opacity).
-   The end states still apply, so no affordance is lost. */
-@media (prefers-reduced-motion: reduce) {
-	.viewTableRow,
-	.drop-property-btn {
-		transition: none !important;
-	}
-}
-
 .viewTableRow:hover {
 	background-color: var(--color-background-hover);
 }
@@ -3670,5 +3663,21 @@ export default {
 .viewObjectDialog .viewTable th.table-row-title,
 .viewObjectDialog .viewTable td.table-row-title {
 	width: 100%;
+}
+/* WCAG 2.3.3. Both transitions in this component are decorative hover feedback
+   (row highlight, and the drop-property button fading from 0.3 to 1 opacity).
+   The end states still apply, so no affordance is lost.
+
+   This block sits at the END of the stylesheet on purpose. `.drop-property-btn`
+   declares its transition with `!important`; the fallback here has the same
+   specificity and is `!important` too, so the cascade is decided by source
+   order alone — and a fallback written ABOVE the rule it must override loses.
+   That is exactly what gate-45 (prefers-reduced-motion) measures since its
+   cascade-model fix of 2026-09-21 (.github@0c1c449a). */
+@media (prefers-reduced-motion: reduce) {
+	.viewTableRow,
+	.drop-property-btn {
+		transition: none !important;
+	}
 }
 </style>

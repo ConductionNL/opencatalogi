@@ -40,6 +40,13 @@ class RobotsControllerTest extends TestCase {
 		$this->l10n->method('t')
 			->willReturnCallback(fn (string $text) => $text);
 
+		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
+			$this->createMock(\Psr\Log\LoggerInterface::class),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
+		);
+
 		$this->controller = new RobotsController(
 			'opencatalogi',
 			$this->request,
@@ -47,7 +54,8 @@ class RobotsControllerTest extends TestCase {
 			$this->container,
 			$this->appManager,
 			$this->urlGenerator,
-			$this->l10n
+			$this->l10n,
+			$categories
 		);
 	}
 
@@ -245,5 +253,69 @@ class RobotsControllerTest extends TestCase {
 		$response = $this->controller->index();
 
 		$this->assertInstanceOf(TextResponse::class, $response);
+	}
+
+	/**
+	 * A catalogue entity with a slug and its Woo flag.
+	 *
+	 * @param string $slug The slug.
+	 * @param bool   $woo  Whether it publishes a Woo sitemap.
+	 */
+	private function catalogue(string $slug, bool $woo): \OCA\OpenRegister\Db\ObjectEntity {
+		$catalogue = new \OCA\OpenRegister\Db\ObjectEntity();
+		$catalogue->setSlug($slug);
+		$catalogue->setObject(['slug' => $slug, 'hasWooSitemap' => $woo]);
+		return $catalogue;
+	}
+
+	/**
+	 * The robots.txt text for these catalogues, with the query the controller asked.
+	 *
+	 * @param array<int, \OCA\OpenRegister\Db\ObjectEntity> $catalogues The search answer.
+	 * @param array<string, mixed>|null                      $query      Filled with the query asked.
+	 */
+	private function robotsFor(array $catalogues, ?array &$query = null): string {
+		$objectService = $this->getMockBuilder(\OCA\OpenRegister\Service\ObjectService::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['searchObjectsPaginated'])
+			->getMock();
+		$objectService->method('searchObjectsPaginated')->willReturnCallback(
+			function (array $asked) use ($catalogues, &$query): array {
+				$query = $asked;
+				return ['results' => $catalogues];
+			}
+		);
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => ['catalog_register' => '1', 'catalog_schema' => '5']]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com/');
+
+		return $this->controller->index()->render();
+	}
+
+	/** REQ-WIH-001: two Woo catalogues and one other. */
+	public function testTwoWooCataloguesAndOneOther(): void {
+		$text = $this->robotsFor(
+			[$this->catalogue('woo-a', true), $this->catalogue('news', false), $this->catalogue('woo-b', true)],
+			$query
+		);
+
+		$this->assertTrue($query['hasWooSitemap'], 'OpenRegister is asked for Woo-enabled catalogues only.');
+		$lines = array_values(array_filter(explode("\n", $text), static fn (string $line): bool => str_starts_with($line, 'Sitemap: ')));
+		$this->assertCount(36, $lines);
+		$this->assertSame('Sitemap: https://example.com/apps/opencatalogi/api/woo-a/sitemaps/sitemapindex-diwoo-infocat001.xml', $lines[0]);
+		$this->assertSame('Sitemap: https://example.com/apps/opencatalogi/api/woo-b/sitemaps/sitemapindex-diwoo-infocat018.xml', $lines[35]);
+		$this->assertStringNotContainsString('/news/', $text);
+		$this->assertStringNotContainsString('\n', $text);
+		$this->assertStringEndsWith("\n", $text);
+	}
+
+	/** REQ-WIH-001: the sitemap paths are allowed. */
+	public function testTheSitemapPathsAreAllowed(): void {
+		$text = $this->robotsFor([$this->catalogue('woo-a', true)]);
+
+		$this->assertStringContainsString("User-agent: *\n", $text);
+		$this->assertStringContainsString("Allow: /apps/opencatalogi/api/\n", $text);
+		$this->assertStringContainsString("Allow: /index.php/apps/opencatalogi/api/\n", $text);
 	}
 }

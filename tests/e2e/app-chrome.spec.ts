@@ -66,7 +66,7 @@ test.describe('app chrome (ADR-114)', () => {
 		await dismissSetupWizard(page)
 	})
 
-	test('the footer reads Documentation, Store, Reports, Features & roadmap, then Restart tutorial', async ({
+	test('the footer reads Documentation, Store, Features & roadmap, then Restart tutorial', async ({
 		page,
 	}) => {
 		const footer = page.locator(
@@ -87,12 +87,11 @@ test.describe('app chrome (ADR-114)', () => {
 		const seen = texts.filter((t) =>
 			/Documentation|Store|Reports|roadmap|tutorial/i.test(t),
 		)
-		expect(seen.length).toBe(5)
+		expect(seen.length).toBe(4)
 		expect(seen[0]).toMatch(/Documentation/i)
 		expect(seen[1]).toMatch(/Store/i)
-		expect(seen[2]).toMatch(/Reports/i)
-		expect(seen[3]).toMatch(/roadmap/i)
-		expect(seen[4]).toMatch(/tutorial/i)
+		expect(seen[2]).toMatch(/roadmap/i)
+		expect(seen[3]).toMatch(/tutorial/i)
 
 		for (const row of await rows.all()) {
 			await expect(
@@ -103,6 +102,8 @@ test.describe('app chrome (ADR-114)', () => {
 
 	test('Reports lists all three reports', async ({ page }) => {
 		const nav = page.locator('[data-testid="cn-nav"]')
+		// Reports sits in the Advanced foldout, so open it first.
+		await nav.locator('[data-testid="cn-nav-settings"]').click()
 		await nav
 			.locator('[data-testid="cn-nav-entry-ReportsMenu"] a')
 			.first()
@@ -177,14 +178,17 @@ test.describe('app chrome (ADR-114)', () => {
 			// satisfied by the bar chart's y-axis ticks (12/10/8/6/4/2/0) and by
 			// the date column of the Most-recent table, so it would pass on a
 			// report whose totals both read an em-dash.
-			await expect(main.locator('[widget-id="use-views"]')).toContainText(
-				'7',
-				{ timeout: 30_000 },
-			)
-			await expect(main.locator('[widget-id="use-downloads"]')).toContainText(
-				'4',
-				{ timeout: 30_000 },
-			)
+			//
+			// Each card is the region its widget wrapper names after the
+			// manifest label. The `widget-id` attribute this read before was a
+			// fallthrough prop that nextcloud-vue 3.2.0 no longer renders, and
+			// `exact` keeps "Views against downloads" out of both matches.
+			await expect(
+				main.getByRole('region', { name: 'Views', exact: true }),
+			).toContainText('7', { timeout: 30_000 })
+			await expect(
+				main.getByRole('region', { name: 'Downloads', exact: true }),
+			).toContainText('4', { timeout: 30_000 })
 		} finally {
 			await fx.cleanupAll()
 			await fx.dispose()

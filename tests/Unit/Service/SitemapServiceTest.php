@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\App\IAppManager;
@@ -20,11 +21,56 @@ use RuntimeException;
  */
 class SitemapServiceTest extends TestCase {
 
+	/**
+	 * Double a class whose method set differs between this tree and CI.
+	 *
+	 * `Schema::getId()` is a magic `Entity` accessor in the real OpenRegister, so
+	 * `createMock()` cannot configure it and PHPUnit raises
+	 * MethodCannotBeConfiguredException. The local stub under tests/Stubs declares
+	 * it as a real method, so the same call succeeds here and fails in CI. Splitting
+	 * the list by `method_exists` at run time satisfies both: `onlyMethods` for what
+	 * the class really declares, `addMethods` for what it resolves magically.
+	 *
+	 * Same helper as RegisterSchemaLinkServiceTest::environmentAwareDouble().
+	 *
+	 * @param class-string       $class   The class to double.
+	 * @param array<int, string> $methods The methods to configure.
+	 *
+	 * @return MockObject The double.
+	 */
+	private function environmentAwareDouble(string $class, array $methods): MockObject {
+		$existing = [];
+		$absent   = [];
+		foreach ($methods as $method) {
+			if (method_exists($class, $method) === true) {
+				$existing[] = $method;
+			} else {
+				$absent[] = $method;
+			}
+		}
+
+		$builder = $this->getMockBuilder($class)->disableOriginalConstructor();
+		if ($existing !== []) {
+			$builder->onlyMethods($existing);
+		}
+
+		if ($absent !== []) {
+			$builder->addMethods($absent);
+		}
+
+		return $builder->getMock();
+	}//end environmentAwareDouble()
+
 	private ContainerInterface|MockObject $container;
 	private IAppManager|MockObject $appManager;
 	private SettingsService|MockObject $settingsService;
 	private IURLGenerator|MockObject $urlGenerator;
 	private IAppConfig|MockObject $config;
+	private PublicationQueryService|MockObject $queryService;
+	private \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry $wooCategories;
+
+	/** @var \Closure(array): array What the read-rule guard returns; pass-through by default. */
+	private \Closure $guard;
 	private SitemapService $service;
 
 	protected function setUp(): void {
@@ -42,7 +88,23 @@ class SitemapServiceTest extends TestCase {
 			);
 
 		// Object visibility is enforced by OpenRegister RBAC inside the _rbac: true
-		// searches, not by an app-side predicate, so the query service is no longer a dep.
+		// searches. The query service is back as a dep for ONE thing: the
+		// SCH-PFTS-CAT-002 read-rule guard (WOO-581 review). Pass-through here; the
+		// WOO-581 tests below swap $this->guard.
+		$this->guard = static fn (array $schemaIds): array => $schemaIds;
+		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService->method('applySchemaScopeReadRuleGuard')
+			->willReturnCallback(fn (array $schemaIds): array => ($this->guard)($schemaIds));
+
+		// A real registry over a mocked SettingsService: getObjectService() returns
+		// null on the mock, so no local category is read and the registry serves the
+		// 18 waardelijst members, which is what the two constants used to hold.
+		$this->wooCategories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->settingsService,
+			$this->createMock(\Psr\Log\LoggerInterface::class),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
+		);
 
 		$this->service = new SitemapService(
 			$this->container,
@@ -51,35 +113,38 @@ class SitemapServiceTest extends TestCase {
 			$this->urlGenerator,
 			$this->config,
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->queryService,
+			$this->wooCategories,
 		);
 	}
 
 	// ──────────────────────────────────────────────────────────
-	// INFO_CAT constant
+	// The sitemap files the category registry serves
 	// ──────────────────────────────────────────────────────────
 
-	public function testInfoCatHas17Entries(): void {
-		$this->assertCount(17, SitemapService::INFO_CAT);
+	public function testTheRegistryServesOneSitemapPerWaardelijstMember(): void {
+		$this->assertCount(18, $this->wooCategories->sitemapFiles());
 	}
 
-	public function testInfoCatAllKeysPresent(): void {
-		for ($i = 1; $i <= 17; $i++) {
+	public function testEveryWaardelijstMemberHasItsSitemapFile(): void {
+		$files = $this->wooCategories->sitemapFiles();
+		for ($i = 1; $i <= 18; $i++) {
 			$key = sprintf('sitemapindex-diwoo-infocat%03d.xml', $i);
-			$this->assertArrayHasKey($key, SitemapService::INFO_CAT, "Missing key: $key");
+			$this->assertArrayHasKey($key, $files, "Missing key: $key");
 		}
 	}
 
-	public function testInfoCatFirstEntry(): void {
+	public function testTheFirstSitemapFileCarriesTheFirstCategoryTitle(): void {
 		$this->assertEquals(
 			'Wetten en algemeen verbindende voorschriften',
-			SitemapService::INFO_CAT['sitemapindex-diwoo-infocat001.xml']
+			$this->wooCategories->sitemapFiles()['sitemapindex-diwoo-infocat001.xml']
 		);
 	}
 
-	public function testInfoCatLastEntry(): void {
+	public function testTheArt31CategoryIsTheEighteenthSitemapFile(): void {
 		$this->assertEquals(
-			'Klachtoordelen',
-			SitemapService::INFO_CAT['sitemapindex-diwoo-infocat017.xml']
+			'Inspanningsverplichting art 3.1 Woo',
+			$this->wooCategories->sitemapFiles()['sitemapindex-diwoo-infocat018.xml']
 		);
 	}
 
@@ -823,6 +888,409 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	// ──────────────────────────────────────────────────────────
+	// WOO-581 review f3 — the read-rule guard on the sitemap
+	// ──────────────────────────────────────────────────────────
+
+	/**
+	 * Wire a valid sitemap request whose category schema is `41`, and count the
+	 * publication searches (the catalog lookup is not one).
+	 *
+	 * @param int $publicationSearches Incremented per publication search.
+	 *
+	 * @return void
+	 */
+	private function wireGuardedSitemap(int &$publicationSearches): void {
+		$this->setupValidSitemapContext('7', '41');
+		$catalogObj = $this->createCatalogObj([41]);
+		$pubObject = $this->createSerializableObject(['id' => 'pub-1', '@self' => ['updated' => '2024-06-01']]);
+
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')
+			->willReturnCallback(function (array $query = []) use ($catalogObj, $pubObject, &$publicationSearches) {
+				if (isset($query['slug'])) {
+					return ['results' => [$catalogObj]];
+				}
+				$publicationSearches++;
+				return ['results' => [$pubObject], 'total' => 1, 'next' => null];
+			});
+
+		$fileService = $this->createMock(\OCA\OpenRegister\Service\FileService::class);
+		$fileService->method('formatFiles')->willReturn(['results' => []]);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn ($id) => $id === 'OCA\OpenRegister\Service\FileService' ? $fileService : $objectService
+		);
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com');
+	}
+
+	/**
+	 * The sitemap admits its category schema on `$catalog['schemas']` membership
+	 * and then searched it with `_rbac: true`, unguarded — for a schema without
+	 * an `authorization` block that published every non-private row, documents
+	 * included, to the national Woo index. A dropped schema is now an empty,
+	 * valid sitemap index, and no publication search runs.
+	 */
+	public function testBuildSitemapIndexIsEmptyWhenTheGuardDropsTheSchema(): void {
+		$publicationSearches = 0;
+		$this->wireGuardedSitemap($publicationSearches);
+		$this->guard = static fn (array $schemaIds): array => [];
+
+		$result = $this->service->buildSitemapIndex('my-catalog', 'sitemapindex-diwoo-infocat001.xml');
+
+		$this->assertSame(200, $result->getStatus());
+		$this->assertStringNotContainsString('<sitemap>', $result->render());
+		$this->assertSame(0, $publicationSearches);
+	}
+
+	public function testBuildSitemapIsEmptyWhenTheGuardDropsTheSchema(): void {
+		$publicationSearches = 0;
+		$this->wireGuardedSitemap($publicationSearches);
+		$this->guard = static fn (array $schemaIds): array => [];
+
+		$result = $this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 1);
+
+		$this->assertSame(200, $result->getStatus());
+		$this->assertStringNotContainsString('<diwoo:Document>', $result->render());
+		$this->assertSame(0, $publicationSearches);
+	}
+
+	/**
+	 * Negative control: the guard keeps the schema → the sitemap is built as
+	 * before, so the guard cannot be why a working Woo-index feed goes quiet.
+	 */
+	public function testBuildSitemapIndexIsUnchangedWhenTheGuardKeepsTheSchema(): void {
+		$publicationSearches = 0;
+		$this->wireGuardedSitemap($publicationSearches);
+
+		$result = $this->service->buildSitemapIndex('my-catalog', 'sitemapindex-diwoo-infocat001.xml');
+
+		$this->assertStringContainsString('<sitemap>', $result->render());
+		$this->assertSame(1, $publicationSearches);
+	}
+
+	// ──────────────────────────────────────────────────────────
+	// woo-publication-category (REQ-WPC-002)
+	// ──────────────────────────────────────────────────────────
+
+	/**
+	 * Wire a catalogue that holds register `reg-pub` with the given schemas, the
+	 * given settings registers, and a publication store answered by $answer.
+	 *
+	 * @param array $settingsRegisters The availableRegisters setting.
+	 * @param array $catalogSchemas The catalogue's schemas.
+	 * @param \Closure $answer fn(array $query): array of publication rows.
+	 * @param array $queries Every publication query, collected.
+	 */
+	private function wireCategoryCatalog(array $settingsRegisters, array $catalogSchemas, \Closure $answer, array &$queries): void {
+		$this->settingsService->method('getSettings')->willReturn([
+			'availableRegisters' => $settingsRegisters,
+			'configuration' => ['catalog_register' => 'cat-reg', 'catalog_schema' => 'cat-sch'],
+		]);
+		$catalogObj = new class($catalogSchemas) {
+			public function __construct(private array $schemas) {
+			}
+
+			public function getObject(): array {
+				return ['registers' => ['reg-pub'], 'schemas' => $this->schemas];
+			}
+
+			public function getSlug(): string {
+				return 'woo';
+			}
+		};
+
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturnCallback(
+			function (array $query = []) use ($catalogObj, $answer, &$queries) {
+				if (isset($query['slug'])) {
+					return ['results' => [$catalogObj]];
+				}
+				$queries[] = $query;
+				$rows = array_map(fn (array $row) => $this->createSerializableObject($row), $answer($query));
+				return ['results' => $rows, 'total' => count($rows), 'next' => null];
+			}
+		);
+
+		$fileService = $this->createMock(\OCA\OpenRegister\Service\FileService::class);
+		$fileService->method('getFiles')->willReturnCallback(static fn ($object) => [$object]);
+		$fileService->method('formatFiles')->willReturnCallback(
+			static fn (array $files) => ['results' => [['downloadUrl' => 'https://example.com/' . $files[0] . '.pdf', 'extension' => 'pdf']]]
+		);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn ($id) => $id === 'OCA\OpenRegister\Service\FileService' ? $fileService : $objectService
+		);
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com');
+	}
+
+	/**
+	 * Three publications, two filed under infocat012 and one under infocat004,
+	 * in a catalogue on an instance WITHOUT a hand-made `woo` register.
+	 *
+	 * @return \Closure The store: filters on the query's wooCategory.
+	 */
+	private function threeFiledPublications(): \Closure {
+		$publications = [
+			['id' => 'jaarverslag-2024', 'wooCategory' => 'infocat012', '@self' => ['updated' => '2025-01-02']],
+			['id' => 'jaarplan-2025', 'wooCategory' => 'infocat012', '@self' => ['updated' => '2025-01-01']],
+			['id' => 'organogram', 'wooCategory' => 'infocat004', '@self' => ['updated' => '2025-01-03']],
+		];
+		return static fn (array $query): array => array_values(array_filter(
+			$publications,
+			static fn (array $p): bool => isset($query['wooCategory']) === false || $p['wooCategory'] === $query['wooCategory']
+		));
+	}
+
+	/**
+	 * REQ-WPC-002 scenario "The harvester reads one category": the sitemap of
+	 * infocat012 lists exactly the two publications filed under it.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testTheCategorySitemapListsExactlyThePublicationsFiledUnderIt(): void {
+		$queries = [];
+		$this->wireCategoryCatalog([], ['sch-pub'], $this->threeFiledPublications(), $queries);
+
+		$result = $this->service->buildSitemap('woo', 'sitemapindex-diwoo-infocat012.xml', 1);
+
+		$this->assertSame(200, $result->getStatus());
+		$xml = $result->render();
+		$this->assertSame(2, substr_count($xml, '<diwoo:Document>'));
+		$this->assertStringContainsString('jaarverslag-2024.pdf', $xml);
+		$this->assertStringContainsString('jaarplan-2025.pdf', $xml);
+		$this->assertStringNotContainsString('organogram.pdf', $xml);
+		$this->assertStringContainsString('Jaarplannen en jaarverslagen', $xml);
+
+		$this->assertCount(1, $queries);
+		$this->assertSame('infocat012', $queries[0]['wooCategory']);
+		$this->assertSame('reg-pub', $queries[0]['@self']['register']);
+		$this->assertSame('sch-pub', $queries[0]['@self']['schema']);
+	}
+
+	/**
+	 * The sitemap index of a category is built from the filed publications,
+	 * without a `woo` register.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testTheCategorySitemapIndexNeedsNoWooRegister(): void {
+		$queries = [];
+		$this->wireCategoryCatalog([], ['sch-pub'], $this->threeFiledPublications(), $queries);
+
+		$result = $this->service->buildSitemapIndex('woo', 'sitemapindex-diwoo-infocat004.xml');
+
+		$this->assertSame(200, $result->getStatus());
+		$xml = $result->render();
+		$this->assertSame(1, substr_count($xml, '<sitemap>'));
+		$this->assertStringContainsString('sitemaps/sitemapindex-diwoo-infocat004.xml/publications?page=1', $xml);
+	}
+
+	/**
+	 * On an instance that still runs a `woo` register, its title-matched schema
+	 * contributes its rows as well; a row found both ways is listed once.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testTheLegacyWooRegisterStillContributesItsRows(): void {
+		$queries = [];
+		$filed = $this->threeFiledPublications();
+		$answer = static function (array $query) use ($filed): array {
+			if (($query['@self']['schema'] ?? null) === 'sch-12' && isset($query['wooCategory']) === false) {
+				return [
+					['id' => 'oud-jaarverslag', '@self' => ['updated' => '2020-01-01']],
+					['id' => 'jaarverslag-2024', 'wooCategory' => 'infocat012', '@self' => ['updated' => '2025-01-02']],
+				];
+			}
+			return $filed($query);
+		};
+		$this->wireCategoryCatalog(
+			[['title' => 'woo', 'id' => 'reg-woo', 'schemas' => [['id' => 'sch-12', 'title' => 'Jaarplan of jaarverslag']]]],
+			['sch-pub', 'sch-12'],
+			$answer,
+			$queries
+		);
+
+		$xml = $this->service->buildSitemap('woo', 'sitemapindex-diwoo-infocat012.xml', 1)->render();
+
+		$this->assertSame(3, substr_count($xml, '<diwoo:Document>'));
+		$this->assertStringContainsString('oud-jaarverslag.pdf', $xml);
+		$this->assertStringNotContainsString('organogram.pdf', $xml);
+	}
+
+	/**
+	 * The service answers with the file names the registry serves (REQ-WIC-001).
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-information-categories-are-data-not-code-req-wic-001
+	 */
+	public function testTheServiceAnswersWithTheRegistrysSitemapFiles(): void {
+		$this->assertSame($this->wooCategories->sitemapFiles(), $this->service->sitemapFiles());
+	}
+
+	/**
+	 * A category that names its schemas restricts its own sitemap to them, and the
+	 * waardelijst members, which name none, keep searching the whole catalogue
+	 * scope (REQ-WIC-003).
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-category-names-the-schemas-its-sitemap-lists-req-wic-003
+	 */
+	public function testACategoryNamingItsSchemasRestrictsItsSitemapToThem(): void {
+		$queries = [];
+		$this->wireCategoryCatalog(
+			[
+				[
+					'title' => 'publication',
+					'id' => 'reg-pub',
+					'schemas' => [
+						['id' => 'sch-pub', 'slug' => 'publication'],
+						['id' => 'sch-tender', 'slug' => 'tender'],
+					],
+				],
+			],
+			['sch-pub', 'sch-tender'],
+			static fn (array $query): array => [['id' => 'aanbesteding-1', '@self' => ['updated' => '2026-01-01']]],
+			$queries
+		);
+
+		$service = $this->serviceWithLocalCategory(
+			['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat010', 'schemas' => ['tender']]
+		);
+
+		$result = $service->buildSitemap('woo', 'sitemapindex-diwoo-aanbestedingen.xml', 1);
+
+		$this->assertSame(200, $result->getStatus());
+		$this->assertCount(1, $queries);
+		$this->assertSame('aanbestedingen', $queries[0]['wooCategory']);
+		$this->assertSame('sch-tender', $queries[0]['@self']['schema'], 'The named schema is not the one searched.');
+	}
+
+	/**
+	 * A category that names no schemas searches the catalogue's whole scope.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-category-names-the-schemas-its-sitemap-lists-req-wic-003
+	 */
+	public function testACategoryNamingNoSchemasSearchesTheWholeScope(): void {
+		$queries = [];
+		$this->wireCategoryCatalog(
+			[
+				[
+					'title' => 'publication',
+					'id' => 'reg-pub',
+					'schemas' => [
+						['id' => 'sch-pub', 'slug' => 'publication'],
+						['id' => 'sch-tender', 'slug' => 'tender'],
+					],
+				],
+			],
+			['sch-pub', 'sch-tender'],
+			static fn (array $query): array => [],
+			$queries
+		);
+
+		$service = $this->serviceWithLocalCategory(
+			['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat010']
+		);
+
+		$service->buildSitemap('woo', 'sitemapindex-diwoo-aanbestedingen.xml', 1);
+
+		$this->assertCount(1, $queries);
+		$this->assertSame(['sch-pub', 'sch-tender'], $queries[0]['@self']['schema']);
+	}
+
+	/**
+	 * A named slug no register declares narrows the search to nothing rather than
+	 * widening it back to the whole catalogue.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-category-names-the-schemas-its-sitemap-lists-req-wic-003
+	 */
+	public function testASchemaSlugNoRegisterDeclaresListsNothing(): void {
+		$queries = [];
+		$this->wireCategoryCatalog(
+			[['title' => 'publication', 'id' => 'reg-pub', 'schemas' => [['id' => 'sch-pub', 'slug' => 'publication']]]],
+			['sch-pub'],
+			static fn (array $query): array => [['id' => 'anything', '@self' => ['updated' => '2026-01-01']]],
+			$queries
+		);
+
+		$service = $this->serviceWithLocalCategory(
+			['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat010', 'schemas' => ['tender']]
+		);
+
+		$result = $service->buildSitemap('woo', 'sitemapindex-diwoo-aanbestedingen.xml', 1);
+
+		$this->assertSame(200, $result->getStatus());
+		$this->assertSame([], $queries, 'A slug nothing declares still produced a search.');
+		$this->assertStringNotContainsString('<diwoo:Document>', $result->render());
+	}
+
+	/**
+	 * A sitemap service whose registry holds one stored local category.
+	 *
+	 * The row is handed in through a mocked OpenRegister object service, the way the
+	 * registry reads it in production.
+	 *
+	 * @param array<string, mixed> $stored The stored category.
+	 *
+	 * @return SitemapService The service.
+	 */
+	private function serviceWithLocalCategory(array $stored): SitemapService {
+		$row = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$row->method('jsonSerialize')->willReturn($stored);
+
+		$schema = $this->environmentAwareDouble(\OCA\OpenRegister\Db\Schema::class, ['getId']);
+		$schema->method('getId')->willReturn(42);
+		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(['results' => [$row]]);
+
+		$registrySettings = $this->createMock(SettingsService::class);
+		$registrySettings->method('getObjectService')->willReturn($objectService);
+		$registrySettings->method('getSchemaMapper')->willReturn($schemaMapper);
+
+		$tooi = new \OCA\OpenCatalogi\Service\TooiVocabularyService();
+
+		return new SitemapService(
+			$this->container,
+			$this->appManager,
+			$this->settingsService,
+			$this->urlGenerator,
+			$this->config,
+			$tooi,
+			$this->queryService,
+			new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+				$tooi,
+				$registrySettings,
+				$this->createMock(\Psr\Log\LoggerInterface::class),
+				new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission($tooi),
+			),
+		);
+	}
+
+	/**
+	 * mapDiwooDocument() reads wooCategory before the older category fields.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testTheDiwooCategoryComesFromWooCategoryFirst(): void {
+		$publication = [
+			'id' => 'pub-1',
+			'wooCategory' => 'infocat012',
+			'category' => 'infocat010',
+			'tooiCategorieNaam' => 'Adviezen',
+			'@self' => [],
+		];
+		$file = ['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf'];
+
+		$result = $this->getPrivateMethod('mapDiwooDocument')->invoke($this->service, $publication, $file);
+
+		$category = $result['diwoo:Document']['diwoo:DiWoo']['diwoo:classificatiecollectie']['diwoo:informatiecategorieen']['diwoo:informatiecategorie'];
+		$this->assertSame('Jaarplannen en jaarverslagen', $category['#text']);
+	}
+
+	// ──────────────────────────────────────────────────────────
 	// Operator-tunable page size
 	// ──────────────────────────────────────────────────────────
 
@@ -844,6 +1312,8 @@ class SitemapServiceTest extends TestCase {
 			$this->urlGenerator,
 			$config,
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->queryService,
+			$this->wooCategories,
 		);
 
 		$reflection = new \ReflectionClass($service);
@@ -863,6 +1333,8 @@ class SitemapServiceTest extends TestCase {
 			$this->urlGenerator,
 			$config,
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->queryService,
+			$this->wooCategories,
 		);
 
 		$reflection = new \ReflectionClass($service);

@@ -156,6 +156,41 @@ class ThemesControllerTest extends TestCase {
 		$this->assertEquals(200, $response->getStatus());
 	}
 
+	/**
+	 * WOO-581 review round 2 (f4): the configured `@self.schema` won for the rows,
+	 * but OR's facet path reads `@self.schemas ?? _schemas` first, so a caller's
+	 * scope keys steered the facets to any schema. None reaches OR now; a
+	 * non-scope `@self` filter does.
+	 *
+	 * @return void
+	 */
+	public function testIndexStripsTheCallersScopeKeys(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'theme_schema', '', '10'],
+				['opencatalogi', 'theme_register', '', '2'],
+				['opencatalogi', 'cors_allowed_origins', '*', '*'],
+			]);
+		$this->request->method('getParams')->willReturn([
+				'_schemas' => [56],
+				'_registers' => [99],
+				'_schema' => 56,
+				'schema' => 56,
+				'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+			]);
+		$this->request->server = [];
+		$mockObjService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => array_intersect(['_schemas', '_registers', 'schema', 'register'], array_keys($q)) === []
+				&& isset($q['@self']['schemas'], $q['@self']['registers']) === false
+				&& ($q['@self']['owner'] ?? null) === 'alice'
+				&& ($q['@self']['schema'] ?? null) === '10'))
+			->willReturn(['results' => [], 'total' => 0]);
+
+		$this->assertEquals(200, $this->controller->index()->getStatus());
+	}
+
 	public function testIndexWithEmptyThemeConfigurationReturns503(): void {
 		// An unconfigured theme_register/theme_schema now surfaces an
 		// operator-actionable 503 instead of silently returning an empty list

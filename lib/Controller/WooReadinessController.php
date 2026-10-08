@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -49,11 +50,15 @@ class WooReadinessController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param WooReadinessService $wooReadinessService The readiness self-check service.
+	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a check met, or nothing when absent.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly WooReadinessService $wooReadinessService,
+		private readonly ?ConnectionReporter $connectionReporter = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -91,21 +96,31 @@ class WooReadinessController extends Controller {
 	 * `src/views/settings/Settings.vue` calls it through `@nextcloud/axios`,
 	 * which sends `requesttoken`.
 	 *
+	 * The outcome, the 409 included, is also reported to integriq's connection
+	 * registry (adopt-connection-registry). The report never changes the response.
+	 *
 	 * @return JSONResponse The freshly computed and persisted report, or a 409 error.
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md#requirement-readiness-endpoints-are-admin-gated-and-fail-closed-woo-hr-004
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function run(): JSONResponse {
 		if ($this->wooReadinessService->hasWooEnabledCatalogs() === false) {
+			$this->connectionReporter?->reportWooNotConfigured();
 			return new JSONResponse(['error' => 'not-configured'], Http::STATUS_CONFLICT);
 		}
 
 		try {
-			return new JSONResponse($this->wooReadinessService->runCheck());
+			$report = $this->wooReadinessService->runCheck();
 		} catch (\Throwable $e) {
+			$this->connectionReporter?->reportWooCheckStopped();
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		}
+
+		$this->connectionReporter?->reportWooReadiness(report: $report);
+
+		return new JSONResponse($report);
 
 	}//end run()
 }//end class

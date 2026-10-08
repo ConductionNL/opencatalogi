@@ -1,17 +1,16 @@
 # Tasks: harvest-protocol-plugins
 
-- [ ] 0.1 Author the delta spec: plugin interface, per-protocol fetch/parse
-      contracts, incremental semantics per protocol
-- [ ] 1.1 Protocol plugin interface + registry; `dcat-jsonld` refactored onto
-      it without behaviour change
-- [ ] 1.2 DCAT Turtle/RDF-XML plugin (RDF library enters the composer tree
-      here; pin and audit it)
-- [ ] 1.3 OAI-PMH client plugin: resumption-token loop, `from` incremental,
-      deleted-status handling (XML via `file_get_contents` +
-      `simplexml_load_string` in tests)
-- [ ] 1.4 CKAN plugin: package walk + mapping
-- [ ] 1.5 schema.org plugin: sitemap walk + JSON-LD script extraction
-- [ ] 2.1 Unit tests per plugin against local fixtures
-- [ ] 2.2 Integration test: harvest this instance's own `oai-pmh-endpoint`
-      round-trip
-- [ ] 3.1 Quality gates as usual
+Build after `harvest-feed-intake` (fetcher pattern, `HarvestFeedService`, feed form) and after `openregister/app-harvest-fetchers-and-flow-node` has merged its code on openregister `development`. Read `openspec/woo-build-rules.md`. Use recorded fixtures under `tests/fixtures/harvest/`; no live site in unit tests.
+
+- [x] 0.1 Author the delta spec (amendment 2026-10-05; revised in spec round part 3, 2026-10-07, onto OpenRegister's fetchers and pipeline).
+- [ ] 1.1 Add the six fetchers under `lib/Harvest/` (`DcatRdfFetcher`, `OaiPmhFetcher`, `CkanApiFetcher`, `SchemaOrgDatasetFetcher`, `WebsiteSitemapFetcher`, `WordpressRestFetcher`), each `IBatchSourceFetcher` with type, display name and config schema, and add them in `RegisterSourceFetchersListener` (REQ-HPP-001). Verify: `tests/Unit/Listener/RegisterSourceFetchersListenerTest.php` on the real event class lists all seven OpenCatalogi types.
+- [ ] 1.2 RDF parsing for `DcatRdfFetcher` (the RDF library enters composer here; pin and audit it) (REQ-HPP-003). Verify: `tests/Unit/Harvest/DcatRdfFetcherTest.php` on a Turtle and an RDF/XML fixture giving the same items; `composer audit`.
+- [ ] 1.3 `OaiPmhFetcher` with resumption tokens, `from`, deleted records as errors (REQ-HPP-003). Verify: `tests/Unit/Harvest/OaiPmhFetcherTest.php::testResumptionTokensAreFollowedToTheEnd`, `::testADeletedRecordIsAnError`.
+- [ ] 1.4 `CkanApiFetcher` with paging and incomplete on a failed page (REQ-HPP-001, REQ-HPP-003). Verify: `tests/Unit/Harvest/CkanApiFetcherTest.php::testAFailedPageMakesTheBatchIncomplete`.
+- [ ] 1.5 `WebsiteSitemapFetcher` and `SchemaOrgDatasetFetcher` (REQ-HPP-002, REQ-HPP-003). Verify: `tests/Unit/Harvest/WebsiteSitemapFetcherTest.php::testPagesWithJsonLdBecomeItemsAndPagesWithoutAreSkipped`, `::testAPrivateAddressIsRefusedByTheGuard` (with OpenRegister's real `OutboundUrlGuard` when loadable).
+- [ ] 1.6 `WordpressRestFetcher` with `X-WP-TotalPages` and `modified_after` from `since` (REQ-HPP-002). Verify: `tests/Unit/Harvest/WordpressRestFetcherTest.php::testPostsBecomeItemsKeyedByLink`, `::testPagingFollowsTheTotalPagesHeader`, `::testModifiedAfterComesFromSince`.
+- [ ] 2.1 `HarvestFeedService` accepts the six types and writes the draft-only settings for each (REQ-HPP-004). Verify: `tests/Unit/Service/Harvest/HarvestFeedServiceTest.php::testEveryTypeGetsTheDraftOnlySettings`; `tests/Unit/Service/Harvest/HarvestDraftOnlyTest.php::testAHarvestedPublicationHasNoPublicationDate` through OpenRegister's pipeline when loadable.
+- [ ] 2.2 Seed one OpenRegister mapping per type onto the publication (`ckan-package-to-publication`, `oai-dc-to-publication`, `wordpress-post-to-publication`, `schema-org-to-publication`), writing no protected field. Verify: each run through OpenRegister's real `MappingService` on its fixture (skipped with a named reason without OpenRegister).
+- [ ] 2.3 The feed form offers the types from `GET /apps/openregister/api/sources/types` filtered on `application: opencatalogi`, with each type's config fields (REQ-HPP-001). Verify: e2e `tests/e2e/harvest-cms.spec.ts` creates a `wordpress-rest` feed against a fixture served by the test web server and runs it, carrying `@e2e` for "The six types are offered".
+- [ ] 3.1 Live: point a `wordpress-rest` feed at a public WordPress site on the dev instance, run it once, and paste the run summary and one draft in the PR body.
+- [ ] 3.2 Diff check while building; once before push `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, `npm run lint`, `format`, `check:l10n`; one PR `--base development`, merge development in, never rebase, no `Co-Authored-By`. Row 1.6 becomes `production` only once a store release ships it.

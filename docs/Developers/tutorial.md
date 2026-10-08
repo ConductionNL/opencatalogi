@@ -82,7 +82,7 @@ Bij het aanmaken van een publicatie zijn een aantal zaken van belang. Een public
 
 ## Bijlagen toevoegen
 
-Sommige publicaites hebben een bijlagen, zoals bijvoorbeeld voor convenanten het geval is. Een bijlage toevoegen aan een publicatie wordt gedaan door te klikken op de `Actie`-knop die rechtsboven te vinden is bij het klikken op een publicatie. Een van die opties is `Bijlage toevoegen`. Dit zorgt voor het tonen van de `Bijlage toevoegen`-modal. Hier kan via `url` of door een bestand toe te voegen vanaf de harde schrijf.&#x20;
+Sommige publicaties hebben bijlagen, zoals bijvoorbeeld voor convenanten het geval is. Klik in het overzicht van publicaties op de drie bolletjes naast een publicatie en kies `Bestandenlijst`. Dit opent de publicatie op het tabblad `Bestanden`, met de bestanden die al aan de publicatie gekoppeld zijn. Klik op `Bestand toevoegen` om de `Bijlage toevoegen`-modal te tonen. Kies daar een of meer labels en voeg bestanden toe vanaf de harde schijf, door ze naar het venster te slepen of te kiezen via `Voeg een of meer bestanden toe`.
 
 <div>
 

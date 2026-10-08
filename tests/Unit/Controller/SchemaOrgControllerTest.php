@@ -28,6 +28,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\SchemaOrgController;
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCP\AppFramework\Http;
 use OCP\IL10N;
@@ -46,6 +47,11 @@ class SchemaOrgControllerTest extends TestCase {
 	private SchemaOrgService|MockObject $schemaOrgService;
 
 	private CatalogiService|MockObject $catalogiService;
+
+	private PublicationQueryService|MockObject $queryService;
+
+	/** @var \Closure(array): array The read-rule guard the query-service mock applies. */
+	private \Closure $guard;
 
 	private IL10N|MockObject $l10n;
 
@@ -68,11 +74,18 @@ class SchemaOrgControllerTest extends TestCase {
 		$this->request->method('getHeader')->willReturn('');
 		$this->l10n->method('t')->willReturnArgument(0);
 
+		// Pass-through by default; the WOO-581 tests below swap $this->guard.
+		$this->guard = static fn (array $catalog): array => $catalog;
+		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService->method('applyCatalogReadRuleGuard')
+			->willReturnCallback(fn (array $catalog): array => ($this->guard)($catalog));
+
 		$this->controller = new SchemaOrgController(
 			'opencatalogi',
 			$this->request,
 			$this->schemaOrgService,
 			$this->catalogiService,
+			$this->queryService,
 			$this->l10n,
 			$this->logger,
 			null
@@ -100,6 +113,24 @@ class SchemaOrgControllerTest extends TestCase {
 		$this->assertSame('DataCatalog', $response->getData()['@type']);
 
 	}//end testCatalogReturnsJsonLd()
+
+	/**
+	 * WOO-581: the DataCatalog is built from the GUARDED catalog, so a schema
+	 * the SCH-PFTS-CAT-002 guard drops never gets its rows listed as `dataset`.
+	 *
+	 * @return void
+	 */
+	public function testCatalogBuildsTheNodeFromTheReadRuleGuardedCatalog(): void {
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'WOO', 'registers' => [20], 'schemas' => [28, 56]]);
+		$this->guard = static fn (array $catalog): array => array_merge($catalog, ['schemas' => [28]]);
+
+		$this->schemaOrgService->expects($this->once())
+			->method('buildCatalogNode')
+			->with($this->callback(static fn (array $catalog): bool => $catalog['schemas'] === [28]), 'woo')
+			->willReturn(['@context' => 'https://schema.org', '@type' => 'DataCatalog', 'dataset' => []]);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->catalog('woo')->getStatus());
+	}//end testCatalogBuildsTheNodeFromTheReadRuleGuardedCatalog()
 
 	/**
 	 * An unknown catalog 404s without invoking the renderer.

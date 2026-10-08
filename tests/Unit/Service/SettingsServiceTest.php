@@ -618,6 +618,28 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testUpdateSettingsUnknownKeyIsSilentlyFiltered()
 
 	/**
+	 * The channel sources keep only known channels with a source slug (REQ-WND-001).
+	 *
+	 * @return void
+	 */
+	public function testChannelSourcesKeepOnlyKnownChannelsWithASlug(): void {
+		$stored = null;
+		$this->config->expects($this->once())->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored = [$key, $value];
+				return true;
+			}
+		);
+
+		$this->service->updateSettings(
+			['channel_sources' => ['plooi' => ' plooi-api ', 'national-woo-index' => '', 'somewhere-else' => 'x']]
+		);
+
+		$this->assertSame(['channel_sources', '{"plooi":"plooi-api"}'], $stored);
+
+	}//end testChannelSourcesKeepOnlyKnownChannelsWithASlug()
+
+	/**
 	 * Returns empty array when no settings are passed.
 	 *
 	 * @return void
@@ -1502,7 +1524,16 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testInitializeSuccess()
 
 	public function testInitializeWithPartialFailure(): void {
-		$this->markTestSkipped('OC_App::installApp() is not available in unit test context');
+		$this->appManager->method('isInstalled')->willReturn(false);
+		$this->appManager->method('enableApp')
+			->willThrowException(new \InvalidArgumentException('openregister is not installed, cannot be enabled.'));
+
+		$result = $this->service->initialize();
+
+		$this->assertFalse($result['openRegister']);
+		$this->assertFalse($result['autoConfigured']);
+		$this->assertCount(1, $result['errors']);
+		$this->assertStringContainsString('App Store', $result['errors'][0]);
 
 	}//end testInitializeWithPartialFailure()
 
@@ -2301,4 +2332,77 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertArrayNotHasKey('woo_assessment_schema', $stored);
 
 	}//end testUpdateObjectTypeConfigurationLeavesMissingWooAssessmentSchemaUntouched()
+
+	/**
+	 * A disabled-but-installed OpenRegister is enabled through the public app manager.
+	 *
+	 * @return void
+	 */
+	public function testInstallOrUpdateOpenRegisterEnablesAnInstalledButDisabledApp(): void {
+		$enabled = false;
+		$this->appManager->method('isInstalled')
+			->willReturnCallback(
+				function () use (&$enabled): bool {
+					return $enabled;
+				}
+			);
+		$this->appManager->method('getAppVersion')->willReturn('1.0.0');
+		$this->appManager->expects($this->once())
+			->method('enableApp')
+			->with('openregister')
+			->willReturnCallback(
+				function () use (&$enabled): void {
+					$enabled = true;
+				}
+			);
+
+		$this->assertTrue($this->service->installOrUpdateOpenRegister('0.1.7'));
+
+	}//end testInstallOrUpdateOpenRegisterEnablesAnInstalledButDisabledApp()
+
+	/**
+	 * A missing OpenRegister cannot be installed through public API: a clear RuntimeException.
+	 *
+	 * @return void
+	 */
+	public function testInstallOrUpdateOpenRegisterThrowsClearErrorWhenMissing(): void {
+		$this->appManager->method('isInstalled')->willReturn(false);
+		$this->appManager->method('enableApp')
+			->willThrowException(new \OCP\App\AppPathNotFoundException('Could not find path for openregister'));
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('Install it from the Nextcloud App Store');
+
+		$this->service->installOrUpdateOpenRegister();
+
+	}//end testInstallOrUpdateOpenRegisterThrowsClearErrorWhenMissing()
+
+	/**
+	 * A too-old OpenRegister cannot be upgraded through public API: a clear RuntimeException.
+	 *
+	 * @return void
+	 */
+	public function testInstallOrUpdateOpenRegisterThrowsClearErrorWhenTooOld(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('getAppVersion')->willReturn('0.1.0');
+		$this->appManager->expects($this->never())->method('enableApp');
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('version 0.1.0 is older than the required 0.2.0');
+
+		$this->service->installOrUpdateOpenRegister('0.2.0');
+
+	}//end testInstallOrUpdateOpenRegisterThrowsClearErrorWhenTooOld()
+
+	/**
+	 * The method no longer references the private OC_App API.
+	 *
+	 * @return void
+	 */
+	public function testSettingsServiceUsesNoPrivateOcAppApi(): void {
+		$source = (string) file_get_contents(__DIR__ . '/../../../lib/Service/SettingsService.php');
+		$code   = (string) preg_replace('#/\*.*?\*/|//[^\n]*#s', '', $source);
+		$this->assertStringNotContainsString('OC_App', $code);
+
+	}//end testSettingsServiceUsesNoPrivateOcAppApi()
 }//end class

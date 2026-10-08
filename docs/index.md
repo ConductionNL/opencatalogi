@@ -67,6 +67,8 @@ Manuals for developers who want to further develop Open Catalogi. This documenta
 ### (Functional) Administrators 
 Manuals for administrators who want to configure and set up Open Catalogi. This documentation contains information about managing catalogs, metadata, organizations and directories.
 
+- [Algoritmeregister](/docs/Administrator/algoritmeregister): a draft entry to paste into algoritmes.overheid.nl and amend
+
 ### Users
 Manuals for end users who use Open Catalogi daily for example:
 - 📝 Publishing WOO requests

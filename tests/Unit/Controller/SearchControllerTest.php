@@ -103,6 +103,26 @@ class SearchControllerTest extends TestCase {
 	}//end testIndexReturnsAssembledSearchResultsForAnonymousCallers()
 
 	/**
+	 * The portal's filter names reach the search as the publication's properties.
+	 *
+	 * @spec openspec/changes/woo-dossier-publication/specs/publications/spec.md#requirement-public-search-takes-the-portals-filter-names-req-wdp-002
+	 *
+	 * @return void
+	 */
+	public function testIndexTranslatesThePortalsFilterNames(): void {
+		$objectService = new \stdClass();
+		$this->container->method('get')->willReturn($objectService);
+		$this->request->method('getParams')->willReturn(['informatiecategorie' => ['infocat014'], 'periodFrom' => '2026-01-01']);
+
+		$this->queryService->expects($this->once())
+			->method('assemblePublicSearchResults')
+			->with(['wooCategory' => ['infocat014'], 'publicationDate' => ['gte' => '2026-01-01']], $objectService)
+			->willReturn(['results' => [], 'total' => 0]);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->index()->getStatus());
+	}//end testIndexTranslatesThePortalsFilterNames()
+
+	/**
 	 * The index() endpoint must be reachable without a session user — no auth guard.
 	 *
 	 * @return void
@@ -131,6 +151,24 @@ class SearchControllerTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * REQ-SCF-002 scenario "A bad date": 400, naming the parameter.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	public function testIndexReturns400NamingAMalformedRangeBound(): void {
+		$this->container->method('get')->willReturn(new \stdClass());
+		$this->request->method('getParams')->willReturn(['meetingDate' => ['gte' => 'tomorrow-ish']]);
+		$this->queryService->method('assemblePublicSearchResults')
+			->willThrowException(new \OCA\OpenCatalogi\Exception\MalformedSearchParameterException('meetingDate[gte]'));
+
+		$response = $this->controller->index();
+
+		$this->assertSame(400, $response->getStatus());
+		$this->assertSame('meetingDate[gte]', $response->getData()['parameter']);
+		$this->assertNotEmpty($response->getData()['error']);
+	}
+
 	public function testIndexReturns503WhenOpenRegisterUnavailable(): void {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('getInstalledApps')->willReturn([]);

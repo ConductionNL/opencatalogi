@@ -521,9 +521,3 @@ export default {
 	flex: 0 0 auto;
 }
 </style>
-
-<style>
-.mass-action-dialog {
-	z-index: 10000 !important;
-}
-</style>

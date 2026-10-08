@@ -6,7 +6,7 @@
   -
   - Surfaces the OpenRegister deck-board widget (the queue/board — NOT a bespoke
   - table; ADR-022) plus the WOO-specific surfaces OpenCatalogi owns: the
-  - per-status progress summary, the redaction review (WooRedactionView), the
+  - per-status progress summary, the
   - inventarislijst download, and the ready-for-review / publish actions (the
   - publish transition is gated by the OpenRegister approval-workflow chain).
   -->
@@ -15,7 +15,6 @@ import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import WooRedactionView from './WooRedactionView.vue'
 import { canMarkReadyForReview } from '../../services/wooHelpers.js'
 
 export default {
@@ -25,7 +24,6 @@ export default {
 		NcEmptyContent,
 		NcLoadingIcon,
 		NcNoteCard,
-		WooRedactionView,
 	},
 
 	data() {
@@ -34,7 +32,6 @@ export default {
 			loading: false,
 			error: null,
 			batch: null,
-			activeDocument: null,
 		}
 	},
 
@@ -59,6 +56,11 @@ export default {
 					progressLabel: '0/0',
 				}
 			)
+		},
+
+		/** @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-the-officer-sees-why-a-partly-public-document-cannot-be-published-req-wrp-002 */
+		unredacted() {
+			return this.summary.unredacted || []
 		},
 
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model */
@@ -181,6 +183,22 @@ export default {
 				}}
 			</NcNoteCard>
 
+			<NcNoteCard v-if="unredacted.length > 0" type="warning">
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'These partly public documents cannot be published until they have a verified redacted version.',
+						)
+					}}
+				</p>
+				<ul class="woo-batch__unredacted">
+					<li v-for="item in unredacted" :key="item.fileName">
+						{{ item.fileName }}: {{ item.reason }}
+					</li>
+				</ul>
+			</NcNoteCard>
+
 			<h2>{{ t('opencatalogi', 'WOO batch') }} — {{ batch.caseReference }}</h2>
 			<p class="woo-batch__progress">
 				{{
@@ -222,12 +240,6 @@ export default {
 					}}
 				</p>
 			</section>
-
-			<WooRedactionView
-				v-if="activeDocument"
-				:documentId="activeDocument.id"
-				:batchId="batchId"
-				:entities="activeDocument.entities || []" />
 
 			<div class="woo-batch__actions">
 				<NcButton :href="inventarislijstUrl('csv')">
@@ -296,6 +308,11 @@ export default {
 	flex-wrap: wrap;
 	gap: 8px;
 	margin-top: 16px;
+}
+
+.woo-batch__unredacted {
+	margin: 4px 0 0;
+	padding-inline-start: 20px;
 }
 
 .woo-batch__published {

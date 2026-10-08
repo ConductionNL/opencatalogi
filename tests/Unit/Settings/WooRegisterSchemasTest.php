@@ -66,6 +66,10 @@ class WooRegisterSchemasTest extends TestCase {
 		'createdAt',
 		'updatedAt',
 		'createdBy',
+		// Read by publishBatch() for the publication it creates
+		// (woo-batch-creates-publications, REQ-WBP-001).
+		'title',
+		'wooCategory',
 	];
 
 	/**
@@ -83,6 +87,9 @@ class WooRegisterSchemasTest extends TestCase {
 		'weigeringsgronden',
 		'redactionInstructions',
 		'anonymizedDocument',
+		'anonymizedDocumentHash',
+		'redactionStatus',
+		'redactionMessage',
 		'caseReference',
 		'assessedBy',
 		'assessedAt',

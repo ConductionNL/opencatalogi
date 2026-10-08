@@ -1,0 +1,153 @@
+{
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"collection"
+				],
+				"configuration": {
+					"schemas": {
+						"collection": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "A resident's own dossier. Read through the portal scoped by owner, never by an employee"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"collection": {
+				"slug": "collection",
+				"title": "Dossier",
+				"version": "0.1.1",
+				"published": "2026-09-30T00:00:00+00:00",
+				"summary": "Publications and documents a resident keeps together",
+				"description": "A resident's private dossier of Woo publications (hydra woo-citizen-journey, contract C1). The owner is the portal subject reference, set by the server. Only the owner reads it through the portal, and anyone reads it through a share link while the link exists, then only its public items.",
+				"icon": "FolderMultiple",
+				"type": "object",
+				"required": [
+					"title",
+					"owner"
+				],
+				"authorization": {
+					"read": [
+						"admin"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin"
+					],
+					"delete": [
+						"admin"
+					]
+				},
+				"properties": {
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"description": "The name the resident gave the dossier.",
+						"maxLength": 200
+					},
+					"description": {
+						"type": "string",
+						"title": "Description",
+						"description": "A note on the whole dossier.",
+						"maxLength": 2000
+					},
+					"owner": {
+						"type": "string",
+						"title": "Owner",
+						"description": "The portal subject reference of the resident. Set by the server, never by the client. Never a BSN.",
+						"maxLength": 255
+					},
+					"items": {
+						"type": "array",
+						"title": "Items",
+						"description": "The publications and documents in the dossier. Another app may append an item, never change or remove one.",
+						"maxItems": 500,
+						"items": {
+							"type": "object",
+							"required": [
+								"id",
+								"publication",
+								"addedAt",
+								"addedBy"
+							],
+							"properties": {
+								"id": {
+									"type": "string",
+									"format": "uuid",
+									"title": "Item id",
+									"description": "The id of this item in the dossier."
+								},
+								"publication": {
+									"type": "string",
+									"format": "uuid",
+									"title": "Publication",
+									"description": "The publication this item points at."
+								},
+								"attachment": {
+									"type": "string",
+									"title": "Document",
+									"description": "The file id of one document of the publication, or null for the whole publication."
+								},
+								"note": {
+									"type": "string",
+									"title": "Note",
+									"maxLength": 2000,
+									"description": "The resident's note on this item."
+								},
+								"addedAt": {
+									"type": "string",
+									"format": "date-time",
+									"title": "Added at",
+									"description": "When the item was added."
+								},
+								"addedBy": {
+									"type": "string",
+									"title": "Added by",
+									"description": "resident, or the app id that added it, for example dossiq."
+								},
+								"title": {
+									"type": "string",
+									"title": "Title",
+									"description": "The publication title when the item was added, kept for when it is no longer public.",
+									"maxLength": 500
+								}
+							}
+						}
+					},
+					"share": {
+						"type": "object",
+						"title": "Share link",
+						"description": "Set while a read-only link exists. Revoking sets it to null (an optional property accepts null).",
+						"properties": {
+							"token": {
+								"type": "string",
+								"title": "Token",
+								"description": "The collection id, a dot and 192 random bits in hex."
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time",
+								"title": "Created at",
+								"description": "When the link was made."
+							}
+						}
+					},
+					"sourceOf": {
+						"type": "array",
+						"title": "Started from this dossier",
+						"description": "Case and ticket references started from this dossier.",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			}
+		}
+	}
+}

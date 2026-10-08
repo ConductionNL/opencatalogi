@@ -1,4 +1,5 @@
 import type { APIRequestContext } from '@playwright/test'
+import type { PublicationCatalog } from '../publication-catalog.ts'
 
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -28,6 +29,7 @@ import type { APIRequestContext } from '@playwright/test'
  */
 import { expect, request as pwRequest, test } from '@playwright/test'
 import { resolveBaseUrl } from '../base-url.ts'
+import { publicationCatalog } from '../publication-catalog.ts'
 import {
 	APP,
 	bootApp,
@@ -71,36 +73,15 @@ async function objectTypeConfig(
 }
 
 /**
- * Resolve an existing catalog slug, seeding a catalog when none exists.
+ * Resolve the slug of a catalog scoped to the publication register + schema,
+ * seeding one when none exists, so its publications page renders the index.
  *
  * @param request The Playwright API request context (authenticated session).
  */
-async function resolveCatalogSlug(request: APIRequestContext): Promise<string> {
-	const list = await request.get('/index.php/apps/opencatalogi/api/catalogi')
-	expect(list.status(), 'GET /api/catalogi must succeed').toBe(200)
-	const body = await list.json()
-	const results: Array<Record<string, any>> = Array.isArray(body)
-		? body
-		: (body?.results ?? [])
-	const existing = results.find((c) => c?.slug || c?.['@self']?.slug)
-	if (existing) return String(existing.slug ?? existing['@self']?.slug)
-
-	const { register, schema } = await objectTypeConfig(request, 'catalog')
-	const slug = `${RUN_ID}-cat`
-	const created = await request.post(
-		`/index.php/apps/openregister/api/objects/${register}/${schema}`,
-		{
-			data: {
-				title: `${RUN_ID} catalog`,
-				summary: 'usage-analytics seeded catalog',
-				slug,
-				listed: true,
-			},
-			headers: { 'Content-Type': 'application/json' },
-		},
-	)
-	expect(created.status(), 'seeding a catalog must succeed').toBeLessThan(300)
-	return slug
+async function resolveCatalog(
+	request: APIRequestContext,
+): Promise<PublicationCatalog> {
+	return publicationCatalog(request, RUN_ID)
 }
 
 /**
@@ -149,14 +130,14 @@ test.describe('usage-analytics', () => {
 	}) => {
 		const errors = trackPageErrors(page)
 
-		const slug = await resolveCatalogSlug(request)
+		const { slug, path } = await resolveCatalog(request)
 		const pubId = await resolvePublicationId(request)
 
 		await bootApp(page)
 
 		// The Publications index for the catalog (hash route — path-form
 		// gotos boot the Dashboard in this hash-mode SPA).
-		await page.goto(`${APP}/publications/${slug}`, {
+		await page.goto(`${APP}${path}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await page.waitForTimeout(1500)
@@ -208,7 +189,7 @@ test.describe('usage-analytics', () => {
 		page,
 		request,
 	}) => {
-		const slug = await resolveCatalogSlug(request)
+		const { slug } = await resolveCatalog(request)
 		const pubId = await resolvePublicationId(request)
 		await bootApp(page)
 		await page.goto(`${APP}/publications/${slug}/${pubId}`, {

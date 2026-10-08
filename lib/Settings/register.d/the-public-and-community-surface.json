@@ -1,0 +1,354 @@
+{
+	"_note": "Register fragment for the-public-and-community-surface change (ADR-037). A notice is NOT a publication: reusing `publication` for a storingsmelding would put it in the sitemap and in the DiWoo feed, which is the wrong place. The status page reads components an administrator set, and probes nothing, because a page that infers health from a health check tells the reader the monitoring is up.",
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"serviceStatus",
+					"statusSubscription",
+					"instanceBanner",
+					"noticeBoard",
+					"notice",
+					"recordVote"
+				],
+				"configuration": {
+					"schemas": {
+						"serviceStatus": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Read on every anonymous load of the status page"
+						},
+						"statusSubscription": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "An address is a recipient only once it confirmed; never read by an anonymous reader"
+						},
+						"instanceBanner": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Shown to every signed-in user between its dates"
+						},
+						"noticeBoard": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "One board per catalogue, with comments off until somebody names a moderator"
+						},
+						"notice": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Deliberately not a publication: a notice never enters the sitemap or the DiWoo feed"
+						},
+						"recordVote": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "One vote per reader token per record; the distribution is public, the votes are not"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"serviceStatus": {
+				"slug": "serviceStatus",
+				"title": "Service status",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "One named component and the state somebody set on it",
+				"description": "A component a reader recognises, with its current state and a short message. An administrator sets the state, or an integration does. It is never inferred from a health probe: a status page that reads a probe tells the reader the monitoring is up, which is the failure mode every incident starts with.",
+				"icon": null,
+				"required": [
+					"component",
+					"state",
+					"stateSetAt"
+				],
+				"properties": {
+					"component": {
+						"type": "string",
+						"title": "Component",
+						"facetable": true,
+						"description": "The name a reader recognises, not the hostname."
+					},
+					"state": {
+						"type": "string",
+						"title": "State",
+						"facetable": true,
+						"enum": [
+							"available",
+							"degraded",
+							"unavailable",
+							"maintenance"
+						],
+						"description": "The state somebody set for this component. Nothing is probed, so nothing is inferred."
+					},
+					"message": {
+						"type": "string",
+						"title": "Message",
+						"description": "What a reader should do about it, in a sentence."
+					},
+					"stateSetAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "State set at",
+						"description": "When somebody last said this. Shown on the page, because a state nobody touched is not a fresh state."
+					},
+					"stateSetBy": {
+						"type": "string",
+						"title": "State set by",
+						"description": "Who last set the state."
+					},
+					"order": {
+						"type": "integer",
+						"title": "Order",
+						"default": 0,
+						"description": "Where the component sits in the list on the page."
+					}
+				},
+				"x-openregister-notifications": {
+					"service-status-changed": {
+						"trigger": {
+							"type": "change",
+							"field": "state"
+						},
+						"enabled": true,
+						"channels": [
+							"nc-notification"
+						],
+						"recipients": [
+							{
+								"kind": "object-acl",
+								"permission": "read"
+							}
+						],
+						"subject": {
+							"nl": "{{component}} is nu {{state}}",
+							"en": "{{component}} is now {{state}}"
+						}
+					}
+				}
+			},
+			"statusSubscription": {
+				"slug": "statusSubscription",
+				"title": "Status subscription",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "A reader who asked to be told when a component changes",
+				"description": "A subscription is a notification subscription under ADR-031, not a mailing list of this app's own. An anonymous reader's address is a recipient only after a one-time confirmation, because subscribing somebody else to an alert stream is a way to send mail on their behalf.",
+				"icon": null,
+				"required": [
+					"address",
+					"requestedAt",
+					"confirmationTokenHash"
+				],
+				"properties": {
+					"address": {
+						"type": "string",
+						"title": "Address",
+						"description": "Where the reader asked to be told."
+					},
+					"scope": {
+						"type": "string",
+						"title": "Scope",
+						"facetable": true,
+						"description": "The status page or the notice board subscribed to."
+					},
+					"confirmedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Confirmed at",
+						"description": "Unset until the reader confirmed. An unconfirmed subscription is never a recipient."
+					},
+					"confirmationTokenHash": {
+						"type": "string",
+						"title": "Confirmation token hash",
+						"description": "A hash of the one-time token. Never the token."
+					},
+					"requestedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Requested at",
+						"description": "When the address was offered. Nothing is sent to it until it is confirmed."
+					}
+				}
+			},
+			"instanceBanner": {
+				"slug": "instanceBanner",
+				"title": "Instance banner",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "Something every signed-in user should see, between two dates",
+				"description": "A banner belongs to the instance, not to a catalogue, because planned maintenance is not per catalogue. It shows between its dates and to nobody outside them, and a dismissable banner a user dismissed is not shown to that user again.",
+				"icon": null,
+				"required": [
+					"body",
+					"startDate",
+					"endDate"
+				],
+				"properties": {
+					"body": {
+						"type": "string",
+						"title": "Body",
+						"description": "What the banner says."
+					},
+					"startDate": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Start date",
+						"description": "The day the banner starts showing."
+					},
+					"endDate": {
+						"type": "string",
+						"format": "date-time",
+						"title": "End date",
+						"description": "The day it stops. A banner outside its period is not shown."
+					},
+					"severity": {
+						"type": "string",
+						"title": "Severity",
+						"facetable": true,
+						"enum": [
+							"info",
+							"warning",
+							"critical"
+						],
+						"default": "info",
+						"description": "How loudly the banner is shown."
+					},
+					"dismissable": {
+						"type": "boolean",
+						"title": "Dismissable",
+						"default": true,
+						"description": "Whether a reader can close the banner for themselves."
+					}
+				}
+			},
+			"noticeBoard": {
+				"slug": "noticeBoard",
+				"title": "Notice board",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "A catalogue's board of dated notices",
+				"description": "Comments on a notice are a moderation duty, so they are off by default, and a board that enables them names a moderator. A board with comments and no moderator is refused at the save.",
+				"icon": null,
+				"required": [
+					"catalog",
+					"title"
+				],
+				"properties": {
+					"catalog": {
+						"type": "string",
+						"format": "uuid",
+						"$ref": "catalog",
+						"title": "Catalog",
+						"facetable": true,
+						"description": "The catalogue this board belongs to."
+					},
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"description": "The name the board is shown under."
+					},
+					"commentsEnabled": {
+						"type": "boolean",
+						"title": "Comments enabled",
+						"default": false,
+						"description": "Comments are off until somebody turns them on, and a board with comments has to name a moderator."
+					},
+					"moderator": {
+						"type": "string",
+						"title": "Moderator",
+						"description": "Required as soon as comments are enabled."
+					}
+				}
+			},
+			"notice": {
+				"slug": "notice",
+				"title": "Notice",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "Something a municipality wants to say this week",
+				"description": "A publication is a document the Woo obliges us to hold; a notice is something a municipality wants to say this week. Different lifetimes, different obligations, different readers. A notice never enters the sitemap or the DiWoo feed.",
+				"icon": null,
+				"required": [
+					"board",
+					"title",
+					"startDate",
+					"endDate"
+				],
+				"properties": {
+					"board": {
+						"type": "string",
+						"title": "Board",
+						"facetable": true,
+						"description": "The board this notice is posted on."
+					},
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"description": "What the notice is about, in one line."
+					},
+					"body": {
+						"type": "string",
+						"title": "Body",
+						"description": "The notice itself."
+					},
+					"startDate": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Start date",
+						"description": "The day the notice starts showing."
+					},
+					"endDate": {
+						"type": "string",
+						"format": "date-time",
+						"title": "End date",
+						"description": "The day it stops showing."
+					},
+					"publication": {
+						"type": "string",
+						"title": "Publication",
+						"description": "An optional link to a publication. A link to one, never a copy of one."
+					}
+				}
+			},
+			"recordVote": {
+				"slug": "recordVote",
+				"title": "Record vote",
+				"version": "0.1.0",
+				"published": "2026-09-18T00:00:00+00:00",
+				"summary": "One reader's vote on one published record",
+				"description": "Participatie and inspraak are the use, and both are acts where the count is the point. The distribution is readable; an individual vote is not, because a vote on an inspraak item is an opinion attached to a person. The reader is held as a salted hash of their token.",
+				"icon": null,
+				"required": [
+					"record",
+					"readerHash",
+					"value"
+				],
+				"properties": {
+					"record": {
+						"type": "string",
+						"title": "Record",
+						"facetable": true,
+						"description": "The record the vote was cast on."
+					},
+					"readerHash": {
+						"type": "string",
+						"title": "Reader hash",
+						"description": "A salted hash of the reader token. Never the token, and never a name."
+					},
+					"value": {
+						"type": "string",
+						"title": "Value",
+						"facetable": true,
+						"description": "What the reader voted."
+					},
+					"castAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Cast at",
+						"description": "When the vote was cast."
+					}
+				}
+			}
+		}
+	}
+}

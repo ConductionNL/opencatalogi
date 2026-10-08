@@ -26,7 +26,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Http\TextResponse;
 use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -63,6 +63,7 @@ class RobotsController extends Controller {
 	 * @param IAppManager $appManager The app manager.
 	 * @param IURLGenerator $urlGenerator The URL generator.
 	 * @param IL10N $l10n The localization service.
+	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		$appName,
@@ -72,6 +73,7 @@ class RobotsController extends Controller {
 		private readonly IAppManager $appManager,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IL10N $l10n,
+		private readonly WooCategoryRegistry $categories,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -105,6 +107,8 @@ class RobotsController extends Controller {
 		$searchQuery = [];
 		$searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
 		$searchQuery['@self']['schema'] = $settings['configuration']['catalog_schema'];
+		// Only catalogues that publish a Woo sitemap (REQ-WIH-001).
+		$searchQuery['hasWooSitemap'] = true;
 
 		// Rbac=true enforces schema authorization; multi=false for public robots.txt.
 		$catalogResult = $this->getObjectService()->searchObjectsPaginated(
@@ -120,26 +124,44 @@ class RobotsController extends Controller {
 
 		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
-		$text = '';
-		$count = 0;
+		// A crawler that honours robots may fetch the sitemaps and the documents
+		// they list; every line ends in a real line break (REQ-WIH-001).
+		$text = "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n";
 		foreach ($catalogs as $catalog) {
-			if ($catalog->getSlug() === false) {
+			$slug = $catalog->getSlug();
+			if (is_string($slug) === false || $slug === '' || $this->publishesWoo(catalog: $catalog) === false) {
 				continue;
 			}
 
-			if ($count > 0) {
-				$text .= '\n';
+			// One line per category the registry serves, so a category an operator
+			// added as data is crawled without a code change (REQ-WIC-001).
+			foreach (array_keys($this->categories->sitemapFiles()) as $categoryCode) {
+				$text .= "Sitemap: $baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode\n";
 			}
-
-			foreach (array_keys(SitemapService::INFO_CAT) as $categoryCode) {
-				$text .= "Sitemap: $baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode\n";
-			}
-
-			$count++;
 		}
 
 		return new TextResponse(text: $text);
 	}//end index()
+
+	/**
+	 * Whether a catalogue publishes a Woo sitemap.
+	 *
+	 * The query already asks OpenRegister for these only; this second look keeps
+	 * a catalogue out when a filter is not honoured.
+	 *
+	 * @param object $catalog The catalogue.
+	 *
+	 * @return boolean True when `hasWooSitemap` is true.
+	 */
+	private function publishesWoo(object $catalog): bool {
+		$data = [];
+		if (method_exists($catalog, 'getObject') === true) {
+			$data = (array)$catalog->getObject();
+		}
+
+		return (($data['hasWooSitemap'] ?? false) === true);
+
+	}//end publishesWoo()
 
 	/**
 	 * Attempts to retrieve the OpenRegister service from the container.

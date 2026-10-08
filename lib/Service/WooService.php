@@ -43,6 +43,8 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
+use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IUserSession;
@@ -160,6 +162,8 @@ class WooService {
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translated refusal messages for the publish gate.
+	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
+	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -167,6 +171,8 @@ class WooService {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
+		private readonly BatchPublicationWriter $publications,
+		private readonly DocumentRedactor $redactor,
 	) {
 
 	}//end __construct()
@@ -498,14 +504,16 @@ class WooService {
 	 * @param string $assessmentId The document-assessment object uuid.
 	 * @param string $assessment The new assessment enum value.
 	 * @param array<int,string> $weigeringsgronden Selected grounds (required for niet_openbaar).
+	 * @param string|null $batchId The batch the document belongs to (whose creator owns relative references).
 	 *
 	 * @return array<string, mixed> The updated assessment object.
 	 *
 	 * @throws RuntimeException When inputs are invalid or OpenRegister is unavailable.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
 	 */
-	public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden = []): array {
+	public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden = [], ?string $batchId = null): array {
 		if (array_key_exists($assessment, self::ASSESSMENTS) === false) {
 			throw new RuntimeException('Unknown assessment: ' . $assessment);
 		}
@@ -554,6 +562,9 @@ class WooService {
 
 		$data['assessedBy'] = $assessedBy;
 		$data['assessedAt'] = $now;
+
+		// A partly public document is published only as its verified redacted version (woo-redaction-pipeline).
+		$data = array_merge($data, $this->redactor->forAssessment(assessment: $data, batchId: $batchId, fallbackOwner: $assessedBy));
 
 		$saved = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
 
@@ -604,6 +615,7 @@ class WooService {
 	 * @throws RuntimeException When OpenRegister is unavailable or the batch is missing.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-the-officer-sees-why-a-partly-public-document-cannot-be-published-req-wrp-002
 	 */
 	public function getBatch(string $batchId): array {
 		$objectService = $this->getObjectService();
@@ -634,6 +646,7 @@ class WooService {
 			'total' => $total,
 			'assessed' => $assessed,
 			'progressLabel' => $assessed . '/' . $total,
+			'unredacted' => $this->redactor->unredacted(assessments: $assessments),
 		];
 
 		return $batch;
@@ -924,6 +937,7 @@ class WooService {
 	 * @throws RuntimeException When the batch is not ready or OpenRegister is unavailable.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 */
 	public function publishBatch(string $batchId): array {
 		$objectService = $this->getObjectService();
@@ -942,35 +956,27 @@ class WooService {
 		$this->assertPublishApproved(batchId: $batchId);
 
 		$assessments = $this->loadAssessments(batch: $batch);
-		$publishable = array_values(
-			array_filter(
-				$assessments,
-				static fn (array $a): bool => in_array((string)($a['assessment'] ?? ''), ['openbaar', 'deels_openbaar'], true)
-			)
-		);
-
-		$listings = [];
-		foreach ($publishable as $assessment) {
-			$isPartial = ((string)($assessment['assessment'] ?? '') === 'deels_openbaar');
-
-			$document = (string)($assessment['documentReference'] ?? '');
-			if ($isPartial === true) {
-				$document = (string)($assessment['anonymizedDocument'] ?? '');
-			}
-
-			$listings[] = [
-				'title' => (string)($assessment['fileName'] ?? ''),
-				'assessment' => (string)($assessment['assessment'] ?? ''),
-				'document' => $document,
-			];
-		}
+		$listings = $this->publications->listings(assessments: $assessments);
+		$this->redactor->assertPublishable(listings: $listings, owner: (string)($batch['createdBy'] ?? ''));
 
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-		$publishedCount = count($publishable);
+
+		// The batch becomes a real publication with its documents attached (woo-batch-creates-publications).
+		$publication = $this->publications->publishDocuments(
+			batch: $batch,
+			listings: $listings,
+			now: $now,
+			keepProgress: fn (array $progress): mixed => $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $progress)
+		);
+
+		$publishedCount = count($listings);
 		$publicationMeta = [
 			'wooDecisionDate' => substr($now, 0, 10),
 			'wooRequestReference' => (string)($batch['caseReference'] ?? ''),
-			'wooCategory' => 'verzoek',
+			'wooCategory' => $publication['wooCategory'],
+			'publication' => $publication['id'],
+			'publicationUrl' => $publication['url'],
+			'attached' => $publication['attached'],
 			'documentCount' => (int)($batch['documentSummary']['total'] ?? 0),
 			'publishedCount' => $publishedCount,
 			'decisionLetter' => (string)($batch['decisionLetter'] ?? ''),

@@ -27,6 +27,23 @@ Visibility is enforced server-side via `isObjectPublic()` post-scoring: `publica
 - **Config route enforces scope** — the endpoint returns whatever schemas the catalog's `registers` + `schemas` array is configured for. Freshly-seeded catalogs contain only `publication`; admins can broaden by adding `document` (or other schemas) to the catalog config.
 - **Opt-in document body-text search (WOO-517)** — `_content=true` widens document matching to the extracted body text (PDF/DOCX/XLSX/EML/text) of attached files, not just metadata. Defaults to `false` — byte-identical to the base behaviour above when omitted. Content-matched document rows are indistinguishable in shape from metadata-matched rows, are deduplicated on `@self.id` against any metadata match on the same document, and pass through the same `isObjectPublic()` + transitive publication-visibility gate (SCH-PFTS-CONTENT-001/-002/-003). See `?_search=<term>&_content=true`.
 
+## Filtering council documents
+
+decidiq publishes decisions, agendas and minutes as publications. You filter them
+on three of their properties:
+
+- `documentType`: `agenda`, `decision`, `minutes` or `activity`, an exact match.
+- `bodyName`: the name of the council or committee, an exact match.
+- `meetingDate[gte]` and `meetingDate[lte]`: a date range, both ends included.
+
+`GET /api/search?documentType=minutes&meetingDate[gte]=2026-04-01&meetingDate[lte]=2026-06-30`
+lists the minutes of meetings in that quarter. The response carries facet counts
+for `documentType` and `bodyName` under `facets`.
+
+A range bound must be a date such as `2026-04-01`, a date-time, or a number. Any
+other value answers 400, and the response names the parameter under `parameter`.
+This holds for a range on every property, not only `meetingDate`.
+
 ## Related documentation
 
 - [openwoo full-text search docs](https://openwoo.conduction.nl/docs/Integrations/fulltext-search/) — endpoint-facing reference for external API consumers. **Pending**: the `_content=true` opt-in described above still needs a twin-PR update there (tracked as a follow-up task on [`add-document-content-search`](../../openspec/changes/add-document-content-search/) — out of this repo's reach to open directly).

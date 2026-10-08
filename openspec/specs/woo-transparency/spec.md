@@ -17,6 +17,7 @@ inventarislijst, reading-room rendering) lives in OpenCatalogi.
 @e2e exclude WOO-specific logic is verified by the WooService PHPUnit suite (batch/assessment/inventarislijst/publish, 13 tests) and the wooHelpers vitest suite (redaction-instruction + progress derivation, 10 tests); the queue/board UI is the consumed OpenRegister deck-leaf widget (its own e2e coverage, ADR-022) and notifications are workflow-integration triggers (not an OpenCatalogi UI surface). No bespoke Playwright e2e is owned by this change.
 
 ## Requirements
+
 ### Requirement: WOO document queue (consumes the OpenRegister deck leaf)
 The system MUST provide the WOO document processing queue by **consuming the OpenRegister deck leaf** (`nextcloud-entity-relations` `DeckCardService`, `openregister_deck_links`, `nl.openregister.object.deck.*` events) — NOT by building a bespoke queue table or kanban UI (hydra ADR-022). A disclosure batch is represented as a Deck board whose stacks are the assessment stages; each document is a Deck card linked to its OpenRegister assessment object. WOO contributes only the assessment status vocabulary and the per-document assessment metadata stored on the linked object; board/card mechanics (drag, bulk move, progress, sort/filter/search) are delivered by the leaf and surfaced as the deck widget on the batch object detail page (ADR-019 / ADR-024).
 
@@ -98,44 +99,6 @@ The system MUST support tagging documents with legal grounds for withholding, co
 - WHEN the user changes the assessment to "Openbaar"
 - THEN the weigeringsgronden MUST be cleared
 - AND the user MUST be warned that changing the assessment will remove the grounds
-
-### Requirement: Redaction with WOO context
-Document redaction MUST be coordinated through Docudesk's anonymization pipeline with WOO-specific context, allowing selective entity redaction with legal ground attribution.
-
-#### Scenario: Selective entity redaction
-- GIVEN a document with 15 detected entities (detected by Docudesk)
-- WHEN the user reviews the entities in the WOO redaction view
-- THEN they MUST be able to select which entities to redact (not all-or-nothing)
-- AND they MUST be able to add manual redaction regions (mark areas not detected by AI)
-- AND each redaction MUST be linkable to a weigeringsgrond
-- AND the redaction instructions MUST be sent to Docudesk for execution
-
-#### Scenario: Redaction preview
-- GIVEN a document with selected redactions
-- WHEN the user clicks "Voorbeeld"
-- THEN a preview MUST show the document with redacted areas blacked out
-- AND the user MUST be able to approve or adjust before finalizing
-
-#### Scenario: Redaction produces clean document
-- GIVEN a finalized redaction
-- WHEN Docudesk generates the anonymized document
-- THEN redacted text MUST be irrecoverably removed (not just visually hidden)
-- AND redacted areas MUST show black bars (standard WOO convention)
-- AND the original document MUST be preserved unchanged
-
-#### Scenario: Redaction audit trail (via OpenRegister audit-trail abstraction)
-- GIVEN a document with 5 redacted entities
-- WHEN the redaction is finalized
-- THEN an audit record MUST be created listing each redacted entity, its page/position, the weigeringsgrond applied, and the user who approved the redaction
-- AND immutability MUST be provided by the OpenRegister immutable audit-trail abstraction on the assessment object (ADR-022) — NOT a bespoke immutable events table in OpenCatalogi
-- AND the WOO-specific entity→ground→position payload is the in-app contribution recorded against that audit event
-
-#### Scenario: Redaction of multi-page document
-- GIVEN a 50-page PDF document with entities detected on 12 pages
-- WHEN the user reviews the redaction view
-- THEN they MUST be able to navigate between pages with detected entities
-- AND they MUST see entity highlights on each page
-- AND page numbers with entities MUST be highlighted in the page navigation
 
 ### Requirement: WOO batch data model
 The system MUST store WOO batch and document assessment data in OpenRegister using well-defined schemas.
@@ -373,8 +336,6 @@ The system MUST support notifications for WOO workflow events by **consuming the
 - AND the notification MUST indicate how many documents remain unassessed
 - AND the deadline-timer logic MUST live in the workflow leaf, not as bespoke in-app cron code
 
-
-
 ### Requirement: WOO batch and assessment objects have shipped storage schemas (WOO-PROV-001)
 
 The app MUST ship `wooBatch` and `wooAssessment` schemas in the bundled
@@ -465,3 +426,75 @@ MUST be members of that key set.
   ids and MUST NOT contain any literal `@resolve:` string.
 
 > @e2e exclude Frontend substitution is covered by the parity test plus the existing initial-state provision; a live-instance check is recorded in the change's tasks rather than as an automated e2e (the WOO surface needs a provisioned Deck leaf to be meaningfully driven).
+
+### Requirement: Publishing a Woo batch creates a public publication with its documents attached (REQ-WBP-001)
+
+Implements hydra `woo-citizen-journey`: Both publishing paths MUST create a public, searchable publication.
+
+Publishing an approved batch SHALL create one `publication` with `publicationKind: actief`, the batch's `wooCategory` (default `infocat014`), its `caseReference`, a `publicationDate` of the moment of publishing, and every disclosable document attached as a published file. `niet_openbaar` documents SHALL NOT be attached, and `deels_openbaar` documents SHALL be attached as their redacted version. The batch SHALL record the publication's id and URL.
+
+#### Scenario: A published batch is found
+
+- **GIVEN** an approved Woo batch with one `openbaar`, one `deels_openbaar` and one `niet_openbaar` document
+- **WHEN** the editor publishes it
+- **THEN** a publication with `publicationKind: actief` exists with two published files: the first document and the redacted second
+- **AND** the batch's `wooPublication.publication` names it
+
+### Requirement: The approval gate stays, and a missing document stops the publish (REQ-WBP-002)
+
+Implements hydra `woo-citizen-journey` design C6 (the batch keeps its approval gate).
+
+Publishing SHALL still require `ready_for_review` and a completed approval. Every document SHALL be resolved to a file before anything is written; when one cannot be found, publishing SHALL fail with that document's name and SHALL create no publication. Publishing a batch again after a partial failure SHALL reuse the recorded publication.
+
+#### Scenario: A document is missing
+
+- **GIVEN** an approved batch whose second document no longer exists
+- **WHEN** the editor publishes it
+- **THEN** the publish fails naming that document
+- **AND** no publication is created and the batch stays `ready_for_review`
+
+#### Scenario: Not approved
+
+- **GIVEN** a batch in `ready_for_review` without a completed approval
+- **WHEN** the editor publishes it
+- **THEN** the publish is refused and no publication is created
+
+### Requirement: A partly public document is published only as a verified redacted version (REQ-WRP-001)
+
+Assessing a document as `deels_openbaar` SHALL produce its redacted version through OpenRegister's redaction pipeline (`FileService::anonymizeDocument`). The findings SHALL be the ones OpenRegister selects for its own anonymize endpoint, so a finding the officer rejected is never redacted and OpenCatalogi accepts nothing on the officer's behalf. The result SHALL count as verified only when it is a separate file, its bytes differ from the original, and OpenRegister reports no residual findings. The assessment SHALL store the verified file id and its SHA-256.
+
+Publishing SHALL refuse a batch while any `deels_openbaar` document lacks a verified redacted file, or while that file is the original, is gone, or has changed bytes. When redaction is unavailable or fails, the original SHALL NOT be published in its place.
+
+#### Scenario: Redaction breaks
+<!-- @e2e exclude Server-side fail-closed contract between OpenCatalogi and OpenRegister's redaction service; a browser cannot break that call on demand. Proven by PHPUnit WooServiceTest::testABrokenRedactionNeverPublishesTheOriginal, which fails on a version that publishes the original. -->
+
+- **GIVEN** an approved batch with a document assessed as `deels_openbaar`
+- **AND** OpenRegister's redaction call fails
+- **WHEN** the officer publishes the batch
+- **THEN** the publish is refused, naming that document
+- **AND** no file is attached and the original is not published
+
+#### Scenario: Redaction works
+<!-- @e2e exclude Needs a live redaction backend (OpenAnonymiser or Presidio) on the test instance; covered by PHPUnit WooServiceTest::testAVerifiedRedactionIsWhatGetsPublished. -->
+
+- **GIVEN** a document assessed as `deels_openbaar` whose redaction is verified
+- **WHEN** the officer publishes the batch
+- **THEN** the redacted file is attached in place of the original
+
+#### Scenario: The redacted file changed after verification
+<!-- @e2e exclude Server-side integrity check on file bytes; covered by PHPUnit WooServiceTest::testARedactedFileChangedSinceVerificationBlocksThePublish. -->
+
+- **GIVEN** a verified redacted file whose bytes changed since
+- **WHEN** the officer publishes the batch
+- **THEN** the publish is refused, naming that document
+
+### Requirement: The officer sees why a partly public document cannot be published (REQ-WRP-002)
+
+The batch SHALL list every `deels_openbaar` document without a verified redacted version, each with the reason redaction did not produce one. The batch page SHALL show that list.
+
+#### Scenario: A redaction failed
+<!-- @e2e exclude The list is fed by a failed server-side redaction, which a browser run cannot force; covered by PHPUnit WooServiceTest::testTheBatchNamesEveryUnredactedDocumentWithItsReason. -->
+
+- **GIVEN** a batch with a `deels_openbaar` document whose redaction failed
+- **WHEN** the officer opens the batch
+- **THEN** the page names that document and the reason

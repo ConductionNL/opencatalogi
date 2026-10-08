@@ -16,6 +16,7 @@ import type { Page } from '@playwright/test'
  *   [data-testid="cn-row-actions"]     — the per-row NcActions trigger
  *   [data-testid="cn-action-item-edit"]   — Edit action in the row menu
  *   [data-testid="cn-action-item-delete"] — Delete action in the row menu
+ *   [data-testid="cn-action-item-file-list"] — File list action (Publications)
  *   [data-testid="cn-modal"]           — the form / delete dialog modal
  *
  * The create/edit form is CnFormDialog: schema-driven NcTextField inputs
@@ -99,11 +100,11 @@ export function rowByTitle(page: Page, title: string) {
 		.first()
 }
 
-/** Open a row's action menu and click an action (edit / delete). */
+/** Open a row's action menu and click an action (edit / delete / file-list). */
 export async function rowAction(
 	page: Page,
 	title: string,
-	action: 'edit' | 'delete',
+	action: 'edit' | 'delete' | 'file-list',
 ): Promise<void> {
 	const row = rowByTitle(page, title)
 	await expect(row).toBeVisible({ timeout: 10000 })

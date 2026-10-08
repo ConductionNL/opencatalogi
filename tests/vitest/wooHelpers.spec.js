@@ -2,59 +2,15 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Unit tests for the pure WOO client helpers in src/services/wooHelpers.js —
- * redaction-instruction building (entity -> weigeringsgrond mapping), pages-with-
- * entities derivation, per-status summary/progress derivation, and the ready-for-
- * review gate. Offline, no DOM.
+ * Unit tests for the pure WOO client helpers in src/services/wooHelpers.js:
+ * per-status summary/progress derivation and the ready-for-review gate.
+ * Offline, no DOM.
  */
 import { describe, expect, it } from 'vitest'
 import {
-	buildRedactionInstructions,
 	canMarkReadyForReview,
 	deriveSummary,
-	pagesWithEntities,
 } from '../../src/services/wooHelpers.js'
-
-describe('buildRedactionInstructions', () => {
-	const entities = [
-		{ id: 'e1', text: 'Jan', page: 1 },
-		{ id: 'e2', text: 'BSN', page: 2 },
-		{ id: 'e3', text: 'Adres', page: 2 },
-	]
-
-	it('only includes selected entities and maps the chosen ground', () => {
-		const selected = { e1: true, e2: false, e3: true }
-		const grounds = { e1: { id: '5.1.2.e' }, e3: { id: '5.2.e' } }
-		const out = buildRedactionInstructions(entities, selected, grounds)
-		expect(out).toHaveLength(2)
-		expect(out[0]).toEqual({
-			entityId: 'e1',
-			text: 'Jan',
-			page: 1,
-			weigeringsgrond: '5.1.2.e',
-		})
-		expect(out[1].weigeringsgrond).toBe('5.2.e')
-	})
-
-	it('uses null when no ground was chosen', () => {
-		const out = buildRedactionInstructions(entities, { e1: true }, {})
-		expect(out[0].weigeringsgrond).toBeNull()
-	})
-
-	it('handles empty input gracefully', () => {
-		expect(buildRedactionInstructions(null, null, null)).toEqual([])
-	})
-})
-
-describe('pagesWithEntities', () => {
-	it('returns sorted unique pages', () => {
-		const entities = [{ page: 3 }, { page: 1 }, { page: 3 }, { page: null }]
-		expect(pagesWithEntities(entities)).toEqual([1, 3])
-	})
-	it('handles empty input', () => {
-		expect(pagesWithEntities()).toEqual([])
-	})
-})
 
 describe('deriveSummary', () => {
 	it('counts per status and derives progress', () => {

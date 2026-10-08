@@ -222,10 +222,3 @@ export default {
 	color: var(--color-main-text);
 }
 </style>
-
-<style>
-/* Ensure mass action dialogs appear on top of other modals */
-.mass-action-dialog {
-	z-index: 10000 !important;
-}
-</style>

@@ -29,6 +29,8 @@ use OCA\OpenCatalogi\Http\DcatResponse;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -44,6 +46,11 @@ class DcatControllerTest extends TestCase {
 	private IRequest|MockObject $request;
 	private DcatService|MockObject $dcatService;
 	private CatalogiService|MockObject $catalogiService;
+	private PublicationQueryService|MockObject $queryService;
+	private StandardsVersionService|MockObject $standardsVersions;
+
+	/** @var \Closure(array): array The read-rule guard the query-service mock applies. */
+	private \Closure $guard;
 	private DcatController $controller;
 
 	protected function setUp(): void {
@@ -54,14 +61,31 @@ class DcatControllerTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
+		// Pass-through by default; the WOO-581 tests below swap $this->guard.
+		$this->guard = static fn (array $catalog): array => $catalog;
+		$this->standardsVersions = $this->createMock(StandardsVersionService::class);
+		$this->standardsVersions->method('dcatApNlVersion')->willReturn(
+			[
+				'declared' => StandardsVersionService::DCAT_AP_NL_VERSION,
+				'published' => StandardsVersionService::DCAT_AP_NL_VERSION,
+				'status' => StandardsVersionService::STATUS_CURRENT,
+				'profile' => StandardsVersionService::DCAT_AP_NL_PROFILE,
+			]
+		);
+		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService->method('applyCatalogReadRuleGuard')
+			->willReturnCallback(fn (array $catalog): array => ($this->guard)($catalog));
+
 		$this->controller = new DcatController(
 			'opencatalogi',
 			$this->request,
 			$this->dcatService,
 			new DcatSerializer(),
 			$this->catalogiService,
+			$this->queryService,
 			$l10n,
 			$this->createMock(LoggerInterface::class),
+			$this->standardsVersions,
 			null
 		);
 	}
@@ -120,6 +144,58 @@ class DcatControllerTest extends TestCase {
 		$this->assertSame('"abc"', $response->getHeaders()['ETag']);
 	}
 
+	/**
+	 * WOO-581: the feed builds from the GUARDED catalog. A schema the
+	 * SCH-PFTS-CAT-002 guard drops must not reach buildCatalogDocument(), or an
+	 * anonymous harvester would crawl it.
+	 *
+	 * @return void
+	 */
+	public function testCatalogBuildsTheFeedFromTheReadRuleGuardedCatalog(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static fn ($key, $default = null) => $key === 'page' ? 1 : null
+		);
+		$this->request->method('getHeader')->willReturnCallback(
+			static fn ($key) => $key === 'Accept' ? 'application/ld+json' : ''
+		);
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['hasDcat' => true, 'registers' => [20], 'schemas' => [28, 56]]);
+		$this->dcatService->method('isDcatEnabled')->willReturn(true);
+		$this->guard = static fn (array $catalog): array => array_merge($catalog, ['schemas' => [28]]);
+
+		$this->dcatService->expects($this->once())
+			->method('buildCatalogDocument')
+			->with($this->callback(static fn (array $catalog): bool => $catalog['schemas'] === [28]))
+			->willReturn(['@context' => [], '@graph' => [], '_meta' => ['etag' => '"e"']]);
+
+		$this->assertSame(200, $this->controller->catalog('woo')->getStatus());
+	}//end testCatalogBuildsTheFeedFromTheReadRuleGuardedCatalog()
+
+	/**
+	 * WOO-581: the guard runs before anything is built — also when it drops
+	 * every schema. The feed then still answers 200 (an empty catalog), which
+	 * DcatServiceTest pins down to "zero datasets, no search".
+	 *
+	 * @return void
+	 */
+	public function testCatalogStillServesWhenTheGuardEmptiesTheScope(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static fn ($key, $default = null) => $key === 'page' ? 1 : null
+		);
+		$this->request->method('getHeader')->willReturnCallback(
+			static fn ($key) => $key === 'Accept' ? 'application/ld+json' : ''
+		);
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['hasDcat' => true, 'registers' => [20], 'schemas' => [56]]);
+		$this->dcatService->method('isDcatEnabled')->willReturn(true);
+		$this->guard = static fn (array $catalog): array => array_merge($catalog, ['schemas' => []]);
+
+		$this->dcatService->expects($this->once())
+			->method('buildCatalogDocument')
+			->with($this->callback(static fn (array $catalog): bool => $catalog['schemas'] === []))
+			->willReturn(['@context' => [], '@graph' => [['@type' => 'dcat:Catalog', 'dcat:dataset' => []]], '_meta' => ['etag' => '"e"', 'count' => 0]]);
+
+		$this->assertSame(200, $this->controller->catalog('woo')->getStatus());
+	}//end testCatalogStillServesWhenTheGuardEmptiesTheScope()
+
 	public function testCatalogConditionalGetReturns304(): void {
 		$this->request->method('getParam')->willReturnCallback(
 			static fn ($key, $default = null) => $key === 'page' ? 1 : null
@@ -169,6 +245,10 @@ class DcatControllerTest extends TestCase {
 		$data = $response->getData();
 		$this->assertFalse($data['valid']);
 		$this->assertCount(1, $data['violations']);
+
+		// The report must name the profile version its verdict was measured against.
+		$this->assertSame(StandardsVersionService::DCAT_AP_NL_VERSION, $data['profile']['declared']);
+		$this->assertSame(StandardsVersionService::STATUS_CURRENT, $data['profile']['status']);
 	}
 
 	public function testDonlReportUnknownCatalogReturns404(): void {

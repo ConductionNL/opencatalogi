@@ -36,6 +36,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Service\WooService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -59,6 +60,7 @@ class WooController extends Controller {
 	 * @param WooService $wooService The WOO workflow service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
+	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		$appName,
@@ -66,6 +68,7 @@ class WooController extends Controller {
 		private readonly WooService $wooService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
+		private readonly WooCategoryRegistry $categories,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -104,6 +107,48 @@ class WooController extends Controller {
 		$grounds = $this->wooService->getWeigeringsgronden(search: $search);
 		return new JSONResponse(['results' => $grounds, 'total' => count($grounds)]);
 	}//end weigeringsgronden()
+
+	/**
+	 * Return the Woo information categories a publication can be filed under.
+	 *
+	 * Read-only; authenticated. Each row carries the code `wooCategory` stores, the
+	 * Dutch and English name, the waardelijst URI it publishes under, and whether it
+	 * is a waardelijst member or a category this instance added as data. An operator
+	 * who adds one gets it here without a code change (REQ-WIC-001).
+	 *
+	 * @return JSONResponse The categories and their count.
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-editor-is-offered-the-17-categories-req-wpc-003
+	 *
+	 * @no-admin-idor-exempt Returns the information categories, the same rows for
+	 *   every caller: a controlled vocabulary plus this instance's own additions,
+	 *   which are public configuration. The endpoint takes no parameter, so there is
+	 *   no object id to scope.
+	 */
+	public function categories(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$rows = [];
+		foreach ($this->categories->all() as $code => $category) {
+			$rows[] = [
+				'code' => $code,
+				'nl' => $category['label'],
+				'en' => $category['labelEn'],
+				'label' => $this->l10n->t($category['labelEn']),
+				'uri' => $category['tooiUri'],
+				'mapsTo' => $category['mapsTo'],
+				'origin' => $category['origin'],
+				'sitemap' => $category['sitemapFile'],
+			];
+		}
+
+		return new JSONResponse(['results' => $rows, 'total' => count($rows)]);
+	}//end categories()
 
 	/**
 	 * Create a WOO disclosure batch and provision its Deck board + cards.
@@ -182,6 +227,7 @@ class WooController extends Controller {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function updateAssessment(string $batchId, string $docId): JSONResponse {
@@ -191,7 +237,8 @@ class WooController extends Controller {
 			$result = $this->wooService->updateAssessment(
 				assessmentId: $docId,
 				assessment: $assessment,
-				weigeringsgronden: $weigeringsgronden
+				weigeringsgronden: $weigeringsgronden,
+				batchId: $batchId
 			);
 			return new JSONResponse($result);
 		} catch (\Throwable $e) {

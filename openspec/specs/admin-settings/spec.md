@@ -135,7 +135,7 @@ MUST follow OR's data types.
 - **WHEN** the settings are saved,
 - **THEN** a `POST /api/settings` request MUST be sent.
 
-## REMOVED Requirements
+## Change history
 
 The following requirements described patterns that duplicated OR's `IAppConfig`
 conventions. They are retained for traceability; implementation MUST NOT

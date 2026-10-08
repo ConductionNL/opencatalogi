@@ -253,10 +253,3 @@ export default {
 	gap: 1rem;
 }
 </style>
-
-<style>
-/* Ensure mass action dialogs appear on top of other modals */
-.mass-action-dialog {
-	z-index: 10000 !important;
-}
-</style>

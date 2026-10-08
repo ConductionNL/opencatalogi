@@ -35,8 +35,10 @@
 
 namespace OCA\OpenCatalogi\Service;
 
-use OC_App;
+use DateTimeImmutable;
+use DateTimeZone;
 use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -125,6 +127,27 @@ class SettingsService {
 	public const DEFAULT_INTERVAL_SECONDS = 3600;
 
 	/**
+	 * App config key holding what a register event can still complete in a catalogue scope.
+	 *
+	 * A JSON list of register slugs not resolved yet, plus the ids of resolved
+	 * registers whose catalogue still names a schema by slug. Written by
+	 * backfillCatalogScopes(), read by CatalogScopePendingListener.
+	 */
+	public const CATALOG_SCOPE_PENDING_KEY = 'catalog_scope_pending';
+
+	/**
+	 * Seeded catalogues that ship unpublished and are published once their scope resolves.
+	 *
+	 * @var list<string>
+	 */
+	private const PUBLISH_WHEN_RESOLVED = ['applicatielandschap'];
+
+	/**
+	 * App config key listing the seeded catalogues already published automatically.
+	 */
+	private const SEEDS_PUBLISHED_KEY = 'catalog_seeds_published';
+
+	/**
 	 * This property holds the name of the application, which is used for identification and configuration purposes.
 	 *
 	 * @var string $appName The name of the app.
@@ -208,56 +231,52 @@ class SettingsService {
 	}//end isOpenRegisterEnabled()
 
 	/**
-	 * Attempts to install or update OpenRegister.
+	 * Attempts to make a compatible OpenRegister available.
+	 *
+	 * Uses only the public app manager. An OpenRegister that is installed but
+	 * disabled is enabled with IAppManager::enableApp(). Downloading/installing
+	 * an app from the App Store or upgrading an installed one has no public API,
+	 * so a missing or too-old OpenRegister yields a RuntimeException that tells
+	 * the administrator what to do instead.
+	 *
+	 * This used to call \OC_App::installApp(), \OC_App::enable() and
+	 * \OC_App::updateApp(). Those are private API and installApp()/enable() do
+	 * not exist on Nextcloud 34 or 35, so the call ended in an \Error that the
+	 * `catch (\Exception)` below could not catch.
 	 *
 	 * @param string|null $minVersion Minimum required version.
 	 *
-	 * @return boolean True if installation/update was successful.
-	 * @throws \RuntimeException If installation/update fails.
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.StaticAccess)         — OC_App is Nextcloud's legacy static API
+	 * @return boolean True when a compatible OpenRegister is enabled.
+	 * @throws \RuntimeException If OpenRegister is missing, too old or cannot be enabled.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	public function installOrUpdateOpenRegister(?string $minVersion = self::MIN_OPENREGISTER_VERSION): bool {
-		try {
-			if ($this->isOpenRegisterInstalled(minVersion: $minVersion) === false) {
-				// Removed problematic download functionality
-				// Then install the downloaded app.
-				if (OC_App::installApp(self::OPENREGISTER_APP_ID) === false) {
-					throw new RuntimeException('Failed to install OpenRegister');
-				}
+		if ($this->isOpenRegisterInstalled(minVersion: null) === false) {
+			try {
+				// Throws when the app is not on disk or was never installed.
+				$this->appManager->enableApp(self::OPENREGISTER_APP_ID);
+			} catch (\Exception $e) {
+				throw new RuntimeException(
+					'Failed to install/update OpenRegister: OpenRegister is not installed on this server and cannot be '
+					. 'installed by OpenCatalogi. Install it from the Nextcloud App Store (or `occ app:install openregister`). '
+					. 'Reason: ' . $e->getMessage()
+				);
+			}//end try
+		}//end if
 
-				// Enable the app after installation.
-				if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
-					throw new RuntimeException('Failed to enable OpenRegister');
-				}
-			}
+		if ($this->isOpenRegisterInstalled(minVersion: $minVersion) === false) {
+			throw new RuntimeException(
+				sprintf(
+					'Failed to install/update OpenRegister: version %s is older than the required %s. '
+					. 'Update it from the Nextcloud App Store (or `occ app:update openregister`).',
+					$this->appManager->getAppVersion(self::OPENREGISTER_APP_ID),
+					(string) $minVersion
+				)
+			);
+		}
 
-			if ($this->isOpenRegisterInstalled(minVersion: $minVersion) === true && $minVersion !== null) {
-				// Check if update is needed.
-				$currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
-				if (version_compare(version1: $currentVersion, version2: $minVersion, operator: '<') === true) {
-					// Removed problematic download functionality
-					// Then update the app.
-					if (OC_App::updateApp(self::OPENREGISTER_APP_ID) === false) {
-						throw new RuntimeException('Failed to update OpenRegister');
-					}
-				}
-
-				// Ensure the app is enabled after update.
-				if ($this->isOpenRegisterEnabled() === false) {
-					if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
-						throw new RuntimeException('Failed to enable OpenRegister after update');
-					}
-				}
-			}
-
-			return true;
-		} catch (\Exception $e) {
-			throw new RuntimeException('Failed to install/update OpenRegister: ' . $e->getMessage());
-		}//end try
+		return true;
 
 	}//end installOrUpdateOpenRegister()
 
@@ -521,6 +540,11 @@ class SettingsService {
 		$defaults['woo_index_registration_status'] = 'not_registered';
 		$defaults['woo_index_registration_url'] = '';
 		$defaults['woo_index_registration_at'] = '';
+		$defaults['woo_index_registration_answer'] = '';
+
+		// National channel sources (woo-national-delivery-repair, REQ-WND-001): a
+		// JSON map from channel to the slug of the integriq source it is sent through.
+		$defaults['channel_sources'] = '{}';
 
 		// Get the current values for the object types from the configuration.
 		try {
@@ -647,6 +671,36 @@ class SettingsService {
 	}//end enrichRegistersWithSchemas()
 
 	/**
+	 * Keep only the known national channels that name a source slug.
+	 *
+	 * @param mixed $value The submitted map, as an array or as a JSON string.
+	 *
+	 * @return string The map as JSON.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
+	 */
+	private function normaliseChannelSources(mixed $value): string {
+		if (is_string($value) === true) {
+			$value = json_decode($value, true);
+		}
+
+		$sources = [];
+		foreach (NationalIndexService::CONFIGURABLE_CHANNELS as $channel) {
+			$slug = '';
+			if (is_array($value) === true && is_string($value[$channel] ?? null) === true) {
+				$slug = trim($value[$channel]);
+			}
+
+			if ($slug !== '') {
+				$sources[$channel] = $slug;
+			}
+		}
+
+		return (string)json_encode((object)$sources);
+
+	}//end normaliseChannelSources()
+
+	/**
 	 * Update the settings configuration.
 	 *
 	 * Only keys that belong to the canonical settings allowlist (the same set
@@ -702,13 +756,22 @@ class SettingsService {
 			$allowedKeys[] = 'woo_index_registration_status';
 			$allowedKeys[] = 'woo_index_registration_url';
 			$allowedKeys[] = 'woo_index_registration_at';
+			$allowedKeys[] = 'woo_index_registration_answer';
+
+			// National channel sources (REQ-WND-001).
+			$allowedKeys[] = 'channel_sources';
 
 			$updated = [];
 
 			// Only persist keys that are explicitly allowed.
 			foreach ($allowedKeys as $key) {
 				if (array_key_exists($key, $data) === true) {
-					$this->config->setValueString($this->appName, $key, (string)$data[$key]);
+					$value = $data[$key];
+					if ($key === 'channel_sources') {
+						$value = $this->normaliseChannelSources(value: $value);
+					}
+
+					$this->config->setValueString($this->appName, $key, (string)$value);
 					// Retrieve the persisted value to confirm the change.
 					$updated[$key] = $this->config->getValueString($this->appName, $key);
 				}
@@ -1215,6 +1278,48 @@ class SettingsService {
 			'woo_assessment_schema' => 'wooAssessment',
 		];
 
+		// Published service and case type catalogue: four schemas in the same
+		// shared publication register, with snake_case config keys rather than
+		// the camelCase schema slugs, for the same reason as $wooSchemaMap.
+		$catalogueSchemaMap = [
+			'service_catalogue_entry_schema' => 'serviceCatalogueEntry',
+			'case_type_definition_schema' => 'caseTypeDefinition',
+			'knowledge_article_schema' => 'knowledgeArticle',
+			'article_verdict_schema' => 'articleVerdict',
+		];
+
+		// Active publication, inspection and the national indexes: six more
+		// schemas in the same shared publication register, same key convention.
+		$publicationSchemaMap = [
+			'publication_rule_schema' => 'publicationRule',
+			'inspection_schema' => 'inspection',
+			'publication_process_schema' => 'publicationProcess',
+			'zienswijze_ask_schema' => 'zienswijzeAsk',
+			'depublication_schema' => 'depublication',
+			'obligation_source_schema' => 'obligationSource',
+		];
+
+		// Woo request intake and the comment period: two more schemas in the
+		// same shared publication register, same key convention. A Woo request
+		// is minted here rather than assumed to exist elsewhere, which is what
+		// gives a statutory term a subject.
+		$wooRequestSchemaMap = [
+			'woo_request_schema' => 'wooRequest',
+			'comment_period_schema' => 'commentPeriod',
+		];
+
+		// The public and community surface: the status page, the banner, the
+		// notice boards and the reader's vote. A notice is deliberately its own
+		// schema rather than a publication, so it never enters the sitemap.
+		$communitySchemaMap = [
+			'service_status_schema' => 'serviceStatus',
+			'status_subscription_schema' => 'statusSubscription',
+			'instance_banner_schema' => 'instanceBanner',
+			'notice_board_schema' => 'noticeBoard',
+			'notice_schema' => 'notice',
+			'record_vote_schema' => 'recordVote',
+		];
+
 		// Build a map of schema slugs to schema IDs.
 		$schemaMap = [];
 		foreach (($importResult['schemas'] ?? []) as $schema) {
@@ -1276,7 +1381,11 @@ class SettingsService {
 		$expectedSlugs = array_merge(
 			$objectTypes,
 			array_values($ooapiTypeMap),
-			array_values($wooSchemaMap)
+			array_values($wooSchemaMap),
+			array_values($catalogueSchemaMap),
+			array_values($publicationSchemaMap),
+			array_values($wooRequestSchemaMap),
+			array_values($communitySchemaMap)
 		);
 		$missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
 		if (empty($missingSlugs) === false) {
@@ -1362,6 +1471,49 @@ class SettingsService {
 			}
 		}
 
+		// The service catalogue shares the same publication register, and each of
+		// its four schemas gets its own key. A key that stays unset makes the
+		// catalogue controller answer 503, which is the intended refusal: an
+		// unconfigured catalogue is not an empty one.
+		if ($registerId !== null) {
+			$this->config->setValueString($this->appName, 'service_catalogue_register', (string)$registerId);
+		}
+
+		foreach ($catalogueSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The publication rules, inspections and the rest share the publication
+		// register, which `publication_register` already points at. A key that
+		// stays unset makes the inspection controller answer 503 rather than
+		// pretending there are no inspections.
+		foreach ($publicationSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The Woo request and the comment period share the same register. An
+		// unset key makes the intake answer 503 rather than minting a request
+		// nothing can read back, and a request nobody can read back is a
+		// statutory term counted against nothing.
+		foreach ($wooRequestSchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
+		// The community surface shares the same register. An unset key makes
+		// the status page answer 503 rather than reporting that nothing is
+		// wrong with anything.
+		foreach ($communitySchemaMap as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+
 		// The organisation is OpenRegister's, so its keys come from there.
 		$this->resolveSharedOrganisationConfiguration();
 
@@ -1434,9 +1586,15 @@ class SettingsService {
 	 * Idempotent — a catalog that already has a non-empty array is skipped so
 	 * admin-configured multi-register catalogs are never touched.
 	 *
+	 * Public because CatalogScopePendingListener runs it again when a register a
+	 * seeded catalogue names by slug appears later (stackiq installed after
+	 * OpenCatalogi).
+	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
 	 */
-	private function backfillCatalogScopes(): void {
+	public function backfillCatalogScopes(): void {
 		try {
 			$publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
 			$publicationSchema = $this->config->getValueString($this->appName, 'publication_schema', '');
@@ -1456,15 +1614,24 @@ class SettingsService {
 			}
 
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			// Every catalogue, published or not: this runs from the import and
+			// from register events, often without a user session, and an
+			// unpublished seeded catalogue still needs its scope resolved.
 			$catalogs = $objectService->searchObjects(
 				query: [
 					'@self' => [
 						'register' => $catalogRegister,
 						'schema' => $catalogSchema,
 					],
-				]
+				],
+				_rbac: false,
+				_multitenancy: false
 			);
+			if (is_array($catalogs) === false) {
+				$catalogs = [];
+			}
 
+			$pending = [];
 			foreach ($catalogs as $catalog) {
 				$catalogData = $catalog;
 				if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
@@ -1477,10 +1644,33 @@ class SettingsService {
 
 				$registers = ($catalogData['registers'] ?? null);
 				$schemas = ($catalogData['schemas'] ?? null);
+
+				// A seeded catalogue names its scope by slug (the ids only exist
+				// after the import). Resolve those first, or the empty-looking
+				// check below would never see them and the scope would stay
+				// unreadable to isObjectInCatalogScope(), which intvals it.
+				// Schema slugs resolve only inside the catalogue's own registers:
+				// a bare slug like `module` can name another app's schema.
+				$slugsResolved = false;
+				if (is_array($registers) === true && is_array($schemas) === true) {
+					$scope = $this->resolveScopeSlugs(registers: $registers, schemas: $schemas);
+					$registers = $scope['registers'];
+					$schemas = $scope['schemas'];
+					$slugsResolved = $scope['changed'];
+					$pending = array_merge($pending, $scope['pending']);
+				}
+
+				if ($slugsResolved === true) {
+					$catalogData['registers'] = $registers;
+					$catalogData['schemas'] = $schemas;
+				}
+
 				$needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
 				$needsSchemas = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
 
-				if ($needsRegisters === false && $needsSchemas === false) {
+				if ($needsRegisters === false && $needsSchemas === false && $slugsResolved === false
+					&& $this->shouldPublishResolvedSeed(catalog: $catalogData, registers: $registers, schemas: $schemas) === false
+				) {
 					// Admin has already configured a scope; leave it alone.
 					continue;
 				}
@@ -1502,6 +1692,17 @@ class SettingsService {
 
 				if ($needsSchemas === true) {
 					$merged['schemas'] = [$publicationSchema];
+				}
+
+				// A seeded catalogue that ships unpublished because it names
+				// another app (applicatielandschap names stackiq) is published
+				// once, the first time its scope holds ids only. Without that app
+				// it stays hidden instead of showing an empty catalogue. What it
+				// then publishes is still decided per object by the other app's
+				// read rules, which OpenRegister's own public API already applies.
+				$publishNow = $this->shouldPublishResolvedSeed(catalog: $catalogData, registers: $registers, schemas: $schemas);
+				if ($publishNow === true) {
+					$merged['published'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM);
 				}
 
 				// Persisted date-time fields can come back in the SQL-style
@@ -1527,12 +1728,23 @@ class SettingsService {
 						_rbac: false,
 						_multitenancy: false,
 					);
+					if ($publishNow === true) {
+						$this->markSeedPublished(slug: (string)$catalogData['slug']);
+					}
 				} catch (\Exception) {
 					// Per-catalog failure must not abort the whole settings
 					// import; the admin can retro-fit via the catalog edit view.
 					continue;
 				}
 			}//end foreach
+
+			// What a later register event can still complete (stackiq installed
+			// after OpenCatalogi). CatalogScopePendingListener reads this.
+			$this->config->setValueString(
+				$this->appName,
+				self::CATALOG_SCOPE_PENDING_KEY,
+				(string)json_encode(array_values(array_unique($pending)))
+			);
 		} catch (\Exception) {
 			// Never let backfill failure sink the settings import — the wizard
 			// still needs to declare success so the app is at least usable.
@@ -1540,6 +1752,98 @@ class SettingsService {
 		}//end try
 
 	}//end backfillCatalogScopes()
+
+	/**
+	 * Whether a seeded catalogue is due its one automatic publication.
+	 *
+	 * True only for a slug in PUBLISH_WHEN_RESOLVED that has no `published`
+	 * date, whose scope holds ids only, and that was never published this way
+	 * before. The last condition keeps an administrator's later unpublish.
+	 *
+	 * @param array<string, mixed> $catalog The catalogue as stored.
+	 * @param mixed $registers The scope's registers after resolution.
+	 * @param mixed $schemas The scope's schemas after resolution.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 */
+	private function shouldPublishResolvedSeed(array $catalog, mixed $registers, mixed $schemas): bool {
+		$slug = ($catalog['slug'] ?? null);
+		$scopeResolver = new CatalogScopeSlugResolver();
+		if (in_array($slug, self::PUBLISH_WHEN_RESOLVED, true) === false
+			|| empty($catalog['published']) === false
+			|| is_array($registers) === false || $registers === []
+			|| is_array($schemas) === false || $schemas === []
+			|| $scopeResolver->hasSlug(entries: $registers) === true
+			|| $scopeResolver->hasSlug(entries: $schemas) === true
+		) {
+			return false;
+		}
+
+		return in_array($slug, $this->publishedSeeds(), true) === false;
+	}//end shouldPublishResolvedSeed()
+
+	/**
+	 * The seeded catalogues already published automatically once.
+	 *
+	 * @return list<string>
+	 */
+	private function publishedSeeds(): array {
+		$done = json_decode($this->config->getValueString($this->appName, self::SEEDS_PUBLISHED_KEY, '[]'), true);
+		if (is_array($done) === false) {
+			return [];
+		}
+
+		return array_values(array_filter($done, 'is_string'));
+	}//end publishedSeeds()
+
+	/**
+	 * Remember that a seeded catalogue had its one automatic publication.
+	 *
+	 * @param string $slug The catalogue slug.
+	 *
+	 * @return void
+	 */
+	private function markSeedPublished(string $slug): void {
+		$done = $this->publishedSeeds();
+		$done[] = $slug;
+		$this->config->setValueString(
+			$this->appName,
+			self::SEEDS_PUBLISHED_KEY,
+			(string)json_encode(array_values(array_unique($done)))
+		);
+	}//end markSeedPublished()
+
+	/**
+	 * Resolve the slugs in one catalogue scope against OpenRegister.
+	 *
+	 * Registers resolve by slug. Schemas resolve only among the schemas those
+	 * registers list (see CatalogScopeSlugResolver::resolveScope()). Lookups
+	 * bypass RBAC and multitenancy: this runs from the import and from register
+	 * events, where there is often no user session.
+	 *
+	 * @param array<int, mixed> $registers The scope's registers as stored.
+	 * @param array<int, mixed> $schemas The scope's schemas as stored.
+	 *
+	 * @return array{registers: array<int, mixed>, schemas: array<int, mixed>, changed: bool, pending: list<string>}
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
+	 */
+	private function resolveScopeSlugs(array $registers, array $schemas): array {
+		$registerMapper = $this->getRegisterMapper();
+		$schemaMapper = $this->getSchemaMapper();
+
+		return (new CatalogScopeSlugResolver())->resolveScope(
+			registers: $registers,
+			schemas: $schemas,
+			findRegisterId: static fn (string $slug) => $registerMapper?->find($slug, _rbac: false, _multitenancy: false)?->getId(),
+			schemaIdsOfRegister: static fn (int $registerId): array => (
+				$registerMapper?->find($registerId, _rbac: false, _multitenancy: false)?->getSchemas() ?? []
+			),
+			schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper?->find($schemaId, _rbac: false, _multitenancy: false)?->getSlug()
+		);
+	}//end resolveScopeSlugs()
 
 	/**
 	 * Check if settings should be loaded based on version comparison.

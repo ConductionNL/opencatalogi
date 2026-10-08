@@ -56,12 +56,20 @@ class WooControllerTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
+		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
+			$this->createMock(\Psr\Log\LoggerInterface::class),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
+		);
+
 		$this->controller = new WooController(
 			'opencatalogi',
 			$this->request,
 			$this->wooService,
 			$l10n,
-			$this->userSession
+			$this->userSession,
+			$categories
 		);
 
 	}//end setUp()
@@ -168,6 +176,56 @@ class WooControllerTest extends TestCase {
 	 * weigeringsgronden — GET /api/woo/weigeringsgronden
 	 * ------------------------------------------------------------------
 	 */
+
+	/**
+	 * REQ-WPC-003: the 17 Woo information categories, each with its Dutch and
+	 * English name and a label in the reader's language.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testCategoriesListsEveryWaardelijstMemberWithBothNames(): void {
+		$this->authenticate();
+
+		$response = $this->controller->categories();
+
+		$this->assertSame(200, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame(18, $data['total']);
+		$this->assertCount(18, $data['results']);
+		$first = $data['results'][0];
+		$this->assertSame('infocat001', $first['code']);
+		$this->assertSame('Wetten en algemeen verbindende voorschriften', $first['nl']);
+		$this->assertSame('Laws and generally binding regulations', $first['en']);
+		$this->assertSame('Laws and generally binding regulations', $first['label']);
+		$codes = array_column($data['results'], 'code');
+		$this->assertContains('infocat012', $codes);
+		$this->assertContains('infocat017', $codes);
+		$this->assertContains('infocat018', $codes);
+
+	}//end testCategoriesListsEveryWaardelijstMemberWithBothNames()
+
+	public function testEveryCategoryRowSaysWhatItPublishesUnderAndWhereItCameFrom(): void {
+		$this->authenticate();
+
+		$rows = $this->controller->categories()->getData()['results'];
+		foreach ($rows as $row) {
+			$this->assertStringStartsWith(
+				'https://identifier.overheid.nl/tooi/def/thes/kern/c_',
+				$row['uri'],
+				$row['code'] . ' carries no waardelijst URI.'
+			);
+			$this->assertSame('waardelijst', $row['origin']);
+			$this->assertSame('sitemapindex-diwoo-' . $row['code'] . '.xml', $row['sitemap']);
+		}
+
+	}//end testEveryCategoryRowSaysWhatItPublishesUnderAndWhereItCameFrom()
+
+	public function testCategoriesAnonymousReturns401(): void {
+		$this->userSession->method('getUser')->willReturn(null);
+
+		$this->assertSame(401, $this->controller->categories()->getStatus());
+
+	}//end testCategoriesAnonymousReturns401()
 
 	public function testWeigeringsgrondenAnonymousReturns401(): void {
 		$this->userSession->method('getUser')->willReturn(null);

@@ -175,14 +175,14 @@ jobs:
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
       # THE LIST IS THE WHOLE DECLARED RANGE. appinfo/info.xml declares
-      # <nextcloud min-version="32" max-version="34"/>, so 32, 33 and 34 each get
-      # a leg. Adopting NC 34 by REPLACING the list left 32 and 33 advertised to
-      # the App Store with no job touching them — the declared floor became the
+      # <nextcloud min-version="32" max-version="35"/>, so 32, 33, 34 and 35 each
+      # get a leg. Adopting NC 34 by REPLACING the list left 32 and 33 advertised
+      # to the App Store with no job touching them — the declared floor became the
       # untested end, which is the same drift as never testing 34, reversed.
-      # stable34 leads because newman, playwright and journeydoc-capture all read
-      # `fromJSON(inputs.nextcloud-test-refs)[0]` as their single server, and 34
-      # is the major this app had never been exercised on.
-      nextcloud-test-refs: '["stable34", "stable32", "stable33"]'
+      # stable35 leads because newman, playwright and journeydoc-capture all read
+      # `fromJSON(inputs.nextcloud-test-refs)[0]` as their single server, and 35
+      # is the newest major this app declares (same order as thematiq).
+      nextcloud-test-refs: '["stable35", "stable32", "stable33", "stable34"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
@@ -195,7 +195,12 @@ jobs:
       # Those tests are now tagged @group network and excluded by default in both
       # phpunit.xml and phpunit-unit.xml, so the suite is deterministic and offline-safe.
       enable-phpunit: true
-      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
+      # integriq is here because the Integrations page reads integriq's
+      # `app_connection` rows (adopt-connection-registry). Without it the page
+      # shows the missing-dependency screen and `tests/e2e/integrations-page.spec.ts`
+      # fails on every run. `app` is `integriq`, verified in its appinfo/info.xml
+      # on `development` on 2026-09-14.
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"},{"repo":"ConductionNL/integriq","app":"integriq","ref":"development"}]'
 
       # ── E2E browser tests ────────────────────────────────────────────────
       # `playwright-test-path` does double duty in the shared workflow:
@@ -222,15 +227,12 @@ jobs:
       playwright-seed-command: 'bash apps/opencatalogi/tests/e2e/ci-seed.sh'
 
       # ── Integration tests ────────────────────────────────────────────────
-      # Was explicitly `false`. tests/integration ships six
-      # *.postman_collection.json files (dcat-ap-harvest,
-      # dcat-national-portal-federation, diwoo-tooi-vocabulary-binding,
-      # ooapi-catalog-publication, publication-quality-metrics,
-      # structured-data-discoverability) that had never executed in CI. They sit
-      # at the default `newman-collection-path` (tests/integration), which is
-      # both the directory the validator counts collections in and the directory
-      # the run step globs flat.
+      # tests/integration ships the app's *.postman_collection.json files; Newman runs all of them.
+      # They sit at the default `newman-collection-path` (tests/integration), which the validator counts and the run step searches recursively.
       enable-newman: true
+      # Collections that write publications need the register provisioned,
+      # which `occ app:enable` does not guarantee (see ci-seed.sh).
+      newman-seed-command: 'CI_SEED_API_ONLY=1 bash apps/opencatalogi/tests/e2e/ci-seed.sh'
 
       # ── Frontend Check legs ──────────────────────────────────────────────
       # `frontend-checks` defaults to `[]`, and an empty list means the shared

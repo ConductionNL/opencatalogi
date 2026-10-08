@@ -275,4 +275,13 @@ class ObjectService {
 		return [];
 	}//end getObjectUsedBy()
 
+	/**
+	 * The permission handler that answers RBAC questions on one object.
+	 *
+	 * @return \OCA\OpenRegister\Service\Object\PermissionHandler
+	 */
+	public function getPermissionHandler(): \OCA\OpenRegister\Service\Object\PermissionHandler {
+		return new \OCA\OpenRegister\Service\Object\PermissionHandler();
+	}//end getPermissionHandler()
+
 }//end class

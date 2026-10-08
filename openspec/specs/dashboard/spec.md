@@ -34,7 +34,7 @@ by status, attachment counts, etc.) MUST source those counts from OR schema
 aggregations (`x-openregister-aggregations`) rather than from hand-rolled PHP
 count queries.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: dashboard widgets consume OR aggregations (DSH-OR-001)
 
@@ -60,8 +60,6 @@ results in PHP.
 - **WHEN** the widget loads,
 - **THEN** the widget degrades gracefully (e.g. shows "N/A") rather than
   falling back to a bespoke PHP count query.
-
-## Requirements
 
 ### Requirement: Serve the Vue SPA template for the main app page (DSH-001)
 The system MUST serve the Vue SPA template for the main app page.
@@ -159,6 +157,7 @@ The system MUST get a single listing by ID (public endpoint).
 - THEN the response MUST return that listing without requiring authentication
 
 ### Requirement: Create a new listing (admin-only, allow-listed) (LST-003)
+
 The system MUST allow creating a new listing. Creating a listing is a
 federation-topology change: the endpoint MUST be admin-gated via
 `#[AuthorizedAdminSetting]` (delegated-admin auditable), and the payload MUST
@@ -168,8 +167,6 @@ caller. When the payload contains a `directory` URL, the URL MUST pass the
 same outbound-safety validation (`FILTER_VALIDATE_URL` +
 `assertSafeOutboundUrl`) that `syncDirectory()` applies, and the request MUST
 be rejected with `400` when it does not.
-
-**Priority:** Must **Status:** Implemented
 
 #### Scenario: admin creates a listing
 - GIVEN an authenticated admin with allow-listed listing data
@@ -273,14 +270,13 @@ parameter).
 - THEN the system MUST synchronize listings from that external directory
 
 ### Requirement: Synchronize a specific listing's directory (admin-only) (DIR-003)
+
 The system MUST allow synchronising a specific listing's directory (or all
 directories when no id is given) via `POST /api/listings/sync`. On-demand
 synchronisation triggers outbound HTTP fetches and MUST be admin-gated via
 `#[AuthorizedAdminSetting]`; scheduled synchronisation for all users is
 provided by the hourly cron (DIR-004), which does not pass through this
 endpoint.
-
-**Priority:** Must **Status:** Implemented
 
 #### Scenario: admin syncs a listing's directory
 - GIVEN an existing listing with a directory URL
@@ -305,19 +301,13 @@ The system MUST synchronize all directories via cron (every hour).
 - THEN all directories MUST be synchronized
 
 ### Requirement: Add a new listing from a URL (admin-only) (DIR-005)
+
 The system MUST allow an authenticated admin to add a new listing from a URL.
 The admin requirement MUST be enforced by the controller via
 `#[AuthorizedAdminSetting]` — a session-only guard (any authenticated user) is
-NOT sufficient.
-
-**Priority:** Must **Status:** Implemented
-
-Anonymous / unauthenticated requests MUST be rejected with `403` — federation
-peer-registration must not be anonymous (SB1 / WF1 SSRF hardening, wave-12,
-tightened via `ListingsController::add()` dropping `@PublicPage` and adding an
-explicit auth guard). The cross-instance broadcast-receive path uses the
-separate `POST /api/directory` endpoint (see DIR-008), which is public because
-that's the federation gossip channel — do not merge the two.
+NOT sufficient. Anonymous requests MUST be rejected with `403`. The
+cross-instance broadcast-receive path remains the separate public
+`POST /api/directory` endpoint (DIR-008); do not merge the two.
 
 #### Scenario: admin adds a listing from a URL
 - GIVEN a directory or publications URL
@@ -477,7 +467,7 @@ a `DeleteListingDialog`.
 - WHEN they edit or delete it
 - THEN the `EditListingModal` and `DeleteListingDialog` MUST be available to perform those actions
 
-## REMOVED Requirements
+## Change history
 
 | ID | Title | Reason removed |
 |----|-------|----------------|

@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\BroadcastService;
+use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\DemoDataService;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
@@ -124,6 +125,9 @@ class SetupController extends Controller {
 	 * @param IL10N $l10n Localization.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IUserSession $userSession Current user session (login guard).
+	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
 	public function __construct(
 		string $appName,
@@ -137,6 +141,7 @@ class SetupController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
+		private readonly ?ConnectionReporter $connectionReporter = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -157,7 +162,8 @@ class SetupController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 *
-	 * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md#requirement-setup-server-contract-endpoints-onb-005
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
 	public function status(): JSONResponse {
 		// The wizard-boot status is for signed-in users only; reject anonymous
@@ -186,30 +192,32 @@ class SetupController extends Controller {
 		$demoDecided = ($this->config->getValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, '') !== '');
 		$pickedDataset = $this->config->getValueString($this->appName, self::DATASET_KEY, '');
 
+		// Completed = every gating (required) step is satisfied. The optional
+		// federation step never blocks completion. The register check is not a
+		// wizard step any more: the admin settings page re-imports the
+		// configuration (wizard-dataset-card-load), and `registersReady`
+		// reports its state as information.
+		$completed = ($scopeChosen === true && $catalogReady === true);
+
+		// Exactly the ids of `manifest.setup.steps`: a step the server never
+		// reports stays open and reopens the wizard.
 		$steps = [
-			'demo-data' => ['done' => ($pickedDataset !== '')],
-			// "None" is an ANSWER, so the load step is finished the moment it
-			// is chosen: there is nothing left for the operator to run.
-			'load-demo-data' => [
-				'done' => ($demoDecided === true || $pickedDataset === DemoDataService::NONE_DATASET),
-			],
 			'welcome' => ['done' => true],
-			'config-check' => ['done' => $registersWired],
+			// A pick without a load still counts: a wizard that predates
+			// `loadAction` can only record the pick.
+			'demo-data' => ['done' => ($demoDecided === true || $pickedDataset !== '')],
 			'catalog-scope' => ['done' => $scopeChosen],
 			'create-catalog' => ['done' => $catalogReady],
 			'connect-federation' => ['done' => $federationDone],
 			'sync-all-directories' => ['done' => $syncDone],
-			'done' => ['done' => ($registersWired === true && $scopeChosen === true && $catalogReady === true)],
+			'done' => ['done' => $completed],
 		];
-
-		// Completed = every gating (required) step is satisfied. The optional
-		// federation step never blocks completion.
-		$completed = ($registersWired === true && $scopeChosen === true && $catalogReady === true);
 
 		return new JSONResponse(
 			[
 				'version' => self::SETUP_VERSION,
 				'completed' => $completed,
+				'registersReady' => $registersWired,
 				// The choice step reads its options from here: it declares
 				// `optionsSource: datasets` and no options of its own, so a
 				// dataset missing from this list is a dataset nobody can pick.
@@ -227,9 +235,14 @@ class SetupController extends Controller {
 	 * gate) and CSRF-protected (no @NoCSRFRequired). #[AuthorizedAdminSetting]
 	 * makes it auditable via NC delegated-admin. Only whitelisted keys are written.
 	 *
+	 * A save that writes `default_directory_url` asks integriq to resolve the
+	 * directory connection again (adopt-connection-registry). That never
+	 * throws, does nothing without integriq, and never changes the response.
+	 *
 	 * @return JSONResponse The saved keys.
 	 *
-	 * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md#requirement-setup-server-contract-endpoints-onb-005
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function config(): JSONResponse {
@@ -244,6 +257,8 @@ class SetupController extends Controller {
 			$this->config->setValueString($this->appName, $key, (string)$params[$key]);
 			$saved[] = $key;
 		}
+
+		$this->connectionReporter?->refreshFromSave(savedKeys: $saved);
 
 		return new JSONResponse(['saved' => $saved]);
 	}//end config()
@@ -262,7 +277,7 @@ class SetupController extends Controller {
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 *
-	 * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md#requirement-create-first-catalog-privileged-action-onb-006
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-create-first-catalog-privileged-action-onb-006
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function action(string $actionId): JSONResponse {
@@ -273,7 +288,7 @@ class SetupController extends Controller {
 			case 'load-demo-data':
 				return $this->loadDataset();
 			case 'install-demo-data':
-				return $this->installDemoData();
+				return $this->installDemoData(dataset: DemoDataService::DEMO_DATASET);
 			case 'skip-demo-data':
 				return $this->skipDemoData();
 			case 'reload-settings':
@@ -297,12 +312,29 @@ class SetupController extends Controller {
 	}//end action()
 
 	/**
-	 * Install the shipped demo dataset (ADR-111 rule 4).
+	 * Install the dataset a card's Load button posted as `dataset`, or the
+	 * stored pick when nothing is posted (ADR-111 rule 4).
 	 *
 	 * @return JSONResponse The outcome, carrying the counts.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
 	private function loadDataset(): JSONResponse {
 		$picked = $this->config->getValueString($this->appName, self::DATASET_KEY, '');
+
+		// The card's Load button names its dataset in the body. An older wizard
+		// posts nothing and relies on the pick stored a step earlier. Nothing is
+		// stored before the load succeeds: a failed load must leave the step
+		// open for an operator who asked for data and got none.
+		$posted = $this->request->getParam('dataset');
+		if ($posted !== null) {
+			$refusal = $this->refuseDataset(value: $posted);
+			if ($refusal !== null) {
+				return $refusal;
+			}
+
+			$picked = (string)$posted;
+		}
 
 		// 🔴 NO SILENT DEFAULT. Importing here because the operator clicked Run
 		// one step early would plant example objects nobody asked for.
@@ -314,6 +346,7 @@ class SetupController extends Controller {
 		}
 
 		if ($picked === DemoDataService::NONE_DATASET) {
+			$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataService::NONE_DATASET);
 			$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 			return new JSONResponse(
@@ -321,16 +354,48 @@ class SetupController extends Controller {
 			);
 		}
 
-		return $this->installDemoData();
+		return $this->installDemoData(dataset: $picked);
 
 	}//end loadDataset()
 
 	/**
+	 * Refuse a posted dataset id no dataset answers to.
+	 *
+	 * @param mixed $value The posted value.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the dataset is known.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	private function refuseDataset(mixed $value): ?JSONResponse {
+		$named = 'that';
+		if (is_scalar($value) === true) {
+			$named = (string)$value;
+		}
+
+		$known = array_column($this->demoDataService->listChoices(), 'id');
+		if (is_scalar($value) === true && in_array($named, $known, true) === true) {
+			return null;
+		}
+
+		return new JSONResponse(
+			['success' => false, 'message' => $this->l10n->t('No dataset is called "%s".', [$named])],
+			Http::STATUS_BAD_REQUEST
+		);
+
+	}//end refuseDataset()
+
+	/**
 	 * Import the dataset this app ships.
 	 *
+	 * @param string $dataset The dataset id, recorded as the pick once the
+	 *                        import succeeded.
+	 *
 	 * @return JSONResponse `{ success, message }`.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
-	private function installDemoData(): JSONResponse {
+	private function installDemoData(string $dataset): JSONResponse {
 		try {
 			$imported = $this->demoDataService->install();
 		} catch (\Throwable $e) {
@@ -340,6 +405,8 @@ class SetupController extends Controller {
 
 		// The decision is recorded only after the import actually returned.
 		// Marking it first would let a failed install present as a finished step.
+		// Loading IS choosing the set, so the pick is recorded too.
+		$this->config->setValueString($this->appName, self::DATASET_KEY, $dataset);
 		$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'installed');
 
 		// 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be
@@ -366,10 +433,8 @@ class SetupController extends Controller {
 	 * @return JSONResponse The outcome.
 	 */
 	private function skipDemoData(): JSONResponse {
-		// 🔴 IT ANSWERS *BOTH* STEPS. The wizard now has a choice step and a
-		// run-action step; closing only the second leaves the first
-		// outstanding, and CnAppRoot opens the wizard while ANY optional step
-		// is outstanding.
+		// Skipping IS choosing "None", so both keys are written: an older
+		// runbook may read either one.
 		$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataService::NONE_DATASET);
 		$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 

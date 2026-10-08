@@ -1,0 +1,284 @@
+{
+	"_source": {
+		"repository": "ConductionNL/decidiq",
+		"note": "PublicationPayload as decidiq's register loader builds it: the base schema deep-merged with the register.d fragments (enum lists united). Copied, not read across repositories. Refresh it when decidiq changes one of these files.",
+		"files": {
+			"lib/Settings/decidesk_register.json": "6190cb1f1907a880b6c802bbb26f68faea47a034",
+			"lib/Settings/register.d/108-publication-papers.json": "1dc6e0b0fac845c0a6d114399d627723ae622502",
+			"lib/Settings/register.d/109-activity-calendar.json": "00a3510743229402491d266fd57ce4f244105c47"
+		}
+	},
+	"PublicationPayload": {
+		"slug": "publication-payload",
+		"icon": "FileDocumentOutline",
+		"version": "0.3.0",
+		"title": "PublicationPayload",
+		"description": "Derived, immutable public payload (publish-decisions-via-opencatalogi). Constructed ALLOW-LIST style by PublicationPayloadService: one polymorphic shape discriminated by oriType (Besluit / Vergadering / Verslag). Carries OpenRaadsinformatie-mapped fields alongside schema.org annotations so OpenCatalogi/OR public-API consumers receive ORI-compatible data without a bespoke harvester. By construction this schema contains NO UID fields, NO contact details, NO individual vote records, and NO voter identities: decision payloads carry vote TOTALS only, agenda payloads omit confidential items, minutes payloads render attendance per the body's policy. Anonymous visibility is governed by the OpenRegister RBAC published-predicate: the authorization.read rule grants the public group read access when publicationDate <= $now; publishing sets publicationDate on the payload instance, withdraw sets depublicationDate. The live source object is never published.",
+		"type": "object",
+		"x-openregister": {
+			"schemaType": "schema:CreativeWork",
+			"active": true,
+			"hardDelete": false,
+			"searchable": true,
+			"mailEnabled": false
+		},
+		"authorization": {
+			"read": [
+				{
+					"group": "public",
+					"match": {
+						"publicationDate": {
+							"$lte": "$now"
+						}
+					}
+				},
+				"authenticated"
+			]
+		},
+		"required": [
+			"oriType",
+			"title"
+		],
+		"properties": {
+			"publicationDate": {
+				"title": "Publication date",
+				"type": "string",
+				"format": "date-time",
+				"facetable": true,
+				"description": "Publication date (WOO/DIWOO). When set to a date in the past, this payload is live and anonymously readable through the OpenRegister published-predicate (public-group RBAC rule publicationDate <= $now). Set by PublicationService on publish; never written by clients."
+			},
+			"depublicationDate": {
+				"title": "Depublication date",
+				"type": "string",
+				"format": "date-time",
+				"facetable": true,
+				"description": "Depublication date (WOO/DIWOO). When set and in the past, this payload is withdrawn from public access. A future value schedules automatic depublication via the OpenRegister published-predicate. Set by PublicationService on withdraw."
+			},
+			"oriType": {
+				"title": "ORI type",
+				"type": "string",
+				"description": "OpenRaadsinformatie record type: interprets the payload ORI-compatibly.",
+				"enum": [
+					"Besluit",
+					"Vergadering",
+					"Verslag"
+				],
+				"example": "Besluit"
+			},
+			"schemaOrgType": {
+				"title": "Schema.org type",
+				"type": "string",
+				"description": "schema.org annotation matching the ORI type (ChooseAction / Event / CreativeWork).",
+				"example": "ChooseAction"
+			},
+			"title": {
+				"title": "Title",
+				"type": "string",
+				"description": "Public title of the published output.",
+				"example": "Vaststelling Programmabegroting 2026"
+			},
+			"bodyName": {
+				"title": "Body name",
+				"type": "string",
+				"description": "Display name of the governance body (no UID).",
+				"example": "Gemeenteraad Amsterdam",
+				"facetable": true
+			},
+			"payloadVersion": {
+				"title": "Payload version",
+				"type": "integer",
+				"description": "Version of this payload (mirrors the PublicationRecord).",
+				"default": 1,
+				"example": 1
+			},
+			"text": {
+				"title": "Decision text",
+				"type": "string",
+				"description": "Decision text (Besluit). ORI: besluittekst.",
+				"example": "De raad besluit de Programmabegroting 2026 vast te stellen."
+			},
+			"outcome": {
+				"title": "Outcome",
+				"type": "string",
+				"description": "Decision outcome (Besluit). ORI: uitslag.",
+				"example": "adopted"
+			},
+			"decisionDate": {
+				"title": "Decision date",
+				"type": "string",
+				"format": "date-time",
+				"description": "Date the decision was made (Besluit). ORI: besluitdatum."
+			},
+			"legalBasis": {
+				"title": "Legal basis",
+				"type": "string",
+				"description": "Legal article or regulation (Besluit). ORI: juridischeGrondslag.",
+				"example": "Gemeentewet art. 189"
+			},
+			"voteTotals": {
+				"title": "Vote totals",
+				"type": "object",
+				"description": "Aggregate vote tally ONLY: for/against/abstain counts. NEVER per-member votes or voter identities (Besluit).",
+				"properties": {
+					"for": {
+						"title": "Votes for",
+						"description": "Aggregate count of votes in favour.",
+						"type": "integer",
+						"example": 23
+					},
+					"against": {
+						"title": "Votes against",
+						"description": "Aggregate count of votes against.",
+						"type": "integer",
+						"example": 12
+					},
+					"abstain": {
+						"title": "Abstentions",
+						"description": "Aggregate count of abstentions.",
+						"type": "integer",
+						"example": 2
+					}
+				}
+			},
+			"meetingDate": {
+				"title": "Meeting date",
+				"type": "string",
+				"format": "date-time",
+				"description": "Meeting start date (Vergadering). ORI: startdatum.",
+				"facetable": true
+			},
+			"meetingType": {
+				"title": "Meeting type",
+				"type": "string",
+				"description": "Meeting type (Vergadering).",
+				"example": "regular"
+			},
+			"agendaItems": {
+				"title": "Agenda items",
+				"type": "array",
+				"description": "Ordered, non-confidential agenda items (Vergadering → AgendaPunt). Confidential items and their document references are stripped during construction and never appear here.",
+				"items": {
+					"type": "object",
+					"properties": {
+						"oriType": {
+							"title": "ORI type",
+							"description": "OpenRaadsinformatie record type of the agenda item.",
+							"type": "string",
+							"example": "AgendaPunt"
+						},
+						"order": {
+							"title": "Order",
+							"description": "Position of the agenda item on the agenda.",
+							"type": "integer",
+							"example": 1
+						},
+						"title": {
+							"title": "Title",
+							"description": "Public title of the agenda item.",
+							"type": "string",
+							"example": "Vaststellen notulen"
+						},
+						"papers": {
+							"type": "array",
+							"title": "Papers",
+							"description": "The public papers of this agenda item. Papers of an item under confidentiality, and papers labelled confidential, are never listed.",
+							"items": {
+								"type": "object",
+								"properties": {
+									"title": {
+										"type": "string",
+										"title": "Title",
+										"description": "The file name of the paper."
+									},
+									"url": {
+										"type": "string",
+										"title": "Download link",
+										"description": "The public link to download the paper."
+									},
+									"type": {
+										"type": "string",
+										"title": "File type",
+										"description": "The media type of the paper, such as application/pdf."
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"content": {
+				"title": "Minutes content",
+				"type": "string",
+				"description": "Approved minutes content (Verslag). ORI: tekst."
+			},
+			"attendance": {
+				"title": "Attendance",
+				"type": "object",
+				"description": "Attendance rendered per the body's policy (Verslag): either aggregate counts or names of role-holders only, never NC UIDs or contact details.",
+				"properties": {
+					"policy": {
+						"title": "Policy",
+						"description": "Attendance-rendering policy applied (aggregate counts or named role-holders).",
+						"type": "string",
+						"enum": [
+							"counts",
+							"role-holders"
+						],
+						"example": "counts"
+					},
+					"presentCount": {
+						"title": "Present count",
+						"description": "Number of attendees present, used when the policy renders aggregate counts.",
+						"type": "integer",
+						"example": 31
+					},
+					"roleHolders": {
+						"title": "Role-holders",
+						"description": "Named role-holders rendered when the body's policy discloses individual attendance.",
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"documentType": {
+				"type": "string",
+				"title": "Document type",
+				"description": "What was published: an agenda, a decision, minutes or a calendar entry. Citizens filter on it.",
+				"enum": [
+					"agenda",
+					"decision",
+					"minutes",
+					"activity"
+				],
+				"facetable": true
+			},
+			"location": {
+				"type": "string",
+				"title": "Location",
+				"description": "Where the meeting takes place, as residents read it on the calendar."
+			},
+			"audiences": {
+				"type": "array",
+				"title": "Audiences",
+				"description": "Who the meeting is for, taken from its kind of meeting.",
+				"items": {
+					"type": "string",
+					"enum": [
+						"council",
+						"executive",
+						"joint-arrangement",
+						"residents",
+						"staff"
+					]
+				},
+				"facetable": true
+			}
+		},
+		"@self": {
+			"register": "decidiq",
+			"schema": "PublicationPayload"
+		}
+	}
+}

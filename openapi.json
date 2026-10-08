@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "OpenCatalogi",
-    "version": "2.1.6-unstable.20260912034522",
+    "version": "2.1.16-unstable.20260919082905",
     "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` — admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.",
     "license": {
       "name": "EUPL-1.2",
@@ -91,6 +91,22 @@
     {
       "name": "OOAPI",
       "description": "OOAPI 5.0 CORS preflight — the resource endpoints themselves require consumer-credential authentication and are out of scope for this document."
+    },
+    {
+      "name": "Community",
+      "description": "The public and community surface: the status page, its subscriptions, the catalogue feed, reader votes and the markup renderer."
+    },
+    {
+      "name": "Inspections",
+      "description": "Terinzagelegging: the documents that lie open for inspection, and for how long."
+    },
+    {
+      "name": "Service catalogue",
+      "description": "The public request catalogue, the case types it publishes, and reader verdicts on knowledge articles."
+    },
+    {
+      "name": "Portal",
+      "description": "A resident's dossiers and saved searches. Called by portaliq's server-to-server forward with its signed X-Portal-Subject assertion."
     }
   ],
   "components": {
@@ -1492,7 +1508,7 @@
       "get": {
         "operationId": "search-index",
         "summary": "Public full-text search",
-        "description": "Anonymous-reachable full-text search across publications and documents (WOO-506). Metadata matching always runs; pass `_content=true` to also match OR-extracted document body text (WOO-517). Only publicly-visible rows are ever returned, regardless of caller identity.",
+        "description": "Anonymous-reachable full-text search across publications and documents (WOO-506). Metadata matching always runs; pass `_content=true` to also match OR-extracted document body text (WOO-517). Only publicly-visible rows are ever returned, regardless of caller identity. Property filters are forwarded to OpenRegister: `documentType=minutes` and `bodyName=Gemeenteraad` match exactly, and `meetingDate[gte]` / `meetingDate[lte]` select a date range, both ends included. A range bound that is not a date or a number answers 400 and names the parameter.",
         "tags": [
           "Search"
         ],
@@ -1514,6 +1530,44 @@
           },
           {
             "$ref": "#/components/parameters/FacetsParam"
+          },
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": false,
+            "description": "Council documents: agenda, decision, minutes or activity.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bodyName",
+            "in": "query",
+            "required": false,
+            "description": "Council documents: the name of the council or committee.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "meetingDate[gte]",
+            "in": "query",
+            "required": false,
+            "description": "Council documents: meetings on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "meetingDate[lte]",
+            "in": "query",
+            "required": false,
+            "description": "Council documents: meetings on or before this date.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
           }
         ],
         "responses": {
@@ -1523,6 +1577,25 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A range bound is not a date or a number.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "parameter": {
+                      "type": "string",
+                      "example": "meetingDate[gte]"
+                    }
+                  }
                 }
               }
             }
@@ -2035,6 +2108,1103 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "operationId": "community-status-page",
+        "summary": "Read the status page",
+        "description": "The state of every component this instance reports on. A component nobody has touched inside the staleness window is marked stale rather than reported as fine, so an unattended page cannot read as a confident green.",
+        "tags": [
+          "Community"
+        ],
+        "responses": {
+          "200": {
+            "description": "The components and their states.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "community-status-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/status`.",
+        "tags": [
+          "Community"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/feeds/{catalogSlug}": {
+      "get": {
+        "operationId": "community-feed",
+        "summary": "Read a catalogue Atom feed",
+        "description": "The published records and notices of one catalogue as Atom. A record the publication rules do not publish never reaches the feed, so a draft cannot leak through the harvest surface.",
+        "tags": [
+          "Community"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The feed.",
+            "content": {
+              "application/atom+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "community-feed-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/feeds/{catalogSlug}`.",
+        "tags": [
+          "Community"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/markup/render": {
+      "post": {
+        "operationId": "community-render-markup",
+        "summary": "Render markup",
+        "description": "Render this app's markup the way this app renders it, so a portal shows the same result. Nothing is stored and nothing is read: the request carries the markup and the response carries the rendering.",
+        "tags": [
+          "Community"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "markup"
+                ],
+                "properties": {
+                  "markup": {
+                    "type": "string",
+                    "description": "The markup to render."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The rendering.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No markup was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "community-render-markup-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/markup/render`.",
+        "tags": [
+          "Community"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/publications/search": {
+      "post": {
+        "operationId": "publication-public-search",
+        "summary": "Search published information in plain words",
+        "description": "Search what is actively published, without an account. The search runs over the anonymous permission set and no further, so a property a rule withholds is not searchable and not returned.",
+        "tags": [
+          "Publications"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "q"
+                ],
+                "properties": {
+                  "q": {
+                    "type": "string",
+                    "description": "The words to search for."
+                  },
+                  "records": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "description": "The records to search, when the caller supplies them."
+                  },
+                  "rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "description": "The publication rules to apply."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The matching views.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No search term was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publication-public-search-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/publications/search`.",
+        "tags": [
+          "Publications"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/inspections/{id}": {
+      "get": {
+        "operationId": "inspection-follow",
+        "summary": "Follow an inspection link",
+        "description": "The documents that lie open for inspection, for whoever holds the link. The window is checked at the read, not by a job, so a link stops working the moment the statutory period ends. A closed window answers 410 with its end date, so a reader learns the period is over rather than that something is broken.",
+        "tags": [
+          "Inspections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unguessable part of the link."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The chosen documents and the window.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "410": {
+            "description": "The inspection period for these documents has ended.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "inspection-follow-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/inspections/{id}`.",
+        "tags": [
+          "Inspections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/comment-periods/{id}": {
+      "get": {
+        "operationId": "comment-period-show",
+        "summary": "Read a public comment period",
+        "description": "The state of a comment period, its legal remedy, its reaction form and its official announcement. The state is derived at the read rather than stored, so a scheduler that has not fired yet cannot leave a closed period inviting comment. The reaction form is answered only while the period is open.",
+        "tags": [
+          "Inspections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The period, with one of the three states: upcoming, open or closed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/service-catalogue": {
+      "get": {
+        "operationId": "service-catalogue-index",
+        "summary": "List what can be requested",
+        "description": "The public request catalogue: every service a resident or a company can ask for, grouped as the catalogue groups them. An entry whose case type cannot be read is counted as unavailable rather than left out, so a short list is never mistaken for a complete one.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "responses": {
+          "200": {
+            "description": "The entries, their groups and the unavailable count.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "service-catalogue-index-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/service-catalogue`.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/case-types/{id}": {
+      "get": {
+        "operationId": "service-catalogue-case-type",
+        "summary": "Read a published case type",
+        "description": "One case type with the links it publishes: the form that starts it and the description of its API. A case type that is not published is not readable here.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The case type and its links.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "service-catalogue-case-type-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/case-types/{id}`.",
+        "tags": [
+          "Service catalogue"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/items": {
+      "post": {
+        "operationId": "portal-collection-add-item",
+        "summary": "Add to a dossier",
+        "description": "Adds a public publication, or one of its documents, to the resident's dossier, or to a new dossier when no collection is given.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "publication": {
+                    "type": "string"
+                  },
+                  "attachment": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/items/remove": {
+      "post": {
+        "operationId": "portal-collection-remove-item",
+        "summary": "Remove from a dossier",
+        "description": "Removes one item from the resident's dossier.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  },
+                  "itemId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/view": {
+      "post": {
+        "operationId": "portal-collection-view",
+        "summary": "Open a dossier",
+        "description": "The resident's own view of a dossier, each item marked public or not.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/note": {
+      "post": {
+        "operationId": "portal-collection-note",
+        "summary": "Write a note",
+        "description": "Sets the note of one item, or of the dossier when no item is given.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "itemId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/share": {
+      "post": {
+        "operationId": "portal-collection-share",
+        "summary": "Make a share link",
+        "description": "Makes a new read-only link to the dossier. An earlier link stops working.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/unshare": {
+      "post": {
+        "operationId": "portal-collection-unshare",
+        "summary": "Revoke the share link",
+        "description": "Revokes the read-only link.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/collections/delete": {
+      "post": {
+        "operationId": "portal-collection-delete",
+        "summary": "Delete a dossier",
+        "description": "Deletes the resident's dossier.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "collection": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/saved-searches": {
+      "post": {
+        "operationId": "portal-saved-search-save",
+        "summary": "Save a search",
+        "description": "Saves a search for the resident, daily by default.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "query": {
+                    "type": "object"
+                  },
+                  "frequency": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/saved-searches/pause": {
+      "post": {
+        "operationId": "portal-saved-search-pause",
+        "summary": "Stop notices",
+        "description": "Stops the notices of a saved search.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "savedSearch": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/portal/saved-searches/delete": {
+      "post": {
+        "operationId": "portal-saved-search-delete",
+        "summary": "Delete a saved search",
+        "description": "Deletes the resident's saved search.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "X-Portal-Subject",
+            "in": "header",
+            "required": true,
+            "description": "portaliq's signed HS256 assertion. The subject in it is the owner every call is checked against.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "savedSearch": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid X-Portal-Subject assertion."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The input is refused; the message says why."
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/collections/shared/{token}": {
+      "get": {
+        "operationId": "shared-collection-show",
+        "summary": "A shared dossier",
+        "description": "The title, description and the items that are public at this moment, with their notes. Never the owner. A revoked or unknown token answers 404.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
