@@ -133,7 +133,7 @@
     "micromatch": "^4.0.8",
     "dompurify": "$dompurify",
     "d3-color": "^3.1.0",
-    "mermaid": ">=11.4.1",
+    "mermaid": "^11.4.1",
     "json5": "^2.2.3",
     "@braintree/sanitize-url": "^7.0.0",
     "katex": "^0.18.2",
