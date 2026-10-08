@@ -1041,8 +1041,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"group publications under themes a reader can browse by\"; catalogue set-up in the JOIN Woo Portaal is covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: Themes is removed from the simple menu (inventory-opencatalogi.md) and has no board"
+				"canvas": "design-system",
+				"board": "OcThemas"
 			}
 		},
 		{
@@ -1075,8 +1075,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"keep a glossary that explains the terms used in the publications\"; catalogue set-up in the JOIN Woo Portaal is covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: Glossary is removed from the simple menu (inventory-opencatalogi.md) and has no board"
+				"canvas": "design-system",
+				"board": "OcBegrippen"
 			}
 		},
 		{
@@ -1110,8 +1110,8 @@
 				"iprox": "not checked: searched the public iprox.open material for \"limit which staff can see or edit the publications of a catalogue\"; the iprox.open back office (\"specifieke beheeromgeving\") is named on the product pages but not described in any public manual. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: the Staff access section goes on the catalogue edit page (OcCatalogusBewerken), which does not draw it; see catalogue-staff-access design D4"
+				"canvas": "design-system",
+				"board": "OcCatalogusBeheer"
 			}
 		},
 		{
@@ -1580,8 +1580,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"link a publication to related publications and see which ones link back to it\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no relations card on OcPublicatie"
+				"canvas": "design-system",
+				"board": "OcPublicatieInzage"
 			}
 		},
 		{
@@ -1723,8 +1723,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"preview an attached document or data file in the browser before downloading it\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: the in-place preview is a nextcloud-vue files component with no board"
+				"canvas": "design-system",
+				"board": "OcPublicatieData"
 			}
 		},
 		{
@@ -2147,8 +2147,8 @@
 				"decos": "docs read 2026-09-26: https://decos.com/oplossingen/woo-portaal: \"Je bepaalt zelf welke collecties je configureert en op basis van welke voorwaarden informatie beschikbaar wordt gesteld op het portaal\"; a preview of what a rule catches is not described"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no board for publication rules"
+				"canvas": "design-system",
+				"board": "OcPublicatiebeleid"
 			}
 		},
 		{
@@ -2181,8 +2181,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see in one overview what must still be published, fed from every source system\"; the public pages describe the JOIN link, categories, collections and anonymisation, not this Woo function. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no board for the obligation overview"
+				"canvas": "design-system",
+				"board": "OcWooVerplichtingen"
 			}
 		},
 		{
@@ -2215,8 +2215,8 @@
 				"iprox": "not checked: searched the public iprox.open material for \"configure which collections publish, and on what conditions\"; nothing public describes this Woo back-office function beyond categorisation, metadata, koppelingen and the automatic Woo-index connection. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no board for published collections"
+				"canvas": "design-system",
+				"board": "OcPublicatiebeleid"
 			}
 		},
 		{
@@ -2835,8 +2835,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"put documents on public inspection for exactly the statutory period\"; nothing public covers decision types, inspection periods, notices or signing in the JOIN Woo Portaal. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no inspection board"
+				"canvas": "design-system",
+				"board": "OcPublicatieInzage"
 			}
 		},
 		{
@@ -3399,8 +3399,8 @@
 			},
 			"note": "corrections round 9 (2026-09-28): carried by openspec/changes/harvest-conflict-policies (open, 0 of 8 tasks), which specifies the per-feed policies shadow-local, overlay, reject-on-conflict and manual-review with a review screen; it depends on harvest-feed-intake. Spec round part 2 (2026-10-07, decision 80): depends on openregister/app-harvest-fetchers-and-flow-node (collision reasons, strategies, states, resolve API and resolution log are OpenRegister's) and on harvest-feed-intake. harvest-conflict-policies was revised to keep only the policy choice in the feed modal (manual-review to manual, overlay to source-wins, shadow-local to local-wins, reject-on-conflict to reject, plus per-reason overrides as conflictRules) and the review queue screen; its own fields, state machine and migration are dropped. Neither change has code yet.",
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no harvest review board"
+				"canvas": "design-system",
+				"board": "OcCatalogusBeheer"
 			}
 		},
 		{
@@ -3469,8 +3469,8 @@
 			},
 			"note": "Specified in openspec/changes/open-data-table-query-and-dictionary (OpenSpec pass 2026-09-27).",
 			"screen": {
-				"board": null,
-				"reason": "backend: public rows API; the Tables section of the publication is not on a board yet"
+				"canvas": "design-system",
+				"board": "OcPublicatieData"
 			}
 		},
 		{
@@ -3568,8 +3568,8 @@
 			},
 			"note": "Specified in openspec/changes/open-data-table-query-and-dictionary (OpenSpec pass 2026-09-27).",
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: the data dictionary section is not on a board"
+				"canvas": "design-system",
+				"board": "OcPublicatieData"
 			}
 		},
 		{
@@ -4539,8 +4539,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"publish a status page that says which services are running\"; the public pages do not mention this reading-room feature and no live instance was found to look at. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "backend: public status endpoint, no board"
+				"canvas": "design-system",
+				"board": "OcStatus"
 			}
 		},
 		{
@@ -4604,8 +4604,11 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"show every user a dated banner, for example about planned maintenance\"; the public pages do not mention this reading-room feature and no live instance was found to look at. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no component shows banners"
+				"canvas": "design-system",
+				"board": [
+					"OcPublicatiebeleid",
+					"OcWooVerplichtingen"
+				]
 			}
 		},
 		{
@@ -4639,8 +4642,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"keep a notice board per catalogue for announcements to residents\"; the public pages do not mention this reading-room feature and no live instance was found to look at. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no notice board screen"
+				"canvas": "design-system",
+				"board": "OcCatalogusBeheer"
 			}
 		},
 		{
@@ -4843,8 +4846,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"publish a catalogue of everything a resident can request, with what it costs and how long it takes\"; the JOIN Woo Portaal has no product or service catalogue scope in any public page. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no service catalogue board"
+				"canvas": "design-system",
+				"board": "OcDienstencatalogus"
 			}
 		},
 		{
@@ -4948,8 +4951,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"preview and accept the changes when a case type is synchronised again from its source\"; the JOIN Woo Portaal has no product or service catalogue scope in any public page. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no resync board"
+				"canvas": "design-system",
+				"board": "OcZaaktypeSynchroniseren"
 			}
 		},
 		{
@@ -4982,8 +4985,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see which catalogue entries are broken and need repair\"; the JOIN Woo Portaal has no product or service catalogue scope in any public page. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no repair board"
+				"canvas": "design-system",
+				"board": "OcDienstencatalogus"
 			}
 		},
 		{
@@ -5082,8 +5085,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"turn the answer given on a case into a draft knowledge article in one action\"; the JOIN Woo Portaal has no product or service catalogue scope in any public page. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no knowledge article board"
+				"canvas": "design-system",
+				"board": "OcKennisartikel"
 			}
 		},
 		{
@@ -6203,8 +6206,8 @@
 				"iprox": "not checked: searched the public iprox.open material for \"give editors and publishers different rights on publication actions\"; no public admin guide, release notes or operations page exists for iprox.open. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no rights board"
+				"canvas": "design-system",
+				"board": "OcPublicatiebeleid"
 			}
 		},
 		{
@@ -6237,8 +6240,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"follow a walkthrough that explains the app on first use\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: the walkthrough overlays existing pages and has no board"
+				"canvas": "design-system",
+				"board": "OcRondleiding"
 			}
 		},
 		{
@@ -6387,8 +6390,8 @@
 			},
 			"note": "Specified in openspec/changes/integration-publish-by-reference (OpenSpec pass 2026-09-27).",
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no publish-by-reference control on OcBijlageToevoegen"
+				"canvas": "design-system",
+				"board": "OcPublicatieData"
 			}
 		},
 		{
@@ -6464,8 +6467,8 @@
 			},
 			"note": "Specified in openspec/changes/woo-metadata-suggestions (OpenSpec pass 2026-09-27).",
 			"screen": {
-				"board": null,
-				"reason": "not designed yet: no suggestion UI on the publication boards"
+				"canvas": "design-system",
+				"board": "OcPublicatieInzage"
 			}
 		},
 		{
@@ -6916,8 +6919,8 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"be alerted when a published data file fails to import, instead of finding it in a log\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "a Nextcloud notification; the failed state sits in the Tables section that open-data-table-query-and-dictionary adds, which no board draws yet"
+				"canvas": "design-system",
+				"board": "OcPublicatieData"
 			}
 		},
 		{
