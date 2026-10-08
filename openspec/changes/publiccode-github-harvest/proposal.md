@@ -33,13 +33,13 @@ OpenCatalogi names these by slug and never ships a copy of them.
 
 ## Related changes
 
-- `harvest-feed-intake`, `harvest-protocol-plugins`, `harvest-conflict-policies`, `harvest-observability` (the re-scoped `dcat-oai-pmh-harvesting` umbrella) cover DCAT, OAI-PMH, CKAN and schema.org feeds that an administrator registers one by one. This change harvests one fixed corpus into one fixed schema and registers no feed. It follows the same rules those slices set: the OpenRegister flow engine owns the schedule, no app cron, no app scheduler, and the fetch runs through integriq when it is installed. When `harvest-feed-intake` lands, its feed model can adopt this flow as a feed of protocol `publiccode-github` without changing the flow.
+- `harvest-feed-intake`, `harvest-protocol-plugins`, `harvest-conflict-policies`, `harvest-observability` (the re-scoped `dcat-oai-pmh-harvesting` umbrella) cover DCAT, OAI-PMH, CKAN and schema.org feeds that an administrator registers one by one. This change harvests one fixed corpus into one fixed schema and registers no feed. It follows the same rules those slices set: the OpenRegister flow engine owns the schedule, no app cron, no app scheduler, and the fetch runs through integriq when it is installed. Since decision 80 those slices build on OpenRegister's app harvesting (`openregister/app-harvest-fetchers-and-flow-node`): a feed is an OpenRegister `Source` with a fetcher OpenCatalogi registers, items are `SyncRecord`s, a run is the source's flow run. This change does not use that model: its corpus is one GitHub code search fanned out over 24 shards with rate-limit suspension, which the integriq nodes do and a single fetcher would not. A later move onto a `Source` of type `opencatalogi.publiccode-github` would give the components sync records, so a component that disappears from GitHub is tombstoned; that is a follow-up, not part of this change.
 - `the-public-and-community-surface` and `published-service-and-case-type-catalogue` seed catalogues the same way.
 
 ## Out of scope
 
 - GitLab, Codeberg and other forges. `harvestedFrom` is ready for them.
-- Removing components that disappear from GitHub. A component whose `harvestedAt` stops moving is one the harvest no longer finds; nothing is deleted.
+- Removing components that disappear from GitHub. A component whose `harvestedAt` stops moving is one the harvest no longer finds; nothing is deleted. OpenRegister's sync records would tombstone them once the harvest moves onto a `Source` (see Related changes).
 - The authenticated full crawl against github.com. It needs Ruben's token and is left as a named open task.
 
 ## Impact

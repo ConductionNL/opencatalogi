@@ -1,5 +1,7 @@
 # Tasks: setup-wizard-server-contract
 
+> Archive pass 2026-10-07: code done. Delta fix-up 2026-10-07: delta reconciled and retargeted to `first-time-setup` (ADDED ONB-005 to ONB-009, ONB-001 dropped because `config-check` left the wizard in `wizard-dataset-card-load`). Task 5's step list describes the manifest as this change left it; `config-check` is gone since. The spec_ref paths below name the original delta file.
+
 ## Implementation Tasks
 
 ### Task 1: Unify the national directory URL behind one constant + config key

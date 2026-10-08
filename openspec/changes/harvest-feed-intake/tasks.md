@@ -1,23 +1,20 @@
 # Tasks: harvest-feed-intake
 
-Authoring order: the delta spec (`specs/harvest-feed-intake/spec.md`) is
-task 0 — write it against the OR flow-engine surface current at pickup
-(`TriggerScheduleNode` contract, contributed-node registration, `runAs`
-scoping per OR `flow-engine-consumer-seams`), then implement.
+The delta spec is `specs/harvest-feed-intake/spec.md` (REQ-HFI-001 to REQ-HFI-005); read `design.md` first, D1 says what OpenRegister owns. **Build after `openregister/app-harvest-fetchers-and-flow-node` has merged its code on openregister `development`**: this change needs `RegisterSourceFetchersEvent`, `IBatchSourceFetcher`, `HarvestHttpClient`, `SourceService`, the Source fields of its D-4 and `POST /api/sources/{id}/sync` starting the flow. Read `openspec/woo-build-rules.md` for the branch, test and verification rules. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`.
 
-- [ ] 0.1 Author the delta spec: feed registration, scheduled flow execution,
-      mapping, checksum skip, provenance, binary conflict parking, tombstone
-- [ ] 1.1 Register fragment with the three schemas (ADR-037), no app tables
-- [ ] 1.2 Feed CRUD settings surface + validation (URL guard, JSON-path
-      syntax, schedule)
-- [ ] 2.1 Flow materialisation per enabled feed: `TriggerScheduleNode` with
-      explicit `runAs`; create/update/retire the flow with the feed
-- [ ] 2.2 Harvest handler (contributed node): fetch → parse DCAT JSON-LD →
-      JSON-path map → checksum compare → save via ObjectService with
-      provenance; park collisions as `conflict`; tombstone disappeared items
-- [ ] 2.3 HarvestRun accounting per execution
-- [ ] 3.1 Unit tests: mapping, checksum skip, conflict parking, tombstone,
-      flow-materialisation idempotency
-- [ ] 3.2 e2e: register a feed against a served fixture, run it, assert the
-      local object + provenance + run counts
-- [ ] 4.1 Quality: linters individually, hydra gates `--scope-to-diff`
+- [x] 0.1 Author the delta spec (spec round 2026-10-07); revised in spec round part 2 to build on OpenRegister's app harvesting and drop the app's own schemas, node and scheduler.
+- [ ] 1.1 Fetcher `lib/Harvest/DcatJsonLdFetcher.php` implementing OpenRegister's `IBatchSourceFetcher` (type, display name and config schema of design D2; datasets under `dcat:dataset` or `@graph`; missing `@id` as an error; `complete: false` on a fetch or parse failure; the `sourceSlug` path through integriq when installed, a named error when not) (REQ-HFI-001). Verify: `tests/Unit/Harvest/DcatJsonLdFetcherTest.php` with the methods the spec scenarios name, on the fixtures of 3.1.
+- [ ] 1.2 Listener `lib/Listener/RegisterSourceFetchersListener.php` adding the fetcher on `RegisterSourceFetchersEvent`, registered in `lib/AppInfo/Application.php` (REQ-HFI-001). Verify: `tests/Unit/Listener/RegisterSourceFetchersListenerTest.php` constructs the real event class, not a mock; and on the dev instance `GET /apps/openregister/api/sources/types` lists `opencatalogi.dcat-jsonld` (paste the line in the PR body).
+- [ ] 1.3 Contract test for the integriq source call used by the `sourceSlug` path: the method, its arguments and the return keys this side reads (REQ-HFI-001). Link the matching integriq test in the PR body.
+- [ ] 2.1 `lib/Service/Harvest/HarvestFeedService.php`: list OpenCatalogi sources (filter on `application`), save through OpenRegister `SourceService` with the fixed fields of design D3 (`protectedFields`, `provenance`, `identityProperty`, `deleteStrategy: flag`, `conflictStrategy: manual`), the catalogue and schema check, delete (REQ-HFI-002, REQ-HFI-004, REQ-HFI-005). Verify: `tests/Unit/Service/Harvest/HarvestFeedServiceTest.php::testASchemaOutsideTheCatalogueIsRefused`, `::testEveryFeedProtectsThePublicationFields`, `::testARunAsRefusalIsShownOnTheField`, `::testSwitchOffSavesSyncDisabled`.
+- [ ] 2.2 `lib/Controller/HarvestFeedController.php` (`#[AuthorizedAdminSetting]`, index, create, update, destroy) and its routes in `appinfo/routes.php`, calling `HarvestFeedService` (REQ-HFI-002). Verify: `tests/Unit/Controller/HarvestFeedControllerTest.php::testANonAdminIsRefused`; the hydra route-auth and route-reachability gates pass.
+- [ ] 2.3 Register fragment `lib/Settings/register.d/harvest-provenance.json` (ADR-037): `source` and `derivedFrom` on the publication schema, with titles, and the outbound DCAT feed writes `source` as `dct:source` (REQ-HFI-005). Verify: `tests/Unit/Settings/HarvestProvenanceFragmentTest.php` loads the fragment and finds both properties; `occ app:enable` imports it on a clean instance; the DCAT feed test asserts `dct:source` on a harvested publication.
+- [ ] 2.4 Seed the OpenRegister mapping `dcat-dataset-to-publication` (design D6), writing no protected field (REQ-HFI-004). Verify: a unit test runs it through the real `MappingService` on the fixture dataset (skipped with a named reason when OpenRegister's source is not next to the app) and asserts no `publicationDate`, `depublicationDate` or `status` in the output.
+- [ ] 3.1 Fixtures `tests/fixtures/harvest/dcat-catalog.jsonld` (three datasets, one under `@graph`) and `dcat-catalog-v2.jsonld` (one changed, one removed, one without `@id`).
+- [ ] 4.1 Settings section `src/views/settings/HarvestFeeds.vue` under `#section-harvest-feeds`, after the GitHub harvest card on board `OcInstellingen`: one card per feed (name, source, Last run with date, time, status and count, or Never run; Run now through `POST /apps/openregister/api/sources/{id}/sync`; Switch off or Switch on; Open the source in OpenRegister), the `already-running` reason shown, empty state, "New" (REQ-HFI-003).
+- [ ] 4.2 Modal `src/modals/HarvestFeedModal.vue` (ADR-004): name, source URL or integriq source slug, catalogue, schema, mapping, schedule, Run as (offers the current administrator visibly), each `NcSelect` with `inputLabel`; OpenRegister and service refusals shown on the field they name (REQ-HFI-002).
+- [ ] 4.3 "Harvested from <feed name>" on the publication detail page when `derivedFrom` is set, linking to the feed card (REQ-HFI-005).
+- [ ] 5.1 e2e `tests/e2e/harvest-feed.spec.ts`: register a feed against the fixture served by the test web server, Run now, assert three draft publications not in the public API, their `source` and "Harvested from", and the count on the card. Carries `@e2e` for "A valid feed is saved", "An administrator runs a feed by hand", "Three datasets become three drafts" and "The source is on the publication".
+- [ ] 5.2 nl and en strings for the section, the modal and the detail line; `check:l10n`.
+- [ ] 5.3 Live: run one feed on the dev instance against a public DCAT JSON-LD catalogue and paste the run's summary and one draft in the PR body.
+- [ ] 5.4 Quality: diff check while building; once before push `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, `npm run lint`, `format`; hydra gates `--scope-to-diff`. One PR `--base development`.

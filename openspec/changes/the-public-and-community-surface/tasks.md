@@ -1,5 +1,7 @@
 # Tasks: the-public-and-community-surface
 
+> Archive pass 2026-10-07: not archived; open: 2.2 (no page renders the banner: `GET /api/banners` has no caller under `src/`), 3.3 (`CommunityController::feed()` filters publications on `catalog`, a property the publication schema does not declare, and the feed lists every notice, not only the catalogue's).
+
 ## 1. The status page
 
 - [x] 1.1 `serviceStatus` schema: component, state, message, updated at (REQ-PCS-101)
@@ -9,13 +11,13 @@
 ## 2. The banner
 
 - [x] 2.1 `instanceBanner`: body, period, severity, dismissable (REQ-PCS-103)
-- [x] 2.2 Render it to every user between its dates, and remember a dismissal per user (REQ-PCS-103)
+- [ ] 2.2 Render it to every user between its dates, and remember a dismissal per user (REQ-PCS-103)
 
 ## 3. The notice board and the feed
 
 - [x] 3.1 `notice` schema per catalogue, with an optional link to a publication (REQ-PCS-104)
 - [x] 3.2 Comments per notice board, off by default, with a named moderator when enabled (REQ-PCS-104)
-- [x] 3.3 An Atom feed per catalogue over published records and notices, access-checked per entry (REQ-PCS-105)
+- [ ] 3.3 An Atom feed per catalogue over published records and notices, access-checked per entry (REQ-PCS-105)
 
 ## 4. The reader's answer
 

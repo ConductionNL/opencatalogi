@@ -1,16 +1,12 @@
 # Tasks: harvest-conflict-policies
 
-- [ ] 0.1 Author the delta spec: the four policies, the full item state
-      machine (every transition), resolution actions incl. per-field merge
-      and bulk, resolution audit
-- [ ] 1.1 Policy execution in the harvest handler; evaluate rule-shaped
-      policies via the shared OR decision-table evaluator, never an app-local
-      matcher
-- [ ] 1.2 Idempotent re-entry for items parked `conflict` by
-      harvest-feed-intake
-- [ ] 2.1 Manual-review queue page (pagination >100) + resolution modal with
-      side-by-side and per-field diff
-- [ ] 2.2 Resolution handler: link/update/discard + audit record; bulk apply
-- [ ] 3.1 Unit tests per policy and per state transition
-- [ ] 3.2 e2e: conflict created → reviewed → merged, and a bulk resolution
-- [ ] 4.1 i18n (nl/en) for queue + modal; quality gates as usual
+The delta spec is `specs/harvest-conflict-policies/spec.md` (REQ-HCP-001 to REQ-HCP-005); read `design.md` first, D1 says what OpenRegister owns. **Build after `harvest-feed-intake` and after `openregister/app-harvest-fetchers-and-flow-node` has merged its code** (strategies `reject` and `local-wins`, `conflictRules`, the sync-record list and resolve routes). Read `openspec/woo-build-rules.md` for the branch, test and verification rules. The review page and modal have no board yet (design D7): ask for one before 2.1. Task 2.2 waits on OpenRegister's answer about the mapped payload (design D6).
+
+- [x] 0.1 Author the delta spec (spec round 2026-10-07); revised in spec round part 2 to build on OpenRegister's strategies and resolution API and drop the app's own fields, state machine, resolution service and migration.
+- [ ] 1.1 Policy choice in `src/modals/HarvestFeedModal.vue`: four choices with a line each, the `source-wins` warning, stored as `conflictStrategy` through `HarvestFeedService` (REQ-HCP-001). Verify: `tests/Unit/Service/Harvest/ConflictPolicyFormTest.php::testEachChoiceStoresItsStrategy`, `::testAFeedWithoutAChoiceReadsAskAPerson`.
+- [ ] 1.2 Per-reason overrides compiled to `conflictRules` in `lib/Service/Harvest/ConflictRulesCompiler.php` (design D3: hit policy `FIRST`, input `conflictReason`, output `strategy`, no table without overrides, a foreign table left untouched), called from `HarvestFeedService`; OpenRegister's 422 shown on the section (REQ-HCP-002). Verify: `ConflictPolicyFormTest::testOverridesCompileToOneRowPerReason`, `::testNoOverrideWritesNoTable`, `::testAForeignTableIsLeftUntouched`; on the dev instance save one override and paste the stored table in the PR body.
+- [ ] 2.1 Page `src/views/harvest/HarvestReview.vue` at `/harvest/review` with its manifest entry and menu item: for each OpenCatalogi source read `GET /apps/openregister/api/sources/{id}/sync-records?status=conflict`, one table (feed, dataset title, reason, since when, link to the publication), selection bar, empty state (REQ-HCP-003). Verify: `tests/vitest/harvestReview.spec.js` renders exactly the records the route returns, and the empty state.
+- [ ] 2.2 Modal `src/modals/HarvestConflictModal.vue`: differing properties only, protected and provenance properties never offered, `NcSelect` with `inputLabel` per property, the four actions to OpenRegister's resolve route, the 403 message (REQ-HCP-004). Verify: `tests/vitest/harvestConflictModal.spec.js` (only differing fields, no protected field, a 403 keeps the conflict).
+- [ ] 2.3 Bulk keep ours, use harvested and drop through OpenRegister's bulk resolve route; failed items listed with their reason (REQ-HCP-005). Verify: a vitest with a mixed bulk response.
+- [ ] 3.1 e2e `tests/e2e/harvest-conflict-review.spec.ts`: a local edit, a re-run, the item on the review page, a per-field merge, the merged publication; then a bulk "Keep ours" over two items. Carries `@e2e` for "An administrator picks a policy", "An editor merges one field" and "A bulk keep-ours over two items".
+- [ ] 4.1 nl and en strings for the policy choice, the overrides, the page and the modal; quality as in `harvest-feed-intake` task 5.4.
