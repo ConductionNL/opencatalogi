@@ -1143,19 +1143,13 @@ class PublicationQueryService
             return [];
         }
 
-        $ids = [];
-        foreach ($value as $id) {
-            if (is_int($id) === true && $id > 0) {
-                $ids[] = $id;
-                continue;
-            }
+        // An int, or a string of digits; whatever else casts to 0 and drops out.
+        $digits = array_filter(
+            $value,
+            static fn (mixed $id): bool => is_int($id) === true || (is_string($id) === true && ctype_digit($id) === true)
+        );
 
-            if (is_string($id) === true && ctype_digit($id) === true && (int) $id > 0) {
-                $ids[] = (int) $id;
-            }
-        }
-
-        return $ids;
+        return array_values(array_filter(array_map('intval', $digits), static fn (int $id): bool => $id > 0));
 
     }//end normalizeIds()
 
