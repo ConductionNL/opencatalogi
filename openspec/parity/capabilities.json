@@ -500,7 +500,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"create a catalogue with its own title, summary and web address for a department or a theme\"; catalogue set-up in the JOIN Woo Portaal is covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcCatalogi",
 					"OcNieuweCatalogus"
@@ -538,7 +538,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"choose per catalogue which kinds of publication it holds\"; catalogue set-up in the JOIN Woo Portaal is covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcNieuweCatalogus",
 					"OcCatalogusBewerken",
@@ -577,7 +577,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see every catalogue in one overview and open one to work on its publications\"; catalogue set-up in the JOIN Woo Portaal is covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcCatalogi",
 					"OcCatalogus"
@@ -615,7 +615,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"record the publishing organisation of a catalogue with its government identifiers, such as OIN, TOOI and RSIN\"; catalogue set-up in the JOIN Woo Portaal is covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcOrganisatie",
 					"OcCatalogus"
@@ -757,7 +757,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"run catalogues for several organisations on one installation, each seeing only its own\"; catalogue set-up in the JOIN Woo Portaal is covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcCatalogi"
 			}
 		},
@@ -792,7 +792,7 @@
 				"iprox": "docs read 2026-09-26: https://api-waterschaplimburg.iprox-open.nl/api/v1/public/dossier-categories on the Limburg instance (public instance open.waterschaplimburg.nl, established as iprox.open by the vendor interview https://iprox.nl/marketing/521/interview-marc-ypeij-ws-limburg (\"publiceren ... naar ons platform open.waterschaplimburg.nl\") and by its backend host api-waterschaplimburg.iprox-open.nl) gives each publication category its own dynamicFields, e.g. Bestuursorgaan (Select), Vergaderdatum (Date) and PublicReviewPeriod (DateTimeRange); whether an administrator adds such fields without the vendor is not documented"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcPublicatieBewerken"
 			}
 		},
@@ -827,7 +827,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"copy an existing catalogue item as the starting point for a new one\"; catalogue set-up in the JOIN Woo Portaal is covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcPublicatieKopieren"
 			}
 		},
@@ -862,7 +862,7 @@
 				"decos": "docs read 2026-09-26: https://decos.com/hubfs/woo_infographic_canva.pdf.png step 1: in the source system a \"Document wordt aangemerkt als Woo-publicatie\", then offered to the platform over an API and published; https://decos.com/oplossingen/woo-portaal: \"Alles staat in JOIN, de publicatie gebeurt vanuit dezelfde bron\"; the fields of a publication (title, summary, description) are not described"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcNieuwePublicatie"
 			}
 		},
@@ -897,7 +897,7 @@
 			},
 			"note": "Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"Attach documents to a publication and keep them as files in Nextcloud.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row.",
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcBijlageToevoegen",
 					"OcPublicatieBestanden"
@@ -935,7 +935,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"decide per attached document whether it is published or stays internal\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcPublicatieBestanden",
 					"OcMassaActies"
@@ -973,7 +973,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"publish or withdraw a publication with one status change\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcPublicatie",
 					"OcPubliceren"
@@ -1011,7 +1011,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"schedule a publication to go live on a set date and keep it hidden until then\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcPubliceren",
 					"OcPublicatie"
@@ -1049,11 +1049,12 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"publish, withdraw or delete many publications in one action\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcPublicaties",
 					"OcPubliceren",
-					"OcMassaActies"
+					"OcMassaActies",
+					"OcPublicatieVerwijderen"
 				]
 			}
 		},
@@ -1088,7 +1089,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"lock a publication so nobody else edits it while you work on it\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcMassaActies"
 			}
 		},
@@ -1123,7 +1124,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see earlier versions of a publication and what changed between them\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcPublicatie"
 			}
 		},
@@ -1157,7 +1158,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see who changed a publication and when\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcPublicatie"
 			}
 		},
@@ -1227,7 +1228,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"publish records from another app automatically once they meet a rule\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -1262,7 +1263,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see which publications miss required metadata before they go out\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcCatalogus"
 			}
 		},
@@ -1297,7 +1298,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see on the Nextcloud dashboard which publications and attachments are not yet published\"; the row names the Nextcloud dashboard; the JOIN Woo Portaal is part of the JOIN platform and no page mentions any Nextcloud integration. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcDashboard",
 					"OcRapportPublicaties"
@@ -1404,7 +1405,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"import many publications at once from a spreadsheet or a data file\"; publication editing happens in JOIN Zaak & Document and is documented only in the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcJsonUploaden"
 			}
 		},
@@ -1439,7 +1440,7 @@
 				"dkan": "source read at 4.1.3: grepped -iE 'woo|wet open overheid|diwoo|tooi|informatiecategor|plooi|open.overheid' across modules/, schema/ and cypress/ (php, yml, json, twig, js), no hits. Nearest thing is free theme ('Category') items (schema/collections/theme.json, schema/collections/dataset.json:202); an admin could create 17 terms by hand, but nothing ships or enforces the Woo list."
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcNieuwePublicatie",
 					"OcPublicatie"
@@ -1582,7 +1583,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"serve a robots.txt that points harvesters at those sitemaps\"; the public pages describe the JOIN link, categories, collections and anonymisation, not this Woo function. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -1617,7 +1618,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"check whether the national Woo-index harvester can read this installation, and see what fails\"; the public pages describe the JOIN link, categories, collections and anonymisation, not this Woo function. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -1652,7 +1653,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"validate a catalogue's DiWoo output against the value lists before the harvester reads it\"; the public pages describe the JOIN link, categories, collections and anonymisation, not this Woo function. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -1687,7 +1688,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"get publications into the national Woo-index without delivering each one by hand\"; searched https://decos.com/oplossingen/woo-portaal and https://decos.com/hubfs/woo_infographic_canva.pdf.png for Woo-index, sitemap or DiWoo; none of the public pages mention the Woo-index. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -1722,7 +1723,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"deliver publications to open.overheid.nl through its delivery API rather than by harvest\"; the public pages describe the JOIN link, categories, collections and anonymisation, not this Woo function. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcPublicatie",
 					"OcInstellingen"
@@ -1958,7 +1959,7 @@
 				"iprox": "docs read 2026-09-26: https://iprox.nl/pages/716/page: with the EntrD FileFactory integration \"Vanuit FileFactory kunnen documenten automatisch worden opgehaald uit SharePoint om te worden gelakt of gepseudonimiseerd\", then published with one click; this runs through a partner product on the SharePoint route, not inside iprox.open itself"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcWooBatch",
 					"OcLakken"
@@ -1995,7 +1996,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"export the publication and usage figures per catalogue for the annual Woo report\"; the public pages describe the JOIN link, categories, collections and anonymisation, not this Woo function. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcRapportGebruik"
 			}
 		},
@@ -2030,7 +2031,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"open a disclosure batch for one Woo request and gather the documents in scope\"; the public pages describe intake via eFormulieren, handling as a case and anonymisation, not this step of the request workflow. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcWooBatches",
 					"OcWooBatchAanmaken"
@@ -2067,7 +2068,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"record per document whether it is disclosed in full, in part or not at all\"; the public pages describe intake via eFormulieren, handling as a case and anonymisation, not this step of the request workflow. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcWooBatch",
 					"OcLakken"
@@ -2104,7 +2105,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"choose the refusal grounds from the statutory list in the Woo\"; the public pages describe intake via eFormulieren, handling as a case and anonymisation, not this step of the request workflow. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcWooBatch",
 					"OcLakken"
@@ -2171,7 +2172,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see how far a batch is, with a count of documents per assessment status\"; the public pages describe intake via eFormulieren, handling as a case and anonymisation, not this step of the request workflow. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcWooBatches",
 					"OcWooBatch"
@@ -2209,7 +2210,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"send a batch for review only once every document in it is assessed\"; the public pages describe intake via eFormulieren, handling as a case and anonymisation, not this step of the request workflow. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcWooBatch"
 			}
 		},
@@ -2244,7 +2245,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"generate the inventory list of a batch as a spreadsheet\"; the public pages describe intake via eFormulieren, handling as a case and anonymisation, not this step of the request workflow. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcWooBatch"
 			}
 		},
@@ -2309,7 +2310,7 @@
 				"decos": "docs read 2026-09-26: https://decos.com/oplossingen/woo-portaal: for a Woo request \"Na beoordeling worden de relevante documenten via het portaal gepubliceerd\"; publishing a finished batch in one action is not described"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcWooBatch"
 			}
 		},
@@ -2515,7 +2516,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"compose an official notice and send it to the national publication platform and the local channel\"; nothing public covers decision types, inspection periods, notices or signing in the JOIN Woo Portaal. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcPublicatie"
 			}
 		},
@@ -2720,7 +2721,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"serve a DCAT-AP document per catalogue for a harvester to read\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcCatalogus"
 			}
 		},
@@ -2790,7 +2791,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"check a catalogue's DCAT feed against the mandatory properties before it is harvested\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -2825,7 +2826,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"check that data.overheid.nl can harvest a catalogue, and see what it would reject\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -2860,7 +2861,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"make catalogues findable in web search engines through schema.org dataset markup\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcCatalogus"
 			}
 		},
@@ -2895,7 +2896,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"publish courses, programmes and offerings in the Open Onderwijs API format\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcCatalogus",
 					"OcInstellingen"
@@ -2933,7 +2934,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"score a catalogue's metadata quality the way the European data portal does\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcCatalogus"
 			}
 		},
@@ -2972,7 +2973,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"harvest datasets from another DCAT or CKAN portal into a catalogue on a schedule\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -3115,7 +3116,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"show a dataset as a table, chart or map on its public page\"; the JOIN Woo Portaal is positioned for Woo documents; no public page mentions datasets or DCAT. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcPublicatieBestanden"
 			}
 		},
@@ -3244,7 +3245,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"publish a directory of this installation's catalogues that other installations can read\"; no public page mentions federation between installations. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcDirectory"
 			}
 		},
@@ -3278,7 +3279,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"add another organisation's directory by its address and pull in its catalogues\"; no public page mentions federation between installations. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcDirectoryToevoegen"
 			}
 		},
@@ -3313,7 +3314,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"keep federated catalogues in step on a schedule, and sync them now on demand\"; no public page mentions federation between installations. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcInstellingen",
 					"OcDirectory"
@@ -3385,7 +3386,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"choose which remote catalogues are shown, and edit or remove a listing\"; no public page mentions federation between installations. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcListingBewerken",
 					"OcListingVerwijderen"
@@ -3422,7 +3423,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"search the publications of every federated catalogue from one screen\"; no public page mentions federation between installations. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcZoeken"
 			}
 		},
@@ -3457,7 +3458,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"open a publication from another organisation with its attachments without leaving the app\"; no public page mentions federation between installations. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcZoeken"
 			}
 		},
@@ -3527,7 +3528,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see whether each federation connection works and when it last succeeded\"; no public page mentions federation between installations. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcDirectory",
 					"OcRapportCatalogi"
@@ -3703,7 +3704,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"find words in scanned documents that were never typed\"; the public pages say only that the portal makes publications findable; search behaviour is described only in the login-gated wiki and no live instance was found. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcPublicatieBestanden"
 			}
 		},
@@ -4113,7 +4114,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"offer the publications and their labels in more than one language\"; the public pages do not mention this reading-room feature and no live instance was found to look at. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcPublicatie",
 					"OcPublicatieBewerken"
@@ -4417,7 +4418,7 @@
 				"iprox": "not checked: searched the public iprox.open material for \"show some documents only to readers who log in with DigiD or eHerkenning\"; the Limburg and Vechtstromen reading rooms do not show this feature and no public page mentions it. Sources read: https://iprox.nl/oplossingen/66/iprox-open, https://iprox.nl/oplossingen/456/iprox-open-nieuw (product pages with FAQ), the iprox blogs 435, 477, 389 and interviews 521 and 601, the EntrD news https://iprox.nl/pages/716/page, the Softwarecatalogus entry https://www.softwarecatalogus.nl/pakket/iproxopen-complete-publicatie-oplossing-voor-de-woo, and the public instances https://open.waterschaplimburg.nl and https://open.vechtstromen.nl with the public API https://api-waterschaplimburg.iprox-open.nl/api/v1/public"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcPublicatie",
 					"OcPublicatieBewerken"
@@ -4967,7 +4968,7 @@
 				"decos": "docs read 2026-09-26: https://decos.com/hubfs/woo_infographic_canva.pdf.png step 1 \"Bronsysteem: Document aangemerkt als Woo-publicatie, bijv. iBabs\", step 2 \"API-koppeling: Document wordt aangeboden aan het platform\""
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -5102,7 +5103,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"give an outside consumer its own credentials for a protected feed\"; the public pages name JOIN Zaak & Document over its RestAPI and iBabs as a source; nothing public covers this integration. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -5207,7 +5208,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"evaluate the retention term of every publication daily and flag the ones that are due\"; no public page describes retention, withdrawal or archiving in the JOIN Woo Portaal (JOIN RMA & Archivering is a separate product not described for the portal). Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcBewaartermijnen",
 					"OcDashboard"
@@ -5245,7 +5246,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"work through a review queue of publications whose term has passed\"; no public page describes retention, withdrawal or archiving in the JOIN Woo Portaal (JOIN RMA & Archivering is a separate product not described for the portal). Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcBewaartermijnen"
 			}
 		},
@@ -5280,7 +5281,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"decide per publication to extend, withdraw, archive or dispose, with the decision recorded\"; no public page describes retention, withdrawal or archiving in the JOIN Woo Portaal (JOIN RMA & Archivering is a separate product not described for the portal). Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcBewaartermijnen",
 					"OcTermijnVerlengen"
@@ -5318,7 +5319,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"set default retention terms per catalogue\"; no public page describes retention, withdrawal or archiving in the JOIN Woo Portaal (JOIN RMA & Archivering is a separate product not described for the portal). Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcCatalogus"
 			}
 		},
@@ -5353,7 +5354,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"export a retention report as a spreadsheet\"; no public page describes retention, withdrawal or archiving in the JOIN Woo Portaal (JOIN RMA & Archivering is a separate product not described for the portal). Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcRapportPublicaties"
 			}
 		},
@@ -5388,7 +5389,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"take something published in error down with one action, record who did it and why, and tell every channel\"; no public page describes retention, withdrawal or archiving in the JOIN Woo Portaal (JOIN RMA & Archivering is a separate product not described for the portal). Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcPublicatie"
 			}
 		},
@@ -5457,7 +5458,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"set the app up on first use with a guided wizard that creates what it needs\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstallatie"
 			}
 		},
@@ -5492,7 +5493,7 @@
 			},
 			"note": "Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"Point the app at the register and schemas it stores its data in.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row.",
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -5526,7 +5527,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"re-import the shipped configuration after an update\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcInstellingen"
 			}
 		},
@@ -5561,7 +5562,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"count views and downloads per publication without storing personal data\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcPublicatie",
 					"OcRapportGebruik"
@@ -5599,7 +5600,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see a daily usage chart on the dashboard\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcDashboard"
 			}
 		},
@@ -5634,7 +5635,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see the most viewed publications on the Nextcloud dashboard\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcDashboard",
 					"OcRapportGebruik"
@@ -5672,7 +5673,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"see counts of catalogues, publications and attachments on the app's own dashboard\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcDashboard"
 			}
 		},
@@ -5707,7 +5708,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"open ready-made reports on publications, usage and federation\"; operations and admin set-up are covered only by the login-gated Decos wiki. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcRapporten",
 					"OcRapportPublicaties",
@@ -6228,7 +6229,7 @@
 			},
 			"note": "Specified in ConductionNL/dossiq openspec/changes/woo-requests-gather-documents-from-sources (dossiq lane, OpenSpec pass 2026-09-27).",
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcWooVerzoek"
 			}
 		},
@@ -6264,7 +6265,7 @@
 				"decos": "not checked: searched the public Decos JOIN Woo Portaal material for \"show one publication in the catalogues of several organisations without copying it\"; no public page or live instance shows it. Sources read: https://decos.com/oplossingen/woo-portaal (product page and FAQ), the infographic https://decos.com/hubfs/woo_infographic_canva.pdf.png linked from it, https://decos.com/oplossingen/anonimiseren and https://decos.com/zaaksysteem; the Decos wiki pages on the Woo Portaal (wiki.decos.com and wiki.decos.nl, including the configuration page and the June 2025 release note) answer 403 with a login redirect, so they are not public; no public live Woo Portaal instance could be established (searched the ROO Woo-index export exportOO.xml for Decos-hosted addresses, the accessibility register, and the web)"
 			},
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcCatalogus"
 			}
 		},
@@ -6338,7 +6339,7 @@
 			},
 			"note": "Specified in ConductionNL/openregister openspec/changes/field-rules-by-state (openregister lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: OpenRegister shipped field rules by state; opencatalogi has neither the draft state nor the rule that makes fields required in published. No opencatalogi change declares that rule yet. Spec round part 3 (2026-10-07): opencatalogi's half (the required-in-published rule on the publication schema and the form hints) is specified in publication-required-at-publish, after publication-lifecycle-on-or; OpenRegister's delivered engine is openregister/field-rules-by-state.",
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcNieuwePublicatie",
 					"OcPublicatieBewerken",
@@ -6587,7 +6588,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcPublicatie"
 			}
 		},
@@ -6609,7 +6610,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": [
 					"OcWooVerzoeken",
 					"OcWooVerzoek"
@@ -6656,7 +6657,7 @@
 			"iprox": "unknown",
 			"decos": "unknown",
 			"screen": {
-				"canvas": "5NkFW28vZUUij43xzxHg5a",
+				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
 				"board": "OcBijlageToevoegen"
 			}
 		},
