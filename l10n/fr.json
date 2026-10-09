@@ -730,9 +730,8 @@
         "This catalog has no registers or schemas configured": "Ce catalogue n'a aucun registre ni schéma configuré",
         "Add a register and a schema to the catalog to list its publications here.": "Ajoutez un registre et un schéma au catalogue pour afficher ses publications ici.",
         "Open catalog": "Ouvrir le catalogue",
-        "Register and schema": "Registre et schéma",
-        "{schema} in {register}": "{schema} dans {register}",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Créez votre premier catalogue. C'est le conteneur dans lequel vivront vos publications. Choisissez le registre Publication et le schéma Publication, afin que le catalogue affiche les publications que vous ajoutez."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Créez votre premier catalogue. C'est le conteneur dans lequel vivront vos publications. Choisissez le registre Publication et le schéma Publication, afin que le catalogue affiche les publications que vous ajoutez.",
+        "Manage your publications and their status": "Gérez vos publications et leur statut"
     },
     "plurals": {}
 }

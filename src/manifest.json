@@ -508,7 +508,7 @@
 			"type": "custom",
 			"component": "CatalogPublicationsIndex",
 			"title": "Publications",
-			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage for one register/schema pair, with a selector when the catalog has several, kept in the `_pair` query parameter. It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. `register`/`schema` below name the publication pair: rows of that pair open on PublicationDetail, rows of any other pair (e.g. publiccode) have no detail page, so a click selects them and Edit uses CnIndexPage's form for their schema. CnIndexPage itself lists the catalog's active pair. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Every other config key reaches CnIndexPage for every pair, so it must fit any schema; config that only fits the publication schema, such as `columns` naming its properties or `actions` with a publication handler, goes in `publicationPairConfig`, which CnIndexPage gets on the publication pair only. SORT: newest first by default, on every pair; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). COLUMNS: Name, Status, Files, Updated, the set the list had before the CnIndexPage migration. Files counts `@self.files` (file IDs) with the library's `count` formatter; it is not sortable. Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`. The columns name publication properties, so they sit in `publicationPairConfig` and other pairs show CnIndexPage's default columns for their schema.",
+			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage over all of its pairs at once: the list comes from `/api/{catalogSlug}` through CnIndexPage's `collectionUrl`, newest first, while `register`/`schema` below name the page's own pair (the publication pair, which drives the columns, Add and the form). It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. Publication rows open on PublicationDetail; rows of any other pair (e.g. publicationRule) have no detail page, so View and Edit open CnIndexPage's form for their own schema, and save, copy and delete go to their own pair. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Config that only fits the publication schema, such as `columns` and `actions` with a publication handler, goes in `publicationPairConfig`, applied when the page's pair is the publication pair; its custom actions show on publication rows only. Mass export and import stay off because they would cover the page's own pair only. SORT: newest first by default, on every pair; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). COLUMNS: Name, Status, Files, Updated, the set the list had before the CnIndexPage migration. Name is `@self.name`, which every schema has. Files counts `@self.files` (file IDs) with the library's `count` formatter; it is not sortable. Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`.",
 			"config": {
 				"register": "@resolve:publication_register",
 				"schema": "@resolve:publication_schema",
@@ -527,7 +527,7 @@
 				"publicationPairConfig": {
 					"columns": [
 						{
-							"key": "title",
+							"key": "@self.name",
 							"label": "Name",
 							"sortable": true
 						},
@@ -566,7 +566,9 @@
 					"showCopyAction": true,
 					"showDeleteAction": true,
 					"showViewToggle": true,
-					"selectable": true
+					"selectable": true,
+					"showMassExport": false,
+					"showMassImport": false
 				},
 				"inlineSearch": true,
 				"showCountWithSearch": true,

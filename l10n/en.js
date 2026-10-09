@@ -1430,9 +1430,8 @@ OC.L10N.register(
         "This catalog has no registers or schemas configured": "This catalog has no registers or schemas configured",
         "Add a register and a schema to the catalog to list its publications here.": "Add a register and a schema to the catalog to list its publications here.",
         "Open catalog": "Open catalog",
-        "Register and schema": "Register and schema",
-        "{schema} in {register}": "{schema} in {register}",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.",
+        "Manage your publications and their status": "Manage your publications and their status"
     },
     "nplurals=2; plural=(n != 1);"
 )

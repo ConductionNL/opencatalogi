@@ -731,9 +731,8 @@ OC.L10N.register(
         "This catalog has no registers or schemas configured": "Ky katalog nuk ka regjistra ose skema të konfiguruara",
         "Add a register and a schema to the catalog to list its publications here.": "Shtoni një regjistër dhe një skemë në katalog që botimet e tij të shfaqen këtu.",
         "Open catalog": "Hap katalogun",
-        "Register and schema": "Regjistër dhe skemë",
-        "{schema} in {register}": "{schema} në {register}",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Krijoni katalogun tuaj të parë. Është kontejneri ku do të jenë botimet tuaja. Zgjidhni regjistrin Publication dhe skemën Publication, që katalogu të shfaqë botimet që shtoni."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Krijoni katalogun tuaj të parë. Është kontejneri ku do të jenë botimet tuaja. Zgjidhni regjistrin Publication dhe skemën Publication, që katalogu të shfaqë botimet që shtoni.",
+        "Manage your publications and their status": "Menaxhoni publikimet tuaja dhe statusin e tyre"
     },
     "nplurals=2; plural=(n != 1);"
 )
