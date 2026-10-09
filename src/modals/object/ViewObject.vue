@@ -915,6 +915,7 @@ import {
 	dispatchObjectsChanged,
 	validateValue,
 } from '@conduction/nextcloud-vue'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcActionButton,
@@ -1802,10 +1803,10 @@ export default {
 		getModalTitle() {
 			// For new objects, show "Create Publication"
 			if (this.isNewObject) {
-				return 'Create Publication'
+				return t('opencatalogi', 'Create Publication')
 			}
 
-			if (!this.currentObject) return 'View Object'
+			if (!this.currentObject) return t('opencatalogi', 'View Object')
 
 			const name =
 				this.currentObject['@self']?.name
