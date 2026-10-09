@@ -298,6 +298,35 @@ describe('CatalogPublicationsIndex', () => {
 		).toBe(false)
 	})
 
+	it('colors publication cards by their status and leaves other rows plain', async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
+		const { wrapper } = mountPage()
+		await flushPromises()
+
+		const { cardAccent } = indexPage(wrapper).vm.$attrs
+		const self = { register: 19, schema: 173 }
+		expect(
+			cardAccent({ '@self': self, publicationDate: '2020-01-01' }),
+		).toMatchObject({ variant: 'success', icon: 'ListBoxOutline' })
+		expect(
+			cardAccent({
+				'@self': self,
+				publicationDate: '2020-01-01',
+				depublicationDate: '2021-01-01',
+			}),
+		).toMatchObject({ variant: 'error', icon: 'AlertOutline' })
+		expect(cardAccent({ '@self': self })).toMatchObject({
+			variant: 'warning',
+			icon: 'Pencil',
+		})
+		expect(
+			cardAccent({
+				'@self': { register: 19, schema: 184 },
+				publicationDate: '2020-01-01',
+			}),
+		).toBeNull()
+	})
+
 	it('uses the first pair, without publication config, for a catalog without the publication pair', async () => {
 		objectStore.menuCatalogs = [catalog('code', [19], [184])]
 		const { wrapper, router } = mountPage({
