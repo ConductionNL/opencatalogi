@@ -36,7 +36,9 @@
 const fs = require('fs')
 const path = require('path')
 
-const ROOT = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(__dirname, '..')
+const ROOT = process.argv[2]
+	? path.resolve(process.argv[2])
+	: path.resolve(__dirname, '..')
 const failures = []
 
 /**
@@ -74,8 +76,10 @@ for (const f of walk(path.join(ROOT, 'lib'), /\.php$/)) {
 	}
 	const id = (src.match(/LEAF_ID\s*=\s*'([^']+)'/) || [])[1]
 	if (!id) {
-		failures.push(`${path.relative(ROOT, f)}: constructs a LeafDescriptor but declares no LEAF_ID `
-			+ 'constant, so its id cannot be correlated with the JS half.')
+		failures.push(
+			`${path.relative(ROOT, f)}: constructs a LeafDescriptor but declares no LEAF_ID `
+				+ 'constant, so its id cannot be correlated with the JS half.',
+		)
 		continue
 	}
 	php.set(id, {
@@ -85,8 +89,10 @@ for (const f of walk(path.join(ROOT, 'lib'), /\.php$/)) {
 		group: (src.match(/GROUP\s*=\s*'([^']+)'/) || [])[1] || '',
 		referenceType: (src.match(/REFERENCE_TYPE\s*=\s*'([^']+)'/) || [])[1] || '',
 		renderMode: /RENDER_MODE_MOUNT/.test(src) ? 'mount' : '',
-		surfaces: ((src.match(/const SURFACES\s*=\s*\[([\s\S]*?)\];/) || [])[1] || '')
-			.match(/'([^']+)'/g)?.map((s) => s.replace(/'/g, '')) || [],
+		surfaces:
+			((src.match(/const SURFACES\s*=\s*\[([\s\S]*?)\];/) || [])[1] || '')
+				.match(/'([^']+)'/g)
+				?.map((s) => s.replace(/'/g, '')) || [],
 	})
 }
 
@@ -97,10 +103,14 @@ for (const f of walk(path.join(ROOT, 'src'), /\.(js|ts)$/)) {
 	if (!/integrations\.register\(|registerIntegration\(/.test(src)) {
 		continue
 	}
-	const id = (src.match(/_INTEGRATION_ID\s*=\s*'([^']+)'/) || src.match(/\bid:\s*'([^']+)'/) || [])[1]
+	const id = (src.match(/_INTEGRATION_ID\s*=\s*'([^']+)'/)
+		|| src.match(/\bid:\s*'([^']+)'/)
+		|| [])[1]
 	if (!id) {
-		failures.push(`${path.relative(ROOT, f)}: registers an integration but no id could be read, `
-			+ 'so it cannot be correlated with the PHP half.')
+		failures.push(
+			`${path.relative(ROOT, f)}: registers an integration but no id could be read, `
+				+ 'so it cannot be correlated with the PHP half.',
+		)
 		continue
 	}
 	js.set(id, {
@@ -110,22 +120,28 @@ for (const f of walk(path.join(ROOT, 'src'), /\.(js|ts)$/)) {
 		group: (src.match(/\n\tgroup:\s*'([^']+)'/) || [])[1] || '',
 		referenceType: (src.match(/\n\treferenceType:\s*'([^']+)'/) || [])[1] || '',
 		renderMode: (src.match(/renderMode:\s*'([^']+)'/) || [])[1] || '',
-		surfaces: ((src.match(/const SURFACES\s*=\s*\[([^\]]*)\]/) || [])[1] || '')
-			.match(/'([^']+)'/g)?.map((s) => s.replace(/'/g, '')) || [],
+		surfaces:
+			((src.match(/const SURFACES\s*=\s*\[([^\]]*)\]/) || [])[1] || '')
+				.match(/'([^']+)'/g)
+				?.map((s) => s.replace(/'/g, '')) || [],
 	})
 }
 
 // Pass 1 — id sets.
 for (const [id, e] of php) {
 	if (!js.has(id)) {
-		failures.push(`'${id}': declared by ${e.file} but by no JS half. The descriptor reaches `
-			+ 'server-side consumers and renders nothing — an orphan registration (ADR-066 decision 4).')
+		failures.push(
+			`'${id}': declared by ${e.file} but by no JS half. The descriptor reaches `
+				+ 'server-side consumers and renders nothing — an orphan registration (ADR-066 decision 4).',
+		)
 	}
 }
 for (const [id, e] of js) {
 	if (!php.has(id)) {
-		failures.push(`'${id}': registered by ${e.file} but by no PHP half. The surface renders but is `
-			+ 'invisible to every consumer that does not load this app\'s bundle (gate-24 R2).')
+		failures.push(
+			`'${id}': registered by ${e.file} but by no PHP half. The surface renders but is `
+				+ "invisible to every consumer that does not load this app's bundle (gate-24 R2).",
+		)
 	}
 }
 
@@ -138,19 +154,27 @@ for (const [id, p] of php) {
 	}
 	for (const field of FIELDS) {
 		if (p[field] === '' || j[field] === '') {
-			failures.push(`'${id}'.${field}: unreadable on the ${p[field] === '' ? 'PHP' : 'JS'} half. `
-				+ 'A value this checker cannot see is one it cannot compare, so this is a failure, not a skip.')
+			failures.push(
+				`'${id}'.${field}: unreadable on the ${p[field] === '' ? 'PHP' : 'JS'} half. `
+					+ 'A value this checker cannot see is one it cannot compare, so this is a failure, not a skip.',
+			)
 		} else if (p[field] !== j[field]) {
-			failures.push(`'${id}'.${field}: JS says ${JSON.stringify(j[field])}, PHP says `
-				+ `${JSON.stringify(p[field])} — the halves are bound by these values.`)
+			failures.push(
+				`'${id}'.${field}: JS says ${JSON.stringify(j[field])}, PHP says `
+					+ `${JSON.stringify(p[field])} — the halves are bound by these values.`,
+			)
 		}
 	}
 	if (p.surfaces.length === 0 || j.surfaces.length === 0) {
-		failures.push(`'${id}'.surfaces: one half declares none. Both must write the list out — a set `
-			+ 'declared by omission gives this checker nothing to compare.')
+		failures.push(
+			`'${id}'.surfaces: one half declares none. Both must write the list out — a set `
+				+ 'declared by omission gives this checker nothing to compare.',
+		)
 	} else if (JSON.stringify(p.surfaces) !== JSON.stringify(j.surfaces)) {
-		failures.push(`'${id}'.surfaces: JS ${j.surfaces.join(',')} vs PHP ${p.surfaces.join(',')} — `
-			+ 'order is part of what both halves promise.')
+		failures.push(
+			`'${id}'.surfaces: JS ${j.surfaces.join(',')} vs PHP ${p.surfaces.join(',')} — `
+				+ 'order is part of what both halves promise.',
+		)
 	}
 }
 
@@ -163,9 +187,13 @@ if (failures.length > 0) {
 }
 
 if (php.size === 0 && js.size === 0) {
-	console.log('✓ integration parity: this repo registers no OpenRegister leaves — nothing to correlate.')
+	console.log(
+		'✓ integration parity: this repo registers no OpenRegister leaves — nothing to correlate.',
+	)
 	process.exit(0)
 }
 
-console.log(`✓ integration parity: ${php.size} leaf/leaves correlated on both halves `
-	+ `(${[...php.keys()].join(', ')}) — id, label, icon, group, referenceType, renderMode and surfaces all agree.`)
+console.log(
+	`✓ integration parity: ${php.size} leaf/leaves correlated on both halves `
+		+ `(${[...php.keys()].join(', ')}) — id, label, icon, group, referenceType, renderMode and surfaces all agree.`,
+)
