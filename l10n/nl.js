@@ -1396,7 +1396,9 @@ OC.L10N.register(
         "Last attempt": "Laatste poging",
         "Error:": "Fout:",
         "Synchronising…": "Bezig met synchroniseren…",
-        "Sync now": "Nu synchroniseren"
+        "Sync now": "Nu synchroniseren",
+        "Dismiss": "Sluiten",
+        "Dismiss this announcement": "Deze mededeling sluiten"
     },
     "nplurals=2; plural=(n != 1);"
 )

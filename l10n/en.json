@@ -1440,7 +1440,9 @@
         "Last attempt": "Last attempt",
         "Error:": "Error:",
         "Synchronising…": "Synchronising…",
-        "Sync now": "Sync now"
+        "Sync now": "Sync now",
+        "Dismiss": "Dismiss",
+        "Dismiss this announcement": "Dismiss this announcement"
     },
     "plurals": {}
 }

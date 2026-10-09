@@ -1441,7 +1441,9 @@ OC.L10N.register(
         "Last attempt": "Last attempt",
         "Error:": "Error:",
         "Synchronising…": "Synchronising…",
-        "Sync now": "Sync now"
+        "Sync now": "Sync now",
+        "Dismiss": "Dismiss",
+        "Dismiss this announcement": "Dismiss this announcement"
     },
     "nplurals=2; plural=(n != 1);"
 )
