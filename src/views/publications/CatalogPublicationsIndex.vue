@@ -59,9 +59,11 @@
 		:collectionUrl="collectionUrl"
 		:rowClickToView="opensDetail"
 		:viewTo="opensDetail ? rowTarget : null"
+		:editOpensDetail="true"
 		@rowClick="onRowOpen"
 		@rowAuxClick="onRowOpen"
 		@view="onView"
+		@editOpen="onEdit"
 		@add="onAdd" />
 </template>
 
@@ -455,6 +457,22 @@ export default {
 				return
 			}
 			this.$refs.index?.openFormDialog(row)
+		},
+
+		/**
+		 * The Edit action: a publication opens in the app's own publication modal,
+		 * a row of another schema in CnIndexPage's form for its own schema.
+		 *
+		 * @param {object} row The row.
+		 * @return {void}
+		 */
+		onEdit(row) {
+			if (!this.isPublicationRow(row)) {
+				this.$refs.index?.openFormDialog(row)
+				return
+			}
+			objectStore.setActiveObject('publication', row)
+			navigationStore.setModal('viewObject')
 		},
 
 		/**

@@ -377,6 +377,35 @@ describe('CatalogPublicationsIndex', () => {
 		expect(wrapper.text()).toContain('Catalog not found')
 	})
 
+	it('edits a publication in the publication modal and another row in its form', async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
+		const setActive = jest
+			.spyOn(objectStore, 'setActiveObject')
+			.mockImplementation(() => {})
+		const setModal = jest
+			.spyOn(navigationStore, 'setModal')
+			.mockImplementation(() => {})
+		const { wrapper, router } = mountPage()
+		await flushPromises()
+
+		const page = indexPage(wrapper)
+		expect(page.vm.$attrs.editOpensDetail).toBe(true)
+		const publication = {
+			id: 'abc',
+			'@self': { id: 'abc', register: 19, schema: 173 },
+		}
+		const rule = { id: 'r1', '@self': { id: 'r1', register: 19, schema: 184 } }
+
+		page.vm.$emit('edit-open', publication)
+		expect(setActive).toHaveBeenCalledWith('publication', publication)
+		expect(setModal).toHaveBeenCalledWith('viewObject')
+
+		page.vm.$emit('edit-open', rule)
+		expect(page.vm.formDialogItem).toEqual(rule)
+		expect(setModal).toHaveBeenCalledTimes(1)
+		expect(router.push).not.toHaveBeenCalled()
+	})
+
 	it('opens the create publication modal from the add button', async () => {
 		objectStore.menuCatalogs = [catalog('woo', [19], [173])]
 		const setActive = jest
