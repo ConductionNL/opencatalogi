@@ -18,10 +18,10 @@ import DeleteOutline from 'vue-material-design-icons/DeleteOutline.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import PencilOutline from 'vue-material-design-icons/PencilOutline.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
-import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import FederationAddDirectoryModal from '../../modals/directory/FederationAddDirectoryModal.vue'
 import FederationDeleteListingModal from '../../modals/directory/FederationDeleteListingModal.vue'
 import FederationEditListingModal from '../../modals/directory/FederationEditListingModal.vue'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { listingSyncStatus } from '../../services/listingSyncStatus.js'
 import { navigationStore } from '../../store/store.js'
 
@@ -189,7 +189,7 @@ export default {
 			try {
 				await axios.post(generateUrl('/apps/opencatalogi/api/listings/sync'), { id: listing.id })
 				showSuccess(t('opencatalogi', 'Synchronised {name}', { name: listing.title || listing.directory }))
-			} catch (e) {
+			} catch {
 				showError(t('opencatalogi', 'Could not synchronise {name}', { name: listing.title || listing.directory }))
 			} finally {
 				this.syncingId = null
