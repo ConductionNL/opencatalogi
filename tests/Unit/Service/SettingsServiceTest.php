@@ -2408,7 +2408,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	/**
 	 * The public cache time defaults to 60 seconds (REQ-PAC-003).
 	 *
-	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
 	 *
 	 * @return void
 	 */
@@ -2427,7 +2427,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	/**
 	 * The administrator sets the cache time; zero is kept, a negative or unreadable value becomes zero (REQ-PAC-003).
 	 *
-	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
 	 *
 	 * @return void
 	 */

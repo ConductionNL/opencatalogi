@@ -17,9 +17,9 @@
  * Locale: nothing forces the E2E language, so the row is found by its URL and
  * the texts are matched in English and Dutch.
  *
- * @e2e openspec/changes/federation-connection-last-success/specs/federation-connection-last-success/spec.md#scenario-a-new-peer-that-never-answered
- * @e2e openspec/changes/federation-connection-last-success/specs/federation-connection-last-success/spec.md#scenario-an-administrator-checks-a-failing-peer
- * @e2e openspec/changes/federation-connection-last-success/specs/federation-connection-last-success/spec.md#scenario-a-user-who-is-not-an-administrator
+ * @e2e openspec/changes/federation-connection-last-success/specs/federation/spec.md#scenario-a-new-peer-that-never-answered
+ * @e2e openspec/changes/federation-connection-last-success/specs/federation/spec.md#scenario-an-administrator-checks-a-failing-peer
+ * @e2e openspec/changes/federation-connection-last-success/specs/federation/spec.md#scenario-a-user-who-is-not-an-administrator
  */
 import { expect, test } from './authenticated-request.ts'
 
@@ -40,7 +40,11 @@ test.describe('Federation directory: last successful sync', () => {
 
 	test.beforeAll(async ({ request: admin }) => {
 		const created = await admin.post(`${API_BASE}/listings`, {
-			data: { title: 'E2E failing peer', directory: FAILING_DIRECTORY, integrationLevel: 'sync' },
+			data: {
+				title: 'E2E failing peer',
+				directory: FAILING_DIRECTORY,
+				integrationLevel: 'sync',
+			},
 		})
 		expect(created.ok(), await created.text()).toBe(true)
 		const body = await created.json()
@@ -66,7 +70,9 @@ test.describe('Federation directory: last successful sync', () => {
 	test('the listing keeps no success and records the failed attempt with its error', async ({
 		request: admin,
 	}) => {
-		const listing = await (await admin.get(`${API_BASE}/listings/${listingId}`)).json()
+		const listing = await (
+			await admin.get(`${API_BASE}/listings/${listingId}`)
+		).json()
 		const data = listing.object ?? listing
 		expect(data.lastSync).toBeTruthy()
 		expect(data.lastSuccessAt ?? null).toBe(null)
@@ -78,20 +84,32 @@ test.describe('Federation directory: last successful sync', () => {
 		page,
 	}) => {
 		await page.goto(`${APP_BASE}/directory`)
-		const row = page.locator('.federation-directory__node', { hasText: 'example.com' })
+		const row = page.locator('.federation-directory__node', {
+			hasText: 'example.com',
+		})
 		await expect(row).toBeVisible()
 		await expect(row.getByTestId('federation-directory-sync')).toContainText(
 			/Never synchronised successfully|Nog nooit geslaagd gesynchroniseerd/,
 		)
-		await expect(row.getByTestId('federation-directory-sync')).toContainText(/Last attempt|Laatste poging/)
+		await expect(row.getByTestId('federation-directory-sync')).toContainText(
+			/Last attempt|Laatste poging/,
+		)
 		await expect(row.locator('.federation-directory__node-error')).toBeVisible()
 
 		await row.getByRole('button', { name: /Actions for|Acties voor/ }).click()
-		await expect(page.getByRole('menuitem', { name: /Sync now|Nu synchroniseren/ })).toBeVisible()
+		await expect(
+			page.getByRole('menuitem', { name: /Sync now|Nu synchroniseren/ }),
+		).toBeVisible()
 	})
 
-	test('a user who is not an administrator sees no Sync now', async ({ baseURL, browser }) => {
-		const context = await browser.newContext({ baseURL, storageState: { cookies: [], origins: [] } })
+	test('a user who is not an administrator sees no Sync now', async ({
+		baseURL,
+		browser,
+	}) => {
+		const context = await browser.newContext({
+			baseURL,
+			storageState: { cookies: [], origins: [] },
+		})
 		const page = await context.newPage()
 		await page.goto('/index.php/login')
 		await page.fill('#user', READER.id)
@@ -102,11 +120,17 @@ test.describe('Federation directory: last successful sync', () => {
 		await page.goto(`${APP_BASE}/directory`)
 		// The page itself must have rendered, or "no button" proves nothing.
 		await expect(page.locator('.federation-directory__title')).toBeVisible()
-		const row = page.locator('.federation-directory__node', { hasText: 'example.com' })
-		if (await row.count() > 0) {
-			await row.getByRole('button', { name: /Actions for|Acties voor/ }).click()
+		const row = page.locator('.federation-directory__node', {
+			hasText: 'example.com',
+		})
+		if ((await row.count()) > 0) {
+			await row
+				.getByRole('button', { name: /Actions for|Acties voor/ })
+				.click()
 		}
-		await expect(page.getByRole('menuitem', { name: /Sync now|Nu synchroniseren/ })).toHaveCount(0)
+		await expect(
+			page.getByRole('menuitem', { name: /Sync now|Nu synchroniseren/ }),
+		).toHaveCount(0)
 		await context.close()
 	})
 })

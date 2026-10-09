@@ -400,7 +400,7 @@ class SearchControllerTest extends TestCase {
 	/**
 	 * An anonymous search answer may be cached publicly (REQ-PAC-001).
 	 *
-	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 *
 	 * @return void
 	 */
@@ -416,7 +416,7 @@ class SearchControllerTest extends TestCase {
 	/**
 	 * A signed-in search answer stays private (REQ-PAC-002).
 	 *
-	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
 	 *
 	 * @return void
 	 */

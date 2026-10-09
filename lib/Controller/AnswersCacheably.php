@@ -22,7 +22,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md
+ * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md
  */
 
 declare(strict_types=1);
@@ -63,7 +63,7 @@ trait AnswersCacheably {
 	 *
 	 * @return JSONResponse The answer with its cache headers, or a 304.
 	 *
-	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 */
 	private function cacheableForCaller(JSONResponse $response): JSONResponse {
 		if ($response->getStatus() !== Http::STATUS_OK) {
@@ -114,7 +114,7 @@ trait AnswersCacheably {
 	 *
 	 * @return boolean True when the client already holds this answer.
 	 *
-	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 */
 	private function ifNoneMatchHits(string $etag): bool {
 		$header = trim($this->request->getHeader('If-None-Match'));

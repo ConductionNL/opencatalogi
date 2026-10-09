@@ -15,7 +15,9 @@
 			:key="banner.id"
 			class="instance-banners__banner"
 			:data-testid="'instance-banner-' + banner.id">
-			<NcNoteCard :type="noteTypeFor(banner.severity)" class="instance-banners__card">
+			<NcNoteCard
+				:type="noteTypeFor(banner.severity)"
+				class="instance-banners__card">
 				<div class="instance-banners__body">
 					<p class="instance-banners__text">
 						{{ banner.body }}
@@ -39,7 +41,11 @@ import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
-import { dismissInstanceBanner, loadInstanceBanners, noteTypeFor } from '../services/instanceBanners.js'
+import {
+	dismissInstanceBanner,
+	loadInstanceBanners,
+	noteTypeFor,
+} from '../services/instanceBanners.js'
 
 /**
  * An app URL from a path under /apps/opencatalogi.

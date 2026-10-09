@@ -2051,7 +2051,7 @@ class PublicationsControllerTest extends TestCase {
 	/**
 	 * An anonymous attachments answer may be cached publicly (REQ-PAC-001).
 	 *
-	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 */
 	public function testAnAnonymousAttachmentsAnswerIsPubliclyCacheable(): void {
 		$headers = $this->attachmentsAs(signedIn: false)->getHeaders();
@@ -2063,7 +2063,7 @@ class PublicationsControllerTest extends TestCase {
 	/**
 	 * A signed-in attachments answer stays private (REQ-PAC-002).
 	 *
-	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
 	 */
 	public function testASignedInAttachmentsAnswerStaysPrivate(): void {
 		$headers = $this->attachmentsAs(signedIn: true)->getHeaders();
@@ -2075,7 +2075,7 @@ class PublicationsControllerTest extends TestCase {
 	/**
 	 * An anonymous catalogue page may be cached, an unknown catalogue may not (REQ-PAC-001).
 	 *
-	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 */
 	public function testAnAnonymousCataloguePageIsCacheableAndAnUnknownCatalogueIsNot(): void {
 		$mockObjService = $this->mockObjectServiceForCaller(signedIn: false);

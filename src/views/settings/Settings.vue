@@ -782,8 +782,13 @@ export default defineComponent({
 					),
 				}
 
-				if (data.configuration && data.configuration.public_api_cache_seconds !== undefined) {
-					this.publicCacheSeconds = String(data.configuration.public_api_cache_seconds)
+				if (
+					data.configuration
+					&& data.configuration.public_api_cache_seconds !== undefined
+				) {
+					this.publicCacheSeconds = String(
+						data.configuration.public_api_cache_seconds,
+					)
 				}
 
 				this.loading = false
@@ -1375,17 +1380,21 @@ export default defineComponent({
 		 * is shown back.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
+		 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
 		 */
 		async savePublicCacheSeconds() {
 			this.savingPublicCache = true
 			this.publicCacheError = ''
 
 			try {
-				const response = await axios.put(generateUrl('/apps/opencatalogi/api/settings'), {
-					public_api_cache_seconds: this.publicCacheSeconds,
-				})
-				const stored = response.data && response.data.public_api_cache_seconds
+				const response = await axios.put(
+					generateUrl('/apps/opencatalogi/api/settings'),
+					{
+						public_api_cache_seconds: this.publicCacheSeconds,
+					},
+				)
+				const stored =
+					response.data && response.data.public_api_cache_seconds
 				if (stored !== undefined) {
 					this.publicCacheSeconds = String(stored)
 				}

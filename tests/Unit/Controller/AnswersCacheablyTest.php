@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md
+ * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md
  */
 
 declare(strict_types=1);

@@ -30,7 +30,13 @@ export async function loadInstanceBanners(http, generateUrl) {
 
 	const banners = Array.isArray(data?.banners) ? data.banners : []
 	return banners
-		.filter((banner) => banner && banner.id && typeof banner.body === 'string' && banner.body.trim() !== '')
+		.filter(
+			(banner) =>
+				banner
+				&& banner.id
+				&& typeof banner.body === 'string'
+				&& banner.body.trim() !== '',
+		)
 		.map((banner) => ({
 			id: String(banner.id),
 			body: banner.body,

@@ -42,6 +42,7 @@ export default {
 		FederationDeleteListingModal,
 	},
 
+	/** @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-an-administrator-re-syncs-one-listing-from-its-row-req-fls-003 */
 	setup() {
 		// Sync now is admin-only (REQ-FLS-003); the endpoint is an
 		// AuthorizedAdminSetting route, so non-admins must not see the action.
@@ -150,7 +151,7 @@ export default {
 		 *
 		 * @param {object} listing The listing.
 		 * @return {object} See listingSyncStatus().
-		 * @spec openspec/changes/federation-connection-last-success/specs/federation-connection-last-success/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+		 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
 		 */
 		syncStatusFor(listing) {
 			return listingSyncStatus(listing)
@@ -162,17 +163,25 @@ export default {
 		 *
 		 * @param {object} listing The listing.
 		 * @return {string} The status text.
-		 * @spec openspec/changes/federation-connection-last-success/specs/federation-connection-last-success/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+		 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
 		 */
 		statusTextFor(listing) {
 			const status = this.syncStatusFor(listing)
 			const label = this.statusLabelFor(listing)
 			if (status.neverSucceeded) {
-				return label + ', ' + t('opencatalogi', 'never synchronised successfully')
+				return (
+					label
+					+ ', '
+					+ t('opencatalogi', 'never synchronised successfully')
+				)
 			}
-			return label + ', ' + t('opencatalogi', 'last successful sync {time}', {
-				time: new Date(status.lastSuccessAt).toLocaleString(),
-			})
+			return (
+				label
+				+ ', '
+				+ t('opencatalogi', 'last successful sync {time}', {
+					time: new Date(status.lastSuccessAt).toLocaleString(),
+				})
+			)
 		},
 
 		/**
@@ -181,16 +190,27 @@ export default {
 		 *
 		 * @param {object} listing The listing to synchronise.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/federation-connection-last-success/specs/federation-connection-last-success/spec.md#requirement-an-administrator-re-syncs-one-listing-from-its-row-req-fls-003
+		 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-an-administrator-re-syncs-one-listing-from-its-row-req-fls-003
 		 */
 		async syncNow(listing) {
 			if (!this.isAdmin || this.syncingId !== null) return
 			this.syncingId = listing.id
 			try {
-				await axios.post(generateUrl('/apps/opencatalogi/api/listings/sync'), { id: listing.id })
-				showSuccess(t('opencatalogi', 'Synchronised {name}', { name: listing.title || listing.directory }))
+				await axios.post(
+					generateUrl('/apps/opencatalogi/api/listings/sync'),
+					{ id: listing.id },
+				)
+				showSuccess(
+					t('opencatalogi', 'Synchronised {name}', {
+						name: listing.title || listing.directory,
+					}),
+				)
 			} catch {
-				showError(t('opencatalogi', 'Could not synchronise {name}', { name: listing.title || listing.directory }))
+				showError(
+					t('opencatalogi', 'Could not synchronise {name}', {
+						name: listing.title || listing.directory,
+					}),
+				)
 			} finally {
 				this.syncingId = null
 				await this.load()
@@ -398,19 +418,24 @@ export default {
 					<NcDateTime
 						v-else
 						class="federation-directory__field-value"
-						:timestamp="Date.parse(syncStatusFor(listing).lastSuccessAt)" />
+						:timestamp="
+							Date.parse(syncStatusFor(listing).lastSuccessAt)
+						" />
 					<template v-if="syncStatusFor(listing).lastAttemptAt">
 						<span class="federation-directory__field-label">
 							{{ t('opencatalogi', 'Last attempt') }}
 						</span>
 						<NcDateTime
 							class="federation-directory__field-value"
-							:timestamp="Date.parse(syncStatusFor(listing).lastAttemptAt)" />
+							:timestamp="
+								Date.parse(syncStatusFor(listing).lastAttemptAt)
+							" />
 					</template>
 					<span
 						v-if="syncStatusFor(listing).error"
 						class="federation-directory__node-error">
-						{{ t('opencatalogi', 'Error:') }} {{ syncStatusFor(listing).error }}
+						{{ t('opencatalogi', 'Error:') }}
+						{{ syncStatusFor(listing).error }}
 					</span>
 				</div>
 				<div class="federation-directory__node-integration">
@@ -441,7 +466,11 @@ export default {
 							<template #icon>
 								<Sync :size="20" />
 							</template>
-							{{ syncingId === listing.id ? t('opencatalogi', 'Synchronising…') : t('opencatalogi', 'Sync now') }}
+							{{
+								syncingId === listing.id
+									? t('opencatalogi', 'Synchronising…')
+									: t('opencatalogi', 'Sync now')
+							}}
 						</NcActionButton>
 						<NcActionButton
 							:closeAfterClick="true"

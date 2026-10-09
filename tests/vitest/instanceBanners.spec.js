@@ -8,7 +8,11 @@
  * and ::dismissBanner); these tests pin the client half against those routes.
  */
 import { describe, expect, it } from 'vitest'
-import { dismissInstanceBanner, loadInstanceBanners, noteTypeFor } from '../../src/services/instanceBanners.js'
+import {
+	dismissInstanceBanner,
+	loadInstanceBanners,
+	noteTypeFor,
+} from '../../src/services/instanceBanners.js'
 
 /**
  * A fake HTTP client that records calls and answers from a map.
@@ -37,21 +41,44 @@ const url = (path) => '/index.php/apps/opencatalogi' + path
 describe('loadInstanceBanners (REQ-PCS-103)', () => {
 	it('reads the banners route and keeps the banners the server returns', async () => {
 		const http = fakeHttp({
-			get: { banners: [{ id: 'b1', body: 'Onderhoud vanavond', severity: 'warning', dismissable: true }] },
+			get: {
+				banners: [
+					{
+						id: 'b1',
+						body: 'Onderhoud vanavond',
+						severity: 'warning',
+						dismissable: true,
+					},
+				],
+			},
 		})
 		const banners = await loadInstanceBanners(http, url)
-		expect(http.calls[0]).toEqual({ method: 'get', url: '/index.php/apps/opencatalogi/api/banners' })
-		expect(banners).toEqual([{ id: 'b1', body: 'Onderhoud vanavond', severity: 'warning', dismissable: true }])
+		expect(http.calls[0]).toEqual({
+			method: 'get',
+			url: '/index.php/apps/opencatalogi/api/banners',
+		})
+		expect(banners).toEqual([
+			{
+				id: 'b1',
+				body: 'Onderhoud vanavond',
+				severity: 'warning',
+				dismissable: true,
+			},
+		])
 	})
 
 	it('treats a missing dismissable flag as dismissable, like the server does', async () => {
-		const http = fakeHttp({ get: { banners: [{ id: 'b2', body: 'Nieuw', severity: 'info' }] } })
+		const http = fakeHttp({
+			get: { banners: [{ id: 'b2', body: 'Nieuw', severity: 'info' }] },
+		})
 		const [banner] = await loadInstanceBanners(http, url)
 		expect(banner.dismissable).toBe(true)
 	})
 
 	it('drops a banner without an id or a body', async () => {
-		const http = fakeHttp({ get: { banners: [{ body: 'no id' }, { id: 'x', body: '' }, null] } })
+		const http = fakeHttp({
+			get: { banners: [{ body: 'no id' }, { id: 'x', body: '' }, null] },
+		})
 		expect(await loadInstanceBanners(http, url)).toEqual([])
 	})
 

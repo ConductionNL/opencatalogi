@@ -8,10 +8,10 @@
  * If-None-Match answers 304, a signed-in answer is private, and a cache time
  * of 0 switches the public headers off. The setting is restored afterwards.
  *
- * @e2e openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#scenario-a-cdn-caches-a-catalogue-page
- * @e2e openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#scenario-nothing-changed
- * @e2e openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#scenario-an-editor-searches
- * @e2e openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#scenario-an-administrator-switches-caching-off
+ * @e2e openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#scenario-a-cdn-caches-a-catalogue-page
+ * @e2e openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#scenario-nothing-changed
+ * @e2e openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#scenario-an-editor-searches
+ * @e2e openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#scenario-an-administrator-switches-caching-off
  */
 import { request as playwrightRequest } from '@playwright/test'
 import { expect, test } from './authenticated-request.ts'
@@ -25,15 +25,21 @@ test.describe('Public API cache headers', () => {
 	test.beforeAll(async ({ request: admin }) => {
 		const settings = await (await admin.get(`${API_BASE}/settings`)).json()
 		before = String(settings?.configuration?.public_api_cache_seconds ?? '60')
-		const set = await admin.put(`${API_BASE}/settings`, { data: { public_api_cache_seconds: 60 } })
+		const set = await admin.put(`${API_BASE}/settings`, {
+			data: { public_api_cache_seconds: 60 },
+		})
 		expect(set.ok()).toBe(true)
 	})
 
 	test.afterAll(async ({ request: admin }) => {
-		await admin.put(`${API_BASE}/settings`, { data: { public_api_cache_seconds: before } })
+		await admin.put(`${API_BASE}/settings`, {
+			data: { public_api_cache_seconds: before },
+		})
 	})
 
-	test('an anonymous answer is public, and an unchanged one answers 304', async ({ baseURL }) => {
+	test('an anonymous answer is public, and an unchanged one answers 304', async ({
+		baseURL,
+	}) => {
 		const anonymous = await playwrightRequest.newContext({ baseURL })
 		const first = await anonymous.get(SEARCH)
 		expect(first.status()).toBe(200)
@@ -42,7 +48,9 @@ test.describe('Public API cache headers', () => {
 		const etag = first.headers().etag
 		expect(etag).toMatch(/^W\/".+"$/)
 
-		const second = await anonymous.get(SEARCH, { headers: { 'If-None-Match': etag } })
+		const second = await anonymous.get(SEARCH, {
+			headers: { 'If-None-Match': etag },
+		})
 		expect(second.status()).toBe(304)
 		await anonymous.dispose()
 	})
@@ -53,8 +61,17 @@ test.describe('Public API cache headers', () => {
 		expect(answer.headers().etag).toBeUndefined()
 	})
 
-	test('a cache time of 0 switches the public headers off', async ({ request: admin, baseURL }) => {
-		expect((await admin.put(`${API_BASE}/settings`, { data: { public_api_cache_seconds: 0 } })).ok()).toBe(true)
+	test('a cache time of 0 switches the public headers off', async ({
+		request: admin,
+		baseURL,
+	}) => {
+		expect(
+			(
+				await admin.put(`${API_BASE}/settings`, {
+					data: { public_api_cache_seconds: 0 },
+				})
+			).ok(),
+		).toBe(true)
 		const anonymous = await playwrightRequest.newContext({ baseURL })
 		const answer = await anonymous.get(SEARCH)
 		expect(answer.status()).toBe(200)

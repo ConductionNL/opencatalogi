@@ -20,14 +20,18 @@
  *
  * @param {object|null|undefined} listing The listing object from the listings API.
  * @return {{lastSuccessAt: string|null, lastAttemptAt: string|null, error: string, neverSucceeded: boolean}}
- * @spec openspec/changes/federation-connection-last-success/specs/federation-connection-last-success/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+ * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
  */
 export function listingSyncStatus(listing) {
 	const source = listing || {}
 	const lastSuccessAt = source.lastSuccessAt || null
 	const lastSync = source.lastSync || null
-	const lastAttemptAt = lastSync !== null && lastSync !== lastSuccessAt ? lastSync : null
-	const error = lastAttemptAt !== null && typeof source.lastError === 'string' ? source.lastError : ''
+	const lastAttemptAt =
+		lastSync !== null && lastSync !== lastSuccessAt ? lastSync : null
+	const error =
+		lastAttemptAt !== null && typeof source.lastError === 'string'
+			? source.lastError
+			: ''
 
 	return {
 		lastSuccessAt,
