@@ -258,7 +258,14 @@ export default {
 				// The publication's own actions (e.g. its file list) do not fit a row of another schema.
 				config.actions = config.actions.map((action) =>
 					action && typeof action === 'object'
-						? { ...action, visible: (row) => this.isPublicationRow(row) }
+						? {
+								...action,
+								visible: (row) =>
+									this.isPublicationRow(row)
+									&& (typeof action.visible === 'function'
+										? action.visible(row)
+										: action.visible !== false),
+							}
 						: action,
 				)
 			}
@@ -403,7 +410,8 @@ export default {
 
 		/**
 		 * Open a row on a click, a middle click or the View action. A
-		 * ctrl/cmd/shift or middle click opens it in a new tab.
+		 * ctrl/cmd/shift or middle click opens a publication in a new tab; a row
+		 * of another schema opens in the form for its own schema.
 		 *
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
@@ -416,6 +424,11 @@ export default {
 					? event
 					: undefined
 			if (isNewTabHandled(nativeEvent)) {
+				return
+			}
+			// A row of another schema has no detail page; it opens in the form for its own schema.
+			if (!this.isPublicationRow(row)) {
+				this.$refs.index?.openFormDialog(row)
 				return
 			}
 			const target = this.rowTarget(row)

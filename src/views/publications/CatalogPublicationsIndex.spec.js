@@ -226,11 +226,14 @@ describe('CatalogPublicationsIndex', () => {
 		const rule = { id: 'r1', '@self': { id: 'r1', register: 19, schema: 184 } }
 		expect(page.props('viewTo')(rule)).toBeNull()
 
-		page.vm.$emit('row-click', rule)
 		page.vm.$emit('view', rule)
+		expect(page.vm.formDialogItem).toEqual(rule)
+
+		page.vm.formDialogItem = null
+		page.vm.$emit('row-click', rule)
+		expect(page.vm.formDialogItem).toEqual(rule)
 
 		expect(router.push).not.toHaveBeenCalled()
-		expect(page.vm.formDialogItem).toEqual(rule)
 	})
 
 	it("shows the publication's own actions on publication rows only", async () => {
@@ -259,6 +262,30 @@ describe('CatalogPublicationsIndex', () => {
 			attrs.actions[1].visible({ '@self': { register: 19, schema: 184 } }),
 		).toBe(false)
 		expect(attrs.publicationPairConfig).toBeUndefined()
+	})
+
+	it("keeps an action's own visible rule on publication rows", async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
+		const publicationPairConfig = {
+			actions: [
+				{ id: 'hidden', visible: false },
+				{ id: 'published', visible: (row) => row.status === 'published' },
+			],
+		}
+		const { wrapper } = mountPage({ publicationPairConfig })
+		await flushPromises()
+
+		const [hidden, published] = indexPage(wrapper).vm.$attrs.actions
+		const self = { register: 19, schema: 173 }
+		expect(hidden.visible({ '@self': self })).toBe(false)
+		expect(published.visible({ '@self': self, status: 'published' })).toBe(true)
+		expect(published.visible({ '@self': self, status: 'draft' })).toBe(false)
+		expect(
+			published.visible({
+				'@self': { register: 19, schema: 184 },
+				status: 'published',
+			}),
+		).toBe(false)
 	})
 
 	it('uses the first pair, without publication config, for a catalog without the publication pair', async () => {
