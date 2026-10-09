@@ -61,7 +61,8 @@
 		:viewTo="opensDetail ? rowTarget : null"
 		@rowClick="onRowOpen"
 		@rowAuxClick="onRowOpen"
-		@view="onView" />
+		@view="onView"
+		@add="onAdd" />
 </template>
 
 <script>
@@ -77,7 +78,7 @@ import DatabaseAlertOutline from 'vue-material-design-icons/DatabaseAlertOutline
 import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
 import DatabaseOffOutline from 'vue-material-design-icons/DatabaseOffOutline.vue'
 import { catalogScopePairs, normaliseIdList } from '../../services/catalogScope.js'
-import { objectStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 /** Listeners CnPageRenderer binds for its own row opening, which only works on `type:"index"` pages. */
 const RENDERER_ROW_LISTENERS = [
@@ -454,6 +455,16 @@ export default {
 				return
 			}
 			this.$refs.index?.openFormDialog(row)
+		},
+
+		/**
+		 * Open the app's own create modal, which lets the user pick a schema.
+		 *
+		 * @return {void}
+		 */
+		onAdd() {
+			objectStore.setActiveObject('publication', null)
+			navigationStore.setModal('viewObject')
 		},
 	},
 }

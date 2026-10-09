@@ -10,7 +10,7 @@
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
 import CatalogPublicationsIndex from './CatalogPublicationsIndex.vue'
-import { objectStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 /**
  * A menu entry as the store keeps it.
@@ -375,6 +375,23 @@ describe('CatalogPublicationsIndex', () => {
 
 		expect(indexPage(wrapper).exists()).toBe(false)
 		expect(wrapper.text()).toContain('Catalog not found')
+	})
+
+	it('opens the create publication modal from the add button', async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173])]
+		const setActive = jest
+			.spyOn(objectStore, 'setActiveObject')
+			.mockImplementation(() => {})
+		const setModal = jest
+			.spyOn(navigationStore, 'setModal')
+			.mockImplementation(() => {})
+		const { wrapper } = mountPage()
+		await flushPromises()
+
+		indexPage(wrapper).vm.$emit('add')
+
+		expect(setActive).toHaveBeenCalledWith('publication', null)
+		expect(setModal).toHaveBeenCalledWith('viewObject')
 	})
 
 	it('discards a lookup that resolves after a slug switch', async () => {
