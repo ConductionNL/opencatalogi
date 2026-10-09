@@ -395,6 +395,7 @@ export default {
 		 *
 		 * @param {object} row The card's object.
 		 * @return {?{variant: string, icon: string, label: string}}
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-publication-card-req-tbl-005
 		 */
 		cardAccent(row) {
 			if (!this.isPublicationRow(row)) {
