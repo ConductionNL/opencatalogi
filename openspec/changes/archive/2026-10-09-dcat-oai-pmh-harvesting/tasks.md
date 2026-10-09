@@ -12,4 +12,4 @@ Work items live in the successor changes:
 
 The one task of this umbrella guards the rule its delta spec holds.
 
-- [ ] 1.1 Add `tests/Unit/Architecture/HarvestArchitectureTest.php::testNoHarvestSchemaShips` (REQ-DOH-001), in the PR of whichever slice lands first. `HarvestFeedServiceTest::testAFeedIsSavedThroughOpenRegistersSourceService` belongs to `harvest-feed-intake`.
+- [x] 1.1 Add `tests/Unit/Architecture/HarvestArchitectureTest.php::testNoHarvestSchemaShips` (REQ-DOH-001), in the PR of whichever slice lands first. `HarvestFeedServiceTest::testAFeedIsSavedThroughOpenRegistersSourceService` belongs to `harvest-feed-intake`.
