@@ -465,6 +465,7 @@ export default {
 		 *
 		 * @param {object} row The row.
 		 * @return {void}
+		 * @spec openspec/specs/generic-object-modals/spec.md#requirement-provide-single-object-lifecycle-modals-driven-by-the-navigation-store-gom-001
 		 */
 		onEdit(row) {
 			if (!this.isPublicationRow(row)) {
@@ -479,6 +480,7 @@ export default {
 		 * Open the app's own create modal, which lets the user pick a schema.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/generic-object-modals/spec.md#requirement-provide-single-object-lifecycle-modals-driven-by-the-navigation-store-gom-001
 		 */
 		onAdd() {
 			objectStore.setActiveObject('publication', null)
