@@ -209,9 +209,8 @@ describe('CatalogPublicationsIndex', () => {
 		page.vm.$emit('row-click', row)
 		page.vm.$emit('view', row)
 		page.vm.$emit('row-aux-click', row, new MouseEvent('auxclick'))
-		page.vm.$emit('edit-open', row)
 
-		expect(router.push).toHaveBeenCalledTimes(4)
+		expect(router.push).toHaveBeenCalledTimes(3)
 		for (const call of router.push.mock.calls) {
 			expect(call[0]).toEqual(target)
 		}
@@ -238,6 +237,10 @@ describe('CatalogPublicationsIndex', () => {
 		expect(page.vm.formDialogItem).toBeNull()
 
 		page.vm.$emit('row-click', rule)
+		expect(page.vm.formDialogItem).toEqual(rule)
+
+		page.vm.formDialogItem = null
+		page.vm.$emit('row-click', rule, new MouseEvent('click', { ctrlKey: true }))
 		expect(page.vm.formDialogItem).toEqual(rule)
 
 		expect(router.push).not.toHaveBeenCalled()

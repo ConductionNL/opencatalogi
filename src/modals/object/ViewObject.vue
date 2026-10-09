@@ -915,6 +915,7 @@ import {
 	dispatchObjectsChanged,
 	validateValue,
 } from '@conduction/nextcloud-vue'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcActionButton,
 	NcActions,
@@ -2357,6 +2358,7 @@ export default {
 		async deleteSelectedFiles() {
 			if (objectStore.selectedAttachments.length === 0) return
 
+			let changed = null
 			try {
 				this.fileIdsLoading = [...objectStore.selectedAttachments]
 
@@ -2368,27 +2370,39 @@ export default {
 				)
 
 				for (const file of selectedFiles) {
-					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${this.currentObject.id}/files/${file.id}`
+					const endpoint = generateUrl(
+						'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files/{fileId}',
+						{
+							registerId,
+							schemaId,
+							objectId: this.currentObject.id,
+							fileId: file.id,
+						},
+					)
 					const response = await fetch(endpoint, { method: 'DELETE' })
 					if (!response.ok) {
 						throw new Error(
 							`Failed to delete file ${file.title || file.name}: ${response.statusText}`,
 						)
 					}
+					changed = {
+						register: registerId,
+						schema: schemaId,
+						id: this.currentObject.id,
+					}
 				}
 
 				await this.refreshFiles()
 				catalogStore.fetchPublications()
-				dispatchObjectsChanged({
-					register: registerId,
-					schema: schemaId,
-					id: this.currentObject.id,
-				})
 				objectStore.selectedAttachments = []
 			} catch (error) {
 				console.error('Failed to delete selected files:', error)
 			} finally {
 				this.fileIdsLoading = []
+				// A partial delete still changes the file count.
+				if (changed) {
+					dispatchObjectsChanged(changed)
+				}
 			}
 		},
 
@@ -2406,7 +2420,15 @@ export default {
 				const { registerId, schemaId } = this.getRegisterSchemaIds(
 					this.currentObject,
 				)
-				const base = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${this.currentObject.id}/files/${file.id}`
+				const base = generateUrl(
+					'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files/{fileId}',
+					{
+						registerId,
+						schemaId,
+						objectId: this.currentObject.id,
+						fileId: file.id,
+					},
+				)
 				const endpoint = action === 'delete' ? base : `${base}/${action}`
 				const response = await fetch(endpoint, {
 					method: action === 'delete' ? 'DELETE' : 'POST',
@@ -2415,6 +2437,13 @@ export default {
 					throw new Error(
 						`Failed to ${action} file: ${response.statusText}`,
 					)
+				}
+				if (action === 'delete') {
+					dispatchObjectsChanged({
+						register: registerId,
+						schema: schemaId,
+						id: this.currentObject.id,
+					})
 				}
 				await this.refreshFiles()
 				catalogStore.fetchPublications()

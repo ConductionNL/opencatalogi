@@ -61,8 +61,7 @@
 		:viewTo="opensDetail ? rowTarget : null"
 		@rowClick="onRowOpen"
 		@rowAuxClick="onRowOpen"
-		@view="onView"
-		@editOpen="onRowOpen" />
+		@view="onView" />
 </template>
 
 <script>
@@ -426,7 +425,8 @@ export default {
 			if (isNewTabHandled(nativeEvent)) {
 				return
 			}
-			// A row of another schema has no detail page; it opens in the form for its own schema, never on a middle click.
+			// A row of another schema has no detail page to open in a new tab: any click but a middle one,
+			// a ctrl/cmd/shift click included, opens the form for its own schema, as in the library.
 			if (!this.isPublicationRow(row)) {
 				if (nativeEvent?.button !== 1) {
 					this.$refs.index?.openFormDialog(row)

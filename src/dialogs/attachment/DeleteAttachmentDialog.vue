@@ -51,6 +51,8 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
+import { dispatchObjectsChanged } from '@conduction/nextcloud-vue'
+import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
@@ -85,8 +87,19 @@ export default {
 		DeleteAttachment() {
 			this.loading = true
 
+			const publication = objectStore.getActiveObject('publication')
+			const { register, schema } = publication['@self']
 			fetch(
-				`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${objectStore.getActiveObject('publicationAttachment').id}`,
+				generateUrl(
+					'/apps/openregister/api/objects/{register}/{schema}/{objectId}/files/{fileId}',
+					{
+						register,
+						schema,
+						objectId: publication.id,
+						fileId: objectStore.getActiveObject('publicationAttachment')
+							.id,
+					},
+				),
 				{
 					method: 'DELETE',
 				},
@@ -94,6 +107,13 @@ export default {
 				.then((response) => {
 					this.loading = false
 					this.succes = response.status === 200
+					if (this.succes) {
+						dispatchObjectsChanged({
+							register,
+							schema,
+							id: publication.id,
+						})
+					}
 
 					catalogStore.getPublicationAttachments(
 						objectStore.getActiveObject('publication').id,
