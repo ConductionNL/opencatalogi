@@ -6619,8 +6619,8 @@
 			},
 			"note": "Specified in ConductionNL/dossiq openspec/changes/woo-requests-gather-documents-from-sources (dossiq lane, OpenSpec pass 2026-09-27).",
 			"screen": {
-				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
-				"board": "OcWooVerzoek"
+				"board": null,
+				"reason": "screen belongs to dossiq: DqZaak (Ruben 2026-10-09, woo-request-screens-move-to-dossiq)"
 			}
 		},
 		{
@@ -7002,11 +7002,8 @@
 			"decos": "unknown",
 			"feature": "woo-disclosure-workflow",
 			"screen": {
-				"canvas": "QAAxpcsFKBCvDUGbQbwtCa",
-				"board": [
-					"OcWooVerzoeken",
-					"OcWooVerzoek"
-				]
+				"board": null,
+				"reason": "screen belongs to dossiq: DqWooVerzoeken and DqZaak (Ruben 2026-10-09, woo-request-screens-move-to-dossiq)"
 			}
 		},
 		{
