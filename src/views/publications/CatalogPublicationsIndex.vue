@@ -426,9 +426,11 @@ export default {
 			if (isNewTabHandled(nativeEvent)) {
 				return
 			}
-			// A row of another schema has no detail page; it opens in the form for its own schema.
+			// A row of another schema has no detail page; it opens in the form for its own schema, never on a middle click.
 			if (!this.isPublicationRow(row)) {
-				this.$refs.index?.openFormDialog(row)
+				if (nativeEvent?.button !== 1) {
+					this.$refs.index?.openFormDialog(row)
+				}
 				return
 			}
 			const target = this.rowTarget(row)

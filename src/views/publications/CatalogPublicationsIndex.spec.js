@@ -230,6 +230,13 @@ describe('CatalogPublicationsIndex', () => {
 		expect(page.vm.formDialogItem).toEqual(rule)
 
 		page.vm.formDialogItem = null
+		page.vm.$emit(
+			'row-aux-click',
+			rule,
+			new MouseEvent('auxclick', { button: 1 }),
+		)
+		expect(page.vm.formDialogItem).toBeNull()
+
 		page.vm.$emit('row-click', rule)
 		expect(page.vm.formDialogItem).toEqual(rule)
 
