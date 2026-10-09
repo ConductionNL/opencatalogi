@@ -2003,4 +2003,99 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertStringNotContainsString($secretMessage, (string)$body);
 		$this->assertStringNotContainsString('internal-server-hostname', (string)$body);
 	}
+	/**
+	 * An ObjectService double plus a session and a config the cache headers read.
+	 *
+	 * @param boolean $signedIn Whether the caller is signed in.
+	 *
+	 * @return MockObject The ObjectService double.
+	 */
+	private function mockObjectServiceForCaller(bool $signedIn): MockObject {
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('isLoggedIn')->willReturn($signedIn);
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturnArgument(2);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				\OCP\IUserSession::class => $session,
+				\OCP\IAppConfig::class => $config,
+				default => $mockObjService,
+			}
+		);
+
+		return $mockObjService;
+	}
+
+	/**
+	 * The attachments of a publication, as a given caller.
+	 *
+	 * @param boolean $signedIn Whether the caller is signed in.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function attachmentsAs(bool $signedIn): JSONResponse {
+		$mockObjService = $this->mockObjectServiceForCaller(signedIn: $signedIn);
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('find')
+			->willReturn($this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class));
+		$this->publicationService->method('attachments')
+			->willReturn(new JSONResponse(['results' => [['name' => 'file.pdf']]], 200));
+
+		return $this->controller->attachments('test-catalog', 'pub-123');
+	}
+
+	/**
+	 * An anonymous attachments answer may be cached publicly (REQ-PAC-001).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 */
+	public function testAnAnonymousAttachmentsAnswerIsPubliclyCacheable(): void {
+		$headers = $this->attachmentsAs(signedIn: false)->getHeaders();
+
+		$this->assertSame('public, max-age=60, must-revalidate', $headers['Cache-Control']);
+		$this->assertArrayHasKey('ETag', $headers);
+	}
+
+	/**
+	 * A signed-in attachments answer stays private (REQ-PAC-002).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
+	 */
+	public function testASignedInAttachmentsAnswerStaysPrivate(): void {
+		$headers = $this->attachmentsAs(signedIn: true)->getHeaders();
+
+		$this->assertSame('private, no-store', $headers['Cache-Control']);
+		$this->assertArrayNotHasKey('ETag', $headers);
+	}
+
+	/**
+	 * An anonymous catalogue page may be cached, an unknown catalogue may not (REQ-PAC-001).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 */
+	public function testAnAnonymousCataloguePageIsCacheableAndAnUnknownCatalogueIsNot(): void {
+		$mockObjService = $this->mockObjectServiceForCaller(signedIn: false);
+		$this->catalogiService->method('getCatalogBySlug')->willReturnCallback(
+			static fn (string $slug) => ($slug === 'test-catalog' ? ['title' => 'Test', 'schemas' => [1], 'registers' => [1]] : null)
+		);
+		$this->queryService->method('applyCatalogReadRuleGuard')->willReturnArgument(0);
+		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+		$this->queryService->method('resolveSchemaAndRegisterObjects')->willReturn(['schemas' => [], 'registers' => []]);
+		$mockObjService->method('searchObjectsPaginated')->willReturn(['results' => [['id' => 'pub-1']], 'total' => 1]);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$page = $this->controller->index('test-catalog');
+		$this->assertSame(200, $page->getStatus());
+		$this->assertSame('public, max-age=60, must-revalidate', $page->getHeaders()['Cache-Control']);
+
+		$unknown = $this->controller->index('no-such-catalog');
+		$this->assertSame(404, $unknown->getStatus());
+		$this->assertArrayNotHasKey('ETag', $unknown->getHeaders());
+		$this->assertStringNotContainsString('public', (string)($unknown->getHeaders()['Cache-Control'] ?? ''));
+	}
 }

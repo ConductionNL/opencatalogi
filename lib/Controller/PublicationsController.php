@@ -64,6 +64,8 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  */
 class PublicationsController extends Controller {
+	use AnswersCacheably;
+
 
 	/**
 	 * Maximum number of extend entries accepted on public read endpoints.
@@ -475,7 +477,7 @@ class PublicationsController extends Controller {
 				);
 				$this->addCorsHeaders(response: $response);
 
-				return $response;
+				return $this->cacheableForCaller(response: $response);
 			}
 
 			// Get ObjectService directly bypassing PublicationService overhead.
@@ -559,7 +561,7 @@ class PublicationsController extends Controller {
 			$response = new JSONResponse($result, 200);
 			$this->addCorsHeaders(response: $response);
 
-			return $response;
+			return $this->cacheableForCaller(response: $response);
 		} catch (\Exception $e) {
 			// Public endpoint — log exception details server-side only and return a
 			// generic error body to the caller (#735); never leak raw $e->getMessage().
@@ -829,7 +831,7 @@ class PublicationsController extends Controller {
 				$response->addHeader('Content-Type', 'application/ld+json');
 				$this->addCorsHeaders(response: $response);
 				$this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
-				return $response;
+				return $this->cacheableForCaller(response: $response);
 			}
 
 			// Add CORS headers for public API access.
@@ -841,7 +843,7 @@ class PublicationsController extends Controller {
 			// (this is the public detail path that already 404'd above on misses).
 			$this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
 
-			return $response;
+			return $this->cacheableForCaller(response: $response);
 		} catch (DoesNotExistException $exception) {
 			return new JSONResponse(
 				[
@@ -940,7 +942,7 @@ class PublicationsController extends Controller {
 				);
 			}
 
-			return $this->publicationService->attachments(id: $id);
+			return $this->cacheableForCaller(response: $this->publicationService->attachments(id: $id));
 		} catch (DoesNotExistException $exception) {
 			return new JSONResponse(
 				[

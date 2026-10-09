@@ -2,12 +2,12 @@
 
 ## 1. The helper
 
-- [ ] 1.1 Add `AnswersCacheably::cacheable()` with the signed-in, anonymous, 304 and error paths (REQ-PAC-001, REQ-PAC-002). Verify: `tests/Unit/Controller/AnswersCacheablyTest.php`, one case per path.
+- [x] 1.1 Add `AnswersCacheably::cacheable()` with the signed-in, anonymous, 304 and error paths (REQ-PAC-001, REQ-PAC-002). Verify: `tests/Unit/Controller/AnswersCacheablyTest.php`, one case per path. Done: `lib/Controller/AnswersCacheably.php`, 8/8.
 
 ## 2. Apply it
 
-- [ ] 2.1 Wrap the answers of `PublicationsController::index()`, `show()` and `attachments()` (REQ-PAC-001). Verify: controller tests assert the headers for an anonymous and a signed-in call.
-- [ ] 2.2 Wrap `SearchController::index()` and `show()` (REQ-PAC-001). Verify: same.
+- [x] 2.1 Wrap the answers of `PublicationsController::index()`, `show()` and `attachments()` (REQ-PAC-001). Verify: controller tests assert the headers for an anonymous and a signed-in call.
+- [x] 2.2 Wrap `SearchController::index()` and `show()` (REQ-PAC-001). Verify: same.
 
 ## 3. The setting
 
