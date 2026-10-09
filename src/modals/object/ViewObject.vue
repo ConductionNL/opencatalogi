@@ -910,7 +910,11 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
-import { CnMetadataTab, validateValue } from '@conduction/nextcloud-vue'
+import {
+	CnMetadataTab,
+	dispatchObjectsChanged,
+	validateValue,
+} from '@conduction/nextcloud-vue'
 import {
 	NcActionButton,
 	NcActions,
@@ -2081,6 +2085,11 @@ export default {
 
 				// Refresh the publications list
 				catalogStore.fetchPublications()
+				dispatchObjectsChanged({
+					register: result['@self'].register,
+					schema: result['@self'].schema,
+					id: result['@self'].id,
+				})
 
 				// Close modal for edit mode, keep open for create mode (which transitions to edit mode)
 				if (!isCreating) {
@@ -2370,6 +2379,11 @@ export default {
 
 				await this.refreshFiles()
 				catalogStore.fetchPublications()
+				dispatchObjectsChanged({
+					register: registerId,
+					schema: schemaId,
+					id: this.currentObject.id,
+				})
 				objectStore.selectedAttachments = []
 			} catch (error) {
 				console.error('Failed to delete selected files:', error)

@@ -468,6 +468,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
+import { dispatchObjectsChanged } from '@conduction/nextcloud-vue'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -1203,6 +1204,11 @@ export default {
 				)
 
 				catalogStore.fetchPublications()
+				dispatchObjectsChanged({
+					register: registerId,
+					schema: schemaId,
+					id: publication.id,
+				})
 
 				const rejected = results.filter((r) => r.status === 'rejected')
 				if (rejected.length > 0) {
@@ -1357,6 +1363,11 @@ export default {
 							'publicationAttachments',
 							attachments?.results || [],
 						)
+						dispatchObjectsChanged({
+							register: registerId,
+							schema: schemaId,
+							id: publication.id,
+						})
 					} catch (_) {
 						/* ignore */
 					}
