@@ -2013,9 +2013,18 @@ class PublicationQueryService
             }
         }
 
+        // Unique int ids, so a catalog holding ['19', 19] does not list everything twice.
+        $normaliseScopeIds = static function (mixed $ids): array {
+            if (is_string($ids) === true) {
+                $ids = (json_decode($ids, true) ?? []);
+            }
+
+            return array_values(array_unique(array_map('intval', (array) $ids)));
+        };
+
         // Handle catalog filtering using _schemas for multi-schema search.
         if (empty($catalog['schemas']) === false) {
-            $schemas = $this->normaliseScopeIds(ids: $catalog['schemas']);
+            $schemas = $normaliseScopeIds($catalog['schemas']);
             // Pass all schemas for both search and faceting.
             $searchQuery['_schemas'] = $schemas;
             // Only set _schema when the catalog pins ONE schema in ONE register (the
@@ -2026,7 +2035,7 @@ class PublicationQueryService
             // round 2). The guard itself produces that shape: [S_ok, S_open] × [R1, R2]
             // becomes [S_ok] × [R1, R2]. Otherwise `_schemas` carries the scope.
             unset($searchQuery['_schema']);
-            $catalogRegisters = $this->normaliseScopeIds(ids: ($catalog['registers'] ?? []));
+            $catalogRegisters = $normaliseScopeIds(($catalog['registers'] ?? []));
 
             if (count($schemas) === 1 && count($catalogRegisters) === 1) {
                 $searchQuery['_schema'] = $schemas[0];
@@ -2034,7 +2043,7 @@ class PublicationQueryService
         }//end if
 
         if (empty($catalog['registers']) === false) {
-            $registers = $this->normaliseScopeIds(ids: $catalog['registers']);
+            $registers = $normaliseScopeIds($catalog['registers']);
             if (count($registers) === 1) {
                 // Single register: use magic mapper optimization.
                 $searchQuery['_register'] = $registers[0];
@@ -2070,30 +2079,6 @@ class PublicationQueryService
         return $searchQuery;
 
     }//end buildCatalogSearchQuery()
-
-    /**
-     * Turn a catalog's `schemas` / `registers` value into unique integer ids.
-     *
-     * Catalogs can hold the same id twice in different types (`['19', 19]`); without
-     * deduplication every object of that scope is searched, and returned, twice.
-     *
-     * @param mixed $ids An array of ids, or its JSON encoding.
-     *
-     * @return int[] The unique ids.
-     */
-    private function normaliseScopeIds(mixed $ids): array
-    {
-        if (is_string($ids) === true) {
-            $ids = (json_decode($ids, true) ?? []);
-        }
-
-        if (is_array($ids) === false) {
-            return [];
-        }
-
-        return array_values(array_unique(array_map('intval', $ids)));
-
-    }//end normaliseScopeIds()
 
     /**
      * Resolve schema and register objects from OpenRegister mappers for catalog enrichment.
