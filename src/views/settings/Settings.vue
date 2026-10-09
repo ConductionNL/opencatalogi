@@ -375,6 +375,39 @@
 						{{ t('opencatalogi', 'Save Publishing Options') }}
 					</NcButton>
 				</div>
+
+				<!-- Public API cache time (REQ-PAC-003) -->
+				<div class="option-section" data-testid="public-api-cache">
+					<NcTextField
+						v-model="publicCacheSeconds"
+						type="number"
+						min="0"
+						:label="t('opencatalogi', 'Public cache time (seconds)')"
+						:disabled="savingPublicCache" />
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="publicCacheError" type="error">
+						{{ publicCacheError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingPublicCache"
+							@click="savePublicCacheSeconds">
+							<template #icon>
+								<NcLoadingIcon v-if="savingPublicCache" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save cache time') }}
+						</NcButton>
+					</div>
+				</div>
 			</div>
 
 			<!-- Loading State -->
@@ -595,6 +628,10 @@ export default defineComponent({
 
 			savingChannelSources: false,
 			channelSourcesError: '',
+			// Public API cache time in seconds (REQ-PAC-003).
+			publicCacheSeconds: '60',
+			savingPublicCache: false,
+			publicCacheError: '',
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
@@ -743,6 +780,10 @@ export default defineComponent({
 					...this.parseChannelSources(
 						data.configuration && data.configuration.channel_sources,
 					),
+				}
+
+				if (data.configuration && data.configuration.public_api_cache_seconds !== undefined) {
+					this.publicCacheSeconds = String(data.configuration.public_api_cache_seconds)
 				}
 
 				this.loading = false
@@ -1325,6 +1366,36 @@ export default defineComponent({
 				return parsed && typeof parsed === 'object' ? parsed : {}
 			} catch {
 				return {}
+			}
+		},
+
+		/**
+		 * Saves how long the public API answers may be cached; 0 switches the
+		 * public cache headers off. The server stores what it accepted, which
+		 * is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/operations-public-api-cache-headers/specs/operations-public-api-cache-headers/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
+		 */
+		async savePublicCacheSeconds() {
+			this.savingPublicCache = true
+			this.publicCacheError = ''
+
+			try {
+				const response = await axios.put(generateUrl('/apps/opencatalogi/api/settings'), {
+					public_api_cache_seconds: this.publicCacheSeconds,
+				})
+				const stored = response.data && response.data.public_api_cache_seconds
+				if (stored !== undefined) {
+					this.publicCacheSeconds = String(stored)
+				}
+			} catch {
+				this.publicCacheError = this.t(
+					'opencatalogi',
+					'The cache time could not be saved. Try again.',
+				)
+			} finally {
+				this.savingPublicCache = false
 			}
 		},
 

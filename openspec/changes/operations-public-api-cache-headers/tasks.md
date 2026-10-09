@@ -11,8 +11,8 @@
 
 ## 3. The setting
 
-- [ ] 3.1 Add `public_api_cache_seconds` to `SettingsService` and the admin settings screen (REQ-PAC-003). Verify: `tests/Unit/Service/SettingsServiceTest.php` and `tests/e2e/public-api-cache.spec.ts` sets 0 and sees no public header.
+- [ ] 3.1 Add `public_api_cache_seconds` to `SettingsService` and the admin settings screen (REQ-PAC-003). Verify: `tests/Unit/Service/SettingsServiceTest.php` and `tests/e2e/public-api-cache.spec.ts` sets 0 and sees no public header. Built: `SettingsService` default 60 + allowlist + clamp to a non-negative integer (`testThePublicCacheTimeDefaultsToSixtySeconds`, `testTheAdministratorSetsThePublicCacheTime`), `src/views/settings/Settings.vue` publishing options number field; e2e spec written. (not run: the e2e needs a live instance)
 
 ## 4. Docs and strings
 
-- [ ] 4.1 Document the CDN setup, the `Vary` header and the withdrawal delay in `docs/`, and add the strings to `l10n/` in English and Dutch. Verify: `npm run lint` and the l10n check.
+- [x] 4.1 Document the CDN setup, the `Vary` header and the withdrawal delay in `docs/`, and add the strings to `l10n/` in English and Dutch. Verify: `npm run lint` and the l10n check. Done: `docs/features/public-api-cache.md` (CDN setup, `Vary`, withdrawal delay), en/nl strings, check:l10n clean.

@@ -1398,7 +1398,11 @@ OC.L10N.register(
         "Synchronising…": "Bezig met synchroniseren…",
         "Sync now": "Nu synchroniseren",
         "Dismiss": "Sluiten",
-        "Dismiss this announcement": "Deze mededeling sluiten"
+        "Dismiss this announcement": "Deze mededeling sluiten",
+        "Public cache time (seconds)": "Cachetijd openbare API (seconden)",
+        "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.": "Hoe lang een CDN of browser een antwoord van de openbare API mag bewaren voor een bezoeker zonder account. Een langere tijd geeft snellere antwoorden en een langere wachttijd voordat een wijziging zichtbaar is. 0 zet de cache uit.",
+        "Save cache time": "Cachetijd opslaan",
+        "The cache time could not be saved. Try again.": "De cachetijd kon niet worden opgeslagen. Probeer het opnieuw."
     },
     "nplurals=2; plural=(n != 1);"
 )
