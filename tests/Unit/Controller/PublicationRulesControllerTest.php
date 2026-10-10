@@ -176,7 +176,7 @@ class PublicationRulesControllerTest extends TestCase {
 	 * An admin reads the overview as the service assembled it, with the
 	 * failing source named under `unreadSources`.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function testAnAdminReadsTheObligationOverview(): void {
 		$overview = [
@@ -198,7 +198,7 @@ class PublicationRulesControllerTest extends TestCase {
 	 * The overview is admin-only: the middleware refuses anyone else with a
 	 * 403 because of this attribute, and there is no public or user route to it.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function testANonAdminIsRefusedTheOverview(): void {
 		$method = new \ReflectionMethod(PublicationRulesController::class, 'obligations');
@@ -214,7 +214,7 @@ class PublicationRulesControllerTest extends TestCase {
 	/**
 	 * Sources that cannot be read refuse with 503 rather than an empty overview.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function testUnconfiguredSourcesAnswer503RatherThanAnEmptyOverview(): void {
 		$this->obligations->method('read')->willThrowException(new UnreadableRuleException('not configured'));

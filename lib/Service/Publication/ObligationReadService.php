@@ -24,7 +24,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+ * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use OCP\IAppConfig;
 /**
  * Asks every registered source for its obligations and assembles the overview.
  *
- * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+ * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
 class ObligationReadService {
 
@@ -88,7 +88,7 @@ class ObligationReadService {
 	 *
 	 * @throws UnreadableRuleException When the source register or schema is not configured.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function read(?DateTimeInterface $now = null): array {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));

@@ -29,19 +29,25 @@ function parse(value) {
  * @param {object|null|undefined} overview The response of `GET /api/obligations`.
  * @param {Date} now The moment.
  * @return {{tiles: object, rows: Array<object>, perSource: Array<object>, unreadSources: Array<object>}}
- * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-an-admin-can-open-the-overview-as-a-page-req-woo-003
+ * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-an-admin-can-open-the-overview-as-a-page-req-woo-003
  */
 export function obligationPage(overview, now = new Date()) {
 	const source = overview || {}
 	const obligations = Array.isArray(source.obligations) ? source.obligations : []
-	const unreadSources = Array.isArray(source.unreadSources) ? source.unreadSources : []
+	const unreadSources = Array.isArray(source.unreadSources)
+		? source.unreadSources
+		: []
 	const weekEnd = new Date(now.getTime() + 7 * DAY)
 
 	const outstanding = obligations.filter((row) => row.state !== 'published')
 	const publishedThisMonth = obligations.filter((row) => {
 		const at = parse(row.publishedAt)
-		return row.state === 'published' && at !== null
-			&& at.getUTCFullYear() === now.getUTCFullYear() && at.getUTCMonth() === now.getUTCMonth()
+		return (
+			row.state === 'published'
+			&& at !== null
+			&& at.getUTCFullYear() === now.getUTCFullYear()
+			&& at.getUTCMonth() === now.getUTCMonth()
+		)
 	})
 	const onTime = publishedThisMonth.filter((row) => {
 		const due = parse(row.dueDate)
@@ -59,21 +65,33 @@ export function obligationPage(overview, now = new Date()) {
 				recordReference: row.recordReference || '',
 				dueDate: due ? row.dueDate : null,
 				late,
-				daysLate: late && due ? Math.floor((now.getTime() - due.getTime()) / DAY) : 0,
+				daysLate:
+					late && due
+						? Math.floor((now.getTime() - due.getTime()) / DAY)
+						: 0,
 			}
 		})
 		.sort((a, b) => {
 			if (a.late !== b.late) return a.late ? -1 : 1
-			if (a.dueDate === null || b.dueDate === null) return (a.dueDate === null) - (b.dueDate === null)
+			if (a.dueDate === null || b.dueDate === null)
+				return (a.dueDate === null) - (b.dueDate === null)
 			return parse(a.dueDate) - parse(b.dueDate)
 		})
 
 	const bySource = new Map()
 	for (const row of rows) {
-		const entry = bySource.get(row.source) || { source: row.source, outstanding: 0, nextDue: null, late: 0 }
+		const entry = bySource.get(row.source) || {
+			source: row.source,
+			outstanding: 0,
+			nextDue: null,
+			late: 0,
+		}
 		entry.outstanding++
 		if (row.late) entry.late++
-		if (row.dueDate !== null && (entry.nextDue === null || parse(row.dueDate) < parse(entry.nextDue))) {
+		if (
+			row.dueDate !== null
+			&& (entry.nextDue === null || parse(row.dueDate) < parse(entry.nextDue))
+		) {
 			entry.nextDue = row.dueDate
 		}
 		bySource.set(row.source, entry)
@@ -92,7 +110,9 @@ export function obligationPage(overview, now = new Date()) {
 			onTimeThisMonth: onTime.length,
 		},
 		rows,
-		perSource: [...bySource.values()].sort((a, b) => a.source.localeCompare(b.source)),
+		perSource: [...bySource.values()].sort((a, b) =>
+			a.source.localeCompare(b.source),
+		),
 		unreadSources,
 	}
 }

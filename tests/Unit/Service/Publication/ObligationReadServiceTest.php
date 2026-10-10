@@ -164,7 +164,7 @@ class ObligationReadServiceTest extends TestCase {
 	 * reader. The answering source's obligations are listed; the other two are
 	 * unread with their reason and are not counted as zero.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function testOneSourceAnswersOneThrowsAndOneHasNoReader(): void {
 		$this->dispatcher->addListener(
@@ -211,7 +211,7 @@ class ObligationReadServiceTest extends TestCase {
 	 * A source that answered gets its `lastReadAt`; one that did not keeps the
 	 * old moment, because it was not read.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function testOnlyASourceThatWasReadGetsItsLastReadMoment(): void {
 		$this->dispatcher->addListener(
@@ -241,7 +241,7 @@ class ObligationReadServiceTest extends TestCase {
 	 * without a configured schema the service refuses rather than reporting an
 	 * organisation with no sources as compliant.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function testWithoutAConfiguredSourceSchemaTheOverviewRefuses(): void {
 		$objects = $this->threeSources();
@@ -255,7 +255,7 @@ class ObligationReadServiceTest extends TestCase {
 	/**
 	 * The stored sources are read from the configured register and schema.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function testTheSourcesComeFromTheConfiguredSchema(): void {
 		$objects = $this->threeSources();
@@ -269,7 +269,7 @@ class ObligationReadServiceTest extends TestCase {
 	/**
 	 * The saved `lastReadAt` is valid under the real `obligationSource` fragment.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function testTheSavedSourceFitsTheRealSchemaFragment(): void {
 		$this->dispatcher->addListener(
@@ -313,7 +313,7 @@ class ObligationReadServiceTest extends TestCase {
 	/**
 	 * The event carries the source it asks, and an answer only once set.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function testTheEventIsUnansweredUntilAListenerSetsObligations(): void {
 		$event = new ObligationsRequestedEvent(appId: 'dossiq');

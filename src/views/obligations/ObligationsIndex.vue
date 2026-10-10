@@ -3,49 +3,98 @@
 		<header class="obligations__header">
 			<h2>{{ t('opencatalogi', 'Woo obligations') }}</h2>
 			<p v-if="overview" class="obligations__lede">
-				{{ n('opencatalogi', '%n record the Woo requires to be public', '%n records the Woo requires to be public', overview.total || 0) }}
+				{{
+					t(
+						'opencatalogi',
+						'Records the Woo requires to be public: {count}',
+						{ count: overview.total || 0 },
+					)
+				}}
 			</p>
 		</header>
 
 		<NcNoteCard v-if="loaded && !isAdmin" type="info">
-			{{ t('opencatalogi', 'Only an administrator can see the Woo obligations.') }}
+			{{
+				t(
+					'opencatalogi',
+					'Only an administrator can see the Woo obligations.',
+				)
+			}}
 		</NcNoteCard>
 
 		<NcNoteCard v-else-if="error" type="error">
 			{{ error }}
 		</NcNoteCard>
 
-		<NcLoadingIcon v-else-if="loading" :name="t('opencatalogi', 'Loading the Woo obligations')" />
+		<NcLoadingIcon
+			v-else-if="loading"
+			:name="t('opencatalogi', 'Loading the Woo obligations')" />
 
 		<template v-else-if="page">
 			<NcNoteCard v-if="page.unreadSources.length > 0" type="warning">
-				<p>{{ t('opencatalogi', 'These sources could not be read. Their obligations are missing from the figures below.') }}</p>
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'These sources could not be read. Their obligations are missing from the figures below.',
+						)
+					}}
+				</p>
 				<ul class="obligations__unread">
 					<li v-for="source in page.unreadSources" :key="source.appId">
-						<strong>{{ source.appId }}</strong>: {{ source.reason }}
+						<strong>{{ source.appId }}</strong
+						>: {{ source.reason }}
 					</li>
 				</ul>
 			</NcNoteCard>
 
-			<section class="obligations__tiles" :aria-label="t('opencatalogi', 'Totals')">
+			<section
+				class="obligations__tiles"
+				:aria-label="t('opencatalogi', 'Totals')">
 				<div class="obligations__tile">
-					<span class="obligations__tile-label">{{ t('opencatalogi', 'Still to publish') }}</span>
-					<span class="obligations__tile-value">{{ page.tiles.outstanding }}</span>
-					<span class="obligations__tile-note">{{ n('opencatalogi', 'from %n source system', 'from %n source systems', page.tiles.sources) }}</span>
+					<span class="obligations__tile-label">{{
+						t('opencatalogi', 'Still to publish')
+					}}</span>
+					<span class="obligations__tile-value">{{
+						page.tiles.outstanding
+					}}</span>
+					<span class="obligations__tile-note">{{
+						t('opencatalogi', 'Source systems: {count}', {
+							count: page.tiles.sources,
+						})
+					}}</span>
 				</div>
 				<div class="obligations__tile">
-					<span class="obligations__tile-label">{{ t('opencatalogi', 'Due this week') }}</span>
-					<span class="obligations__tile-value">{{ page.tiles.dueThisWeek }}</span>
+					<span class="obligations__tile-label">{{
+						t('opencatalogi', 'Due this week')
+					}}</span>
+					<span class="obligations__tile-value">{{
+						page.tiles.dueThisWeek
+					}}</span>
 				</div>
 				<div class="obligations__tile obligations__tile--late">
-					<span class="obligations__tile-label">{{ t('opencatalogi', 'Late') }}</span>
-					<span class="obligations__tile-value">{{ page.tiles.late }}</span>
-					<span class="obligations__tile-note">{{ t('opencatalogi', 'past the Woo term') }}</span>
+					<span class="obligations__tile-label">{{
+						t('opencatalogi', 'Late')
+					}}</span>
+					<span class="obligations__tile-value">{{
+						page.tiles.late
+					}}</span>
+					<span class="obligations__tile-note">{{
+						t('opencatalogi', 'past the Woo term')
+					}}</span>
 				</div>
 				<div class="obligations__tile">
-					<span class="obligations__tile-label">{{ t('opencatalogi', 'Published this month') }}</span>
-					<span class="obligations__tile-value">{{ page.tiles.publishedThisMonth }}</span>
-					<span class="obligations__tile-note">{{ t('opencatalogi', 'on time: {count}', { count: page.tiles.onTimeThisMonth }) }}</span>
+					<span class="obligations__tile-label">{{
+						t('opencatalogi', 'Published this month')
+					}}</span>
+					<span class="obligations__tile-value">{{
+						page.tiles.publishedThisMonth
+					}}</span>
+					<span class="obligations__tile-note">{{
+						t('opencatalogi', 'on time: {count}', {
+							count: page.tiles.onTimeThisMonth,
+						})
+					}}</span>
 				</div>
 			</section>
 
@@ -54,9 +103,15 @@
 				<table class="obligations__table">
 					<thead>
 						<tr>
-							<th scope="col">{{ t('opencatalogi', 'Source system') }}</th>
-							<th scope="col">{{ t('opencatalogi', 'Still to publish') }}</th>
-							<th scope="col">{{ t('opencatalogi', 'Next deadline') }}</th>
+							<th scope="col">
+								{{ t('opencatalogi', 'Source system') }}
+							</th>
+							<th scope="col">
+								{{ t('opencatalogi', 'Still to publish') }}
+							</th>
+							<th scope="col">
+								{{ t('opencatalogi', 'Next deadline') }}
+							</th>
 							<th scope="col">{{ t('opencatalogi', 'Late') }}</th>
 						</tr>
 					</thead>
@@ -64,8 +119,22 @@
 						<tr v-for="row in page.perSource" :key="row.source">
 							<td>{{ row.source }}</td>
 							<td>{{ row.outstanding }}</td>
-							<td>{{ row.nextDue ? formatDate(row.nextDue) : t('opencatalogi', 'Unknown') }}</td>
-							<td>{{ row.late > 0 ? n('opencatalogi', '%n late', '%n late', row.late) : t('opencatalogi', 'None') }}</td>
+							<td>
+								{{
+									row.nextDue
+										? formatDate(row.nextDue)
+										: t('opencatalogi', 'Unknown')
+								}}
+							</td>
+							<td>
+								{{
+									row.late > 0
+										? t('opencatalogi', '{count} late', {
+												count: row.late,
+											})
+										: t('opencatalogi', 'None')
+								}}
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -73,7 +142,9 @@
 
 			<section class="obligations__section">
 				<h3>{{ t('opencatalogi', 'Late first, then by deadline') }}</h3>
-				<NcEmptyContent v-if="page.rows.length === 0" :name="t('opencatalogi', 'Nothing left to publish')" />
+				<NcEmptyContent
+					v-if="page.rows.length === 0"
+					:name="t('opencatalogi', 'Nothing left to publish')" />
 				<table v-else class="obligations__table">
 					<thead>
 						<tr>
@@ -96,7 +167,13 @@
 									{{ t('opencatalogi', 'Unknown') }}
 								</template>
 								<span v-if="row.late" class="obligations__late">
-									{{ n('opencatalogi', 'Late, %n day', 'Late, %n days', row.daysLate) }}
+									{{
+										t(
+											'opencatalogi',
+											'Late: {count} days past the deadline',
+											{ count: row.daysLate },
+										)
+									}}
 								</span>
 							</td>
 						</tr>
@@ -117,7 +194,7 @@
 // could not be read is missing from them, not empty.
 
 import axios from '@nextcloud/axios'
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
@@ -130,6 +207,7 @@ export default {
 		const { isAdmin, loaded } = useIsAdmin()
 		return { isAdmin, loaded }
 	},
+
 	data() {
 		return {
 			overview: null,
@@ -137,51 +215,64 @@ export default {
 			error: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * The page model, or null before the overview arrived.
 		 *
 		 * @return {object|null}
-		 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-an-admin-can-open-the-overview-as-a-page-req-woo-003
+		 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-an-admin-can-open-the-overview-as-a-page-req-woo-003
 		 */
 		page() {
 			return this.overview ? obligationPage(this.overview, new Date()) : null
 		},
 	},
+
 	mounted() {
 		this.load()
 	},
+
 	methods: {
 		t,
-		n,
 		/**
 		 * Read the overview from the backend.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-an-admin-can-open-the-overview-as-a-page-req-woo-003
+		 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-an-admin-can-open-the-overview-as-a-page-req-woo-003
 		 */
 		async load() {
 			this.loading = true
 			this.error = ''
 			try {
-				const response = await axios.get(generateUrl('/apps/opencatalogi/api/obligations'))
+				const response = await axios.get(
+					generateUrl('/apps/opencatalogi/api/obligations'),
+				)
 				this.overview = response.data
 			} catch (e) {
-				this.error = e?.response?.data?.message
-					|| t('opencatalogi', 'The Woo obligations could not be read. This is not an overview with nothing to publish.')
+				this.error =
+					e?.response?.data?.message
+					|| t(
+						'opencatalogi',
+						'The Woo obligations could not be read. This is not an overview with nothing to publish.',
+					)
 			} finally {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * A deadline as the reader's date.
 		 *
 		 * @param {string} value An ISO 8601 date.
 		 * @return {string}
-		 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-an-admin-can-open-the-overview-as-a-page-req-woo-003
+		 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-an-admin-can-open-the-overview-as-a-page-req-woo-003
 		 */
 		formatDate(value) {
-			return new Date(value).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
+			return new Date(value).toLocaleDateString(undefined, {
+				day: 'numeric',
+				month: 'long',
+				year: 'numeric',
+			})
 		},
 	},
 }

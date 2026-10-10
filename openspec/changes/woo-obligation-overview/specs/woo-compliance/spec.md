@@ -35,11 +35,11 @@ The harvest intake SHALL be registered as the source `harvest`, and its obligati
 
 ### Requirement: An admin can open the overview as a page (REQ-WOO-003)
 
-The admin navigation SHALL offer an Obligations page that shows the totals, each obligation with its state, source and a link to its record, and the unread sources above the table. A late obligation SHALL be marked with the word Late as well as a colour.
+The admin navigation SHALL offer a Woo obligations page (Dutch: Woo-verplichtingen) that shows four totals: still to publish (with the number of source systems), due this week, late, and published this month (with how many on time). Below them it SHALL show a table per source system (still to publish, next deadline, late) and the outstanding obligations, late first and then by deadline, each with its source, category and deadline. The unread sources SHALL stand above the totals with their reason. A late obligation SHALL be marked with the word Late as well as a colour. (Amended to board OcWooVerplichtingen, decision 130.)
 
 #### Scenario: An admin reads the page
 
-- **GIVEN** an overview with two published, one late and one unread source
-- **WHEN** an admin opens the Obligations page
-- **THEN** the page shows the totals 2 published and 1 late
-- **AND** the unread source is listed with its reason above the table
+- **GIVEN** an overview with one published this month, one late, one due this week and one unread source
+- **WHEN** an admin opens the Woo obligations page
+- **THEN** the page shows the totals 1 late, 1 due this week and 1 published this month
+- **AND** the unread source is listed with its reason above the totals

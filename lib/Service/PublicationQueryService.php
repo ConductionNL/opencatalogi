@@ -852,8 +852,8 @@ class PublicationQueryService
      * @return array The OpenRegister result envelope (`results`, `total`).
      *
      * @psalm-param   array<string, mixed> $catalog
-     * @phpstan-param array<string, mixed> $catalog
      * @psalm-param   array<string, mixed> $queryParams
+     * @phpstan-param array<string, mixed> $catalog
      * @phpstan-param array<string, mixed> $queryParams
      *
      * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
