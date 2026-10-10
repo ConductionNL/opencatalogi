@@ -730,9 +730,8 @@
         "This catalog has no registers or schemas configured": "Engar skráningar eða skemu eru stillt fyrir þessa skrá",
         "Add a register and a schema to the catalog to list its publications here.": "Bættu skráningu og skema við skrána til að birta útgáfur hennar hér.",
         "Open catalog": "Opna skrá",
-        "Register and schema": "Skráning og skema",
-        "{schema} in {register}": "{schema} ({register})",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Búðu til fyrstu skrána þína. Hún er ílátið sem útgáfurnar þínar verða í. Veldu skráninguna Publication og skemað Publication svo skráin birti útgáfurnar sem þú bætir við."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Búðu til fyrstu skrána þína. Hún er ílátið sem útgáfurnar þínar verða í. Veldu skráninguna Publication og skemað Publication svo skráin birti útgáfurnar sem þú bætir við.",
+        "Manage your publications and their status": "Stjórnaðu útgáfum þínum og stöðu þeirra"
     },
     "plurals": {}
 }

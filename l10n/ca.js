@@ -731,9 +731,8 @@ OC.L10N.register(
         "This catalog has no registers or schemas configured": "Aquest catàleg no té cap registre ni esquema configurat",
         "Add a register and a schema to the catalog to list its publications here.": "Afegiu un registre i un esquema al catàleg per mostrar-ne aquí les publicacions.",
         "Open catalog": "Obre el catàleg",
-        "Register and schema": "Registre i esquema",
-        "{schema} in {register}": "{schema} a {register}",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creeu el vostre primer catàleg. És el contenidor on viuran les vostres publicacions. Trieu el registre Publication i l'esquema Publication perquè el catàleg mostri les publicacions que afegiu."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creeu el vostre primer catàleg. És el contenidor on viuran les vostres publicacions. Trieu el registre Publication i l'esquema Publication perquè el catàleg mostri les publicacions que afegiu.",
+        "Manage your publications and their status": "Gestioneu les vostres publicacions i el seu estat"
     },
     "nplurals=2; plural=(n != 1);"
 )

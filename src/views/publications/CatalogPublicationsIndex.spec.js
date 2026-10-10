@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Component test for `CatalogPublicationsIndex.vue`: the catalog it resolves
- * from the slug, the register/schema pair it hands CnIndexPage, the selector
- * for catalogs with several pairs, and where a row opens.
+ * from the slug, the pair and endpoint it hands CnIndexPage, and where a row
+ * of each schema opens.
  */
 
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
@@ -73,7 +73,6 @@ function mountPage({
 }
 
 const indexPage = (wrapper) => wrapper.findComponent({ name: 'CnIndexPage' })
-const select = (wrapper) => wrapper.findComponent({ name: 'NcSelect' })
 
 // A page left mounted would react to the next test's menu list.
 enableAutoUnmount(afterEach)
@@ -159,8 +158,8 @@ describe('CatalogPublicationsIndex', () => {
 		})
 	})
 
-	it('lists the single pair of a catalog without a selector', async () => {
-		objectStore.menuCatalogs = [catalog('woo', [19], [173])]
+	it("lists all of the catalog's pairs from its endpoint, under the page heading", async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
 		const { wrapper } = mountPage()
 		await flushPromises()
 
@@ -168,9 +167,15 @@ describe('CatalogPublicationsIndex', () => {
 		expect(walk).not.toHaveBeenCalled()
 		expect(page.props('register')).toBe('19')
 		expect(page.props('schema')).toBe('173')
-		expect(page.props('description')).toBe('Title woo')
+		expect(page.props('collectionUrl')).toMatch(
+			/\/apps\/opencatalogi\/api\/woo$/,
+		)
+		expect(page.props('showTitle')).toBe(true)
+		expect(page.props('description')).toBe(
+			'Manage your publications and their status',
+		)
 		expect(page.vm.$.vnode.key).toBe('woo:19:173')
-		expect(select(wrapper).exists()).toBe(false)
+		expect(wrapper.findComponent({ name: 'NcSelect' }).exists()).toBe(false)
 	})
 
 	it('passes the action toggles and the rest of the config through', async () => {
@@ -186,55 +191,65 @@ describe('CatalogPublicationsIndex', () => {
 		expect(attrs.onRowClick).toBeUndefined()
 	})
 
-	it('opens a clicked row on its publication detail page in this catalog', async () => {
+	it('opens a clicked publication on its detail page in this catalog', async () => {
 		objectStore.menuCatalogs = [catalog('woo', [19], [173])]
 		const { wrapper, router } = mountPage()
 		await flushPromises()
 
 		const page = indexPage(wrapper)
+		const row = { id: 'abc', '@self': { id: 'abc', register: 19, schema: 173 } }
 		expect(page.props('rowClickToView')).toBe(true)
 		const target = {
 			name: 'PublicationDetail',
 			params: { catalogSlug: 'woo', id: 'abc' },
 		}
-		expect(page.props('viewTo')({ '@self': { id: 'abc' } })).toEqual(target)
+		expect(page.props('viewTo')(row)).toEqual(target)
 		expect(page.props('viewTo')({})).toBeNull()
 
-		page.vm.$emit('row-click', { id: 'abc' })
-		page.vm.$emit('view', { id: 'abc' })
-		page.vm.$emit('row-aux-click', { id: 'abc' }, new MouseEvent('auxclick'))
-		page.vm.$emit('edit-open', { id: 'abc' })
+		page.vm.$emit('row-click', row)
+		page.vm.$emit('view', row)
+		page.vm.$emit('row-aux-click', row, new MouseEvent('auxclick'))
 
-		expect(router.push).toHaveBeenCalledTimes(4)
+		expect(router.push).toHaveBeenCalledTimes(3)
 		for (const call of router.push.mock.calls) {
 			expect(call[0]).toEqual(target)
 		}
-		expect(page.vm.$attrs.showViewAction).toBeUndefined()
 	})
 
-	it('leaves rows of another pair to CnIndexPage: a click selects, no View', async () => {
-		objectStore.menuCatalogs = [catalog('code', [19], [184])]
-		const { wrapper, router } = mountPage({ slug: 'code' })
+	it('opens a row of another schema in the form for that schema', async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
+		const { wrapper, router } = mountPage()
 		await flushPromises()
 
 		const page = indexPage(wrapper)
-		expect(page.props('schema')).toBe('184')
-		expect(page.props('rowClickToView')).toBe(false)
-		expect(page.props('viewTo')).toBeNull()
-		expect(page.vm.$attrs.showViewAction).toBe(false)
-		expect(page.vm.$attrs.showEditAction).toBeUndefined()
-		expect(wrapper.vm.rowTarget({ id: 'abc' })).toBeNull()
+		const rule = { id: 'r1', '@self': { id: 'r1', register: 19, schema: 184 } }
+		expect(page.props('viewTo')(rule)).toBeNull()
 
-		page.vm.$emit('row-click', { id: 'abc' })
-		page.vm.$emit('view', { id: 'abc' })
+		page.vm.$emit('view', rule)
+		expect(page.vm.formDialogItem).toEqual(rule)
+
+		page.vm.formDialogItem = null
+		page.vm.$emit(
+			'row-aux-click',
+			rule,
+			new MouseEvent('auxclick', { button: 1 }),
+		)
+		expect(page.vm.formDialogItem).toBeNull()
+
+		page.vm.$emit('row-click', rule)
+		expect(page.vm.formDialogItem).toEqual(rule)
+
+		page.vm.formDialogItem = null
+		page.vm.$emit('row-click', rule, new MouseEvent('click', { ctrlKey: true }))
+		expect(page.vm.formDialogItem).toEqual(rule)
 
 		expect(router.push).not.toHaveBeenCalled()
 	})
 
-	it('passes the publication pair config on the publication pair only', async () => {
+	it("shows the publication's own actions on publication rows only", async () => {
 		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
 		const publicationPairConfig = {
-			columns: ['title', 'wooCategory'],
+			columns: ['@self.name', 'status'],
 			actions: [
 				'builtin:view',
 				{ id: 'file-list', handler: 'openPublicationFiles' },
@@ -243,22 +258,65 @@ describe('CatalogPublicationsIndex', () => {
 		const { wrapper } = mountPage({ publicationPairConfig })
 		await flushPromises()
 
-		let attrs = indexPage(wrapper).vm.$attrs
+		const attrs = indexPage(wrapper).vm.$attrs
 		expect(attrs.columns).toEqual(publicationPairConfig.columns)
-		expect(attrs.actions).toEqual(publicationPairConfig.actions)
+		expect(attrs.actions[0]).toBe('builtin:view')
+		expect(attrs.actions[1]).toMatchObject({
+			id: 'file-list',
+			handler: 'openPublicationFiles',
+		})
+		expect(
+			attrs.actions[1].visible({ '@self': { register: 19, schema: 173 } }),
+		).toBe(true)
+		expect(
+			attrs.actions[1].visible({ '@self': { register: 19, schema: 184 } }),
+		).toBe(false)
 		expect(attrs.publicationPairConfig).toBeUndefined()
+	})
 
-		select(wrapper).vm.$emit(
-			'update:modelValue',
-			select(wrapper).props('options')[1],
-		)
+	it("keeps an action's own visible rule on publication rows", async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
+		const publicationPairConfig = {
+			actions: [
+				{ id: 'hidden', visible: false },
+				{ id: 'published', visible: (row) => row.status === 'published' },
+			],
+		}
+		const { wrapper } = mountPage({ publicationPairConfig })
 		await flushPromises()
 
-		attrs = indexPage(wrapper).vm.$attrs
-		expect(indexPage(wrapper).props('schema')).toBe('184')
-		expect(attrs.columns).toBeUndefined()
-		expect(attrs.actions).toBeUndefined()
-		expect(attrs.showAdd).toBe(true)
+		const [hidden, published] = indexPage(wrapper).vm.$attrs.actions
+		const self = { register: 19, schema: 173 }
+		expect(hidden.visible({ '@self': self })).toBe(false)
+		expect(published.visible({ '@self': self, status: 'published' })).toBe(true)
+		expect(published.visible({ '@self': self, status: 'draft' })).toBe(false)
+		expect(
+			published.visible({
+				'@self': { register: 19, schema: 184 },
+				status: 'published',
+			}),
+		).toBe(false)
+	})
+
+	it('uses the first pair, without publication config, for a catalog without the publication pair', async () => {
+		objectStore.menuCatalogs = [catalog('code', [19], [184])]
+		const { wrapper, router } = mountPage({
+			slug: 'code',
+			publicationPairConfig: { columns: ['title'] },
+		})
+		await flushPromises()
+
+		const page = indexPage(wrapper)
+		expect(page.props('schema')).toBe('184')
+		expect(page.props('rowClickToView')).toBe(false)
+		expect(page.props('viewTo')).toBeNull()
+		expect(page.vm.$attrs.columns).toBeUndefined()
+
+		page.vm.$emit('row-click', {
+			id: 'abc',
+			'@self': { register: 19, schema: 184 },
+		})
+		expect(router.push).not.toHaveBeenCalled()
 	})
 
 	it('opens no detail page while the publication ids are unresolved', async () => {
@@ -271,59 +329,6 @@ describe('CatalogPublicationsIndex', () => {
 
 		expect(indexPage(wrapper).props('rowClickToView')).toBe(false)
 		expect(indexPage(wrapper).props('viewTo')).toBeNull()
-	})
-
-	it('offers a selector for several pairs and keeps the choice in the query', async () => {
-		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
-		const { wrapper, router } = mountPage()
-		await flushPromises()
-
-		expect(indexPage(wrapper).props('schema')).toBe('173')
-		const options = select(wrapper).props('options')
-		expect(options.map((option) => option.key)).toEqual(['19-173', '19-184'])
-		expect(select(wrapper).props('modelValue').key).toBe('19-173')
-
-		select(wrapper).vm.$emit('update:modelValue', options[1])
-		await flushPromises()
-
-		expect(router.push).toHaveBeenCalledWith({ query: { _pair: '19-184' } })
-		expect(indexPage(wrapper).props('schema')).toBe('184')
-		expect(indexPage(wrapper).vm.$.vnode.key).toBe('woo:19:184')
-	})
-
-	it('starts on the pair the query names', async () => {
-		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
-		const { wrapper } = mountPage({ query: { _pair: '19-184' } })
-		await flushPromises()
-
-		expect(indexPage(wrapper).props('schema')).toBe('184')
-	})
-
-	it('labels the pairs with the register and schema titles', async () => {
-		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
-		const titles = {
-			'registers/19': 'Publication',
-			'schemas/173': 'Publication',
-			'schemas/184': 'Public code component',
-		}
-		global.fetch = jest.fn((url) => {
-			const key = Object.keys(titles).find((path) => url.endsWith(path))
-			return Promise.resolve({
-				ok: Boolean(key),
-				json: () => Promise.resolve({ title: titles[key] }),
-			})
-		})
-		const { wrapper } = mountPage()
-		await flushPromises()
-
-		expect(
-			select(wrapper)
-				.props('options')
-				.map((option) => option.label),
-		).toEqual([
-			'Publication in Publication',
-			'Public code component in Publication',
-		])
 	})
 
 	it('re-resolves when the catalog slug changes', async () => {

@@ -731,9 +731,8 @@ OC.L10N.register(
         "This catalog has no registers or schemas configured": "Αυτός ο κατάλογος δεν έχει ρυθμισμένα μητρώα ή σχήματα",
         "Add a register and a schema to the catalog to list its publications here.": "Προσθέστε ένα μητρώο και ένα σχήμα στον κατάλογο για να εμφανίζονται εδώ οι δημοσιεύσεις του.",
         "Open catalog": "Άνοιγμα καταλόγου",
-        "Register and schema": "Μητρώο και σχήμα",
-        "{schema} in {register}": "{schema} ({register})",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Δημιουργήστε τον πρώτο σας κατάλογο. Είναι ο χώρος όπου θα βρίσκονται οι δημοσιεύσεις σας. Επιλέξτε το μητρώο Publication και το σχήμα Publication, ώστε ο κατάλογος να εμφανίζει τις δημοσιεύσεις που προσθέτετε."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Δημιουργήστε τον πρώτο σας κατάλογο. Είναι ο χώρος όπου θα βρίσκονται οι δημοσιεύσεις σας. Επιλέξτε το μητρώο Publication και το σχήμα Publication, ώστε ο κατάλογος να εμφανίζει τις δημοσιεύσεις που προσθέτετε.",
+        "Manage your publications and their status": "Διαχειριστείτε τις δημοσιεύσεις σας και την κατάστασή τους"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -731,9 +731,8 @@ OC.L10N.register(
         "This catalog has no registers or schemas configured": "Za ovaj katalog nisu podešeni registri ni sheme",
         "Add a register and a schema to the catalog to list its publications here.": "Dodajte registar i shemu katalogu da bi se ovdje prikazale njegove objave.",
         "Open catalog": "Otvori katalog",
-        "Register and schema": "Registar i shema",
-        "{schema} in {register}": "{schema} ({register})",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Napravite svoj prvi katalog. To je spremnik u kojem će biti vaše objave. Odaberite registar Publication i shemu Publication kako bi katalog prikazivao objave koje dodate."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Napravite svoj prvi katalog. To je spremnik u kojem će biti vaše objave. Odaberite registar Publication i shemu Publication kako bi katalog prikazivao objave koje dodate.",
+        "Manage your publications and their status": "Upravljajte svojim publikacijama i njihovim statusom"
     },
     "nplurals=2; plural=(n != 1);"
 )

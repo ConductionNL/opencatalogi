@@ -184,13 +184,28 @@ const CnIndexPage = {
 		schema: { type: [Object, String], default: null },
 		rowClickToView: { type: Boolean, default: false },
 		viewTo: { type: Function, default: null },
+		showTitle: { type: Boolean, default: false },
+		collectionUrl: { type: String, default: '' },
 	},
 	emits: ['row-click', 'row-aux-click', 'view', 'edit-open'],
+	data() {
+		return { formDialogItem: null }
+	},
+	methods: {
+		openFormDialog(item) {
+			this.formDialogItem = item
+		},
+	},
 	render() {
 		return h('div', { class: 'cn-index-page-stub' }, [
 			this.$slots['below-header']?.(),
 		])
 	},
+}
+
+// The library's objects-changed signal, reduced to a no-op.
+function dispatchObjectsChanged() {
+	return true
 }
 
 // The library's row-opening helpers, reduced to a plain router push.
@@ -211,6 +226,7 @@ module.exports = {
 	useObjectStore: createObjectStore('conduction-objects'),
 	CnAppNav,
 	CnIndexPage,
+	dispatchObjectsChanged,
 	isNewTabHandled,
 	openRowTarget,
 	CnThemePreview,
