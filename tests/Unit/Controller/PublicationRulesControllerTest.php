@@ -27,7 +27,10 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
 use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
+use OCA\OpenCatalogi\Service\Publication\ObligationReadService;
+use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -45,6 +48,7 @@ class PublicationRulesControllerTest extends TestCase {
 	private IAppConfig|MockObject $config;
 	private IUserSession|MockObject $userSession;
 	private PublicationRulesController $controller;
+	private ObligationReadService|MockObject $obligations;
 
 	protected function setUp(): void {
 		$this->request = $this->createMock(IRequest::class);
@@ -62,6 +66,7 @@ class PublicationRulesControllerTest extends TestCase {
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->userSession->method('getUser')->willReturn($user);
 
+		$this->obligations = $this->createMock(ObligationReadService::class);
 		$this->controller = new PublicationRulesController(
 			'opencatalogi',
 			$this->request,
@@ -70,6 +75,7 @@ class PublicationRulesControllerTest extends TestCase {
 			$this->userSession,
 			new PublicationRuleService(),
 			new DecisionPublicationValidator(),
+			$this->obligations,
 		);
 
 	}//end setUp()
@@ -166,4 +172,57 @@ class PublicationRulesControllerTest extends TestCase {
 
 	}//end testThePublicSearchRunsOverTheProjections()
 
+	/**
+	 * An admin reads the overview as the service assembled it, with the
+	 * failing source named under `unreadSources`.
+	 *
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 */
+	public function testAnAdminReadsTheObligationOverview(): void {
+		$overview = [
+			'total' => 3, 'published' => 1, 'late' => 1, 'outstanding' => 2,
+			'unreadSources' => [['appId' => 'filinq', 'reason' => 'Filinq is in maintenance.']],
+			'obligations' => [['title' => 'A'], ['title' => 'B'], ['title' => 'C']],
+			'sourcesRead' => 1, 'sourcesRegistered' => 2,
+		];
+		$this->obligations->expects($this->once())->method('read')->willReturn($overview);
+
+		$response = $this->controller->obligations();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame($overview, $response->getData());
+
+	}//end testAnAdminReadsTheObligationOverview()
+
+	/**
+	 * The overview is admin-only: the middleware refuses anyone else with a
+	 * 403 because of this attribute, and there is no public or user route to it.
+	 *
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 */
+	public function testANonAdminIsRefusedTheOverview(): void {
+		$method = new \ReflectionMethod(PublicationRulesController::class, 'obligations');
+
+		$this->assertCount(1, $method->getAttributes(AuthorizedAdminSetting::class));
+		$this->assertSame([], $method->getAttributes(\OCP\AppFramework\Http\Attribute\NoAdminRequired::class));
+		$this->assertSame([], $method->getAttributes(\OCP\AppFramework\Http\Attribute\PublicPage::class));
+		$this->assertStringNotContainsString('@NoAdminRequired', (string)$method->getDocComment());
+		$this->assertStringNotContainsString('@PublicPage', (string)$method->getDocComment());
+
+	}//end testANonAdminIsRefusedTheOverview()
+
+	/**
+	 * Sources that cannot be read refuse with 503 rather than an empty overview.
+	 *
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 */
+	public function testUnconfiguredSourcesAnswer503RatherThanAnEmptyOverview(): void {
+		$this->obligations->method('read')->willThrowException(new UnreadableRuleException('not configured'));
+
+		$response = $this->controller->obligations();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('obligations-unreadable', $response->getData()['error']);
+
+	}//end testUnconfiguredSourcesAnswer503RatherThanAnEmptyOverview()
 }//end class

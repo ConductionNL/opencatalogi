@@ -7,10 +7,10 @@
  * plus its notices, readable without an account by a ketenpartner who wants to
  * watch without a webhook.
  *
- * The feed carries exactly what an anonymous reader may read and no more, and
- * the check runs per entry against the publication rather than as a separate
- * rule of its own. A feed with its own idea of what is public is a second
- * access decision, and two access decisions disagree eventually.
+ * The feed carries exactly what an anonymous reader may read and no more: the
+ * publication schema's own read rules decide, inside the catalogue, the same
+ * check as `/api/{catalogSlug}`. A feed with its own idea of what is public is
+ * a second access decision, and two access decisions disagree eventually.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service\Community
@@ -36,7 +36,6 @@ namespace OCA\OpenCatalogi\Service\Community;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 
 /**
  * Builds a catalogue's Atom feed from what an anonymous reader may read.
@@ -48,11 +47,9 @@ class AtomFeedService {
 	/**
 	 * Constructor.
 	 *
-	 * @param PublicationRuleService $ruleService The publication rules, which own the access decision.
 	 * @param NoticeBoardService $noticeService The notice board rules.
 	 */
 	public function __construct(
-		private readonly PublicationRuleService $ruleService,
 		private readonly NoticeBoardService $noticeService,
 	) {
 
@@ -61,30 +58,39 @@ class AtomFeedService {
 	/**
 	 * The entries a catalogue's feed carries.
 	 *
-	 * The publication rules decide which records appear and which of their
-	 * properties do, per entry. A record with no rule is absent: a record
-	 * nobody decided to publish is not published.
+	 * The records are what an anonymous reader may read inside the catalogue:
+	 * OpenRegister applied the publication schema's own read rules before they
+	 * reached this method (PublicationQueryService::readCatalogueAsAnonymous()),
+	 * so a draft is absent because no public rule admits it. This method only
+	 * shapes entries and drops notices outside their period.
 	 *
-	 * @param array<int, array<string, mixed>> $records The catalogue's records.
-	 * @param array<int, array<string, mixed>> $notices The catalogue's current notices.
-	 * @param array<int, array<string, mixed>> $rules The publication rules.
+	 * @param array<int, mixed> $records The records an anonymous reader may read.
+	 * @param array<int, mixed> $notices The catalogue's notices.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
 	 *
 	 * @return array<int, array<string, mixed>> The entries.
 	 *
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
-	public function entries(array $records, array $notices, array $rules, ?DateTimeInterface $now = null): array {
-		$rulesByType = $this->ruleService->indexByRecordType(rules: $rules);
+	public function entries(array $records, array $notices, ?DateTimeInterface $now = null): array {
 		$entries = [];
 
-		foreach ($this->ruleService->projectList(records: $records, rulesByType: $rulesByType) as $view) {
+		foreach ($records as $record) {
+			if (is_array($record) === false) {
+				continue;
+			}
+
+			$self = [];
+			if (is_array($record['@self'] ?? null) === true) {
+				$self = $record['@self'];
+			}
+
 			$entries[] = [
 				'kind' => 'record',
-				'id' => (string)($view['id'] ?? ''),
-				'title' => (string)($view['title'] ?? ''),
-				'updated' => (string)($view['updated'] ?? ($view['publicationDate'] ?? '')),
-				'summary' => (string)($view['summary'] ?? ($view['description'] ?? '')),
+				'id' => (string)($record['id'] ?? ($self['id'] ?? '')),
+				'title' => (string)($record['title'] ?? ($self['name'] ?? '')),
+				'updated' => (string)($self['updated'] ?? ($record['publicationDate'] ?? '')),
+				'summary' => (string)($record['summary'] ?? ($record['description'] ?? '')),
 			];
 		}
 
@@ -111,11 +117,51 @@ class AtomFeedService {
 	}//end entries()
 
 	/**
+	 * The notices posted on the boards of one catalogue.
+	 *
+	 * A notice names its board, and a board names its catalogue. A notice on
+	 * another catalogue's board, or on a board that no longer exists, is not
+	 * this catalogue's.
+	 *
+	 * @param string $catalogId The catalogue's id.
+	 * @param array<int, mixed> $boards Every notice board.
+	 * @param array<int, mixed> $notices Every notice.
+	 *
+	 * @return array<int, array<string, mixed>> The catalogue's notices.
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 */
+	public function noticesOfCatalogue(string $catalogId, array $boards, array $notices): array {
+		if ($catalogId === '') {
+			return [];
+		}
+
+		$boardIds = [];
+		foreach ($boards as $board) {
+			if (is_array($board) === true && (string)($board['catalog'] ?? '') === $catalogId) {
+				$boardIds[(string)($board['id'] ?? '')] = true;
+			}
+		}
+
+		unset($boardIds['']);
+
+		$kept = [];
+		foreach ($notices as $notice) {
+			if (is_array($notice) === true && isset($boardIds[(string)($notice['board'] ?? '')]) === true) {
+				$kept[] = $notice;
+			}
+		}
+
+		return $kept;
+
+	}//end noticesOfCatalogue()
+
+	/**
 	 * The feed as Atom.
 	 *
 	 * Everything that came from an entry is escaped. The feed is assembled from
-	 * projections that already dropped every withheld property, so the escaping
-	 * is about markup and not about access.
+	 * records an anonymous reader may already read, so the escaping is about
+	 * markup and not about access.
 	 *
 	 * @param string $catalogTitle The catalogue's title.
 	 * @param string $selfUrl The feed's own URL.

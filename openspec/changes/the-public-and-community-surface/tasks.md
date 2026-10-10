@@ -17,7 +17,7 @@
 
 - [x] 3.1 `notice` schema per catalogue, with an optional link to a publication (REQ-PCS-104)
 - [x] 3.2 Comments per notice board, off by default, with a named moderator when enabled (REQ-PCS-104)
-- [ ] 3.3 (blocked: Q-opencatalogi-1, the feed's access check) An Atom feed per catalogue over published records and notices, access-checked per entry (REQ-PCS-105)
+- [x] 3.3 An Atom feed per catalogue over published records and notices, access-checked per entry (REQ-PCS-105). Q-opencatalogi-1 answered (decision 138): the records are what an anonymous reader may read under the publication schema's own read rules, inside the catalogue, the same check as `/api/{catalogSlug}`; the rule projection is dropped. `PublicationQueryService::readCatalogueAsAnonymous()` (read rules for every caller, inside `runAsAnonymous()`), `AtomFeedService::entries()` / `noticesOfCatalogue()`, `CommunityController::feed()` (404 for an unknown catalogue, only the catalogue's own boards' notices). Tests: `PublicationQueryServiceTest::testTheCatalogueFeedReadsAsAnAnonymousReaderInsideTheCatalogue`, `::testTheFeedDropsASchemaWithoutReadRulesEvenForASignedInCaller`, `::testAFeedWithNoReadableSchemaIsEmptyAndReadsNothing`, `::testThePublicationSchemaKeepsADraftFromAnAnonymousReader`; `CommunityControllerTest::testTheFeedCarriesWhatAnAnonymousReaderMayReadInTheCatalogue`, `::testASchemaWithoutReadRulesNeverReachesTheFeed`, `::testAnUnknownCatalogueHasNoFeed`; `CommunitySurfaceTest::testAFeedCarriesOnlyTheNoticesOfItsOwnCatalogue`.
 
 ## 4. The reader's answer
 

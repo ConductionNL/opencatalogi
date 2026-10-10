@@ -362,6 +362,13 @@
 					"order": 97
 				},
 				{
+					"id": "ObligationsMenu",
+					"label": "Woo obligations",
+					"icon": "ClipboardCheckOutline",
+					"route": "Obligations",
+					"order": 98
+				},
+				{
 					"id": "SettingsMenu",
 					"label": "Settings",
 					"icon": "CogOutline",
@@ -1370,6 +1377,14 @@
 			"title": "Directory",
 			"component": "FederationDirectory",
 			"_note": "FederationDirectory (custom) fetches /api/listings and renders CnFederationStatus with mapped nodes + an admin add-directory modal. The bare CnFederationStatus this replaced shipped a permanent empty-state because the manifest had no :nodes binding."
+		},
+		{
+			"id": "Obligations",
+			"route": "/obligations",
+			"type": "custom",
+			"title": "Woo obligations",
+			"component": "ObligationsIndex",
+			"_note": "Admin only (GET /api/obligations is AuthorizedAdminSetting; the page shows a note to anyone else). Board OcWooVerplichtingen: four totals, a table per source system, the outstanding records late first; the unread sources stand above the figures (REQ-WOO-003)."
 		},
 		{
 			"id": "Reports",

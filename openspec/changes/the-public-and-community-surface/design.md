@@ -48,8 +48,14 @@ as Atom. Kanboard and Vikunja both chose a feed for the same reason: a
 ketenpartner who wants to watch without an account and without a webhook.
 
 The feed is public, so it carries exactly what an anonymous reader may
-read and no more. Its access check is the publication's, run per entry,
-not a separate rule.
+read and no more. Its access check is the publication schema's own read
+rules, scoped to the catalogue, the same check as `/api/{catalogSlug}`, and
+it is evaluated as an anonymous reader for every caller, so a signed-in
+administrator who opens the feed sees what a ketenpartner sees. It is not a
+separate rule: the publication-rule projection the first build used never
+matched a publication, because no publication carries a record type
+(Q-opencatalogi-1, decision 138). A notice reaches the feed only from a
+board of this catalogue, inside its period.
 
 ## D6. A vote is one per reader, and the reader is not staff
 

@@ -96,6 +96,7 @@ return [
 		// Active publication, inspection and the national indexes: the admin surfaces.
 		['name' => 'publicationRules#previewRule', 'url' => '/api/publication-rules/preview', 'verb' => 'POST'],
 		['name' => 'publicationRules#validateDecision', 'url' => '/api/publication-rules/validate-decision', 'verb' => 'POST'],
+		['name' => 'publicationRules#obligations', 'url' => '/api/obligations', 'verb' => 'GET'],
 		['name' => 'depublication#depublish', 'url' => '/api/publications/depublish', 'verb' => 'POST'],
 		['name' => 'depublication#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
 		// Publish now, withdraw with a reason, publish again, withdraw one document

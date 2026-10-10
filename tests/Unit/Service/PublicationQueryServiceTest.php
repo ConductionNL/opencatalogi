@@ -40,6 +40,7 @@ use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\IAppConfig;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -1963,6 +1964,106 @@ class PublicationQueryServiceTest extends TestCase {
 			'page one with limit'  => [['_page' => 1, '_limit' => 10]],
 		];
 	}
+
+	// -------------------------------------------------------------------------
+	// REQ-PCS-105 (Q-opencatalogi-1, decision 138): the catalogue feed reads
+	// what an anonymous reader may read under the publication schema's own read
+	// rules, scoped to the catalogue, for every caller.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * The feed's read runs inside the anonymous scope, with the schema read
+	 * rules as the filter, over the catalogue's own registers and schemas.
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 */
+	public function testTheCatalogueFeedReadsAsAnAnonymousReaderInsideTheCatalogue(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [['results' => [['id' => 'p1', 'title' => 'Een']], 'total' => 1]];
+
+		$result = $this->service->readCatalogueAsAnonymous(
+			catalog: ['registers' => [1], 'schemas' => [1]],
+			queryParams: ['_limit' => 50, 'schema' => 99, 'register' => 98],
+			objectService: $fake
+		);
+
+		$this->assertSame([['id' => 'p1', 'title' => 'Een']], $result['results']);
+		$this->assertSame(1, $fake->anonymousScopes);
+		$this->assertSame([], $fake->readsOutsideScope, 'the feed read must run inside runAsAnonymous()');
+		$this->assertCount(1, $fake->capturedCalls);
+		$call = $fake->capturedCalls[0];
+		$this->assertTrue($call['_rbac'], 'the public read rules are the filter, so RBAC stays on');
+		$this->assertFalse($call['_multitenancy']);
+		$this->assertSame([1], $call['query']['_schemas']);
+		$this->assertSame(1, $call['query']['_register']);
+		$this->assertArrayNotHasKey('schema', $call['query'], 'a caller cannot widen the scope past the catalogue');
+	}//end testTheCatalogueFeedReadsAsAnAnonymousReaderInsideTheCatalogue()
+
+	/**
+	 * A schema without read rules leaves the feed for a SIGNED-IN caller too:
+	 * the feed is public, so it carries what an anonymous reader may read.
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 */
+	public function testTheFeedDropsASchemaWithoutReadRulesEvenForASignedInCaller(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('isLoggedIn')->willReturn(true);
+		$session->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$this->service = new PublicationQueryService(
+			container: $this->container,
+			userSession: $session,
+			config: $this->config,
+			logger: $this->logger,
+		);
+		$fake = $this->wireHappyPath(authorizationById: [2 => []]);
+
+		$this->service->readCatalogueAsAnonymous(
+			catalog: ['registers' => [1], 'schemas' => [1, 2]],
+			queryParams: [],
+			objectService: $fake
+		);
+
+		$this->assertSame([1], $fake->capturedCalls[0]['query']['_schemas']);
+	}//end testTheFeedDropsASchemaWithoutReadRulesEvenForASignedInCaller()
+
+	/**
+	 * A catalogue none of whose schemas carries read rules has an empty feed,
+	 * and OpenRegister is not asked: an empty `_schemas` would search every table.
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 */
+	public function testAFeedWithNoReadableSchemaIsEmptyAndReadsNothing(): void {
+		$fake = $this->wireHappyPath(authorizationById: [1 => null]);
+
+		$result = $this->service->readCatalogueAsAnonymous(
+			catalog: ['registers' => [1], 'schemas' => [1]],
+			queryParams: [],
+			objectService: $fake
+		);
+
+		$this->assertSame(['results' => [], 'total' => 0], $result);
+		$this->assertSame([], $fake->capturedCalls);
+	}//end testAFeedWithNoReadableSchemaIsEmptyAndReadsNothing()
+
+	/**
+	 * A draft never reaches the feed because the publication schema's own
+	 * public read rules require a publication date that has passed. Pinned on
+	 * the schema this app ships, not on a fake.
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 */
+	public function testThePublicationSchemaKeepsADraftFromAnAnonymousReader(): void {
+		$register = json_decode((string) file_get_contents(__DIR__.'/../../../lib/Settings/publication_register.json'), true);
+		$read = $register['components']['schemas']['publication']['authorization']['read'];
+
+		$publicRules = array_values(array_filter($read, static fn ($rule): bool => is_array($rule) && ($rule['group'] ?? '') === 'public'));
+		$this->assertNotEmpty($publicRules);
+		foreach ($publicRules as $rule) {
+			$this->assertSame(['$lte' => '$now'], $rule['match']['publicationDate'], 'every public rule needs a publication date in the past');
+		}
+
+		$this->assertNotContains('public', $read, 'no unconditional public read on the publication schema');
+	}//end testThePublicationSchemaKeepsADraftFromAnAnonymousReader()
 
 	/**
 	 * Invoke a private/protected method by name via reflection.
