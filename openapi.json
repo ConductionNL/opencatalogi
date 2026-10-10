@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "OpenCatalogi",
-    "version": "2.1.16-unstable.20260919082905",
+    "version": "2.1.16-unstable.20261010175130",
     "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` — admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.",
     "license": {
       "name": "EUPL-1.2",
@@ -327,6 +327,75 @@
       },
       "DcatDocument": {
         "description": "DCAT-AP-NL RDF document. Serialization is content-negotiated via `?format=` (authoritative) or the `Accept` header; body shape depends on the negotiated media type (JSON-LD object, or a Turtle/RDF-XML string)."
+      },
+      "WithheldEntry": {
+        "type": "object",
+        "description": "A document withheld from publication: its position in the publication and the grounds, never its content (REQ-PDP-004, REQ-WDW-003).",
+        "required": [
+          "position",
+          "grounds",
+          "groundDetails"
+        ],
+        "properties": {
+          "position": {
+            "type": "integer",
+            "description": "Position of the document in the publication, from 1."
+          },
+          "grounds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The refusal ground codes."
+          },
+          "groundDetails": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "code",
+                "article",
+                "label"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "article": {
+                  "type": "string",
+                  "description": "Empty when the code could not be resolved; never guessed."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "Empty when the code could not be resolved; never guessed."
+                }
+              }
+            }
+          },
+          "title": {
+            "type": "string",
+            "description": "Only on an entry from a publication batch whose assessment has titlePublic true."
+          }
+        }
+      },
+      "PublicPublication": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ObjectRecord"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "withheld": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WithheldEntry"
+                },
+                "description": "Present only when the catalogue (on the federation route: every catalogue holding the publication) has showWithheld true and the list could be read; absent otherwise."
+              }
+            }
+          }
+        ]
       }
     },
     "parameters": {
@@ -1138,7 +1207,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ObjectRecord"
+                  "$ref": "#/components/schemas/PublicPublication"
                 }
               }
             }
@@ -1863,7 +1932,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ObjectRecord"
+                  "$ref": "#/components/schemas/PublicPublication"
                 }
               }
             }
