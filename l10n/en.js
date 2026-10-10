@@ -1,6 +1,11 @@
 OC.L10N.register(
     "opencatalogi",
     {
+        "Show which documents of a publication were withheld, and on which grounds": "Show which documents of a publication were withheld, and on which grounds",
+        "Show withheld documents": "Show withheld documents",
+        "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.",
+        "Title public": "Title public",
+        "Whether the title of this document may be shown on the public decision when the document is withheld.": "Whether the title of this document may be shown on the public decision when the document is withheld.",
         "Store": "Store",
         "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.",
         "Load example data?": "Load example data?",
@@ -1447,7 +1452,20 @@ OC.L10N.register(
         "Public cache time (seconds)": "Public cache time (seconds)",
         "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.": "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.",
         "Save cache time": "Save cache time",
-        "The cache time could not be saved. Try again.": "The cache time could not be saved. Try again."
+        "The cache time could not be saved. Try again.": "The cache time could not be saved. Try again.",
+        "Withheld document": "Withheld document",
+        "The publication of the Woo decision this document belongs to.": "The publication of the Woo decision this document belongs to.",
+        "Position": "Position",
+        "The document's number on the decision's inventory.": "The document's number on the decision's inventory.",
+        "Grounds": "Grounds",
+        "The grounds it was withheld on. Each holds the code, article and label from dossiq's list.": "The grounds it was withheld on. Each holds the code, article and label from dossiq's list.",
+        "The app that recorded the entry, such as dossiq.": "The app that recorded the entry, such as dossiq.",
+        "When the entry was recorded.": "When the entry was recorded.",
+        "Code": "Code",
+        "The ground's code, such as 5.1.2.e.": "The ground's code, such as 5.1.2.e.",
+        "The article of the Woo the ground rests on.": "The article of the Woo the ground rests on.",
+        "Label": "Label",
+        "The ground in words, as dossiq's list names it.": "The ground in words, as dossiq's list names it."
     },
     "nplurals=2; plural=(n != 1);"
 )

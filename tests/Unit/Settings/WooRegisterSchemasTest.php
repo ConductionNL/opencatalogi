@@ -93,6 +93,9 @@ class WooRegisterSchemasTest extends TestCase {
 		'caseReference',
 		'assessedBy',
 		'assessedAt',
+		// Not written by WooService: set by an administrator through OpenRegister's
+		// object API and read by the public withheld list (REQ-PDP-004).
+		'titlePublic',
 	];
 
 	/**

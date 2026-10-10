@@ -210,7 +210,7 @@
       "wooAssessment": {
         "slug": "wooAssessment",
         "title": "WooAssessment",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "published": null,
         "summary": "A per-document openbaarheid assessment within a Woo disclosure batch",
         "description": "A document-assessment object represents the openbaarheid (public disclosure) decision for a single document collected in a Woo disclosure batch: which weigeringsgronden (WOO Art. 5.1/5.2 refusal grounds) apply, any redaction instructions, and the resulting anonymized document when partially disclosed. Each assessment is linked to a Deck card via the consumed deck leaf so its status is reflected on the document queue board.",
@@ -313,6 +313,13 @@
             "format": "date-time",
             "facetable": true,
             "title": "Assessed At"
+          },
+          "titlePublic": {
+            "type": "boolean",
+            "description": "Whether the title of this document may be shown on the public decision when the document is withheld.",
+            "default": false,
+            "facetable": false,
+            "title": "Title public"
           }
         },
         "configuration": {
