@@ -8,7 +8,7 @@
 
 ## 2. Page
 
-- [ ] 2.1 Add the Obligations page and its manifest entry (REQ-WOO-003). Built: page `Obligations` at `/obligations` (`src/views/obligations/ObligationsIndex.vue`, model `src/services/obligationOverview.js`, menu item under Administration), laid out after board OcWooVerplichtingen; vitest `tests/vitest/obligationOverview.spec.js` red then green. (not run: the e2e needs the live instance) Verify: `tests/e2e/woo-obligations.spec.ts` with two sources, one unread.
+- [ ] 2.1 Add the Obligations page and its manifest entry (REQ-WOO-003). Built: page `Obligations` at `/obligations` (`src/views/obligations/ObligationsIndex.vue`, model `src/services/obligationOverview.js`, menu item under Administration), laid out after board OcWooVerplichtingen; vitest `tests/vitest/obligationOverview.spec.js` red then green. (live pass, decision 139: `tests/e2e/woo-obligations.spec.ts`) Verify: `tests/e2e/woo-obligations.spec.ts` with two sources, one unread.
 
 ## 3. Docs and strings
 
