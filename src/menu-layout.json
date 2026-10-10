@@ -16,16 +16,12 @@
 		"OrganizationsMenu",
 		"GlossaryMenu",
 		"ThemesMenu",
-		"PagesMenu",
-		"MenusMenu",
 		"WooBatchesMenu"
 	],
 	"removalsReplacedBy": {
 		"OrganizationsMenu": "openregister:objects",
 		"GlossaryMenu": "portaliq:Glossary",
 		"ThemesMenu": "portaliq:Themes",
-		"PagesMenu": "portaliq:Pages",
-		"MenusMenu": "portaliq:Menus",
 		"WooBatchesMenu": "openregister:objects"
 	},
 	"settingsSection": []

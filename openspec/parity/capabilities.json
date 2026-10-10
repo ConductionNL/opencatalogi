@@ -4444,7 +4444,7 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
-				"evidence": "portaliq src/manifest.json:1277 Menus index and :1310 Pages index, plus PageLayout editor; opencatalogi openspec/changes/cms-moves-to-portaliq/proposal.md explains the move; opencatalogi lib/Command/MigrateCmsToPortaliqCommand.php:68 migrates old pages/menus",
+				"evidence": "portaliq src/manifest.json:1277 Menus index and :1310 Pages index, plus PageLayout editor; opencatalogi openspec/changes/archive/2026-10-10-cms-moves-to-portaliq/proposal.md explains the move; opencatalogi lib/Command/MigrateCmsToPortaliqCommand.php:68 migrates old pages/menus",
 				"change": "cms-moves-to-portaliq"
 			},
 			"reachedOn": "portaliq /pages and /menus (staff), served publicly by portaliq /api/content/pages|menus",

@@ -1004,8 +1004,6 @@ export const useObjectStore = defineStore('object', {
 
 				// Add _source=database for types that aren't indexed in Solr
 				const nonIndexedTypes = [
-					'menu',
-					'page',
 					'glossary',
 					'theme',
 					'organization',

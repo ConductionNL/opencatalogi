@@ -203,7 +203,7 @@ export async function openSettingsFoldout(page: Page): Promise<void> {
  * to open ONLY when the user has toggled it, when a child is the ACTIVE route,
  * or when the manifest entry sets `open: true`. On a cold boot at `#/` none of
  * those hold, so every grouped entry (`CatalogsMenu`, `ThemesMenu`,
- * `GlossaryMenu`, `PagesMenu`, `MenusMenu`, `WooBatchesMenu`) starts hidden —
+ * `GlossaryMenu`, `WooBatchesMenu`) starts hidden —
  * present in the DOM, zero-sized, `offsetParent === null`.
  *
  * `openSettingsFoldout` cannot help here: these entries are in a collapsible

@@ -146,8 +146,6 @@ return [
 		// Themes CORS
 		['name' => 'themes#preflightedCors', 'postfix' => '-themes', 'url' => '/api/themes', 'verb' => 'OPTIONS'],
 		['name' => 'themes#preflightedCors', 'postfix' => '-themes-id', 'url' => '/api/themes/{id}', 'verb' => 'OPTIONS'],
-		// Menus CORS
-		// Pages CORS
 		// Directory CORS
 		['name' => 'directory#preflightedCors', 'url' => '/api/directory', 'verb' => 'OPTIONS'],
 		// Community surface CORS (status page, subscriptions, the feed, votes, the renderer)
@@ -196,8 +194,6 @@ return [
 		// Themes (specific route - must be before wildcard catalog routes)
 		['name' => 'themes#index', 'url' => '/api/themes', 'verb' => 'GET'],
 		['name' => 'themes#show', 'url' => '/api/themes/{id}', 'verb' => 'GET'],
-		// Menus (specific route - must be before wildcard catalog routes)
-		// Pages (specific route - must be before wildcard catalog routes)
 		// Directory (specific route - must be before wildcard catalog routes)
 		['name' => 'directory#index', 'url' => '/api/directory', 'verb' => 'GET'],
 		['name' => 'directory#update', 'url' => '/api/directory', 'verb' => 'POST'],
@@ -293,8 +289,6 @@ return [
 		['name' => 'ui#organizations', 'url' => '/organizations', 'verb' => 'GET'],
 		['name' => 'ui#themes', 'url' => '/themes', 'verb' => 'GET'],
 		['name' => 'ui#glossary', 'url' => '/glossary', 'verb' => 'GET'],
-		['name' => 'ui#pages', 'url' => '/pages', 'verb' => 'GET'],
-		['name' => 'ui#menus', 'url' => '/menus', 'verb' => 'GET'],
 		['name' => 'ui#directory', 'url' => '/directory', 'verb' => 'GET'],
 		// SPA catch-all — serves the Vue app for any frontend route (history mode routing).
 		// GenericDashboard#catchAll delegates to page() on the AppHost GenericDashboardController

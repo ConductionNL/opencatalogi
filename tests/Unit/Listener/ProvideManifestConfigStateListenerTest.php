@@ -60,8 +60,11 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 			new BeforeTemplateRenderedEvent(true, new TemplateResponse('opencatalogi', 'index'))
 		);
 
-		// 19 register/schema keys (incl. the 3 WOO keys) + default_directory_url.
-		$this->assertCount(20, $this->provided);
+		// 15 register/schema keys (incl. the 3 WOO keys; no page or menu keys since
+		// the CMS moved to Portaliq) + default_directory_url.
+		$this->assertCount(16, $this->provided);
+		$this->assertArrayNotHasKey('page_schema', $this->provided);
+		$this->assertArrayNotHasKey('menu_schema', $this->provided);
 		$this->assertSame('42', $this->provided['catalog_register']);
 		$this->assertSame('42', $this->provided['publication_schema']);
 		$this->assertSame('42', $this->provided['woo_register']);
