@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use DomainException;
 /**
  * Notice boards, their notices, and the line between a notice and a publication.
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
  */
 class NoticeBoardService {
 
@@ -64,7 +64,7 @@ class NoticeBoardService {
 	 *
 	 * @throws DomainException When comments are enabled and no moderator is named.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function validateBoard(array $board): array {
 		if (trim((string)($board['title'] ?? '')) === '') {
@@ -97,7 +97,7 @@ class NoticeBoardService {
 	 *
 	 * @return boolean True only when comments are on and somebody moderates.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function commentsOffered(array $board): bool {
 		return ((bool)($board['commentsEnabled'] ?? false) === true
@@ -114,7 +114,7 @@ class NoticeBoardService {
 	 *
 	 * @throws DomainException When it carries no board, title or readable period.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function validateNotice(array $notice): array {
 		if (trim((string)($notice['board'] ?? '')) === '') {
@@ -152,7 +152,7 @@ class NoticeBoardService {
 	 *
 	 * @return boolean True while it should be shown.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function isCurrent(array $notice, ?DateTimeInterface $now = null): bool {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
@@ -183,7 +183,7 @@ class NoticeBoardService {
 	 *
 	 * @return boolean True when it may enter the sitemap.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function belongsInSitemap(array $entry): bool {
 		$schema = (string)($entry['@type'] ?? ($entry['schema'] ?? ($entry['recordType'] ?? '')));
@@ -199,7 +199,7 @@ class NoticeBoardService {
 	 *
 	 * @return array<int, array<string, mixed>> The entries that belong in the sitemap.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function excludeNotices(array $entries): array {
 		return array_values(

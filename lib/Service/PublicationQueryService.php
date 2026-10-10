@@ -40,6 +40,8 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.TooManyMethods) the anonymous catalogue read shares the private read-rule guard
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) same reason: readCatalogueAsAnonymous() must reach the private guard
  */
 class PublicationQueryService
 {
@@ -831,6 +833,70 @@ class PublicationQueryService
         return $this->dropSchemasWithoutReadRules(schemaIds: $schemaIds);
 
     }//end applySchemaScopeReadRuleGuard()
+
+
+    /**
+     * Read one catalogue the way an anonymous reader reads it, for every caller.
+     *
+     * The catalogue's Atom feed is public, so it carries exactly what an
+     * anonymous reader may read under the schemas' own read rules, and a
+     * signed-in administrator who opens the feed sees the same entries
+     * (decision 138, Q-opencatalogi-1). So, unlike the per-catalogue routes,
+     * the read-rule drop runs for every caller here, and the read runs inside
+     * OpenRegister's anonymous scope, with `_rbac: true` because the public
+     * read rules ARE the filter. A draft has no publication date in the past,
+     * so the publication schema's public rules never admit it.
+     *
+     * @param array  $catalog       The catalogue (keys: schemas, registers).
+     * @param array  $queryParams   Paging and ordering for the read; scope keys are stripped.
+     * @param object $objectService OpenRegister ObjectService.
+     *
+     * @return array The OpenRegister result envelope (`results`, `total`).
+     *
+     * @psalm-param   array<string, mixed> $catalog
+     * @psalm-param   array<string, mixed> $queryParams
+     * @phpstan-param array<string, mixed> $catalog
+     * @phpstan-param array<string, mixed> $queryParams
+     *
+     * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+     */
+    public function readCatalogueAsAnonymous(array $catalog, array $queryParams, object $objectService): array
+    {
+        return $this->evaluateAsAnonymous(
+            objectService: $objectService,
+            operation: function () use ($catalog, $queryParams, $objectService): array {
+                $schemas = ($catalog['schemas'] ?? []);
+                if (is_string($schemas) === true) {
+                    $schemas = (json_decode($schemas, true) ?? []);
+                }
+
+                if (is_array($schemas) === false) {
+                    $schemas = [];
+                }
+
+                $schemas = array_values(array_map('intval', array_filter($schemas, 'is_numeric')));
+                $catalog['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $schemas);
+
+                // An empty `_schemas` would let OpenRegister search every table.
+                if ($catalog['schemas'] === []) {
+                    return ['results' => [], 'total' => 0];
+                }
+
+                $query = $this->buildCatalogSearchQuery(
+                    catalog: $catalog,
+                    queryParams: $queryParams,
+                    objectService: $objectService
+                );
+
+                return $objectService->searchObjectsPaginated(
+                    query: $query,
+                    _rbac: true,
+                    _multitenancy: false
+                );
+            }
+        );
+
+    }//end readCatalogueAsAnonymous()
 
     /**
      * Apply the SCH-PFTS-CAT-002 read-rule guard to the ROWS of a relation result.

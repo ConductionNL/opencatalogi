@@ -86,8 +86,9 @@ default, and a board that enables them MUST name a moderator.
 
 A catalogue MUST offer an Atom feed of its published and updated records
 and its notices. The feed MUST be readable without an account and MUST
-carry only what an anonymous reader may read, checked per entry against
-the publication.
+carry only what an anonymous reader may read under the publication
+schema's own read rules, scoped to the catalogue, for every caller. A
+notice MUST come from a board of that catalogue.
 
 #### Scenario: A reader watches without an account
 
@@ -100,6 +101,12 @@ the publication.
 - **GIVEN** a catalogue with one published record and one draft
 - **WHEN** the feed is fetched
 - **THEN** only the published record is an entry.
+
+#### Scenario: Another catalogue's notice stays out
+
+- **GIVEN** a current notice on a board of another catalogue
+- **WHEN** this catalogue's feed is fetched
+- **THEN** that notice is not an entry.
 
 ### Requirement: A client renders our markup the way we render it (REQ-PCS-107)
 

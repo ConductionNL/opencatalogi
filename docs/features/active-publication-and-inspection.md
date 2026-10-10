@@ -164,6 +164,18 @@ without a release. A configuration that cannot be read refuses: read as
   through integriq's gateway. This app composes the notice and the
   registration, records the answer, and holds no transport.
 
+## The Woo obligations page
+
+Open **Administration > Woo obligations** to see what the Woo requires you to publish. Only an administrator sees it.
+
+The page shows four totals: what is still to publish, what is due this week, what is late and what you published this month. Below them is a table per source system and the list of outstanding records, late first. A late record says "Late" in words, not only in colour.
+
+Each source registers itself as an obligation source. OpenCatalogi asks every enabled source for its obligations through the `ObligationsRequestedEvent`. A source that fails, or that no app answers for, is listed above the totals with its reason. Its obligations are missing from the figures, and the page says so rather than counting it as zero.
+
+The same overview is available to administrators at `GET /api/obligations`.
+
+Harvested records join as the source `harvest` once harvesting through OpenRegister is in place. Until then that source shows as unread.
+
 ## Publish, withdraw and publish again
 
 The publication page has a Publication status section. It says whether the publication is a draft, scheduled, public, withdrawn or archived. It shows only the buttons that apply.

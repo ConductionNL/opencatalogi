@@ -19,6 +19,7 @@ import Bookshelf from 'vue-material-design-icons/Bookshelf.vue'
 import Bullhorn from 'vue-material-design-icons/Bullhorn.vue'
 import ChartBar from 'vue-material-design-icons/ChartBar.vue'
 import ChartBoxOutline from 'vue-material-design-icons/ChartBoxOutline.vue'
+import ClipboardCheckOutline from 'vue-material-design-icons/ClipboardCheckOutline.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 import CogOutline from 'vue-material-design-icons/CogOutline.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
@@ -54,6 +55,7 @@ export default {
 	ChartBar,
 	ChartBoxOutline,
 	Cog,
+	ClipboardCheckOutline,
 	CogOutline,
 	DatabaseEyeOutline,
 	EyeOutline,

@@ -19,15 +19,15 @@
  * WHAT A RED HERE USUALLY MEANS. A 503 naming its error means the registers are
  * not configured on this instance. That is the app refusing correctly.
  *
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-reader-sees-what-is-down
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-stale-state-does-not-read-as-green
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-the-page-probes-nothing
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-notice-is-published-without-becoming-a-publication
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-board-with-comments-names-a-moderator
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-reader-watches-without-an-account
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-draft-never-reaches-the-feed
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-a-client-shows-what-the-website-shows
- * @e2e openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#scenario-rendering-stores-nothing
+ * @e2e openspec/specs/public-and-community-surface/spec.md#scenario-a-reader-sees-what-is-down
+ * @e2e openspec/specs/public-and-community-surface/spec.md#scenario-a-stale-state-does-not-read-as-green
+ * @e2e openspec/specs/public-and-community-surface/spec.md#scenario-the-page-probes-nothing
+ * @e2e openspec/specs/public-and-community-surface/spec.md#scenario-a-notice-is-published-without-becoming-a-publication
+ * @e2e openspec/specs/public-and-community-surface/spec.md#scenario-a-board-with-comments-names-a-moderator
+ * @e2e openspec/specs/public-and-community-surface/spec.md#scenario-a-reader-watches-without-an-account
+ * @e2e openspec/specs/public-and-community-surface/spec.md#scenario-a-draft-never-reaches-the-feed
+ * @e2e openspec/specs/public-and-community-surface/spec.md#scenario-a-client-shows-what-the-website-shows
+ * @e2e openspec/specs/public-and-community-surface/spec.md#scenario-rendering-stores-nothing
  */
 import type { APIRequestContext } from '@playwright/test'
 

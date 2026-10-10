@@ -11,7 +11,6 @@ use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
-use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -33,7 +32,7 @@ class CommunitySurfaceTest extends TestCase {
 		$this->status = new StatusPageService();
 		$this->banners = new BannerService();
 		$this->notices = new NoticeBoardService();
-		$this->feed = new AtomFeedService(new PublicationRuleService(), $this->notices);
+		$this->feed = new AtomFeedService($this->notices);
 
 	}//end setUp()
 
@@ -230,56 +229,44 @@ class CommunitySurfaceTest extends TestCase {
 	}//end testABoardWithCommentsAndAModeratorIsAccepted()
 
 	/**
-	 * The rule that publishes a besluit, for the feed tests.
+	 * Both records an anonymous reader may read are entries, with the id and
+	 * the update moment OpenRegister keeps under `@self`.
 	 *
-	 * @return array<string, mixed>
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
-	private function feedRule(): array {
-		return [
-			'recordType' => 'besluit',
-			'enabled' => true,
-			'anonymousProperties' => ['id', 'title', 'publicationDate'],
-			'conditions' => [['property' => 'status', 'operator' => 'equals', 'value' => 'definitief']],
-		];
-
-	}//end feedRule()
-
 	public function testAReaderWatchesTwoPublishedRecordsWithoutAnAccount(): void {
 		$entries = $this->feed->entries(
 			records: [
-				['@type' => 'besluit', 'status' => 'definitief', 'id' => 'r1', 'title' => 'Een', 'publicationDate' => '2026-09-01'],
-				['@type' => 'besluit', 'status' => 'definitief', 'id' => 'r2', 'title' => 'Twee', 'publicationDate' => '2026-09-02'],
+				['@self' => ['id' => 'r1', 'updated' => '2026-09-01T10:00:00+00:00'], 'title' => 'Een', 'publicationDate' => '2026-09-01'],
+				['@self' => ['id' => 'r2', 'name' => 'Twee'], 'summary' => 'Kort', 'publicationDate' => '2026-09-02'],
 			],
-			notices: [],
-			rules: [$this->feedRule()]
+			notices: []
 		);
 
-		$this->assertCount(2, $entries);
 		$this->assertSame(['Een', 'Twee'], array_column($entries, 'title'));
+		$this->assertSame(['r1', 'r2'], array_column($entries, 'id'));
+		$this->assertSame(['2026-09-01T10:00:00+00:00', '2026-09-02'], array_column($entries, 'updated'));
+		$this->assertSame('Kort', $entries[1]['summary']);
 
 	}//end testAReaderWatchesTwoPublishedRecordsWithoutAnAccount()
 
 	/**
-	 * The access check is the publication's, run per entry. A draft is absent
-	 * because it is not published, not because the feed has its own opinion.
+	 * The feed carries no rule of its own: what reached it is what the
+	 * publication schema's read rules let an anonymous reader read, and the
+	 * feed neither drops nor narrows a record on top of that.
+	 *
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
-	public function testADraftNeverReachesTheFeed(): void {
+	public function testTheFeedHasNoAccessRuleOfItsOwn(): void {
 		$entries = $this->feed->entries(
-			records: [
-				['@type' => 'besluit', 'status' => 'definitief', 'id' => 'r1', 'title' => 'Gepubliceerd'],
-				['@type' => 'besluit', 'status' => 'concept', 'id' => 'r2', 'title' => 'Concept'],
-			],
-			notices: [],
-			rules: [$this->feedRule()]
+			records: [['id' => 'p1', 'title' => 'Zonder recordtype']],
+			notices: []
 		);
 
 		$this->assertCount(1, $entries);
-		$this->assertSame('Gepubliceerd', $entries[0]['title']);
+		$this->assertSame('record', $entries[0]['kind']);
 
-		$atom = $this->feed->toAtom(catalogTitle: 'Zuiderdorp', selfUrl: 'https://example.org/feed', entries: $entries);
-		$this->assertStringNotContainsString('Concept', $atom);
-
-	}//end testADraftNeverReachesTheFeed()
+	}//end testTheFeedHasNoAccessRuleOfItsOwn()
 
 	public function testAnExpiredNoticeIsAbsentFromTheFeed(): void {
 		$entries = $this->feed->entries(
@@ -288,7 +275,6 @@ class CommunitySurfaceTest extends TestCase {
 				['id' => 'n1', 'title' => 'Nu', 'startDate' => '2026-09-01', 'endDate' => '2026-12-01'],
 				['id' => 'n2', 'title' => 'Voorbij', 'startDate' => '2026-01-01', 'endDate' => '2026-02-01'],
 			],
-			rules: [],
 			now: $this->at('2026-09-18T00:00:00+00:00')
 		);
 
@@ -296,6 +282,31 @@ class CommunitySurfaceTest extends TestCase {
 		$this->assertSame('Nu', $entries[0]['title']);
 
 	}//end testAnExpiredNoticeIsAbsentFromTheFeed()
+
+	/**
+	 * Only notices on this catalogue's boards belong in its feed.
+	 *
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 */
+	public function testAFeedCarriesOnlyTheNoticesOfItsOwnCatalogue(): void {
+		$kept = $this->feed->noticesOfCatalogue(
+			catalogId: 'cat-a',
+			boards: [
+				['id' => 'b1', 'catalog' => 'cat-a'],
+				['id' => 'b2', 'catalog' => 'cat-b'],
+			],
+			notices: [
+				['id' => 'n1', 'board' => 'b1', 'title' => 'Hier'],
+				['id' => 'n2', 'board' => 'b2', 'title' => 'Elders'],
+				['id' => 'n3', 'board' => 'weg', 'title' => 'Zwerver'],
+				['id' => 'n4', 'title' => 'Zonder bord'],
+			]
+		);
+
+		$this->assertSame(['Hier'], array_column($kept, 'title'));
+		$this->assertSame([], $this->feed->noticesOfCatalogue(catalogId: '', boards: [['id' => 'b', 'catalog' => '']], notices: [['board' => 'b']]));
+
+	}//end testAFeedCarriesOnlyTheNoticesOfItsOwnCatalogue()
 
 	public function testTheAtomDocumentEscapesWhatCameFromAnEntry(): void {
 		$atom = $this->feed->toAtom(

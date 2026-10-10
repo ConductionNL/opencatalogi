@@ -32,7 +32,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+ * @spec openspec/specs/public-and-community-surface/spec.md
  */
 
 declare(strict_types=1);
@@ -42,7 +42,9 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
+use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -63,12 +65,17 @@ use Psr\Container\ContainerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+ * @spec openspec/specs/public-and-community-surface/spec.md
  */
 class CommunityController extends Controller {
 	use AnswersCrossOriginRequests;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
+
+	/**
+	 * How many records the feed carries, newest first.
+	 */
+	private const FEED_SIZE = 50;
 
 	/**
 	 * Constructor.
@@ -83,6 +90,8 @@ class CommunityController extends Controller {
 	 * @param AtomFeedService $feedService The catalogue feed.
 	 * @param MarkupRenderService $markupService The markup renderer.
 	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param CatalogiService $catalogi The catalogues, by slug.
+	 * @param PublicationQueryService $queryService The anonymous catalogue read.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -97,6 +106,8 @@ class CommunityController extends Controller {
 		private readonly AtomFeedService $feedService,
 		private readonly MarkupRenderService $markupService,
 		private readonly ServiceCatalogueService $objects,
+		private readonly CatalogiService $catalogi,
+		private readonly PublicationQueryService $queryService,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -192,7 +203,7 @@ class CommunityController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function statusPage(): JSONResponse {
@@ -231,7 +242,7 @@ class CommunityController extends Controller {
 	 *
 	 * @return JSONResponse The saved status.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function setStatus(): JSONResponse {
@@ -276,9 +287,12 @@ class CommunityController extends Controller {
 	/**
 	 * A catalogue's activity as an Atom feed.
 	 *
-	 * The publication rules own the access decision and it runs per entry, so a
-	 * draft is absent because it is not published and not because the feed has
-	 * an opinion of its own.
+	 * The records are what an anonymous reader may read under the publication
+	 * schema's own read rules, inside this catalogue: the same check as
+	 * `/api/{catalogSlug}`, evaluated as an anonymous reader for every caller,
+	 * because the feed is public (decision 138). A draft is absent because no
+	 * public read rule admits it, not because the feed has an opinion of its own.
+	 * The notices are the ones on this catalogue's boards, inside their period.
 	 *
 	 * @param string $catalogSlug The catalogue.
 	 *
@@ -287,14 +301,38 @@ class CommunityController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function feed(string $catalogSlug): Response {
+		$catalog = $this->catalogi->getCatalogBySlug($catalogSlug);
+		if ($catalog === null) {
+			return $this->withCors(
+				response: new JSONResponse(
+					data: ['error' => 'catalog-not-found', 'message' => $this->l10n->t('Catalog not found')],
+					statusCode: Http::STATUS_NOT_FOUND
+				)
+			);
+		}
+
+		$catalogId = (string)($catalog['id'] ?? ($catalog['@self']['id'] ?? ''));
+
 		try {
-			$rules = $this->readAll(schemaKey: 'publication_rule_schema');
-			$notices = $this->readAll(schemaKey: 'notice_schema');
-			$records = $this->readAll(schemaKey: 'publication_schema', filters: ['catalog' => $catalogSlug]);
+			$read = $this->queryService->readCatalogueAsAnonymous(
+				catalog: $catalog,
+				queryParams: ['_limit' => self::FEED_SIZE, '_order' => ['@self.updated' => 'desc']],
+				objectService: $this->objects->getObjectService()
+			);
+			$records = [];
+			foreach (($read['results'] ?? []) as $record) {
+				$records[] = $this->asArray(object: $record);
+			}
+
+			$notices = $this->feedService->noticesOfCatalogue(
+				catalogId: $catalogId,
+				boards: $this->readAll(schemaKey: 'notice_board_schema'),
+				notices: $this->readAll(schemaKey: 'notice_schema')
+			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
 				response: new JSONResponse(
@@ -307,11 +345,11 @@ class CommunityController extends Controller {
 			);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
-		}
+		}//end try
 
-		$entries = $this->feedService->entries(records: $records, notices: $notices, rules: $rules);
+		$entries = $this->feedService->entries(records: $records, notices: $notices);
 		$atom = $this->feedService->toAtom(
-			catalogTitle: $catalogSlug,
+			catalogTitle: (string)($catalog['title'] ?? $catalogSlug),
 			selfUrl: $this->request->getRequestUri(),
 			entries: $entries
 		);
@@ -338,7 +376,7 @@ class CommunityController extends Controller {
 	 * identifier reaches a lookup, no object is read and none is written, so
 	 * there is no direct object reference for a caller to substitute.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
 	 */
 	#[AnonRateLimit(limit: 30, period: 60)]
 	public function renderMarkup(): JSONResponse {
