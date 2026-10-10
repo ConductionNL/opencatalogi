@@ -3,9 +3,9 @@
 The build order of the proposal as checkboxes. A box is ticked when the
 named change is archived.
 
-- [ ] 1 `the-public-and-community-surface` (cluster 17, D5)
-- [ ] 2 After `the-public-and-community-surface`:
-  `publication-inspection-and-the-national-indexes` (cluster 50)
+- [x] 1 `the-public-and-community-surface` (cluster 17, D5). Archived as `archive/2026-10-10-the-public-and-community-surface`.
+- [x] 2 After `the-public-and-community-surface`:
+  `publication-inspection-and-the-national-indexes` (cluster 50). Archived as `archive/2026-10-10-publication-inspection-and-the-national-indexes`.
 - [x] 3 `published-service-and-case-type-catalogue` (cluster 31). Archived as `archive/2026-10-07-published-service-and-case-type-catalogue`.
 - [x] 4 Hand the dossiq halves of the three clusters to the dossiq lane,
   with the candidate ids. Handed over 2026-10-10 through the build programme's sibling asks (`for-ruben/opencatalogi-sibling-asks.md`).
