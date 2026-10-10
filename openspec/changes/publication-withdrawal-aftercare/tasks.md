@@ -20,7 +20,7 @@ Read `openspec/woo-build-rules.md` first. Start once `publication-lifecycle-on-o
 - [ ] 3.2 `DepublicationService::depublish()` freezes with the internal reason and reports `frozen` (REQ-PWA-003). Verify: `tests/Unit/Service/Publication/DepublicationServiceTest.php::testWithdrawingFreezesThePublicationWithTheReason` (fails today: no freeze call) and `::testAFailedFreezeKeepsTheWithdrawalAndSaysSo`; plus a controller test through `POST /api/publications/{id}/withdraw` asserting the freeze ran, so the call has a caller.
 - [ ] 3.3 Check the frozen marker in every OpenCatalogi document write path; list them with `git grep -n "createShareLink\|addFile\|saveFile\|withdrawFile" lib` and name each in the PR body (REQ-PWA-003). Verify: `tests/Unit/Service/Publication/FrozenPublicationDocumentWriteTest.php::testAnUploadToAFrozenPublicationIsRefused` and one case per path found.
 - [ ] 3.4 Show the frozen marker on the publication page and hide edit, upload and file actions while frozen (REQ-PWA-003). Verify: `tests/e2e/publication-withdrawal-aftercare.spec.ts` "the page says why".
-- [ ] 3.5 Live: withdraw a publication on the dev instance, try a title edit and an upload through OpenRegister's file endpoint, and paste both refusals in the PR body (REQ-PWA-003). Verify: the pasted refusals.
+- [ ] 3.5 Live: withdraw a publication on the dev instance, try a title edit and an upload through OpenRegister's file endpoint, and paste both refusals in the PR body (REQ-PWA-003). Verify: the pasted refusals. (live pass, decision 139)
 
 ## 4. Docs
 
