@@ -18,10 +18,10 @@
 - **Status**: todo
 - **Files**: `lib/Listener/ObjectUpdatedEventListener.php`
 - **Acceptance criteria**:
-  - [ ] All `OPENCATALOGI_EVENT_LISTENER_CALLED_AT_*` log statements are removed from the listener.
-  - [ ] No other development-only debug log entries remain in the listener.
-  - [ ] Functional logging (info/error results from `EventService`) is preserved.
-  - [ ] `grep -n "OPENCATALOGI_EVENT_LISTENER_CALLED_AT_" lib/Listener/ObjectUpdatedEventListener.php` returns no matches.
+  - [x] All `OPENCATALOGI_EVENT_LISTENER_CALLED_AT_*` log statements are removed from the listener. (verified: lib/Listener/ObjectUpdatedEventListener.php, grep finds none)
+  - [x] No other development-only debug log entries remain in the listener. (verified: lib/Listener/ObjectUpdatedEventListener.php logs only info/error results)
+  - [x] Functional logging (info/error results from `EventService`) is preserved. (verified: lib/Listener/ObjectUpdatedEventListener.php:135-161)
+  - [x] `grep -n "OPENCATALOGI_EVENT_LISTENER_CALLED_AT_" lib/Listener/ObjectUpdatedEventListener.php` returns no matches. (verified: no matches in lib/Listener/ObjectUpdatedEventListener.php)
   - [ ] `composer check:strict` passes.
 
 ---
@@ -46,9 +46,9 @@
 - **Status**: todo
 - **Files**: `lib/Service/EventService.php`, `tests/Unit/Service/EventServiceTest.php`
 - **Acceptance criteria**:
-  - [ ] Confirm `EventService.publishObjectAttachments()` prepends `/OpenRegister/` to the FileMapper path before calling `FileService.createShareLink()`.
-  - [ ] Add a unit test asserting the path transformation: a FileMapper path of `files/object-uuid/document.pdf` becomes `/OpenRegister/files/object-uuid/document.pdf` when passed to `FileService.createShareLink()`.
-  - [ ] Unit test uses a mock `FileService` and asserts the exact path argument.
+  - [x] Confirm `EventService.publishObjectAttachments()` prepends `/OpenRegister/` to the FileMapper path before calling `FileService.createShareLink()`. (verified: lib/Service/EventService.php:488; code exists, exact-path test missing)
+  - [ ] Add a unit test asserting the path transformation: a FileMapper path of `files/object-uuid/document.pdf` becomes `/OpenRegister/files/object-uuid/document.pdf` when passed to `FileService.createShareLink()`. (code exists, test missing: tests/Unit/Service/EventServiceTest.php asserts no exact createShareLink path)
+  - [ ] Unit test uses a mock `FileService` and asserts the exact path argument. (code exists, test missing: the exact path argument is not asserted)
 
 ---
 
@@ -59,10 +59,10 @@
 - **Files**: `tests/Unit/Service/EventServiceTest.php`
 - **Acceptance criteria**:
   - [ ] **APB-003**: `handleObjectCreateEvents()` with a matching catalog calls `ObjectService.publish()` once; with no catalog match it does not call `publish()`.
-  - [ ] **APB-004**: `publishObjectAttachments()` calls `FileService.createShareLink()` for each file without a `share_token`.
-  - [ ] **APB-006**: `isObjectPublished()` returns `true` for published-only, `false` for depublished-after-published, `true` for published-after-depublished.
+  - [x] **APB-004**: `publishObjectAttachments()` calls `FileService.createShareLink()` for each file without a `share_token`. (verified: lib/Service/EventService.php, tests/Unit/Service/EventServiceTest.php::testPublishObjectAttachmentsSuccess)
+  - [x] **APB-006**: `isObjectPublished()` returns `true` for published-only, `false` for depublished-after-published, `true` for published-after-depublished. (verified: tests/Unit/Service/EventServiceTest.php::testIsObjectPublished*)
   - [ ] **APB-007**: When both options are `false`, the listener returns without calling any `EventService` method.
-  - [ ] **APB-011**: `publishObjectAttachments()` skips files that already have a `share_token`.
+  - [x] **APB-011**: `publishObjectAttachments()` skips files that already have a `share_token`. (verified: tests/Unit/Service/EventServiceTest.php::testPublishObjectAttachmentsSuccess (skipped=1))
   - [ ] **APB-012**: The returned result array contains `processed`, `published`, `attachmentsPublished`, `errors`, and `details` keys with the correct values.
   - [ ] **APB-014**: An exception from `ObjectService.publish()` is caught; the method still returns a result array with the error recorded in `errors`.
   - [ ] All tests pass under `composer test`.
