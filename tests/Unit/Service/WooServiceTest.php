@@ -432,16 +432,6 @@ class WooServiceTest extends TestCase {
 
 	}//end testChangingToOpenbaarClearsGrounds()
 
-	public function testTitlePublicIsStoredOnlyWhenGiven(): void {
-		$this->objects->objects[] = ['id' => 'a1', 'assessment' => 'te_beoordelen'];
-		$result = $this->service->updateAssessment('a1', 'niet_openbaar', ['5.1.2.e'], null, true);
-		$this->assertTrue($result['titlePublic']);
-
-		$this->objects->objects[] = ['id' => 'a2', 'assessment' => 'te_beoordelen'];
-		$this->assertArrayNotHasKey('titlePublic', $this->service->updateAssessment('a2', 'niet_openbaar', ['5.1.2.e']));
-
-	}//end testTitlePublicIsStoredOnlyWhenGiven()
-
 	public function testGetBatchProducesDocumentSummary(): void {
 		$this->seedBatchWithAssessments();
 		$batch = $this->service->getBatch('batch-1');

@@ -234,17 +234,11 @@ class WooController extends Controller {
 		try {
 			$assessment = (string)$this->request->getParam('assessment', '');
 			$weigeringsgronden = (array)$this->request->getParam('weigeringsgronden', []);
-			$titlePublic = $this->request->getParam('titlePublic', null);
-			if ($titlePublic !== null) {
-				$titlePublic = filter_var($titlePublic, FILTER_VALIDATE_BOOLEAN);
-			}
-
 			$result = $this->wooService->updateAssessment(
 				assessmentId: $docId,
 				assessment: $assessment,
 				weigeringsgronden: $weigeringsgronden,
-				batchId: $batchId,
-				titlePublic: $titlePublic
+				batchId: $batchId
 			);
 			return new JSONResponse($result);
 		} catch (\Throwable $e) {

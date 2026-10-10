@@ -100,26 +100,6 @@ class WooControllerTest extends TestCase {
 	 * ------------------------------------------------------------------
 	 */
 
-	public function testUpdateAssessmentPassesTitlePublicOnlyWhenSent(): void {
-		$this->withParams(['assessment' => 'niet_openbaar', 'weigeringsgronden' => ['5.1.2.e'], 'titlePublic' => 'true']);
-		$this->wooService->expects($this->once())->method('updateAssessment')
-			->with('doc-1', 'niet_openbaar', ['5.1.2.e'], 'batch-1', true)
-			->willReturn(['id' => 'doc-1', 'titlePublic' => true]);
-
-		$this->assertSame(200, $this->controller->updateAssessment('batch-1', 'doc-1')->getStatus());
-
-	}//end testUpdateAssessmentPassesTitlePublicOnlyWhenSent()
-
-	public function testUpdateAssessmentWithoutTitlePublicLeavesItAlone(): void {
-		$this->withParams(['assessment' => 'openbaar']);
-		$this->wooService->expects($this->once())->method('updateAssessment')
-			->with('doc-1', 'openbaar', [], 'batch-1', null)
-			->willReturn(['id' => 'doc-1']);
-
-		$this->controller->updateAssessment('batch-1', 'doc-1');
-
-	}//end testUpdateAssessmentWithoutTitlePublicLeavesItAlone()
-
 	public function testInventarislijstDefaultsToCsv(): void {
 		$this->withParams([]);
 
