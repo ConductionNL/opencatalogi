@@ -38,9 +38,12 @@ use OCA\OpenCatalogi\Event\ObligationsRequestedEvent;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
+use RuntimeException;
 
 /**
  * Asks every registered source for its obligations and assembles the overview.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) the event, reader, config and assembler are what the contract names
  *
  * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
@@ -93,7 +96,7 @@ class ObligationReadService {
 	public function read(?DateTimeInterface $now = null): array {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		if ($now !== null) {
-			$moment = DateTimeImmutable::createFromInterface($now);
+			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
 
 		[$register, $schema] = $this->sourceConfiguration();
@@ -149,11 +152,11 @@ class ObligationReadService {
 		}
 
 		if ((microtime(true) - $started) > self::READ_LIMIT_SECONDS) {
-			return new \RuntimeException('This source took longer than ' . self::READ_LIMIT_SECONDS . ' seconds to answer.');
+			return new RuntimeException('This source took longer than ' . self::READ_LIMIT_SECONDS . ' seconds to answer.');
 		}
 
 		if ($event->isAnswered() === false) {
-			return new \RuntimeException(self::NO_READER);
+			return new RuntimeException(self::NO_READER);
 		}
 
 		return $event->getObligations();

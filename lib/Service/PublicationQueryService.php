@@ -40,6 +40,8 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.TooManyMethods) the anonymous catalogue read shares the private read-rule guard
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) same reason: readCatalogueAsAnonymous() must reach the private guard
  */
 class PublicationQueryService
 {
