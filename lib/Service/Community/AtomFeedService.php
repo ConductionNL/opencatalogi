@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use DateTimeZone;
 /**
  * Builds a catalogue's Atom feed from what an anonymous reader may read.
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
  */
 class AtomFeedService {
 
@@ -70,7 +70,7 @@ class AtomFeedService {
 	 *
 	 * @return array<int, array<string, mixed>> The entries.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function entries(array $records, array $notices, ?DateTimeInterface $now = null): array {
 		$entries = [];
@@ -129,7 +129,7 @@ class AtomFeedService {
 	 *
 	 * @return array<int, array<string, mixed>> The catalogue's notices.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function noticesOfCatalogue(string $catalogId, array $boards, array $notices): array {
 		if ($catalogId === '') {
@@ -170,7 +170,7 @@ class AtomFeedService {
 	 *
 	 * @return string The Atom document.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function toAtom(string $catalogTitle, string $selfUrl, array $entries, ?DateTimeInterface $now = null): string {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));

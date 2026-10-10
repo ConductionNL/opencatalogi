@@ -856,7 +856,7 @@ class PublicationQueryService
      * @phpstan-param array<string, mixed> $catalog
      * @phpstan-param array<string, mixed> $queryParams
      *
-     * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+     * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
      */
     public function readCatalogueAsAnonymous(array $catalog, array $queryParams, object $objectService): array
     {

@@ -32,7 +32,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+ * @spec openspec/specs/public-and-community-surface/spec.md
  */
 
 declare(strict_types=1);
@@ -65,7 +65,7 @@ use Psr\Container\ContainerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+ * @spec openspec/specs/public-and-community-surface/spec.md
  */
 class CommunityController extends Controller {
 	use AnswersCrossOriginRequests;
@@ -203,7 +203,7 @@ class CommunityController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function statusPage(): JSONResponse {
@@ -242,7 +242,7 @@ class CommunityController extends Controller {
 	 *
 	 * @return JSONResponse The saved status.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function setStatus(): JSONResponse {
@@ -301,7 +301,7 @@ class CommunityController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function feed(string $catalogSlug): Response {
@@ -376,7 +376,7 @@ class CommunityController extends Controller {
 	 * identifier reaches a lookup, no object is read and none is written, so
 	 * there is no direct object reference for a caller to substitute.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
 	 */
 	#[AnonRateLimit(limit: 30, period: 60)]
 	public function renderMarkup(): JSONResponse {

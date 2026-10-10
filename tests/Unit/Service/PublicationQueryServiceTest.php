@@ -1975,7 +1975,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * The feed's read runs inside the anonymous scope, with the schema read
 	 * rules as the filter, over the catalogue's own registers and schemas.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testTheCatalogueFeedReadsAsAnAnonymousReaderInsideTheCatalogue(): void {
 		$fake = $this->wireHappyPath();
@@ -2003,7 +2003,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * A schema without read rules leaves the feed for a SIGNED-IN caller too:
 	 * the feed is public, so it carries what an anonymous reader may read.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testTheFeedDropsASchemaWithoutReadRulesEvenForASignedInCaller(): void {
 		$session = $this->createMock(IUserSession::class);
@@ -2030,7 +2030,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * A catalogue none of whose schemas carries read rules has an empty feed,
 	 * and OpenRegister is not asked: an empty `_schemas` would search every table.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testAFeedWithNoReadableSchemaIsEmptyAndReadsNothing(): void {
 		$fake = $this->wireHappyPath(authorizationById: [1 => null]);
@@ -2050,7 +2050,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * public read rules require a publication date that has passed. Pinned on
 	 * the schema this app ships, not on a fake.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testThePublicationSchemaKeepsADraftFromAnAnonymousReader(): void {
 		$register = json_decode((string) file_get_contents(__DIR__.'/../../../lib/Settings/publication_register.json'), true);

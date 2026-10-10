@@ -232,7 +232,7 @@ class CommunitySurfaceTest extends TestCase {
 	 * Both records an anonymous reader may read are entries, with the id and
 	 * the update moment OpenRegister keeps under `@self`.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testAReaderWatchesTwoPublishedRecordsWithoutAnAccount(): void {
 		$entries = $this->feed->entries(
@@ -255,7 +255,7 @@ class CommunitySurfaceTest extends TestCase {
 	 * publication schema's read rules let an anonymous reader read, and the
 	 * feed neither drops nor narrows a record on top of that.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testTheFeedHasNoAccessRuleOfItsOwn(): void {
 		$entries = $this->feed->entries(
@@ -286,7 +286,7 @@ class CommunitySurfaceTest extends TestCase {
 	/**
 	 * Only notices on this catalogue's boards belong in its feed.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testAFeedCarriesOnlyTheNoticesOfItsOwnCatalogue(): void {
 		$kept = $this->feed->noticesOfCatalogue(

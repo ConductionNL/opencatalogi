@@ -364,7 +364,7 @@ class CommunityControllerTest extends TestCase {
 	 * A reader without an account gets the catalogue's records and only its
 	 * own notices, read as an anonymous reader under the schema's read rules.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testTheFeedCarriesWhatAnAnonymousReaderMayReadInTheCatalogue(): void {
 		$this->catalogi->method('getCatalogBySlug')->with('zuiderdorp')->willReturn(
@@ -407,7 +407,7 @@ class CommunityControllerTest extends TestCase {
 	 * A catalogue schema without read rules never feeds the feed, so nothing
 	 * an administrator left unruled reaches a reader without an account.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testASchemaWithoutReadRulesNeverReachesTheFeed(): void {
 		$this->authorizationById = [1 => []];
@@ -428,7 +428,7 @@ class CommunityControllerTest extends TestCase {
 	 * A catalogue that does not exist, or that an anonymous reader may not see,
 	 * answers 404 rather than an empty feed.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
 	 */
 	public function testAnUnknownCatalogueHasNoFeed(): void {
 		$this->catalogi->method('getCatalogBySlug')->willReturn(null);

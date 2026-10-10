@@ -4555,7 +4555,7 @@
 				"evidence": "Code removed 2026-09-29 (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code, DECISIONS row 9); before removal: lib/Controller/CommunityController.php:298 subscribe stores an unconfirmed subscription and drops the one-time token from SubscriptionService::request; no confirm route in appinfo/routes.php; SubscriptionService::confirm is never called outside tests; recipients() returns only confirmed addresses"
 			},
 			"reachedOn": "nothing: POST /api/status/subscribe answers 202 'confirm the address', but no mail is sent and no confirm route exists",
-			"note": "Decided no 2026-09-28: No competitor rated yes, no demand row, and the app sends no mail itself by design. No subscription can reach the confirmed state, so the recipient list is always empty. openspec/changes/the-public-and-community-surface/tasks.md:38 also says the app sends nothing itself.",
+			"note": "Decided no 2026-09-28: No competitor rated yes, no demand row, and the app sends no mail itself by design. No subscription can reach the confirmed state, so the recipient list is always empty. openspec/changes/archive/2026-10-10-the-public-and-community-surface/tasks.md:38 also says the app sends nothing itself.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "notices-status-and-feeds",
@@ -4655,7 +4655,7 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:218 GET /api/feeds/{catalogSlug} @PublicPage; lib/Controller/CommunityController.php:394 filters publications by 'catalog', a property the publication schema does not declare (lib/Settings/publication_register.json); lib/Service/Publication/PublicationRuleService.php:331 keeps only records whose @type/recordType has a publicationRule",
+				"evidence": "GET /api/feeds/{catalogSlug} @PublicPage (appinfo/routes.php); CommunityController::feed reads the catalogue through PublicationQueryService::readCatalogueAsAnonymous (the publication schema's read rules, inside runAsAnonymous, for every caller, decision 138) and only the notices of the catalogue's own boards (AtomFeedService::noticesOfCatalogue); tests CommunityControllerTest::testTheFeedCarriesWhatAnAnonymousReaderMayReadInTheCatalogue, PublicationQueryServiceTest::testThePublicationSchemaKeepsADraftFromAnAnonymousReader",
 				"change": "the-public-and-community-surface"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/feeds/{catalogSlug} (public, Atom). Nothing links to it",
@@ -4720,7 +4720,7 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:220 POST /api/markup/render; lib/Controller/CommunityController.php:533 renderMarkup returns MarkupRenderService output; openspec/changes/the-public-and-community-surface/tasks.md:44 says ViewObject.vue and WooRedactionView.vue still render with marked, so byte-parity is not claimed",
+				"evidence": "appinfo/routes.php:220 POST /api/markup/render; lib/Controller/CommunityController.php:533 renderMarkup returns MarkupRenderService output; openspec/changes/archive/2026-10-10-the-public-and-community-surface/tasks.md:44 says ViewObject.vue and WooRedactionView.vue still render with marked, so byte-parity is not claimed",
 				"change": "the-public-and-community-surface"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/markup/render (public). No caller in opencatalogi src/ or portaliq",
