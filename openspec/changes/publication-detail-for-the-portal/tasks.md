@@ -17,8 +17,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 4. Withheld
 
-- [ ] 4.1 Add `showWithheld` to `#catalog` and `titlePublic` to `#wooAssessment`, with versions bumped, and the toggles in the catalogue form and the assessment form (REQ-PDP-004). Verify: `tests/Unit/Settings/PortalDetailSchemaTest.php::testTheDefaultsAreOff`.
-- [ ] 4.2 Add `withheld` to the public publication response (REQ-PDP-004). Verify: `tests/Unit/Service/WithheldDocumentsTest.php::testAnOptedInCatalogueListsWithheldDocumentsWithGroundsOnly`, `::testWithoutOptInThereIsNoWithheldKey`, `::testAnUnresolvableCatalogueGivesNoKey`, `::testNoFileOrHashIsEverReturned`.
+- [x] 4.1 (`showWithheld` on `catalog` 0.4.0 in `lib/Settings/publication_register.json`, toggle in `src/modals/catalog/CatalogModal.vue`; `titlePublic` on `wooAssessment` 0.3.0 in `register.d/fix-woo-capability-provisioning.json`, set through `PUT .../assessments/{docId}` `titlePublic` (`WooService::updateAssessment`, `WooControllerTest::testUpdateAssessmentPassesTitlePublicOnlyWhenSent`); no assessment form exists in the frontend, the Deck board carries the assessment; app version bumped; `tests/Unit/Settings/PortalDetailSchemaTest.php::testTheDefaultsAreOff`) Add `showWithheld` to `#catalog` and `titlePublic` to `#wooAssessment`, with versions bumped, and the toggles in the catalogue form and the assessment form (REQ-PDP-004). Verify: `tests/Unit/Settings/PortalDetailSchemaTest.php::testTheDefaultsAreOff`.
+- [x] 4.2 (`WithheldFromPublication::addForCatalog()` from `PublicationsController::show`; `tests/Unit/Service/WithheldDocumentsTest.php` with the four named tests plus merge and no-batch cases) Add `withheld` to the public publication response (REQ-PDP-004). Verify: `tests/Unit/Service/WithheldDocumentsTest.php::testAnOptedInCatalogueListsWithheldDocumentsWithGroundsOnly`, `::testWithoutOptInThereIsNoWithheldKey`, `::testAnUnresolvableCatalogueGivesNoKey`, `::testNoFileOrHashIsEverReturned`.
 
 ## 5. Error reports
 

@@ -7,11 +7,11 @@
  * admin-only: the `withheldDocument` rows dossiq recorded for a publication
  * (REQ-WDW-002), the assessments of the `wooBatch` a publication was made from
  * (REQ-PDP-004), and the catalogues that hold a publication's register and
- * schema. Only `PublicWithheld` calls these, and it returns a fixed subset of
+ * schema. Only `WithheldFromPublication` calls these, and it returns a fixed subset of
  * keys; nothing read here reaches a response as it is.
  *
  * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service\Withheld
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -27,7 +27,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\Withheld;
 
 use OCA\OpenCatalogi\Service\WooService;
 use OCP\App\IAppManager;
@@ -41,7 +41,7 @@ use Throwable;
  *
  * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-the-public-read-of-a-woo-decision-names-what-was-withheld-and-why-req-wdw-003
  */
-class PublicWithheldStore {
+class WithheldFromPublicationStore {
 
 	/**
 	 * Constructor.

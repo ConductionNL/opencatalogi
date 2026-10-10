@@ -515,7 +515,13 @@ class WooService {
 	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-show-that-documents-were-withheld-and-why-req-pdp-004
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
 	 */
-	public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden = [], ?string $batchId = null, ?bool $titlePublic = null): array {
+	public function updateAssessment(
+		string $assessmentId,
+		string $assessment,
+		array $weigeringsgronden = [],
+		?string $batchId = null,
+		?bool $titlePublic = null
+	): array {
 		if (array_key_exists($assessment, self::ASSESSMENTS) === false) {
 			throw new RuntimeException('Unknown assessment: ' . $assessment);
 		}

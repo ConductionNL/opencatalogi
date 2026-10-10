@@ -30,6 +30,7 @@ export const mockCatalogi: TCatalogi = {
 	slug: 'test-catalogi',
 	hasWooSitemap: false,
 	hasOoapi: false,
+	showWithheld: false,
 }
 
 export const mockCatalogiList: TCatalogi[] = [
@@ -51,5 +52,6 @@ export const mockCatalogiList: TCatalogi[] = [
 		slug: 'another-catalogi',
 		hasWooSitemap: true,
 		hasOoapi: false,
+		showWithheld: false,
 	},
 ]

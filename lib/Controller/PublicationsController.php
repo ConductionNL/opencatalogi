@@ -36,7 +36,7 @@ use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
-use OCA\OpenCatalogi\Service\Woo\PublicWithheld;
+use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -839,7 +839,7 @@ class PublicationsController extends Controller {
 			// withheld and why. Read only for such a catalogue, so every other
 			// public read stays exactly as it was.
 			if (($catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
-				$result = $this->container->get(PublicWithheld::class)->addForCatalog(
+				$result = $this->container->get(WithheldFromPublication::class)->addForCatalog(
 					response: $result,
 					catalog: $catalog,
 					publicationId: $id

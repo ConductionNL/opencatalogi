@@ -15,8 +15,8 @@ namespace Unit\Service;
 
 require_once __DIR__ . '/WithheldOnThePublicReadTest.php';
 
-use OCA\OpenCatalogi\Service\Woo\PublicWithheld;
-use OCA\OpenCatalogi\Service\Woo\PublicWithheldStore;
+use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
+use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -26,8 +26,8 @@ use Psr\Log\NullLogger;
 /**
  * REQ-PDP-004 (and the batch half of REQ-WDW-003) on the service.
  *
- * @covers \OCA\OpenCatalogi\Service\Woo\PublicWithheld
- * @covers \OCA\OpenCatalogi\Service\Woo\PublicWithheldStore
+ * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication
+ * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
  */
 class WithheldDocumentsTest extends TestCase {
 
@@ -65,7 +65,7 @@ class WithheldDocumentsTest extends TestCase {
 		];
 	}//end setUp()
 
-	private function service(): PublicWithheld {
+	private function service(): WithheldFromPublication {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key, string $default = ''): string => (self::CONFIG[$key] ?? $default)
@@ -75,8 +75,8 @@ class WithheldDocumentsTest extends TestCase {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('isInstalled')->willReturn(true);
 
-		return new PublicWithheld(
-			store: new PublicWithheldStore(config: $config, container: $container, appManager: $appManager),
+		return new WithheldFromPublication(
+			store: new WithheldFromPublicationStore(config: $config, container: $container, appManager: $appManager),
 			logger: new NullLogger(),
 		);
 	}//end service()

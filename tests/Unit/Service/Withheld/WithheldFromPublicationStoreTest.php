@@ -11,11 +11,11 @@
 
 declare(strict_types=1);
 
-namespace Unit\Service\Woo;
+namespace Unit\Service\Withheld;
 
 require_once __DIR__ . '/../WithheldOnThePublicReadTest.php';
 
-use OCA\OpenCatalogi\Service\Woo\PublicWithheldStore;
+use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -26,9 +26,9 @@ use Unit\Service\PublicReadObjectService;
 /**
  * One publication's rows, its batch's assessments in order, and the catalogues holding it.
  *
- * @covers \OCA\OpenCatalogi\Service\Woo\PublicWithheldStore
+ * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
  */
-class PublicWithheldStoreTest extends TestCase {
+class WithheldFromPublicationStoreTest extends TestCase {
 
 	private PublicReadObjectService $objects;
 
@@ -40,7 +40,7 @@ class PublicWithheldStoreTest extends TestCase {
 	 * @param array<string, string> $config     The app config.
 	 * @param bool                  $installed  Whether OpenRegister is installed.
 	 */
-	private function store(array $config = ['publication_register' => 'r', 'withheld_document_schema' => 'w', 'catalog_register' => 'r', 'catalog_schema' => 'c', 'woo_register' => 'wr', 'woo_batch_schema' => 'b'], bool $installed = true): PublicWithheldStore {
+	private function store(array $config = ['publication_register' => 'r', 'withheld_document_schema' => 'w', 'catalog_register' => 'r', 'catalog_schema' => 'c', 'woo_register' => 'wr', 'woo_batch_schema' => 'b'], bool $installed = true): WithheldFromPublicationStore {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => ($config[$key] ?? $default));
 		$container = $this->createMock(ContainerInterface::class);
@@ -48,7 +48,7 @@ class PublicWithheldStoreTest extends TestCase {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('isInstalled')->willReturn($installed);
 
-		return new PublicWithheldStore(config: $appConfig, container: $container, appManager: $appManager);
+		return new WithheldFromPublicationStore(config: $appConfig, container: $container, appManager: $appManager);
 	}//end store()
 
 	public function testStoredEntriesAreThisPublicationsOnly(): void {

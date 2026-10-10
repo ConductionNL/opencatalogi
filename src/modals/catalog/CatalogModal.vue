@@ -150,7 +150,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					{{
 						t(
 							'opencatalogi',
-							'Show on a public Woo decision which documents were withheld and why',
+							'Show which documents of a publication were withheld, and on which grounds',
 						)
 					}}
 				</NcCheckboxRadioSwitch>

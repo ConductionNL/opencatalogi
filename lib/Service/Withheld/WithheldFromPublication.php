@@ -1,12 +1,14 @@
 <?php
 
 /**
- * The public `withheld` list of a publication.
+ * The public `withheld` list of a publication: generic (decision 182), for
+ * any publication a catalogue holds; the Woo decision is the first user.
  *
  * A catalogue that opted in (`showWithheld`, REQ-PDP-004) shows on a public
- * Woo decision which documents were withheld and on which grounds: one entry
- * per withheld assessment of the `wooBatch` the publication was made from, and
- * one per `withheldDocument` dossiq recorded (REQ-WDW-003), ordered by
+ * publication which of its documents were withheld from publication and on
+ * which grounds: one entry per withheld assessment of the publication batch
+ * (`wooBatch`, the existing Woo workflow) it was made from, and one per
+ * `withheldDocument` record an app wrote (REQ-WDW-003), ordered by
  * position. Each entry carries `position`, `grounds` (codes) and
  * `groundDetails` (`{code, article, label}`); a batch entry also carries its
  * `title` when the assessment's `titlePublic` is true. Nothing else.
@@ -15,7 +17,7 @@
  * or the list cannot be read: an empty list would say nothing was withheld.
  *
  * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service\Withheld
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -31,7 +33,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\Withheld;
 
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -41,16 +43,16 @@ use Throwable;
  *
  * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-the-public-read-of-a-woo-decision-names-what-was-withheld-and-why-req-wdw-003
  */
-class PublicWithheld {
+class WithheldFromPublication {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param PublicWithheldStore $store  The OpenRegister reads.
+	 * @param WithheldFromPublicationStore $store  The OpenRegister reads.
 	 * @param LoggerInterface     $logger Records an unreadable list.
 	 */
 	public function __construct(
-		private readonly PublicWithheldStore $store,
+		private readonly WithheldFromPublicationStore $store,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -98,7 +100,7 @@ class PublicWithheld {
 		try {
 			$catalogs = $this->store->catalogsHolding(register: $register, schema: $schema);
 		} catch (Throwable $e) {
-			$this->logger->warning('PublicWithheld: the catalogues could not be read', ['exception' => $e->getMessage()]);
+			$this->logger->warning('WithheldFromPublication: the catalogues could not be read', ['exception' => $e->getMessage()]);
 			return $response;
 		}
 
@@ -146,7 +148,10 @@ class PublicWithheld {
 		try {
 			$response['withheld'] = $this->entries(publicationId: $publicationId);
 		} catch (Throwable $e) {
-			$this->logger->warning('PublicWithheld: the withheld list could not be read', ['publication' => $publicationId, 'exception' => $e->getMessage()]);
+			$this->logger->warning(
+				'WithheldFromPublication: the withheld list could not be read',
+				['publication' => $publicationId, 'exception' => $e->getMessage()]
+			);
 		}
 
 		return $response;
