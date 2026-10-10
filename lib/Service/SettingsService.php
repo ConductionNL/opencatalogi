@@ -546,6 +546,11 @@ class SettingsService {
 		// JSON map from channel to the slug of the integriq source it is sent through.
 		$defaults['channel_sources'] = '{}';
 
+		// Public API cache time in seconds (operations-public-api-cache-headers,
+		// REQ-PAC-003): how long a CDN or browser may keep an anonymous answer.
+		// 0 switches the public cache headers off.
+		$defaults['public_api_cache_seconds'] = '60';
+
 		// Get the current values for the object types from the configuration.
 		try {
 			foreach ($defaults as $key => $defaultValue) {
@@ -761,6 +766,9 @@ class SettingsService {
 			// National channel sources (REQ-WND-001).
 			$allowedKeys[] = 'channel_sources';
 
+			// Public API cache time in seconds (REQ-PAC-003).
+			$allowedKeys[] = 'public_api_cache_seconds';
+
 			$updated = [];
 
 			// Only persist keys that are explicitly allowed.
@@ -769,6 +777,17 @@ class SettingsService {
 					$value = $data[$key];
 					if ($key === 'channel_sources') {
 						$value = $this->normaliseChannelSources(value: $value);
+					}
+
+					if ($key === 'public_api_cache_seconds') {
+						// A negative or unreadable time switches caching off rather than
+						// storing something the cache headers cannot use.
+						$seconds = 0;
+						if (is_numeric($value) === true) {
+							$seconds = max(0, (int)$value);
+						}
+
+						$value = $seconds;
 					}
 
 					$this->config->setValueString($this->appName, $key, (string)$value);

@@ -627,8 +627,8 @@
 		"row": "pub-languages",
 		"matrix": "opencatalogi",
 		"decision": "existing",
-		"reason": "Covered by the open change register-i18n.",
-		"change": "register-i18n",
+		"reason": "Covered by the open change publication-translations (register-i18n was archived on 9 October 2026 without folding its spec: its publication and catalogue part moved to publication-translations, the rest to portaliq).",
+		"change": "publication-translations",
 		"decidedOn": "2026-09-28"
 	},
 	{

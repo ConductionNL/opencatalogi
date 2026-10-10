@@ -23,6 +23,8 @@
 		     so those dispatches keep opening their modals / dialogs. -->
 		<Modals />
 		<Dialogs />
+		<!-- REQ-PCS-103: the administrator's dated banners, on every page. -->
+		<InstanceBanners />
 	</div>
 </template>
 
@@ -30,6 +32,7 @@
 import { CnAppRoot } from '@conduction/nextcloud-vue'
 import { translate as ncT } from '@nextcloud/l10n'
 import { reactive } from 'vue'
+import InstanceBanners from './components/InstanceBanners.vue'
 import Dialogs from './dialogs/Dialogs.vue'
 import Modals from './modals/Modals.vue'
 import CatalogNavigation from './navigation/CatalogNavigation.vue'
@@ -47,6 +50,7 @@ export default {
 		CnAppRoot,
 		Modals,
 		Dialogs,
+		InstanceBanners,
 	},
 
 	/** @spec exclude Vue provide()/inject() DI channel wiring, no business logic */

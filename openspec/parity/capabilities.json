@@ -4479,7 +4479,7 @@
 			"built": {
 				"state": "specified",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "l10n/nl.json has 1110 UI strings (74 l10n files); openspec/changes/register-i18n/tasks.md has only Task 1 'todo'; lib/Settings/publication_register.json publication schema has no language or translation property; portaliq lib/Controller/ContentController.php:212 negotiates a locale for portal pages only",
+				"evidence": "l10n/nl.json has 1110 UI strings (74 l10n files); openspec/changes/archive/2026-10-09-register-i18n/tasks.md has only Task 1 'todo'; lib/Settings/publication_register.json publication schema has no language or translation property; portaliq lib/Controller/ContentController.php:212 negotiates a locale for portal pages only",
 				"change": "publication-translations"
 			},
 			"reachedOn": "staff UI labels via Nextcloud l10n; publication content: nothing",

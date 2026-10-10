@@ -1432,7 +1432,22 @@ OC.L10N.register(
         "Open catalog": "Open catalog",
         "Register and schema": "Register and schema",
         "{schema} in {register}": "{schema} in {register}",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.",
+        "never synchronised successfully": "never synchronised successfully",
+        "last successful sync {time}": "last successful sync {time}",
+        "Synchronised {name}": "Synchronised {name}",
+        "Could not synchronise {name}": "Could not synchronise {name}",
+        "Last successful sync": "Last successful sync",
+        "Last attempt": "Last attempt",
+        "Error:": "Error:",
+        "Synchronising…": "Synchronising…",
+        "Sync now": "Sync now",
+        "Dismiss": "Dismiss",
+        "Dismiss this announcement": "Dismiss this announcement",
+        "Public cache time (seconds)": "Public cache time (seconds)",
+        "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.": "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.",
+        "Save cache time": "Save cache time",
+        "The cache time could not be saved. Try again.": "The cache time could not be saved. Try again."
     },
     "nplurals=2; plural=(n != 1);"
 )
