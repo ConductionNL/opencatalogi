@@ -7,7 +7,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `env
 - [ ] 1.1 Rewrite `x-openregister-lifecycle` and the `status` enum of `#publication` in `lib/Settings/publication_register.json`, add `firstReleasedAt` (immutable) and `unlisted`, and bump the schema `version` (REQ-PLC-001, REQ-PLC-006). Verify: `tests/Unit/Settings/PublicationLifecycleDeclarationTest.php::testTheLifecycleDeclaresTheSevenTransitions` (fails today: only `archive` is declared) and `::testTheDeclarationPassesOpenRegistersGraphValidator`, which runs OpenRegister's `LifecycleGraphValidator` and `LifecycleTransitionsValidator` over the shipped declaration when the class exists and is skipped with a message otherwise.
 - [ ] 1.2 Add the `publication_review_required` app config (default `true`), a guard on `publishWithoutReview` reading it, and the admin toggle in the publications settings section (REQ-PLC-001). Verify: `tests/Unit/Service/Publication/PublicationLifecycleTest.php::testPublishWithoutReviewIsRefusedWhenReviewIsRequired` and `::testPublishWithoutReviewIsAllowedWhenReviewIsOff`.
 - [ ] 1.3 Add `GET /api/publications/lifecycle` returning the transition table read from the shipped schema, not a copy (REQ-PLC-001). Verify: `tests/Unit/Controller/PublicationLifecycleControllerTest.php::testTheTransitionTableIsPublished`, and a route-table test asserting the route exists.
-- [ ] 1.4 Through OpenRegister's transition route on the dev instance, run an illegal move and a list-form skip, and paste the two answers in the PR body (REQ-PLC-001). Verify: `PublicationLifecycleTest::testAnIllegalMoveIsRefusedByName`, `::testAListFormEditThatSkipsReviewIsRefused`, `::testAvailableActionsFollowTheState`, plus the pasted live answers.
+- [ ] 1.4 Through OpenRegister's transition route on the dev instance, run an illegal move and a list-form skip, and paste the two answers in the PR body (REQ-PLC-001). Verify: `PublicationLifecycleTest::testAnIllegalMoveIsRefusedByName`, `::testAListFormEditThatSkipsReviewIsRefused`, `::testAvailableActionsFollowTheState`, plus the pasted live answers. (live pass, decision 139)
 
 ## 2. One state
 
@@ -18,7 +18,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `env
 
 - [ ] 3.1 Add `status: "published"` to the public read rule of `#publication` (REQ-PLC-003, RET-001). Verify: `tests/Unit/Settings/PublicationLifecycleReadRuleTest.php::testADraftWithAPastPublicationDateIsNotPublic`, which reads the shipped rule and evaluates it with OpenRegister's condition matcher; it fails today because the rule matches dates only.
 - [ ] 3.2 Move `PublicationStateController::publish()`, `EventService::publishObject()`, `BatchPublicationWriter` and `MassPublishObjects.vue` onto `TransitionEngine` (the Vue modal through OpenRegister's transition route); a refused transition writes no date (REQ-PLC-003). Verify: `tests/Unit/Controller/PublicationStateControllerTest.php::testPublishRunsTheTransition`, `::testPublishRefusesAnUnreviewedDraftWhenReviewIsRequired`, `tests/Unit/Service/EventServiceTest.php::testPublishObjectRunsTheTransition`, `tests/Unit/Service/Woo/BatchPublicationWriterTest.php::testABatchCreatesAnApprovedPublicationAndPublishesIt`. Then `git grep -n "'publicationDate'" lib src` and list every remaining writer in the PR body with why it is not a publish path.
-- [ ] 3.3 Live: publish an approved publication from its page and see Public. Verify: `tests/e2e/publication-lifecycle.spec.ts` "publish now moves the lifecycle".
+- [ ] 3.3 Live: publish an approved publication from its page and see Public. Verify: `tests/e2e/publication-lifecycle.spec.ts` "publish now moves the lifecycle". (live pass, decision 139)
 
 ## 5. Ready list
 
@@ -32,7 +32,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `env
 ## 7. Upgrade
 
 - [ ] 7.1 Add `BackfillPublicationLifecycleState`, registered post-migration after `InitializeSettings` (REQ-PLC-007). Verify: `tests/Unit/Repair/BackfillPublicationLifecycleStateTest.php::testALegacyPublicationWithADateBecomesPublished`, `::testALegacyPublicationWithoutADateBecomesADraft`, `::testASecondRunChangesNothing`, `::testTheStepIsRegisteredPostMigration` (reads `appinfo/info.xml`).
-- [ ] 7.2 Upgrade the dev instance with `appstoreenabled=false` set first, then count public publications before and after on the public API and paste both numbers in the PR body; they must match (REQ-PLC-007). Verify: the two counts.
+- [ ] 7.2 Upgrade the dev instance with `appstoreenabled=false` set first, then count public publications before and after on the public API and paste both numbers in the PR body; they must match (REQ-PLC-007). Verify: the two counts. (live pass, decision 139)
 
 ## 8. Coordination
 
