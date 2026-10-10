@@ -143,6 +143,17 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						)
 					}}
 				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch
+					v-model="catalogi.showWithheld"
+					:disabled="objectStore.isLoading('catalog')"
+					data-testid="catalog-show-withheld">
+					{{
+						t(
+							'opencatalogi',
+							'Show on a public Woo decision which documents were withheld and why',
+						)
+					}}
+				</NcCheckboxRadioSwitch>
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
@@ -230,6 +241,7 @@ export default {
 				status: { id: 'development', label: 'Development' },
 				hasWooSitemap: false,
 				hasOoapi: false,
+				showWithheld: false,
 			},
 
 			selectedOrganization: null,
@@ -422,6 +434,7 @@ export default {
 				status: { id: 'development', label: 'Development' },
 				hasWooSitemap: false,
 				hasOoapi: false,
+				showWithheld: false,
 			}
 			this.selectedOrganization = null
 			this.selectedRegisters = []

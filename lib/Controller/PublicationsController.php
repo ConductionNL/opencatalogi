@@ -36,6 +36,7 @@ use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
+use OCA\OpenCatalogi\Service\Woo\PublicWithheld;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -832,6 +833,17 @@ class PublicationsController extends Controller {
 				$this->addCorsHeaders(response: $response);
 				$this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
 				return $this->cacheableForCaller(response: $response);
+			}
+
+			// REQ-PDP-004 / REQ-WDW-003: a catalogue that opted in shows what was
+			// withheld and why. Read only for such a catalogue, so every other
+			// public read stays exactly as it was.
+			if (($catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
+				$result = $this->container->get(PublicWithheld::class)->addForCatalog(
+					response: $result,
+					catalog: $catalog,
+					publicationId: $id
+				);
 			}
 
 			// Add CORS headers for public API access.

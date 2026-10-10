@@ -505,15 +505,17 @@ class WooService {
 	 * @param string $assessment The new assessment enum value.
 	 * @param array<int,string> $weigeringsgronden Selected grounds (required for niet_openbaar).
 	 * @param string|null $batchId The batch the document belongs to (whose creator owns relative references).
+	 * @param bool|null $titlePublic Whether the title may show on the public decision when withheld; null keeps it.
 	 *
 	 * @return array<string, mixed> The updated assessment object.
 	 *
 	 * @throws RuntimeException When inputs are invalid or OpenRegister is unavailable.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-show-that-documents-were-withheld-and-why-req-pdp-004
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
 	 */
-	public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden = [], ?string $batchId = null): array {
+	public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden = [], ?string $batchId = null, ?bool $titlePublic = null): array {
 		if (array_key_exists($assessment, self::ASSESSMENTS) === false) {
 			throw new RuntimeException('Unknown assessment: ' . $assessment);
 		}
@@ -562,6 +564,9 @@ class WooService {
 
 		$data['assessedBy'] = $assessedBy;
 		$data['assessedAt'] = $now;
+		if ($titlePublic !== null) {
+			$data['titlePublic'] = $titlePublic;
+		}
 
 		// A partly public document is published only as its verified redacted version (woo-redaction-pipeline).
 		$data = array_merge($data, $this->redactor->forAssessment(assessment: $data, batchId: $batchId, fallbackOwner: $assessedBy));

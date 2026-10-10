@@ -47,6 +47,7 @@ describe('Catalogi Store', () => {
 			slug: '',
 			hasWooSitemap: false,
 			hasOoapi: false,
+			showWithheld: false,
 		})
 
 		expect(catalogi).toBeInstanceOf(Catalogi)

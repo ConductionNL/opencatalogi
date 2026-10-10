@@ -26,4 +26,5 @@ export type TCatalogi = {
 	slug: string
 	hasWooSitemap: boolean
 	hasOoapi: boolean
+	showWithheld?: boolean
 }

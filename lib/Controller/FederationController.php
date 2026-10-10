@@ -31,6 +31,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Service\Woo\PublicWithheld;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -53,6 +54,7 @@ class FederationController extends Controller {
 	 * @param PublicationService $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param PublicWithheld|null $withheld The public withheld list (REQ-WDW-003).
 	 */
 	public function __construct(
 		$appName,
@@ -60,6 +62,7 @@ class FederationController extends Controller {
 		private readonly PublicationService $publicationService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
+		private readonly ?PublicWithheld $withheld = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -136,6 +139,12 @@ class FederationController extends Controller {
 		try {
 			// Use the service method to get the publication with federation support.
 			$result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
+
+			// REQ-WDW-003: the same `withheld` list publications#show answers, for a
+			// publication of this instance whose catalogue opted in.
+			if ($this->withheld !== null && $result['status'] === 200 && is_array($result['data']) === true) {
+				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
+			}
 
 			return new JSONResponse($result['data'], $result['status']);
 		} catch (\Exception $e) {
