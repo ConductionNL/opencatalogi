@@ -30,6 +30,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Deelnames Gebruik](./deelnames-gebruik.md) | Query and display shared usage (inter-organizational cooperation) alongside owned modules | [deelnames-gebruik.md](./deelnames-gebruik.md) |
 | [Prometheus Metrics](./prometheus-metrics.md) | Monitoring endpoint in Prometheus text format: publication counts, catalog metrics, listing health | [prometheus-metrics.md](./prometheus-metrics.md) |
 | [Public API: `_extend=files`](./public-api-files-extend.md) | Opt-in switch for full attachment metadata in publication responses; default is lightweight file IDs | [public-api-files-extend.md](./public-api-files-extend.md) |
+| [Public API: cache headers](./public-api-cache.md) | Anonymous public answers carry `Cache-Control: public` and an `ETag` for a CDN; signed-in answers stay private; the administrator sets the time | [public-api-cache.md](./public-api-cache.md) |
 | Publiek zoeken | Unauthenticated full-text search with filters and facets | — |
 | [Publieke fulltext search — publicaties + documenten](./public-fulltext-search.md) | Public `GET /apps/opencatalogi/api/search` — RBAC-filtered mixed envelope of publications and documents, `@self.schema` as row discriminator, embedded `publication: {id, slug, title}` on document rows | [public-fulltext-search.md](./public-fulltext-search.md) |
 | DCAT-AP export | Dataset metadata export in DCAT-AP NL and EU DCAT-AP format | — |

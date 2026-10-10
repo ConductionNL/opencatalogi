@@ -1386,7 +1386,22 @@
         "Open catalog": "Catalogus openen",
         "Register and schema": "Register en schema",
         "{schema} in {register}": "{schema} in {register}",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Maak je eerste catalogus aan. Dat is de houder waarin je publicaties komen te staan. Kies het register Publication en het schema Publication, zodat de catalogus de publicaties toont die je toevoegt."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Maak je eerste catalogus aan. Dat is de houder waarin je publicaties komen te staan. Kies het register Publication en het schema Publication, zodat de catalogus de publicaties toont die je toevoegt.",
+        "never synchronised successfully": "nog nooit geslaagd gesynchroniseerd",
+        "last successful sync {time}": "laatste geslaagde synchronisatie {time}",
+        "Synchronised {name}": "{name} gesynchroniseerd",
+        "Could not synchronise {name}": "{name} kon niet worden gesynchroniseerd",
+        "Last successful sync": "Laatste geslaagde synchronisatie",
+        "Last attempt": "Laatste poging",
+        "Error:": "Fout:",
+        "Synchronising…": "Bezig met synchroniseren…",
+        "Sync now": "Nu synchroniseren",
+        "Dismiss": "Sluiten",
+        "Dismiss this announcement": "Deze mededeling sluiten",
+        "Public cache time (seconds)": "Cachetijd openbare API (seconden)",
+        "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.": "Hoe lang een CDN of browser een antwoord van de openbare API mag bewaren voor een bezoeker zonder account. Een langere tijd geeft snellere antwoorden en een langere wachttijd voordat een wijziging zichtbaar is. 0 zet de cache uit.",
+        "Save cache time": "Cachetijd opslaan",
+        "The cache time could not be saved. Try again.": "De cachetijd kon niet worden opgeslagen. Probeer het opnieuw."
     },
     "plurals": {}
 }
