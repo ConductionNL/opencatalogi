@@ -21,5 +21,5 @@ Search only finds OCR text once `add-document-content-search` is merged; tasks 1
 ## 4. Verification
 
 - [ ] 4.1 `openspec validate scanned-attachments-become-searchable --strict`, `composer check:strict`, `npm run lint`.
-- [ ] 4.2 Live, on an instance with filinq and Tesseract: publish a scan, wait for the job, and paste the `_content` search answer that finds it in the PR body.
+- [ ] 4.2 Live, on an instance with filinq and Tesseract: publish a scan, wait for the job, and paste the `_content` search answer that finds it in the PR body. (live pass, decision 139)
 - [ ] 4.3 Set `srch-ocr` in `openspec/parity/capabilities.json` to `built` with this change, and correct its evidence (filinq's fallback and OpenRegister's seam exist).

@@ -33,7 +33,7 @@
 - **acceptance_criteria**:
   - GIVEN an unconfigured instance on :8080 WHEN the app opens THEN the wizard gates; GIVEN a configured instance THEN the wizard passes to `done`
   - GIVEN an empty catalog index WHEN the shell renders THEN the tour clicks through end to end (create catalog → add publication → discover via Directory)
-- [ ] Live-verify the setup gating and the walkthrough tour end to end on :8080
+- [ ] Live-verify the setup gating and the walkthrough tour end to end on :8080 (live pass, decision 139)
 
 ## Quality checklist
 
