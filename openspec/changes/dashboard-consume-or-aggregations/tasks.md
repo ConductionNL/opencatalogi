@@ -67,7 +67,7 @@
       OR's current aggregation feature; see the note above. Not implemented.
 - [ ] ~~Add `x-openregister-aggregations.countByStatus` to the `attachment`
       schema~~ — NO SUCH SCHEMA EXISTS; see the note above. Not implemented.
-- [ ] Confirm the register import picks up the new annotation on a clean
+- [ ] Confirm the register import picks up the new annotation on a clean (live pass, decision 139)
       install / `reload-settings` — DEFERRED, needs a live instance
       (`SettingsService::loadSettings()` round-trip); not verifiable from an
       isolated worktree with no running Nextcloud.
@@ -124,8 +124,8 @@
       claiming full "Status: Implemented" compliance.
 - [x] No new user-facing strings were introduced by the KPI aggregation change
       — nothing to register via `scripts/l10n-ai.js`.
-- [ ] Manual verify against a >1000-publication catalog — DEFERRED, needs a
+- [ ] Manual verify against a >1000-publication catalog — DEFERRED, needs a (live pass, decision 139)
       live instance / Postgres seed script not available from this isolated
       worktree.
-- [ ] Verify `UnpublishedAttachmentsWidget`/`UnpublishedPublicationsWidget` on
+- [ ] Verify `UnpublishedAttachmentsWidget`/`UnpublishedPublicationsWidget` on (live pass, decision 139)
       `/apps/dashboard/` — DEFERRED, moot until task 4 is unblocked.
