@@ -22,8 +22,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 4. Live
 
-- [ ] 4.1 On the dev instance, create a publication through OpenRegister's object API and paste the response's `publicUrl` and `officerUrl` in the PR body; open both (REQ-PTS-001). Verify: the pasted response.
-- [ ] 4.2 Subscribe a webhook with the recipe's filters to a local catcher, complete a publication, edit it once more, and paste the delivery log showing one delivery (REQ-PTS-003). Verify: the pasted log.
+- [ ] 4.1 On the dev instance, create a publication through OpenRegister's object API and paste the response's `publicUrl` and `officerUrl` in the PR body; open both (REQ-PTS-001). Verify: the pasted response. (live pass, decision 139)
+- [ ] 4.2 Subscribe a webhook with the recipe's filters to a local catcher, complete a publication, edit it once more, and paste the delivery log showing one delivery (REQ-PTS-003). Verify: the pasted log. (live pass, decision 139)
 
 ## 5. Verification
 

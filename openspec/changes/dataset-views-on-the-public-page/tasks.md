@@ -31,5 +31,5 @@ Start after `open-data-table-query-and-dictionary` is merged: every task here re
 ## 6. Verification
 
 - [ ] 6.1 `openspec validate dataset-views-on-the-public-page --strict`, `composer check:strict`, `npm run lint`.
-- [ ] 6.2 Live: publish a CSV as a table on the dev instance, add a bar view and a map view, and paste both data answers in the PR body.
+- [ ] 6.2 Live: publish a CSV as a table on the dev instance, add a bar view and a map view, and paste both data answers in the PR body. (live pass, decision 139)
 - [ ] 6.3 Set `od-visualise` in `openspec/parity/capabilities.json` to `building` while portaliq tasks are open, `built` once they land.
