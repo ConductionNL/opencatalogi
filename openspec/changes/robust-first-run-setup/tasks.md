@@ -40,8 +40,8 @@
   - GIVEN `config-check`, `catalog-scope` and `create-catalog` are all `done` and `connect-federation`'s computed `done` is `false` WHEN `status()` is called THEN `completed` is `true`
   - GIVEN `DirectoryService::syncDirectory()` throws (unreachable directory) WHEN `connectFederation()` runs THEN the response is `{success: false, ...}` with HTTP 200, not a 5xx, and does not touch `onboarding_completed_version`
   - GIVEN the national directory returns zero listings WHEN `syncDirectory()` completes THEN the step remains skippable and `completed` is unaffected
-- [ ] Implement
-- [ ] Test
+- [x] Implement (verified: tests/Unit/Controller/SetupControllerTest.php::testConnectFederationFailureIsNonFatal, ::testStatusConfigCheckDoneWhenRegistersWired; lib/Controller/SetupController.php)
+- [x] Test (verified: tests/Unit/Controller/SetupControllerTest.php::testConnectFederationFailureIsNonFatal, ::testStatusConfigCheckDoneWhenRegistersWired; lib/Controller/SetupController.php)
 
 ### Task 5: Add the `class_exists` OpenRegister-compatibility guard to `Application::register()`
 - **spec_ref**: `openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009`
