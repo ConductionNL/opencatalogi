@@ -35,10 +35,10 @@ programme to hit it.
 
 ## 4. Follows this change
 
-- [ ] 4.1 Remove `page` and `menu` from the register descriptor.
-- [ ] 4.2 Remove `PagesController`, `MenusController` and their 8 routes.
+- [x] 4.1 Remove `page` and `menu` from the register descriptor. The schemas went in #1421; the table configuration and the five seed objects (`publication_register.json`) and six mock objects (`opencatalogi_mock_register.json`) go now (decision 138). `tests/Unit/AppInfo/NoCmsInOpenCatalogiTest.php`.
+- [x] 4.2 Remove `PagesController`, `MenusController` and their 8 routes. Done in #1421 (2026-09-04); the leftover route comments and the `page_*`/`menu_*` frontend config keys (`ProvideManifestConfigStateListener`) go now.
       Consumers move to Portaliq's `/api/content/pages` and `/api/content/menus`,
       which is a BREAKING change for anything calling the old paths.
-- [ ] 4.3 Remove the 4 manifest pages and the CMS frontend.
-- [ ] 4.4 Update the e2e specs that drive `/pages` and `/menus` (CMS-001,
-      CMS-006, CMS-010, CMS-016).
+- [x] 4.3 Remove the 4 manifest pages and the CMS frontend. Pages, entities, modals and dialogs went in #1421; the `/pages` and `/menus` SPA routes (`UiController::pages()`/`menus()`), the `PagesMenu`/`MenusMenu` layout removals and the store's `page`/`menu` types go now. `UiControllerTest::testThereIsNoPagesOrMenusScreenAnyMore`.
+- [x] 4.4 Update the e2e specs that drive `/pages` and `/menus` (CMS-001,
+      CMS-006, CMS-010, CMS-016). The CMS specs went in #1421; `tests/e2e/spec-coverage/_nav.ts` stops naming the two menus. The canonical `content-management` spec loses CMS-001 to CMS-016 and CMS-036/037 through this change's REMOVED delta.

@@ -39,7 +39,7 @@ use Throwable;
 /**
  * The rules for turning an OpenCatalogi page into a Portaliq page.
  *
- * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+ * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
  */
 class CmsMigrationService {
 
@@ -105,7 +105,7 @@ class CmsMigrationService {
 	 *
 	 * @return string The route.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function routeFor(mixed $slug): string {
 		if (is_scalar($slug) === false) {
@@ -133,7 +133,7 @@ class CmsMigrationService {
 	 *         The body, plus any block type with no mapping and any prop the
 	 *         target widget does not declare.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
+	 * @spec openspec/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
 	 */
 	public function bodyFor(array $blocks, string $pageId): array {
 		$widgets = [];
@@ -202,7 +202,7 @@ class CmsMigrationService {
 	 * @return array{page: array<string, mixed>, unmapped: array<int, string>, dropped: array<int, string>}
 	 *         The page to write, and what could not be carried.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function pageFor(array $page, string $portal): array {
 		$blocks = ($page['contents'] ?? []);
@@ -247,7 +247,7 @@ class CmsMigrationService {
 	 *
 	 * @return array{menu: array<string, mixed>, dropped: array<int, string>} The menu, and what is lost.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-menu-becomes-a-portal-menu-req-cms-103
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-menu-becomes-a-portal-menu-req-cms-103
 	 */
 	public function menuFor(array $menu, string $portal): array {
 		$dropped = [];
@@ -281,7 +281,7 @@ class CmsMigrationService {
 	 *
 	 * @return object|null The service, or null.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function openRegister(string $id): ?object {
 		try {
@@ -308,7 +308,7 @@ class CmsMigrationService {
 	 *
 	 * @return array<string, mixed> The fields.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function toFields(mixed $row): array {
 		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {

@@ -38,7 +38,7 @@ use Throwable;
 /**
  * Move pages and menus into a Portaliq portal.
  *
- * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+ * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
@@ -51,7 +51,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function __construct(private readonly CmsMigrationService $migration) {
 		parent::__construct();
@@ -62,7 +62,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'opencatalogi:cms:migrate-to-portaliq')
@@ -96,7 +96,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$portal = trim((string)$input->getOption('portal'));
@@ -179,7 +179,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 	 *
 	 * @return array<int, mixed>|null The rows, or null on failure.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	private function read(object $objectService, string $schema, OutputInterface $output): ?array {
 		try {
@@ -213,7 +213,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 	 * @return array{0: array<string, mixed>, 1: string, 2: array<string, mixed>} The
 	 *         target object, the report label, and the mapping outcome.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	private function mapRow(string $kind, array $fields, string $portal, string $name): array {
 		if ($kind === 'page') {
@@ -243,7 +243,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 	 *   once in execute() and passed down rather than re-resolved per row.
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	private function moveOne(
 		string $kind,

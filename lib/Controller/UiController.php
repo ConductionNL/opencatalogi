@@ -192,34 +192,6 @@ class UiController extends Controller {
 	}//end glossary()
 
 	/**
-	 * Serve pages page.
-	 *
-	 * @return TemplateResponse
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-	 */
-	public function pages(): TemplateResponse {
-		return $this->makeSpaResponse();
-	}//end pages()
-
-	/**
-	 * Serve menus page.
-	 *
-	 * @return TemplateResponse
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
-	 */
-	public function menus(): TemplateResponse {
-		return $this->makeSpaResponse();
-	}//end menus()
-
-	/**
 	 * Serve directory page.
 	 *
 	 * @return TemplateResponse
