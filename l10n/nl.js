@@ -1402,7 +1402,20 @@ OC.L10N.register(
         "Public cache time (seconds)": "Cachetijd openbare API (seconden)",
         "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.": "Hoe lang een CDN of browser een antwoord van de openbare API mag bewaren voor een bezoeker zonder account. Een langere tijd geeft snellere antwoorden en een langere wachttijd voordat een wijziging zichtbaar is. 0 zet de cache uit.",
         "Save cache time": "Cachetijd opslaan",
-        "The cache time could not be saved. Try again.": "De cachetijd kon niet worden opgeslagen. Probeer het opnieuw."
+        "The cache time could not be saved. Try again.": "De cachetijd kon niet worden opgeslagen. Probeer het opnieuw.",
+        "Withheld document": "Geweigerd document",
+        "The publication of the Woo decision this document belongs to.": "De publicatie van het Woo-besluit waar dit document bij hoort.",
+        "Position": "Positie",
+        "The document's number on the decision's inventory.": "Het nummer van het document op de inventarislijst van het besluit.",
+        "Grounds": "Gronden",
+        "The grounds it was withheld on. Each holds the code, article and label from dossiq's list.": "De gronden waarop het is geweigerd. Elke grond heeft de code, het artikel en de omschrijving uit de lijst van dossiq.",
+        "The app that recorded the entry, such as dossiq.": "De app die de regel vastlegde, bijvoorbeeld dossiq.",
+        "When the entry was recorded.": "Wanneer de regel is vastgelegd.",
+        "Code": "Code",
+        "The ground's code, such as 5.1.2.e.": "De code van de grond, bijvoorbeeld 5.1.2.e.",
+        "The article of the Woo the ground rests on.": "Het artikel van de Woo waarop de grond berust.",
+        "Label": "Omschrijving",
+        "The ground in words, as dossiq's list names it.": "De grond in woorden, zoals de lijst van dossiq hem noemt."
     },
     "nplurals=2; plural=(n != 1);"
 )
