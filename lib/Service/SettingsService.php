@@ -1295,7 +1295,7 @@ class SettingsService {
 		$wooSchemaMap = [
 			'woo_batch_schema' => 'wooBatch',
 			'woo_assessment_schema' => 'wooAssessment',
-			// woo-decision-shows-what-was-withheld: dossiq's withheld documents.
+			// Woo-decision-shows-what-was-withheld: dossiq's withheld documents.
 			'withheld_document_schema' => 'withheldDocument',
 		];
 

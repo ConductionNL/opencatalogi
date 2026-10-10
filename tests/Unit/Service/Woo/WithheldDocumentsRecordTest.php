@@ -27,6 +27,7 @@ require_once __DIR__ . '/Fixtures/DossiqWooRefusalGrounds.php';
 use OCA\Dossiq\Woo\WooRefusalGrounds;
 use OCA\Dossiq\Woo\WooRefusalGroundsUnavailable;
 use OCA\OpenCatalogi\Service\Woo\WithheldDocuments;
+use OCA\OpenCatalogi\Service\Woo\WithheldDocumentStore;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -157,7 +158,11 @@ class WithheldDocumentsRecordTest extends TestCase {
 			static fn (string $app): bool => $app !== 'dossiq' || $dossiq
 		);
 
-		return new WithheldDocuments($config, $container, $appManager, new NullLogger());
+		return new WithheldDocuments(
+			new WithheldDocumentStore($config, $container, $appManager, new NullLogger()),
+			$container,
+			$appManager
+		);
 	}//end service()
 
 	/**

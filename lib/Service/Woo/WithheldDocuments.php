@@ -22,11 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
-use DateTimeImmutable;
 use OCP\App\IAppManager;
-use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
@@ -42,6 +39,8 @@ use Throwable;
  * and stored as dossiq answered, so the public read never guesses a label.
  * When that list cannot be reached, nothing is stored or removed and the
  * vendored snapshot is NOT read: a label from a stale copy is worse than none.
+ *
+ * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
  */
 class WithheldDocuments {
 
@@ -98,16 +97,14 @@ class WithheldDocuments {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig         $config     Holds the register and schema ids.
-	 * @param ContainerInterface $container  Resolves OpenRegister's ObjectService and dossiq's list.
-	 * @param IAppManager        $appManager Says whether OpenRegister and dossiq are there.
-	 * @param LoggerInterface    $logger     Records a store failure.
+	 * @param WithheldDocumentStore $store      Reads and writes the withheldDocument objects.
+	 * @param ContainerInterface    $container  Resolves dossiq's grounds list.
+	 * @param IAppManager           $appManager Says whether dossiq is there.
 	 */
 	public function __construct(
-		private readonly IAppConfig $config,
+		private readonly WithheldDocumentStore $store,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
-		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
 
@@ -125,8 +122,7 @@ class WithheldDocuments {
 	public function record(string $publicationId, array $entries, string $source): array {
 		$entries = array_map(fn (mixed $entry): array => $this->reduce(entry: $entry), array_values($entries));
 
-		$objects = $this->objects();
-		if ($objects === null || $this->publicationExists(objects: $objects, publicationId: $publicationId) === false) {
+		if ($this->store->publicationExists(publicationId: $publicationId) === false) {
 			return $this->refuseAll(entries: $entries, reason: self::REASON_NO_PUBLICATION);
 		}
 
@@ -155,7 +151,7 @@ class WithheldDocuments {
 			return $this->refuseAll(entries: $entries, reason: self::REASON_GROUNDS_UNAVAILABLE);
 		}
 
-		$this->replace(objects: $objects, publicationId: $publicationId, accepted: $accepted, source: $source);
+		$this->store->replace(publicationId: $publicationId, accepted: $accepted, source: $source);
 
 		return ['recorded' => count($accepted), 'refused' => $refused];
 	}//end record()
@@ -179,9 +175,12 @@ class WithheldDocuments {
 			}
 		}
 
-		$position = $entry['position'] ?? 0;
+		$position = 0;
+		if (is_numeric($entry['position'] ?? null) === true) {
+			$position = (int)$entry['position'];
+		}
 
-		return ['position' => is_numeric($position) === true ? (int)$position : 0, 'grounds' => $grounds];
+		return ['position' => $position, 'grounds' => $grounds];
 	}//end reduce()
 
 	/**
@@ -215,74 +214,6 @@ class WithheldDocuments {
 	}//end resolve()
 
 	/**
-	 * Remove the stored entries of the publication and write the accepted ones.
-	 *
-	 * @param object                                         $objects       OpenRegister's ObjectService.
-	 * @param string                                         $publicationId The publication.
-	 * @param list<array{position: int, grounds: list<array<string, string>>}> $accepted The entries to store.
-	 * @param string                                         $source        The recording app.
-	 *
-	 * @return void
-	 */
-	private function replace(object $objects, string $publicationId, array $accepted, string $source): void {
-		[$register, $schema] = $this->target(key: 'withheld_document_schema');
-
-		$result = $objects->searchObjectsPaginated(
-			query: ['@self' => ['register' => $register, 'schema' => $schema], 'publication' => $publicationId, '_limit' => 1000],
-			_rbac: false,
-			_multitenancy: false
-		);
-		foreach ((array)($result['results'] ?? []) as $row) {
-			$stored = $this->asArray(object: $row);
-			if ((string)($stored['publication'] ?? '') !== $publicationId) {
-				continue;
-			}
-
-			$objects->deleteObject(uuid: (string)($stored['id'] ?? ''), register: $register, schema: $schema, _rbac: false, _multitenancy: false);
-		}
-
-		$now = (new DateTimeImmutable())->format('c');
-		foreach ($accepted as $entry) {
-			$objects->saveObject(
-				object: [
-					'publication' => $publicationId,
-					'position' => $entry['position'],
-					'grounds' => $entry['grounds'],
-					'source' => $source,
-					'recordedAt' => $now,
-				],
-				register: $register,
-				schema: $schema,
-				_rbac: false,
-				_multitenancy: false
-			);
-		}
-	}//end replace()
-
-	/**
-	 * Whether the publication exists.
-	 *
-	 * @param object $objects       OpenRegister's ObjectService.
-	 * @param string $publicationId The publication.
-	 *
-	 * @return bool
-	 */
-	private function publicationExists(object $objects, string $publicationId): bool {
-		if (trim($publicationId) === '') {
-			return false;
-		}
-
-		try {
-			[$register, $schema] = $this->target(key: 'publication_schema');
-			$found = $objects->find(id: $publicationId, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
-		} catch (Throwable $e) {
-			return false;
-		}
-
-		return $found !== null && $found !== [];
-	}//end publicationExists()
-
-	/**
 	 * dossiq's grounds list, or null when dossiq or the class is not there.
 	 *
 	 * @return object|null
@@ -298,47 +229,12 @@ class WithheldDocuments {
 			return null;
 		}
 
-		return is_object($grounds) === true && method_exists($grounds, 'byCode') === true ? $grounds : null;
+		if (is_object($grounds) === false || method_exists($grounds, 'byCode') === false) {
+			return null;
+		}
+
+		return $grounds;
 	}//end grounds()
-
-	/**
-	 * OpenRegister's ObjectService, or null when OpenRegister is not there.
-	 *
-	 * @return object|null
-	 */
-	private function objects(): ?object {
-		if ($this->appManager->isInstalled('openregister') === false) {
-			return null;
-		}
-
-		try {
-			$objects = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		} catch (Throwable $e) {
-			$this->logger->warning('WithheldDocuments: OpenRegister is unavailable', ['exception' => $e->getMessage()]);
-			return null;
-		}
-
-		return is_object($objects) === true ? $objects : null;
-	}//end objects()
-
-	/**
-	 * The publication register and a schema id from the app config.
-	 *
-	 * @param string $key The schema config key.
-	 *
-	 * @return array{0: string, 1: string}
-	 *
-	 * @throws \RuntimeException When either is not configured.
-	 */
-	private function target(string $key): array {
-		$register = trim($this->config->getValueString('opencatalogi', 'publication_register', ''));
-		$schema = trim($this->config->getValueString('opencatalogi', $key, ''));
-		if ($register === '' || $schema === '') {
-			throw new \RuntimeException('Register configuration is not set for publication_register / ' . $key . '.');
-		}
-
-		return [$register, $schema];
-	}//end target()
 
 	/**
 	 * Whether an error is dossiq saying its list cannot be read.
@@ -370,29 +266,4 @@ class WithheldDocuments {
 		return ['recorded' => 0, 'refused' => $refused];
 	}//end refuseAll()
 
-	/**
-	 * An OpenRegister object as a flat array with its id.
-	 *
-	 * @param mixed $object The object.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		$id = ($object['id'] ?? ($object['@self']['id'] ?? ($object['uuid'] ?? null)));
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$object = $object['object'];
-		}
-
-		$object['id'] = $id;
-
-		return $object;
-	}//end asArray()
 }//end class
