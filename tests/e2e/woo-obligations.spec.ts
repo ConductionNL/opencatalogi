@@ -2,7 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * The Woo-verplichtingen page (woo-obligation-overview, REQ-WOO-001 and
+ * The Woo-verplichtingen page, ObligationsIndex (manifest page Obligations;
+ * woo-obligation-overview, REQ-WOO-001 and
  * REQ-WOO-003).
  *
  * THE FIXTURE. Two enabled `obligationSource` rows, created through
@@ -90,7 +91,7 @@ test.describe('Woo obligations', () => {
 		expect(unread).toContain(`e2e-raad-${RUN}`)
 	})
 
-	test('an admin reads the page with the unread sources above the figures', async ({
+	test('ObligationsIndex: an admin reads the page with the unread sources above the figures', async ({
 		page,
 	}) => {
 		await page.goto(`${APP_BASE}/obligations`)

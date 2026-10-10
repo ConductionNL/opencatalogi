@@ -203,6 +203,7 @@ import { obligationPage } from '../../services/obligationOverview.js'
 export default {
 	name: 'ObligationsIndex',
 	components: { NcEmptyContent, NcLoadingIcon, NcNoteCard },
+	/** @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-an-admin-can-open-the-overview-as-a-page-req-woo-003 */
 	setup() {
 		const { isAdmin, loaded } = useIsAdmin()
 		return { isAdmin, loaded }
