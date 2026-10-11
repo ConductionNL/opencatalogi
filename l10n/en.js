@@ -1,6 +1,11 @@
 OC.L10N.register(
     "opencatalogi",
     {
+        "Show which documents of a publication were withheld, and on which grounds": "Show which documents of a publication were withheld, and on which grounds",
+        "Show withheld documents": "Show withheld documents",
+        "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.",
+        "Title public": "Title public",
+        "Whether the title of this document may be shown on the public decision when the document is withheld.": "Whether the title of this document may be shown on the public decision when the document is withheld.",
         "Store": "Store",
         "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.",
         "Load example data?": "Load example data?",

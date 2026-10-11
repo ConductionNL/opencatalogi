@@ -1,5 +1,10 @@
 {
     "translations": {
+        "Show which documents of a publication were withheld, and on which grounds": "Toon welke documenten van een publicatie zijn geweigerd, en op welke gronden",
+        "Show withheld documents": "Geweigerde documenten tonen",
+        "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Toon bij een openbaar Woo-besluit welke documenten zijn geweigerd en op welke weigeringsgronden, zonder hun inhoud.",
+        "Title public": "Titel openbaar",
+        "Whether the title of this document may be shown on the public decision when the document is withheld.": "Of de titel van dit document bij het openbare besluit getoond mag worden als het document geweigerd is.",
         "Load example data?": "Voorbeeldgegevens laden?",
         "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install.": "Voorbeeldgegevens vullen de lijsten, detailpagina’s en dashboards, zodat je de app meteen ziet werken. Elke kaart heeft een eigen knop Laden. Kies \"Geen\" op een productieomgeving.",
         "None, I will set this up myself": "Geen, ik richt dit zelf in",

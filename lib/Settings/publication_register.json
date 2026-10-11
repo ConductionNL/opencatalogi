@@ -447,7 +447,7 @@
           }
         },
         "title": "Catalog",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A collection of publications organized by theme and schema",
         "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
@@ -592,6 +592,13 @@
             "default": false,
             "facetable": false,
             "title": "Deliver to PLOOI"
+          },
+          "showWithheld": {
+            "type": "boolean",
+            "description": "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.",
+            "default": false,
+            "facetable": false,
+            "title": "Show withheld documents"
           }
         },
         "configuration": {
