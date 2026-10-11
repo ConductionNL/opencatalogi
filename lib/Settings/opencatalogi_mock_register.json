@@ -2013,6 +2013,60 @@
         "announcementUrl": "https://www.officielebekendmakingen.nl/stcrt-2026-10003",
         "automaticWithdrawal": false,
         "openedBy": "admin"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "withheldDocument",
+          "slug": "withhelddocument-1"
+        },
+        "publication": "5f0c2a1e-7b3d-4c8e-9a61-2d4f6b8c0e11",
+        "position": 3,
+        "grounds": [
+          {
+            "code": "5.1.2.e",
+            "article": "5.1",
+            "label": "Eerbiediging van de persoonlijke levenssfeer"
+          }
+        ],
+        "source": "dossiq",
+        "recordedAt": "2026-10-01T10:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "withheldDocument",
+          "slug": "withhelddocument-2"
+        },
+        "publication": "5f0c2a1e-7b3d-4c8e-9a61-2d4f6b8c0e11",
+        "position": 7,
+        "grounds": [
+          {
+            "code": "5.1.2.e",
+            "article": "5.1",
+            "label": "Eerbiediging van de persoonlijke levenssfeer"
+          }
+        ],
+        "source": "dossiq",
+        "recordedAt": "2026-10-02T10:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "withheldDocument",
+          "slug": "withhelddocument-3"
+        },
+        "publication": "5f0c2a1e-7b3d-4c8e-9a61-2d4f6b8c0e11",
+        "position": 9,
+        "grounds": [
+          {
+            "code": "5.1.2.i",
+            "article": "5.1",
+            "label": "Het goed functioneren van de Staat of andere publiekrechtelijke lichamen"
+          }
+        ],
+        "source": "dossiq",
+        "recordedAt": "2026-10-03T10:00:00+00:00"
       }
     ]
   }
