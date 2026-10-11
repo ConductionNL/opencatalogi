@@ -35,6 +35,7 @@ export class Catalogi implements TCatalogi {
 	public slug!: string
 	public hasWooSitemap!: boolean
 	public hasOoapi!: boolean
+	public showWithheld!: boolean
 
 	/**
 	 * @param data
@@ -60,6 +61,7 @@ export class Catalogi implements TCatalogi {
 		this.slug = data?.slug || ''
 		this.hasWooSitemap = data?.hasWooSitemap || false
 		this.hasOoapi = data?.hasOoapi || false
+		this.showWithheld = data?.showWithheld === true
 	}
 
 	/* istanbul ignore next */
@@ -89,6 +91,7 @@ export class Catalogi implements TCatalogi {
 				),
 			hasWooSitemap: z.boolean(),
 			hasOoapi: z.boolean(),
+			showWithheld: z.boolean(),
 		})
 
 		const result = schema.safeParse({
