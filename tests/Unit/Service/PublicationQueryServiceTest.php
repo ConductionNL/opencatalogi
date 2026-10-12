@@ -613,6 +613,40 @@ class PublicationQueryServiceTest extends TestCase {
 	}//end testCatalogSearchQueryKeepsTheOrderForASingleRegisterCatalog()
 
 	/**
+	 * A catalog holding the same id as string and int (`['19', 19]`) searches each schema
+	 * once and keeps the single-register path, so its rows are not returned twice.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryDeduplicatesTheCatalogScope(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => ['24', 24, 202], 'registers' => ['19', 19]],
+			queryParams: ['_order' => ['@self.created' => 'desc']],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame([24, 202], $query['_schemas']);
+		$this->assertSame(19, $query['_register']);
+		$this->assertSame(['@self.created' => 'desc'], $query['_order']);
+	}//end testCatalogSearchQueryDeduplicatesTheCatalogScope()
+
+	/**
+	 * A JSON-encoded `_order` is decoded, and a multi-register catalog keeps `@self.<field>`
+	 * keys whose `_<field>` column exists in every table.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryKeepsUniversalSelfOrderKeysAcrossRegisters(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [24, 30], 'registers' => [19, 20]],
+			queryParams: ['_order' => '{"@self.created":"desc","title":"asc"}'],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame(['@self.created' => 'desc'], $query['_order']);
+	}//end testCatalogSearchQueryKeepsUniversalSelfOrderKeysAcrossRegisters()
+
+	/**
 	 * WOO-581 review round 2 (f3): the rows of a relation result go through the
 	 * read-rule guard for an anonymous caller. A row of a schema without an
 	 * `authorization` block goes, a row without a numeric schema id goes (fail

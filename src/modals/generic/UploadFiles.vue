@@ -468,6 +468,8 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
+import { dispatchObjectsChanged } from '@conduction/nextcloud-vue'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -1188,13 +1190,25 @@ export default {
 
 				const results = await Promise.allSettled(uploadPromises)
 
-				await this.getAllTags()
-
 				const publication = objectStore.getActiveObject('publication')
 				const { registerId, schemaId } =
 					this.getRegisterSchemaIds(publication)
+				// Refresh the list before the follow-up fetches below can fail.
+				if (results.some((r) => r.status === 'fulfilled')) {
+					dispatchObjectsChanged({
+						register: registerId,
+						schema: schemaId,
+						id: publication.id,
+					})
+				}
+
+				await this.getAllTags()
+
 				const getAttachments = await fetch(
-					`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`,
+					generateUrl(
+						'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files',
+						{ registerId, schemaId, objectId: publication.id },
+					),
 				)
 				const attachments = await getAttachments.json()
 				objectStore.setCollection(
@@ -1347,8 +1361,16 @@ export default {
 					try {
 						const { registerId, schemaId } =
 							this.getRegisterSchemaIds(publication)
+						dispatchObjectsChanged({
+							register: registerId,
+							schema: schemaId,
+							id: publication.id,
+						})
 						const getAttachments = await fetch(
-							`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`,
+							generateUrl(
+								'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files',
+								{ registerId, schemaId, objectId: publication.id },
+							),
 						)
 						const attachments = await getAttachments
 							.json()

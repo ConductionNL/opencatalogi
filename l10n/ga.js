@@ -731,9 +731,8 @@ OC.L10N.register(
         "This catalog has no registers or schemas configured": "Níl aon chláir ná scéimrí socraithe don chatalóg seo",
         "Add a register and a schema to the catalog to list its publications here.": "Cuir clár agus scéimre leis an gcatalóg chun a foilseacháin a liostú anseo.",
         "Open catalog": "Oscail an catalóg",
-        "Register and schema": "Clár agus scéimre",
-        "{schema} in {register}": "{schema} ({register})",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cruthaigh do chéad chatalóg. Is é an coimeádán ina mbeidh do chuid foilseachán. Roghnaigh an clár Publication agus an scéimre Publication, ionas go liostóidh an catalóg na foilseacháin a chuireann tú leis."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cruthaigh do chéad chatalóg. Is é an coimeádán ina mbeidh do chuid foilseachán. Roghnaigh an clár Publication agus an scéimre Publication, ionas go liostóidh an catalóg na foilseacháin a chuireann tú leis.",
+        "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas"
     },
     "nplurals=2; plural=(n != 1);"
 )

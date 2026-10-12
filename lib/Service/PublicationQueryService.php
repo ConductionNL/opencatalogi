@@ -2005,15 +2005,26 @@ class PublicationQueryService
         // Clean up catalog-specific parameters.
         unset($searchQuery['catalogSlug'], $searchQuery['fq']);
 
-        // Handle catalog filtering using _schemas for multi-schema search.
-        if (empty($catalog['schemas']) === false) {
-            $schemas = $catalog['schemas'];
-            // Parse JSON string if needed.
-            if (is_string($schemas) === true) {
-                $schemas = json_decode($schemas, true) ?? [];
+        // A JSON-encoded `_order` (as nextcloud-vue's buildQueryString sends it) becomes an array.
+        if (isset($searchQuery['_order']) === true && is_string($searchQuery['_order']) === true) {
+            $decodedOrder = json_decode($searchQuery['_order'], true);
+            if (is_array($decodedOrder) === true) {
+                $searchQuery['_order'] = $decodedOrder;
+            }
+        }
+
+        // Unique int ids, so a catalog holding ['19', 19] does not list everything twice.
+        $normaliseScopeIds = static function (mixed $ids): array {
+            if (is_string($ids) === true) {
+                $ids = (json_decode($ids, true) ?? []);
             }
 
-            $schemas = array_map('intval', $schemas);
+            return array_values(array_unique(array_map('intval', (array) $ids)));
+        };
+
+        // Handle catalog filtering using _schemas for multi-schema search.
+        if (empty($catalog['schemas']) === false) {
+            $schemas = $normaliseScopeIds($catalog['schemas']);
             // Pass all schemas for both search and faceting.
             $searchQuery['_schemas'] = $schemas;
             // Only set _schema when the catalog pins ONE schema in ONE register (the
@@ -2024,24 +2035,15 @@ class PublicationQueryService
             // round 2). The guard itself produces that shape: [S_ok, S_open] × [R1, R2]
             // becomes [S_ok] × [R1, R2]. Otherwise `_schemas` carries the scope.
             unset($searchQuery['_schema']);
-            $catalogRegisters = ($catalog['registers'] ?? []);
-            if (is_string($catalogRegisters) === true) {
-                $catalogRegisters = (json_decode($catalogRegisters, true) ?? []);
-            }
+            $catalogRegisters = $normaliseScopeIds(($catalog['registers'] ?? []));
 
-            if (count($schemas) === 1 && is_array($catalogRegisters) === true && count($catalogRegisters) === 1) {
+            if (count($schemas) === 1 && count($catalogRegisters) === 1) {
                 $searchQuery['_schema'] = $schemas[0];
             }
         }//end if
 
         if (empty($catalog['registers']) === false) {
-            $registers = $catalog['registers'];
-            // Parse JSON string if needed.
-            if (is_string($registers) === true) {
-                $registers = json_decode($registers, true) ?? [];
-            }
-
-            $registers = array_map('intval', $registers);
+            $registers = $normaliseScopeIds($catalog['registers']);
             if (count($registers) === 1) {
                 // Single register: use magic mapper optimization.
                 $searchQuery['_register'] = $registers[0];
@@ -2057,7 +2059,13 @@ class PublicationQueryService
             // Only allow metadata fields that exist in all magic mapper tables.
             if (empty($searchQuery['_order']) === false && is_array($searchQuery['_order']) === true) {
                 foreach (array_keys($searchQuery['_order']) as $orderField) {
-                    if (in_array($orderField, self::UNIVERSAL_ORDER_FIELDS, true) === false) {
+                    // `@self.created` names the same metadata column as `_created`.
+                    $columnField = (string) $orderField;
+                    if (str_starts_with($columnField, '@self.') === true) {
+                        $columnField = '_'.substr($columnField, strlen('@self.'));
+                    }
+
+                    if (in_array($columnField, self::UNIVERSAL_ORDER_FIELDS, true) === false) {
                         unset($searchQuery['_order'][$orderField]);
                     }
                 }

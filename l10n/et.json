@@ -730,9 +730,8 @@
         "This catalog has no registers or schemas configured": "Selle kataloogi jaoks pole registreid ega skeeme seadistatud",
         "Add a register and a schema to the catalog to list its publications here.": "Lisa kataloogile register ja skeem, et selle väljaanded siin kuvataks.",
         "Open catalog": "Ava kataloog",
-        "Register and schema": "Register ja skeem",
-        "{schema} in {register}": "{schema} ({register})",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Loo oma esimene kataloog. See on konteiner, kus sinu väljaanded asuvad. Vali register Publication ja skeem Publication, et kataloog näitaks väljaandeid, mida sa lisad."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Loo oma esimene kataloog. See on konteiner, kus sinu väljaanded asuvad. Vali register Publication ja skeem Publication, et kataloog näitaks väljaandeid, mida sa lisad.",
+        "Manage your publications and their status": "Hallake oma väljaandeid ja nende olekut"
     },
     "plurals": {}
 }

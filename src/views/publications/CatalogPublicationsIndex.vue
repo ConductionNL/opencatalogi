@@ -48,29 +48,20 @@
 	</NcEmptyContent>
 	<CnIndexPage
 		v-else
+		ref="index"
 		:key="indexKey"
 		v-bind="indexProps"
 		:title="t('opencatalogi', 'Publications')"
-		:description="catalog.title"
-		:register="String(activePair.register)"
-		:schema="String(activePair.schema)"
+		:description="t('opencatalogi', 'Manage your publications and their status')"
+		:showTitle="true"
+		:register="String(primaryPair.register)"
+		:schema="String(primaryPair.schema)"
+		:collectionUrl="collectionUrl"
 		:rowClickToView="opensDetail"
 		:viewTo="opensDetail ? rowTarget : null"
 		@rowClick="onRowOpen"
 		@rowAuxClick="onRowOpen"
-		@view="onRowOpen"
-		@editOpen="onRowOpen">
-		<template v-if="pairs.length > 1" #below-header>
-			<NcSelect
-				class="catalog-publications__pair"
-				:modelValue="activeOption"
-				:options="pairOptions"
-				label="label"
-				:clearable="false"
-				:inputLabel="t('opencatalogi', 'Register and schema')"
-				@update:modelValue="onPairSelected" />
-		</template>
-	</CnIndexPage>
+		@view="onView" />
 </template>
 
 <script>
@@ -81,15 +72,12 @@ import {
 } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { NcButton, NcEmptyContent, NcLoadingIcon, NcSelect } from '@nextcloud/vue'
+import { NcButton, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import DatabaseAlertOutline from 'vue-material-design-icons/DatabaseAlertOutline.vue'
 import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
 import DatabaseOffOutline from 'vue-material-design-icons/DatabaseOffOutline.vue'
 import { catalogScopePairs, normaliseIdList } from '../../services/catalogScope.js'
 import { objectStore } from '../../store/store.js'
-
-/** The query key holding the active pair. Underscored, so CnIndexPage does not send it to the API as a filter. */
-const PAIR_QUERY_KEY = '_pair'
 
 /** Listeners CnPageRenderer binds for its own row opening, which only works on `type:"index"` pages. */
 const RENDERER_ROW_LISTENERS = [
@@ -103,13 +91,14 @@ const RENDERER_ROW_LISTENERS = [
  * CatalogPublicationsIndex: the publications of one catalog, scoped like the
  * backend's `/api/{catalogSlug}`, to the catalog's registers × schemas.
  *
- * Renders the library's CnIndexPage for one register/schema pair at a time.
- * With several pairs a selector picks the active one, kept in the `_pair`
- * query parameter. Rows of the publication pair open on PublicationDetail;
- * rows of any other pair have no detail page, so a click selects them and
- * Edit uses CnIndexPage's own form for that schema. Takes the page config and
- * route params from CnPageRenderer, and passes the rest of the config through
- * to CnIndexPage, `publicationPairConfig` on the publication pair only.
+ * Renders the library's CnIndexPage over all of the catalog's pairs at once,
+ * listed from `/api/{catalogSlug}` through its `collectionUrl`. The page's own
+ * pair is the publication pair when the catalog holds it, else its first pair.
+ * Rows of the publication pair open on PublicationDetail; rows of any other
+ * pair have no detail page, so View and Edit open CnIndexPage's form for their
+ * own schema. Takes the page config and route params from CnPageRenderer, and
+ * passes the rest of the config through to CnIndexPage, `publicationPairConfig`
+ * only when the page's pair is the publication pair.
  *
  * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
  */
@@ -123,7 +112,6 @@ export default {
 		NcButton,
 		NcEmptyContent,
 		NcLoadingIcon,
-		NcSelect,
 	},
 
 	inheritAttrs: false,
@@ -141,8 +129,8 @@ export default {
 		schema: { type: String, default: '' },
 		/**
 		 * CnIndexPage props that only fit the publication schema, such as its
-		 * columns and row actions. Passed on the publication pair only; other
-		 * pairs fall back to CnIndexPage's defaults for their schema.
+		 * columns and row actions. Passed when the page's pair is the
+		 * publication pair; its custom row actions show on publication rows only.
 		 */
 		publicationPairConfig: { type: Object, default: () => ({}) },
 	},
@@ -154,8 +142,6 @@ export default {
 			resolving: false,
 			failed: false,
 			resolveSequence: 0,
-			/** Register and schema titles for the selector, keyed `register:<id>` / `schema:<id>`. */
-			scopeTitles: {},
 		}
 	},
 
@@ -204,36 +190,57 @@ export default {
 			return catalogScopePairs(this.catalog)
 		},
 
-		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
-		activePair() {
-			const key = this.$route?.query?.[PAIR_QUERY_KEY]
+		/**
+		 * The publication register and schema ids, or null when either is unknown.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 */
+		publicationPair() {
+			const [register] = normaliseIdList([this.register])
+			const [schema] = normaliseIdList([this.schema])
+			return register !== undefined && schema !== undefined
+				? { register, schema }
+				: null
+		},
+
+		/**
+		 * The page's own pair for CnIndexPage: the publication pair when the
+		 * catalog holds it, else the catalog's first pair.
+		 *
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+		 */
+		primaryPair() {
 			return (
-				this.pairs.find((pair) => pair.key === key) ?? this.pairs[0] ?? null
+				this.pairs.find((pair) => this.isPublicationPair(pair))
+				?? this.pairs[0]
+				?? null
 			)
+		},
+
+		/**
+		 * The catalog's own list endpoint, which searches all of its pairs at once.
+		 *
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+		 */
+		collectionUrl() {
+			return generateUrl('/apps/opencatalogi/api/{catalogSlug}', {
+				catalogSlug: this.catalogSlug,
+			})
 		},
 
 		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		indexKey() {
-			const pair = this.activePair
+			const pair = this.primaryPair
 			return `${this.catalogSlug}:${pair?.register}:${pair?.schema}`
 		},
 
 		/**
-		 * Whether the active pair is the publication pair, which has a detail page.
+		 * Whether the page's pair is the publication pair, which has a detail page.
 		 *
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
 		opensDetail() {
-			const [register] = normaliseIdList([this.register])
-			const [schema] = normaliseIdList([this.schema])
-			const pair = this.activePair
-			return Boolean(
-				pair
-				&& register !== undefined
-				&& schema !== undefined
-				&& pair.register === register
-				&& pair.schema === schema,
-			)
+			return this.isPublicationPair(this.primaryPair)
 		},
 
 		/** @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003 */
@@ -242,37 +249,26 @@ export default {
 			for (const listener of RENDERER_ROW_LISTENERS) {
 				delete attrs[listener]
 			}
-			if (this.opensDetail) {
-				return {
-					...this.actionToggles,
-					...attrs,
-					...this.publicationPairConfig,
-				}
+			if (!this.opensDetail) {
+				return { ...this.actionToggles, ...attrs }
 			}
-			// CnIndexPage's View only emits; without a detail page it would do nothing.
-			return { ...this.actionToggles, ...attrs, showViewAction: false }
-		},
-
-		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
-		pairOptions() {
-			return this.pairs.map((pair) => ({
-				key: pair.key,
-				label: t('opencatalogi', '{schema} in {register}', {
-					schema: this.scopeTitles[`schema:${pair.schema}`] ?? pair.schema,
-					register:
-						this.scopeTitles[`register:${pair.register}`]
-						?? pair.register,
-				}),
-			}))
-		},
-
-		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
-		activeOption() {
-			return (
-				this.pairOptions.find(
-					(option) => option.key === this.activePair?.key,
-				) ?? null
-			)
+			const config = { ...this.publicationPairConfig }
+			if (Array.isArray(config.actions)) {
+				// The publication's own actions (e.g. its file list) do not fit a row of another schema.
+				config.actions = config.actions.map((action) =>
+					action && typeof action === 'object'
+						? {
+								...action,
+								visible: (row) =>
+									this.isPublicationRow(row)
+									&& (typeof action.visible === 'function'
+										? action.visible(row)
+										: action.visible !== false),
+							}
+						: action,
+				)
+			}
+			return { ...this.actionToggles, ...attrs, ...config }
 		},
 
 		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
@@ -302,19 +298,6 @@ export default {
 			if (!this.resolving && !this.menuCatalog) {
 				this.resolveCatalog({ walk: false })
 			}
-		},
-
-		pairs: {
-			immediate: true,
-			/**
-			 * @param {Array<{register: number, schema: number}>} pairs The pairs.
-			 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
-			 */
-			handler(pairs) {
-				if (pairs.length > 1) {
-					this.loadScopeTitles(pairs)
-				}
-			},
 		},
 	},
 
@@ -372,67 +355,34 @@ export default {
 		},
 
 		/**
-		 * Load the register and schema titles the selector shows. An id whose
-		 * title does not load stays shown as the id. Each id is requested once;
-		 * its null placeholder marks the request as in flight.
+		 * Whether a pair is the publication pair.
 		 *
-		 * @param {Array<{register: number, schema: number}>} pairs The pairs.
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+		 * @param {{register: number, schema: number}|null} pair The pair.
+		 * @return {boolean} True for the publication pair.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
-		async loadScopeTitles(pairs) {
-			const wanted = new Set()
-			for (const pair of pairs) {
-				wanted.add(`register:${pair.register}`)
-				wanted.add(`schema:${pair.schema}`)
-			}
-			const missing = [...wanted].filter((key) => !(key in this.scopeTitles))
-			if (missing.length === 0) {
-				return
-			}
-			const placeholders = Object.fromEntries(
-				missing.map((key) => [key, null]),
-			)
-			this.scopeTitles = { ...this.scopeTitles, ...placeholders }
-			await Promise.all(
-				missing.map(async (key) => {
-					const [kind, id] = key.split(':')
-					try {
-						const response = await fetch(
-							generateUrl(`/apps/openregister/api/${kind}s/{id}`, {
-								id,
-							}),
-						)
-						if (!response.ok) return
-						const data = await response.json()
-						if (typeof data?.title === 'string' && data.title !== '') {
-							this.scopeTitles = {
-								...this.scopeTitles,
-								[key]: data.title,
-							}
-						}
-					} catch {
-						// The id stays as the label.
-					}
-				}),
+		isPublicationPair(pair) {
+			const publication = this.publicationPair
+			return Boolean(
+				pair
+				&& publication
+				&& pair.register === publication.register
+				&& pair.schema === publication.schema,
 			)
 		},
 
 		/**
-		 * Switch the list to another pair. Starts from a clean query: the
-		 * previous pair's filters, search and sort belong to another schema.
+		 * Whether a row is a publication, by its own `@self` register and schema.
 		 *
-		 * @param {{key: string}|null} option The selected option.
-		 * @return {void}
-		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+		 * @param {object} row The row.
+		 * @return {boolean} True for a publication row.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
-		onPairSelected(option) {
-			if (!option || option.key === this.activePair?.key) {
-				return
-			}
-			this.$router
-				.push({ query: { [PAIR_QUERY_KEY]: option.key } })
-				.catch(() => {})
+		isPublicationRow(row) {
+			const self = row?.['@self'] || {}
+			const [register] = normaliseIdList([self.register])
+			const [schema] = normaliseIdList([self.schema])
+			return this.isPublicationPair({ register, schema })
 		},
 
 		/**
@@ -443,7 +393,7 @@ export default {
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
 		rowTarget(row) {
-			if (!this.opensDetail) {
+			if (!this.isPublicationRow(row)) {
 				return null
 			}
 			const self = row?.['@self'] || {}
@@ -459,7 +409,8 @@ export default {
 
 		/**
 		 * Open a row on a click, a middle click or the View action. A
-		 * ctrl/cmd/shift or middle click opens it in a new tab.
+		 * ctrl/cmd/shift or middle click opens a publication in a new tab; a row
+		 * of another schema opens in the form for its own schema.
 		 *
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
@@ -474,10 +425,35 @@ export default {
 			if (isNewTabHandled(nativeEvent)) {
 				return
 			}
+			// A row of another schema has no detail page to open in a new tab: any click but a middle one,
+			// a ctrl/cmd/shift click included, opens the form for its own schema, as in the library.
+			if (!this.isPublicationRow(row)) {
+				if (nativeEvent?.button !== 1) {
+					this.$refs.index?.openFormDialog(row)
+				}
+				return
+			}
 			const target = this.rowTarget(row)
 			if (target) {
 				openRowTarget(nativeEvent, target, this.$router)
 			}
+		},
+
+		/**
+		 * The View action: a publication opens its detail page, a row of another
+		 * schema, which has none, opens in CnIndexPage's form for its own schema.
+		 *
+		 * @param {object} row The row.
+		 * @param {Event} [event] The originating event, when there is one.
+		 * @return {void}
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 */
+		onView(row, event) {
+			if (this.isPublicationRow(row)) {
+				this.onRowOpen(row, event)
+				return
+			}
+			this.$refs.index?.openFormDialog(row)
 		},
 	},
 }
@@ -488,9 +464,5 @@ export default {
 	display: flex;
 	justify-content: center;
 	padding: calc(var(--default-grid-baseline) * 10);
-}
-
-.catalog-publications__pair {
-	max-width: 480px;
 }
 </style>
