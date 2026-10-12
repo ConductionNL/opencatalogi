@@ -1,0 +1,98 @@
+{
+  "_note": "Register fragment for woo-decision-shows-what-was-withheld (REQ-WDW-001). One withheldDocument per document of a Woo decision that was not made public, recorded by dossiq through WithheldDocuments::record(). It holds the position on the inventory and the refusal grounds as dossiq's list named them, and nothing of the document: no title, file, hash, reference or text. Admin-only, as wooAssessment: the public read (REQ-WDW-003) answers through the publication, never through the object API.",
+  "components": {
+    "registers": {
+      "publication": {
+        "schemas": [
+          "withheldDocument"
+        ],
+        "configuration": {
+          "schemas": {
+            "withheldDocument": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "One withheld document of a Woo decision: its position and the grounds, never its content"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "withheldDocument": {
+        "slug": "withheldDocument",
+        "title": "Withheld document",
+        "version": "0.1.0",
+        "summary": "A document of a Woo decision that was not made public, and why",
+        "description": "Records that the document at this position on the decision's inventory was withheld, and on which refusal grounds. It never holds the document itself: no title, no file, no hash, no reference and no text, so the record of what was withheld cannot leak what was withheld.",
+        "icon": null,
+        "required": [
+          "publication",
+          "position",
+          "grounds",
+          "source",
+          "recordedAt"
+        ],
+        "authorization": {
+          "read": ["admin"],
+          "create": ["admin"],
+          "update": ["admin"],
+          "delete": ["admin"]
+        },
+        "properties": {
+          "publication": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Publication",
+            "description": "The publication of the Woo decision this document belongs to.",
+            "facetable": true
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Position",
+            "description": "The document's number on the decision's inventory."
+          },
+          "grounds": {
+            "type": "array",
+            "minItems": 1,
+            "title": "Grounds",
+            "description": "The grounds it was withheld on. Each holds the code, article and label from dossiq's list.",
+            "items": {
+              "type": "object",
+              "required": ["code", "article", "label"],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "title": "Code",
+                  "description": "The ground's code, such as 5.1.2.e."
+                },
+                "article": {
+                  "type": "string",
+                  "title": "Article",
+                  "description": "The article of the Woo the ground rests on."
+                },
+                "label": {
+                  "type": "string",
+                  "title": "Label",
+                  "description": "The ground in words, as dossiq's list names it."
+                }
+              }
+            }
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "The app that recorded the entry, such as dossiq.",
+            "facetable": true
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded at",
+            "description": "When the entry was recorded."
+          }
+        }
+      }
+    }
+  }
+}

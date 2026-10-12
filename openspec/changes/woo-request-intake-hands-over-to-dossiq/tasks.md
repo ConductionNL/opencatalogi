@@ -4,7 +4,7 @@ Read `openspec/woo-build-rules.md` first. Start only once `dossiq/woo-request-ta
 
 ## 1. The stamp (same release as the forward)
 
-- [ ] 1.1 Declare `migratedTo` and `migratedAt` on `#wooRequest` and bump its version (REQ-WHD-001). Verify: `tests/Unit/Settings/WooRequestMigrationStampTest.php::testTheImportStampIsStoredOnTheRequest` (fails today: the keys are dropped), saving the exact stamp shape from dossiq's REQ-WTO-004 step 5.
+- [x] 1.1 Declare `migratedTo` and `migratedAt` on `#wooRequest` and bump its version (REQ-WHD-001). Verify: `tests/Unit/Settings/WooRequestMigrationStampTest.php::testTheImportStampIsStoredOnTheRequest` (fails today: the keys are dropped), saving the exact stamp shape from dossiq's REQ-WTO-004 step 5.
 
 ## 2. Forward
 
