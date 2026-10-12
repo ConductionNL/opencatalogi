@@ -11,13 +11,13 @@
 ## 2. The banner
 
 - [x] 2.1 `instanceBanner`: body, period, severity, dismissable (REQ-PCS-103)
-- [ ] 2.2 Render it to every user between its dates, and remember a dismissal per user (REQ-PCS-103)
+- [x] 2.2 Render it to every user between its dates, and remember a dismissal per user (REQ-PCS-103). `src/components/InstanceBanners.vue` mounted in `src/App.vue` reads `GET /api/banners` (period and per-user dismissal decided server side, `NoticeBoardController::banners`, `BannerService::forUser`) and posts `POST /api/banners/dismiss`; client half pinned in `tests/vitest/instanceBanners.spec.js` (6/6). Live look owed: see STATE Still owed.
 
 ## 3. The notice board and the feed
 
 - [x] 3.1 `notice` schema per catalogue, with an optional link to a publication (REQ-PCS-104)
 - [x] 3.2 Comments per notice board, off by default, with a named moderator when enabled (REQ-PCS-104)
-- [ ] 3.3 An Atom feed per catalogue over published records and notices, access-checked per entry (REQ-PCS-105)
+- [ ] 3.3 (blocked: Q-opencatalogi-1, the feed's access check) An Atom feed per catalogue over published records and notices, access-checked per entry (REQ-PCS-105)
 
 ## 4. The reader's answer
 
