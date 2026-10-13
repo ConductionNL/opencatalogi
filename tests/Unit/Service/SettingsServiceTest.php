@@ -2405,4 +2405,50 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertStringNotContainsString('OC_App', $code);
 
 	}//end testSettingsServiceUsesNoPrivateOcAppApi()
+	/**
+	 * The public cache time defaults to 60 seconds (REQ-PAC-003).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
+	 *
+	 * @return void
+	 */
+	public function testThePublicCacheTimeDefaultsToSixtySeconds(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = '') => $default
+		);
+
+		$result = $this->service->getSettings();
+
+		$this->assertSame('60', $result['configuration']['public_api_cache_seconds']);
+
+	}//end testThePublicCacheTimeDefaultsToSixtySeconds()
+
+	/**
+	 * The administrator sets the cache time; zero is kept, a negative or unreadable value becomes zero (REQ-PAC-003).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
+	 *
+	 * @return void
+	 */
+	public function testTheAdministratorSetsThePublicCacheTime(): void {
+		$stored = [];
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored) {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$this->config->method('getValueString')->willReturnCallback(
+			function (string $app, string $key, string $default = '') use (&$stored) {
+				return ($stored[$key] ?? $default);
+			}
+		);
+
+		$this->assertSame('300', $this->service->updateSettings(['public_api_cache_seconds' => 300])['public_api_cache_seconds']);
+		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '0'])['public_api_cache_seconds']);
+		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '-5'])['public_api_cache_seconds']);
+		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => 'soon'])['public_api_cache_seconds']);
+
+	}//end testTheAdministratorSetsThePublicCacheTime()
 }//end class
