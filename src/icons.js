@@ -13,6 +13,7 @@
 // vue-material-design-icons.
 
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import BookOpenVariant from 'vue-material-design-icons/BookOpenVariant.vue'
 import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
 import Bookshelf from 'vue-material-design-icons/Bookshelf.vue'
@@ -30,11 +31,13 @@ import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import History from 'vue-material-design-icons/History.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
+import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Magnify from 'vue-material-design-icons/Magnify.vue'
 import MapMarkerPath from 'vue-material-design-icons/MapMarkerPath.vue'
 import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import Package from 'vue-material-design-icons/Package.vue'
 import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
 import PowerPlugOutline from 'vue-material-design-icons/PowerPlugOutline.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
@@ -47,6 +50,7 @@ import Web from 'vue-material-design-icons/Web.vue'
 
 export default {
 	AccountGroup,
+	AlertOutline,
 	BookOpenVariant,
 	BookOpenVariantOutline,
 	Bookshelf,
@@ -64,11 +68,13 @@ export default {
 	FormatListBulleted,
 	History,
 	LinkVariant,
+	ListBoxOutline,
 	Magnify,
 	MapMarkerPath,
 	OfficeBuilding,
 	Package,
 	PackageVariantClosed,
+	Pencil,
 	PlayCircleOutline,
 	PowerPlugOutline,
 	ShieldAccountOutline,

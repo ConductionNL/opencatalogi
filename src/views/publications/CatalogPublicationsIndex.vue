@@ -59,6 +59,7 @@
 		:collectionUrl="collectionUrl"
 		:rowClickToView="opensDetail"
 		:viewTo="opensDetail ? rowTarget : null"
+		:cardAccent="cardAccent"
 		:editOpensDetail="true"
 		@rowClick="onRowOpen"
 		@rowAuxClick="onRowOpen"
@@ -80,6 +81,7 @@ import DatabaseAlertOutline from 'vue-material-design-icons/DatabaseAlertOutline
 import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
 import DatabaseOffOutline from 'vue-material-design-icons/DatabaseOffOutline.vue'
 import { catalogScopePairs, normaliseIdList } from '../../services/catalogScope.js'
+import { getPublicationStatus } from '../../services/publicationStatus.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
 /** Listeners CnPageRenderer binds for its own row opening, which only works on `type:"index"` pages. */
@@ -386,6 +388,39 @@ export default {
 			const [register] = normaliseIdList([self.register])
 			const [schema] = normaliseIdList([self.schema])
 			return this.isPublicationPair({ register, schema })
+		},
+
+		/**
+		 * A publication card's status color and icon; other rows get none.
+		 *
+		 * @param {object} row The card's object.
+		 * @return {?{variant: string, icon: string, label: string}}
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-publication-card-req-tbl-005
+		 */
+		cardAccent(row) {
+			if (!this.isPublicationRow(row)) {
+				return null
+			}
+			switch (getPublicationStatus(row)) {
+				case 'published':
+					return {
+						variant: 'success',
+						icon: 'ListBoxOutline',
+						label: t('opencatalogi', 'Published'),
+					}
+				case 'depublished':
+					return {
+						variant: 'error',
+						icon: 'AlertOutline',
+						label: t('opencatalogi', 'Depublished'),
+					}
+				default:
+					return {
+						variant: 'warning',
+						icon: 'Pencil',
+						label: t('opencatalogi', 'Concept'),
+					}
+			}
 		},
 
 		/**
