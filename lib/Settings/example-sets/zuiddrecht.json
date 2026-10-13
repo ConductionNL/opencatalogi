@@ -1,0 +1,592 @@
+{
+	"set": "zuiddrecht",
+	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications and the dossier and saved search of the example resident Sanne de Vries (cast key sanne). Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
+	"objects": [
+		{
+			"key": "catalogus",
+			"register": "publication",
+			"schema": "catalog",
+			"data": {
+				"title": "Gemeente Zuiddrecht",
+				"summary": "Openbare informatie van de gemeente Zuiddrecht",
+				"description": "Besluiten, rapporten, raadsstukken en antwoorden op Woo-verzoeken van de gemeente Zuiddrecht. Zuiddrecht is een voorbeeldgemeente: alles in deze catalogus is demo-inhoud.",
+				"listed": true,
+				"status": "stable",
+				"slug": "zuiddrecht",
+				"registers": [
+					"publication"
+				],
+				"schemas": [
+					"publication"
+				],
+				"hasWooSitemap": true,
+				"showWithheld": true,
+				"published": "{{datetime:-200 09:00}}",
+				"organization": "{{organisation:zuiddrecht}}"
+			}
+		},
+		{
+			"key": "thema-verkeer",
+			"register": "publication",
+			"schema": "theme",
+			"data": {
+				"title": "Verkeer en vervoer",
+				"summary": "Fietspaden, wegen, verlichting en verkeersveiligheid.",
+				"sort": 1
+			}
+		},
+		{
+			"key": "thema-openbare-ruimte",
+			"register": "publication",
+			"schema": "theme",
+			"data": {
+				"title": "Openbare ruimte",
+				"summary": "Straten, groen, speelplekken en meldingen over de buitenruimte.",
+				"sort": 2
+			}
+		},
+		{
+			"key": "thema-parkeren",
+			"register": "publication",
+			"schema": "theme",
+			"data": {
+				"title": "Parkeren",
+				"summary": "Parkeervergunningen, parkeerbelasting en parkeerzones.",
+				"sort": 3
+			}
+		},
+		{
+			"key": "thema-afval",
+			"register": "publication",
+			"schema": "theme",
+			"data": {
+				"title": "Afval",
+				"summary": "Afval scheiden, ophalen en de afvalstoffenheffing.",
+				"sort": 4
+			}
+		},
+		{
+			"key": "thema-wonen",
+			"register": "publication",
+			"schema": "theme",
+			"data": {
+				"title": "Wonen en leven",
+				"summary": "Wonen in Zuiddrecht, uw buurt en evenementen.",
+				"sort": 5
+			}
+		},
+		{
+			"key": "thema-ondernemen",
+			"register": "publication",
+			"schema": "theme",
+			"data": {
+				"title": "Ondernemen",
+				"summary": "Vergunningen en regels voor ondernemers.",
+				"sort": 6
+			}
+		},
+		{
+			"key": "thema-bestuur",
+			"register": "publication",
+			"schema": "theme",
+			"data": {
+				"title": "Bestuur en organisatie",
+				"summary": "De gemeenteraad, het college en de organisatie van de gemeente.",
+				"sort": 7
+			}
+		},
+		{
+			"key": "thema-inkoop",
+			"register": "publication",
+			"schema": "theme",
+			"data": {
+				"title": "Inkoop en aanbesteding",
+				"summary": "Hoe de gemeente inkoopt, opdrachten en contracten.",
+				"sort": 8
+			}
+		},
+		{
+			"key": "pub-inspectie-verlichting",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Inspectierapport openbare verlichting wijk Lindelaan 2026",
+				"summary": "De staat van de lantaarnpalen en de donkere plekken in de wijk Lindelaan.",
+				"description": "Een inspectie van alle lantaarnpalen in de wijk Lindelaan. Het rapport noemt het fietspad langs de Lindelaan als de donkerste plek van de wijk.",
+				"themes": [
+					"{{object:thema-verkeer.id}}",
+					"{{object:thema-openbare-ruimte.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "ontvangst",
+				"publicationDate": "{{datetime:-60 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat015"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-inspectie-verlichting/01-inspectierapport-openbare-verlichting-lindelaan.pdf",
+					"title": "Inspectierapport openbare verlichting wijk Lindelaan 2026",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-advies-wijkraad",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Advies van de wijkraad Lindelaan-Kerkplein over verlichting van het fietspad",
+				"summary": "De wijkraad adviseert het college om het fietspad langs de Lindelaan te verlichten.",
+				"description": "De wijkraad vroeg bewoners naar het fietspad. Veel bewoners fietsen er in het donker niet graag. De wijkraad adviseert zuinige verlichting langs het hele pad.",
+				"themes": [
+					"{{object:thema-verkeer.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "ontvangst",
+				"publicationDate": "{{datetime:-45 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat010"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-advies-wijkraad/01-advies-wijkraad-verlichting-fietspad.pdf",
+					"title": "Advies van de wijkraad Lindelaan-Kerkplein",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-college-fietspad",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Besluitenlijst college: verlichting fietspad Lindelaan",
+				"summary": "Het college stelt de raad voor geld vrij te maken voor verlichting langs het fietspad Lindelaan.",
+				"description": "Besluit van het college van burgemeester en wethouders over de verlichting van het fietspad Lindelaan, met het collegevoorstel.",
+				"themes": [
+					"{{object:thema-verkeer.id}}",
+					"{{object:thema-bestuur.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "vaststelling",
+				"publicationDate": "{{datetime:-32 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat009"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-college-fietspad/01-besluitenlijst-college.pdf",
+					"title": "Besluitenlijst van het college van burgemeester en wethouders",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-college-fietspad/02-collegevoorstel-verlichting-fietspad.pdf",
+					"title": "Collegevoorstel verlichting fietspad Lindelaan",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-raad-fietspad",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Raadsbesluit krediet verlichting fietspad Lindelaan",
+				"summary": "De gemeenteraad maakt het geld vrij voor 42 lantaarnpalen langs het fietspad Lindelaan.",
+				"description": "Het raadsvoorstel en het besluit van de gemeenteraad over het krediet voor de verlichting van het fietspad Lindelaan.",
+				"themes": [
+					"{{object:thema-verkeer.id}}",
+					"{{object:thema-bestuur.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "vaststelling",
+				"publicationDate": "{{datetime:-21 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat008"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-raad-fietspad/01-raadsvoorstel-krediet-fietspad.pdf",
+					"title": "Raadsvoorstel krediet verlichting fietspad Lindelaan",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-raad-fietspad/02-raadsbesluit-krediet-fietspad.pdf",
+					"title": "Raadsbesluit krediet verlichting fietspad Lindelaan",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-raadsbrief-fietspad",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Raadsinformatiebrief: planning aanleg en verlichting fietspad Lindelaan",
+				"summary": "Het college vertelt de raad wanneer het werk aan het fietspad begint en hoe lang het duurt.",
+				"description": "Brief van het college aan de gemeenteraad over de planning van het werk aan het fietspad Lindelaan en de omleiding tijdens het werk.",
+				"themes": [
+					"{{object:thema-verkeer.id}}",
+					"{{object:thema-bestuur.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "ondertekening",
+				"publicationDate": "{{datetime:-12 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat008"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-raadsbrief-fietspad/01-raadsinformatiebrief-planning-fietspad.pdf",
+					"title": "Raadsinformatiebrief: planning aanleg en verlichting fietspad Lindelaan",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-overeenkomst-vandam",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Overeenkomst levering en plaatsing verlichting fietspad Lindelaan",
+				"summary": "De opdracht aan Installatiebedrijf Van Dam voor het leveren en plaatsen van de lantaarnpalen.",
+				"description": "De gemeente gaf Installatiebedrijf Van Dam de opdracht om 42 lantaarnpalen te leveren en te plaatsen langs het fietspad Lindelaan. Hier staan de gunningsbrief en de overeenkomst.",
+				"themes": [
+					"{{object:thema-verkeer.id}}",
+					"{{object:thema-inkoop.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "ondertekening",
+				"publicationDate": "{{datetime:-10 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-overeenkomst-vandam/01-gunningsbrief-installatiebedrijf-van-dam.pdf",
+					"title": "Gunningsbrief verlichting fietspad Lindelaan",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-overeenkomst-vandam/02-overeenkomst-levering-en-plaatsing.pdf",
+					"title": "Overeenkomst levering en plaatsing verlichting fietspad Lindelaan",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-woo-zaaksysteem",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Woo-besluit over de aanbesteding van het zaaksysteem",
+				"summary": "Besluit op een Woo-verzoek over de aanbesteding van het zaaksysteem. Drie documenten openbaar, twee niet.",
+				"description": "CloudGemeente B.V. vroeg de documenten over de aanbesteding van het nieuwe zaaksysteem. Drie documenten zijn openbaar gemaakt, een daarvan deels. Twee documenten zijn niet openbaar gemaakt. Bij deze publicatie staat welke en waarom.",
+				"themes": [
+					"{{object:thema-inkoop.id}}",
+					"{{object:thema-bestuur.id}}"
+				],
+				"publicationKind": "woo-besluit",
+				"soortHandeling": "vaststelling",
+				"publicationDate": "{{datetime:-18 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat014",
+				"period": {
+					"from": "{{date:-240}}",
+					"to": "{{date:-60}}"
+				}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/01-woo-besluit-aanbesteding-zaaksysteem.pdf",
+					"title": "Besluit op uw Woo-verzoek over de aanbesteding van het zaaksysteem",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/02-inventarislijst.pdf",
+					"title": "Inventarislijst Woo-verzoek aanbesteding zaaksysteem",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/03-aanbestedingsleidraad-zaaksysteem.pdf",
+					"title": "Aanbestedingsleidraad zaaksysteem gemeente Zuiddrecht",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/04-proces-verbaal-opening-inschrijvingen.pdf",
+					"title": "Proces-verbaal van opening van de inschrijvingen",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/05-gunningsadvies-zaaksysteem.pdf",
+					"title": "Gunningsadvies zaaksysteem",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-afvalkalender",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Besluit inzamelschema huishoudelijk afval 2027",
+				"summary": "Op welke dagen de gemeente in 2027 het afval ophaalt.",
+				"description": "Het college stelt het inzamelschema voor 2027 vast. Groente-, fruit- en tuinafval en restafval worden om de week opgehaald, papier eens per vier weken.",
+				"themes": [
+					"{{object:thema-afval.id}}",
+					"{{object:thema-wonen.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "vaststelling",
+				"publicationDate": "{{datetime:-16 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat002"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-afvalkalender/01-besluit-inzamelschema-2027.pdf",
+					"title": "Besluit inzamelschema huishoudelijk afval 2027",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-parkeerverordening",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Verordening parkeerbelastingen Zuiddrecht 2027",
+				"summary": "De tarieven voor parkeren en bewonersvergunningen in 2027.",
+				"description": "De gemeenteraad stelt de parkeerbelastingen voor 2027 vast, met de tarieven per zone en de prijs van een bewonersvergunning.",
+				"themes": [
+					"{{object:thema-parkeren.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "vaststelling",
+				"publicationDate": "{{datetime:-8 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat001"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-parkeerverordening/01-verordening-parkeerbelastingen-2027.pdf",
+					"title": "Verordening parkeerbelastingen Zuiddrecht 2027",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-terrasregels",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Beleidsregels terrassen Dorpsstraat",
+				"summary": "Hoe groot een terras aan de Dorpsstraat mag zijn en wanneer u een overkapping mag plaatsen.",
+				"description": "Beleidsregels van het college voor terrassen en terrasoverkappingen aan de Dorpsstraat, zodat er genoeg ruimte blijft voor voetgangers.",
+				"themes": [
+					"{{object:thema-ondernemen.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "vaststelling",
+				"publicationDate": "{{datetime:-70 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat002"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-terrasregels/01-beleidsregels-terrassen-dorpsstraat.pdf",
+					"title": "Beleidsregels terrassen Dorpsstraat",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-evenement-havenstraat",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Beschikking evenementenvergunning Zomerfeest Havenstraat",
+				"summary": "Vergunning voor het buurtfeest aan de Havenstraat in juli.",
+				"description": "De burgemeester verleent een evenementenvergunning voor het zomerfeest aan de Havenstraat. Namen van de aanvragers zijn weggelaten.",
+				"themes": [
+					"{{object:thema-wonen.id}}",
+					"{{object:thema-ondernemen.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "vaststelling",
+				"publicationDate": "{{datetime:-100 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat016"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-evenement-havenstraat/01-beschikking-evenementenvergunning-zomerfeest.pdf",
+					"title": "Beschikking evenementenvergunning Zomerfeest Havenstraat",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-mandaatbesluit",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Organisatie- en mandaatbesluit gemeente Zuiddrecht 2026",
+				"summary": "Wie in de gemeente Zuiddrecht namens het college mag besluiten.",
+				"description": "Het organisatieschema van de gemeente en de lijst van besluiten die het college aan teams en medewerkers heeft gemandateerd.",
+				"themes": [
+					"{{object:thema-bestuur.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "vaststelling",
+				"publicationDate": "{{datetime:-90 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat004"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-mandaatbesluit/01-organisatie-en-mandaatbesluit-2026.pdf",
+					"title": "Organisatie- en mandaatbesluit gemeente Zuiddrecht 2026",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "pub-jaarverslag-klachten",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Jaarverslag klachtbehandeling 2025",
+				"summary": "Hoeveel klachten de gemeente in 2025 kreeg en wat zij ermee deed.",
+				"description": "Het jaarverslag over de klachten die de gemeente Zuiddrecht in 2025 ontving, met de lessen die de organisatie eruit trok.",
+				"themes": [
+					"{{object:thema-bestuur.id}}"
+				],
+				"publicationKind": "actief",
+				"soortHandeling": "vaststelling",
+				"publicationDate": "{{datetime:-150 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat012"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-jaarverslag-klachten/01-jaarverslag-klachtbehandeling-2025.pdf",
+					"title": "Jaarverslag klachtbehandeling 2025",
+					"share": true
+				}
+			]
+		},
+		{
+			"key": "woo-zaaksysteem-geweigerd-4",
+			"register": "publication",
+			"schema": "withheldDocument",
+			"data": {
+				"publication": "{{object:pub-woo-zaaksysteem.id}}",
+				"position": 4,
+				"grounds": [
+					{
+						"code": "5.1.1.c",
+						"article": "5.1",
+						"label": "Vertrouwelijk meegedeelde bedrijfs- en fabricagegegevens"
+					}
+				],
+				"source": "dossiq",
+				"recordedAt": "{{datetime:-18 10:00}}"
+			}
+		},
+		{
+			"key": "woo-zaaksysteem-geweigerd-5",
+			"register": "publication",
+			"schema": "withheldDocument",
+			"data": {
+				"publication": "{{object:pub-woo-zaaksysteem.id}}",
+				"position": 5,
+				"grounds": [
+					{
+						"code": "5.2.1",
+						"article": "5.2",
+						"label": "Persoonlijke beleidsopvattingen in stukken voor intern beraad"
+					},
+					{
+						"code": "5.1.2.e",
+						"article": "5.1",
+						"label": "Eerbiediging van de persoonlijke levenssfeer"
+					}
+				],
+				"source": "dossiq",
+				"recordedAt": "{{datetime:-18 10:00}}"
+			}
+		},
+		{
+			"key": "dossier-sanne",
+			"register": "publication",
+			"schema": "collection",
+			"data": {
+				"title": "Fietspad Lindelaan",
+				"description": "Wat de gemeente publiceert over de verlichting langs het fietspad bij mijn huis.",
+				"owner": "{{cast:sanne.uid}}",
+				"items": [
+					{
+						"id": "6f1d2c3a-4b5e-4c7d-8e9f-0a1b2c3d4e01",
+						"publication": "{{object:pub-college-fietspad.id}}",
+						"addedAt": "{{datetime:-4 21:15}}",
+						"addedBy": "resident",
+						"title": "Besluitenlijst college: verlichting fietspad Lindelaan",
+						"note": "Hier staat dat het college de verlichting wil."
+					},
+					{
+						"id": "6f1d2c3a-4b5e-4c7d-8e9f-0a1b2c3d4e02",
+						"publication": "{{object:pub-raad-fietspad.id}}",
+						"addedAt": "{{datetime:-4 21:15}}",
+						"addedBy": "resident",
+						"title": "Raadsbesluit krediet verlichting fietspad Lindelaan"
+					},
+					{
+						"id": "6f1d2c3a-4b5e-4c7d-8e9f-0a1b2c3d4e03",
+						"publication": "{{object:pub-raadsbrief-fietspad.id}}",
+						"addedAt": "{{datetime:-3 21:15}}",
+						"addedBy": "resident",
+						"title": "Raadsinformatiebrief: planning aanleg en verlichting fietspad Lindelaan",
+						"note": "Werk begint in maart. Wie levert de lampen?"
+					}
+				],
+				"sourceOf": []
+			}
+		},
+		{
+			"key": "zoekopdracht-sanne",
+			"register": "publication",
+			"schema": "savedSearch",
+			"data": {
+				"title": "Fietspad Lindelaan",
+				"owner": "{{cast:sanne.uid}}",
+				"query": {
+					"text": "fietspad Lindelaan",
+					"filters": {
+						"informatiecategorie": [
+							"infocat008",
+							"infocat009",
+							"infocat014"
+						]
+					},
+					"catalog": "zuiddrecht"
+				},
+				"frequency": "weekly",
+				"active": true
+			}
+		}
+	]
+}
