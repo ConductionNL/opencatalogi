@@ -14,10 +14,10 @@
 				"status": "stable",
 				"slug": "zuiddrecht",
 				"registers": [
-					"publication"
+					"{{register:publication}}"
 				],
 				"schemas": [
-					"publication"
+					"{{schema:publication/publication}}"
 				],
 				"hasWooSitemap": true,
 				"showWithheld": true,
