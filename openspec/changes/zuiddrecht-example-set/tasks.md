@@ -21,7 +21,7 @@ Kind: data. No PHP changes. Depends on openregister#4603 (the loader).
 - [x] 3.1 Static check: every placeholder resolves and every object validates against the merged register schema, with no undeclared key.
 - [ ] 3.2 After openregister#4603 merges: `occ openregister:example-set:install zuiddrecht --check` exits 0, then the install exits 0.
 
-## 4. Requests on the loader (openregister#4603)
+## 4. Loader features used (openregister#4603)
 
-- [ ] 4.1 Files on an object: `files: [{path, title, description, share}]` on an object entry, added with OpenRegister's file service after the object is written, shared when asked, removed with the object.
-- [ ] 4.2 An organisation reference: `organization` on catalog and publication points at OpenRegister's organisation entity, which is not an object a lookup can find.
+- [x] 4.1 Files on an object: every publication lists its PDFs in `files` with `share: true` (REQ-EXS-013).
+- [x] 4.2 An organisation reference: catalog and publications carry `{{organisation:zuiddrecht}}` (REQ-EXS-016).

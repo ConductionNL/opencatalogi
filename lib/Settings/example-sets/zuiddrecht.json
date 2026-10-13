@@ -1,6 +1,6 @@
 {
 	"set": "zuiddrecht",
-	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications and the dossier and saved search of the example resident Sanne de Vries (cast key sanne). Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py; the loader cannot attach files to an object yet, so until it can they are not on the publications after an install. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
+	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications and the dossier and saved search of the example resident Sanne de Vries (cast key sanne). Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
 	"objects": [
 		{
 			"key": "catalogus",
@@ -21,7 +21,8 @@
 				],
 				"hasWooSitemap": true,
 				"showWithheld": true,
-				"published": "{{datetime:-200 09:00}}"
+				"published": "{{datetime:-200 09:00}}",
+				"organization": "{{organisation:zuiddrecht}}"
 			}
 		},
 		{
@@ -120,8 +121,16 @@
 				"soortHandeling": "ontvangst",
 				"publicationDate": "{{datetime:-60 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat015"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-inspectie-verlichting/01-inspectierapport-openbare-verlichting-lindelaan.pdf",
+					"title": "Inspectierapport openbare verlichting wijk Lindelaan 2026",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-advies-wijkraad",
@@ -138,8 +147,16 @@
 				"soortHandeling": "ontvangst",
 				"publicationDate": "{{datetime:-45 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat010"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-advies-wijkraad/01-advies-wijkraad-verlichting-fietspad.pdf",
+					"title": "Advies van de wijkraad Lindelaan-Kerkplein",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-college-fietspad",
@@ -157,8 +174,21 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-32 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat009"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-college-fietspad/01-besluitenlijst-college.pdf",
+					"title": "Besluitenlijst van het college van burgemeester en wethouders",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-college-fietspad/02-collegevoorstel-verlichting-fietspad.pdf",
+					"title": "Collegevoorstel verlichting fietspad Lindelaan",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-raad-fietspad",
@@ -176,8 +206,21 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-21 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat008"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-raad-fietspad/01-raadsvoorstel-krediet-fietspad.pdf",
+					"title": "Raadsvoorstel krediet verlichting fietspad Lindelaan",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-raad-fietspad/02-raadsbesluit-krediet-fietspad.pdf",
+					"title": "Raadsbesluit krediet verlichting fietspad Lindelaan",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-raadsbrief-fietspad",
@@ -195,8 +238,16 @@
 				"soortHandeling": "ondertekening",
 				"publicationDate": "{{datetime:-12 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat008"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-raadsbrief-fietspad/01-raadsinformatiebrief-planning-fietspad.pdf",
+					"title": "Raadsinformatiebrief: planning aanleg en verlichting fietspad Lindelaan",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-overeenkomst-vandam",
@@ -213,8 +264,21 @@
 				"publicationKind": "actief",
 				"soortHandeling": "ondertekening",
 				"publicationDate": "{{datetime:-10 10:00}}",
-				"status": "published"
-			}
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}"
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-overeenkomst-vandam/01-gunningsbrief-installatiebedrijf-van-dam.pdf",
+					"title": "Gunningsbrief verlichting fietspad Lindelaan",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-overeenkomst-vandam/02-overeenkomst-levering-en-plaatsing.pdf",
+					"title": "Overeenkomst levering en plaatsing verlichting fietspad Lindelaan",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-woo-zaaksysteem",
@@ -232,12 +296,40 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-18 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat014",
 				"period": {
 					"from": "{{date:-240}}",
 					"to": "{{date:-60}}"
 				}
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/01-woo-besluit-aanbesteding-zaaksysteem.pdf",
+					"title": "Besluit op uw Woo-verzoek over de aanbesteding van het zaaksysteem",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/02-inventarislijst.pdf",
+					"title": "Inventarislijst Woo-verzoek aanbesteding zaaksysteem",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/03-aanbestedingsleidraad-zaaksysteem.pdf",
+					"title": "Aanbestedingsleidraad zaaksysteem gemeente Zuiddrecht",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/04-proces-verbaal-opening-inschrijvingen.pdf",
+					"title": "Proces-verbaal van opening van de inschrijvingen",
+					"share": true
+				},
+				{
+					"path": "zuiddrecht/pub-woo-zaaksysteem/05-gunningsadvies-zaaksysteem.pdf",
+					"title": "Gunningsadvies zaaksysteem",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-afvalkalender",
@@ -255,8 +347,16 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-16 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat002"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-afvalkalender/01-besluit-inzamelschema-2027.pdf",
+					"title": "Besluit inzamelschema huishoudelijk afval 2027",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-parkeerverordening",
@@ -273,8 +373,16 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-8 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat001"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-parkeerverordening/01-verordening-parkeerbelastingen-2027.pdf",
+					"title": "Verordening parkeerbelastingen Zuiddrecht 2027",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-terrasregels",
@@ -291,8 +399,16 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-70 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat002"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-terrasregels/01-beleidsregels-terrassen-dorpsstraat.pdf",
+					"title": "Beleidsregels terrassen Dorpsstraat",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-evenement-havenstraat",
@@ -310,8 +426,16 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-100 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat016"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-evenement-havenstraat/01-beschikking-evenementenvergunning-zomerfeest.pdf",
+					"title": "Beschikking evenementenvergunning Zomerfeest Havenstraat",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-mandaatbesluit",
@@ -328,8 +452,16 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-90 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat004"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-mandaatbesluit/01-organisatie-en-mandaatbesluit-2026.pdf",
+					"title": "Organisatie- en mandaatbesluit gemeente Zuiddrecht 2026",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "pub-jaarverslag-klachten",
@@ -346,8 +478,16 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-150 10:00}}",
 				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
 				"wooCategory": "infocat012"
-			}
+			},
+			"files": [
+				{
+					"path": "zuiddrecht/pub-jaarverslag-klachten/01-jaarverslag-klachtbehandeling-2025.pdf",
+					"title": "Jaarverslag klachtbehandeling 2025",
+					"share": true
+				}
+			]
 		},
 		{
 			"key": "woo-zaaksysteem-geweigerd-4",

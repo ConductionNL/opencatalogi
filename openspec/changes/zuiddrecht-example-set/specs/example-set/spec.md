@@ -42,7 +42,7 @@ The set SHALL give the cast resident `sanne` a dossier (`collection`) titled "Fi
 
 ### Requirement: The publications' documents ship with the fragment (REQ-ZES-004)
 
-Every publication of the fragment SHALL have at least one document in `lib/Settings/example-sets/zuiddrecht/<publication key>/`, made by `scripts/example-sets/make-zuiddrecht-documents.py`. Every page SHALL say it is demo content. The script SHALL refuse to run when a document folder names no publication of the fragment, or a publication has no documents. The withheld documents SHALL have no file.
+Every publication of the fragment SHALL have at least one document in `lib/Settings/example-sets/zuiddrecht/<publication key>/`, made by `scripts/example-sets/make-zuiddrecht-documents.py`. Every page SHALL say it is demo content. The script SHALL refuse to run when a document folder names no publication of the fragment, or a publication has no documents. Each publication SHALL list its documents in `files` with `share: true`, so the loader attaches them as public files. The withheld documents SHALL have no file.
 
 #### Scenario: The script and the fragment agree
 - **GIVEN** the fragment and the script

@@ -27,15 +27,14 @@ OpenRegister#4603 adds one loader for a story across apps. Each app ships `lib/S
 - Every publication uses an information category code from `tooi_waardelijsten.json`, except the contract, which has no Woo category.
 - 20 demo documents as small PDF files in `lib/Settings/example-sets/zuiddrecht/<publication key>/`, made by `scripts/example-sets/make-zuiddrecht-documents.py`. Every page says it is demo content.
 
-## The documents need a loader feature
+## The documents
 
-OpenCatalogi serves a publication's documents as files on the publication object. The files must be shared to be public (`PublicationService::attachments()` lists `sharedFilesOnly`). The title, description and publication window sit on the file record. The loader of openregister#4603 writes objects only, so it cannot attach these files yet.
+OpenCatalogi serves a publication's documents as files on the publication object. The files must be shared to be public (`PublicationService::attachments()` lists `sharedFilesOnly`). Every publication lists its PDFs in `files` (REQ-EXS-013 of openregister#4603): a `path` relative to `lib/Settings/example-sets/`, a `title` and `share: true`. The loader adds them after writing the publication and removes them with it.
 
-The request on the loader, in its smallest form: an object entry may carry `files`, a list of `{path, title, description, share}`, where `path` is relative to the app's `lib/Settings/example-sets/` folder. The loader adds each file to the object it just wrote with OpenRegister's file service, shared when `share` is true, and sets the description and label on the file record. Remove deletes them with the object. This change ships the files in the folder layout that request expects: one folder per publication key.
+## Organisation
 
-Until the loader can do this, the publications install without documents.
+The catalog and every publication carry `organization: {{organisation:zuiddrecht}}`. The cast declares that OpenRegister organisation, and the loader creates it when it is missing (REQ-EXS-016).
 
 ## Not in this change
 
-- An organisation on the catalog and the publications. `organization` refers to OpenRegister's organisation entity, which a lookup cannot find.
 - Rows in `informationCategory`. The 17 Woo categories come from the waardelijst and need no row.
