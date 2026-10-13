@@ -36,7 +36,9 @@ By the end you will have added one peer directory, verified the connection, tune
 
    ![Edit listing dialog showing directory URL and integration level dropdown](/screenshots/tutorials/admin/02-manage-federation-sources-04.png)
 
-5. Verify the federation is live by opening **Search** and running any query. The search fans out to every peer with integration level *Federated search* and combines the results with your local publications. If nothing matches, the page reads *No matching publications across the federation* — federation is still working, the peers just have no data on that term.
+5. Check when each peer last worked. Every row shows its **last successful sync**. When the last attempt failed, the row also shows that **last attempt** and its error. A peer that never answered says *Never synchronised successfully*. To retry one peer, click **Actions → Sync now** on its row; the row refreshes with the result. Only administrators see **Sync now**.
+
+6. Verify the federation is live by opening **Search** and running any query. The search fans out to every peer with integration level *Federated search* and combines the results with your local publications. If nothing matches, the page reads *No matching publications across the federation* — federation is still working, the peers just have no data on that term.
 
    ![Search publications page showing the federated search UI](/screenshots/tutorials/admin/02-manage-federation-sources-05.png)
 
@@ -45,6 +47,7 @@ By the end you will have added one peer directory, verified the connection, tune
 - The peer row in **Directory** shows an *available* status dot and a real integration level.
 - The three counters at the top of the Directory page reflect the network state — e.g. `2 available · 0 degraded · 1 unreachable`.
 - `GET /index.php/apps/opencatalogi/api/listings` returns the peer with a `statusCode: 200` and a recent `lastSync` timestamp.
+- On that listing, `lastSync` is the last attempt, `lastSuccessAt` is the last successful sync, and `lastError` holds the error of a failed last attempt. A failed attempt never moves `lastSuccessAt`. The stored error carries no credentials and no URL query string.
 
 ## Common issues
 

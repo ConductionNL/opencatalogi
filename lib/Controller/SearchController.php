@@ -64,6 +64,8 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class SearchController extends Controller {
+	use AnswersCacheably;
+
 	/**
 	 * SearchController constructor.
 	 *
@@ -152,7 +154,8 @@ class SearchController extends Controller {
 				objectService: $objectService
 			);
 
-			return new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
+			// REQ-PAC-001/002: public cache headers for an anonymous caller only.
+			return $this->cacheableForCaller(response: new JSONResponse(data: $result, statusCode: Http::STATUS_OK));
 		} catch (MalformedSearchParameterException $e) {
 			// A range bound that is not a date or a number (REQ-SCF-002).
 			return new JSONResponse(
@@ -213,7 +216,7 @@ class SearchController extends Controller {
 			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		return $this->publicationService->show(id: $id);
+		return $this->cacheableForCaller(response: $this->publicationService->show(id: $id));
 	}//end show()
 
 	/**
