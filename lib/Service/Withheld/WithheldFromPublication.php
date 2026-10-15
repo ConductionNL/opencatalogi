@@ -177,7 +177,11 @@ class WithheldFromPublication {
 			$value = ($value['id'] ?? '');
 		}
 
-		return (is_string($value) === true || is_int($value) === true) ? (string)$value : '';
+		if (is_string($value) === true || is_int($value) === true) {
+			return (string)$value;
+		}
+
+		return '';
 	}//end referenceId()
 
 	/**
