@@ -35,8 +35,8 @@
 
 ## 6. Waiting on others
 
-- [ ] 6.1 Authenticated full crawl against github.com with Ruben's token (coordinator). (live pass, decision 139)
-- [ ] 6.2 OpenRegister's `github` credential provider allows `GET /search/code` (coordinator, see lane iq). (live pass, decision 139)
+- [x] 6.1 Authenticated full crawl against github.com with Ruben's token (coordinator). (verified: 7.5, WOO-585 rig against real github.com, 24 of 24 shards)
+- [x] 6.2 OpenRegister's `github` credential provider allows `GET /search/code` (coordinator, see lane iq). (verified: ConductionNL/openregister#4233, merged 2026-10-01)
 
 ## 7. After the first real crawl (WOO-585, 2026-10-01)
 
