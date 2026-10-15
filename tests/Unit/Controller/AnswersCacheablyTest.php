@@ -116,7 +116,8 @@ class AnswersCacheablyTest extends TestCase {
 
 		$this->assertSame('public, max-age=60, must-revalidate', $headers['Cache-Control']);
 		$this->assertMatchesRegularExpression('/^W\/"[0-9a-f]{40}"$/', $headers['ETag']);
-		$this->assertSame('Origin, Accept-Language', $headers['Vary']);
+		$this->assertSame('Origin, Accept, Accept-Language', $headers['Vary']);
+		$this->assertStringContainsString('Accept,', $headers['Vary'], 'the answer of one URL can be JSON or JSON-LD');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 	}
 

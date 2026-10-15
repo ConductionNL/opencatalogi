@@ -13,7 +13,7 @@ The public read answers of OpenCatalogi can be kept by a CDN or a browser. A vis
 
 | caller | answer | headers |
 |---|---|---|
-| no account | 200 | `Cache-Control: public, max-age=N, must-revalidate`, a weak `ETag` over the answer, `Vary: Origin, Accept-Language` |
+| no account | 200 | `Cache-Control: public, max-age=N, must-revalidate`, a weak `ETag` over the answer, `Vary: Origin, Accept, Accept-Language` |
 | no account, `If-None-Match` matches | 304, no body | the same `ETag` and `Cache-Control` |
 | signed in | any | `Cache-Control: private, no-store`, no `ETag` |
 | anyone | an error (4xx, 5xx) | no public cache header |
@@ -33,7 +33,7 @@ occ config:app:set opencatalogi public_api_cache_seconds --value=300
 ## Setting up a CDN
 
 - Let the CDN respect `Cache-Control` and `ETag` from the origin. It should revalidate with `If-None-Match` once `max-age` has passed.
-- Keep `Origin` and `Accept-Language` in the cache key. The answers carry `Vary: Origin, Accept-Language` because the CORS header and the language differ per site and per reader. A CDN that ignores `Vary: Origin` can hand one site's CORS answer to another site.
+- Keep `Origin`, `Accept` and `Accept-Language` in the cache key. The answers carry `Vary: Origin, Accept, Accept-Language` because the CORS header, the format (a publication answers JSON, or schema.org JSON-LD for `Accept: application/ld+json`) and the language differ per site and per reader. A CDN that ignores `Vary: Origin` can hand one site's CORS answer to another site.
 - Do not cache requests that carry a Nextcloud session cookie or an `Authorization` header. The origin already marks those answers `private, no-store`.
 
 ## The withdrawal delay

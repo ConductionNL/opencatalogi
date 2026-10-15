@@ -48,7 +48,7 @@ trait AnswersCacheably {
 	 *   because the answer can hold records the public cannot read.
 	 * - An anonymous caller and a 200 answer: `Cache-Control: public,
 	 *   max-age=N, must-revalidate`, a weak `ETag` over the body as sent, and
-	 *   `Vary: Origin, Accept-Language`. A matching `If-None-Match` turns the
+	 *   `Vary: Origin, Accept, Accept-Language`. A matching `If-None-Match` turns the
 	 *   answer into a 304 without a body.
 	 * - An error answer, or a cache time of 0: unchanged.
 	 *
@@ -96,7 +96,7 @@ trait AnswersCacheably {
 
 		$response->addHeader('Cache-Control', $cacheControl);
 		$response->addHeader('ETag', $etag);
-		$response->addHeader('Vary', 'Origin, Accept-Language');
+		$response->addHeader('Vary', 'Origin, Accept, Accept-Language');
 
 		if ($this->ifNoneMatchHits(etag: $etag) === true) {
 			$response->setStatus(Http::STATUS_NOT_MODIFIED);
