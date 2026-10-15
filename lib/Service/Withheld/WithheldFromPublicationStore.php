@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Withheld;
 
+use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\WooService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -82,13 +83,51 @@ class WithheldFromPublicationStore {
 		$register = $this->configured(key: 'publication_register');
 		$schema = $this->configured(key: 'withheld_document_schema');
 
-		return array_values(
-			array_filter(
-				$this->search(register: $register, schema: $schema, filters: ['publication' => $publicationId]),
-				static fn (array $row): bool => (string)($row['publication'] ?? '') === $publicationId
+		return $this->newestBatch(
+			rows: array_values(
+				array_filter(
+					$this->search(register: $register, schema: $schema, filters: ['publication' => $publicationId]),
+					static fn (array $row): bool => (string)($row['publication'] ?? '') === $publicationId
+				)
 			)
 		);
 	}//end storedEntries()
+
+	/**
+	 * Only the rows of the newest recording.
+	 *
+	 * Every row of one `WithheldDocuments::record()` call shares its `recordedAt` stamp. While the
+	 * rows of the previous call still exist (the call is between writing and deleting, or the
+	 * delete failed) both lists are stored, and listing both would show documents twice. The
+	 * newest stamp is the list that was last recorded completely; rows without a readable stamp
+	 * count as the oldest.
+	 *
+	 * @param list<array<string, mixed>> $rows The rows of one publication.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function newestBatch(array $rows): array {
+		$newest = null;
+		$stamps = [];
+		foreach ($rows as $index => $row) {
+			$stamp = '0000000000.000000';
+			$recordedAt = trim((string)($row['recordedAt'] ?? ''));
+			if ($recordedAt !== '') {
+				try {
+					$stamp = (new DateTimeImmutable($recordedAt))->format('U.u');
+				} catch (Throwable $e) {
+					$stamp = '0000000000.000000';
+				}
+			}
+
+			$stamps[$index] = $stamp;
+			if ($newest === null || strcmp($stamp, $newest) > 0) {
+				$newest = $stamp;
+			}
+		}
+
+		return array_values(array_filter($rows, static fn (int $index): bool => $stamps[$index] === $newest, ARRAY_FILTER_USE_KEY));
+	}//end newestBatch()
 
 	/**
 	 * The assessments of the batch a publication was made from, in the batch's document order.

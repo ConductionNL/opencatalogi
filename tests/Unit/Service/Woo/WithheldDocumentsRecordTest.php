@@ -53,6 +53,15 @@ class WithheldShapedObjectService {
 
 	public int $saves = 0;
 
+	/** @var bool Whether deleteObject throws. */
+	public bool $failDelete = false;
+
+	/** @var bool Whether saveObject answers without an id. */
+	public bool $saveWithoutId = false;
+
+	/** @var list<string> The uuids deleteObject was called with. */
+	public array $deleted = [];
+
 	public function find(string $id, mixed ...$rest): ?array {
 		if (in_array($id, $this->publications, true) === false) {
 			throw new RuntimeException('not found');
@@ -69,11 +78,19 @@ class WithheldShapedObjectService {
 
 		$id = 'w-' . $this->next++;
 		$this->rows[$id] = $object;
+		if ($this->saveWithoutId === true) {
+			return ['object' => $object];
+		}
 
 		return ['id' => $id, 'object' => $object];
 	}//end saveObject()
 
 	public function deleteObject(string $uuid, mixed ...$rest): bool {
+		$this->deleted[] = $uuid;
+		if ($this->failDelete === true) {
+			throw new RuntimeException('delete failed');
+		}
+
 		unset($this->rows[$uuid]);
 
 		return true;
