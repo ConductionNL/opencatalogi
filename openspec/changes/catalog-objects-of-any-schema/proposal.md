@@ -26,7 +26,7 @@ OpenRegister fills `@self.summary` and `@self.description` when an object is sav
 
 ## Dependency on nextcloud-vue
 
-The scenario "A component's description can be read per language" in `specs/publications/spec.md` depends on ConductionNL/nextcloud-vue#1623 (the CnObjectDataWidget fix for nested objects, unreleased; branch `fix/object-data-nested-objects`). This change pins `@conduction/nextcloud-vue` `^2.80.0` and does not bump it; task 5.1 tracks the bump. Until #1623 ships, the Data card shows one row per language holding that language's entry as JSON, and the form shows the whole object in a JSON editor. The scenario's readable Dutch and English short and long description is therefore not met on the pinned library; it follows from the release tracked by task 5.1.
+The scenario "A component's description can be read per language" in `specs/publications/spec.md` depends on ConductionNL/nextcloud-vue#1623 (the CnObjectDataWidget fix for nested objects). That fix first shipped in the beta release `2.56.0-beta.36`, and this change pins `@conduction/nextcloud-vue` to exactly that version (task 5.1). A caret range would not select a prerelease, and the beta line's version number sits below the stable `2.84.0` even though its content includes everything in it, so the pin is exact. With it, the Data card shows the Dutch and English short and long description as readable nested rows instead of one JSON blob per language. Move the pin back to a caret range on the first stable release that contains #1623.
 
 ## Not in this change
 
