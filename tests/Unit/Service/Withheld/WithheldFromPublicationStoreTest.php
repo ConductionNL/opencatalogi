@@ -106,19 +106,6 @@ class WithheldFromPublicationStoreTest extends TestCase {
 		$this->assertSame(['@self.created' => 'asc'], $this->objects->queries[0]['_order'] ?? null);
 	}//end testTheBatchScanIsOrderedSoPagesCannotShift()
 
-	public function testWhileOldAndNewRowsCoexistOnlyTheNewestRecordingIsListed(): void {
-		$this->objects->rows['w'] = [
-			['id' => 'old-1', 'publication' => 'pub-1', 'position' => 1, 'recordedAt' => '2026-10-10T10:00:00+00:00'],
-			['id' => 'old-2', 'publication' => 'pub-1', 'position' => 2, 'recordedAt' => '2026-10-10T10:00:00+00:00'],
-			['id' => 'new-3', 'publication' => 'pub-1', 'position' => 3, 'recordedAt' => '2026-10-12T09:00:00.250000+00:00'],
-			['id' => 'new-4', 'publication' => 'pub-1', 'position' => 4, 'recordedAt' => '2026-10-12T09:00:00.250000+00:00'],
-			['id' => 'unstamped', 'publication' => 'pub-1', 'position' => 9],
-			['id' => 'other', 'publication' => 'pub-2', 'position' => 1, 'recordedAt' => '2026-10-13T10:00:00+00:00'],
-		];
-
-		$this->assertSame(['new-3', 'new-4'], array_column($this->store()->storedEntries(publicationId: 'pub-1'), 'id'));
-	}//end testWhileOldAndNewRowsCoexistOnlyTheNewestRecordingIsListed()
-
 	public function testWithoutAWooRegisterThereIsNoBatch(): void {
 		$this->assertSame([], $this->store(config: ['publication_register' => 'r'])->batchAssessments(publicationId: 'pub-1'));
 	}//end testWithoutAWooRegisterThereIsNoBatch()

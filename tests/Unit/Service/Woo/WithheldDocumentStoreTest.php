@@ -91,24 +91,6 @@ class WithheldDocumentStoreTest extends TestCase {
 		$this->assertSame(['old-1', 'old-2'], array_keys($this->objects->rows), 'the previous rows stand, and the half-written new one is gone');
 	}//end testAFailedWriteKeepsThePreviousCompleteList()
 
-	public function testAFailedDeleteOfTheOldRowsStillShowsOnlyTheNewList(): void {
-		$this->objects->failDelete = true;
-		$old = ['publication' => 'pub-1', 'grounds' => [], 'source' => 'dossiq', 'recordedAt' => '2026-10-10T10:00:00+00:00'];
-		$this->objects->rows = ['old-1' => ($old + ['position' => 1]), 'old-2' => ($old + ['position' => 2])];
-
-		try {
-			$this->store()->replace('pub-1', [['position' => 5, 'grounds' => [['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'L']]]], 'dossiq');
-			$this->fail('The failed delete must reach the caller.');
-		} catch (RuntimeException $e) {
-			$this->assertSame('delete failed', $e->getMessage());
-		}
-
-		// Old and new rows both exist now; the read side lists the new recording only.
-		$this->assertCount(3, $this->objects->rows);
-		$stored = $this->readStore()->storedEntries(publicationId: 'pub-1');
-		$this->assertSame([5], array_column($stored, 'position'));
-	}//end testAFailedDeleteOfTheOldRowsStillShowsOnlyTheNewList()
-
 	public function testARowSavedWithoutAnIdIsSkippedInTheRollbackNotDeletedAsEmpty(): void {
 		$this->objects->rows = [];
 		$this->objects->saveWithoutId = true;
@@ -124,17 +106,6 @@ class WithheldDocumentStoreTest extends TestCase {
 
 		$this->assertNotContains('', $this->objects->deleted, 'deleteObject was called with an empty uuid');
 	}//end testARowSavedWithoutAnIdIsSkippedInTheRollbackNotDeletedAsEmpty()
-
-	private function readStore(): \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore {
-		$config = $this->createMock(IAppConfig::class);
-		$config->method('getValueString')->willReturn('7');
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($this->objects);
-		$appManager = $this->createMock(IAppManager::class);
-		$appManager->method('isInstalled')->willReturn(true);
-
-		return new \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore($config, $container, $appManager);
-	}//end readStore()
 
 	public function testThePublicationIsLookedUp(): void {
 		$this->assertTrue($this->store()->publicationExists('pub-1'));

@@ -75,9 +75,8 @@ class WithheldDocumentStore {
 	 *
 	 * The new entries are written first and the superseded ones deleted afterwards, so a
 	 * write that fails halfway leaves the previous complete list: the entries already written
-	 * by this call are removed again and the error is passed on. All entries of one call share
-	 * a `recordedAt` stamp; while old and new rows coexist (the delete step, or a failed
-	 * delete) the public read keeps only the newest stamp, see WithheldFromPublicationStore.
+	 * by this call are removed again and the error is passed on. A failed delete of the
+	 * superseded rows leaves them next to the new ones until the next record().
 	 *
 	 * @param string                                                           $publicationId The publication.
 	 * @param list<array{position: int, grounds: list<array<string, string>>}> $accepted      The entries to store.
@@ -96,9 +95,7 @@ class WithheldDocumentStore {
 
 		$superseded = $this->storedIds(objects: $objects, register: $register, schema: $schema, publicationId: $publicationId);
 
-		// One stamp for the whole call, with microseconds: it names this batch of entries, so
-		// the public read can tell them from the rows they replace while both still exist.
-		$now = (new DateTimeImmutable())->format('Y-m-d\TH:i:s.uP');
+		$now = (new DateTimeImmutable())->format('c');
 		$written = [];
 		try {
 			foreach ($accepted as $entry) {
