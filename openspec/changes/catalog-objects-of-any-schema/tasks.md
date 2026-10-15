@@ -19,7 +19,7 @@
 
 - [x] 4.1 Jest: row targets, the other-pair config and the sidebar pass-through in `CatalogPublicationsIndex.spec.js`.
 - [x] 4.2 Vitest: manifest and schema shape in `tests/vitest/catalogObjectDetailPage.spec.js`.
-- [x] 4.3 Playwright: `tests/e2e/workflows/catalog-other-schema-objects.spec.ts`.
+- [ ] 4.3 Playwright: `tests/e2e/workflows/catalog-other-schema-objects.spec.ts` (written, not yet run).
 
 ## 5. Dependencies
 
