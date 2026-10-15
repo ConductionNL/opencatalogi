@@ -71,7 +71,12 @@ class WithheldDocumentStore {
 	}//end requireObjects()
 
 	/**
-	 * Remove the stored entries of the publication and write the accepted ones.
+	 * Write the accepted entries of the publication, then remove the entries they replace.
+	 *
+	 * The new entries are written first and the superseded ones deleted afterwards, so a
+	 * write that fails halfway leaves the previous complete list: the entries already written
+	 * by this call are removed again and the error is passed on. The public read therefore
+	 * never serves a list that is only partly the new one.
 	 *
 	 * @param string                                                           $publicationId The publication.
 	 * @param list<array{position: int, grounds: list<array<string, string>>}> $accepted      The entries to store.
@@ -80,6 +85,7 @@ class WithheldDocumentStore {
 	 * @return void
 	 *
 	 * @throws RuntimeException When OpenRegister or the register configuration is not there.
+	 * @throws Throwable        When a write fails; the previous list is kept.
 	 *
 	 * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
 	 */
@@ -87,37 +93,86 @@ class WithheldDocumentStore {
 		$objects = $this->requireObjects();
 		[$register, $schema] = $this->target(key: 'withheld_document_schema');
 
+		$superseded = $this->storedIds(objects: $objects, register: $register, schema: $schema, publicationId: $publicationId);
+
+		$now = (new DateTimeImmutable())->format('c');
+		$written = [];
+		try {
+			foreach ($accepted as $entry) {
+				$saved = $objects->saveObject(
+					object: [
+						'publication' => $publicationId,
+						'position' => $entry['position'],
+						'grounds' => $entry['grounds'],
+						'source' => $source,
+						'recordedAt' => $now,
+					],
+					register: $register,
+					schema: $schema,
+					_rbac: false,
+					_multitenancy: false
+				);
+				$written[] = (string)($this->asArray(object: $saved)['id'] ?? '');
+			}
+		} catch (Throwable $e) {
+			$this->discard(objects: $objects, register: $register, schema: $schema, ids: $written);
+			throw $e;
+		}
+
+		foreach ($superseded as $id) {
+			$objects->deleteObject(uuid: $id, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+		}
+	}//end replace()
+
+	/**
+	 * The ids of the entries stored for a publication.
+	 *
+	 * @param object $objects       OpenRegister's ObjectService.
+	 * @param string $register      The register.
+	 * @param string $schema        The schema.
+	 * @param string $publicationId The publication.
+	 *
+	 * @return list<string>
+	 */
+	private function storedIds(object $objects, string $register, string $schema, string $publicationId): array {
 		$result = $objects->searchObjectsPaginated(
 			query: ['@self' => ['register' => $register, 'schema' => $schema], 'publication' => $publicationId, '_limit' => 1000],
 			_rbac: false,
 			_multitenancy: false
 		);
+
+		$ids = [];
 		foreach ((array)($result['results'] ?? []) as $row) {
 			$stored = $this->asArray(object: $row);
 			if ((string)($stored['publication'] ?? '') !== $publicationId) {
 				continue;
 			}
 
-			$objects->deleteObject(uuid: (string)($stored['id'] ?? ''), register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+			$ids[] = (string)($stored['id'] ?? '');
 		}
 
-		$now = (new DateTimeImmutable())->format('c');
-		foreach ($accepted as $entry) {
-			$objects->saveObject(
-				object: [
-					'publication' => $publicationId,
-					'position' => $entry['position'],
-					'grounds' => $entry['grounds'],
-					'source' => $source,
-					'recordedAt' => $now,
-				],
-				register: $register,
-				schema: $schema,
-				_rbac: false,
-				_multitenancy: false
-			);
+		return $ids;
+	}//end storedIds()
+
+	/**
+	 * Remove entries a failed replace had already written, so the previous list stands alone.
+	 *
+	 * @param object       $objects  OpenRegister's ObjectService.
+	 * @param string       $register The register.
+	 * @param string       $schema   The schema.
+	 * @param list<string> $ids      The ids written by the failed call.
+	 *
+	 * @return void
+	 */
+	private function discard(object $objects, string $register, string $schema, array $ids): void {
+		foreach ($ids as $id) {
+			try {
+				$objects->deleteObject(uuid: $id, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+			} catch (Throwable $e) {
+				$this->logger->error('WithheldDocuments: an entry of a failed replace could not be removed', ['id' => $id, 'exception' => $e->getMessage()]);
+			}
 		}
-	}//end replace()
+	}//end discard()
 
 	/**
 	 * Whether the publication exists.

@@ -70,6 +70,27 @@ class WithheldDocumentStoreTest extends TestCase {
 		$this->assertSame([1, 4], array_values(array_map(static fn (array $row): int => $row['position'], $this->objects->rows)));
 	}//end testAReplaceLeavesAnotherPublicationsEntries()
 
+	public function testAFailedWriteKeepsThePreviousCompleteList(): void {
+		$this->objects->rows = [
+			'old-1' => ['publication' => 'pub-1', 'position' => 1, 'grounds' => [], 'source' => 'dossiq', 'recordedAt' => 'x'],
+			'old-2' => ['publication' => 'pub-1', 'position' => 2, 'grounds' => [], 'source' => 'dossiq', 'recordedAt' => 'x'],
+		];
+		$this->objects->failSaveAt = 2;
+		$accepted = [
+			['position' => 3, 'grounds' => [['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'L']]],
+			['position' => 4, 'grounds' => [['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'L']]],
+		];
+
+		try {
+			$this->store()->replace('pub-1', $accepted, 'dossiq');
+			$this->fail('The failed write must reach the caller.');
+		} catch (RuntimeException $e) {
+			$this->assertSame('OpenRegister is down', $e->getMessage());
+		}
+
+		$this->assertSame(['old-1', 'old-2'], array_keys($this->objects->rows), 'the previous rows stand, and the half-written new one is gone');
+	}//end testAFailedWriteKeepsThePreviousCompleteList()
+
 	public function testThePublicationIsLookedUp(): void {
 		$this->assertTrue($this->store()->publicationExists('pub-1'));
 		$this->assertFalse($this->store()->publicationExists('pub-404'));

@@ -48,6 +48,11 @@ class WithheldShapedObjectService {
 
 	public int $next = 1;
 
+	/** @var int|null Which saveObject call (from 1) throws; null for none. */
+	public ?int $failSaveAt = null;
+
+	public int $saves = 0;
+
 	public function find(string $id, mixed ...$rest): ?array {
 		if (in_array($id, $this->publications, true) === false) {
 			throw new RuntimeException('not found');
@@ -57,6 +62,11 @@ class WithheldShapedObjectService {
 	}//end find()
 
 	public function saveObject(array $object, mixed ...$rest): array {
+		$this->saves++;
+		if ($this->failSaveAt !== null && $this->saves === $this->failSaveAt) {
+			throw new RuntimeException('OpenRegister is down');
+		}
+
 		$id = 'w-' . $this->next++;
 		$this->rows[$id] = $object;
 
