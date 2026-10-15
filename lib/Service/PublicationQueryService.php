@@ -976,10 +976,7 @@ class PublicationQueryService
             if ($c === null || $this->isCatalogPubliclyAvailable(catalog: $c) === false) {
                 return ['registers' => [], 'schemas' => []];
             }
-            return [
-                'registers' => $this->normalizeIds(value: ($c['registers'] ?? [])),
-                'schemas'   => $this->normalizeIds(value: ($c['schemas']   ?? [])),
-            ];
+            return $this->catalogScope(catalog: $c);
         }
 
         // 2. Explicit multi-catalog union.
@@ -996,8 +993,9 @@ class PublicationQueryService
                 if ($c === null || $this->isCatalogPubliclyAvailable(catalog: $c) === false) {
                     continue;
                 }
-                $regs    = array_merge($regs,    $this->normalizeIds(value: ($c['registers'] ?? [])));
-                $schemas = array_merge($schemas, $this->normalizeIds(value: ($c['schemas']   ?? [])));
+                $scope   = $this->catalogScope(catalog: $c);
+                $regs    = array_merge($regs, $scope['registers']);
+                $schemas = array_merge($schemas, $scope['schemas']);
             }
             return [
                 'registers' => array_values(array_unique($regs)),
@@ -1010,8 +1008,9 @@ class PublicationQueryService
         $regs = [];
         $schemas = [];
         foreach ($allCatalogs as $c) {
-            $regs    = array_merge($regs,    $this->normalizeIds(value: ($c['registers'] ?? [])));
-            $schemas = array_merge($schemas, $this->normalizeIds(value: ($c['schemas']   ?? [])));
+            $scope   = $this->catalogScope(catalog: $c);
+            $regs    = array_merge($regs, $scope['registers']);
+            $schemas = array_merge($schemas, $scope['schemas']);
         }
         return [
             'registers' => array_values(array_unique($regs)),
@@ -1123,7 +1122,9 @@ class PublicationQueryService
      * word became 0, and one catalogue naming a register that way (the example
      * data does) scoped the whole public search to register 0, which
      * OpenRegister refuses: every `/api/search` answered 500. Leaving it out
-     * only narrows the scope.
+     * narrows the scope while at least one id is left. When none is left the
+     * list is empty, and an empty register list means no register scope at all:
+     * {@see catalogScope()} turns that case into an empty scope for the catalogue.
      *
      * @param mixed $value Raw value from catalog metadata.
      *
@@ -1152,6 +1153,61 @@ class PublicationQueryService
         return array_values(array_filter(array_map('intval', $digits), static fn (int $id): bool => $id > 0));
 
     }//end normalizeIds()
+
+    /**
+     * The register and schema ids one catalogue scopes the public search to.
+     *
+     * Fails closed: a catalogue that names registers (or schemas) of which none is an
+     * id gets an empty scope. Left as an empty register list it would add neither
+     * `_register` nor `_registers`, and the catalogue's schemas would be searched in
+     * every register that holds them; an empty schema list already ends in the empty
+     * envelope.
+     *
+     * @param array $catalog The catalogue's jsonSerialize()d array.
+     *
+     * @return array{registers: int[], schemas: int[]}
+     */
+    private function catalogScope(array $catalog): array
+    {
+        $registers = $this->normalizeIds(value: ($catalog['registers'] ?? []));
+        $schemas   = $this->normalizeIds(value: ($catalog['schemas'] ?? []));
+
+        if (($registers === [] && $this->namesReferences(value: ($catalog['registers'] ?? [])) === true)
+            || ($schemas === [] && $this->namesReferences(value: ($catalog['schemas'] ?? [])) === true)
+        ) {
+            return ['registers' => [], 'schemas' => []];
+        }
+
+        return ['registers' => $registers, 'schemas' => $schemas];
+
+    }//end catalogScope()
+
+    /**
+     * Whether a catalogue's register or schema field names anything, id or not.
+     *
+     * @param mixed $value Raw value from catalog metadata: a list, or a JSON string of one.
+     *
+     * @return bool
+     */
+    private function namesReferences(mixed $value): bool
+    {
+        if (is_string($value) === true) {
+            if (trim($value) === '') {
+                return false;
+            }
+
+            $decoded = json_decode($value, true);
+            if (is_array($decoded) === false) {
+                // A word, not a list: it names something, and no id.
+                return true;
+            }
+
+            $value = $decoded;
+        }
+
+        return is_array($value) === true && $value !== [];
+
+    }//end namesReferences()
 
     /**
      * Whether the current caller is anonymous (no logged-in user).
