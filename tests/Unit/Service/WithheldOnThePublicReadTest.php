@@ -296,6 +296,16 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$this->assertArrayNotHasKey('withheld', $this->federation());
 	}//end testAnUnreadableAssessmentLeavesTheKeyOutOfTheAnswer()
 
+	public function testAnOptedInCatalogueWithNothingRecordedForThePublicationHasNoWithheldKey(): void {
+		// No stored row and no batch for pub-1: "not recorded" must not read as "nothing withheld".
+		$this->objects->rows['sch-withheld'] = [];
+
+		[$status, $data] = $this->show(optIn: true);
+		$this->assertSame(200, $status);
+		$this->assertArrayNotHasKey('withheld', $data);
+		$this->assertArrayNotHasKey('withheld', $this->federation());
+	}//end testAnOptedInCatalogueWithNothingRecordedForThePublicationHasNoWithheldKey()
+
 	public function testANonPublicPublicationShowsNothing(): void {
 		// OpenRegister's RBAC hides a publication that is not public from the anonymous lookup.
 		$this->objects->publication = [];

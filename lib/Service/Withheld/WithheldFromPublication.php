@@ -14,7 +14,8 @@
  * `title` when the assessment's `titlePublic` is true. Nothing else.
  *
  * Absent, never empty, when the catalogue did not opt in, cannot be resolved,
- * or the list cannot be read: an empty list would say nothing was withheld.
+ * the list cannot be read, or there is nothing to list: an empty list would say
+ * nothing was withheld, which nothing recorded cannot tell.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service\Withheld
@@ -137,7 +138,11 @@ class WithheldFromPublication {
 	}//end entries()
 
 	/**
-	 * Add the list, or leave the key out when it cannot be read.
+	 * Add the list, or leave the key out when it cannot be read or holds nothing.
+	 *
+	 * An empty list is never added: nothing recorded (a Woo decision whose `record()` has not
+	 * run yet, or was refused) cannot be told from nothing withheld, and `withheld: []` would
+	 * state the second.
 	 *
 	 * @param array<string, mixed> $response      The rendered publication.
 	 * @param string               $publicationId The publication.
@@ -146,7 +151,10 @@ class WithheldFromPublication {
 	 */
 	private function withList(array $response, string $publicationId): array {
 		try {
-			$response['withheld'] = $this->entries(publicationId: $publicationId);
+			$entries = $this->entries(publicationId: $publicationId);
+			if ($entries !== []) {
+				$response['withheld'] = $entries;
+			}
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'WithheldFromPublication: the withheld list could not be read',
