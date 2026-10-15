@@ -144,7 +144,7 @@ class WithheldFromPublicationStore {
 	 */
 	private function findBatch(string $register, string $schema, string $publicationId): ?array {
 		for ($page = 1; $page <= self::MAX_BATCH_PAGES; $page++) {
-			$batches = $this->search(register: $register, schema: $schema, filters: ['_page' => $page, '_order' => ['@self.created' => 'asc']]);
+			$batches = $this->search(register: $register, schema: $schema, filters: ['_page' => $page, '_order' => ['@self.created' => 'asc', '_uuid' => 'asc']]);
 			foreach ($batches as $batch) {
 				if ((string)($batch['wooPublication']['publication'] ?? '') === $publicationId) {
 					return $batch;

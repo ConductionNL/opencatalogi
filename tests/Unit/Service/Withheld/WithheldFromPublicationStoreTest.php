@@ -103,7 +103,7 @@ class WithheldFromPublicationStoreTest extends TestCase {
 
 		$this->store()->batchAssessments(publicationId: 'pub-1');
 
-		$this->assertSame(['@self.created' => 'asc'], $this->objects->queries[0]['_order'] ?? null);
+		$this->assertSame(['@self.created' => 'asc', '_uuid' => 'asc'], $this->objects->queries[0]['_order'] ?? null);
 	}//end testTheBatchScanIsOrderedSoPagesCannotShift()
 
 	public function testWithoutAWooRegisterThereIsNoBatch(): void {
