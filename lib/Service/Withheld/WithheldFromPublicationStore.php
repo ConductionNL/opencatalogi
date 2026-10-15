@@ -169,7 +169,9 @@ class WithheldFromPublicationStore {
 	 *
 	 * Not finding the batch in a register that was read to its end means there is none. A register
 	 * larger than the scan cap is not read to its end, so the answer is unknown and the scan
-	 * refuses rather than report a missing batch.
+	 * refuses rather than report a missing batch. The pages are ordered by creation, oldest
+	 * first, so a batch created while the scan runs lands after the pages already read and
+	 * cannot shift a batch past the scan.
 	 *
 	 * @param string $register      The batch register.
 	 * @param string $schema        The batch schema.
@@ -181,7 +183,7 @@ class WithheldFromPublicationStore {
 	 */
 	private function findBatch(string $register, string $schema, string $publicationId): ?array {
 		for ($page = 1; $page <= self::MAX_BATCH_PAGES; $page++) {
-			$batches = $this->search(register: $register, schema: $schema, filters: ['_page' => $page]);
+			$batches = $this->search(register: $register, schema: $schema, filters: ['_page' => $page, '_order' => ['@self.created' => 'asc']]);
 			foreach ($batches as $batch) {
 				if ((string)($batch['wooPublication']['publication'] ?? '') === $publicationId) {
 					return $batch;

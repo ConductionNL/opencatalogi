@@ -47,7 +47,11 @@ class PublicReadObjectService {
 	/** @var array<string, mixed> What renderEntity answers. */
 	public array $rendered = [];
 
+	/** @var list<array<string, mixed>> The queries received. */
+	public array $queries = [];
+
 	public function searchObjectsPaginated(array $query, mixed ...$rest): array {
+		$this->queries[] = $query;
 		$rows = ($this->rows[(string)($query['@self']['schema'] ?? '')] ?? []);
 		if (isset($query['_limit']) === true) {
 			// Page like OpenRegister does: `_limit` rows per `_page`, from 1.

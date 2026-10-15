@@ -98,6 +98,14 @@ class WithheldFromPublicationStoreTest extends TestCase {
 		$this->store()->batchAssessments(publicationId: 'pub-1');
 	}//end testABatchRegisterBeyondTheScanCapRefusesRatherThanReportNoBatch()
 
+	public function testTheBatchScanIsOrderedSoPagesCannotShift(): void {
+		$this->objects->rows['b'] = [['id' => 'b-1', 'documents' => [], 'wooPublication' => ['publication' => 'pub-1']]];
+
+		$this->store()->batchAssessments(publicationId: 'pub-1');
+
+		$this->assertSame(['@self.created' => 'asc'], $this->objects->queries[0]['_order'] ?? null);
+	}//end testTheBatchScanIsOrderedSoPagesCannotShift()
+
 	public function testWhileOldAndNewRowsCoexistOnlyTheNewestRecordingIsListed(): void {
 		$this->objects->rows['w'] = [
 			['id' => 'old-1', 'publication' => 'pub-1', 'position' => 1, 'recordedAt' => '2026-10-10T10:00:00+00:00'],
