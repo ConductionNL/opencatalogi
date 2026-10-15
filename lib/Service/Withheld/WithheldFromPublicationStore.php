@@ -44,6 +44,16 @@ use Throwable;
 class WithheldFromPublicationStore {
 
 	/**
+	 * Rows read per OpenRegister search.
+	 */
+	private const SEARCH_LIMIT = 1000;
+
+	/**
+	 * Pages of the batch register scanned before the scan refuses (20 000 batches).
+	 */
+	private const MAX_BATCH_PAGES = 20;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig         $config     Holds the register and schema ids.
@@ -84,13 +94,14 @@ class WithheldFromPublicationStore {
 	 * The assessments of the batch a publication was made from, in the batch's document order.
 	 *
 	 * An empty list when no batch names the publication or the Woo register is not configured:
-	 * a publication from dossiq has no batch.
+	 * a publication from dossiq has no batch. An assessment that cannot be read, or a batch
+	 * register too large to scan, is an error: the list is then left out, never shortened.
 	 *
 	 * @param string $publicationId The publication.
 	 *
 	 * @return list<array<string, mixed>>
 	 *
-	 * @throws RuntimeException When OpenRegister is not there.
+	 * @throws RuntimeException When OpenRegister is not there, an assessment cannot be read, or the batch register is too large to scan.
 	 *
 	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-show-that-documents-were-withheld-and-why-req-pdp-004
 	 */
@@ -101,21 +112,50 @@ class WithheldFromPublicationStore {
 			return [];
 		}
 
-		foreach ($this->search(register: $register, schema: $schema, filters: []) as $batch) {
-			if ((string)($batch['wooPublication']['publication'] ?? '') !== $publicationId) {
-				continue;
-			}
-
-			$assessments = [];
-			foreach (array_values((array)($batch['documents'] ?? [])) as $ref) {
-				$assessments[] = $this->findQuietly(id: (string)$ref);
-			}
-
-			return $assessments;
+		$batch = $this->findBatch(register: $register, schema: $schema, publicationId: $publicationId);
+		if ($batch === null) {
+			return [];
 		}
 
-		return [];
+		$assessments = [];
+		foreach (array_values((array)($batch['documents'] ?? [])) as $ref) {
+			$assessments[] = $this->assessment(id: (string)$ref);
+		}
+
+		return $assessments;
 	}//end batchAssessments()
+
+	/**
+	 * The batch a publication was made from, scanning the batch register page by page.
+	 *
+	 * Not finding the batch in a register that was read to its end means there is none. A register
+	 * larger than the scan cap is not read to its end, so the answer is unknown and the scan
+	 * refuses rather than report a missing batch.
+	 *
+	 * @param string $register      The batch register.
+	 * @param string $schema        The batch schema.
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<string, mixed>|null The batch, or null when none names the publication.
+	 *
+	 * @throws RuntimeException When OpenRegister is not there, or the register is larger than the scan cap.
+	 */
+	private function findBatch(string $register, string $schema, string $publicationId): ?array {
+		for ($page = 1; $page <= self::MAX_BATCH_PAGES; $page++) {
+			$batches = $this->search(register: $register, schema: $schema, filters: ['_page' => $page]);
+			foreach ($batches as $batch) {
+				if ((string)($batch['wooPublication']['publication'] ?? '') === $publicationId) {
+					return $batch;
+				}
+			}
+
+			if (count($batches) < self::SEARCH_LIMIT) {
+				return null;
+			}
+		}
+
+		throw new RuntimeException('The batch register is larger than the scan cap, so the batch of a publication cannot be told.');
+	}//end findBatch()
 
 	/**
 	 * The catalogues whose registers and schemas hold the given register and schema.
@@ -158,7 +198,7 @@ class WithheldFromPublicationStore {
 	 */
 	private function search(string $register, string $schema, array $filters): array {
 		$result = $this->objects()->searchObjectsPaginated(
-			query: array_merge(['@self' => ['register' => $register, 'schema' => $schema], '_limit' => 1000], $filters),
+			query: array_merge(['@self' => ['register' => $register, 'schema' => $schema], '_limit' => self::SEARCH_LIMIT], $filters),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -167,19 +207,28 @@ class WithheldFromPublicationStore {
 	}//end search()
 
 	/**
-	 * One object by id, or an empty array when it cannot be read.
+	 * One assessment by id. An assessment that cannot be read is an error, not an empty one:
+	 * an empty one reads as "not withheld", and the list must then be left out, never shortened.
 	 *
 	 * @param string $id The object id.
 	 *
 	 * @return array<string, mixed>
+	 *
+	 * @throws RuntimeException When the assessment cannot be read.
 	 */
-	private function findQuietly(string $id): array {
+	private function assessment(string $id): array {
 		try {
-			return $this->asArray(object: $this->objects()->find(id: $id, _rbac: false, _multitenancy: false));
+			$assessment = $this->asArray(object: $this->objects()->find(id: $id, _rbac: false, _multitenancy: false));
 		} catch (Throwable $e) {
-			return [];
+			throw new RuntimeException('An assessment of the batch could not be read: ' . $e->getMessage(), 0, $e);
 		}
-	}//end findQuietly()
+
+		if ($assessment === []) {
+			throw new RuntimeException('An assessment of the batch could not be read.');
+		}
+
+		return $assessment;
+	}//end assessment()
 
 	/**
 	 * OpenRegister's ObjectService, or a refusal naming why it is not there.

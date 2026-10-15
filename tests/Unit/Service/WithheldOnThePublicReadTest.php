@@ -48,8 +48,14 @@ class PublicReadObjectService {
 	public array $rendered = [];
 
 	public function searchObjectsPaginated(array $query, mixed ...$rest): array {
+		$rows = ($this->rows[(string)($query['@self']['schema'] ?? '')] ?? []);
+		if (isset($query['_limit']) === true) {
+			// Page like OpenRegister does: `_limit` rows per `_page`, from 1.
+			$rows = array_slice($rows, (((int)($query['_page'] ?? 1) - 1) * (int)$query['_limit']), (int)$query['_limit']);
+		}
+
 		$results = [];
-		foreach ($this->rows[(string)($query['@self']['schema'] ?? '')] ?? [] as $row) {
+		foreach ($rows as $row) {
 			$results[] = ['id' => $row['id'] ?? null, 'object' => $row];
 		}
 
@@ -278,6 +284,17 @@ class WithheldOnThePublicReadTest extends TestCase {
 
 		$this->assertSame([3, 7], array_column($data['withheld'], 'position'));
 	}//end testAnExtendedRegisterAndSchemaStillGetTheListForALocalPublication()
+
+	public function testAnUnreadableAssessmentLeavesTheKeyOutOfTheAnswer(): void {
+		// The batch names an assessment that cannot be read: the list is left out, not shortened.
+		$this->objects->rows['sch-batch'] = [['id' => 'b-1', 'documents' => ['a-1', 'gone'], 'wooPublication' => ['publication' => 'pub-1']]];
+		$this->objects->objects = ['a-1' => ['id' => 'a-1', 'assessment' => 'niet_openbaar', 'weigeringsgronden' => ['5.1.2.e']]];
+
+		[$status, $data] = $this->show(optIn: true);
+		$this->assertSame(200, $status);
+		$this->assertArrayNotHasKey('withheld', $data);
+		$this->assertArrayNotHasKey('withheld', $this->federation());
+	}//end testAnUnreadableAssessmentLeavesTheKeyOutOfTheAnswer()
 
 	public function testANonPublicPublicationShowsNothing(): void {
 		// OpenRegister's RBAC hides a publication that is not public from the anonymous lookup.

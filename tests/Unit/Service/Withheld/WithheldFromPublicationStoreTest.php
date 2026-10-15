@@ -57,13 +57,46 @@ class WithheldFromPublicationStoreTest extends TestCase {
 		$this->assertSame(['1'], array_column($this->store()->storedEntries(publicationId: 'pub-1'), 'id'));
 	}//end testStoredEntriesAreThisPublicationsOnly()
 
-	public function testBatchAssessmentsKeepTheBatchOrderAndAnUnreadableOneKeepsItsPlace(): void {
+	public function testBatchAssessmentsKeepTheBatchOrder(): void {
+		$this->objects->rows['b'] = [['id' => 'b-1', 'documents' => ['a-2', 'a-1'], 'wooPublication' => ['publication' => 'pub-1']]];
+		$this->objects->objects = ['a-1' => ['id' => 'a-1'], 'a-2' => ['id' => 'a-2']];
+
+		$this->assertSame(['a-2', 'a-1'], array_column($this->store()->batchAssessments(publicationId: 'pub-1'), 'id'));
+		$this->assertSame([], $this->store()->batchAssessments(publicationId: 'pub-2'));
+	}//end testBatchAssessmentsKeepTheBatchOrder()
+
+	public function testAnAssessmentThatCannotBeReadMakesTheBatchReadFailRatherThanShortenTheList(): void {
 		$this->objects->rows['b'] = [['id' => 'b-1', 'documents' => ['a-2', 'gone', 'a-1'], 'wooPublication' => ['publication' => 'pub-1']]];
 		$this->objects->objects = ['a-1' => ['id' => 'a-1'], 'a-2' => ['id' => 'a-2']];
 
-		$this->assertSame(['a-2', null, 'a-1'], array_map(static fn (array $a): mixed => $a['id'] ?? null, $this->store()->batchAssessments(publicationId: 'pub-1')));
-		$this->assertSame([], $this->store()->batchAssessments(publicationId: 'pub-2'));
-	}//end testBatchAssessmentsKeepTheBatchOrderAndAnUnreadableOneKeepsItsPlace()
+		$this->expectException(RuntimeException::class);
+		$this->store()->batchAssessments(publicationId: 'pub-1');
+	}//end testAnAssessmentThatCannotBeReadMakesTheBatchReadFailRatherThanShortenTheList()
+
+	public function testTheBatchOfAPublicationIsFoundBeyondTheFirstThousandBatches(): void {
+		$rows = [];
+		for ($index = 1; $index <= 1500; $index++) {
+			$rows[] = ['id' => 'b-' . $index, 'documents' => [], 'wooPublication' => ['publication' => 'other-' . $index]];
+		}
+
+		$rows[] = ['id' => 'b-mine', 'documents' => ['a-1'], 'wooPublication' => ['publication' => 'pub-1']];
+		$this->objects->rows['b'] = $rows;
+		$this->objects->objects = ['a-1' => ['id' => 'a-1']];
+
+		$this->assertSame(['a-1'], array_column($this->store()->batchAssessments(publicationId: 'pub-1'), 'id'));
+	}//end testTheBatchOfAPublicationIsFoundBeyondTheFirstThousandBatches()
+
+	public function testABatchRegisterBeyondTheScanCapRefusesRatherThanReportNoBatch(): void {
+		$rows = [];
+		for ($index = 1; $index <= 20001; $index++) {
+			$rows[] = ['id' => 'b-' . $index, 'documents' => [], 'wooPublication' => ['publication' => 'other']];
+		}
+
+		$this->objects->rows['b'] = $rows;
+
+		$this->expectException(RuntimeException::class);
+		$this->store()->batchAssessments(publicationId: 'pub-1');
+	}//end testABatchRegisterBeyondTheScanCapRefusesRatherThanReportNoBatch()
 
 	public function testWithoutAWooRegisterThereIsNoBatch(): void {
 		$this->assertSame([], $this->store(config: ['publication_register' => 'r'])->batchAssessments(publicationId: 'pub-1'));
