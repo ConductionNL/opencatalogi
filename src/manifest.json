@@ -508,7 +508,7 @@
 			"type": "custom",
 			"component": "CatalogPublicationsIndex",
 			"title": "Publications",
-			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage over all of its pairs at once: the list comes from `/api/{catalogSlug}` through CnIndexPage's `collectionUrl`, newest first, while `register`/`schema` below name the page's own pair (the publication pair, which drives the columns, Add and the form). It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. Publication rows open on PublicationDetail; rows of any other pair (e.g. publicationRule) have no detail page, so View and Edit open CnIndexPage's form for their own schema, and save, copy and delete go to their own pair. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Config that only fits the publication schema, such as `columns` and `actions` with a publication handler, goes in `publicationPairConfig`, applied when the page's pair is the publication pair; its custom actions show on publication rows only. Mass export and import stay off because they would cover the page's own pair only. SORT: newest first by default, on every pair; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). COLUMNS: Name, Status, Files, Updated, the set the list had before the CnIndexPage migration. Name is `@self.name`, which every schema has. Files counts `@self.files` (file IDs) with the library's `count` formatter; it is not sortable. Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`.",
+			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage over all of its pairs at once: the list comes from `/api/{catalogSlug}` through CnIndexPage's `collectionUrl`, newest first, while `register`/`schema` below name the page's own pair (the publication pair, which drives the columns, Add and the form). It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. Publication rows open on PublicationDetail and edit in the publication modal; rows of any other pair (e.g. publicationRule, publiccode) open on the generic CatalogObjectDetail page (click, View, or a new tab), while Edit opens CnIndexPage's form for their own schema; save, copy and delete go to their own pair. A row whose `@self` register or schema is not numeric has no detail page and opens in the form. `sidebar` turns on CnIndexPage's search, filter and columns sidebar. Config for a catalog WITHOUT the publication pair goes in `otherPairConfig`, applied only then: its Name, Summary and Updated columns replace the every-scalar-property default, and the other properties stay available in the sidebar's Columns tab. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Config that only fits the publication schema, such as `columns` and `actions` with a publication handler, goes in `publicationPairConfig`, applied when the page's pair is the publication pair; its custom actions show on publication rows only. Mass export and import stay off because they would cover the page's own pair only. SORT: newest first by default, on every pair; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). COLUMNS: Name, Status, Files, Updated, the set the list had before the CnIndexPage migration. Name is `@self.name`, which every schema has. Files counts `@self.files` (file IDs) with the library's `count` formatter; it is not sortable. Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`.",
 			"config": {
 				"register": "@resolve:publication_register",
 				"schema": "@resolve:publication_schema",
@@ -573,7 +573,100 @@
 				"inlineSearch": true,
 				"showCountWithSearch": true,
 				"emptyText": "No publications found",
+				"otherPairConfig": {
+					"columns": [
+						{
+							"key": "@self.name",
+							"label": "Name",
+							"sortable": true
+						},
+						{
+							"key": "@self.summary",
+							"label": "Summary",
+							"sortable": true
+						},
+						{
+							"key": "@self.updated",
+							"label": "Updated",
+							"format": "date-time",
+							"sortable": true
+						}
+					]
+				},
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true
+				},
 				"documentationUrl": "https://opencatalogi.conduction.nl"
+			}
+		},
+		{
+			"id": "CatalogObjectDetail",
+			"route": "/publications/:catalogSlug/:register/:schema/:id",
+			"type": "detail",
+			"title": "Details",
+			"_note": "Generic detail page for an object of any schema in a catalog other than the publication schema, e.g. a harvested publiccode component in the Componenten catalog. CatalogPublicationsIndex opens rows of other pairs here; register and schema come from the row's own `@self`, through the route. The Data card is read-only because its inline editor cannot edit free-form object properties such as publiccode's per-language `description` (it would write back a string); edits go through the header Edit button, whose form renders those properties with their schema `widget`. Related lists the object's references; the audit trail lives in the sidebar.",
+			"config": {
+				"register": "@route.register",
+				"schema": "@route.schema",
+				"idParam": "@route.id",
+				"notFoundRoute": {
+					"name": "Publications"
+				},
+				"notFoundRouteLabel": "Publications",
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "object-data",
+						"type": "data",
+						"title": "Data",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"editable": false
+						}
+					},
+					{
+						"id": "object-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "object-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 10
+					},
+					{
+						"id": "2",
+						"widgetId": "object-related",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 4
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
