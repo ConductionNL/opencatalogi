@@ -2817,10 +2817,12 @@ class PublicationService {
 				$responseData = $federatedResult['result'];
 				$responseData['sources'] = ($federatedResult['source'] ?? []);
 
+				// `federated` marks a peer's publication: it is not this instance's to describe.
 				return [
 					'success' => true,
 					'data' => $responseData,
 					'status' => 200,
+					'federated' => true,
 				];
 			}
 

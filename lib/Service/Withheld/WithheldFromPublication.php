@@ -91,8 +91,8 @@ class WithheldFromPublication {
 	public function addForPublication(array $response): array {
 		$self = (array)($response['@self'] ?? []);
 		$publicationId = (string)($response['id'] ?? ($self['id'] ?? ''));
-		$register = (string)($self['register'] ?? '');
-		$schema = (string)($self['schema'] ?? '');
+		$register = $this->referenceId(value: ($self['register'] ?? ''));
+		$schema = $this->referenceId(value: ($self['schema'] ?? ''));
 		if ($publicationId === '' || $register === '' || $schema === '') {
 			return $response;
 		}
@@ -156,6 +156,21 @@ class WithheldFromPublication {
 
 		return $response;
 	}//end withList()
+
+	/**
+	 * The id of a `@self` register or schema, which an `_extend` turns from an id into an object.
+	 *
+	 * @param mixed $value The id, or the extended object holding it.
+	 *
+	 * @return string The id, or '' when there is none.
+	 */
+	private function referenceId(mixed $value): string {
+		if (is_array($value) === true) {
+			$value = ($value['id'] ?? '');
+		}
+
+		return (is_string($value) === true || is_int($value) === true) ? (string)$value : '';
+	}//end referenceId()
 
 	/**
 	 * Whether a catalogue opted in. Only a literal true counts.

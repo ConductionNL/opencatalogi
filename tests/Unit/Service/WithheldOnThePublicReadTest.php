@@ -239,6 +239,46 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$this->assertArrayNotHasKey('withheld', $this->federation(), 'an unresolved catalogue gives no key');
 	}//end testTheFederationEndpointSaysNothingWhenACatalogueHoldingItDidNotOptIn()
 
+	public function testAPeersPublicationGetsNoWithheldKeyEvenWhenTheIdsMatchALocalOptedInCatalogue(): void {
+		// The peer's register and schema ids coincide with the opted-in local catalogue's.
+		$publications = $this->createMock(PublicationService::class);
+		$publications->method('getFederatedPublication')->willReturn(
+			[
+				'success' => true,
+				'data' => ($this->objects->rendered + ['sources' => ['https://peer.example.com']]),
+				'status' => 200,
+				'federated' => true,
+			]
+		);
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParams')->willReturn([]);
+		$controller = new FederationController('opencatalogi', $request, $publications, $this->createMock(IL10N::class), new NullLogger(), $this->withheld);
+
+		$data = (array)$controller->publication('pub-1')->getData();
+
+		$this->assertArrayHasKey('sources', $data);
+		$this->assertArrayNotHasKey('withheld', $data);
+
+		// Peer data that only carries `sources` (no marker) is treated the same way.
+		$publications = $this->createMock(PublicationService::class);
+		$publications->method('getFederatedPublication')->willReturn(
+			['success' => true, 'data' => ($this->objects->rendered + ['sources' => []]), 'status' => 200]
+		);
+		$controller = new FederationController('opencatalogi', $request, $publications, $this->createMock(IL10N::class), new NullLogger(), $this->withheld);
+
+		$this->assertArrayNotHasKey('withheld', (array)$controller->publication('pub-1')->getData());
+	}//end testAPeersPublicationGetsNoWithheldKeyEvenWhenTheIdsMatchALocalOptedInCatalogue()
+
+	public function testAnExtendedRegisterAndSchemaStillGetTheListForALocalPublication(): void {
+		// `?_extend[]=@self.register&_extend[]=@self.schema` turns both ids into objects.
+		$this->objects->rendered['@self']['register'] = ['id' => '1', 'title' => 'Register'];
+		$this->objects->rendered['@self']['schema'] = ['id' => '1', 'title' => 'Schema'];
+
+		$data = $this->federation();
+
+		$this->assertSame([3, 7], array_column($data['withheld'], 'position'));
+	}//end testAnExtendedRegisterAndSchemaStillGetTheListForALocalPublication()
+
 	public function testANonPublicPublicationShowsNothing(): void {
 		// OpenRegister's RBAC hides a publication that is not public from the anonymous lookup.
 		$this->objects->publication = [];

@@ -141,8 +141,13 @@ class FederationController extends Controller {
 			$result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
 
 			// REQ-WDW-003: the same `withheld` list publications#show answers, for a
-			// publication of this instance whose catalogue opted in.
-			if ($this->withheld !== null && $result['status'] === 200 && is_array($result['data']) === true) {
+			// publication of this instance whose catalogue opted in. A publication a peer
+			// answered (marked `federated`, carrying `sources`) is never described from this
+			// instance's catalogues: its register and schema ids are the peer's.
+			$isLocal = (($result['federated'] ?? false) !== true
+				&& is_array($result['data']) === true
+				&& array_key_exists('sources', $result['data']) === false);
+			if ($this->withheld !== null && $result['status'] === 200 && $isLocal === true) {
 				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
 			}
 
