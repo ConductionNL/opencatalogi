@@ -57,8 +57,8 @@
 		:register="String(primaryPair.register)"
 		:schema="String(primaryPair.schema)"
 		:collectionUrl="collectionUrl"
-		:rowClickToView="opensDetail"
-		:viewTo="opensDetail ? rowTarget : null"
+		:rowClickToView="true"
+		:viewTo="rowTarget"
 		:cardAccent="cardAccent"
 		:editOpensDetail="true"
 		@rowClick="onRowOpen"
@@ -99,13 +99,15 @@ const RENDERER_ROW_LISTENERS = [
  * Renders the library's CnIndexPage over all of the catalog's pairs at once,
  * listed from `/api/{catalogSlug}` through its `collectionUrl`. The page's own
  * pair is the publication pair when the catalog holds it, else its first pair.
- * Rows of the publication pair open on PublicationDetail; rows of any other
- * pair have no detail page, so View and Edit open CnIndexPage's form for their
- * own schema. Takes the page config and route params from CnPageRenderer, and
- * passes the rest of the config through to CnIndexPage, `publicationPairConfig`
- * only when the page's pair is the publication pair.
+ * Rows of the publication pair open on PublicationDetail, rows of any other
+ * pair on the generic CatalogObjectDetail page. Edit opens the publication
+ * modal for publications and CnIndexPage's form for other schemas. Takes the
+ * page config and route params from CnPageRenderer, and passes the rest of the
+ * config through to CnIndexPage, plus `publicationPairConfig` when the page's
+ * pair is the publication pair and `otherPairConfig` when it is not.
  *
  * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+ * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
  */
 export default {
 	name: 'CatalogPublicationsIndex',
@@ -138,6 +140,11 @@ export default {
 		 * publication pair; its custom row actions show on publication rows only.
 		 */
 		publicationPairConfig: { type: Object, default: () => ({}) },
+		/**
+		 * CnIndexPage props for a catalog without the publication pair, such as
+		 * a default column set, so not every schema property becomes a column.
+		 */
+		otherPairConfig: { type: Object, default: () => ({}) },
 	},
 
 	data() {
@@ -240,22 +247,25 @@ export default {
 		},
 
 		/**
-		 * Whether the page's pair is the publication pair, which has a detail page.
+		 * Whether the page's pair is the publication pair, which picks the config.
 		 *
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
-		opensDetail() {
+		isPublicationPagePair() {
 			return this.isPublicationPair(this.primaryPair)
 		},
 
-		/** @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003 */
+		/**
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-a-catalog-without-the-publication-schema-lists-a-default-column-set-cos-003
+		 */
 		indexProps() {
 			const attrs = { ...this.$attrs }
 			for (const listener of RENDERER_ROW_LISTENERS) {
 				delete attrs[listener]
 			}
-			if (!this.opensDetail) {
-				return { ...this.actionToggles, ...attrs }
+			if (!this.isPublicationPagePair) {
+				return { ...this.actionToggles, ...attrs, ...this.otherPairConfig }
 			}
 			const config = { ...this.publicationPairConfig }
 			if (Array.isArray(config.actions)) {
@@ -424,36 +434,52 @@ export default {
 		},
 
 		/**
-		 * Where a row opens: its publication's detail page in this catalog.
+		 * Where a row opens: a publication on its detail page in this catalog,
+		 * an object of another schema on the generic detail page for its pair.
 		 *
 		 * @param {object} row The row.
-		 * @return {object|null} The router location, or null for a row of another pair or without an id.
+		 * @return {object|null} The router location, or null for a row without an id, register or schema.
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
 		 */
 		rowTarget(row) {
-			if (!this.isPublicationRow(row)) {
-				return null
-			}
 			const self = row?.['@self'] || {}
 			const id = row?.id ?? self.id ?? self.uuid ?? row?.uuid
 			if (id === undefined || id === null || id === '') {
 				return null
 			}
+			if (this.isPublicationRow(row)) {
+				return {
+					name: 'PublicationDetail',
+					params: { catalogSlug: this.catalogSlug, id: String(id) },
+				}
+			}
+			const [register] = normaliseIdList([self.register])
+			const [schema] = normaliseIdList([self.schema])
+			if (register === undefined || schema === undefined) {
+				return null
+			}
 			return {
-				name: 'PublicationDetail',
-				params: { catalogSlug: this.catalogSlug, id: String(id) },
+				name: 'CatalogObjectDetail',
+				params: {
+					catalogSlug: this.catalogSlug,
+					register: String(register),
+					schema: String(schema),
+					id: String(id),
+				},
 			}
 		},
 
 		/**
-		 * Open a row on a click, a middle click or the View action. A
-		 * ctrl/cmd/shift or middle click opens a publication in a new tab; a row
-		 * of another schema opens in the form for its own schema.
+		 * Open a row on a click, a middle click or the View action, on its
+		 * detail page. A ctrl/cmd/shift or middle click opens it in a new tab. A
+		 * row without a detail page opens in the form for its own schema instead.
 		 *
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
 		 * @return {void}
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
 		 */
 		onRowOpen(row, event) {
 			const nativeEvent =
@@ -463,35 +489,27 @@ export default {
 			if (isNewTabHandled(nativeEvent)) {
 				return
 			}
-			// A row of another schema has no detail page to open in a new tab: any click but a middle one,
-			// a ctrl/cmd/shift click included, opens the form for its own schema, as in the library.
-			if (!this.isPublicationRow(row)) {
-				if (nativeEvent?.button !== 1) {
-					this.$refs.index?.openFormDialog(row)
-				}
-				return
-			}
 			const target = this.rowTarget(row)
 			if (target) {
 				openRowTarget(nativeEvent, target, this.$router)
+				return
+			}
+			// A middle click has nothing to open in a new tab.
+			if (nativeEvent?.button !== 1) {
+				this.$refs.index?.openFormDialog(row)
 			}
 		},
 
 		/**
-		 * The View action: a publication opens its detail page, a row of another
-		 * schema, which has none, opens in CnIndexPage's form for its own schema.
+		 * The View action: every row opens on its detail page.
 		 *
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
 		 * @return {void}
-		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
 		 */
 		onView(row, event) {
-			if (this.isPublicationRow(row)) {
-				this.onRowOpen(row, event)
-				return
-			}
-			this.$refs.index?.openFormDialog(row)
+			this.onRowOpen(row, event)
 		},
 
 		/**
