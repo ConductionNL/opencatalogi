@@ -1448,7 +1448,7 @@ OC.L10N.register(
         "Dismiss": "Dismiss",
         "Dismiss this announcement": "Dismiss this announcement",
         "Public cache time (seconds)": "Public cache time (seconds)",
-        "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.": "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.",
+        "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. At most 3600 seconds; 0 switches caching off.": "How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. At most 3600 seconds; 0 switches caching off.",
         "Save cache time": "Save cache time",
         "The cache time could not be saved. Try again.": "The cache time could not be saved. Try again.",
         "Moved at": "Moved at",
