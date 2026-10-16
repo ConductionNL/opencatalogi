@@ -4,8 +4,7 @@
  * OpenCatalogi public cache headers trait.
  *
  * One rule for the cache headers of the public read answers (the publication
- * list, a publication, its attachments, the public search and a search
- * result), so a CDN or a browser may keep an anonymous answer for the time
+ * list, a publication, its attachments and the public search), so a CDN or a browser may keep an anonymous answer for the time
  * the administrator set, and never keeps a signed-in one.
  *
  * @category Controller
@@ -29,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -51,6 +51,14 @@ trait AnswersCacheably {
 	 *   `Vary: Origin, Accept, Accept-Language`. A matching `If-None-Match` turns the
 	 *   answer into a 304 without a body.
 	 * - An error answer, or a cache time of 0: unchanged.
+	 * - An anonymous request that carried a body, while caching is on: `Cache-Control: no-store`. Nextcloud merges a
+	 *   JSON body into the parameters for a GET too, and a shared cache keys on
+	 *   the URL only, so a public answer to such a request would be served to
+	 *   every visitor of the plain URL.
+	 *
+	 * The cache time is capped at {@see self::publicCacheCeiling()} seconds, also
+	 * when it was set with `occ`: a browser keeps a public answer for the full
+	 * `max-age`, and a CDN purge after a withdrawal does not reach it.
 	 *
 	 * When the session or the configuration cannot be read, the caller is
 	 * treated as signed in: a private answer cached publicly is the one
@@ -91,6 +99,15 @@ trait AnswersCacheably {
 			return $response;
 		}
 
+		if ($this->requestCarriesABody() === true) {
+			// Not just no public header: a CDN that caches unmarked answers by
+			// default would still store this one under the plain URL.
+			$response->addHeader('Cache-Control', 'no-store');
+			return $response;
+		}
+
+		$seconds = min($seconds, $this->publicCacheCeiling());
+
 		$etag = 'W/"' . sha1((string)json_encode($response->getData())) . '"';
 		$cacheControl = 'public, max-age=' . $seconds . ', must-revalidate';
 
@@ -106,6 +123,31 @@ trait AnswersCacheably {
 		return $response;
 
 	}//end cacheableForCaller()
+
+	/**
+	 * The longest time, in seconds, a public answer may be kept.
+	 *
+	 * @return integer One hour, the ceiling the settings save clamps to.
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
+	 */
+	private function publicCacheCeiling(): int {
+		return SettingsService::PUBLIC_API_CACHE_MAX_SECONDS;
+
+	}//end publicCacheCeiling()
+
+	/**
+	 * Whether the request carried a body, which a shared cache would not key on.
+	 *
+	 * @return boolean True when a Content-Length above 0 or a Transfer-Encoding was sent.
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 */
+	private function requestCarriesABody(): bool {
+		return (int)$this->request->getHeader('Content-Length') > 0
+			|| trim($this->request->getHeader('Transfer-Encoding')) !== '';
+
+	}//end requestCarriesABody()
 
 	/**
 	 * Whether the request's If-None-Match names this tag (weak comparison).

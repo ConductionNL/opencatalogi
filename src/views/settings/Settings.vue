@@ -382,6 +382,7 @@
 						v-model="publicCacheSeconds"
 						type="number"
 						min="0"
+						max="3600"
 						:label="t('opencatalogi', 'Public cache time (seconds)')"
 						:disabled="savingPublicCache" />
 					<p class="option-description">

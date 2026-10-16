@@ -2449,6 +2449,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '0'])['public_api_cache_seconds']);
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '-5'])['public_api_cache_seconds']);
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => 'soon'])['public_api_cache_seconds']);
+		$this->assertSame('3600', $this->service->updateSettings(['public_api_cache_seconds' => 31536000])['public_api_cache_seconds']);
 
 	}//end testTheAdministratorSetsThePublicCacheTime()
 }//end class

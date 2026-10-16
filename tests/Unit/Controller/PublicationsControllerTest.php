@@ -25,6 +25,12 @@ use Psr\Log\LoggerInterface;
  */
 class PublicationsControllerTest extends TestCase {
 
+	/** What renderEntity() answers in the show() cache cases. */
+	private const SHOWN_PUBLICATION = ['id' => 'pub-123', 'title' => 'Test Publication'];
+
+	/** What the schema.org service answers in the show() cache cases. */
+	private const SHOWN_NODE = ['@type' => 'Dataset', 'name' => 'Test Publication'];
+
 	private IRequest|MockObject $request;
 	private PublicationService|MockObject $publicationService;
 	private CatalogiService|MockObject $catalogiService;
@@ -2166,5 +2172,128 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertSame(404, $unknown->getStatus());
 		$this->assertArrayNotHasKey('ETag', $unknown->getHeaders());
 		$this->assertStringNotContainsString('public', (string)($unknown->getHeaders()['Cache-Control'] ?? ''));
+	}
+
+	/**
+	 * A catalogue page for a signed-in caller stays private (REQ-PAC-002).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
+	 */
+	public function testASignedInCataloguePageStaysPrivate(): void {
+		$mockObjService = $this->mockObjectServiceForCaller(signedIn: true);
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$this->queryService->method('applyCatalogReadRuleGuard')->willReturnArgument(0);
+		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+		$this->queryService->method('resolveSchemaAndRegisterObjects')->willReturn(['schemas' => [], 'registers' => []]);
+		$mockObjService->method('searchObjectsPaginated')->willReturn(['results' => [['id' => 'pub-1']], 'total' => 1]);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$page = $this->controller->index('test-catalog');
+		$headers = $page->getHeaders();
+
+		$this->assertSame(200, $page->getStatus());
+		$this->assertSame('private, no-store', $headers['Cache-Control']);
+		$this->assertArrayNotHasKey('ETag', $headers);
+	}
+
+	/**
+	 * An anonymous publication detail read with a given Accept and If-None-Match header.
+	 *
+	 * @param string $accept      The Accept header of the request.
+	 * @param string $ifNoneMatch The If-None-Match header of the request.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function showAnonymouslyWith(string $accept, string $ifNoneMatch): JSONResponse {
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$schemaOrg = $this->createMock(\OCA\OpenCatalogi\Service\SchemaOrgService::class);
+		$schemaOrg->method('buildPublicationNode')->willReturn(self::SHOWN_NODE);
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('isLoggedIn')->willReturn(false);
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturnArgument(2);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				\OCP\IUserSession::class => $session,
+				\OCP\IAppConfig::class => $config,
+				\OCA\OpenCatalogi\Service\SchemaOrgService::class => $schemaOrg,
+				default => $mockObjService,
+			}
+		);
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
+		$mockObjService->method('renderEntity')->willReturn(self::SHOWN_PUBLICATION);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->method('getHeader')->willReturnCallback(
+			static fn (string $name): string => match ($name) {
+				'Accept' => $accept,
+				'If-None-Match' => $ifNoneMatch,
+				default => '',
+			}
+		);
+		$this->request->server = [];
+
+		return $this->controller->show('test-catalog', 'pub-123');
+	}
+
+	/**
+	 * The weak ETag the cache headers give an answer carrying these data.
+	 *
+	 * @param array $data The answer's data.
+	 *
+	 * @return string The weak tag.
+	 */
+	private static function weakEtagOf(array $data): string {
+		return 'W/"' . sha1((string)json_encode($data)) . '"';
+	}
+
+	/**
+	 * A revalidation that ends in a 304 is not a view (ANA-001).
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	public function testARevalidatedPublicationIsNotCountedAsAView(): void {
+		$this->usageCounterService->expects($this->never())->method('increment');
+
+		$response = $this->showAnonymouslyWith(
+			accept: 'application/json',
+			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION)
+		);
+
+		$this->assertSame(304, $response->getStatus());
+	}
+
+	/**
+	 * A revalidation of the schema.org JSON-LD variant that ends in a 304 is not a view either (ANA-001).
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	public function testARevalidatedJsonLdPublicationIsNotCountedAsAView(): void {
+		$this->usageCounterService->expects($this->never())->method('increment');
+
+		$response = $this->showAnonymouslyWith(
+			accept: 'application/ld+json',
+			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_NODE)
+		);
+
+		$this->assertSame(304, $response->getStatus());
+	}
+
+	/**
+	 * A detail read that is answered in full still counts as one view (ANA-001).
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	public function testAFullPublicationAnswerIsCountedAsOneView(): void {
+		$this->usageCounterService->expects($this->once())->method('increment');
+
+		$response = $this->showAnonymouslyWith(accept: 'application/json', ifNoneMatch: '');
+
+		$this->assertSame(200, $response->getStatus());
 	}
 }
