@@ -2098,4 +2098,28 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertArrayNotHasKey('ETag', $unknown->getHeaders());
 		$this->assertStringNotContainsString('public', (string)($unknown->getHeaders()['Cache-Control'] ?? ''));
 	}
+
+	/**
+	 * A catalogue page for a signed-in caller stays private (REQ-PAC-002).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
+	 */
+	public function testASignedInCataloguePageStaysPrivate(): void {
+		$mockObjService = $this->mockObjectServiceForCaller(signedIn: true);
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$this->queryService->method('applyCatalogReadRuleGuard')->willReturnArgument(0);
+		$this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+		$this->queryService->method('resolveSchemaAndRegisterObjects')->willReturn(['schemas' => [], 'registers' => []]);
+		$mockObjService->method('searchObjectsPaginated')->willReturn(['results' => [['id' => 'pub-1']], 'total' => 1]);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$page = $this->controller->index('test-catalog');
+		$headers = $page->getHeaders();
+
+		$this->assertSame(200, $page->getStatus());
+		$this->assertSame('private, no-store', $headers['Cache-Control']);
+		$this->assertArrayNotHasKey('ETag', $headers);
+	}
 }
