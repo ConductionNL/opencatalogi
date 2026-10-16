@@ -19,7 +19,7 @@
 
 - [x] 4.1 Jest: row targets, the other-pair config and the sidebar pass-through in `CatalogPublicationsIndex.spec.js`.
 - [x] 4.2 Vitest: manifest and schema shape in `tests/vitest/catalogObjectDetailPage.spec.js`.
-- [ ] 4.3 Playwright: `tests/e2e/workflows/catalog-other-schema-objects.spec.ts` (written, not yet run).
+- [x] 4.3 Playwright: `tests/e2e/workflows/catalog-other-schema-objects.spec.ts`. Run against a fresh Nextcloud 35 with `2.1.25-unstable.20261016102208` (nextcloud-vue 2.88.0): 5/5 green. The sidebar toggle on a table page is the icon-only "Search and columns" button, and the Data card hides the description behind "Show all N fields"; the spec handles both.
 
 ## 5. Dependencies
 
