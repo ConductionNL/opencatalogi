@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- **Breaking: pages and menus are Portaliq's now.** OpenCatalogi no longer seeds `page` or `menu` objects, no longer configures their tables, and serves no `/pages` or `/menus` screen. The `/api/pages` and `/api/menus` endpoints were already gone. Before you upgrade, move your content with `occ opencatalogi:cms:migrate-to-portaliq --portal=<portal-slug>` (a dry run), then again with `--apply`. Websites read the same content from Portaliq's `/api/content/pages` and `/api/content/menus` (cms-moves-to-portaliq, decision 138).
+
 ## [0.7.54] - 2026-07-16
 
 ### Added
