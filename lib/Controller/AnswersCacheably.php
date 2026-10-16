@@ -51,7 +51,7 @@ trait AnswersCacheably {
 	 *   `Vary: Origin, Accept-Language`. A matching `If-None-Match` turns the
 	 *   answer into a 304 without a body.
 	 * - An error answer, or a cache time of 0: unchanged.
-	 * - An anonymous request that carried a body: `Cache-Control: no-store`. Nextcloud merges a
+	 * - An anonymous request that carried a body, while caching is on: `Cache-Control: no-store`. Nextcloud merges a
 	 *   JSON body into the parameters for a GET too, and a shared cache keys on
 	 *   the URL only, so a public answer to such a request would be served to
 	 *   every visitor of the plain URL.
@@ -95,14 +95,14 @@ trait AnswersCacheably {
 			return $response;
 		}
 
+		if ($seconds <= 0) {
+			return $response;
+		}
+
 		if ($this->requestCarriesABody() === true) {
 			// Not just no public header: a CDN that caches unmarked answers by
 			// default would still store this one under the plain URL.
 			$response->addHeader('Cache-Control', 'no-store');
-			return $response;
-		}
-
-		if ($seconds <= 0) {
 			return $response;
 		}
 

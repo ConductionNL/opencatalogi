@@ -217,6 +217,13 @@ class AnswersCacheablyTest extends TestCase {
 			$this->assertArrayNotHasKey('ETag', $response->getHeaders());
 		}
 
+		$off = $this->host(signedIn: false, cacheSeconds: '0', headers: ['content-length' => '20'])->answer(new JSONResponse(['a' => 1]));
+		$plain = $this->host(signedIn: false, cacheSeconds: '0')->answer(new JSONResponse(['a' => 1]));
+		$this->assertSame($plain->getHeaders(), $off->getHeaders(), 'With caching off every answer goes out as before');
+
+		$signedIn = $this->host(signedIn: true, headers: ['content-length' => '20'])->answer(new JSONResponse(['a' => 1]));
+		$this->assertSame('private, no-store', $signedIn->getHeaders()['Cache-Control']);
+
 		$empty = $this->host(signedIn: false, headers: ['content-length' => '0'])->answer(new JSONResponse(['a' => 1]));
 		$this->assertSame('public, max-age=60, must-revalidate', $empty->getHeaders()['Cache-Control']);
 	}
