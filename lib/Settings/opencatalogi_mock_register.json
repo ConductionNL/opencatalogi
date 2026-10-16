@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "opencatalogi demo data",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Demo data covering every schema this app supplies, offered as the first step of the app's setup walkthrough. Every object satisfies the schema that will validate it."
   },
   "x-openregister": {
@@ -1024,9 +1024,19 @@
           "Voorbeeld Itconformsto 1"
         ],
         "publiccodeYmlVersion": "Voorbeeld Publiccodeymlversion 1",
-        "harvestedFrom": "Voorbeeld Harvestedfrom 1",
+        "harvestedFrom": "github.com",
         "harvestedAt": "2026-03-01T09:00:00+00:00",
-        "rawPubliccode": {}
+        "rawPubliccode": {},
+        "developerOverheid": {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "organisation": {
+            "label": "Example: Gemeente Voorbeeldstad",
+            "uri": "https://identifier.example.invalid/organisation/1"
+          },
+          "registerUrl": "https://oss.developer.overheid.nl/repositories/00000000-0000-0000-0000-000000000001",
+          "lastCrawledAt": "2026-10-15T02:00:00Z",
+          "archived": false
+        }
       },
       {
         "@self": {
@@ -1063,9 +1073,20 @@
           "Voorbeeld Itconformsto 2"
         ],
         "publiccodeYmlVersion": "Voorbeeld Publiccodeymlversion 2",
-        "harvestedFrom": "Voorbeeld Harvestedfrom 2",
+        "harvestedFrom": "gitlab.com",
         "harvestedAt": "2026-03-02T09:00:00+00:00",
-        "rawPubliccode": {}
+        "rawPubliccode": {},
+        "developerOverheid": {
+          "id": "00000000-0000-0000-0000-000000000002",
+          "organisation": {
+            "label": "Example: Waterschap Voorbeeld",
+            "uri": "https://identifier.example.invalid/organisation/2"
+          },
+          "registerUrl": "https://oss.developer.overheid.nl/repositories/00000000-0000-0000-0000-000000000002",
+          "lastCrawledAt": "2026-10-14T02:00:00Z",
+          "forkType": "VARIANT_FORK",
+          "archived": false
+        }
       },
       {
         "@self": {
@@ -1102,7 +1123,7 @@
           "Voorbeeld Itconformsto 3"
         ],
         "publiccodeYmlVersion": "Voorbeeld Publiccodeymlversion 3",
-        "harvestedFrom": "Voorbeeld Harvestedfrom 3",
+        "harvestedFrom": "github.com",
         "harvestedAt": "2026-03-03T09:00:00+00:00",
         "rawPubliccode": {}
       },

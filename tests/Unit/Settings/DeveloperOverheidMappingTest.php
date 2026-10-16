@@ -550,4 +550,35 @@ class DeveloperOverheidMappingTest extends TestCase {
 		$this->assertArrayNotHasKey('developerOverheid', $before);
 		$this->assertValid(component: $before);
 	}//end testSchemaZeroFourZeroIsAdditive()
+
+	/**
+	 * The demo data shows a listed and an unlisted component, each valid against
+	 * 0.4.0, under the slugs it always had, so a re-import updates them.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-007-the-publiccode-schema-records-the-register-listing-additively
+	 *
+	 * @return void
+	 */
+	public function testTheDemoDataShowsAListedAndAnUnlistedComponent(): void {
+		$mock = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/opencatalogi_mock_register.json'), false, 512, JSON_THROW_ON_ERROR);
+		$this->assertTrue(version_compare($mock->info->version, '1.0.3', '>='), 'A demo-data change raises the register version.');
+
+		$listed = [];
+		foreach ($mock->components->objects as $object) {
+			if ($object->{'@self'}->schema !== 'publiccode') {
+				continue;
+			}
+
+			$data = clone $object;
+			unset($data->{'@self'});
+			$result = (new Validator())->validate($data, $this->schema());
+			$this->assertTrue($result->isValid(), $object->{'@self'}->slug . ': ' . json_encode($result->error()?->args()));
+			$listed[$object->{'@self'}->slug] = isset($object->developerOverheid);
+		}
+
+		$this->assertSame(
+			['publiccode-voorbeeld-name-1-1' => true, 'publiccode-voorbeeld-name-2-2' => true, 'publiccode-voorbeeld-name-3-3' => false],
+			$listed
+		);
+	}//end testTheDemoDataShowsAListedAndAnUnlistedComponent()
 }//end class
