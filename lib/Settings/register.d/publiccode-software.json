@@ -11,7 +11,7 @@
       "publiccode": {
         "slug": "publiccode",
         "title": "Public code component",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "published": true,
         "summary": "A software component described by a publiccode.yml file",
         "description": "One harvested publiccode.yml. The identity of a component is its repository URL, not its name: names collide across forges and change on rebrand, while the URL is what the harvest actually dereferenced. `slug` is derived from the repository full name so a re-harvest UPDATES rather than duplicates — the flow engine has no synchronisation contracts yet, so idempotency has to come from a deterministic identifier.",
@@ -178,6 +178,60 @@
             "type": "object",
             "title": "Raw publiccode.yml",
             "description": "The decoded file as harvested. Kept because the mapping above is lossy by construction: any field the standard adds, or any country extension we do not model, would otherwise be discarded silently at harvest time and be unrecoverable without re-fetching."
+          },
+          "developerOverheid": {
+            "type": "object",
+            "title": "developer.overheid.nl listing",
+            "description": "How the OSS-register of developer.overheid.nl lists this component, written by the developer.overheid.nl harvest (openspec/changes/publiccode-developer-overheid-harvest). Present means the government register lists the repository; there is deliberately no separate flag. Not part of publiccode.yml, so it has no x-publiccode path. A component the register stops listing keeps the block until tombstoning arrives.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Register id",
+                "description": "The repository's id in the OSS-register."
+              },
+              "organisation": {
+                "type": "object",
+                "title": "Organisation",
+                "description": "The government organisation that publishes the repository, as the register names it.",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "title": "Name",
+                    "description": "The organisation's name."
+                  },
+                  "uri": {
+                    "type": "string",
+                    "format": "uri",
+                    "title": "Identifier",
+                    "description": "The organisation's identifier URI."
+                  }
+                }
+              },
+              "registerUrl": {
+                "type": "string",
+                "format": "uri",
+                "title": "Page in the register",
+                "description": "The repository's page on oss.developer.overheid.nl."
+              },
+              "lastCrawledAt": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Last crawled at",
+                "description": "When the register last read the repository."
+              },
+              "forkType": {
+                "type": "string",
+                "enum": ["TECHNICAL_FORK", "VARIANT_FORK", "GIT_FORK", "URL_MISTAKE"],
+                "title": "Fork type",
+                "description": "How the register classifies the repository when it is a fork. Absent for an original."
+              },
+              "archived": {
+                "type": "boolean",
+                "title": "Archived",
+                "description": "Whether the register marks the repository as archived."
+              }
+            }
           }
         }
       }
