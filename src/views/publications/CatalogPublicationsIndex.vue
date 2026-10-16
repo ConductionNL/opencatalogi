@@ -107,7 +107,7 @@ const RENDERER_ROW_LISTENERS = [
  * pair is the publication pair and `otherPairConfig` when it is not.
  *
  * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
- * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
+ * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
  */
 export default {
 	name: 'CatalogPublicationsIndex',
@@ -257,7 +257,7 @@ export default {
 
 		/**
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
-		 * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-a-catalog-without-the-publication-schema-lists-a-default-column-set-cos-003
+		 * @spec openspec/specs/publications/spec.md#requirement-a-catalog-without-the-publication-schema-lists-a-default-column-set-cos-003
 		 */
 		indexProps() {
 			const attrs = { ...this.$attrs }
@@ -440,7 +440,7 @@ export default {
 		 * @param {object} row The row.
 		 * @return {object|null} The router location, or null for a row without an id, register or schema.
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
-		 * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
+		 * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
 		 */
 		rowTarget(row) {
 			const self = row?.['@self'] || {}
@@ -479,7 +479,7 @@ export default {
 		 * @param {Event} [event] The originating event, when there is one.
 		 * @return {void}
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
-		 * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
+		 * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
 		 */
 		onRowOpen(row, event) {
 			const nativeEvent =
@@ -506,7 +506,7 @@ export default {
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
 		 * @return {void}
-		 * @spec openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
+		 * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
 		 */
 		onView(row, event) {
 			this.onRowOpen(row, event)

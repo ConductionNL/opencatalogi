@@ -9,11 +9,11 @@
  * Needs the OpenCatalogi settings of this change imported, so the publiccode
  * schema carries its `widget` and summary configuration.
  *
- * @e2e openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#scenario-a-components-description-can-be-read-per-language
- * @e2e openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#scenario-a-ctrl-click-opens-the-component-in-a-new-tab
- * @e2e openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#scenario-the-component-is-edited-in-the-form-with-its-description
- * @e2e openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#scenario-the-sidebar-is-offered-on-a-catalog-of-components
- * @e2e openspec/changes/catalog-objects-of-any-schema/specs/publications/spec.md#scenario-the-componenten-catalog-lists-three-columns
+ * @e2e openspec/specs/publications/spec.md#scenario-a-components-description-can-be-read-per-language
+ * @e2e openspec/specs/publications/spec.md#scenario-a-ctrl-click-opens-the-component-in-a-new-tab
+ * @e2e openspec/specs/publications/spec.md#scenario-the-component-is-edited-in-the-form-with-its-description
+ * @e2e openspec/specs/publications/spec.md#scenario-the-sidebar-is-offered-on-a-catalog-of-components
+ * @e2e openspec/specs/publications/spec.md#scenario-the-componenten-catalog-lists-three-columns
  *
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test workflows/catalog-other-schema-objects
@@ -99,11 +99,20 @@ test.describe('objects of another schema in a catalog', () => {
 		await navToRoute(page, `/publications/${slug}`)
 		await waitIndexBody(page)
 
+		// CnActionsBar renders the labelled Filter button only in its board
+		// layout; on a table page the same toggle is the icon-only "Search and
+		// columns" button, which carries no test id.
 		const toggle = page
 			.locator('[data-testid="cn-actions-bar-filter-button"]')
+			.or(
+				page.getByRole('button', {
+					name: /Search and columns|Zoeken en kolommen/,
+				}),
+			)
 			.first()
 		await expect(toggle).toBeVisible({ timeout: 15000 })
-		const sidebar = page.locator('.cn-index-sidebar').first()
+		// CnIndexSidebar has no root class of its own: its root is NcAppSidebar.
+		const sidebar = page.locator('.app-sidebar').first()
 		if (!(await sidebar.isVisible().catch(() => false))) {
 			await toggle.click()
 		}
@@ -161,6 +170,18 @@ test.describe('objects of another schema in a catalog', () => {
 		)
 		const detail = page.locator('[data-testid="cn-detail-page"]').first()
 		await expect(detail).toBeVisible({ timeout: 20000 })
+		// The Data card shows its first fields only when it has more; the
+		// description can sit behind "Show all N fields".
+		await expect(
+			detail.locator('.cn-object-data-widget__grid-wrap').first(),
+		).toBeVisible({ timeout: 20000 })
+		const showAll = detail.locator('.cn-object-data-widget__toggle').first()
+		if (
+			(await showAll.isVisible().catch(() => false))
+			&& (await showAll.getAttribute('aria-expanded')) !== 'true'
+		) {
+			await showAll.click()
+		}
 		for (const language of Object.values(DESCRIPTION)) {
 			await expect(detail).toContainText(language.shortDescription)
 			await expect(detail).toContainText(language.longDescription)
