@@ -2,7 +2,7 @@
 
 ## 1. The helper
 
-- [x] 1.1 Add `AnswersCacheably::cacheable()` with the signed-in, anonymous, 304 and error paths (REQ-PAC-001, REQ-PAC-002). Verify: `tests/Unit/Controller/AnswersCacheablyTest.php`, one case per path. Done: `lib/Controller/AnswersCacheably.php`, 8/8.
+- [x] 1.1 Add `AnswersCacheably::cacheableForCaller()` with the signed-in, anonymous, 304 and error paths (REQ-PAC-001, REQ-PAC-002). Verify: `tests/Unit/Controller/AnswersCacheablyTest.php`, one case per path. Done: `lib/Controller/AnswersCacheably.php`, 8/8.
 
 ## 2. Apply it
 
@@ -11,7 +11,8 @@
 
 ## 3. The setting
 
-- [ ] 3.1 Add `public_api_cache_seconds` to `SettingsService` and the admin settings screen (REQ-PAC-003). Verify: `tests/Unit/Service/SettingsServiceTest.php` and `tests/e2e/public-api-cache.spec.ts` sets 0 and sees no public header. Built: `SettingsService` default 60 + allowlist + clamp to a non-negative integer (`testThePublicCacheTimeDefaultsToSixtySeconds`, `testTheAdministratorSetsThePublicCacheTime`), `src/views/settings/Settings.vue` publishing options number field; e2e spec written. (not run: the e2e needs a live instance)
+- [x] 3.1 Add `public_api_cache_seconds` to `SettingsService` and the admin settings screen (REQ-PAC-003). Verify: `tests/Unit/Service/SettingsServiceTest.php`. Done: `SettingsService` default 60 + allowlist + clamp to a non-negative integer (`testThePublicCacheTimeDefaultsToSixtySeconds`, `testTheAdministratorSetsThePublicCacheTime`), `src/views/settings/Settings.vue` publishing options number field.
+- [ ] 3.2 Run `tests/e2e/public-api-cache.spec.ts` against a live instance: it sets `public_api_cache_seconds` to 0 and sees no public header (REQ-PAC-003). The spec is written; it has not run, because it needs a live instance.
 
 ## 4. Docs and strings
 
