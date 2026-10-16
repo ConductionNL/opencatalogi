@@ -10,8 +10,8 @@ Kind: mixed (see design.md, Mixed-spec rationale). Depends on integriq `sources-
 - **acceptance_criteria**:
   - GIVEN the schema WHEN read THEN its version is 0.4.0 and it has `developerOverheid` (object) and no separate flag
   - GIVEN a 0.3.0-shaped component WHEN validated against 0.4.0 THEN it is valid; `required` is still `name`, `url`
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 2: Flow, mappings and synchronization definition
 - **spec_ref**: `openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-001-the-harvest-flow-ships-with-the-app-and-stays-inert-until-adopted`, `#requirement-req-pdh-002-the-register-is-read-page-by-page-through-one-synchronization`, `#requirement-req-pdh-003-each-repository-is-fetched-from-its-own-forge`, `#requirement-req-pdh-004-a-repository-on-another-forge-falls-back-to-the-registers-parsed-publiccode`, `#requirement-req-pdh-005-one-object-per-repository-shared-with-the-github-harvest`, `#requirement-req-pdh-006-a-file-that-cannot-be-read-is-skipped-not-written`
@@ -22,8 +22,8 @@ Kind: mixed (see design.md, Mixed-spec rationale). Depends on integriq `sources-
   - GIVEN this repository's `publiccode.yml` and a fixture RepositorySummary WHEN mapped THEN the slug equals what `publiccode-github-hit` gives and the object validates against 0.4.0
   - GIVEN a fixture RepositoryDetail WHEN it takes the fallback THEN no `rawPubliccode` is written
   - GIVEN the filters WHEN run through JSON Logic THEN a fork naming the original is dropped and an original with `.git` is kept
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 3: Demo data
 - **spec_ref**: `openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-007-the-publiccode-schema-records-the-register-listing-additively`
@@ -31,7 +31,7 @@ Kind: mixed (see design.md, Mixed-spec rationale). Depends on integriq `sources-
 - **acceptance_criteria**:
   - GIVEN the mock register WHEN imported THEN two `publiccode` demo objects carry `developerOverheid` and one does not, as in design.md Seed Data
   - GIVEN the import run twice THEN no duplicate is created (register version raised, slugs unchanged)
-- [ ] Implement
+- [x] Implement
 - [ ] Test
 
 ### Task 4: Generalise `PubliccodeHarvestService` per harvest
@@ -41,8 +41,8 @@ Kind: mixed (see design.md, Mixed-spec rationale). Depends on integriq `sources-
   - GIVEN harvest key `developer-overheid` WHEN set up twice THEN one synchronization exists, updated in place
   - GIVEN harvest key `developer-overheid` WHEN the status is read THEN it reports the source like the GitHub status does, has no credential block and reads no secret
   - GIVEN harvest key `github` WHEN the status is read THEN the payload is identical to the one before this change
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 5: Controller and routes
 - **spec_ref**: `openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi`
@@ -51,8 +51,8 @@ Kind: mixed (see design.md, Mixed-spec rationale). Depends on integriq `sources-
   - GIVEN every method WHEN inspected THEN it carries `#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]` and no CSRF opt-out
   - GIVEN a `HarvestNotReadyException` WHEN raised THEN the answer is 409 `{message, error}` with a static localised message
   - GIVEN any other exception WHEN raised THEN it is logged and the answer is 500 with a static message and no exception text
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 6: Admin section and strings
 - **spec_ref**: `openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi`
@@ -62,7 +62,7 @@ Kind: mixed (see design.md, Mixed-spec rationale). Depends on integriq `sources-
   - GIVEN the source switched off WHEN the section opens THEN it says so, that the key is entered on the source, and links to the integriq source and to the key request page
   - GIVEN everything ready WHEN Set up, Switch on, Run now are chosen THEN the section shows the synchronization present, the harvest on and a started run
   - GIVEN the GitHub section WHEN opened THEN it looks and behaves as before
-- [ ] Implement
+- [x] Implement
 - [ ] Test
 
 ### Task 7: Manual
@@ -70,7 +70,7 @@ Kind: mixed (see design.md, Mixed-spec rationale). Depends on integriq `sources-
 - **files**: `docs/handleidingen/Publiccode.md`
 - **acceptance_criteria**:
   - GIVEN the manual WHEN read THEN it describes the second source, the shared component, the set-up steps, the key request at https://apis.developer.overheid.nl/apis/key-aanvragen and the credential `developer-overheid-oss` (`generic-apikey`), and no longer says only GitHub is read
-- [ ] Implement
+- [x] Implement
 
 ### Task 8: Live run on a dev instance
 - **spec_ref**: `openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-010-harvested-components-are-found-in-search-and-in-the-public-api`
