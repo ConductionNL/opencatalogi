@@ -11,13 +11,18 @@
       "publiccode": {
         "slug": "publiccode",
         "title": "Public code component",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "published": true,
         "summary": "A software component described by a publiccode.yml file",
         "description": "One harvested publiccode.yml. The identity of a component is its repository URL, not its name: names collide across forges and change on rebrand, while the URL is what the harvest actually dereferenced. `slug` is derived from the repository full name so a re-harvest UPDATES rather than duplicates — the flow engine has no synchronisation contracts yet, so idempotency has to come from a deterministic identifier.",
         "icon": "PackageVariantClosed",
         "searchable": true,
         "hardValidation": false,
+        "configuration": {
+          "objectNameField": "name",
+          "objectSummaryField": "description.nl.shortDescription | description.en.shortDescription",
+          "objectDescriptionField": "description.nl.longDescription | description.en.longDescription"
+        },
         "authorization": {
           "read": ["public"]
         },
@@ -104,6 +109,7 @@
             "type": "object",
             "title": "Descriptions by language",
             "description": "publiccode.yml nests descriptions per language code (description.en.shortDescription, …). Kept nested rather than flattened to one language: flattening would silently discard every other translation on write.",
+            "widget": "json",
             "x-publiccode": "description"
           },
           "maintenanceType": {

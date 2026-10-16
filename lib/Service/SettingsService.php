@@ -127,6 +127,16 @@ class SettingsService {
 	public const DEFAULT_INTERVAL_SECONDS = 3600;
 
 	/**
+	 * The longest time, in seconds, a public API answer may be cached (REQ-PAC-003).
+	 *
+	 * The settings save clamps to it and AnswersCacheably caps the headers at it,
+	 * also for a value set with occ.
+	 *
+	 * @var integer
+	 */
+	public const PUBLIC_API_CACHE_MAX_SECONDS = 3600;
+
+	/**
 	 * App config key holding what a register event can still complete in a catalogue scope.
 	 *
 	 * A JSON list of register slugs not resolved yet, plus the ids of resolved
@@ -546,6 +556,11 @@ class SettingsService {
 		// JSON map from channel to the slug of the integriq source it is sent through.
 		$defaults['channel_sources'] = '{}';
 
+		// Public API cache time in seconds (operations-public-api-cache-headers,
+		// REQ-PAC-003): how long a CDN or browser may keep an anonymous answer.
+		// 0 switches the public cache headers off.
+		$defaults['public_api_cache_seconds'] = '60';
+
 		// Get the current values for the object types from the configuration.
 		try {
 			foreach ($defaults as $key => $defaultValue) {
@@ -761,6 +776,9 @@ class SettingsService {
 			// National channel sources (REQ-WND-001).
 			$allowedKeys[] = 'channel_sources';
 
+			// Public API cache time in seconds (REQ-PAC-003).
+			$allowedKeys[] = 'public_api_cache_seconds';
+
 			$updated = [];
 
 			// Only persist keys that are explicitly allowed.
@@ -769,6 +787,18 @@ class SettingsService {
 					$value = $data[$key];
 					if ($key === 'channel_sources') {
 						$value = $this->normaliseChannelSources(value: $value);
+					}
+
+					if ($key === 'public_api_cache_seconds') {
+						// A negative or unreadable time switches caching off rather than
+						// storing something the cache headers cannot use; more than an
+						// hour is stored as an hour, the ceiling the headers apply too.
+						$seconds = 0;
+						if (is_numeric($value) === true) {
+							$seconds = min(self::PUBLIC_API_CACHE_MAX_SECONDS, max(0, (int)$value));
+						}
+
+						$value = $seconds;
 					}
 
 					$this->config->setValueString($this->appName, $key, (string)$value);
@@ -1276,6 +1306,8 @@ class SettingsService {
 		$wooSchemaMap = [
 			'woo_batch_schema' => 'wooBatch',
 			'woo_assessment_schema' => 'wooAssessment',
+			// Woo-decision-shows-what-was-withheld: dossiq's withheld documents.
+			'withheld_document_schema' => 'withheldDocument',
 		];
 
 		// Published service and case type catalogue: four schemas in the same

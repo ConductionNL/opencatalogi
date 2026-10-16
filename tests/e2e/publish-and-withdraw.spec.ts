@@ -21,7 +21,7 @@ import { expect, test } from './authenticated-request.ts'
 import {
 	BASE,
 	Fixtures,
-	REG_OPENCATALOGI,
+	REG_PUBLICATION,
 	SCHEMA_PUBLICATION,
 } from './workflows/_fixtures.ts'
 
@@ -46,7 +46,7 @@ test.describe('Publish and withdraw in one action', () => {
 		const publication = await fx.createPublication(
 			'withdraw',
 			{ publicationDate: '2026-01-05T09:00:00+00:00' },
-			REG_OPENCATALOGI,
+			REG_PUBLICATION,
 		)
 
 		const before = await admin.get(
@@ -97,7 +97,7 @@ test.describe('Publish and withdraw in one action', () => {
 		const publication = await fx.createPublication(
 			'anonymous',
 			{ publicationDate: '2026-01-05T09:00:00+00:00' },
-			REG_OPENCATALOGI,
+			REG_PUBLICATION,
 		)
 		const anonymous = await playwright.request.newContext({
 			baseURL: BASE,
@@ -118,17 +118,17 @@ test.describe('Publish and withdraw in one action', () => {
 		const publication = await fx.createPublication(
 			'annex',
 			{ publicationDate: '2026-01-05T09:00:00+00:00' },
-			REG_OPENCATALOGI,
+			REG_PUBLICATION,
 		)
 		const annex = await fx.attachFile(
-			REG_OPENCATALOGI,
+			REG_PUBLICATION,
 			SCHEMA_PUBLICATION,
 			publication.id,
 			'bijlage-adres.txt',
 			'Huisadres',
 		)
 		const other = await fx.attachFile(
-			REG_OPENCATALOGI,
+			REG_PUBLICATION,
 			SCHEMA_PUBLICATION,
 			publication.id,
 			'bijlage-besluit.txt',
@@ -147,7 +147,7 @@ test.describe('Publish and withdraw in one action', () => {
 		expect(body.depublication.reason).toBe('Contains a home address')
 
 		const files = await admin.get(
-			`/index.php/apps/openregister/api/objects/${REG_OPENCATALOGI}/${SCHEMA_PUBLICATION}/${publication.id}/files`,
+			`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${publication.id}/files`,
 		)
 		const list = await files.json()
 		const rows = Array.isArray(list) ? list : list.results || []

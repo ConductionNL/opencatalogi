@@ -731,9 +731,8 @@ OC.L10N.register(
         "This catalog has no registers or schemas configured": "Tento katalog nemá nastavené žádné registry ani schémata",
         "Add a register and a schema to the catalog to list its publications here.": "Přidejte do katalogu registr a schéma, aby se zde zobrazovaly jeho publikace.",
         "Open catalog": "Otevřít katalog",
-        "Register and schema": "Registr a schéma",
-        "{schema} in {register}": "{schema} ({register})",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvořte svůj první katalog. Je to kontejner, ve kterém budou vaše publikace. Vyberte registr Publication a schéma Publication, aby katalog zobrazoval publikace, které přidáte."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvořte svůj první katalog. Je to kontejner, ve kterém budou vaše publikace. Vyberte registr Publication a schéma Publication, aby katalog zobrazoval publikace, které přidáte.",
+        "Manage your publications and their status": "Spravujte své publikace a jejich stav"
     },
     "nplurals=2; plural=(n != 1);"
 )

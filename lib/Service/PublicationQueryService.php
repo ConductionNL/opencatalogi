@@ -952,6 +952,7 @@ class PublicationQueryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalogue.
      */
     private function resolveCatalogScope(array $queryParams): array
     {
@@ -976,10 +977,7 @@ class PublicationQueryService
             if ($c === null || $this->isCatalogPubliclyAvailable(catalog: $c) === false) {
                 return ['registers' => [], 'schemas' => []];
             }
-            return [
-                'registers' => $this->normalizeIds(value: ($c['registers'] ?? [])),
-                'schemas'   => $this->normalizeIds(value: ($c['schemas']   ?? [])),
-            ];
+            return CatalogScopeIds::forCatalog(catalog: $c);
         }
 
         // 2. Explicit multi-catalog union.
@@ -996,8 +994,9 @@ class PublicationQueryService
                 if ($c === null || $this->isCatalogPubliclyAvailable(catalog: $c) === false) {
                     continue;
                 }
-                $regs    = array_merge($regs,    $this->normalizeIds(value: ($c['registers'] ?? [])));
-                $schemas = array_merge($schemas, $this->normalizeIds(value: ($c['schemas']   ?? [])));
+                $scope   = CatalogScopeIds::forCatalog(catalog: $c);
+                $regs    = array_merge($regs, $scope['registers']);
+                $schemas = array_merge($schemas, $scope['schemas']);
             }
             return [
                 'registers' => array_values(array_unique($regs)),
@@ -1010,8 +1009,9 @@ class PublicationQueryService
         $regs = [];
         $schemas = [];
         foreach ($allCatalogs as $c) {
-            $regs    = array_merge($regs,    $this->normalizeIds(value: ($c['registers'] ?? [])));
-            $schemas = array_merge($schemas, $this->normalizeIds(value: ($c['schemas']   ?? [])));
+            $scope   = CatalogScopeIds::forCatalog(catalog: $c);
+            $regs    = array_merge($regs, $scope['registers']);
+            $schemas = array_merge($schemas, $scope['schemas']);
         }
         return [
             'registers' => array_values(array_unique($regs)),
@@ -1114,31 +1114,6 @@ class PublicationQueryService
         }
 
     }//end isCatalogPubliclyAvailable()
-
-    /**
-     * Resolve an id-array from either a JSON-string or a native array. Every element
-     * is cast to int (schema/register ids in OC/OR are integers).
-     *
-     * @param mixed $value Raw value from catalog metadata.
-     *
-     * @return int[]
-     */
-    private function normalizeIds(mixed $value): array
-    {
-        if (is_string($value) === true) {
-            $decoded = json_decode($value, true);
-            if (is_array($decoded) === true) {
-                $value = $decoded;
-            } else {
-                $value = [];
-            }
-        }
-        if (is_array($value) === false) {
-            return [];
-        }
-        return array_values(array_map('intval', $value));
-
-    }//end normalizeIds()
 
     /**
      * Whether the current caller is anonymous (no logged-in user).
@@ -1974,7 +1949,7 @@ class PublicationQueryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
+     * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() and CatalogScopeIds::forCatalog() are pure functions
      */
     public function buildCatalogSearchQuery(array $catalog, array $queryParams, object $objectService): array
     {
@@ -1992,15 +1967,23 @@ class PublicationQueryService
         // Clean up catalog-specific parameters.
         unset($searchQuery['catalogSlug'], $searchQuery['fq']);
 
-        // Handle catalog filtering using _schemas for multi-schema search.
-        if (empty($catalog['schemas']) === false) {
-            $schemas = $catalog['schemas'];
-            // Parse JSON string if needed.
-            if (is_string($schemas) === true) {
-                $schemas = json_decode($schemas, true) ?? [];
+        // A JSON-encoded `_order` (as nextcloud-vue's buildQueryString sends it) becomes an array.
+        if (isset($searchQuery['_order']) === true && is_string($searchQuery['_order']) === true) {
+            $decodedOrder = json_decode($searchQuery['_order'], true);
+            if (is_array($decodedOrder) === true) {
+                $searchQuery['_order'] = $decodedOrder;
             }
+        }
 
-            $schemas = array_map('intval', $schemas);
+        // The scope's ids as the search route reads them: positive ints only, each once,
+        // so a word in `registers` never becomes `_register = 0` and a catalog holding
+        // ['19', 19] does not list everything twice.
+        $scope            = CatalogScopeIds::forCatalog(catalog: $catalog);
+        $schemas          = array_values(array_unique($scope['schemas']));
+        $catalogRegisters = array_values(array_unique($scope['registers']));
+
+        // Handle catalog filtering using _schemas for multi-schema search.
+        if ($schemas !== []) {
             // Pass all schemas for both search and faceting.
             $searchQuery['_schemas'] = $schemas;
             // Only set _schema when the catalog pins ONE schema in ONE register (the
@@ -2011,24 +1994,14 @@ class PublicationQueryService
             // round 2). The guard itself produces that shape: [S_ok, S_open] × [R1, R2]
             // becomes [S_ok] × [R1, R2]. Otherwise `_schemas` carries the scope.
             unset($searchQuery['_schema']);
-            $catalogRegisters = ($catalog['registers'] ?? []);
-            if (is_string($catalogRegisters) === true) {
-                $catalogRegisters = (json_decode($catalogRegisters, true) ?? []);
-            }
 
-            if (count($schemas) === 1 && is_array($catalogRegisters) === true && count($catalogRegisters) === 1) {
+            if (count($schemas) === 1 && count($catalogRegisters) === 1) {
                 $searchQuery['_schema'] = $schemas[0];
             }
         }//end if
 
-        if (empty($catalog['registers']) === false) {
-            $registers = $catalog['registers'];
-            // Parse JSON string if needed.
-            if (is_string($registers) === true) {
-                $registers = json_decode($registers, true) ?? [];
-            }
-
-            $registers = array_map('intval', $registers);
+        if ($catalogRegisters !== []) {
+            $registers = $catalogRegisters;
             if (count($registers) === 1) {
                 // Single register: use magic mapper optimization.
                 $searchQuery['_register'] = $registers[0];
@@ -2044,7 +2017,13 @@ class PublicationQueryService
             // Only allow metadata fields that exist in all magic mapper tables.
             if (empty($searchQuery['_order']) === false && is_array($searchQuery['_order']) === true) {
                 foreach (array_keys($searchQuery['_order']) as $orderField) {
-                    if (in_array($orderField, self::UNIVERSAL_ORDER_FIELDS, true) === false) {
+                    // `@self.created` names the same metadata column as `_created`.
+                    $columnField = (string) $orderField;
+                    if (str_starts_with($columnField, '@self.') === true) {
+                        $columnField = '_'.substr($columnField, strlen('@self.'));
+                    }
+
+                    if (in_array($columnField, self::UNIVERSAL_ORDER_FIELDS, true) === false) {
                         unset($searchQuery['_order'][$orderField]);
                     }
                 }

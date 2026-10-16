@@ -32,13 +32,16 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\CatalogScopeIds;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
+use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -64,6 +67,8 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  */
 class PublicationsController extends Controller {
+	use AnswersCacheably;
+
 
 	/**
 	 * Maximum number of extend entries accepted on public read endpoints.
@@ -223,6 +228,29 @@ class PublicationsController extends Controller {
 		}
 
 	}//end countReach()
+
+	/**
+	 * Apply the cache headers to a detail answer, then count it as a view when it is still a 200.
+	 *
+	 * The cache decision comes first because a matching `If-None-Match` turns the
+	 * answer into a 304, and ANA-001 says a `304 Not Modified` MUST NOT be counted.
+	 * Counted before it, every revalidation by a browser or CDN was a view.
+	 *
+	 * @param JSONResponse $response      The detail answer.
+	 * @param string       $publicationId The publication's id.
+	 * @param string       $catalogSlug   The catalogue the publication was read through.
+	 *
+	 * @return JSONResponse The answer with its cache headers, or the 304 that replaces it.
+	 */
+	private function countedView(JSONResponse $response, string $publicationId, string $catalogSlug): JSONResponse {
+		$response = $this->cacheableForCaller(response: $response);
+		if ($response->getStatus() === Http::STATUS_OK) {
+			$this->countReach(publicationId: $publicationId, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
+		}
+
+		return $response;
+
+	}//end countedView()
 
 	/**
 	 * Resolve the Access-Control-Allow-Origin header value for the current request.
@@ -424,6 +452,7 @@ class PublicationsController extends Controller {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalog.
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
@@ -449,12 +478,13 @@ class PublicationsController extends Controller {
 			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
-			// Every schema in this catalog was dropped by the guard above, so there is
+			// Every schema in this catalog was dropped by the guard above, or the
+			// catalog names registers or schemas of which none is an id, so there is
 			// nothing an anonymous caller may read here. Answer the empty envelope
 			// rather than falling through: `buildCatalogSearchQuery()` only sets
 			// `_schemas` when the list is non-empty, and an unset scope means OpenRegister
 			// searches every magic table — the opposite of what the guard just decided.
-			if (empty($catalog['schemas']) === true) {
+			if (CatalogScopeIds::forCatalog(catalog: $catalog)['schemas'] === []) {
 				$this->logger->warning(
 					'[PublicationsController::index] Empty catalog scope after the read-rule guard — returning an empty envelope',
 					['catalogSlug' => $catalogSlug]
@@ -475,7 +505,7 @@ class PublicationsController extends Controller {
 				);
 				$this->addCorsHeaders(response: $response);
 
-				return $response;
+				return $this->cacheableForCaller(response: $response);
 			}
 
 			// Get ObjectService directly bypassing PublicationService overhead.
@@ -559,7 +589,7 @@ class PublicationsController extends Controller {
 			$response = new JSONResponse($result, 200);
 			$this->addCorsHeaders(response: $response);
 
-			return $response;
+			return $this->cacheableForCaller(response: $response);
 		} catch (\Exception $e) {
 			// Public endpoint — log exception details server-side only and return a
 			// generic error body to the caller (#735); never leak raw $e->getMessage().
@@ -828,8 +858,18 @@ class PublicationsController extends Controller {
 				$response = new JSONResponse($node, 200);
 				$response->addHeader('Content-Type', 'application/ld+json');
 				$this->addCorsHeaders(response: $response);
-				$this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
-				return $response;
+				return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
+			}
+
+			// REQ-PDP-004 / REQ-WDW-003: a catalogue that opted in shows what was
+			// withheld and why. Read only for such a catalogue, so every other
+			// public read stays exactly as it was.
+			if (($catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
+				$result = $this->container->get(WithheldFromPublication::class)->addForCatalog(
+					response: $result,
+					catalog: $catalog,
+					publicationId: $id
+				);
 			}
 
 			// Add CORS headers for public API access.
@@ -839,9 +879,7 @@ class PublicationsController extends Controller {
 			// ANA-001: count this successful public detail view, fire-and-forget.
 			// HEAD requests, non-2xx, and back-office reads never reach this seam
 			// (this is the public detail path that already 404'd above on misses).
-			$this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
-
-			return $response;
+			return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
 		} catch (DoesNotExistException $exception) {
 			return new JSONResponse(
 				[
@@ -940,7 +978,7 @@ class PublicationsController extends Controller {
 				);
 			}
 
-			return $this->publicationService->attachments(id: $id);
+			return $this->cacheableForCaller(response: $this->publicationService->attachments(id: $id));
 		} catch (DoesNotExistException $exception) {
 			return new JSONResponse(
 				[
