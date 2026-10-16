@@ -17,7 +17,7 @@ The public read answers of OpenCatalogi can be kept by a CDN or a browser. A vis
 | no account, `If-None-Match` matches | 304, no body | the same `ETag` and `Cache-Control` |
 | signed in | any | `Cache-Control: private, no-store`, no `ETag` |
 | anyone | an error (4xx, 5xx) | no public cache header |
-| no account, the request carries a body | 200 | `Cache-Control: no-store`, no `ETag` |
+| no account, the request carries a body, cache time above 0 | 200 | `Cache-Control: no-store`, no `ETag` |
 
 A signed-in answer can hold records the public cannot read, so it is never cached. The `ETag` is computed over the answer after the access check, so it does not reveal that a hidden record changed.
 
