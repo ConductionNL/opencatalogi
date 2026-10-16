@@ -2113,17 +2113,18 @@ class PublicationsControllerTest extends TestCase {
 	}
 
 	/**
-	 * A publication detail read, as a given caller and with a given Accept header.
+	 * A publication detail read, as a given caller and with a given Accept and If-None-Match header.
 	 *
-	 * @param boolean $signedIn Whether the caller is signed in.
-	 * @param string  $accept   The Accept header of the request.
+	 * @param boolean $signedIn    Whether the caller is signed in.
+	 * @param string  $accept      The Accept header of the request.
+	 * @param string  $ifNoneMatch The If-None-Match header of the request.
 	 *
 	 * @return JSONResponse The answer.
 	 */
-	private function showAs(bool $signedIn, string $accept): JSONResponse {
+	private function showAs(bool $signedIn, string $accept, string $ifNoneMatch=''): JSONResponse {
 		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$schemaOrg = $this->createMock(\OCA\OpenCatalogi\Service\SchemaOrgService::class);
-		$schemaOrg->method('buildPublicationNode')->willReturn(['@type' => 'Dataset', 'name' => 'Test Publication']);
+		$schemaOrg->method('buildPublicationNode')->willReturn(self::SHOWN_NODE);
 		$session = $this->createMock(\OCP\IUserSession::class);
 		$session->method('isLoggedIn')->willReturn($signedIn);
 		$config = $this->createMock(\OCP\IAppConfig::class);
@@ -2141,10 +2142,14 @@ class PublicationsControllerTest extends TestCase {
 		$this->catalogiService->method('getCatalogBySlug')
 			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
 		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
-		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'title' => 'Test Publication']);
+		$mockObjService->method('renderEntity')->willReturn(self::SHOWN_PUBLICATION);
 		$this->request->method('getParams')->willReturn([]);
 		$this->request->method('getHeader')->willReturnCallback(
-			static fn (string $name): string => ($name === 'Accept' ? $accept : '')
+			static fn (string $name): string => match ($name) {
+				'Accept' => $accept,
+				'If-None-Match' => $ifNoneMatch,
+				default => '',
+			}
 		);
 		$this->request->server = [];
 
@@ -2179,6 +2184,44 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertSame('Dataset', ((array)$response->getData())['@type']);
 		$this->assertSame('public, max-age=60, must-revalidate', $headers['Cache-Control']);
 		$this->assertStringContainsString('Accept', $headers['Vary']);
+	}
+
+	/**
+	 * A signed-in detail read stays private in both variants, and a matching
+	 * If-None-Match gets the full answer, not a 304 (REQ-PAC-002).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
+	 */
+	public function testASignedInShowAnswerStaysPrivateForJson(): void {
+		$response = $this->showAs(
+			signedIn: true,
+			accept: 'application/json',
+			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION)
+		);
+		$headers = $response->getHeaders();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame('private, no-store', $headers['Cache-Control']);
+		$this->assertArrayNotHasKey('ETag', $headers);
+	}
+
+	/**
+	 * The schema.org JSON-LD variant of a signed-in detail read stays private too (REQ-PAC-002).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
+	 */
+	public function testASignedInShowAnswerStaysPrivateForJsonLd(): void {
+		$response = $this->showAs(
+			signedIn: true,
+			accept: 'application/ld+json',
+			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_NODE)
+		);
+		$headers = $response->getHeaders();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame('Dataset', ((array)$response->getData())['@type']);
+		$this->assertSame('private, no-store', $headers['Cache-Control']);
+		$this->assertArrayNotHasKey('ETag', $headers);
 	}
 
 	/**
@@ -2233,49 +2276,6 @@ class PublicationsControllerTest extends TestCase {
 	}
 
 	/**
-	 * An anonymous publication detail read with a given Accept and If-None-Match header.
-	 *
-	 * @param string $accept      The Accept header of the request.
-	 * @param string $ifNoneMatch The If-None-Match header of the request.
-	 *
-	 * @return JSONResponse The answer.
-	 */
-	private function showAnonymouslyWith(string $accept, string $ifNoneMatch): JSONResponse {
-		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-		$schemaOrg = $this->createMock(\OCA\OpenCatalogi\Service\SchemaOrgService::class);
-		$schemaOrg->method('buildPublicationNode')->willReturn(self::SHOWN_NODE);
-		$session = $this->createMock(\OCP\IUserSession::class);
-		$session->method('isLoggedIn')->willReturn(false);
-		$config = $this->createMock(\OCP\IAppConfig::class);
-		$config->method('getValueString')->willReturnArgument(2);
-
-		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
-		$this->container->method('get')->willReturnCallback(
-			static fn (string $id) => match ($id) {
-				\OCP\IUserSession::class => $session,
-				\OCP\IAppConfig::class => $config,
-				\OCA\OpenCatalogi\Service\SchemaOrgService::class => $schemaOrg,
-				default => $mockObjService,
-			}
-		);
-		$this->catalogiService->method('getCatalogBySlug')
-			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
-		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
-		$mockObjService->method('renderEntity')->willReturn(self::SHOWN_PUBLICATION);
-		$this->request->method('getParams')->willReturn([]);
-		$this->request->method('getHeader')->willReturnCallback(
-			static fn (string $name): string => match ($name) {
-				'Accept' => $accept,
-				'If-None-Match' => $ifNoneMatch,
-				default => '',
-			}
-		);
-		$this->request->server = [];
-
-		return $this->controller->show('test-catalog', 'pub-123');
-	}
-
-	/**
 	 * The weak ETag the cache headers give an answer carrying these data.
 	 *
 	 * @param array $data The answer's data.
@@ -2294,7 +2294,8 @@ class PublicationsControllerTest extends TestCase {
 	public function testARevalidatedPublicationIsNotCountedAsAView(): void {
 		$this->usageCounterService->expects($this->never())->method('increment');
 
-		$response = $this->showAnonymouslyWith(
+		$response = $this->showAs(
+			signedIn: false,
 			accept: 'application/json',
 			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION)
 		);
@@ -2310,7 +2311,8 @@ class PublicationsControllerTest extends TestCase {
 	public function testARevalidatedJsonLdPublicationIsNotCountedAsAView(): void {
 		$this->usageCounterService->expects($this->never())->method('increment');
 
-		$response = $this->showAnonymouslyWith(
+		$response = $this->showAs(
+			signedIn: false,
 			accept: 'application/ld+json',
 			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_NODE)
 		);
@@ -2326,7 +2328,7 @@ class PublicationsControllerTest extends TestCase {
 	public function testAFullPublicationAnswerIsCountedAsOneView(): void {
 		$this->usageCounterService->expects($this->once())->method('increment');
 
-		$response = $this->showAnonymouslyWith(accept: 'application/json', ifNoneMatch: '');
+		$response = $this->showAs(signedIn: false, accept: 'application/json');
 
 		$this->assertSame(200, $response->getStatus());
 	}
