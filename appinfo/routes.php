@@ -83,6 +83,12 @@ return [
 		['name' => 'publiccodeHarvest#enable', 'url' => '/api/settings/publiccode-harvest/enable', 'verb' => 'POST'],
 		['name' => 'publiccodeHarvest#disable', 'url' => '/api/settings/publiccode-harvest/disable', 'verb' => 'POST'],
 		['name' => 'publiccodeHarvest#run', 'url' => '/api/settings/publiccode-harvest/run', 'verb' => 'POST'],
+		// developer.overheid.nl publiccode harvest (publiccode-developer-overheid-harvest). Admin only.
+		['name' => 'developerOverheidHarvest#status', 'url' => '/api/settings/developer-overheid-harvest', 'verb' => 'GET'],
+		['name' => 'developerOverheidHarvest#setup', 'url' => '/api/settings/developer-overheid-harvest/setup', 'verb' => 'POST'],
+		['name' => 'developerOverheidHarvest#enable', 'url' => '/api/settings/developer-overheid-harvest/enable', 'verb' => 'POST'],
+		['name' => 'developerOverheidHarvest#disable', 'url' => '/api/settings/developer-overheid-harvest/disable', 'verb' => 'POST'],
+		['name' => 'developerOverheidHarvest#run', 'url' => '/api/settings/developer-overheid-harvest/run', 'verb' => 'POST'],
 		// Woo-index registration and the root robots.txt rules (woo-index-harvester-connection).
 		['name' => 'wooRegistration#show', 'url' => '/api/woo/registration', 'verb' => 'GET'],
 		['name' => 'wooRegistration#request', 'url' => '/api/woo/registration', 'verb' => 'POST'],
