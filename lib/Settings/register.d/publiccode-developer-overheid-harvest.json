@@ -1,0 +1,1035 @@
+{
+    "$comment": "openspec/changes/publiccode-developer-overheid-harvest. The developer.overheid.nl harvest flow on the publiccode schema and the three OpenRegister mappings it runs through. It writes into the Componenten catalogue that publiccode-github-harvest.json seeds. The synchronization the list step names is NOT seeded here: OpenRegister skips an object whose register is missing, so an install without integriq would never get it. PubliccodeHarvestService::setUp(harvest: 'developer-overheid') writes it from lib/Settings/publiccode-developer-overheid-sync.json when an administrator asks. The API key lives on integriq source developer-overheid-oss and never in this app.",
+    "components": {
+        "schemas": {
+            "publiccode": {
+                "configuration": {
+                    "x-openregister-flows": [
+                        {
+                            "name": "developer.overheid.nl publiccode harvest",
+                            "app": "opencatalogi",
+                            "description": "Reads every repository with a publiccode.yml in the OSS-register of developer.overheid.nl into the publiccode schema (openspec/changes/publiccode-developer-overheid-harvest). One synchronization pages through GET /repositories?publiccode=true; each repository is classified by the forge its publicCodeUrl points at and the flow fans out into three branches side by side: github.com files from integriq source github-raw, gitlab.com files from gitlab-raw, and every other host from the register's own parse (GET /repositories/{id} on developer-overheid-oss). Filters, not a router, split the branches: a router sends its token down one exit only and the join would wait for the others. Each branch has its own filter, map and write steps and only the end node is shared; it waits for every branch (join), because an end node stops the whole run. A repository the GitHub harvest also finds becomes the same component (same slug rule, upsert patches). Ships disabled; set it up and switch it on in the OpenCatalogi admin settings, section developer.overheid.nl harvest. Needs integriq with its developer-overheid-oss, github-raw and gitlab-raw sources.",
+                            "trigger": "schedule",
+                            "enabled": false,
+                            "executionMode": "async",
+                            "limits": {
+                                "maxRuntimeMinutes": 60
+                            },
+                            "nodes": [
+                                {
+                                    "id": "nightly",
+                                    "type": "openregister.trigger-schedule",
+                                    "config": {
+                                        "cron": "15 4 * * *",
+                                        "runAs": "admin"
+                                    }
+                                },
+                                {
+                                    "id": "on-demand",
+                                    "type": "openregister.trigger-manual",
+                                    "config": {}
+                                },
+                                {
+                                    "id": "list",
+                                    "type": "openconnector.source-paginate",
+                                    "config": {
+                                        "synchronization": "opencatalogi-publiccode-developer-overheid",
+                                        "output": "page"
+                                    }
+                                },
+                                {
+                                    "id": "repos",
+                                    "type": "openregister.explode",
+                                    "config": {
+                                        "path": "page.results",
+                                        "as": "repo",
+                                        "keepRecord": false
+                                    }
+                                },
+                                {
+                                    "id": "locate",
+                                    "type": "openregister.map",
+                                    "config": {
+                                        "mapping": "publiccode-developer-overheid-locate"
+                                    },
+                                    "onError": "continue"
+                                },
+                                {
+                                    "id": "to-github",
+                                    "type": "openregister.filter",
+                                    "config": {
+                                        "condition": {
+                                            "==": [
+                                                {
+                                                    "var": "json.locate.forge"
+                                                },
+                                                "github"
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "id": "to-gitlab",
+                                    "type": "openregister.filter",
+                                    "config": {
+                                        "condition": {
+                                            "==": [
+                                                {
+                                                    "var": "json.locate.forge"
+                                                },
+                                                "gitlab"
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "id": "to-register",
+                                    "type": "openregister.filter",
+                                    "config": {
+                                        "condition": {
+                                            "==": [
+                                                {
+                                                    "var": "json.locate.forge"
+                                                },
+                                                "other"
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "id": "fetch-github",
+                                    "type": "openconnector.source-call",
+                                    "onError": "continue",
+                                    "config": {
+                                        "source": "github-raw",
+                                        "endpoint": "{{ locate.rawPath }}",
+                                        "method": "GET",
+                                        "decode": "yaml",
+                                        "output": "publiccode",
+                                        "onError": "continue"
+                                    }
+                                },
+                                {
+                                    "id": "fetch-gitlab",
+                                    "type": "openconnector.source-call",
+                                    "onError": "continue",
+                                    "config": {
+                                        "source": "gitlab-raw",
+                                        "endpoint": "{{ locate.rawPath }}",
+                                        "method": "GET",
+                                        "decode": "yaml",
+                                        "output": "publiccode",
+                                        "onError": "continue"
+                                    }
+                                },
+                                {
+                                    "id": "detail",
+                                    "type": "openconnector.source-call",
+                                    "onError": "continue",
+                                    "config": {
+                                        "source": "developer-overheid-oss",
+                                        "endpoint": "/repositories/{{ repo.id }}",
+                                        "method": "GET",
+                                        "decode": "json",
+                                        "output": "detail",
+                                        "onError": "continue"
+                                    }
+                                },
+                                {
+                                    "id": "lift",
+                                    "type": "openregister.map",
+                                    "config": {
+                                        "mapping": "publiccode-developer-overheid-detail"
+                                    },
+                                    "onError": "continue"
+                                },
+                                {
+                                    "id": "decoded-github",
+                                    "type": "openregister.filter",
+                                    "config": {
+                                        "condition": {
+                                            "and": [
+                                                {
+                                                    "!!": [
+                                                        {
+                                                            "var": "json.publiccode.body.name"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "!!": [
+                                                        {
+                                                            "var": "json.publiccode.body.url"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "and": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "lower": {
+                                                                                "trim": {
+                                                                                    "var": "json.publiccode.body.url"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        0,
+                                                                        4
+                                                                    ]
+                                                                },
+                                                                "http"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                ".",
+                                                                {
+                                                                    "var": "json.publiccode.body.url"
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    " ",
+                                                                    {
+                                                                        "trim": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "!=": [
+                                                        {
+                                                            "lower": {
+                                                                "var": "json.publiccode.body.name"
+                                                            }
+                                                        },
+                                                        "array"
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.locate.host"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    },
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        "/"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        ".git"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "var": "json.publiccode.body.url"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        "#"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "var": "json.publiccode.body.url"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        "?"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "var": "json.publiccode.body.url"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "id": "decoded-gitlab",
+                                    "type": "openregister.filter",
+                                    "config": {
+                                        "condition": {
+                                            "and": [
+                                                {
+                                                    "!!": [
+                                                        {
+                                                            "var": "json.publiccode.body.name"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "!!": [
+                                                        {
+                                                            "var": "json.publiccode.body.url"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "and": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "lower": {
+                                                                                "trim": {
+                                                                                    "var": "json.publiccode.body.url"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        0,
+                                                                        4
+                                                                    ]
+                                                                },
+                                                                "http"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                ".",
+                                                                {
+                                                                    "var": "json.publiccode.body.url"
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    " ",
+                                                                    {
+                                                                        "trim": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "!=": [
+                                                        {
+                                                            "lower": {
+                                                                "var": "json.publiccode.body.name"
+                                                            }
+                                                        },
+                                                        "array"
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.locate.host"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    },
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        "/"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        ".git"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "var": "json.publiccode.body.url"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        "#"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "var": "json.publiccode.body.url"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        "?"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "var": "json.publiccode.body.url"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "id": "decoded-register",
+                                    "type": "openregister.filter",
+                                    "config": {
+                                        "condition": {
+                                            "and": [
+                                                {
+                                                    "!!": [
+                                                        {
+                                                            "var": "json.publiccode.body.name"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "!!": [
+                                                        {
+                                                            "var": "json.publiccode.body.url"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "and": [
+                                                        {
+                                                            "==": [
+                                                                {
+                                                                    "substr": [
+                                                                        {
+                                                                            "lower": {
+                                                                                "trim": {
+                                                                                    "var": "json.publiccode.body.url"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        0,
+                                                                        4
+                                                                    ]
+                                                                },
+                                                                "http"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                ".",
+                                                                {
+                                                                    "var": "json.publiccode.body.url"
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    " ",
+                                                                    {
+                                                                        "trim": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "!=": [
+                                                        {
+                                                            "lower": {
+                                                                "var": "json.publiccode.body.name"
+                                                            }
+                                                        },
+                                                        "array"
+                                                    ]
+                                                },
+                                                {
+                                                    "or": [
+                                                        {
+                                                            "!": {
+                                                                "in": [
+                                                                    {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.locate.host"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    },
+                                                                    {
+                                                                        "lower": {
+                                                                            "var": "json.publiccode.body.url"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        "/"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "cat": [
+                                                                            {
+                                                                                "var": "json.publiccode.body.url"
+                                                                            },
+                                                                            "/"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        ".git"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "var": "json.publiccode.body.url"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        "#"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "var": "json.publiccode.body.url"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "in": [
+                                                                {
+                                                                    "cat": [
+                                                                        {
+                                                                            "var": "json.locate.repoKey"
+                                                                        },
+                                                                        "?"
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "lower": {
+                                                                        "var": "json.publiccode.body.url"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "id": "map-github",
+                                    "type": "openregister.map",
+                                    "config": {
+                                        "mapping": "publiccode-developer-overheid-repository"
+                                    },
+                                    "onError": "continue"
+                                },
+                                {
+                                    "id": "map-gitlab",
+                                    "type": "openregister.map",
+                                    "config": {
+                                        "mapping": "publiccode-developer-overheid-repository"
+                                    },
+                                    "onError": "continue"
+                                },
+                                {
+                                    "id": "map-register",
+                                    "type": "openregister.map",
+                                    "config": {
+                                        "mapping": "publiccode-developer-overheid-repository"
+                                    },
+                                    "onError": "continue"
+                                },
+                                {
+                                    "id": "write-github",
+                                    "type": "openregister.object-write",
+                                    "config": {
+                                        "operation": "upsert",
+                                        "register": "publication",
+                                        "schema": "publiccode",
+                                        "payloadFrom": "component",
+                                        "match": {
+                                            "@self.slug": "{{ component.slug }}"
+                                        },
+                                        "maxWrites": 5000
+                                    },
+                                    "onError": "continue"
+                                },
+                                {
+                                    "id": "write-gitlab",
+                                    "type": "openregister.object-write",
+                                    "config": {
+                                        "operation": "upsert",
+                                        "register": "publication",
+                                        "schema": "publiccode",
+                                        "payloadFrom": "component",
+                                        "match": {
+                                            "@self.slug": "{{ component.slug }}"
+                                        },
+                                        "maxWrites": 5000
+                                    },
+                                    "onError": "continue"
+                                },
+                                {
+                                    "id": "write-register",
+                                    "type": "openregister.object-write",
+                                    "config": {
+                                        "operation": "upsert",
+                                        "register": "publication",
+                                        "schema": "publiccode",
+                                        "payloadFrom": "component",
+                                        "match": {
+                                            "@self.slug": "{{ component.slug }}"
+                                        },
+                                        "maxWrites": 5000
+                                    },
+                                    "onError": "continue"
+                                },
+                                {
+                                    "id": "end",
+                                    "type": "openregister.end",
+                                    "config": {},
+                                    "join": true
+                                }
+                            ],
+                            "edges": [
+                                {
+                                    "id": "e-nightly-list",
+                                    "from": "nightly",
+                                    "to": "list"
+                                },
+                                {
+                                    "id": "e-on-demand-list",
+                                    "from": "on-demand",
+                                    "to": "list"
+                                },
+                                {
+                                    "id": "e-list-repos",
+                                    "from": "list",
+                                    "to": "repos"
+                                },
+                                {
+                                    "id": "e-repos-locate",
+                                    "from": "repos",
+                                    "to": "locate"
+                                },
+                                {
+                                    "id": "e-locate-to-github",
+                                    "from": "locate",
+                                    "to": "to-github"
+                                },
+                                {
+                                    "id": "e-locate-to-gitlab",
+                                    "from": "locate",
+                                    "to": "to-gitlab"
+                                },
+                                {
+                                    "id": "e-locate-to-register",
+                                    "from": "locate",
+                                    "to": "to-register"
+                                },
+                                {
+                                    "id": "e-to-github-fetch-github",
+                                    "from": "to-github",
+                                    "to": "fetch-github"
+                                },
+                                {
+                                    "id": "e-fetch-github-decoded-github",
+                                    "from": "fetch-github",
+                                    "to": "decoded-github"
+                                },
+                                {
+                                    "id": "e-decoded-github-map-github",
+                                    "from": "decoded-github",
+                                    "to": "map-github"
+                                },
+                                {
+                                    "id": "e-map-github-write-github",
+                                    "from": "map-github",
+                                    "to": "write-github"
+                                },
+                                {
+                                    "id": "e-write-github-end",
+                                    "from": "write-github",
+                                    "to": "end"
+                                },
+                                {
+                                    "id": "e-to-gitlab-fetch-gitlab",
+                                    "from": "to-gitlab",
+                                    "to": "fetch-gitlab"
+                                },
+                                {
+                                    "id": "e-fetch-gitlab-decoded-gitlab",
+                                    "from": "fetch-gitlab",
+                                    "to": "decoded-gitlab"
+                                },
+                                {
+                                    "id": "e-decoded-gitlab-map-gitlab",
+                                    "from": "decoded-gitlab",
+                                    "to": "map-gitlab"
+                                },
+                                {
+                                    "id": "e-map-gitlab-write-gitlab",
+                                    "from": "map-gitlab",
+                                    "to": "write-gitlab"
+                                },
+                                {
+                                    "id": "e-write-gitlab-end",
+                                    "from": "write-gitlab",
+                                    "to": "end"
+                                },
+                                {
+                                    "id": "e-to-register-detail",
+                                    "from": "to-register",
+                                    "to": "detail"
+                                },
+                                {
+                                    "id": "e-detail-lift",
+                                    "from": "detail",
+                                    "to": "lift"
+                                },
+                                {
+                                    "id": "e-lift-decoded-register",
+                                    "from": "lift",
+                                    "to": "decoded-register"
+                                },
+                                {
+                                    "id": "e-decoded-register-map-register",
+                                    "from": "decoded-register",
+                                    "to": "map-register"
+                                },
+                                {
+                                    "id": "e-map-register-write-register",
+                                    "from": "map-register",
+                                    "to": "write-register"
+                                },
+                                {
+                                    "id": "e-write-register-end",
+                                    "from": "write-register",
+                                    "to": "end"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "mappings": {
+            "publiccode-developer-overheid-locate": {
+                "slug": "publiccode-developer-overheid-locate",
+                "name": "developer.overheid.nl repository to forge and raw path",
+                "description": "Classifies one OSS-register repository (at repo) by the forge its publicCodeUrl points at and adds locate.forge (github, gitlab or other), locate.host (lower case, no www.), locate.rawPath (the file's path on integriq source github-raw or gitlab-raw), locate.filePath (the file's path in the repository) and locate.repoKey (the register's own url, normalised as the slug is). The query string and fragment are cut off first. A URL with an empty, \".\" or \"..\" segment, on another host, or without a file path is classified other and takes the register's detail endpoint instead. Rules and examples: openspec/changes/publiccode-developer-overheid-harvest/design.md D2. Renders one JSON object so the URL is parsed once.",
+                "version": "1.0.0",
+                "passThrough": true,
+                "mapping": {
+                    "locate": "{% set u = repo.publicCodeUrl is defined and repo.publicCodeUrl is not iterable ? (repo.publicCodeUrl ~ '')|trim : '' %}{% if '#' in u %}{% set u = u|split('#')|first %}{% endif %}{% if '?' in u %}{% set u = u|split('?')|first %}{% endif %}{% set r = repo.url is defined and repo.url is not iterable ? (repo.url ~ '')|lower|trim : '' %}{% if '#' in r %}{% set r = r|split('#')|first %}{% endif %}{% if '?' in r %}{% set r = r|split('?')|first %}{% endif %}{% set r = r|replace({'https://www.': '', 'http://www.': '', 'https://': '', 'http://': ''})|trim('/') %}{% if r ends with '.git' %}{% set r = r|slice(0, -4) %}{% endif %}{% set forge = 'other' %}{% set host = '' %}{% set rawPath = null %}{% set filePath = null %}{% if u matches '~^https?://~i' %}{% set segs = u|split('://', 2)|last|split('/') %}{% set host = segs|first|lower %}{% if host starts with 'www.' %}{% set host = host|slice(4) %}{% endif %}{% set p = segs|slice(1) %}{% set clean = true %}{% for s in p %}{% if s == '' or s == '.' or s == '..' %}{% set clean = false %}{% endif %}{% endfor %}{% if clean and host == 'github.com' and p|length >= 5 and (p[2] == 'blob' or p[2] == 'raw') %}{% set forge = 'github' %}{% set filePath = p|slice(4)|join('/') %}{% set rawPath = '/' ~ p[0] ~ '/' ~ p[1] ~ '/' ~ p[3] ~ '/' ~ filePath %}{% elseif clean and host == 'raw.githubusercontent.com' and p|length >= 4 %}{% if p[2] == 'refs' and (p[3] == 'heads' or p[3] == 'tags') %}{% set filePath = p|slice(5)|join('/') %}{% else %}{% set filePath = p|slice(3)|join('/') %}{% endif %}{% if filePath != '' %}{% set forge = 'github' %}{% set rawPath = '/' ~ p|join('/') %}{% else %}{% set filePath = null %}{% endif %}{% elseif clean and host == 'gitlab.com' %}{% set dash = null %}{% for s in p %}{% if s == '-' and dash is null %}{% set dash = loop.index0 %}{% endif %}{% endfor %}{% if dash is not null and dash >= 2 and p|length >= dash + 4 and (p[dash + 1] == 'blob' or p[dash + 1] == 'raw') %}{% set forge = 'gitlab' %}{% set filePath = p|slice(dash + 3)|join('/') %}{% set rawPath = '/' ~ p|slice(0, dash)|join('/') ~ '/-/raw/' ~ p[dash + 2] ~ '/' ~ filePath %}{% endif %}{% endif %}{% endif %}{% if host == '' %}{% set host = r|split('/')|first %}{% endif %}{{ {forge: forge, host: host, rawPath: rawPath, filePath: filePath, repoKey: r}|json_encode }}"
+                },
+                "cast": {
+                    "locate": [
+                        "jsonToArray"
+                    ]
+                },
+                "unset": []
+            },
+            "publiccode-developer-overheid-detail": {
+                "slug": "publiccode-developer-overheid-detail",
+                "name": "developer.overheid.nl repository detail to publiccode",
+                "description": "Lifts the register's own parse of the publiccode.yml (detail.body.publicCode, from GET /repositories/{id}) to publiccode.body, where a file fetched from a forge sits, so the filter and the repository mapping read both the same way. Used only for a repository on a host without a raw-file source. When the detail call failed there is nothing to lift, and the cast removes the unresolved path rather than writing it as text, so the filter drops the item.",
+                "version": "1.0.0",
+                "passThrough": true,
+                "mapping": {
+                    "publiccode.body": "detail.body.publicCode"
+                },
+                "cast": {
+                    "publiccode.body": [
+                        "unsetIfValue==detail.body.publicCode"
+                    ]
+                },
+                "unset": []
+            },
+            "publiccode-developer-overheid-repository": {
+                "slug": "publiccode-developer-overheid-repository",
+                "name": "developer.overheid.nl repository with its publiccode.yml to publiccode",
+                "description": "Turns one OSS-register repository (at repo, classified at locate) with its publiccode.yml (at publiccode.body) into a publiccode object under `component`. Every publiccode field is shaped exactly as mapping publiccode-github-hit shapes it, and the slug follows the same rule over the url the file declares, plus the file's directory when the file sits below the root of the repository the register lists. A repository both harvests find is therefore one object; the upsert patches, so a field one harvest does not write survives the other. Change the slug rule in both mappings together. harvestedFrom is the host the file came from. rawPubliccode is written only for a file fetched from github.com or gitlab.com: the register's parse is not the file. developerOverheid records how the register lists the repository. openspec/changes/publiccode-developer-overheid-harvest/design.md D5.",
+                "version": "1.0.0",
+                "passThrough": false,
+                "mapping": {
+                    "component.slug": "{% set u = publiccode.body.url is defined and publiccode.body.url is not iterable ? (publiccode.body.url ~ '')|lower|trim : '' %}{% if '#' in u %}{% set u = u|split('#')|first %}{% endif %}{% if '?' in u %}{% set u = u|split('?')|first %}{% endif %}{% set u = u|replace({'https://www.': '', 'http://www.': '', 'https://': '', 'http://': ''})|trim('/') %}{% if u ends with '.git' %}{% set u = u|slice(0, -4) %}{% endif %}{% set fp = locate.filePath is defined and locate.filePath is not iterable ? (locate.filePath ~ '')|lower : '' %}{% if u != '' and u == (locate.repoKey ~ '') and '/' in fp %}{% set u = u ~ '/' ~ fp|split('/')|slice(0, -1)|join('/') %}{% endif %}{{ u|replace({'/': '-', '.': '-', '_': '-', ' ': '-', ':': '-', '~': '-'}) }}",
+                    "component.name": "{{ publiccode.body.name is defined and publiccode.body.name is not iterable ? (publiccode.body.name ~ '')|trim : '' }}",
+                    "component.applicationSuite": "{{ publiccode.body.applicationSuite is defined and publiccode.body.applicationSuite is not iterable ? (publiccode.body.applicationSuite ~ '')|trim : '' }}",
+                    "component.url": "{{ publiccode.body.url is defined and publiccode.body.url is not iterable ? (publiccode.body.url ~ '')|trim : '' }}",
+                    "component.landingURL": "{% set v = publiccode.body.landingURL is defined and publiccode.body.landingURL is not iterable ? (publiccode.body.landingURL ~ '')|trim : '' %}{{ v matches '~^https?://[^ ]+$~i' ? v : '' }}",
+                    "component.softwareVersion": "{{ publiccode.body.softwareVersion is defined and publiccode.body.softwareVersion is not iterable ? (publiccode.body.softwareVersion ~ '')|trim : '' }}",
+                    "component.releaseDate": "{% set rd = publiccode.body.releaseDate is defined and publiccode.body.releaseDate is not iterable ? (publiccode.body.releaseDate ~ '') : '' %}{{ rd matches '/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])/' ? rd|slice(0, 10) : (rd matches '/^[0-9]{9,11}$/' ? rd|date('Y-m-d', false) : '') }}",
+                    "component.logo": "{{ publiccode.body.logo is defined and publiccode.body.logo is not iterable ? (publiccode.body.logo ~ '')|trim : '' }}",
+                    "component.platforms": "{% set src = publiccode.body.platforms is defined and publiccode.body.platforms is iterable ? publiccode.body.platforms : [] %}{% set out = [] %}{% for v in src %}{% if v is not iterable %}{% set out = out|merge([(v ~ '')|trim]) %}{% endif %}{% endfor %}{{ out|json_encode }}",
+                    "component.categories": "{% set src = publiccode.body.categories is defined and publiccode.body.categories is iterable ? publiccode.body.categories : [] %}{% set out = [] %}{% for v in src %}{% if v is not iterable %}{% set out = out|merge([(v ~ '')|trim]) %}{% endif %}{% endfor %}{{ out|json_encode }}",
+                    "component.developmentStatus": "{{ publiccode.body.developmentStatus is defined and publiccode.body.developmentStatus is not iterable ? (publiccode.body.developmentStatus ~ '')|trim : '' }}",
+                    "component.softwareType": "{{ publiccode.body.softwareType is defined and publiccode.body.softwareType is not iterable ? (publiccode.body.softwareType ~ '')|trim : '' }}",
+                    "component.description": "{% set d = publiccode.body.description is defined and publiccode.body.description is iterable ? publiccode.body.description : {} %}{% set ok = {} %}{% for k, v in d %}{% if k matches '~^[a-z]{2,3}([-_][a-z]+)?$~i' and v is iterable %}{% set ok = ok|merge({(k): v}) %}{% endif %}{% endfor %}{{ ok|json_encode }}",
+                    "component.maintenanceType": "{% set m = publiccode.body.maintenance is defined and publiccode.body.maintenance is iterable ? publiccode.body.maintenance : {} %}{{ m.type is defined and m.type is not iterable ? (m.type ~ '')|trim : '' }}",
+                    "component.maintainers": "{% set m = publiccode.body.maintenance is defined and publiccode.body.maintenance is iterable ? publiccode.body.maintenance : {} %}{% set out = [] %}{% for v in (m.contractors is defined and m.contractors is iterable ? m.contractors : []) %}{% if v is iterable %}{% set out = out|merge([v]) %}{% endif %}{% endfor %}{% for v in (m.contacts is defined and m.contacts is iterable ? m.contacts : []) %}{% if v is iterable %}{% set out = out|merge([v]) %}{% endif %}{% endfor %}{{ out|json_encode }}",
+                    "component.legalLicense": "{% set lg = publiccode.body.legal is defined and publiccode.body.legal is iterable ? publiccode.body.legal : {} %}{{ lg.license is defined and lg.license is not iterable ? (lg.license ~ '')|trim : '' }}",
+                    "component.legalRepoOwner": "{% set lg = publiccode.body.legal is defined and publiccode.body.legal is iterable ? publiccode.body.legal : {} %}{{ lg.repoOwner is defined and lg.repoOwner is not iterable ? (lg.repoOwner ~ '')|trim : '' }}",
+                    "component.localisationAvailableLanguages": "{% set l = publiccode.body.localisation is defined and publiccode.body.localisation is iterable ? publiccode.body.localisation : {} %}{% set src = l.availableLanguages is defined and l.availableLanguages is iterable ? l.availableLanguages : [] %}{% set out = [] %}{% for v in src %}{% if v is not iterable %}{% set out = out|merge([(v ~ '')|trim]) %}{% endif %}{% endfor %}{{ out|json_encode }}",
+                    "component.itConformsTo": "{% set conforms = [] %}{% set itb = publiccode.body.it is defined and publiccode.body.it is iterable ? publiccode.body.it : {} %}{% for standard, conforms_to in (itb.conforme is defined and itb.conforme is iterable ? itb.conforme : {}) %}{% if conforms_to %}{% set conforms = conforms|merge([standard ~ '']) %}{% endif %}{% endfor %}{{ conforms|json_encode }}",
+                    "component.publiccodeYmlVersion": "{{ publiccode.body.publiccodeYmlVersion is defined and publiccode.body.publiccodeYmlVersion is not iterable ? (publiccode.body.publiccodeYmlVersion ~ '')|trim : '' }}",
+                    "component.harvestedFrom": "{{ locate.host is defined and locate.host is not iterable ? (locate.host ~ '')|trim : '' }}",
+                    "component.harvestedAt": "{{ 'now'|date('c', 'UTC') }}",
+                    "component.rawPubliccode": "{{ locate.forge is defined and (locate.forge == 'github' or locate.forge == 'gitlab') and publiccode.body is defined and publiccode.body is iterable ? publiccode.body|json_encode|escape('html')|escape('html') : '' }}",
+                    "component.developerOverheid.id": "{% set v = repo.id is defined and repo.id is not iterable ? (repo.id ~ '')|trim : '' %}{{ v matches '~^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$~i' ? v : '' }}",
+                    "component.developerOverheid.organisation.label": "{% set o = repo.organisation is defined and repo.organisation is iterable ? repo.organisation : {} %}{{ o.label is defined and o.label is not iterable ? (o.label ~ '')|trim : '' }}",
+                    "component.developerOverheid.organisation.uri": "{% set o = repo.organisation is defined and repo.organisation is iterable ? repo.organisation : {} %}{% set v = o.uri is defined and o.uri is not iterable ? (o.uri ~ '')|trim : '' %}{{ v matches '~^https?://[^ ]+$~i' ? v : '' }}",
+                    "component.developerOverheid.registerUrl": "{% set v = repo.id is defined and repo.id is not iterable ? (repo.id ~ '')|trim : '' %}{{ v matches '~^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$~i' ? 'https://oss.developer.overheid.nl/repositories/' ~ v : '' }}",
+                    "component.developerOverheid.lastCrawledAt": "{% set v = repo.lastCrawledAt is defined and repo.lastCrawledAt is not iterable ? (repo.lastCrawledAt ~ '')|trim : '' %}{{ v matches '~^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$~i' ? v : '' }}",
+                    "component.developerOverheid.forkType": "{% set v = repo.forkType is defined and repo.forkType is not iterable ? (repo.forkType ~ '')|trim : '' %}{{ v in ['TECHNICAL_FORK', 'VARIANT_FORK', 'GIT_FORK', 'URL_MISTAKE'] ? v : '' }}",
+                    "component.developerOverheid.archived": "{{ repo.archived is defined and repo.archived is same as(true) ? 'true' : (repo.archived is defined and repo.archived is same as(false) ? 'false' : '') }}"
+                },
+                "cast": {
+                    "component.name": [
+                        "unsetIfValue=="
+                    ],
+                    "component.applicationSuite": [
+                        "unsetIfValue=="
+                    ],
+                    "component.url": [
+                        "unsetIfValue=="
+                    ],
+                    "component.landingURL": [
+                        "unsetIfValue=="
+                    ],
+                    "component.softwareVersion": [
+                        "unsetIfValue=="
+                    ],
+                    "component.releaseDate": [
+                        "unsetIfValue=="
+                    ],
+                    "component.logo": [
+                        "unsetIfValue=="
+                    ],
+                    "component.platforms": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.categories": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.developmentStatus": [
+                        "unsetIfValue=="
+                    ],
+                    "component.softwareType": [
+                        "unsetIfValue=="
+                    ],
+                    "component.description": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.maintenanceType": [
+                        "unsetIfValue=="
+                    ],
+                    "component.maintainers": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.legalLicense": [
+                        "unsetIfValue=="
+                    ],
+                    "component.legalRepoOwner": [
+                        "unsetIfValue=="
+                    ],
+                    "component.localisationAvailableLanguages": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.itConformsTo": [
+                        "jsonToArray",
+                        "unsetIfValue=="
+                    ],
+                    "component.publiccodeYmlVersion": [
+                        "unsetIfValue=="
+                    ],
+                    "component.harvestedFrom": [
+                        "unsetIfValue=="
+                    ],
+                    "component.rawPubliccode": [
+                        "unsetIfValue==",
+                        "jsonToArray"
+                    ],
+                    "component.developerOverheid.id": [
+                        "unsetIfValue=="
+                    ],
+                    "component.developerOverheid.organisation.label": [
+                        "unsetIfValue=="
+                    ],
+                    "component.developerOverheid.organisation.uri": [
+                        "unsetIfValue=="
+                    ],
+                    "component.developerOverheid.organisation": [
+                        "unsetIfValue=="
+                    ],
+                    "component.developerOverheid.registerUrl": [
+                        "unsetIfValue=="
+                    ],
+                    "component.developerOverheid.lastCrawledAt": [
+                        "unsetIfValue=="
+                    ],
+                    "component.developerOverheid.forkType": [
+                        "unsetIfValue=="
+                    ],
+                    "component.developerOverheid.archived": [
+                        "unsetIfValue==",
+                        "bool"
+                    ],
+                    "component.developerOverheid": [
+                        "unsetIfValue=="
+                    ]
+                },
+                "unset": []
+            }
+        }
+    }
+}

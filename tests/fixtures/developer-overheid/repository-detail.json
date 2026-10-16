@@ -1,0 +1,46 @@
+{
+    "$comment": "One RepositoryDetail as GET /repositories/{id} of the developer.overheid.nl OSS-register answers it for a repository on a host without a raw-file source. publicCode is the register crawler's parse of the file; it lacks categories, softwareVersion, releaseDate, logo, applicationSuite, it and legal.repoOwner. Ids, names and the organisation are placeholders.",
+    "id": "00000000-0000-0000-0000-000000000000",
+    "url": "https://codeberg.org/example-org/app",
+    "name": "app",
+    "shortDescription": "Example: a component hosted on Codeberg",
+    "organisation": {
+        "uri": "https://identifier.example.invalid/organisation/2",
+        "label": "Example: Waterschap Voorbeeld"
+    },
+    "publicCodeUrl": "https://codeberg.org/example-org/app/src/branch/main/publiccode.yml",
+    "forkType": "VARIANT_FORK",
+    "archived": false,
+    "createdAt": "2025-03-01T09:00:00Z",
+    "lastCrawledAt": "2026-10-14T02:00:00.123Z",
+    "lastActivityAt": "2026-10-01T12:00:00Z",
+    "publicCode": {
+        "publiccodeYmlVersion": "0.4",
+        "name": "Example App",
+        "url": "https://codeberg.org/example-org/app",
+        "landingURL": "https://example.invalid/app",
+        "platforms": ["web"],
+        "developmentStatus": "beta",
+        "softwareType": "standalone/web",
+        "description": {
+            "nl": {
+                "shortDescription": "Voorbeeld: een component op Codeberg"
+            }
+        },
+        "legal": {
+            "license": "EUPL-1.2"
+        },
+        "maintenance": {
+            "type": "community",
+            "contacts": [
+                {
+                    "name": "Example Maintainer"
+                }
+            ]
+        },
+        "localisation": {
+            "localisationReady": true,
+            "availableLanguages": ["nl"]
+        }
+    }
+}
