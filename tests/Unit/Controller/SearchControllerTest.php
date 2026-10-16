@@ -409,7 +409,7 @@ class SearchControllerTest extends TestCase {
 
 		$this->assertSame('public, max-age=60, must-revalidate', $headers['Cache-Control']);
 		$this->assertArrayHasKey('ETag', $headers);
-		$this->assertSame('Origin, Accept-Language', $headers['Vary']);
+		$this->assertSame('Origin, Accept, Accept-Language', $headers['Vary']);
 
 	}//end testAnAnonymousSearchAnswerIsPubliclyCacheable()
 

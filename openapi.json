@@ -391,7 +391,7 @@
                 "items": {
                   "$ref": "#/components/schemas/WithheldEntry"
                 },
-                "description": "Present only when the catalogue (on the federation route: every catalogue holding the publication) has showWithheld true and the list could be read; absent otherwise."
+                "description": "Present only when the catalogue (on the federation route: every catalogue holding the publication) has showWithheld true and the list could be read and holds at least one entry; absent otherwise, including when nothing was recorded for the publication."
               }
             }
           }

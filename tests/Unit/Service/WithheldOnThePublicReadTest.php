@@ -47,9 +47,19 @@ class PublicReadObjectService {
 	/** @var array<string, mixed> What renderEntity answers. */
 	public array $rendered = [];
 
+	/** @var list<array<string, mixed>> The queries received. */
+	public array $queries = [];
+
 	public function searchObjectsPaginated(array $query, mixed ...$rest): array {
+		$this->queries[] = $query;
+		$rows = ($this->rows[(string)($query['@self']['schema'] ?? '')] ?? []);
+		if (isset($query['_limit']) === true) {
+			// Page like OpenRegister does: `_limit` rows per `_page`, from 1.
+			$rows = array_slice($rows, (((int)($query['_page'] ?? 1) - 1) * (int)$query['_limit']), (int)$query['_limit']);
+		}
+
 		$results = [];
-		foreach ($this->rows[(string)($query['@self']['schema'] ?? '')] ?? [] as $row) {
+		foreach ($rows as $row) {
 			$results[] = ['id' => $row['id'] ?? null, 'object' => $row];
 		}
 
@@ -238,6 +248,67 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$this->objects->rows['sch-catalog'] = [];
 		$this->assertArrayNotHasKey('withheld', $this->federation(), 'an unresolved catalogue gives no key');
 	}//end testTheFederationEndpointSaysNothingWhenACatalogueHoldingItDidNotOptIn()
+
+	public function testAPeersPublicationGetsNoWithheldKeyEvenWhenTheIdsMatchALocalOptedInCatalogue(): void {
+		// The peer's register and schema ids coincide with the opted-in local catalogue's.
+		$publications = $this->createMock(PublicationService::class);
+		$publications->method('getFederatedPublication')->willReturn(
+			[
+				'success' => true,
+				'data' => ($this->objects->rendered + ['sources' => ['https://peer.example.com']]),
+				'status' => 200,
+				'federated' => true,
+			]
+		);
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParams')->willReturn([]);
+		$controller = new FederationController('opencatalogi', $request, $publications, $this->createMock(IL10N::class), new NullLogger(), $this->withheld);
+
+		$data = (array)$controller->publication('pub-1')->getData();
+
+		$this->assertArrayHasKey('sources', $data);
+		$this->assertArrayNotHasKey('withheld', $data);
+
+		// Peer data that only carries `sources` (no marker) is treated the same way.
+		$publications = $this->createMock(PublicationService::class);
+		$publications->method('getFederatedPublication')->willReturn(
+			['success' => true, 'data' => ($this->objects->rendered + ['sources' => []]), 'status' => 200]
+		);
+		$controller = new FederationController('opencatalogi', $request, $publications, $this->createMock(IL10N::class), new NullLogger(), $this->withheld);
+
+		$this->assertArrayNotHasKey('withheld', (array)$controller->publication('pub-1')->getData());
+	}//end testAPeersPublicationGetsNoWithheldKeyEvenWhenTheIdsMatchALocalOptedInCatalogue()
+
+	public function testAnExtendedRegisterAndSchemaStillGetTheListForALocalPublication(): void {
+		// `?_extend[]=@self.register&_extend[]=@self.schema` turns both ids into objects.
+		$this->objects->rendered['@self']['register'] = ['id' => '1', 'title' => 'Register'];
+		$this->objects->rendered['@self']['schema'] = ['id' => '1', 'title' => 'Schema'];
+
+		$data = $this->federation();
+
+		$this->assertSame([3, 7], array_column($data['withheld'], 'position'));
+	}//end testAnExtendedRegisterAndSchemaStillGetTheListForALocalPublication()
+
+	public function testAnUnreadableAssessmentLeavesTheKeyOutOfTheAnswer(): void {
+		// The batch names an assessment that cannot be read: the list is left out, not shortened.
+		$this->objects->rows['sch-batch'] = [['id' => 'b-1', 'documents' => ['a-1', 'gone'], 'wooPublication' => ['publication' => 'pub-1']]];
+		$this->objects->objects = ['a-1' => ['id' => 'a-1', 'assessment' => 'niet_openbaar', 'weigeringsgronden' => ['5.1.2.e']]];
+
+		[$status, $data] = $this->show(optIn: true);
+		$this->assertSame(200, $status);
+		$this->assertArrayNotHasKey('withheld', $data);
+		$this->assertArrayNotHasKey('withheld', $this->federation());
+	}//end testAnUnreadableAssessmentLeavesTheKeyOutOfTheAnswer()
+
+	public function testAnOptedInCatalogueWithNothingRecordedForThePublicationHasNoWithheldKey(): void {
+		// No stored row and no batch for pub-1: "not recorded" must not read as "nothing withheld".
+		$this->objects->rows['sch-withheld'] = [];
+
+		[$status, $data] = $this->show(optIn: true);
+		$this->assertSame(200, $status);
+		$this->assertArrayNotHasKey('withheld', $data);
+		$this->assertArrayNotHasKey('withheld', $this->federation());
+	}//end testAnOptedInCatalogueWithNothingRecordedForThePublicationHasNoWithheldKey()
 
 	public function testANonPublicPublicationShowsNothing(): void {
 		// OpenRegister's RBAC hides a publication that is not public from the anonymous lookup.

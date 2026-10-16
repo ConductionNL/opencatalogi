@@ -2073,6 +2073,75 @@ class PublicationsControllerTest extends TestCase {
 	}
 
 	/**
+	 * A publication detail read, as a given caller and with a given Accept header.
+	 *
+	 * @param boolean $signedIn Whether the caller is signed in.
+	 * @param string  $accept   The Accept header of the request.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function showAs(bool $signedIn, string $accept): JSONResponse {
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$schemaOrg = $this->createMock(\OCA\OpenCatalogi\Service\SchemaOrgService::class);
+		$schemaOrg->method('buildPublicationNode')->willReturn(['@type' => 'Dataset', 'name' => 'Test Publication']);
+		$session = $this->createMock(\OCP\IUserSession::class);
+		$session->method('isLoggedIn')->willReturn($signedIn);
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturnArgument(2);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				\OCP\IUserSession::class => $session,
+				\OCP\IAppConfig::class => $config,
+				\OCA\OpenCatalogi\Service\SchemaOrgService::class => $schemaOrg,
+				default => $mockObjService,
+			}
+		);
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
+		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'title' => 'Test Publication']);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->method('getHeader')->willReturnCallback(
+			static fn (string $name): string => ($name === 'Accept' ? $accept : '')
+		);
+		$this->request->server = [];
+
+		return $this->controller->show('test-catalog', 'pub-123');
+	}
+
+	/**
+	 * show() answers JSON or JSON-LD on one URL, so both variants vary on Accept (REQ-PAC-001).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 */
+	public function testAnAnonymousShowAnswerVariesOnAcceptForJson(): void {
+		$response = $this->showAs(signedIn: false, accept: 'application/json');
+		$headers = $response->getHeaders();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame('public, max-age=60, must-revalidate', $headers['Cache-Control']);
+		$this->assertStringContainsString('Accept', $headers['Vary']);
+		$this->assertArrayNotHasKey('@type', (array)$response->getData());
+	}
+
+	/**
+	 * The schema.org JSON-LD variant of show() carries the same Vary (REQ-PAC-001).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 */
+	public function testAnAnonymousShowAnswerVariesOnAcceptForJsonLd(): void {
+		$response = $this->showAs(signedIn: false, accept: 'application/ld+json');
+		$headers = $response->getHeaders();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame('Dataset', ((array)$response->getData())['@type']);
+		$this->assertSame('public, max-age=60, must-revalidate', $headers['Cache-Control']);
+		$this->assertStringContainsString('Accept', $headers['Vary']);
+	}
+
+	/**
 	 * An anonymous catalogue page may be cached, an unknown catalogue may not (REQ-PAC-001).
 	 *
 	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001

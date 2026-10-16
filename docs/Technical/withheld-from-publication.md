@@ -34,6 +34,6 @@ Both answer the same list. The federation route has no catalogue in its path, so
 
 ## When the key is missing
 
-`withheld` is left out, never sent empty, when the catalogue did not opt in, when the catalogue cannot be found, when the publication is not public, or when the list cannot be read. An empty list would say nothing was withheld.
+`withheld` is left out, never sent empty, when the catalogue did not opt in, when the catalogue cannot be found, when the publication is not public, when the list cannot be read, or when there is nothing to list (no stored entry and no withheld assessment for the publication, which includes a decision whose documents have not been recorded yet). An assessment of a batch that cannot be read, or a batch register too large to scan (20 000 batches), counts as a list that cannot be read: the key is left out rather than sent with entries missing. An empty list would say nothing was withheld.
 
 A portal that renders this (portaliq `publication-error-reports-and-withheld-notices`) should show the `groundDetails` labels and test against these keys. The schema is `PublicPublication` and `WithheldEntry` in `openapi.json`.

@@ -16,7 +16,7 @@ Read at opencatalogi development `1694b051`.
 A trait `AnswersCacheably` beside `AnswersCrossOriginRequests` (`lib/Controller/AnswersCrossOriginRequests.php`) with `cacheable(JSONResponse $response): Response`:
 
 - signed-in caller (`IUserSession::isLoggedIn()`): `Cache-Control: private, no-store`, nothing else;
-- anonymous caller and a 200 answer: `Cache-Control: public, max-age=N, must-revalidate`, `ETag` = a weak tag over the serialised body, `Vary: Origin, Accept-Language`;
+- anonymous caller and a 200 answer: `Cache-Control: public, max-age=N, must-revalidate`, `ETag` = a weak tag over the serialised body, `Vary: Origin, Accept, Accept-Language`;
 - a matching `If-None-Match`: 304 with the same `ETag` and `Cache-Control`, no body;
 - error answers (4xx, 5xx): unchanged.
 

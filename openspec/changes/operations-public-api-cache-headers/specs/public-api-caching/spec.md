@@ -8,13 +8,13 @@ status: proposed
 
 ### Requirement: Anonymous answers of the public API may be cached (REQ-PAC-001)
 
-A successful anonymous answer of the publication list, a publication, its attachments list, the public search and a search result SHALL carry `Cache-Control: public` with the configured max-age and `must-revalidate`, an `ETag` over the answer as sent, and `Vary: Origin, Accept-Language`. A request whose `If-None-Match` matches SHALL get 304 Not Modified without a body. Error answers SHALL carry no public cache header.
+A successful anonymous answer of the publication list, a publication, its attachments list, the public search and a search result SHALL carry `Cache-Control: public` with the configured max-age and `must-revalidate`, an `ETag` over the answer as sent, and `Vary: Origin, Accept, Accept-Language`. A request whose `If-None-Match` matches SHALL get 304 Not Modified without a body. Error answers SHALL carry no public cache header.
 
 #### Scenario: A CDN caches a catalogue page
 
 - **GIVEN** a cache time of 60 seconds
 - **WHEN** an anonymous reader calls `GET /index.php/apps/opencatalogi/api/woo-publicaties`
-- **THEN** the answer carries `Cache-Control: public, max-age=60, must-revalidate`, an `ETag` and `Vary: Origin, Accept-Language`
+- **THEN** the answer carries `Cache-Control: public, max-age=60, must-revalidate`, an `ETag` and `Vary: Origin, Accept, Accept-Language`
 
 #### Scenario: Nothing changed
 
