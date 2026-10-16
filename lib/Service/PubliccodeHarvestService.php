@@ -1,17 +1,21 @@
 <?php
 
 /**
- * The GitHub publiccode harvest, as the administrator sees and drives it.
+ * The publiccode harvests, as the administrator sees and drives them.
  *
- * The harvest itself is a flow OpenCatalogi ships on the `publiccode` schema
- * (`lib/Settings/register.d/publiccode-github-harvest.json`) and OpenRegister
- * runs. This service is the admin's handle on it: it reports whether the pieces
- * are in place, writes the shard synchronizations into integriq when asked,
- * switches the flow on and off and starts a run.
+ * Each harvest is a flow OpenCatalogi ships on the `publiccode` schema and
+ * OpenRegister runs: the GitHub harvest
+ * (`lib/Settings/register.d/publiccode-github-harvest.json`) and the
+ * developer.overheid.nl harvest
+ * (`lib/Settings/register.d/publiccode-developer-overheid-harvest.json`). This
+ * service is the admin's handle on them: it reports whether the pieces are in
+ * place, writes the synchronizations into integriq when asked, switches a flow
+ * on and off and starts a run. Every public method takes the harvest key, and
+ * `github` is the default, so the GitHub harvest's callers are unchanged.
  *
- * It never touches the GitHub token. The `github-api` source authenticates
- * through integriq's credential broker, and this service only reads whether
- * that source exists and is enabled.
+ * It never touches a token or an API key. Each source authenticates through
+ * integriq's credential broker, and this service only reads whether that source
+ * exists and is enabled. It does not look up the credential at all.
  *
  * Everything is resolved from the container by class name, so the app keeps
  * working when integriq is absent: the harvest then reports what it needs and
@@ -27,6 +31,7 @@
  * @link https://www.OpenCatalogi.nl
  *
  * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+ * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
  */
 
 declare(strict_types=1);
@@ -34,6 +39,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use DateTimeInterface;
+use InvalidArgumentException;
+use OCA\OpenCatalogi\Exception\HarvestNotReadyException;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -41,20 +48,43 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Status, set-up, switch and run for the GitHub publiccode harvest.
+ * Status, set-up, switch and run for the publiccode harvests.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class PubliccodeHarvestService {
 
 	/**
-	 * The name the shipped flow carries. The flow store identifies a declared
-	 * flow by (app, name, trigger schema), so this is its key.
+	 * The GitHub harvest's key, and the default of every method.
+	 *
+	 * @var string
+	 */
+	public const HARVEST_GITHUB = 'github';
+
+	/**
+	 * The developer.overheid.nl harvest's key.
+	 *
+	 * @var string
+	 */
+	public const HARVEST_DEVELOPER_OVERHEID = 'developer-overheid';
+
+	/**
+	 * The name the shipped GitHub flow carries. The flow store identifies a
+	 * declared flow by (app, name, trigger schema), so this is its key.
 	 *
 	 * @var string
 	 */
 	public const FLOW_NAME = 'GitHub publiccode harvest';
 
 	/**
-	 * The app the declared flow belongs to.
+	 * The name the shipped developer.overheid.nl flow carries.
+	 *
+	 * @var string
+	 */
+	public const DEVELOPER_OVERHEID_FLOW_NAME = 'developer.overheid.nl publiccode harvest';
+
+	/**
+	 * The app the declared flows belong to.
 	 *
 	 * @var string
 	 */
@@ -75,11 +105,28 @@ class PubliccodeHarvestService {
 	public const INTEGRIQ_REGISTER = 'integriq';
 
 	/**
-	 * The shard definitions, relative to the app root.
+	 * The GitHub shard definitions, relative to the app root.
 	 *
 	 * @var string
 	 */
 	public const SHARDS_FILE = '/lib/Settings/publiccode-github-shards.json';
+
+	/**
+	 * The developer.overheid.nl synchronization definitions, relative to the app root.
+	 *
+	 * @var string
+	 */
+	public const DEVELOPER_OVERHEID_FILE = '/lib/Settings/publiccode-developer-overheid-sync.json';
+
+	/**
+	 * How each harvest names itself in messages and log lines.
+	 *
+	 * @var array<string, string>
+	 */
+	private const LABELS = [
+		self::HARVEST_GITHUB => 'GitHub',
+		self::HARVEST_DEVELOPER_OVERHEID => 'developer.overheid.nl',
+	];
 
 	/**
 	 * Constructor.
@@ -97,27 +144,46 @@ class PubliccodeHarvestService {
 	}//end __construct()
 
 	/**
-	 * Everything the admin section shows.
+	 * Everything the admin section of one harvest shows.
+	 *
+	 * The GitHub status counts its search shards under `shards`; the
+	 * developer.overheid.nl status counts its synchronization under
+	 * `synchronizations` and also reports the raw-file sources under `sources`.
+	 * Neither has a credential block: no credential is looked up.
+	 *
+	 * @param string $harvest The harvest key.
 	 *
 	 * @return array<string, mixed> The status.
 	 *
+	 * @throws RuntimeException When the harvest's definition file is missing or malformed.
+	 *
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-009-the-api-key-never-touches-opencatalogi
 	 */
-	public function status(): array {
-		$definitions = $this->shardDefinitions();
+	public function status(string $harvest = self::HARVEST_GITHUB): array {
+		$definition = $this->definition(harvest: $harvest);
 		$integriq = $this->integriqInstalled();
+		$counted = $this->countKey(harvest: $harvest);
 
 		$status = [
 			'integriq' => $integriq,
 			'source' => null,
-			'shards' => ['expected' => count($definitions['shards']), 'present' => 0],
-			'flow' => $this->flowStatus(),
-			'lastRun' => null,
 		];
+		if ($harvest === self::HARVEST_DEVELOPER_OVERHEID) {
+			$status['sources'] = null;
+		}
+
+		$status[$counted] = ['expected' => count($definition['synchronizations']), 'present' => 0];
+		$status['flow'] = $this->flowStatus(flowName: $definition['flowName']);
+		$status['lastRun'] = null;
 
 		if ($integriq === true) {
-			$status['source'] = $this->sourceStatus(slug: (string)$definitions['source']);
-			$status['shards']['present'] = $this->countPresentShards(definitions: $definitions);
+			$status['source'] = $this->sourceStatus(slug: $definition['source']);
+			$status[$counted]['present'] = $this->countPresent(synchronizations: $definition['synchronizations']);
+			if ($harvest === self::HARVEST_DEVELOPER_OVERHEID) {
+				$status['sources'] = $this->otherSourcesStatus(slugs: $definition['sources']);
+			}
 		}
 
 		if (($status['flow']['uuid'] ?? null) !== null) {
@@ -128,24 +194,28 @@ class PubliccodeHarvestService {
 	}//end status()
 
 	/**
-	 * Write one integriq synchronization per shard, updating those that exist.
+	 * Write the harvest's integriq synchronizations, updating those that exist.
+	 *
+	 * @param string $harvest The harvest key.
 	 *
 	 * @return array{created: int, updated: int} What was written.
 	 *
-	 * @throws RuntimeException When integriq is not installed.
+	 * @throws HarvestNotReadyException When integriq or OpenRegister is not installed.
+	 * @throws RuntimeException When the harvest's definition file is missing or malformed.
 	 *
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-002-the-register-is-read-page-by-page-through-one-synchronization
 	 */
-	public function setUp(): array {
-		$this->assertIntegriq();
+	public function setUp(string $harvest = self::HARVEST_GITHUB): array {
+		$label = $this->label(harvest: $harvest);
+		$this->assertIntegriq(label: $label);
 
-		$definitions = $this->shardDefinitions();
+		$definition = $this->definition(harvest: $harvest);
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
 		$created = 0;
 		$updated = 0;
-		foreach ($definitions['shards'] as $shard) {
-			$synchronization = self::synchronizationFor(definitions: $definitions, shard: $shard);
+		foreach ($definition['synchronizations'] as $synchronization) {
 			$existing = $this->findIntegriqObject(schema: 'synchronization', slug: (string)$synchronization['slug']);
 
 			$objectService->saveObject(
@@ -164,7 +234,7 @@ class PubliccodeHarvestService {
 		}//end foreach
 
 		$this->logger->info(
-			'OpenCatalogi: GitHub publiccode harvest set up',
+			'OpenCatalogi: ' . $label . ' publiccode harvest set up',
 			['created' => $created, 'updated' => $updated]
 		);
 
@@ -172,27 +242,34 @@ class PubliccodeHarvestService {
 	}//end setUp()
 
 	/**
-	 * Switch the harvest flow on or off.
+	 * Switch a harvest flow on or off.
 	 *
 	 * Switching on adopts the flow first, so the administrator who switches it
 	 * on becomes its owner. The flow arrives unowned on purpose (OpenRegister's
 	 * adoption contract) and an unowned flow never dispatches.
 	 *
 	 * @param bool $enabled Whether the harvest should run.
+	 * @param string $harvest The harvest key.
 	 *
 	 * @return array<string, mixed> The flow status after the switch.
 	 *
-	 * @throws RuntimeException When integriq is missing or the flow was not imported.
+	 * @throws HarvestNotReadyException When integriq is missing or the flow was not imported.
 	 *
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
 	 */
-	public function setEnabled(bool $enabled): array {
-		$this->assertIntegriq();
+	public function setEnabled(bool $enabled, string $harvest = self::HARVEST_GITHUB): array {
+		$label = $this->label(harvest: $harvest);
+		$this->assertIntegriq(label: $label);
+		$flowName = $this->flowName(harvest: $harvest);
 
 		$flowService = $this->container->get('OCA\OpenRegister\Service\Flow\FlowService');
-		$flow = $this->findFlow();
+		$flow = $this->findFlow(flowName: $flowName);
 		if ($flow === null) {
-			throw new RuntimeException('The harvest flow is not imported yet. Reimport the OpenCatalogi configuration first.');
+			throw new HarvestNotReadyException(
+				message: 'The harvest flow is not imported yet. Reimport the OpenCatalogi configuration first.',
+				error: HarvestNotReadyException::FLOW_NOT_IMPORTED
+			);
 		}
 
 		if ($enabled === true) {
@@ -201,31 +278,38 @@ class PubliccodeHarvestService {
 
 		$flowService->save(['enabled' => $enabled], (string)$flow->getUuid());
 
-		$this->logger->info('OpenCatalogi: GitHub publiccode harvest switched', ['enabled' => $enabled]);
+		$this->logger->info('OpenCatalogi: ' . $label . ' publiccode harvest switched', ['enabled' => $enabled]);
 
-		return $this->flowStatus();
+		return $this->flowStatus(flowName: $flowName);
 	}//end setEnabled()
 
 	/**
 	 * Start a run now. The run is queued; the flow engine's worker advances it.
 	 *
+	 * @param string $harvest The harvest key.
+	 *
 	 * @return array<string, mixed> The queued run.
 	 *
-	 * @throws RuntimeException When the harvest is not set up and switched on.
+	 * @throws HarvestNotReadyException When the harvest is not set up and switched on.
+	 * @throws RuntimeException When the harvest's definition file is missing or malformed.
 	 *
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
 	 */
-	public function runNow(): array {
-		$this->assertIntegriq();
+	public function runNow(string $harvest = self::HARVEST_GITHUB): array {
+		$this->assertIntegriq(label: $this->label(harvest: $harvest));
 
-		$flow = $this->findFlow();
+		$flow = $this->findFlow(flowName: $this->flowName(harvest: $harvest));
 		if ($flow === null || $flow->getEnabled() !== true) {
-			throw new RuntimeException('Switch the harvest on before you run it.');
+			throw new HarvestNotReadyException(
+				message: 'Switch the harvest on before you run it.',
+				error: HarvestNotReadyException::SWITCHED_OFF
+			);
 		}
 
-		$definitions = $this->shardDefinitions();
-		if ($this->countPresentShards(definitions: $definitions) < count($definitions['shards'])) {
-			throw new RuntimeException('Set the harvest up before you run it: not every shard exists in integriq.');
+		$definition = $this->definition(harvest: $harvest);
+		if ($this->countPresent(synchronizations: $definition['synchronizations']) < count($definition['synchronizations'])) {
+			throw new HarvestNotReadyException(message: $definition['notSetUp'], error: HarvestNotReadyException::NOT_SET_UP);
 		}
 
 		$run = $this->container->get('OCA\OpenRegister\Service\Flow\FlowService')->run((string)$flow->getUuid());
@@ -234,7 +318,7 @@ class PubliccodeHarvestService {
 	}//end runNow()
 
 	/**
-	 * The integriq synchronization one shard becomes.
+	 * The integriq synchronization one GitHub shard becomes.
 	 *
 	 * @param array<string, mixed> $definitions The shard file.
 	 * @param array<string, mixed> $shard One shard entry.
@@ -269,7 +353,34 @@ class PubliccodeHarvestService {
 	}//end synchronizationFor()
 
 	/**
-	 * Read the shard file.
+	 * The integriq synchronization one developer.overheid.nl entry becomes.
+	 *
+	 * The entry's `sourceConfig` is taken verbatim: the file is the one place
+	 * the list call is defined.
+	 *
+	 * @param array<string, mixed> $definitions The synchronization file.
+	 * @param array<string, mixed> $entry One entry of its `synchronizations`.
+	 *
+	 * @return array<string, mixed> The synchronization object.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-002-the-register-is-read-page-by-page-through-one-synchronization
+	 */
+	public static function developerOverheidSynchronizationFor(array $definitions, array $entry): array {
+		return [
+			'slug' => (string)$entry['synchronization'],
+			'name' => (string)$entry['name'],
+			'description' => 'The list step of OpenCatalogi\'s developer.overheid.nl publiccode harvest. Written by '
+				. 'OpenCatalogi from lib/Settings/publiccode-developer-overheid-sync.json when an administrator sets '
+				. 'the harvest up; change it there, not here. The flow "' . self::DEVELOPER_OVERHEID_FLOW_NAME
+				. '" fetches its pages.',
+			'sourceId' => (string)$definitions['source'],
+			'sourceType' => 'api',
+			'sourceConfig' => (array)$entry['sourceConfig'],
+		];
+	}//end developerOverheidSynchronizationFor()
+
+	/**
+	 * Read the GitHub shard file.
 	 *
 	 * @return array<string, mixed> The decoded definitions.
 	 *
@@ -278,23 +389,157 @@ class PubliccodeHarvestService {
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-002-shards-partition-the-file-sizes-so-no-search-passes-1000-results
 	 */
 	public function shardDefinitions(): array {
-		$path = $this->appManager->getAppPath('opencatalogi') . self::SHARDS_FILE;
+		return $this->readDefinitionFile(file: self::SHARDS_FILE, noun: 'shard file', listKey: 'shards');
+	}//end shardDefinitions()
+
+	/**
+	 * Read the developer.overheid.nl synchronization file.
+	 *
+	 * Fails closed: a missing file, a file without a source or an entry without
+	 * a synchronization slug or sourceConfig raises, so nothing is written.
+	 *
+	 * @return array<string, mixed> The decoded definitions.
+	 *
+	 * @throws RuntimeException When the file is missing or malformed.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-002-the-register-is-read-page-by-page-through-one-synchronization
+	 */
+	public function developerOverheidDefinitions(): array {
+		$decoded = $this->readDefinitionFile(file: self::DEVELOPER_OVERHEID_FILE, noun: 'synchronization file', listKey: 'synchronizations');
+
+		$valid = (is_string($decoded['source'] ?? null) === true && $decoded['source'] !== '')
+			&& is_array($decoded['sources'] ?? []) === true;
+		foreach ($decoded['synchronizations'] as $entry) {
+			$valid = $valid
+				&& is_string($entry['synchronization'] ?? null) === true
+				&& is_string($entry['name'] ?? null) === true
+				&& is_array($entry['sourceConfig'] ?? null) === true;
+		}
+
+		if ($valid === false) {
+			throw new RuntimeException('The synchronization file ' . self::DEVELOPER_OVERHEID_FILE . ' is not valid.');
+		}
+
+		return $decoded;
+	}//end developerOverheidDefinitions()
+
+	/**
+	 * Read one definition file from the app root.
+	 *
+	 * @param string $file The path relative to the app root.
+	 * @param string $noun How the file is named in the message.
+	 * @param string $listKey The key that must hold a list.
+	 *
+	 * @return array<string, mixed> The decoded file.
+	 *
+	 * @throws RuntimeException When the file is missing or malformed.
+	 */
+	private function readDefinitionFile(string $file, string $noun, string $listKey): array {
+		$path = $this->appManager->getAppPath('opencatalogi') . $file;
 		$content = false;
 		if (is_readable($path) === true) {
 			$content = file_get_contents($path);
 		}
 
 		if ($content === false) {
-			throw new RuntimeException('The shard file ' . self::SHARDS_FILE . ' is missing.');
+			throw new RuntimeException('The ' . $noun . ' ' . $file . ' is missing.');
 		}
 
 		$decoded = json_decode($content, true);
-		if (is_array($decoded) === false || is_array($decoded['shards'] ?? null) === false) {
-			throw new RuntimeException('The shard file ' . self::SHARDS_FILE . ' is not valid.');
+		if (is_array($decoded) === false || is_array($decoded[$listKey] ?? null) === false) {
+			throw new RuntimeException('The ' . $noun . ' ' . $file . ' is not valid.');
 		}
 
 		return $decoded;
-	}//end shardDefinitions()
+	}//end readDefinitionFile()
+
+	/**
+	 * One harvest, in the shape every method works with.
+	 *
+	 * @param string $harvest The harvest key.
+	 *
+	 * @return array{flowName: string, source: string, sources: array<int, string>, synchronizations: array<int, array<string, mixed>>, notSetUp: string}
+	 *
+	 * @throws RuntimeException When the definition file is missing or malformed.
+	 */
+	private function definition(string $harvest): array {
+		$this->label(harvest: $harvest);
+
+		if ($harvest === self::HARVEST_DEVELOPER_OVERHEID) {
+			$definitions = $this->developerOverheidDefinitions();
+
+			return [
+				'flowName' => self::DEVELOPER_OVERHEID_FLOW_NAME,
+				'source' => (string)$definitions['source'],
+				'sources' => array_values(array_map('strval', (array)($definitions['sources'] ?? []))),
+				'synchronizations' => array_map(
+					static fn (array $entry): array => self::developerOverheidSynchronizationFor(definitions: $definitions, entry: $entry),
+					array_values($definitions['synchronizations'])
+				),
+				'notSetUp' => 'Set the harvest up before you run it: the synchronization does not exist in integriq.',
+			];
+		}
+
+		$definitions = $this->shardDefinitions();
+
+		return [
+			'flowName' => self::FLOW_NAME,
+			'source' => (string)$definitions['source'],
+			'sources' => [],
+			'synchronizations' => array_map(
+				static fn (array $shard): array => self::synchronizationFor(definitions: $definitions, shard: $shard),
+				array_values($definitions['shards'])
+			),
+			'notSetUp' => 'Set the harvest up before you run it: not every shard exists in integriq.',
+		];
+	}//end definition()
+
+	/**
+	 * The harvest's name in messages, refusing an unknown key.
+	 *
+	 * @param string $harvest The harvest key.
+	 *
+	 * @return string The label.
+	 *
+	 * @throws InvalidArgumentException When the key names no harvest.
+	 */
+	private function label(string $harvest): string {
+		if (isset(self::LABELS[$harvest]) === false) {
+			throw new InvalidArgumentException('Unknown publiccode harvest: ' . $harvest);
+		}
+
+		return self::LABELS[$harvest];
+	}//end label()
+
+	/**
+	 * The name of the harvest's shipped flow.
+	 *
+	 * @param string $harvest The harvest key.
+	 *
+	 * @return string The flow name.
+	 */
+	private function flowName(string $harvest): string {
+		if ($harvest === self::HARVEST_DEVELOPER_OVERHEID) {
+			return self::DEVELOPER_OVERHEID_FLOW_NAME;
+		}
+
+		return self::FLOW_NAME;
+	}//end flowName()
+
+	/**
+	 * The status key the synchronizations are counted under.
+	 *
+	 * @param string $harvest The harvest key.
+	 *
+	 * @return string `shards` for GitHub, `synchronizations` otherwise.
+	 */
+	private function countKey(string $harvest): string {
+		if ($harvest === self::HARVEST_GITHUB) {
+			return 'shards';
+		}
+
+		return 'synchronizations';
+	}//end countKey()
 
 	/**
 	 * Whether integriq is installed and enabled.
@@ -308,20 +553,28 @@ class PubliccodeHarvestService {
 	/**
 	 * Refuse when integriq is absent.
 	 *
+	 * @param string $label The harvest's name in the message.
+	 *
 	 * @return void
 	 *
-	 * @throws RuntimeException When integriq is not installed.
+	 * @throws HarvestNotReadyException When integriq or OpenRegister is not installed.
 	 */
-	private function assertIntegriq(): void {
+	private function assertIntegriq(string $label): void {
 		if ($this->integriqInstalled() === false) {
-			throw new RuntimeException('The GitHub harvest needs integriq. Install and enable integriq first.');
+			throw new HarvestNotReadyException(
+				message: 'The ' . $label . ' harvest needs integriq. Install and enable integriq first.',
+				error: HarvestNotReadyException::NEEDS_INTEGRIQ
+			);
 		}
 
 		// Every action reaches OpenRegister's services through the container
 		// (ADR-083: an optional capability establishes availability first, so
 		// this class stays constructible on an instance without OpenRegister).
 		if ($this->appManager->isInstalled('openregister') === false) {
-			throw new RuntimeException('The GitHub harvest needs OpenRegister. Install and enable OpenRegister first.');
+			throw new HarvestNotReadyException(
+				message: 'The ' . $label . ' harvest needs OpenRegister. Install and enable OpenRegister first.',
+				error: HarvestNotReadyException::NEEDS_OPENREGISTER
+			);
 		}
 	}//end assertIntegriq()
 
@@ -370,30 +623,32 @@ class PubliccodeHarvestService {
 	}//end findIntegriqEntity()
 
 	/**
-	 * How many shard synchronizations exist.
+	 * How many of the given synchronizations exist.
 	 *
-	 * @param array<string, mixed> $definitions The shard file.
+	 * @param array<int, array<string, mixed>> $synchronizations The synchronization objects.
 	 *
 	 * @return int The count.
 	 */
-	private function countPresentShards(array $definitions): int {
+	private function countPresent(array $synchronizations): int {
 		$present = 0;
-		foreach ($definitions['shards'] as $shard) {
-			if ($this->findIntegriqObject(schema: 'synchronization', slug: (string)$shard['synchronization']) !== null) {
+		foreach ($synchronizations as $synchronization) {
+			if ($this->findIntegriqObject(schema: 'synchronization', slug: (string)$synchronization['slug']) !== null) {
 				$present++;
 			}
 		}
 
 		return $present;
-	}//end countPresentShards()
+	}//end countPresent()
 
 	/**
-	 * Whether the code search source exists and is enabled. The section links
-	 * to it by uuid, so the administrator can add the token there.
+	 * Whether a source exists and is enabled. The section links to it by uuid,
+	 * so the administrator can add the token or key there.
 	 *
 	 * @param string $slug The source slug.
 	 *
 	 * @return array<string, mixed> The source status.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-009-the-api-key-never-touches-opencatalogi
 	 */
 	private function sourceStatus(string $slug): array {
 		$source = $this->findIntegriqEntity(schema: 'source', slug: $slug);
@@ -417,11 +672,30 @@ class PubliccodeHarvestService {
 	}//end sourceStatus()
 
 	/**
-	 * The shipped flow, or null when it was not imported.
+	 * Whether each raw-file source exists and is enabled, by slug.
+	 *
+	 * @param array<int, string> $slugs The source slugs.
+	 *
+	 * @return array<string, array{exists: bool, enabled: bool}> The statuses.
+	 */
+	private function otherSourcesStatus(array $slugs): array {
+		$statuses = [];
+		foreach ($slugs as $slug) {
+			$source = $this->sourceStatus(slug: $slug);
+			$statuses[$slug] = ['exists' => $source['exists'], 'enabled' => $source['enabled']];
+		}
+
+		return $statuses;
+	}//end otherSourcesStatus()
+
+	/**
+	 * A shipped flow by name, or null when it was not imported.
+	 *
+	 * @param string $flowName The flow's name.
 	 *
 	 * @return object|null The flow entity.
 	 */
-	private function findFlow(): ?object {
+	private function findFlow(string $flowName): ?object {
 		if ($this->appManager->isEnabledForAnyone('openregister') === false) {
 			return null;
 		}
@@ -434,7 +708,7 @@ class PubliccodeHarvestService {
 		}
 
 		foreach ($flows as $flow) {
-			if ($flow->getName() === self::FLOW_NAME) {
+			if ($flow->getName() === $flowName) {
 				return $flow;
 			}
 		}
@@ -443,12 +717,14 @@ class PubliccodeHarvestService {
 	}//end findFlow()
 
 	/**
-	 * What the section shows about the flow.
+	 * What the section shows about a flow.
+	 *
+	 * @param string $flowName The flow's name.
 	 *
 	 * @return array<string, mixed> The flow status.
 	 */
-	private function flowStatus(): array {
-		$flow = $this->findFlow();
+	private function flowStatus(string $flowName): array {
+		$flow = $this->findFlow(flowName: $flowName);
 		if ($flow === null) {
 			return ['uuid' => null, 'imported' => false, 'enabled' => false, 'owner' => null, 'runAs' => null, 'cron' => null];
 		}
@@ -501,6 +777,7 @@ class PubliccodeHarvestService {
 	 * @return array<string, mixed> The summary.
 	 *
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-004-a-file-that-cannot-be-read-is-skipped-not-written
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-006-a-file-that-cannot-be-read-is-skipped-not-written
 	 */
 	private static function runSummary(object $run): array {
 		return [

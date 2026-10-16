@@ -1,0 +1,26 @@
+{
+    "$comment": "The integriq synchronization the developer.overheid.nl harvest flow pages through (openspec/changes/publiccode-developer-overheid-harvest, design D8). PubliccodeHarvestService::setUp(harvest: 'developer-overheid') writes each entry into integriq when an administrator sets the harvest up, updating it in place by slug; the flow's node with the same `node` id names it. `source` is the source the list call goes to and the section checks; `sources` are the raw-file sources the section also checks. maxPages 10 covers 1,000 repositories, ten times the register's size on 2026-10-16; past that the list step raises rather than silently truncating, so raise the number here. The API key is never in this file or in OpenCatalogi: the administrator stores it as a generic-apikey credential named developer-overheid-oss, which integriq adds to every request to the source. tests/Unit/Settings/DeveloperOverheidHarvestFlowTest.php keeps this file and the flow in step.",
+    "source": "developer-overheid-oss",
+    "sources": [
+        "github-raw",
+        "gitlab-raw"
+    ],
+    "synchronizations": [
+        {
+            "node": "list",
+            "synchronization": "opencatalogi-publiccode-developer-overheid",
+            "name": "developer.overheid.nl OSS-register, repositories with a publiccode.yml",
+            "sourceConfig": {
+                "endpoint": "/repositories",
+                "query": {
+                    "publiccode": "true",
+                    "perPage": 100
+                },
+                "resultsPosition": "_root",
+                "paginationQuery": "page",
+                "maxPages": 10,
+                "prefetchConcurrency": 1
+            }
+        }
+    ]
+}

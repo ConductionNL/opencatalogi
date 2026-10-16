@@ -16,15 +16,22 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * The developer.overheid.nl harvest runs through the same service under its
+ * own key; its tests below also pin that the GitHub status keeps its shape and
+ * that no status reads or returns a credential.
+ *
  * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+ * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
  */
 
 declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
+use OCA\OpenCatalogi\Exception\HarvestNotReadyException;
 use OCA\OpenCatalogi\Service\PubliccodeHarvestService;
 use DateTime;
+use InvalidArgumentException;
 use OCA\OpenRegister\Db\Flow;
 use OCA\OpenRegister\Db\FlowRun;
 use OCA\OpenRegister\Db\FlowRunMapper;
@@ -48,6 +55,21 @@ class PubliccodeHarvestServiceTest extends TestCase {
 	 * @var array<string, ObjectEntity>
 	 */
 	private array $store = [];
+
+	/**
+	 * Objects "stored" in integriq by schema and slug, for the
+	 * developer.overheid.nl tests, where a source and a credential share a name.
+	 *
+	 * @var array<string, ObjectEntity>
+	 */
+	private array $scoped = [];
+
+	/**
+	 * Every (schema, id) the scoped double was asked for.
+	 *
+	 * @var array<int, string>
+	 */
+	private array $lookups = [];
 
 	/**
 	 * Skip where OpenRegister's real classes are not next to the app.
@@ -595,4 +617,364 @@ class PubliccodeHarvestServiceTest extends TestCase {
 			rmdir($root);
 		}
 	}//end testAMissingOrBrokenShardFileIsReported()
+
+	/**
+	 * An ObjectService double keyed by schema and slug, recording every lookup.
+	 *
+	 * @return ObjectService
+	 */
+	private function scopedObjects(): ObjectService {
+		$objects = $this->getMockBuilder(ObjectService::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['find', 'saveObject'])
+			->getMock();
+
+		$objects->method('find')->willReturnCallback(
+			function (int|string $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null): ?ObjectEntity {
+				$this->lookups[] = $schema . '/' . $id;
+				return ($this->scoped[$schema . '/' . $id] ?? null);
+			}
+		);
+		$objects->method('saveObject')->willReturnCallback(
+			function (array|ObjectEntity $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): ObjectEntity {
+				$this->assertSame('integriq', $register);
+				$key = $schema . '/' . $object['slug'];
+				$entity = ($this->scoped[$key] ?? new ObjectEntity());
+				if ($uuid !== null) {
+					$this->assertSame($uuid, $entity->getUuid(), 'An update must name the stored object.');
+				}
+
+				$entity->setUuid($uuid ?? ('uuid-' . $object['slug']));
+				$entity->setObject($object);
+				$this->scoped[$key] = $entity;
+
+				return $entity;
+			}
+		);
+
+		return $objects;
+	}//end scopedObjects()
+
+	/**
+	 * Store one object in the scoped double.
+	 *
+	 * @param string $schema The integriq schema.
+	 * @param string $slug The slug.
+	 * @param array<string, mixed> $data Its data.
+	 *
+	 * @return void
+	 */
+	private function storedIn(string $schema, string $slug, array $data): void {
+		$entity = new ObjectEntity();
+		$entity->setUuid('uuid-' . $slug);
+		$entity->setObject($data);
+		$this->scoped[$schema . '/' . $slug] = $entity;
+	}//end storedIn()
+
+	/**
+	 * The shipped developer.overheid.nl flow, as the flow store would hold it.
+	 *
+	 * @param bool $enabled Whether it is switched on.
+	 *
+	 * @return Flow
+	 */
+	private function developerOverheidFlow(bool $enabled): Flow {
+		$flow = new Flow();
+		$flow->setUuid('flow-2');
+		$flow->setName(PubliccodeHarvestService::DEVELOPER_OVERHEID_FLOW_NAME);
+		$flow->setEnabled($enabled);
+		$flow->setNodes([['id' => 'nightly', 'type' => 'openregister.trigger-schedule', 'config' => ['cron' => '15 4 * * *', 'runAs' => 'admin']]]);
+
+		return $flow;
+	}//end developerOverheidFlow()
+
+	/**
+	 * Without integriq the developer.overheid.nl status says so and every action
+	 * refuses with a slug the controller can answer.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 *
+	 * @return void
+	 */
+	public function testWithoutIntegriqTheDeveloperOverheidHarvestCannotStart(): void {
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: []),
+			$this->container(services: []),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$status = $service->status(harvest: 'developer-overheid');
+		$this->assertSame(['integriq', 'source', 'sources', 'synchronizations', 'flow', 'lastRun'], array_keys($status));
+		$this->assertFalse($status['integriq']);
+		$this->assertNull($status['source']);
+		$this->assertNull($status['sources']);
+		$this->assertSame(['expected' => 1, 'present' => 0], $status['synchronizations']);
+		$this->assertFalse($status['flow']['imported']);
+
+		foreach (['setUp', 'runNow'] as $action) {
+			try {
+				$service->$action(harvest: 'developer-overheid');
+				$this->fail($action . ' must refuse without integriq.');
+			} catch (HarvestNotReadyException $e) {
+				$this->assertSame('needs-integriq', $e->getError());
+				$this->assertStringContainsString('developer.overheid.nl harvest needs integriq', $e->getMessage());
+			}
+		}
+
+		try {
+			$service->setEnabled(enabled: true, harvest: 'developer-overheid');
+			$this->fail('Switching on must refuse without integriq.');
+		} catch (HarvestNotReadyException $e) {
+			$this->assertSame('needs-integriq', $e->getError());
+		}
+
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq']),
+			$this->container(services: []),
+			$this->createMock(LoggerInterface::class)
+		);
+		$this->expectExceptionObject(new HarvestNotReadyException(message: 'The developer.overheid.nl harvest needs OpenRegister. Install and enable OpenRegister first.', error: 'needs-openregister'));
+		$service->setUp(harvest: 'developer-overheid');
+	}//end testWithoutIntegriqTheDeveloperOverheidHarvestCannotStart()
+
+	/**
+	 * Setting the developer.overheid.nl harvest up twice writes its one
+	 * synchronization once and then updates it in place.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-002-the-register-is-read-page-by-page-through-one-synchronization
+	 *
+	 * @return void
+	 */
+	public function testSettingTheDeveloperOverheidHarvestUpTwiceUpdatesInPlace(): void {
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(services: ['OCA\OpenRegister\Service\ObjectService' => $this->scopedObjects()]),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$this->assertSame(['created' => 1, 'updated' => 0], $service->setUp(harvest: 'developer-overheid'));
+		$this->assertSame(['created' => 0, 'updated' => 1], $service->setUp(harvest: 'developer-overheid'));
+		$this->assertSame(['synchronization/opencatalogi-publiccode-developer-overheid'], array_keys($this->scoped));
+
+		$synchronization = $this->scoped['synchronization/opencatalogi-publiccode-developer-overheid']->getObject();
+		$this->assertSame('developer-overheid-oss', $synchronization['sourceId']);
+		$this->assertSame('/repositories', $synchronization['sourceConfig']['endpoint']);
+		$this->assertSame(['publiccode' => 'true', 'perPage' => 100], $synchronization['sourceConfig']['query']);
+		$this->assertSame('_root', $synchronization['sourceConfig']['resultsPosition']);
+		$this->assertSame(10, $synchronization['sourceConfig']['maxPages']);
+		$this->assertStringNotContainsString('apikey', strtolower((string)json_encode($synchronization)));
+	}//end testSettingTheDeveloperOverheidHarvestUpTwiceUpdatesInPlace()
+
+	/**
+	 * The developer.overheid.nl status reports its source the way the GitHub
+	 * status reports github-api, plus the raw-file sources, and never reads or
+	 * returns a credential.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-009-the-api-key-never-touches-opencatalogi
+	 *
+	 * @return void
+	 */
+	public function testTheDeveloperOverheidStatusReportsTheSourceAndNoCredential(): void {
+		$this->storedIn(
+			schema: 'source',
+			slug: 'developer-overheid-oss',
+			data: ['isEnabled' => false, 'configuration' => ['headers' => ['X-Api-Key' => 'YOUR_API_KEY_HERE']]]
+		);
+		$this->storedIn(schema: 'credential', slug: 'developer-overheid-oss', data: ['provider' => 'generic-apikey', 'secret' => 'YOUR_API_KEY_HERE']);
+		$this->storedIn(schema: 'source', slug: 'github-raw', data: ['isEnabled' => true]);
+		$this->storedIn(schema: 'synchronization', slug: 'opencatalogi-publiccode-developer-overheid', data: []);
+		$run = new FlowRun();
+		$run->setUuid('run-3');
+		$run->setStatus('completed');
+		$run->setTrigger('manual');
+		$run->setLog([['transition' => 'write-gitlab', 'status' => 'failed']]);
+		$runs = $this->getMockBuilder(FlowRunMapper::class)->disableOriginalConstructor()->onlyMethods(['findAllRuns'])->getMock();
+		$runs->method('findAllRuns')->willReturnCallback(
+			function (?string $flowId = null) use ($run): array {
+				$this->assertSame('flow-2', $flowId, 'The last run is read for the developer.overheid.nl flow.');
+				return [$run];
+			}
+		);
+
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(
+				services: [
+					'OCA\OpenRegister\Service\ObjectService' => $this->scopedObjects(),
+					'OCA\OpenRegister\Service\Flow\FlowService' => $this->flows(flows: [$this->flow(enabled: true), $this->developerOverheidFlow(enabled: false)]),
+					'OCA\OpenRegister\Db\FlowRunMapper' => $runs,
+				]
+			),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$status = $service->status(harvest: 'developer-overheid');
+
+		$this->assertSame(['integriq', 'source', 'sources', 'synchronizations', 'flow', 'lastRun'], array_keys($status));
+		$this->assertSame(['slug' => 'developer-overheid-oss', 'exists' => true, 'enabled' => false, 'uuid' => 'uuid-developer-overheid-oss'], $status['source']);
+		$this->assertSame(
+			['github-raw' => ['exists' => true, 'enabled' => true], 'gitlab-raw' => ['exists' => false, 'enabled' => false]],
+			$status['sources']
+		);
+		$this->assertSame(['expected' => 1, 'present' => 1], $status['synchronizations']);
+		$this->assertSame(
+			['uuid' => 'flow-2', 'imported' => true, 'enabled' => false, 'owner' => null, 'runAs' => 'admin', 'cron' => '15 4 * * *'],
+			$status['flow']
+		);
+		$this->assertSame(1, $status['lastRun']['failedSteps']);
+
+		$this->assertStringNotContainsString('YOUR_API_KEY_HERE', (string)json_encode($status));
+		$this->assertStringNotContainsString('credential', strtolower((string)json_encode(array_keys($status))));
+		foreach ($this->lookups as $lookup) {
+			$this->assertStringStartsNotWith('credential/', $lookup, 'The status must not look the credential up.');
+		}
+	}//end testTheDeveloperOverheidStatusReportsTheSourceAndNoCredential()
+
+	/**
+	 * The GitHub status keeps the shape it had before the developer.overheid.nl
+	 * harvest arrived, as the default and when named.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 *
+	 * @return void
+	 */
+	public function testTheGithubStatusKeepsItsShape(): void {
+		$this->stored(slug: 'github-api', data: ['isEnabled' => true]);
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(
+				services: [
+					'OCA\OpenRegister\Service\ObjectService' => $this->objects(),
+					'OCA\OpenRegister\Service\Flow\FlowService' => $this->flows(flows: [$this->developerOverheidFlow(enabled: true), $this->flow(enabled: false)]),
+					'OCA\OpenRegister\Db\FlowRunMapper' => $this->runs(runs: []),
+				]
+			),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$status = $service->status();
+		$this->assertSame(['integriq', 'source', 'shards', 'flow', 'lastRun'], array_keys($status));
+		$this->assertSame(['slug', 'exists', 'enabled', 'uuid'], array_keys($status['source']));
+		$this->assertSame('flow-1', $status['flow']['uuid'], 'The GitHub status reads the GitHub flow, not the other one.');
+		$this->assertFalse($status['flow']['enabled']);
+		$this->assertSame($status, $service->status(harvest: 'github'));
+	}//end testTheGithubStatusKeepsItsShape()
+
+	/**
+	 * Switching the developer.overheid.nl harvest on adopts and enables its own
+	 * flow and leaves the GitHub flow alone.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 *
+	 * @return void
+	 */
+	public function testSwitchingTheDeveloperOverheidHarvestTouchesOnlyItsFlow(): void {
+		$calls = [];
+		$flow = $this->developerOverheidFlow(enabled: false);
+		$flows = $this->flows(flows: [$this->flow(enabled: false), $flow], methods: ['adopt', 'save']);
+		$flows->method('adopt')->willReturnCallback(
+			static function (Flow $adopted) use (&$calls): Flow {
+				$calls[] = 'adopt:' . $adopted->getUuid();
+				return $adopted;
+			}
+		);
+		$flows->method('save')->willReturnCallback(
+			static function (array $data, ?string $uuid) use (&$calls, $flow): Flow {
+				$calls[] = 'save:' . $uuid . ':' . json_encode($data);
+				$flow->setEnabled($data['enabled']);
+				return $flow;
+			}
+		);
+
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(services: ['OCA\OpenRegister\Service\Flow\FlowService' => $flows]),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		$this->assertTrue($service->setEnabled(enabled: true, harvest: 'developer-overheid')['enabled']);
+		$this->assertSame(['adopt:flow-2', 'save:flow-2:{"enabled":true}'], $calls);
+	}//end testSwitchingTheDeveloperOverheidHarvestTouchesOnlyItsFlow()
+
+	/**
+	 * A developer.overheid.nl run is refused while the flow is off or not set
+	 * up, with the slug the controller answers, and queued once both hold.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-008-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+	 *
+	 * @return void
+	 */
+	public function testADeveloperOverheidRunNeedsTheFlowOnAndTheSynchronization(): void {
+		$flow = $this->developerOverheidFlow(enabled: false);
+		$queued = new FlowRun();
+		$queued->setUuid('run-4');
+		$queued->setStatus('queued');
+		$queued->setTrigger('manual');
+		$flows = $this->flows(flows: [$this->flow(enabled: true), $flow], methods: ['run']);
+		$flows->expects($this->once())->method('run')->with('flow-2')->willReturn($queued);
+
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(
+				services: [
+					'OCA\OpenRegister\Service\Flow\FlowService' => $flows,
+					'OCA\OpenRegister\Service\ObjectService' => $this->scopedObjects(),
+				]
+			),
+			$this->createMock(LoggerInterface::class)
+		);
+
+		foreach ([[false, 'switched-off'], [true, 'not-set-up']] as [$enabled, $slug]) {
+			$flow->setEnabled($enabled);
+			try {
+				$service->runNow(harvest: 'developer-overheid');
+				$this->fail('A run must be refused: ' . $slug);
+			} catch (HarvestNotReadyException $e) {
+				$this->assertSame($slug, $e->getError());
+			}
+		}
+
+		$this->storedIn(schema: 'synchronization', slug: 'opencatalogi-publiccode-developer-overheid', data: []);
+		$this->assertSame('run-4', $service->runNow(harvest: 'developer-overheid')['uuid']);
+	}//end testADeveloperOverheidRunNeedsTheFlowOnAndTheSynchronization()
+
+	/**
+	 * A developer.overheid.nl file without a usable entry is reported, and an
+	 * unknown harvest key is refused, never read as some default.
+	 *
+	 * @spec openspec/changes/publiccode-developer-overheid-harvest/specs/publiccode-developer-overheid-harvest/spec.md#requirement-req-pdh-002-the-register-is-read-page-by-page-through-one-synchronization
+	 *
+	 * @return void
+	 */
+	public function testABrokenSynchronizationFileAndAnUnknownHarvestAreRefused(): void {
+		$root = sys_get_temp_dir() . '/oc-do-' . bin2hex(random_bytes(4));
+		mkdir($root . '/lib/Settings', 0777, true);
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('getAppPath')->willReturn($root);
+		$service = new PubliccodeHarvestService($apps, $this->container(services: []), $this->createMock(LoggerInterface::class));
+
+		try {
+			foreach (['' => 'is missing', '{"source": "developer-overheid-oss"}' => 'is not valid', '{"source": "developer-overheid-oss", "synchronizations": [{"synchronization": "x", "name": "x"}]}' => 'is not valid'] as $content => $expected) {
+				if ($content !== '') {
+					file_put_contents($root . PubliccodeHarvestService::DEVELOPER_OVERHEID_FILE, $content);
+				}
+
+				try {
+					$service->status(harvest: 'developer-overheid');
+					$this->fail('A broken file must be reported: ' . $content);
+				} catch (RuntimeException $e) {
+					$this->assertStringContainsString($expected, $e->getMessage());
+					$this->assertNotInstanceOf(HarvestNotReadyException::class, $e, 'A broken file is a fault, not a precondition.');
+				}
+			}
+		} finally {
+			@unlink($root . PubliccodeHarvestService::DEVELOPER_OVERHEID_FILE);
+			rmdir($root . '/lib/Settings');
+			rmdir($root . '/lib');
+			rmdir($root);
+		}
+
+		$this->expectException(InvalidArgumentException::class);
+		$service->status(harvest: 'gitlab');
+	}//end testABrokenSynchronizationFileAndAnUnknownHarvestAreRefused()
 }//end class
