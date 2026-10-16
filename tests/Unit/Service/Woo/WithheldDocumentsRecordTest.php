@@ -53,9 +53,6 @@ class WithheldShapedObjectService {
 
 	public int $saves = 0;
 
-	/** @var bool Whether deleteObject throws. */
-	public bool $failDelete = false;
-
 	/** @var bool Whether saveObject answers without an id. */
 	public bool $saveWithoutId = false;
 
@@ -87,10 +84,6 @@ class WithheldShapedObjectService {
 
 	public function deleteObject(string $uuid, mixed ...$rest): bool {
 		$this->deleted[] = $uuid;
-		if ($this->failDelete === true) {
-			throw new RuntimeException('delete failed');
-		}
-
 		unset($this->rows[$uuid]);
 
 		return true;

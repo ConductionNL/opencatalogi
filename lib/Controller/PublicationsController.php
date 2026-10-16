@@ -32,6 +32,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\CatalogScopeIds;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
@@ -451,6 +452,7 @@ class PublicationsController extends Controller {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalog.
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 */
@@ -476,12 +478,13 @@ class PublicationsController extends Controller {
 			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
-			// Every schema in this catalog was dropped by the guard above, so there is
+			// Every schema in this catalog was dropped by the guard above, or the
+			// catalog names registers or schemas of which none is an id, so there is
 			// nothing an anonymous caller may read here. Answer the empty envelope
 			// rather than falling through: `buildCatalogSearchQuery()` only sets
 			// `_schemas` when the list is non-empty, and an unset scope means OpenRegister
 			// searches every magic table — the opposite of what the guard just decided.
-			if (empty($catalog['schemas']) === true) {
+			if (CatalogScopeIds::forCatalog(catalog: $catalog)['schemas'] === []) {
 				$this->logger->warning(
 					'[PublicationsController::index] Empty catalog scope after the read-rule guard — returning an empty envelope',
 					['catalogSlug' => $catalogSlug]

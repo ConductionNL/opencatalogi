@@ -623,6 +623,24 @@ class PublicationQueryServiceTest extends TestCase {
 	}//end testCatalogSearchQueryDeduplicatesTheCatalogScope()
 
 	/**
+	 * The list route reads the catalog's ids the way the search route does: an id
+	 * that is not a positive int drops out, and it never becomes register 0.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryDropsAReferenceThatIsNotAnId(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [24, 'publication'], 'registers' => [19, 'register']],
+			queryParams: [],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame([24], $query['_schemas']);
+		$this->assertSame(19, $query['_register']);
+		$this->assertArrayNotHasKey('_registers', $query);
+	}//end testCatalogSearchQueryDropsAReferenceThatIsNotAnId()
+
+	/**
 	 * A JSON-encoded `_order` is decoded, and a multi-register catalog keeps `@self.<field>`
 	 * keys whose `_<field>` column exists in every table.
 	 *
@@ -637,6 +655,23 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$this->assertSame(['@self.created' => 'desc'], $query['_order']);
 	}//end testCatalogSearchQueryKeepsUniversalSelfOrderKeysAcrossRegisters()
+
+	/**
+	 * A multi-register catalog whose `_order` names only schema properties drops
+	 * the whole `_order`, rather than sending OpenRegister an empty one.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryDropsAnOrderWithNoUniversalFieldAcrossRegisters(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [24, 30], 'registers' => [19, 20]],
+			queryParams: ['_order' => ['title' => 'asc']],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertArrayNotHasKey('_order', $query);
+		$this->assertSame([19, 20], $query['_registers']);
+	}//end testCatalogSearchQueryDropsAnOrderWithNoUniversalFieldAcrossRegisters()
 
 	/**
 	 * WOO-581 review round 2 (f3): the rows of a relation result go through the
