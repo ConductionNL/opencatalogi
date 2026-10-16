@@ -11,7 +11,7 @@
 
 ## 3. The setting
 
-- [x] 3.1 Add `public_api_cache_seconds` to `SettingsService` and the admin settings screen (REQ-PAC-003). Verify: `tests/Unit/Service/SettingsServiceTest.php`. Done: `SettingsService` default 60 + allowlist + clamp to a non-negative integer (`testThePublicCacheTimeDefaultsToSixtySeconds`, `testTheAdministratorSetsThePublicCacheTime`), `src/views/settings/Settings.vue` publishing options number field.
+- [x] 3.1 Add `public_api_cache_seconds` to `SettingsService` and the admin settings screen (REQ-PAC-003). Verify: `tests/Unit/Service/SettingsServiceTest.php`. Done: `SettingsService` default 60 + allowlist + clamp to an integer from 0 to 3600 (`testThePublicCacheTimeDefaultsToSixtySeconds`, `testTheAdministratorSetsThePublicCacheTime`), `src/views/settings/Settings.vue` publishing options number field.
 - [ ] 3.2 Run `tests/e2e/public-api-cache.spec.ts` against a live instance: it sets `public_api_cache_seconds` to 0 and sees no public header (REQ-PAC-003). The spec is written; it has not run, because it needs a live instance.
 
 ## 4. Docs and strings

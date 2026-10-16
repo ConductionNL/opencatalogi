@@ -38,7 +38,7 @@ The set SHALL give the cast resident `sanne` a dossier (`collection`) titled "Fi
 - **WHEN** she opens her dossiers
 - **THEN** she SHALL see "Fietspad Lindelaan" with three publications
 
-@e2e exclude Needs the unmerged loader and portaliq's sign-in for the example resident; the owner scope is opencatalogi's existing PortalContributionProvider.
+@e2e exclude Needs the loader (openregister#4603, on OpenRegister `development` only) and portaliq's sign-in for the example resident; the owner scope is opencatalogi's existing PortalContributionProvider.
 
 ### Requirement: The publications' documents ship with the fragment (REQ-ZES-004)
 
