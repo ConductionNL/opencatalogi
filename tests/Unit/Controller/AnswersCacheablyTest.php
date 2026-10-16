@@ -73,13 +73,15 @@ class AnswersCacheablyTest extends TestCase {
 	 * @param string      $ifNoneMatch  The If-None-Match header.
 	 * @param string|null $cacheSeconds The configured cache time, or null for the default.
 	 * @param boolean     $brokenConfig Whether the container cannot answer.
+	 * @param array       $headers      Further request headers, by lower-case name.
 	 *
 	 * @return CacheablyHost The host.
 	 */
-	private function host(bool $signedIn, string $ifNoneMatch = '', ?string $cacheSeconds = null, bool $brokenConfig = false): CacheablyHost {
+	private function host(bool $signedIn, string $ifNoneMatch = '', ?string $cacheSeconds = null, bool $brokenConfig = false, array $headers = []): CacheablyHost {
+		$headers['if-none-match'] = $ifNoneMatch;
 		$request = $this->createMock(IRequest::class);
 		$request->method('getHeader')->willReturnCallback(
-			static fn (string $name): string => (strtolower($name) === 'if-none-match' ? $ifNoneMatch : '')
+			static fn (string $name): string => ($headers[strtolower($name)] ?? '')
 		);
 
 		$session = $this->createMock(IUserSession::class);
@@ -190,6 +192,33 @@ class AnswersCacheablyTest extends TestCase {
 		$off = $this->host(signedIn: false, cacheSeconds: '0')->answer(new JSONResponse(['a' => 1]));
 		$this->assertStringNotContainsString('public', (string)($off->getHeaders()['Cache-Control'] ?? ''));
 		$this->assertArrayNotHasKey('ETag', $off->getHeaders());
+	}
+
+	/**
+	 * A cache time above the ceiling, for example one set with occ, is sent as the ceiling (REQ-PAC-003).
+	 */
+	public function testACacheTimeAboveTheCeilingIsSentAsTheCeiling(): void {
+		$year = $this->host(signedIn: false, cacheSeconds: '31536000')->answer(new JSONResponse(['a' => 1]));
+
+		$this->assertSame('public, max-age=3600, must-revalidate', $year->getHeaders()['Cache-Control']);
+	}
+
+	/**
+	 * An anonymous request that carried a body gets no public answer (REQ-PAC-001).
+	 *
+	 * Nextcloud merges a JSON body into the parameters for a GET too, and a shared
+	 * cache keys on the URL only.
+	 */
+	public function testARequestWithABodyGetsNoPublicAnswer(): void {
+		foreach ([['content-length' => '20'], ['transfer-encoding' => 'chunked']] as $headers) {
+			$response = $this->host(signedIn: false, headers: $headers)->answer(new JSONResponse(['a' => 1]));
+
+			$this->assertStringNotContainsString('public', (string)($response->getHeaders()['Cache-Control'] ?? ''));
+			$this->assertArrayNotHasKey('ETag', $response->getHeaders());
+		}
+
+		$empty = $this->host(signedIn: false, headers: ['content-length' => '0'])->answer(new JSONResponse(['a' => 1]));
+		$this->assertSame('public, max-age=60, must-revalidate', $empty->getHeaders()['Cache-Control']);
 	}
 
 	/**

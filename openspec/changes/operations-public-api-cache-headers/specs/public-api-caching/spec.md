@@ -28,6 +28,12 @@ A successful anonymous answer of the publication list, a publication, its attach
 - **WHEN** an anonymous reader calls `GET /api/nope`
 - **THEN** the 404 answer carries no public cache header
 
+#### Scenario: A request with a body
+
+- **GIVEN** a cache time of 60 seconds
+- **WHEN** an anonymous reader calls `GET /api/{catalogSlug}` with `Content-Type: application/json` and a body
+- **THEN** the answer carries no public cache header, because a shared cache keys on the URL and not on the body
+
 ### Requirement: Answers to a signed-in user stay private (REQ-PAC-002)
 
 An answer of the same endpoints to a signed-in user SHALL carry `Cache-Control: private, no-store` and no `ETag`, because it can hold records the public cannot read.
@@ -40,10 +46,16 @@ An answer of the same endpoints to a signed-in user SHALL carry `Cache-Control: 
 
 ### Requirement: The administrator sets the cache time (REQ-PAC-003)
 
-The admin settings SHALL offer the cache time in seconds, default 60. Zero SHALL switch the public cache headers off.
+The admin settings SHALL offer the cache time in seconds, default 60, at most 3600. Zero SHALL switch the public cache headers off. A higher value, also one set with `occ`, SHALL be sent as 3600, because a browser keeps a public answer for the full max-age and a CDN purge does not reach it.
 
 #### Scenario: An administrator switches caching off
 
 - **GIVEN** an administrator on the publishing section of the OpenCatalogi admin settings
 - **WHEN** they set the cache time to 0 and save
 - **THEN** an anonymous `GET /api/{catalogSlug}` answer carries no public cache header
+
+#### Scenario: An administrator sets a cache time of a year
+
+- **GIVEN** an administrator on the publishing section of the OpenCatalogi admin settings
+- **WHEN** they set the cache time to 31536000 and save
+- **THEN** the stored value is 3600, and an anonymous answer carries `max-age=3600`

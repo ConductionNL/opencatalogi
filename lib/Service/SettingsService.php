@@ -781,10 +781,11 @@ class SettingsService {
 
 					if ($key === 'public_api_cache_seconds') {
 						// A negative or unreadable time switches caching off rather than
-						// storing something the cache headers cannot use.
+						// storing something the cache headers cannot use; more than an
+						// hour is stored as an hour, the ceiling the headers apply too.
 						$seconds = 0;
 						if (is_numeric($value) === true) {
-							$seconds = max(0, (int)$value);
+							$seconds = min(3600, max(0, (int)$value));
 						}
 
 						$value = $seconds;
