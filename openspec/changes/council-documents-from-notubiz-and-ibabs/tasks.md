@@ -21,5 +21,5 @@ Read `lib/Settings/register.d/publiccode-github-harvest.json` and `lib/Service/P
 ## 4. Verification
 
 - [ ] 4.1 `openspec validate council-documents-from-notubiz-and-ibabs --strict`, `composer check:strict`, `npm run lint`.
-- [ ] 4.2 Live: point the Notubiz source at a municipality with a public feed, run the harvest once, and paste the run counts and one publication in the PR body.
+- [ ] 4.2 Live: point the Notubiz source at a municipality with a public feed, run the harvest once, and paste the run counts and one publication in the PR body. (live pass, decision 139)
 - [ ] 4.3 Set `int-council` in `openspec/parity/capabilities.json` to `built` with this change.

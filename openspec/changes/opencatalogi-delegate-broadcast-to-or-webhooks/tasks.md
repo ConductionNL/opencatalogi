@@ -9,7 +9,7 @@
   - GIVEN a call to `enqueueBroadcast($url, $directoryUrl)` WHEN OR is installed THEN `BroadcastResult` with status `enqueued` is returned
   - GIVEN a call to `enqueueBroadcast($url, $directoryUrl)` WHEN OR is absent THEN a deprecation warning is logged and the legacy sync path is used (transition only)
   - GIVEN the new adapter THEN the existing `broadcast()` public method's `array<string,bool>` return remains usable for legacy callers
-- [ ] Implement
+- [ ] Implement (partial: enqueueBroadcast adapter and BroadcastResult exist but return delivered/failed through the legacy sync path, never enqueued; OR WebhookService not wired)
 - [ ] Test
 
 ### Task 2: Wire enqueueBroadcast to OR's WebhookService::triggerWebhookForEvent
@@ -39,8 +39,8 @@
   - GIVEN a target URL pointing at metadata IP `169.254.169.254` WHEN `enqueueBroadcast` is called THEN the SSRF guard throws before any OR call
   - GIVEN an http:// URL (not https + not allowlisted) WHEN `enqueueBroadcast` is called THEN the SSRF guard rejects it
   - GIVEN an allowlisted dev host (e.g. `nc-fed-2` in compose) WHEN `enqueueBroadcast` is called THEN it passes pre-flight even on http://
-- [ ] Implement
-- [ ] Test
+- [x] Implement (verified: lib/Service/BroadcastService.php assertSafeOutboundUrl in enqueueBroadcast)
+- [x] Test (verified: tests/Unit/Service/BroadcastServiceTest.php::testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery, ::testBroadcastProceedsWhenTheLocalHostIsAllowlisted)
 
 ### Task 5: Remove legacy sync retry loop + app-local config keys
 - **spec_ref**: `openspec/changes/opencatalogi-delegate-broadcast-to-or-webhooks/specs/federation/spec.md#requirement-no-app-local-retry-maths-fed-or-001`
