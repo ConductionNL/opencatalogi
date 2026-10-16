@@ -127,6 +127,16 @@ class SettingsService {
 	public const DEFAULT_INTERVAL_SECONDS = 3600;
 
 	/**
+	 * The longest time, in seconds, a public API answer may be cached (REQ-PAC-003).
+	 *
+	 * The settings save clamps to it and AnswersCacheably caps the headers at it,
+	 * also for a value set with occ.
+	 *
+	 * @var integer
+	 */
+	public const PUBLIC_API_CACHE_MAX_SECONDS = 3600;
+
+	/**
 	 * App config key holding what a register event can still complete in a catalogue scope.
 	 *
 	 * A JSON list of register slugs not resolved yet, plus the ids of resolved
@@ -785,7 +795,7 @@ class SettingsService {
 						// hour is stored as an hour, the ceiling the headers apply too.
 						$seconds = 0;
 						if (is_numeric($value) === true) {
-							$seconds = min(3600, max(0, (int)$value));
+							$seconds = min(self::PUBLIC_API_CACHE_MAX_SECONDS, max(0, (int)$value));
 						}
 
 						$value = $seconds;

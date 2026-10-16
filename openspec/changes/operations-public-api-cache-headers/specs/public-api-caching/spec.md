@@ -32,7 +32,7 @@ A successful anonymous answer of the publication list, a publication, its attach
 
 - **GIVEN** a cache time of 60 seconds
 - **WHEN** an anonymous reader calls `GET /api/{catalogSlug}` with `Content-Type: application/json` and a body
-- **THEN** the answer carries no public cache header, because a shared cache keys on the URL and not on the body
+- **THEN** the answer carries `Cache-Control: no-store` and no `ETag`, because a shared cache keys on the URL and not on the body
 
 ### Requirement: Answers to a signed-in user stay private (REQ-PAC-002)
 

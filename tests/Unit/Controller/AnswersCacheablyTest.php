@@ -213,7 +213,7 @@ class AnswersCacheablyTest extends TestCase {
 		foreach ([['content-length' => '20'], ['transfer-encoding' => 'chunked']] as $headers) {
 			$response = $this->host(signedIn: false, headers: $headers)->answer(new JSONResponse(['a' => 1]));
 
-			$this->assertStringNotContainsString('public', (string)($response->getHeaders()['Cache-Control'] ?? ''));
+			$this->assertSame('no-store', $response->getHeaders()['Cache-Control'] ?? '');
 			$this->assertArrayNotHasKey('ETag', $response->getHeaders());
 		}
 
