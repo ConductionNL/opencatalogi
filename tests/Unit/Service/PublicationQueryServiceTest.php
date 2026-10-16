@@ -657,6 +657,23 @@ class PublicationQueryServiceTest extends TestCase {
 	}//end testCatalogSearchQueryKeepsUniversalSelfOrderKeysAcrossRegisters()
 
 	/**
+	 * A multi-register catalog whose `_order` names only schema properties drops
+	 * the whole `_order`, rather than sending OpenRegister an empty one.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryDropsAnOrderWithNoUniversalFieldAcrossRegisters(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [24, 30], 'registers' => [19, 20]],
+			queryParams: ['_order' => ['title' => 'asc']],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertArrayNotHasKey('_order', $query);
+		$this->assertSame([19, 20], $query['_registers']);
+	}//end testCatalogSearchQueryDropsAnOrderWithNoUniversalFieldAcrossRegisters()
+
+	/**
 	 * WOO-581 review round 2 (f3): the rows of a relation result go through the
 	 * read-rule guard for an anonymous caller. A row of a schema without an
 	 * `authorization` block goes, a row without a numeric schema id goes (fail
