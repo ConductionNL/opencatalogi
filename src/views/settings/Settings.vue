@@ -303,6 +303,18 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-developer-overheid-harvest"
+			:name="t('opencatalogi', 'developer.overheid.nl harvest')"
+			:description="
+				t(
+					'opencatalogi',
+					'Read every repository with a publiccode.yml in the developer.overheid.nl OSS-register into the Componenten catalogue, every night.',
+				)
+			">
+			<PubliccodeHarvest kind="developer-overheid" />
+		</NcSettingsSection>
+
+		<NcSettingsSection
 			:name="t('opencatalogi', 'Publishing Options')"
 			:description="
 				t(
