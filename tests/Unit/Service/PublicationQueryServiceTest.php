@@ -8,7 +8,7 @@
  * document-transitive visibility), the M2 fast-path added 2026-08-31
  * that resolves document→publication via the document's OWN
  * `_relations` (bug 1 fix), the pure helpers
- * (`isCatalogPubliclyAvailable`, `normalizeIds`, `stripEmptyValues`),
+ * (`isCatalogPubliclyAvailable`, `stripEmptyValues`),
  * and `findObjectLocation` (the constrained object-location query).
  *
  * The service is thin over OpenRegister — most branches boil down to
@@ -308,14 +308,6 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame('minutes', $query['documentType']);
 		$this->assertSame('Gemeenteraad', $query['bodyName']);
 		$this->assertSame(['gte' => '2026-04-01', 'lte' => '2026-06-30'], $query['meetingDate']);
-	}
-
-	public function testNormalizeIdsAcceptsJsonStringAndArrayAndCastsToInt(): void {
-		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', ['[1,2]']));
-		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', ['["1","2"]']));
-		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', [[1, '2']]));
-		$this->assertSame([], $this->invokePrivate('normalizeIds', [null]));
-		$this->assertSame([], $this->invokePrivate('normalizeIds', ['not-json']));
 	}
 
 	public function testIsCatalogPubliclyAvailableAcceptsPublishedInPast(): void {
