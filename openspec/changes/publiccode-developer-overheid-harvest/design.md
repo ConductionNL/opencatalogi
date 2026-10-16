@@ -137,7 +137,7 @@ The integriq source `developer-overheid-oss` holds no key. Its `configuration.au
 | Flow name | GitHub publiccode harvest | developer.overheid.nl publiccode harvest |
 | Definition file | `lib/Settings/publiccode-github-shards.json` (unchanged) | `lib/Settings/publiccode-developer-overheid-sync.json` |
 | Source checked | `github-api` | `developer-overheid-oss` |
-| Credential checked | — | `developer-overheid-oss` |
+| Credential checked | — | — (never looked up; the key is entered on the integriq source) |
 | Other sources checked | — | `github-raw`, `gitlab-raw` |
 | Synchronizations written | 24, one per size shard | 1: `opencatalogi-publiccode-developer-overheid` |
 
@@ -146,7 +146,6 @@ The developer.overheid.nl definition file holds the synchronization verbatim:
 ```json
 {
   "source": "developer-overheid-oss",
-  "credential": "developer-overheid-oss",
   "sources": ["github-raw", "gitlab-raw"],
   "synchronizations": [
     {
@@ -209,7 +208,7 @@ The five invariants of `writing-controllers.md`:
 
 ## Security Considerations
 
-- The API key never enters OpenCatalogi: not in a file it ships, not in a request it makes, not in a response it returns. The status reads only the credential's existence by name.
+- The API key never enters OpenCatalogi: not in a file it ships, not in a request it makes, not in a response it returns. The status checks the source exactly as the GitHub section checks `github-api` and never looks up the credential.
 - All endpoints admin-only; see the five invariants above.
 - Outbound calls go only to the locations of three integriq sources an administrator controls; the endpoint guard refuses an absolute URL, so a `publicCodeUrl` cannot steer a call to another host.
 - YAML is decoded by integriq's `ResponseDecoder` without object, constant or custom tags.
@@ -286,7 +285,7 @@ The split chain, if review prefers it per ADR-032:
 
 - `DeveloperOverheidHarvestFlowTest`: the flow ships disabled under the name the service finds; both triggers lead to `list` only; `locate` has exactly three outgoing edges, to the three forge filters; each branch's steps form one chain with no edge between branches; only `end` has more than one way in and it joins; every node type is one OpenRegister or integriq registers; the `list` node names the synchronization in the definition file; the forge and `decoded-*` filters, run through OpenRegister's JSON Logic, keep and drop the cases of D4.
 - `DeveloperOverheidMappingTest`: the locate mapping over every example of D2; the repository mapping over a fixture RepositorySummary plus this repository's own `publiccode.yml`, run through OpenRegister's real `MappingService` and validated against the 0.4.0 properties; the slug equals what `publiccode-github-hit` gives for the same file; the fallback mapping over a fixture RepositoryDetail writes no `rawPubliccode`. Skipped with a named reason where OpenRegister's source is not next to the app, as the precedent does.
-- `PubliccodeHarvestServiceTest`: per harvest key, inert without integriq, set-up idempotent by slug, the credential state, the GitHub status unchanged.
+- `PubliccodeHarvestServiceTest`: per harvest key, inert without integriq, set-up idempotent by slug, no credential lookup, the GitHub status unchanged.
 - `DeveloperOverheidHarvestControllerTest`: the 409 slugs, the static 500, no exception text in a response.
 - Live on a dev instance against integriq's mock of the register: set up, switch on, run now; components written; a second run updates; a 404 and a broken file in the page are skipped; a component found by both harvests is one object with both blocks.
 
