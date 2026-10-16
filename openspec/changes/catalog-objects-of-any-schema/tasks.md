@@ -23,4 +23,4 @@
 
 ## 5. Dependencies
 
-- [x] 5.1 Bump `@conduction/nextcloud-vue` to the release that contains ConductionNL/nextcloud-vue#1623, so the Data card shows the per-language description readably (COS-001). Pinned to `2.56.0-beta.36`.
+- [x] 5.1 Bump `@conduction/nextcloud-vue` to the release that contains ConductionNL/nextcloud-vue#1623, so the Data card shows the per-language description readably (COS-001). On `^2.88.0`, the stable line that carries it (first in `2.85.0`).
