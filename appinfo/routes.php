@@ -83,7 +83,7 @@ return [
 		['name' => 'publiccodeHarvest#enable', 'url' => '/api/settings/publiccode-harvest/enable', 'verb' => 'POST'],
 		['name' => 'publiccodeHarvest#disable', 'url' => '/api/settings/publiccode-harvest/disable', 'verb' => 'POST'],
 		['name' => 'publiccodeHarvest#run', 'url' => '/api/settings/publiccode-harvest/run', 'verb' => 'POST'],
-		// developer.overheid.nl publiccode harvest (publiccode-developer-overheid-harvest). Admin only.
+		// The developer.overheid.nl publiccode harvest (publiccode-developer-overheid-harvest). Admin only.
 		['name' => 'developerOverheidHarvest#status', 'url' => '/api/settings/developer-overheid-harvest', 'verb' => 'GET'],
 		['name' => 'developerOverheidHarvest#setup', 'url' => '/api/settings/developer-overheid-harvest/setup', 'verb' => 'POST'],
 		['name' => 'developerOverheidHarvest#enable', 'url' => '/api/settings/developer-overheid-harvest/enable', 'verb' => 'POST'],
