@@ -8,7 +8,7 @@ status: proposed
 
 ### Requirement: Anonymous answers of the public API may be cached (REQ-PAC-001)
 
-A successful anonymous answer of the publication list, a publication, its attachments list, the public search and a search result SHALL carry `Cache-Control: public` with the configured max-age and `must-revalidate`, an `ETag` over the answer as sent, and `Vary: Origin, Accept, Accept-Language`. A request whose `If-None-Match` matches SHALL get 304 Not Modified without a body. Error answers SHALL carry no public cache header.
+A successful anonymous answer of the publication list, a publication, its attachments list and the public search SHALL carry `Cache-Control: public` with the configured max-age and `must-revalidate`, an `ETag` over the answer as sent, and `Vary: Origin, Accept, Accept-Language`. A request whose `If-None-Match` matches SHALL get 304 Not Modified without a body. Error answers SHALL carry no public cache header. An anonymous request that carries a body SHALL get `Cache-Control: no-store` and no `ETag`.
 
 #### Scenario: A CDN caches a catalogue page
 
