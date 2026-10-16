@@ -1,6 +1,6 @@
 # Tasks: zuiddrecht-example-set
 
-Kind: data. No PHP changes. Depends on openregister#4603 (the loader).
+Kind: data. No PHP changes. Depends on openregister#4603 (the loader; on OpenRegister `development` since 2026-10-13, not yet on `beta`).
 
 ## 1. The fragment
 
@@ -18,8 +18,8 @@ Kind: data. No PHP changes. Depends on openregister#4603 (the loader).
 
 ## 3. Checks
 
-- [x] 3.1 Static check: every placeholder resolves and every object validates against the merged register schema, with no undeclared key.
-- [ ] 3.2 After openregister#4603 merges: `occ openregister:example-set:install zuiddrecht --check` exits 0, then the install exits 0.
+- [ ] 3.1 Static check: every placeholder resolves and every object validates against the merged register schema, with no undeclared key. Run once by hand when the fragment was written; no test or script repeats it, so it does not catch drift when the register schemas change. Done when a unit test or script performs it.
+- [ ] 3.2 On an instance whose OpenRegister carries the loader (`development` since 2026-10-13; not yet `beta`): `occ openregister:example-set:install zuiddrecht --check` exits 0, then the install exits 0.
 
 ## 4. Loader features used (openregister#4603)
 

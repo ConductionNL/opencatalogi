@@ -9,14 +9,14 @@ OpenCatalogi SHALL ship `lib/Settings/example-sets/zuiddrecht.json` in the forma
 - **WHEN** every placeholder of the fragment is resolved and every object is validated against its schema
 - **THEN** every object SHALL satisfy its schema and no object SHALL carry a key its schema does not declare
 
-@e2e exclude Example data, not behaviour. The loader that installs it is not merged (openregister#4603). The fragment is checked statically against the merged register; the loader's `--check` and read-back proof run it against a live instance.
+@e2e exclude Example data, not behaviour. The loader that installs it (openregister#4603, #4605) is on OpenRegister `development` since 2026-10-13, not yet on `beta`. The fragment was checked once by hand against the merged register (no test repeats it, see task 3.1); the loader's `--check` and read-back proof run it against a live instance.
 
 #### Scenario: A visitor finds the Lindelaan publications
 - **GIVEN** the set is installed
 - **WHEN** an anonymous visitor searches the Woo publications for "fietspad"
 - **THEN** the college decision, the council decision, the letter to the council and the contract with Installatiebedrijf Van Dam SHALL be in the results
 
-@e2e exclude Needs the unmerged loader (openregister#4603) on a live instance; public visibility follows from the publication schema's read rule on publicationDate, which this change does not touch.
+@e2e exclude Needs the loader (openregister#4603, on OpenRegister `development` only) on a live instance; public visibility follows from the publication schema's read rule on publicationDate, which this change does not touch.
 
 ### Requirement: The Woo decision shows what was withheld (REQ-ZES-002)
 
