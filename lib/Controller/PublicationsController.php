@@ -40,6 +40,7 @@ use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -226,6 +227,29 @@ class PublicationsController extends Controller {
 		}
 
 	}//end countReach()
+
+	/**
+	 * Apply the cache headers to a detail answer, then count it as a view when it is still a 200.
+	 *
+	 * The cache decision comes first because a matching `If-None-Match` turns the
+	 * answer into a 304, and ANA-001 says a `304 Not Modified` MUST NOT be counted.
+	 * Counted before it, every revalidation by a browser or CDN was a view.
+	 *
+	 * @param JSONResponse $response      The detail answer.
+	 * @param string       $publicationId The publication's id.
+	 * @param string       $catalogSlug   The catalogue the publication was read through.
+	 *
+	 * @return JSONResponse The answer with its cache headers, or the 304 that replaces it.
+	 */
+	private function countedView(JSONResponse $response, string $publicationId, string $catalogSlug): JSONResponse {
+		$response = $this->cacheableForCaller(response: $response);
+		if ($response->getStatus() === Http::STATUS_OK) {
+			$this->countReach(publicationId: $publicationId, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
+		}
+
+		return $response;
+
+	}//end countedView()
 
 	/**
 	 * Resolve the Access-Control-Allow-Origin header value for the current request.
@@ -831,8 +855,7 @@ class PublicationsController extends Controller {
 				$response = new JSONResponse($node, 200);
 				$response->addHeader('Content-Type', 'application/ld+json');
 				$this->addCorsHeaders(response: $response);
-				$this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
-				return $this->cacheableForCaller(response: $response);
+				return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
 			}
 
 			// REQ-PDP-004 / REQ-WDW-003: a catalogue that opted in shows what was
@@ -853,9 +876,7 @@ class PublicationsController extends Controller {
 			// ANA-001: count this successful public detail view, fire-and-forget.
 			// HEAD requests, non-2xx, and back-office reads never reach this seam
 			// (this is the public detail path that already 404'd above on misses).
-			$this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
-
-			return $this->cacheableForCaller(response: $response);
+			return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
 		} catch (DoesNotExistException $exception) {
 			return new JSONResponse(
 				[
