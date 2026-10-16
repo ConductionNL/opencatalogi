@@ -864,6 +864,40 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertSame([7], $body['@catalog']['registers'], 'the rest of the catalog block is untouched');
 	}//end testIndexAnswersTheEmptyEnvelopeWithoutQueryingWhenTheGuardDropsEverySchema()
 
+	/**
+	 * A catalog that names its registers by a word, not an id, has no scope the
+	 * search route can use (`CatalogScopeIds::forCatalog()` fails closed), so the
+	 * list route answers the empty envelope instead of building a query whose
+	 * register would cast to 0.
+	 *
+	 * @return void
+	 */
+	public function testIndexAnswersTheEmptyEnvelopeWhenTheCatalogNamesNoRegisterId(): void {
+		$mockObjService = $this->mockObjectService();
+		$mockObjService->expects($this->never())->method('searchObjectsPaginated');
+
+		$this->queryService = $this->createMock(PublicationQueryService::class);
+		$this->queryService->method('applyCatalogReadRuleGuard')->willReturnArgument(0);
+		$this->queryService->expects($this->never())->method('buildCatalogSearchQuery');
+		$this->controller = $this->newControllerWithQueryService();
+
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn([
+				'title'     => 'Word Catalog',
+				'schemas'   => [1],
+				'registers' => ['publication'],
+			]);
+
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$response = $this->controller->index('word');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame([], $response->getData()['results']);
+		$this->assertSame(0, $response->getData()['total']);
+	}//end testIndexAnswersTheEmptyEnvelopeWhenTheCatalogNamesNoRegisterId()
+
 
 	public function testIndexWithEmptySchemas(): void {
 		$mockObjService = $this->mockObjectService();

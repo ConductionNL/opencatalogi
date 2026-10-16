@@ -623,6 +623,24 @@ class PublicationQueryServiceTest extends TestCase {
 	}//end testCatalogSearchQueryDeduplicatesTheCatalogScope()
 
 	/**
+	 * The list route reads the catalog's ids the way the search route does: an id
+	 * that is not a positive int drops out, and it never becomes register 0.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryDropsAReferenceThatIsNotAnId(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [24, 'publication'], 'registers' => [19, 'register']],
+			queryParams: [],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame([24], $query['_schemas']);
+		$this->assertSame(19, $query['_register']);
+		$this->assertArrayNotHasKey('_registers', $query);
+	}//end testCatalogSearchQueryDropsAReferenceThatIsNotAnId()
+
+	/**
 	 * A JSON-encoded `_order` is decoded, and a multi-register catalog keeps `@self.<field>`
 	 * keys whose `_<field>` column exists in every table.
 	 *
