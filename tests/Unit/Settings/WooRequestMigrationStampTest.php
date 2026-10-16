@@ -41,18 +41,25 @@ class WooRequestMigrationStampTest extends TestCase {
 	];
 
 	/**
-	 * Every key of the stamp is a declared wooRequest property of the right
-	 * type and format; an undeclared key is dropped on save, and the import
-	 * would then count a request as moved that never says so.
+	 * Every key of the stamp is a declared, optional wooRequest property of the
+	 * right type and format, in the bumped schema version; an undeclared key is
+	 * dropped on save, and the import would then count a request as moved that
+	 * never says so.
+	 *
+	 * This reads the register fragment. It does not save the stamp: that needs
+	 * OpenRegister, which this unit suite does not have.
 	 *
 	 * @return void
 	 */
-	public function testTheImportStampIsStoredOnTheRequest(): void {
+	public function testTheImportStampIsDeclaredOnTheRequest(): void {
 		$fragment = json_decode(
 			(string)file_get_contents(dirname(__DIR__, 3) . '/lib/Settings/register.d/woo-request-intake-and-comment-periods.json'),
 			true
 		);
-		$properties = $fragment['components']['schemas']['wooRequest']['properties'];
+		$schema = $fragment['components']['schemas']['wooRequest'];
+		$properties = $schema['properties'];
+
+		self::assertSame('0.2.0', $schema['version'], 'the version is bumped with the two keys');
 
 		foreach (array_keys(self::STAMP) as $key) {
 			self::assertArrayHasKey($key, $properties, 'wooRequest declares ' . $key);
@@ -61,8 +68,8 @@ class WooRequestMigrationStampTest extends TestCase {
 
 		self::assertSame('uuid', $properties['migratedTo']['format']);
 		self::assertSame('date-time', $properties['migratedAt']['format']);
-		self::assertNotFalse(\DateTimeImmutable::createFromFormat(\DATE_ATOM, self::STAMP['migratedAt']));
-		self::assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', self::STAMP['migratedTo']);
-		self::assertNotContains('migratedTo', $fragment['components']['schemas']['wooRequest']['required']);
-	}//end testTheImportStampIsStoredOnTheRequest()
+		foreach (array_keys(self::STAMP) as $key) {
+			self::assertNotContains($key, $schema['required'], 'a request without the stamp stays valid');
+		}
+	}//end testTheImportStampIsDeclaredOnTheRequest()
 }//end class

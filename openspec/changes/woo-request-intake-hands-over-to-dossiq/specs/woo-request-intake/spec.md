@@ -11,7 +11,7 @@ status: proposed
 The `wooRequest` schema SHALL declare `migratedTo` (string, `format: uuid`, the dossiq case uuid) and `migratedAt` (string, `format: date-time`), with its version bumped, in the same release as REQ-WHD-002. A save that sets only these two keys on a stored request SHALL be accepted.
 
 #### Scenario: dossiq's stamp is stored, not dropped
-<!-- @e2e exclude Schema contract for a cross-app write; proven by WooRequestMigrationStampTest::testTheImportStampIsStoredOnTheRequest, which saves the exact stamp OpenCatalogiWooImport::run() writes through ObjectService and reads it back, and fails on today's schema because both keys are undeclared and dropped. -->
+<!-- @e2e exclude Schema contract for a cross-app write. WooRequestMigrationStampTest::testTheImportStampIsDeclaredOnTheRequest checks that both keys are declared in the register fragment with the right type and format, optional, in schema version 0.2.0. No test saves the stamp through ObjectService and reads it back: the unit suite has no OpenRegister, so the save itself is proven only by dossiq's import against a live instance. -->
 
 - **GIVEN** a stored `wooRequest` WOO-2026-A1B2C3
 - **WHEN** it is saved with `migratedTo` a case uuid and `migratedAt` now, as dossiq's import does
