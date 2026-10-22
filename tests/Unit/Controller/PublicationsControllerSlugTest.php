@@ -59,6 +59,9 @@ class PublicationsControllerSlugTest extends TestCase {
 	/** @var list<array> Every query searchObjects() received, in order. */
 	private array $queries = [];
 
+	/** @var list<bool> The _rbac flag of every searchObjects() call, in order. */
+	private array $rbacFlags = [];
+
 	/** @var list<string> Warnings logged. */
 	private array $warnings = [];
 
@@ -154,10 +157,11 @@ class PublicationsControllerSlugTest extends TestCase {
 	private function given(array $answers, array $catalog=['schemas' => [1], 'registers' => [1]]): void {
 		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Woo'] + $catalog);
 		$this->objectService->method('searchObjects')->willReturnCallback(
-			function (array $query) use ($answers): array {
+			function (array $query, bool $_rbac=true) use ($answers): array {
 				$this->queries[] = $query;
+				$this->rbacFlags[] = $_rbac;
 				$self = $query['@self'] ?? [];
-				$field = isset($self['slug']) === true ? 'slug' : 'uuid';
+				$field = isset($self['slug']) === true ? 'slug' : (isset($self['id']) === true ? 'id' : 'uuid');
 				$key = $field . ':' . ($self[$field] ?? '') . ':' . ($self['register'] ?? '') . ':' . ($self['schema'] ?? '');
 				return $answers[$key] ?? [];
 			}
@@ -282,9 +286,112 @@ class PublicationsControllerSlugTest extends TestCase {
 		$response = $this->controller->show('woo', '123456');
 
 		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(self::UUID_A, $response->getData()['id']);
 		$slugQueries = array_values(array_filter($this->queries, static fn (array $q): bool => isset($q['@self']['slug'])));
 		$this->assertSame('123456', $slugQueries[0]['@self']['slug']);
 		$this->assertArrayNotHasKey('id', $slugQueries[0]['@self']);
+	}
+
+	public function testAnObjectWithTheNumericIdOfTheSlugIsNotReturned(): void {
+		// An object with numeric id 123456 exists, but no publication has that slug.
+		$this->given(['id:123456:1:1' => [$this->publication(self::UUID_B)]]);
+
+		$response = $this->controller->show('woo', '123456');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertStringNotContainsString(self::UUID_B, json_encode($response->getData()));
+	}
+
+	public function testASlugOfAPublicationInAnotherCatalogueIsNotFound(): void {
+		// The slug exists in register 2 / schema 9, which this catalogue does not span.
+		$this->given(['slug:2026-0042:2:9' => [$this->publication(self::UUID_A, 2, 9)]]);
+
+		$response = $this->controller->show('woo', '2026-0042');
+
+		$this->assertSame(404, $response->getStatus());
+		foreach ($this->queries as $query) {
+			$this->assertNotSame(2, $query['@self']['register'] ?? null, 'only the catalogue scope is searched');
+		}
+	}
+
+	public function testTheUuidOfOneOfTwoAmbiguousPublicationsStillResolves(): void {
+		$this->given(
+			[
+				'uuid:' . self::UUID_A . ':1:1' => [$this->publication(self::UUID_A, 1, 1)],
+				'slug:2026-0042:1:1' => [$this->publication(self::UUID_A, 1, 1)],
+				'slug:2026-0042:1:2' => [$this->publication(self::UUID_B, 1, 2)],
+			],
+			['schemas' => [1, 2], 'registers' => [1]]
+		);
+
+		$response = $this->controller->show('woo', self::UUID_A);
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(self::UUID_A, $response->getData()['id']);
+	}
+
+	public function testTheSlugSearchIsRbacScopedAndCapsEachSearchAtTwo(): void {
+		$this->given(['slug:2026-0042:1:1' => [$this->publication(self::UUID_A)]]);
+
+		$this->controller->show('woo', '2026-0042');
+
+		$slugCalls = [];
+		foreach ($this->queries as $i => $query) {
+			if (isset($query['@self']['slug']) === true) {
+				$slugCalls[] = $i;
+				$this->assertSame(2, $query['_limit'] ?? null);
+				$this->assertTrue($this->rbacFlags[$i], 'the slug search must run with RBAC');
+			}
+		}
+
+		$this->assertNotEmpty($slugCalls);
+	}
+
+	public function testAHiddenDuplicateDoesNotMakeTheSlugAmbiguous(): void {
+		// RBAC hides the copy in schema 2 from this reader: the search returns nothing for it.
+		$this->given(
+			[
+				'slug:2026-0042:1:1' => [$this->publication(self::UUID_A, 1, 1)],
+				'slug:2026-0042:1:2' => [],
+			],
+			['schemas' => [1, 2], 'registers' => [1]]
+		);
+
+		$response = $this->controller->show('woo', '2026-0042');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(self::UUID_A, $response->getData()['id']);
+		$this->assertSame([], array_filter($this->warnings, static fn (string $w): bool => str_contains($w, 'is ambiguous')));
+	}
+
+	public function testTheSlugLoopStopsOnceTwoMatchesAreFound(): void {
+		$this->given(
+			[
+				'slug:2026-0042:1:1' => [$this->publication(self::UUID_A, 1, 1)],
+				'slug:2026-0042:1:2' => [$this->publication(self::UUID_B, 1, 2)],
+				'slug:2026-0042:1:3' => [$this->publication('00000000-0000-0000-0000-00000000000c', 1, 3)],
+			],
+			['schemas' => [1, 2, 3], 'registers' => [1]]
+		);
+
+		$response = $this->controller->show('woo', '2026-0042');
+
+		$this->assertSame(404, $response->getStatus());
+		$searchedSchemas = array_map(
+			static fn (array $q) => $q['@self']['schema'],
+			array_values(array_filter($this->queries, static fn (array $q): bool => isset($q['@self']['slug'])))
+		);
+		$this->assertSame([1, 2], $searchedSchemas, 'the third schema is not searched once the slug is ambiguous');
+	}
+
+	public function testAPublicationWithoutASlugStaysReachableByUuid(): void {
+		// The double carries no slug; only the UUID lookup knows it.
+		$this->given(['uuid:' . self::UUID_B . ':1:1' => [$this->publication(self::UUID_B)]]);
+
+		$response = $this->controller->show('woo', self::UUID_B);
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(self::UUID_B, $response->getData()['id']);
 	}
 
 	public function testACatalogueWithoutScopeNeverRunsTheSlugRoute(): void {

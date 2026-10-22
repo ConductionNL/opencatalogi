@@ -31,9 +31,10 @@ run. A UUID URL therefore costs nothing extra and returns exactly what it did (P
 ### D2 — Slug lookup across the whole catalogue scope, then count
 
 For each register × schema of the catalogue, `searchObjects` with
-`['@self' => ['slug' => $id, 'register' => $reg, 'schema' => $sch]]` and `_limit: 2`.
-Matches are collected across all combinations, not stopped at the first hit, because a
-second hit in another schema makes the slug ambiguous (PUB-019). Same `_rbac: true,
+`['@self' => ['slug' => $id, 'register' => $reg, 'schema' => $sch], '_limit' => 2]`.
+Matches are collected across combinations, not stopped at the first hit, because a
+second hit in another schema makes the slug ambiguous (PUB-019); the loop stops as soon as
+two matches are found, since ambiguity is then decided. Same `_rbac: true,
 _multitenancy: false` as the UUID path, so the read rules stay identical.
 
 The lookup never goes through an identifier that OpenRegister could read as a numeric

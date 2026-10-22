@@ -455,6 +455,8 @@ class PublicationsController extends Controller {
 							'register' => $register,
 							'schema' => $schema,
 						],
+						// Only 0 / 1 / more is needed to decide.
+						'_limit' => 2,
 					],
 					_rbac: true,
 					_multitenancy: false,
@@ -465,6 +467,12 @@ class PublicationsController extends Controller {
 
 				foreach ($found as $candidate) {
 					$matches[] = $candidate;
+				}
+
+				// Two matches already make the slug ambiguous: skip the remaining
+				// register x schema searches.
+				if (count($matches) > 1) {
+					break 2;
 				}
 			}
 		}
