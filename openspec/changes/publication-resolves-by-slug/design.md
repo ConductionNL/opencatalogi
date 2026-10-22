@@ -40,6 +40,12 @@ _multitenancy: false` as the UUID path, so the read rules stay identical.
 The lookup never goes through an identifier that OpenRegister could read as a numeric
 object id: it filters on `@self.slug` explicitly (PUB-020 numeric scenario).
 
+The URL id is normalised before the slug lookup, with the algorithm OpenRegister uses
+for stored slugs (`createSlug()` plus the 255 cut), because stored slugs are always
+normalised: `/api/woo/Zaak_2026-0042` searches `zaak-2026-0042`. Only the slug route
+does this; the UUID lookup receives the raw id. An id that normalises to empty runs no
+slug search (404). Log lines keep the raw URL id.
+
 ### D3 — Ambiguous → 404 + warning, not 409
 
 One match is returned. More than one gives the existing 404 body and a warning

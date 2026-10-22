@@ -445,13 +445,21 @@ class PublicationsController extends Controller {
 		array $registers,
 		array $schemas,
 	): ?object {
+		// OpenRegister stores slugs normalised, so the URL id is normalised the
+		// same way before the lookup (`Zaak_2026-0042` finds `zaak-2026-0042`).
+		// An id with nothing left after normalising matches no stored slug.
+		$searchSlug = $this->normaliseSlug(text: $slug);
+		if ($searchSlug === '') {
+			return null;
+		}
+
 		$matches = [];
 		foreach ($registers as $register) {
 			foreach ($schemas as $schema) {
 				$found = $objectService->searchObjects(
 					query: [
 						'@self' => [
-							'slug' => $slug,
+							'slug' => $searchSlug,
 							'register' => $register,
 							'schema' => $schema,
 						],
@@ -499,6 +507,28 @@ class PublicationsController extends Controller {
 
 		return null;
 	}//end findBySlugInCatalogScope()
+
+	/**
+	 * Normalise a URL id the way OpenRegister normalises a stored slug.
+	 *
+	 * Mirrors OpenRegister's `MetadataHydrationHandler::createSlug()` plus the
+	 * 255-character column cut of `ObjectSlugHandler::candidate()`: lowercase,
+	 * spaces and underscores to hyphens, everything outside a-z, 0-9 and hyphen
+	 * dropped, hyphen runs collapsed, edge hyphens trimmed.
+	 *
+	 * @param string $text The identifier from the URL.
+	 *
+	 * @return string The normalised slug, empty when nothing is left.
+	 */
+	private function normaliseSlug(string $text): string {
+		$slug = strtolower(trim($text));
+		$slug = str_replace([' ', '_'], '-', $slug);
+		$slug = (string)preg_replace('/[^a-z0-9\-]/', '', $slug);
+		$slug = (string)preg_replace('/-+/', '-', $slug);
+		$slug = trim($slug, '-');
+
+		return substr($slug, 0, 255);
+	}//end normaliseSlug()
 
 	/**
 	 * Implements a preflighted CORS response for OPTIONS requests.

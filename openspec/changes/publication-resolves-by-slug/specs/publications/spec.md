@@ -26,6 +26,14 @@ returned by either route.
 - THEN that publication MUST be rendered and returned with HTTP 200
 - AND the response MUST have the same shape as a lookup by its UUID
 
+#### Scenario: The URL id is normalised before the slug lookup
+
+- GIVEN a publication stored with slug "zaak-2026-0042" within catalog "woo"
+- WHEN a GET request is made to `/api/woo/Zaak_2026-0042`
+- THEN the identifier MUST be normalised like OpenRegister normalises a stored slug (lowercase, spaces and underscores to hyphens, other characters outside a-z, 0-9 and hyphen dropped, hyphen runs collapsed, edge hyphens trimmed, cut to 255) before the slug lookup
+- AND that publication MUST be returned with HTTP 200
+- AND an identifier with nothing left after normalising MUST NOT run a slug search (HTTP 404)
+
 #### Scenario: Slug of a publication in another catalog
 
 - GIVEN a publication with slug "2026-0042" in catalog "archive" only

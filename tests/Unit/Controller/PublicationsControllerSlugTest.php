@@ -404,4 +404,26 @@ class PublicationsControllerSlugTest extends TestCase {
 			$this->assertArrayNotHasKey('slug', $query['@self'] ?? []);
 		}
 	}
+
+	public function testTheUrlIdIsNormalisedBeforeTheSlugLookup(): void {
+		$this->given(['slug:zaak-2026-0042:1:1' => [$this->publication(self::UUID_A)]]);
+
+		$response = $this->controller->show('woo', 'Zaak_2026-0042');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(self::UUID_A, $response->getData()['id']);
+		$slugQueries = array_values(array_filter($this->queries, static fn (array $q): bool => isset($q['@self']['slug'])));
+		$this->assertSame('zaak-2026-0042', $slugQueries[0]['@self']['slug']);
+	}
+
+	public function testAnIdThatNormalisesToNothingRunsNoSlugSearch(): void {
+		$this->given([]);
+
+		$response = $this->controller->show('woo', '..é.');
+
+		$this->assertSame(404, $response->getStatus());
+		foreach ($this->queries as $query) {
+			$this->assertArrayNotHasKey('slug', $query['@self'] ?? []);
+		}
+	}
 }//end class
