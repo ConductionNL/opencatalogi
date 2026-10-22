@@ -840,6 +840,7 @@ class PublicationsController extends Controller {
 			// Slug route (#1592): only when the UUID lookup above found nothing, so
 			// a UUID URL is answered exactly as before. Same catalogue scope and the
 			// same read rules as the UUID path.
+			$publicationId = $id;
 			if ($object === null
 				&& empty($catalogRegisters) === false
 				&& empty($catalogSchemas) === false
@@ -851,6 +852,12 @@ class PublicationsController extends Controller {
 					registers: $catalogRegisters,
 					schemas: $catalogSchemas
 				);
+
+				// Everything downstream (withheld list, view counter) keys on the
+				// publication UUID, not on the slug the URL carried.
+				if ($object !== null) {
+					$publicationId = (string) $object->getUuid();
+				}
 			}
 
 			if ($object === null) {
@@ -951,7 +958,7 @@ class PublicationsController extends Controller {
 				$response = new JSONResponse($node, 200);
 				$response->addHeader('Content-Type', 'application/ld+json');
 				$this->addCorsHeaders(response: $response);
-				return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
+				return $this->countedView(response: $response, publicationId: $publicationId, catalogSlug: $catalogSlug);
 			}
 
 			// REQ-PDP-004 / REQ-WDW-003: a catalogue that opted in shows what was
@@ -961,7 +968,7 @@ class PublicationsController extends Controller {
 				$result = $this->container->get(WithheldFromPublication::class)->addForCatalog(
 					response: $result,
 					catalog: $catalog,
-					publicationId: $id
+					publicationId: $publicationId
 				);
 			}
 
@@ -972,7 +979,7 @@ class PublicationsController extends Controller {
 			// ANA-001: count this successful public detail view, fire-and-forget.
 			// HEAD requests, non-2xx, and back-office reads never reach this seam
 			// (this is the public detail path that already 404'd above on misses).
-			return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
+			return $this->countedView(response: $response, publicationId: $publicationId, catalogSlug: $catalogSlug);
 		} catch (DoesNotExistException $exception) {
 			return new JSONResponse(
 				[

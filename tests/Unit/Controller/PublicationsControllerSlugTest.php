@@ -23,6 +23,7 @@ use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
+use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -46,6 +47,10 @@ class PublicationsControllerSlugTest extends TestCase {
 
 	private LoggerInterface|MockObject $logger;
 
+	private UsageCounterService|MockObject $usageCounter;
+
+	private WithheldFromPublication|MockObject $withheld;
+
 	/** @var list<array> Every query searchObjects() received, in order. */
 	private array $queries = [];
 
@@ -67,7 +72,11 @@ class PublicationsControllerSlugTest extends TestCase {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($this->objectService);
+		$this->withheld = $this->createMock(WithheldFromPublication::class);
+		$container->method('get')->willReturnCallback(
+			fn (string $id) => $id === WithheldFromPublication::class ? $this->withheld : $this->objectService
+		);
+		$this->usageCounter = $this->createMock(UsageCounterService::class);
 
 		$queryService = $this->createMock(PublicationQueryService::class);
 		$queryService->method('applyCatalogReadRuleGuard')->willReturnCallback(fn (array $catalog) => $catalog);
@@ -97,7 +106,7 @@ class PublicationsControllerSlugTest extends TestCase {
 			$appManager,
 			$this->logger,
 			$l10n,
-			$this->createMock(UsageCounterService::class),
+			$this->usageCounter,
 			$appConfig
 		);
 	}//end setUp()
@@ -164,6 +173,50 @@ class PublicationsControllerSlugTest extends TestCase {
 
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(self::UUID_A, $response->getData()['id']);
+	}
+
+	public function testASlugHitOnAShowWithheldCatalogueContinuesWithTheUuid(): void {
+		$this->given(
+			['slug:2026-0042:1:1' => [$this->publication(self::UUID_A)]],
+			['schemas' => [1], 'registers' => [1], 'showWithheld' => true]
+		);
+		$this->withheld->expects($this->once())->method('addForCatalog')->willReturnCallback(
+			function (array $response, array $catalog, string $publicationId): array {
+				$this->assertSame(self::UUID_A, $publicationId);
+				return $response;
+			}
+		);
+		$this->usageCounter->expects($this->once())->method('increment')->with(
+			self::UUID_A,
+			UsageCounterService::KIND_VIEW,
+			$this->anything(),
+			'woo'
+		);
+
+		$response = $this->controller->show('woo', '2026-0042');
+
+		$this->assertSame(200, $response->getStatus());
+	}
+
+	public function testAUuidHitStillPassesTheUrlUuidToTheWithheldListAndTheCounter(): void {
+		$this->given(
+			['uuid:' . self::UUID_A . ':1:1' => [$this->publication(self::UUID_A)]],
+			['schemas' => [1], 'registers' => [1], 'showWithheld' => true]
+		);
+		$this->withheld->expects($this->once())->method('addForCatalog')->willReturnCallback(
+			function (array $response, array $catalog, string $publicationId): array {
+				$this->assertSame(self::UUID_A, $publicationId);
+				return $response;
+			}
+		);
+		$this->usageCounter->expects($this->once())->method('increment')->with(
+			self::UUID_A,
+			UsageCounterService::KIND_VIEW,
+			$this->anything(),
+			'woo'
+		);
+
+		$this->assertSame(200, $this->controller->show('woo', self::UUID_A)->getStatus());
 	}
 
 	public function testASlugHeldInTwoSchemasOfTheCatalogueIsRefused(): void {
