@@ -27,8 +27,8 @@ NC 35 rig: `GET /api/{catalogSlug}/{uuid}` answers 200 with `@self.slug` set, an
   catalogue may share a `kenmerk`; OpenRegister only guarantees uniqueness per register
   and schema) is refused: the endpoint answers 404 and logs a warning naming the
   catalogue, the slug and the matching UUIDs. It never returns the first match.
-- The UI detail route `#/publications/{catalogSlug}/{id}` accepts a slug through the
-  same endpoint.
+- The admin detail route `#/publications/{catalogSlug}/{id}` is not changed: it loads
+  through OpenRegister's object API, not this endpoint (see design D4).
 - Nothing else changes: UUID links, the response shape, federation and directory links
   (they keep the UUID), sitemap and schema.org output (out of scope, Robert 2026-10-19).
 
@@ -52,8 +52,8 @@ keeps doing so; a slug URL that matches one publication now answers 200.
 - `lib/Controller/PublicationsController.php` (`show()`), possibly a helper in
   `lib/Service/PublicationQueryService.php`.
 - No route change: `{id}` in `appinfo/routes.php` has no format requirement.
-- `src/views/publications/PublicationDetail.vue`: verify only; it passes the route id to
-  the same endpoint.
+- `src/views/publications/PublicationDetail.vue`: not changed; it does not use this
+  endpoint (design D4).
 - Depends at runtime on openregister#4037 (slugs that are unique and frozen) and on
   `objectSlugField: kenmerk` in openwoo-app-config for WOO publications. On an older
   OpenRegister, publications have no slug and the endpoint behaves as today.

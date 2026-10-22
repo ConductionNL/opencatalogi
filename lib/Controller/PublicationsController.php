@@ -417,6 +417,82 @@ class PublicationsController extends Controller {
 	}//end objectMatchesCatalogScope()
 
 	/**
+	 * Resolve a publication by its slug across every register × schema of a catalogue.
+	 *
+	 * OpenRegister keeps a slug unique per register and schema only, and a
+	 * catalogue spans several schemas, so the same slug can occur more than once
+	 * here. All combinations are searched before deciding: exactly one match is
+	 * returned; more than one is refused (logged with the matching UUIDs, the
+	 * caller gets the plain 404) so the endpoint never returns the wrong
+	 * publication. The lookup filters on `@self.slug` explicitly, so a numeric
+	 * slug is never read as an object id.
+	 *
+	 * @param object        $objectService OpenRegister's ObjectService.
+	 * @param string        $slug          The identifier from the URL.
+	 * @param string        $catalogSlug   The catalogue, for the log line.
+	 * @param array         $registers     The catalogue's register ids.
+	 * @param array         $schemas       The catalogue's schema ids.
+	 *
+	 * @return object|null The one matching publication, or null.
+	 *
+	 * @spec openspec/changes/publication-resolves-by-slug/specs/publications/spec.md#requirement-retrieve-a-single-publication-by-catalog-slug-and-object-uuid-or-slug-pub-002
+	 * @spec openspec/changes/publication-resolves-by-slug/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
+	 */
+	private function findBySlugInCatalogScope(
+		object $objectService,
+		string $slug,
+		string $catalogSlug,
+		array $registers,
+		array $schemas,
+	): ?object {
+		$matches = [];
+		foreach ($registers as $register) {
+			foreach ($schemas as $schema) {
+				$found = $objectService->searchObjects(
+					query: [
+						'@self' => [
+							'slug' => $slug,
+							'register' => $register,
+							'schema' => $schema,
+						],
+					],
+					_rbac: true,
+					_multitenancy: false,
+				);
+				if (is_array($found) === false) {
+					continue;
+				}
+
+				foreach ($found as $candidate) {
+					$matches[] = $candidate;
+				}
+			}
+		}
+
+		if (count($matches) === 1) {
+			return $matches[0];
+		}
+
+		if (count($matches) > 1) {
+			$uuids = array_map(
+				static fn ($match): string => (string)(method_exists($match, 'getUuid') === true ? $match->getUuid() : ''),
+				$matches
+			);
+			$this->logger->warning(
+				sprintf(
+					'[PublicationsController] Slug "%s" is ambiguous in catalog %s: matches publications %s',
+					$slug,
+					$catalogSlug,
+					implode(', ', $uuids)
+				),
+				['slug' => $slug, 'catalogSlug' => $catalogSlug, 'uuids' => $uuids]
+			);
+		}
+
+		return null;
+	}//end findBySlugInCatalogScope()
+
+	/**
 	 * Implements a preflighted CORS response for OPTIONS requests.
 	 *
 	 * @return Response The CORS response
@@ -626,6 +702,7 @@ class PublicationsController extends Controller {
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/publication-resolves-by-slug/specs/publications/spec.md#requirement-slug-resolution-must-be-backwards-compatible-pub-020
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -759,6 +836,22 @@ class PublicationsController extends Controller {
 					}
 				}
 			}//end if
+
+			// Slug route (#1592): only when the UUID lookup above found nothing, so
+			// a UUID URL is answered exactly as before. Same catalogue scope and the
+			// same read rules as the UUID path.
+			if ($object === null
+				&& empty($catalogRegisters) === false
+				&& empty($catalogSchemas) === false
+			) {
+				$object = $this->findBySlugInCatalogScope(
+					objectService: $objectService,
+					slug: $id,
+					catalogSlug: $catalogSlug,
+					registers: $catalogRegisters,
+					schemas: $catalogSchemas
+				);
+			}
 
 			if ($object === null) {
 				$this->logger->warning(

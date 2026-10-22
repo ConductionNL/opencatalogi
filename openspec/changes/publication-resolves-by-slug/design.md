@@ -47,11 +47,16 @@ publications <uuid-a>, <uuid-b>`. A 404 rather than a 409: the endpoint is anony
 public, a 409 would tell any caller that two publications share a case number, and a
 citizen cannot act on it (issue plan Q8, working assumption pending Robert Zondervan).
 
-### D4 — No new route, no UI code
+### D4 — No new route; the admin detail page is out of scope
 
-`appinfo/routes.php` puts no format requirement on `{id}`. The detail view passes the
-route id straight to this endpoint, so a slug in the hash route works once the endpoint
-resolves it. Verified, not changed.
+`appinfo/routes.php` puts no format requirement on `{id}`, so the public endpoint
+needs no route change. The admin detail page (`#/publications/{catalogSlug}/{id}`,
+`PublicationDetail.vue`) does NOT use this endpoint: it loads through OpenRegister's
+object API (`objectStore.fetchObject('publication', id)`) and then reads the store by
+the route id. OpenRegister resolves a slug there, but the store lookup by id would not
+find the object, so a slug in the admin route is not supported by this change. The
+stable link is the public one (API and website); making the admin route slug-aware is
+a separate decision (verified 2026-10-22 while implementing task 2.1).
 
 ## Backwards compatibility
 
