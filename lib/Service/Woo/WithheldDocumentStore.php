@@ -24,6 +24,7 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeImmutable;
 use OCP\App\IAppManager;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -180,25 +181,41 @@ class WithheldDocumentStore {
 	}//end discard()
 
 	/**
-	 * Whether the publication exists.
+	 * Whether the publication exists, or null when that cannot be told.
+	 *
+	 * Only OpenRegister saying the object does not exist answers false. When
+	 * OpenRegister or the register configuration is not there, or the read fails
+	 * otherwise, that is not an answer about the publication: it answers null, so
+	 * the caller is not told a publication is missing that a retry or an
+	 * administrator would find.
 	 *
 	 * @param string $publicationId The publication.
 	 *
-	 * @return bool
+	 * @return bool|null
 	 *
 	 * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
 	 */
-	public function publicationExists(string $publicationId): bool {
-		$objects = $this->objects();
-		if ($objects === null || trim($publicationId) === '') {
+	public function publicationExists(string $publicationId): ?bool {
+		if (trim($publicationId) === '') {
 			return false;
+		}
+
+		$objects = $this->objects();
+		if ($objects === null) {
+			return null;
 		}
 
 		try {
 			[$register, $schema] = $this->target(key: 'publication_schema');
 			$found = $objects->find(id: $publicationId, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
-		} catch (Throwable $e) {
+		} catch (DoesNotExistException $e) {
 			return false;
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'WithheldDocuments: the publication could not be looked up',
+				['publication' => $publicationId, 'exception' => $e->getMessage()]
+			);
+			return null;
 		}
 
 		return $found !== null && $found !== [];
