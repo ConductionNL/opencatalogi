@@ -475,7 +475,7 @@ class PublicationsController extends Controller {
 
 		if (count($matches) > 1) {
 			$uuids = array_map(
-				static fn ($match): string => (string)(method_exists($match, 'getUuid') === true ? $match->getUuid() : ''),
+				static fn ($match): string => (string)$match->getUuid(),
 				$matches
 			);
 			$this->logger->warning(
