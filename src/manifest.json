@@ -605,7 +605,7 @@
 			"route": "/publications/:catalogSlug/:register/:schema/:id",
 			"type": "detail",
 			"title": "Details",
-			"_note": "Generic detail page for an object of any schema in a catalog other than the publication schema, e.g. a harvested publiccode component in the Componenten catalog. CatalogPublicationsIndex opens rows of other pairs here; register and schema come from the row's own `@self`, through the route. The Data card is read-only because its inline editor cannot edit free-form object properties such as publiccode's per-language `description` (it would write back a string); edits go through the header Edit button, whose form renders those properties with their schema `widget`. Related lists the object's references; the audit trail lives in the sidebar.",
+			"_note": "Generic detail page for an object of any schema in a catalog other than the publication schema, e.g. a harvested publiccode component in the Componenten catalog, or a stackiq module/connection/usage record in the Applicatielandschap catalog. CatalogPublicationsIndex opens rows of other pairs here; register and schema come from the row's own `@self`, through the route. The Data card is read-only because its inline editor cannot edit free-form object properties such as publiccode's per-language `description` (it would write back a string); edits go through the header Edit button, whose form renders those properties with their schema `widget`. Related lists the object's references; the audit trail lives in the sidebar. Attachments uses the same generic `integration`/`files` widget PublicationDetail does: file attachment in OpenRegister is resolved by object id alone (FileMapper::getFilesForObject()), never by a schema-declared property, so it applies uniformly regardless of which schema the row is.",
 			"config": {
 				"register": "@route.register",
 				"schema": "@route.schema",
@@ -631,6 +631,16 @@
 						"type": "related",
 						"title": "Related",
 						"icon": "LinkVariant"
+					},
+					{
+						"id": "object-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Attachments",
+						"icon": "FolderOutline",
+						"props": {
+							"maxDisplay": 100
+						}
 					}
 				],
 				"layout": [
@@ -649,6 +659,14 @@
 						"gridY": 10,
 						"gridWidth": 12,
 						"gridHeight": 4
+					},
+					{
+						"id": "3",
+						"widgetId": "object-files",
+						"gridX": 0,
+						"gridY": 14,
+						"gridWidth": 12,
+						"gridHeight": 5
 					}
 				],
 				"sidebar": {
