@@ -380,6 +380,12 @@ describe('CatalogPublicationsIndex', () => {
 	it('uses the first pair, with the other-pair config, for a catalog without the publication pair', async () => {
 		objectStore.menuCatalogs = [catalog('code', [19], [184])]
 		const otherPairConfig = { columns: ['@self.name', '@self.summary'] }
+		const setActive = jest
+			.spyOn(objectStore, 'setActiveObject')
+			.mockImplementation(() => {})
+		const setModal = jest
+			.spyOn(navigationStore, 'setModal')
+			.mockImplementation(() => {})
 		const { wrapper, router } = mountPage({
 			slug: 'code',
 			publicationPairConfig: { columns: ['title'] },
@@ -393,19 +399,44 @@ describe('CatalogPublicationsIndex', () => {
 		expect(page.vm.$attrs.columns).toEqual(otherPairConfig.columns)
 		expect(page.vm.$attrs.otherPairConfig).toBeUndefined()
 
-		page.vm.$emit('row-click', {
-			id: 'abc',
-			'@self': { register: 19, schema: 184 },
-		})
-		expect(router.push).toHaveBeenCalledWith({
-			name: 'CatalogObjectDetail',
-			params: {
-				catalogSlug: 'code',
-				register: '19',
-				schema: '184',
-				id: 'abc',
-			},
-		})
+		const row = { id: 'abc', '@self': { register: 19, schema: 184 } }
+		page.vm.$emit('row-click', row)
+
+		// This catalog has no publication pair of its own to single out, so
+		// its only schema is still files-capable: the row opens the
+		// viewObject modal rather than CnIndexPage's plain form.
+		expect(router.push).not.toHaveBeenCalled()
+		expect(setActive).toHaveBeenCalledWith('publication', row)
+		expect(setModal).toHaveBeenCalledWith('viewObject')
+	})
+
+	it('opens the files tab of the viewObject modal for every schema of a catalog with several document types and none of them the default pair', async () => {
+		// Mirrors a catalog set up with its own per-category document schemas
+		// (e.g. one per Woo category) instead of the app-wide default
+		// publication schema: none of its pairs is the default pair, so every
+		// one of its schemas is still a publication, not just the first.
+		objectStore.menuCatalogs = [catalog('woo-categories', [23], [192, 196, 201])]
+		const setActive = jest
+			.spyOn(objectStore, 'setActiveObject')
+			.mockImplementation(() => {})
+		const setTransfer = jest
+			.spyOn(navigationStore, 'setTransferData')
+			.mockImplementation(() => {})
+		const setModal = jest
+			.spyOn(navigationStore, 'setModal')
+			.mockImplementation(() => {})
+		const { wrapper, router } = mountPage({ slug: 'woo-categories' })
+		await flushPromises()
+
+		const page = indexPage(wrapper)
+		const convenant = { id: 'c1', '@self': { register: 23, schema: 196 } }
+
+		page.vm.$emit('view', convenant)
+
+		expect(router.push).not.toHaveBeenCalled()
+		expect(setActive).toHaveBeenCalledWith('publication', convenant)
+		expect(setTransfer).toHaveBeenCalledWith({ initialTab: 'files' })
+		expect(setModal).toHaveBeenCalledWith('viewObject')
 	})
 
 	it('keeps the other-pair config off a page whose pair is the publication pair', async () => {

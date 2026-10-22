@@ -387,17 +387,52 @@ export default {
 		},
 
 		/**
-		 * Whether a row is a publication, by its own `@self` register and schema.
+		 * Whether this catalog's own pairs include the app-wide default
+		 * publication pair. A catalog that does holds a real distinction
+		 * between its publications and other attached object types (e.g. a
+		 * rule schema alongside the publication schema); a catalog that does
+		 * not has no such distinction to make — every one of its schemas is
+		 * its own document type, all equally a "publication" in it.
+		 *
+		 * @return {boolean} True when the default pair is one of this catalog's pairs.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 */
+		hasPublicationPair() {
+			return this.pairs.some((pair) => this.isPublicationPair(pair))
+		},
+
+		/**
+		 * Whether a row is a publication, by its own `@self` register and
+		 * schema. For a catalog that holds the app-wide default pair, only
+		 * rows of that exact pair count — other pairs are a different object
+		 * type (e.g. rules), not a publication. For a catalog that does not
+		 * (it was set up with its own document schemas instead, e.g. one per
+		 * Woo category), every one of its own pairs counts, since there is no
+		 * narrower schema to single out. That broadening only applies once the
+		 * page's own default-pair ids are actually resolved
+		 * ({@see publicationPair} non-null) — while CnPageRenderer has not
+		 * injected them yet, `hasPublicationPair()` is false for every catalog
+		 * regardless of its real shape, and treating that as "no default pair"
+		 * would misroute a row before its page even finishes resolving.
 		 *
 		 * @param {object} row The row.
-		 * @return {boolean} True for a publication row.
+		 * @return {boolean} True for a row this page treats as a publication.
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
 		isPublicationRow(row) {
 			const self = row?.['@self'] || {}
 			const [register] = normaliseIdList([self.register])
 			const [schema] = normaliseIdList([self.schema])
-			return this.isPublicationPair({ register, schema })
+			if (register === undefined || schema === undefined) {
+				return false
+			}
+			const pair = { register, schema }
+			if (this.publicationPair !== null && this.hasPublicationPair() === false) {
+				return this.pairs.some(
+					(p) => p.register === pair.register && p.schema === pair.schema,
+				)
+			}
+			return this.isPublicationPair(pair)
 		},
 
 		/**
@@ -434,28 +469,37 @@ export default {
 		},
 
 		/**
-		 * Where a row opens: a publication on its detail page in this catalog,
-		 * an object of another schema on the generic detail page for its pair.
+		 * Where a row opens: a publication of the app-wide default pair on its
+		 * detail page, an object of another schema on the generic detail page
+		 * for its pair. A catalog without the default pair treats every one of
+		 * its own schemas as a publication ({@see isPublicationRow}), but
+		 * neither detail page fits such a row: `PublicationDetail` is wired to
+		 * the literal default pair, and `CatalogObjectDetail` has no Files
+		 * widget — so it opens the files-capable `viewObject` modal instead
+		 * ({@see onRowOpen}).
 		 *
 		 * @param {object} row The row.
-		 * @return {object|null} The router location, or null for a row without an id, register or schema.
+		 * @return {object|null} The router location, or null for a row without an id, or one with no fitting detail page.
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
 		 */
 		rowTarget(row) {
 			const self = row?.['@self'] || {}
+			const [register] = normaliseIdList([self.register])
+			const [schema] = normaliseIdList([self.schema])
 			const id = row?.id ?? self.id ?? self.uuid ?? row?.uuid
 			if (id === undefined || id === null || id === '') {
 				return null
 			}
-			if (this.isPublicationRow(row)) {
+			if (this.isPublicationPair({ register, schema })) {
 				return {
 					name: 'PublicationDetail',
 					params: { catalogSlug: this.catalogSlug, id: String(id) },
 				}
 			}
-			const [register] = normaliseIdList([self.register])
-			const [schema] = normaliseIdList([self.schema])
+			if (this.isPublicationRow(row)) {
+				return null
+			}
 			if (register === undefined || schema === undefined) {
 				return null
 			}
@@ -471,9 +515,11 @@ export default {
 		},
 
 		/**
-		 * Open a row on a click, a middle click or the View action, on its
-		 * detail page. A ctrl/cmd/shift or middle click opens it in a new tab. A
-		 * row without a detail page opens in the form for its own schema instead.
+		 * Open a row on a click, a middle click or the View action. A
+		 * ctrl/cmd/shift or middle click opens it in a new tab when it has a
+		 * detail page; a row without one opens the files-capable `viewObject`
+		 * modal when it is still a publication, else CnIndexPage's form for its
+		 * own schema.
 		 *
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
@@ -494,14 +540,22 @@ export default {
 				openRowTarget(nativeEvent, target, this.$router)
 				return
 			}
-			// A middle click has nothing to open in a new tab.
-			if (nativeEvent?.button !== 1) {
-				this.$refs.index?.openFormDialog(row)
+			// A middle click has nowhere to open in a new tab; leave it alone.
+			if (nativeEvent?.button === 1) {
+				return
 			}
+			if (this.isPublicationRow(row)) {
+				objectStore.setActiveObject('publication', row)
+				navigationStore.setTransferData({ initialTab: 'files' })
+				navigationStore.setModal('viewObject')
+				return
+			}
+			this.$refs.index?.openFormDialog(row)
 		},
 
 		/**
-		 * The View action: every row opens on its detail page.
+		 * The View action: same resolution as a row click — its detail page,
+		 * else the files-capable modal, else the form for its own schema.
 		 *
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
