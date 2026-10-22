@@ -856,7 +856,7 @@ class PublicationsController extends Controller {
 				// Everything downstream (withheld list, view counter) keys on the
 				// publication UUID, not on the slug the URL carried.
 				if ($object !== null) {
-					$publicationId = (string) $object->getUuid();
+					$publicationId = (string)$object->getUuid();
 				}
 			}
 

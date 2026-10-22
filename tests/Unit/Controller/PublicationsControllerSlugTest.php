@@ -22,6 +22,7 @@ use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCP\App\IAppManager;
@@ -49,6 +50,10 @@ class PublicationsControllerSlugTest extends TestCase {
 
 	private UsageCounterService|MockObject $usageCounter;
 
+	private IRequest|MockObject $request;
+
+	private SchemaOrgService|MockObject $schemaOrg;
+
 	private WithheldFromPublication|MockObject $withheld;
 
 	/** @var list<array> Every query searchObjects() received, in order. */
@@ -74,8 +79,13 @@ class PublicationsControllerSlugTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$this->withheld = $this->createMock(WithheldFromPublication::class);
 		$container->method('get')->willReturnCallback(
-			fn (string $id) => $id === WithheldFromPublication::class ? $this->withheld : $this->objectService
+			fn (string $id) => match ($id) {
+				WithheldFromPublication::class => $this->withheld,
+				SchemaOrgService::class => $this->schemaOrg,
+				default => $this->objectService,
+			}
 		);
+		$this->schemaOrg = $this->createMock(SchemaOrgService::class);
 		$this->usageCounter = $this->createMock(UsageCounterService::class);
 
 		$queryService = $this->createMock(PublicationQueryService::class);
@@ -88,7 +98,7 @@ class PublicationsControllerSlugTest extends TestCase {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(fn (string $app, string $key, string $default = '') => $default);
 
-		$request = $this->createMock(IRequest::class);
+		$request = $this->request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn([]);
 		$request->server = [];
 
@@ -217,6 +227,25 @@ class PublicationsControllerSlugTest extends TestCase {
 		);
 
 		$this->assertSame(200, $this->controller->show('woo', self::UUID_A)->getStatus());
+	}
+
+	public function testASlugHitOnTheSchemaOrgPathCountsTheViewUnderTheUuid(): void {
+		$this->given(['slug:2026-0042:1:1' => [$this->publication(self::UUID_A)]]);
+		$this->request->method('getParam')->willReturnCallback(
+			static fn (string $key, $default = null) => $key === 'format' ? 'schema' : $default
+		);
+		$this->schemaOrg->method('buildPublicationNode')->willReturn(['@type' => 'Dataset']);
+		$this->usageCounter->expects($this->once())->method('increment')->with(
+			self::UUID_A,
+			UsageCounterService::KIND_VIEW,
+			$this->anything(),
+			'woo'
+		);
+
+		$response = $this->controller->show('woo', '2026-0042');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame('Dataset', $response->getData()['@type']);
 	}
 
 	public function testASlugHeldInTwoSchemasOfTheCatalogueIsRefused(): void {
