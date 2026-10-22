@@ -380,12 +380,6 @@ describe('CatalogPublicationsIndex', () => {
 	it('uses the first pair, with the other-pair config, for a catalog without the publication pair', async () => {
 		objectStore.menuCatalogs = [catalog('code', [19], [184])]
 		const otherPairConfig = { columns: ['@self.name', '@self.summary'] }
-		const setActive = jest
-			.spyOn(objectStore, 'setActiveObject')
-			.mockImplementation(() => {})
-		const setModal = jest
-			.spyOn(navigationStore, 'setModal')
-			.mockImplementation(() => {})
 		const { wrapper, router } = mountPage({
 			slug: 'code',
 			publicationPairConfig: { columns: ['title'] },
@@ -403,40 +397,36 @@ describe('CatalogPublicationsIndex', () => {
 		page.vm.$emit('row-click', row)
 
 		// This catalog has no publication pair of its own to single out, so
-		// its only schema is still files-capable: the row opens the
-		// viewObject modal rather than CnIndexPage's plain form.
-		expect(router.push).not.toHaveBeenCalled()
-		expect(setActive).toHaveBeenCalledWith('publication', row)
-		expect(setModal).toHaveBeenCalledWith('viewObject')
+		// its only schema is a different object type, not a publication — it
+		// opens the generic detail page, same as any other-schema row would.
+		expect(router.push).toHaveBeenCalledWith({
+			name: 'CatalogObjectDetail',
+			params: { catalogSlug: 'code', register: '19', schema: '184', id: 'abc' },
+		})
 	})
 
-	it('opens the files tab of the viewObject modal for every schema of a catalog with several document types and none of them the default pair', async () => {
-		// Mirrors a catalog set up with its own per-category document schemas
-		// (e.g. one per Woo category) instead of the app-wide default
-		// publication schema: none of its pairs is the default pair, so every
-		// one of its schemas is still a publication, not just the first.
-		objectStore.menuCatalogs = [catalog('woo-categories', [23], [192, 196, 201])]
-		const setActive = jest
-			.spyOn(objectStore, 'setActiveObject')
-			.mockImplementation(() => {})
-		const setTransfer = jest
-			.spyOn(navigationStore, 'setTransferData')
-			.mockImplementation(() => {})
-		const setModal = jest
-			.spyOn(navigationStore, 'setModal')
-			.mockImplementation(() => {})
-		const { wrapper, router } = mountPage({ slug: 'woo-categories' })
+	it('treats no single schema as a publication in a catalog with several unrelated schemas and none of them the default pair', async () => {
+		// Mirrors a real, shipped catalog (Applicatielandschap, publish-from-
+		// stackiq.json): several structurally different schemas (module, suite,
+		// connection, usage) with no default pair among them. None of these is
+		// "a publication" just because the pair isn't the default — there is no
+		// signal in the data model that marks a schema as a publication
+		// independent of the one global default pair, so every row here opens
+		// its generic detail page, exactly like a catalog that DOES hold the
+		// default pair would treat its own other-schema rows.
+		objectStore.menuCatalogs = [catalog('applicatielandschap', [23], [192, 196, 201])]
+		const { wrapper, router } = mountPage({ slug: 'applicatielandschap' })
 		await flushPromises()
 
 		const page = indexPage(wrapper)
-		const convenant = { id: 'c1', '@self': { register: 23, schema: 196 } }
+		const connection = { id: 'c1', '@self': { register: 23, schema: 196 } }
 
-		page.vm.$emit('view', convenant)
+		page.vm.$emit('view', connection)
 
-		expect(router.push).not.toHaveBeenCalled()
-		expect(setActive).toHaveBeenCalledWith('publication', convenant)
-		expect(setTransfer).toHaveBeenCalledWith({ initialTab: 'files' })
-		expect(setModal).toHaveBeenCalledWith('viewObject')
+		expect(router.push).toHaveBeenCalledWith({
+			name: 'CatalogObjectDetail',
+			params: { catalogSlug: 'applicatielandschap', register: '23', schema: '196', id: 'c1' },
+		})
 	})
 
 	it('keeps the other-pair config off a page whose pair is the publication pair', async () => {
