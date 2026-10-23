@@ -60,13 +60,15 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 			new BeforeTemplateRenderedEvent(true, new TemplateResponse('opencatalogi', 'index'))
 		);
 
-		// 19 register/schema keys (incl. the 3 WOO keys) + default_directory_url.
-		$this->assertCount(20, $this->provided);
+		// 23 register/schema keys (incl. the 3 WOO and 4 service catalogue keys) + default_directory_url.
+		$this->assertCount(24, $this->provided);
 		$this->assertSame('42', $this->provided['catalog_register']);
 		$this->assertSame('42', $this->provided['publication_schema']);
 		$this->assertSame('42', $this->provided['woo_register']);
 		$this->assertSame('42', $this->provided['woo_batch_schema']);
 		$this->assertSame('42', $this->provided['woo_assessment_schema']);
+		$this->assertSame('42', $this->provided['service_catalogue_register']);
+		$this->assertSame('42', $this->provided['knowledge_article_schema']);
 		$this->assertArrayHasKey('default_directory_url', $this->provided);
 		$this->assertNotSame('', $this->provided['default_directory_url']);
 	}
