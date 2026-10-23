@@ -1,6 +1,6 @@
 {
 	"set": "zuiddrecht",
-	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications the dossier and saved search of the example resident Sanne de Vries (cast key sanne), and a service catalogue: three case types, five products and services (two of them need repair: one has no form name, one names a case type that does not exist) two knowledge articles, and five older publications whose retention term ends within 30 days or has ended, for the retention review, and the four source systems the Woo obligations overview reads. Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
+	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications the dossier and saved search of the example resident Sanne de Vries (cast key sanne), and a service catalogue: three case types, five products and services (two of them need repair: one has no form name, one names a case type that does not exist) two knowledge articles, and five older publications whose retention term ends within 30 days or has ended, for the retention review, the four source systems the Woo obligations overview reads, a notice with its public inspection period, three publication rules and a banner. Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
 	"objects": [
 		{
 			"key": "catalogus",
@@ -910,6 +910,123 @@
 				"title": "Besluitenlijsten college",
 				"kind": "harvest",
 				"enabled": true
+			}
+		},
+		{
+			"key": "pub-kennisgeving-kerkplein",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Kennisgeving ontwerpbestemmingsplan Kerkplein",
+				"summary": "Het ontwerpbestemmingsplan Kerkplein ligt zes weken ter inzage. U kunt een zienswijze indienen.",
+				"publicationDate": "{{datetime:-7 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat009"
+			}
+		},
+		{
+			"key": "inzage-kerkplein",
+			"register": "publication",
+			"schema": "commentPeriod",
+			"data": {
+				"publication": "{{object:pub-kennisgeving-kerkplein.id}}",
+				"startDate": "{{date:-6}}",
+				"endDate": "{{date:36}}",
+				"termDays": 42,
+				"legalRemedy": "zienswijze",
+				"automaticWithdrawal": false
+			}
+		},
+		{
+			"key": "regel-raadsbesluiten",
+			"register": "publication",
+			"schema": "publicationRule",
+			"data": {
+				"recordType": "Raadsbesluiten",
+				"enabled": true,
+				"conditions": [
+					{
+						"property": "soort",
+						"operator": "equals",
+						"value": "Besluitenlijst"
+					},
+					{
+						"property": "status",
+						"operator": "equals",
+						"value": "Vastgesteld"
+					}
+				],
+				"publicationText": "Besluiten van de raad (infocat004)",
+				"inspectionTermDays": 0,
+				"anonymousProperties": [
+					"title",
+					"summary",
+					"publicationDate"
+				]
+			}
+		},
+		{
+			"key": "regel-woo-besluiten",
+			"register": "publication",
+			"schema": "publicationRule",
+			"data": {
+				"recordType": "Woo-besluiten",
+				"enabled": true,
+				"conditions": [
+					{
+						"property": "zaaktype",
+						"operator": "equals",
+						"value": "Woo-verzoek"
+					},
+					{
+						"property": "resultaat",
+						"operator": "equals",
+						"value": "Besloten"
+					}
+				],
+				"publicationText": "Woo-verzoeken en -besluiten (infocat014)",
+				"inspectionTermDays": 0,
+				"anonymousProperties": [
+					"title",
+					"summary",
+					"publicationDate"
+				]
+			}
+		},
+		{
+			"key": "regel-convenanten",
+			"register": "publication",
+			"schema": "publicationRule",
+			"data": {
+				"recordType": "Convenanten",
+				"enabled": false,
+				"conditions": [
+					{
+						"property": "documenttype",
+						"operator": "equals",
+						"value": "Convenant"
+					}
+				],
+				"publicationText": "Convenanten (infocat007)",
+				"inspectionTermDays": 0,
+				"anonymousProperties": [
+					"title",
+					"summary",
+					"publicationDate"
+				]
+			}
+		},
+		{
+			"key": "banner-onderhoud",
+			"register": "publication",
+			"schema": "instanceBanner",
+			"data": {
+				"body": "Zaterdag van 07:00 tot 09:00 is opencatalogi niet bereikbaar door onderhoud.",
+				"startDate": "{{date:-1}}",
+				"endDate": "{{date:5}}",
+				"severity": "info",
+				"dismissable": true
 			}
 		}
 	]
