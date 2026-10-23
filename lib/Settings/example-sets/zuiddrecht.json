@@ -1,6 +1,6 @@
 {
 	"set": "zuiddrecht",
-	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications and the dossier and saved search of the example resident Sanne de Vries (cast key sanne). Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
+	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications the dossier and saved search of the example resident Sanne de Vries (cast key sanne), and a service catalogue: three case types, five products and services (two of them need repair: one has no form name, one names a case type that does not exist) and two knowledge articles. Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
 	"objects": [
 		{
 			"key": "catalogus",
@@ -586,6 +586,201 @@
 				},
 				"frequency": "weekly",
 				"active": true
+			}
+		},
+		{
+			"key": "zaaktype-parkeervergunning",
+			"register": "publication",
+			"schema": "caseTypeDefinition",
+			"data": {
+				"identifier": "ZT-PARKEERVERGUNNING",
+				"title": "Parkeervergunning",
+				"description": "Een bewoner vraagt een parkeervergunning voor de eigen zone aan.",
+				"catalog": "{{object:catalogus.id}}"
+			}
+		},
+		{
+			"key": "zaaktype-melding-openbare-ruimte",
+			"register": "publication",
+			"schema": "caseTypeDefinition",
+			"data": {
+				"identifier": "ZT-MELDING-OR",
+				"title": "Melding openbare ruimte",
+				"description": "Een inwoner meldt een probleem op straat, in het groen of bij een speelplek.",
+				"catalog": "{{object:catalogus.id}}"
+			}
+		},
+		{
+			"key": "zaaktype-evenementenvergunning",
+			"register": "publication",
+			"schema": "caseTypeDefinition",
+			"data": {
+				"identifier": "ZT-EVENEMENT",
+				"title": "Evenementenvergunning",
+				"description": "Vraag dit minstens 8 weken voor het evenement aan.",
+				"catalog": "{{object:catalogus.id}}",
+				"source": {
+					"sourceId": "landelijke-zaaktypecatalogus",
+					"externalId": "evenementenvergunning",
+					"version": "2026"
+				}
+			}
+		},
+		{
+			"key": "dienst-parkeervergunning",
+			"register": "publication",
+			"schema": "serviceCatalogueEntry",
+			"data": {
+				"title": "Parkeervergunning voor bewoners",
+				"summary": "Parkeren in uw eigen zone, zonder parkeerschijf.",
+				"group": "Parkeren",
+				"audience": "resident",
+				"catalog": "{{object:catalogus.id}}",
+				"cost": {
+					"amount": 96.4,
+					"currency": "EUR",
+					"description": "per jaar"
+				},
+				"duration": {
+					"term": 2,
+					"unit": "week",
+					"description": "2 weken"
+				},
+				"formBinding": {
+					"caseType": "ZT-PARKEERVERGUNNING",
+					"audience": "resident",
+					"formName": "Parkeervergunning"
+				}
+			}
+		},
+		{
+			"key": "dienst-melding-openbare-ruimte",
+			"register": "publication",
+			"schema": "serviceCatalogueEntry",
+			"data": {
+				"title": "Probleem in de openbare ruimte melden",
+				"summary": "Een kapotte lantaarnpaal, losse tegels of zwerfafval doorgeven.",
+				"group": "Openbare ruimte",
+				"audience": "resident",
+				"catalog": "{{object:catalogus.id}}",
+				"cost": {
+					"amount": 0,
+					"currency": "EUR",
+					"description": "Gratis"
+				},
+				"duration": {
+					"term": 5,
+					"unit": "day",
+					"description": "5 werkdagen"
+				},
+				"formBinding": {
+					"caseType": "ZT-MELDING-OR",
+					"audience": "resident",
+					"formName": "Melding openbare ruimte"
+				}
+			}
+		},
+		{
+			"key": "dienst-evenementenvergunning",
+			"register": "publication",
+			"schema": "serviceCatalogueEntry",
+			"data": {
+				"title": "Evenementenvergunning",
+				"summary": "Een vergunning voor een feest, markt of optocht op straat.",
+				"group": "Ondernemen",
+				"audience": "resident",
+				"catalog": "{{object:catalogus.id}}",
+				"cost": {
+					"amount": 128.0,
+					"currency": "EUR"
+				},
+				"duration": {
+					"term": 8,
+					"unit": "week",
+					"description": "8 weken"
+				},
+				"formBinding": {
+					"caseType": "ZT-EVENEMENT",
+					"audience": "resident",
+					"formName": "Evenement"
+				}
+			}
+		},
+		{
+			"key": "dienst-afschrift-geboorteakte",
+			"register": "publication",
+			"schema": "serviceCatalogueEntry",
+			"data": {
+				"title": "Afschrift van een geboorteakte",
+				"summary": "Een officieel afschrift uit de basisregistratie personen.",
+				"group": "Burgerzaken",
+				"audience": "resident",
+				"catalog": "{{object:catalogus.id}}",
+				"cost": {
+					"amount": 15.7,
+					"currency": "EUR"
+				},
+				"duration": {
+					"term": 1,
+					"unit": "week",
+					"description": "1 week"
+				},
+				"formBinding": {
+					"caseType": "ZT-UITTREKSEL-BRP",
+					"audience": "resident",
+					"formName": ""
+				}
+			}
+		},
+		{
+			"key": "dienst-afvalcontainer",
+			"register": "publication",
+			"schema": "serviceCatalogueEntry",
+			"data": {
+				"title": "Afvalcontainer voor inwoners",
+				"summary": "Een extra container voor restafval of gft aanvragen.",
+				"group": "Afval",
+				"audience": "resident",
+				"catalog": "{{object:catalogus.id}}",
+				"cost": {
+					"amount": 35.0,
+					"currency": "EUR"
+				},
+				"duration": {
+					"term": 3,
+					"unit": "day",
+					"description": "3 dagen"
+				},
+				"formBinding": {
+					"caseType": "ZT-AFVALCONTAINER",
+					"audience": "resident",
+					"formName": "Afvalcontainer"
+				}
+			}
+		},
+		{
+			"key": "kennisartikel-blauwe-zone",
+			"register": "publication",
+			"schema": "knowledgeArticle",
+			"data": {
+				"title": "Parkeren in de blauwe zone",
+				"body": "In de blauwe zone mag u twee uur parkeren met een parkeerschijf. Zet de schijf op het eerstvolgende halve uur na aankomst.\n\nMet een bewonersvergunning mag u langer parkeren, maar alleen in de zone op uw vergunning. Bezoekers gebruiken de bezoekersvergunning in de app Parkeren.",
+				"catalog": "{{object:catalogus.id}}",
+				"draft": true,
+				"sourceCase": "2026-0412"
+			}
+		},
+		{
+			"key": "kennisartikel-grofvuil",
+			"register": "publication",
+			"schema": "knowledgeArticle",
+			"data": {
+				"title": "Grofvuil laten ophalen",
+				"body": "U kunt grofvuil vier keer per jaar gratis laten ophalen. Maak online een afspraak en zet het grofvuil de avond ervoor aan de straat.",
+				"catalog": "{{object:catalogus.id}}",
+				"draft": false,
+				"helpfulCount": 14,
+				"notHelpfulCount": 2
 			}
 		}
 	]
