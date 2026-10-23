@@ -6,13 +6,13 @@ Read `openspec/woo-build-rules.md` first. Start once `openregister/appraisal-inh
 
 - [ ] 1.1 Add `archiveHotspot`, `archiveHotspotReason` and `archiveHotspotSince` to `#theme` with a bumped version and labels (REQ-THA-001). Verify: `tests/Unit/Settings/ThemeHotspotSchemaTest.php::testTheThemeDeclaresTheHotspotFields` and `npm run check:schema-l10n`.
 - [ ] 1.2 Add `ThemeHotspotListener` on `ObjectCreatingEvent` and `ObjectUpdatingEvent`, registered in `Application::register()`, with the admin check, the reason check, the appraisal write and the audit entry (REQ-THA-001). Verify: `tests/Unit/Listener/ThemeHotspotListenerTest.php` on the REAL events with `::testANonAdministratorCannotMarkAHotspot`, `::testAMarkingWithoutAReasonIsRefused`, `::testMarkingSetsTheThemesAppraisalToRetainPermanently` (fails today: no listener), `::testUnmarkingRestoresThePreviousAppraisal`; an `ApplicationRegisterInvariantTest` case.
-- [ ] 1.3 Live: mark a subject on the dev instance and read the theme object back through OpenRegister's object API; paste `@self.retention` in the PR body. If OpenRegister's save resets `retention` set in the pre-save event, stop and raise it on `openregister/appraisal-inherited-from-a-parent`; do not write the appraisal another way (REQ-THA-001). Verify: the pasted read-back.
+- [ ] 1.3 Live: mark a subject on the dev instance and read the theme object back through OpenRegister's object API; paste `@self.retention` in the PR body. If OpenRegister's save resets `retention` set in the pre-save event, stop and raise it on `openregister/appraisal-inherited-from-a-parent`; do not write the appraisal another way (REQ-THA-001). Verify: the pasted read-back. (live pass, decision 139)
 - [ ] 1.4 Add the toggle and reason to the theme form, shown to administrators only (REQ-THA-001). Verify: `tests/e2e/theme-archive-hotspot.spec.ts` "an administrator marks a subject", carrying `@e2e` REQ-THA-001.
 
 ## 2. Destruction
 
 - [ ] 2.1 Declare `x-openregister-retention.inheritAppraisalFrom: ["themes"]` on `#publication` and bump its version (REQ-THA-002). Verify: `tests/Unit/Settings/ThemeHotspotDestructionTest.php::testThePublicationDeclaresInheritanceFromThemes` and `::testAPublicationFiledBeforeTheMarkingIsNotEligible`, which uses OpenRegister's `RetentionService::destructionRefusal()` when it exists.
-- [ ] 2.2 Live: on the dev instance give a publication under a marked subject a past destruction date, run `occ openregister:retention:dry-run` (from the OpenRegister change), and paste the held-back line naming the subject (REQ-THA-002). Verify: the pasted line.
+- [ ] 2.2 Live: on the dev instance give a publication under a marked subject a past destruction date, run `occ openregister:retention:dry-run` (from the OpenRegister change), and paste the held-back line naming the subject (REQ-THA-002). Verify: the pasted line. (live pass, decision 139)
 
 ## 3. OpenCatalogi retention
 
