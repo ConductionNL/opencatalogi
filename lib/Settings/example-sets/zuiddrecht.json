@@ -1,6 +1,6 @@
 {
 	"set": "zuiddrecht",
-	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications the dossier and saved search of the example resident Sanne de Vries (cast key sanne), and a service catalogue: three case types, five products and services (two of them need repair: one has no form name, one names a case type that does not exist) two knowledge articles, and five older publications whose retention term ends within 30 days or has ended, for the retention review, and the four source systems the Woo obligations overview reads. Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
+	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications the dossier and saved search of the example resident Sanne de Vries (cast key sanne), and a service catalogue: three case types, five products and services (two of them need repair: one has no form name, one names a case type that does not exist) two knowledge articles, and five older publications whose retention term ends within 30 days or has ended, for the retention review, and the four source systems the Woo obligations overview reads. Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title, and the five services of the status page.",
 	"objects": [
 		{
 			"key": "catalogus",
@@ -910,6 +910,71 @@
 				"title": "Besluitenlijsten college",
 				"kind": "harvest",
 				"enabled": true
+			}
+		},
+		{
+			"key": "status-1",
+			"register": "publication",
+			"schema": "serviceStatus",
+			"data": {
+				"component": "Woo-publicaties zoeken",
+				"state": "available",
+				"message": "",
+				"stateSetAt": "{{datetime:0 07:00}}",
+				"stateSetBy": "admin",
+				"order": 1
+			}
+		},
+		{
+			"key": "status-2",
+			"register": "publication",
+			"schema": "serviceStatus",
+			"data": {
+				"component": "Woo-verzoek indienen",
+				"state": "degraded",
+				"message": "Formulieren worden traag geladen. We zoeken uit waarom.",
+				"stateSetAt": "{{datetime:-1 09:40}}",
+				"stateSetBy": "admin",
+				"order": 2
+			}
+		},
+		{
+			"key": "status-3",
+			"register": "publication",
+			"schema": "serviceStatus",
+			"data": {
+				"component": "Open data downloaden",
+				"state": "available",
+				"message": "",
+				"stateSetAt": "{{datetime:0 07:00}}",
+				"stateSetBy": "admin",
+				"order": 3
+			}
+		},
+		{
+			"key": "status-4",
+			"register": "publication",
+			"schema": "serviceStatus",
+			"data": {
+				"component": "Raadsstukken",
+				"state": "maintenance",
+				"message": "Zaterdag van 07:00 tot 09:00 niet bereikbaar.",
+				"stateSetAt": "{{datetime:0 07:00}}",
+				"stateSetBy": "admin",
+				"order": 4
+			}
+		},
+		{
+			"key": "status-5",
+			"register": "publication",
+			"schema": "serviceStatus",
+			"data": {
+				"component": "Mijn dossiers",
+				"state": "available",
+				"message": "",
+				"stateSetAt": "{{datetime:0 07:00}}",
+				"stateSetBy": "admin",
+				"order": 5
 			}
 		}
 	]
