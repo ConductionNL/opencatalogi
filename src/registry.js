@@ -51,6 +51,7 @@ import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
 import { createCaseTypeActionHandlers } from './services/caseTypeActions.js'
 import { createConnectionHandlers } from './services/connectionRegistry.js'
 import { createPublicationActionHandlers } from './services/publicationActions.js'
+import { createRetentionActionHandlers } from './services/retentionActions.js'
 import { navigationStore, objectStore } from './store/store.js'
 
 export default {
@@ -74,6 +75,13 @@ export default {
 
 	// Row-action handler of the Products and services page.
 	...createCaseTypeActionHandlers({ navigationStore }),
+
+	// Row, bulk and header handlers of the Retention review page.
+	...createRetentionActionHandlers({
+		navigationStore,
+		generateUrl,
+		assign: (url) => window.location.assign(url),
+	}),
 
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
 	//     the list and the canvas are the shared `flows` / `flow-detail`

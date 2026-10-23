@@ -121,5 +121,6 @@ module.exports = {
 	NcModal: slotStub('NcModal'),
 	NcNoteCard,
 	NcSelect,
+	NcTextArea: slotStub('NcTextArea'),
 	NcTextField: slotStub('NcTextField'),
 }

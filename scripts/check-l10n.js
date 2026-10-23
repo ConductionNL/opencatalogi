@@ -419,8 +419,9 @@ function collectManifestStrings() {
 		// folderSidebar.allLabel, the "All" row of an index page's folder
 		// sidebar (adopt-connection-registry's Integrations page).
 		'allLabel',
-		// An index page's Add button.
+		// An index page's Add button and the line under its list.
 		'addLabel',
+		'footerNote',
 	])
 	// A record-list template made of tokens only ("{title}") has no words to translate.
 	const TOKENS_ONLY = /^\s*(\{[^{}]+\}\s*)+$/
@@ -442,7 +443,9 @@ function collectManifestStrings() {
 				Object.values(value).forEach((labels) => {
 					if (labels && typeof labels === 'object') {
 						Object.values(labels)
-							.filter((label) => typeof label === 'string' && label.trim())
+							.filter(
+								(label) => typeof label === 'string' && label.trim(),
+							)
 							.forEach((label) => out.add(label))
 					}
 				})
