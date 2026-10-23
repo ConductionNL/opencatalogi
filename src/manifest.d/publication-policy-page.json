@@ -1,0 +1,130 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"_note": "publication-policy-page (board OcPublicatiebeleid): the publication rules and the banner as object lists over their schemas (add opens the library's form), and the published collections from /api/published-collections. Admin only, in the settings section of the navigation; the roles-and-rights section of the board has no backend yet.",
+	"menu": [
+		{
+			"id": "PublicationPolicyMenu",
+			"label": "Publication policy",
+			"icon": "ShieldCheckOutline",
+			"route": "PublicationPolicy",
+			"section": "settings",
+			"order": 92,
+			"permission": "admin"
+		}
+	],
+	"pages": [
+		{
+			"id": "PublicationPolicy",
+			"route": "/publication-policy",
+			"type": "dashboard",
+			"title": "Publication policy",
+			"permission": "admin",
+			"config": {
+				"description": "What publishes by itself, what collections publish, and the banner on every page",
+				"widgets": [
+					{
+						"id": "policy-rules",
+						"type": "object-list",
+						"title": "Publication rules",
+						"content": {
+							"register": "@resolve:publication_register",
+							"schema": "publicationRule",
+							"limit": 20,
+							"columns": [
+								{
+									"key": "recordType",
+									"label": "Rule"
+								},
+								{
+									"key": "publicationText",
+									"label": "Files under"
+								},
+								{
+									"key": "inspectionTermDays",
+									"label": "Inspection term (days)"
+								},
+								{
+									"key": "enabled",
+									"label": "On"
+								}
+							],
+							"addLabel": "Add rule",
+							"emptyText": "No publication rules yet"
+						}
+					},
+					{
+						"id": "policy-collections",
+						"type": "record-list",
+						"title": "Published collections",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/opencatalogi/api/published-collections",
+								"responsePath": "collections"
+							},
+							"presentation": "rows",
+							"title": "{recordType}",
+							"emptyText": "No collection publishes yet",
+							"limit": 50
+						}
+					},
+					{
+						"id": "policy-banner",
+						"type": "object-list",
+						"title": "Banner",
+						"content": {
+							"register": "@resolve:publication_register",
+							"schema": "instanceBanner",
+							"limit": 10,
+							"columns": [
+								{
+									"key": "body",
+									"label": "Text"
+								},
+								{
+									"key": "startDate",
+									"label": "Visible from"
+								},
+								{
+									"key": "endDate",
+									"label": "Visible until"
+								},
+								{
+									"key": "severity",
+									"label": "Severity"
+								}
+							],
+							"addLabel": "Add banner",
+							"emptyText": "No banner is shown"
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "policy-rules",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 5
+					},
+					{
+						"id": "2",
+						"widgetId": "policy-collections",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 3
+					},
+					{
+						"id": "3",
+						"widgetId": "policy-banner",
+						"gridX": 0,
+						"gridY": 8,
+						"gridWidth": 12,
+						"gridHeight": 3
+					}
+				]
+			}
+		}
+	]
+}

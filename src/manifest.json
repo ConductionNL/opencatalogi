@@ -903,6 +903,36 @@
 						"type": "publication-visibility",
 						"title": "Publication status",
 						"icon": "EyeOutline"
+					},
+					{
+						"id": "pub-inspection",
+						"type": "record-list",
+						"title": "Public inspection",
+						"icon": "EyeOutline",
+						"content": {
+							"register": "@resolve:publication_register",
+							"schema": "commentPeriod",
+							"filter": {
+								"publication": "@objectId"
+							},
+							"presentation": "rows",
+							"title": "{legalRemedy}",
+							"meta": {
+								"parts": [
+									"From {startDate|date}",
+									"until {endDate|date}",
+									"{termDays} days"
+								]
+							},
+							"valueLabels": {
+								"legalRemedy": {
+									"zienswijze": "Open for views (zienswijzen)",
+									"bezwaar": "Open for objections (bezwaar)"
+								}
+							},
+							"emptyText": "No public inspection period",
+							"limit": 5
+						}
 					}
 				],
 				"layout": [
@@ -991,6 +1021,14 @@
 						"widgetId": "pub-visibility",
 						"gridX": 0,
 						"gridY": 26,
+						"gridWidth": 12,
+						"gridHeight": 3
+					},
+					{
+						"id": "13",
+						"widgetId": "pub-inspection",
+						"gridX": 0,
+						"gridY": 29,
 						"gridWidth": 12,
 						"gridHeight": 3
 					}
