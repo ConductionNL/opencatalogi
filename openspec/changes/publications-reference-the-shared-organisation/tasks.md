@@ -44,7 +44,7 @@ not run:
    already exists.
 2. `occ openregister:schemas:prune-retired --app opencatalogi --slug organization --apply`
 
-- [ ] 4.1 Run on the fleet. The descriptor change alone removes nothing:
+- [ ] 4.1 Run on the fleet. The descriptor change alone removes nothing: (live pass, decision 139)
       `ImportHandler` unions schema ids.
 
 ## 6. Amendment 2026-10-05: rights follow the named unit (row 12.34)
