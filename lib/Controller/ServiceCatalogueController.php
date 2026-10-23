@@ -161,12 +161,13 @@ class ServiceCatalogueController extends Controller {
 	 * a reason, because an obligation that is hidden reads as an obligation
 	 * that does not exist.
 	 *
-	 * @return JSONResponse The catalogue, grouped.
+	 * @return JSONResponse The catalogue, grouped, and its entries again as `results`.
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
 	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-public-catalogue-lists-everything-that-can-be-requested-req-psc-101
+	 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-an-administrator-lists-the-catalogue-entries-with-their-availability-sca-001
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
@@ -198,7 +199,10 @@ class ServiceCatalogueController extends Controller {
 			);
 		}
 
-		return $this->withCors(response: new JSONResponse($catalogue));
+		// `results` repeats the flat entry list under the key a list page reads.
+		return $this->withCors(
+			response: new JSONResponse(array_merge($catalogue, ['results' => $catalogue['entries']]))
+		);
 
 	}//end index()
 

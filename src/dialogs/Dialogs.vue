@@ -12,12 +12,14 @@ import { navigationStore } from './../store/store.js'
 		<DeleteAttachmentDialog
 			v-if="navigationStore.dialog === 'deleteAttachment'" />
 		<UploadFiles />
+		<CaseTypeResyncDialog v-if="navigationStore.dialog === 'caseTypeResync'" />
 	</div>
 </template>
 
 <script>
 import UploadFiles from '../modals/generic/UploadFiles.vue'
 import DeleteAttachmentDialog from './attachment/DeleteAttachmentDialog.vue'
+import CaseTypeResyncDialog from './caseType/CaseTypeResyncDialog.vue'
 import CopyObjectDialog from './generic/CopyObjectDialog.vue'
 import DeleteObjectDialog from './generic/DeleteObjectDialog.vue'
 import DeleteListingDialog from './listing/DeleteListingDialog.vue'
@@ -31,6 +33,7 @@ export default {
 		DeleteListingDialog,
 		ViewLogDialog,
 		DeleteAttachmentDialog,
+		CaseTypeResyncDialog,
 	},
 }
 </script>

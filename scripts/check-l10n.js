@@ -419,7 +419,11 @@ function collectManifestStrings() {
 		// folderSidebar.allLabel, the "All" row of an index page's folder
 		// sidebar (adopt-connection-registry's Integrations page).
 		'allLabel',
+		// An index page's Add button.
+		'addLabel',
 	])
+	// A record-list template made of tokens only ("{title}") has no words to translate.
+	const TOKENS_ONLY = /^\s*(\{[^{}]+\}\s*)+$/
 	const out = new Set()
 	const visit = (node) => {
 		if (Array.isArray(node)) {
@@ -430,7 +434,18 @@ function collectManifestStrings() {
 		for (const [key, value] of Object.entries(node)) {
 			if (key.startsWith('_')) continue
 			if (FIELDS.has(key) && typeof value === 'string' && value.trim()) {
-				out.add(value)
+				if (!TOKENS_ONLY.test(value)) {
+					out.add(value)
+				}
+			} else if (key === 'valueLabels' && value && typeof value === 'object') {
+				// `{ field: { storedValue: "Label" } }`: the labels are shown translated.
+				Object.values(value).forEach((labels) => {
+					if (labels && typeof labels === 'object') {
+						Object.values(labels)
+							.filter((label) => typeof label === 'string' && label.trim())
+							.forEach((label) => out.add(label))
+					}
+				})
 			} else {
 				visit(value)
 			}

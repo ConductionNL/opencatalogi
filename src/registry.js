@@ -48,6 +48,7 @@ import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
 import CatalogPublicationsIndex from './views/publications/CatalogPublicationsIndex.vue'
 import FederationSearch from './views/search/FederationSearch.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
+import { createCaseTypeActionHandlers } from './services/caseTypeActions.js'
 import { createConnectionHandlers } from './services/connectionRegistry.js'
 import { createPublicationActionHandlers } from './services/publicationActions.js'
 import { navigationStore, objectStore } from './store/store.js'
@@ -70,6 +71,9 @@ export default {
 		showError,
 		t,
 	}),
+
+	// Row-action handler of the Products and services page.
+	...createCaseTypeActionHandlers({ navigationStore }),
 
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
 	//     the list and the canvas are the shared `flows` / `flow-detail`
