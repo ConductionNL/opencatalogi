@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+ * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use OCP\IRequest;
 /**
  * Answers the obligation overview.
  *
- * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+ * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
 class ObligationController extends Controller {
 
@@ -66,7 +66,7 @@ class ObligationController extends Controller {
 	 *
 	 * @return JSONResponse The overview, or 503 when the sources cannot be read.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function index(): JSONResponse {

@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+ * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use OCP\EventDispatcher\Event;
  * unknown), `publishedAt` (empty while unpublished), `reference` and,
  * optionally, `category` and `url`.
  *
- * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+ * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
 class ObligationsRequestedEvent extends Event {
 
@@ -65,7 +65,7 @@ class ObligationsRequestedEvent extends Event {
 	 *
 	 * @return string The app id.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function getAppId(): string {
 		return $this->appId;
@@ -79,7 +79,7 @@ class ObligationsRequestedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function setObligations(array $obligations): void {
 		$this->obligations = array_values($obligations);
@@ -91,7 +91,7 @@ class ObligationsRequestedEvent extends Event {
 	 *
 	 * @return array<int, array<string, mixed>>|null The obligations, or null when nobody answered.
 	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-obligation-overview/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function getObligations(): ?array {
 		return $this->obligations;
