@@ -14,12 +14,10 @@
  * 2026-09-19 and this paragraph names them, because a docblock that still
  * advertises a surface is what stops the next person looking for it.
  *
- * There is NO obligation overview here, and this sentence says so because the
- * previous one claimed there was. `ObligationOverviewService` assembles an
- * overview from what it is given, and nothing gives it anything yet: the
- * per-source readers and the harvest intake it reads from are
- * `harvest-feed-intake`. REQ-PIN-110 is unmet until that lands, and a docblock
- * advertising the surface is what stops the next person checking.
+ * The obligation overview is not here: it is ObligationController
+ * (`GET /api/obligations`), which asks every registered source through
+ * ObligationReadService. The harvest intake is not a source yet; it waits on
+ * `harvest-feed-intake`.
  *
  * Every write here is admin-gated. The two public surfaces of this change live
  * in InspectionController (the inspection link) and in the public search

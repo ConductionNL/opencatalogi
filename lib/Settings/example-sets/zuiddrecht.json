@@ -1,6 +1,6 @@
 {
 	"set": "zuiddrecht",
-	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications the dossier and saved search of the example resident Sanne de Vries (cast key sanne), and a service catalogue: three case types, five products and services (two of them need repair: one has no form name, one names a case type that does not exist) two knowledge articles, and five older publications whose retention term ends within 30 days or has ended, for the retention review. Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
+	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications the dossier and saved search of the example resident Sanne de Vries (cast key sanne), and a service catalogue: three case types, five products and services (two of them need repair: one has no form name, one names a case type that does not exist) two knowledge articles, and five older publications whose retention term ends within 30 days or has ended, for the retention review, and the four source systems the Woo obligations overview reads. Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
 	"objects": [
 		{
 			"key": "catalogus",
@@ -866,6 +866,50 @@
 				"retentionTermMonths": 60,
 				"retentionAction": "review",
 				"retentionExpiresAt": "{{datetime:23 00:00}}"
+			}
+		},
+		{
+			"key": "bron-dossiq",
+			"register": "publication",
+			"schema": "obligationSource",
+			"data": {
+				"appId": "dossiq",
+				"title": "Woo-besluiten",
+				"kind": "app",
+				"enabled": true
+			}
+		},
+		{
+			"key": "bron-notubiz",
+			"register": "publication",
+			"schema": "obligationSource",
+			"data": {
+				"appId": "notubiz",
+				"title": "Raadsstukken",
+				"kind": "harvest",
+				"enabled": true
+			}
+		},
+		{
+			"key": "bron-decos",
+			"register": "publication",
+			"schema": "obligationSource",
+			"data": {
+				"appId": "decos",
+				"title": "Convenanten en brieven",
+				"kind": "harvest",
+				"enabled": true
+			}
+		},
+		{
+			"key": "bron-ibabs",
+			"register": "publication",
+			"schema": "obligationSource",
+			"data": {
+				"appId": "ibabs",
+				"title": "Besluitenlijsten college",
+				"kind": "harvest",
+				"enabled": true
 			}
 		}
 	]
