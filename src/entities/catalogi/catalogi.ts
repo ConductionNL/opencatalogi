@@ -11,7 +11,7 @@
  */
 
 import type { SafeParseReturnType } from 'zod'
-import type { CatalogStatus, TCatalogi } from './catalogi.types'
+import type { CatalogStatus, TCatalogi, TCatalogStaffAccess } from './catalogi.types'
 
 import { z } from 'zod'
 
@@ -36,6 +36,7 @@ export class Catalogi implements TCatalogi {
 	public hasWooSitemap!: boolean
 	public hasOoapi!: boolean
 	public showWithheld!: boolean
+	public staffAccess?: TCatalogStaffAccess
 
 	/**
 	 * @param data
@@ -62,6 +63,13 @@ export class Catalogi implements TCatalogi {
 		this.hasWooSitemap = data?.hasWooSitemap || false
 		this.hasOoapi = data?.hasOoapi || false
 		this.showWithheld = data?.showWithheld === true
+		if (data?.staffAccess) {
+			this.staffAccess = {
+				restricted: data.staffAccess.restricted === true,
+				readGroups: [...(data.staffAccess.readGroups || [])],
+				editGroups: [...(data.staffAccess.editGroups || [])],
+			}
+		}
 	}
 
 	/* istanbul ignore next */
@@ -92,6 +100,13 @@ export class Catalogi implements TCatalogi {
 			hasWooSitemap: z.boolean(),
 			hasOoapi: z.boolean(),
 			showWithheld: z.boolean(),
+			staffAccess: z
+				.object({
+					restricted: z.boolean(),
+					readGroups: z.array(z.string()),
+					editGroups: z.array(z.string()),
+				})
+				.optional(),
 		})
 
 		const result = schema.safeParse({
