@@ -1423,7 +1423,10 @@ OC.L10N.register(
         "The article of the Woo the ground rests on.": "Het artikel van de Woo waarop de grond berust.",
         "Label": "Omschrijving",
         "The ground in words, as dossiq's list names it.": "De grond in woorden, zoals de lijst van dossiq hem noemt.",
-        "Manage your publications and their status": "Beheer uw publicaties en hun status"
+        "Manage your publications and their status": "Beheer uw publicaties en hun status",
+        "Merge": "Samenvoegen",
+        "Migrate": "Migreren",
+        "Select exactly two publications to merge": "Selecteer precies twee publicaties om samen te voegen"
     },
     "nplurals=2; plural=(n != 1);"
 )

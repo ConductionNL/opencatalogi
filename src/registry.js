@@ -36,6 +36,8 @@ import {
 	CnRelationshipGraph,
 	CnTreeView,
 } from '@conduction/nextcloud-vue'
+import { showError } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
@@ -61,8 +63,13 @@ export default {
 		assign: (url) => window.location.assign(url),
 	}),
 
-	// Row-action handler: the Publications index's File list.
-	...createPublicationActionHandlers({ objectStore, navigationStore }),
+	// Row and bulk action handlers of the Publications index.
+	...createPublicationActionHandlers({
+		objectStore,
+		navigationStore,
+		showError,
+		t,
+	}),
 
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
 	//     the list and the canvas are the shared `flows` / `flow-detail`

@@ -166,6 +166,34 @@ describe('translateActionLabels', () => {
 		})
 	})
 
+	it('translates the bulk action labels beside the row actions', () => {
+		const out = translateActionLabels(
+			{
+				pages: [
+					{
+						id: 'Publications',
+						config: {
+							publicationPairConfig: {
+								bulkActions: [
+									{
+										id: 'lock',
+										label: 'Lock',
+										handler: 'openSelectionDialog',
+									},
+								],
+							},
+						},
+					},
+				],
+			},
+			(key) => `nl:${key}`,
+		)
+
+		expect(out.pages[0].config.publicationPairConfig.bulkActions).toEqual([
+			{ id: 'lock', label: 'nl:Lock', handler: 'openSelectionDialog' },
+		])
+	})
+
 	it('does not mutate its input', () => {
 		const snapshot = JSON.parse(JSON.stringify(input))
 
@@ -184,5 +212,26 @@ describe('translateActionLabels', () => {
 
 		expect(fileList(out.pages).label).toBe('Bestandenlijst')
 		expect(fileList(manifest.pages).label).toBe('File list')
+	})
+
+	it('ships every Publications bulk action label in the nl catalogue', () => {
+		const bulk = page('Publications').config.publicationPairConfig.bulkActions
+
+		expect(bulk.map((a) => a.id)).toEqual([
+			'publish',
+			'depublish',
+			'lock',
+			'unlock',
+			'validate',
+			'merge',
+			'migrate',
+		])
+		for (const action of bulk) {
+			expect(nlCatalogue.translations[action.label]).toEqual(
+				expect.any(String),
+			)
+		}
+		expect(enCatalogue.translations.Depublish).toBe('Depublish')
+		expect(nlCatalogue.translations.Depublish).toBe('Publicatie intrekken')
 	})
 })

@@ -1468,7 +1468,10 @@ OC.L10N.register(
         "The article of the Woo the ground rests on.": "The article of the Woo the ground rests on.",
         "Label": "Label",
         "The ground in words, as dossiq's list names it.": "The ground in words, as dossiq's list names it.",
-        "Manage your publications and their status": "Manage your publications and their status"
+        "Manage your publications and their status": "Manage your publications and their status",
+        "Merge": "Merge",
+        "Migrate": "Migrate",
+        "Select exactly two publications to merge": "Select exactly two publications to merge"
     },
     "nplurals=2; plural=(n != 1);"
 )
