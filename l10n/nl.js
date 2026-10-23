@@ -1505,7 +1505,15 @@ OC.L10N.register(
         "No term": "Geen termijn",
         "Nothing has to be published": "Er hoeft niets gepubliceerd te worden",
         "The obligation sources could not be read, so this is not an overview of nothing.": "De bronnen van de verplichtingen konden niet worden gelezen, dus dit is geen overzicht van niets.",
-        "Next term {nextDue|date}": "Eerstvolgende termijn {nextDue|date}"
+        "Next term {nextDue|date}": "Eerstvolgende termijn {nextDue|date}",
+        "Staff access": "Toegang medewerkers",
+        "Only these groups can see and edit this catalogue's publications": "Alleen deze groepen zien en bewerken de publicaties van deze catalogus",
+        "Who can see unpublished publications": "Wie concepten mag zien",
+        "Who can edit": "Wie mag bewerken",
+        "Administrators always keep access. Another catalogue over the same publications shares this access.": "Beheerders houden altijd toegang. Een andere catalogus over dezelfde publicaties deelt deze toegang.",
+        "All staff": "Alle medewerkers",
+        "Restricted to administrators": "Alleen beheerders",
+        "Restricted to {groups}": "Alleen {groups}"
     },
     "nplurals=2; plural=(n != 1);"
 )

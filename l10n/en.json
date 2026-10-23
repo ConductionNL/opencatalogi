@@ -1549,7 +1549,15 @@
         "No term": "No term",
         "Nothing has to be published": "Nothing has to be published",
         "The obligation sources could not be read, so this is not an overview of nothing.": "The obligation sources could not be read, so this is not an overview of nothing.",
-        "Next term {nextDue|date}": "Next term {nextDue|date}"
+        "Next term {nextDue|date}": "Next term {nextDue|date}",
+        "Staff access": "Staff access",
+        "Only these groups can see and edit this catalogue's publications": "Only these groups can see and edit this catalogue's publications",
+        "Who can see unpublished publications": "Who can see unpublished publications",
+        "Who can edit": "Who can edit",
+        "Administrators always keep access. Another catalogue over the same publications shares this access.": "Administrators always keep access. Another catalogue over the same publications shares this access.",
+        "All staff": "All staff",
+        "Restricted to administrators": "Restricted to administrators",
+        "Restricted to {groups}": "Restricted to {groups}"
     },
     "plurals": {}
 }
