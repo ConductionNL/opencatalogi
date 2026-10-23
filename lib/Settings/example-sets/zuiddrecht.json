@@ -1,6 +1,6 @@
 {
 	"set": "zuiddrecht",
-	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications the dossier and saved search of the example resident Sanne de Vries (cast key sanne), and a service catalogue: three case types, five products and services (two of them need repair: one has no form name, one names a case type that does not exist) and two knowledge articles. Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
+	"$comment": "OpenCatalogi's part of the Zuiddrecht example set, installed with `occ openregister:example-set:install zuiddrecht` (the loader lives in OpenRegister). A catalog for the municipality, themes that follow the subjects of the Zuiddrecht site, thirteen publications the dossier and saved search of the example resident Sanne de Vries (cast key sanne), and a service catalogue: three case types, five products and services (two of them need repair: one has no form name, one names a case type that does not exist) two knowledge articles, and five older publications whose retention term ends within 30 days or has ended, for the retention review. Every date is relative to the install day. The documents of each publication are in example-sets/zuiddrecht/<publication key>/, made by scripts/example-sets/make-zuiddrecht-documents.py, and the loader attaches them as shared files. Dossiq's fragment runs after this one and finds the Woo decision by its title.",
 	"objects": [
 		{
 			"key": "catalogus",
@@ -781,6 +781,91 @@
 				"draft": false,
 				"helpfulCount": 14,
 				"notHelpfulCount": 2
+			}
+		},
+		{
+			"key": "bewaar-woo-parkeervergunningen",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Woo-besluit over de parkeervergunningen van 2021",
+				"summary": "Besluit op een Woo-verzoek over de uitgifte van parkeervergunningen in 2021.",
+				"publicationDate": "{{datetime:-1845 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat014",
+				"retentionCategory": "Woo-verzoeken en -besluiten",
+				"retentionTermMonths": 60,
+				"retentionAction": "review",
+				"retentionExpiresAt": "{{datetime:-19 00:00}}"
+			}
+		},
+		{
+			"key": "bewaar-convenant-leerlingenvervoer",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Convenant leerlingenvervoer 2016 tot 2026",
+				"summary": "Afspraken met de vervoerders over het leerlingenvervoer.",
+				"publicationDate": "{{datetime:-3735 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat011",
+				"retentionCategory": "Convenanten",
+				"retentionTermMonths": 120,
+				"retentionAction": "review",
+				"retentionExpiresAt": "{{datetime:-22 00:00}}"
+			}
+		},
+		{
+			"key": "bewaar-evaluatie-sportbeleid",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Evaluatie sportbeleid 2019",
+				"summary": "Wat het sportbeleid van 2015 tot 2019 opleverde.",
+				"publicationDate": "{{datetime:-2537 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat016",
+				"retentionCategory": "Onderzoeksrapporten",
+				"retentionTermMonths": 84,
+				"retentionAction": "depublish",
+				"retentionExpiresAt": "{{datetime:10 00:00}}"
+			}
+		},
+		{
+			"key": "bewaar-raadsstukken-oktober-2021",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Raadsstukken voor de vergadering van 21 oktober 2021",
+				"summary": "De stukken voor de raadsvergadering van 21 oktober 2021.",
+				"publicationDate": "{{datetime:-1835 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat004",
+				"retentionCategory": "Vergaderstukken",
+				"retentionTermMonths": 60,
+				"retentionAction": "archive",
+				"retentionExpiresAt": "{{datetime:14 00:00}}"
+			}
+		},
+		{
+			"key": "bewaar-woo-begraafplaats",
+			"register": "publication",
+			"schema": "publication",
+			"data": {
+				"title": "Woo-besluit over de aanbesteding begraafplaats",
+				"summary": "Besluit op een Woo-verzoek over de aanbesteding van het onderhoud van de begraafplaats.",
+				"publicationDate": "{{datetime:-1819 10:00}}",
+				"status": "published",
+				"organization": "{{organisation:zuiddrecht}}",
+				"wooCategory": "infocat014",
+				"retentionCategory": "Woo-verzoeken en -besluiten",
+				"retentionTermMonths": 60,
+				"retentionAction": "review",
+				"retentionExpiresAt": "{{datetime:23 00:00}}"
 			}
 		}
 	]
