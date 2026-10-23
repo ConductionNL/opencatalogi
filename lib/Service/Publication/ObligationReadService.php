@@ -88,7 +88,7 @@ class ObligationReadService {
 	public function read(?DateTimeInterface $now=null): array {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		if ($now !== null) {
-			$moment = DateTimeImmutable::createFromInterface($now);
+			$moment = new DateTimeImmutable($now->format(DateTimeInterface::ATOM));
 		}
 
 		$sources = $this->loadSources();
@@ -142,50 +142,20 @@ class ObligationReadService {
 
 		$dueThisWeek = 0;
 		$publishedThisMonth = 0;
-		$bySource = [];
-		foreach ($sources as $source) {
-			if ((bool)($source['enabled'] ?? true) === false) {
-				continue;
-			}
-
-			$appId = (string)($source['appId'] ?? '');
-			$bySource[$appId] = [
-				'appId'       => $appId,
-				'title'       => (string)($source['title'] ?? $appId),
-				'outstanding' => 0,
-				'late'        => 0,
-				'nextDue'     => null,
-			];
-		}
-
+		$bySource = $this->sourceRows(sources: $sources);
 		foreach ($overview['obligations'] as $obligation) {
 			$state = $obligation['state'];
 			if ($state === 'published') {
 				$publishedAt = $this->dateOf(value: $obligation['publishedAt'] ?? '');
-				if ($publishedAt !== null && $publishedAt >= $monthStart) {
-					$publishedThisMonth++;
-				}
-
+				$publishedThisMonth += (int)($publishedAt !== null && $publishedAt >= $monthStart);
 				continue;
 			}
 
 			$due = $this->dateOf(value: $obligation['dueDate'] ?? '');
-			if ($state === 'due' && $due !== null && $due <= $weekEnd) {
-				$dueThisWeek++;
-			}
-
-			$row = &$bySource[$obligation['source']];
-			$row['outstanding']++;
-			if ($state === 'late') {
-				$row['late']++;
-			}
-
-			if ($due !== null && ($row['nextDue'] === null || $due < $this->dateOf(value: $row['nextDue']))) {
-				$row['nextDue'] = $due->format(DateTimeInterface::ATOM);
-			}
-
-			unset($row);
-		}//end foreach
+			$dueThisWeek += (int)($state === 'due' && $due !== null && $due <= $weekEnd);
+			$source = $obligation['source'];
+			$bySource[$source] = $this->countInto(row: $bySource[$source], state: $state, due: $due);
+		}
 
 		$order = ['late' => 0, 'due' => 1, 'unknown' => 2, 'published' => 3];
 		usort(
@@ -201,6 +171,56 @@ class ObligationReadService {
 		return $overview;
 
 	}//end summarise()
+
+	/**
+	 * An empty row per enabled source, keyed by app id.
+	 *
+	 * @param array<int, array<string, mixed>> $sources The registered sources.
+	 *
+	 * @return array<string, array<string, mixed>> The rows.
+	 */
+	private function sourceRows(array $sources): array {
+		$rows = [];
+		foreach ($sources as $source) {
+			if ((bool)($source['enabled'] ?? true) === false) {
+				continue;
+			}
+
+			$appId = (string)($source['appId'] ?? '');
+			$rows[$appId] = [
+				'appId'       => $appId,
+				'title'       => (string)($source['title'] ?? $appId),
+				'outstanding' => 0,
+				'late'        => 0,
+				'nextDue'     => null,
+			];
+		}
+
+		return $rows;
+
+	}//end sourceRows()
+
+	/**
+	 * Count one outstanding obligation into its source's row.
+	 *
+	 * @param array<string, mixed>   $row   The source's row.
+	 * @param string                 $state The obligation's state.
+	 * @param DateTimeImmutable|null $due   Its due date.
+	 *
+	 * @return array<string, mixed> The row.
+	 */
+	private function countInto(array $row, string $state, ?DateTimeImmutable $due): array {
+		$row['outstanding']++;
+		$row['late'] += (int)($state === 'late');
+
+		$next = $this->dateOf(value: $row['nextDue']);
+		if ($due !== null && ($next === null || $due < $next)) {
+			$row['nextDue'] = $due->format(DateTimeInterface::ATOM);
+		}
+
+		return $row;
+
+	}//end countInto()
 
 	/**
 	 * Read a date, or null when it cannot be read.
