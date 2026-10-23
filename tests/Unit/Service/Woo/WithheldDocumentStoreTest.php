@@ -113,17 +113,27 @@ class WithheldDocumentStoreTest extends TestCase {
 		$this->assertFalse($this->store()->publicationExists(''));
 	}//end testThePublicationIsLookedUp()
 
-	public function testWithoutOpenRegisterNothingExistsAndNothingIsWritten(): void {
-		$this->assertFalse($this->store(installed: false)->publicationExists('pub-1'));
+	public function testAFailedLookupIsNotAMissingPublication(): void {
+		$this->objects->findFails = true;
 
+		$this->assertNull($this->store()->publicationExists('pub-1'));
+	}//end testAFailedLookupIsNotAMissingPublication()
+
+	public function testWithoutOpenRegisterTheLookupCannotAnswer(): void {
+		$this->assertNull($this->store(installed: false)->publicationExists('pub-1'));
+	}//end testWithoutOpenRegisterTheLookupCannotAnswer()
+
+	public function testWithoutOpenRegisterNothingIsWritten(): void {
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('OpenRegister is not available');
 		$this->store(installed: false)->replace('pub-1', [], 'dossiq');
-	}//end testWithoutOpenRegisterNothingExistsAndNothingIsWritten()
+	}//end testWithoutOpenRegisterNothingIsWritten()
+
+	public function testAnUnconfiguredRegisterCannotAnswerTheLookup(): void {
+		$this->assertNull($this->store(configured: '')->publicationExists('pub-1'));
+	}//end testAnUnconfiguredRegisterCannotAnswerTheLookup()
 
 	public function testAnUnconfiguredRegisterIsNamed(): void {
-		$this->assertFalse($this->store(configured: '')->publicationExists('pub-1'));
-
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('withheld_document_schema');
 		$this->store(configured: '')->replace('pub-1', [], 'dossiq');

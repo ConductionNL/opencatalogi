@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Dashboard\MostViewedPublicationsWidget;
 use OCA\OpenCatalogi\Dashboard\RetentionWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
+use OCA\OpenCatalogi\Listener\CatalogAccessListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
 use OCA\OpenCatalogi\Listener\CatalogScopePendingListener;
@@ -170,6 +171,19 @@ class Application extends App implements IBootstrap {
 		// infinite event loop on every catalog update/soft-delete.
 		$context->registerEventListener(ObjectCreatingEvent::class, CatalogSchemaEventListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, CatalogSchemaEventListener::class);
+
+		// Catalogue staff access (catalogue-staff-access): refuse a change by a
+		// non-administrator before the write, recompute the covered schemas' rules after it.
+		$catalogAccessEvents = [
+			ObjectCreatingEvent::class,
+			ObjectUpdatingEvent::class,
+			ObjectCreatedEvent::class,
+			ObjectUpdatedEvent::class,
+			ObjectDeletedEvent::class,
+		];
+		foreach ($catalogAccessEvents as $catalogAccessEvent) {
+			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
+		}
 
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is

@@ -495,6 +495,8 @@ import '../../css/json-highlight.css'
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcDialog,
@@ -791,33 +793,20 @@ export default {
 
 			this.loading = true
 			try {
-				const response = await fetch(
-					'/index.php/apps/openregister/api/migrate',
+				const { data } = await axios.post(
+					generateUrl('/apps/openregister/api/migrate'),
 					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							sourceRegister: this.sourceRegister.id,
-							sourceSchema: this.sourceSchema.id,
-							targetRegister: this.targetRegister.id,
-							targetSchema: this.targetSchema.id,
-							objects: this.selectedObjects.map((obj) => obj.id),
-							mapping: this.mapping,
-						}),
+						sourceRegister: this.sourceRegister.id,
+						sourceSchema: this.sourceSchema.id,
+						targetRegister: this.targetRegister.id,
+						targetSchema: this.targetSchema.id,
+						objects: this.selectedObjects.map((obj) => obj.id),
+						mapping: this.mapping,
 					},
 				)
 
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`)
-				}
-
-				this.migrationResult = await response.json()
+				this.migrationResult = data
 				this.step = 4
-
-				// Refresh the object list
-				objectStore.refreshObjectList()
 			} catch (error) {
 				console.error('Error performing migration:', error)
 				this.migrationResult = {

@@ -85,6 +85,10 @@ class ProvideManifestConfigStateListener implements IEventListener {
 		'woo_register',
 		'woo_batch_schema',
 		'woo_assessment_schema',
+		'service_catalogue_register',
+		'service_catalogue_entry_schema',
+		'case_type_definition_schema',
+		'knowledge_article_schema',
 	];
 
 	/**
