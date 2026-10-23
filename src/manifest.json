@@ -842,11 +842,10 @@
 					},
 					{
 						"id": "pub-files",
-						"type": "integration",
-						"integrationId": "files",
+						"type": "publication-attachments",
 						"title": "Attachments",
 						"icon": "FolderOutline",
-						"props": {
+						"content": {
 							"maxDisplay": 100
 						}
 					},

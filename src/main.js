@@ -35,6 +35,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
+import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import appIcons from './icons.js'
@@ -104,6 +105,16 @@ registerDashboardWidget('publication-visibility', {
 	defaultContent: {},
 	displayName: 'Publication status',
 	icon: 'EyeOutline',
+	surfaces: ['detail-page'],
+})
+// The publication's attachments with Add attachment, which opens the app's
+// upload dialog (publication-attachment-upload-dialog, board OcBijlageToevoegen).
+registerDashboardWidget('publication-attachments', {
+	renderer: PublicationAttachmentsWidget,
+	form: null,
+	defaultContent: { maxDisplay: 100 },
+	displayName: 'Attachments',
+	icon: 'FolderOutline',
 	surfaces: ['detail-page'],
 })
 // `theme-preview` is registered with the local `ThemePreviewWidget` adapter,

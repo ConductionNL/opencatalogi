@@ -69,13 +69,13 @@ describe('Publications "File list" row action', () => {
 describe('PublicationDetail Attachments widget', () => {
 	// CnFilesCard requests `limit=maxDisplay` (default 5), so the widget shows
 	// only as many files as this allows.
-	it('lists up to 100 files', () => {
+	it('lists up to 100 files, with the add button of the app widget', () => {
 		const files = page('PublicationDetail').config.widgets.find(
 			(w) => w.id === 'pub-files',
 		)
 
-		expect(files.integrationId).toBe('files')
-		expect(files.props).toEqual({ maxDisplay: 100 })
+		expect(files.type).toBe('publication-attachments')
+		expect(files.content).toEqual({ maxDisplay: 100 })
 	})
 })
 
