@@ -435,8 +435,8 @@ class PublicationsController extends Controller {
 	 *
 	 * @return object|null The one matching publication, or null.
 	 *
-	 * @spec openspec/changes/publication-resolves-by-slug/specs/publications/spec.md#requirement-retrieve-a-single-publication-by-catalog-slug-and-object-uuid-or-slug-pub-002
-	 * @spec openspec/changes/publication-resolves-by-slug/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
+	 * @spec openspec/specs/publications/spec.md#requirement-retrieve-a-single-publication-by-catalog-slug-and-object-uuid-or-slug-pub-002
+	 * @spec openspec/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
 	 */
 	private function findBySlugInCatalogScope(
 		object $objectService,
@@ -740,7 +740,7 @@ class PublicationsController extends Controller {
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/publications/spec.md
-	 * @spec openspec/changes/publication-resolves-by-slug/specs/publications/spec.md#requirement-slug-resolution-must-be-backwards-compatible-pub-020
+	 * @spec openspec/specs/publications/spec.md#requirement-slug-resolution-must-be-backwards-compatible-pub-020
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

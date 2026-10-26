@@ -54,16 +54,21 @@ publications <uuid-a>, <uuid-b>`. A 404 rather than a 409: the endpoint is anony
 public, a 409 would tell any caller that two publications share a case number, and a
 citizen cannot act on it (issue plan Q8, working assumption pending Robert Zondervan).
 
-### D4 — No new route; the admin detail page is out of scope
+### D4 — No new route; the admin detail page works through OpenRegister
 
 `appinfo/routes.php` puts no format requirement on `{id}`, so the public endpoint
-needs no route change. The admin detail page (`#/publications/{catalogSlug}/{id}`,
-`PublicationDetail.vue`) does NOT use this endpoint: it loads through OpenRegister's
-object API (`objectStore.fetchObject('publication', id)`) and then reads the store by
-the route id. OpenRegister resolves a slug there, but the store lookup by id would not
-find the object, so a slug in the admin route is not supported by this change. The
-stable link is the public one (API and website); making the admin route slug-aware is
-a separate decision (verified 2026-10-22 while implementing task 2.1).
+needs no route change. The admin detail page (history route
+`/apps/opencatalogi/publications/{catalogSlug}/{register}/{schema}/{id}`, rendered by
+`CnDetailPage` from `@conduction/nextcloud-vue`, not the dead `PublicationDetail.vue`)
+does NOT use this endpoint: it loads the object through OpenRegister's object API with
+the route id. OpenRegister resolves a slug there (openregister#4037, PR #4774), and since
+its audit-trail and files/uses/used sub-routes resolve a slug within register and schema
+as well, the page is complete on a slug URL: data, history, attachments and relations
+(verified on the NC 35 rig, 2026-10-26). No OpenCatalogi code is needed. An ambiguous
+slug (two objects in one register and schema, a pre-existing duplicate) gives an empty
+page with a 409 from OpenRegister in the browser console; the UUID URL keeps working.
+Opening a publication by slug in the admin app is in scope and working (Robert
+Zondervan, 2026-10-23).
 
 ## Backwards compatibility
 

@@ -11,7 +11,7 @@ Acceptance criteria:
 
 ## 2. UI route
 
-- [-] 2.1 Verify `#/publications/{catalogSlug}/{slug}` opens the publication through the same endpoint; change nothing unless it fails — the admin route does not use this endpoint (design D4); not changed, open decision
+- [x] 2.1 Verify the admin detail route opens a publication by slug — realised by OpenRegister (openregister#4774), no OpenCatalogi code: the page loads the object through OpenRegister's object API, whose slug resolve also serves the history, attachments and relation widgets (verified on the NC 35 rig, 2026-10-26; design D4)
 
 ## 3. Tests and verification
 

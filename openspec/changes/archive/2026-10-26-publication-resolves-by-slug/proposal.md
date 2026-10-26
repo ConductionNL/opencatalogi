@@ -27,8 +27,10 @@ NC 35 rig: `GET /api/{catalogSlug}/{uuid}` answers 200 with `@self.slug` set, an
   catalogue may share a `kenmerk`; OpenRegister only guarantees uniqueness per register
   and schema) is refused: the endpoint answers 404 and logs a warning naming the
   catalogue, the slug and the matching UUIDs. It never returns the first match.
-- The admin detail route `#/publications/{catalogSlug}/{id}` is not changed: it loads
-  through OpenRegister's object API, not this endpoint (see design D4).
+- The admin detail route (`/apps/opencatalogi/publications/{catalogSlug}/{register}/{schema}/{id}`)
+  needs no change and opens a publication by slug as well: it loads through OpenRegister's
+  object API, whose slug resolve (openregister#4774) also covers history, attachments and
+  relations. An ambiguous slug gives an empty page with a 409 in the console (see design D4).
 - Nothing else changes: UUID links, the response shape, federation and directory links
   (they keep the UUID), sitemap and schema.org output (out of scope, Robert 2026-10-19).
 
