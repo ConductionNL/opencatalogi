@@ -97,13 +97,58 @@ class PortalContributionProvider {
 	 *
 	 * @param CitizenCollectionService|null $collections The dossiers.
 	 * @param WooRequestIntake|null $wooRequests Mints a Woo request and arms its term.
+	 * @param ServiceStatusIndex|null $statusIndex The service status, for the public index.
 	 */
 	public function __construct(
 		private readonly ?CitizenCollectionService $collections=null,
 		private readonly ?WooRequestIntake $wooRequests=null,
+		private readonly ?ServiceStatusIndex $statusIndex=null,
 	) {
 
 	}//end __construct()
+
+	/**
+	 * The public index a portal's visitors read: the service status.
+	 *
+	 * Portaliq calls this without a session, for every portal; the status is
+	 * the same for each.
+	 *
+	 * @param string $portal The portal slug.
+	 *
+	 * @return array<int, array<string, mixed>> The index items.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 *
+	 * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+	 */
+	public function getPublicIndex(string $portal): array {
+		if ($this->statusIndex === null) {
+			return [];
+		}
+
+		return $this->statusIndex->items();
+
+	}//end getPublicIndex()
+
+	/**
+	 * The kinds of the public index, with the columns a site table can show.
+	 *
+	 * @param string $portal The portal slug.
+	 *
+	 * @return array<int, array<string, mixed>> The kinds.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 *
+	 * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+	 */
+	public function getPublicIndexKinds(string $portal): array {
+		if ($this->statusIndex === null) {
+			return [];
+		}
+
+		return [$this->statusIndex->kind()];
+
+	}//end getPublicIndexKinds()
 
 	/**
 	 * Receive a Woo request a citizen sent through a portal form.

@@ -1,0 +1,212 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"_note": "service-catalogue-admin-screens (boards OcDienstencatalogus, OcZaaktypeSynchroniseren, OcKennisartikel). ServiceCatalogue lists from the public catalogue endpoint, which answers every entry with its `available` flag (and the grouped catalogue beside it); add, edit and delete go to the entry pair. The side panel reads the admin repair list. Resync opens CaseTypeResyncDialog for the case type the entry's formBinding names (openCaseTypeResync in src/services/caseTypeActions.js).",
+	"menu": [
+		{
+			"id": "ServiceCatalogueMenu",
+			"label": "Products and services",
+			"icon": "StorefrontOutline",
+			"route": "ServiceCatalogue",
+			"section": "settings",
+			"order": 93,
+			"permission": "admin"
+		},
+		{
+			"id": "KnowledgeArticlesMenu",
+			"label": "Knowledge articles",
+			"icon": "BookOpenPageVariantOutline",
+			"route": "KnowledgeArticles",
+			"section": "settings",
+			"order": 94
+		}
+	],
+	"pages": [
+		{
+			"id": "ServiceCatalogue",
+			"route": "/service-catalogue",
+			"type": "index",
+			"title": "Products and services",
+			"permission": "admin",
+			"config": {
+				"register": "@resolve:service_catalogue_register",
+				"schema": "@resolve:service_catalogue_entry_schema",
+				"collectionUrl": "/apps/opencatalogi/api/service-catalogue",
+				"description": "Cost, duration and what each request starts",
+				"addLabel": "Add entry",
+				"rowClickToView": false,
+				"columns": [
+					{
+						"key": "title",
+						"label": "Product or service",
+						"sortable": true
+					},
+					{
+						"key": "cost.amount",
+						"label": "Cost",
+						"formatter": "currency",
+						"formatterOptions": {
+							"currency": "EUR"
+						}
+					},
+					{
+						"key": "duration.description",
+						"label": "Takes"
+					},
+					{
+						"key": "formBinding.formName",
+						"label": "Starts with"
+					},
+					{
+						"key": "available",
+						"label": "Available"
+					}
+				],
+				"actions": [
+					"builtin:edit",
+					{
+						"id": "resync",
+						"label": "Resync",
+						"icon": "Sync",
+						"handler": "openCaseTypeResync"
+					},
+					"builtin:delete"
+				],
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": true,
+					"showCopyAction": false,
+					"showDeleteAction": true,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showViewToggle": false,
+					"selectable": false
+				},
+				"sidePanel": [
+					{
+						"id": "needs-repair",
+						"type": "record-list",
+						"title": "Needs repair",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/opencatalogi/api/service-catalogue/unavailable",
+								"responsePath": "results"
+							},
+							"presentation": "rows",
+							"title": "{title}",
+							"meta": "{unavailableReason}",
+							"valueLabels": {
+								"unavailableReason": {
+									"no-form-binding": "It starts no form",
+									"incomplete-form-binding": "Its form binding is incomplete",
+									"unknown-case-type": "Its case type does not exist",
+									"unpublished-case-type": "Its case type is not published"
+								}
+							},
+							"emptyText": "Every entry is available",
+							"limit": 20
+						}
+					}
+				],
+				"emptyText": "No entries in the catalogue yet",
+				"documentationUrl": "https://opencatalogi.conduction.nl"
+			}
+		},
+		{
+			"id": "KnowledgeArticles",
+			"route": "/knowledge-articles",
+			"type": "index",
+			"title": "Knowledge articles",
+			"config": {
+				"register": "@resolve:service_catalogue_register",
+				"schema": "@resolve:knowledge_article_schema",
+				"description": "Answers residents can find, written from what colleagues answered",
+				"addLabel": "New knowledge article",
+				"createDefaults": {
+					"draft": true
+				},
+				"columns": [
+					{
+						"key": "title",
+						"label": "Title",
+						"sortable": true
+					},
+					{
+						"key": "draft",
+						"label": "Draft"
+					},
+					{
+						"key": "helpfulCount",
+						"label": "Helpful"
+					},
+					{
+						"key": "@self.updated",
+						"label": "Updated",
+						"format": "date-time",
+						"sortable": true
+					}
+				],
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": true,
+					"showCopyAction": false,
+					"showDeleteAction": true,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showViewToggle": false,
+					"selectable": true
+				},
+				"emptyText": "No knowledge articles yet",
+				"documentationUrl": "https://opencatalogi.conduction.nl"
+			}
+		},
+		{
+			"id": "KnowledgeArticleDetail",
+			"route": "/knowledge-articles/:id",
+			"type": "detail",
+			"title": "Knowledge article",
+			"config": {
+				"register": "@resolve:service_catalogue_register",
+				"schema": "@resolve:knowledge_article_schema",
+				"idParam": "@route.id",
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "article-data",
+						"type": "data",
+						"title": "Article",
+						"icon": "BookOpenPageVariantOutline",
+						"content": {
+							"columns": 1
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "article-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

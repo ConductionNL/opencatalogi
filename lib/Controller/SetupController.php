@@ -82,6 +82,7 @@ class SetupController extends Controller {
 	 */
 	private const WRITABLE_CONFIG_KEYS = [
 		'default_catalog_scope',
+		'default_catalog_groups',
 		'default_directory_url',
 		self::DATASET_KEY,
 	];
@@ -520,6 +521,14 @@ class SetupController extends Controller {
 			'listed' => ($scope === 'public'),
 			'status' => 'development',
 		];
+		// "Private (explicitly granted groups only)" restricts the catalogue's staff
+		// access to the groups named in `default_catalog_groups` (comma separated);
+		// none named leaves it to administrators until groups are granted.
+		if ($scope === 'private') {
+			$groups = array_values(array_filter(array_map('trim', explode(',', $this->config->getValueString($this->appName, 'default_catalog_groups', '')))));
+			$catalogObject['staffAccess'] = ['restricted' => true, 'readGroups' => $groups, 'editGroups' => $groups];
+		}
+
 		// Read each key immediately above the check that handles its empty case.
 		// These two used to be read at the top of the method, thirteen lines up,
 		// which separated them from the only thing that makes an empty value safe.

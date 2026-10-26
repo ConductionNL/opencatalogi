@@ -98,6 +98,7 @@ import { NcButton } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+import { staffAccessLine } from '../../services/catalogStaffAccess.js'
 
 const DETAIL_LAYOUT = [
 	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
@@ -200,6 +201,10 @@ export default {
 					value: this.catalog.listed
 						? t('opencatalogi', 'Public')
 						: t('opencatalogi', 'Private'),
+				},
+				{
+					label: t('opencatalogi', 'Staff access'),
+					value: staffAccessLine(this.catalog.staffAccess),
 				},
 				{
 					label: t('opencatalogi', 'Created'),
