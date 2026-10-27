@@ -35,6 +35,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Event\ObligationsRequestedEvent;
+use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -59,12 +60,14 @@ class ObligationReadService {
 	 * @param ObligationOverviewService $overview   The overview assembler.
 	 * @param IAppConfig                $config     App configuration.
 	 * @param ContainerInterface        $container  The container, for OpenRegister's ObjectService.
+	 * @param IAppManager               $appManager Tells whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly IEventDispatcher $dispatcher,
 		private readonly ObligationOverviewService $overview,
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -254,6 +257,10 @@ class ObligationReadService {
 		$schema = $this->config->getValueString('opencatalogi', 'obligation_source_schema', '');
 		if ($register === '' || $schema === '') {
 			return [];
+		}
+
+		if ($this->appManager->isInstalled('openregister') === false) {
+			throw new RuntimeException('The obligation sources could not be read: OpenRegister is not installed');
 		}
 
 		try {
