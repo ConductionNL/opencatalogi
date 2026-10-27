@@ -17,6 +17,7 @@ use DateTimeImmutable;
 use OCA\OpenCatalogi\Event\ObligationsRequestedEvent;
 use OCA\OpenCatalogi\Service\Publication\ObligationOverviewService;
 use OCA\OpenCatalogi\Service\Publication\ObligationReadService;
+use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -77,7 +78,7 @@ class ObligationReadServiceTest extends TestCase {
 			}
 		);
 
-		return new ObligationReadService($dispatcher, new ObligationOverviewService(), $config, $container);
+		return new ObligationReadService($dispatcher, new ObligationOverviewService(), $config, $container, $this->appManager(installed: true));
 
 	}//end service()
 
@@ -147,7 +148,8 @@ class ObligationReadServiceTest extends TestCase {
 			$dispatcher,
 			new ObligationOverviewService(),
 			$config,
-			$this->createMock(ContainerInterface::class)
+			$this->createMock(ContainerInterface::class),
+			$this->appManager(installed: true)
 		);
 
 		$overview = $service->read();
@@ -170,11 +172,49 @@ class ObligationReadServiceTest extends TestCase {
 			$this->createMock(IEventDispatcher::class),
 			new ObligationOverviewService(),
 			$config,
-			$container
+			$container,
+			$this->appManager(installed: true)
 		);
 
 		$this->expectException(RuntimeException::class);
 		$service->read();
 
 	}//end testUnreadableSourcesAreAnError()
+
+	/**
+	 * Without OpenRegister the sources are an error, and the container is not asked.
+	 */
+	public function testWithoutOpenRegisterTheSourcesAreAnError(): void {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn('7');
+		$container = $this->createMock(ContainerInterface::class);
+		$container->expects($this->never())->method('get');
+
+		$service = new ObligationReadService(
+			$this->createMock(IEventDispatcher::class),
+			new ObligationOverviewService(),
+			$config,
+			$container,
+			$this->appManager(installed: false)
+		);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('OpenRegister is not installed');
+		$service->read();
+
+	}//end testWithoutOpenRegisterTheSourcesAreAnError()
+
+	/**
+	 * An app manager that answers whether OpenRegister is installed.
+	 *
+	 * @param bool $installed The answer.
+	 *
+	 * @return IAppManager
+	 */
+	private function appManager(bool $installed): IAppManager {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isInstalled')->willReturn($installed);
+		return $appManager;
+
+	}//end appManager()
 }//end class
