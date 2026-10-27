@@ -1557,7 +1557,12 @@
         "Administrators always keep access. Another catalogue over the same publications shares this access.": "Administrators always keep access. Another catalogue over the same publications shares this access.",
         "All staff": "All staff",
         "Restricted to administrators": "Restricted to administrators",
-        "Restricted to {groups}": "Restricted to {groups}"
+        "Restricted to {groups}": "Restricted to {groups}",
+        "Restricted": "Restricted",
+        "Only the groups below see and edit this catalogue's publications.": "Only the groups below see and edit this catalogue's publications.",
+        "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
+        "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it."
     },
     "plurals": {}
 }
