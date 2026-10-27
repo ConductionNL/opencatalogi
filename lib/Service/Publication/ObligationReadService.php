@@ -44,6 +44,9 @@ use RuntimeException;
 /**
  * Reads the registered sources and assembles the obligation overview.
  *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Dates, the event, the config, the container and the
+ *                                                 app manager are each one step of reading the sources.
+ *
  * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
 class ObligationReadService {
