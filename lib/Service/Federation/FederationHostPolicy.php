@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Federation;
 
-use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCP\IAppConfig;
 
 /**
@@ -82,7 +82,7 @@ class FederationHostPolicy {
 	 *       each held a private copy; no new domain behaviour.
 	 */
 	public function isAllowlistedFederationHost(string $host): bool {
-		$allowlist = $this->config->getValueString(Application::APP_ID, self::CONFIG_ALLOWLIST, '');
+		$allowlist = $this->config->getValueString(AppIdentity::APP_ID, self::CONFIG_ALLOWLIST, '');
 		if ($allowlist === '') {
 			return false;
 		}

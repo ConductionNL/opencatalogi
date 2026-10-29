@@ -37,7 +37,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -1081,7 +1081,7 @@ class SettingsService {
 	public function loadSettings(bool $force = false): array {
 		try {
 			// Get the absolute path to the app directory.
-			$appPath = $this->appManager->getAppPath(Application::APP_ID);
+			$appPath = $this->appManager->getAppPath(AppIdentity::APP_ID);
 
 			// Build absolute path to the configuration file.
 			$absoluteFilePath = $appPath . '/lib/Settings/publication_register.json';
@@ -1168,7 +1168,7 @@ class SettingsService {
 			$configurationService = $this->getConfigurationService();
 
 			// Get the current app version. dynamically.
-			$currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+			$currentAppVersion = $this->appManager->getAppVersion(AppIdentity::APP_ID);
 
 			// The fragment digest is NOT folded into the version any more.
 			//
@@ -1188,7 +1188,7 @@ class SettingsService {
 			// Use importFromApp to import the configuration data directly.
 			// This avoids the file path resolution issue in importFromFilePath.
 			$result = $configurationService->importFromApp(
-				appId: Application::APP_ID,
+				appId: AppIdentity::APP_ID,
 				data: $data,
 				version: $currentAppVersion,
 				force: $force
@@ -1469,7 +1469,7 @@ class SettingsService {
 		try {
 			$schemaMapper = $this->container->get(\OCA\OpenRegister\Db\SchemaMapper::class);
 			foreach ($missingSlugs as $slug) {
-				$found = $schemaMapper->findByApplicationAndSlug($slug, Application::APP_ID);
+				$found = $schemaMapper->findByApplicationAndSlug($slug, AppIdentity::APP_ID);
 				if ($found !== null) {
 					$schemaMap[$slug] = $found->getId();
 				}
@@ -1477,7 +1477,7 @@ class SettingsService {
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Schema slug fallback lookup failed: ' . $e->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}
 
@@ -1515,7 +1515,7 @@ class SettingsService {
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Register slug fallback lookup failed: ' . $e->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 			return null;
 		}
@@ -1909,11 +1909,11 @@ class SettingsService {
 	private function shouldLoadSettings(): bool {
 		try {
 			// Get the current app version.
-			$currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+			$currentAppVersion = $this->appManager->getAppVersion(AppIdentity::APP_ID);
 
 			// Get the configuration service. to check stored version.
 			$configurationService = $this->getConfigurationService();
-			$storedVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
+			$storedVersion = $configurationService->getConfiguredAppVersion(AppIdentity::APP_ID);
 
 			// If no stored version exists, we need to load settings.
 			if ($storedVersion === null) {
@@ -1944,11 +1944,11 @@ class SettingsService {
 	public function getVersionInfo(): array {
 		try {
 			// Get the current app version.
-			$currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+			$currentAppVersion = $this->appManager->getAppVersion(AppIdentity::APP_ID);
 
 			// Get the configuration service. to check stored version.
 			$configurationService = $this->getConfigurationService();
-			$storedConfigVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
+			$storedConfigVersion = $configurationService->getConfiguredAppVersion(AppIdentity::APP_ID);
 
 			// Determine if versions match.
 			$versionsMatch = $storedConfigVersion !== null
