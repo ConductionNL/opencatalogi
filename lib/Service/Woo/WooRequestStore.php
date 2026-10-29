@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Contract\WooRequestStoreInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -39,7 +40,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
-class WooRequestStore {
+class WooRequestStore implements WooRequestStoreInterface {
 
 	/**
 	 * How many requests the terms report reads.

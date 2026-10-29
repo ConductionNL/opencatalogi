@@ -34,10 +34,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\CaseTypeCatalogueService;
+use OCA\OpenCatalogi\Contract\CaseTypeCatalogueServiceInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -70,8 +70,8 @@ class ServiceCatalogueController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
-	 * @param ServiceCatalogueService $catalogueService The catalogue reader.
-	 * @param CaseTypeCatalogueService $caseTypeService The case type importer.
+	 * @param ServiceCatalogueServiceInterface $catalogueService The catalogue reader.
+	 * @param CaseTypeCatalogueServiceInterface $caseTypeService The case type importer.
 	 * @param string $corsMethods Allowed CORS methods.
 	 * @param string $corsAllowedHeaders Allowed CORS headers.
 	 * @param integer $corsMaxAge CORS max age.
@@ -84,8 +84,8 @@ class ServiceCatalogueController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
-		private readonly ServiceCatalogueService $catalogueService,
-		private readonly CaseTypeCatalogueService $caseTypeService,
+		private readonly ServiceCatalogueServiceInterface $catalogueService,
+		private readonly CaseTypeCatalogueServiceInterface $caseTypeService,
 		private readonly string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
 		private readonly string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
 		private readonly int $corsMaxAge = 1728000,

@@ -30,6 +30,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
+use OCA\OpenCatalogi\Contract\EventServiceInterface;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -42,8 +43,10 @@ use RuntimeException;
  * implementing auto-publishing features based on configuration settings.
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ *
+ * @spec openspec/specs/auto-publishing/spec.md
  */
-class EventService {
+class EventService implements EventServiceInterface {
 	/**
 	 * EventService constructor.
 	 *

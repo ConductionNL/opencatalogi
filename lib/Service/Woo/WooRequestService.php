@@ -37,13 +37,14 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\WooRequestServiceInterface;
 
 /**
  * Builds and reads the Woo request record.
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
-class WooRequestService {
+class WooRequestService implements WooRequestServiceInterface {
 
 	/**
 	 * The states a request moves through.

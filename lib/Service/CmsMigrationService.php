@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -41,17 +42,9 @@ use Throwable;
  *
  * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
  */
-class CmsMigrationService {
+class CmsMigrationService implements CmsMigrationServiceInterface {
 
-	/**
-	 * The register this app's CMS content lives in.
-	 */
-	public const SOURCE_REGISTER = 'publication';
 
-	/**
-	 * The register Portaliq's content lives in.
-	 */
-	public const TARGET_REGISTER = 'portaliq';
 
 	/**
 	 * How an OpenCatalogi content block maps onto a Portaliq widget.

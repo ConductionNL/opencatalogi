@@ -35,6 +35,7 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeImmutable;
 use DomainException;
+use OCA\OpenCatalogi\Contract\WooRequestIntakeInterface;
 use Throwable;
 
 /**
@@ -42,7 +43,7 @@ use Throwable;
  *
  * @spec openspec/changes/portal-woo-request-intake/specs/woo-request-intake/spec.md#requirement-a-woo-request-delivered-by-the-portal-arms-its-term-req-wri-008
  */
-class WooRequestIntake {
+class WooRequestIntake implements WooRequestIntakeInterface {
 
 	/**
 	 * The request is stored and its term runs; `dueAt` is set.
@@ -59,10 +60,6 @@ class WooRequestIntake {
 	 */
 	public const OUTCOME_REFUSED = 'refused';
 
-	/**
-	 * The register could not store the request.
-	 */
-	public const OUTCOME_UNAVAILABLE = 'unavailable';
 
 	/**
 	 * Who the stored request says registered it.

@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Portal;
 
+use OCA\OpenCatalogi\Contract\PortalAssertionVerifierInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -38,12 +39,8 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
  */
-class PortalAssertionVerifier {
+class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 
-	/**
-	 * The header portaliq attaches the assertion to.
-	 */
-	public const HEADER = 'X-Portal-Subject';
 
 	/**
 	 * The only accepted JWS algorithm.

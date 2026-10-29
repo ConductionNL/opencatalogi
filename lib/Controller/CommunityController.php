@@ -39,11 +39,11 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
+use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCA\OpenCatalogi\Service\Community\AtomFeedService;
-use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
-use OCA\OpenCatalogi\Service\Community\StatusPageService;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -79,10 +79,10 @@ class CommunityController extends Controller {
 	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param StatusPageService $statusService The status page.
-	 * @param AtomFeedService $feedService The catalogue feed.
-	 * @param MarkupRenderService $markupService The markup renderer.
-	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param StatusPageServiceInterface $statusService The status page.
+	 * @param AtomFeedServiceInterface $feedService The catalogue feed.
+	 * @param MarkupRenderServiceInterface $markupService The markup renderer.
+	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -93,10 +93,10 @@ class CommunityController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly StatusPageService $statusService,
-		private readonly AtomFeedService $feedService,
-		private readonly MarkupRenderService $markupService,
-		private readonly ServiceCatalogueService $objects,
+		private readonly StatusPageServiceInterface $statusService,
+		private readonly AtomFeedServiceInterface $feedService,
+		private readonly MarkupRenderServiceInterface $markupService,
+		private readonly ServiceCatalogueServiceInterface $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -215,7 +215,7 @@ class CommunityController extends Controller {
 		$stalenessHours = $this->config->getValueInt(
 			$this->appName,
 			'status_staleness_hours',
-			StatusPageService::DEFAULT_STALENESS_HOURS
+			StatusPageServiceInterface::DEFAULT_STALENESS_HOURS
 		);
 
 		return $this->withCors(

@@ -40,6 +40,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 
@@ -48,7 +49,7 @@ use OCP\IURLGenerator;
  *
  * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-publication-can-carry-one-bounded-public-comment-period-req-pcp-001
  */
-class CommentPeriodService {
+class CommentPeriodService implements CommentPeriodServiceInterface {
 
 	/**
 	 * The two legal remedies a comment period can carry.

@@ -32,7 +32,7 @@ namespace OCA\OpenCatalogi\Portal;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\OpenCatalogi\Service\Community\StatusPageService;
+use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -74,13 +74,13 @@ class ServiceStatusIndex {
 	 *
 	 * @param IAppConfig         $config        App configuration.
 	 * @param ContainerInterface $container     For OpenRegister's ObjectService.
-	 * @param StatusPageService  $statusService Renders the states with their staleness.
+	 * @param StatusPageServiceInterface  $statusService Renders the states with their staleness.
 	 * @param LoggerInterface    $logger        The logger.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
-		private readonly StatusPageService $statusService,
+		private readonly StatusPageServiceInterface $statusService,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -121,7 +121,7 @@ class ServiceStatusIndex {
 	public function items(?DateTimeInterface $now=null): array {
 		$rendered = $this->statusService->render(
 			components: $this->components(),
-			stalenessHours: $this->config->getValueInt('opencatalogi', 'status_staleness_hours', StatusPageService::DEFAULT_STALENESS_HOURS),
+			stalenessHours: $this->config->getValueInt('opencatalogi', 'status_staleness_hours', StatusPageServiceInterface::DEFAULT_STALENESS_HOURS),
 			now: $now
 		);
 

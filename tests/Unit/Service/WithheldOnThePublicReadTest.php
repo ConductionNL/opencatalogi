@@ -19,6 +19,7 @@ use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
+use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore;
 use OCP\App\IAppManager;
@@ -175,7 +176,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			fn (string $id): object => ($id === WithheldFromPublication::class ? $this->withheld : $this->objects)
+			fn (string $id): object => ($id === WithheldFromPublicationInterface::class ? $this->withheld : $this->objects)
 		);
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn([]);

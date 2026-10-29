@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Command;
 
 use DateTime;
-use OCA\OpenCatalogi\Service\AttachmentMigrationService;
+use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -50,14 +50,14 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Wire the migration service.
 	 *
-	 * @param AttachmentMigrationService $migration The migration rules and lazy OR access.
+	 * @param AttachmentMigrationServiceInterface $migration The migration rules and lazy OR access.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
 	public function __construct(
-		private readonly AttachmentMigrationService $migration,
+		private readonly AttachmentMigrationServiceInterface $migration,
 	) {
 		parent::__construct();
 	}//end __construct()
@@ -194,8 +194,8 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	private function readDocuments(object $objectService, OutputInterface $output): ?array {
 		try {
 			$documents = $objectService->searchObjectsBySlug(
-				AttachmentMigrationService::REGISTER_SLUG,
-				AttachmentMigrationService::DOCUMENT_SCHEMA_SLUG,
+				AttachmentMigrationServiceInterface::REGISTER_SLUG,
+				AttachmentMigrationServiceInterface::DOCUMENT_SCHEMA_SLUG,
 				['_limit' => 5000],
 				false,
 				false

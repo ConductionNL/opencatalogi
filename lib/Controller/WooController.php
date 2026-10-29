@@ -36,8 +36,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\WooCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\WooServiceInterface;
-use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -50,6 +50,8 @@ use OCP\IUserSession;
 
 /**
  * Controller for WOO transparency workflow operations.
+ *
+ * @spec openspec/specs/woo-transparency/spec.md
  */
 class WooController extends Controller {
 	/**
@@ -60,7 +62,7 @@ class WooController extends Controller {
 	 * @param WooServiceInterface $wooService The WOO workflow service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
-	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
+	 * @param WooCategoryRegistryInterface $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		$appName,
@@ -68,7 +70,7 @@ class WooController extends Controller {
 		private readonly WooServiceInterface $wooService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly WooCategoryRegistry $categories,
+		private readonly WooCategoryRegistryInterface $categories,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

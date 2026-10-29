@@ -26,11 +26,11 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
-use OCA\OpenCatalogi\Service\DcatSerializer;
-use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -56,12 +56,12 @@ class DcatController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
 	 * @param DcatServiceInterface $dcatService The DCAT orchestration service.
-	 * @param DcatSerializer $serializer The DCAT serializer.
+	 * @param DcatSerializerInterface $serializer The DCAT serializer.
 	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug → catalog).
 	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param StandardsVersionService $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
+	 * @param StandardsVersionServiceInterface $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -70,12 +70,12 @@ class DcatController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly DcatServiceInterface $dcatService,
-		private readonly DcatSerializer $serializer,
+		private readonly DcatSerializerInterface $serializer,
 		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly StandardsVersionService $standardsVersions,
+		private readonly StandardsVersionServiceInterface $standardsVersions,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -239,7 +239,7 @@ class DcatController extends Controller {
 			if ($ifNoneMatch !== '' && $etag !== '' && trim($ifNoneMatch) === $etag) {
 				return new DcatResponse(
 					body: '',
-					contentType: DcatSerializer::FORMATS[$format],
+					contentType: DcatSerializerInterface::FORMATS[$format],
 					status: 304,
 					headers: $this->cachingHeaders(document: $document)
 				);
@@ -345,7 +345,7 @@ class DcatController extends Controller {
 
 		return new DcatResponse(
 			body: $body,
-			contentType: DcatSerializer::FORMATS[$format],
+			contentType: DcatSerializerInterface::FORMATS[$format],
 			status: 200,
 			headers: $headers
 		);
@@ -384,7 +384,7 @@ class DcatController extends Controller {
 		return new JSONResponse(
 			[
 				'error' => $this->l10n->t('Unsupported serialization format'),
-				'supported' => array_keys(DcatSerializer::FORMATS),
+				'supported' => array_keys(DcatSerializerInterface::FORMATS),
 			],
 			406
 		);

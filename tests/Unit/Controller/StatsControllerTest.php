@@ -346,7 +346,7 @@ class StatsControllerTest extends TestCase {
 					return $dcat;
 				}
 
-				if ($id === \OCA\OpenCatalogi\Service\QualityService::class) {
+				if ($id === \OCA\OpenCatalogi\Contract\QualityServiceInterface::class) {
 					return $quality;
 				}
 

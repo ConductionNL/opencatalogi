@@ -44,6 +44,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
+use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -55,17 +56,9 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class AttachmentMigrationService {
+class AttachmentMigrationService implements AttachmentMigrationServiceInterface {
 
-	/**
-	 * The register the publication and document schemas live in.
-	 */
-	public const REGISTER_SLUG = 'publication';
 
-	/**
-	 * The schema being retired.
-	 */
-	public const DOCUMENT_SCHEMA_SLUG = 'document';
 
 	/**
 	 * The schema an attachment ends up hanging from.

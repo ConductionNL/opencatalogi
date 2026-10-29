@@ -40,10 +40,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\BannerServiceInterface;
+use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCA\OpenCatalogi\Service\Community\BannerService;
-use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -73,9 +73,9 @@ class NoticeBoardController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param ContainerInterface $container Server container.
 	 * @param IUserSession $userSession The current session.
-	 * @param BannerService $bannerService The instance banner.
-	 * @param NoticeBoardService $noticeService The notice boards.
-	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param BannerServiceInterface $bannerService The instance banner.
+	 * @param NoticeBoardServiceInterface $noticeService The notice boards.
+	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
 	 */
 	public function __construct(
 		$appName,
@@ -83,9 +83,9 @@ class NoticeBoardController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $userSession,
-		private readonly BannerService $bannerService,
-		private readonly NoticeBoardService $noticeService,
-		private readonly ServiceCatalogueService $objects,
+		private readonly BannerServiceInterface $bannerService,
+		private readonly NoticeBoardServiceInterface $noticeService,
+		private readonly ServiceCatalogueServiceInterface $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\CaseTypeCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
 
@@ -41,7 +42,7 @@ use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
  *
  * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md
  */
-class CaseTypeCatalogueService {
+class CaseTypeCatalogueService implements CaseTypeCatalogueServiceInterface {
 
 	/**
 	 * The properties an import takes from the source.
