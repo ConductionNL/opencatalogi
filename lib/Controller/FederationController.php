@@ -31,7 +31,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
-use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
+use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -44,6 +44,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling federation endpoints.
+ *
+ * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
 	/**
@@ -54,7 +56,7 @@ class FederationController extends Controller {
 	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param WithheldFromPublication|null $withheld The public withheld list (REQ-WDW-003).
+	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
 	 */
 	public function __construct(
 		$appName,
@@ -62,7 +64,7 @@ class FederationController extends Controller {
 		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
-		private readonly ?WithheldFromPublication $withheld = null,
+		private readonly ?WithheldFromPublicationInterface $withheld = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

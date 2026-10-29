@@ -42,6 +42,7 @@
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Contract\WooCategoryRegistryInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\WooCategory;
@@ -52,7 +53,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/woo-compliance/spec.md
  */
-class WooCategoryRegistry {
+class WooCategoryRegistry implements WooCategoryRegistryInterface {
 
 	/**
 	 * The schema an operator adds a local information category to.

@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Repair;
 
-use OCA\OpenCatalogi\Service\CatalogAccessService;
+use OCA\OpenCatalogi\Contract\CatalogAccessServiceInterface;
 use OCP\App\IAppManager;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -44,11 +44,11 @@ class RecomputeCatalogAccess implements IRepairStep {
 	 * Constructor.
 	 *
 	 * @param IAppManager          $appManager The app manager.
-	 * @param CatalogAccessService $access     Writes the rules.
+	 * @param CatalogAccessServiceInterface $access     Writes the rules.
 	 */
 	public function __construct(
 		private readonly IAppManager $appManager,
-		private readonly CatalogAccessService $access,
+		private readonly CatalogAccessServiceInterface $access,
 	) {
 
 	}//end __construct()

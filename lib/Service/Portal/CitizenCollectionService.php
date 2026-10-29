@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Service\Portal;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
 use Psr\Log\LoggerInterface;
@@ -42,7 +43,7 @@ use Throwable;
  *
  * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
  */
-class CitizenCollectionService {
+class CitizenCollectionService implements CitizenCollectionServiceInterface {
 
 	/**
 	 * The dossier schema.

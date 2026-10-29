@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Portal;
 
-use OCA\OpenCatalogi\Portal\PortalContributionProvider;
+use OCA\OpenCatalogi\Contract\PortalContributionProviderInterface;
 use OCP\IL10N;
 use OCP\L10N\IFactory;
 
@@ -92,7 +92,7 @@ class SavedSearchNoticeWriter {
 				'body' => $this->body(l10n: $l10n, search: $search, batch: $batch, count: $count),
 				'read' => false,
 				'receivedAt' => gmdate('c'),
-				'ruleKey' => PortalContributionProvider::RULE_SAVED_SEARCH_MATCHED,
+				'ruleKey' => PortalContributionProviderInterface::RULE_SAVED_SEARCH_MATCHED,
 				'recordLink' => ['app' => 'opencatalogi', 'collection' => self::COLLECTION, 'id' => (string)($saved['id'] ?? '')],
 			]
 		);

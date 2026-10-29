@@ -28,6 +28,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -43,7 +44,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
  */
-class DcatService {
+class DcatService implements DcatServiceInterface {
 
 	/**
 	 * Page-size ceiling — identical to the sitemap ceiling (WOO-005).

@@ -26,7 +26,7 @@
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
@@ -51,12 +51,12 @@ class CatalogCacheEventListener implements IEventListener {
 	 * at handle time: the listener is only built when a catalog event fires, so
 	 * nothing here runs at boot, and a unit test can hand in its own doubles.
 	 *
-	 * @param CatalogiService $catalogiService Owns the catalog cache.
+	 * @param CatalogiServiceInterface $catalogiService Owns the catalog cache.
 	 * @param IAppConfig $appConfig Holds the catalog schema and register ids.
 	 * @param LoggerInterface $logger Logger for cache operations and failures.
 	 */
 	public function __construct(
-		private readonly CatalogiService $catalogiService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 	) {

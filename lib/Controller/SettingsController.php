@@ -29,8 +29,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
-use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -42,6 +42,8 @@ use OCP\IUserSession;
 
 /**
  * Controller for handling settings-related operations in the OpenCatalogi.
+ *
+ * @spec openspec/specs/admin-settings/spec.md
  */
 class SettingsController extends Controller {
 	/**
@@ -52,7 +54,7 @@ class SettingsController extends Controller {
 	 * @param SettingsServiceInterface $settingsService The settings service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The user session.
-	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
+	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
@@ -62,7 +64,7 @@ class SettingsController extends Controller {
 		private readonly SettingsServiceInterface $settingsService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly ?ConnectionReporter $connectionReporter = null,
+		private readonly ?ConnectionReporterInterface $connectionReporter = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

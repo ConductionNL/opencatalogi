@@ -39,6 +39,7 @@ namespace OCA\OpenCatalogi\Service\Portal;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\SavedSearchMatcherInterface;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SearchQueryTranslator;
 use Psr\Log\LoggerInterface;
@@ -49,7 +50,7 @@ use Throwable;
  *
  * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-frequency-decides-when-and-how-the-resident-hears-req-ssa-003
  */
-class SavedSearchMatcher {
+class SavedSearchMatcher implements SavedSearchMatcherInterface {
 
 	/**
 	 * The most saved searches read per run.

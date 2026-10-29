@@ -31,13 +31,13 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
-use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
+use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
-use OCA\OpenCatalogi\Service\SchemaOrgService;
-use OCA\OpenCatalogi\Service\UsageCounterService;
-use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -65,6 +65,8 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ *
+ * @spec openspec/specs/publications/spec.md
  */
 class PublicationsController extends Controller {
 	use AnswersCacheably;
@@ -108,13 +110,13 @@ class PublicationsController extends Controller {
 	 * @param string $appName The name of the app
 	 * @param IRequest $request The request object
 	 * @param PublicationServiceInterface $publicationService The publication service
-	 * @param CatalogiService $catalogiService The catalogi service
+	 * @param CatalogiServiceInterface $catalogiService The catalogi service
 	 * @param PublicationQueryServiceInterface $queryService Query-building/shaping helpers
 	 * @param ContainerInterface $container The container for dependency injection
 	 * @param IAppManager $appManager The app manager
 	 * @param LoggerInterface $logger PSR-3 logger
 	 * @param IL10N $l10n Localization service
-	 * @param UsageCounterService $usageCounterService Privacy-safe usage counter (fire-and-forget)
+	 * @param UsageCounterServiceInterface $usageCounterService Privacy-safe usage counter (fire-and-forget)
 	 * @param IAppConfig|null $appConfig App config for CORS allowlist (optional)
 	 * @param string $corsMethods Allowed CORS methods
 	 * @param string $corsAllowedHeaders Allowed CORS headers
@@ -126,13 +128,13 @@ class PublicationsController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly PublicationServiceInterface $publicationService,
-		private readonly CatalogiService $catalogiService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
-		private readonly UsageCounterService $usageCounterService,
+		private readonly UsageCounterServiceInterface $usageCounterService,
 		private readonly ?IAppConfig $appConfig = null,
 		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
 		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
@@ -169,12 +171,12 @@ class PublicationsController extends Controller {
 	/**
 	 * Resolve the schema.org rendering service from the container.
 	 *
-	 * @return SchemaOrgService The schema.org JSON-LD service.
+	 * @return SchemaOrgServiceInterface The schema.org JSON-LD service.
 	 *
 	 * @spec exclude Lazy DI accessor for the schema.org renderer; pure plumbing.
 	 */
-	private function getSchemaOrgService(): SchemaOrgService {
-		return $this->container->get(SchemaOrgService::class);
+	private function getSchemaOrgService(): SchemaOrgServiceInterface {
+		return $this->container->get(SchemaOrgServiceInterface::class);
 	}//end getSchemaOrgService()
 
 	/**
@@ -200,7 +202,7 @@ class PublicationsController extends Controller {
 	 * never stores it (ANA-003). HEAD requests are skipped here as a guard.
 	 *
 	 * @param string $publicationId The publication UUID just served.
-	 * @param string $kind UsageCounterService::KIND_VIEW or KIND_DOWNLOAD.
+	 * @param string $kind UsageCounterServiceInterface::KIND_VIEW or KIND_DOWNLOAD.
 	 * @param string $catalogSlug The catalog slug for roll-up labelling.
 	 *
 	 * @return void
@@ -245,7 +247,7 @@ class PublicationsController extends Controller {
 	private function countedView(JSONResponse $response, string $publicationId, string $catalogSlug): JSONResponse {
 		$response = $this->cacheableForCaller(response: $response);
 		if ($response->getStatus() === Http::STATUS_OK) {
-			$this->countReach(publicationId: $publicationId, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
+			$this->countReach(publicationId: $publicationId, kind: UsageCounterServiceInterface::KIND_VIEW, catalogSlug: $catalogSlug);
 		}
 
 		return $response;
@@ -865,7 +867,7 @@ class PublicationsController extends Controller {
 			// withheld and why. Read only for such a catalogue, so every other
 			// public read stays exactly as it was.
 			if (($catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
-				$result = $this->container->get(WithheldFromPublication::class)->addForCatalog(
+				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
 					response: $result,
 					catalog: $catalog,
 					publicationId: $id
@@ -1080,7 +1082,7 @@ class PublicationsController extends Controller {
 			// is NOT counted. The increment runs after the response object is assembled
 			// and does NOT buffer or delay the streamed payload (DWN-OR-001).
 			if ($downloadResponse instanceof DataDownloadResponse) {
-				$this->countReach(publicationId: $id, kind: UsageCounterService::KIND_DOWNLOAD, catalogSlug: $catalogSlug);
+				$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_DOWNLOAD, catalogSlug: $catalogSlug);
 			}
 
 			return $downloadResponse;

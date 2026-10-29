@@ -30,6 +30,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
+use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -42,21 +43,9 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class UsageCounterService {
+class UsageCounterService implements UsageCounterServiceInterface {
 
-	/**
-	 * Counter kind: a public publication-detail view.
-	 *
-	 * @var string
-	 */
-	public const KIND_VIEW = 'view';
 
-	/**
-	 * Counter kind: a public publication file download.
-	 *
-	 * @var string
-	 */
-	public const KIND_DOWNLOAD = 'download';
 
 	/**
 	 * IAppConfig key holding the OpenRegister register id for counter objects.

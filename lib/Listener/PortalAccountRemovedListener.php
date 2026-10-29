@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
+use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -72,12 +72,12 @@ class PortalAccountRemovedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param CitizenCollectionService $collections Deletes the resident's objects.
+	 * @param CitizenCollectionServiceInterface $collections Deletes the resident's objects.
 	 * @param ContainerInterface       $container   Resolves OpenRegister's mappers.
 	 * @param LoggerInterface          $logger      The logger.
 	 */
 	public function __construct(
-		private readonly CitizenCollectionService $collections,
+		private readonly CitizenCollectionServiceInterface $collections,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {

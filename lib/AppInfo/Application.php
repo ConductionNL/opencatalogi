@@ -29,7 +29,9 @@ use OCA\OpenCatalogi\Dashboard\DashboardRegistrar;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
 use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
+use OCA\OpenCatalogi\Portal\PortalRegistrar;
 use OCA\OpenCatalogi\Service\ServiceRegistrar;
+use OCA\OpenCatalogi\Tool\ToolRegistrar;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
 use OCA\OpenRegister\AppHost\Controller\GenericHealthController;
 use OCA\OpenRegister\AppHost\Controller\GenericMetricsController;
@@ -43,6 +45,8 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * Main Application class for OpenCatalogi.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec exclude App bootstrap; wires the component registrars, no behaviour of its own.
  */
 class Application extends App implements IBootstrap {
 	public const APP_ID = AppIdentity::APP_ID;
@@ -83,7 +87,9 @@ class Application extends App implements IBootstrap {
 		(new ListenerRegistrar())->register($context);
 		(new McpRegistrar())->register($context);
 		(new ObservabilityRegistrar())->register($context);
+		(new PortalRegistrar())->register($context);
 		(new ServiceRegistrar(appName: self::APP_ID))->register($context);
+		(new ToolRegistrar())->register($context);
 
 		// AppHost observability adoption (ADR-040). The /api/health and
 		// /api/metrics routes resolve to leaf-namespaced controller class names

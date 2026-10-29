@@ -30,11 +30,11 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
-use OCA\OpenCatalogi\Service\BroadcastService;
-use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
-use OCA\OpenCatalogi\Service\DemoDataService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -119,14 +119,14 @@ class SetupController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
 	 * @param SettingsServiceInterface $settingsService Settings service (register import).
-	 * @param DemoDataService $demoDataService Demo dataset import (ADR-111 rule 4).
+	 * @param DemoDataServiceInterface $demoDataService Demo dataset import (ADR-111 rule 4).
 	 * @param DirectoryServiceInterface $directoryService Directory service (federation sync).
-	 * @param BroadcastService $broadcastService Broadcast service (announce self to a directory).
+	 * @param BroadcastServiceInterface $broadcastService Broadcast service (announce self to a directory).
 	 * @param ContainerInterface $container Container, to resolve OpenRegister ObjectService.
 	 * @param IL10N $l10n Localization.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IUserSession $userSession Current user session (login guard).
-	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
+	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
@@ -135,14 +135,14 @@ class SetupController extends Controller {
 		IRequest $request,
 		private readonly IAppConfig $config,
 		private readonly SettingsServiceInterface $settingsService,
-		private readonly DemoDataService $demoDataService,
+		private readonly DemoDataServiceInterface $demoDataService,
 		private readonly DirectoryServiceInterface $directoryService,
-		private readonly BroadcastService $broadcastService,
+		private readonly BroadcastServiceInterface $broadcastService,
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
-		private readonly ?ConnectionReporter $connectionReporter = null,
+		private readonly ?ConnectionReporterInterface $connectionReporter = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -289,7 +289,7 @@ class SetupController extends Controller {
 			case 'load-demo-data':
 				return $this->loadDataset();
 			case 'install-demo-data':
-				return $this->installDemoData(dataset: DemoDataService::DEMO_DATASET);
+				return $this->installDemoData(dataset: DemoDataServiceInterface::DEMO_DATASET);
 			case 'skip-demo-data':
 				return $this->skipDemoData();
 			case 'reload-settings':
@@ -346,8 +346,8 @@ class SetupController extends Controller {
 			);
 		}
 
-		if ($picked === DemoDataService::NONE_DATASET) {
-			$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		if ($picked === DemoDataServiceInterface::NONE_DATASET) {
+			$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 			$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 			return new JSONResponse(
@@ -436,7 +436,7 @@ class SetupController extends Controller {
 	private function skipDemoData(): JSONResponse {
 		// Skipping IS choosing "None", so both keys are written: an older
 		// runbook may read either one.
-		$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 		$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 		return new JSONResponse(

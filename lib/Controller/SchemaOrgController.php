@@ -28,9 +28,9 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
-use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\SchemaOrgService;
+use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
@@ -53,8 +53,8 @@ class SchemaOrgController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
-	 * @param SchemaOrgService $schemaOrgService The schema.org JSON-LD renderer.
-	 * @param CatalogiService $catalogiService Catalog resolution (slug → catalog).
+	 * @param SchemaOrgServiceInterface $schemaOrgService The schema.org JSON-LD renderer.
+	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug → catalog).
 	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
@@ -63,8 +63,8 @@ class SchemaOrgController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly SchemaOrgService $schemaOrgService,
-		private readonly CatalogiService $catalogiService,
+		private readonly SchemaOrgServiceInterface $schemaOrgService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Command;
 
 use DateTime;
-use OCA\OpenCatalogi\Service\AttachmentMigrationService;
+use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -50,14 +50,14 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Wire the migration service.
 	 *
-	 * @param AttachmentMigrationService $migration The migration rules and lazy OR access.
+	 * @param AttachmentMigrationServiceInterface $migration The migration rules and lazy OR access.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
 	public function __construct(
-		private readonly AttachmentMigrationService $migration,
+		private readonly AttachmentMigrationServiceInterface $migration,
 	) {
 		parent::__construct();
 	}//end __construct()
@@ -127,9 +127,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		foreach ($documents as $document) {
 			$outcome = $this->migrateOne(
 				document: $document,
-				services: $services,
-				options: ['dryRun' => $dryRun, 'keepDocuments' => $keepDocuments],
-				output: $output
+				run: ['services' => $services, 'dryRun' => $dryRun, 'keepDocuments' => $keepDocuments, 'output' => $output]
 			);
 
 			foreach ($outcome as $key => $value) {
@@ -196,8 +194,8 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	private function readDocuments(object $objectService, OutputInterface $output): ?array {
 		try {
 			$documents = $objectService->searchObjectsBySlug(
-				AttachmentMigrationService::REGISTER_SLUG,
-				AttachmentMigrationService::DOCUMENT_SCHEMA_SLUG,
+				AttachmentMigrationServiceInterface::REGISTER_SLUG,
+				AttachmentMigrationServiceInterface::DOCUMENT_SCHEMA_SLUG,
 				['_limit' => 5000],
 				false,
 				false
@@ -218,16 +216,14 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Migrate one document.
 	 *
-	 * @param mixed                $document The document row.
-	 * @param array<string,object> $services The OpenRegister services from openRegisterServices().
-	 * @param array<string,bool>   $options  `dryRun` to report rather than write, `keepDocuments` to leave the document in place.
-	 * @param OutputInterface      $output   Console output stream.
+	 * @param mixed               $document The document row.
+	 * @param array<string,mixed> $run      The run: `services` from openRegisterServices(), `dryRun`, `keepDocuments` and `output`.
 	 *
 	 * @return array{migrated:int, files:int, skipped:int, failed:int} The tally for this document.
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
-	private function migrateOne(mixed $document, array $services, array $options, OutputInterface $output): array {
+	private function migrateOne(mixed $document, array $run): array {
 		$fields = $this->migration->toFields(row: $document);
 		$doc = [
 			'uuid' => (string)($fields['uuid'] ?? ''),
@@ -236,11 +232,11 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		];
 
 		if ($doc['uuid'] === '') {
-			$output->writeln('  <comment>SKIP a document with no uuid.</comment>');
+			$run['output']->writeln('  <comment>SKIP a document with no uuid.</comment>');
 			return $this->outcome(counts: ['skipped' => 1]);
 		}
 
-		$publication = $this->resolvePublication(doc: $doc, objectService: $services['objects'], output: $output);
+		$publication = $this->resolvePublication(doc: $doc, run: $run);
 		if (is_array($publication) === true) {
 			return $publication;
 		}
@@ -248,33 +244,36 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		$doc['publication'] = $publication;
 		$doc['metadata'] = $this->migration->fileMetadataFor(document: $fields);
 
-		$files = $this->listFiles(doc: $doc, objectService: $services['objects'], fileService: $services['files'], output: $output);
+		$files = $this->listFiles(doc: $doc, run: $run);
 		if ($files === null) {
 			return $this->outcome(counts: ['failed' => 1]);
 		}
 
-		$this->reportDocument(doc: $doc, fileCount: count($files), output: $output);
+		$doc['files'] = $files;
+		$this->reportDocument(doc: $doc, output: $run['output']);
 		if (count($files) === 0) {
-			$this->explainMetadataOnly(output: $output);
+			$this->explainMetadataOnly(output: $run['output']);
 			return $this->outcome(counts: ['skipped' => 1]);
 		}
 
-		if ($options['dryRun'] === true) {
-			$output->writeln('  <comment>WOULD MOVE</comment>');
+		if ($run['dryRun'] === true) {
+			$run['output']->writeln('  <comment>WOULD MOVE</comment>');
 			return $this->outcome(counts: []);
 		}
 
-		$moved = $this->moveFiles(doc: $doc, files: $files, services: $services, output: $output);
+		$moved = $this->moveFiles(doc: $doc, run: $run);
 		if ($moved === null) {
 			return $this->outcome(counts: ['failed' => 1]);
 		}
 
-		if ($options['keepDocuments'] === true) {
-			$output->writeln(sprintf('  <info>MOVED %d file(s); document kept.</info>', $moved));
+		if ($run['keepDocuments'] === true) {
+			$run['output']->writeln(sprintf('  <info>MOVED %d file(s); document kept.</info>', $moved));
 			return $this->outcome(counts: ['migrated' => 1, 'files' => $moved]);
 		}
 
-		return $this->removeDocument(doc: $doc, moved: $moved, objectService: $services['objects'], output: $output);
+		$doc['moved'] = $moved;
+
+		return $this->removeDocument(doc: $doc, run: $run);
 	}//end migrateOne()
 
 	/**
@@ -293,15 +292,15 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Find the publication a document belongs to, reporting why when there is none.
 	 *
-	 * @param array<string,mixed> $doc           The document's uuid, name and fields.
-	 * @param object              $objectService OpenRegister ObjectService.
-	 * @param OutputInterface     $output        Console output stream.
+	 * @param array<string,mixed> $doc The document's uuid, name and fields.
+	 * @param array<string,mixed> $run The run, for its services and output.
 	 *
 	 * @return object|array The publication, or the document's tally when it has none.
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
-	private function resolvePublication(array $doc, object $objectService, OutputInterface $output): object|array {
+	private function resolvePublication(array $doc, array $run): object|array {
+		$output = $run['output'];
 		$link = $this->migration->readPublicationLink(link: ($doc['fields']['publication'] ?? null));
 		if ($link['id'] === null && $link['slug'] === null) {
 			$output->writeln(
@@ -311,7 +310,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		}
 
 		try {
-			$publication = $this->migration->findPublication(objectService: $objectService, link: $link);
+			$publication = $this->migration->findPublication(objectService: $run['services']['objects'], link: $link);
 		} catch (Throwable $e) {
 			$output->writeln(sprintf('<error>FAILED %s: %s</error>', $doc['uuid'], $e->getMessage()));
 			return $this->outcome(counts: ['failed' => 1]);
@@ -335,20 +334,20 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * The files a document owns, or null (reported) when they cannot be listed.
 	 *
-	 * @param array<string,mixed> $doc           The document's uuid, name and fields.
-	 * @param object              $objectService OpenRegister ObjectService.
-	 * @param object              $fileService   OpenRegister FileService.
-	 * @param OutputInterface     $output        Console output stream.
+	 * @param array<string,mixed> $doc The document's uuid, name and fields.
+	 * @param array<string,mixed> $run The run, for its services and output.
 	 *
 	 * @return array<int, object>|null The files, or null on failure.
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
-	private function listFiles(array $doc, object $objectService, object $fileService, OutputInterface $output): ?array {
+	private function listFiles(array $doc, array $run): ?array {
 		try {
-			return $fileService->getFiles(object: $this->migration->documentEntity(objectService: $objectService, uuid: $doc['uuid']));
+			return $run['services']['files']->getFiles(
+				object: $this->migration->documentEntity(objectService: $run['services']['objects'], uuid: $doc['uuid'])
+			);
 		} catch (Throwable $e) {
-			$output->writeln(sprintf('<error>FAILED %s: could not list its files: %s</error>', $doc['uuid'], $e->getMessage()));
+			$run['output']->writeln(sprintf('<error>FAILED %s: could not list its files: %s</error>', $doc['uuid'], $e->getMessage()));
 			return null;
 		}
 	}//end listFiles()
@@ -356,22 +355,21 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Report which publication a document goes to, how many files it has and the window it carries.
 	 *
-	 * @param array<string,mixed> $doc       The document, with its publication and metadata.
-	 * @param int                 $fileCount The number of files it owns.
-	 * @param OutputInterface     $output    Console output stream.
+	 * @param array<string,mixed> $doc    The document, with its publication, metadata and files.
+	 * @param OutputInterface     $output Console output stream.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
-	private function reportDocument(array $doc, int $fileCount, OutputInterface $output): void {
+	private function reportDocument(array $doc, OutputInterface $output): void {
 		$output->writeln(
 			sprintf(
 				'<info>%s (%s) -> publication %s, %d file(s)%s</info>',
 				$doc['uuid'],
 				$doc['name'],
 				(string)$doc['publication']->getUuid(),
-				$fileCount,
+				count($doc['files']),
 				$this->windowNote(metadata: $doc['metadata'])
 			)
 		);
@@ -403,18 +401,17 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	 *
 	 * Stops at the first file that cannot be moved.
 	 *
-	 * @param array<string,mixed>  $doc      The document, with its publication and metadata.
-	 * @param array<int, object>   $files    The document's files.
-	 * @param array<string,object> $services The OpenRegister services from openRegisterServices().
-	 * @param OutputInterface      $output   Console output stream.
+	 * @param array<string,mixed> $doc The document, with its publication, metadata and files.
+	 * @param array<string,mixed> $run The run, for its services and output.
 	 *
 	 * @return int|null The number of files moved, or null when a move failed.
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-the-documents-metadata-lands-on-the-file-req-att-102
 	 */
-	private function moveFiles(array $doc, array $files, array $services, OutputInterface $output): ?int {
+	private function moveFiles(array $doc, array $run): ?int {
+		$services = $run['services'];
 		$moved = 0;
-		foreach ($files as $file) {
+		foreach ($doc['files'] as $file) {
 			try {
 				$movedFile = $services['files']->moveFile(
 					sourceObject: $this->migration->documentEntity(objectService: $services['objects'], uuid: $doc['uuid']),
@@ -424,7 +421,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 				$this->applyMetadata(fileMapper: $services['fileMapper'], file: $movedFile, metadata: $doc['metadata']);
 				$moved++;
 			} catch (Throwable $e) {
-				$output->writeln(sprintf('  <error>FAILED to move file %d: %s</error>', (int)$file->getId(), $e->getMessage()));
+				$run['output']->writeln(sprintf('  <error>FAILED to move file %d: %s</error>', (int)$file->getId(), $e->getMessage()));
 				return null;
 			}
 		}
@@ -435,22 +432,22 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Remove a document whose files have moved, naming the manual step when that fails.
 	 *
-	 * @param array<string,mixed> $doc           The document's uuid, name and fields.
-	 * @param int                 $moved         The number of files moved.
-	 * @param object              $objectService OpenRegister ObjectService.
-	 * @param OutputInterface     $output        Console output stream.
+	 * @param array<string,mixed> $doc The document, with the number of files `moved`.
+	 * @param array<string,mixed> $run The run, for its services and output.
 	 *
 	 * @return array{migrated:int, files:int, skipped:int, failed:int} The tally for this document.
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
-	private function removeDocument(array $doc, int $moved, object $objectService, OutputInterface $output): array {
+	private function removeDocument(array $doc, array $run): array {
+		$output = $run['output'];
+		$moved = $doc['moved'];
 		try {
 			// The console has no user session, so the default RBAC check runs as
 			// Anonymous and refuses the delete. The documents were read with the
 			// same flags: a migration that can see a row and not remove it moves
 			// its files and then strands it.
-			$objectService->deleteObject(uuid: $doc['uuid'], _rbac: false, _multitenancy: false);
+			$run['services']['objects']->deleteObject(uuid: $doc['uuid'], _rbac: false, _multitenancy: false);
 		} catch (Throwable $e) {
 			$output->writeln(
 				sprintf('  <error>Files moved but the document could not be removed: %s</error>', $e->getMessage())

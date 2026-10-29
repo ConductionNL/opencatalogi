@@ -24,9 +24,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\PortalAssertionVerifierInterface;
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
-use OCA\OpenCatalogi\Portal\PortalAssertionVerifier;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use Throwable;
@@ -48,7 +48,7 @@ trait AnswersPortalSubjects {
 	 * @return JSONResponse 401 without a valid assertion, 404, 422, 500 or the success status.
 	 */
 	private function asSubject(callable $action, int $status=Http::STATUS_OK): JSONResponse {
-		$owner = $this->verifier->subjectOf(header: $this->request->getHeader(PortalAssertionVerifier::HEADER));
+		$owner = $this->verifier->subjectOf(header: $this->request->getHeader(PortalAssertionVerifierInterface::HEADER));
 		if ($owner === null) {
 			return new JSONResponse(['error' => 'unauthenticated'], Http::STATUS_UNAUTHORIZED);
 		}
