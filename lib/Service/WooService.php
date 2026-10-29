@@ -366,29 +366,24 @@ class WooService {
 
 		// Provision (or re-use) the Deck board via the deck leaf, then link a card
 		// per assessment object into the "Te beoordelen" stack.
-		$deckBoardId = $boardId;
+		$batchContext = [
+			'caseReference' => $caseReference,
+			'register' => $register,
+			'boardId' => $boardId,
+			'deckAvailable' => $this->isDeckAvailable(),
+			'now' => $now,
+		];
 		$deckLinks = [];
-		$deckAvailable = $this->isDeckAvailable();
-		if ($deckAvailable === true && $deckBoardId !== null) {
-			$deckLinks = $this->linkAssessmentCards(
-				assessmentRefs: $assessmentRefs,
-				register: $register,
-				boardId: $deckBoardId,
-				caseReference: $caseReference
-			);
+		if ($batchContext['deckAvailable'] === true && $boardId !== null) {
+			$deckLinks = $this->linkAssessmentCards(assessmentRefs: $assessmentRefs, batchContext: $batchContext);
 		}
 
-		$batch = $this->newBatch(
-			caseReference: $caseReference,
-			assessmentRefs: $assessmentRefs,
-			deck: ['boardId' => $deckBoardId, 'available' => $deckAvailable],
-			now: $now
-		);
+		$batch = $this->newBatch(assessmentRefs: $assessmentRefs, batchContext: $batchContext);
 		$savedBatch = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 
 		$savedBatch['assessments'] = $assessmentRefs;
 		$savedBatch['deckLinks'] = $deckLinks;
-		if ($deckAvailable === false) {
+		if ($batchContext['deckAvailable'] === false) {
 			$savedBatch['deckWarning'] = 'Deck integration required for the WOO queue';
 		}
 
@@ -424,16 +419,14 @@ class WooService {
 	/**
 	 * A new batch object, in progress, for its saved assessments.
 	 *
-	 * @param string                           $caseReference  The case the batch belongs to
 	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
-	 * @param array{boardId: int|null, available: bool} $deck  The Deck board and whether Deck is available
-	 * @param string                           $now            The creation time (ATOM)
+	 * @param array<string, mixed>             $batchContext   The case reference, Deck board, Deck availability and creation time
 	 *
 	 * @return array<string, mixed> The batch object data
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
 	 */
-	private function newBatch(string $caseReference, array $assessmentRefs, array $deck, string $now): array {
+	private function newBatch(array $assessmentRefs, array $batchContext): array {
 		$createdBy = 'system';
 		$user = $this->userSession->getUser();
 		if ($user !== null) {
@@ -441,15 +434,15 @@ class WooService {
 		}
 
 		return [
-			'caseReference' => $caseReference,
+			'caseReference' => $batchContext['caseReference'],
 			'status' => 'in_progress',
-			'deckBoardId' => $deck['boardId'],
-			'deckAvailable' => $deck['available'],
+			'deckBoardId' => $batchContext['boardId'],
+			'deckAvailable' => $batchContext['deckAvailable'],
 			'documents' => array_map(static fn (array $r): string => (string)($r['id'] ?? ($r['uuid'] ?? '')), $assessmentRefs),
 			'decisionLetter' => '',
 			'inventoryList' => '',
-			'createdAt' => $now,
-			'updatedAt' => $now,
+			'createdAt' => $batchContext['now'],
+			'updatedAt' => $batchContext['now'],
 			'createdBy' => $createdBy,
 		];
 
@@ -461,19 +454,18 @@ class WooService {
 	 * A card that cannot be linked is logged and left out; the others still link.
 	 *
 	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
-	 * @param string                           $register       The register the assessments live in
-	 * @param int                              $boardId        The Deck board
-	 * @param string                           $caseReference  The case the batch belongs to
+	 * @param array<string, mixed>             $batchContext   The case reference, register and Deck board
 	 *
 	 * @return array<int, array<string, mixed>> The deck links that were made
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
 	 */
-	private function linkAssessmentCards(array $assessmentRefs, string $register, int $boardId, string $caseReference): array {
+	private function linkAssessmentCards(array $assessmentRefs, array $batchContext): array {
 		$deck = $this->getDeckCardService();
+		$boardId = (int)$batchContext['boardId'];
 		$registerId = 0;
-		if (is_numeric($register) === true) {
-			$registerId = (int)$register;
+		if (is_numeric($batchContext['register']) === true) {
+			$registerId = (int)$batchContext['register'];
 		}
 
 		$deckLinks = [];
@@ -491,7 +483,7 @@ class WooService {
 						'boardId' => $boardId,
 						'stackId' => $this->resolveStackId(boardId: $boardId, assessment: 'te_beoordelen'),
 						'title' => $this->assessmentCardTitle(assessmentRef: $ref),
-						'description' => 'WOO document — ' . $caseReference,
+						'description' => 'WOO document — ' . $batchContext['caseReference'],
 					]
 				);
 
