@@ -2561,10 +2561,6 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	public function getDirectory(array $requestParams = []): array {
@@ -2576,168 +2572,172 @@ class DirectoryService implements DirectoryServiceInterface {
 		// Get ObjectService from container.
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		$allResults = [];
-
-		// Build base config for filters and pagination.
-		$baseConfig = [
-			'filters' => [],
-		];
-
-		// Add any additional filters from request params.
-		if (isset($requestParams['filters']) === true) {
-			$baseConfig['filters'] = array_merge($baseConfig['filters'], $requestParams['filters']);
-		}
-
-		// Add pagination params.
-		if (isset($requestParams['limit']) === true) {
-			$baseConfig['limit'] = (int)$requestParams['limit'];
-		}
-
-		if (isset($requestParams['offset']) === true) {
-			$baseConfig['offset'] = (int)$requestParams['offset'];
-		}
-
-		// Fetch discovered listings.
-		// Read the scope keys HERE rather than at the top of the method: the guard
-		// on the very next line is what makes them safe, and a read separated from
-		// its guard by twenty lines of unrelated setup reads as unguarded — to a
-		// reviewer and to hydra gate-50 alike. Same for the catalog pair below.
-		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
-		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
-		if (empty($listingSchema) === false && empty($listingRegister) === false) {
-			$query = [
-				'@self' => [
-					'schema' => $listingSchema,
-					'register' => $listingRegister,
-				],
-			];
-
-			// Add filters from base config.
-			if (empty($baseConfig['filters']) === false) {
-				foreach ($baseConfig['filters'] as $key => $value) {
-					if (in_array($key, ['schema', 'register']) === false) {
-						$query[$key] = $value;
-					}
-				}
-			}
-
-			// Add pagination parameters.
-			if (isset($baseConfig['limit']) === true) {
-				$query['_limit'] = $baseConfig['limit'];
-			}
-
-			if (isset($baseConfig['offset']) === true) {
-				$query['_offset'] = $baseConfig['offset'];
-			}
-
-			try {
-				// RBAC handles public visibility via conditional published date rule.
-				// ADR-002: each tenant queries only its own listings; multitenancy must stay enabled.
-				$listingResult = $objectService->searchObjects($query);
-
-				// Get our directory URL to identify locally-created listings.
-				$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
-					$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-				);
-
-				// BFS-discovery opt-in: sync-code passes `?include-federated=1` so peers
-				// can transitively learn about each other's known directories. Public
-				// consumers (search UI, browsers) get the default filtered view — only
-				// catalogs that originate from THIS instance — to preserve the historical
-				// "no cross-broadcast" contract.
-				$includeFederated = filter_var(
-					($requestParams['include-federated'] ?? false),
-					FILTER_VALIDATE_BOOLEAN
-				);
-
-				$listings = [];
-				foreach ($listingResult as $object) {
-					$listingData = $object;
-					if ($object instanceof \OCP\AppFramework\Db\Entity) {
-						$listingData = $object->jsonSerialize();
-					}
-
-					$objectData = ($listingData['object'] ?? $listingData);
-					$listingDir = ($objectData['directory'] ?? '');
-
-					// Default view: skip listings synced from OTHER directories (their
-					// `directory` field points at the peer's own /api/directory URL, not
-					// ours) so we don't re-broadcast them. BFS-discovery callers opt in
-					// via `include-federated=1` to receive the full transitive set.
-					if ($includeFederated === false
-						&& empty($listingDir) === false
-						&& $listingDir !== $ourDirectoryUrl
-					) {
-						continue;
-					}
-
-					$listings[] = $this->filterListingProperties(listing: $listingData);
-				}//end foreach
-
-				$allResults = array_merge($allResults, $listings);
-			} catch (\Exception $e) {
-				// Removed redundant logging.
-			}//end try
-		}//end if
-
-		// Fetch local catalogs and convert them to listing format.
-		$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', 'catalog');
-		$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
-		if (empty($catalogSchema) === false && empty($catalogRegister) === false) {
-			$query = [
-				'@self' => [
-					'schema' => $catalogSchema,
-					'register' => $catalogRegister,
-				],
-			];
-
-			// Add filters from base config.
-			if (empty($baseConfig['filters']) === false) {
-				foreach ($baseConfig['filters'] as $key => $value) {
-					if (in_array($key, ['schema', 'register']) === false) {
-						$query[$key] = $value;
-					}
-				}
-			}
-
-			// Add pagination parameters.
-			if (isset($baseConfig['limit']) === true) {
-				$query['_limit'] = $baseConfig['limit'];
-			}
-
-			if (isset($baseConfig['offset']) === true) {
-				$query['_offset'] = $baseConfig['offset'];
-			}
-
-			try {
-				// RBAC handles public visibility via conditional published date rule.
-				// ADR-002: each tenant queries only its own catalogs; multitenancy must stay enabled.
-				$catalogResult = $objectService->searchObjects($query);
-
-				// Convert catalog objects to listing format and expand schemas.
-				$catalogsAsListings = array_map(
-					function ($catalogObject) {
-						$listing = $this->convertCatalogToListing(catalogObject: $catalogObject);
-						return $this->processSchemaExpansion(data: $listing);
-					},
-					$catalogResult
-				);
-
-				$allResults = array_merge($allResults, $catalogsAsListings);
-			} catch (\Exception $e) {
-				// Removed redundant logging.
-			}
-		}//end if
-
-		// Calculate total.
-		$total = count($allResults);
+		$allResults = array_merge(
+			$this->directoryListings(objectService: $objectService, requestParams: $requestParams),
+			$this->directoryCatalogs(objectService: $objectService, requestParams: $requestParams)
+		);
 
 		return [
 			'results' => $allResults,
-			'total' => $total,
+			'total' => count($allResults),
 		];
 
 	}//end getDirectory()
+
+	/**
+	 * The discovered listings for the directory, filtered to our own unless the caller opts in.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService
+	 * @param array  $requestParams The directory request parameters
+	 *
+	 * @return array The listings, or an empty array when unconfigured or the search fails
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function directoryListings(object $objectService, array $requestParams): array {
+		// The scope keys are read right before the guard that makes them safe,
+		// so the read does not look unguarded (to a reviewer or hydra gate-50).
+		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+		if (empty($listingSchema) === true || empty($listingRegister) === true) {
+			return [];
+		}
+
+		try {
+			// RBAC handles public visibility via conditional published date rule.
+			// ADR-002: each tenant queries only its own listings; multitenancy must stay enabled.
+			$listingResult = $objectService->searchObjects(
+				$this->directoryQuery(schema: $listingSchema, register: $listingRegister, requestParams: $requestParams)
+			);
+
+			// Get our directory URL to identify locally-created listings.
+			$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
+				$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
+			);
+
+			// BFS-discovery opt-in: sync-code passes `?include-federated=1` so peers
+			// can transitively learn about each other's known directories. Public
+			// consumers (search UI, browsers) get the default filtered view — only
+			// catalogs that originate from THIS instance — to preserve the historical
+			// "no cross-broadcast" contract.
+			$includeFederated = filter_var(
+				($requestParams['include-federated'] ?? false),
+				FILTER_VALIDATE_BOOLEAN
+			);
+
+			$listings = [];
+			foreach ($listingResult as $object) {
+				$listingData = $object;
+				if ($object instanceof \OCP\AppFramework\Db\Entity) {
+					$listingData = $object->jsonSerialize();
+				}
+
+				if ($includeFederated === false
+					&& $this->isFromOtherDirectory(listingData: $listingData, ourDirectoryUrl: $ourDirectoryUrl) === true
+				) {
+					continue;
+				}
+
+				$listings[] = $this->filterListingProperties(listing: $listingData);
+			}
+
+			return $listings;
+		} catch (\Exception $e) {
+			return [];
+		}//end try
+
+	}//end directoryListings()
+
+	/**
+	 * Whether a listing was synced from another directory.
+	 *
+	 * Such a listing's `directory` field points at the peer's own /api/directory
+	 * URL, not ours, and the default directory view does not re-broadcast it.
+	 *
+	 * @param array  $listingData     The listing
+	 * @param string $ourDirectoryUrl Our own directory URL
+	 *
+	 * @return boolean True when the listing names a directory other than ours
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function isFromOtherDirectory(array $listingData, string $ourDirectoryUrl): bool {
+		$objectData = ($listingData['object'] ?? $listingData);
+		$listingDir = ($objectData['directory'] ?? '');
+
+		return empty($listingDir) === false && $listingDir !== $ourDirectoryUrl;
+
+	}//end isFromOtherDirectory()
+
+	/**
+	 * Our local catalogs, converted to listings with their schemas expanded.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService
+	 * @param array  $requestParams The directory request parameters
+	 *
+	 * @return array The catalogs as listings, or an empty array when unconfigured or the search fails
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function directoryCatalogs(object $objectService, array $requestParams): array {
+		$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', 'catalog');
+		$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
+		if (empty($catalogSchema) === true || empty($catalogRegister) === true) {
+			return [];
+		}
+
+		try {
+			// RBAC handles public visibility via conditional published date rule.
+			// ADR-002: each tenant queries only its own catalogs; multitenancy must stay enabled.
+			$catalogResult = $objectService->searchObjects(
+				$this->directoryQuery(schema: $catalogSchema, register: $catalogRegister, requestParams: $requestParams)
+			);
+
+			return $this->convertCatalogiToListings(catalogs: $catalogResult);
+		} catch (\Exception $e) {
+			return [];
+		}
+
+	}//end directoryCatalogs()
+
+	/**
+	 * The search query for one part of the directory: its scope, the request's
+	 * filters (except schema and register) and its pagination.
+	 *
+	 * @param string $schema        The schema to search
+	 * @param string $register      The register to search
+	 * @param array  $requestParams The directory request parameters
+	 *
+	 * @return array The OpenRegister search query
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function directoryQuery(string $schema, string $register, array $requestParams): array {
+		$query = [
+			'@self' => [
+				'schema' => $schema,
+				'register' => $register,
+			],
+		];
+
+		$filters = array_merge([], ($requestParams['filters'] ?? []));
+		foreach ($filters as $key => $value) {
+			if (in_array($key, ['schema', 'register']) === false) {
+				$query[$key] = $value;
+			}
+		}
+
+		if (isset($requestParams['limit']) === true) {
+			$query['_limit'] = (int)$requestParams['limit'];
+		}
+
+		if (isset($requestParams['offset']) === true) {
+			$query['_offset'] = (int)$requestParams['offset'];
+		}
+
+		return $query;
+
+	}//end directoryQuery()
 
 	/**
 	 * Convert a catalog object to listing format
