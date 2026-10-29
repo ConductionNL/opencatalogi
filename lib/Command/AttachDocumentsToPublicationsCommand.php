@@ -42,6 +42,8 @@ use Throwable;
  * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Each migration step is its own small method;
+ *   the class total counts every method's entry point on top of the same branching.
  */
 class AttachDocumentsToPublicationsCommand extends Command {
 
