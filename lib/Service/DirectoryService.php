@@ -1205,19 +1205,15 @@ class DirectoryService implements DirectoryServiceInterface {
 		// peer's _aggregate=false path takes the ultra-fast branch that skips
 		// catalog stubs and returns @self.catalogs=null — click-through then
 		// silently falls back to the peer app-root (WOO-522 / WOO-533).
-		$query = $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: ['_include_catalogs' => 'true']);
-
 		// The directory URLs from getUniqueDirectories() are already publications URLs.
-		$targets = $this->peerTargets(
-			directories: $directories,
-			query: $query,
-			endpointFor: static fn (string $directoryUrl): string => $directoryUrl
-		);
-		$answers = $this->fetchFromPeers(
-			guzzleConfig: $guzzleConfig,
-			targets: $targets,
-			parse: $this->parsePeerPublications(...)
-		);
+		$lookup = [
+			'guzzleConfig' => $guzzleConfig,
+			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: ['_include_catalogs' => 'true']),
+			'endpointFor' => static fn (string $directoryUrl): string => $directoryUrl,
+			'parse' => $this->parsePeerPublications(...),
+		];
+		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
+		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
 
 		return $this->mergePeerPublications(targets: $targets, answers: $answers);
 
@@ -2255,16 +2251,14 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		// The /used endpoint lives on the peer's federation endpoint, which
 		// needs no catalogue slug (REQ-FOR-002).
-		$targets = $this->peerTargets(
-			directories: $directories,
-			query: $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
-			endpointFor: static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($uuid).'/used'
-		);
-		$answers = $this->fetchFromPeers(
-			guzzleConfig: $guzzleConfig,
-			targets: $targets,
-			parse: $this->parsePeerResults(...)
-		);
+		$lookup = [
+			'guzzleConfig' => $guzzleConfig,
+			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($uuid).'/used',
+			'parse' => $this->parsePeerResults(...),
+		];
+		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
+		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
 
 		return $this->mergePeerResults(targets: $targets, answers: $answers);
 
@@ -2352,22 +2346,20 @@ class DirectoryService implements DirectoryServiceInterface {
 		// `/api/publications/{id}` is the catalogue-slug route and 404s once
 		// the peer renamed its seed catalogue (REQ-FOR-002, issue #1648), so
 		// the lookup goes to the peer's federation endpoint.
-		$targets = $this->peerTargets(
-			directories: $directories,
-			query: $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
-			endpointFor: static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($publicationId)
-		);
-		$answers = $this->fetchFromPeers(
-			guzzleConfig: $guzzleConfig,
-			targets: $targets,
-			parse: static function (mixed $data): ?array {
+		$lookup = [
+			'guzzleConfig' => $guzzleConfig,
+			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($publicationId),
+			'parse' => static function (mixed $data): ?array {
 				if (empty($data) === true) {
 					return null;
 				}
 
 				return ['data' => $data];
-			}
-		);
+			},
+		];
+		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
+		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
 
 		foreach ($answers as $index => $answer) {
 			if ($answer !== null) {
@@ -2415,15 +2407,14 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * The requests to send for a peer lookup, skipping our own directory and any unsafe URL.
 	 *
-	 * @param array    $directories The directory URLs to ask
-	 * @param array    $query       The query parameters to send
-	 * @param callable $endpointFor Maps a directory URL to the endpoint to call
+	 * @param array $directories The directory URLs to ask
+	 * @param array $lookup      The lookup: `query` to send and `endpointFor`, which maps a directory URL to the endpoint to call
 	 *
 	 * @return array<int, array{url: string, name: string}> One entry per peer to call
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function peerTargets(array $directories, array $query, callable $endpointFor): array {
+	private function peerTargets(array $directories, array $lookup): array {
 		$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
 			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
 		);
@@ -2447,7 +2438,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			}
 
 			$targets[] = [
-				'url' => $endpointFor($directoryUrl).'?'.http_build_query($query),
+				'url' => $lookup['endpointFor']($directoryUrl).'?'.http_build_query($lookup['query']),
 				'name' => $host,
 			];
 		}//end foreach
@@ -2459,15 +2450,15 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Call each peer and parse its answer.
 	 *
-	 * @param array    $guzzleConfig The caller's Guzzle configuration, merged over the defaults
-	 * @param array    $targets      The peer requests, as built by peerTargets()
-	 * @param callable $parse        Turns a decoded answer into a result, or null when unusable
+	 * @param array $targets The peer requests, as built by peerTargets()
+	 * @param array $lookup  The lookup: the caller's `guzzleConfig`, merged over the defaults, and `parse`,
+	 *                       which turns a decoded answer into a result or null when unusable
 	 *
 	 * @return array<int, array|null> The parsed answers, indexed like $targets; null for a failed peer
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function fetchFromPeers(array $guzzleConfig, array $targets, callable $parse): array {
+	private function fetchFromPeers(array $targets, array $lookup): array {
 		$defaultGuzzleConfig = [
 			RequestOptions::TIMEOUT => 5,
 			RequestOptions::CONNECT_TIMEOUT => 2,
@@ -2477,11 +2468,11 @@ class DirectoryService implements DirectoryServiceInterface {
 			],
 			RequestOptions::HTTP_ERRORS => false,
 		];
-		$client = new Client(array_merge($defaultGuzzleConfig, $guzzleConfig));
+		$lookup['client'] = new Client(array_merge($defaultGuzzleConfig, $lookup['guzzleConfig']));
 
 		$answers = [];
 		foreach ($targets as $target) {
-			$answers[] = $this->fetchFromPeer(client: $client, url: $target['url'], parse: $parse);
+			$answers[] = $this->fetchFromPeer(url: $target['url'], lookup: $lookup);
 		}
 
 		return $answers;
@@ -2491,21 +2482,20 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Call one peer and parse its answer.
 	 *
-	 * @param Client   $client The HTTP client
-	 * @param string   $url    The URL to call
-	 * @param callable $parse  Turns a decoded answer into a result, or null when unusable
+	 * @param string $url    The URL to call
+	 * @param array  $lookup The lookup: the HTTP `client` and `parse`, which turns a decoded answer into a result or null
 	 *
 	 * @return array|null The parsed answer, or null on a non-2xx status, invalid JSON or a failed request
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function fetchFromPeer(Client $client, string $url, callable $parse): ?array {
+	private function fetchFromPeer(string $url, array $lookup): ?array {
 		try {
 			// SSRF hardening (SB1 / wave-12): disable automatic redirect following so
 			// that a federated peer cannot pivot to cloud-metadata via a 302 response.
 			// The URL is already validated by assertSafeOutboundUrl(); here we
 			// ensure Guzzle never silently follows a redirect to an unvalidated host.
-			$response   = $client->get($url, [RequestOptions::ALLOW_REDIRECTS => false]);
+			$response   = $lookup['client']->get($url, [RequestOptions::ALLOW_REDIRECTS => false]);
 			$statusCode = $response->getStatusCode();
 			if ($statusCode < 200 || $statusCode >= 300) {
 				return null;
@@ -2516,7 +2506,7 @@ class DirectoryService implements DirectoryServiceInterface {
 				return null;
 			}
 
-			return $parse($data);
+			return $lookup['parse']($data);
 		} catch (\Exception $e) {
 			return null;
 		}//end try
@@ -2607,7 +2597,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			// RBAC handles public visibility via conditional published date rule.
 			// ADR-002: each tenant queries only its own listings; multitenancy must stay enabled.
 			$listingResult = $objectService->searchObjects(
-				$this->directoryQuery(schema: $listingSchema, register: $listingRegister, requestParams: $requestParams)
+				$this->directoryQuery(scope: ['schema' => $listingSchema, 'register' => $listingRegister], requestParams: $requestParams)
 			);
 
 			// Get our directory URL to identify locally-created listings.
@@ -2690,7 +2680,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			// RBAC handles public visibility via conditional published date rule.
 			// ADR-002: each tenant queries only its own catalogs; multitenancy must stay enabled.
 			$catalogResult = $objectService->searchObjects(
-				$this->directoryQuery(schema: $catalogSchema, register: $catalogRegister, requestParams: $requestParams)
+				$this->directoryQuery(scope: ['schema' => $catalogSchema, 'register' => $catalogRegister], requestParams: $requestParams)
 			);
 
 			return $this->convertCatalogiToListings(catalogs: $catalogResult);
@@ -2704,19 +2694,18 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * The search query for one part of the directory: its scope, the request's
 	 * filters (except schema and register) and its pagination.
 	 *
-	 * @param string $schema        The schema to search
-	 * @param string $register      The register to search
-	 * @param array  $requestParams The directory request parameters
+	 * @param array{schema: string, register: string} $scope         The schema and register to search
+	 * @param array                                   $requestParams The directory request parameters
 	 *
 	 * @return array The OpenRegister search query
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
-	private function directoryQuery(string $schema, string $register, array $requestParams): array {
+	private function directoryQuery(array $scope, array $requestParams): array {
 		$query = [
 			'@self' => [
-				'schema' => $schema,
-				'register' => $register,
+				'schema' => $scope['schema'],
+				'register' => $scope['register'],
 			],
 		];
 
