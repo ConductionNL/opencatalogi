@@ -34,6 +34,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Event\ObligationsRequestedEvent;
 use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -50,7 +51,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
-class ObligationReadService {
+class ObligationReadService implements ObligationReadServiceInterface {
 
 	/**
 	 * The reason a source carries when no app answered for it.

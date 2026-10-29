@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Publication\ObligationReadService;
+use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -49,13 +49,13 @@ class ObligationController extends Controller {
 	 * @param string                $appName     The app name.
 	 * @param IRequest              $request     The request.
 	 * @param IL10N                 $l10n        Localisation.
-	 * @param ObligationReadService $readService Reads the sources.
+	 * @param ObligationReadServiceInterface $readService Reads the sources.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
-		private readonly ObligationReadService $readService,
+		private readonly ObligationReadServiceInterface $readService,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

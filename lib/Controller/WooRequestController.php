@@ -35,10 +35,10 @@ namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
+use OCA\OpenCatalogi\Contract\WooRequestServiceInterface;
+use OCA\OpenCatalogi\Contract\WooRequestStoreInterface;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
-use OCA\OpenCatalogi\Service\Woo\WooRequestService;
-use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -67,8 +67,8 @@ class WooRequestController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param WooRequestService $requests Builds and reads the request record.
-	 * @param WooRequestStore $store Reads and writes the stored requests.
+	 * @param WooRequestServiceInterface $requests Builds and reads the request record.
+	 * @param WooRequestStoreInterface $store Reads and writes the stored requests.
 	 * @param StatutoryTermInterface $terms Arms, extends, pauses and reads the statutory term.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -78,8 +78,8 @@ class WooRequestController extends Controller {
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly WooRequestService $requests,
-		private readonly WooRequestStore $store,
+		private readonly WooRequestServiceInterface $requests,
+		private readonly WooRequestStoreInterface $store,
 		private readonly StatutoryTermInterface $terms,
 	) {
 		parent::__construct(appName: $appName, request: $request);

@@ -25,8 +25,8 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Contract\WooCategoryRegistryInterface;
 use OCA\OpenCatalogi\Http\TextResponse;
-use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -43,6 +43,8 @@ use RuntimeException;
  *
  * @psalm-suppress                                 UnusedClass
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec openspec/specs/woo-compliance/spec.md
  */
 class RobotsController extends Controller {
 
@@ -63,7 +65,7 @@ class RobotsController extends Controller {
 	 * @param IAppManager $appManager The app manager.
 	 * @param IURLGenerator $urlGenerator The URL generator.
 	 * @param IL10N $l10n The localization service.
-	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
+	 * @param WooCategoryRegistryInterface $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		$appName,
@@ -73,7 +75,7 @@ class RobotsController extends Controller {
 		private readonly IAppManager $appManager,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IL10N $l10n,
-		private readonly WooCategoryRegistry $categories,
+		private readonly WooCategoryRegistryInterface $categories,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

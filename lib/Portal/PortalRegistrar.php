@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Portal;
 
+use OCA\OpenCatalogi\Contract\PortalAssertionVerifierInterface;
 use OCA\OpenCatalogi\Contract\PortalContributionProviderInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
@@ -44,5 +45,6 @@ class PortalRegistrar {
 	public function register(IRegistrationContext $context): void {
 		// Callers in other components depend on these interfaces.
 		$context->registerServiceAlias(PortalContributionProviderInterface::class, PortalContributionProvider::class);
+		$context->registerServiceAlias(PortalAssertionVerifierInterface::class, PortalAssertionVerifier::class);
 	}//end register()
 }//end class

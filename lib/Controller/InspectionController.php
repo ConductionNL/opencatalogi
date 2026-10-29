@@ -33,9 +33,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCA\OpenCatalogi\Service\Publication\InspectionService;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -68,8 +68,8 @@ class InspectionController extends Controller {
 	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param InspectionService $inspectionService The inspection windows.
-	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param InspectionServiceInterface $inspectionService The inspection windows.
+	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -80,8 +80,8 @@ class InspectionController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly InspectionService $inspectionService,
-		private readonly ServiceCatalogueService $objects,
+		private readonly InspectionServiceInterface $inspectionService,
+		private readonly ServiceCatalogueServiceInterface $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

@@ -29,8 +29,8 @@ use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
-use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -61,7 +61,7 @@ class DcatController extends Controller {
 	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param StandardsVersionService $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
+	 * @param StandardsVersionServiceInterface $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -75,7 +75,7 @@ class DcatController extends Controller {
 		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly StandardsVersionService $standardsVersions,
+		private readonly StandardsVersionServiceInterface $standardsVersions,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);

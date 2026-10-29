@@ -32,9 +32,9 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
-use OCA\OpenCatalogi\Service\DemoDataService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -119,7 +119,7 @@ class SetupController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
 	 * @param SettingsServiceInterface $settingsService Settings service (register import).
-	 * @param DemoDataService $demoDataService Demo dataset import (ADR-111 rule 4).
+	 * @param DemoDataServiceInterface $demoDataService Demo dataset import (ADR-111 rule 4).
 	 * @param DirectoryServiceInterface $directoryService Directory service (federation sync).
 	 * @param BroadcastServiceInterface $broadcastService Broadcast service (announce self to a directory).
 	 * @param ContainerInterface $container Container, to resolve OpenRegister ObjectService.
@@ -135,7 +135,7 @@ class SetupController extends Controller {
 		IRequest $request,
 		private readonly IAppConfig $config,
 		private readonly SettingsServiceInterface $settingsService,
-		private readonly DemoDataService $demoDataService,
+		private readonly DemoDataServiceInterface $demoDataService,
 		private readonly DirectoryServiceInterface $directoryService,
 		private readonly BroadcastServiceInterface $broadcastService,
 		private readonly ContainerInterface $container,
@@ -289,7 +289,7 @@ class SetupController extends Controller {
 			case 'load-demo-data':
 				return $this->loadDataset();
 			case 'install-demo-data':
-				return $this->installDemoData(dataset: DemoDataService::DEMO_DATASET);
+				return $this->installDemoData(dataset: DemoDataServiceInterface::DEMO_DATASET);
 			case 'skip-demo-data':
 				return $this->skipDemoData();
 			case 'reload-settings':
@@ -346,8 +346,8 @@ class SetupController extends Controller {
 			);
 		}
 
-		if ($picked === DemoDataService::NONE_DATASET) {
-			$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		if ($picked === DemoDataServiceInterface::NONE_DATASET) {
+			$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 			$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 			return new JSONResponse(
@@ -436,7 +436,7 @@ class SetupController extends Controller {
 	private function skipDemoData(): JSONResponse {
 		// Skipping IS choosing "None", so both keys are written: an older
 		// runbook may read either one.
-		$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 		$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 		return new JSONResponse(

@@ -38,7 +38,7 @@ namespace OCA\OpenCatalogi\Portal;
 
 use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
 use OCA\OpenCatalogi\Contract\PortalContributionProviderInterface;
-use OCA\OpenCatalogi\Service\Woo\WooRequestIntake;
+use OCA\OpenCatalogi\Contract\WooRequestIntakeInterface;
 
 /**
  * Declares what a resident may see and do in opencatalogi through the portal.
@@ -93,12 +93,12 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 * and the Woo intake only for `receiveWooRequest()`.
 	 *
 	 * @param CitizenCollectionServiceInterface|null $collections The dossiers.
-	 * @param WooRequestIntake|null $wooRequests Mints a Woo request and arms its term.
+	 * @param WooRequestIntakeInterface|null $wooRequests Mints a Woo request and arms its term.
 	 * @param ServiceStatusIndex|null $statusIndex The service status, for the public index.
 	 */
 	public function __construct(
 		private readonly ?CitizenCollectionServiceInterface $collections=null,
-		private readonly ?WooRequestIntake $wooRequests=null,
+		private readonly ?WooRequestIntakeInterface $wooRequests=null,
 		private readonly ?ServiceStatusIndex $statusIndex=null,
 	) {
 
@@ -164,7 +164,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	public function receiveWooRequest(array $answers, string $receivedAt=''): array {
 		if ($this->wooRequests === null) {
 			return [
-				'outcome' => WooRequestIntake::OUTCOME_UNAVAILABLE,
+				'outcome' => WooRequestIntakeInterface::OUTCOME_UNAVAILABLE,
 				'requestId' => '',
 				'reference' => '',
 				'dueAt' => '',
