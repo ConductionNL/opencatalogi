@@ -20,3 +20,13 @@ bin/console text eol=lf
 LICENSE export-ignore
 README.md export-ignore
 update-deps.sh export-ignore
+
+# Generated files. GitHub collapses them in diffs and leaves them out of the
+# language statistics.
+l10n/*.js linguist-generated=true
+openapi.json linguist-generated=true
+lib/Settings/example-sets/**/*.pdf linguist-generated=true
+
+# Reference value lists copied from the official government sources.
+lib/Settings/tooi_waardelijsten.json linguist-vendored=true
+lib/Settings/dcat_waardelijsten.json linguist-vendored=true
