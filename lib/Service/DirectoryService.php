@@ -71,6 +71,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.TooManyMethods) Sync paths are split into small private steps to stay under the unit size and complexity limits.
  */
 class DirectoryService {
 
@@ -94,6 +95,19 @@ class DirectoryService {
 	 * @var array<string>
 	 */
 	private array $uniqueDirectories = [];
+
+	/**
+	 * The directory sync counter each successful listing sync action counts toward.
+	 *
+	 * @var array<string, string>
+	 */
+	private const SYNC_ACTION_COUNTERS = [
+		'created' => 'listings_created',
+		'updated' => 'listings_updated',
+		'unchanged' => 'listings_unchanged',
+		'skipped_outdated' => 'listings_skipped',
+		'skipped_other_directory' => 'listings_skipped',
+	];
 
 	/**
 	 * Cached unique directories to avoid repeated database queries.
@@ -460,44 +474,12 @@ class DirectoryService {
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
 	 * @throws \InvalidArgumentException If directory URL is invalid
 	 *
-	 * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	public function syncDirectory(string $directoryUrl): array {
-		// Ensure known peer directories are cached for cross-directory checks (BFS).
-		// Uses directory URLs, not publications URLs — see getKnownDirectoryUrls().
-		if (empty($this->uniqueDirectories) === true) {
-			$this->uniqueDirectories = $this->getKnownDirectoryUrls();
+		$this->ensureKnownDirectories();
+		$this->assertSyncableDirectoryUrl(directoryUrl: $directoryUrl);
 
-			// Add default OpenCatalogi directory if not already present.
-			$defaultDirectory = $this->getDefaultDirectoryUrl();
-			if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
-				$this->uniqueDirectories[] = $defaultDirectory;
-			}
-		}
-
-		// Validate directory URL.
-		if (empty($directoryUrl) === true) {
-			throw new InvalidArgumentException('Directory URL cannot be empty');
-		}
-
-		if (filter_var($directoryUrl, FILTER_VALIDATE_URL) === false) {
-			throw new InvalidArgumentException('Invalid directory URL provided');
-		}
-
-		// Prevent syncing with self. Host+port comparison via isSelfInstance() so
-		// alternate host-aliases (e.g. localhost:9081 vs. nc-fed-1 on a docker
-		// network) still resolve to "this instance" — WOO-516.
-		if ($this->isSelfInstance(url: $directoryUrl) === true) {
-			throw new InvalidArgumentException('Cannot sync with current directory');
-		}
-
-		// Initialize results.
 		$results = [
 			'directory_url' => $directoryUrl,
 			'sync_time' => new DateTime(),
@@ -512,193 +494,287 @@ class DirectoryService {
 		];
 
 		// SSRF guard: validate the attacker-controllable directory URL BEFORE fetching.
-		// Restricts the scheme to http/https and rejects any host that resolves to a
-		// private, loopback, link-local, or cloud-metadata address. Throws
-		// InvalidArgumentException (mapped to HTTP 400) when the target is not safe.
+		// Throws InvalidArgumentException (mapped to HTTP 400) when the target is not safe.
 		$this->assertSafeOutboundUrl(url: $directoryUrl);
 
 		try {
-			// Fetch directory data with limit to get all listings.
-			// Redirects are validated per-hop and bounded by safeGet() so a redirect
-			// cannot be used to pivot to an internal address.
-			//
-			// `include-federated=1` asks the peer to include listings it learned from
-			// OTHER peers (BFS-discovery opt-in — see getDirectory()). Peers running an
-			// older OpenCatalogi build ignore the query param and return their default
-			// filtered view (only own catalogs), so this stays backward-compatible.
-			$dirUrlWithLimit = $directoryUrl . '?_limit=10000&include-federated=1';
-			$response = $this->safeGet(url: $dirUrlWithLimit);
-			$directoryData = json_decode($response->getBody()->getContents(), true);
-
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				throw new InvalidArgumentException('Invalid JSON response from directory');
-			}
-
-			// Get our own directory URL for filtering.
-			$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
-				$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-			);
-
-			// Process directory results asynchronously.
+			$directoryData = $this->fetchDirectoryData(directoryUrl: $directoryUrl);
 			if (isset($directoryData['results']) === true && is_array($directoryData['results']) === true) {
-				// Filter out listings that have our directory URL to prevent syncing ourselves.
-				// Also filter out listings with localhost or .local extensions.
-				$filteredListings = array_filter(
-					$directoryData['results'],
-					function ($listingData) {
-						// Skip if listing points at THIS instance (self-sync). Uses
-						// host+port matching + instance_aliases config so alternate
-						// host-aliases still resolve to self (WOO-516).
-						if (isset($listingData['directory']) === true
-							&& $this->isSelfInstance(url: $listingData['directory']) === true
-						) {
-							return false;
-						}
-
-						// Skip if listing has a local URL (localhost, .local, private IPs).
-						if (isset($listingData['directory']) === true
-							&& $this->isLocalUrl(url: $listingData['directory']) === true
-						) {
-							return false;
-						}
-
-						return true;
-					}
-				);
-
-				// Check if the directory has any listings from our directory (before filtering).
-				$hasOurListings = count($directoryData['results']) > count($filteredListings);
-
-				$listingPromises = [];
-
-				// Create promises for each filtered listing sync.
-				foreach ($filteredListings as $listingData) {
-					$listingPromises[] = new Promise(
-						function ($resolve) use ($listingData, $directoryUrl) {
-							$resolve($this->syncListing(listingData: $listingData, sourceDirectoryUrl: $directoryUrl));
-						}
-					);
-				}
-
-				// Execute all listing sync promises concurrently.
-				if (empty($listingPromises) === false) {
-					try {
-						$listingResults = \React\Async\await(\React\Promise\all($listingPromises));
-					} catch (\Exception $e) {
-						// If any promise fails, handle gracefully by creating error results.
-						$listingResults = [];
-						$promiseCount = count($listingPromises);
-						for ($i = 0; $i < $promiseCount; $i++) {
-							$listingResults[] = [
-								'listing_id' => 'unknown',
-								'listing_title' => 'Failed Promise',
-								'action' => 'failed',
-								'success' => false,
-								'error' => 'Promise execution failed: ' . $e->getMessage(),
-							];
-						}
-					}
-
-					// Process results.
-					foreach ($listingResults as $listingResult) {
-						$results['total_processed']++;
-						$results['listing_details'][] = $listingResult;
-
-						if ($listingResult['success'] === true) {
-							switch ($listingResult['action']) {
-								case 'created':
-									$results['listings_created']++;
-									break;
-								case 'updated':
-									$results['listings_updated']++;
-									break;
-								case 'unchanged':
-									$results['listings_unchanged']++;
-									break;
-								case 'skipped_outdated':
-								case 'skipped_other_directory':
-									$results['listings_skipped']++;
-									break;
-							}
-						}
-
-						if ($listingResult['success'] === false) {
-							$results['listings_failed']++;
-							if ($listingResult['error'] !== null) {
-								$results['errors'][] = 'Listing ' . $listingResult['listing_id'] . ': ' . $listingResult['error'];
-							}
-						}
-					}//end foreach
-				}//end if
-
-				// Broadcast to the directory if it doesn't have our listings and our URL is not local.
-				// Skip broadcasting if this sync was triggered by a system broadcast to prevent infinite loops.
-				if ($hasOurListings === false
-					&& $this->isLocalUrl(url: $ourDirectoryUrl) === false
-					&& $this->isSystemBroadcast() === false
-				) {
-					try {
-						$this->broadcastService->broadcast($directoryUrl);
-					} catch (\Exception $e) {
-						// Removed redundant logging (error handled silently).
-					}
-				} elseif ($this->isSystemBroadcast() === true) {
-					// Removed redundant logging.
-				}
-			}//end if
+				$results = $this->syncDirectoryListings(results: $results, listings: $directoryData['results'], directoryUrl: $directoryUrl);
+			}
 		} catch (GuzzleException $e) {
-			$error = 'Failed to fetch directory data: ' . $e->getMessage();
-			$results['errors'][] = $error;
-
-			// Try to update existing listings with error status.
-			try {
-				$errorCode = $e->getCode();
-				if ($errorCode === 0) {
-					$errorCode = 500;
-				}
-
-				$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: $errorCode, errorMessage: $error);
-			} catch (\Exception $updateException) {
-				// Removed redundant logging.
-			}
-
-			// Re-throw as a RequestException (concrete GuzzleException implementation).
-			if ($e instanceof RequestException) {
-				throw new RequestException(
-					message: $error,
-					request: $e->getRequest(),
-					response: $e->getResponse(),
-					previous: $e
-				);
-			}
-
-			// Construct a synthetic GET request representing the upstream call
-			// that produced the non-HTTP failure. PHPStan rejects null here
-			// because RequestException::__construct requires RequestInterface;
-			// we satisfy the contract while preserving the originating URL
-			// for downstream consumers (logs, retry queues).
-			throw new RequestException(
-				message: $error,
-				request: new Psr7Request('GET', $directoryUrl),
-				response: null,
-				previous: $e
-			);
+			throw $this->recordDirectoryFetchFailure(directoryUrl: $directoryUrl, exception: $e);
 		} catch (\Exception $e) {
-			$error = 'Sync failed: ' . $e->getMessage();
-			$results['errors'][] = $error;
-
-			// Try to update existing listings with error status.
-			try {
-				$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: 500, errorMessage: $error);
-			} catch (\Exception $updateException) {
-				// Removed redundant logging.
-			}
-
+			$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: 500, errorMessage: 'Sync failed: ' . $e->getMessage());
 			throw $e;
-		}//end try
+		}
 
 		return $results;
 	}//end syncDirectory()
+
+	/**
+	 * Cache the known peer directories, plus the default directory, for the cross-directory check.
+	 *
+	 * Uses directory URLs, not publication URLs: see getKnownDirectoryUrls().
+	 *
+	 * @return void
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function ensureKnownDirectories(): void {
+		if (empty($this->uniqueDirectories) === false) {
+			return;
+		}
+
+		$this->uniqueDirectories = $this->getKnownDirectoryUrls();
+		$defaultDirectory = $this->getDefaultDirectoryUrl();
+		if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
+			$this->uniqueDirectories[] = $defaultDirectory;
+		}
+	}//end ensureKnownDirectories()
+
+	/**
+	 * Refuse an empty or malformed directory URL, or one that points at this instance.
+	 *
+	 * The self check compares host and port, so an alias of this instance (such as
+	 * localhost:9081 against nc-fed-1 on a docker network) is refused too (WOO-516).
+	 *
+	 * @param string $directoryUrl The directory URL to sync.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the URL cannot be synced.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function assertSyncableDirectoryUrl(string $directoryUrl): void {
+		if (empty($directoryUrl) === true) {
+			throw new InvalidArgumentException('Directory URL cannot be empty');
+		}
+
+		if (filter_var($directoryUrl, FILTER_VALIDATE_URL) === false) {
+			throw new InvalidArgumentException('Invalid directory URL provided');
+		}
+
+		if ($this->isSelfInstance(url: $directoryUrl) === true) {
+			throw new InvalidArgumentException('Cannot sync with current directory');
+		}
+	}//end assertSyncableDirectoryUrl()
+
+	/**
+	 * Fetch and decode a peer directory, including the listings it learned from other peers.
+	 *
+	 * `include-federated=1` is the discovery opt-in (see getDirectory()); older peers
+	 * ignore it and return only their own catalogs. Redirects are checked per hop by
+	 * safeGet().
+	 *
+	 * @param string $directoryUrl The directory URL.
+	 *
+	 * @return mixed The decoded directory response.
+	 *
+	 * @throws GuzzleException
+	 * @throws InvalidArgumentException When the answer is not valid JSON.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function fetchDirectoryData(string $directoryUrl) {
+		$response = $this->safeGet(url: $directoryUrl . '?_limit=10000&include-federated=1');
+		$directoryData = json_decode($response->getBody()->getContents(), true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			throw new InvalidArgumentException('Invalid JSON response from directory');
+		}
+
+		return $directoryData;
+	}//end fetchDirectoryData()
+
+	/**
+	 * Sync the listings of a peer directory and broadcast to the peer when it does not list us.
+	 *
+	 * Listings that point at this instance or at a local address are not synced.
+	 *
+	 * @param array  $results      The sync results so far.
+	 * @param array  $listings     The listings the peer returned.
+	 * @param string $directoryUrl The peer directory URL.
+	 *
+	 * @return array The sync results.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function syncDirectoryListings(array $results, array $listings, string $directoryUrl): array {
+		$syncable = array_filter(
+			$listings,
+			function ($listingData) {
+				return $this->isSyncableListing(listingData: $listingData);
+			}
+		);
+
+		foreach ($this->runListingSyncs(listings: $syncable, directoryUrl: $directoryUrl) as $listingResult) {
+			$results = $this->tallyListingResult(results: $results, listingResult: $listingResult);
+		}
+
+		$hasOurListings = count($listings) > count($syncable);
+		if ($hasOurListings === false) {
+			$this->broadcastToDirectory(directoryUrl: $directoryUrl);
+		}
+
+		return $results;
+	}//end syncDirectoryListings()
+
+	/**
+	 * Whether a peer's listing is synced: not when it points at this instance or at a local address.
+	 *
+	 * @param mixed $listingData A listing from the peer.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function isSyncableListing($listingData): bool {
+		if (isset($listingData['directory']) === false) {
+			return true;
+		}
+
+		return $this->isSelfInstance(url: $listingData['directory']) === false
+			&& $this->isLocalUrl(url: $listingData['directory']) === false;
+	}//end isSyncableListing()
+
+	/**
+	 * Sync listings concurrently; when the batch fails, every listing gets a failed result.
+	 *
+	 * @param array  $listings     The listings to sync.
+	 * @param string $directoryUrl The peer directory URL.
+	 *
+	 * @return array The per-listing sync results.
+	 *
+	 * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function runListingSyncs(array $listings, string $directoryUrl): array {
+		$listingPromises = [];
+		foreach ($listings as $listingData) {
+			$listingPromises[] = new Promise(
+				function ($resolve) use ($listingData, $directoryUrl) {
+					$resolve($this->syncListing(listingData: $listingData, sourceDirectoryUrl: $directoryUrl));
+				}
+			);
+		}
+
+		if (empty($listingPromises) === true) {
+			return [];
+		}
+
+		try {
+			return \React\Async\await(\React\Promise\all($listingPromises));
+		} catch (\Exception $e) {
+			$failed = [
+				'listing_id' => 'unknown',
+				'listing_title' => 'Failed Promise',
+				'action' => 'failed',
+				'success' => false,
+				'error' => 'Promise execution failed: ' . $e->getMessage(),
+			];
+
+			return array_fill(0, count($listingPromises), $failed);
+		}
+	}//end runListingSyncs()
+
+	/**
+	 * Count one listing sync result into the directory sync results.
+	 *
+	 * @param array $results       The directory sync results.
+	 * @param array $listingResult The result of one listing sync.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function tallyListingResult(array $results, array $listingResult): array {
+		$results['total_processed']++;
+		$results['listing_details'][] = $listingResult;
+
+		if ($listingResult['success'] === true) {
+			$counter = (self::SYNC_ACTION_COUNTERS[$listingResult['action']] ?? null);
+			if ($counter !== null) {
+				$results[$counter]++;
+			}
+		}
+
+		if ($listingResult['success'] === false) {
+			$results['listings_failed']++;
+			if ($listingResult['error'] !== null) {
+				$results['errors'][] = 'Listing ' . $listingResult['listing_id'] . ': ' . $listingResult['error'];
+			}
+		}
+
+		return $results;
+	}//end tallyListingResult()
+
+	/**
+	 * Announce this instance to a peer directory, unless this instance has a local URL or
+	 * the sync was itself triggered by a broadcast (which would loop). A failure is ignored.
+	 *
+	 * @param string $directoryUrl The peer directory URL.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function broadcastToDirectory(string $directoryUrl): void {
+		$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
+			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
+		);
+		if ($this->isLocalUrl(url: $ourDirectoryUrl) === true || $this->isSystemBroadcast() === true) {
+			return;
+		}
+
+		try {
+			$this->broadcastService->broadcast($directoryUrl);
+		} catch (\Exception $e) {
+			// A peer that cannot be reached learns about us on its own next sync.
+		}
+	}//end broadcastToDirectory()
+
+	/**
+	 * Mark the directory's listings with a failed fetch and build the exception to rethrow.
+	 *
+	 * The rethrown RequestException carries the original request and response, or a
+	 * synthetic GET of the directory URL when the failure had no request.
+	 *
+	 * @param string          $directoryUrl The directory URL.
+	 * @param GuzzleException $exception    The fetch failure.
+	 *
+	 * @return RequestException
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function recordDirectoryFetchFailure(string $directoryUrl, GuzzleException $exception): RequestException {
+		$error = 'Failed to fetch directory data: ' . $exception->getMessage();
+		$errorCode = $exception->getCode();
+		if ($errorCode === 0) {
+			$errorCode = 500;
+		}
+
+		$this->updateDirectoryStatusOnError(directoryUrl: $directoryUrl, statusCode: $errorCode, errorMessage: $error);
+
+		if ($exception instanceof RequestException) {
+			return new RequestException(
+				message: $error,
+				request: $exception->getRequest(),
+				response: $exception->getResponse(),
+				previous: $exception
+			);
+		}
+
+		return new RequestException(
+			message: $error,
+			request: new Psr7Request('GET', $directoryUrl),
+			response: null,
+			previous: $exception
+		);
+	}//end recordDirectoryFetchFailure()
 
 	/**
 	 * Synchronize a single listing from directory data
@@ -716,306 +792,385 @@ class DirectoryService {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	public function syncListing(array $listingData, string $sourceDirectoryUrl): array {
-		// Extract fields from OpenRegister object structure.
-		$listingId = ($listingData['id'] ?? null);
-		$listingTitle = ($listingData['title'] ?? $listingData['@self']['name'] ?? 'Unknown');
-
-		// Extract catalog ID from relations.catalog or use id as fallback.
-		$catalogId = null;
-		if (isset($listingData['catalog']) === true) {
-			// Catalog field at top level.
-			$catalogId = $listingData['catalog'];
-		} elseif (isset($listingData['@self']['relations']['catalog']) === true) {
-			// Catalog in relations.
-			$catalogId = $listingData['@self']['relations']['catalog'];
-		} elseif (empty($listingId) === false) {
-			// Fallback: use id as catalog (for listings, catalog ID is often the same as listing ID).
-			$catalogId = $listingId;
-		}
-
-		// Extract directory from relations if present.
 		$listingDirectory = ($listingData['directory'] ?? $listingData['@self']['relations']['directory'] ?? null);
-
 		$result = [
-			'listing_id' => ($listingId ?? 'unknown'),
-			'listing_title' => $listingTitle,
+			'listing_id' => ($listingData['id'] ?? 'unknown'),
+			'listing_title' => ($listingData['title'] ?? $listingData['@self']['name'] ?? 'Unknown'),
 			'action' => 'none',
 			'success' => false,
 			'error' => null,
 		];
 
-		// Initialize variables used in both try and catch blocks.
+		if ($this->isFromOtherKnownDirectory(listingDirectory: $listingDirectory, sourceDirectoryUrl: $sourceDirectoryUrl) === true) {
+			return $this->skippedForOtherDirectory(result: $result, listingDirectory: $listingDirectory);
+		}
+
+		$target = null;
 		$existingListings = [];
-		$objectService = null;
-		$listingRegister = '';
-		$listingSchema = '';
-
 		try {
-			// Check if this listing belongs to a different directory that we already have as a source.
-			if (empty($listingDirectory) === false
-				&& $listingDirectory !== $sourceDirectoryUrl
-				&& in_array($listingDirectory, $this->uniqueDirectories) === true
-			) {
-				$result['action'] = 'skipped_other_directory';
-				$result['success'] = true;
-				$result['reason'] = 'Listing belongs to directory ' . $listingDirectory . ' which is processed separately';
-
-				// No need to log routine skips.
-				return $result;
-			}
-
-			// Check if OpenRegister service is available..
-			if (in_array('openregister', $this->appManager->getInstalledApps()) === false) {
-				throw new RuntimeException('OpenRegister service is not available.');
-			}
-
-			// Get ObjectService from container..
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-			// Get listing configuration.
-			$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
-			$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
-
-			if (empty($listingSchema) === true || empty($listingRegister) === true) {
-				throw new RuntimeException('Listing schema or register not configured');
-			}
-
-			// Validate listing data - require id and catalog.
-			if (empty($listingId) === true) {
-				throw new InvalidArgumentException('Invalid listing data: missing id');
-			}
-
-			if (empty($catalogId) === true) {
-				throw new InvalidArgumentException('Invalid listing data: missing catalog');
-			}
-
-			// Ensure catalog fields are set in listingData for later use.
-			// The listing schema requires 'catalogusId' as a required field.
-			$listingData['catalog'] = $catalogId;
-			$listingData['catalogusId'] = $catalogId;
-			$listingData['id'] = $listingId;
-
-			// Extract title from @self.name if title is not at top level.
-			if (empty($listingData['title']) === true && isset($listingData['@self']['name']) === true) {
-				$listingData['title'] = $listingData['@self']['name'];
-			}
-
-			// Clean up listing data to match schema.
-			// Keep the @self metadata for UUID handling, but clean it up.
-			// Determine UUID: prefer @self.id, then listing id.
-			$uuid = ($listingData['@self']['id'] ?? $listingData['id']);
-
-			// Extract API endpoints from @self.relations BEFORE we unset @self.
-			// These endpoints tell us where the actual catalog's API is hosted.
-			if (isset($listingData['@self']['relations']) === true
-				&& is_array($listingData['@self']['relations']) === true
-			) {
-				$relations = $listingData['@self']['relations'];
-
-				// Extract publications endpoint.
-				if (isset($relations['publications']) === true && empty($relations['publications']) === false) {
-					$listingData['publications'] = $relations['publications'];
-				}
-
-				// Extract search endpoint (alternative).
-				if (isset($relations['search']) === true && empty($relations['search']) === false) {
-					$listingData['search'] = $relations['search'];
-				}
-
-				// Extract directory endpoint from relations (the actual catalog's directory URL).
-				// This is different from $sourceDirectoryUrl which is where we got the listing from.
-				if (isset($relations['directory']) === true && empty($relations['directory']) === false) {
-					$listingData['catalogDirectory'] = $relations['directory'];
-				}
-			}
-
-			// Remove @self metadata from the object data (but keep UUID for saveObject).
-			unset($listingData['@self']);
-
-			// Detect or generate publication endpoint BEFORE we overwrite directory field.
-			// If not already extracted from relations, try to detect from available data.
-			if (empty($listingData['publications']) === true) {
-				$listingData['publications'] = $this->detectPublicationEndpoint(listingData: $listingData);
-			}
-
-			// Preserve the peer's own /api/directory URL in the `directory` field so cron
-			// sync can discover it as a new sync target on the next tick — this is the
-			// BFS-like discovery mechanism: peer A tells us about peer B, we save B's
-			// directory URL, next sync we hit B directly, B tells us about C, etc.
-			//
-			// Fall back to $sourceDirectoryUrl only when the incoming listing itself
-			// carries no directory field (malformed / legacy payload) so the dedup key
-			// downstream is never null.
-			$listingData['directory'] = $listingDirectory;
-			if (empty($listingDirectory) === true) {
-				$listingData['directory'] = $sourceDirectoryUrl;
-			}
-
-			// Set lastSync as ISO string format instead of DateTime object.
-			// lastSync is the last attempt; lastSuccessAt only moves on a
-			// successful sync, so a failing peer keeps its last good time
-			// (REQ-FLS-001). A success clears the previous error.
-			$listingData['lastSync']      = (new DateTime())->format('c');
-			$listingData['lastSuccessAt'] = $listingData['lastSync'];
-			$listingData['lastError']     = '';
-
-			// Set published from source if available, otherwise default to now for backwards compatibility.
-			// Normalize to ISO 8601 format (date-time validation requires 'T' separator and timezone).
-			$originalPublished = ($listingData['published'] ?? null);
-			$listingData['published'] = (new DateTime())->format('c');
-			if (empty($originalPublished) === false) {
-				try {
-					$listingData['published'] = (new DateTime((string)$originalPublished))->format('c');
-				} catch (\Exception $e) {
-					$listingData['published'] = (new DateTime())->format('c');
-				}
-			}
-
-			// Catalog field is already present from external listing data.
-			// Set summary to 'unknown' if empty (required field).
-			if (empty($listingData['summary']) === true) {
-				$listingData['summary'] = 'unknown';
-			}
-
-			// Count schemas if available.
-			$listingData['schemaCount'] = 0;
-			if (isset($listingData['schemas']) === true && is_array($listingData['schemas']) === true) {
-				$listingData['schemaCount'] = count($listingData['schemas']);
-			}
-
-			// Check if listing already exists to determine action type.
-			// Match on catalogusId + directory (peer's own /api/directory URL, or
-			// $sourceDirectoryUrl fallback for legacy payloads without a directory field).
-			// Using catalogusId alone fails because different instances generate different
-			// UUIDs for the same logical catalog; the directory URL disambiguates cross-peer
-			// duplicates while still deduplicating on repeated syncs of the SAME peer.
-			$existingListings = $objectService->searchObjects(
-				query: [
-					'@self' => [
-						'register' => $listingRegister,
-						'schema' => $listingSchema,
-					],
-					'catalogusId' => $catalogId,
-					'directory' => $listingData['directory'],
-				]
+			$target = $this->resolveListingTarget();
+			$target['uuid'] = ($listingData['@self']['id'] ?? $listingData['id'] ?? null);
+			$listingData = $this->prepareListingData(
+				listingData: $listingData,
+				sourceDirectoryUrl: $sourceDirectoryUrl,
+				listingDirectory: $listingDirectory
 			);
+			$existingListings = $this->findExistingListings(target: $target, listingData: $listingData);
 
-			$isUpdate = (empty($existingListings) === false);
-
-			// Set directory properties based on whether it's new or updated.
-			// Set defaults for new listings.
-			$listingData['default'] = (
-				$sourceDirectoryUrl === $this->getDefaultDirectoryUrl()
-			);
-			$listingData['statusCode'] = 200;
-			$listingData['status'] = 'development';
-			$listingData['integrationLevel'] = 'search';
-
-			if ($isUpdate === true) {
-				// For updates, preserve existing available and default values.
-				$existingListing = $existingListings[0];
-				$existingListingData = $existingListing->jsonSerialize();
-				$existingObject = ($existingListingData['object'] ?? []);
-
-				// Preserve existing availability and default status, but set smart defaults for missing fields.
-				$listingData['default'] = ($existingObject['default'] ?? $listingData['default']);
-				$listingData['status'] = ($existingObject['status'] ?? 'development');
-				$listingData['integrationLevel'] = ($existingObject['integrationLevel'] ?? 'search');
-			}
-
-			if ($isUpdate === true) {
-				// For updates, check for race conditions and data changes.
-				// (existingListing and existingListingData already retrieved above).
-				// Check for race condition: skip if incoming data is older than our last sync.
-				if ($this->isListingDataOutdated(incomingData: $listingData, existingData: $existingListingData) === true) {
-					$result['action'] = 'skipped_outdated';
-					$result['success'] = true;
-					$result['reason'] = 'Incoming listing data is older than existing data';
-
-					// Skipping outdated listing (no logging needed for routine operations).
-					return $result;
-				}
-
-				// Check if listing has actually changed using hash comparison.
-				$newHash = hash('sha256', json_encode($listingData));
-				$oldHash = hash('sha256', json_encode(($existingListingData['object'] ?? [])));
-
-				if ($newHash === $oldHash) {
-					$result['action'] = 'unchanged';
-					$result['success'] = true;
-				}
-
-				if ($newHash !== $oldHash) {
-					// Use existing UUID for update.
-					$uuid = $existingListingData['id'];
-
-					// Use saveObject which respects hard validation settings.
-					// Use positional parameters for compatibility with different ObjectService versions..
-					$objectService->saveObject(
-						object: $listingData,
-						extend: [],
-						register: $listingRegister,
-						schema: $listingSchema,
-						uuid: $uuid
-					);
-
-					$result['action'] = 'updated';
-					$result['success'] = true;
-				}
-			}//end if
-
-			if ($isUpdate === false) {
-				// Create new listing using saveObject.
-				// Use positional parameters for compatibility with different ObjectService versions..
-				$objectService->saveObject(
-					object: $listingData,
-					extend: [],
-					register: $listingRegister,
-					schema: $listingSchema,
-					uuid: $uuid
-				);
-
-				$result['action'] = 'created';
-				$result['success'] = true;
-			}
+			return array_merge($result, $this->storeListing(listingData: $listingData, existingListings: $existingListings, target: $target));
 		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
-
-			// Try to update the listing with error status if it exists.
-			// @phpstan-ignore-next-line Variables are assigned in the try block before potential exceptions.
-			if (is_array($existingListings) === true && count($existingListings) > 0 && $objectService !== null) {
-				try {
-					$existingListing = $existingListings[0];
-					$existingListingData = $existingListing->jsonSerialize();
-					$errorData = ($existingListingData['object'] ?? []);
-
-					// Update with error status. lastSuccessAt is left as it was.
-					$errorData['statusCode'] = 500;
-					$errorData['lastSync']   = (new DateTime())->format('c');
-					$errorData['lastError']  = self::sanitizeSyncError(message: $e->getMessage());
-
-					$objectService->saveObject(
-						object: $errorData,
-						extend: [],
-						register: $listingRegister,
-						schema: $listingSchema,
-						uuid: $existingListingData['id']
-					);
-				} catch (\Exception $updateException) {
-					// Silently ignore update failures in error handling path.
-				}//end try
-			}//end if
-		}//end try
+			$this->recordListingError(target: $target, existingListings: $existingListings, exception: $e);
+		}
 
 		return $result;
 	}//end syncListing()
+
+	/**
+	 * Whether a listing belongs to another directory that is synced as a source of its own.
+	 *
+	 * @param mixed  $listingDirectory   The directory the listing names.
+	 * @param string $sourceDirectoryUrl The directory being synced.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function isFromOtherKnownDirectory($listingDirectory, string $sourceDirectoryUrl): bool {
+		return empty($listingDirectory) === false
+			&& $listingDirectory !== $sourceDirectoryUrl
+			&& in_array($listingDirectory, $this->uniqueDirectories) === true;
+	}//end isFromOtherKnownDirectory()
+
+	/**
+	 * The sync result of a listing that is skipped because its own directory is synced separately.
+	 *
+	 * @param array $result           The initial sync result.
+	 * @param mixed $listingDirectory The directory the listing names.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function skippedForOtherDirectory(array $result, $listingDirectory): array {
+		$result['action'] = 'skipped_other_directory';
+		$result['success'] = true;
+		$result['reason'] = 'Listing belongs to directory ' . $listingDirectory . ' which is processed separately';
+
+		return $result;
+	}//end skippedForOtherDirectory()
+
+	/**
+	 * The ObjectService and the listing register/schema that synced listings are stored in.
+	 *
+	 * @return array{objectService: object, register: string, schema: string}
+	 *
+	 * @throws RuntimeException When OpenRegister is not installed or the listing register/schema is not configured.
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function resolveListingTarget(): array {
+		if (in_array('openregister', $this->appManager->getInstalledApps()) === false) {
+			throw new RuntimeException('OpenRegister service is not available.');
+		}
+
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+		if (empty($listingSchema) === true || empty($listingRegister) === true) {
+			throw new RuntimeException('Listing schema or register not configured');
+		}
+
+		return [
+			'objectService' => $objectService,
+			'register' => $listingRegister,
+			'schema' => $listingSchema,
+		];
+	}//end resolveListingTarget()
+
+	/**
+	 * Normalise an incoming listing to the local listing schema.
+	 *
+	 * @param array  $listingData        The listing as the peer sent it.
+	 * @param string $sourceDirectoryUrl The directory being synced.
+	 * @param mixed  $listingDirectory   The directory the listing names.
+	 *
+	 * @return array The listing to store.
+	 *
+	 * @throws InvalidArgumentException When the listing has no id or no catalog.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function prepareListingData(array $listingData, string $sourceDirectoryUrl, $listingDirectory): array {
+		$listingData = $this->withListingIdentity(listingData: $listingData);
+		$listingData = $this->withRelationEndpoints(listingData: $listingData);
+		unset($listingData['@self']);
+
+		if (empty($listingData['publications']) === true) {
+			$listingData['publications'] = $this->detectPublicationEndpoint(listingData: $listingData);
+		}
+
+		// The peer's own directory URL is kept so the next cron sync can reach that peer
+		// directly (discovery); the source directory is only the fallback for a payload
+		// without one, so the dedup key is never null.
+		$listingData['directory'] = $listingDirectory;
+		if (empty($listingDirectory) === true) {
+			$listingData['directory'] = $sourceDirectoryUrl;
+		}
+
+		$listingData = $this->withSyncStamps(listingData: $listingData);
+		if (empty($listingData['summary']) === true) {
+			$listingData['summary'] = 'unknown';
+		}
+
+		$listingData['schemaCount'] = 0;
+		if (isset($listingData['schemas']) === true && is_array($listingData['schemas']) === true) {
+			$listingData['schemaCount'] = count($listingData['schemas']);
+		}
+
+		return $this->withListingDefaults(listingData: $listingData, sourceDirectoryUrl: $sourceDirectoryUrl);
+	}//end prepareListingData()
+
+	/**
+	 * Validate the listing id and catalog, and write them as `id`, `catalog` and `catalogusId`.
+	 *
+	 * The catalog comes from `catalog`, then `@self.relations.catalog`, then the listing id.
+	 * A missing top-level title is taken from `@self.name`.
+	 *
+	 * @param array $listingData The listing as the peer sent it.
+	 *
+	 * @return array
+	 *
+	 * @throws InvalidArgumentException When the listing has no id or no catalog.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function withListingIdentity(array $listingData): array {
+		$listingId = ($listingData['id'] ?? null);
+		$catalogId = ($listingData['catalog'] ?? $listingData['@self']['relations']['catalog'] ?? null);
+		if ($catalogId === null && empty($listingId) === false) {
+			$catalogId = $listingId;
+		}
+
+		if (empty($listingId) === true) {
+			throw new InvalidArgumentException('Invalid listing data: missing id');
+		}
+
+		if (empty($catalogId) === true) {
+			throw new InvalidArgumentException('Invalid listing data: missing catalog');
+		}
+
+		$listingData['catalog'] = $catalogId;
+		$listingData['catalogusId'] = $catalogId;
+		$listingData['id'] = $listingId;
+		if (empty($listingData['title']) === true && isset($listingData['@self']['name']) === true) {
+			$listingData['title'] = $listingData['@self']['name'];
+		}
+
+		return $listingData;
+	}//end withListingIdentity()
+
+	/**
+	 * Copy the catalog's API endpoints from `@self.relations` onto the listing.
+	 *
+	 * `@self.relations.directory` is the catalog's own directory URL, stored as
+	 * `catalogDirectory`; it differs from the directory the listing was synced from.
+	 *
+	 * @param array $listingData The listing.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function withRelationEndpoints(array $listingData): array {
+		$relations = ($listingData['@self']['relations'] ?? null);
+		if (is_array($relations) === false) {
+			return $listingData;
+		}
+
+		$endpoints = [
+			'publications' => 'publications',
+			'search' => 'search',
+			'directory' => 'catalogDirectory',
+		];
+		foreach ($endpoints as $relation => $property) {
+			if (empty($relations[$relation]) === false) {
+				$listingData[$property] = $relations[$relation];
+			}
+		}
+
+		return $listingData;
+	}//end withRelationEndpoints()
+
+	/**
+	 * Stamp a successful sync and normalise `published` to ISO 8601.
+	 *
+	 * `lastSync` is the last attempt and `lastSuccessAt` only moves on success, so a
+	 * failing peer keeps its last good time (REQ-FLS-001). A missing or unreadable
+	 * `published` becomes now.
+	 *
+	 * @param array $listingData The listing.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function withSyncStamps(array $listingData): array {
+		$listingData['lastSync']      = (new DateTime())->format('c');
+		$listingData['lastSuccessAt'] = $listingData['lastSync'];
+		$listingData['lastError']     = '';
+
+		$originalPublished = ($listingData['published'] ?? null);
+		$listingData['published'] = (new DateTime())->format('c');
+		if (empty($originalPublished) === false) {
+			try {
+				$listingData['published'] = (new DateTime((string)$originalPublished))->format('c');
+			} catch (\Exception $e) {
+				$listingData['published'] = (new DateTime())->format('c');
+			}
+		}
+
+		return $listingData;
+	}//end withSyncStamps()
+
+	/**
+	 * Set the status fields of a newly seen listing; an update later keeps the stored ones.
+	 *
+	 * @param array  $listingData        The listing.
+	 * @param string $sourceDirectoryUrl The directory being synced.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function withListingDefaults(array $listingData, string $sourceDirectoryUrl): array {
+		$listingData['default'] = ($sourceDirectoryUrl === $this->getDefaultDirectoryUrl());
+		$listingData['statusCode'] = 200;
+		$listingData['status'] = 'development';
+		$listingData['integrationLevel'] = 'search';
+
+		return $listingData;
+	}//end withListingDefaults()
+
+	/**
+	 * Find the stored listing for a catalog from a directory.
+	 *
+	 * Matched on catalogusId plus directory: instances generate different UUIDs for
+	 * the same logical catalog, and the directory URL tells those peers apart while
+	 * repeated syncs of the same peer still find the same listing.
+	 *
+	 * @param array $target      The ObjectService and listing register/schema.
+	 * @param array $listingData The prepared listing.
+	 *
+	 * @return mixed The matching listings.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function findExistingListings(array $target, array $listingData) {
+		return $target['objectService']->searchObjects(
+			query: [
+				'@self' => [
+					'register' => $target['register'],
+					'schema' => $target['schema'],
+				],
+				'catalogusId' => $listingData['catalogusId'],
+				'directory' => $listingData['directory'],
+			]
+		);
+	}//end findExistingListings()
+
+	/**
+	 * Create the listing, or update the stored one when the incoming data is newer and differs.
+	 *
+	 * @param array $listingData      The prepared listing.
+	 * @param mixed $existingListings The stored listings that match it.
+	 * @param array $target           The ObjectService, listing register/schema and new uuid.
+	 *
+	 * @return array The outcome: action, success and, for a skip, the reason.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function storeListing(array $listingData, $existingListings, array $target): array {
+		if (empty($existingListings) === true) {
+			$this->saveListing(target: $target, listingData: $listingData, uuid: $target['uuid']);
+			return ['action' => 'created', 'success' => true];
+		}
+
+		$existingListingData = $existingListings[0]->jsonSerialize();
+		$existingObject = ($existingListingData['object'] ?? []);
+		$listingData['default'] = ($existingObject['default'] ?? $listingData['default']);
+		$listingData['status'] = ($existingObject['status'] ?? 'development');
+		$listingData['integrationLevel'] = ($existingObject['integrationLevel'] ?? 'search');
+
+		if ($this->isListingDataOutdated(incomingData: $listingData, existingData: $existingListingData) === true) {
+			return ['action' => 'skipped_outdated', 'success' => true, 'reason' => 'Incoming listing data is older than existing data'];
+		}
+
+		if (hash('sha256', json_encode($listingData)) === hash('sha256', json_encode($existingObject))) {
+			return ['action' => 'unchanged', 'success' => true];
+		}
+
+		$this->saveListing(target: $target, listingData: $listingData, uuid: $existingListingData['id']);
+
+		return ['action' => 'updated', 'success' => true];
+	}//end storeListing()
+
+	/**
+	 * Save a listing object in the listing register/schema.
+	 *
+	 * @param array $target      The ObjectService and listing register/schema.
+	 * @param array $listingData The listing object.
+	 * @param mixed $uuid        The uuid to save it under.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function saveListing(array $target, array $listingData, $uuid): void {
+		$target['objectService']->saveObject(
+			object: $listingData,
+			extend: [],
+			register: $target['register'],
+			schema: $target['schema'],
+			uuid: $uuid
+		);
+	}//end saveListing()
+
+	/**
+	 * Record a failed sync on the stored listing; `lastSuccessAt` is left as it was.
+	 *
+	 * Does nothing when the failure came before a stored listing was found. A failure
+	 * to record is ignored.
+	 *
+	 * @param array|null $target           The ObjectService and listing register/schema, or null.
+	 * @param mixed      $existingListings The stored listings found so far.
+	 * @param \Exception $exception        The sync failure.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function recordListingError(?array $target, $existingListings, \Exception $exception): void {
+		if ($target === null || is_array($existingListings) === false || count($existingListings) === 0) {
+			return;
+		}
+
+		try {
+			$existingListingData = $existingListings[0]->jsonSerialize();
+			$errorData = ($existingListingData['object'] ?? []);
+			$errorData['statusCode'] = 500;
+			$errorData['lastSync']   = (new DateTime())->format('c');
+			$errorData['lastError']  = self::sanitizeSyncError(message: $exception->getMessage());
+
+			$this->saveListing(target: $target, listingData: $errorData, uuid: $existingListingData['id']);
+		} catch (\Exception $updateException) {
+			// A failure to record the error must not mask the sync failure.
+		}
+	}//end recordListingError()
 
 	/**
 	 * Get publications from all available federated catalogs asynchronously
