@@ -35,7 +35,7 @@ OpenCatalogi runs inside a Nextcloud server, in PHP on the server and Vue in the
 
 ## Functional components
 
-We group the code by what it does, not by technical layer. The class name or its directory decides the component; `sigrid.yaml` holds the exact patterns.
+We group the code by what it does, not by technical layer. The class name or its directory decides the component.
 
 | Component | What it covers | PHP lines |
 |---|---|---|
@@ -51,11 +51,11 @@ We group the code by what it does, not by technical layer. The class name or its
 
 Counts exclude `lib/Migration/`, which SIG leaves out by default.
 
-### Boundaries and known coupling
+### Boundaries
 
 Every component uses **Publications and catalogs**, because a publication is what the other components act on. Every component also uses **Application wiring** for shared helpers. Those dependencies are intended.
 
-Measured on `lib/` in October 2026, about half of the PHP code is called from another component, and many pairs of components call each other both ways. Moving the shared publication types behind a small interface is the main architectural work ahead.
+Decoupling between components is in progress. The aim is that the other components reach publications through a small interface.
 
 ## How a request flows
 
@@ -76,7 +76,7 @@ SIG's Sigrid excludes `vendor/`, `node_modules/`, `docs/`, migrations, mocks and
 - `l10n/*.js`: generated translation catalogues that would count as JavaScript.
 - `scripts/`: developer tooling that would count as production code.
 
-`sigrid.yaml` handles both. It also pins the model version and maps the components above.
+`sigrid.yaml` excludes both and pins the model version. Components are left to Sigrid's automatic detection.
 
 ## Licence
 
