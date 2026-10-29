@@ -163,7 +163,17 @@ class WooFakeDeckService {
 		return $this->available;
 	}//end isDeckAvailable()
 
+	/** @var array<int, array<string, mixed>> Every linkOrCreateCard call, in full. */
+	public array $calls = [];
+
+	public ?string $failOnTitle = null;
+
 	public function linkOrCreateCard(string $objectUuid, int $registerId, array $data) {
+		$this->calls[] = ['objectUuid' => $objectUuid, 'registerId' => $registerId, 'data' => $data];
+		if ($this->failOnTitle !== null && ($data['title'] ?? '') === $this->failOnTitle) {
+			throw new \RuntimeException('deck down');
+		}
+
 		$link = [
 			'objectUuid' => $objectUuid,
 			'boardId' => ($data['boardId'] ?? 0),
@@ -390,6 +400,97 @@ class WooServiceTest extends TestCase {
 		$this->assertCount(2, $this->deck->links);
 
 	}//end testCreateBatchPersistsAssessmentsAndBatch()
+
+	public function testCreateBatchLinksOneCardPerAssessmentAndRecordsTheBatch(): void {
+		$batch = $this->service->createBatch(
+			'WOO-2026-003',
+			[
+				['fileName' => 'a.pdf', 'fileType' => 'application/pdf', 'documentReference' => 'doc-a'],
+				['id' => 'doc-b'],
+			],
+			42
+		);
+
+		$this->assertSame(
+			[
+				[
+					'objectUuid' => 'obj-1',
+					'registerId' => 1,
+					'data' => ['boardId' => 42, 'stackId' => 0, 'title' => 'a.pdf', 'description' => 'WOO document — WOO-2026-003'],
+				],
+				[
+					'objectUuid' => 'obj-2',
+					'registerId' => 1,
+					'data' => ['boardId' => 42, 'stackId' => 0, 'title' => 'Document', 'description' => 'WOO document — WOO-2026-003'],
+				],
+			],
+			$this->deck->calls
+		);
+		$this->assertSame(
+			[
+				'documentReference' => 'doc-b',
+				'fileName' => '',
+				'fileType' => '',
+				'assessment' => 'te_beoordelen',
+				'weigeringsgronden' => [],
+				'redactionInstructions' => '',
+				'anonymizedDocument' => '',
+				'caseReference' => 'WOO-2026-003',
+				'assessedBy' => '',
+				'assessedAt' => '',
+				'id' => 'obj-2',
+			],
+			$batch['assessments'][1]
+		);
+		$this->assertSame(
+			[['register' => '1', 'schema' => 'assess-sch'], ['register' => '1', 'schema' => 'assess-sch'], ['register' => '1', 'schema' => 'batch-sch']],
+			$this->objects->saveTargets
+		);
+		$this->assertSame('obj-3', $batch['id']);
+		$this->assertSame(['obj-1', 'obj-2'], $batch['documents']);
+		$this->assertSame(42, $batch['deckBoardId']);
+		$this->assertTrue($batch['deckAvailable']);
+		$this->assertSame('alice', $batch['createdBy']);
+		$this->assertSame($batch['createdAt'], $batch['updatedAt']);
+		$this->assertSame('', $batch['decisionLetter']);
+		$this->assertSame('', $batch['inventoryList']);
+		$this->assertCount(2, $batch['deckLinks']);
+		$this->assertSame('obj-2', $batch['deckLinks'][1]['objectUuid']);
+		$this->assertArrayNotHasKey('deckWarning', $batch);
+
+	}//end testCreateBatchLinksOneCardPerAssessmentAndRecordsTheBatch()
+
+	public function testCreateBatchLogsAFailedCardAndKeepsTheOthers(): void {
+		$this->deck->failOnTitle = 'a.pdf';
+		$this->logger->expects($this->once())->method('warning')
+			->with('[WooService] deck card link failed for obj-1: deck down');
+
+		$batch = $this->service->createBatch('WOO-2026-004', [['fileName' => 'a.pdf'], ['fileName' => 'b.pdf']], 5);
+
+		$this->assertCount(1, $batch['deckLinks']);
+		$this->assertSame('obj-2', $batch['deckLinks'][0]['objectUuid']);
+		$this->assertCount(2, $batch['documents']);
+
+	}//end testCreateBatchLogsAFailedCardAndKeepsTheOthers()
+
+	public function testCreateBatchWithoutABoardLinksNoCards(): void {
+		$batch = $this->service->createBatch('WOO-2026-005', [['fileName' => 'a.pdf']]);
+
+		$this->assertSame([], $this->deck->calls);
+		$this->assertSame([], $batch['deckLinks']);
+		$this->assertNull($batch['deckBoardId']);
+		$this->assertArrayNotHasKey('deckWarning', $batch);
+
+	}//end testCreateBatchWithoutABoardLinksNoCards()
+
+	public function testCreateBatchNeedsTheRegisterAndSchemas(): void {
+		unset($this->store['woo_batch_schema']);
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('OpenRegister WOO register/schema unavailable or unconfigured');
+		$this->service->createBatch('WOO-2026-006', []);
+
+	}//end testCreateBatchNeedsTheRegisterAndSchemas()
 
 	public function testCreateBatchDeckUnavailableSurfacesWarning(): void {
 		$this->deck->available = false;
