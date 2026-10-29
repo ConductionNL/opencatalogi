@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TCatalogi } from '../'
 import type { TPublication } from './publication.types'
 
@@ -161,7 +161,7 @@ export class Publication implements TPublication {
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TPublication, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/jcrqsdtnjtx8v-create-publication
 		const schema = z.object({
 			title: z.string().min(1, 'is verplicht'), // .min(1) on a string functionally works the same as a nonEmpty check (SHOULD NOT BE COMBINED WITH .OPTIONAL())
