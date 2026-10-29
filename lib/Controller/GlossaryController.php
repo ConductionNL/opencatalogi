@@ -306,10 +306,25 @@ class GlossaryController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string|int $id): JSONResponse {
-		// Use searchObjectsPaginated to find single glossary term.
+		// Get glossary configuration from settings (resolved via OpenRegister; 503 if
+		// unconfigured), exactly as index() does.
+		try {
+			$glossaryConfig = $this->getGlossaryConfiguration();
+		} catch (\Throwable $e) {
+			return $this->registerConfigErrorResponse(e: $e);
+		}
+
+		// Scope the lookup to the glossary register/schema. Unscoped, OpenRegister answers an
+		// `_ids` search from every magic table on the instance, and this route is @PublicPage.
+		// `_rbac: true` alone does not close that: a schema without an authorization block
+		// grants read to everyone.
 		$searchQuery = [
 			'_ids' => [$id],
 			'_limit' => 1,
+			'@self' => [
+				'register' => $glossaryConfig['register'],
+				'schema' => $glossaryConfig['schema'],
+			],
 		];
 		$result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: true, _multitenancy: false);
 
