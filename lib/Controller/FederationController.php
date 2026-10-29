@@ -39,6 +39,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 
@@ -48,6 +49,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
+	use AnswersCacheably;
+
 	/**
 	 * FederationController constructor.
 	 *
@@ -55,6 +58,7 @@ class FederationController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
+	 * @param ContainerInterface $container The container the cache headers read the session and config from.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
 	 */
@@ -63,6 +67,7 @@ class FederationController extends Controller {
 		IRequest $request,
 		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
+		private readonly ContainerInterface $container,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?WithheldFromPublicationInterface $withheld = null,
 	) {
@@ -135,6 +140,7 @@ class FederationController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publication(string $id): JSONResponse {
@@ -153,7 +159,12 @@ class FederationController extends Controller {
 				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
 			}
 
-			return new JSONResponse($result['data'], $result['status']);
+			// The same cache headers publications#show sends: the portal reads a
+			// publication with its schema through this route on every page view,
+			// and an unchanged answer comes back as a 304 without a body.
+			return $this->cacheableForCaller(
+				response: new JSONResponse($result['data'], $result['status'])
+			);
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publication] Failed to retrieve publication',
@@ -266,10 +277,11 @@ class FederationController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
-		return $this->publicationService->attachments(id: $id);
+		return $this->cacheableForCaller(response: $this->publicationService->attachments(id: $id));
 	}//end publicationAttachments()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of
