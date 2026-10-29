@@ -40,7 +40,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request as Psr7Request;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
-use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -178,7 +178,7 @@ class DirectoryService {
 		return $this->config->getValueString(
 			$this->appName,
 			'default_directory_url',
-			Application::DEFAULT_DIRECTORY_URL
+			AppIdentity::DEFAULT_DIRECTORY_URL
 		);
 
 	}//end getDefaultDirectoryUrl()

@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\AppInfo;
 
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Dashboard\DashboardRegistrar;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
@@ -44,20 +45,14 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Application extends App implements IBootstrap {
-	public const APP_ID = 'opencatalogi';
+	public const APP_ID = AppIdentity::APP_ID;
 
 	/**
-	 * Canonical national OpenCatalogi directory URL.
-	 *
-	 * Single source of truth for the federated-network endpoint that
-	 * DirectoryService, the Add-Directory modal and the first-time-setup
-	 * `connect-federation` action all default to. An instance may override it
-	 * with the `default_directory_url` app-config key (see
-	 * DirectoryService::getDefaultDirectoryUrl()).
+	 * Canonical national OpenCatalogi directory URL, see AppIdentity.
 	 *
 	 * @var string
 	 */
-	public const DEFAULT_DIRECTORY_URL = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+	public const DEFAULT_DIRECTORY_URL = AppIdentity::DEFAULT_DIRECTORY_URL;
 
 	/**
 	 * Constructor.
