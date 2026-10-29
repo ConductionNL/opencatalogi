@@ -37,13 +37,14 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\BannerServiceInterface;
 
 /**
  * Decides which banners one user sees right now.
  *
  * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
  */
-class BannerService {
+class BannerService implements BannerServiceInterface {
 
 	/**
 	 * The severities a banner may carry.

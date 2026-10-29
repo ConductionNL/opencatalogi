@@ -33,10 +33,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Publication\DepublicationService;
+use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
-use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -62,22 +62,22 @@ class PublicationStateController extends Controller {
 	 * @param IRequest                $request      The request.
 	 * @param IL10N                   $l10n         Localisation.
 	 * @param IUserSession            $userSession  The current session.
-	 * @param PublicationStateService $states       The visibility state and the record per move.
+	 * @param PublicationStateServiceInterface $states       The visibility state and the record per move.
 	 * @param PublicationRights       $rights       The update right on one publication.
-	 * @param DepublicationService    $depublisher  Sends the withdrawals.
+	 * @param DepublicationServiceInterface    $depublisher  Sends the withdrawals.
 	 * @param ContainerInterface      $container    Server container, for the register resolver and OpenRegister's file service.
-	 * @param ServiceCatalogueService $objects      The OpenRegister reader.
+	 * @param ServiceCatalogueServiceInterface $objects      The OpenRegister reader.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationStateService $states,
+		private readonly PublicationStateServiceInterface $states,
 		private readonly PublicationRights $rights,
-		private readonly DepublicationService $depublisher,
+		private readonly DepublicationServiceInterface $depublisher,
 		private readonly ContainerInterface $container,
-		private readonly ServiceCatalogueService $objects,
+		private readonly ServiceCatalogueServiceInterface $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -131,7 +131,7 @@ class PublicationStateController extends Controller {
 
 		$properties = $this->asArray(object: $publication);
 		$state = $this->states->stateOf(publication: $properties);
-		if ($state === PublicationStateService::STATE_PUBLIC || $state === PublicationStateService::STATE_ARCHIVED) {
+		if ($state === PublicationStateServiceInterface::STATE_PUBLIC || $state === PublicationStateServiceInterface::STATE_ARCHIVED) {
 			return $this->conflict(state: $state);
 		}
 
@@ -141,7 +141,7 @@ class PublicationStateController extends Controller {
 			return $this->refused(e: $e);
 		}
 
-		return new JSONResponse(['state' => PublicationStateService::STATE_PUBLIC]);
+		return new JSONResponse(['state' => PublicationStateServiceInterface::STATE_PUBLIC]);
 
 	}//end publish()
 
@@ -168,7 +168,7 @@ class PublicationStateController extends Controller {
 
 		$properties = $this->asArray(object: $publication);
 		$state = $this->states->stateOf(publication: $properties);
-		if ($state !== PublicationStateService::STATE_PUBLIC && $state !== PublicationStateService::STATE_SCHEDULED) {
+		if ($state !== PublicationStateServiceInterface::STATE_PUBLIC && $state !== PublicationStateServiceInterface::STATE_SCHEDULED) {
 			return $this->conflict(state: $state);
 		}
 
@@ -181,7 +181,7 @@ class PublicationStateController extends Controller {
 		}
 
 		$channels = [];
-		if ($state === PublicationStateService::STATE_PUBLIC) {
+		if ($state === PublicationStateServiceInterface::STATE_PUBLIC) {
 			$channels = $this->states->channelsReached(publication: $properties);
 		}
 
@@ -302,7 +302,7 @@ class PublicationStateController extends Controller {
 		} catch (\Throwable $e) {
 			return new JSONResponse(
 				data: [
-					'state' => PublicationStateService::STATE_WITHDRAWN,
+					'state' => PublicationStateServiceInterface::STATE_WITHDRAWN,
 					'error' => 'depublication-unstored',
 					'message' => $this->l10n->t('It was taken down, but the record of why could not be stored.'),
 				],
@@ -315,7 +315,7 @@ class PublicationStateController extends Controller {
 
 		return new JSONResponse(
 			[
-				'state' => PublicationStateService::STATE_WITHDRAWN,
+				'state' => PublicationStateServiceInterface::STATE_WITHDRAWN,
 				'depublication' => $stored,
 				'outstandingChannels' => $outstanding,
 				'complete' => ($outstanding === []),

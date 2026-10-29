@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
@@ -40,7 +41,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md
  */
-class ServiceCatalogueService {
+class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 
 	/**
 	 * The reason an entry carries no binding at all.
