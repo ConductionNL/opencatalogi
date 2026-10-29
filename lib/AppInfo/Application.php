@@ -24,45 +24,19 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\AppInfo;
 
-use OCA\OpenCatalogi\Dashboard\CatalogWidget;
-use OCA\OpenCatalogi\Dashboard\MostViewedPublicationsWidget;
-use OCA\OpenCatalogi\Dashboard\RetentionWidget;
-use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
-use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
-use OCA\OpenCatalogi\Listener\CatalogAccessListener;
-use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
-use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
-use OCA\OpenCatalogi\Listener\CatalogScopePendingListener;
-use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
-use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
-use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
-use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
-use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
-use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
-use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
-use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
-use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
-use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
-use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
-use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
+use OCA\OpenCatalogi\Dashboard\DashboardRegistrar;
+use OCA\OpenCatalogi\Listener\ListenerRegistrar;
+use OCA\OpenCatalogi\Mcp\McpRegistrar;
+use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
+use OCA\OpenCatalogi\Service\ServiceRegistrar;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
 use OCA\OpenRegister\AppHost\Controller\GenericHealthController;
 use OCA\OpenRegister\AppHost\Controller\GenericMetricsController;
 use OCA\OpenRegister\AppHost\Controller\GenericPreferencesController;
-use OCA\OpenRegister\AppHost\IMetricsProvider;
-use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\OpenRegister\Event\ObjectCreatingEvent;
-use OCA\OpenRegister\Event\ObjectDeletedEvent;
-use OCA\OpenRegister\Event\ObjectUpdatedEvent;
-use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\OpenRegister\Event\RegisterCreatedEvent;
-use OCA\OpenRegister\Event\RegisterUpdatedEvent;
-use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
-use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 
 /**
  * Main Application class for OpenCatalogi.
@@ -109,116 +83,12 @@ class Application extends App implements IBootstrap {
 	public function register(IRegistrationContext $context): void {
 		include_once __DIR__ . '/../../vendor/autoload.php';
 
-		// Register dashboard widgets.
-		$context->registerDashboardWidget(CatalogWidget::class);
-		$context->registerDashboardWidget(UnpublishedPublicationsWidget::class);
-		$context->registerDashboardWidget(UnpublishedAttachmentsWidget::class);
-		$context->registerDashboardWidget(MostViewedPublicationsWidget::class);
-		$context->registerDashboardWidget(RetentionWidget::class);
-
-		// Register event listeners for OpenRegister events.
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: ObjectCreatedEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: ObjectUpdatedEventListener::class
-		);
-
-		// Woo citizen journey (citizen-collections, REQ-CCOL-007): when portaliq
-		// marks a portal account removed, delete that resident's dossiers and
-		// saved searches. portaliq has no removal event; the account update is it.
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: PortalAccountRemovedListener::class
-		);
-
-		// PLOOI delivery (woo-national-delivery-repair, REQ-WND-003): queue a
-		// delivery when a publication has just become public.
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: PlooiDeliveryListener::class
-		);
-
-		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: WooReadinessTriggerListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: WooReadinessTriggerListener::class
-		);
-
-		// Register catalog cache event listeners.
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectDeletedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-
-		// Register catalog rewrite event listeners on the *pre-save* events so the
-		// listener can mutate the in-flight payload via `setModifiedData(...)` instead
-		// of issuing a second save. Subscribing to the post-save events caused an
-		// infinite event loop on every catalog update/soft-delete.
-		$context->registerEventListener(ObjectCreatingEvent::class, CatalogSchemaEventListener::class);
-		$context->registerEventListener(ObjectUpdatingEvent::class, CatalogSchemaEventListener::class);
-
-		// Catalogue staff access (catalogue-staff-access): refuse a change by a
-		// non-administrator before the write, recompute the covered schemas' rules after it.
-		$catalogAccessEvents = [
-			ObjectCreatingEvent::class,
-			ObjectUpdatingEvent::class,
-			ObjectCreatedEvent::class,
-			ObjectUpdatedEvent::class,
-			ObjectDeletedEvent::class,
-		];
-		foreach ($catalogAccessEvents as $catalogAccessEvent) {
-			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
-		}
-
-		// A seeded catalogue can name another app's register by slug (the
-		// applicatielandschap catalogue names stackiq's). When that app is
-		// installed after OpenCatalogi, its register event completes the scope
-		// (publish-from-stackiq, REQ-PFS-004).
-		$context->registerEventListener(RegisterCreatedEvent::class, CatalogScopePendingListener::class);
-		$context->registerEventListener(RegisterUpdatedEvent::class, CatalogScopePendingListener::class);
-
-		// Register tool registration listener for OpenRegister agents.
-		$context->registerEventListener(
-			event: ToolRegistrationEvent::class,
-			listener: ToolRegistrationListener::class
-		);
-
-		// Provide the manifest-config initial state on every SPA `index` render,
-		// controller-independent. After the AppHost adoption (ADR-040) the `/`
-		// index route resolves to OpenRegister's shared AppHost dashboard
-		// controller, which serves templates/index.php without OpenCatalogi's
-		// register/schema config — a clean install then rendered no SPA. Hooking
-		// the provision to BeforeTemplateRenderedEvent restores it for both the
-		// AppHost `/` page and the UiController-served deep-link routes.
-		$context->registerEventListener(
-			event: BeforeTemplateRenderedEvent::class,
-			listener: ProvideManifestConfigStateListener::class
-		);
-
-		// Register OpenCatalogiToolProvider as the MCP tool provider for the AI Chat Companion.
-		// The alias key 'OCA\OpenRegister\Mcp\IMcpToolProvider::opencatalogi' is the format
-		// that OR's McpToolsService enumerates to discover per-app providers (hydra ADR-034/035).
-		// The interface ships in openregister PR #1466 (ai-chat-companion-orchestrator); until
-		// then apps implement the test stub in tests/Stubs/Mcp/IMcpToolProvider.php.
-		$context->registerServiceAlias(
-			'OCA\\OpenRegister\\Mcp\\IMcpToolProvider::opencatalogi',
-			OpenCatalogiToolProvider::class
-		);
+		// Each component registers its own classes.
+		(new DashboardRegistrar())->register($context);
+		(new ListenerRegistrar())->register($context);
+		(new McpRegistrar())->register($context);
+		(new ObservabilityRegistrar())->register($context);
+		(new ServiceRegistrar(appName: self::APP_ID))->register($context);
 
 		// AppHost observability adoption (ADR-040). The /api/health and
 		// /api/metrics routes resolve to leaf-namespaced controller class names
@@ -255,15 +125,6 @@ class Application extends App implements IBootstrap {
 					engine: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine')
 				);
 			}
-		);
-
-		// Register the domain-metrics escape hatch under the ADR-035 alias the
-		// engine's ProviderMetricSource enumerates. The {kind:provider} metric
-		// descriptor in the manifest merges this provider's samples into the
-		// /api/metrics response, preserving the pre-adoption contract.
-		$context->registerServiceAlias(
-			IMetricsProvider::class . '::opencatalogi',
-			OpenCatalogiMetricsProvider::class
 		);
 
 		// AppHost boilerplate adoption (ADR-040). The Dashboard (SPA page +
@@ -310,29 +171,6 @@ class Application extends App implements IBootstrap {
 					request: $c->get('OCP\\IRequest'),
 					config: $c->get('OCP\\IConfig'),
 					userSession: $c->get('OCP\\IUserSession')
-				);
-			}
-		);
-
-		// The external case type catalogue is read through integriq's gateway;
-		// this app composes the ask and reads the answer, and holds no
-		// transport. The reader raises rather than answering an empty list when
-		// there is no gateway to ask with.
-		$context->registerServiceAlias(
-			'OCA\\OpenCatalogi\\Service\\Catalogue\\CaseTypeSourceReader',
-			GatewayCaseTypeSourceReader::class
-		);
-
-		// The published-collection configuration lives in this app's config, so
-		// adding a collection takes effect on a running instance without a
-		// release.
-		$context->registerService(
-			PublishedCollectionsService::class,
-			static function ($c) {
-				return new PublishedCollectionsService(
-					config: $c->get(\OCP\IAppConfig::class),
-					ruleService: $c->get(PublicationRuleService::class),
-					appName: self::APP_ID
 				);
 			}
 		);

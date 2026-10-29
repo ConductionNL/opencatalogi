@@ -171,7 +171,7 @@ class CatalogScopePendingListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheListenerIsRegistered(): void {
-		$source = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
+		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Listener/ListenerRegistrar.php');
 
 		$this->assertStringContainsString('registerEventListener(RegisterCreatedEvent::class, CatalogScopePendingListener::class)', $source);
 		$this->assertStringContainsString('registerEventListener(RegisterUpdatedEvent::class, CatalogScopePendingListener::class)', $source);
