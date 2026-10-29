@@ -41,6 +41,7 @@ use GuzzleHttp\Psr7\Request as Psr7Request;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -73,7 +74,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyMethods) Sync paths are split into small private steps to stay under the unit size and complexity limits.
  */
-class DirectoryService {
+class DirectoryService implements DirectoryServiceInterface {
 
 	/**
 	 * The name of the app.

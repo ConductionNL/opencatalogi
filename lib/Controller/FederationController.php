@@ -30,7 +30,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -51,7 +51,7 @@ class FederationController extends Controller {
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param PublicationService $publicationService The publication service.
+	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param WithheldFromPublication|null $withheld The public withheld list (REQ-WDW-003).
@@ -59,7 +59,7 @@ class FederationController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?WithheldFromPublication $withheld = null,

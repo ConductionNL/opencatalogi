@@ -24,8 +24,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Http\TextResponse;
-use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -58,7 +58,7 @@ class RobotsController extends Controller {
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param SettingsService $settingsService The settings service.
+	 * @param SettingsServiceInterface $settingsService The settings service.
 	 * @param ContainerInterface $container The container for DI.
 	 * @param IAppManager $appManager The app manager.
 	 * @param IURLGenerator $urlGenerator The URL generator.
@@ -68,7 +68,7 @@ class RobotsController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly SettingsService $settingsService,
+		private readonly SettingsServiceInterface $settingsService,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly IURLGenerator $urlGenerator,

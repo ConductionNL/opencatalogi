@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenRegister\Db\Register;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
@@ -58,12 +58,12 @@ class CatalogScopePendingListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Runs the backfill.
+	 * @param SettingsServiceInterface $settingsService Runs the backfill.
 	 * @param IAppConfig $appConfig Holds the pending list.
 	 * @param LoggerInterface $logger Logs a failed backfill.
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly SettingsServiceInterface $settingsService,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 	) {
@@ -88,7 +88,7 @@ class CatalogScopePendingListener implements IEventListener {
 		}
 
 		$pending = json_decode(
-			$this->appConfig->getValueString('opencatalogi', SettingsService::CATALOG_SCOPE_PENDING_KEY, '[]'),
+			$this->appConfig->getValueString('opencatalogi', SettingsServiceInterface::CATALOG_SCOPE_PENDING_KEY, '[]'),
 			true
 		);
 		if (is_array($pending) === false || $pending === []) {

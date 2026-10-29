@@ -29,8 +29,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
-use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -49,7 +49,7 @@ class SettingsController extends Controller {
 	 *
 	 * @param string $appName The name of the app
 	 * @param IRequest $request The request object
-	 * @param SettingsService $settingsService The settings service.
+	 * @param SettingsServiceInterface $settingsService The settings service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The user session.
 	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
@@ -59,7 +59,7 @@ class SettingsController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly SettingsService $settingsService,
+		private readonly SettingsServiceInterface $settingsService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly ?ConnectionReporter $connectionReporter = null,

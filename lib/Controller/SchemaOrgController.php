@@ -28,8 +28,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -55,7 +55,7 @@ class SchemaOrgController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param SchemaOrgService $schemaOrgService The schema.org JSON-LD renderer.
 	 * @param CatalogiService $catalogiService Catalog resolution (slug → catalog).
-	 * @param PublicationQueryService $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
+	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
@@ -65,7 +65,7 @@ class SchemaOrgController extends Controller {
 		IRequest $request,
 		private readonly SchemaOrgService $schemaOrgService,
 		private readonly CatalogiService $catalogiService,
-		private readonly PublicationQueryService $queryService,
+		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly ?IAppConfig $appConfig = null,

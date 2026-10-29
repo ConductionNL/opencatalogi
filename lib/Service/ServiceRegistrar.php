@@ -22,6 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
@@ -35,6 +39,8 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * services that take a scalar constructor argument.
  *
  * @spec exclude Component wiring; registers existing classes, no behaviour of its own.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A wiring class names every class it binds.
  */
 class ServiceRegistrar {
 
@@ -82,6 +88,12 @@ class ServiceRegistrar {
 				);
 			}
 		);
+
+		// Callers in other components depend on these interfaces.
+		$context->registerServiceAlias(DirectoryServiceInterface::class, DirectoryService::class);
+		$context->registerServiceAlias(PublicationServiceInterface::class, PublicationService::class);
+		$context->registerServiceAlias(PublicationQueryServiceInterface::class, PublicationQueryService::class);
+		$context->registerServiceAlias(SettingsServiceInterface::class, SettingsService::class);
 
 	}//end register()
 }//end class
