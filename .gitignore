@@ -85,3 +85,8 @@ tests/e2e/test-results/
 # Added by the 2026-08-25 fleet hygiene sweep (ADR-100 Decision 2).
 .stale/
 /.e2e-state/
+
+# Generated reports and agent work files. They are rebuilt on demand and do not belong in the tree.
+/coverage.txt
+/phpcs-output*.json
+/task-audit.json
