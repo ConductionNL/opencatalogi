@@ -1,0 +1,148 @@
+# Sigrid analysis scope for OpenCatalogi.
+#
+# Every key below is documented at
+# https://docs.sigrid-says.com/reference/analysis-scope-configuration.html
+# Sigrid's default excludes (node_modules, vendor, build output, docs, migrations,
+# mocks and stubs) still apply on top of this file. ARCHITECTURE.md explains the
+# component map and the directory roles in prose.
+
+# Pin the maintainability model, so a yearly recalibration never changes the
+# rating without a deliberate change to this file.
+model: "2026"
+
+# The technologies we write. Listing them switches off automatic detection, so
+# shell and Python helper scripts under scripts/ are not analysed.
+languages:
+  - name: php
+    production:
+    test:
+      include:
+        - ".*/tests/.*[.]php"
+  - name: javascript
+    production:
+    test:
+      include:
+        - ".*/tests/.*"
+        - ".*/__tests__/.*"
+        - ".*/__mocks__/.*"
+        - ".*[.](spec|test)[.](js|mjs|cjs|ts)"
+        - ".*[.]mock[.](js|ts)"
+  - name: typescript
+    production:
+    test:
+      include:
+        - ".*/tests/.*"
+        - ".*/__tests__/.*"
+        - ".*/__mocks__/.*"
+        - ".*[.](spec|test)[.](js|mjs|cjs|ts)"
+        - ".*[.]mock[.](js|ts)"
+  - name: vue
+    production:
+    test:
+      include:
+        - ".*/tests/.*[.]vue"
+
+# Only code that is not ours, or that a tool writes, is excluded.
+exclude:
+  # Translation catalogues. l10n/<locale>.js is generated from l10n/<locale>.json
+  # (an OC.L10N.register() call around the same key/value pairs); neither holds logic.
+  - ".*/l10n/.*"
+
+# Functional components instead of the technical layers (Controller, Service, Db).
+# A file belongs to the first component whose pattern matches its class name or
+# directory; each component excludes the patterns of the components above it.
+components:
+  # Woo requests, obligations, withheld documents, comment periods, depublication and delivery to national indexes.
+  - name: "Disclosure duties"
+    include:
+      - ".*/lib/.*(Woo|Plooi|Obligation|Withheld|Inspection|Depublication|CommentPeriod|NationalIndex|TermRoll|StatutoryTerm|Disclosure|Readiness|Redact).*[.]php"
+  # Retention policies and their evaluation.
+  - name: "Retention"
+    include:
+      - ".*/lib/.*Retention.*[.]php"
+    exclude:
+      - ".*/lib/.*(Woo|Plooi|Obligation|Withheld|Inspection|Depublication|CommentPeriod|NationalIndex|TermRoll|StatutoryTerm|Disclosure|Readiness|Redact).*[.]php"
+  # Public search, saved searches, statistics and usage counters.
+  - name: "Search"
+    include:
+      - ".*/lib/.*(Search|Query|Stats|UsageCounter).*[.]php"
+    exclude:
+      - ".*/lib/.*(Woo|Plooi|Obligation|Withheld|Inspection|Depublication|CommentPeriod|NationalIndex|TermRoll|StatutoryTerm|Disclosure|Readiness|Redact).*[.]php"
+      - ".*/lib/.*Retention.*[.]php"
+  # The public portal, citizen collections, notice boards, feeds and sitemaps.
+  - name: "Portal and community"
+    include:
+      - ".*/lib/.*(Portal|Community|NoticeBoard|Citizen|Collection|Robots|Sitemap|UiController|Answers).*[.]php"
+    exclude:
+      - ".*/lib/.*(Woo|Plooi|Obligation|Withheld|Inspection|Depublication|CommentPeriod|NationalIndex|TermRoll|StatutoryTerm|Disclosure|Readiness|Redact).*[.]php"
+      - ".*/lib/.*Retention.*[.]php"
+      - ".*/lib/.*(Search|Query|Stats|UsageCounter).*[.]php"
+  # The catalogue directory, federation between instances and broadcasts.
+  - name: "Federation and directory"
+    include:
+      - ".*/lib/.*(Federation|Directory|Broadcast|Connection).*[.]php"
+    exclude:
+      - ".*/lib/.*(Woo|Plooi|Obligation|Withheld|Inspection|Depublication|CommentPeriod|NationalIndex|TermRoll|StatutoryTerm|Disclosure|Readiness|Redact).*[.]php"
+      - ".*/lib/.*Retention.*[.]php"
+      - ".*/lib/.*(Search|Query|Stats|UsageCounter).*[.]php"
+      - ".*/lib/.*(Portal|Community|NoticeBoard|Citizen|Collection|Robots|Sitemap|UiController|Answers).*[.]php"
+  # DCAT, OOAPI, schema.org, publiccode, TOOI value lists and the case-type catalogue.
+  - name: "Open standards"
+    include:
+      - ".*/lib/.*(Dcat|Ooapi|SchemaOrg|Publiccode|Tooi|Vocabulary|StandardsVersion|ServiceCatalogue|CaseType|Catalogue/|ApiDocumentation|/Http/).*[.]php"
+    exclude:
+      - ".*/lib/.*(Woo|Plooi|Obligation|Withheld|Inspection|Depublication|CommentPeriod|NationalIndex|TermRoll|StatutoryTerm|Disclosure|Readiness|Redact).*[.]php"
+      - ".*/lib/.*Retention.*[.]php"
+      - ".*/lib/.*(Search|Query|Stats|UsageCounter).*[.]php"
+      - ".*/lib/.*(Portal|Community|NoticeBoard|Citizen|Collection|Robots|Sitemap|UiController|Answers).*[.]php"
+      - ".*/lib/.*(Federation|Directory|Broadcast|Connection).*[.]php"
+  # Catalogs, publications, listings, attachments, themes and glossary.
+  - name: "Publications and catalogs"
+    include:
+      - ".*/lib/.*(Publication|Catalog|Listing|Attachment|Download|File|Theme|Glossary|Quality|Dashboard|Event|Listener).*[.]php"
+    exclude:
+      - ".*/lib/.*(Woo|Plooi|Obligation|Withheld|Inspection|Depublication|CommentPeriod|NationalIndex|TermRoll|StatutoryTerm|Disclosure|Readiness|Redact).*[.]php"
+      - ".*/lib/.*Retention.*[.]php"
+      - ".*/lib/.*(Search|Query|Stats|UsageCounter).*[.]php"
+      - ".*/lib/.*(Portal|Community|NoticeBoard|Citizen|Collection|Robots|Sitemap|UiController|Answers).*[.]php"
+      - ".*/lib/.*(Federation|Directory|Broadcast|Connection).*[.]php"
+      - ".*/lib/.*(Dcat|Ooapi|SchemaOrg|Publiccode|Tooi|Vocabulary|StandardsVersion|ServiceCatalogue|CaseType|Catalogue/|ApiDocumentation|/Http/).*[.]php"
+  # Bootstrap, settings, repair steps, commands and the MCP tool provider.
+  - name: "Application wiring"
+    include:
+      - ".*/lib/.*[.]php"
+      - ".*/appinfo/.*"
+      - ".*/templates/.*[.]php"
+    exclude:
+      - ".*/lib/.*(Woo|Plooi|Obligation|Withheld|Inspection|Depublication|CommentPeriod|NationalIndex|TermRoll|StatutoryTerm|Disclosure|Readiness|Redact).*[.]php"
+      - ".*/lib/.*Retention.*[.]php"
+      - ".*/lib/.*(Search|Query|Stats|UsageCounter).*[.]php"
+      - ".*/lib/.*(Portal|Community|NoticeBoard|Citizen|Collection|Robots|Sitemap|UiController|Answers).*[.]php"
+      - ".*/lib/.*(Federation|Directory|Broadcast|Connection).*[.]php"
+      - ".*/lib/.*(Dcat|Ooapi|SchemaOrg|Publiccode|Tooi|Vocabulary|StandardsVersion|ServiceCatalogue|CaseType|Catalogue/|ApiDocumentation|/Http/).*[.]php"
+      - ".*/lib/.*(Publication|Catalog|Listing|Attachment|Download|File|Theme|Glossary|Quality|Dashboard|Event|Listener).*[.]php"
+  # The Vue front end.
+  - name: "Web interface"
+    include:
+      - ".*/src/.*"
+    exclude:
+      - ".*/lib/.*(Woo|Plooi|Obligation|Withheld|Inspection|Depublication|CommentPeriod|NationalIndex|TermRoll|StatutoryTerm|Disclosure|Readiness|Redact).*[.]php"
+      - ".*/lib/.*Retention.*[.]php"
+      - ".*/lib/.*(Search|Query|Stats|UsageCounter).*[.]php"
+      - ".*/lib/.*(Portal|Community|NoticeBoard|Citizen|Collection|Robots|Sitemap|UiController|Answers).*[.]php"
+      - ".*/lib/.*(Federation|Directory|Broadcast|Connection).*[.]php"
+      - ".*/lib/.*(Dcat|Ooapi|SchemaOrg|Publiccode|Tooi|Vocabulary|StandardsVersion|ServiceCatalogue|CaseType|Catalogue/|ApiDocumentation|/Http/).*[.]php"
+      - ".*/lib/.*(Publication|Catalog|Listing|Attachment|Download|File|Theme|Glossary|Quality|Dashboard|Event|Listener).*[.]php"
+      - ".*/lib/.*[.]php"
+  # Build, quality and release tooling: helper scripts and root-level tool configuration.
+  - name: "Developer tooling"
+    include:
+      - ".*/scripts/.*"
+      - ".*/tools/.*"
+      - ".*/vendor-bin/.*"
+      - ".*/[^/]*[.]config[.]m?[jt]s"
+      - ".*/phpstan-bootstrap[.]php"
+      - ".*/[.]php-cs-fixer[.]dist[.]php"
+    exclude:
+      - ".*/lib/.*[.]php"
+      - ".*/src/.*"
