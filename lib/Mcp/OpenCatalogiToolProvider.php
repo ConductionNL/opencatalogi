@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Mcp;
 
-use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenRegister\Mcp\IMcpToolProvider;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -137,12 +137,12 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	/**
 	 * Constructor for OpenCatalogiToolProvider.
 	 *
-	 * @param PublicationService $publicationService The publication service (search / show / attachments).
+	 * @param PublicationServiceInterface $publicationService The publication service (search / show / attachments).
 	 * @param IUserSession $userSession The current user session (caller context).
 	 * @param LoggerInterface $logger The PSR-3 logger.
 	 */
 	public function __construct(
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

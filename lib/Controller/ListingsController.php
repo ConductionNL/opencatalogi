@@ -31,7 +31,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
-use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -68,7 +68,7 @@ class ListingsController extends Controller {
 	 * @param IAppConfig $config The app configuration
 	 * @param ContainerInterface $container Server container for dependency injection
 	 * @param IAppManager $appManager App manager for checking installed apps
-	 * @param DirectoryService $directoryService The directory service
+	 * @param DirectoryServiceInterface $directoryService The directory service
 	 * @param IL10N $l10n Localization service
 	 * @param IUserSession $userSession The user session
 	 * @param LoggerInterface $logger PSR-3 logger
@@ -79,7 +79,7 @@ class ListingsController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
-		private readonly DirectoryService $directoryService,
+		private readonly DirectoryServiceInterface $directoryService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly ?LoggerInterface $logger = null,

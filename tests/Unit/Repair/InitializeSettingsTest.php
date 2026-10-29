@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Repair;
 
 use OCA\OpenCatalogi\Repair\InitializeSettings;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -61,7 +62,7 @@ class InitializeSettingsTest extends TestCase {
 			->willReturn(['openregister', 'opencatalogi']);
 
 		$this->container->method('get')
-			->with(SettingsService::class)
+			->with(SettingsServiceInterface::class)
 			->willReturn($settingsService);
 
 		$settingsService->method('loadSettings')

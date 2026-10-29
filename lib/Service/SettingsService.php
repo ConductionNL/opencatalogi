@@ -38,6 +38,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -79,7 +80,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyMethods) Object type configuration is split into small private steps to stay under the unit limits.
  */
-class SettingsService {
+class SettingsService implements SettingsServiceInterface {
 
 	/**
 	 * The OpenRegister register the shared organisation projection lives on.
@@ -190,53 +191,10 @@ class SettingsService {
 		],
 	];
 
-	/**
-	 * Minimum allowed federation sync interval in seconds (15 minutes).
-	 *
-	 * The interval bounds live here rather than on the cron job because this is
-	 * the class that PUBLISHES them (getSyncOptions) and ENFORCES them
-	 * (updateSyncOptions clamps a submitted value against them). Holding them on
-	 * DirectorySync meant a service referenced a cron class purely to read three
-	 * numbers — which pushed this class over PHPMD's coupling threshold — and
-	 * left the same clamp expressed in two places. DirectorySync now aliases
-	 * these, so `self::MIN_INTERVAL_SECONDS` still resolves.
-	 *
-	 * @var integer
-	 */
-	public const MIN_INTERVAL_SECONDS = 900;
 
-	/**
-	 * Maximum allowed federation sync interval in seconds (24 hours).
-	 *
-	 * @var integer
-	 */
-	public const MAX_INTERVAL_SECONDS = 86400;
 
-	/**
-	 * Default federation sync interval in seconds (1 hour).
-	 *
-	 * @var integer
-	 */
-	public const DEFAULT_INTERVAL_SECONDS = 3600;
 
-	/**
-	 * The longest time, in seconds, a public API answer may be cached (REQ-PAC-003).
-	 *
-	 * The settings save clamps to it and AnswersCacheably caps the headers at it,
-	 * also for a value set with occ.
-	 *
-	 * @var integer
-	 */
-	public const PUBLIC_API_CACHE_MAX_SECONDS = 3600;
 
-	/**
-	 * App config key holding what a register event can still complete in a catalogue scope.
-	 *
-	 * A JSON list of register slugs not resolved yet, plus the ids of resolved
-	 * registers whose catalogue still names a schema by slug. Written by
-	 * backfillCatalogScopes(), read by CatalogScopePendingListener.
-	 */
-	public const CATALOG_SCOPE_PENDING_KEY = 'catalog_scope_pending';
 
 	/**
 	 * Seeded catalogues that ship unpublished and are published once their scope resolves.
@@ -266,14 +224,6 @@ class SettingsService {
 	 */
 	private const OPENREGISTER_APP_ID = 'openregister';
 
-	/**
-	 * This constant defines the minimum version of the OpenRegister
-	 * application that is required for compatibility and
-	 * functionality.
-	 *
-	 * @var string $minORVersion The minimum required version of OpenRegister.
-	 */
-	private const MIN_OPENREGISTER_VERSION = '0.1.7';
 
 	/**
 	 * SettingsService constructor.

@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Repair;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
-use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -108,7 +108,7 @@ class InitializeSettings implements IRepairStep {
 		try {
 			// Get the settings service and load configuration.
 			// The import is idempotent.
-			$settingsService = $this->container->get(SettingsService::class);
+			$settingsService = $this->container->get(SettingsServiceInterface::class);
 			$result = $settingsService->loadSettings(force: false);
 
 			$registerCount = count($result['registers'] ?? []);

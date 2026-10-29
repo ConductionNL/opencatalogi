@@ -23,6 +23,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -41,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  */
-class PublicationQueryService
+class PublicationQueryService implements PublicationQueryServiceInterface
 {
 
     /**

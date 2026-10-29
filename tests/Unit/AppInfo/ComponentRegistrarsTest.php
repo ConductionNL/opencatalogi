@@ -186,8 +186,8 @@ class ComponentRegistrarsTest extends TestCase {
 		(new ServiceRegistrar(appName: 'catalogue-app'))->register($context);
 
 		$this->assertSame(
-			['OCA\\OpenCatalogi\\Service\\Catalogue\\CaseTypeSourceReader' => GatewayCaseTypeSourceReader::class],
-			$aliases
+			GatewayCaseTypeSourceReader::class,
+			$aliases['OCA\\OpenCatalogi\\Service\\Catalogue\\CaseTypeSourceReader'] ?? null
 		);
 		$this->assertSame([PublishedCollectionsService::class], array_keys($factories));
 

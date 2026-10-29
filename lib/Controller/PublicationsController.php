@@ -31,10 +31,10 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
@@ -107,9 +107,9 @@ class PublicationsController extends Controller {
 	 *
 	 * @param string $appName The name of the app
 	 * @param IRequest $request The request object
-	 * @param PublicationService $publicationService The publication service
+	 * @param PublicationServiceInterface $publicationService The publication service
 	 * @param CatalogiService $catalogiService The catalogi service
-	 * @param PublicationQueryService $queryService Query-building/shaping helpers
+	 * @param PublicationQueryServiceInterface $queryService Query-building/shaping helpers
 	 * @param ContainerInterface $container The container for dependency injection
 	 * @param IAppManager $appManager The app manager
 	 * @param LoggerInterface $logger PSR-3 logger
@@ -125,9 +125,9 @@ class PublicationsController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly CatalogiService $catalogiService,
-		private readonly PublicationQueryService $queryService,
+		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,

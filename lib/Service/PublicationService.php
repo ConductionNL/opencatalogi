@@ -43,6 +43,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use Exception;
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
 use OCP\App\IAppManager;
@@ -73,7 +74,7 @@ use ZipArchive;
  * @spec openspec/specs/publications/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
  */
-class PublicationService {
+class PublicationService implements PublicationServiceInterface {
 
 	/**
 	 * The object service instance.

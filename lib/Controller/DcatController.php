@@ -25,11 +25,11 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -58,7 +58,7 @@ class DcatController extends Controller {
 	 * @param DcatService $dcatService The DCAT orchestration service.
 	 * @param DcatSerializer $serializer The DCAT serializer.
 	 * @param CatalogiService $catalogiService Catalog resolution (slug → catalog).
-	 * @param PublicationQueryService $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
+	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param StandardsVersionService $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
@@ -72,7 +72,7 @@ class DcatController extends Controller {
 		private readonly DcatService $dcatService,
 		private readonly DcatSerializer $serializer,
 		private readonly CatalogiService $catalogiService,
-		private readonly PublicationQueryService $queryService,
+		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly StandardsVersionService $standardsVersions,

@@ -24,9 +24,9 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\SearchQueryTranslator;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -71,10 +71,10 @@ class SearchController extends Controller {
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param PublicationService $publicationService The publication service.
+	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IUserSession $userSession The user session.
 	 * @param IL10N $l10n The localization service.
-	 * @param PublicationQueryService $queryService Public search assembly helper (WOO-506).
+	 * @param PublicationQueryServiceInterface $queryService Public search assembly helper (WOO-506).
 	 * @param ContainerInterface $container DI container, to resolve OpenRegister's ObjectService.
 	 * @param IAppManager $appManager The app manager.
 	 * @param LoggerInterface $logger PSR-3 logger.
@@ -84,10 +84,10 @@ class SearchController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
-		private readonly PublicationQueryService $queryService,
+		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,

@@ -26,7 +26,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
-use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -71,7 +71,7 @@ class DirectoryController extends Controller {
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param DirectoryService $directoryService The directory service.
+	 * @param DirectoryServiceInterface $directoryService The directory service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param IAppConfig|null $config App config for CORS allowlist (optional).
@@ -82,7 +82,7 @@ class DirectoryController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly DirectoryService $directoryService,
+		private readonly DirectoryServiceInterface $directoryService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?IAppConfig $config = null,
