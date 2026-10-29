@@ -23,20 +23,41 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Contract\CatalogAccessServiceInterface;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
+use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
+use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
+use OCA\OpenCatalogi\Contract\EventServiceInterface;
+use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
+use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
+use OCA\OpenCatalogi\Contract\QualityServiceInterface;
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
+use OCA\OpenCatalogi\Contract\SavedSearchMatcherInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WooReadinessServiceInterface;
 use OCA\OpenCatalogi\Contract\WooServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
+use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
+use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
+use OCA\OpenCatalogi\Service\Portal\SavedSearchMatcher;
+use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
+use OCA\OpenCatalogi\Service\Publication\CommentPeriodWithdrawalService;
+use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
+use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
@@ -110,6 +131,20 @@ class ServiceRegistrar {
 		$context->registerServiceAlias(WooReadinessServiceInterface::class, WooReadinessService::class);
 		$context->registerServiceAlias(BroadcastServiceInterface::class, BroadcastService::class);
 		$context->registerServiceAlias(SchemaOrgServiceInterface::class, SchemaOrgService::class);
+		$context->registerServiceAlias(NationalIndexServiceInterface::class, NationalIndexService::class);
+		$context->registerServiceAlias(EventServiceInterface::class, EventService::class);
+		$context->registerServiceAlias(PubliccodeHarvestServiceInterface::class, PubliccodeHarvestService::class);
+		$context->registerServiceAlias(OoapiServiceInterface::class, OoapiService::class);
+		$context->registerServiceAlias(QualityServiceInterface::class, QualityService::class);
+		$context->registerServiceAlias(DcatSerializerInterface::class, DcatSerializer::class);
+		$context->registerServiceAlias(StatutoryTermInterface::class, StatutoryTerm::class);
+		$context->registerServiceAlias(CitizenCollectionServiceInterface::class, CitizenCollectionService::class);
+		$context->registerServiceAlias(PublicationRuleServiceInterface::class, PublicationRuleService::class);
+		$context->registerServiceAlias(CommentPeriodServiceInterface::class, CommentPeriodService::class);
+		$context->registerServiceAlias(CatalogAccessServiceInterface::class, CatalogAccessService::class);
+		$context->registerServiceAlias(ConnectionReporterInterface::class, ConnectionReporter::class);
+		$context->registerServiceAlias(CommentPeriodWithdrawalServiceInterface::class, CommentPeriodWithdrawalService::class);
+		$context->registerServiceAlias(SavedSearchMatcherInterface::class, SavedSearchMatcher::class);
 
 	}//end register()
 }//end class

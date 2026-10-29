@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
+use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -65,7 +65,7 @@ class CommentPeriodController extends Controller {
 	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param CommentPeriodService $periods Opens periods and derives their state.
+	 * @param CommentPeriodServiceInterface $periods Opens periods and derives their state.
 	 */
 	public function __construct(
 		$appName,
@@ -73,7 +73,7 @@ class CommentPeriodController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly CommentPeriodService $periods,
+		private readonly CommentPeriodServiceInterface $periods,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
