@@ -25,13 +25,13 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Http\XMLResponse;
-use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
 
 /**
@@ -45,12 +45,12 @@ class SitemapController extends Controller {
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param SitemapService $sitemapService The sitemap service.
+	 * @param SitemapServiceInterface $sitemapService The sitemap service.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly SitemapService $sitemapService,
+		private readonly SitemapServiceInterface $sitemapService,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -62,7 +62,7 @@ class SitemapController extends Controller {
 	 * @param string $catalogSlug The catalog slug.
 	 * @param string $categoryCode The category code.
 	 *
-	 * @return XMLResponse
+	 * @return Response The sitemap as an XML response.
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
@@ -70,7 +70,7 @@ class SitemapController extends Controller {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
-	public function index(string $catalogSlug, string $categoryCode): XMLResponse {
+	public function index(string $catalogSlug, string $categoryCode): Response {
 		return $this->sitemapService->buildSitemapIndex(
 			catalogSlug: $catalogSlug,
 			categoryCode: $categoryCode
@@ -84,7 +84,7 @@ class SitemapController extends Controller {
 	 * @param string $catalogSlug The catalog slug.
 	 * @param string $categoryCode The category code.
 	 *
-	 * @return XMLResponse
+	 * @return Response The sitemap as an XML response.
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
@@ -92,7 +92,7 @@ class SitemapController extends Controller {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
-	public function sitemap(string $catalogSlug, string $categoryCode): XMLResponse {
+	public function sitemap(string $catalogSlug, string $categoryCode): Response {
 		$page = (int)($this->request->getParams()['page'] ?? 1);
 		return $this->sitemapService->buildSitemap(
 			catalogSlug: $catalogSlug,
