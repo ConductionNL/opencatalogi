@@ -74,6 +74,13 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	private const APPLICATION_PHP = __DIR__ . '/../../../lib/AppInfo/Application.php';
 
 	/**
+	 * Glob of the per-component registrars that Application::register() delegates to.
+	 *
+	 * @var string
+	 */
+	private const REGISTRARS_GLOB = __DIR__ . '/../../../lib/*/*Registrar.php';
+
+	/**
 	 * Read Application.php.
 	 *
 	 * The file is inspected as SOURCE rather than reflected over, deliberately:
@@ -82,11 +89,13 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	 * reproduce that moment. Reflection would also force the very resolution
 	 * the invariant forbids.
 	 *
+	 * @param string $file The file to read, Application.php by default.
+	 *
 	 * @return string
 	 */
-	private function source(): string {
-		$path = realpath(self::APPLICATION_PHP);
-		$this->assertNotFalse($path, 'lib/AppInfo/Application.php must exist');
+	private function source(string $file=self::APPLICATION_PHP): string {
+		$path = realpath($file);
+		$this->assertNotFalse($path, $file . ' must exist');
 
 		$src = file_get_contents($path);
 		$this->assertIsString($src);
@@ -95,11 +104,30 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		$this->assertStringContainsString(
 			'public function register(',
 			$src,
-			'read Application.php but found no register() — the reader is broken, so any pass below would be meaningless'
+			'read ' . basename($file) . ' but found no register(): the reader is broken, so any pass below would be meaningless'
 		);
 
 		return $src;
 	}//end source()
+
+	/**
+	 * The registrars Application::register() delegates to.
+	 *
+	 * @return array<string, string> Class short name => absolute path.
+	 */
+	private function registrars(): array {
+		$files = glob(self::REGISTRARS_GLOB);
+		$this->assertIsArray($files);
+		$this->assertNotEmpty($files, 'no lib/*/*Registrar.php found: the glob no longer watches anything');
+
+		$registrars = [];
+		foreach ($files as $file) {
+			$registrars[basename($file, '.php')] = $file;
+		}
+
+		return $registrars;
+
+	}//end registrars()
 
 	/**
 	 * Extract the body of a method by brace matching.
@@ -144,20 +172,33 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	 * @return void
 	 */
 	public function testRegisterDoesNotProbeForClasses(): void {
-		$body = $this->methodBody($this->source(), 'public function register(');
+		$files = array_merge([self::APPLICATION_PHP], array_values($this->registrars()));
+		foreach ($files as $file) {
+			$this->assertRegisterDoesNotProbe($this->methodBody($this->source($file), 'public function register('));
+		}
 
+	}//end testRegisterDoesNotProbeForClasses()
+
+	/**
+	 * Assert one register() body calls no class probe.
+	 *
+	 * @param string $body The register() body.
+	 *
+	 * @return void
+	 */
+	private function assertRegisterDoesNotProbe(string $body): void {
 		foreach (['class_exists', 'interface_exists', 'enum_exists'] as $probe) {
 			$this->assertStringNotContainsString(
 				$probe . '(',
 				$body,
-				"Application::register() calls {$probe}(). At register() time the OCA\\OpenRegister\\ "
+				"A register() method calls {$probe}(). At register() time the OCA\\OpenRegister\\ "
 				. 'prefix is not on the autoloader yet — `opencatalogi` sorts before `openregister` — so '
 				. 'this answers FALSE on a healthy instance and whatever it guards is silently skipped. '
 				. "Move the check to boot(), which runs after every app's register() has completed."
 			);
 		}
 
-	}//end testRegisterDoesNotProbeForClasses()
+	}//end assertRegisterDoesNotProbe()
 
 	/**
 	 * register() must not eagerly construct an OpenRegister class.
@@ -213,7 +254,7 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	 * @return void
 	 */
 	public function testAppHostServiceKeysAreStringLiterals(): void {
-		$body = $this->methodBody($this->source(), 'public function register(');
+		$body = $this->methodBody($this->source($this->registrars()['McpRegistrar']), 'public function register(');
 
 		$this->assertMatchesRegularExpression(
 			'/registerServiceAlias\(\s*\'OCA\\\\\\\\OpenRegister\\\\\\\\Mcp\\\\\\\\IMcpToolProvider::opencatalogi\'/',
@@ -223,4 +264,25 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		);
 
 	}//end testAppHostServiceKeysAreStringLiterals()
+
+	/**
+	 * Application::register() hands the context to every component registrar.
+	 *
+	 * A registrar that exists but is never called registers nothing, and its
+	 * listeners, widgets and bindings silently disappear.
+	 *
+	 * @return void
+	 */
+	public function testRegisterCallsEveryComponentRegistrar(): void {
+		$body = $this->methodBody($this->source(), 'public function register(');
+
+		foreach (array_keys($this->registrars()) as $registrar) {
+			$this->assertMatchesRegularExpression(
+				'/\(new ' . $registrar . '\([^)]*\)\)->register\(\$context\);/',
+				$body,
+				"Application::register() does not call {$registrar}, so nothing it registers is registered"
+			);
+		}
+
+	}//end testRegisterCallsEveryComponentRegistrar()
 }//end class
