@@ -444,4 +444,174 @@ class OoapiControllerTest extends TestCase {
 		$this->assertSame('c1', $response->getData()['courseId']);
 
 	}//end testOfferingResolvesByOfferingIdFieldOnItsOwnRegisterPair()
+
+	/**
+	 * Every consumer endpoint, with its arguments and the config context it resolves.
+	 *
+	 * @return array<string, array{0: string, 1: array<int, string>, 2: string}>
+	 */
+	public static function consumerEndpoints(): array {
+		return [
+			'organizations' => ['organizations', ['hva'], 'organization'],
+			'organization' => ['organization', ['hva', 'org-1'], 'organization'],
+			'courses' => ['courses', ['hva'], 'ooapi_courses'],
+			'course' => ['course', ['hva', 'c1'], 'ooapi_courses'],
+			'programs' => ['programs', ['hva'], 'ooapi_programs'],
+			'program' => ['program', ['hva', 'p1'], 'ooapi_programs'],
+			'courseOfferings' => ['courseOfferings', ['hva', 'c1'], 'ooapi_offerings'],
+			'offering' => ['offering', ['hva', 'o1'], 'ooapi_offerings'],
+		];
+	}
+
+	/**
+	 * @dataProvider consumerEndpoints
+	 */
+	public function testEveryConsumerEndpointRefusesAnAnonymousCaller(string $method, array $args, string $context): void {
+		$this->userSession->method('getUser')->willReturn(null);
+		$this->catalogiService->expects($this->never())->method('getCatalogBySlug');
+
+		$this->assertSame(401, $this->controller->$method(...$args)->getStatus());
+	}
+
+	/**
+	 * @dataProvider consumerEndpoints
+	 */
+	public function testEveryConsumerEndpointRefusesAnUnknownCatalogBeforeItsContext(string $method, array $args, string $context): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->with('hva')->willReturn(null);
+		$this->container->expects($this->never())->method('get');
+
+		$this->assertSame(404, $this->controller->$method(...$args)->getStatus());
+	}
+
+	/**
+	 * @dataProvider consumerEndpoints
+	 */
+	public function testEveryConsumerEndpointResolvesItsOwnContext(string $method, array $args, string $context): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->request->method('getParam')->willReturnCallback(static fn ($key, $default = null) => $default);
+		$envelope = ['items' => [], 'pageNumber' => 1, 'pageSize' => 25, 'hasNext' => false];
+		$this->ooapiService->method('listCourses')->willReturn($envelope);
+		$this->ooapiService->method('listPrograms')->willReturn($envelope);
+		$this->ooapiService->method('listOfferings')->willReturn($envelope);
+		$this->ooapiService->method('getResource')->willReturn(['id' => 'x']);
+		$this->ooapiService->method('organizationById')->willReturn(['id' => 'x']);
+
+		$keys = new \ArrayObject();
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => new class($keys) {
+				public function __construct(
+					private \ArrayObject $keys,
+				) {
+				}
+
+				public function resolveRegisterId(string $a, string $k): string {
+					$this->keys[] = $k;
+					return '3';
+				}
+
+				public function resolveSchemaId(string $a, string $k): string {
+					$this->keys[] = $k;
+					return '5';
+				}
+			}
+		);
+
+		$this->assertSame(200, $this->controller->$method(...$args)->getStatus());
+		$this->assertSame([$context.'_register', $context.'_schema'], $keys->getArrayCopy());
+	}
+
+	/**
+	 * @return array<string, array{0: string, 1: string, 2: string}>
+	 */
+	public static function singleResourceEndpoints(): array {
+		return [
+			'organization' => ['organization', 'organizationById', 'Organization not found'],
+			'course' => ['course', 'getResource', 'Course not found'],
+			'program' => ['program', 'getResource', 'Program not found'],
+			'offering' => ['offering', 'getResource', 'Offering not found'],
+		];
+	}
+
+	/**
+	 * @dataProvider singleResourceEndpoints
+	 */
+	public function testSingleResourceEndpointsAnswerTheirOwnNotFound(string $method, string $serviceMethod, string $message): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->method($serviceMethod)->willReturn(null);
+
+		$response = $this->controller->$method('hva', 'missing');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertSame(['error' => $message], $response->getData());
+	}
+
+	public function testOrganizationRendersTheCatalogOrganizationById(): void {
+		$this->authenticateAsAllowedConsumer();
+		$catalog = ['id' => 'cat-1', 'hasOoapi' => true];
+		$this->catalogiService->method('getCatalogBySlug')->willReturn($catalog);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->expects($this->once())
+			->method('organizationById')
+			->with($catalog, 'org-1', '3', '5')
+			->willReturn(['organizationId' => 'org-1']);
+
+		$response = $this->controller->organization('hva', 'org-1');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['organizationId' => 'org-1'], $response->getData());
+	}
+
+	public function testOrganizationsListsTheCatalogOrganization(): void {
+		$this->authenticateAsAllowedConsumer();
+		$catalog = ['id' => 'cat-1', 'hasOoapi' => true];
+		$this->catalogiService->method('getCatalogBySlug')->willReturn($catalog);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->expects($this->once())
+			->method('renderOrganization')
+			->with($catalog, '3', '5')
+			->willReturn(['organizationId' => 'org-1']);
+
+		$response = $this->controller->organizations('hva');
+
+		$this->assertSame(
+			['pageNumber' => 1, 'pageSize' => 1, 'hasNext' => false, 'items' => [['organizationId' => 'org-1']]],
+			$response->getData()
+		);
+	}
+
+	public function testCourseResolvesByCourseIdField(): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->expects($this->once())
+			->method('getResource')
+			->with($this->anything(), '3', '5', 'c1', 'courseId')
+			->willReturn(['courseId' => 'c1']);
+
+		$response = $this->controller->course('hva', 'c1');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['courseId' => 'c1'], $response->getData());
+	}
+
+	public function testAnUnexpectedFailureInsideTheCatalogContextAnswers500(): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->method('getResource')->willThrowException(new \RuntimeException('boom'));
+
+		$response = $this->controller->course('hva', 'c1');
+
+		$this->assertSame(500, $response->getStatus());
+	}
 }

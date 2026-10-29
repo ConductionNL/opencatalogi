@@ -57,6 +57,8 @@ use RuntimeException;
  * Drives the WOO transparency workflow.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength) Long workflow steps are split into small documented
+ *   private methods; the docblocks of those steps push the class past the line threshold.
  */
 class WooService implements WooServiceInterface {
 
@@ -325,108 +327,175 @@ class WooService implements WooServiceInterface {
 		}
 
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-		$user = $this->userSession->getUser();
 
 		// First persist the assessment objects so we have their ids for the cards.
 		$assessmentRefs = [];
 		foreach ($documents as $document) {
-			$assessment = [
-				'documentReference' => (string)($document['documentReference'] ?? ($document['id'] ?? '')),
-				'fileName' => (string)($document['fileName'] ?? ''),
-				'fileType' => (string)($document['fileType'] ?? ''),
-				'assessment' => 'te_beoordelen',
-				'weigeringsgronden' => [],
-				'redactionInstructions' => '',
-				'anonymizedDocument' => '',
-				'caseReference' => $caseReference,
-				'assessedBy' => '',
-				'assessedAt' => '',
-			];
-			$saved = $this->normalise(
+			$assessmentRefs[] = $this->normalise(
 				object: $this->save(
 					objectService: $objectService,
 					register: $register,
 					schema: $assessmentSchema,
-					data: $assessment
+					data: $this->newAssessment(document: $document, caseReference: $caseReference)
 				)
 			);
-			$assessmentRefs[] = $saved;
-		}//end foreach
+		}
 
 		// Provision (or re-use) the Deck board via the deck leaf, then link a card
 		// per assessment object into the "Te beoordelen" stack.
-		$deckBoardId = $boardId;
+		$batchContext = [
+			'caseReference' => $caseReference,
+			'register' => $register,
+			'boardId' => $boardId,
+			'deckAvailable' => $this->isDeckAvailable(),
+			'now' => $now,
+		];
 		$deckLinks = [];
-		$deckAvailable = $this->isDeckAvailable();
-		if ($deckAvailable === true && $deckBoardId !== null) {
-			$deck = $this->getDeckCardService();
-			$registerId = 0;
-			if (is_numeric($register) === true) {
-				$registerId = (int)$register;
-			}
-
-			foreach ($assessmentRefs as $ref) {
-				$uuid = (string)($ref['id'] ?? ($ref['uuid'] ?? ''));
-				if ($uuid === '') {
-					continue;
-				}
-
-				try {
-					$title = 'Document';
-					if ((string)($ref['fileName'] ?? '') !== '') {
-						$title = (string)$ref['fileName'];
-					}
-
-					$link = $deck->linkOrCreateCard(
-						objectUuid: $uuid,
-						registerId: $registerId,
-						data: [
-							'boardId' => $deckBoardId,
-							'stackId' => $this->resolveStackId(boardId: $deckBoardId, assessment: 'te_beoordelen'),
-							'title' => $title,
-							'description' => 'WOO document — ' . $caseReference,
-						]
-					);
-
-					$deckLink = ['objectUuid' => $uuid];
-					if (method_exists($link, 'jsonSerialize') === true) {
-						$deckLink = $link->jsonSerialize();
-					}
-
-					$deckLinks[] = $deckLink;
-				} catch (\Throwable $e) {
-					$this->logger->warning('[WooService] deck card link failed for ' . $uuid . ': ' . $e->getMessage());
-				}//end try
-			}//end foreach
-		}//end if
-
-		$createdBy = 'system';
-		if ($user !== null) {
-			$createdBy = $user->getUID();
+		if ($batchContext['deckAvailable'] === true && $boardId !== null) {
+			$deckLinks = $this->linkAssessmentCards(assessmentRefs: $assessmentRefs, batchContext: $batchContext);
 		}
 
-		$batch = [
-			'caseReference' => $caseReference,
-			'status' => 'in_progress',
-			'deckBoardId' => $deckBoardId,
-			'deckAvailable' => $deckAvailable,
-			'documents' => array_map(static fn (array $r): string => (string)($r['id'] ?? ($r['uuid'] ?? '')), $assessmentRefs),
-			'decisionLetter' => '',
-			'inventoryList' => '',
-			'createdAt' => $now,
-			'updatedAt' => $now,
-			'createdBy' => $createdBy,
-		];
+		$batch = $this->newBatch(assessmentRefs: $assessmentRefs, batchContext: $batchContext);
 		$savedBatch = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 
 		$savedBatch['assessments'] = $assessmentRefs;
 		$savedBatch['deckLinks'] = $deckLinks;
-		if ($deckAvailable === false) {
+		if ($batchContext['deckAvailable'] === false) {
 			$savedBatch['deckWarning'] = 'Deck integration required for the WOO queue';
 		}
 
 		return $savedBatch;
 	}//end createBatch()
+
+	/**
+	 * A new assessment object for one collected document, waiting to be assessed.
+	 *
+	 * @param array<string, mixed> $document      The collected document
+	 * @param string               $caseReference The case the batch belongs to
+	 *
+	 * @return array<string, mixed> The assessment object data
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 */
+	private function newAssessment(array $document, string $caseReference): array {
+		return [
+			'documentReference' => (string)($document['documentReference'] ?? ($document['id'] ?? '')),
+			'fileName' => (string)($document['fileName'] ?? ''),
+			'fileType' => (string)($document['fileType'] ?? ''),
+			'assessment' => 'te_beoordelen',
+			'weigeringsgronden' => [],
+			'redactionInstructions' => '',
+			'anonymizedDocument' => '',
+			'caseReference' => $caseReference,
+			'assessedBy' => '',
+			'assessedAt' => '',
+		];
+
+	}//end newAssessment()
+
+	/**
+	 * A new batch object, in progress, for its saved assessments.
+	 *
+	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
+	 * @param array<string, mixed>             $batchContext   The case reference, Deck board, Deck availability and creation time
+	 *
+	 * @return array<string, mixed> The batch object data
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 */
+	private function newBatch(array $assessmentRefs, array $batchContext): array {
+		$createdBy = 'system';
+		$user = $this->userSession->getUser();
+		if ($user !== null) {
+			$createdBy = $user->getUID();
+		}
+
+		return [
+			'caseReference' => $batchContext['caseReference'],
+			'status' => 'in_progress',
+			'deckBoardId' => $batchContext['boardId'],
+			'deckAvailable' => $batchContext['deckAvailable'],
+			'documents' => array_map(static fn (array $r): string => (string)($r['id'] ?? ($r['uuid'] ?? '')), $assessmentRefs),
+			'decisionLetter' => '',
+			'inventoryList' => '',
+			'createdAt' => $batchContext['now'],
+			'updatedAt' => $batchContext['now'],
+			'createdBy' => $createdBy,
+		];
+
+	}//end newBatch()
+
+	/**
+	 * Link a Deck card to each saved assessment, through the deck leaf.
+	 *
+	 * A card that cannot be linked is logged and left out; the others still link.
+	 *
+	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
+	 * @param array<string, mixed>             $batchContext   The case reference, register and Deck board
+	 *
+	 * @return array<int, array<string, mixed>> The deck links that were made
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 */
+	private function linkAssessmentCards(array $assessmentRefs, array $batchContext): array {
+		$deck = $this->getDeckCardService();
+		$boardId = (int)$batchContext['boardId'];
+		$registerId = 0;
+		if (is_numeric($batchContext['register']) === true) {
+			$registerId = (int)$batchContext['register'];
+		}
+
+		$deckLinks = [];
+		foreach ($assessmentRefs as $ref) {
+			$uuid = (string)($ref['id'] ?? ($ref['uuid'] ?? ''));
+			if ($uuid === '') {
+				continue;
+			}
+
+			try {
+				$link = $deck->linkOrCreateCard(
+					objectUuid: $uuid,
+					registerId: $registerId,
+					data: [
+						'boardId' => $boardId,
+						'stackId' => $this->resolveStackId(boardId: $boardId, assessment: 'te_beoordelen'),
+						'title' => $this->assessmentCardTitle(assessmentRef: $ref),
+						'description' => 'WOO document — ' . $batchContext['caseReference'],
+					]
+				);
+
+				$deckLink = ['objectUuid' => $uuid];
+				if (method_exists($link, 'jsonSerialize') === true) {
+					$deckLink = $link->jsonSerialize();
+				}
+
+				$deckLinks[] = $deckLink;
+			} catch (\Throwable $e) {
+				$this->logger->warning('[WooService] deck card link failed for ' . $uuid . ': ' . $e->getMessage());
+			}//end try
+		}//end foreach
+
+		return $deckLinks;
+
+	}//end linkAssessmentCards()
+
+	/**
+	 * The title of an assessment's Deck card: its file name, or "Document".
+	 *
+	 * @param array<string, mixed> $assessmentRef The saved assessment object
+	 *
+	 * @return string The card title
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 */
+	private function assessmentCardTitle(array $assessmentRef): string {
+		if ((string)($assessmentRef['fileName'] ?? '') !== '') {
+			return (string)$assessmentRef['fileName'];
+		}
+
+		return 'Document';
+
+	}//end assessmentCardTitle()
 
 	/**
 	 * Whether the consumed deck leaf reports the Deck app available at runtime.

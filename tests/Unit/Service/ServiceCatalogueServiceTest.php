@@ -17,6 +17,7 @@ use Psr\Log\LoggerInterface;
  * Unit tests for ServiceCatalogueService.
  *
  * @covers \OCA\OpenCatalogi\Service\ServiceCatalogueService
+ * @uses \OCA\OpenCatalogi\Service\CallerScope
  */
 class ServiceCatalogueServiceTest extends TestCase {
 

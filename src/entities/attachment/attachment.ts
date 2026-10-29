@@ -1,4 +1,4 @@
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TAttachment } from './attachment.types'
 
 import { z } from 'zod'
@@ -81,7 +81,7 @@ export class Attachment implements TAttachment {
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TAttachment, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/lsigtx7cafbr7-create-attachment
 		const schema = z.object({
 			reference: z.string().max(255, 'kan niet langer dan 255 zijn'),

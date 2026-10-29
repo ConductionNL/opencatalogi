@@ -290,8 +290,21 @@ class GlossaryControllerTest extends TestCase {
 		$this->assertEquals(503, $response->getStatus());
 	}
 
+	/**
+	 * Configure the glossary register (3) and schema (11).
+	 */
+	private function configureGlossary(): void {
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'glossary_schema', '', '11'],
+				['opencatalogi', 'glossary_register', '', '3'],
+				['opencatalogi', 'cors_allowed_origins', '*', '*'],
+			]);
+	}
+
 	public function testShowReturnsGlossaryTerm(): void {
 		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
 
 		$mockObjService->method('searchObjectsPaginated')
 			->willReturn([
@@ -306,8 +319,50 @@ class GlossaryControllerTest extends TestCase {
 		$this->assertEquals(200, $response->getStatus());
 	}
 
+	/**
+	 * The lookup must be scoped to the glossary register and schema.
+	 *
+	 * Unscoped, OpenRegister answers an `_ids` search from every magic table on the
+	 * instance, and this route is @PublicPage: an anonymous caller could read any
+	 * object whose schema declares no authorization block.
+	 */
+	public function testShowScopesTheLookupToTheGlossaryRegister(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
+
+		$mockObjService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with(
+				$this->callback(static fn (array $q): bool => ($q['@self']['register'] ?? null) === '3'
+					&& ($q['@self']['schema'] ?? null) === '11'
+					&& $q['_ids'] === ['an-object-in-another-register']),
+				true,
+				false
+			)
+			->willReturn(['results' => []]);
+
+		$this->request->server = [];
+
+		$response = $this->controller->show('an-object-in-another-register');
+
+		$this->assertEquals(404, $response->getStatus());
+	}
+
+	public function testShowReturns503WhenTheGlossaryIsNotConfigured(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->config->method('getValueString')->willReturn('');
+
+		$mockObjService->expects($this->never())->method('searchObjectsPaginated');
+
+		$response = $this->controller->show('term-1');
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(503, $response->getStatus());
+	}
+
 	public function testShowReturns404WhenNotFound(): void {
 		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
 
 		$mockObjService->method('searchObjectsPaginated')
 			->willReturn(['results' => []]);
@@ -320,6 +375,7 @@ class GlossaryControllerTest extends TestCase {
 
 	public function testShowWithIntegerId(): void {
 		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
 
 		$mockObjService->method('searchObjectsPaginated')
 			->willReturn([
@@ -341,6 +397,7 @@ class GlossaryControllerTest extends TestCase {
 	 */
 	public function testShowAcceptsArrayShape(): void {
 		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
 
 		$mockObjService->method('searchObjectsPaginated')
 			->willReturn([

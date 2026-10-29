@@ -1174,7 +1174,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end recordListingError()
 
 	/**
-	 * Get publications from all available federated catalogs asynchronously
+	 * Get publications from all available federated catalogs
 	 *
 	 * Fetches publications from all publication endpoints of listings marked as available,
 	 * combining results into a single array.
@@ -1186,209 +1186,135 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
 	 *
-	 * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
-	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getPublications(array $guzzleConfig = [], bool $includeDefault = false): array {
-		// Get directories based on criteria.
 		$directories = $this->getUniqueDirectories(availableOnly: true, defaultOnly: $includeDefault);
-
-		// Removed redundant logging.
 		if (empty($directories) === true) {
-			// Removed redundant logging (error handled silently).
 			return [
 				'results' => [],
 				'sources' => [],
 			];
 		}
 
-		// Get our own directory URL to exclude from search..
-		$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-		);
-
-		// Prepare Guzzle client..
-		$defaultGuzzleConfig = [
-			RequestOptions::TIMEOUT => 5,
-			RequestOptions::CONNECT_TIMEOUT => 2,
-			RequestOptions::HEADERS => [
-				'Accept' => 'application/json',
-				'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
-			],
-			RequestOptions::HTTP_ERRORS => false,
-		];
-
-		$finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
-		$queryParams = ($finalGuzzleConfig['query_params'] ?? []);
-		// Prevent circular aggregation — the peer must not fan out to its own
-		// peers (which would eventually loop back to us).
-		$queryParams['_aggregate'] = 'false';
 		// Force catalog enrichment on the peer response so the client-side
 		// @result-click handler in FederationSearch can build a peer deep-link
 		// (`<peer>/#/publications/<catalogSlug>/<id>`). Without this, the
 		// peer's _aggregate=false path takes the ultra-fast branch that skips
 		// catalog stubs and returns @self.catalogs=null — click-through then
 		// silently falls back to the peer app-root (WOO-522 / WOO-533).
-		$queryParams['_include_catalogs'] = 'true';
-		$queryParams['_extend'] = [
-			'@self.schema',
-			'@self.register',
+		// The directory URLs from getUniqueDirectories() are already publications URLs.
+		$lookup = [
+			'guzzleConfig' => $guzzleConfig,
+			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: ['_include_catalogs' => 'true']),
+			'endpointFor' => static fn (string $directoryUrl): string => $directoryUrl,
+			'parse' => $this->parsePeerPublications(...),
 		];
-		// Add self-extension.
-		$client = new Client($finalGuzzleConfig);
-		$promises = [];
-		$urlToDirectoryMap = [];
+		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
+		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
 
-		// Create promises for each directory.
-		foreach ($directories as $index => $directoryUrl) {
-			// Skip our own directory.
-			if ($directoryUrl === $ourDirectoryUrl) {
-				continue;
-			}
+		return $this->mergePeerPublications(targets: $targets, answers: $answers);
 
-			// Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
-			try {
-				$this->assertSafeOutboundUrl(url: $directoryUrl);
-			} catch (InvalidArgumentException $e) {
-				continue;
-			}
+	}//end getPublications()
 
-			// The directoryUrl is now actually a publications URL from getUniqueDirectories().
-			$publicationsUrl = $directoryUrl;
-
-			if (empty($queryParams) === false) {
-				$publicationsUrl .= '?' . http_build_query($queryParams);
-			}
-
-			// Removed redundant logging (error handled silently).
-			// Store mapping for later source tracking.
-			$parsedHost = parse_url($directoryUrl, PHP_URL_HOST);
-			if (empty($parsedHost) === true) {
-				$parsedHost = $directoryUrl;
-			}
-
-			$urlToDirectoryMap[count($promises)] = [
-				'url' => $publicationsUrl,
-				'directoryUrl' => $directoryUrl,
-				'name' => $parsedHost,
+	/**
+	 * Read a peer's publications answer, which is either a search result or a bare list.
+	 *
+	 * @param mixed $data The decoded peer response
+	 *
+	 * @return array|null The results, facets and total, or null when the answer is unusable
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function parsePeerPublications(mixed $data): ?array {
+		if (isset($data['results']) === true && is_array($data['results']) === true) {
+			return [
+				'results' => $data['results'],
+				'facets' => ($data['facets'] ?? []),
+				'total' => $data['total'],
 			];
+		}
 
-			$promises[] = new Promise(
-				resolver: function ($resolve) use ($client, $publicationsUrl) {
-					$failResult = ['success' => false, 'results' => [], 'facets' => [], 'total' => 0];
-					try {
-						// SSRF hardening (SB1 / wave-12): disable automatic redirect following so
-						// that a federated peer cannot pivot to cloud-metadata via a 302 response.
-						// The initial URL is already validated by assertSafeOutboundUrl(); here we
-						// ensure Guzzle never silently follows a redirect to an unvalidated host.
-						$response = $client->get($publicationsUrl, [RequestOptions::ALLOW_REDIRECTS => false]);
-						$statusCode = $response->getStatusCode();
+		if (is_array($data) === true) {
+			return [
+				'results' => $data,
+				'facets' => [],
+				'total' => $data['total'],
+			];
+		}
 
-						if ($statusCode < 200 || $statusCode >= 300) {
-							$resolve($failResult);
-							return;
-						}
+		return null;
 
-						$body = $response->getBody()->getContents();
-						$data = json_decode($body, true);
+	}//end parsePeerPublications()
 
-						if (json_last_error() !== JSON_ERROR_NONE) {
-							$resolve($failResult);
-							return;
-						}
+	/**
+	 * Combine the peers' publications: deduplicate by id, tag each with its directory, sum totals and merge facets.
+	 *
+	 * @param array $targets The peer requests, as built by peerTargets()
+	 * @param array $answers The parsed answers, indexed like $targets
+	 *
+	 * @return array The combined results, sources, facets and total
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function mergePeerPublications(array $targets, array $answers): array {
+		$combined = [
+			'results' => [],
+			'sources' => [],
+			'facets' => [],
+			'total' => 0,
+		];
+		$seenIds  = [];
 
-						// Handle different response formats.
-						if (isset($data['results']) === true && is_array($data['results']) === true) {
-							$resolve(
-								[
-									'success' => true,
-									'results' => $data['results'],
-									'facets' => $data['facets'] ?? [],
-									'total' => $data['total'],
-								]
-							);
-							return;
-						}
-
-						if (is_array($data) === true) {
-							$resolve(
-								[
-									'success' => true,
-									'results' => $data,
-									'facets' => [],
-									'total' => $data['total'],
-								]
-							);
-							return;
-						}
-
-						$resolve($failResult);
-					} catch (\Exception $e) {
-						$resolve($failResult);
-					}//end try
-				}
-			);
-		}//end foreach
-
-		// Removed redundant logging.
-		// Execute all promises and collect results.
-		$allResults = \React\Async\await(\React\Promise\all($promises));
-
-		// Removed redundant logging.
-		// Flatten and deduplicate results, track sources., aggregate facets.
-		$combinedResults = [];
-		$seenIds = [];
-		$sources = [];
-		$combinedFacets = [];
-		$combinedTotal = 0;
-
-		foreach ($allResults as $index => $result) {
-			$directoryInfo = $urlToDirectoryMap[$index];
-
-			if ($result['success'] === false || empty($result['results']) === true) {
+		foreach ($answers as $index => $answer) {
+			if ($answer === null || empty($answer['results']) === true) {
 				continue;
 			}
 
-			$sources[$directoryInfo['name']] = $directoryInfo['url'];
-			$combinedTotal += $result['total'];
+			$target = $targets[$index];
+			$combined['sources'][$target['name']] = $target['url'];
+			$combined['total'] += $answer['total'];
 
-			foreach ($result['results'] as $item) {
+			foreach ($answer['results'] as $item) {
 				$itemId = ($item['id'] ?? $item['uuid'] ?? uniqid());
 				if (isset($seenIds[$itemId]) === true) {
 					continue;
 				}
 
-				// Add directory information to federated publications for faceting.
-				if (isset($item['@self']) === false || is_array($item['@self']) === false) {
-					$item['@self'] = [];
-				}
-
-				$item['@self']['directory'] = $directoryInfo['name'];
-				$combinedResults[] = $item;
-				$seenIds[$itemId] = true;
+				$combined['results'][] = $this->tagWithDirectory(item: $item, directoryName: $target['name']);
+				$seenIds[$itemId]      = true;
 			}
 
-			// Aggregate facets if they exist.
-			if (empty($result['facets']) === false) {
-				$combinedFacets = $this->aggregateFacets(existingFacets: $combinedFacets, newFacets: $result['facets']);
+			if (empty($answer['facets']) === false) {
+				$combined['facets'] = $this->aggregateFacets(existingFacets: $combined['facets'], newFacets: $answer['facets']);
 			}
 		}//end foreach
 
-		// Removed redundant logging.
-		return [
-			'results' => $combinedResults,
-			'sources' => $sources,
-			'facets' => $combinedFacets,
-			'total' => $combinedTotal,
-		];
+		return $combined;
 
-	}//end getPublications()
+	}//end mergePeerPublications()
+
+	/**
+	 * Record on a federated publication which directory it came from, for faceting.
+	 *
+	 * @param array  $item          The publication
+	 * @param string $directoryName The host name of the peer directory
+	 *
+	 * @return array The publication with `@self.directory` set
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function tagWithDirectory(array $item, string $directoryName): array {
+		if (isset($item['@self']) === false || is_array($item['@self']) === false) {
+			$item['@self'] = [];
+		}
+
+		$item['@self']['directory'] = $directoryName;
+		return $item;
+
+	}//end tagWithDirectory()
 
 	/**
 	 * Detect or generate publication endpoint for a listing
@@ -2312,18 +2238,10 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
 	 *
-	 * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getUsed(string $uuid, array $guzzleConfig = []): array {
-		// Get available listings with publication endpoints.
 		$directories = $this->getUniqueDirectories(availableOnly: true);
-
 		if (empty($directories) === true) {
 			return [
 				'results' => [],
@@ -2331,129 +2249,68 @@ class DirectoryService implements DirectoryServiceInterface {
 			];
 		}
 
-		// Get our own directory URL to exclude from search.
-		$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-		);
-
-		// Prepare Guzzle client.
-		$defaultGuzzleConfig = [
-			RequestOptions::TIMEOUT => 5,
-			RequestOptions::CONNECT_TIMEOUT => 2,
-			RequestOptions::HEADERS => [
-				'Accept' => 'application/json',
-				'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
-			],
-			RequestOptions::HTTP_ERRORS => false,
+		// The /used endpoint lives on the peer's federation endpoint, which
+		// needs no catalogue slug (REQ-FOR-002).
+		$lookup = [
+			'guzzleConfig' => $guzzleConfig,
+			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($uuid).'/used',
+			'parse' => $this->parsePeerResults(...),
 		];
+		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
+		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
 
-		$finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
-		$queryParams = ($finalGuzzleConfig['query_params'] ?? []);
-		$queryParams['_aggregate'] = 'false';
-		// Prevent circular aggregation.
-		$queryParams['_extend'] = [
-			'@self.schema',
-			'@self.register',
-		];
-		// Add self-extension.
-		$client = new Client($finalGuzzleConfig);
-		$promises = [];
-		$urlToDirectoryMap = [];
+		return $this->mergePeerResults(targets: $targets, answers: $answers);
 
-		// Create promises for each directory.
-		foreach ($directories as $index => $directoryUrl) {
-			// Skip our own directory.
-			if ($directoryUrl === $ourDirectoryUrl) {
-				continue;
-			}
+	}//end getUsed()
 
-			// Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
-			try {
-				$this->assertSafeOutboundUrl(url: $directoryUrl);
-			} catch (InvalidArgumentException $e) {
-				continue;
-			}
+	/**
+	 * Read a peer's list answer, which is either a search result or a bare list.
+	 *
+	 * @param mixed $data The decoded peer response
+	 *
+	 * @return array|null The results, or null when the answer is unusable
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function parsePeerResults(mixed $data): ?array {
+		if (isset($data['results']) === true && is_array($data['results']) === true) {
+			return $data['results'];
+		}
 
-			// Build the /used endpoint URL on the peer's federation endpoint, which
-			// needs no catalogue slug (REQ-FOR-002).
-			$baseUrl = self::peerFederationPublicationsUrl(url: $directoryUrl);
-			$usedUrl = $baseUrl . '/' . urlencode($uuid) . '/used';
+		if (is_array($data) === true) {
+			return $data;
+		}
 
-			if (empty($queryParams) === false) {
-				$usedUrl .= '?' . http_build_query($queryParams);
-			}
+		return null;
 
-			// Store mapping for later source tracking.
-			$usedParsedHost = parse_url($directoryUrl, PHP_URL_HOST);
-			if (empty($usedParsedHost) === true) {
-				$usedParsedHost = $directoryUrl;
-			}
+	}//end parsePeerResults()
 
-			$urlToDirectoryMap[count($promises)] = [
-				'url' => $usedUrl,
-				'directoryUrl' => $directoryUrl,
-				'name' => $usedParsedHost,
-			];
-
-			$promises[] = new Promise(
-				function ($resolve) use ($client, $usedUrl) {
-					$failResult = ['success' => false, 'results' => []];
-					try {
-						// SSRF hardening (SB1 / wave-12): disable automatic redirect following
-						// to prevent a federated peer from pivoting via 302 to internal services.
-						$response = $client->get($usedUrl, [RequestOptions::ALLOW_REDIRECTS => false]);
-
-						if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
-							$resolve($failResult);
-							return;
-						}
-
-						$data = json_decode($response->getBody()->getContents(), true);
-
-						if (json_last_error() !== JSON_ERROR_NONE) {
-							$resolve($failResult);
-							return;
-						}
-
-						// Handle different response formats.
-						if (isset($data['results']) === true && is_array($data['results']) === true) {
-							$resolve(['success' => true, 'results' => $data['results']]);
-							return;
-						}
-
-						if (is_array($data) === true) {
-							$resolve(['success' => true, 'results' => $data]);
-							return;
-						}
-
-						$resolve($failResult);
-					} catch (\Exception $e) {
-						$resolve($failResult);
-					}//end try
-				}
-			);
-		}//end foreach
-
-		// Execute all promises and collect results.
-		$allResults = \React\Async\await(\React\Promise\all($promises));
-
-		// Flatten and deduplicate results, track sources.
+	/**
+	 * Combine the peers' results, deduplicated by id, with the peers that answered as sources.
+	 *
+	 * @param array $targets The peer requests, as built by peerTargets()
+	 * @param array $answers The parsed answers, indexed like $targets
+	 *
+	 * @return array The combined results and sources
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function mergePeerResults(array $targets, array $answers): array {
 		$combinedResults = [];
-		$seenIds = [];
-		$sources = [];
+		$seenIds         = [];
+		$sources         = [];
+		foreach ($answers as $index => $results) {
+			if (empty($results) === true) {
+				continue;
+			}
 
-		foreach ($allResults as $index => $result) {
-			$directoryInfo = $urlToDirectoryMap[$index];
-
-			if ($result['success'] === true && empty($result['results']) === false) {
-				$sources[$directoryInfo['name']] = $directoryInfo['url'];
-
-				foreach ($result['results'] as $item) {
-					$itemId = ($item['id'] ?? $item['uuid'] ?? uniqid());
-					if (isset($seenIds[$itemId]) === false) {
-						$combinedResults[] = $item;
-						$seenIds[$itemId] = true;
-					}
+			$sources[$targets[$index]['name']] = $targets[$index]['url'];
+			foreach ($results as $item) {
+				$itemId = ($item['id'] ?? $item['uuid'] ?? uniqid());
+				if (isset($seenIds[$itemId]) === false) {
+					$combinedResults[] = $item;
+					$seenIds[$itemId]  = true;
 				}
 			}
 		}
@@ -2463,7 +2320,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			'sources' => $sources,
 		];
 
-	}//end getUsed()
+	}//end mergePeerResults()
 
 	/**
 	 * Get a single publication from federated catalogs by ID
@@ -2478,54 +2335,92 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
 	 *
-	 * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getPublication(string $publicationId, array $guzzleConfig = []): ?array {
-		// Get available directories.
 		$directories = $this->getUniqueDirectories(availableOnly: true);
-
 		if (empty($directories) === true) {
 			return null;
 		}
 
-		// Get our own directory URL to exclude from search.
+		// `/api/publications/{id}` is the catalogue-slug route and 404s once
+		// the peer renamed its seed catalogue (REQ-FOR-002, issue #1648), so
+		// the lookup goes to the peer's federation endpoint.
+		$lookup = [
+			'guzzleConfig' => $guzzleConfig,
+			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($publicationId),
+			'parse' => static function (mixed $data): ?array {
+				if (empty($data) === true) {
+					return null;
+				}
+
+				return ['data' => $data];
+			},
+		];
+		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
+		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
+
+		foreach ($answers as $index => $answer) {
+			if ($answer !== null) {
+				return [
+					'result' => $answer['data'],
+					'source' => [
+						$targets[$index]['name'] => $targets[$index]['url'],
+					],
+				];
+			}
+		}
+
+		return null;
+	}//end getPublication()
+
+	/**
+	 * The query every peer lookup sends: the caller's `query_params`, the extra
+	 * parameters, no fan-out on the peer's side and the schema and register extended.
+	 *
+	 * @param array $guzzleConfig The caller's Guzzle configuration
+	 * @param array $extraQuery   Parameters to add after `_aggregate`
+	 *
+	 * @return array The query parameters
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function peerQuery(array $guzzleConfig, array $extraQuery): array {
+		$query = ($guzzleConfig['query_params'] ?? []);
+		// Prevent circular aggregation: the peer must not fan out to its own
+		// peers (which would eventually loop back to us).
+		$query['_aggregate'] = 'false';
+		foreach ($extraQuery as $key => $value) {
+			$query[$key] = $value;
+		}
+
+		$query['_extend'] = [
+			'@self.schema',
+			'@self.register',
+		];
+
+		return $query;
+
+	}//end peerQuery()
+
+	/**
+	 * The requests to send for a peer lookup, skipping our own directory and any unsafe URL.
+	 *
+	 * @param array $directories The directory URLs to ask
+	 * @param array $lookup      The lookup: `query` to send and `endpointFor`, which maps a directory URL to the endpoint to call
+	 *
+	 * @return array<int, array{url: string, name: string}> One entry per peer to call
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function peerTargets(array $directories, array $lookup): array {
 		$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
 			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
 		);
 
-		// Prepare Guzzle client.
-		$defaultGuzzleConfig = [
-			RequestOptions::TIMEOUT => 5,
-			RequestOptions::CONNECT_TIMEOUT => 2,
-			RequestOptions::HEADERS => [
-				'Accept' => 'application/json',
-				'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
-			],
-			RequestOptions::HTTP_ERRORS => false,
-		];
-
-		$finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
-		$queryParams = ($finalGuzzleConfig['query_params'] ?? []);
-		$queryParams['_aggregate'] = 'false';
-		// Prevent circular aggregation.
-		$queryParams['_extend'] = [
-			'@self.schema',
-			'@self.register',
-		];
-		// Add self-extension.
-		$client = new Client($finalGuzzleConfig);
-		$promises = [];
-		$urlToDirectoryMap = [];
-
-		// Create promises for each directory.
-		foreach ($directories as $index => $directoryUrl) {
-			// Skip our own directory.
+		$targets = [];
+		foreach ($directories as $directoryUrl) {
 			if ($directoryUrl === $ourDirectoryUrl) {
 				continue;
 			}
@@ -2537,70 +2432,86 @@ class DirectoryService implements DirectoryServiceInterface {
 				continue;
 			}
 
-			// Build the publication endpoint URL on the peer's federation endpoint.
-			// `/api/publications/{id}` is the catalogue-slug route and 404s once
-			// the peer renamed its seed catalogue (REQ-FOR-002, issue #1648).
-			$baseUrl = self::peerFederationPublicationsUrl(url: $directoryUrl);
-			$publicationUrl = $baseUrl . '/' . urlencode($publicationId);
-
-			if (empty($queryParams) === false) {
-				$publicationUrl .= '?' . http_build_query($queryParams);
+			$host = parse_url($directoryUrl, PHP_URL_HOST);
+			if (empty($host) === true) {
+				$host = $directoryUrl;
 			}
 
-			// Store mapping for later source tracking.
-			$pubParsedHost = parse_url($directoryUrl, PHP_URL_HOST);
-			if (empty($pubParsedHost) === true) {
-				$pubParsedHost = $directoryUrl;
-			}
-
-			$urlToDirectoryMap[count($promises)] = [
-				'url' => $publicationUrl,
-				'directoryUrl' => $directoryUrl,
-				'name' => $pubParsedHost,
+			$targets[] = [
+				'url' => $lookup['endpointFor']($directoryUrl).'?'.http_build_query($lookup['query']),
+				'name' => $host,
 			];
-
-			$promises[] = new Promise(
-				function ($resolve) use ($client, $publicationUrl) {
-					try {
-						// SSRF hardening (SB1 / wave-12): disable automatic redirect following
-						// to prevent a federated peer from pivoting via 302 to internal services.
-						$response = $client->get($publicationUrl, [RequestOptions::ALLOW_REDIRECTS => false]);
-
-						if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
-							$data = json_decode($response->getBody()->getContents(), true);
-
-							if (json_last_error() === JSON_ERROR_NONE && empty($data) === false) {
-								$resolve(['success' => true, 'data' => $data]);
-								return;
-							}
-						}
-
-						$resolve(['success' => false, 'data' => null]);
-					} catch (\Exception $e) {
-						$resolve(['success' => false, 'data' => null]);
-					}
-				}
-			);
 		}//end foreach
 
-		// Execute all promises and return first successful result with source.
-		$allResults = \React\Async\await(\React\Promise\all($promises));
+		return $targets;
 
-		// Return the first successful result with source information.
-		foreach ($allResults as $index => $result) {
-			if ($result['success'] === true && $result['data'] !== null) {
-				$directoryInfo = $urlToDirectoryMap[$index];
-				return [
-					'result' => $result['data'],
-					'source' => [
-						$directoryInfo['name'] => $directoryInfo['url'],
-					],
-				];
-			}
+	}//end peerTargets()
+
+	/**
+	 * Call each peer and parse its answer.
+	 *
+	 * @param array $targets The peer requests, as built by peerTargets()
+	 * @param array $lookup  The lookup: the caller's `guzzleConfig`, merged over the defaults, and `parse`,
+	 *                       which turns a decoded answer into a result or null when unusable
+	 *
+	 * @return array<int, array|null> The parsed answers, indexed like $targets; null for a failed peer
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function fetchFromPeers(array $targets, array $lookup): array {
+		$defaultGuzzleConfig = [
+			RequestOptions::TIMEOUT => 5,
+			RequestOptions::CONNECT_TIMEOUT => 2,
+			RequestOptions::HEADERS => [
+				'Accept' => 'application/json',
+				'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
+			],
+			RequestOptions::HTTP_ERRORS => false,
+		];
+		$lookup['client'] = new Client(array_merge($defaultGuzzleConfig, $lookup['guzzleConfig']));
+
+		$answers = [];
+		foreach ($targets as $target) {
+			$answers[] = $this->fetchFromPeer(url: $target['url'], lookup: $lookup);
 		}
 
-		return null;
-	}//end getPublication()
+		return $answers;
+
+	}//end fetchFromPeers()
+
+	/**
+	 * Call one peer and parse its answer.
+	 *
+	 * @param string $url    The URL to call
+	 * @param array  $lookup The lookup: the HTTP `client` and `parse`, which turns a decoded answer into a result or null
+	 *
+	 * @return array|null The parsed answer, or null on a non-2xx status, invalid JSON or a failed request
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function fetchFromPeer(string $url, array $lookup): ?array {
+		try {
+			// SSRF hardening (SB1 / wave-12): disable automatic redirect following so
+			// that a federated peer cannot pivot to cloud-metadata via a 302 response.
+			// The URL is already validated by assertSafeOutboundUrl(); here we
+			// ensure Guzzle never silently follows a redirect to an unvalidated host.
+			$response   = $lookup['client']->get($url, [RequestOptions::ALLOW_REDIRECTS => false]);
+			$statusCode = $response->getStatusCode();
+			if ($statusCode < 200 || $statusCode >= 300) {
+				return null;
+			}
+
+			$data = json_decode($response->getBody()->getContents(), true);
+			if (json_last_error() !== JSON_ERROR_NONE) {
+				return null;
+			}
+
+			return $lookup['parse']($data);
+		} catch (\Exception $e) {
+			return null;
+		}//end try
+
+	}//end fetchFromPeer()
 
 	/**
 	 * The peer's `/api/federation/publications` URL for a listing URL of any shape.
@@ -2640,10 +2551,6 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	public function getDirectory(array $requestParams = []): array {
@@ -2655,168 +2562,171 @@ class DirectoryService implements DirectoryServiceInterface {
 		// Get ObjectService from container.
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		$allResults = [];
-
-		// Build base config for filters and pagination.
-		$baseConfig = [
-			'filters' => [],
-		];
-
-		// Add any additional filters from request params.
-		if (isset($requestParams['filters']) === true) {
-			$baseConfig['filters'] = array_merge($baseConfig['filters'], $requestParams['filters']);
-		}
-
-		// Add pagination params.
-		if (isset($requestParams['limit']) === true) {
-			$baseConfig['limit'] = (int)$requestParams['limit'];
-		}
-
-		if (isset($requestParams['offset']) === true) {
-			$baseConfig['offset'] = (int)$requestParams['offset'];
-		}
-
-		// Fetch discovered listings.
-		// Read the scope keys HERE rather than at the top of the method: the guard
-		// on the very next line is what makes them safe, and a read separated from
-		// its guard by twenty lines of unrelated setup reads as unguarded — to a
-		// reviewer and to hydra gate-50 alike. Same for the catalog pair below.
-		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
-		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
-		if (empty($listingSchema) === false && empty($listingRegister) === false) {
-			$query = [
-				'@self' => [
-					'schema' => $listingSchema,
-					'register' => $listingRegister,
-				],
-			];
-
-			// Add filters from base config.
-			if (empty($baseConfig['filters']) === false) {
-				foreach ($baseConfig['filters'] as $key => $value) {
-					if (in_array($key, ['schema', 'register']) === false) {
-						$query[$key] = $value;
-					}
-				}
-			}
-
-			// Add pagination parameters.
-			if (isset($baseConfig['limit']) === true) {
-				$query['_limit'] = $baseConfig['limit'];
-			}
-
-			if (isset($baseConfig['offset']) === true) {
-				$query['_offset'] = $baseConfig['offset'];
-			}
-
-			try {
-				// RBAC handles public visibility via conditional published date rule.
-				// ADR-002: each tenant queries only its own listings; multitenancy must stay enabled.
-				$listingResult = $objectService->searchObjects($query);
-
-				// Get our directory URL to identify locally-created listings.
-				$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
-					$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-				);
-
-				// BFS-discovery opt-in: sync-code passes `?include-federated=1` so peers
-				// can transitively learn about each other's known directories. Public
-				// consumers (search UI, browsers) get the default filtered view — only
-				// catalogs that originate from THIS instance — to preserve the historical
-				// "no cross-broadcast" contract.
-				$includeFederated = filter_var(
-					($requestParams['include-federated'] ?? false),
-					FILTER_VALIDATE_BOOLEAN
-				);
-
-				$listings = [];
-				foreach ($listingResult as $object) {
-					$listingData = $object;
-					if ($object instanceof \OCP\AppFramework\Db\Entity) {
-						$listingData = $object->jsonSerialize();
-					}
-
-					$objectData = ($listingData['object'] ?? $listingData);
-					$listingDir = ($objectData['directory'] ?? '');
-
-					// Default view: skip listings synced from OTHER directories (their
-					// `directory` field points at the peer's own /api/directory URL, not
-					// ours) so we don't re-broadcast them. BFS-discovery callers opt in
-					// via `include-federated=1` to receive the full transitive set.
-					if ($includeFederated === false
-						&& empty($listingDir) === false
-						&& $listingDir !== $ourDirectoryUrl
-					) {
-						continue;
-					}
-
-					$listings[] = $this->filterListingProperties(listing: $listingData);
-				}//end foreach
-
-				$allResults = array_merge($allResults, $listings);
-			} catch (\Exception $e) {
-				// Removed redundant logging.
-			}//end try
-		}//end if
-
-		// Fetch local catalogs and convert them to listing format.
-		$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', 'catalog');
-		$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
-		if (empty($catalogSchema) === false && empty($catalogRegister) === false) {
-			$query = [
-				'@self' => [
-					'schema' => $catalogSchema,
-					'register' => $catalogRegister,
-				],
-			];
-
-			// Add filters from base config.
-			if (empty($baseConfig['filters']) === false) {
-				foreach ($baseConfig['filters'] as $key => $value) {
-					if (in_array($key, ['schema', 'register']) === false) {
-						$query[$key] = $value;
-					}
-				}
-			}
-
-			// Add pagination parameters.
-			if (isset($baseConfig['limit']) === true) {
-				$query['_limit'] = $baseConfig['limit'];
-			}
-
-			if (isset($baseConfig['offset']) === true) {
-				$query['_offset'] = $baseConfig['offset'];
-			}
-
-			try {
-				// RBAC handles public visibility via conditional published date rule.
-				// ADR-002: each tenant queries only its own catalogs; multitenancy must stay enabled.
-				$catalogResult = $objectService->searchObjects($query);
-
-				// Convert catalog objects to listing format and expand schemas.
-				$catalogsAsListings = array_map(
-					function ($catalogObject) {
-						$listing = $this->convertCatalogToListing(catalogObject: $catalogObject);
-						return $this->processSchemaExpansion(data: $listing);
-					},
-					$catalogResult
-				);
-
-				$allResults = array_merge($allResults, $catalogsAsListings);
-			} catch (\Exception $e) {
-				// Removed redundant logging.
-			}
-		}//end if
-
-		// Calculate total.
-		$total = count($allResults);
+		$allResults = array_merge(
+			$this->directoryListings(objectService: $objectService, requestParams: $requestParams),
+			$this->directoryCatalogs(objectService: $objectService, requestParams: $requestParams)
+		);
 
 		return [
 			'results' => $allResults,
-			'total' => $total,
+			'total' => count($allResults),
 		];
 
 	}//end getDirectory()
+
+	/**
+	 * The discovered listings for the directory, filtered to our own unless the caller opts in.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService
+	 * @param array  $requestParams The directory request parameters
+	 *
+	 * @return array The listings, or an empty array when unconfigured or the search fails
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function directoryListings(object $objectService, array $requestParams): array {
+		// The scope keys are read right before the guard that makes them safe,
+		// so the read does not look unguarded (to a reviewer or hydra gate-50).
+		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+		if (empty($listingSchema) === true || empty($listingRegister) === true) {
+			return [];
+		}
+
+		try {
+			// RBAC handles public visibility via conditional published date rule.
+			// ADR-002: each tenant queries only its own listings; multitenancy must stay enabled.
+			$listingResult = $objectService->searchObjects(
+				$this->directoryQuery(scope: ['schema' => $listingSchema, 'register' => $listingRegister], requestParams: $requestParams)
+			);
+
+			// Get our directory URL to identify locally-created listings.
+			$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
+				$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
+			);
+
+			// BFS-discovery opt-in: sync-code passes `?include-federated=1` so peers
+			// can transitively learn about each other's known directories. Public
+			// consumers (search UI, browsers) get the default filtered view — only
+			// catalogs that originate from THIS instance — to preserve the historical
+			// "no cross-broadcast" contract.
+			$includeFederated = filter_var(
+				($requestParams['include-federated'] ?? false),
+				FILTER_VALIDATE_BOOLEAN
+			);
+
+			$listings = [];
+			foreach ($listingResult as $object) {
+				$listingData = $object;
+				if ($object instanceof \OCP\AppFramework\Db\Entity) {
+					$listingData = $object->jsonSerialize();
+				}
+
+				if ($includeFederated === false
+					&& $this->isFromOtherDirectory(listingData: $listingData, ourDirectoryUrl: $ourDirectoryUrl) === true
+				) {
+					continue;
+				}
+
+				$listings[] = $this->filterListingProperties(listing: $listingData);
+			}
+
+			return $listings;
+		} catch (\Exception $e) {
+			return [];
+		}//end try
+
+	}//end directoryListings()
+
+	/**
+	 * Whether a listing was synced from another directory.
+	 *
+	 * Such a listing's `directory` field points at the peer's own /api/directory
+	 * URL, not ours, and the default directory view does not re-broadcast it.
+	 *
+	 * @param array  $listingData     The listing
+	 * @param string $ourDirectoryUrl Our own directory URL
+	 *
+	 * @return boolean True when the listing names a directory other than ours
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function isFromOtherDirectory(array $listingData, string $ourDirectoryUrl): bool {
+		$objectData = ($listingData['object'] ?? $listingData);
+		$listingDir = ($objectData['directory'] ?? '');
+
+		return empty($listingDir) === false && $listingDir !== $ourDirectoryUrl;
+
+	}//end isFromOtherDirectory()
+
+	/**
+	 * Our local catalogs, converted to listings with their schemas expanded.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService
+	 * @param array  $requestParams The directory request parameters
+	 *
+	 * @return array The catalogs as listings, or an empty array when unconfigured or the search fails
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function directoryCatalogs(object $objectService, array $requestParams): array {
+		$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', 'catalog');
+		$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
+		if (empty($catalogSchema) === true || empty($catalogRegister) === true) {
+			return [];
+		}
+
+		try {
+			// RBAC handles public visibility via conditional published date rule.
+			// ADR-002: each tenant queries only its own catalogs; multitenancy must stay enabled.
+			$catalogResult = $objectService->searchObjects(
+				$this->directoryQuery(scope: ['schema' => $catalogSchema, 'register' => $catalogRegister], requestParams: $requestParams)
+			);
+
+			return $this->convertCatalogiToListings(catalogs: $catalogResult);
+		} catch (\Exception $e) {
+			return [];
+		}
+
+	}//end directoryCatalogs()
+
+	/**
+	 * The search query for one part of the directory: its scope, the request's
+	 * filters (except schema and register) and its pagination.
+	 *
+	 * @param array{schema: string, register: string} $scope         The schema and register to search
+	 * @param array                                   $requestParams The directory request parameters
+	 *
+	 * @return array The OpenRegister search query
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function directoryQuery(array $scope, array $requestParams): array {
+		$query = [
+			'@self' => [
+				'schema' => $scope['schema'],
+				'register' => $scope['register'],
+			],
+		];
+
+		$filters = array_merge([], ($requestParams['filters'] ?? []));
+		foreach ($filters as $key => $value) {
+			if (in_array($key, ['schema', 'register']) === false) {
+				$query[$key] = $value;
+			}
+		}
+
+		if (isset($requestParams['limit']) === true) {
+			$query['_limit'] = (int)$requestParams['limit'];
+		}
+
+		if (isset($requestParams['offset']) === true) {
+			$query['_offset'] = (int)$requestParams['offset'];
+		}
+
+		return $query;
+
+	}//end directoryQuery()
 
 	/**
 	 * Convert a catalog object to listing format

@@ -10,7 +10,7 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { CatalogStatus, TCatalogi, TCatalogStaffAccess } from './catalogi.types'
 
 import { z } from 'zod'
@@ -73,7 +73,7 @@ export class Catalogi implements TCatalogi {
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TCatalogi, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/l89lv7ocvq848-create-catalog
 		const schema = z.object({
 			title: z
@@ -88,7 +88,7 @@ export class Catalogi implements TCatalogi {
 			organization: z.number().or(z.string()).or(z.null()),
 			registers: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
 			schemas: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
-			filters: z.record(z.unknown()),
+			filters: z.record(z.string(), z.unknown()),
 			slug: z
 				.string()
 				.min(1, 'is verplicht')

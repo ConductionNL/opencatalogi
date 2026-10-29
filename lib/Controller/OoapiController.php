@@ -306,6 +306,95 @@ class OoapiController extends Controller {
 	}//end guard()
 
 	/**
+	 * Run a consumer endpoint inside an enabled catalog and its configured register/schema pair.
+	 *
+	 * Refuses an unauthenticated or disallowed consumer, an unknown or OOAPI-disabled
+	 * catalog and an unconfigured context before $render runs; an unexpected failure
+	 * answers 500.
+	 *
+	 * @param array{catalogSlug: string, context: string} $lookup The catalog slug and the `<context>` of the
+	 *                                                           `<context>_register`/`<context>_schema` config keys.
+	 * @param callable                                    $render Builds the answer from the catalog and its register/schema pair.
+	 *
+	 * @return JSONResponse The answer, or the refusal.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+	 */
+	private function inCatalogContext(array $lookup, callable $render): JSONResponse {
+		$authError = $this->requireAuthenticatedConsumer();
+		if ($authError !== null) {
+			return $authError;
+		}
+
+		return $this->guard(
+			action: function () use ($lookup, $render): JSONResponse {
+				$resolved = $this->resolveEnabledCatalog(catalogSlug: $lookup['catalogSlug']);
+				if ($resolved['error'] !== null) {
+					return $resolved['error'];
+				}
+
+				$context = $this->resolveContext(
+					registerKey: $lookup['context'].'_register',
+					schemaKey: $lookup['context'].'_schema'
+				);
+				if ($context['error'] !== null) {
+					return $context['error'];
+				}
+
+				return $render($resolved['catalog'], $context['pair']);
+			}
+		);
+
+	}//end inCatalogContext()
+
+	/**
+	 * A single resource, or a 404 with the given message when there is none.
+	 *
+	 * @param array<string, mixed>|null $resource The resource.
+	 * @param string                    $notFound The translated not-found message.
+	 *
+	 * @return JSONResponse The resource, or the 404.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+	 */
+	private function resourceOrNotFound(?array $resource, string $notFound): JSONResponse {
+		if ($resource === null) {
+			return $this->json(data: ['error' => $notFound], status: Http::STATUS_NOT_FOUND);
+		}
+
+		return $this->json(data: $resource, status: Http::STATUS_OK);
+
+	}//end resourceOrNotFound()
+
+	/**
+	 * Fetch one materialized resource by its OOAPI id field.
+	 *
+	 * @param array{catalogSlug: string, context: string, id: string, idField: string} $lookup   The catalog slug, config context,
+	 *                                                                                           id and the field that holds it.
+	 * @param string                                                                   $notFound The translated not-found message.
+	 *
+	 * @return JSONResponse The resource, or a 404 or refusal.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
+	 */
+	private function materializedResource(array $lookup, string $notFound): JSONResponse {
+		return $this->inCatalogContext(
+			lookup: $lookup,
+			render: fn (array $catalog, array $pair): JSONResponse => $this->resourceOrNotFound(
+				resource: $this->ooapiService->getResource(
+					$catalog,
+					register: $pair['register'],
+					schema: $pair['schema'],
+					id: $lookup['id'],
+					idField: $lookup['idField']
+				),
+				notFound: $notFound
+			)
+		);
+
+	}//end materializedResource()
+
+	/**
 	 * List an institution's OOAPI 5.0 organizations for a catalog.
 	 *
 	 * @param string $catalogSlug The catalog slug.
@@ -318,27 +407,13 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
 	public function organizations(string $catalogSlug): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'organization_register', schemaKey: 'organization_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'organization'],
+			render: function (array $catalog, array $pair): JSONResponse {
 				$organization = $this->ooapiService->renderOrganization(
-					$resolved['catalog'],
-					organizationRegister: $context['pair']['register'],
-					organizationSchema: $context['pair']['schema']
+					$catalog,
+					organizationRegister: $pair['register'],
+					organizationSchema: $pair['schema']
 				);
 
 				$items = [];
@@ -374,35 +449,17 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
 	public function organization(string $catalogSlug, string $id): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'organization_register', schemaKey: 'organization_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$organization = $this->ooapiService->organizationById(
-					$resolved['catalog'],
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'organization'],
+			render: fn (array $catalog, array $pair): JSONResponse => $this->resourceOrNotFound(
+				resource: $this->ooapiService->organizationById(
+					$catalog,
 					id: $id,
-					organizationRegister: $context['pair']['register'],
-					organizationSchema: $context['pair']['schema']
-				);
-				if ($organization === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Organization not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				return $this->json(data: $organization, status: Http::STATUS_OK);
-			}
+					organizationRegister: $pair['register'],
+					organizationSchema: $pair['schema']
+				),
+				notFound: $this->l10n->t('Organization not found')
+			)
 		);
 
 	}//end organization()
@@ -420,33 +477,20 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
 	public function courses(string $catalogSlug): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_courses'],
+			render: function (array $catalog, array $pair): JSONResponse {
 				$pagination = $this->resolvePagination();
-				$result = $this->ooapiService->listCourses(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					page: $pagination['page'],
-					pageSize: $pagination['pageSize']
-				);
 
-				return $this->collectionResponse(result: $result);
+				return $this->collectionResponse(
+					result: $this->ooapiService->listCourses(
+						$catalog,
+						register: $pair['register'],
+						schema: $pair['schema'],
+						page: $pagination['page'],
+						pageSize: $pagination['pageSize']
+					)
+				);
 			}
 		);
 
@@ -466,36 +510,9 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 */
 	public function course(string $catalogSlug, string $id): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$course = $this->ooapiService->getResource(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					id: $id,
-					idField: 'courseId'
-				);
-				if ($course === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Course not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				return $this->json(data: $course, status: Http::STATUS_OK);
-			}
+		return $this->materializedResource(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_courses', 'id' => $id, 'idField' => 'courseId'],
+			notFound: $this->l10n->t('Course not found')
 		);
 
 	}//end course()
@@ -513,33 +530,20 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
 	public function programs(string $catalogSlug): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_programs_register', schemaKey: 'ooapi_programs_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_programs'],
+			render: function (array $catalog, array $pair): JSONResponse {
 				$pagination = $this->resolvePagination();
-				$result = $this->ooapiService->listPrograms(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					page: $pagination['page'],
-					pageSize: $pagination['pageSize']
-				);
 
-				return $this->collectionResponse(result: $result);
+				return $this->collectionResponse(
+					result: $this->ooapiService->listPrograms(
+						$catalog,
+						register: $pair['register'],
+						schema: $pair['schema'],
+						page: $pagination['page'],
+						pageSize: $pagination['pageSize']
+					)
+				);
 			}
 		);
 
@@ -559,36 +563,9 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 */
 	public function program(string $catalogSlug, string $id): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_programs_register', schemaKey: 'ooapi_programs_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$program = $this->ooapiService->getResource(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					id: $id,
-					idField: 'programId'
-				);
-				if ($program === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Program not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				return $this->json(data: $program, status: Http::STATUS_OK);
-			}
+		return $this->materializedResource(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_programs', 'id' => $id, 'idField' => 'programId'],
+			notFound: $this->l10n->t('Program not found')
 		);
 
 	}//end program()
@@ -607,34 +584,21 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
 	 */
 	public function courseOfferings(string $catalogSlug, string $courseId): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $courseId): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_offerings_register', schemaKey: 'ooapi_offerings_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_offerings'],
+			render: function (array $catalog, array $pair) use ($courseId): JSONResponse {
 				$pagination = $this->resolvePagination();
-				$result = $this->ooapiService->listOfferings(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					courseId: $courseId,
-					page: $pagination['page'],
-					pageSize: $pagination['pageSize']
-				);
 
-				return $this->collectionResponse(result: $result);
+				return $this->collectionResponse(
+					result: $this->ooapiService->listOfferings(
+						$catalog,
+						register: $pair['register'],
+						schema: $pair['schema'],
+						courseId: $courseId,
+						page: $pagination['page'],
+						pageSize: $pagination['pageSize']
+					)
+				);
 			}
 		);
 
@@ -654,36 +618,9 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
 	 */
 	public function offering(string $catalogSlug, string $id): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_offerings_register', schemaKey: 'ooapi_offerings_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$offering = $this->ooapiService->getResource(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					id: $id,
-					idField: 'offeringId'
-				);
-				if ($offering === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Offering not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				return $this->json(data: $offering, status: Http::STATUS_OK);
-			}
+		return $this->materializedResource(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_offerings', 'id' => $id, 'idField' => 'offeringId'],
+			notFound: $this->l10n->t('Offering not found')
 		);
 
 	}//end offering()

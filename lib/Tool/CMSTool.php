@@ -165,183 +165,248 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 *
 	 * @return array<array<string, mixed>> Function definitions
 	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	public function getFunctions(): array {
 		return [
-			// Page functions.
-			[
-				'name' => 'cms_create_page',
-				'subject' => 'page',
-				'action' => 'create',
-				'description' => 'Create a new page with title and content. Returns the page UUID.',
-				'parameters' => [
-					'type' => 'object',
-					'properties' => [
-						'title' => [
-							'type' => 'string',
-							'description' => 'Page title (required)',
-						],
-						'summary' => [
-							'type' => 'string',
-							'description' => 'Brief summary of the page',
-						],
-						'description' => [
-							'type' => 'string',
-							'description' => 'Full page content in HTML or markdown',
-						],
-						'slug' => [
-							'type' => 'string',
-							'description' => 'URL-friendly slug (auto-generated if not provided)',
-						],
-					],
-					'required' => ['title'],
-				],
-			],
-			[
-				'name' => 'cms_list_pages',
-				'subject' => 'page',
-				'action' => 'list',
-				'description' => 'List all pages. Returns array of pages with title, slug, and UUID.',
-				'parameters' => [
-					'type' => 'object',
-					'properties' => [
-						'limit' => [
-							'type' => 'integer',
-							'description' => 'Maximum number of pages to return (default: 50)',
-						],
-					],
-					'required' => [],
-				],
-			],
+			$this->createPageFunction(),
+			$this->listPagesFunction(),
+			$this->createMenuFunction(),
+			$this->listMenusFunction(),
+			$this->addMenuItemFunction(),
+		];
 
-			// Menu functions.
-			[
-				'name' => 'cms_create_menu',
-				'subject' => 'menu',
-				'action' => 'create',
-				'description' => 'Create a new menu with items including position, names, links, order, and access groups.',
-				'parameters' => [
-					'type' => 'object',
-					'properties' => [
-						'title' => [
-							'type' => 'string',
-							'description' => 'Menu title/name (required)',
-						],
-						'position' => [
-							'type' => 'number',
-							// phpcs:ignore Generic.Files.LineLength.TooLong
-							'description' => 'Menu display position/order (0 = first, higher = later). ASK THE USER for this if not provided.',
-						],
-						'items' => [
-							'type' => 'array',
-							'description' => 'Array of menu items. Each item MUST have: order, name, and link.',
-							'items' => [
-								'type' => 'object',
-								'properties' => [
-									'order' => [
-										'type' => 'number',
-										'description' => 'Item display order within menu',
-									],
-									'name' => [
-										'type' => 'string',
-										'description' => 'Display name of the menu item',
-									],
-									'link' => [
-										'type' => 'string',
-										'description' => 'URL or path (e.g., /page-slug or https://example.com)',
-									],
-									'description' => [
-										'type' => 'string',
-										'description' => 'Optional item description',
-									],
-									'icon' => [
-										'type' => 'string',
-										'description' => 'Optional icon name',
-									],
-									'groups' => [
-										'type' => 'array',
-										'description' => 'Nextcloud groups that can access this item (RBAC)',
-										'items' => ['type' => 'string'],
-									],
-								],
-								'required' => [
-									'order',
-									'name',
-									'link',
-								],
-							],
-						],
-						'groups' => [
-							'type' => 'array',
-							// phpcs:ignore Generic.Files.LineLength.TooLong
-							'description' => 'Nextcloud groups that can access this entire menu (RBAC). Ask user if they want to restrict access.',
-							'items' => ['type' => 'string'],
-						],
-						'hideBeforeLogin' => [
-							'type' => 'boolean',
-							'description' => 'Whether to hide this menu before user login (security setting)',
-						],
-					],
-					'required' => [
-						'title',
-						'items',
-					],
-				],
-			],
-			[
-				'name' => 'cms_list_menus',
-				'subject' => 'menu',
-				'action' => 'list',
-				'description' => 'List all menus. Returns array of menus with name and UUID.',
-				'parameters' => [
-					'type' => 'object',
-					'properties' => [],
-					'required' => [],
-				],
-			],
+	}//end getFunctions()
 
-			// Menu item functions.
-			[
-				'name' => 'cms_add_menu_item',
-				'subject' => 'menuItem',
-				'action' => 'create',
-				'description' => 'Add an item to a menu. Can link to a page or external URL.',
-				'parameters' => [
-					'type' => 'object',
-					'properties' => [
-						'menuId' => [
-							'type' => 'string',
-							'description' => 'UUID of the menu to add item to (required)',
-						],
-						'name' => [
-							'type' => 'string',
-							'description' => 'Label for the menu item (required)',
-						],
-						'link' => [
-							'type' => 'string',
-							'description' => 'External URL to link to (provide either link or pageId)',
-						],
-						'pageId' => [
-							'type' => 'string',
-							'description' => 'UUID of a page to link to (provide either link or pageId)',
-						],
-						'order' => [
-							'type' => 'integer',
-							'description' => 'Display order in the menu',
-						],
+	/**
+	 * The definition of the `cms_create_page` function.
+	 *
+	 * @return array<string, mixed> The function definition
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function createPageFunction(): array {
+		return [
+			'name' => 'cms_create_page',
+			'subject' => 'page',
+			'action' => 'create',
+			'description' => 'Create a new page with title and content. Returns the page UUID.',
+			'parameters' => [
+				'type' => 'object',
+				'properties' => [
+					'title' => [
+						'type' => 'string',
+						'description' => 'Page title (required)',
 					],
-					'required' => [
-						'menuId',
-						'name',
+					'summary' => [
+						'type' => 'string',
+						'description' => 'Brief summary of the page',
 					],
+					'description' => [
+						'type' => 'string',
+						'description' => 'Full page content in HTML or markdown',
+					],
+					'slug' => [
+						'type' => 'string',
+						'description' => 'URL-friendly slug (auto-generated if not provided)',
+					],
+				],
+				'required' => ['title'],
+			],
+		];
+
+	}//end createPageFunction()
+
+	/**
+	 * The definition of the `cms_list_pages` function.
+	 *
+	 * @return array<string, mixed> The function definition
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function listPagesFunction(): array {
+		return [
+			'name' => 'cms_list_pages',
+			'subject' => 'page',
+			'action' => 'list',
+			'description' => 'List all pages. Returns array of pages with title, slug, and UUID.',
+			'parameters' => [
+				'type' => 'object',
+				'properties' => [
+					'limit' => [
+						'type' => 'integer',
+						'description' => 'Maximum number of pages to return (default: 50)',
+					],
+				],
+				'required' => [],
+			],
+		];
+
+	}//end listPagesFunction()
+
+	/**
+	 * The definition of the `cms_create_menu` function.
+	 *
+	 * @return array<string, mixed> The function definition
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function createMenuFunction(): array {
+		return [
+			'name' => 'cms_create_menu',
+			'subject' => 'menu',
+			'action' => 'create',
+			'description' => 'Create a new menu with items including position, names, links, order, and access groups.',
+			'parameters' => [
+				'type' => 'object',
+				'properties' => [
+					'title' => [
+						'type' => 'string',
+						'description' => 'Menu title/name (required)',
+					],
+					'position' => [
+						'type' => 'number',
+						// phpcs:ignore Generic.Files.LineLength.TooLong
+						'description' => 'Menu display position/order (0 = first, higher = later). ASK THE USER for this if not provided.',
+					],
+					'items' => [
+						'type' => 'array',
+						'description' => 'Array of menu items. Each item MUST have: order, name, and link.',
+						'items' => $this->menuItemSchema(),
+					],
+					'groups' => [
+						'type' => 'array',
+						// phpcs:ignore Generic.Files.LineLength.TooLong
+						'description' => 'Nextcloud groups that can access this entire menu (RBAC). Ask user if they want to restrict access.',
+						'items' => ['type' => 'string'],
+					],
+					'hideBeforeLogin' => [
+						'type' => 'boolean',
+						'description' => 'Whether to hide this menu before user login (security setting)',
+					],
+				],
+				'required' => [
+					'title',
+					'items',
 				],
 			],
 		];
 
-	}//end getFunctions()
+	}//end createMenuFunction()
+
+	/**
+	 * The schema of one item in the `cms_create_menu` function's `items` parameter.
+	 *
+	 * @return array<string, mixed> The JSON schema of a menu item
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function menuItemSchema(): array {
+		return [
+			'type' => 'object',
+			'properties' => [
+				'order' => [
+					'type' => 'number',
+					'description' => 'Item display order within menu',
+				],
+				'name' => [
+					'type' => 'string',
+					'description' => 'Display name of the menu item',
+				],
+				'link' => [
+					'type' => 'string',
+					'description' => 'URL or path (e.g., /page-slug or https://example.com)',
+				],
+				'description' => [
+					'type' => 'string',
+					'description' => 'Optional item description',
+				],
+				'icon' => [
+					'type' => 'string',
+					'description' => 'Optional icon name',
+				],
+				'groups' => [
+					'type' => 'array',
+					'description' => 'Nextcloud groups that can access this item (RBAC)',
+					'items' => ['type' => 'string'],
+				],
+			],
+			'required' => [
+				'order',
+				'name',
+				'link',
+			],
+		];
+
+	}//end menuItemSchema()
+
+	/**
+	 * The definition of the `cms_list_menus` function.
+	 *
+	 * @return array<string, mixed> The function definition
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function listMenusFunction(): array {
+		return [
+			'name' => 'cms_list_menus',
+			'subject' => 'menu',
+			'action' => 'list',
+			'description' => 'List all menus. Returns array of menus with name and UUID.',
+			'parameters' => [
+				'type' => 'object',
+				'properties' => [],
+				'required' => [],
+			],
+		];
+
+	}//end listMenusFunction()
+
+	/**
+	 * The definition of the `cms_add_menu_item` function.
+	 *
+	 * @return array<string, mixed> The function definition
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function addMenuItemFunction(): array {
+		return [
+			'name' => 'cms_add_menu_item',
+			'subject' => 'menuItem',
+			'action' => 'create',
+			'description' => 'Add an item to a menu. Can link to a page or external URL.',
+			'parameters' => [
+				'type' => 'object',
+				'properties' => [
+					'menuId' => [
+						'type' => 'string',
+						'description' => 'UUID of the menu to add item to (required)',
+					],
+					'name' => [
+						'type' => 'string',
+						'description' => 'Label for the menu item (required)',
+					],
+					'link' => [
+						'type' => 'string',
+						'description' => 'External URL to link to (provide either link or pageId)',
+					],
+					'pageId' => [
+						'type' => 'string',
+						'description' => 'UUID of a page to link to (provide either link or pageId)',
+					],
+					'order' => [
+						'type' => 'integer',
+						'description' => 'Display order in the menu',
+					],
+				],
+				'required' => [
+					'menuId',
+					'name',
+				],
+			],
+		];
+
+	}//end addMenuItemFunction()
 
 	/**
 	 * Execute a function

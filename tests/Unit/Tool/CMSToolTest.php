@@ -120,6 +120,12 @@ class CMSToolTest extends TestCase {
 		$this->assertContains('cms_add_menu_item', $names);
 	}
 
+	public function testGetFunctionsMatchesThePublishedDefinitions(): void {
+		$expected = json_decode((string)file_get_contents(__DIR__.'/fixtures/cms-tool-functions.json'), true);
+
+		$this->assertSame($expected, $this->tool->getFunctions());
+	}
+
 	public function testGetFunctionsHaveRequiredStructure(): void {
 		$functions = $this->tool->getFunctions();
 

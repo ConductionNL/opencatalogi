@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TCatalogi } from '../'
 import type { TPublication } from './publication.types'
 
@@ -7,6 +7,30 @@ import { z } from 'zod'
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
+
+/**
+ * The value when it is a truthy non-array, otherwise the fallback.
+ *
+ * @param value - The value from the publication data
+ * @param fallback - What to use instead
+ * @return The value or the fallback
+ */
+function objectOr<T>(value: unknown, fallback: T): T {
+	return ((!Array.isArray(value) && value) || fallback) as T
+}
+
+/**
+ * Read the featured flag. The backend can send true and false as "1" and ""
+ * (not "0"), so a numeric string counts by its number.
+ *
+ * @param value - The featured value from the publication data
+ * @return Whether the publication is featured
+ */
+function featuredFlag(value: unknown): boolean {
+	return (typeof value === 'boolean' && value)
+		|| (typeof value === 'string' && !!parseInt(value))
+		|| false
+}
 
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -73,6 +97,16 @@ export class Publication implements TPublication {
 
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	private hydrate(data: TPublication) {
+		this.hydrateText(data)
+		this.hydrateStructure(data)
+	}
+
+	/**
+	 * Copy the identity, text and status fields, defaulting each to an empty value.
+	 *
+	 * @param data - The publication data
+	 */
+	private hydrateText(data: TPublication) {
 		this.id = data.id?.toString()
 		this.title = data.title || ''
 		this.summary = data.summary || ''
@@ -82,49 +116,52 @@ export class Publication implements TPublication {
 		this.organization = data.organization || ''
 		this.category = data.category || ''
 		this.portal = data.portal || ''
-		this.featured =
-			(typeof data.featured === 'boolean' && data.featured)
-			// backend can send true and false back as "1" and "" (yes. not "0")
-			// FIXME: remove once bug is fixed
-			|| (typeof data.featured === 'string' && !!parseInt(data.featured))
-			|| false
+		this.featured = featuredFlag(data.featured)
 		this.source = data.source || ''
 		this.status = (data.status as TStatus) || 'Concept'
-		this.themes = data.themes || []
-		this.data = (!Array.isArray(data.data) && data.data) || {}
+	}
 
-		this.anonymization = (!Array.isArray(data.anonymization)
-			&& data.anonymization) || {
+	/**
+	 * Copy the lists, nested objects and references; an array where an object
+	 * belongs counts as missing.
+	 *
+	 * @param data - The publication data
+	 */
+	private hydrateStructure(data: TPublication) {
+		this.themes = data.themes || []
+		this.data = objectOr(data.data, {})
+
+		this.anonymization = objectOr(data.anonymization, {
 			anonymized: false,
 			results: '',
-		}
+		})
 
-		this.language = (!Array.isArray(data.language) && data.language) || {
+		this.language = objectOr(data.language, {
 			code: '',
 			level: '',
-		}
+		})
 
 		this.published = data.published || ''
 		this.modified = data.modified || ''
 		this.license = data.license || ''
-		this.archive = (!Array.isArray(data.archive) && data.archive) || {
+		this.archive = objectOr(data.archive, {
 			date: '',
-		}
+		})
 
-		this.geo = (!Array.isArray(data.geo) && data.geo) || {
+		this.geo = objectOr(data.geo, {
 			type: 'Point',
 			coordinates: [0, 0],
-		}
+		})
 
-		this['@self'] = (!Array.isArray(data['@self']) && data['@self']) || {}
+		this['@self'] = objectOr(data['@self'], {})
 
-		this.catalog = (!Array.isArray(data.catalog) && data.catalog) || {}
+		this.catalog = objectOr(data.catalog, {})
 		this.register = data.register || null
 		this.schema = data.schema || null
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TPublication, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/jcrqsdtnjtx8v-create-publication
 		const schema = z.object({
 			title: z.string().min(1, 'is verplicht'), // .min(1) on a string functionally works the same as a nonEmpty check (SHOULD NOT BE COMBINED WITH .OPTIONAL())
