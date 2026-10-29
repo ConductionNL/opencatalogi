@@ -37,6 +37,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -50,7 +51,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/publication-retention-lifecycle/spec.md
  */
-class RetentionService {
+class RetentionService implements RetentionServiceInterface {
 
 	/**
 	 * Config key holding the per-catalog retention defaults (JSON).

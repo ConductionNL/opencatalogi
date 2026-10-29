@@ -30,9 +30,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
-use OCA\OpenCatalogi\Service\BroadcastService;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\DemoDataService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -121,7 +121,7 @@ class SetupController extends Controller {
 	 * @param SettingsServiceInterface $settingsService Settings service (register import).
 	 * @param DemoDataService $demoDataService Demo dataset import (ADR-111 rule 4).
 	 * @param DirectoryServiceInterface $directoryService Directory service (federation sync).
-	 * @param BroadcastService $broadcastService Broadcast service (announce self to a directory).
+	 * @param BroadcastServiceInterface $broadcastService Broadcast service (announce self to a directory).
 	 * @param ContainerInterface $container Container, to resolve OpenRegister ObjectService.
 	 * @param IL10N $l10n Localization.
 	 * @param LoggerInterface $logger Logger.
@@ -137,7 +137,7 @@ class SetupController extends Controller {
 		private readonly SettingsServiceInterface $settingsService,
 		private readonly DemoDataService $demoDataService,
 		private readonly DirectoryServiceInterface $directoryService,
-		private readonly BroadcastService $broadcastService,
+		private readonly BroadcastServiceInterface $broadcastService,
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

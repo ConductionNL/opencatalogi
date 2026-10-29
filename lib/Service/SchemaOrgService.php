@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -41,7 +42,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/structured-data-discoverability/spec.md
  */
-class SchemaOrgService {
+class SchemaOrgService implements SchemaOrgServiceInterface {
 
 	/**
 	 * Schema.org JSON-LD context IRI.

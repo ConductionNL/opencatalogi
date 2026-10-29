@@ -33,7 +33,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Service\OoapiService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -67,7 +67,7 @@ class OoapiController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
 	 * @param OoapiService $ooapiService The OOAPI 5.0 orchestration service.
-	 * @param CatalogiService $catalogiService Catalog resolution (slug →
+	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug →
 	 *                                         catalog).
 	 * @param IUserSession $userSession Nextcloud user session (OOAPI-008 auth gate).
 	 * @param IL10N $l10n Localization service.
@@ -81,7 +81,7 @@ class OoapiController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly OoapiService $ooapiService,
-		private readonly CatalogiService $catalogiService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

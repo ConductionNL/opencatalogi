@@ -25,11 +25,11 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
-use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
-use OCA\OpenCatalogi\Service\DcatService;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -55,9 +55,9 @@ class DcatController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
-	 * @param DcatService $dcatService The DCAT orchestration service.
+	 * @param DcatServiceInterface $dcatService The DCAT orchestration service.
 	 * @param DcatSerializer $serializer The DCAT serializer.
-	 * @param CatalogiService $catalogiService Catalog resolution (slug → catalog).
+	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug → catalog).
 	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
@@ -69,9 +69,9 @@ class DcatController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly DcatService $dcatService,
+		private readonly DcatServiceInterface $dcatService,
 		private readonly DcatSerializer $serializer,
-		private readonly CatalogiService $catalogiService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

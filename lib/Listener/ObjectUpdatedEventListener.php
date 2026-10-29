@@ -30,9 +30,9 @@
 
 namespace OCA\OpenCatalogi\Listener;
 
+use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\EventService;
-use OCA\OpenCatalogi\Service\RetentionService;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -60,13 +60,13 @@ class ObjectUpdatedEventListener implements IEventListener {
 	 * object event fires, so nothing here runs at boot, and a unit test can
 	 * hand in its own doubles.
 	 *
-	 * @param RetentionService $retentionService Stamps retention defaults at publication time (RET-004).
+	 * @param RetentionServiceInterface $retentionService Stamps retention defaults at publication time (RET-004).
 	 * @param SettingsServiceInterface $settingsService Answers which auto-publishing options are on.
 	 * @param EventService $eventService Applies the auto-publishing side effect.
 	 * @param LoggerInterface $logger Logger for both side effects.
 	 */
 	public function __construct(
-		private readonly RetentionService $retentionService,
+		private readonly RetentionServiceInterface $retentionService,
 		private readonly SettingsServiceInterface $settingsService,
 		private readonly EventService $eventService,
 		private readonly LoggerInterface $logger,

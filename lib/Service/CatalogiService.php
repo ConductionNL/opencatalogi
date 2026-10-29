@@ -32,6 +32,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use Exception;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -60,7 +61,7 @@ use Symfony\Component\Uid\Uuid;
  * @spec openspec/specs/catalogs/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
  */
-class CatalogiService {
+class CatalogiService implements CatalogiServiceInterface {
 
 	/**
 	 * Properties stripped from the `@self` envelope for anonymous (logged-out)

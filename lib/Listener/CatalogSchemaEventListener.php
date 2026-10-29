@@ -26,7 +26,7 @@
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -51,12 +51,12 @@ class CatalogSchemaEventListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param CatalogiService $catalogiService Service used to compute rewritten registers/schemas.
+	 * @param CatalogiServiceInterface $catalogiService Service used to compute rewritten registers/schemas.
 	 * @param LoggerInterface $logger Logger for event-handling diagnostics.
 	 * @param IAppConfig $appConfig App configuration for catalog schema/register routing.
 	 */
 	public function __construct(
-		private readonly CatalogiService $catalogiService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly LoggerInterface $logger,
 		private readonly IAppConfig $appConfig,
 	) {

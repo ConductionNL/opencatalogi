@@ -36,8 +36,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\WooServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
-use OCA\OpenCatalogi\Service\WooService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -57,7 +57,7 @@ class WooController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param WooService $wooService The WOO workflow service.
+	 * @param WooServiceInterface $wooService The WOO workflow service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
@@ -65,7 +65,7 @@ class WooController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly WooService $wooService,
+		private readonly WooServiceInterface $wooService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly WooCategoryRegistry $categories,

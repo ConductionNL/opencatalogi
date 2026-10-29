@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
 use DOMDocument;
+use OCA\OpenCatalogi\Contract\WooReadinessServiceInterface;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -44,7 +45,7 @@ use OCP\IURLGenerator;
  *
  * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
  */
-class WooReadinessService {
+class WooReadinessService implements WooReadinessServiceInterface {
 
 	/**
 	 * The app id used for IAppConfig reads/writes.
