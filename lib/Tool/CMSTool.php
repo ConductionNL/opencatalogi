@@ -34,6 +34,7 @@
 namespace OCA\OpenCatalogi\Tool;
 
 use BadMethodCallException;
+use OCA\OpenCatalogi\Contract\CMSToolInterface;
 use OCA\OpenRegister\Db\Agent;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\OpenRegister\Tool\ToolInterface;
@@ -59,7 +60,7 @@ use ReflectionMethod;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
-class CMSTool implements ToolInterface {
+class CMSTool implements ToolInterface, CMSToolInterface {
 
 	/**
 	 * Agent context

@@ -25,7 +25,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Service\CallerScope;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -73,7 +73,7 @@ class CatalogiController extends Controller {
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param CatalogiService $catalogiService The catalogi service.
+	 * @param CatalogiServiceInterface $catalogiService The catalogi service.
 	 * @param IAppConfig $config App configuration interface.
 	 * @param ContainerInterface $container Server container for DI.
 	 * @param IAppManager $appManager App manager.
@@ -86,7 +86,7 @@ class CatalogiController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly CatalogiService $catalogiService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,

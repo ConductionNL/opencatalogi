@@ -43,6 +43,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\WooServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
 use OCP\IAppConfig;
@@ -57,7 +58,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class WooService {
+class WooService implements WooServiceInterface {
 
 	/**
 	 * Config key holding the WOO batch register id/uuid.
@@ -108,30 +109,6 @@ class WooService {
 	 */
 	public const BATCH_STATUSES = ['in_progress', 'ready_for_review', 'published'];
 
-	/**
-	 * The WOO Art. 5.1/5.2 weigeringsgronden (refusal grounds) catalogue. Each
-	 * entry is the article reference (stored value) mapped to a short Dutch
-	 * description. Absolute grounds (5.1) and relative grounds (5.2).
-	 *
-	 * @var array<string, string>
-	 */
-	public const WEIGERINGSGRONDEN = [
-		'5.1.1.a' => 'Eenheid van de Kroon',
-		'5.1.1.b' => 'Veiligheid van de Staat',
-		'5.1.1.c' => 'Vertrouwelijk verstrekte bedrijfs- en fabricagegegevens',
-		'5.1.1.d' => 'Bijzondere persoonsgegevens en strafrechtelijke gegevens',
-		'5.1.2.a' => 'Betrekkingen van Nederland met andere staten en internationale organisaties',
-		'5.1.2.b' => 'Economische of financiele belangen van de Staat',
-		'5.1.2.c' => 'Opsporing en vervolging van strafbare feiten',
-		'5.1.2.d' => 'Inspectie, controle en toezicht door bestuursorganen',
-		'5.1.2.e' => 'Eerbiediging van de persoonlijke levenssfeer',
-		'5.1.2.f' => 'Bescherming van het milieu',
-		'5.1.2.g' => 'Beveiliging van personen en bedrijven en het voorkomen van sabotage',
-		'5.1.2.h' => 'Het goed functioneren van de Staat en andere publiekrechtelijke lichamen',
-		'5.1.2.i' => 'Het belang van de geadresseerde om als eerste kennis te kunnen nemen',
-		'5.2.a' => 'Persoonlijke beleidsopvattingen in documenten voor intern beraad',
-		'5.2.e' => 'Persoonlijke beleidsopvattingen',
-	];
 
 	/**
 	 * Cached OpenRegister ObjectService instance.

@@ -22,10 +22,18 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
+use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Contract\WooReadinessServiceInterface;
+use OCA\OpenCatalogi\Contract\WooServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
@@ -94,6 +102,14 @@ class ServiceRegistrar {
 		$context->registerServiceAlias(PublicationServiceInterface::class, PublicationService::class);
 		$context->registerServiceAlias(PublicationQueryServiceInterface::class, PublicationQueryService::class);
 		$context->registerServiceAlias(SettingsServiceInterface::class, SettingsService::class);
+		$context->registerServiceAlias(RetentionServiceInterface::class, RetentionService::class);
+		$context->registerServiceAlias(WooServiceInterface::class, WooService::class);
+		$context->registerServiceAlias(CatalogiServiceInterface::class, CatalogiService::class);
+		$context->registerServiceAlias(DcatServiceInterface::class, DcatService::class);
+		$context->registerServiceAlias(UsageCounterServiceInterface::class, UsageCounterService::class);
+		$context->registerServiceAlias(WooReadinessServiceInterface::class, WooReadinessService::class);
+		$context->registerServiceAlias(BroadcastServiceInterface::class, BroadcastService::class);
+		$context->registerServiceAlias(SchemaOrgServiceInterface::class, SchemaOrgService::class);
 
 	}//end register()
 }//end class

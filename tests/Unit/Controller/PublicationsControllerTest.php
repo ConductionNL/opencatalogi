@@ -2135,7 +2135,7 @@ class PublicationsControllerTest extends TestCase {
 			static fn (string $id) => match ($id) {
 				\OCP\IUserSession::class => $session,
 				\OCP\IAppConfig::class => $config,
-				\OCA\OpenCatalogi\Service\SchemaOrgService::class => $schemaOrg,
+				\OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface::class => $schemaOrg,
 				default => $mockObjService,
 			}
 		);

@@ -342,7 +342,7 @@ class StatsControllerTest extends TestCase {
 
 		$this->container->method('get')->willReturnCallback(
 			function (string $id) use ($dcat, $quality) {
-				if ($id === \OCA\OpenCatalogi\Service\DcatService::class) {
+				if ($id === \OCA\OpenCatalogi\Contract\DcatServiceInterface::class) {
 					return $dcat;
 				}
 
