@@ -177,18 +177,22 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 	}
 
 	public function testMissingSlugsAndTheRegisterAreLookedUpAndTheOrganisationIsResolved(): void {
-		$schemaMapper = $this->getMockBuilder(SchemaMapper::class)
-			->disableOriginalConstructor()
-			->onlyMethods(['find'])
-			->addMethods(['findByApplicationAndSlug'])
-			->getMock();
+		// The real SchemaMapper (CI) has findByApplicationAndSlug; the local stub does not.
+		$builder = $this->getMockBuilder(SchemaMapper::class)->disableOriginalConstructor();
+		if (method_exists(SchemaMapper::class, 'findByApplicationAndSlug') === true) {
+			$builder->onlyMethods(['find', 'findByApplicationAndSlug']);
+		} else {
+			$builder->onlyMethods(['find'])->addMethods(['findByApplicationAndSlug']);
+		}
+
+		$schemaMapper = $builder->getMock();
 		$looked = [];
 		$schemaMapper->method('findByApplicationAndSlug')->willReturnCallback(
 			function (string $slug, string $app) use (&$looked) {
 				$looked[] = $slug . '@' . $app;
 				return match ($slug) {
-					'listing' => $this->entity([], 41),
-					'notice' => $this->entity([], 42),
+					'listing' => $this->typedEntity(class: Schema::class, id: 41),
+					'notice' => $this->typedEntity(class: Schema::class, id: 42),
 					default => null,
 				};
 			}
