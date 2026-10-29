@@ -75,6 +75,53 @@ let menuCatalogsSequence = 0
 let menuCatalogsWalk = null
 
 /**
+ * The query for a related-data request: the caller's params, and for `uses`
+ * and `used` an `_extend` that defaults to the schema.
+ *
+ * @param {string} dataType - The kind of related data
+ * @param {object} params - The caller's params
+ * @return {object} The query params
+ */
+function relatedQueryParams(dataType, params) {
+	if (dataType !== 'uses' && dataType !== 'used') {
+		return { ...params }
+	}
+
+	return {
+		...params,
+		_extend: params._extend || params.extend || '@self.schema',
+	}
+}
+
+/**
+ * The pagination of a related-data answer. The limit is the API's, else the
+ * requested one, else 500 for files and 20 for anything else.
+ *
+ * @param {object} data - The API answer
+ * @param {object} params - The caller's params
+ * @param {string} dataType - The kind of related data
+ * @return {object} The pagination info
+ */
+function relatedPagination(data, params, dataType) {
+	const apiLimit = data.limit ? parseInt(data.limit, 10) : null
+	const limit =
+		apiLimit
+		|| params._limit
+		|| params.limit
+		|| (dataType === 'files' ? 500 : 20)
+	const total = data.total || 0
+
+	return {
+		total,
+		page: data.page || 1,
+		pages: data.pages || Math.ceil(total / limit),
+		limit,
+		next: data.next || null,
+		prev: data.prev || null,
+	}
+}
+
+/**
  * Whether a collection fetch reloads the whole collection rather than one
  * paged, sorted or searched slice of it.
  *
@@ -1423,17 +1470,7 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				const queryParams = {
-					...params,
-					...(dataType === 'uses' || dataType === 'used'
-						? {
-								_extend:
-									params._extend
-									|| params.extend
-									|| '@self.schema',
-							}
-						: {}),
-				}
+				const queryParams = relatedQueryParams(dataType, params)
 
 				const response = await fetch(
 					this._constructApiUrl(
@@ -1454,23 +1491,10 @@ export const useObjectStore = defineStore('object', {
 
 				// Update pagination info for related data
 				if (data.total !== undefined || data.page !== undefined) {
-					const paginationKey = `${type}_${dataType}`
-					const requestedLimit = params._limit || params.limit
-					const apiLimit = data.limit ? parseInt(data.limit, 10) : null
-					const actualLimit =
-						apiLimit
-						|| requestedLimit
-						|| (dataType === 'files' ? 500 : 20)
-					const paginationInfo = {
-						total: data.total || 0,
-						page: data.page || 1,
-						pages:
-							data.pages || Math.ceil((data.total || 0) / actualLimit),
-						limit: actualLimit,
-						next: data.next || null,
-						prev: data.prev || null,
-					}
-					this.setPagination(paginationKey, paginationInfo)
+					this.setPagination(
+						`${type}_${dataType}`,
+						relatedPagination(data, params, dataType),
+					)
 				}
 
 				// For audit trails, store the results array
