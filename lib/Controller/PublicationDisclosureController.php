@@ -40,8 +40,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
-use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -62,13 +62,13 @@ class PublicationDisclosureController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param NationalIndexService $indexService The national channels.
+	 * @param NationalIndexServiceInterface $indexService The national channels.
 	 * @param PublishedCollectionsService $collectionsService The configured published set.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly NationalIndexService $indexService,
+		private readonly NationalIndexServiceInterface $indexService,
 		private readonly PublishedCollectionsService $collectionsService,
 	) {
 		parent::__construct(appName: $appName, request: $request);

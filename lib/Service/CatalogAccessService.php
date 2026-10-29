@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\CatalogAccessServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -46,7 +47,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
  */
-class CatalogAccessService {
+class CatalogAccessService implements CatalogAccessServiceInterface {
 
 	/**
 	 * The IAppConfig key prefix holding a schema's authorization from before the first restriction.

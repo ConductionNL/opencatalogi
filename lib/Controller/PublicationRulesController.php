@@ -44,8 +44,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
-use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -77,7 +77,7 @@ class PublicationRulesController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param PublicationRuleService $ruleService The rule evaluator.
+	 * @param PublicationRuleServiceInterface $ruleService The rule evaluator.
 	 * @param DecisionPublicationValidator $decisionValidator The decision type validation.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -88,7 +88,7 @@ class PublicationRulesController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationRuleService $ruleService,
+		private readonly PublicationRuleServiceInterface $ruleService,
 		private readonly DecisionPublicationValidator $decisionValidator,
 	) {
 		parent::__construct(appName: $appName, request: $request);

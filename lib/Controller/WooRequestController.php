@@ -34,7 +34,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
-use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
+use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
@@ -69,7 +69,7 @@ class WooRequestController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param WooRequestService $requests Builds and reads the request record.
 	 * @param WooRequestStore $store Reads and writes the stored requests.
-	 * @param StatutoryTerm $terms Arms, extends, pauses and reads the statutory term.
+	 * @param StatutoryTermInterface $terms Arms, extends, pauses and reads the statutory term.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -80,7 +80,7 @@ class WooRequestController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly WooRequestService $requests,
 		private readonly WooRequestStore $store,
-		private readonly StatutoryTerm $terms,
+		private readonly StatutoryTermInterface $terms,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

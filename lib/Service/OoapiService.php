@@ -32,6 +32,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -48,7 +49,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/ooapi-catalog-publication/tasks.md#task-3-public-endpoints-serializer
  */
-class OoapiService {
+class OoapiService implements OoapiServiceInterface {
 
 	/**
 	 * OOAPI 5.0 list-endpoint page-size ceiling (OOAPI-007).
@@ -57,12 +58,6 @@ class OoapiService {
 	 */
 	public const MAX_PAGE_SIZE = 250;
 
-	/**
-	 * Default page size when the caller does not specify one.
-	 *
-	 * @var integer
-	 */
-	public const DEFAULT_PAGE_SIZE = 50;
 
 	/**
 	 * OoapiService constructor.

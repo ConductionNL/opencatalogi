@@ -241,7 +241,7 @@ class StatsController extends Controller {
 
 		try {
 			$dcatService = $this->container->get(\OCA\OpenCatalogi\Contract\DcatServiceInterface::class);
-			$qualityService = $this->container->get(\OCA\OpenCatalogi\Service\QualityService::class);
+			$qualityService = $this->container->get(\OCA\OpenCatalogi\Contract\QualityServiceInterface::class);
 
 			$document = $dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $slug, page: 1);
 			$nodes = [];

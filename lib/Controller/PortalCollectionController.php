@@ -25,8 +25,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
 use OCA\OpenCatalogi\Portal\PortalAssertionVerifier;
-use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
 use OCA\OpenCatalogi\Service\Portal\CollectionShareService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -51,7 +51,7 @@ class PortalCollectionController extends Controller {
 	 * @param string                   $appName     The app name.
 	 * @param IRequest                 $request     The request.
 	 * @param PortalAssertionVerifier  $verifier    Verifies portaliq's assertion.
-	 * @param CitizenCollectionService $collections The dossiers.
+	 * @param CitizenCollectionServiceInterface $collections The dossiers.
 	 * @param CollectionShareService   $shares      The share links.
 	 * @param LoggerInterface          $logger      The logger.
 	 */
@@ -59,7 +59,7 @@ class PortalCollectionController extends Controller {
 		string $appName,
 		IRequest $request,
 		private readonly PortalAssertionVerifier $verifier,
-		private readonly CitizenCollectionService $collections,
+		private readonly CitizenCollectionServiceInterface $collections,
 		private readonly CollectionShareService $shares,
 		private readonly LoggerInterface $logger,
 	) {

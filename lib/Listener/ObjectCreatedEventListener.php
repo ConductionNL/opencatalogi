@@ -29,9 +29,9 @@
 
 namespace OCA\OpenCatalogi\Listener;
 
+use OCA\OpenCatalogi\Contract\EventServiceInterface;
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
-use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -61,13 +61,13 @@ class ObjectCreatedEventListener implements IEventListener {
 	 *
 	 * @param RetentionServiceInterface $retentionService Stamps retention defaults at publication time (RET-004).
 	 * @param SettingsServiceInterface $settingsService Answers which auto-publishing options are on.
-	 * @param EventService $eventService Applies the auto-publishing side effect.
+	 * @param EventServiceInterface $eventService Applies the auto-publishing side effect.
 	 * @param LoggerInterface $logger Logger for both side effects.
 	 */
 	public function __construct(
 		private readonly RetentionServiceInterface $retentionService,
 		private readonly SettingsServiceInterface $settingsService,
-		private readonly EventService $eventService,
+		private readonly EventServiceInterface $eventService,
 		private readonly LoggerInterface $logger,
 	) {
 

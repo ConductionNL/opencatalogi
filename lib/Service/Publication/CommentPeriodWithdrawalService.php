@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -44,7 +45,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-closed-period-can-withdraw-its-publication-req-pcp-005
  */
-class CommentPeriodWithdrawalService {
+class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceInterface {
 
 	/**
 	 * How many periods one pass considers.

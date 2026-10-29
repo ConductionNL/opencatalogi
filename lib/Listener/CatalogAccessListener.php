@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\CatalogAccessService;
+use OCA\OpenCatalogi\Contract\CatalogAccessServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
@@ -60,13 +60,13 @@ class CatalogAccessListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param CatalogAccessService $access       Writes the rules.
+	 * @param CatalogAccessServiceInterface $access       Writes the rules.
 	 * @param IAppConfig           $config       App configuration.
 	 * @param IUserSession         $userSession  The session.
 	 * @param IGroupManager        $groupManager For the administrator check.
 	 */
 	public function __construct(
-		private readonly CatalogAccessService $access,
+		private readonly CatalogAccessServiceInterface $access,
 		private readonly IAppConfig $config,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,

@@ -34,7 +34,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
-use OCA\OpenCatalogi\Service\OoapiService;
+use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -66,7 +66,7 @@ class OoapiController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
-	 * @param OoapiService $ooapiService The OOAPI 5.0 orchestration service.
+	 * @param OoapiServiceInterface $ooapiService The OOAPI 5.0 orchestration service.
 	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug →
 	 *                                         catalog).
 	 * @param IUserSession $userSession Nextcloud user session (OOAPI-008 auth gate).
@@ -80,7 +80,7 @@ class OoapiController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly OoapiService $ooapiService,
+		private readonly OoapiServiceInterface $ooapiService,
 		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
@@ -257,7 +257,7 @@ class OoapiController extends Controller {
 	private function resolvePagination(): array {
 		return [
 			'page' => max(1, (int)$this->request->getParam('pageNumber', 1)),
-			'pageSize' => max(1, (int)$this->request->getParam('pageSize', OoapiService::DEFAULT_PAGE_SIZE)),
+			'pageSize' => max(1, (int)$this->request->getParam('pageSize', OoapiServiceInterface::DEFAULT_PAGE_SIZE)),
 		];
 
 	}//end resolvePagination()
