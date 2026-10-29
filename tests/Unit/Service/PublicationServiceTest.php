@@ -3073,11 +3073,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			['_page' => 1],
-			'http://example.com/api',
-			true,  // includeCatalogs
-			true,  // reqDirFacets
-			true   // reqCatFacets
+			[
+				'requestParams' => ['_page' => 1],
+				'baseUrl' => 'http://example.com/api',
+				'includeCatalogs' => true,
+				'reqDirFacets' => true,
+				'reqCatFacets' => true,
+			]
 		);
 
 		$this->assertArrayHasKey('results', $result);
@@ -3116,11 +3118,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			false, // includeCatalogs
-			false, // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => false,
+				'reqDirFacets' => false,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('results', $result);
@@ -3167,11 +3171,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 2],
-			['_page' => 2],
-			'http://example.com/api',
-			true,  // includeCatalogs
-			false, // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => ['_page' => 2],
+				'baseUrl' => 'http://example.com/api',
+				'includeCatalogs' => true,
+				'reqDirFacets' => false,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('next', $result);
@@ -3212,11 +3218,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 0, '_page' => 1],
-			[],
-			'',
-			true,  // includeCatalogs
-			false, // reqDirFacets
-			true   // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => true,
+				'reqDirFacets' => false,
+				'reqCatFacets' => true,
+			]
 		);
 
 		$this->assertSame(0, $result['limit']);
@@ -3254,11 +3262,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			false, // includeCatalogs
-			true,  // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => false,
+				'reqDirFacets' => true,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('facets', $result);
@@ -3298,11 +3308,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			true,  // includeCatalogs
-			true,  // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => true,
+				'reqDirFacets' => true,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('facets', $result);
