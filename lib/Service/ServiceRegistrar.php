@@ -62,6 +62,7 @@ use OCA\OpenCatalogi\Contract\SavedSearchServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
@@ -215,6 +216,7 @@ class ServiceRegistrar {
 		$context->registerServiceAlias(DecisionPublicationValidatorInterface::class, DecisionPublicationValidator::class);
 		$context->registerServiceAlias(BannerServiceInterface::class, BannerService::class);
 		$context->registerServiceAlias(PublishedCollectionsServiceInterface::class, PublishedCollectionsService::class);
+		$context->registerServiceAlias(SitemapServiceInterface::class, SitemapService::class);
 
 	}//end register()
 }//end class
