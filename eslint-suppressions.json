@@ -516,9 +516,17 @@
     }
   },
   "src/modals/object/MassDepublishObjects.vue": {
-    "@nextcloud/no-deprecated-library-props": {
+    "eqeqeq": {
       "count": 1
     },
+    "jsdoc/require-param-type": {
+      "count": 4
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "src/modals/object/MassPublishObjects.vue": {
     "eqeqeq": {
       "count": 1
     },
@@ -526,59 +534,6 @@
       "count": 5
     },
     "no-console": {
-      "count": 1
-    },
-    "vue/prefer-define-options": {
-      "count": 1
-    }
-  },
-  "src/modals/object/MassLockObjects.vue": {
-    "@nextcloud/no-deprecated-library-props": {
-      "count": 1
-    },
-    "jsdoc/require-param-type": {
-      "count": 1
-    },
-    "vue/prefer-define-options": {
-      "count": 1
-    }
-  },
-  "src/modals/object/MassPublishObjects.vue": {
-    "@nextcloud/no-deprecated-library-props": {
-      "count": 1
-    },
-    "eqeqeq": {
-      "count": 1
-    },
-    "jsdoc/require-param-type": {
-      "count": 6
-    },
-    "no-console": {
-      "count": 1
-    },
-    "vue/prefer-define-options": {
-      "count": 1
-    }
-  },
-  "src/modals/object/MassUnlockObjects.vue": {
-    "@nextcloud/no-deprecated-library-props": {
-      "count": 1
-    },
-    "jsdoc/require-param-type": {
-      "count": 1
-    },
-    "vue/prefer-define-options": {
-      "count": 1
-    }
-  },
-  "src/modals/object/MassValidateObjects.vue": {
-    "@nextcloud/no-deprecated-library-props": {
-      "count": 1
-    },
-    "jsdoc/require-param-type": {
-      "count": 1
-    },
-    "vue/prefer-define-options": {
       "count": 1
     }
   },

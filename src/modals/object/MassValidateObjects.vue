@@ -1,115 +1,82 @@
 /** * @file MassValidateObjects.vue * @module Modals/Object * @author Your Name *
 @copyright 2024 Your Organization * @license EUPL-1.2 * @version 1.0.0 */
 
-<script setup>
-import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
-</script>
-
 <template>
-	<NcDialog
-		:name="dialogTitle"
-		:canClose="true"
-		size="normal"
-		class="mass-action-dialog"
-		@update:open="handleDialogClose">
-		<!-- Object Selection Review -->
-		<div v-if="success === null" class="validate-step">
-			<NcNoteCard type="info">
-				<strong>{{
-					t('opencatalogi', 'When to use mass validation:')
-				}}</strong
-				><br />
-				{{
-					t(
-						'opencatalogi',
-						'• After updating the schema to apply new validation rules',
-					)
-				}}<br />
-				{{
-					t(
-						'opencatalogi',
-						'• When publications need to be re-enriched with updated name/description logic',
-					)
-				}}<br />
-				{{
-					t(
-						'opencatalogi',
-						'• To refresh computed properties or auto-generated fields',
-					)
-				}}<br />
-				{{
-					t(
-						'opencatalogi',
-						'• After changing schema configuration that affects existing publications',
-					)
-				}}<br /><br />
-				{{
-					t(
-						'opencatalogi',
-						'Publications will be saved without modification to trigger validation and enrichment processes against the current schema.',
-					)
-				}}
-			</NcNoteCard>
-
-			<SelectedObjectsList
-				:title="
-					(objectStore.selectedObjects?.length || 0) === 1
-						? t('opencatalogi', 'Publication to Validate')
-						: t('opencatalogi', 'Selected Publications')
-				"
-				:showRemove="true" />
-		</div>
-
-		<NcNoteCard v-if="success" type="success">
-			<p>
-				{{
-					originalSelectedCount > 1
-						? t('opencatalogi', '{type}s successfully validated', {
-								type: t('opencatalogi', 'Publication'),
-							})
-						: t('opencatalogi', '{type} successfully validated', {
-								type: t('opencatalogi', 'Publication'),
-							})
-				}}
-			</p>
-		</NcNoteCard>
-		<NcNoteCard v-if="error" type="error">
-			<p>{{ error }}</p>
+	<MassObjectActionDialog
+		:title="dialogTitle"
+		:confirmLabel="t('opencatalogi', 'Validate')"
+		confirmVariant="primary"
+		:confirmDisabled="loading || objectsToValidate.length === 0"
+		:loading="loading"
+		:success="success"
+		:error="error"
+		:successMessage="
+			originalSelectedCount > 1
+				? t('opencatalogi', '{type}s successfully validated', {
+						type: t('opencatalogi', 'Publication'),
+					})
+				: t('opencatalogi', '{type} successfully validated', {
+						type: t('opencatalogi', 'Publication'),
+					})
+		"
+		@close="closeDialog"
+		@confirm="validateObjects()">
+		<NcNoteCard type="info">
+			<strong>{{ t('opencatalogi', 'When to use mass validation:') }}</strong
+			><br />
+			{{
+				t(
+					'opencatalogi',
+					'• After updating the schema to apply new validation rules',
+				)
+			}}<br />
+			{{
+				t(
+					'opencatalogi',
+					'• When publications need to be re-enriched with updated name/description logic',
+				)
+			}}<br />
+			{{
+				t(
+					'opencatalogi',
+					'• To refresh computed properties or auto-generated fields',
+				)
+			}}<br />
+			{{
+				t(
+					'opencatalogi',
+					'• After changing schema configuration that affects existing publications',
+				)
+			}}<br /><br />
+			{{
+				t(
+					'opencatalogi',
+					'Publications will be saved without modification to trigger validation and enrichment processes against the current schema.',
+				)
+			}}
 		</NcNoteCard>
 
-		<template #actions>
-			<NcButton @click="closeDialog">
-				<template #icon>
-					<Cancel :size="20" />
-				</template>
-				{{
-					success === null
-						? t('opencatalogi', 'Cancel')
-						: t('opencatalogi', 'Close')
-				}}
-			</NcButton>
-			<NcButton
-				v-if="success === null"
-				:disabled="
-					loading || (objectStore.selectedObjects?.length || 0) === 0
-				"
-				variant="primary"
-				@click="validateObjects()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<CheckCircle v-if="!loading" :size="20" />
-				</template>
-				{{ t('opencatalogi', 'Validate') }}
-			</NcButton>
+		<SelectedObjectsList
+			:title="
+				objectsToValidate.length === 1
+					? t('opencatalogi', 'Publication to Validate')
+					: t('opencatalogi', 'Selected Publications')
+			"
+			:showRemove="true" />
+
+		<template #icon>
+			<CheckCircle :size="20" />
 		</template>
-	</NcDialog>
+	</MassObjectActionDialog>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
+import { NcNoteCard } from '@nextcloud/vue'
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
+import MassObjectActionDialog from './MassObjectActionDialog.vue'
+import { objectStore } from '../../store/store.js'
+import massObjectAction from './massObjectAction.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -117,30 +84,13 @@ import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 export default {
 	name: 'MassValidateObjects',
 	components: {
-		NcDialog,
-		NcButton,
-		NcLoadingIcon,
+		MassObjectActionDialog,
 		NcNoteCard,
 		SelectedObjectsList,
-		// Icons
 		CheckCircle,
-		Cancel,
 	},
 
-	props: {
-		// No props needed - always uses selected objects from store
-	},
-
-	data() {
-		return {
-			success: null,
-			loading: false,
-			error: false,
-			result: null,
-			closeModalTimeout: null,
-			originalSelectedCount: 0,
-		}
-	},
+	mixins: [massObjectAction],
 
 	computed: {
 		/**
@@ -168,65 +118,20 @@ export default {
 		},
 	},
 
-	mounted() {
-		this.initializeSelection()
-	},
-
 	methods: {
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5 */
-		initializeSelection() {
-			// Store the original count for success message
-			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
-		},
-
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5 */
-		closeDialog() {
-			// Clear any pending timeout that might reopen the dialog
-			if (this.closeModalTimeout) {
-				clearTimeout(this.closeModalTimeout)
-				this.closeModalTimeout = null
-			}
-			navigationStore.setDialog(false)
-		},
-
-		/**
-		 * @param isOpen
-		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5
-		 */
-		handleDialogClose(isOpen) {
-			if (!isOpen) {
-				this.closeDialog()
-			}
-		},
-
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5 */
 		async validateObjects() {
 			this.loading = true
 
 			try {
-				// Get the objects to validate
-				const objectsToProcess = [...this.objectsToValidate]
-
-				// Use the store's mass validate method
-				const { successful, failed } =
-					await objectStore.massValidateObjects(objectsToProcess)
-
-				if (successful.length > 0) {
-					this.success = true
-					// Refresh publications using catalogStore
-					catalogStore.fetchPublications()
-
-					// Only auto-close if there are no failures
-					if (failed.length === 0) {
-						this.closeModalTimeout = setTimeout(() => {
-							this.closeDialog()
-						}, 2000)
-					}
-				}
-
-				if (failed.length > 0) {
-					this.error = `Failed to validate ${failed.length} object${failed.length > 1 ? 's' : ''}`
-				}
+				const result = await objectStore.massValidateObjects([
+					...this.objectsToValidate,
+				])
+				this.finishMassAction(
+					result,
+					(count) =>
+						`Failed to validate ${count} object${count > 1 ? 's' : ''}`,
+				)
 			} catch (error) {
 				this.success = false
 				this.error =
@@ -238,15 +143,3 @@ export default {
 	},
 }
 </script>
-
-<style scoped>
-.validate-step {
-	padding: 0;
-}
-
-.step-title {
-	margin-top: 0 !important;
-	margin-bottom: 16px;
-	color: var(--color-main-text);
-}
-</style>
