@@ -349,7 +349,7 @@ class CatalogiServiceTest extends TestCase {
 		$cachedData = ['id' => '1', 'slug' => 'test-catalog', 'title' => 'Test'];
 
 		$this->cache->method('get')
-			->with('catalog_slug_test-catalog')
+			->with('catalog_public_slug_test-catalog')
 			->willReturn($cachedData);
 
 		$result = $this->service->getCatalogBySlug('test-catalog');
@@ -361,7 +361,7 @@ class CatalogiServiceTest extends TestCase {
 		$catalogData = ['id' => '2', 'slug' => 'my-catalog', 'title' => 'My Catalog'];
 
 		$this->cache->method('get')
-			->with('catalog_slug_my-catalog')
+			->with('catalog_public_slug_my-catalog')
 			->willReturn(null);
 
 		$this->config->method('getValueString')
@@ -380,7 +380,7 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->cache->expects($this->once())
 			->method('set')
-			->with('catalog_slug_my-catalog', $catalogData, 3600);
+			->with('catalog_public_slug_my-catalog', $catalogData, 3600);
 
 		$this->injectObjectService($objectService);
 
@@ -554,7 +554,7 @@ class CatalogiServiceTest extends TestCase {
 	public function testInvalidateCatalogCache(): void {
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_test-slug');
+			->with('catalog_public_slug_test-slug');
 
 		$this->service->invalidateCatalogCache('test-slug');
 	}//end testInvalidateCatalogCache()
@@ -665,7 +665,7 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_found-slug');
+			->with('catalog_public_slug_found-slug');
 
 		$this->service->invalidateCatalogCacheById(42);
 	}//end testInvalidateCatalogCacheByIdSuccess()
@@ -723,7 +723,7 @@ class CatalogiServiceTest extends TestCase {
 		// warmupCatalogCache invalidates, then calls getCatalogBySlug.
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_warm-slug');
+			->with('catalog_public_slug_warm-slug');
 
 		// getCatalogBySlug will try cache first (returns null after invalidation),
 		// then query the DB.
@@ -779,7 +779,7 @@ class CatalogiServiceTest extends TestCase {
 		// Should call invalidateCatalogCache (remove) then getCatalogBySlug.
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_warmup-by-id');
+			->with('catalog_public_slug_warmup-by-id');
 
 		$this->cache->method('get')
 			->willReturn(null);
