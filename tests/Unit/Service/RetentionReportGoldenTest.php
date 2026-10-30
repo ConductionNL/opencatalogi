@@ -27,6 +27,7 @@
  * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionReport
  */
 
 declare(strict_types=1);
@@ -97,6 +98,8 @@ class RetentionReportGoldenTest extends TestCase {
 			'catalog unknown' => [['filter' => ['nope', null, null]]],
 			'from' => [['filter' => [null, '2026-01-15', null]]],
 			'to' => [['filter' => [null, null, '2026-02-10']]],
+			'to on the publication day' => [['filter' => [null, null, '2026-01-15']]],
+			'from on the publication day' => [['filter' => [null, '2026-01-15', null]]],
 			'from and to' => [['filter' => [null, '2026-01-01', '2026-03-30']]],
 			'catalog and dates' => [['filter' => ['woo', '2026-02-01', '2026-12-31']]],
 		];
