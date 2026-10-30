@@ -66,9 +66,7 @@
                         "title": "Gevonden",
                         "@self": {
                             "id": "7",
-                            "name": "7",
-                            "register": null,
-                            "schema": null
+                            "name": "7"
                         }
                     }
                 }
@@ -96,9 +94,7 @@
                         "title": "Acht",
                         "@self": {
                             "id": "8",
-                            "name": "8",
-                            "register": null,
-                            "schema": null
+                            "name": "8"
                         }
                     }
                 }

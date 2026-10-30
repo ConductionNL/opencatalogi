@@ -165,9 +165,12 @@ class DownloadPublicationFileGoldenTest extends TestCase {
 					return null;
 				}
 
-				$entity = new ObjectEntity();
-				$entity->setObject($found);
-				$entity->setUuid((string)$found['id']);
+				// A double, not a real entity: the real jsonSerialize() shape
+				// depends on the installed OpenRegister version.
+				$entity = $this->createMock(ObjectEntity::class);
+				$entity->method('jsonSerialize')->willReturn(
+					array_merge($found, ['@self' => ['id' => (string)$found['id'], 'name' => (string)$found['id']]])
+				);
 
 				return $entity;
 			}
