@@ -1712,15 +1712,16 @@
 			"area": "publications",
 			"name": "Preview an attached document or data file in the browser before downloading it.",
 			"source": "competitor-derived",
-			"opencatalogi": "partial",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/nextcloud-vue",
-				"evidence": "src/manifest.json:650 pub-files integration widget; nextcloud-vue CnFilesCard.vue:28-29 renders a plain file.url link; CnFilesTab.vue:76-105 has the image preview and Viewer, but the PublicationDetail sidebar only has the audit tab (manifest.json:750)",
-				"change": "nextcloud-vue/files-preview-in-place"
+				"evidence": "re-measured 2026-10-30: src/manifest.json PublicationDetail widget pub-files (type publication-attachments) -> src/components/widgets/PublicationAttachmentsWidget.vue:7,31 renders nextcloud-vue CnFilesCard; package-lock.json:2164 locks @conduction/nextcloud-vue 2.129.0, whose CnFilesCard.vue:56,154 opens a file through useFileOpener (Viewer first, then CnFilePreview for CSV, TSV, JSON, XML and text in the page). Built by nextcloud-vue change files-preview-in-place (7 of 8 tasks; the open one is the Playwright run of the no-Viewer public path). Before: src/manifest.json:650 pub-files integration widget; nextcloud-vue CnFilesCard.vue:28-29 renders a plain file.url link; CnFilesTab.vue:76-105 has the image preview and Viewer, but the PublicationDetail sidebar only has the audit tab (manifest.json:750)",
+				"change": "nextcloud-vue/files-preview-in-place",
+				"requirement": "Every files component opens a file the same way"
 			},
-			"reachedOn": "/publications/:catalogSlug/:id Attachments widget (link out)",
-			"note": "Not settled whether the detail-page widget renders CnFilesCard (link only) or the CnFilesTab body with Viewer. Nothing public previews data files. Specified in ConductionNL/nextcloud-vue openspec/changes/files-preview-in-place (nextcloud-vue lane, OpenSpec pass 2026-09-27).",
+			"reachedOn": "/publications/:catalogSlug/:id Attachments widget: a click previews the file in place",
+			"note": "Staff preview is built through the shared CnFilesCard. The public reading room is portaliq's. Earlier: Not settled whether the detail-page widget renders CnFilesCard (link only) or the CnFilesTab body with Viewer. Nothing public previews data files. Specified in ConductionNL/nextcloud-vue openspec/changes/files-preview-in-place (nextcloud-vue lane, OpenSpec pass 2026-09-27).",
 			"provider": "nextcloud-vue",
 			"providerHow": "read-from-code",
 			"feature": "publications",
@@ -5573,13 +5574,14 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json Store page (/store: 'Install catalogue configurations ... a publication type, a set of themes, or the flows behind them') and Flows page (/flows) are OpenRegister AppHost surfaces; openspec/changes/harvest-protocol-plugins/tasks.md has 0 of 9 tasks done",
-				"change": "openregister/app-leaf-provider-registration"
+				"evidence": "re-measured 2026-10-30 on openregister development: lib/Event/RegisterLeafProvidersEvent.php (collect event any app listens to), lib/Service/Integration/LeafDescriptor.php and LeafRegistry.php collect, validate and expose announced leaves (tests/Unit/Service/Integration/LeafRegistryTest.php), docs/Integrations/leaf-system.md documents the contract (ADR-066); the render half is nextcloud-vue registerIntegration() (src/integrations/registry.js:497, present in the 2.129.0 opencatalogi locks). Open in openregister/app-leaf-provider-registration: only the id-equality check and the hydra integration-parity gate, both tooling. Before: src/manifest.json Store page (/store: 'Install catalogue configurations ... a publication type, a set of themes, or the flows behind them') and Flows page (/flows) are OpenRegister AppHost surfaces; openspec/changes/harvest-protocol-plugins/tasks.md has 0 of 9 tasks done",
+				"change": "openregister/app-leaf-provider-registration",
+				"requirement": "Sibling apps register leaves through a typed collect-event"
 			},
 			"reachedOn": "/apps/opencatalogi/store and /apps/opencatalogi/flows (OpenRegister-provided)",
-			"note": "Extension works through configuration packages and flows. opencatalogi has no code plugin interface of its own. Specified in ConductionNL/openregister openspec/changes/app-leaf-provider-registration (openregister lane, OpenSpec pass 2026-09-27).",
+			"note": "An app extends OpenCatalogi's pages by announcing a leaf, with no change to OpenCatalogi or OpenRegister core. Earlier: Extension works through configuration packages and flows. opencatalogi has no code plugin interface of its own. Specified in ConductionNL/openregister openspec/changes/app-leaf-provider-registration (openregister lane, OpenSpec pass 2026-09-27).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "api-management-government-koppelingen",
