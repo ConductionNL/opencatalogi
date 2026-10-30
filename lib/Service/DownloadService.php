@@ -39,7 +39,6 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
@@ -169,16 +168,8 @@ class DownloadService {
 				data: ['error' => 'Publication not found'],
 				statusCode: 404
 			);
-		} catch (NotFoundExceptionInterface|MultipleObjectsReturnedException $e) {
-			return new JSONResponse(
-				data: ['error' => $e->getMessage()],
-				statusCode: 500
-			);
-		} catch (ContainerExceptionInterface|DoesNotExistException $e) {
-			return new JSONResponse(
-				data: ['error' => $e->getMessage()],
-				statusCode: 500
-			);
+		} catch (ContainerExceptionInterface|MultipleObjectsReturnedException|DoesNotExistException $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
 		}//end try
 
 	}//end getPublicationData()
@@ -217,16 +208,8 @@ class DownloadService {
 			}
 
 			return $attachments;
-		} catch (NotFoundExceptionInterface|MultipleObjectsReturnedException $e) {
-			return new JSONResponse(
-				data: ['error' => $e->getMessage()],
-				statusCode: 500
-			);
-		} catch (ContainerExceptionInterface|DoesNotExistException $e) {
-			return new JSONResponse(
-				data: ['error' => $e->getMessage()],
-				statusCode: 500
-			);
+		} catch (ContainerExceptionInterface|MultipleObjectsReturnedException|DoesNotExistException $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
 		}//end try
 
 	}//end publicationAttachments()
