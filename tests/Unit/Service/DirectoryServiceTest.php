@@ -31,6 +31,7 @@ use RuntimeException;
  * phpunit-unit.xml). Run them with the network group in an environment that has DNS.
  *
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
+ * @uses \OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard
  */
 class DirectoryServiceTest extends TestCase {
 	private DirectoryService $service;
