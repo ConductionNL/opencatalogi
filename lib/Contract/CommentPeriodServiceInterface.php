@@ -34,12 +34,7 @@ interface CommentPeriodServiceInterface {
 	/**
 	 * Open a comment period on a publication.
 	 *
-	 * @param array<string, mixed> $publication The publication going out for comment.
-	 * @param int $termDays How many days the period runs.
-	 * @param string $legalRemedy The remedy open to a reader, one of {@see REMEDIES}.
-	 * @param string $announcementUrl The official announcement of the period.
-	 * @param bool $automaticWithdrawal Whether the close withdraws the publication.
-	 * @param string $openedBy Who opened it.
+	 * @param CommentPeriodRequest $request The publication, term, remedy and announcement.
 	 * @param DateTimeInterface|null $start When it opens; defaults to now.
 	 *
 	 * @return array<string, mixed> The period to save.
@@ -49,15 +44,7 @@ interface CommentPeriodServiceInterface {
 	 *
 	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-publication-can-carry-one-bounded-public-comment-period-req-pcp-001
 	 */
-	public function open(
-		array $publication,
-		int $termDays,
-		string $legalRemedy,
-		string $announcementUrl,
-		bool $automaticWithdrawal,
-		string $openedBy,
-		?DateTimeInterface $start = null,
-	): array;
+	public function open(CommentPeriodRequest $request, ?DateTimeInterface $start = null): array;
 
 	/**
 	 * The reaction form that belongs to a remedy.
