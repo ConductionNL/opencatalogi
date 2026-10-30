@@ -548,7 +548,7 @@ class SitemapService implements SitemapServiceInterface {
 
 		// Visibility governed by RBAC on the search (_rbac: true).
 		$catalogResult = $objectService->searchObjectsPaginated(
-			query: $this->sitemapCatalogQuery(request: $request, configuration: $settings['configuration']),
+			query: $request->catalogQuery(configuration: $settings['configuration']),
 			_rbac: true,
 			_multitenancy: false,
 			deleted: false
@@ -644,27 +644,6 @@ class SitemapService implements SitemapServiceInterface {
 
 		return null;
 	}//end titleMatchedSchemaId()
-
-	/**
-	 * The search for the catalog a sitemap request names: by slug, with a Woo sitemap.
-	 *
-	 * @param SitemapRequest $request The request.
-	 * @param array<string, mixed> $configuration The catalog register and schema settings.
-	 *
-	 * @return array<string, mixed> The search query.
-	 *
-	 * @spec openspec/specs/woo-compliance/spec.md
-	 */
-	private function sitemapCatalogQuery(SitemapRequest $request, array $configuration): array {
-		return [
-			'@self' => [
-				'register' => $configuration['catalog_register'],
-				'schema' => $configuration['catalog_schema'],
-			],
-			'slug' => $request->catalogSlug,
-			'hasWooSitemap' => true,
-		];
-	}//end sitemapCatalogQuery()
 
 	/**
 	 * Maps publication + file metadata into a DIWOO Document XML array structure.

@@ -64,4 +64,24 @@ final class SitemapRequest {
 		public readonly string $categoryCode,
 	) {
 	}//end __construct()
+
+	/**
+	 * The search for the catalog this request names: by slug, with a Woo sitemap.
+	 *
+	 * @param array<string, mixed> $configuration The catalog register and schema settings.
+	 *
+	 * @return array<string, mixed> The search query.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function catalogQuery(array $configuration): array {
+		return [
+			'@self' => [
+				'register' => $configuration['catalog_register'],
+				'schema' => $configuration['catalog_schema'],
+			],
+			'slug' => $this->catalogSlug,
+			'hasWooSitemap' => true,
+		];
+	}//end catalogQuery()
 }//end class
