@@ -1152,8 +1152,8 @@ class PublicationQueryService implements PublicationQueryServiceInterface
      *
      * @return array{registers: int[], schemas: int[]}
      *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @spec openspec/specs/search/spec.md
+     *
      * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalogue.
      */
     private function resolveCatalogScope(array $queryParams): array
@@ -1171,56 +1171,109 @@ class PublicationQueryService implements PublicationQueryServiceInterface
 
         // 1. Explicit single-catalog scope.
         if (is_string($singleCatalog) === true && $singleCatalog !== '') {
-            $c = $catalogiService->getCatalogBySlug($singleCatalog);
-            // C2: an unpublished catalog must be indistinguishable from a
-            // non-existent one on the public endpoint — else anonymous callers
-            // could probe for drafts by slug-guessing. `getCatalogBySlug` uses
-            // `_rbac:false`, so we re-apply the published predicate in PHP.
-            if ($c === null || $this->isCatalogPubliclyAvailable(catalog: $c) === false) {
+            $catalog = $this->publicCatalogBySlug(catalogiService: $catalogiService, slug: $singleCatalog);
+            if ($catalog === null) {
                 return ['registers' => [], 'schemas' => []];
             }
-            return CatalogScopeIds::forCatalog(catalog: $c);
+
+            return CatalogScopeIds::forCatalog(catalog: $catalog);
         }
 
-        // 2. Explicit multi-catalog union.
+        // 2. Explicit multi-catalog union; unknown and unpublished slugs drop out silently.
         if (is_array($multiCatalog) === true && empty($multiCatalog) === false) {
-            $regs = [];
-            $schemas = [];
-            foreach ($multiCatalog as $slug) {
-                if (is_string($slug) === false || $slug === '') {
-                    continue;
-                }
-                $c = $catalogiService->getCatalogBySlug($slug);
-                // Same C2 guard as the single-catalog branch — drop unpublished
-                // catalogs silently from the union rather than leak their scope.
-                if ($c === null || $this->isCatalogPubliclyAvailable(catalog: $c) === false) {
-                    continue;
-                }
-                $scope   = CatalogScopeIds::forCatalog(catalog: $c);
-                $regs    = array_merge($regs, $scope['registers']);
-                $schemas = array_merge($schemas, $scope['schemas']);
-            }
-            return [
-                'registers' => array_values(array_unique($regs)),
-                'schemas'   => array_values(array_unique($schemas)),
-            ];
+            return $this->unionCatalogScopes(
+                catalogs: $this->publicCatalogsBySlugs(catalogiService: $catalogiService, slugs: $multiCatalog)
+            );
         }
 
         // 3. Default — union of listed+published catalogs.
-        $allCatalogs = $this->listListedPublishedCatalogs(catalogiService: $catalogiService);
-        $regs = [];
+        return $this->unionCatalogScopes(
+            catalogs: $this->listListedPublishedCatalogs(catalogiService: $catalogiService)
+        );
+
+    }//end resolveCatalogScope()
+
+    /**
+     * A catalog by slug, or null when it does not exist or is not published yet.
+     *
+     * C2: an unpublished catalog must be indistinguishable from a non-existent
+     * one on the public endpoint — else anonymous callers could probe for drafts
+     * by slug-guessing. `getCatalogBySlug` uses `_rbac:false`, so the published
+     * predicate is re-applied here.
+     *
+     * @param object $catalogiService The CatalogiService.
+     * @param string $slug            The catalog slug.
+     *
+     * @return array|null The catalog, or null.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function publicCatalogBySlug(object $catalogiService, string $slug): ?array
+    {
+        $catalog = $catalogiService->getCatalogBySlug($slug);
+        if ($catalog === null || $this->isCatalogPubliclyAvailable(catalog: $catalog) === false) {
+            return null;
+        }
+
+        return $catalog;
+
+    }//end publicCatalogBySlug()
+
+    /**
+     * The published catalogs among the given slugs, in order; other entries drop out.
+     *
+     * @param object $catalogiService The CatalogiService.
+     * @param array  $slugs           The requested slugs; non-string and empty entries are skipped.
+     *
+     * @return array The catalogs.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function publicCatalogsBySlugs(object $catalogiService, array $slugs): array
+    {
+        $catalogs = [];
+        foreach ($slugs as $slug) {
+            if (is_string($slug) === false || $slug === '') {
+                continue;
+            }
+
+            $catalog = $this->publicCatalogBySlug(catalogiService: $catalogiService, slug: $slug);
+            if ($catalog !== null) {
+                $catalogs[] = $catalog;
+            }
+        }
+
+        return $catalogs;
+
+    }//end publicCatalogsBySlugs()
+
+    /**
+     * The union of the register and schema ids of the given catalogs, without duplicates.
+     *
+     * @param array $catalogs The catalogs.
+     *
+     * @return array{registers: int[], schemas: int[]}
+     *
+     * @spec openspec/specs/search/spec.md
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalogue.
+     */
+    private function unionCatalogScopes(array $catalogs): array
+    {
+        $regs    = [];
         $schemas = [];
-        foreach ($allCatalogs as $c) {
-            $scope   = CatalogScopeIds::forCatalog(catalog: $c);
+        foreach ($catalogs as $catalog) {
+            $scope   = CatalogScopeIds::forCatalog(catalog: $catalog);
             $regs    = array_merge($regs, $scope['registers']);
             $schemas = array_merge($schemas, $scope['schemas']);
         }
+
         return [
             'registers' => array_values(array_unique($regs)),
             'schemas'   => array_values(array_unique($schemas)),
         ];
 
-    }//end resolveCatalogScope()
+    }//end unionCatalogScopes()
 
     /**
      * Enumerate catalogs eligible for the anonymous default scope: `listed: true`
