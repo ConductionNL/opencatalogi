@@ -136,7 +136,7 @@ class ListingsController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, PATCH');
 		$response->addHeader('Access-Control-Max-Age', '1728000');
 		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');

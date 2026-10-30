@@ -123,6 +123,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', CatalogSchemaEventListener::class],
 				[$e . 'ObjectCreatingEvent', CatalogAccessListener::class],
 				[$e . 'ObjectUpdatingEvent', CatalogAccessListener::class],
+				[$e . 'ObjectDeletingEvent', CatalogAccessListener::class],
 				[$e . 'ObjectCreatedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectUpdatedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectDeletedEvent', CatalogAccessListener::class],

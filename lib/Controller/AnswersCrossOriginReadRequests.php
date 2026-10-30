@@ -34,17 +34,16 @@ use OCP\AppFramework\Http\Response;
  * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
  */
 trait AnswersCrossOriginReadRequests {
+	use ResolvesAllowedOrigin;
+
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
+	 * The `cors_allowed_origins` setting; '*' without an app config.
 	 *
-	 * @return string The header value.
-	 *
-	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 * @return string The setting.
 	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = ($this->appConfig?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
-		return (new CorsAllowlist($configured))->allowedFor($this->request->getHeader('Origin'));
-	}//end resolveAllowedOrigin()
+	private function allowedOriginsSetting(): string {
+		return ($this->appConfig?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+	}//end allowedOriginsSetting()
 
 	/**
 	 * Build the GET-only public CORS header set.
@@ -54,11 +53,13 @@ trait AnswersCrossOriginReadRequests {
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
 	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
+		return array_merge(
+			$this->allowedOriginHeaders(),
+			[
+				'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+				'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
+			]
+		);
 
 	}//end corsHeaders()
 
@@ -75,6 +76,11 @@ trait AnswersCrossOriginReadRequests {
 	 */
 	private function withCorsHeaders(Response $response): Response {
 		foreach ($this->corsHeaders() as $name => $value) {
+			if ($name === 'Vary') {
+				$this->addOriginToVary(response: $response);
+				continue;
+			}
+
 			$response->addHeader($name, $value);
 		}
 

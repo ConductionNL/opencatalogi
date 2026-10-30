@@ -71,6 +71,7 @@ use RuntimeException;
  */
 class PublicationsController extends Controller {
 	use AnswersCacheably;
+	use ResolvesAllowedOrigin;
 
 
 	/**
@@ -254,51 +255,17 @@ class PublicationsController extends Controller {
 	}//end countedView()
 
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
+	 * The `cors_allowed_origins` setting for ResolvesAllowedOrigin; '*' without an app config.
 	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
-	 * — the caller's Origin is NEVER echoed back unless it is explicitly listed in the
-	 * configured allowlist. This prevents arbitrary-origin reflection on public endpoints
-	 * (#735). When credentials are not allowed (as on these public read endpoints) a
-	 * static '*' is the safest default; only operators that need credentialed CORS
-	 * should configure a strict allowlist.
+	 * Called by ResolvesAllowedOrigin::resolveAllowedOrigin(), which PHPMD does not follow.
 	 *
-	 * @return string The header value to use for Access-Control-Allow-Origin.
+	 * @return string The setting.
 	 *
-	 * @spec exclude CORS-policy plumbing extracted to fail-closed on Origin reflection;
-	 *       reads an IAppConfig allowlist and never echoes an unvetted caller Origin.
+	 * @SuppressWarnings(PHPMD.UnusedPrivateMethod)
 	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = $this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*');
-		}
-
-		$configured = trim($configured);
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		// Caller Origin not on the allowlist — fall back to the first configured entry
-		// (or '*' if the allowlist became empty after trimming). Crucially, we do NOT
-		// echo back the caller's unvetted Origin.
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
+	private function allowedOriginsSetting(): string {
+		return ($this->appConfig?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+	}//end allowedOriginsSetting()
 
 	/**
 	 * Add standard CORS headers to a response.
@@ -308,7 +275,7 @@ class PublicationsController extends Controller {
 	 * @return void
 	 */
 	private function addCorsHeaders(JSONResponse $response): void {
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
 		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
@@ -562,7 +529,7 @@ class PublicationsController extends Controller {
 		// Determine the origin via the same allowlist-aware resolver used elsewhere
 		// so we never reflect an arbitrary caller-supplied Origin (#735).
 		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
 		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
 		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

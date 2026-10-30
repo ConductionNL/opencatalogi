@@ -27,8 +27,8 @@ use OCP\AppFramework\Http\Response;
 /**
  * Add the CORS headers built from the controller's own methods, headers and max age.
  *
- * Consuming controllers MUST expose a `CorsSettings $cors` property and a
- * `resolveAllowedOrigin()` method.
+ * Consuming controllers MUST expose a `CorsSettings $cors` property and use
+ * ResolvesAllowedOrigin (directly or through a CORS trait).
  *
  * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
  */
@@ -45,7 +45,7 @@ trait SendsListCorsHeaders {
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
 	private function withListCorsHeaders(Response $response): Response {
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
 		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
 
@@ -64,7 +64,7 @@ trait SendsListCorsHeaders {
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
 	private function withListPreflightHeaders(Response $response): Response {
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
 		$response->addHeader('Access-Control-Max-Age', (string)$this->cors->maxAge);
 		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);

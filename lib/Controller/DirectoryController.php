@@ -47,6 +47,7 @@ use Psr\Log\LoggerInterface;
  */
 class DirectoryController extends Controller {
 	use SendsListCorsHeaders;
+	use ResolvesAllowedOrigin;
 
 	/**
 	 * DirectoryController constructor.
@@ -73,27 +74,17 @@ class DirectoryController extends Controller {
 	}//end __construct()
 
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
+	 * The `cors_allowed_origins` setting for ResolvesAllowedOrigin; '*' without an app config.
 	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
-	 * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
+	 * Called by ResolvesAllowedOrigin::resolveAllowedOrigin(), which PHPMD does not follow.
 	 *
-	 * @return string The header value to use for Access-Control-Allow-Origin.
+	 * @return string The setting.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedPrivateMethod) Called from the SendsListCorsHeaders trait.
-	 *
-	 * @spec exclude CORS-policy plumbing; reads IAppConfig allowlist, no Origin reflection.
+	 * @SuppressWarnings(PHPMD.UnusedPrivateMethod)
 	 */
-	private function resolveAllowedOrigin(): string {
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		$configured = ($this->config?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
-		return (new CorsAllowlist($configured))->allowedFor($callerOrigin);
-	}//end resolveAllowedOrigin()
+	private function allowedOriginsSetting(): string {
+		return ($this->config?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+	}//end allowedOriginsSetting()
 
 	/**
 	 * Implements a preflighted CORS response for OPTIONS requests.
