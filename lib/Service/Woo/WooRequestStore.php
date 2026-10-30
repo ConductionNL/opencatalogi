@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Woo;
 
 use OCA\OpenCatalogi\Contract\WooRequestStoreInterface;
+use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -41,6 +42,7 @@ use RuntimeException;
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
 class WooRequestStore implements WooRequestStoreInterface {
+	use ReadsObjectProperties;
 
 	/**
 	 * How many requests the terms report reads.
@@ -225,33 +227,4 @@ class WooRequestStore implements WooRequestStoreInterface {
 		return $requests;
 
 	}//end all()
-
-	/**
-	 * Read an object's properties, whatever shape OpenRegister returned.
-	 *
-	 * @param mixed $object The result.
-	 *
-	 * @return array<string, mixed> The properties.
-	 *
-	 * @spec exclude pure shape adaptation over the consumed OR ObjectService.
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$properties = $object['object'];
-			$properties['id'] = ($object['id'] ?? ($properties['id'] ?? null));
-
-			return $properties;
-		}
-
-		return $object;
-
-	}//end asArray()
 }//end class

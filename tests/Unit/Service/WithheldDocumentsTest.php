@@ -28,6 +28,7 @@ use Psr\Log\NullLogger;
  *
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 class WithheldDocumentsTest extends TestCase {
 

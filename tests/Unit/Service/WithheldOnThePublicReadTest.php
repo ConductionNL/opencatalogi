@@ -89,6 +89,7 @@ class PublicReadObjectService {
  *
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @covers \OCA\OpenCatalogi\Controller\FederationController
  */
