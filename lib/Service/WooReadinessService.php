@@ -183,12 +183,16 @@ class WooReadinessService implements WooReadinessServiceInterface {
 				continue;
 			}
 
+			$catalogChecks = new CatalogReadinessChecks(slug: $slug);
 			if ($robotsOk === false) {
-				$this->skipCatalogChecks(slug: $slug, checks: $checks, reason: 'robots-txt-unreachable');
-				continue;
+				$this->skipCatalogChecks(catalog: $catalogChecks, reason: 'robots-txt-unreachable');
 			}
 
-			$this->checkCatalog(baseUrl: $baseUrl, slug: $slug, checks: $checks);
+			if ($robotsOk === true) {
+				$this->checkCatalog(baseUrl: $baseUrl, catalog: $catalogChecks);
+			}
+
+			array_push($checks, ...$catalogChecks->all());
 		}
 
 		$registration = $this->getRegistrationConfig();
@@ -330,42 +334,42 @@ class WooReadinessService implements WooReadinessServiceInterface {
 	 * checks for a single WOO-enabled catalog (checks 2-5, D5 bounded sampling).
 	 *
 	 * @param string $baseUrl The instance's public base URL.
-	 * @param string $slug The catalog slug.
-	 * @param array<int, array<string, mixed>> $checks The checks list (by reference).
+	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
 	 */
-	private function checkCatalog(string $baseUrl, string $slug, array &$checks): void {
+	private function checkCatalog(string $baseUrl, CatalogReadinessChecks $catalog): void {
+		$slug = $catalog->slug;
 		$categoryCode = (string)array_key_first($this->sitemapService->sitemapFiles());
 		$sitemapIndexUrl = "$baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode";
 		$checkId = "sitemapindex:$slug";
 
 		$response = $this->safeFetch(url: $sitemapIndexUrl);
 		if ($response['ok'] === false) {
-			$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: $response['reason'], catalogSlug: $slug);
-			$this->skipDependentChecks(slug: $slug, checks: $checks, reason: 'sitemapindex-unreachable');
+			$catalog->fail(id: $checkId, reason: $response['reason']);
+			$this->skipDependentChecks(catalog: $catalog, reason: 'sitemapindex-unreachable');
 			return;
 		}
 
 		if ($this->isWellFormedXml(xml: $response['body']) === false) {
-			$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: 'invalid-xml', catalogSlug: $slug);
-			$this->skipDependentChecks(slug: $slug, checks: $checks, reason: 'sitemapindex-invalid');
+			$catalog->fail(id: $checkId, reason: 'invalid-xml');
+			$this->skipDependentChecks(catalog: $catalog, reason: 'sitemapindex-invalid');
 			return;
 		}
 
-		$checks[] = $this->buildCheck(id: $checkId, status: 'pass', catalogSlug: $slug);
+		$catalog->pass(id: $checkId);
 
 		$pageUrls = array_slice($this->extractLocs(xml: $response['body']), 0, self::MAX_SAMPLED_PAGES);
 		if (empty($pageUrls) === true) {
-			$this->skipDependentChecks(slug: $slug, checks: $checks, reason: 'no-sitemap-pages');
+			$this->skipDependentChecks(catalog: $catalog, reason: 'no-sitemap-pages');
 			return;
 		}
 
-		$firstDocumentUrl = $this->checkCategorySitemapPages(slug: $slug, pageUrls: $pageUrls, checks: $checks);
-		$this->checkDiwooXsd(slug: $slug, categoryCode: $categoryCode, checks: $checks);
-		$this->checkPublicationSample(slug: $slug, publicationUrl: $firstDocumentUrl, checks: $checks);
+		$firstDocumentUrl = $this->checkCategorySitemapPages(catalog: $catalog, pageUrls: $pageUrls);
+		$this->checkDiwooXsd(catalog: $catalog, categoryCode: $categoryCode);
+		$this->checkPublicationSample(catalog: $catalog, publicationUrl: $firstDocumentUrl);
 
 	}//end checkCatalog()
 
@@ -373,37 +377,36 @@ class WooReadinessService implements WooReadinessServiceInterface {
 	 * Check 3: fetch up to MAX_SAMPLED_PAGES category-sitemap pages, verifying reachability,
 	 * well-formedness, and the presence of `diwoo:` metadata extension elements.
 	 *
-	 * @param string $slug The catalog slug.
+	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
 	 * @param array<int, string> $pageUrls The sampled page URLs (from the sitemapindex).
-	 * @param array<int, array<string, mixed>> $checks The checks list (by reference).
 	 *
 	 * @return string|null The first publication document URL found, or null when none was found.
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
 	 */
-	private function checkCategorySitemapPages(string $slug, array $pageUrls, array &$checks): ?string {
+	private function checkCategorySitemapPages(CatalogReadinessChecks $catalog, array $pageUrls): ?string {
 		$firstDocumentUrl = null;
 
 		foreach ($pageUrls as $index => $pageUrl) {
-			$pageCheckId = 'category-sitemap:' . $slug . ':' . ($index + 1);
+			$pageCheckId = 'category-sitemap:' . $catalog->slug . ':' . ($index + 1);
 			$response = $this->safeFetch(url: $pageUrl);
 
 			if ($response['ok'] === false) {
-				$checks[] = $this->buildCheck(id: $pageCheckId, status: 'fail', reason: $response['reason'], catalogSlug: $slug);
+				$catalog->fail(id: $pageCheckId, reason: $response['reason']);
 				continue;
 			}
 
 			if ($this->isWellFormedXml(xml: $response['body']) === false) {
-				$checks[] = $this->buildCheck(id: $pageCheckId, status: 'fail', reason: 'invalid-xml', catalogSlug: $slug);
+				$catalog->fail(id: $pageCheckId, reason: 'invalid-xml');
 				continue;
 			}
 
 			if (str_contains($response['body'], '<diwoo:Document') === false) {
-				$checks[] = $this->buildCheck(id: $pageCheckId, status: 'fail', reason: 'no-diwoo-elements', catalogSlug: $slug);
+				$catalog->fail(id: $pageCheckId, reason: 'no-diwoo-elements');
 				continue;
 			}
 
-			$checks[] = $this->buildCheck(id: $pageCheckId, status: 'pass', catalogSlug: $slug);
+			$catalog->pass(id: $pageCheckId);
 
 			if ($firstDocumentUrl === null) {
 				$locs = $this->extractLocs(xml: $response['body']);
@@ -418,16 +421,15 @@ class WooReadinessService implements WooReadinessServiceInterface {
 	 * Check 4: DIWOO metadata validation, reusing the existing admin DIWOO validator (D1)
 	 * instead of re-implementing XSD validation.
 	 *
-	 * @param string $slug The catalog slug.
+	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
 	 * @param string $categoryCode The DIWOO category code that was sampled.
-	 * @param array<int, array<string, mixed>> $checks The checks list (by reference).
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
 	 */
-	private function checkDiwooXsd(string $slug, string $categoryCode, array &$checks): void {
-		$checkId = "diwoo-xsd:$slug";
+	private function checkDiwooXsd(CatalogReadinessChecks $catalog, string $categoryCode): void {
+		$checkId = 'diwoo-xsd:' . $catalog->slug;
 
 		// A pass here means "our output conforms to the DiWoo version we emit". That is
 		// only worth reporting when the version we emit is the version the publisher
@@ -435,47 +437,37 @@ class WooReadinessService implements WooReadinessServiceInterface {
 		// report a pass, because the rules it validated against are the wrong ones.
 		$version = $this->resolveDiwooVersion();
 		if ($version['status'] === StandardsVersionService::STATUS_BEHIND) {
-			$checks[] = $this->buildCheck(
-				id: $checkId,
-				status: 'fail',
-				reason: 'diwoo-version-behind:' . $version['published'],
-				catalogSlug: $slug
-			);
+			$catalog->fail(id: $checkId, reason: 'diwoo-version-behind:' . $version['published']);
 			return;
 		}
 
 		if ($version['status'] === StandardsVersionService::STATUS_UNKNOWN) {
-			$checks[] = $this->buildCheck(
-				id: $checkId,
-				status: 'skipped',
-				reason: 'diwoo-version-unknown',
-				catalogSlug: $slug
-			);
+			$catalog->skip(id: $checkId, reason: 'diwoo-version-unknown');
 			return;
 		}
 
 		try {
 			$report = $this->sitemapService->validateDiwooOutput(
-				catalogSlug: $slug,
+				catalogSlug: $catalog->slug,
 				categoryCode: $categoryCode,
 				page: 1
 			);
 		} catch (\Throwable $e) {
-			$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: 'diwoo-validation-error', catalogSlug: $slug);
+			$catalog->fail(id: $checkId, reason: 'diwoo-validation-error');
 			return;
 		}
 
 		if (isset($report['error']) === true) {
-			$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: 'diwoo-validation-error', catalogSlug: $slug);
+			$catalog->fail(id: $checkId, reason: 'diwoo-validation-error');
 			return;
 		}
 
 		if ($report['valid'] === true) {
-			$checks[] = $this->buildCheck(id: $checkId, status: 'pass', catalogSlug: $slug);
+			$catalog->pass(id: $checkId);
 			return;
 		}
 
-		$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: 'diwoo-xsd-invalid', catalogSlug: $slug);
+		$catalog->fail(id: $checkId, reason: 'diwoo-xsd-invalid');
 
 	}//end checkDiwooXsd()
 
@@ -534,29 +526,28 @@ class WooReadinessService implements WooReadinessServiceInterface {
 	/**
 	 * Check 5: fetch a single sampled publication URL and verify it resolves publicly with HTTP 200.
 	 *
-	 * @param string $slug The catalog slug.
+	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
 	 * @param string|null $publicationUrl The sampled publication URL, or null when none was found.
-	 * @param array<int, array<string, mixed>> $checks The checks list (by reference).
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
 	 */
-	private function checkPublicationSample(string $slug, ?string $publicationUrl, array &$checks): void {
-		$checkId = "publication-sample:$slug";
+	private function checkPublicationSample(CatalogReadinessChecks $catalog, ?string $publicationUrl): void {
+		$checkId = 'publication-sample:' . $catalog->slug;
 
 		if ($publicationUrl === null) {
-			$checks[] = $this->buildCheck(id: $checkId, status: 'skipped', reason: 'no-publications-found', catalogSlug: $slug);
+			$catalog->skip(id: $checkId, reason: 'no-publications-found');
 			return;
 		}
 
 		$response = $this->safeFetch(url: $publicationUrl);
 		if ($response['ok'] === false) {
-			$checks[] = $this->buildCheck(id: $checkId, status: 'fail', reason: $response['reason'], catalogSlug: $slug);
+			$catalog->fail(id: $checkId, reason: $response['reason']);
 			return;
 		}
 
-		$checks[] = $this->buildCheck(id: $checkId, status: 'pass', catalogSlug: $slug);
+		$catalog->pass(id: $checkId);
 
 	}//end checkPublicationSample()
 
@@ -564,8 +555,7 @@ class WooReadinessService implements WooReadinessServiceInterface {
 	 * Append `skipped` entries for the sitemapindex + all its dependent checks (used when
 	 * robots.txt itself failed, so no per-catalog check even attempted a fetch).
 	 *
-	 * @param string $slug The catalog slug.
-	 * @param array<int, array<string, mixed>> $checks The checks list (by reference).
+	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
 	 * @param string $reason The skip reason shared by every entry.
 	 *
 	 * @return void
@@ -573,9 +563,9 @@ class WooReadinessService implements WooReadinessServiceInterface {
 	 * @spec exclude Skip-bookkeeping helper — prerequisite-failed checks must report `skipped`,
 	 *       never `pass`, per WOO-HR-001; no independent domain behavior of its own.
 	 */
-	private function skipCatalogChecks(string $slug, array &$checks, string $reason): void {
-		$checks[] = $this->buildCheck(id: "sitemapindex:$slug", status: 'skipped', reason: $reason, catalogSlug: $slug);
-		$this->skipDependentChecks(slug: $slug, checks: $checks, reason: $reason);
+	private function skipCatalogChecks(CatalogReadinessChecks $catalog, string $reason): void {
+		$catalog->skip(id: 'sitemapindex:' . $catalog->slug, reason: $reason);
+		$this->skipDependentChecks(catalog: $catalog, reason: $reason);
 
 	}//end skipCatalogChecks()
 
@@ -583,8 +573,7 @@ class WooReadinessService implements WooReadinessServiceInterface {
 	 * Append `skipped` entries for the category-sitemap, DIWOO-validation, and
 	 * publication-sample checks of one catalog (used when the sitemapindex check itself failed).
 	 *
-	 * @param string $slug The catalog slug.
-	 * @param array<int, array<string, mixed>> $checks The checks list (by reference).
+	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
 	 * @param string $reason The skip reason shared by every entry.
 	 *
 	 * @return void
@@ -592,10 +581,10 @@ class WooReadinessService implements WooReadinessServiceInterface {
 	 * @spec exclude Skip-bookkeeping helper — prerequisite-failed checks must report `skipped`,
 	 *       never `pass`, per WOO-HR-001; no independent domain behavior of its own.
 	 */
-	private function skipDependentChecks(string $slug, array &$checks, string $reason): void {
-		$checks[] = $this->buildCheck(id: "category-sitemap:$slug", status: 'skipped', reason: $reason, catalogSlug: $slug);
-		$checks[] = $this->buildCheck(id: "diwoo-xsd:$slug", status: 'skipped', reason: $reason, catalogSlug: $slug);
-		$checks[] = $this->buildCheck(id: "publication-sample:$slug", status: 'skipped', reason: $reason, catalogSlug: $slug);
+	private function skipDependentChecks(CatalogReadinessChecks $catalog, string $reason): void {
+		foreach (['category-sitemap', 'diwoo-xsd', 'publication-sample'] as $check) {
+			$catalog->skip(id: $check . ':' . $catalog->slug, reason: $reason);
+		}
 
 	}//end skipDependentChecks()
 
