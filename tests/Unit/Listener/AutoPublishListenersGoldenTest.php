@@ -27,6 +27,8 @@
  *
  * @covers \OCA\OpenCatalogi\Listener\ObjectCreatedEventListener
  * @covers \OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener
+ * @covers \OCA\OpenCatalogi\Listener\ReportsAutoPublishOutcome
+ * @covers \OCA\OpenCatalogi\Service\ChecksPublicationWindow
  */
 
 declare(strict_types=1);

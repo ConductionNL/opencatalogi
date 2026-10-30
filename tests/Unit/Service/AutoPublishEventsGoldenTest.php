@@ -28,6 +28,7 @@
  * @spec openspec/specs/auto-publishing/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\EventService
+ * @uses \OCA\OpenCatalogi\Service\ChecksPublicationWindow
  */
 
 declare(strict_types=1);
