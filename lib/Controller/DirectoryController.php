@@ -42,6 +42,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling directory-related operations.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) CorsSettings is the thirteenth type, shared with the other list controllers.
  */
 class DirectoryController extends Controller {
 	use SendsListCorsHeaders;
@@ -55,9 +57,7 @@ class DirectoryController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param IAppConfig|null $config App config for CORS allowlist (optional).
-	 * @param string $corsMethods Allowed CORS methods.
-	 * @param string $corsAllowedHeaders Allowed CORS headers.
-	 * @param integer $corsMaxAge CORS max age.
+	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 */
 	public function __construct(
 		$appName,
@@ -66,9 +66,7 @@ class DirectoryController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?IAppConfig $config = null,
-		private readonly string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		private readonly string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		private readonly int $corsMaxAge = 1728000,
+		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

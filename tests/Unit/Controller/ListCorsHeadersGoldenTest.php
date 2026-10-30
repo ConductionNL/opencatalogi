@@ -35,6 +35,7 @@
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginListRequests
  * @covers \OCA\OpenCatalogi\Controller\SendsListCorsHeaders
  * @uses \OCA\OpenCatalogi\Controller\CorsAllowlist
+ * @uses \OCA\OpenCatalogi\Controller\CorsSettings
  */
 
 declare(strict_types=1);
@@ -43,6 +44,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Controller\CatalogiController;
+use OCA\OpenCatalogi\Controller\CorsSettings;
 use OCA\OpenCatalogi\Controller\DirectoryController;
 use OCA\OpenCatalogi\Controller\GlossaryController;
 use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
@@ -187,9 +189,7 @@ class ListCorsHeadersGoldenTest extends TestCase {
 			$name = ($type instanceof ReflectionNamedType ? $type->getName() : null);
 			$args[] = match (true) {
 				$param->getName() === 'appName' => 'opencatalogi',
-				$customCors === true && $param->getName() === 'corsMethods' => 'GET, X-METHODS',
-				$customCors === true && $param->getName() === 'corsAllowedHeaders' => 'X-Headers',
-				$customCors === true && $param->getName() === 'corsMaxAge' => 42,
+				$customCors === true && $name === CorsSettings::class => new CorsSettings('GET, X-METHODS', 'X-Headers', 42),
 				$name === IRequest::class => $request,
 				$name === IAppConfig::class => $config,
 				$name === IL10N::class => $l10n,

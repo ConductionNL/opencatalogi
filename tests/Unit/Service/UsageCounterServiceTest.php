@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
@@ -33,6 +34,7 @@ use Psr\Log\LoggerInterface;
 /**
  * @covers \OCA\OpenCatalogi\Service\UsageCounterService
  * @uses \OCA\OpenCatalogi\Service\UsageCount
+ * @uses \OCA\OpenCatalogi\Contract\PublicationUsage
  */
 class UsageCounterServiceTest extends TestCase {
 
@@ -121,7 +123,7 @@ class UsageCounterServiceTest extends TestCase {
 
 		$this->withObjectService($os);
 
-		$ok = $this->service->increment('pub-1', UsageCounterService::KIND_VIEW, 'Mozilla/5.0', 'woo');
+		$ok = $this->service->increment(new PublicationUsage('pub-1', UsageCounterService::KIND_VIEW, 'woo'), 'Mozilla/5.0');
 		$this->assertTrue($ok);
 		$this->assertSame('pub-1', $captured['publication']);
 		$this->assertSame(UsageCounterService::KIND_VIEW, $captured['kind']);
@@ -145,7 +147,7 @@ class UsageCounterServiceTest extends TestCase {
 
 		$this->withObjectService($os);
 
-		$ok = $this->service->increment('pub-1', UsageCounterService::KIND_VIEW, 'Mozilla/5.0');
+		$ok = $this->service->increment(new PublicationUsage('pub-1', UsageCounterService::KIND_VIEW), 'Mozilla/5.0');
 		$this->assertTrue($ok);
 		$this->assertSame(10, $captured['count']);
 	}//end testIncrementBumpsExistingCounter()
@@ -155,11 +157,11 @@ class UsageCounterServiceTest extends TestCase {
 		$os->expects($this->never())->method('saveObject');
 		$this->withObjectService($os);
 
-		$this->assertFalse($this->service->increment('pub-1', UsageCounterService::KIND_VIEW, 'Googlebot/2.1'));
+		$this->assertFalse($this->service->increment(new PublicationUsage('pub-1', UsageCounterService::KIND_VIEW), 'Googlebot/2.1'));
 	}//end testIncrementSkippedForCrawler()
 
 	public function testIncrementRejectsUnknownKind(): void {
-		$this->assertFalse($this->service->increment('pub-1', 'sneaky', 'Mozilla/5.0'));
+		$this->assertFalse($this->service->increment(new PublicationUsage('pub-1', 'sneaky'), 'Mozilla/5.0'));
 	}//end testIncrementRejectsUnknownKind()
 
 	public function testIncrementSwallowsFailure(): void {
@@ -168,7 +170,7 @@ class UsageCounterServiceTest extends TestCase {
 		$this->withObjectService($os);
 
 		// ANA-001: a counting failure is swallowed, never propagated.
-		$this->assertFalse($this->service->increment('pub-1', UsageCounterService::KIND_DOWNLOAD, 'Mozilla/5.0'));
+		$this->assertFalse($this->service->increment(new PublicationUsage('pub-1', UsageCounterService::KIND_DOWNLOAD), 'Mozilla/5.0'));
 	}//end testIncrementSwallowsFailure()
 
 	public function testIncrementNoOpWhenSchemaUnconfigured(): void {
@@ -178,7 +180,7 @@ class UsageCounterServiceTest extends TestCase {
 			->willReturnCallback(fn (string $a, string $k, string $d = '') => $d);
 
 		$service = new UsageCounterService($appConfig, $this->appManager, $this->container, $this->logger);
-		$this->assertFalse($service->increment('pub-1', UsageCounterService::KIND_VIEW, 'Mozilla/5.0'));
+		$this->assertFalse($service->increment(new PublicationUsage('pub-1', UsageCounterService::KIND_VIEW), 'Mozilla/5.0'));
 	}//end testIncrementNoOpWhenSchemaUnconfigured()
 
 	// ──────────────────────────────────────────────────────────
@@ -199,10 +201,8 @@ class UsageCounterServiceTest extends TestCase {
 		$this->withObjectService($os);
 
 		$this->service->increment(
-			'pub-1',
-			UsageCounterService::KIND_VIEW,
-			'Mozilla/5.0 (secret browser fingerprint 1.2.3.4)',
-			'woo'
+			new PublicationUsage('pub-1', UsageCounterService::KIND_VIEW, 'woo'),
+			'Mozilla/5.0 (secret browser fingerprint 1.2.3.4)'
 		);
 
 		// The stored object MUST hold ONLY (publication, catalog, date, kind, count).
@@ -229,7 +229,7 @@ class UsageCounterServiceTest extends TestCase {
 			}
 		);
 
-		$this->service->increment('pub-1', UsageCounterService::KIND_VIEW, 'SecretAgent/9.9');
+		$this->service->increment(new PublicationUsage('pub-1', UsageCounterService::KIND_VIEW), 'SecretAgent/9.9');
 
 		foreach ($logged as [$msg, $ctx]) {
 			$blob = $msg . json_encode($ctx);
