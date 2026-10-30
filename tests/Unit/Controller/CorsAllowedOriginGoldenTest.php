@@ -218,6 +218,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 			$this->assertSame(
 				[
 					'Access-Control-Allow-Origin' => 'https://b.nl',
+					'Vary' => 'Origin',
 					'Access-Control-Allow-Methods' => 'GET, OPTIONS',
 					'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
 				],
@@ -227,6 +228,44 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		}
 
 	}//end testReadOnlyHeaderSet()
+
+	/**
+	 * Every controller sends `Vary: Origin` with an allowlisted origin, and keeps an existing Vary.
+	 *
+	 * @return void
+	 */
+	public function testAnAllowlistedOriginVariesOnOrigin(): void {
+		foreach (self::CONTROLLERS as $class) {
+			$controller = $this->build($class, $this->config('https://a.nl,https://b.nl'), 'https://b.nl');
+			$response = new Response();
+			$response->addHeader('Vary', 'Accept');
+			(new ReflectionMethod($controller, 'addAllowedOriginHeaders'))->invoke($controller, $response);
+
+			$this->assertSame('https://b.nl', $response->getHeaders()['Access-Control-Allow-Origin'], $class);
+			$this->assertSame('Accept, Origin', $response->getHeaders()['Vary'], $class);
+
+			(new ReflectionMethod($controller, 'addAllowedOriginHeaders'))->invoke($controller, $response);
+			$this->assertSame('Accept, Origin', $response->getHeaders()['Vary'], $class . ' twice');
+		}
+
+	}//end testAnAllowlistedOriginVariesOnOrigin()
+
+	/**
+	 * The wildcard does not depend on the caller, so no Vary is added.
+	 *
+	 * @return void
+	 */
+	public function testTheWildcardDoesNotVary(): void {
+		foreach (self::CONTROLLERS as $class) {
+			$controller = $this->build($class, $this->config('*'), 'https://b.nl');
+			$response = new Response();
+			(new ReflectionMethod($controller, 'addAllowedOriginHeaders'))->invoke($controller, $response);
+
+			$this->assertSame('*', $response->getHeaders()['Access-Control-Allow-Origin'], $class);
+			$this->assertArrayNotHasKey('Vary', $response->getHeaders(), $class);
+		}
+
+	}//end testTheWildcardDoesNotVary()
 
 	/**
 	 * The read-only preflight adds the max age and refuses credentials.
@@ -245,6 +284,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 				'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
 				'Access-Control-Max-Age' => '1728000',
 				'Access-Control-Allow-Credentials' => 'false',
+				'Vary' => 'Origin',
 			] as $name => $value) {
 				$this->assertSame($value, $headers[$name] ?? null, $class . ' ' . $name);
 			}

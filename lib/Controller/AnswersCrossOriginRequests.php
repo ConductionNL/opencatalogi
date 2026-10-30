@@ -61,7 +61,7 @@ trait AnswersCrossOriginRequests {
 	 */
 	private function readWritePreflight(): Response {
 		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 		$response->addHeader('Access-Control-Max-Age', '1728000');
 		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');

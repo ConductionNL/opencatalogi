@@ -22,11 +22,14 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCP\AppFramework\Http\Response;
+
 /**
  * Resolve the `Access-Control-Allow-Origin` value for the current request.
  *
  * The one place that reads the caller's Origin and hands it, with the
- * `cors_allowed_origins` setting, to CorsAllowlist. The consumer supplies the
+ * `cors_allowed_origins` setting, to CorsAllowlist, and that sets the
+ * allowed-origin header (with `Vary: Origin` when it is not the wildcard). The consumer supplies the
  * setting through `allowedOriginsSetting()` (its app config lives under
  * different property names) and inherits `$request` from
  * `OCP\AppFramework\Controller`.
@@ -47,6 +50,66 @@ trait ResolvesAllowedOrigin {
 		return (new CorsAllowlist($this->allowedOriginsSetting()))->allowedFor($this->callerOrigin());
 
 	}//end resolveAllowedOrigin()
+
+	/**
+	 * The allowed-origin header, plus `Vary: Origin` when the value depends on the caller.
+	 *
+	 * Any value but the wildcard comes from the allowlist and may be the caller's
+	 * own Origin, so a shared cache must key the answer on the Origin.
+	 *
+	 * @return array<string, string> The headers.
+	 *
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 */
+	private function allowedOriginHeaders(): array {
+		$origin = $this->resolveAllowedOrigin();
+		if ($origin === '*') {
+			return ['Access-Control-Allow-Origin' => $origin];
+		}
+
+		return ['Access-Control-Allow-Origin' => $origin, 'Vary' => 'Origin'];
+
+	}//end allowedOriginHeaders()
+
+	/**
+	 * Put the allowed-origin header on a response, adding `Origin` to its Vary when needed.
+	 *
+	 * @param Response $response The response.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 */
+	private function addAllowedOriginHeaders(Response $response): void {
+		foreach ($this->allowedOriginHeaders() as $name => $value) {
+			if ($name === 'Vary') {
+				$value = $this->varyWithOrigin(current: (string)($response->getHeaders()['Vary'] ?? ''));
+			}
+
+			$response->addHeader($name, $value);
+		}
+
+	}//end addAllowedOriginHeaders()
+
+	/**
+	 * A Vary value that names Origin, keeping what it already named.
+	 *
+	 * @param string $current The current Vary value.
+	 *
+	 * @return string The value.
+	 */
+	private function varyWithOrigin(string $current): string {
+		$names = array_values(array_filter(array_map('trim', explode(',', $current)), static fn (string $name): bool => $name !== ''));
+		foreach ($names as $name) {
+			if (strcasecmp($name, 'Origin') === 0 || $name === '*') {
+				return implode(', ', $names);
+			}
+		}
+
+		$names[] = 'Origin';
+		return implode(', ', $names);
+
+	}//end varyWithOrigin()
 
 	/**
 	 * The caller's Origin header, or the server's HTTP_ORIGIN when the header is empty.

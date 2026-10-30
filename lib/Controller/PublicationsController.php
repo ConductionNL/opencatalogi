@@ -272,7 +272,7 @@ class PublicationsController extends Controller {
 	 * @return void
 	 */
 	private function addCorsHeaders(JSONResponse $response): void {
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
 		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
@@ -509,7 +509,7 @@ class PublicationsController extends Controller {
 		// Determine the origin via the same allowlist-aware resolver used elsewhere
 		// so we never reflect an arbitrary caller-supplied Origin (#735).
 		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
 		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
 		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

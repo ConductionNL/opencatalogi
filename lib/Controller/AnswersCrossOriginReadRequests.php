@@ -53,11 +53,13 @@ trait AnswersCrossOriginReadRequests {
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
 	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
+		return array_merge(
+			$this->allowedOriginHeaders(),
+			[
+				'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+				'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
+			]
+		);
 
 	}//end corsHeaders()
 
@@ -74,6 +76,10 @@ trait AnswersCrossOriginReadRequests {
 	 */
 	private function withCorsHeaders(Response $response): Response {
 		foreach ($this->corsHeaders() as $name => $value) {
+			if ($name === 'Vary') {
+				$value = $this->varyWithOrigin(current: (string)($response->getHeaders()['Vary'] ?? ''));
+			}
+
 			$response->addHeader($name, $value);
 		}
 
