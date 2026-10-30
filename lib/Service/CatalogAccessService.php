@@ -94,21 +94,62 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
 	 */
 	public function recompute(int $schemaId): bool {
-		try {
-			$mapper = $this->container->get(self::SCHEMA_MAPPER);
-			$schema = $mapper->find($schemaId, [], _rbac: false, _multitenancy: false);
-		} catch (\Throwable $e) {
-			$this->logger->warning('[CatalogAccessService] schema '.$schemaId.' could not be read: '.$e->getMessage());
-			return false;
+		return $this->recomputeMany(schemaIds: [$schemaId]) === 1;
+
+	}//end recompute()
+
+	/**
+	 * Recompute and, where it changed, write the authorization of several schemas.
+	 *
+	 * The catalogues are read once for all of them. A schema that cannot be read
+	 * or written is logged and skipped; nothing is thrown, so a catalogue save
+	 * that already went through never reports an error for this follow-up work.
+	 *
+	 * @param array<int, int> $schemaIds The schema ids.
+	 *
+	 * @return int How many schemas were written.
+	 *
+	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
+	 */
+	public function recomputeMany(array $schemaIds): int {
+		$schemaIds = array_values(array_unique($schemaIds));
+		if ($schemaIds === []) {
+			return 0;
 		}
 
 		// Fail closed (ADR-102): when the catalogues cannot be read, "no catalogue
 		// restricts this schema" is unknown, not true. Recomputing on an empty list
 		// would restore the pre-restriction rules and drop the snapshot, so the
-		// schema and its snapshot are left exactly as they are.
+		// schemas and their snapshots are left exactly as they are.
 		$catalogs = $this->catalogs();
 		if ($catalogs === null) {
-			$this->logger->warning('[CatalogAccessService] schema '.$schemaId.' left unchanged: the catalogues could not be read');
+			$this->logger->warning('[CatalogAccessService] schema(s) '.implode(', ', $schemaIds).' left unchanged: the catalogues could not be read');
+			return 0;
+		}
+
+		$written = 0;
+		foreach ($schemaIds as $schemaId) {
+			$written += (int)$this->recomputeWith(schemaId: $schemaId, catalogs: $catalogs);
+		}
+
+		return $written;
+
+	}//end recomputeMany()
+
+	/**
+	 * Recompute one schema from an already-read catalogue list and write it when it changed.
+	 *
+	 * @param int                              $schemaId The schema id.
+	 * @param array<int, array<string, mixed>> $catalogs Every catalogue.
+	 *
+	 * @return bool Whether the schema was written.
+	 */
+	private function recomputeWith(int $schemaId, array $catalogs): bool {
+		try {
+			$mapper = $this->container->get(self::SCHEMA_MAPPER);
+			$schema = $mapper->find($schemaId, [], _rbac: false, _multitenancy: false);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[CatalogAccessService] schema '.$schemaId.' could not be read: '.$e->getMessage());
 			return false;
 		}
 
@@ -119,10 +160,16 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		$schema->setAuthorization($next);
-		$mapper->update($schema);
+		try {
+			$mapper->update($schema);
+		} catch (\Throwable $e) {
+			$this->logger->error('[CatalogAccessService] schema '.$schemaId.' could not be written: '.$e->getMessage());
+			return false;
+		}
+
 		return true;
 
-	}//end recompute()
+	}//end recomputeWith()
 
 	/**
 	 * The authorization a schema should have, given the catalogues.

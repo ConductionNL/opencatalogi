@@ -47,6 +47,20 @@ class CatalogAccessServiceTest extends TestCase {
 	private int $writes = 0;
 
 	/**
+	 * Whether the mapper's update throws.
+	 *
+	 * @var bool
+	 */
+	public bool $failWrites = false;
+
+	/**
+	 * How often the catalogues were searched.
+	 *
+	 * @var int
+	 */
+	public int $searches = 0;
+
+	/**
 	 * The service over these catalogues.
 	 *
 	 * @param array<int, array<string, mixed>>|null $catalogs The catalogues; null makes the catalogue search throw.
@@ -71,11 +85,12 @@ class CatalogAccessServiceTest extends TestCase {
 		);
 		$config->method('getKeys')->willReturnCallback(fn (): array => array_keys($this->stored));
 
-		$objects = new class($catalogs) {
+		$objects = new class($catalogs, $this) {
 			/**
 			 * @param array<int, array<string, mixed>>|null $rows The rows; null throws.
+			 * @param CatalogAccessServiceTest              $test Counts the searches.
 			 */
-			public function __construct(private ?array $rows) {
+			public function __construct(private ?array $rows, private CatalogAccessServiceTest $test) {
 			}
 
 			/**
@@ -86,6 +101,7 @@ class CatalogAccessServiceTest extends TestCase {
 			 * @return array<string, mixed>
 			 */
 			public function searchObjectsPaginated(array $query, bool $_rbac=true, bool $_multitenancy=true): array {
+				$this->test->searches++;
 				if ($this->rows === null) {
 					throw new \RuntimeException('search index unavailable');
 				}
@@ -114,6 +130,10 @@ class CatalogAccessServiceTest extends TestCase {
 			 * @return object The schema.
 			 */
 			public function update(object $schema): object {
+				if ($this->test->failWrites === true) {
+					throw new \RuntimeException('database gone');
+				}
+
 				$this->test->wrote();
 				return $schema;
 			}
@@ -284,6 +304,24 @@ class CatalogAccessServiceTest extends TestCase {
 		$this->assertSame([173], $this->service(null)->coveredSchemaIds());
 
 	}//end testAFailedCatalogueReadStillListsTheSchemasWithASnapshot()
+
+	public function testRecomputeManyReadsTheCataloguesOnce(): void {
+		$catalogs = [['title' => 'Raadsstukken', 'schemas' => [173, 184, 190], 'staffAccess' => ['restricted' => true, 'editGroups' => ['griffie']]]];
+
+		$this->assertSame(1, $this->service($catalogs)->recomputeMany(schemaIds: [173, 184, 190, 173]));
+
+		$this->assertSame(1, $this->searches);
+
+	}//end testRecomputeManyReadsTheCataloguesOnce()
+
+	public function testAFailingSchemaWriteIsLoggedNotThrown(): void {
+		$this->failWrites = true;
+		$catalogs = [['title' => 'Raadsstukken', 'schemas' => [173], 'staffAccess' => ['restricted' => true, 'editGroups' => ['griffie']]]];
+
+		$this->assertFalse($this->service($catalogs)->recompute(schemaId: 173));
+		$this->assertSame(0, $this->service($catalogs)->recomputeMany(schemaIds: [173]));
+
+	}//end testAFailingSchemaWriteIsLoggedNotThrown()
 
 	public function testRestrictedSchemaIdsListsOnlyTheSchemasARestrictedCatalogueCovers(): void {
 		$service = $this->service(

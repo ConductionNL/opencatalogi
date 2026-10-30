@@ -81,11 +81,16 @@ class CatalogAccessListener implements IEventListener {
 	/**
 	 * Guard before a catalogue write, recompute after one.
 	 *
+	 * The post-save recompute stays in the request on purpose (ADR-078 rule 3).
+	 * It reads the catalogues once for every covered schema and never throws.
+	 *
 	 * @param Event $event The OpenRegister object event.
 	 *
 	 * @return void
 	 *
 	 * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
+	 *
+	 * @listener-placement inline correctness — deferred, a just-restricted catalogue stays open to every signed-in user until the job runs
 	 *
 	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
 	 */
@@ -115,9 +120,7 @@ class CatalogAccessListener implements IEventListener {
 			$schemaIds = array_merge($schemaIds, $this->access->schemaIdsOf(catalog: ($object->getObject() ?? [])));
 		}
 
-		foreach (array_unique($schemaIds) as $schemaId) {
-			$this->access->recompute(schemaId: $schemaId);
-		}
+		$this->access->recomputeMany(schemaIds: $schemaIds);
 
 	}//end handle()
 

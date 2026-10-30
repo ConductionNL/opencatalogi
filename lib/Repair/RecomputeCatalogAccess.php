@@ -80,10 +80,7 @@ class RecomputeCatalogAccess implements IRepairStep {
 			return;
 		}
 
-		$written = 0;
-		foreach ($this->access->coveredSchemaIds() as $schemaId) {
-			$written += (int)$this->access->recompute(schemaId: $schemaId);
-		}
+		$written = $this->access->recomputeMany(schemaIds: $this->access->coveredSchemaIds());
 
 		$output->info('Catalogue staff access written onto '.$written.' schema(s)');
 

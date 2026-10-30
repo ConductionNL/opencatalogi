@@ -40,6 +40,18 @@ interface CatalogAccessServiceInterface {
 	public function recompute(int $schemaId): bool;
 
 	/**
+	 * Recompute and, where it changed, write the authorization of several
+	 * schemas, reading the catalogues once; never throws.
+	 *
+	 * @param array<int, int> $schemaIds The schema ids.
+	 *
+	 * @return int How many schemas were written.
+	 *
+	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
+	 */
+	public function recomputeMany(array $schemaIds): int;
+
+	/**
 	 * The authorization a schema should have, given the catalogues.
 	 *
 	 * @param int                              $schemaId The schema id.

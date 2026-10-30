@@ -44,7 +44,7 @@ class CatalogAccessListenerTest extends TestCase {
 	protected function setUp(): void {
 		$this->access = $this->getMockBuilder(CatalogAccessService::class)
 			->disableOriginalConstructor()
-			->onlyMethods(['recompute', 'restrictedSchemaIds'])
+			->onlyMethods(['recompute', 'recomputeMany', 'restrictedSchemaIds'])
 			->getMock();
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
@@ -249,12 +249,13 @@ class CatalogAccessListenerTest extends TestCase {
 
 	}//end testAnAdministratorMayChangeTheScopeOfACatalogueOnARestrictedSchema()
 
-	public function testASavedCatalogueRecomputesItsOldAndNewSchemas(): void {
+	public function testASavedCatalogueRecomputesItsOldAndNewSchemasInOneCall(): void {
 		$recomputed = [];
-		$this->access->method('recompute')->willReturnCallback(
-			function (int $schemaId) use (&$recomputed): bool {
-				$recomputed[] = $schemaId;
-				return true;
+		$this->access->expects($this->never())->method('recompute');
+		$this->access->expects($this->once())->method('recomputeMany')->willReturnCallback(
+			function (array $schemaIds) use (&$recomputed): int {
+				$recomputed = array_values(array_unique($schemaIds));
+				return count($recomputed);
 			}
 		);
 
@@ -265,12 +266,19 @@ class CatalogAccessListenerTest extends TestCase {
 		sort($recomputed);
 		$this->assertSame([173, 184, 190], $recomputed);
 
-	}//end testASavedCatalogueRecomputesItsOldAndNewSchemas()
+	}//end testASavedCatalogueRecomputesItsOldAndNewSchemasInOneCall()
 
 	public function testADeletedCatalogueRecomputesItsSchemas(): void {
-		$this->access->expects($this->once())->method('recompute')->with(173);
+		$this->access->expects($this->once())->method('recomputeMany')->with([173]);
 
 		$this->listener->handle(new ObjectDeletedEvent($this->catalog(['schemas' => ['173']])));
 
 	}//end testADeletedCatalogueRecomputesItsSchemas()
+
+	public function testThePostSaveHandlerCarriesAnAdr078Placement(): void {
+		$doc = (string)(new \ReflectionMethod(CatalogAccessListener::class, 'handle'))->getDocComment();
+
+		$this->assertMatchesRegularExpression('/@listener-placement inline correctness — \S/u', $doc);
+
+	}//end testThePostSaveHandlerCarriesAnAdr078Placement()
 }//end class
