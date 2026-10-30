@@ -230,6 +230,50 @@ All federation publication endpoints MUST have corresponding routes in
 - **WHEN** the app's routes are loaded,
 - **THEN** each endpoint MUST have a corresponding entry in `appinfo/routes.php`.
 
+### Requirement: The installation announces itself to the directories it knows (FED-013)
+
+A background job MUST post this installation's directory address to every
+directory it knows, every four hours. The broadcast MUST skip an address that
+points at the installation itself. A receiving installation MUST accept the
+announcement on `POST /api/directory` and synchronise the sender's directory,
+so its catalogues appear as listings.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: a known directory learns about this installation
+
+- **GIVEN** an installation with one known remote directory
+- **WHEN** the broadcast job runs
+- **THEN** the remote directory MUST receive a POST on `/api/directory` naming this installation's directory address
+
+#### Scenario: no broadcast to itself
+
+- **GIVEN** the list of known directories contains this installation's own address
+- **WHEN** the broadcast job runs
+- **THEN** no request MUST be sent to that address
+
+### Requirement: Federation refuses addresses that are not allowed (FED-014)
+
+Before it adds or synchronises a directory, the app MUST resolve the address
+and MUST refuse it when it points at a loopback, link-local (including the
+169.254.169.254 metadata address), private or reserved network. Internal
+directories MUST only be allowed when an administrator switches on
+`allow_internal_directories`, or names the host in `local_federation_hosts`.
+
+**Priority:** Must **Status:** Implemented
+
+#### Scenario: an internal address is refused
+
+- **GIVEN** `allow_internal_directories` is off and `local_federation_hosts` is empty
+- **WHEN** an administrator adds a directory whose host resolves to 10.0.0.5
+- **THEN** the request MUST be refused and no listing MUST be created
+
+#### Scenario: an allowlisted development host is accepted
+
+- **GIVEN** `local_federation_hosts` names the host `fed2.local`
+- **WHEN** an administrator adds the directory `http://fed2.local/apps/opencatalogi/api/directory`
+- **THEN** the directory MUST be synchronised
+
 ## Change history
 
 | ID | Title | Reason removed |

@@ -867,7 +867,9 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/manifest.json:490 Catalogs page -> CatalogiIndex.vue:243 onAdd opens CatalogModal; src/modals/catalog/CatalogModal.vue:63-92 title, summary, slug fields; CatalogModal.vue:466 objectStore.createObject -> OR objects API (object.js:1256); PublicationsController.php:433 serves /api/{catalogSlug}",
-				"change": "retrofit-2026-05-26-catalog-management"
+				"change": "retrofit-2026-05-26-catalog-management",
+				"spec": "openspec/specs/retrofit-2026-05-26-catalog-management",
+				"requirement": "A catalogue has its own title, summary and web address (REQ-CATM-006)"
 			},
 			"reachedOn": "/catalogi Add Catalog (CatalogiIndex.vue:31, admin only) -> CatalogModal.vue:466",
 			"note": "The web address is the slug, served as GET /apps/opencatalogi/api/{slug}. Add, edit, copy and delete are admin-only (CatalogiIndex.vue:31,168).",
@@ -905,7 +907,9 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/modals/catalog/CatalogModal.vue:110-119 registers and schemas pickers, saved at :437-449; lib/Service/PublicationService.php:526 rejects schemas outside the catalog context; lib/Service/EventService.php:317 auto-publish matches catalog registers/schemas",
-				"change": "retrofit-2026-05-26-catalog-management"
+				"change": "retrofit-2026-05-26-catalog-management",
+				"spec": "openspec/specs/retrofit-2026-05-26-catalog-management",
+				"requirement": "A catalogue has its own title, summary and web address (REQ-CATM-006)"
 			},
 			"reachedOn": "/catalogi -> CatalogModal (CatalogiIndex.vue:297 editCatalog)",
 			"note": "The choice drives the public /api/{slug} scope. The staff Publications page ignores it: it is hard-wired to register/schema 'publication' (manifest.json:523-531).",
@@ -944,7 +948,9 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/manifest.json:488 Catalogs page (CatalogiIndex.vue:2 CnIndexPage), row click -> CatalogDetail (CatalogiIndex.vue:259); CatalogDetailPage.vue:311 openPublications -> /publications/:catalogSlug; manifest.json:521 Publications page -> CatalogPublicationsIndex.vue:190 lists the catalog's registers x schemas (services/catalogScope.js), the same scope as PublicationQueryService::buildCatalogSearchQuery",
-				"change": "retrofit-2026-05-26-catalog-management"
+				"change": "retrofit-2026-05-26-catalog-management",
+				"spec": "openspec/specs/retrofit-2026-05-26-catalog-management",
+				"requirement": "Catalogue overview (REQ-CATM-005)"
 			},
 			"reachedOn": "/catalogi -> /catalogi/:id -> /publications/:catalogSlug",
 			"note": "The overview and the detail page work. A catalogue's publications page lists only that catalogue's publications: its numeric registers x schemas, one pair at a time, with a selector when there is more than one pair.",
@@ -1124,7 +1130,8 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "Staff pages read through OR objects API (object.js:890 /apps/openregister/api/objects), where OR applies its default multitenancy; opencatalogi's public reads deliberately disable it (openspec/specs/catalogs/spec.md:26 'no RBAC/multitenancy filters'; PublicationsController.php:1166 only uses/used pass _multitenancy: true)",
-				"spec": "openspec/specs/opencatalogi-adopt-or-abstractions"
+				"spec": "openspec/specs/opencatalogi-adopt-or-abstractions",
+				"requirement": "staff pages MUST show only the active organisation's catalogues and publications"
 			},
 			"reachedOn": "/catalogi and /publications/:catalogSlug through OR's active-organisation scoping",
 			"note": "Isolation rests entirely on OR multitenancy. opencatalogi has no org-scoping logic of its own, and its public API serves every organisation's catalogues. Not verified live. Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-03-22-saas-multi-tenant; the missing half is opencatalogi's own work, so the owner moved to ConductionNL/opencatalogi (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister).",
@@ -1194,7 +1201,9 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "CatalogiIndex.vue:176-181 Copy row action (admin) -> CatalogiIndex.vue:306 setDialog('copyObject'); src/dialogs/generic/CopyObjectDialog.vue:104-126 -> object.js:2133 copyObject prefixes 'Kopie van' and createObject; Publications page actionToggles showCopyAction true (manifest.json:529-535)",
-				"change": "retrofit-2026-05-26-generic-dialogs"
+				"change": "retrofit-2026-05-26-generic-dialogs",
+				"spec": "openspec/specs/retrofit-2026-05-26-generic-dialogs",
+				"requirement": "Copy object dialog (REQ-DLG-002)"
 			},
 			"reachedOn": "/catalogi row Copy -> CopyObjectDialog; /publications/:catalogSlug row Copy (CnIndexPage)",
 			"note": "A copied catalogue keeps the original slug field, so two catalogues can share one web address until someone edits it.",
@@ -1302,7 +1311,9 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "object.js:2849/2897 publishAttachment/depublishAttachment -> OR /files/{id}/publish; only caller is dialogs/attachment/MassAttachmentModal.vue:233, opened from modals/object/ViewObject.vue:2328, which is reached only from Dashboard.vue:1066 createPublication (new object) and MergeObject; the PublicationDetail files widget (manifest.json:650) has no publish toggle",
-				"change": "retrofit-2026-05-26-mass-object-actions"
+				"change": "retrofit-2026-05-26-mass-object-actions",
+				"spec": "openspec/specs/retrofit-2026-05-26-mass-object-actions",
+				"requirement": "Mass attachment publish/depublish (REQ-MASS-006)"
 			},
 			"reachedOn": "nothing on the publication detail page; only the legacy ViewObject modal",
 			"note": "The per-file publish endpoint and store actions exist, but the page staff actually use for a publication does not expose them.",
@@ -1455,7 +1466,9 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "src/manifest.json:543 PublicationDetail is a CnDetailPage; nextcloud-vue v2.56.0 CnDetailPage.vue:3320-3337 openEditForm takes the lock via useObjectLock (OR /lock), CnDetailPage.vue:301 CnLockedBanner shows holder and Unlock",
-				"change": "retrofit-2026-05-26-mass-object-actions"
+				"change": "retrofit-2026-05-26-mass-object-actions",
+				"spec": "openspec/specs/retrofit-2026-05-26-mass-object-actions",
+				"requirement": "Editing a publication takes a lock (REQ-MASS-008)"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id Edit (lock taken on open)",
 			"note": "The lock is implicit on edit, not a separate Lock button. The app's own LockObject.vue modal has no caller.",
@@ -1594,7 +1607,8 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Listener/ObjectCreatedEventListener.php:103-117 -> EventService.php:133 handleObjectCreateEvents when auto_publish_objects is on; EventService.php:277-318 rule = object's register+schema is in some catalog; Settings.vue:688 publishing options (routes.php:46-47); PublicationRuleService.php:180 publishes() conditions are not called from the listener",
-				"spec": "openspec/specs/auto-publishing"
+				"spec": "openspec/specs/auto-publishing",
+				"requirement": "Only auto-publish objects whose register/schema match a configured catalog (APB-005)"
 			},
 			"reachedOn": "Admin settings publishing options, then any OR object created in a catalogued schema",
 			"note": "Auto-publish works, but the only rule is catalogue membership. The conditional publicationRule engine is used for preview and public search only.",
@@ -3646,7 +3660,9 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "FederationDirectory.vue:18 imports FederationAddDirectoryModal.vue:107 POST /api/listings/add -> routes.php:190 -> ListingsController.php:659 add() (admin) -> DirectoryService.php:471 syncDirectory() with SSRF guard :518",
-				"change": "retrofit-2026-05-26-directory-federation"
+				"change": "retrofit-2026-05-26-directory-federation",
+				"spec": "openspec/specs/retrofit-2026-05-26-directory-federation",
+				"requirement": "Add a directory by its address (REQ-DIR-004)"
 			},
 			"reachedOn": "/directory (FederationDirectory.vue 'Add directory' -> FederationAddDirectoryModal.vue:107)",
 			"provider": "opencatalogi",
@@ -3680,7 +3696,9 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "info.xml:137 DirectorySync job, DirectorySync.php:83-90 interval from config, :112 doCronSync (DirectoryService.php:192); sync now: Settings.vue:435 button -> :1545 POST /api/listings/sync -> ListingsController.php:592 synchronise()",
-				"change": "retrofit-2026-05-26-directory-federation"
+				"change": "retrofit-2026-05-26-directory-federation",
+				"spec": "openspec/specs/retrofit-2026-05-26-directory-federation",
+				"requirement": "Scheduled and on-demand synchronisation (REQ-DIR-005)"
 			},
 			"reachedOn": "Admin settings (Settings.vue:435 'sync directories now'); background job",
 			"note": "Per-listing sync is dead: DirectorySideBar.vue:464 posts to /api/listings/synchronise/{id}, which has no route, and the sidebar is not mounted.",
@@ -3718,7 +3736,8 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "info.xml:148 Broadcast job, Broadcast.php:59 every 4h, :91 broadcastService->broadcast(null) -> BroadcastService.php:425 posts to every known directory, refuses a local self-URL :448; inbound: routes.php:185 POST /api/directory -> DirectoryController.php:232 update()",
-				"spec": "openspec/specs/federation"
+				"spec": "openspec/specs/federation",
+				"requirement": "The installation announces itself to the directories it knows (FED-013)"
 			},
 			"reachedOn": "background job; peers receive it on POST /apps/opencatalogi/api/directory",
 			"provider": "opencatalogi",
@@ -3752,7 +3771,9 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "FederationDirectory.vue:51,59 Edit/Delete actions; FederationEditListingModal.vue:108 PUT /api/listings/{id} with integrationLevel (search/sync/none); FederationDeleteListingModal.vue:109 DELETE; DirectoryService.php:328 only integrationLevel=='search' listings feed federated search",
-				"change": "retrofit-2026-05-26-directory-federation"
+				"change": "retrofit-2026-05-26-directory-federation",
+				"spec": "openspec/specs/retrofit-2026-05-26-directory-federation",
+				"requirement": "Edit or remove a listing (REQ-DIR-006)"
 			},
 			"reachedOn": "/directory (FederationDirectory.vue Edit/Delete)",
 			"note": "Choosing 'Full sync' (sync) takes a listing out of federated search, because DirectoryService.php:328 counts only 'search' as available. That may not be what an admin expects.",
@@ -3859,7 +3880,8 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "DirectoryService.php:1752 assertSafeOutboundUrl (DNS-resolving) on add/sync :518,:1095; :1863 isBlockedIp blocks 169.254.169.254, loopback, private/reserved; allow_internal_directories opt-in :1946; FederationHostPolicy.php:57 local_federation_hosts allowlist",
-				"spec": "openspec/specs/federation"
+				"spec": "openspec/specs/federation",
+				"requirement": "Federation refuses addresses that are not allowed (FED-014)"
 			},
 			"reachedOn": "enforced on POST /api/listings/add and every sync; configured by occ only",
 			"provider": "opencatalogi",
@@ -3932,7 +3954,8 @@
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq FederatedSearchBlock.vue:514 defaults to /index.php/apps/opencatalogi/api/federation/publications, PublicationDetailBlock.vue:140; InitializeDemoPortal.php:344 wires it; opencatalogi FederationController.php:81 PublicPage aggregates local + peers",
-				"spec": "openspec/specs/federation"
+				"spec": "openspec/specs/federation",
+				"requirement": "List all publications from local and federated sources (FED-001)"
 			},
 			"reachedOn": "portaliq public site search + /publicatie/<id> pages -> GET /apps/opencatalogi/api/federation/publications (public)",
 			"provider": "portaliq",
@@ -4240,7 +4263,9 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "DcatService.php:197 datasetIri = base/apps/opencatalogi/api/{catalogSlug}/{uuid}; DcatMappingService.php:258 dct:identifier = publication id; grep DOI/handle/ARK in lib: 0",
-				"change": "dcat-ap-harvest"
+				"change": "dcat-ap-harvest",
+				"spec": "openspec/specs/dcat-ap-harvest",
+				"requirement": "Attachments rendered as distributions with stable IRIs (DCAT-006)"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{uuid} (public)",
 			"note": "UUID-based URLs are stable but host- and slug-bound. There is no PID scheme (DOI, Handle or ARK) and no citation output.",
@@ -4340,7 +4365,8 @@
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq src/site/components/FederatedSearchBlock.vue:514 and PublicationDetailBlock.vue:140 default to /index.php/apps/opencatalogi/api/federation/publications; lib/Controller/FederationController.php:74 @PublicPage",
-				"spec": "openspec/specs/federation"
+				"spec": "openspec/specs/federation",
+				"requirement": "All federation endpoints must be public (FED-007)"
 			},
 			"reachedOn": "portaliq public site (FederatedSearchBlock + PublicationDetailBlock) over GET /apps/opencatalogi/api/federation/publications (public)",
 			"note": "opencatalogi supplies the anonymous API. portaliq renders the reading room.",
@@ -4410,7 +4436,8 @@
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq tests/e2e/site-accessibility.spec.ts:57 runs axe with wcag2a/2aa/21a/21aa/22aa tags; :83,:94,:104 grid, markdown and not-found pages; :116 keyboard-only path; src/site/App.vue:136 aria breadcrumb",
-				"spec": "none"
+				"change": "portaliq/public-site-meets-wcag-aa",
+				"requirement": "The public site meets WCAG 2.1 AA on every page state it serves (REQ-PWA-001)"
 			},
 			"reachedOn": "portaliq public site root ([data-testid=site-root])",
 			"note": "Automated axe checks and a keyboard test cover three page states. The search and publication-detail blocks are not named in the axe tests. That is evidence of AA work, not a conformance claim.",
@@ -4964,10 +4991,12 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:89 GET /api/service-catalogue/unavailable (admin); lib/Controller/ServiceCatalogueController.php:220 unavailableEntries filters entries with available=false and a reason (ServiceCatalogueService.php:203-220)",
-				"change": "published-service-and-case-type-catalogue"
+				"evidence": "src/manifest.d/service-catalogue-admin-screens.json ServiceCatalogue page widget needs-repair reads /apps/opencatalogi/api/service-catalogue/unavailable (re-measured 2026-10-30); appinfo/routes.php:89 GET /api/service-catalogue/unavailable (admin); lib/Controller/ServiceCatalogueController.php:220 unavailableEntries filters entries with available=false and a reason (ServiceCatalogueService.php:203-220)",
+				"change": "published-service-and-case-type-catalogue",
+				"spec": "openspec/specs/published-service-and-case-type-catalogue",
+				"requirement": "An administrator sees which catalogue entries need repair (REQ-PSC-104)"
 			},
-			"reachedOn": "nothing: admin API only, no page in src/ calls it",
+			"reachedOn": "/service-catalogue \"Needs repair\" list (admin)",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "service-and-case-type-catalogue",
@@ -5026,9 +5055,9 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "none",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:229 POST /api/knowledge-articles/{id}/verdict @PublicPage; lib/Controller/ServiceCatalogueController.php:499 recordVerdict counts one verdict per reader and returns publicCounts; KnowledgeArticleService.php:203 refuses drafts",
+				"evidence": "Code removed 2026-09-29 by 29e5b27d (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code) together with the knowledge articles of the decided-no row svc-articles: routes, ServiceCatalogueController methods and KnowledgeArticleService are gone from development (re-measured 2026-10-30). The staff Knowledge articles list (src/manifest.d/service-catalogue-admin-screens.json, 23 Oct) shows a helpfulCount column, but no route lets a reader record a verdict; before removal: appinfo/routes.php:229 POST /api/knowledge-articles/{id}/verdict @PublicPage; lib/Controller/ServiceCatalogueController.php:499 recordVerdict counts one verdict per reader and returns publicCounts; KnowledgeArticleService.php:203 refuses drafts",
 				"change": "published-service-and-case-type-catalogue"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/knowledge-articles/{id}/verdict (public). No page or portal calls it or shows the count",
@@ -5061,9 +5090,9 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "none",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:93 POST /api/knowledge-articles/extract; lib/Controller/ServiceCatalogueController.php:602 extractArticle takes the case in the request body and saves KnowledgeArticleService::extractDraft as a draft",
+				"evidence": "Code removed 2026-09-29 by 29e5b27d (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code) together with the knowledge articles of the decided-no row svc-articles: routes, ServiceCatalogueController methods and KnowledgeArticleService are gone from development (re-measured 2026-10-30); before removal: appinfo/routes.php:93 POST /api/knowledge-articles/extract; lib/Controller/ServiceCatalogueController.php:602 extractArticle takes the case in the request body and saves KnowledgeArticleService::extractDraft as a draft",
 				"change": "published-service-and-case-type-catalogue"
 			},
 			"reachedOn": "nothing: no opencatalogi page and no dossiq caller (git grep procest origin/development finds no knowledge-articles call)",
@@ -5437,7 +5466,8 @@
 				"state": "built",
 				"owner": "nextcloud/user_oidc",
 				"evidence": "lib/Controller/RetentionController.php:85 and NoticeBoardController.php:143 take the user from Nextcloud IUserSession; the app has no login of its own, so any Nextcloud SSO backend signs staff in",
-				"spec": "none"
+				"spec": "openspec/specs/app-packaging",
+				"requirement": "Staff sign in through Nextcloud's own login (PKG-006)"
 			},
 			"reachedOn": "Nextcloud login (user_oidc / user_saml) in front of /apps/opencatalogi",
 			"note": "Inherited from the platform. Nothing app-specific to build.",
@@ -5862,7 +5892,9 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/views/settings/Settings.vue:110-119 per-object-type schema pickers; Settings.vue:1046 saveAll -> /api/settings (routes.php:35-40, SettingsController); lib/Settings/OpenCatalogiAdmin.php:59 admin section",
-				"change": "retrofit-2026-05-26-app-shell-settings"
+				"change": "retrofit-2026-05-26-app-shell-settings",
+				"spec": "openspec/specs/retrofit-2026-05-26-app-shell-settings",
+				"requirement": "Settings configuration (REQ-SHELL-001)"
 			},
 			"reachedOn": "Nextcloud admin settings > OpenCatalogi (Settings.vue)",
 			"provider": "opencatalogi",
@@ -6220,7 +6252,9 @@
 				"state": "built",
 				"owner": "ConductionNL/nextcloud-vue",
 				"evidence": "src/manifest.json:97 walkthrough tour 'opencatalogi:getting-started', trigger first-visit; manifest.json:423 Restart tutorial footer menu item (action replay-walkthrough)",
-				"change": "retrofit-2026-05-26-app-shell-settings"
+				"change": "retrofit-2026-05-26-app-shell-settings",
+				"spec": "openspec/specs/retrofit-2026-05-26-app-shell-settings",
+				"requirement": "First-use walkthrough (REQ-SHELL-005)"
 			},
 			"reachedOn": "first visit to the app; footer 'Restart tutorial'",
 			"provider": "nextcloud-vue",
@@ -6254,7 +6288,8 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/info.xml:60 licence EUPL-1.2, Nextcloud app whose only dependency is openregister (manifest.json dependencies); docker-compose.yml in repo; Application.php:83 default directory URL is only an optional federation peer",
-				"spec": "openspec/specs/app-packaging"
+				"spec": "openspec/specs/app-packaging",
+				"requirement": "The app runs on the organisation's own Nextcloud with no vendor cloud (PKG-005)"
 			},
 			"reachedOn": "any Nextcloud install",
 			"note": "The one outbound default is the national directory used for federation, which the setup step makes optional.",
@@ -6290,8 +6325,8 @@
 				"state": "built",
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at integriq development 5e903e546: the source detail page (/sources/:id, src/manifest.json:1012) carries SourceRunSummaryWidget (src/manifest.json:1336-1340), which shows the source's pulls per day in one table and each run with a Run again button on a failed run (src/components/SourceRunSummaryWidget.vue:17-97), fed by GET /api/sources/{id}/run-summary (appinfo/routes.php:409, lib/Controller/RunSummaryController.php:102 via RunSummaryService); Run again posts /api/synchronizations/{id}/run (src/handlers/runAgain.js:35-37). Shipped by integriq change observability-connection-run-summary, archived 2026-09-29 (10 of 10 tasks). opencatalogi itself still only reports its own three connections (lib/Settings/connections.json, lib/Service/Connection/ConnectionReporter.php).",
-				"change": "integriq/observability-connection-run-summary",
-				"readOn": "2026-10-07"
+				"readOn": "2026-10-07",
+				"spec": "integriq/openspec/specs/connection-run-monitoring"
 			},
 			"reachedOn": "integriq /sources/:id (run summary per day, Run again)",
 			"provider": "integriq",
@@ -6670,7 +6705,8 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): publications are OpenRegister objects and deletes are soft; the Deleted page (src/manifest.json:165-170, component src/views/deleted/DeletedIndex.vue) offers restore per item and in bulk and permanently delete per item (DeletedIndex.vue:221,633-678; store src/store/modules/deleted.js:285-298 restore, :354 permanentlyDelete), backed by /api/deleted/{id}/restore and DELETE /api/deleted/{id} (appinfo/routes.php:1429-1442). Soft delete keeps the files for restore (lib/Service/Object/DeleteObject.php:363-364). Reached in the OpenRegister app, not inside opencatalogi's own navigation.",
-				"spec": "none"
+				"spec": "openregister/openspec/specs/deletion-audit-trail",
+				"requirement": "Requirement 3: Soft-deleted objects MUST be restorable through the trash API"
 			},
 			"reachedOn": "openregister /deleted",
 			"provider": "openregister",
@@ -6748,7 +6784,7 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): publication history is OpenRegister's audit trail; the Settings page section RetentionConfiguration (src/views/settings/Settings.vue:53, fields createLogRetention, readLogRetention, updateLogRetention at src/views/settings/sections/RetentionConfiguration.vue:230-288) sets a retention age per kind of change, stored through PUT/PATCH /api/settings/retention (appinfo/routes.php:347,361, ObjectRetentionHandler lib/Service/Settings/ObjectRetentionHandler.php:162-174), and the hourly LogCleanUpTask tombstones audit rows past that age (lib/BackgroundJob/LogCleanUpTask.php:38-40,157). The payload is destroyed while the row and hash-chain link stay.",
-				"change": "openregister/retrofit-2026-05-24-retention-management"
+				"spec": "openregister/openspec/specs/retention-management"
 			},
 			"reachedOn": "openregister admin settings, retention section",
 			"provider": "openregister",
@@ -6858,8 +6894,8 @@
 				"state": "built",
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at integriq development 5e903e546: each synchronisation now declares what happens to a record that disappears from its source: sourceConfig.disappearancePolicy delete, markEnded, keepAndFlag or purge (lib/Service/Ownership/DisappearancePolicy.php:35-63), applied by lib/Service/SynchronizationService.php:4354-4644 behind the existing deletion-ratio guard, chosen in the synchronisation editor (src/modals/v2/SynchronizationEditorModal.vue:191-206). Shipped by integriq change records-owned-by-an-external-source, archived 2026-09-28 (22 of 23 tasks; the open one is a nightly e2e). keepAndFlag is keep until someone acts; markEnded writes an end date instead of an opencatalogi unpublish. Source read at opencatalogi development 7a5a8a492: federated publications are still read live from peers (lib/Controller/FederationController.php), so a record gone at the peer disappears at once.",
-				"change": "integriq/records-owned-by-an-external-source",
-				"readOn": "2026-10-07"
+				"readOn": "2026-10-07",
+				"spec": "integriq/openspec/specs/source-owned-records"
 			},
 			"reachedOn": "integriq synchronisation editor (disappearance policy)",
 			"provider": "integriq",
