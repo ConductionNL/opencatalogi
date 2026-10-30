@@ -463,6 +463,32 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * A publication that names its organisation only by UUID gets the
+	 * organisation's own tooiIdentifier as publisher, looked up once per
+	 * organisation for the whole request (WOO-TOOI-002).
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testThePublisherIsLookedUpOncePerOrganisation(): void {
+		$tooi = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855';
+		$objectService = $this->environmentAwareDouble(\OCA\OpenRegister\Service\ObjectService::class, ['searchObjects']);
+		$objectService->expects($this->once())
+			->method('searchObjects')
+			->with(['@self' => ['uuid' => 'org-uuid-123']])
+			->willReturn([['tooiIdentifier' => $tooi]]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$file = ['downloadUrl' => 'https://example.com/files/doc.pdf', 'extension' => 'pdf', 'owner' => 'file-owner'];
+		$method = $this->getPrivateMethod('mapDiwooDocument');
+		foreach (['pub-a', 'pub-b'] as $id) {
+			$publication = ['id' => $id, 'category' => 'infocat014', '@self' => ['created' => '2024-01-15 10:00:00', 'organisation' => 'org-uuid-123']];
+			$doc = $method->invoke($this->service, $publication, $file)['diwoo:Document']['diwoo:DiWoo'];
+			$this->assertSame($tooi, $doc['diwoo:publisher']['@resource'], $id);
+		}
+	}
+
+	/**
 	 * diwoo:atTime falls back to the publication's own publicationDate (RBAC model)
 	 * when the file has no published timestamp. The removed object-level
 	 * @self.published predicate is always empty for magic-mapped publications and

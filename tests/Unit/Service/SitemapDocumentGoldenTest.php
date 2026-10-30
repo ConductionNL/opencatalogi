@@ -26,6 +26,7 @@
  * @spec openspec/specs/woo-compliance/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\SitemapService
+ * @uses \OCA\OpenCatalogi\Service\SitemapIndexBuilder
  * @uses \OCA\OpenCatalogi\Service\TooiVocabularyService
  * @uses \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry
  * @uses \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission
