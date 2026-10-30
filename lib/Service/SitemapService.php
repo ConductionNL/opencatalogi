@@ -170,12 +170,13 @@ class SitemapService implements SitemapServiceInterface {
 	/**
 	 * Build sitemap index based on woo category.
 	 *
+	 * Visibility is governed by RBAC in every search (_rbac: true): sitemaps
+	 * expose only the published objects the public group may read.
+	 *
 	 * @param string $catalogSlug The catalog slug identifier.
 	 * @param string $categoryCode The DIWOO category code.
 	 *
 	 * @return XMLResponse The sitemap index XML response.
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
@@ -187,31 +188,40 @@ class SitemapService implements SitemapServiceInterface {
 			return $error;
 		}
 
-		$catalog = $request->catalog;
-		$registerId = $request->registerId;
-		$schemaId = $request->schemaId;
-
-		$emptyIndex = new XMLResponse(
-			data: [
-				'@root' => 'sitemapindex',
-				'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
-				'sitemap' => [],
-			]
+		$request->queries = $this->sitemapQueries(
+			registerId: $request->registerId,
+			schemaId: $request->schemaId,
+			catalog: $request->catalog,
+			categoryCode: $categoryCode
 		);
-
-		$queries = $this->sitemapQueries(registerId: $registerId, schemaId: $schemaId, catalog: $catalog, categoryCode: $categoryCode);
-		if ($queries === []) {
-			return $emptyIndex;
+		if ($request->queries === []) {
+			return $this->sitemapIndexResponse(sitemaps: []);
 		}
 
-		// Visibility is governed by RBAC in every search (_rbac: true): sitemaps
-		// expose only the published objects the public group may read.
-		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
-		$sitemapBaseUri = "$baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode/publications";
+		return $this->sitemapIndexResponse(
+			sitemaps: $this->sitemapIndexEntries(request: $request, objectService: $objectService)
+		);
+	}//end buildSitemapIndex()
 
-		// One index entry per page; page N holds page N of every source, so the
-		// index runs until no source has a further page.
+	/**
+	 * One index entry per sitemap page, with the newest update on that page.
+	 *
+	 * Page N holds page N of every source, so the index runs until no source
+	 * has a further page.
+	 *
+	 * @param SitemapRequest $request The resolved request with its sources.
+	 * @param object $objectService The OpenRegister ObjectService.
+	 *
+	 * @return array<int, array{loc: string, lastmod: string|null}>
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function sitemapIndexEntries(SitemapRequest $request, object $objectService): array {
+		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
+		$sitemapBaseUri = "$baseUrl/apps/opencatalogi/api/{$request->catalog->getSlug()}/sitemaps/{$request->categoryCode}/publications";
+
 		$sitemaps = [];
+		$queries = $request->queries;
 		$page = 1;
 		while ($queries !== []) {
 			$batch = $this->searchSitemapPage(objectService: $objectService, queries: $queries, page: $page);
@@ -227,10 +237,19 @@ class SitemapService implements SitemapServiceInterface {
 			$page++;
 		}
 
-		if ($sitemaps === []) {
-			return $emptyIndex;
-		}
+		return $sitemaps;
+	}//end sitemapIndexEntries()
 
+	/**
+	 * A sitemap index document over the given entries.
+	 *
+	 * @param array<int, array{loc: string, lastmod: string|null}> $sitemaps The entries.
+	 *
+	 * @return XMLResponse
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function sitemapIndexResponse(array $sitemaps): XMLResponse {
 		return new XMLResponse(
 			data: [
 				'@root' => 'sitemapindex',
@@ -238,8 +257,7 @@ class SitemapService implements SitemapServiceInterface {
 				'sitemap' => $sitemaps,
 			]
 		);
-
-	}//end buildSitemapIndex()
+	}//end sitemapIndexResponse()
 
 	/**
 	 * Build sitemap based on woo publications.
