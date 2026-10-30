@@ -6325,8 +6325,8 @@
 				"state": "built",
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at integriq development 5e903e546: the source detail page (/sources/:id, src/manifest.json:1012) carries SourceRunSummaryWidget (src/manifest.json:1336-1340), which shows the source's pulls per day in one table and each run with a Run again button on a failed run (src/components/SourceRunSummaryWidget.vue:17-97), fed by GET /api/sources/{id}/run-summary (appinfo/routes.php:409, lib/Controller/RunSummaryController.php:102 via RunSummaryService); Run again posts /api/synchronizations/{id}/run (src/handlers/runAgain.js:35-37). Shipped by integriq change observability-connection-run-summary, archived 2026-09-29 (10 of 10 tasks). opencatalogi itself still only reports its own three connections (lib/Settings/connections.json, lib/Service/Connection/ConnectionReporter.php).",
-				"change": "integriq/observability-connection-run-summary",
-				"readOn": "2026-10-07"
+				"readOn": "2026-10-07",
+				"spec": "integriq/openspec/specs/connection-run-monitoring"
 			},
 			"reachedOn": "integriq /sources/:id (run summary per day, Run again)",
 			"provider": "integriq",
@@ -6784,7 +6784,7 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): publication history is OpenRegister's audit trail; the Settings page section RetentionConfiguration (src/views/settings/Settings.vue:53, fields createLogRetention, readLogRetention, updateLogRetention at src/views/settings/sections/RetentionConfiguration.vue:230-288) sets a retention age per kind of change, stored through PUT/PATCH /api/settings/retention (appinfo/routes.php:347,361, ObjectRetentionHandler lib/Service/Settings/ObjectRetentionHandler.php:162-174), and the hourly LogCleanUpTask tombstones audit rows past that age (lib/BackgroundJob/LogCleanUpTask.php:38-40,157). The payload is destroyed while the row and hash-chain link stay.",
-				"change": "openregister/retrofit-2026-05-24-retention-management"
+				"spec": "openregister/openspec/specs/retention-management"
 			},
 			"reachedOn": "openregister admin settings, retention section",
 			"provider": "openregister",
@@ -6894,8 +6894,8 @@
 				"state": "built",
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at integriq development 5e903e546: each synchronisation now declares what happens to a record that disappears from its source: sourceConfig.disappearancePolicy delete, markEnded, keepAndFlag or purge (lib/Service/Ownership/DisappearancePolicy.php:35-63), applied by lib/Service/SynchronizationService.php:4354-4644 behind the existing deletion-ratio guard, chosen in the synchronisation editor (src/modals/v2/SynchronizationEditorModal.vue:191-206). Shipped by integriq change records-owned-by-an-external-source, archived 2026-09-28 (22 of 23 tasks; the open one is a nightly e2e). keepAndFlag is keep until someone acts; markEnded writes an end date instead of an opencatalogi unpublish. Source read at opencatalogi development 7a5a8a492: federated publications are still read live from peers (lib/Controller/FederationController.php), so a record gone at the peer disappears at once.",
-				"change": "integriq/records-owned-by-an-external-source",
-				"readOn": "2026-10-07"
+				"readOn": "2026-10-07",
+				"spec": "integriq/openspec/specs/source-owned-records"
 			},
 			"reachedOn": "integriq synchronisation editor (disappearance policy)",
 			"provider": "integriq",
