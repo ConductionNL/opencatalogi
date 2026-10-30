@@ -37,6 +37,7 @@
  * @covers \OCA\OpenCatalogi\Controller\ListingsController
  * @covers \OCA\OpenCatalogi\Controller\OoapiController
  * @covers \OCA\OpenCatalogi\Controller\PublicationRulesController
+ * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @covers \OCA\OpenCatalogi\Controller\SchemaOrgController
  * @covers \OCA\OpenCatalogi\Controller\ServiceCatalogueController
  * @covers \OCA\OpenCatalogi\Controller\ThemesController
@@ -60,6 +61,7 @@ use OCA\OpenCatalogi\Controller\InspectionController;
 use OCA\OpenCatalogi\Controller\ListingsController;
 use OCA\OpenCatalogi\Controller\OoapiController;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
+use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Controller\SchemaOrgController;
 use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Controller\ThemesController;
@@ -88,6 +90,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		ListingsController::class,
 		OoapiController::class,
 		PublicationRulesController::class,
+		PublicationsController::class,
 		SchemaOrgController::class,
 		ServiceCatalogueController::class,
 		ThemesController::class,
@@ -101,6 +104,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		DirectoryController::class,
 		GlossaryController::class,
 		ListingsController::class,
+		PublicationsController::class,
 		ThemesController::class,
 	];
 
@@ -110,6 +114,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		DcatController::class,
 		DirectoryController::class,
 		OoapiController::class,
+		PublicationsController::class,
 		SchemaOrgController::class,
 	];
 
@@ -150,6 +155,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 			'padded entries are trimmed' => [' , https://a.nl ,  https://b.nl , ', 'https://b.nl', 'https://b.nl'],
 			'padded entries, unlisted caller' => [' , https://a.nl , ', 'https://c.nl', 'https://a.nl'],
 			'blank first entry, no caller' => [',https://a.nl', '', 'https://a.nl'],
+			'blank first entry, unlisted caller' => [',https://a.nl', 'https://evil.nl', 'https://a.nl'],
 			'blank middle entry, unlisted caller' => ['https://a.nl,,https://b.nl', 'https://c.nl', 'https://a.nl'],
 			'only separators' => [',, ,', 'https://a.nl', '*'],
 			'matching is case sensitive' => ['https://A.nl', 'https://a.nl', 'https://A.nl'],

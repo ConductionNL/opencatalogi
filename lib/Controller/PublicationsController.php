@@ -276,29 +276,12 @@ class PublicationsController extends Controller {
 			$configured = $this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*');
 		}
 
-		$configured = trim($configured);
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
 		$callerOrigin = $this->request->getHeader('Origin');
 		if ($callerOrigin === '') {
 			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
 		}
 
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		// Caller Origin not on the allowlist — fall back to the first configured entry
-		// (or '*' if the allowlist became empty after trimming). Crucially, we do NOT
-		// echo back the caller's unvetted Origin.
-		return ($allowlist[0] ?? '*');
+		return (new CorsAllowlist($configured))->allowedFor($callerOrigin);
 	}//end resolveAllowedOrigin()
 
 	/**
