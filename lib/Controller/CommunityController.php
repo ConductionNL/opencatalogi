@@ -239,6 +239,10 @@ class CommunityController extends Controller {
 	 *
 	 * @return Response The Atom document, or a refusal.
 	 *
+	 * @no-admin-idor-exempt public by design: an anonymous Atom feed. Only records a publication
+	 *   rule publishes reach it, projected for anonymous readers (AtomFeedService::entries() via
+	 *   PublicationRuleService::projectList() → publishes() + projectForAnonymous()), and only current notices.
+	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
