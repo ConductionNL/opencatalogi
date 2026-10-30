@@ -771,9 +771,8 @@ class PublicationService implements PublicationServiceInterface {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 *
+	 * @spec openspec/specs/federation/spec.md
 	 */
 	private function addVirtualFieldFacets(
 		array $existingFacets,
@@ -786,106 +785,19 @@ class PublicationService implements PublicationServiceInterface {
 				$existingFacets['@self'] = [];
 			}
 
-			// Add directory facets if requested.
 			if ($inclDirFacets === true) {
-				// Get unique directories from the directory service.
-				$uniqueDirectories = $this->directoryService->getUniqueDirectories(availableOnly: true);
-
-				// Add local directory.
-				$directoryBuckets = [
-					[
-						'key' => 'local',
-						'label' => 'local',
-						'results' => 1,
-					],
-				];
-
-				// Add federated directories.
-				foreach ($uniqueDirectories as $directoryUrl) {
-					$directoryName = parse_url($directoryUrl, PHP_URL_HOST);
-					if (empty($directoryName) === true) {
-						$directoryName = $directoryUrl;
-					}
-
-					$directoryBuckets[] = [
-						'key' => $directoryName,
-						'label' => $directoryName,
-						'results' => 1,
-					];
-				}
-
 				$existingFacets['@self']['directory'] = [
 					'type' => 'terms',
-					'buckets' => $directoryBuckets,
+					'buckets' => $this->directoryFacetBuckets(),
 				];
-			}//end if
+			}
 
-			// Add catalog facets if requested.
 			if ($inclCatFacets === true) {
-				$catalogBuckets = [];
-
-				// Get local catalogs.
-				$localCatalogs = $this->getLocalCatalogs();
-				foreach ($localCatalogs as $catalog) {
-					$catalogKey = 'unknown';
-					if (empty($catalog['id']) === false) {
-						$catalogKey = $catalog['id'];
-					} elseif (empty($catalog['title']) === false) {
-						$catalogKey = $catalog['title'];
-					}
-
-					$catalogLabel = 'unknown';
-					if (empty($catalog['title']) === false) {
-						$catalogLabel = $catalog['title'];
-					} elseif (empty($catalog['id']) === false) {
-						$catalogLabel = $catalog['id'];
-					}
-
-					$catalogBuckets[] = [
-						'key' => $catalogKey,
-						'label' => $catalogLabel,
-						'results' => 1,
-					];
-				}//end foreach
-
-				// Get external catalogs from listings.
-				$externalCatalogs = $this->getExternalCatalogsFromListings();
-				foreach ($externalCatalogs as $catalog) {
-					$catalogKey = $catalog['key'];
-					$catalogLabel = $catalog['label'];
-
-					// Check if this catalog is already in our list to avoid duplicates.
-					$exists = false;
-					foreach ($catalogBuckets as $existingCatalog) {
-						if ($existingCatalog['key'] === $catalogKey) {
-							$exists = true;
-							break;
-						}
-					}
-
-					if ($exists === false) {
-						$catalogBuckets[] = [
-							'key' => $catalogKey,
-							'label' => $catalogLabel,
-							'results' => 1,
-						];
-					}
-				}//end foreach
-
-				// If no catalogs found, add a default entry.
-				if (empty($catalogBuckets) === true) {
-					$catalogBuckets[] = [
-						'key' => 'default',
-						'label' => 'Default Catalog',
-						'results' => 1,
-					];
-				}
-
 				$existingFacets['@self']['catalogs'] = [
 					'type' => 'terms',
-					'buckets' => $catalogBuckets,
+					'buckets' => $this->catalogFacetBuckets(),
 				];
-			}//end if
+			}
 
 			return $existingFacets;
 		} catch (\Exception $e) {
@@ -894,6 +806,118 @@ class PublicationService implements PublicationServiceInterface {
 		}//end try
 
 	}//end addVirtualFieldFacets()
+
+	/**
+	 * The directory facet buckets: the local directory, then each federated
+	 * directory by host name.
+	 *
+	 * @return array<int, array{key: string, label: string, results: int}> The buckets.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function directoryFacetBuckets(): array {
+		// Add local directory.
+		$directoryBuckets = [
+			[
+				'key' => 'local',
+				'label' => 'local',
+				'results' => 1,
+			],
+		];
+
+		// Add federated directories.
+		foreach ($this->directoryService->getUniqueDirectories(availableOnly: true) as $directoryUrl) {
+			$directoryName = parse_url($directoryUrl, PHP_URL_HOST);
+			if (empty($directoryName) === true) {
+				$directoryName = $directoryUrl;
+			}
+
+			$directoryBuckets[] = [
+				'key' => $directoryName,
+				'label' => $directoryName,
+				'results' => 1,
+			];
+		}
+
+		return $directoryBuckets;
+
+	}//end directoryFacetBuckets()
+
+	/**
+	 * The catalog facet buckets: the local catalogs, then the external catalogs
+	 * from the directory listings that are not local, or one default bucket when
+	 * there are none.
+	 *
+	 * @return array<int, array{key: mixed, label: mixed, results: int}> The buckets.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function catalogFacetBuckets(): array {
+		$catalogBuckets = array_map(
+			fn ($catalog): array => $this->localCatalogBucket(catalog: $catalog),
+			$this->getLocalCatalogs()
+		);
+
+		foreach ($this->getExternalCatalogsFromListings() as $catalog) {
+			// Skip a catalog that is already in the list.
+			if (in_array($catalog['key'], array_column($catalogBuckets, 'key'), true) === false) {
+				$catalogBuckets[] = [
+					'key' => $catalog['key'],
+					'label' => $catalog['label'],
+					'results' => 1,
+				];
+			}
+		}
+
+		// If no catalogs found, add a default entry.
+		if (empty($catalogBuckets) === true) {
+			$catalogBuckets[] = [
+				'key' => 'default',
+				'label' => 'Default Catalog',
+				'results' => 1,
+			];
+		}
+
+		return $catalogBuckets;
+
+	}//end catalogFacetBuckets()
+
+	/**
+	 * The facet bucket of one local catalog: keyed by id (else title), labelled
+	 * by title (else id), `unknown` when it has neither.
+	 *
+	 * @param mixed $catalog The local catalog.
+	 *
+	 * @return array{key: mixed, label: mixed, results: int} The bucket.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function localCatalogBucket(mixed $catalog): array {
+		$catalogKey = 'unknown';
+		if (empty($catalog['id']) === false) {
+			$catalogKey = $catalog['id'];
+		} elseif (empty($catalog['title']) === false) {
+			$catalogKey = $catalog['title'];
+		}
+
+		$catalogLabel = 'unknown';
+		if (empty($catalog['title']) === false) {
+			$catalogLabel = $catalog['title'];
+		} elseif (empty($catalog['id']) === false) {
+			$catalogLabel = $catalog['id'];
+		}
+
+		return [
+			'key' => $catalogKey,
+			'label' => $catalogLabel,
+			'results' => 1,
+		];
+
+	}//end localCatalogBucket()
 
 	/**
 	 * Retrieves a list of all objects for a specific register and schema
