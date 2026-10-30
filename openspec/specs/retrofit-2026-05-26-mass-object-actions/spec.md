@@ -66,3 +66,15 @@ The selected-objects and selected-attachments list components MUST display each 
 - **WHEN** its remove control is used
 - **THEN** the item MUST be removed from the selection
 
+### Requirement: Editing a publication takes a lock (REQ-MASS-008)
+
+Opening the edit form of a publication MUST lock it for the editor, so nobody
+else can save changes while they work. Another user MUST see who holds the
+lock. The holder MUST be able to unlock it.
+
+#### Scenario: a second editor sees the lock
+
+- **GIVEN** editor A has the edit form of a publication open
+- **WHEN** editor B opens the same publication
+- **THEN** editor B MUST see that editor A holds the lock
+- **AND** editor B MUST NOT be able to save changes to it
