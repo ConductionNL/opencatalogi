@@ -30,6 +30,7 @@
  * @covers \OCA\OpenCatalogi\Service\Woo\WooRequestStore
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
  * @covers \OCA\OpenCatalogi\Service\Woo\WithheldDocumentStore
+ * @covers \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 
 declare(strict_types=1);
@@ -155,7 +156,7 @@ class ObjectPropertiesGoldenTest extends TestCase {
 		$got = [];
 		foreach ($readers as $name => $reader) {
 			$rule = explode(':', $name)[0];
-			$method = new ReflectionMethod($reader, 'asArray');
+			$method = new ReflectionMethod($reader, ($rule === 'record' ? 'asRecord' : 'asArray'));
 			foreach (self::shapes() as $shape => $value) {
 				$want[$name][$shape] = $expected[$rule][$shape];
 				$got[$name][$shape] = $method->invoke($reader, $value);

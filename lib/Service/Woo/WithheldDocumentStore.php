@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -38,6 +39,7 @@ use Throwable;
  * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
  */
 class WithheldDocumentStore {
+	use ReadsObjectProperties;
 
 	/**
 	 * Constructor.
@@ -113,7 +115,7 @@ class WithheldDocumentStore {
 					_rbac: false,
 					_multitenancy: false
 				);
-				$written[] = (string)($this->asArray(object: $saved)['id'] ?? '');
+				$written[] = (string)($this->asRecord(object: $saved)['id'] ?? '');
 			}
 		} catch (Throwable $e) {
 			$this->discard(objects: $objects, register: $register, schema: $schema, ids: $written);
@@ -144,7 +146,7 @@ class WithheldDocumentStore {
 
 		$ids = [];
 		foreach ((array)($result['results'] ?? []) as $row) {
-			$stored = $this->asArray(object: $row);
+			$stored = $this->asRecord(object: $row);
 			if ((string)($stored['publication'] ?? '') !== $publicationId) {
 				continue;
 			}
@@ -263,30 +265,4 @@ class WithheldDocumentStore {
 
 		return [$register, $schema];
 	}//end target()
-
-	/**
-	 * An OpenRegister object as a flat array with its id.
-	 *
-	 * @param mixed $object The object.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		$id = ($object['id'] ?? ($object['@self']['id'] ?? ($object['uuid'] ?? null)));
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$object = $object['object'];
-		}
-
-		$object['id'] = $id;
-
-		return $object;
-	}//end asArray()
 }//end class
