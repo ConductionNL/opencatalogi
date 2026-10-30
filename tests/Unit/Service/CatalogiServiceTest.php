@@ -472,6 +472,89 @@ class CatalogiServiceTest extends TestCase {
 	// ──────────────────────────────────────────────────────────
 	// invalidateCatalogCacheById
 	// ──────────────────────────────────────────────────────────
+	/**
+	 * Both by-id cache operations fail closed: an unset catalog register or
+	 * schema means nothing is looked up, cached, removed or logged.
+	 *
+	 * @return void
+	 */
+	public function testCacheByIdFailsClosedWithoutCatalogConfiguration(): void {
+		foreach ([['', 'register-1'], ['schema-1', '']] as [$schema, $register]) {
+			$config = $this->createMock(\OCP\IAppConfig::class);
+			$config->method('getValueString')->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', $schema],
+					['opencatalogi', 'catalog_register', '', $register],
+				]
+			);
+			$objectService = $this->createMock(ObjectService::class);
+			$objectService->expects($this->never())->method('find');
+			$this->cache->expects($this->never())->method('remove');
+			$this->cache->expects($this->never())->method('set');
+			$this->logger->expects($this->never())->method('error');
+			$service = $this->serviceWithConfig($config);
+			$this->injectObjectService($objectService);
+
+			$service->invalidateCatalogCacheById(42);
+			$service->warmupCatalogCacheById(42);
+		}
+	}//end testCacheByIdFailsClosedWithoutCatalogConfiguration()
+
+	/**
+	 * Both by-id cache operations look the catalog up in the configured register and schema.
+	 *
+	 * @return void
+	 */
+	public function testCacheByIdLooksUpInTheConfiguredScope(): void {
+		$this->config->method('getValueString')->willReturnMap(
+			[
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]
+		);
+		$catalogEntity = new \OCA\OpenRegister\Db\ObjectEntity();
+		$catalogEntity->setObject(['title' => 'No Slug']);
+		$objectService = $this->createMock(ObjectService::class);
+		$finds = [];
+		$objectService->method('find')->willReturnCallback(
+			static function (...$args) use (&$finds, $catalogEntity) {
+				$named = [];
+				foreach ((new \ReflectionMethod(ObjectService::class, 'find'))->getParameters() as $i => $param) {
+					$named[$param->getName()] = ($args[$param->getName()] ?? $args[$i] ?? null);
+				}
+
+				$finds[] = [$named['id'], $named['register'], $named['schema']];
+				return $catalogEntity;
+			}
+		);
+		$this->injectObjectService($objectService);
+		$this->cache->expects($this->never())->method('remove');
+		$this->cache->expects($this->never())->method('set');
+
+		$this->service->invalidateCatalogCacheById(42);
+		$this->service->warmupCatalogCacheById(42);
+		$this->assertSame([[42, 'register-1', 'schema-1'], [42, 'register-1', 'schema-1']], $finds);
+	}//end testCacheByIdLooksUpInTheConfiguredScope()
+
+	/**
+	 * A CatalogiService over the given app config and this test's other doubles.
+	 *
+	 * @param \OCP\IAppConfig $config The app config.
+	 *
+	 * @return CatalogiService
+	 */
+	private function serviceWithConfig(\OCP\IAppConfig $config): CatalogiService {
+		return new CatalogiService(
+			$config,
+			$this->request,
+			$this->container,
+			$this->appManager,
+			$this->cacheFactory,
+			$this->logger,
+			$this->userSession,
+		);
+	}//end serviceWithConfig()
+
 	public function testInvalidateCatalogCacheByIdSuccess(): void {
 		$this->config->method('getValueString')
 			->willReturnMap(
