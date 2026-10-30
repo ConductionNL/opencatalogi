@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Controller\PublicationsController;
@@ -203,10 +204,12 @@ class PublicationsControllerSlugTest extends TestCase {
 			}
 		);
 		$this->usageCounter->expects($this->once())->method('increment')->with(
-			self::UUID_A,
-			UsageCounterService::KIND_VIEW,
-			$this->anything(),
-			'woo'
+			$this->callback(
+				static fn (PublicationUsage $count): bool => $count->publicationId === self::UUID_A
+					&& $count->kind === UsageCounterService::KIND_VIEW
+					&& $count->catalog === 'woo'
+			),
+			$this->anything()
 		);
 
 		$response = $this->controller->show('woo', '2026-0042');
@@ -226,10 +229,12 @@ class PublicationsControllerSlugTest extends TestCase {
 			}
 		);
 		$this->usageCounter->expects($this->once())->method('increment')->with(
-			self::UUID_A,
-			UsageCounterService::KIND_VIEW,
-			$this->anything(),
-			'woo'
+			$this->callback(
+				static fn (PublicationUsage $count): bool => $count->publicationId === self::UUID_A
+					&& $count->kind === UsageCounterService::KIND_VIEW
+					&& $count->catalog === 'woo'
+			),
+			$this->anything()
 		);
 
 		$this->assertSame(200, $this->controller->show('woo', self::UUID_A)->getStatus());
@@ -242,10 +247,12 @@ class PublicationsControllerSlugTest extends TestCase {
 		);
 		$this->schemaOrg->method('buildPublicationNode')->willReturn(['@type' => 'Dataset']);
 		$this->usageCounter->expects($this->once())->method('increment')->with(
-			self::UUID_A,
-			UsageCounterService::KIND_VIEW,
-			$this->anything(),
-			'woo'
+			$this->callback(
+				static fn (PublicationUsage $count): bool => $count->publicationId === self::UUID_A
+					&& $count->kind === UsageCounterService::KIND_VIEW
+					&& $count->catalog === 'woo'
+			),
+			$this->anything()
 		);
 
 		$response = $this->controller->show('woo', '2026-0042');
