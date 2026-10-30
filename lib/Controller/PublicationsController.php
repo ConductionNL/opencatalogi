@@ -428,35 +428,50 @@ class PublicationsController extends Controller {
 	 * publication. The lookup filters on `@self.slug` explicitly, so a numeric
 	 * slug is never read as an object id.
 	 *
-	 * @param object        $objectService OpenRegister's ObjectService.
-	 * @param string        $slug          The identifier from the URL.
-	 * @param string        $catalogSlug   The catalogue, for the log line.
-	 * @param array         $registers     The catalogue's register ids.
-	 * @param array         $schemas       The catalogue's schema ids.
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param CatalogSlugQuery $query The identifier from the URL and the catalogue scope.
 	 *
 	 * @return object|null The one matching publication, or null.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-retrieve-a-single-publication-by-catalog-slug-and-object-uuid-or-slug-pub-002
 	 * @spec openspec/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
 	 */
-	private function findBySlugInCatalogScope(
-		object $objectService,
-		string $slug,
-		string $catalogSlug,
-		array $registers,
-		array $schemas,
-	): ?object {
-		// OpenRegister stores slugs normalised, so the URL id is normalised the
-		// same way before the lookup (`Zaak_2026-0042` finds `zaak-2026-0042`).
-		// An id with nothing left after normalising matches no stored slug.
-		$searchSlug = $this->normaliseSlug(text: $slug);
+	private function findBySlugInCatalogScope(object $objectService, CatalogSlugQuery $query): ?object {
+		$matches = $this->slugMatches(objectService: $objectService, query: $query);
+		if (count($matches) === 1) {
+			return $matches[0];
+		}
+
+		if (count($matches) > 1) {
+			$this->logAmbiguousSlug(query: $query, matches: $matches);
+		}
+
+		return null;
+	}//end findBySlugInCatalogScope()
+
+	/**
+	 * Search every register x schema of the catalogue for the slug, stopping at two matches.
+	 *
+	 * OpenRegister stores slugs normalised, so the URL id is normalised the same
+	 * way before the lookup (`Zaak_2026-0042` finds `zaak-2026-0042`). An id with
+	 * nothing left after normalising matches no stored slug.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param CatalogSlugQuery $query The identifier from the URL and the catalogue scope.
+	 *
+	 * @return list<object> The matches found, at most the first two searches' worth past one.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
+	 */
+	private function slugMatches(object $objectService, CatalogSlugQuery $query): array {
+		$searchSlug = $this->normaliseSlug(text: $query->slug);
 		if ($searchSlug === '') {
-			return null;
+			return [];
 		}
 
 		$matches = [];
-		foreach ($registers as $register) {
-			foreach ($schemas as $schema) {
+		foreach ($query->registers as $register) {
+			foreach ($query->schemas as $schema) {
 				$found = $objectService->searchObjects(
 					query: [
 						'@self' => [
@@ -470,44 +485,46 @@ class PublicationsController extends Controller {
 					_rbac: true,
 					_multitenancy: false,
 				);
-				if (is_array($found) === false) {
-					continue;
-				}
-
-				foreach ($found as $candidate) {
-					$matches[] = $candidate;
+				if (is_array($found) === true) {
+					array_push($matches, ...array_values($found));
 				}
 
 				// Two matches already make the slug ambiguous: skip the remaining
 				// register x schema searches.
 				if (count($matches) > 1) {
-					break 2;
+					return $matches;
 				}
 			}
 		}
 
-		if (count($matches) === 1) {
-			return $matches[0];
-		}
+		return $matches;
+	}//end slugMatches()
 
-		if (count($matches) > 1) {
-			$uuids = array_map(
-				static fn ($match): string => (string)$match->getUuid(),
-				$matches
-			);
-			$this->logger->warning(
-				sprintf(
-					'[PublicationsController] Slug "%s" is ambiguous in catalog %s: matches publications %s',
-					$slug,
-					$catalogSlug,
-					implode(', ', $uuids)
-				),
-				['slug' => $slug, 'catalogSlug' => $catalogSlug, 'uuids' => $uuids]
-			);
-		}
-
-		return null;
-	}//end findBySlugInCatalogScope()
+	/**
+	 * Log the publications an ambiguous slug matched.
+	 *
+	 * @param CatalogSlugQuery $query The identifier from the URL and the catalogue scope.
+	 * @param list<object> $matches The publications it matched.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
+	 */
+	private function logAmbiguousSlug(CatalogSlugQuery $query, array $matches): void {
+		$uuids = array_map(
+			static fn ($match): string => (string)$match->getUuid(),
+			$matches
+		);
+		$this->logger->warning(
+			sprintf(
+				'[PublicationsController] Slug "%s" is ambiguous in catalog %s: matches publications %s',
+				$query->slug,
+				$query->catalogSlug,
+				implode(', ', $uuids)
+			),
+			['slug' => $query->slug, 'catalogSlug' => $query->catalogSlug, 'uuids' => $uuids]
+		);
+	}//end logAmbiguousSlug()
 
 	/**
 	 * Normalise a URL id the way OpenRegister normalises a stored slug.
@@ -886,10 +903,12 @@ class PublicationsController extends Controller {
 			) {
 				$object = $this->findBySlugInCatalogScope(
 					objectService: $objectService,
-					slug: $id,
-					catalogSlug: $catalogSlug,
-					registers: $catalogRegisters,
-					schemas: $catalogSchemas
+					query: new CatalogSlugQuery(
+						slug: $id,
+						catalogSlug: $catalogSlug,
+						registers: $catalogRegisters,
+						schemas: $catalogSchemas
+					)
 				);
 
 				// Everything downstream (withheld list, view counter) keys on the
