@@ -186,12 +186,11 @@ class WooReadinessService implements WooReadinessServiceInterface {
 			$catalogChecks = new CatalogReadinessChecks(slug: $slug);
 			if ($robotsOk === false) {
 				$this->skipCatalogChecks(catalog: $catalogChecks, reason: 'robots-txt-unreachable');
+				array_push($checks, ...$catalogChecks->all());
+				continue;
 			}
 
-			if ($robotsOk === true) {
-				$this->checkCatalog(baseUrl: $baseUrl, catalog: $catalogChecks);
-			}
-
+			$this->checkCatalog(baseUrl: $baseUrl, catalog: $catalogChecks);
 			array_push($checks, ...$catalogChecks->all());
 		}
 
@@ -435,14 +434,7 @@ class WooReadinessService implements WooReadinessServiceInterface {
 		// only worth reporting when the version we emit is the version the publisher
 		// publishes. When it is not, or when we could not find out, this check must not
 		// report a pass, because the rules it validated against are the wrong ones.
-		$version = $this->resolveDiwooVersion();
-		if ($version['status'] === StandardsVersionService::STATUS_BEHIND) {
-			$catalog->fail(id: $checkId, reason: 'diwoo-version-behind:' . $version['published']);
-			return;
-		}
-
-		if ($version['status'] === StandardsVersionService::STATUS_UNKNOWN) {
-			$catalog->skip(id: $checkId, reason: 'diwoo-version-unknown');
+		if ($this->recordedVersionMismatch(catalog: $catalog, checkId: $checkId) === true) {
 			return;
 		}
 
@@ -470,6 +462,33 @@ class WooReadinessService implements WooReadinessServiceInterface {
 		$catalog->fail(id: $checkId, reason: 'diwoo-xsd-invalid');
 
 	}//end checkDiwooXsd()
+
+	/**
+	 * Record the DiWoo check as failed when we emit a superseded version, or as
+	 * skipped when the published version could not be read.
+	 *
+	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
+	 * @param string $checkId The DiWoo check id.
+	 *
+	 * @return bool True when a mismatch was recorded and the check must not run.
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 */
+	private function recordedVersionMismatch(CatalogReadinessChecks $catalog, string $checkId): bool {
+		$version = $this->resolveDiwooVersion();
+		if ($version['status'] === StandardsVersionService::STATUS_BEHIND) {
+			$catalog->fail(id: $checkId, reason: 'diwoo-version-behind:' . $version['published']);
+			return true;
+		}
+
+		if ($version['status'] === StandardsVersionService::STATUS_UNKNOWN) {
+			$catalog->skip(id: $checkId, reason: 'diwoo-version-unknown');
+			return true;
+		}
+
+		return false;
+
+	}//end recordedVersionMismatch()
 
 	/**
 	 * Check 0: the DiWoo version this instance emits is the version the publisher publishes.
