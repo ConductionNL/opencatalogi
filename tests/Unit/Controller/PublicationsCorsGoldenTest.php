@@ -27,6 +27,7 @@ use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Controller\CorsSettings;
 use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -44,6 +45,7 @@ use ReflectionMethod;
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @uses   \OCA\OpenCatalogi\Controller\CorsAllowlist
+ * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
  */
 class PublicationsCorsGoldenTest extends TestCase {
 
@@ -152,7 +154,7 @@ class PublicationsCorsGoldenTest extends TestCase {
 			$config,
 		];
 		if ($custom === true) {
-			array_push($args, 'GET, X-METHODS', 'X-Headers', 42);
+			$args[] = new CorsSettings('GET, X-METHODS', 'X-Headers', 42);
 		}
 
 		return new PublicationsController(...$args);

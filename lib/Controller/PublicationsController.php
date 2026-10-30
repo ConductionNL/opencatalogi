@@ -84,27 +84,6 @@ class PublicationsController extends Controller {
 	private const MAX_PUBLIC_EXTEND = 5;
 
 	/**
-	 * Allowed CORS methods.
-	 *
-	 * @var string Allowed CORS methods
-	 */
-	private string $corsMethods;
-
-	/**
-	 * Allowed CORS headers.
-	 *
-	 * @var string Allowed CORS headers
-	 */
-	private string $corsAllowedHeaders;
-
-	/**
-	 * CORS max age.
-	 *
-	 * @var integer CORS max age
-	 */
-	private int $corsMaxAge;
-
-	/**
 	 * PublicationsController constructor.
 	 *
 	 * @param string $appName The name of the app
@@ -118,9 +97,7 @@ class PublicationsController extends Controller {
 	 * @param IL10N $l10n Localization service
 	 * @param UsageCounterServiceInterface $usageCounterService Privacy-safe usage counter (fire-and-forget)
 	 * @param IAppConfig|null $appConfig App config for CORS allowlist (optional)
-	 * @param string $corsMethods Allowed CORS methods
-	 * @param string $corsAllowedHeaders Allowed CORS headers
-	 * @param integer $corsMaxAge CORS max age
+	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -136,14 +113,9 @@ class PublicationsController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly UsageCounterServiceInterface $usageCounterService,
 		private readonly ?IAppConfig $appConfig = null,
-		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		int $corsMaxAge = 1728000,
+		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
-		$this->corsMethods = $corsMethods;
-		$this->corsAllowedHeaders = $corsAllowedHeaders;
-		$this->corsMaxAge = $corsMaxAge;
 
 	}//end __construct()
 
@@ -310,8 +282,8 @@ class PublicationsController extends Controller {
 	 */
 	private function addCorsHeaders(JSONResponse $response): void {
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
+		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
 
 	}//end addCorsHeaders()
 
@@ -547,9 +519,9 @@ class PublicationsController extends Controller {
 		// so we never reflect an arbitrary caller-supplied Origin (#735).
 		$response = new Response();
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
+		$response->addHeader('Access-Control-Max-Age', (string)$this->cors->maxAge);
+		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
