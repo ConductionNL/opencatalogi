@@ -1,0 +1,251 @@
+{
+    "woo-request / absent": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "OpenRegister is not installed, so Woo requests cannot be read or written.",
+            "cause": null
+        },
+        "asked": [
+            "installed?openregister"
+        ]
+    },
+    "woo-request / unresolvable": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "OpenRegister is unavailable, so Woo requests cannot be read or written.",
+            "cause": "RuntimeException"
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService"
+        ]
+    },
+    "woo-request / working": {
+        "outcome": {
+            "answer": {
+                "id": "o-1",
+                "publication": "p1",
+                "results": [
+                    {
+                        "id": "o-1",
+                        "publication": "p1"
+                    }
+                ],
+                "total": 1
+            }
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "objects:saveObject"
+        ]
+    },
+    "withheld-read / absent": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "OpenRegister is not available, so the withheld documents cannot be read.",
+            "cause": null
+        },
+        "asked": [
+            "installed?openregister"
+        ]
+    },
+    "withheld-read / unresolvable": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "not resolvable",
+            "cause": null
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService"
+        ]
+    },
+    "withheld-read / working": {
+        "outcome": {
+            "answer": [
+                {
+                    "id": "o-1",
+                    "publication": "p1"
+                }
+            ]
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "objects:searchObjectsPaginated"
+        ]
+    },
+    "withheld-write / absent": {
+        "outcome": {
+            "answer": null
+        },
+        "asked": [
+            "installed?openregister"
+        ]
+    },
+    "withheld-write / unresolvable": {
+        "outcome": {
+            "answer": null
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "warning:WithheldDocuments: OpenRegister is unavailable"
+        ]
+    },
+    "withheld-write / working": {
+        "outcome": {
+            "answer": true
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "objects:find"
+        ]
+    },
+    "portal-save / absent": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "OpenRegister is not installed",
+            "cause": null
+        },
+        "asked": [
+            "installed?openregister"
+        ]
+    },
+    "portal-save / unresolvable": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "OpenRegister is not available: not resolvable",
+            "cause": null
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService"
+        ]
+    },
+    "portal-save / working": {
+        "outcome": {
+            "answer": {
+                "id": "o-1",
+                "publication": "p1",
+                "results": [
+                    {
+                        "id": "o-1",
+                        "publication": "p1"
+                    }
+                ],
+                "total": 1
+            }
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "objects:saveObject"
+        ]
+    },
+    "portal-find / absent": {
+        "outcome": {
+            "answer": null
+        },
+        "asked": [
+            "installed?openregister",
+            "debug:OpenCatalogi: portal object not found"
+        ]
+    },
+    "portal-find / unresolvable": {
+        "outcome": {
+            "answer": null
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "debug:OpenCatalogi: portal object not found"
+        ]
+    },
+    "portal-find / working": {
+        "outcome": {
+            "answer": {
+                "id": "o-1",
+                "publication": "p1",
+                "results": [
+                    {
+                        "id": "o-1",
+                        "publication": "p1"
+                    }
+                ],
+                "total": 1
+            }
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "objects:find"
+        ]
+    },
+    "public-search / absent": {
+        "outcome": {
+            "answer": []
+        },
+        "asked": [
+            "installed?openregister"
+        ]
+    },
+    "public-search / unresolvable": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "not resolvable",
+            "cause": null
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService"
+        ]
+    },
+    "public-search / working": {
+        "outcome": {
+            "answer": [
+                {
+                    "id": "r-1"
+                }
+            ]
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "search-with:Unit\\Service\\AvailabilityGoldenObjects"
+        ]
+    },
+    "service-catalogue / absent": {
+        "outcome": {
+            "refused": "OCA\\OpenCatalogi\\Service\\Catalogue\\CatalogueUnreadableException",
+            "message": "The service catalogue cannot be read because OpenRegister is not installed.",
+            "cause": null
+        },
+        "asked": [
+            "installed?openregister"
+        ]
+    },
+    "service-catalogue / unresolvable": {
+        "outcome": {
+            "refused": "OCA\\OpenCatalogi\\Service\\Catalogue\\CatalogueUnreadableException",
+            "message": "The service catalogue cannot be read because OpenRegister is unavailable.",
+            "cause": "RuntimeException"
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "error:[ServiceCatalogueService] OpenRegister is unavailable: not resolvable"
+        ]
+    },
+    "service-catalogue / working": {
+        "outcome": {
+            "answer": "object:Unit\\Service\\AvailabilityGoldenObjects"
+        },
+        "asked": [
+            "installed?openregister",
+            "container:OCA\\OpenRegister\\Service\\ObjectService"
+        ]
+    }
+}
