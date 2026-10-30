@@ -34,6 +34,8 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\OoapiPage;
+use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -191,13 +193,13 @@ class OoapiController extends Controller {
 	/**
 	 * Resolve `pageNumber`/`pageSize` query parameters (OOAPI-007).
 	 *
-	 * @return array{page: int, pageSize: int} The resolved pagination parameters.
+	 * @return OoapiPage The page asked for.
 	 */
-	private function resolvePagination(): array {
-		return [
-			'page' => max(1, (int)$this->request->getParam('pageNumber', 1)),
-			'pageSize' => max(1, (int)$this->request->getParam('pageSize', OoapiServiceInterface::DEFAULT_PAGE_SIZE)),
-		];
+	private function resolvePagination(): OoapiPage {
+		return new OoapiPage(
+			number: max(1, (int)$this->request->getParam('pageNumber', 1)),
+			size: max(1, (int)$this->request->getParam('pageSize', OoapiServiceInterface::DEFAULT_PAGE_SIZE))
+		);
 
 	}//end resolvePagination()
 
@@ -253,7 +255,7 @@ class OoapiController extends Controller {
 	 *
 	 * @param array{catalogSlug: string, context: string} $lookup The catalog slug and the `<context>` of the
 	 *                                                           `<context>_register`/`<context>_schema` config keys.
-	 * @param callable                                    $render Builds the answer from the catalog and its register/schema pair.
+	 * @param callable                                    $render Builds the answer from the OoapiScope of the catalog and its pair.
 	 *
 	 * @return JSONResponse The answer, or the refusal.
 	 *
@@ -280,7 +282,13 @@ class OoapiController extends Controller {
 					return $context['error'];
 				}
 
-				return $render($resolved['catalog'], $context['pair']);
+				return $render(
+					new OoapiScope(
+						catalog: $resolved['catalog'],
+						register: $context['pair']['register'],
+						schema: $context['pair']['schema']
+					)
+				);
 			}
 		);
 
@@ -319,11 +327,9 @@ class OoapiController extends Controller {
 	private function materializedResource(array $lookup, string $notFound): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: $lookup,
-			render: fn (array $catalog, array $pair): JSONResponse => $this->resourceOrNotFound(
+			render: fn (OoapiScope $scope): JSONResponse => $this->resourceOrNotFound(
 				resource: $this->ooapiService->getResource(
-					$catalog,
-					register: $pair['register'],
-					schema: $pair['schema'],
+					scope: $scope,
 					id: $lookup['id'],
 					idField: $lookup['idField']
 				),
@@ -348,12 +354,8 @@ class OoapiController extends Controller {
 	public function organizations(string $catalogSlug): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'organization'],
-			render: function (array $catalog, array $pair): JSONResponse {
-				$organization = $this->ooapiService->renderOrganization(
-					$catalog,
-					organizationRegister: $pair['register'],
-					organizationSchema: $pair['schema']
-				);
+			render: function (OoapiScope $scope): JSONResponse {
+				$organization = $this->ooapiService->renderOrganization(scope: $scope);
 
 				$items = [];
 				if ($organization !== null) {
@@ -390,13 +392,8 @@ class OoapiController extends Controller {
 	public function organization(string $catalogSlug, string $id): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'organization'],
-			render: fn (array $catalog, array $pair): JSONResponse => $this->resourceOrNotFound(
-				resource: $this->ooapiService->organizationById(
-					$catalog,
-					id: $id,
-					organizationRegister: $pair['register'],
-					organizationSchema: $pair['schema']
-				),
+			render: fn (OoapiScope $scope): JSONResponse => $this->resourceOrNotFound(
+				resource: $this->ooapiService->organizationById(scope: $scope, id: $id),
 				notFound: $this->l10n->t('Organization not found')
 			)
 		);
@@ -418,19 +415,9 @@ class OoapiController extends Controller {
 	public function courses(string $catalogSlug): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_courses'],
-			render: function (array $catalog, array $pair): JSONResponse {
-				$pagination = $this->resolvePagination();
-
-				return $this->collectionResponse(
-					result: $this->ooapiService->listCourses(
-						$catalog,
-						register: $pair['register'],
-						schema: $pair['schema'],
-						page: $pagination['page'],
-						pageSize: $pagination['pageSize']
-					)
-				);
-			}
+			render: fn (OoapiScope $scope): JSONResponse => $this->collectionResponse(
+				result: $this->ooapiService->listCourses(scope: $scope, page: $this->resolvePagination())
+			)
 		);
 
 	}//end courses()
@@ -471,19 +458,9 @@ class OoapiController extends Controller {
 	public function programs(string $catalogSlug): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_programs'],
-			render: function (array $catalog, array $pair): JSONResponse {
-				$pagination = $this->resolvePagination();
-
-				return $this->collectionResponse(
-					result: $this->ooapiService->listPrograms(
-						$catalog,
-						register: $pair['register'],
-						schema: $pair['schema'],
-						page: $pagination['page'],
-						pageSize: $pagination['pageSize']
-					)
-				);
-			}
+			render: fn (OoapiScope $scope): JSONResponse => $this->collectionResponse(
+				result: $this->ooapiService->listPrograms(scope: $scope, page: $this->resolvePagination())
+			)
 		);
 
 	}//end programs()
@@ -525,20 +502,13 @@ class OoapiController extends Controller {
 	public function courseOfferings(string $catalogSlug, string $courseId): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_offerings'],
-			render: function (array $catalog, array $pair) use ($courseId): JSONResponse {
-				$pagination = $this->resolvePagination();
-
-				return $this->collectionResponse(
-					result: $this->ooapiService->listOfferings(
-						$catalog,
-						register: $pair['register'],
-						schema: $pair['schema'],
-						courseId: $courseId,
-						page: $pagination['page'],
-						pageSize: $pagination['pageSize']
-					)
-				);
-			}
+			render: fn (OoapiScope $scope): JSONResponse => $this->collectionResponse(
+				result: $this->ooapiService->listOfferings(
+					scope: $scope,
+					page: $this->resolvePagination(),
+					courseId: $courseId
+				)
+			)
 		);
 
 	}//end courseOfferings()
@@ -593,9 +563,11 @@ class OoapiController extends Controller {
 				}
 
 				$violations = $this->ooapiService->validateCatalog(
-					$catalog,
-					courseRegister: $context['pair']['register'],
-					courseSchema: $context['pair']['schema']
+					scope: new OoapiScope(
+						catalog: $catalog,
+						register: $context['pair']['register'],
+						schema: $context['pair']['schema']
+					)
 				);
 
 				return $this->json(
