@@ -102,8 +102,18 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 			return false;
 		}
 
+		// Fail closed (ADR-102): when the catalogues cannot be read, "no catalogue
+		// restricts this schema" is unknown, not true. Recomputing on an empty list
+		// would restore the pre-restriction rules and drop the snapshot, so the
+		// schema and its snapshot are left exactly as they are.
+		$catalogs = $this->catalogs();
+		if ($catalogs === null) {
+			$this->logger->warning('[CatalogAccessService] schema '.$schemaId.' left unchanged: the catalogues could not be read');
+			return false;
+		}
+
 		$current = ($schema->getAuthorization() ?? []);
-		$next = $this->authorizationFor(schemaId: $schemaId, current: $current, catalogs: $this->catalogs());
+		$next = $this->authorizationFor(schemaId: $schemaId, current: $current, catalogs: $catalogs);
 		if ($next === $current) {
 			return false;
 		}
@@ -162,7 +172,7 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	 */
 	public function coveredSchemaIds(): array {
 		$ids = [];
-		foreach ($this->catalogs() as $catalog) {
+		foreach (($this->catalogs() ?? []) as $catalog) {
 			$ids = array_merge($ids, $this->schemaIdsOf(catalog: $catalog));
 		}
 
@@ -355,13 +365,17 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	/**
 	 * Every catalogue, as arrays.
 	 *
-	 * @return array<int, array<string, mixed>> The catalogues; none when they cannot be read.
+	 * An empty list means there are no catalogues; null means they could not be
+	 * read, so a caller cannot mistake a failed read for "nothing is restricted".
+	 *
+	 * @return array<int, array<string, mixed>>|null The catalogues; null when they cannot be read.
 	 */
-	private function catalogs(): array {
+	private function catalogs(): ?array {
 		$register = $this->config->getValueString('opencatalogi', 'catalog_register', '');
 		$schema = $this->config->getValueString('opencatalogi', 'catalog_schema', '');
 		if ($register === '' || $schema === '') {
-			return [];
+			$this->logger->warning('[CatalogAccessService] the catalogues could not be read: the catalogue register or schema is not configured');
+			return null;
 		}
 
 		try {
@@ -372,7 +386,7 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 			);
 		} catch (\Throwable $e) {
 			$this->logger->warning('[CatalogAccessService] the catalogues could not be read: '.$e->getMessage());
-			return [];
+			return null;
 		}
 
 		return array_values(array_filter(array_map(fn (mixed $object): array => $this->asArray(object: $object), ($result['results'] ?? []))));

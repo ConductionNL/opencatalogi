@@ -49,11 +49,11 @@ class CatalogAccessServiceTest extends TestCase {
 	/**
 	 * The service over these catalogues.
 	 *
-	 * @param array<int, array<string, mixed>> $catalogs The catalogues.
+	 * @param array<int, array<string, mixed>>|null $catalogs The catalogues; null makes the catalogue search throw.
 	 *
 	 * @return CatalogAccessService The service.
 	 */
-	private function service(array $catalogs): CatalogAccessService {
+	private function service(?array $catalogs): CatalogAccessService {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			fn (string $app, string $key, string $default = ''): string => (['catalog_register' => '19', 'catalog_schema' => '172'][$key] ?? ($this->stored[$key] ?? $default))
@@ -73,9 +73,9 @@ class CatalogAccessServiceTest extends TestCase {
 
 		$objects = new class($catalogs) {
 			/**
-			 * @param array<int, array<string, mixed>> $rows The rows.
+			 * @param array<int, array<string, mixed>>|null $rows The rows; null throws.
 			 */
-			public function __construct(private array $rows) {
+			public function __construct(private ?array $rows) {
 			}
 
 			/**
@@ -86,6 +86,10 @@ class CatalogAccessServiceTest extends TestCase {
 			 * @return array<string, mixed>
 			 */
 			public function searchObjectsPaginated(array $query, bool $_rbac=true, bool $_multitenancy=true): array {
+				if ($this->rows === null) {
+					throw new \RuntimeException('search index unavailable');
+				}
+
 				return ['results' => $this->rows];
 			}
 		};
@@ -257,4 +261,27 @@ class CatalogAccessServiceTest extends TestCase {
 		$this->assertSame([], $this->stored);
 
 	}//end testLiftingTheRestrictionRestoresThePreviousRules()
+
+	public function testAFailedCatalogueReadLeavesARestrictedSchemaAndItsSnapshotUnchanged(): void {
+		$restricted = [['title' => 'Raadsstukken', 'schemas' => [173], 'staffAccess' => ['restricted' => true, 'editGroups' => ['griffie']]]];
+		$this->service($restricted)->recompute(schemaId: 173);
+		$rules = $this->schema->authorization;
+		$snapshot = $this->stored;
+		$writes = $this->writes;
+
+		$this->assertFalse($this->service(null)->recompute(schemaId: 173));
+
+		$this->assertSame($rules, $this->schema->authorization);
+		$this->assertSame($snapshot, $this->stored);
+		$this->assertArrayHasKey(CatalogAccessService::PREVIOUS_KEY.'173', $this->stored);
+		$this->assertSame($writes, $this->writes);
+
+	}//end testAFailedCatalogueReadLeavesARestrictedSchemaAndItsSnapshotUnchanged()
+
+	public function testAFailedCatalogueReadStillListsTheSchemasWithASnapshot(): void {
+		$this->stored[CatalogAccessService::PREVIOUS_KEY.'173'] = '{"read":[]}';
+
+		$this->assertSame([173], $this->service(null)->coveredSchemaIds());
+
+	}//end testAFailedCatalogueReadStillListsTheSchemasWithASnapshot()
 }//end class
