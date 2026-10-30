@@ -27,6 +27,7 @@
  * @spec openspec/specs/publication-usage-analytics/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\UsageCounterService
+ * @uses \OCA\OpenCatalogi\Service\UsageCount
  */
 
 declare(strict_types=1);

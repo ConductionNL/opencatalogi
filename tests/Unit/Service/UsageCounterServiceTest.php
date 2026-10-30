@@ -32,6 +32,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\UsageCounterService
+ * @uses \OCA\OpenCatalogi\Service\UsageCount
  */
 class UsageCounterServiceTest extends TestCase {
 
