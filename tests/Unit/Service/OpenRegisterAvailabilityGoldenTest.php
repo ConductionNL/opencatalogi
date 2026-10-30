@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Portal\PortalObjectStore;
 use OCA\OpenCatalogi\Service\Portal\PublicSearchRunner;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
@@ -77,6 +78,7 @@ class AvailabilityGoldenObjects {
  * @covers \OCA\OpenCatalogi\Service\Portal\PublicSearchRunner
  * @covers \OCA\OpenCatalogi\Service\ServiceCatalogueService
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
  */
 class OpenRegisterAvailabilityGoldenTest extends TestCase {
 
@@ -202,14 +204,16 @@ class OpenRegisterAvailabilityGoldenTest extends TestCase {
 			}
 		);
 
+		$openRegister = new OpenRegisterLookup($container, $appManager);
+
 		return match ($store) {
-			'woo-request' => (new WooRequestStore($config, $container, $appManager))->save(['title' => 'x']),
-			'withheld-read' => (new WithheldFromPublicationStore($config, $container, $appManager))->storedEntries('p1'),
-			'withheld-write' => (new WithheldDocumentStore($config, $container, $appManager, $logger))->publicationExists('p1'),
-			'portal-save' => (new PortalObjectStore($container, $queries, $logger, $appManager))->save('dossier', ['a' => 1]),
-			'portal-find' => (new PortalObjectStore($container, $queries, $logger, $appManager))->find('dossier', 'id-1'),
-			'public-search' => (new PublicSearchRunner($queries, $container, $appManager))->search(['q' => 'x']),
-			'service-catalogue' => (new ServiceCatalogueService($container, $logger, $appManager))->getObjectService(),
+			'woo-request' => (new WooRequestStore($config, $openRegister))->save(['title' => 'x']),
+			'withheld-read' => (new WithheldFromPublicationStore($config, $openRegister))->storedEntries('p1'),
+			'withheld-write' => (new WithheldDocumentStore($config, $openRegister, $logger))->publicationExists('p1'),
+			'portal-save' => (new PortalObjectStore($openRegister, $queries, $logger))->save('dossier', ['a' => 1]),
+			'portal-find' => (new PortalObjectStore($openRegister, $queries, $logger))->find('dossier', 'id-1'),
+			'public-search' => (new PublicSearchRunner($queries, $openRegister))->search(['q' => 'x']),
+			'service-catalogue' => (new ServiceCatalogueService($openRegister, $logger))->getObjectService(),
 		};
 
 	}//end call()
