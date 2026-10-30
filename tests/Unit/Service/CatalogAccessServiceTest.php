@@ -260,6 +260,19 @@ class CatalogAccessServiceTest extends TestCase {
 
 	}//end testAnUnrestrictedCatalogueBesideARestrictedOneKeepsStaffAccessForItsOwnPublications()
 
+	public function testThePublicReadRulesStayFirst(): void {
+		$otherPublic = ['group' => 'public', 'match' => ['kind' => 'open']];
+		$this->schema->authorization = ['read' => ['authenticated', self::PUBLIC_RULE, 'redactie', $otherPublic]];
+		$service = $this->service(
+			[['title' => 'Raadsstukken', 'schemas' => [173], 'staffAccess' => ['restricted' => true, 'readGroups' => ['juridisch'], 'editGroups' => ['griffie']]]]
+		);
+
+		$service->recompute(schemaId: 173);
+
+		$this->assertSame([self::PUBLIC_RULE, $otherPublic, 'juridisch', 'griffie'], $this->schema->authorization['read']);
+
+	}//end testThePublicReadRulesStayFirst()
+
 	public function testNoWriteWhenNothingChanged(): void {
 		$catalogs = [['title' => 'Raadsstukken', 'schemas' => [173], 'staffAccess' => ['restricted' => true, 'editGroups' => ['griffie']]]];
 
