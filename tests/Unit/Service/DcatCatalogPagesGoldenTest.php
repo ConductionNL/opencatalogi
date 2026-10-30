@@ -86,6 +86,15 @@ class DcatCatalogPagesGoldenTest extends TestCase {
 			'no rows' => [['catalog' => $catalog, 'page' => 2, 'rows' => [], 'next' => null]],
 			'no schemas' => [['catalog' => ['registers' => ['20']], 'page' => 1, 'rows' => $rows, 'next' => 'y']],
 			'no registers, slug as etag' => [['catalog' => ['schemas' => [28]], 'page' => 1, 'rows' => $rows, 'next' => 'y']],
+			'schema mapping and file lookup id' => [[
+				'catalog' => ['registers' => ['20'], 'schemas' => [31, 28]],
+				'page' => 1,
+				'rows' => [
+					['@self' => ['uuid' => 'uuid-x', 'schema' => 31], 'id' => 'pid', 'title' => 'Titel', 'summary' => 'Samenvatting'],
+					['@self' => ['uuid' => 'uuid-y', 'schema' => 28], 'id' => 'pid-2', 'title' => 'Titel twee', 'summary' => 'Niet gebruikt'],
+				],
+				'next' => null,
+			]],
 			'search rows as entities' => [['catalog' => $catalog, 'page' => 1, 'entities' => true, 'rows' => array_slice($rows, 0, 2), 'next' => null]],
 		];
 
@@ -189,7 +198,11 @@ class DcatCatalogPagesGoldenTest extends TestCase {
 					->disableOriginalConstructor()
 					->onlyMethods(['jsonSerialize'])
 					->getMock();
-				$schema->method('jsonSerialize')->willReturn(($id === 30) ? ['x-dcat' => false] : []);
+				$schema->method('jsonSerialize')->willReturn(match ($id) {
+					30 => ['x-dcat' => false],
+					31 => ['x-dcat' => ['mapping' => ['dct:title' => 'summary']]],
+					default => [],
+				});
 				return $schema;
 			}
 		);
