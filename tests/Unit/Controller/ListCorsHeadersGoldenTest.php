@@ -92,6 +92,27 @@ class ListCorsHeadersGoldenTest extends TestCase {
 	}//end testPreflights()
 
 	/**
+	 * Without CORS settings the list controllers fall back to the same defaults.
+	 *
+	 * @return void
+	 */
+	public function testDefaultPreflights(): void {
+		$got = [];
+		foreach ([CatalogiController::class, DirectoryController::class, GlossaryController::class, ThemesController::class, ServiceCatalogueController::class] as $class) {
+			$got[$class] = $this->cors($this->build($class, false)->preflightedCors());
+		}
+
+		$defaults = [
+			'Access-Control-Allow-Origin' => 'https://a.nl',
+			'Access-Control-Allow-Methods' => 'PUT, POST, GET, DELETE, PATCH',
+			'Access-Control-Max-Age' => '1728000',
+			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
+			'Access-Control-Allow-Credentials' => 'false',
+		];
+		$this->assertSame(array_fill_keys(array_keys($got), $defaults), $got);
+	}//end testDefaultPreflights()
+
+	/**
 	 * The JSON answers send the three answer headers, ServiceCatalogue's withCors() all five.
 	 *
 	 * @return void
@@ -143,10 +164,11 @@ class ListCorsHeadersGoldenTest extends TestCase {
 	 * A controller over mocks, with non-default CORS settings.
 	 *
 	 * @param class-string $class The controller.
+	 * @param bool $customCors Whether to pass non-default CORS settings.
 	 *
 	 * @return object
 	 */
-	private function build(string $class): object {
+	private function build(string $class, bool $customCors = true): object {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getHeader')->willReturnCallback(static fn (string $name): string => ($name === 'Origin' ? 'https://evil.nl' : ''));
 		$request->method('getParam')->willReturn(null);
@@ -165,9 +187,9 @@ class ListCorsHeadersGoldenTest extends TestCase {
 			$name = ($type instanceof ReflectionNamedType ? $type->getName() : null);
 			$args[] = match (true) {
 				$param->getName() === 'appName' => 'opencatalogi',
-				$param->getName() === 'corsMethods' => 'GET, X-METHODS',
-				$param->getName() === 'corsAllowedHeaders' => 'X-Headers',
-				$param->getName() === 'corsMaxAge' => 42,
+				$customCors === true && $param->getName() === 'corsMethods' => 'GET, X-METHODS',
+				$customCors === true && $param->getName() === 'corsAllowedHeaders' => 'X-Headers',
+				$customCors === true && $param->getName() === 'corsMaxAge' => 42,
 				$name === IRequest::class => $request,
 				$name === IAppConfig::class => $config,
 				$name === IL10N::class => $l10n,
