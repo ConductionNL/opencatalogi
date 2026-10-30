@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Contract\OoapiPage;
+use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Service\OoapiMappingService;
 use OCA\OpenCatalogi\Service\OoapiService;
 use OCP\App\IAppManager;
@@ -39,6 +41,8 @@ use Psr\Log\LoggerInterface;
  *
  * @covers \OCA\OpenCatalogi\Service\OoapiService
  * @uses   \OCA\OpenCatalogi\Service\OoapiMappingService
+ * @uses   \OCA\OpenCatalogi\Contract\OoapiScope
+ * @uses   \OCA\OpenCatalogi\Contract\OoapiPage
  */
 class OoapiCollectionGoldenTest extends TestCase {
 
@@ -131,7 +135,21 @@ class OoapiCollectionGoldenTest extends TestCase {
 	 * @return mixed The answer.
 	 */
 	private function call(string $method, array $args): mixed {
-		return $this->service()->$method(...$args);
+		$service = $this->service();
+		return match ($method) {
+			'listCourses', 'listPrograms' => $service->$method(
+				new OoapiScope($args[0], $args[1], $args[2]),
+				new OoapiPage($args[3], $args[4])
+			),
+			'listOfferings' => $service->listOfferings(
+				new OoapiScope($args[0], $args[1], $args[2]),
+				new OoapiPage($args[4], $args[5]),
+				$args[3]
+			),
+			'getResource' => $service->getResource(new OoapiScope($args[0], $args[1], $args[2]), $args[3], $args[4]),
+			'organizationById' => $service->organizationById(new OoapiScope($args[0], $args[2], $args[3]), $args[1]),
+			default => $service->$method(new OoapiScope($args[0], $args[1], $args[2])),
+		};
 
 	}//end call()
 
