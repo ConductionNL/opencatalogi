@@ -1,0 +1,582 @@
+{
+    "diff, mixed changes": {
+        "result": {
+            "sourceVersion": "2",
+            "changes": [
+                {
+                    "property": "title",
+                    "localValue": "Vergunning (lokaal)",
+                    "sourceValue": "Vergunning",
+                    "locallyChanged": true
+                },
+                {
+                    "property": "description",
+                    "localValue": "Oud",
+                    "sourceValue": "Nieuw",
+                    "locallyChanged": false
+                },
+                {
+                    "property": "publicationText",
+                    "localValue": null,
+                    "sourceValue": "Tekst",
+                    "locallyChanged": false
+                }
+            ],
+            "locallyChanged": [
+                "title",
+                "inspectionTermDays"
+            ]
+        }
+    },
+    "diff, identical": {
+        "result": {
+            "sourceVersion": "",
+            "changes": [],
+            "locallyChanged": []
+        }
+    },
+    "diff, no snapshot": {
+        "result": {
+            "sourceVersion": "",
+            "changes": [
+                {
+                    "property": "identifier",
+                    "localValue": "a",
+                    "sourceValue": "b",
+                    "locallyChanged": true
+                },
+                {
+                    "property": "title",
+                    "localValue": "t",
+                    "sourceValue": null,
+                    "locallyChanged": true
+                }
+            ],
+            "locallyChanged": [
+                "identifier",
+                "title"
+            ]
+        }
+    },
+    "diff, snapshot not a list": {
+        "result": {
+            "sourceVersion": "",
+            "changes": [],
+            "locallyChanged": [
+                "identifier"
+            ]
+        }
+    },
+    "diff, source empty": {
+        "result": {
+            "sourceVersion": "",
+            "changes": [
+                {
+                    "property": "identifier",
+                    "localValue": "vergunning",
+                    "sourceValue": null,
+                    "locallyChanged": false
+                },
+                {
+                    "property": "title",
+                    "localValue": "Vergunning (lokaal)",
+                    "sourceValue": null,
+                    "locallyChanged": true
+                },
+                {
+                    "property": "description",
+                    "localValue": "Oud",
+                    "sourceValue": null,
+                    "locallyChanged": false
+                },
+                {
+                    "property": "inspectionTermDays",
+                    "localValue": 42,
+                    "sourceValue": null,
+                    "locallyChanged": true
+                }
+            ],
+            "locallyChanged": [
+                "title",
+                "inspectionTermDays"
+            ]
+        }
+    },
+    "diff, local empty": {
+        "result": {
+            "sourceVersion": "2",
+            "changes": [
+                {
+                    "property": "identifier",
+                    "localValue": null,
+                    "sourceValue": "vergunning",
+                    "locallyChanged": false
+                },
+                {
+                    "property": "title",
+                    "localValue": null,
+                    "sourceValue": "Vergunning",
+                    "locallyChanged": false
+                },
+                {
+                    "property": "description",
+                    "localValue": null,
+                    "sourceValue": "Nieuw",
+                    "locallyChanged": false
+                },
+                {
+                    "property": "publicationText",
+                    "localValue": null,
+                    "sourceValue": "Tekst",
+                    "locallyChanged": false
+                },
+                {
+                    "property": "inspectionTermDays",
+                    "localValue": null,
+                    "sourceValue": 42,
+                    "locallyChanged": false
+                }
+            ],
+            "locallyChanged": []
+        }
+    },
+    "diff, null versus absent": {
+        "result": {
+            "sourceVersion": "",
+            "changes": [],
+            "locallyChanged": []
+        }
+    },
+    "diff, loose equal is a change": {
+        "result": {
+            "sourceVersion": "",
+            "changes": [
+                {
+                    "property": "inspectionTermDays",
+                    "localValue": "42",
+                    "sourceValue": 42,
+                    "locallyChanged": false
+                }
+            ],
+            "locallyChanged": []
+        }
+    },
+    "apply, accept one": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning (lokaal)",
+            "description": "Nieuw",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "2.0",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Nieuw",
+                "inspectionTermDays": "42"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    },
+    "apply, accept all": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning",
+            "description": "Nieuw",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "2.0",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Nieuw",
+                "inspectionTermDays": "42",
+                "publicationText": "Tekst"
+            },
+            "publicationText": "Tekst"
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot",
+            "publicationText"
+        ]
+    },
+    "apply, accept none": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning (lokaal)",
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-01-01T00:00:00+00:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Oud",
+                "inspectionTermDays": "42"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    },
+    "apply, accept unknown only": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning (lokaal)",
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-01-01T00:00:00+00:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Oud",
+                "inspectionTermDays": "42"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    },
+    "apply, accept one, no snapshot or source": {
+        "result": {
+            "title": "Vergunning",
+            "importedSnapshot": {
+                "title": "Vergunning"
+            },
+            "source": {
+                "version": "2.0",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            }
+        },
+        "keys": [
+            "title",
+            "importedSnapshot",
+            "source"
+        ]
+    },
+    "apply, snapshot and source not lists": {
+        "result": {
+            "title": "Vergunning",
+            "importedSnapshot": {
+                "title": "Vergunning"
+            },
+            "source": {
+                "version": "2.0",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            }
+        },
+        "keys": [
+            "title",
+            "importedSnapshot",
+            "source"
+        ]
+    },
+    "apply, no source version in diff": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning",
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Oud",
+                "inspectionTermDays": "42"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    },
+    "apply, no source version anywhere": {
+        "result": {
+            "title": "Vergunning",
+            "importedSnapshot": {
+                "title": "Vergunning"
+            },
+            "source": {
+                "version": "",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            }
+        },
+        "keys": [
+            "title",
+            "importedSnapshot",
+            "source"
+        ]
+    },
+    "apply, no changes key": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning (lokaal)",
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-01-01T00:00:00+00:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Oud",
+                "inspectionTermDays": "42"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    },
+    "apply, change without property": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning (lokaal)",
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-01-01T00:00:00+00:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Oud",
+                "inspectionTermDays": "42"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    },
+    "apply, duplicate change, last wins": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "b",
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "b",
+                "description": "Oud",
+                "inspectionTermDays": "42"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    },
+    "apply, numeric property": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning (lokaal)",
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Oud",
+                "inspectionTermDays": "42",
+                "3": "drie"
+            },
+            "3": "drie"
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot",
+            3
+        ]
+    },
+    "apply, accepted is strict": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning (lokaal)",
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-01-01T00:00:00+00:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Oud",
+                "inspectionTermDays": "42"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    },
+    "apply, source value null": {
+        "result": {
+            "identifier": "vergunning",
+            "title": null,
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": null,
+                "description": "Oud",
+                "inspectionTermDays": "42"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    },
+    "apply, change to the snapshot itself": {
+        "result": {
+            "identifier": "vergunning",
+            "title": "Vergunning (lokaal)",
+            "description": "Oud",
+            "inspectionTermDays": 42,
+            "own": "local field",
+            "source": {
+                "sourceId": "vng",
+                "externalId": "ext-1",
+                "version": "1.0",
+                "importedAt": "2026-09-18T12:00:00+02:00"
+            },
+            "importedSnapshot": {
+                "identifier": "vergunning",
+                "title": "Vergunning",
+                "description": "Oud",
+                "inspectionTermDays": "42",
+                "importedSnapshot": "flat"
+            }
+        },
+        "keys": [
+            "identifier",
+            "title",
+            "description",
+            "inspectionTermDays",
+            "own",
+            "source",
+            "importedSnapshot"
+        ]
+    }
+}
