@@ -23,11 +23,10 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
-use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -45,14 +44,12 @@ class WithheldDocumentStore {
 	 * Constructor.
 	 *
 	 * @param IAppConfig         $config     Holds the register and schema ids.
-	 * @param ContainerInterface $container  Resolves OpenRegister's ObjectService.
-	 * @param IAppManager        $appManager Says whether OpenRegister is there.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param LoggerInterface    $logger     Records an unavailable OpenRegister.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -229,12 +226,12 @@ class WithheldDocumentStore {
 	 * @return object|null
 	 */
 	private function objects(): ?object {
-		if ($this->appManager->isInstalled('openregister') === false) {
+		if ($this->openRegister->isInstalled() === false) {
 			return null;
 		}
 
 		try {
-			$objects = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$objects = $this->openRegister->objectService();
 		} catch (Throwable $e) {
 			$this->logger->warning('WithheldDocuments: OpenRegister is unavailable', ['exception' => $e->getMessage()]);
 			return null;

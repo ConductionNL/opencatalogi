@@ -25,9 +25,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Portal;
 
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
 
 /**
  * The public, anonymous search, callable from a background job.
@@ -40,13 +39,11 @@ class PublicSearchRunner {
 	 * Constructor.
 	 *
 	 * @param PublicationQueryService $queries   The public search.
-	 * @param ContainerInterface      $container Resolves OpenRegister.
-	 * @param IAppManager             $appManager Whether OpenRegister is installed.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 */
 	public function __construct(
 		private readonly PublicationQueryService $queries,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookup $openRegister,
 	) {
 
 	}//end __construct()
@@ -62,13 +59,13 @@ class PublicSearchRunner {
 	 */
 	public function search(array $params): array {
 		// ADR-083: without OpenRegister there is nothing to search.
-		if ($this->appManager->isInstalled('openregister') === false) {
+		if ($this->openRegister->isInstalled() === false) {
 			return [];
 		}
 
 		$result = $this->queries->assemblePublicSearchResults(
 			queryParams: $params,
-			objectService: $this->container->get('OCA\OpenRegister\Service\ObjectService')
+			objectService: $this->openRegister->objectService()
 		);
 
 		return array_values(array_filter((array)($result['results'] ?? []), 'is_array'));
