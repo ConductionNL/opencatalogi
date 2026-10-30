@@ -18,6 +18,8 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
+use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
@@ -83,8 +85,8 @@ class PublicationsControllerSlugTest extends TestCase {
 		$this->withheld = $this->createMock(WithheldFromPublication::class);
 		$container->method('get')->willReturnCallback(
 			fn (string $id) => match ($id) {
-				WithheldFromPublication::class => $this->withheld,
-				SchemaOrgService::class => $this->schemaOrg,
+				WithheldFromPublicationInterface::class => $this->withheld,
+				SchemaOrgServiceInterface::class => $this->schemaOrg,
 				default => $this->objectService,
 			}
 		);
