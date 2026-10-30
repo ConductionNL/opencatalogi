@@ -100,7 +100,7 @@ interface OoapiServiceInterface {
 	 * reuse the existing single `catalog.organization` reference).
 	 *
 	 * @param OoapiScope $scope The catalog and the organisation register/schema pair.
-	 * @param string     $id    The requested organization id.
+	 * @param string $id The requested organization id.
 	 *
 	 * @return array<string, mixed>|null The rendered `organization` resource, or null when unresolvable.
 	 *
@@ -112,7 +112,7 @@ interface OoapiServiceInterface {
 	 * List the materialized `course` resources scoped to a catalog (OOAPI-001).
 	 *
 	 * @param OoapiScope $scope The catalog and the resolved `ooapi_courses` register/schema pair.
-	 * @param OoapiPage  $page  The page asked for.
+	 * @param OoapiPage $page The page asked for.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated course collection.
 	 *
@@ -124,7 +124,7 @@ interface OoapiServiceInterface {
 	 * List the materialized `program` resources scoped to a catalog (OOAPI-001).
 	 *
 	 * @param OoapiScope $scope The catalog and the resolved `ooapi_programs` register/schema pair.
-	 * @param OoapiPage  $page  The page asked for.
+	 * @param OoapiPage $page The page asked for.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated program collection.
 	 *
@@ -136,8 +136,8 @@ interface OoapiServiceInterface {
 	 * List the materialized `offering` resources scoped to a catalog, optionally
 	 * filtered to a single parent course (OOAPI-006).
 	 *
-	 * @param OoapiScope  $scope    The catalog and the resolved `ooapi_offerings` register/schema pair.
-	 * @param OoapiPage   $page     The page asked for.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_offerings` register/schema pair.
+	 * @param OoapiPage $page The page asked for.
 	 * @param string|null $courseId Filter to this parent course's offerings, or null for all.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated offering collection.
@@ -151,9 +151,9 @@ interface OoapiServiceInterface {
 	 * by id, scoped to the catalog. Returns null when the object does not exist, is
 	 * not scoped to this catalog, or its schema carries no `x-ooapi` annotation.
 	 *
-	 * @param OoapiScope $scope   The catalog and the resolved register/schema pair.
-	 * @param string     $id      The requested object id.
-	 * @param string     $idField The OOAPI resource id field name.
+	 * @param OoapiScope $scope The catalog and the resolved register/schema pair.
+	 * @param string $id The requested object id.
+	 * @param string $idField The OOAPI resource id field name.
 	 *
 	 * @return array<string, mixed>|null The rendered resource, or null.
 	 *

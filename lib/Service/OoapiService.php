@@ -220,7 +220,7 @@ class OoapiService implements OoapiServiceInterface {
 	 * reuse the existing single `catalog.organization` reference).
 	 *
 	 * @param OoapiScope $scope The catalog and the organisation register/schema pair.
-	 * @param string     $id    The requested organization id.
+	 * @param string $id The requested organization id.
 	 *
 	 * @return array<string, mixed>|null The rendered `organization` resource, or null when unresolvable.
 	 *
@@ -239,8 +239,8 @@ class OoapiService implements OoapiServiceInterface {
 	/**
 	 * Fetch a single Organisation object and render it as an OOAPI `organization` resource.
 	 *
-	 * @param string     $organisationId The Organisation object id/uuid.
-	 * @param OoapiScope $scope          The catalog and the organisation register/schema pair.
+	 * @param string $organisationId The Organisation object id/uuid.
+	 * @param OoapiScope $scope The catalog and the organisation register/schema pair.
 	 *
 	 * @return array<string, mixed>|null The rendered resource, or null when not found.
 	 */
@@ -274,9 +274,9 @@ class OoapiService implements OoapiServiceInterface {
 	 * the page's extra equality filter (e.g. `courseId` for the
 	 * offerings-under-course view, OOAPI-006).
 	 *
-	 * @param OoapiScope $scope   The catalog and the register/schema pair.
-	 * @param OoapiPage  $page    The page asked for (size capped at MAX_PAGE_SIZE).
-	 * @param string     $idField The OOAPI resource id field name.
+	 * @param OoapiScope $scope The catalog and the register/schema pair.
+	 * @param OoapiPage $page The page asked for (size capped at MAX_PAGE_SIZE).
+	 * @param string $idField The OOAPI resource id field name.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated OOAPI collection.
 	 *
@@ -284,28 +284,20 @@ class OoapiService implements OoapiServiceInterface {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-ooapi-5-0-pagination-ooapi-007
 	 */
 	private function searchCollection(OoapiScope $scope, OoapiPage $page, string $idField): array {
-		$number = max(1, $page->number);
-		$size = max(1, min($page->size, self::MAX_PAGE_SIZE));
+		$page = new OoapiPage(
+			number: max(1, $page->number),
+			size: max(1, min($page->size, self::MAX_PAGE_SIZE)),
+			filter: $page->filter
+		);
 
 		$mapping = $this->resolveSchemaMapping(schemaId: $scope->schema);
 		if ($mapping['resource'] === null) {
 			// Unannotated schema — never offered as an OOAPI resource (OOAPI-004).
-			return ['items' => [], 'pageNumber' => $number, 'pageSize' => $size, 'hasNext' => false];
+			return ['items' => [], 'pageNumber' => $page->number, 'pageSize' => $page->size, 'hasNext' => false];
 		}
 
-		$query = array_merge(
-			$page->filter,
-			[
-				'@self' => ['register' => $scope->register, 'schema' => $scope->schema],
-				'catalog' => $scope->catalogId(),
-				'_limit' => $size,
-				'_page' => $number,
-				'_order' => ['@self.created' => 'asc'],
-			]
-		);
-
 		$result = $this->getObjectService()->searchObjectsPaginated(
-			query: $query,
+			query: $this->collectionQuery(scope: $scope, page: $page),
 			_rbac: true,
 			_multitenancy: false,
 			deleted: false
@@ -318,18 +310,43 @@ class OoapiService implements OoapiServiceInterface {
 
 		return [
 			'items' => $items,
-			'pageNumber' => $number,
-			'pageSize' => $size,
+			'pageNumber' => $page->number,
+			'pageSize' => $page->size,
 			'hasNext' => (($result['next'] ?? null) !== null),
 		];
 
 	}//end searchCollection()
 
 	/**
+	 * The OpenRegister query for one page of a catalog-scoped collection: the
+	 * page's extra filter, the register/schema pair, the catalog, and oldest first.
+	 *
+	 * @param OoapiScope $scope The catalog and the register/schema pair.
+	 * @param OoapiPage $page The clamped page.
+	 *
+	 * @return array<string, mixed> The query.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-ooapi-5-0-pagination-ooapi-007
+	 */
+	private function collectionQuery(OoapiScope $scope, OoapiPage $page): array {
+		return array_merge(
+			$page->filter,
+			[
+				'@self' => ['register' => $scope->register, 'schema' => $scope->schema],
+				'catalog' => $scope->catalogId(),
+				'_limit' => $page->size,
+				'_page' => $page->number,
+				'_order' => ['@self.created' => 'asc'],
+			]
+		);
+
+	}//end collectionQuery()
+
+	/**
 	 * List the materialized `course` resources scoped to a catalog (OOAPI-001).
 	 *
 	 * @param OoapiScope $scope The catalog and the resolved `ooapi_courses` register/schema pair.
-	 * @param OoapiPage  $page  The page asked for.
+	 * @param OoapiPage $page The page asked for.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated course collection.
 	 *
@@ -344,7 +361,7 @@ class OoapiService implements OoapiServiceInterface {
 	 * List the materialized `program` resources scoped to a catalog (OOAPI-001).
 	 *
 	 * @param OoapiScope $scope The catalog and the resolved `ooapi_programs` register/schema pair.
-	 * @param OoapiPage  $page  The page asked for.
+	 * @param OoapiPage $page The page asked for.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated program collection.
 	 *
@@ -359,8 +376,8 @@ class OoapiService implements OoapiServiceInterface {
 	 * List the materialized `offering` resources scoped to a catalog, optionally
 	 * filtered to a single parent course (OOAPI-006).
 	 *
-	 * @param OoapiScope  $scope    The catalog and the resolved `ooapi_offerings` register/schema pair.
-	 * @param OoapiPage   $page     The page asked for.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_offerings` register/schema pair.
+	 * @param OoapiPage $page The page asked for.
 	 * @param string|null $courseId Filter to this parent course's offerings, or null for all.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated offering collection.
@@ -386,9 +403,9 @@ class OoapiService implements OoapiServiceInterface {
 	 * by id, scoped to the catalog. Returns null when the object does not exist, is
 	 * not scoped to this catalog, or its schema carries no `x-ooapi` annotation.
 	 *
-	 * @param OoapiScope $scope   The catalog and the resolved register/schema pair.
-	 * @param string     $id      The requested object id.
-	 * @param string     $idField The OOAPI resource id field name.
+	 * @param OoapiScope $scope The catalog and the resolved register/schema pair.
+	 * @param string $id The requested object id.
+	 * @param string $idField The OOAPI resource id field name.
 	 *
 	 * @return array<string, mixed>|null The rendered resource, or null.
 	 *

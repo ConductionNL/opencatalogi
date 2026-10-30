@@ -34,9 +34,9 @@ final class OoapiScope {
 	/**
 	 * Constructor.
 	 *
-	 * @param array<string, mixed> $catalog  The catalog object.
-	 * @param string               $register The resolved register id.
-	 * @param string               $schema   The resolved schema id.
+	 * @param array<string, mixed> $catalog The catalog object.
+	 * @param string $register The resolved register id.
+	 * @param string $schema The resolved schema id.
 	 */
 	public function __construct(
 		public readonly array $catalog,

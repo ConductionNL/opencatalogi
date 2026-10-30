@@ -36,8 +36,8 @@ final class OoapiPage {
 	/**
 	 * Constructor.
 	 *
-	 * @param int                  $number The 1-based page number.
-	 * @param int                  $size   The requested page size.
+	 * @param int $number The 1-based page number.
+	 * @param int $size The requested page size.
 	 * @param array<string, mixed> $filter Extra equality filters, such as `['courseId' => '...']`.
 	 */
 	public function __construct(
