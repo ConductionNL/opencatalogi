@@ -826,13 +826,31 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
 	 */
 	public function buildReport(?string $catalogSlug = null, ?string $from = null, ?string $to = null): array {
+		$report = new RetentionReport(filter: ['catalog' => $catalogSlug, 'from' => $from, 'to' => $to]);
 		$rows = [];
+		foreach ($this->reportPublications() as $object) {
+			$data = $this->normalise(object: $object);
+			if ($report->includes(data: $data) === true) {
+				$rows[] = $report->row(data: $data);
+			}
+		}
 
+		return $rows;
+	}//end buildReport()
+
+	/**
+	 * Every publication the report reads, or none when OpenRegister or its config is missing.
+	 *
+	 * @return iterable<mixed> The stored publications.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
+	 */
+	private function reportPublications(): iterable {
 		$objectService = $this->getObjectService();
 		$register = $this->getRegister();
 		$schema = $this->getSchema();
 		if ($objectService === null || $register === null || $schema === null) {
-			return $rows;
+			return [];
 		}
 
 		$query = [
@@ -842,62 +860,13 @@ class RetentionService implements RetentionServiceInterface {
 
 		try {
 			$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
-			$objects = ($result['results'] ?? []);
 		} catch (\Throwable $e) {
 			$this->logger->warning('[RetentionService] report build failed: ' . $e->getMessage());
-			return $rows;
+			return [];
 		}
 
-		foreach ($objects as $object) {
-			$data = $this->normalise(object: $object);
-			$pubDate = (string)($data['publicationDate'] ?? '');
-
-			if ($catalogSlug !== null && $catalogSlug !== '' && (string)($data['catalog'] ?? '') !== $catalogSlug) {
-				continue;
-			}
-
-			if ($from !== null && $from !== '' && $pubDate !== '' && substr($pubDate, 0, 10) < $from) {
-				continue;
-			}
-
-			if ($to !== null && $to !== '' && $pubDate !== '' && substr($pubDate, 0, 10) > $to) {
-				continue;
-			}
-
-			$log = ($data['retentionDecisionLog'] ?? []);
-			$lastDecision = null;
-			if (is_array($log) === true && count($log) > 0) {
-				$lastDecision = end($log);
-			}
-
-			$actionTaken = 'pending';
-			$decisionBy = '';
-			$decisionAt = '';
-			$decisionNote = '';
-			if ($lastDecision !== null) {
-				$actionTaken = (string)($lastDecision['decision'] ?? '');
-				$decisionBy = (string)($lastDecision['by'] ?? '');
-				$decisionAt = (string)($lastDecision['at'] ?? '');
-				$decisionNote = (string)($lastDecision['note'] ?? '');
-			}
-
-			$rows[] = [
-				'id' => (string)($data['id'] ?? $data['uuid'] ?? ''),
-				'title' => (string)($data['title'] ?? ''),
-				'publicationDate' => $pubDate,
-				'retentionCategory' => (string)($data['retentionCategory'] ?? ''),
-				'retentionTermMonths' => (string)($data['retentionTermMonths'] ?? ''),
-				'retentionExpiresAt' => (string)($data['retentionExpiresAt'] ?? ''),
-				'status' => (string)($data['status'] ?? ''),
-				'actionTaken' => $actionTaken,
-				'decisionBy' => $decisionBy,
-				'decisionAt' => $decisionAt,
-				'decisionNote' => $decisionNote,
-			];
-		}//end foreach
-
-		return $rows;
-	}//end buildReport()
+		return ($result['results'] ?? []);
+	}//end reportPublications()
 
 	/**
 	 * Render report rows as CSV (UTF-8 with BOM).
