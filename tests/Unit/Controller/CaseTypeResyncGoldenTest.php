@@ -27,6 +27,7 @@
  * @covers \OCA\OpenCatalogi\Controller\ServiceCatalogueController
  * @covers \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
  * @covers \OCA\OpenCatalogi\Controller\ReadsOpenRegisterResults
+ * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 
 declare(strict_types=1);
