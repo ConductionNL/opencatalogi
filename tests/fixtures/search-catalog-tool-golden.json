@@ -1,0 +1,953 @@
+{
+    "blank query": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Required argument \"query\" is missing or empty."
+            }
+        },
+        "calls": []
+    },
+    "catalog blank": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [
+                {
+                    "uuid": "pub-1",
+                    "title": "Publication 1"
+                },
+                {
+                    "uuid": "pub-2",
+                    "title": "Publication 2"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-1",
+                    "url": "/apps/opencatalogi/publications/pub-1",
+                    "label": "Publication 1"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-2",
+                    "url": "/apps/opencatalogi/publications/pub-2",
+                    "label": "Publication 2"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "catalog not a string": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [
+                {
+                    "uuid": "pub-1",
+                    "title": "Publication 1"
+                },
+                {
+                    "uuid": "pub-2",
+                    "title": "Publication 2"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-1",
+                    "url": "/apps/opencatalogi/publications/pub-1",
+                    "label": "Publication 1"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-2",
+                    "url": "/apps/opencatalogi/publications/pub-2",
+                    "label": "Publication 2"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "catalog trimmed": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [
+                {
+                    "uuid": "pub-1",
+                    "title": "Publication 1"
+                },
+                {
+                    "uuid": "pub-2",
+                    "title": "Publication 2"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-1",
+                    "url": "/apps/opencatalogi/publications/pub-1",
+                    "label": "Publication 1"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-2",
+                    "url": "/apps/opencatalogi/publications/pub-2",
+                    "label": "Publication 2"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "index",
+                "cat-1",
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "exactly twenty": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [
+                {
+                    "uuid": "pub-1",
+                    "title": "Publication 1"
+                },
+                {
+                    "uuid": "pub-2",
+                    "title": "Publication 2"
+                },
+                {
+                    "uuid": "pub-3",
+                    "title": "Publication 3"
+                },
+                {
+                    "uuid": "pub-4",
+                    "title": "Publication 4"
+                },
+                {
+                    "uuid": "pub-5",
+                    "title": "Publication 5"
+                },
+                {
+                    "uuid": "pub-6",
+                    "title": "Publication 6"
+                },
+                {
+                    "uuid": "pub-7",
+                    "title": "Publication 7"
+                },
+                {
+                    "uuid": "pub-8",
+                    "title": "Publication 8"
+                },
+                {
+                    "uuid": "pub-9",
+                    "title": "Publication 9"
+                },
+                {
+                    "uuid": "pub-10",
+                    "title": "Publication 10"
+                },
+                {
+                    "uuid": "pub-11",
+                    "title": "Publication 11"
+                },
+                {
+                    "uuid": "pub-12",
+                    "title": "Publication 12"
+                },
+                {
+                    "uuid": "pub-13",
+                    "title": "Publication 13"
+                },
+                {
+                    "uuid": "pub-14",
+                    "title": "Publication 14"
+                },
+                {
+                    "uuid": "pub-15",
+                    "title": "Publication 15"
+                },
+                {
+                    "uuid": "pub-16",
+                    "title": "Publication 16"
+                },
+                {
+                    "uuid": "pub-17",
+                    "title": "Publication 17"
+                },
+                {
+                    "uuid": "pub-18",
+                    "title": "Publication 18"
+                },
+                {
+                    "uuid": "pub-19",
+                    "title": "Publication 19"
+                },
+                {
+                    "uuid": "pub-20",
+                    "title": "Publication 20"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-1",
+                    "url": "/apps/opencatalogi/publications/pub-1",
+                    "label": "Publication 1"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-2",
+                    "url": "/apps/opencatalogi/publications/pub-2",
+                    "label": "Publication 2"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-3",
+                    "url": "/apps/opencatalogi/publications/pub-3",
+                    "label": "Publication 3"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-4",
+                    "url": "/apps/opencatalogi/publications/pub-4",
+                    "label": "Publication 4"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-5",
+                    "url": "/apps/opencatalogi/publications/pub-5",
+                    "label": "Publication 5"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-6",
+                    "url": "/apps/opencatalogi/publications/pub-6",
+                    "label": "Publication 6"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-7",
+                    "url": "/apps/opencatalogi/publications/pub-7",
+                    "label": "Publication 7"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-8",
+                    "url": "/apps/opencatalogi/publications/pub-8",
+                    "label": "Publication 8"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-9",
+                    "url": "/apps/opencatalogi/publications/pub-9",
+                    "label": "Publication 9"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-10",
+                    "url": "/apps/opencatalogi/publications/pub-10",
+                    "label": "Publication 10"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-11",
+                    "url": "/apps/opencatalogi/publications/pub-11",
+                    "label": "Publication 11"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-12",
+                    "url": "/apps/opencatalogi/publications/pub-12",
+                    "label": "Publication 12"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-13",
+                    "url": "/apps/opencatalogi/publications/pub-13",
+                    "label": "Publication 13"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-14",
+                    "url": "/apps/opencatalogi/publications/pub-14",
+                    "label": "Publication 14"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-15",
+                    "url": "/apps/opencatalogi/publications/pub-15",
+                    "label": "Publication 15"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-16",
+                    "url": "/apps/opencatalogi/publications/pub-16",
+                    "label": "Publication 16"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-17",
+                    "url": "/apps/opencatalogi/publications/pub-17",
+                    "label": "Publication 17"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-18",
+                    "url": "/apps/opencatalogi/publications/pub-18",
+                    "label": "Publication 18"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-19",
+                    "url": "/apps/opencatalogi/publications/pub-19",
+                    "label": "Publication 19"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-20",
+                    "url": "/apps/opencatalogi/publications/pub-20",
+                    "label": "Publication 20"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "limit 50": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [
+                {
+                    "uuid": "pub-1",
+                    "title": "Publication 1"
+                },
+                {
+                    "uuid": "pub-2",
+                    "title": "Publication 2"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-1",
+                    "url": "/apps/opencatalogi/publications/pub-1",
+                    "label": "Publication 1"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-2",
+                    "url": "/apps/opencatalogi/publications/pub-2",
+                    "label": "Publication 2"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 50,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "limit 51": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Invalid limit 51. Must be between 1 and 50."
+            }
+        },
+        "calls": []
+    },
+    "limit as string": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [
+                {
+                    "uuid": "pub-1",
+                    "title": "Publication 1"
+                },
+                {
+                    "uuid": "pub-2",
+                    "title": "Publication 2"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-1",
+                    "url": "/apps/opencatalogi/publications/pub-1",
+                    "label": "Publication 1"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-2",
+                    "url": "/apps/opencatalogi/publications/pub-2",
+                    "label": "Publication 2"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 5,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "limit null is the default": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [
+                {
+                    "uuid": "pub-1",
+                    "title": "Publication 1"
+                },
+                {
+                    "uuid": "pub-2",
+                    "title": "Publication 2"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-1",
+                    "url": "/apps/opencatalogi/publications/pub-1",
+                    "label": "Publication 1"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-2",
+                    "url": "/apps/opencatalogi/publications/pub-2",
+                    "label": "Publication 2"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "limit text": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Invalid limit 0. Must be between 1 and 50."
+            }
+        },
+        "calls": []
+    },
+    "limit zero": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Invalid limit 0. Must be between 1 and 50."
+            }
+        },
+        "calls": []
+    },
+    "mixed result shapes": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [
+                {
+                    "id": "by-id",
+                    "name": "Named"
+                },
+                {
+                    "@self": {
+                        "uuid": "self-uuid"
+                    }
+                },
+                {
+                    "slug": "by-slug"
+                },
+                {
+                    "uuid": "entity-uuid",
+                    "title": "Entity"
+                },
+                {
+                    "id": "plain-id"
+                },
+                "scalar"
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "by-id",
+                    "url": "/apps/opencatalogi/publications/by-id",
+                    "label": "Named"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "self-uuid",
+                    "url": "/apps/opencatalogi/publications/self-uuid",
+                    "label": "Publication"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "by-slug",
+                    "url": "/apps/opencatalogi/publications/by-slug",
+                    "label": "Publication"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "entity-uuid",
+                    "url": "/apps/opencatalogi/publications/entity-uuid",
+                    "label": "Entity"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "plain-id",
+                    "url": "/apps/opencatalogi/publications/plain-id",
+                    "label": "Publication"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "",
+                    "url": "/apps/opencatalogi/publications/",
+                    "label": "Publication"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "more than twenty": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [
+                {
+                    "uuid": "pub-1",
+                    "title": "Publication 1"
+                },
+                {
+                    "uuid": "pub-2",
+                    "title": "Publication 2"
+                },
+                {
+                    "uuid": "pub-3",
+                    "title": "Publication 3"
+                },
+                {
+                    "uuid": "pub-4",
+                    "title": "Publication 4"
+                },
+                {
+                    "uuid": "pub-5",
+                    "title": "Publication 5"
+                },
+                {
+                    "uuid": "pub-6",
+                    "title": "Publication 6"
+                },
+                {
+                    "uuid": "pub-7",
+                    "title": "Publication 7"
+                },
+                {
+                    "uuid": "pub-8",
+                    "title": "Publication 8"
+                },
+                {
+                    "uuid": "pub-9",
+                    "title": "Publication 9"
+                },
+                {
+                    "uuid": "pub-10",
+                    "title": "Publication 10"
+                },
+                {
+                    "uuid": "pub-11",
+                    "title": "Publication 11"
+                },
+                {
+                    "uuid": "pub-12",
+                    "title": "Publication 12"
+                },
+                {
+                    "uuid": "pub-13",
+                    "title": "Publication 13"
+                },
+                {
+                    "uuid": "pub-14",
+                    "title": "Publication 14"
+                },
+                {
+                    "uuid": "pub-15",
+                    "title": "Publication 15"
+                },
+                {
+                    "uuid": "pub-16",
+                    "title": "Publication 16"
+                },
+                {
+                    "uuid": "pub-17",
+                    "title": "Publication 17"
+                },
+                {
+                    "uuid": "pub-18",
+                    "title": "Publication 18"
+                },
+                {
+                    "uuid": "pub-19",
+                    "title": "Publication 19"
+                },
+                {
+                    "uuid": "pub-20",
+                    "title": "Publication 20"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-1",
+                    "url": "/apps/opencatalogi/publications/pub-1",
+                    "label": "Publication 1"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-2",
+                    "url": "/apps/opencatalogi/publications/pub-2",
+                    "label": "Publication 2"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-3",
+                    "url": "/apps/opencatalogi/publications/pub-3",
+                    "label": "Publication 3"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-4",
+                    "url": "/apps/opencatalogi/publications/pub-4",
+                    "label": "Publication 4"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-5",
+                    "url": "/apps/opencatalogi/publications/pub-5",
+                    "label": "Publication 5"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-6",
+                    "url": "/apps/opencatalogi/publications/pub-6",
+                    "label": "Publication 6"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-7",
+                    "url": "/apps/opencatalogi/publications/pub-7",
+                    "label": "Publication 7"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-8",
+                    "url": "/apps/opencatalogi/publications/pub-8",
+                    "label": "Publication 8"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-9",
+                    "url": "/apps/opencatalogi/publications/pub-9",
+                    "label": "Publication 9"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-10",
+                    "url": "/apps/opencatalogi/publications/pub-10",
+                    "label": "Publication 10"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-11",
+                    "url": "/apps/opencatalogi/publications/pub-11",
+                    "label": "Publication 11"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-12",
+                    "url": "/apps/opencatalogi/publications/pub-12",
+                    "label": "Publication 12"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-13",
+                    "url": "/apps/opencatalogi/publications/pub-13",
+                    "label": "Publication 13"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-14",
+                    "url": "/apps/opencatalogi/publications/pub-14",
+                    "label": "Publication 14"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-15",
+                    "url": "/apps/opencatalogi/publications/pub-15",
+                    "label": "Publication 15"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-16",
+                    "url": "/apps/opencatalogi/publications/pub-16",
+                    "label": "Publication 16"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-17",
+                    "url": "/apps/opencatalogi/publications/pub-17",
+                    "label": "Publication 17"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-18",
+                    "url": "/apps/opencatalogi/publications/pub-18",
+                    "label": "Publication 18"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-19",
+                    "url": "/apps/opencatalogi/publications/pub-19",
+                    "label": "Publication 19"
+                },
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "pub-20",
+                    "url": "/apps/opencatalogi/publications/pub-20",
+                    "label": "Publication 20"
+                }
+            ],
+            "resultsTruncated": true,
+            "resultsTotalCount": 23
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 40,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "no query": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Required argument \"query\" is missing or empty."
+            }
+        },
+        "calls": []
+    },
+    "query not a string": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Required argument \"query\" is missing or empty."
+            }
+        },
+        "calls": []
+    },
+    "results not a list": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [],
+            "sources": []
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "search answers a string": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [],
+            "sources": []
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "search answers an error": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Catalog not found"
+            }
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "search answers no results key": {
+        "answer": {
+            "success": true,
+            "query": "woo",
+            "publications": [],
+            "sources": []
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ]
+        ]
+    },
+    "search fails anonymously": {
+        "answer": {
+            "error": {
+                "code": "internal_error",
+                "message": "Failed to search publications. See server log for details."
+            }
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ],
+            [
+                "error",
+                "OpenCatalogi MCP: searchCatalog failed",
+                {
+                    "caller": "anonymous",
+                    "exception": "search down"
+                }
+            ]
+        ]
+    },
+    "search fails for a user": {
+        "answer": {
+            "error": {
+                "code": "internal_error",
+                "message": "Failed to search publications. See server log for details."
+            }
+        },
+        "calls": [
+            [
+                "index",
+                null,
+                {
+                    "_search": "woo",
+                    "_limit": 20,
+                    "_page": 1
+                }
+            ],
+            [
+                "error",
+                "OpenCatalogi MCP: searchCatalog failed",
+                {
+                    "caller": "alice",
+                    "exception": "search down"
+                }
+            ]
+        ]
+    }
+}
