@@ -1,0 +1,158 @@
+{
+    "publication given": {
+        "result": {
+            "filename": "Besluit.pdf",
+            "content": "%PDF-1.4 golden"
+        },
+        "log": [
+            {
+                "template": "publication.html.twig",
+                "context": {
+                    "publication": {
+                        "id": "1",
+                        "title": "Besluit"
+                    }
+                }
+            },
+            {
+                "output": "F",
+                "inTemp": true
+            }
+        ]
+    },
+    "publication without title": {
+        "result": {
+            "filename": "publication.pdf",
+            "content": "%PDF-1.4 golden"
+        },
+        "log": [
+            {
+                "template": "publication.html.twig",
+                "context": {
+                    "publication": {
+                        "id": "1"
+                    }
+                }
+            },
+            {
+                "output": "F",
+                "inTemp": true
+            }
+        ]
+    },
+    "download off": {
+        "result": {
+            "status": 400,
+            "data": {
+                "error": "At least one output option must be enabled; \"download\" was false"
+            }
+        },
+        "log": []
+    },
+    "default options, found": {
+        "result": {
+            "filename": "Gevonden.pdf",
+            "content": "%PDF-1.4 golden"
+        },
+        "log": [
+            {
+                "find": "id-1"
+            },
+            {
+                "template": "publication.html.twig",
+                "context": {
+                    "publication": {
+                        "id": "7",
+                        "title": "Gevonden",
+                        "@self": {
+                            "id": "7",
+                            "name": "7",
+                            "register": null,
+                            "schema": null
+                        }
+                    }
+                }
+            },
+            {
+                "output": "F",
+                "inTemp": true
+            }
+        ]
+    },
+    "no download key, found": {
+        "result": {
+            "filename": "Acht.pdf",
+            "content": "%PDF-1.4 golden"
+        },
+        "log": [
+            {
+                "find": "id-1"
+            },
+            {
+                "template": "publication.html.twig",
+                "context": {
+                    "publication": {
+                        "id": "8",
+                        "title": "Acht",
+                        "@self": {
+                            "id": "8",
+                            "name": "8",
+                            "register": null,
+                            "schema": null
+                        }
+                    }
+                }
+            },
+            {
+                "output": "F",
+                "inTemp": true
+            }
+        ]
+    },
+    "not found": {
+        "result": {
+            "status": 404,
+            "data": {
+                "error": "Publication not found"
+            }
+        },
+        "log": [
+            {
+                "find": "id-1"
+            }
+        ]
+    },
+    "lookup fails": {
+        "result": {
+            "status": 500,
+            "data": {
+                "error": "gone"
+            }
+        },
+        "log": [
+            {
+                "find": "id-1"
+            }
+        ]
+    },
+    "empty pdf": {
+        "result": {
+            "filename": "Nul.pdf",
+            "content": ""
+        },
+        "log": [
+            {
+                "template": "publication.html.twig",
+                "context": {
+                    "publication": {
+                        "title": "Nul"
+                    }
+                }
+            },
+            {
+                "output": "F",
+                "inTemp": true
+            }
+        ]
+    }
+}
