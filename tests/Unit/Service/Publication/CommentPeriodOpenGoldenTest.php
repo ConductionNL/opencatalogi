@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace Unit\Service\Publication;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCP\App\IAppManager;
@@ -79,6 +80,7 @@ class GoldenCalendarService {
  *
  * @covers \OCA\OpenCatalogi\Service\Publication\CommentPeriodService
  * @uses   \OCA\OpenCatalogi\Service\Publication\TermRoll
+ * @uses   \OCA\OpenCatalogi\Contract\CommentPeriodRequest
  * @uses   \OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException
  */
 class CommentPeriodOpenGoldenTest extends TestCase {
@@ -223,12 +225,14 @@ class CommentPeriodOpenGoldenTest extends TestCase {
 		}
 
 		return $service->open(
-			publication: $case['publication'],
-			termDays: $case['termDays'],
-			legalRemedy: $case['legalRemedy'],
-			announcementUrl: $case['announcementUrl'],
-			automaticWithdrawal: $case['automaticWithdrawal'],
-			openedBy: $case['openedBy'],
+			request: new CommentPeriodRequest(
+				publication: $case['publication'],
+				termDays: $case['termDays'],
+				legalRemedy: $case['legalRemedy'],
+				announcementUrl: $case['announcementUrl'],
+				automaticWithdrawal: $case['automaticWithdrawal'],
+				openedBy: $case['openedBy']
+			),
 			start: $start
 		);
 
