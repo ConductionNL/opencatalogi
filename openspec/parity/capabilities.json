@@ -986,12 +986,13 @@
 			"opencatalogi": "partial",
 			"built": {
 				"state": "specified",
-				"owner": "ConductionNL/openregister",
+				"owner": "ConductionNL/opencatalogi",
 				"evidence": "CatalogModal.vue:105 organisation picker, saved as catalog.organization (:447); SettingsService.php:1179 organisation is OR's nc-organisation projection; openregister lib/Repair/SeedDirectoryVirtualSchemas.php:80-91 declares oin, tooi, rsin, pki; manifest.json:767 Organizations page still targets schema 'organization' in listing_register",
-				"change": "openregister/the-organisation-projection-is-writable"
+				"change": "organisations-page-edits-the-shared-organisation",
+				"requirement": "Staff record the publishing organisation and its identifiers on the shared organisation (REQ-SHO-103)"
 			},
 			"reachedOn": "/catalogi -> CatalogModal organisation picker; /organizations (manifest.json:767)",
-			"note": "A catalogue can point at an organisation, and the identifier fields exist on OR's nc-organisation. The app's own Organizations page queries schema 'organization', which publication_register.json no longer ships, so where staff edit OIN/TOOI/RSIN is unproven. Specified in ConductionNL/openregister openspec/changes/the-organisation-projection-is-writable (openregister lane, OpenSpec pass 2026-09-27).",
+			"note": "The projection side is done (openregister/the-organisation-projection-is-writable, every task ticked but other apps' migrations). What is left is opencatalogi's: src/manifest.json:1035,1060 still point the Organizations pages at the retired schema \"organization\"; change organisations-page-edits-the-shared-organisation moves them onto nc-organisation (re-measured 2026-10-30). Earlier: A catalogue can point at an organisation, and the identifier fields exist on OR's nc-organisation. The app's own Organizations page queries schema 'organization', which publication_register.json no longer ships, so where staff edit OIN/TOOI/RSIN is unproven. Specified in ConductionNL/openregister openspec/changes/the-organisation-projection-is-writable (openregister lane, OpenSpec pass 2026-09-27).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "catalogs",
