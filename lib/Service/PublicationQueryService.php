@@ -675,19 +675,11 @@ class PublicationQueryService implements PublicationQueryServiceInterface
      */
     private function withLinkedPublication(array $rowArray, PublicSearchAssembly $run): ?array
     {
-        $publicationSchemaId = $run->publicationSchemaId;
-        if ($publicationSchemaId === null) {
+        if ($run->publicationSchemaId === null) {
             return $rowArray;
         }
 
-        $publicationSummary = $this->resolveDocumentPublicationSummary(
-            documentRow: $rowArray,
-            objectService: $run->objectService,
-            registerId: $run->refinementRegisterId,
-            publicationSchemaId: $publicationSchemaId,
-            cache: $run->publicationCache,
-            slugCache: $run->slugCache
-        );
+        $publicationSummary = $this->resolveDocumentPublicationSummary(documentRow: $rowArray, run: $run);
 
         if ($publicationSummary === null || $publicationSummary['public'] !== true) {
             // No linked publication OR linked publication is not publicly
@@ -1598,44 +1590,79 @@ class PublicationQueryService implements PublicationQueryServiceInterface
      * OLDEST-by-created linked publication (most stable link — does not change as new
      * publications are added). Documented as a known approximation.
      *
-     * @param array               $documentRow         The document row (post `@self.schema` rewrite).
-     * @param object              $objectService       OpenRegister ObjectService instance.
-     * @param integer|null        $registerId          The publication register id, or null when the
-     *                                                 outer scope spans multiple registers (query
-     *                                                 falls back to the multi-schema search path).
-     * @param integer             $publicationSchemaId The publication schema id in scope.
-     * @param array<string,mixed> $cache               Per-request document-uuid → summary cache
-     *                                                 (by reference).
-     * @param array<string,mixed> $slugCache           Per-request publication-slug → summary cache
-     *                                                 (by reference). Prevents O(N × 500) scan
-     *                                                 regression when N documents on one page
-     *                                                 share the same `_relations['publication.slug']`.
+     * The run carries the publication register (null when the outer scope spans
+     * multiple registers, so the query falls back to the multi-schema search path),
+     * the publication schema in scope, and two per-request caches: document uuid to
+     * summary, and publication slug to summary. The slug cache prevents an
+     * O(N × 500) scan regression when N documents on one page share the same
+     * `_relations['publication.slug']`.
+     *
+     * @param array                $documentRow The document row (post `@self.schema` rewrite).
+     * @param PublicSearchAssembly $run         The search being assembled.
      *
      * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
      *
      * @spec openspec/changes/fix-fts-catalog-model-alignment/tasks.md
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    private function resolveDocumentPublicationSummary(
-        array $documentRow,
-        object $objectService,
-        ?int $registerId,
-        int $publicationSchemaId,
-        array &$cache,
-        array &$slugCache
-    ): ?array {
+    private function resolveDocumentPublicationSummary(array $documentRow, PublicSearchAssembly $run): ?array
+    {
         $documentUuid = ($documentRow['@self']['id'] ?? ($documentRow['id'] ?? null));
         if (is_string($documentUuid) === false || $documentUuid === '') {
             return null;
         }
 
-        if (array_key_exists($documentUuid, $cache) === true) {
-            return $cache[$documentUuid];
+        if (array_key_exists($documentUuid, $run->publicationCache) === true) {
+            return $run->publicationCache[$documentUuid];
         }
 
+        $summary = $this->publicationFromCarriedLinks(documentRow: $documentRow, run: $run);
+        if ($summary === null) {
+            $summary = $this->publicationFromRefinement(documentUuid: $documentUuid, run: $run);
+        }
+
+        $run->publicationCache[$documentUuid] = $summary;
+        return $summary;
+
+    }//end resolveDocumentPublicationSummary()
+
+
+    /**
+     * The first publication a document's carried links resolve to, tried in the
+     * order {@see carriedPublicationLinks()} lists them.
+     *
+     * @param array                $documentRow The document row.
+     * @param PublicSearchAssembly $run         The search being assembled.
+     *
+     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function publicationFromCarriedLinks(array $documentRow, PublicSearchAssembly $run): ?array
+    {
+        foreach ($this->carriedPublicationLinks(documentRow: $documentRow) as $link) {
+            $summary = $this->publicationByLink(link: $link, run: $run);
+            if ($summary !== null) {
+                return $summary;
+            }
+        }
+
+        return null;
+
+    }//end publicationFromCarriedLinks()
+
+
+    /**
+     * The links to its publication a document row carries, in lookup order, as
+     * `[kind, value]` pairs where kind is `id` or `slug`. Empty values are left out.
+     *
+     * @param array $documentRow The document row.
+     *
+     * @return array<int, array{0: string, 1: string}> The links.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function carriedPublicationLinks(array $documentRow): array
+    {
         // M1 fast-path: if the document row already carries a resolvable
         // `publication.id`, verify it points at a publicly-visible publication
         // via a targeted find() rather than fanning out into a relations query
@@ -1644,19 +1671,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface
         // find() fails, or find() returns a non-public row), fall through to
         // the `_relations_contains` path below — the authoritative relation
         // graph remains the source of truth for divergent cases.
-        $carriedPublicationId = ($documentRow['publication']['id'] ?? null);
-        if (is_string($carriedPublicationId) === true && $carriedPublicationId !== '') {
-            $fastPath = $this->tryFastPathPublicationLookup(
-                publicationId: $carriedPublicationId,
-                objectService: $objectService,
-                registerId: $registerId,
-                publicationSchemaId: $publicationSchemaId
-            );
-            if ($fastPath !== null) {
-                $cache[$documentUuid] = $fastPath;
-                return $fastPath;
-            }
-        }
+        $links = [['id', ($documentRow['publication']['id'] ?? null)]];
 
         // M1b: the carried summary may name the publication by SLUG and not by
         // id. That is the shape the fleet actually writes — a document is
@@ -1671,25 +1686,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface
         // result, silently: the row is discarded by the `publicationSummary
         // === null` guard in assemblePublicSearchResults(), and an empty result
         // set is indistinguishable from "nothing matched".
-        $carriedPublicationSlug = ($documentRow['publication']['slug'] ?? null);
-        if (is_string($carriedPublicationSlug) === true && $carriedPublicationSlug !== '') {
-            if (array_key_exists($carriedPublicationSlug, $slugCache) === true) {
-                $slugPath = $slugCache[$carriedPublicationSlug];
-            } else {
-                $slugPath = $this->tryPublicationSlugLookup(
-                    publicationSlug: $carriedPublicationSlug,
-                    objectService: $objectService,
-                    registerId: $registerId,
-                    publicationSchemaId: $publicationSchemaId
-                );
-                $slugCache[$carriedPublicationSlug] = $slugPath;
-            }
-
-            if ($slugPath !== null) {
-                $cache[$documentUuid] = $slugPath;
-                return $slugPath;
-            }
-        }
+        $links[] = ['slug', ($documentRow['publication']['slug'] ?? null)];
 
         // M2 fast-path: legacy documents store the linked publication in their
         // OWN `_relations` array — either as `publication` (UUID form, canonical)
@@ -1700,52 +1697,145 @@ class PublicationQueryService implements PublicationQueryServiceInterface
         // schema-level RBAC decide visibility.
         $relations = ($documentRow['@self']['relations'] ?? ($documentRow['_relations'] ?? []));
         if (is_array($relations) === true) {
-            $linkedById = ($relations['publication'] ?? null);
-            if (is_string($linkedById) === true && $linkedById !== '') {
-                $fastPath = $this->tryFastPathPublicationLookup(
-                    publicationId: $linkedById,
-                    objectService: $objectService,
-                    registerId: $registerId,
-                    publicationSchemaId: $publicationSchemaId
-                );
-                if ($fastPath !== null) {
-                    $cache[$documentUuid] = $fastPath;
-                    return $fastPath;
-                }
-            }
-
-            $linkedBySlug = ($relations['publication.slug'] ?? null);
-            if (is_string($linkedBySlug) === true && $linkedBySlug !== '') {
-                if (array_key_exists($linkedBySlug, $slugCache) === true) {
-                    $slugPath = $slugCache[$linkedBySlug];
-                } else {
-                    $slugPath = $this->tryPublicationSlugLookup(
-                        publicationSlug: $linkedBySlug,
-                        objectService: $objectService,
-                        registerId: $registerId,
-                        publicationSchemaId: $publicationSchemaId
-                    );
-                    $slugCache[$linkedBySlug] = $slugPath;
-                }
-                if ($slugPath !== null) {
-                    $cache[$documentUuid] = $slugPath;
-                    return $slugPath;
-                }
-            }
+            $links[] = ['id', ($relations['publication'] ?? null)];
+            $links[] = ['slug', ($relations['publication.slug'] ?? null)];
         }
+
+        return array_values(
+            array_filter(
+                $links,
+                static fn (array $link): bool => is_string($link[1]) === true && $link[1] !== ''
+            )
+        );
+
+    }//end carriedPublicationLinks()
+
+
+    /**
+     * Resolve one carried link: an id through the fast-path find, a slug through
+     * the per-request slug cache.
+     *
+     * @param array                $link The `[kind, value]` pair.
+     * @param PublicSearchAssembly $run  The search being assembled.
+     *
+     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
+     *
+     * @psalm-param   array{0: string, 1: string} $link
+     * @phpstan-param array{0: string, 1: string} $link
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function publicationByLink(array $link, PublicSearchAssembly $run): ?array
+    {
+        if ($link[0] === 'id') {
+            return $this->tryFastPathPublicationLookup(publicationId: $link[1], run: $run);
+        }
+
+        if (array_key_exists($link[1], $run->slugCache) === false) {
+            $run->slugCache[$link[1]] = $this->tryPublicationSlugLookup(publicationSlug: $link[1], run: $run);
+        }
+
+        return $run->slugCache[$link[1]];
+
+    }//end publicationByLink()
+
+
+    /**
+     * The publication whose relations contain the document, oldest first, or null
+     * when the refinement fails or finds none.
+     *
+     * @param string               $documentUuid The document's uuid.
+     * @param PublicSearchAssembly $run          The search being assembled.
+     *
+     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function publicationFromRefinement(string $documentUuid, PublicSearchAssembly $run): ?array
+    {
+        $rows = $this->refinedPublicationRows(documentUuid: $documentUuid, run: $run);
+        if ($rows === null) {
+            return null;
+        }
+
+        if (empty($rows) === true) {
+        // N4a: no publicly-visible linked publication → drop the document.
+            $this->logger?->info(
+                'WOO-536: document has no publicly-visible linked publication',
+                ['documentUuid' => $documentUuid]
+            );
+            return null;
+        }
+
+        if (count($rows) > 1) {
+        // N4b: multi-linked document — the oldest-by-created wins (documented
+        // approximation, most stable link). Fires on every hit-per-page, so
+        // debug (not info) keeps log volume sane on hot public deployments.
+            $this->logger?->debug(
+                'WOO-536: document linked to multiple publications; using oldest-by-created',
+                ['documentUuid' => $documentUuid, 'count' => count($rows)]
+            );
+        }
+
+        return $this->refinedPublicationSummary(publication: $rows[0]);
+
+    }//end publicationFromRefinement()
+
+
+    /**
+     * The `{id, slug, title}` summary of the publication a refinement returned.
+     *
+     * @param mixed $publication The publication row, as an array or a serialisable entity.
+     *
+     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function refinedPublicationSummary(mixed $publication): array
+    {
+        if (is_array($publication) === false) {
+            $publication = $publication->jsonSerialize();
+        }
+
+        return [
+            'summary' => [
+                'id'    => (string) ($publication['@self']['id'] ?? ($publication['id'] ?? '')),
+                'slug'  => (string) ($publication['@self']['slug'] ?? ($publication['slug'] ?? '')),
+                'title' => (string) ($publication['title'] ?? ''),
+            ],
+            'public'  => true,
+        ];
+
+    }//end refinedPublicationSummary()
+
+
+    /**
+     * The publication rows whose relations contain the document, or null when the
+     * refinement query failed (logged).
+     *
+     * @param string               $documentUuid The document's uuid.
+     * @param PublicSearchAssembly $run          The search being assembled.
+     *
+     * @return array|null The matching rows, or null on failure.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function refinedPublicationRows(string $documentUuid, PublicSearchAssembly $run): ?array
+    {
+        $objectService = $run->objectService;
 
         // Build the per-document refinement query. Under OR's schema-level RBAC,
         // anonymous callers only see publications the `public` group is allowed to
         // read — so a non-empty result guarantees the linked pub is public for
         // every caller, because the read runs as an anonymous caller (WOO-578).
         $refinementQuery = [
-            '_schema'             => $publicationSchemaId,
+            '_schema'             => $run->publicationSchemaId,
             '_relations_contains' => $documentUuid,
             '_limit'              => 2,
             '_order'              => ['@self.created' => 'asc'],
         ];
-        if ($registerId !== null) {
-            $refinementQuery['_register'] = $registerId;
+        if ($run->refinementRegisterId !== null) {
+            $refinementQuery['_register'] = $run->refinementRegisterId;
         }
 
         try {
@@ -1764,49 +1854,12 @@ class PublicationQueryService implements PublicationQueryServiceInterface
                 'WOO-536: document→publication refinement failed',
                 ['documentUuid' => $documentUuid, 'error' => $e->getMessage()]
             );
-            $cache[$documentUuid] = null;
             return null;
         }
 
-        $rows = ($matches['results'] ?? []);
-        if (empty($rows) === true) {
-            // N4a: no publicly-visible linked publication → drop the document.
-            $this->logger?->info(
-                'WOO-536: document has no publicly-visible linked publication',
-                ['documentUuid' => $documentUuid]
-            );
-            $cache[$documentUuid] = null;
-            return null;
-        }
+        return ($matches['results'] ?? []);
 
-        if (count($rows) > 1) {
-            // N4b: multi-linked document — the oldest-by-created wins (documented
-            // approximation, most stable link). Fires on every hit-per-page, so
-            // debug (not info) keeps log volume sane on hot public deployments.
-            $this->logger?->debug(
-                'WOO-536: document linked to multiple publications; using oldest-by-created',
-                ['documentUuid' => $documentUuid, 'count' => count($rows)]
-            );
-        }
-
-        $publication = $rows[0];
-        if (is_array($publication) === false) {
-            $publication = $publication->jsonSerialize();
-        }
-
-        $summary = [
-            'summary' => [
-                'id'    => (string) ($publication['@self']['id'] ?? ($publication['id'] ?? '')),
-                'slug'  => (string) ($publication['@self']['slug'] ?? ($publication['slug'] ?? '')),
-                'title' => (string) ($publication['title'] ?? ''),
-            ],
-            'public'  => true,
-        ];
-
-        $cache[$documentUuid] = $summary;
-        return $summary;
-
-    }//end resolveDocumentPublicationSummary()
+    }//end refinedPublicationRows()
 
     /**
      * Fast-path publication lookup — verify that a carried publication id resolves
@@ -1821,19 +1874,18 @@ class PublicationQueryService implements PublicationQueryServiceInterface
      * The read runs as an anonymous caller (WOO-578), so "publicly visible" holds
      * for every session — see the Stap 1 comment in {@see assemblePublicSearchResults()}.
      *
-     * @param string      $publicationId       The UUID from the document row's carried summary.
-     * @param object      $objectService       OpenRegister ObjectService instance.
-     * @param integer|null $registerId         Optional register scope hint.
-     * @param integer     $publicationSchemaId The publication schema id.
+     * @param string               $publicationId The UUID from the document row's carried summary.
+     * @param PublicSearchAssembly $run           The search being assembled (ObjectService,
+     *                                            register scope hint, publication schema id).
      *
      * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
      */
-    private function tryFastPathPublicationLookup(
-        string $publicationId,
-        object $objectService,
-        ?int $registerId,
-        int $publicationSchemaId
-    ): ?array {
+    private function tryFastPathPublicationLookup(string $publicationId, PublicSearchAssembly $run): ?array
+    {
+        $objectService       = $run->objectService;
+        $registerId          = $run->refinementRegisterId;
+        $publicationSchemaId = $run->publicationSchemaId;
+
         try {
             // Same anonymous evaluation as the main search (WOO-578).
             $publication = $this->evaluateAsAnonymous(
@@ -1891,22 +1943,22 @@ class PublicationQueryService implements PublicationQueryServiceInterface
      * `_relations_contains` path. The read runs as an anonymous caller for every
      * session (WOO-578).
      *
-     * @param string      $publicationSlug     The linked publication's slug.
-     * @param object      $objectService       OpenRegister ObjectService instance.
-     * @param integer|null $registerId         Publication register id or null.
-     * @param integer     $publicationSchemaId Publication schema id in scope.
+     * @param string               $publicationSlug The linked publication's slug.
+     * @param PublicSearchAssembly $run             The search being assembled (ObjectService,
+     *                                              publication register id or null, publication
+     *                                              schema id in scope).
      *
      * @return array|null The public-visible publication summary + flag, or null on miss.
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    private function tryPublicationSlugLookup(
-        string $publicationSlug,
-        object $objectService,
-        ?int $registerId,
-        int $publicationSchemaId
-    ): ?array {
+    private function tryPublicationSlugLookup(string $publicationSlug, PublicSearchAssembly $run): ?array
+    {
+        $objectService       = $run->objectService;
+        $registerId          = $run->refinementRegisterId;
+        $publicationSchemaId = $run->publicationSchemaId;
+
         // ObjectService::searchObjectsPaginated normalises the query differently
         // for `@self.<field>` filters than the HTTP query parser does, so we scan
         // for a slug match client-side instead of relying on a pushdown filter.

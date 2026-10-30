@@ -1319,141 +1319,187 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Detect or generate publication endpoint for a listing
 	 *
-	 * Checks if the listing has a publication endpoint, and if not,
-	 * generates one based on the search endpoint by replacing 'search' with 'publications'.
+	 * Uses the listing's own endpoint when it has one, and otherwise derives
+	 * one from, in turn, the search URL, the catalog directory, the directory
+	 * host and a domain-like title or name.
 	 *
 	 * @param array $listingData The listing data to process
 	 *
 	 * @return string|null The publication endpoint URL or null if cannot be determined
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function detectPublicationEndpoint(array $listingData): ?string {
-		// Check if listing already has a publication endpoint.
 		if (empty($listingData['publications']) === false) {
 			return $listingData['publications'];
 		}
 
-		// Check if listing already has a publication endpoint (alternative field name).
 		if (empty($listingData['publication']) === false) {
 			return $listingData['publication'];
 		}
 
-		// Try to generate from search endpoint.
-		if (empty($listingData['search']) === false) {
-			/*
-			 * Replace 'search' with 'publications' in the URL.
-			 *
-			 * @var string $searchUrl
-			 */
+		return $this->publicationEndpointFromSearch(listingData: $listingData)
+			?? $this->publicationEndpointFromCatalogDirectory(listingData: $listingData)
+			?? $this->publicationEndpointFromDirectory(listingData: $listingData)
+			?? $this->publicationEndpointFromTitle(listingData: $listingData);
+	}//end detectPublicationEndpoint()
 
-			$searchUrl = (string)$listingData['search'];
-			$publicationEndpoint = (string)str_replace('/search', '/publications', $searchUrl);
-
-			// Also handle cases where 'search' might be a query parameter or different pattern.
-			if ($publicationEndpoint === $listingData['search']) {
-				// Try replacing 'search' anywhere in the URL path.
-				$publicationEndpoint = (string)preg_replace('/\/search(?=\/|$)/', '/publications', $listingData['search']);
-			}
-
-			// If still no change, try a more generic approach.
-			if ($publicationEndpoint === $listingData['search']) {
-				// Parse URL and replace 'search' in path segments.
-				$urlParts = parse_url($listingData['search']);
-				if ($urlParts !== false && isset($urlParts['path']) === true) {
-					$pathSegments = explode('/', trim($urlParts['path'], '/'));
-					$pathSegments = array_map(
-						function ($segment) {
-							if ($segment === 'search') {
-								return 'publications';
-							}
-
-							return $segment;
-						},
-						$pathSegments
-					);
-
-					$newPath = '/' . implode('/', $pathSegments);
-					$publicationEndpoint = $urlParts['scheme'] . '://' . $urlParts['host'];
-					if (isset($urlParts['port']) === true) {
-						$publicationEndpoint .= ':' . $urlParts['port'];
-					}
-
-					$publicationEndpoint .= $newPath;
-					if (isset($urlParts['query']) === true) {
-						$publicationEndpoint .= '?' . $urlParts['query'];
-					}
-				}//end if
-			}//end if
-
-			// Only return if we actually made a change.
-			if ($publicationEndpoint !== $listingData['search']) {
-				return $publicationEndpoint;
-			}
-		}//end if
-
-		// Try to construct from catalogDirectory (the actual catalog's directory endpoint from relations).
-		// Format: Replace /api/directory with /api/publications.
-		if (empty($listingData['catalogDirectory']) === false) {
-			/*
-			 * @var string $catalogDir
-			 */
-
-			$catalogDir = (string)$listingData['catalogDirectory'];
-			// Replace /api/directory with /api/publications.
-			$publicationEndpoint = (string)str_replace('/api/directory', '/api/publications', $catalogDir);
-			if ($publicationEndpoint !== $catalogDir) {
-				return $publicationEndpoint;
-			}
+	/**
+	 * The search URL with its `/search` part turned into `/publications`.
+	 *
+	 * When the URL holds no `/search`, it is rebuilt from its parts with every
+	 * `search` path segment replaced; the result counts only when it differs.
+	 *
+	 * @param array $listingData The listing data.
+	 *
+	 * @return string|null The derived endpoint, or null when nothing changed.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function publicationEndpointFromSearch(array $listingData): ?string {
+		if (empty($listingData['search']) === true) {
+			return null;
 		}
 
-		// Try to construct from directory hostname (fallback for listings without proper relations).
-		// Format: https://{directory-host}/apps/opencatalogi/api/publications.
-		if (empty($listingData['directory']) === false) {
-			$directory = $listingData['directory'];
+		$search = $listingData['search'];
+		$publicationEndpoint = (string)str_replace('/search', '/publications', (string)$search);
+		if ($publicationEndpoint === $search) {
+			$publicationEndpoint = $this->rebuildWithPublicationsSegment(url: $search);
+		}
 
-			// If directory is just a hostname (e.g., "directory.opencatalogi.nl" or "opencatalogi.nl").
-			// construct the full publications URL.
-			if (strpos($directory, '://') === false) {
-				// No protocol, assume HTTPS and add standard OpenCatalogi API path.
-				return 'https://' . $directory . '/apps/opencatalogi/api/publications';
-			}
-
-			// Directory is a full URL, extract the base and construct publications endpoint.
-			$urlParts = parse_url($directory);
-			if ($urlParts !== false && isset($urlParts['host']) === true) {
-				$publicationEndpoint = $urlParts['scheme'] . '://' . $urlParts['host'];
-				if (isset($urlParts['port']) === true) {
-					$publicationEndpoint .= ':' . $urlParts['port'];
-				}
-
-				$publicationEndpoint .= '/apps/opencatalogi/api/publications';
-				return $publicationEndpoint;
-			}
-		}//end if
-
-		// Try to infer hostname from catalog title or name.
-		// For catalogs named like "OpenCatalogi.nl", "Example.com", try using that as hostname.
-		$title = ($listingData['title'] ?? $listingData['name'] ?? '');
-		if (empty($title) === false) {
-			// Check if title looks like a domain name (contains a dot and no spaces).
-			if (strpos($title, '.') !== false && strpos($title, ' ') === false) {
-				// Looks like a domain, try using it.
-				$hostname = strtolower(trim($title));
-				// Remove any trailing slashes or paths.
-				$hostname = preg_replace('#[/\\\\].*$#', '', $hostname);
-				if (empty($hostname) === false) {
-					return 'https://' . $hostname . '/apps/opencatalogi/api/publications';
-				}
-			}
+		if ($publicationEndpoint !== $search) {
+			return $publicationEndpoint;
 		}
 
 		return null;
-	}//end detectPublicationEndpoint()
+	}//end publicationEndpointFromSearch()
+
+	/**
+	 * Rebuild a URL from its parts with every `search` path segment replaced by `publications`.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string The rebuilt URL, or the URL itself when it has no path.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function rebuildWithPublicationsSegment(string $url): string {
+		$urlParts = parse_url($url);
+		if ($urlParts === false || isset($urlParts['path']) === false) {
+			return $url;
+		}
+
+		$pathSegments = array_map(
+			static function ($segment) {
+				if ($segment === 'search') {
+					return 'publications';
+				}
+
+				return $segment;
+			},
+			explode('/', trim($urlParts['path'], '/'))
+		);
+
+		$rebuilt = $this->urlOrigin(urlParts: $urlParts) . '/' . implode('/', $pathSegments);
+		if (isset($urlParts['query']) === true) {
+			$rebuilt .= '?' . $urlParts['query'];
+		}
+
+		return $rebuilt;
+	}//end rebuildWithPublicationsSegment()
+
+	/**
+	 * The catalog directory endpoint with `/api/directory` turned into `/api/publications`.
+	 *
+	 * @param array $listingData The listing data.
+	 *
+	 * @return string|null The derived endpoint, or null when nothing changed.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function publicationEndpointFromCatalogDirectory(array $listingData): ?string {
+		if (empty($listingData['catalogDirectory']) === true) {
+			return null;
+		}
+
+		$catalogDir = (string)$listingData['catalogDirectory'];
+		$publicationEndpoint = (string)str_replace('/api/directory', '/api/publications', $catalogDir);
+		if ($publicationEndpoint !== $catalogDir) {
+			return $publicationEndpoint;
+		}
+
+		return null;
+	}//end publicationEndpointFromCatalogDirectory()
+
+	/**
+	 * The standard publications path on the directory's host.
+	 *
+	 * A bare hostname is taken as HTTPS; a full URL keeps its scheme and port.
+	 *
+	 * @param array $listingData The listing data.
+	 *
+	 * @return string|null The derived endpoint, or null when the directory has no host.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function publicationEndpointFromDirectory(array $listingData): ?string {
+		if (empty($listingData['directory']) === true) {
+			return null;
+		}
+
+		$directory = $listingData['directory'];
+		if (strpos($directory, '://') === false) {
+			return 'https://' . $directory . '/apps/opencatalogi/api/publications';
+		}
+
+		$urlParts = parse_url($directory);
+		if ($urlParts !== false && isset($urlParts['host']) === true) {
+			return $this->urlOrigin(urlParts: $urlParts) . '/apps/opencatalogi/api/publications';
+		}
+
+		return null;
+	}//end publicationEndpointFromDirectory()
+
+	/**
+	 * The standard publications path on a host named by a domain-like title or name.
+	 *
+	 * @param array $listingData The listing data.
+	 *
+	 * @return string|null The derived endpoint, or null when the title is not domain-like.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function publicationEndpointFromTitle(array $listingData): ?string {
+		$title = ($listingData['title'] ?? $listingData['name'] ?? '');
+		if (empty($title) === true || strpos($title, '.') === false || strpos($title, ' ') !== false) {
+			return null;
+		}
+
+		$hostname = preg_replace('#[/\\\\].*$#', '', strtolower(trim($title)));
+		if (empty($hostname) === false) {
+			return 'https://' . $hostname . '/apps/opencatalogi/api/publications';
+		}
+
+		return null;
+	}//end publicationEndpointFromTitle()
+
+	/**
+	 * The `scheme://host[:port]` part of a parsed URL.
+	 *
+	 * @param array $urlParts The parse_url() result.
+	 *
+	 * @return string The origin.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function urlOrigin(array $urlParts): string {
+		$origin = $urlParts['scheme'] . '://' . $urlParts['host'];
+		if (isset($urlParts['port']) === true) {
+			$origin .= ':' . $urlParts['port'];
+		}
+
+		return $origin;
+	}//end urlOrigin()
 
 	/**
 	 * Check if incoming listing data is outdated compared to existing data

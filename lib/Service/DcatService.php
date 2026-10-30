@@ -392,16 +392,15 @@ class DcatService implements DcatServiceInterface {
 			$this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
 		}
 
-		$dataset = $this->mappingService->mapDataset(
-			publication: $publication,
+		$source = new DcatDatasetSource(publication: $publication, datasetIri: $datasetIri, files: $files);
+		$profile = new DcatMappingProfile(
 			mapping: ($scope['schemaMappings'][$schemaId] ?? DcatMappingService::DEFAULT_MAPPING),
-			files: $files,
-			datasetIri: $datasetIri,
 			defaults: $scope['defaults'],
 			hvd: ($scope['schemaHvds'][$schemaId] ?? null),
-			catalogHvdDefault: $scope['catalogHvdDefault'],
-			violations: $violations
+			catalogHvdDefault: $scope['catalogHvdDefault']
 		);
+		$dataset = $this->mappingService->mapDataset(source: $source, profile: $profile);
+		array_push($violations, ...$source->violations);
 
 		// PQM-002: additive DQV measurements, only when the catalog opts in.
 		if ($scope['dqvExposure'] === true && $this->qualityService !== null) {
