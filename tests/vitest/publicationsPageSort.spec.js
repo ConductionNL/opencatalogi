@@ -2,13 +2,12 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * The Publications page (src/manifest.json) opens newest first and sorts server-side on every column it shows on the publication pair.
+ * The Publications page (src/manifest.json) opens newest first and sorts server-side on every sortable column it shows on the publication pair.
  * CnIndexPage turns a column key straight into OpenRegister's `_order`,
  * and OpenRegister silently ignores a key it cannot map,
  * so each key is checked against what it can sort on.
  */
 
-import { columnsFromSchema } from '@conduction/nextcloud-vue/src/utils/schema.js'
 import * as fs from 'fs'
 import * as path from 'path'
 import { describe, expect, it } from 'vitest'
@@ -43,27 +42,23 @@ const baseProperties = readJson(path.join(SETTINGS, 'publication_register.json')
 /**
  * The publication schema properties as installed: the base register with every register.d fragment merged on top.
  *
- * @return {{properties: object, fragmentOnly: string[]}} Merged properties and the keys only fragments add.
+ * @return {object} Merged properties.
  */
 function installedSchema() {
 	const properties = { ...baseProperties }
-	const fragmentOnly = []
 	const dir = path.join(SETTINGS, 'register.d')
 	const fragments = fs.readdirSync(dir).filter((n) => n.endsWith('.json'))
 	for (const name of fragments.sort()) {
 		const schemas = readJson(path.join(dir, name)).components?.schemas
 		const extra = schemas?.publication?.properties || {}
 		for (const [key, prop] of Object.entries(extra)) {
-			if (!(key in baseProperties) && !fragmentOnly.includes(key)) {
-				fragmentOnly.push(key)
-			}
 			properties[key] = { ...(properties[key] || {}), ...prop }
 		}
 	}
-	return { properties, fragmentOnly }
+	return properties
 }
 
-const { properties, fragmentOnly } = installedSchema()
+const properties = installedSchema()
 
 /**
  * Whether OpenRegister can order by this key.
@@ -90,47 +85,30 @@ describe('Publications page default sort', () => {
 })
 
 describe('Publications page columns', () => {
-	it('leads with Title, Status, Created and Updated', () => {
-		expect(columns.slice(0, 4).map(keyOf)).toEqual([
-			'title',
+	it('lists Name, Status, Files and Updated', () => {
+		expect(columns.map(keyOf)).toEqual([
+			'@self.name',
 			'status',
-			'@self.created',
+			'@self.files',
 			'@self.updated',
 		])
 	})
 
-	it('opts every object column in to sorting', () => {
-		// Bare strings are resolved by the library, which marks them sortable.
-		const objects = columns.filter((c) => typeof c === 'object')
-		for (const col of objects) {
-			expect(col.sortable, col.key).toBe(true)
-		}
-	})
-
-	it('keeps every schema column, in the schema-derived order, after the lead columns', () => {
-		const lead = ['title', 'status']
-		const rest = columns.slice(4).map(keyOf)
-		const expected = columnsFromSchema({ properties })
-			.map((col) => col.key)
-			.filter((key) => !lead.includes(key))
-		expect(rest).toEqual(expected)
-	})
-
-	it('labels fragment-only properties so an install without them still names the column', () => {
-		const fragmentColumns = columns.filter((col) =>
-			fragmentOnly.includes(keyOf(col)),
-		)
-		for (const col of fragmentColumns) {
-			expect(col, keyOf(col)).toMatchObject({
-				label: properties[keyOf(col)].title,
-			})
-		}
+	it('sorts on Name and Updated, and leaves the computed Files count unsortable', () => {
+		const sortable = columns
+			.filter((col) => typeof col === 'object' && col.sortable === true)
+			.map(keyOf)
+		expect(sortable).toEqual(['@self.name', '@self.updated'])
+		expect(columns.find((col) => keyOf(col) === '@self.files').sortable).toBeUndefined()
 	})
 })
 
 describe('Publications page sort-key binding', () => {
-	it('binds every column to a key OpenRegister can order by', () => {
-		for (const col of columns) {
+	it('binds every sortable column to a key OpenRegister can order by', () => {
+		const sortable = columns.filter(
+			(col) => typeof col === 'object' && col.sortable === true,
+		)
+		for (const col of sortable) {
 			expect(isSortableKey(keyOf(col)), keyOf(col)).toBe(true)
 		}
 	})
