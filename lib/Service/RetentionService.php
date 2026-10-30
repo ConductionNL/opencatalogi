@@ -553,87 +553,121 @@ class RetentionService implements RetentionServiceInterface {
 			return $counts;
 		}
 
-		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		$today = $now->format('Y-m-d');
-		$windowEnd = $now->add(new DateInterval('P' . $this->getWarningWindowDays() . 'D'));
+		$run = new RetentionRun(objectService: $objectService, register: $register, schema: $schema);
+		$objects = $this->retentionCandidates(run: $run);
+		if ($objects === null) {
+			return $counts;
+		}
 
-		// Plain object search: publications with retentionExpiresAt at or before the
-		// end of the warning window (covers both expiring-soon and already-expired).
+		foreach ($objects as $object) {
+			$outcome = $this->evaluatePublication(run: $run, data: $this->normalise(object: $object));
+			if ($outcome !== null) {
+				$counts[$outcome]++;
+			}
+		}
+
+		return $counts;
+	}//end evaluate()
+
+	/**
+	 * The publications whose retentionExpiresAt lies at or before the end of the warning window.
+	 *
+	 * Covers both expiring-soon and already-expired publications, in one plain object search.
+	 *
+	 * @param RetentionRun $run The evaluation run.
+	 *
+	 * @return array<int, mixed>|null The rows, or null when the search failed (logged).
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+	 */
+	private function retentionCandidates(RetentionRun $run): ?array {
+		$windowEnd = $run->now->add(new DateInterval('P' . $this->getWarningWindowDays() . 'D'));
 		$query = [
-			'@self' => ['register' => $register, 'schema' => $schema],
+			'@self' => ['register' => $run->register, 'schema' => $run->schema],
 			'retentionExpiresAt' => ['$lte' => $windowEnd->format(DateTimeInterface::ATOM)],
 			'_limit' => 1000,
 		];
 
 		try {
-			$result = $objectService->searchObjectsPaginated(query: $query, _rbac: false, _multitenancy: false);
-			$objects = ($result['results'] ?? []);
+			$result = $run->objectService->searchObjectsPaginated(query: $query, _rbac: false, _multitenancy: false);
 		} catch (\Throwable $e) {
 			$this->logger->error('[RetentionService] retention search failed: ' . $e->getMessage());
-			return $counts;
+			return null;
 		}
 
-		foreach ($objects as $object) {
-			$data = $this->normalise(object: $object);
+		return ($result['results'] ?? []);
+	}//end retentionCandidates()
 
-			$expiresAt = ($data['retentionExpiresAt'] ?? null);
-			if ($expiresAt === null || $expiresAt === '') {
-				continue;
-			}
+	/**
+	 * Evaluate one publication: skip it, flag it as expiring soon, or act on its expiry.
+	 *
+	 * A publication without a parseable expiry, or already evaluated today, is skipped.
+	 *
+	 * @param RetentionRun $run The evaluation run.
+	 * @param array<string, mixed> $data The publication.
+	 *
+	 * @return string|null The count it adds to, or null when skipped.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+	 */
+	private function evaluatePublication(RetentionRun $run, array $data): ?string {
+		$expiresAt = ($data['retentionExpiresAt'] ?? null);
+		if ($expiresAt === null || $expiresAt === '') {
+			return null;
+		}
 
-			// Idempotency: skip objects already evaluated today.
-			$lastEvaluated = (string)($data['retentionLastEvaluatedAt'] ?? '');
-			if ($lastEvaluated !== '' && str_starts_with($lastEvaluated, $today) === true) {
-				continue;
-			}
+		$lastEvaluated = (string)($data['retentionLastEvaluatedAt'] ?? '');
+		if ($lastEvaluated !== '' && str_starts_with($lastEvaluated, $run->today) === true) {
+			return null;
+		}
 
-			try {
-				$expiry = new DateTimeImmutable($expiresAt);
-			} catch (\Throwable $e) {
-				continue;
-			}
+		try {
+			$expiry = new DateTimeImmutable($expiresAt);
+		} catch (\Throwable $e) {
+			return null;
+		}
 
-			$expired = ($expiry <= $now);
-			$action = (string)($data['retentionAction'] ?? 'review');
+		if ($expiry > $run->now) {
+			$this->stampEvaluated(run: $run, data: $data);
+			return 'expiringSoon';
+		}
 
-			if ($expired === false) {
-				// Within the warning window but not yet expired -> flag expiring-soon.
-				$counts['expiringSoon']++;
-				$this->stampEvaluated(objectService: $objectService, register: $register, schema: $schema, data: $data, now: $now);
-				continue;
-			}
+		return $this->actOnExpiry(run: $run, data: $data);
+	}//end evaluatePublication()
 
-			switch ($action) {
-				case 'depublish':
-					$data['depublicationDate'] = $now->format(DateTimeInterface::ATOM);
-					$data['retentionLastEvaluatedAt'] = $now->format(DateTimeInterface::ATOM);
-					$this->recordDecision(data: $data, decision: 'auto-depublish', note: 'retention term expired');
-					$this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
-					$counts['depublished']++;
-					break;
+	/**
+	 * Act on an expired publication per its retentionAction.
+	 *
+	 * `depublish` sets depublicationDate; `archive` also requests the archived
+	 * lifecycle status, which removes it from public surfaces (RET-006). Both record
+	 * the decision. Any other action only flags it for review: visibility unchanged.
+	 *
+	 * @param RetentionRun $run The evaluation run.
+	 * @param array<string, mixed> $data The publication.
+	 *
+	 * @return string The count it adds to.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+	 */
+	private function actOnExpiry(RetentionRun $run, array $data): string {
+		$action = (string)($data['retentionAction'] ?? 'review');
+		$counted = ['depublish' => 'depublished', 'archive' => 'archived'];
+		if (isset($counted[$action]) === false) {
+			$this->stampEvaluated(run: $run, data: $data);
+			return 'reviewRequired';
+		}
 
-				case 'archive':
-					// Request the declared lifecycle transition; setting depublicationDate
-					// removes it from public surfaces as part of archiving (RET-006).
-					$data['status'] = 'archived';
-					$data['depublicationDate'] = $now->format(DateTimeInterface::ATOM);
-					$data['retentionLastEvaluatedAt'] = $now->format(DateTimeInterface::ATOM);
-					$this->recordDecision(data: $data, decision: 'auto-archive', note: 'retention term expired');
-					$this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
-					$counts['archived']++;
-					break;
+		if ($action === 'archive') {
+			$data['status'] = 'archived';
+		}
 
-				case 'review':
-				default:
-					// Flag only — visibility unchanged; humans decide in the queue.
-					$counts['reviewRequired']++;
-					$this->stampEvaluated(objectService: $objectService, register: $register, schema: $schema, data: $data, now: $now);
-					break;
-			}//end switch
-		}//end foreach
+		$data['depublicationDate'] = $run->now->format(DateTimeInterface::ATOM);
+		$data['retentionLastEvaluatedAt'] = $run->now->format(DateTimeInterface::ATOM);
+		$this->recordDecision(data: $data, decision: 'auto-' . $action, note: 'retention term expired');
+		$this->save(objectService: $run->objectService, register: $run->register, schema: $run->schema, data: $data);
 
-		return $counts;
-	}//end evaluate()
+		return $counted[$action];
+	}//end actOnExpiry()
 
 	/**
 	 * Build a retention review-queue summary for the dashboard widget.
@@ -951,19 +985,16 @@ class RetentionService implements RetentionServiceInterface {
 	/**
 	 * Stamp the idempotency marker without otherwise changing the object.
 	 *
-	 * @param object $objectService The OR ObjectService.
-	 * @param string $register The register id.
-	 * @param string $schema The schema id.
+	 * @param RetentionRun $run The evaluation run.
 	 * @param array<string, mixed> $data The publication data.
-	 * @param DateTimeImmutable $now The current time.
 	 *
 	 * @return void
 	 *
 	 * @spec exclude internal idempotency helper.
 	 */
-	private function stampEvaluated(object $objectService, string $register, string $schema, array $data, DateTimeImmutable $now): void {
-		$data['retentionLastEvaluatedAt'] = $now->format(DateTimeInterface::ATOM);
-		$this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
+	private function stampEvaluated(RetentionRun $run, array $data): void {
+		$data['retentionLastEvaluatedAt'] = $run->now->format(DateTimeInterface::ATOM);
+		$this->save(objectService: $run->objectService, register: $run->register, schema: $run->schema, data: $data);
 
 	}//end stampEvaluated()
 
