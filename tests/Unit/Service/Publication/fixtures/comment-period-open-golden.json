@@ -1,0 +1,217 @@
+{
+    "weekday end": {
+        "period": {
+            "publication": "pub-1",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-16T10:00:00+00:00",
+            "termDays": 14,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/pub-1/zienswijze",
+            "announcementUrl": "https://officielebekendmakingen.nl/stcrt-2026-1",
+            "automaticWithdrawal": false,
+            "openedBy": "alice"
+        }
+    },
+    "weekend end rolls": {
+        "period": {
+            "publication": "pub-1",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-09T10:00:00+00:00",
+            "termDays": 5,
+            "legalRemedy": "bezwaar",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/pub-1/bezwaar",
+            "announcementUrl": "https://officielebekendmakingen.nl/stcrt-2026-1",
+            "automaticWithdrawal": true,
+            "openedBy": "alice",
+            "unrolledEndDate": "2026-03-07T10:00:00+00:00",
+            "rolledBy": "weekend"
+        }
+    },
+    "sunday end rolls": {
+        "period": {
+            "publication": "pub-1",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-09T10:00:00+00:00",
+            "termDays": 6,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/pub-1/zienswijze",
+            "announcementUrl": "https://officielebekendmakingen.nl/stcrt-2026-1",
+            "automaticWithdrawal": false,
+            "openedBy": "alice",
+            "unrolledEndDate": "2026-03-08T10:00:00+00:00",
+            "rolledBy": "weekend"
+        }
+    },
+    "one day": {
+        "period": {
+            "publication": "pub-1",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-03T10:00:00+00:00",
+            "termDays": 1,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/pub-1/zienswijze",
+            "announcementUrl": "https://officielebekendmakingen.nl/stcrt-2026-1",
+            "automaticWithdrawal": false,
+            "openedBy": ""
+        }
+    },
+    "offset start": {
+        "period": {
+            "publication": "pub-1",
+            "startDate": "2026-03-02T23:30:00+02:00",
+            "endDate": "2026-03-16T23:30:00+02:00",
+            "termDays": 14,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/pub-1/zienswijze",
+            "announcementUrl": "https://officielebekendmakingen.nl/stcrt-2026-1",
+            "automaticWithdrawal": false,
+            "openedBy": "alice"
+        }
+    },
+    "publication id is trimmed": {
+        "period": {
+            "publication": "pub 2/x",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-16T10:00:00+00:00",
+            "termDays": 14,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/pub%202%2Fx/zienswijze",
+            "announcementUrl": "https://officielebekendmakingen.nl/stcrt-2026-1",
+            "automaticWithdrawal": false,
+            "openedBy": "alice"
+        }
+    },
+    "numeric publication id": {
+        "period": {
+            "publication": "42",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-16T10:00:00+00:00",
+            "termDays": 14,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/42/zienswijze",
+            "announcementUrl": "https://officielebekendmakingen.nl/stcrt-2026-1",
+            "automaticWithdrawal": false,
+            "openedBy": "alice"
+        }
+    },
+    "no publication id": {
+        "refused": "DomainException",
+        "message": "A comment period belongs to a publication, and none was named."
+    },
+    "blank publication id": {
+        "refused": "DomainException",
+        "message": "A comment period belongs to a publication, and none was named."
+    },
+    "unknown remedy": {
+        "refused": "DomainException",
+        "message": "The legal remedy \"beroep\" is not one of zienswijze, bezwaar. A reader told the wrong remedy loses a right, so an unknown one is refused."
+    },
+    "remedy is case sensitive": {
+        "refused": "DomainException",
+        "message": "The legal remedy \"Bezwaar\" is not one of zienswijze, bezwaar. A reader told the wrong remedy loses a right, so an unknown one is refused."
+    },
+    "no days": {
+        "refused": "DomainException",
+        "message": "A comment period runs for at least one day. A period of no days is a publication with no comment period, which is a different thing and should be recorded as one."
+    },
+    "negative days": {
+        "refused": "DomainException",
+        "message": "A comment period runs for at least one day. A period of no days is a publication with no comment period, which is a different thing and should be recorded as one."
+    },
+    "no announcement": {
+        "refused": "DomainException",
+        "message": "A comment period needs the official announcement it was published with. A period nobody was told about is not a public comment period."
+    },
+    "http announcement": {
+        "refused": "DomainException",
+        "message": "The announcement has to be an absolute https url."
+    },
+    "relative announcement": {
+        "refused": "DomainException",
+        "message": "The announcement has to be an absolute https url."
+    },
+    "internal announcement": {
+        "refused": "DomainException",
+        "message": "The announcement has to point at officielebekendmakingen.nl, which is where an official announcement of a Dutch public body appears. A link to an internal page does not make a period publicly announced."
+    },
+    "lookalike announcement host": {
+        "refused": "DomainException",
+        "message": "The announcement has to point at officielebekendmakingen.nl, which is where an official announcement of a Dutch public body appears. A link to an internal page does not make a period publicly announced."
+    },
+    "subdomain announcement": {
+        "period": {
+            "publication": "pub-1",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-16T10:00:00+00:00",
+            "termDays": 14,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/pub-1/zienswijze",
+            "announcementUrl": "https://zoek.officielebekendmakingen.nl/gmb-1",
+            "automaticWithdrawal": false,
+            "openedBy": "alice"
+        }
+    },
+    "uppercase announcement host": {
+        "period": {
+            "publication": "pub-1",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-16T10:00:00+00:00",
+            "termDays": 14,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/pub-1/zienswijze",
+            "announcementUrl": "HTTPS://OfficieleBekendmakingen.NL/x",
+            "automaticWithdrawal": false,
+            "openedBy": "alice"
+        }
+    },
+    "invalid remedy before no days": {
+        "refused": "DomainException",
+        "message": "The legal remedy \"x\" is not one of zienswijze, bezwaar. A reader told the wrong remedy loses a right, so an unknown one is refused."
+    },
+    "no days before bad announcement": {
+        "refused": "DomainException",
+        "message": "A comment period runs for at least one day. A period of no days is a publication with no comment period, which is a different thing and should be recorded as one."
+    },
+    "no publication before bad remedy": {
+        "refused": "DomainException",
+        "message": "A comment period belongs to a publication, and none was named."
+    },
+    "no engine": {
+        "refused": "OCA\\OpenCatalogi\\Service\\Publication\\TermRollUnavailableException",
+        "message": "The term engine is unavailable, so the end date of this period cannot be rolled off a non-working day. It is not computed here instead."
+    },
+    "no engine but invalid input": {
+        "refused": "DomainException",
+        "message": "A comment period runs for at least one day. A period of no days is a publication with no comment period, which is a different thing and should be recorded as one."
+    },
+    "configured form template": {
+        "period": {
+            "publication": "pub-1",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-16T10:00:00+00:00",
+            "termDays": 14,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://forms.example.org/zienswijze?id=pub-1",
+            "announcementUrl": "https://officielebekendmakingen.nl/stcrt-2026-1",
+            "automaticWithdrawal": false,
+            "openedBy": "alice"
+        }
+    },
+    "template without remedy placeholder": {
+        "period": {
+            "publication": "pub-1",
+            "startDate": "2026-03-02T10:00:00+00:00",
+            "endDate": "2026-03-16T10:00:00+00:00",
+            "termDays": 14,
+            "legalRemedy": "zienswijze",
+            "reactionFormUrl": "https://example.org/index.php/apps/opencatalogi/comment-periods/pub-1/zienswijze",
+            "announcementUrl": "https://officielebekendmakingen.nl/stcrt-2026-1",
+            "automaticWithdrawal": false,
+            "openedBy": "alice"
+        }
+    },
+    "end not after start": {
+        "refused": "DomainException",
+        "message": "A comment period has to end after it starts."
+    }
+}
