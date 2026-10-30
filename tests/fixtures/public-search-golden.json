@@ -1,0 +1,936 @@
+{
+    "catalogue not found": {
+        "envelope": {
+            "results": [],
+            "total": 0
+        },
+        "calls": [],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "PublicationQueryService::assemblePublicSearchResults returning empty envelope \u2014 no schemas in resolved catalog scope",
+                "context": {
+                    "_catalog": "missing",
+                    "_catalogi": null
+                }
+            }
+        ]
+    },
+    "catalogue not yet published": {
+        "envelope": {
+            "results": [],
+            "total": 0
+        },
+        "calls": [],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "PublicationQueryService::assemblePublicSearchResults returning empty envelope \u2014 no schemas in resolved catalog scope",
+                "context": {
+                    "_catalog": "raad",
+                    "_catalogi": null
+                }
+            }
+        ]
+    },
+    "content search widens over two registers": {
+        "envelope": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "d-6",
+                        "schema": "document"
+                    },
+                    "publication": {
+                        "id": "p-r1",
+                        "slug": "r-one",
+                        "title": "Refined"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "p-1",
+                        "schema": "publication"
+                    }
+                }
+            ],
+            "total": 2
+        },
+        "calls": [
+            {
+                "buildSearchQuery": {
+                    "_catalogi": [
+                        "multi",
+                        "",
+                        7,
+                        "missing"
+                    ],
+                    "_content": "true",
+                    "_limit": 20
+                },
+                "depth": 1
+            },
+            {
+                "search": {
+                    "_limit": 20,
+                    "_schemas": [
+                        1,
+                        3,
+                        2,
+                        6
+                    ],
+                    "_registers": [
+                        10,
+                        11
+                    ],
+                    "_register": null,
+                    "_includeDeleted": false,
+                    "_content_search": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            },
+            {
+                "search": {
+                    "_schema": 1,
+                    "_relations_contains": "d-6",
+                    "_limit": 2,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            }
+        ],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-574: schema has no authorization.read rules \u2014 excluded from anonymous search (SCH-PFTS-CAT-002)",
+                "context": {
+                    "schemaId": 4,
+                    "schema": "document"
+                }
+            }
+        ]
+    },
+    "content search without register mappers": {
+        "envelope": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "b-1",
+                        "schema": "besluit"
+                    }
+                }
+            ],
+            "total": 1
+        },
+        "calls": [
+            {
+                "buildSearchQuery": {
+                    "_catalog": "raad",
+                    "_content": "1"
+                },
+                "depth": 1
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        1,
+                        2,
+                        3
+                    ],
+                    "_register": 10,
+                    "_includeDeleted": false,
+                    "_content_search": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            }
+        ],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-574: schema has no authorization.read rules \u2014 excluded from anonymous search (SCH-PFTS-CAT-002)",
+                "context": {
+                    "schemaId": 5,
+                    "schema": "open"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "WOO-517: could not resolve OR mappers for document-schema widening",
+                "context": {
+                    "error": "no register mapper"
+                }
+            }
+        ]
+    },
+    "default scope unions listed catalogues": {
+        "envelope": {
+            "results": [],
+            "total": 0
+        },
+        "calls": [
+            {
+                "buildSearchQuery": {
+                    "_search": "x"
+                },
+                "depth": 1
+            },
+            {
+                "search": {
+                    "_search": "x",
+                    "_schemas": [
+                        1,
+                        2,
+                        3
+                    ],
+                    "_registers": [
+                        10,
+                        11
+                    ],
+                    "_register": null,
+                    "_includeDeleted": false
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            }
+        ],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-574: schema has no authorization.read rules \u2014 excluded from anonymous search (SCH-PFTS-CAT-002)",
+                "context": {
+                    "schemaId": 5,
+                    "schema": "open"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "WOO-577: OpenRegister reported a total without returning any rows on the first page; reporting 0 so the envelope does not advertise unreachable results",
+                "context": {
+                    "orTotal": 8,
+                    "search": "x",
+                    "contentSearch": false,
+                    "schemas": [
+                        1,
+                        2,
+                        3
+                    ]
+                }
+            }
+        ]
+    },
+    "drops floor the total at the rows shipped": {
+        "envelope": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "b-1",
+                        "schema": "besluit"
+                    }
+                }
+            ],
+            "total": 1
+        },
+        "calls": [
+            {
+                "buildSearchQuery": {
+                    "_catalog": "raad"
+                },
+                "depth": 1
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        1,
+                        2,
+                        3
+                    ],
+                    "_register": 10,
+                    "_includeDeleted": false
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            }
+        ],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-574: schema has no authorization.read rules \u2014 excluded from anonymous search (SCH-PFTS-CAT-002)",
+                "context": {
+                    "schemaId": 5,
+                    "schema": "open"
+                }
+            }
+        ]
+    },
+    "empty first page by page number": {
+        "envelope": {
+            "results": [],
+            "total": 0
+        },
+        "calls": [
+            {
+                "buildSearchQuery": {
+                    "_catalog": "raad",
+                    "_page": "1",
+                    "_offset": "0"
+                },
+                "depth": 1
+            },
+            {
+                "search": {
+                    "_page": "1",
+                    "_offset": "0",
+                    "_schemas": [
+                        1,
+                        2,
+                        3
+                    ],
+                    "_register": 10,
+                    "_includeDeleted": false
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            }
+        ],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-574: schema has no authorization.read rules \u2014 excluded from anonymous search (SCH-PFTS-CAT-002)",
+                "context": {
+                    "schemaId": 5,
+                    "schema": "open"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "WOO-577: OpenRegister reported a total without returning any rows on the first page; reporting 0 so the envelope does not advertise unreachable results",
+                "context": {
+                    "orTotal": 8,
+                    "search": null,
+                    "contentSearch": false,
+                    "schemas": [
+                        1,
+                        2,
+                        3
+                    ]
+                }
+            }
+        ]
+    },
+    "empty later page by page number": {
+        "envelope": {
+            "results": [],
+            "total": 31
+        },
+        "calls": [
+            {
+                "buildSearchQuery": {
+                    "_catalog": "raad",
+                    "_page": 3
+                },
+                "depth": 1
+            },
+            {
+                "search": {
+                    "_page": 3,
+                    "_schemas": [
+                        1,
+                        2,
+                        3
+                    ],
+                    "_register": 10,
+                    "_includeDeleted": false
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            }
+        ],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-574: schema has no authorization.read rules \u2014 excluded from anonymous search (SCH-PFTS-CAT-002)",
+                "context": {
+                    "schemaId": 5,
+                    "schema": "open"
+                }
+            }
+        ]
+    },
+    "empty later page keeps the total": {
+        "envelope": {
+            "results": [],
+            "total": 31
+        },
+        "calls": [
+            {
+                "buildSearchQuery": {
+                    "_catalog": "raad",
+                    "_offset": 40
+                },
+                "depth": 1
+            },
+            {
+                "search": {
+                    "_offset": 40,
+                    "_schemas": [
+                        1,
+                        2,
+                        3
+                    ],
+                    "_register": 10,
+                    "_includeDeleted": false
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            }
+        ],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-574: schema has no authorization.read rules \u2014 excluded from anonymous search (SCH-PFTS-CAT-002)",
+                "context": {
+                    "schemaId": 5,
+                    "schema": "open"
+                }
+            }
+        ]
+    },
+    "every schema lacks read rules": {
+        "envelope": {
+            "results": [],
+            "total": 0
+        },
+        "calls": [],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-574: schema has no authorization.read rules \u2014 excluded from anonymous search (SCH-PFTS-CAT-002)",
+                "context": {
+                    "schemaId": 5,
+                    "schema": "open"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "WOO-574: schema lookup failed in the read-rule guard \u2014 schema excluded from anonymous scope",
+                "context": {
+                    "schemaId": 99,
+                    "error": "schema 99 missing"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "PublicationQueryService::assemblePublicSearchResults returning empty envelope \u2014 no schemas in resolved catalog scope",
+                "context": {
+                    "_catalog": "raad",
+                    "_catalogi": null
+                }
+            }
+        ]
+    },
+    "mixed rows on one register": {
+        "envelope": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p-1",
+                        "schema": "publication"
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p-5",
+                        "schema": "besluit"
+                    },
+                    "title": "Entity"
+                },
+                {
+                    "id": "p-6",
+                    "schema": "3",
+                    "title": "Top-level id",
+                    "@self": {
+                        "schema": "besluit"
+                    }
+                },
+                {
+                    "@self": {
+                        "schema": "besluit"
+                    },
+                    "title": "No id at all"
+                },
+                {
+                    "@self": {
+                        "id": "d-1",
+                        "schema": "document"
+                    },
+                    "publication": {
+                        "id": "p-1",
+                        "slug": "one",
+                        "title": "One"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-2",
+                        "schema": "document"
+                    },
+                    "publication": {
+                        "id": "p-a1",
+                        "slug": "slug-a",
+                        "title": "A first"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-3",
+                        "schema": "document",
+                        "relations": {
+                            "publication": "p-missing",
+                            "publication.slug": "slug-a"
+                        }
+                    },
+                    "publication": {
+                        "id": "p-a1",
+                        "slug": "slug-a",
+                        "title": "A first"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-4",
+                        "schema": "document"
+                    },
+                    "_relations": {
+                        "publication.slug": "slug-a"
+                    },
+                    "publication": {
+                        "id": "p-a1",
+                        "slug": "slug-a",
+                        "title": "A first"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-6",
+                        "schema": "document"
+                    },
+                    "publication": {
+                        "id": "p-r1",
+                        "slug": "r-one",
+                        "title": "Refined"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-7",
+                        "schema": "document"
+                    },
+                    "publication": {
+                        "id": "p-r2",
+                        "slug": "r-two",
+                        "title": ""
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "b-1",
+                        "schema": "besluit"
+                    },
+                    "status": "concept"
+                }
+            ],
+            "total": 33,
+            "facets": {
+                "type": {
+                    "a": 1
+                }
+            },
+            "facetable": {
+                "type": true
+            }
+        },
+        "calls": [
+            {
+                "buildSearchQuery": {
+                    "_catalog": "raad",
+                    "_search": "x",
+                    "_limit": "500",
+                    "schema": 9,
+                    "register": 9,
+                    "fq": "a",
+                    "catalogSlug": "b",
+                    "_schema": 9,
+                    "_registers": [
+                        9
+                    ],
+                    "@self": {
+                        "schema": 9,
+                        "owner": "me"
+                    }
+                },
+                "depth": 1
+            },
+            {
+                "search": {
+                    "_search": "x",
+                    "_limit": 100,
+                    "@self": {
+                        "owner": "me"
+                    },
+                    "_schemas": [
+                        1,
+                        2,
+                        3
+                    ],
+                    "_register": 10,
+                    "_includeDeleted": false
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            },
+            {
+                "find": "p-1",
+                "register": 10,
+                "schema": 1,
+                "depth": 2
+            },
+            {
+                "find": "p-archived",
+                "register": 10,
+                "schema": 1,
+                "depth": 2
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        1
+                    ],
+                    "_limit": 500,
+                    "_register": 10
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            },
+            {
+                "find": "p-missing",
+                "register": 10,
+                "schema": 1,
+                "depth": 2
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        1
+                    ],
+                    "_limit": 500,
+                    "_register": 10
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            },
+            {
+                "search": {
+                    "_schema": 1,
+                    "_relations_contains": "d-5",
+                    "_limit": 2,
+                    "_order": {
+                        "@self.created": "asc"
+                    },
+                    "_register": 10
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            },
+            {
+                "search": {
+                    "_schema": 1,
+                    "_relations_contains": "d-6",
+                    "_limit": 2,
+                    "_order": {
+                        "@self.created": "asc"
+                    },
+                    "_register": 10
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            },
+            {
+                "search": {
+                    "_schema": 1,
+                    "_relations_contains": "d-7",
+                    "_limit": 2,
+                    "_order": {
+                        "@self.created": "asc"
+                    },
+                    "_register": 10
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            },
+            {
+                "search": {
+                    "_schema": 1,
+                    "_relations_contains": "d-8",
+                    "_limit": 2,
+                    "_order": {
+                        "@self.created": "asc"
+                    },
+                    "_register": 10
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            },
+            {
+                "search": {
+                    "_schema": 1,
+                    "_relations_contains": "d-9",
+                    "_limit": 2,
+                    "_order": {
+                        "@self.created": "asc"
+                    },
+                    "_register": 10
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            }
+        ],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-574: schema has no authorization.read rules \u2014 excluded from anonymous search (SCH-PFTS-CAT-002)",
+                "context": {
+                    "schemaId": 5,
+                    "schema": "open"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "WOO-536: schema slug lookup failed",
+                "context": {
+                    "schemaId": 99,
+                    "error": "schema 99 missing"
+                }
+            },
+            {
+                "level": "debug",
+                "message": "WOO-536: publication slug matched multiple rows; using first-scanned",
+                "context": {
+                    "slug": "slug-a",
+                    "count": 2
+                }
+            },
+            {
+                "level": "info",
+                "message": "WOO-536: document has no publicly-visible linked publication",
+                "context": {
+                    "documentUuid": "d-5"
+                }
+            },
+            {
+                "level": "debug",
+                "message": "WOO-536: document linked to multiple publications; using oldest-by-created",
+                "context": {
+                    "documentUuid": "d-7",
+                    "count": 2
+                }
+            },
+            {
+                "level": "info",
+                "message": "WOO-536: document has no publicly-visible linked publication",
+                "context": {
+                    "documentUuid": "d-8"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "WOO-536: document\u2192publication refinement failed",
+                "context": {
+                    "documentUuid": "d-9",
+                    "error": "refinement down"
+                }
+            }
+        ]
+    },
+    "mixed rows without a publication schema": {
+        "envelope": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p-1",
+                        "schema": "publication"
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p-5",
+                        "schema": "besluit"
+                    },
+                    "title": "Entity"
+                },
+                {
+                    "id": "p-6",
+                    "schema": "3",
+                    "title": "Top-level id",
+                    "@self": {
+                        "schema": "besluit"
+                    }
+                },
+                {
+                    "@self": {
+                        "schema": "besluit"
+                    },
+                    "title": "No id at all"
+                },
+                {
+                    "@self": {
+                        "id": "d-1",
+                        "schema": "document"
+                    },
+                    "publication": {
+                        "id": "p-1"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-2",
+                        "schema": "document"
+                    },
+                    "publication": {
+                        "id": "p-archived",
+                        "slug": "slug-a"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-3",
+                        "schema": "document",
+                        "relations": {
+                            "publication": "p-missing",
+                            "publication.slug": "slug-a"
+                        }
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-4",
+                        "schema": "document"
+                    },
+                    "_relations": {
+                        "publication.slug": "slug-a"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-5",
+                        "schema": "document"
+                    },
+                    "_relations": {
+                        "publication.slug": "slug-archived"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-6",
+                        "schema": "document"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-7",
+                        "schema": "document"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-8",
+                        "schema": "document"
+                    }
+                },
+                {
+                    "@self": {
+                        "id": "d-9",
+                        "schema": "document"
+                    }
+                },
+                {
+                    "@self": {
+                        "schema": "document"
+                    },
+                    "title": "Document without id"
+                },
+                {
+                    "@self": {
+                        "id": "b-1",
+                        "schema": "besluit"
+                    },
+                    "status": "concept"
+                }
+            ],
+            "total": 37,
+            "facets": {
+                "type": {
+                    "a": 1
+                }
+            },
+            "facetable": {
+                "type": true
+            }
+        },
+        "calls": [
+            {
+                "buildSearchQuery": {
+                    "_catalog": "raad",
+                    "_limit": 100
+                },
+                "depth": 1
+            },
+            {
+                "search": {
+                    "_limit": 100,
+                    "_schemas": [
+                        2,
+                        3
+                    ],
+                    "_register": 10,
+                    "_includeDeleted": false
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "depth": 2
+            }
+        ],
+        "logs": [
+            {
+                "level": "warning",
+                "message": "WOO-536: schema slug lookup failed",
+                "context": {
+                    "schemaId": 99,
+                    "error": "schema 99 missing"
+                }
+            }
+        ]
+    }
+}
