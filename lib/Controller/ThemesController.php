@@ -61,9 +61,7 @@ class ThemesController extends Controller {
 	 * @param IAppConfig $config App configuration interface.
 	 * @param ContainerInterface $container Server container for DI.
 	 * @param IAppManager $appManager App manager.
-	 * @param string $corsMethods Allowed CORS methods.
-	 * @param string $corsAllowedHeaders Allowed CORS headers.
-	 * @param integer $corsMaxAge CORS max age.
+	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 */
 	public function __construct(
 		$appName,
@@ -71,9 +69,7 @@ class ThemesController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
-		private readonly string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		private readonly string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		private readonly int $corsMaxAge = 1728000,
+		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

@@ -73,9 +73,7 @@ class ServiceCatalogueController extends Controller {
 	 * @param IL10N $l10n Localisation.
 	 * @param ServiceCatalogueServiceInterface $catalogueService The catalogue reader.
 	 * @param CaseTypeCatalogueServiceInterface $caseTypeService The case type importer.
-	 * @param string $corsMethods Allowed CORS methods.
-	 * @param string $corsAllowedHeaders Allowed CORS headers.
-	 * @param integer $corsMaxAge CORS max age.
+	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -87,9 +85,7 @@ class ServiceCatalogueController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly ServiceCatalogueServiceInterface $catalogueService,
 		private readonly CaseTypeCatalogueServiceInterface $caseTypeService,
-		private readonly string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		private readonly string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		private readonly int $corsMaxAge = 1728000,
+		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
