@@ -242,6 +242,27 @@ class PublicSearchGoldenTest extends TestCase {
 				['catalog' => $single],
 				['main' => ['results' => [], 'total' => 31]],
 			],
+			'document links across two registers' => [
+				['_catalog' => 'multi'],
+				['catalog' => ['schemas' => [1, 2]] + $multi],
+				[
+					'main' => ['results' => [
+						['@self' => ['id' => 'e-1', 'schema' => 2], 'publication' => ['id' => 'p-null', 'slug' => 'slug-a']],
+						['@self' => ['id' => 'e-2', 'schema' => 2], 'publication' => ['slug' => 'slug-a']],
+						['@self' => ['id' => 'e-3', 'schema' => 2, 'relations' => 'not-a-list']],
+						['@self' => ['id' => 'e-4', 'schema' => 2, 'relations' => ['publication' => 'p-1']]],
+						['@self' => ['id' => '', 'schema' => 2], 'id' => 'e-5'],
+						['@self' => ['id' => 'e-6', 'schema' => 2], 'publication' => ['id' => '', 'slug' => 'slug-none']],
+						['@self' => ['id' => 'e-7', 'schema' => 2], '_relations' => ['publication' => '', 'publication.slug' => 'slug-none']],
+					], 'total' => 7],
+					'finds' => $mixedScript['finds'],
+					'slugScan' => $mixedScript['slugScan'],
+					'refinements' => [
+						'e-3' => ['results' => [['@self' => ['id' => 'p-r9', 'slug' => 'r-nine'], 'title' => 'Nine']]],
+						'e-6' => ['results' => [['id' => 'p-r6', 'slug' => 'r-six']]],
+					],
+				],
+			],
 			'drops floor the total at the rows shipped' => [
 				['_catalog' => 'raad'],
 				['catalog' => $single],
