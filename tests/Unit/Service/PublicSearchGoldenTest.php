@@ -254,6 +254,8 @@ class PublicSearchGoldenTest extends TestCase {
 						['@self' => ['id' => '', 'schema' => 2], 'id' => 'e-5'],
 						['@self' => ['id' => 'e-6', 'schema' => 2], 'publication' => ['id' => '', 'slug' => 'slug-none']],
 						['@self' => ['id' => 'e-7', 'schema' => 2], '_relations' => ['publication' => '', 'publication.slug' => 'slug-none']],
+						['@self' => ['id' => 'e-7', 'schema' => 2], 'title' => 'Dropped once, asked again'],
+						['@self' => ['id' => 'e-3', 'schema' => 2], 'title' => 'Kept once, deduplicated'],
 					], 'total' => 7],
 					'finds' => $mixedScript['finds'],
 					'slugScan' => $mixedScript['slugScan'],
