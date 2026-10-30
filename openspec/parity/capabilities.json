@@ -5059,13 +5059,12 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "Code removed 2026-09-29 by 29e5b27d (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code) together with the knowledge articles of the decided-no row svc-articles: routes, ServiceCatalogueController methods and KnowledgeArticleService are gone from development (re-measured 2026-10-30). The staff Knowledge articles list (src/manifest.d/service-catalogue-admin-screens.json, 23 Oct) shows a helpfulCount column, but no route lets a reader record a verdict; before removal: appinfo/routes.php:229 POST /api/knowledge-articles/{id}/verdict @PublicPage; lib/Controller/ServiceCatalogueController.php:499 recordVerdict counts one verdict per reader and returns publicCounts; KnowledgeArticleService.php:203 refuses drafts",
-				"change": "published-service-and-case-type-catalogue"
+				"evidence": "Decided no 2026-10-30 (DECISIONS row 268): code removed 2026-09-29 by 29e5b27d (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code) together with the knowledge articles of the decided-no row svc-articles: routes, ServiceCatalogueController methods and KnowledgeArticleService are gone from development (re-measured 2026-10-30). The staff Knowledge articles list (src/manifest.d/service-catalogue-admin-screens.json, 23 Oct) shows a helpfulCount column, but no route lets a reader record a verdict; before removal: appinfo/routes.php:229 POST /api/knowledge-articles/{id}/verdict @PublicPage; lib/Controller/ServiceCatalogueController.php:499 recordVerdict counts one verdict per reader and returns publicCounts; KnowledgeArticleService.php:203 refuses drafts"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/knowledge-articles/{id}/verdict (public). No page or portal calls it or shows the count",
-			"note": "The count is returned in the response, but no page shows it.",
+			"note": "Decided no 2026-10-30 (DECISIONS row 268): the code was removed on 2026-09-29 with the knowledge articles of svc-articles, which is decided no.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "knowledge-articles",
@@ -5094,13 +5093,12 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "Code removed 2026-09-29 by 29e5b27d (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code) together with the knowledge articles of the decided-no row svc-articles: routes, ServiceCatalogueController methods and KnowledgeArticleService are gone from development (re-measured 2026-10-30); before removal: appinfo/routes.php:93 POST /api/knowledge-articles/extract; lib/Controller/ServiceCatalogueController.php:602 extractArticle takes the case in the request body and saves KnowledgeArticleService::extractDraft as a draft",
-				"change": "published-service-and-case-type-catalogue"
+				"evidence": "Decided no 2026-10-30 (DECISIONS row 268): code removed 2026-09-29 by 29e5b27d (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code) together with the knowledge articles of the decided-no row svc-articles: routes, ServiceCatalogueController methods and KnowledgeArticleService are gone from development (re-measured 2026-10-30); before removal: appinfo/routes.php:93 POST /api/knowledge-articles/extract; lib/Controller/ServiceCatalogueController.php:602 extractArticle takes the case in the request body and saves KnowledgeArticleService::extractDraft as a draft"
 			},
 			"reachedOn": "nothing: no opencatalogi page and no dossiq caller (git grep procest origin/development finds no knowledge-articles call)",
-			"note": "There is no one-action button in dossiq. The endpoint expects the caller to post the whole case object.",
+			"note": "Decided no 2026-10-30 (DECISIONS row 268): the code was removed on 2026-09-29 with the knowledge articles of svc-articles, which is decided no.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "knowledge-articles",
