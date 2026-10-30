@@ -25,6 +25,7 @@ namespace OCA\OpenCatalogi\Service\Woo;
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenCatalogi\Service\SchemaObjects;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;

@@ -38,7 +38,7 @@ use RuntimeException;
  * Golden test for WithheldDocumentStore::replace.
  *
  * @covers \OCA\OpenCatalogi\Service\Woo\WithheldDocumentStore
- * @covers \OCA\OpenCatalogi\Service\Woo\SchemaObjects
+ * @covers \OCA\OpenCatalogi\Service\SchemaObjects
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  */
 class WithheldStoreReplaceGoldenTest extends TestCase {

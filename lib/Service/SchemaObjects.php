@@ -4,7 +4,7 @@
  * The objects of one register and schema, read and written as the system.
  *
  * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service;
 
 /**
  * OpenRegister's ObjectService bound to one register and schema, without
