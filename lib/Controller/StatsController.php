@@ -134,15 +134,12 @@ class StatsController extends Controller {
 	public function catalog(string $slug): JSONResponse {
 		// Auth guard: catalog usage roll-ups are officer-facing, never anonymous.
 		if ($this->requireAuthenticatedUser() === null) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('Authentication required.')],
-				Http::STATUS_FORBIDDEN
-			);
+			return $this->authenticationRequired();
 		}
 
 		$catalog = $this->catalogiService->getCatalogBySlug($slug);
 		if ($catalog === null) {
-			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+			return $this->catalogNotFound();
 		}
 
 		[$from, $to] = $this->readRange();
@@ -185,10 +182,7 @@ class StatsController extends Controller {
 	public function series(): JSONResponse {
 		// Auth guard: instance-wide usage is officer-facing, never anonymous.
 		if ($this->requireAuthenticatedUser() === null) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('Authentication required.')],
-				Http::STATUS_FORBIDDEN
-			);
+			return $this->authenticationRequired();
 		}
 
 		[$from, $to] = $this->readRange();
@@ -228,15 +222,12 @@ class StatsController extends Controller {
 	public function quality(string $slug): JSONResponse {
 		// Auth guard: quality roll-ups are officer-facing, never anonymous.
 		if ($this->requireAuthenticatedUser() === null) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('Authentication required.')],
-				Http::STATUS_FORBIDDEN
-			);
+			return $this->authenticationRequired();
 		}
 
 		$catalog = $this->catalogiService->getCatalogBySlug($slug);
 		if ($catalog === null) {
-			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+			return $this->catalogNotFound();
 		}
 
 		$worst = (int)($this->request->getParam('worst', 5));
@@ -285,15 +276,12 @@ class StatsController extends Controller {
 	public function export(string $slug): DataDownloadResponse|JSONResponse {
 		// Auth guard: the CSV export is officer-facing, never anonymous.
 		if ($this->requireAuthenticatedUser() === null) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('Authentication required.')],
-				Http::STATUS_FORBIDDEN
-			);
+			return $this->authenticationRequired();
 		}
 
 		$catalog = $this->catalogiService->getCatalogBySlug($slug);
 		if ($catalog === null) {
-			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+			return $this->catalogNotFound();
 		}
 
 		[$from, $to] = $this->readRange();
@@ -417,6 +405,28 @@ class StatsController extends Controller {
 
 		return $user->getUID();
 	}//end requireAuthenticatedUser()
+
+	/**
+	 * The refusal for a caller who is not signed in.
+	 *
+	 * @return JSONResponse A 403.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function authenticationRequired(): JSONResponse {
+		return new JSONResponse(['error' => $this->l10n->t('Authentication required.')], Http::STATUS_FORBIDDEN);
+	}//end authenticationRequired()
+
+	/**
+	 * The answer for a catalog slug that resolves to nothing.
+	 *
+	 * @return JSONResponse A 404.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function catalogNotFound(): JSONResponse {
+		return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+	}//end catalogNotFound()
 
 	/**
 	 * Check whether the current caller may read a publication under OR RBAC.
