@@ -50,6 +50,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
  */
 class DcatController extends Controller {
+	use AnswersCrossOriginReadRequests;
+
 	/**
 	 * DcatController constructor.
 	 *
@@ -83,57 +85,6 @@ class DcatController extends Controller {
 	}//end __construct()
 
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * '*' (the default) emits a literal '*'; an unvetted caller Origin is never echoed
-	 * back unless explicitly allowlisted — mirroring PublicationsController (#735).
-	 *
-	 * @return string The Access-Control-Allow-Origin value.
-	 *
-	 * @spec exclude CORS-policy plumbing mirroring PublicationsController; fail-closed on
-	 *       Origin reflection, no domain behaviour.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = trim($this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
-	/**
-	 * Build the standard public-CORS header set for DCAT responses.
-	 *
-	 * @return array<string, string> The header map.
-	 */
-	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
-
-	}//end corsHeaders()
-
-	/**
 	 * Preflighted CORS response for the public DCAT OPTIONS routes.
 	 *
 	 * @return Response The CORS preflight response.
@@ -145,14 +96,7 @@ class DcatController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		foreach ($this->corsHeaders() as $name => $value) {
-			$response->addHeader($name, $value);
-		}
-
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-		return $response;
+		return $this->readOnlyPreflight();
 	}//end preflightedCors()
 
 	/**

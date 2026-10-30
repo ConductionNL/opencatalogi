@@ -45,6 +45,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One over the limit since index() strips caller scope via CallerScope (WOO-581).
  */
 class CatalogiController extends Controller {
+	use AnswersCrossOriginListRequests;
 	use ResolvesRegisterConfiguration;
 
 	/**
@@ -133,40 +134,6 @@ class CatalogiController extends Controller {
 	private function getCatalogConfiguration(): array {
 		return $this->resolveRegisterConfiguration(registerKey: 'catalog_register', schemaKey: 'catalog_schema');
 	}//end getCatalogConfiguration()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
-	 * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
-	 *
-	 * @return string The header value to use for Access-Control-Allow-Origin.
-	 *
-	 * @spec exclude CORS-policy plumbing; reads IAppConfig allowlist, no Origin reflection.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
 
 	// Generous, as for every preflightedCors() in this app: the browser sends
 	// this OPTIONS request BEFORE each cross-origin call it makes. A ceiling
