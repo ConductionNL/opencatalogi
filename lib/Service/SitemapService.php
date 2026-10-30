@@ -972,36 +972,56 @@ class SitemapService implements SitemapServiceInterface {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function validateDiwooOutput(string $catalogSlug, string $categoryCode, int $page = 1): array {
+		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
 		try {
 			$objectService = $this->getObjectService();
 		} catch (\Throwable $e) {
-			return $this->diwooError(catalogSlug: $catalogSlug, categoryCode: $categoryCode, error: 'OpenRegister is not available');
+			return $this->diwooError(request: $request, error: 'OpenRegister is not available');
 		}
 
-		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
 		if ($this->resolveSitemapRequest(request: $request, objectService: $objectService) !== null) {
-			return $this->diwooError(catalogSlug: $catalogSlug, categoryCode: $categoryCode, error: 'Unknown catalog or category');
+			return $this->diwooError(request: $request, error: 'Unknown catalog or category');
 		}
-
-		$registerId = $request->registerId;
-		$schemaId = $request->schemaId;
-
-		$searchQuery = [];
-		$searchQuery['@self']['register'] = $registerId;
-		$searchQuery['@self']['schema'] = $schemaId;
-		$searchQuery['_limit'] = $this->getMaxPerPage();
-		$searchQuery['_page'] = max(1, $page);
 
 		$publicationResult = $objectService->searchObjectsPaginated(
-			query: $searchQuery,
+			query: [
+				'@self' => ['register' => $request->registerId, 'schema' => $request->schemaId],
+				'_limit' => $this->getMaxPerPage(),
+				'_page' => max(1, $page),
+			],
 			_rbac: true,
 			_multitenancy: false,
 			deleted: false
 		);
 
+		$violations = $this->collectDiwooViolations(
+			publications: $this->publicationsWithFiles(rows: ($publicationResult['results'] ?? []))
+		);
+
+		return [
+			'catalogSlug' => $catalogSlug,
+			'categoryCode' => $categoryCode,
+			'valid' => ($violations === []),
+			'violations' => $violations,
+		];
+
+	}//end validateDiwooOutput()
+
+	/**
+	 * The publications as arrays, each with its files under `@self.files`.
+	 *
+	 * The search does not return files, so they are fetched per publication.
+	 *
+	 * @param iterable<mixed> $rows The search rows, arrays or serialisable objects.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function publicationsWithFiles(iterable $rows): array {
 		$fileService = $this->getFileService();
 		$publications = [];
-		foreach (($publicationResult['results'] ?? []) as $publication) {
+		foreach ($rows as $publication) {
 			if (is_array($publication) === false) {
 				$publication = $publication->jsonSerialize();
 			}
@@ -1014,32 +1034,23 @@ class SitemapService implements SitemapServiceInterface {
 			$publications[] = $publication;
 		}
 
-		$violations = $this->collectDiwooViolations(publications: $publications);
-
-		return [
-			'catalogSlug' => $catalogSlug,
-			'categoryCode' => $categoryCode,
-			'valid' => ($violations === []),
-			'violations' => $violations,
-		];
-
-	}//end validateDiwooOutput()
+		return $publications;
+	}//end publicationsWithFiles()
 
 	/**
 	 * Build a DIWOO validator error report.
 	 *
-	 * @param string $catalogSlug The catalog slug.
-	 * @param string $categoryCode The category code.
+	 * @param SitemapRequest $request The catalog slug and category code asked for.
 	 * @param string $error The error message.
 	 *
 	 * @return array{catalogSlug: string, categoryCode: string, valid: bool, violations: array<int, array<string, string>>, error: string}
 	 *
 	 * @spec exclude Error-shape plumbing for the DIWOO validator.
 	 */
-	private function diwooError(string $catalogSlug, string $categoryCode, string $error): array {
+	private function diwooError(SitemapRequest $request, string $error): array {
 		return [
-			'catalogSlug' => $catalogSlug,
-			'categoryCode' => $categoryCode,
+			'catalogSlug' => $request->catalogSlug,
+			'categoryCode' => $request->categoryCode,
 			'valid' => false,
 			'violations' => [],
 			'error' => $error,

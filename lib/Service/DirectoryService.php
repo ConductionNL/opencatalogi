@@ -3011,15 +3011,13 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * Aggregate facets from multiple directory sources
 	 *
 	 * Combines facet data from different publication endpoints,
-	 * merging counts for the same facet values.
+	 * merging counts for the same facet values. A field whose new or existing
+	 * value is not a list is left as it was.
 	 *
 	 * @param array $existingFacets The current aggregated facets
 	 * @param array $newFacets The new facets to merge in
 	 *
 	 * @return array The merged facets
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
@@ -3033,11 +3031,8 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		$mergedFacets = $existingFacets;
-
 		foreach ($newFacets as $field => $facetValues) {
-			// Skip if facetValues is not an array.
 			if (is_array($facetValues) === false) {
-				// Removed redundant logging.
 				continue;
 			}
 
@@ -3046,75 +3041,104 @@ class DirectoryService implements DirectoryServiceInterface {
 				continue;
 			}
 
-			// Skip if existing field data is not an array.
-			if (is_array($mergedFacets[$field]) === false) {
-				// Removed redundant logging.
-				continue;
-			}
-
-			// Create a lookup map for existing values.
-			$existingValues = [];
-			foreach ($mergedFacets[$field] as $index => $existingFacet) {
-				// Skip if existingFacet is not an array or doesn't have _id.
-				if (is_array($existingFacet) === false || isset($existingFacet['_id']) === false) {
-					// Removed redundant logging.
-					continue;
-				}
-
-				$existingValues[$existingFacet['_id']] = $index;
-			}
-
-			// Merge or add new values.
-			foreach ($facetValues as $facetValue) {
-				// Skip if facetValue is not an array or doesn't have required fields.
-				if (is_array($facetValue) === false || isset($facetValue['_id']) === false) {
-					// Removed redundant logging.
-					continue;
-				}
-
-				$valueId = $facetValue['_id'];
-
-				if (isset($existingValues[$valueId]) === true && isset($facetValue['count']) === true) {
-					// Add to existing count.
-					if (isset($mergedFacets[$field][$existingValues[$valueId]]['count']) === true) {
-						$mergedFacets[$field][$existingValues[$valueId]]['count'] += $facetValue['count'];
-					}
-
-					continue;
-				}
-
-				// Add new value.
-				$mergedFacets[$field][] = $facetValue;
-			}//end foreach
-
-			// Re-sort merged facets by count (descending) and then by value (ascending).
-			// Only sort if we have valid array data.
-			if (is_array($mergedFacets[$field]) === true && empty($mergedFacets[$field]) === false) {
-				usort(
-					$mergedFacets[$field],
-					function ($a, $b) {
-						// Ensure both items are arrays with required fields.
-						if (is_array($a) === false
-							|| is_array($b) === false
-							|| isset($a['_id']) === false
-							|| isset($b['_id']) === false
-						) {
-							return 0;
-						}
-
-						$countA = ($a['count'] ?? 0);
-						$countB = ($b['count'] ?? 0);
-
-						if ($countA === $countB) {
-							return strcmp($a['_id'], $b['_id']);
-						}
-
-						return ($countB <=> $countA);
-					}
+			if (is_array($mergedFacets[$field]) === true) {
+				$mergedFacets[$field] = $this->sortFacetBuckets(
+					buckets: $this->mergeFacetBuckets(buckets: $mergedFacets[$field], incoming: $facetValues)
 				);
-			}//end if
-		}//end foreach
+			}
+		}
 
 		return $mergedFacets;
 	}//end aggregateFacets()
+
+	/**
+	 * Merge one field's incoming facet buckets into its existing buckets.
+	 *
+	 * An incoming bucket whose `_id` an existing bucket has adds its count to
+	 * that bucket; any other bucket with an `_id` is appended. Buckets without
+	 * an `_id` are skipped.
+	 *
+	 * @param array $buckets The existing buckets of the field.
+	 * @param array $incoming The incoming buckets of the field.
+	 *
+	 * @return array The merged buckets.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function mergeFacetBuckets(array $buckets, array $incoming): array {
+		$existingValues = $this->facetBucketPositions(buckets: $buckets);
+		foreach ($incoming as $facetValue) {
+			if (is_array($facetValue) === false || isset($facetValue['_id']) === false) {
+				continue;
+			}
+
+			$index = ($existingValues[$facetValue['_id']] ?? null);
+			if ($index === null || isset($facetValue['count']) === false) {
+				$buckets[] = $facetValue;
+				continue;
+			}
+
+			if (isset($buckets[$index]['count']) === true) {
+				$buckets[$index]['count'] += $facetValue['count'];
+			}
+		}
+
+		return $buckets;
+	}//end mergeFacetBuckets()
+
+	/**
+	 * The position of each existing facet bucket, by its `_id`.
+	 *
+	 * @param array $buckets The buckets of one field.
+	 *
+	 * @return array<int|string, int|string> Bucket key by `_id`.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function facetBucketPositions(array $buckets): array {
+		$positions = [];
+		foreach ($buckets as $index => $bucket) {
+			if (is_array($bucket) === true && isset($bucket['_id']) === true) {
+				$positions[$bucket['_id']] = $index;
+			}
+		}
+
+		return $positions;
+	}//end facetBucketPositions()
+
+	/**
+	 * Sort facet buckets by count (descending), then by `_id` (ascending).
+	 *
+	 * Buckets that are not arrays with an `_id` compare equal to everything.
+	 *
+	 * @param array $buckets The buckets.
+	 *
+	 * @return array The sorted, reindexed buckets.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function sortFacetBuckets(array $buckets): array {
+		if (empty($buckets) === true) {
+			return $buckets;
+		}
+
+		usort(
+			$buckets,
+			static function ($a, $b): int {
+				if (is_array($a) === false || is_array($b) === false || isset($a['_id'], $b['_id']) === false) {
+					return 0;
+				}
+
+				$countA = ($a['count'] ?? 0);
+				$countB = ($b['count'] ?? 0);
+				if ($countA === $countB) {
+					return strcmp($a['_id'], $b['_id']);
+				}
+
+				return ($countB <=> $countA);
+			}
+		);
+
+		return $buckets;
+	}//end sortFacetBuckets()
 }//end class
