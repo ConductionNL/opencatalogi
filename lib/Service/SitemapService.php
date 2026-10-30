@@ -180,24 +180,16 @@ class SitemapService implements SitemapServiceInterface {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function buildSitemapIndex(string $catalogSlug, string $categoryCode): XMLResponse {
-		$catalog = (object)[];
-		// Create reference for $catalog.
-		$registerId = null;
-		// Create reference for $registerId.
-		$schemaId = null;
-		// Create reference for $catalogId.
 		$objectService = $this->getObjectService();
-		$isValid = $this->isValidSitemapRequest(
-			catalogSlug: $catalogSlug,
-			categoryCode: $categoryCode,
-			objectService: $objectService,
-			catalog: $catalog,
-			registerId: $registerId,
-			schemaId: $schemaId
-		);
-		if ($isValid instanceof XMLResponse === true) {
-			return $isValid;
+		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
+		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
+		if ($error !== null) {
+			return $error;
 		}
+
+		$catalog = $request->catalog;
+		$registerId = $request->registerId;
+		$schemaId = $request->schemaId;
 
 		$emptyIndex = new XMLResponse(
 			data: [
@@ -264,23 +256,16 @@ class SitemapService implements SitemapServiceInterface {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse {
-		$catalog = (object)[];
-		$registerId = null;
-		// Create reference for $registerId.
-		$schemaId = null;
-		// Create reference for $catalogId.
 		$objectService = $this->getObjectService();
-		$isValid = $this->isValidSitemapRequest(
-			catalogSlug: $catalogSlug,
-			categoryCode: $categoryCode,
-			objectService: $objectService,
-			catalog: $catalog,
-			registerId: $registerId,
-			schemaId: $schemaId
-		);
-		if ($isValid instanceof XMLResponse === true) {
-			return $isValid;
+		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
+		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
+		if ($error !== null) {
+			return $error;
 		}
+
+		$catalog = $request->catalog;
+		$registerId = $request->registerId;
+		$schemaId = $request->schemaId;
 
 		// Fail closed: a schema the read-rule guard drops yields a valid, empty
 		// document list, never a search (see isDroppedByReadRuleGuard()).
@@ -502,7 +487,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * Whether the SCH-PFTS-CAT-002 read-rule guard drops the sitemap's schema.
 	 *
 	 * The sitemap picks its schema by woo-register category, but admits it on
-	 * membership of the catalog's `schemas` list ({@see isValidSitemapRequest()})
+	 * membership of the catalog's `schemas` list ({@see resolveSitemapRequest()})
 	 * — the same scope source as every other public catalog reader — and then
 	 * searches it with `_rbac: true`. A schema without an `authorization` block
 	 * is open to every non-private row there, and the sitemap also emits each
@@ -525,128 +510,140 @@ class SitemapService implements SitemapServiceInterface {
 	}//end isDroppedByReadRuleGuard()
 
 	/**
-	 * Validates a sitemap request and resolves catalog, schema, and register IDs.
+	 * Validates a sitemap request and resolves its catalog, schema and register.
 	 *
-	 * Ensures the requested category and catalog exist, resolves the Woo catalog,
-	 * verifies the schema belongs to the configured catalog, and returns either:
-	 * - true on success
-	 * - XMLResponse with error details on failure
+	 * Ensures the requested category and catalog exist, resolves the Woo catalog
+	 * and verifies the schema belongs to it. The catalog, register and schema are
+	 * set on the request.
 	 *
-	 * @param string $catalogSlug The slug of the Woo catalog
-	 * @param string $categoryCode The sitemap category code
+	 * @param SitemapRequest $request The request; receives the resolved catalog, register and schema.
 	 * @param object $objectService The OpenRegister ObjectService
-	 * @param object|null $catalog Resolved catalog object (output reference)
-	 * @param string|null $schemaId Resolved schema ID (output reference)
-	 * @param string|null $registerId Resolved register ID (output reference)
 	 *
-	 * @return boolean|XMLResponse Returns true if the request is valid, otherwise an XMLResponse error.
-	 *
-	 * @psalm-suppress InvalidArrayOffset Array offset types are runtime-determined.
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @return XMLResponse|null Null when the request is valid, otherwise the error response.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function isValidSitemapRequest(
-		string $catalogSlug,
-		string $categoryCode,
-		$objectService,
-		&$catalog = null,
-		&$schemaId = null,
-		&$registerId = null,
-	) {
+	private function resolveSitemapRequest(SitemapRequest $request, $objectService): ?XMLResponse {
 		$settings = $this->settingsService->getSettings();
 
 		if (isset($settings['availableRegisters']) === false) {
 			return new XMLResponse(data: 'Could net fetch settings', status: 500);
 		}
 
-		$schemas = [];
-		foreach ($settings['availableRegisters'] as $register) {
-			if (strcasecmp(($register['title'] ?? ''), 'woo') === 0) {
-				$registerId = $register['id'];
-				$schemas = $register['schemas'];
-			}
+		$wooRegister = $this->wooRegister(registers: $settings['availableRegisters']);
+		if ($wooRegister !== null) {
+			$request->registerId = $wooRegister['id'];
 		}
 
 		// The categories are data (REQ-WIC-001): a file name nothing is served at,
 		// and a local category the registry refused for want of a waardelijst
 		// member, are the same 400 here. That is the guarantee an unmapped local
 		// category cannot reach a sitemap: it has no record, so it has no route.
-		$category = $this->categories->findBySitemapFile(sitemapFile: $categoryCode);
+		$category = $this->categories->findBySitemapFile(sitemapFile: $request->categoryCode);
 		if ($category === null) {
 			return new XMLResponse(data: 'Invalid category code', status: 400);
 		}
 
-		// Off case because our schema does not follow the woo category precisely.
-		$schemas = array_map(
-			function ($schema) {
-				if (trim($schema['title']) === 'Jaarplan of jaarverslag') {
-					$schema['title'] = 'Jaarplannen en jaarverslagen';
-				}
+		$request->schemaId = $this->titleMatchedSchemaId(schemas: ($wooRegister['schemas'] ?? []), category: $category);
 
-				return $schema;
-			},
-			$schemas
-		);
-
-		// Have to trim whitespace because of typo in schema title definition.
-		$needle = trim($category['label']);
-		$haystack = array_map(
-			function ($sch) {
-				return trim($sch['title']);
-			},
-			$schemas
-		);
-
-		// Get current schema belonging to requested category code. A category that
-		// names its own schemas (REQ-WIC-003) does not also get the title-matched
-		// schema of the legacy `woo` register: the named list is the whole answer.
-		$index = array_search(needle: $needle, haystack: $haystack);
-		$schemaId = null;
-		if ($index !== false && isset($schemas[$index]) === true && $category['schemas'] === []) {
-			$schemaId = $schemas[$index]['id'];
-		}
-
-		$searchQuery = [
-			'@self' => [
-				'register' => $settings['configuration']['catalog_register'],
-				'schema' => $settings['configuration']['catalog_schema'],
-			],
-			'slug' => $catalogSlug,
-			'hasWooSitemap' => true,
-		];
-
+		// Visibility governed by RBAC on the search (_rbac: true).
 		$catalogResult = $objectService->searchObjectsPaginated(
-			query: $searchQuery,
+			query: $request->catalogQuery(configuration: $settings['configuration']),
 			_rbac: true,
 			_multitenancy: false,
 			deleted: false
 		);
+		$request->catalog = ($catalogResult['results'][0] ?? []);
 
-		// Visibility governed by RBAC on the search above (_rbac: true).
-		$catalog = ($catalogResult['results'][0] ?? []);
+		return $this->catalogScopeError(request: $request);
+	}//end resolveSitemapRequest()
 
-		if (empty($catalog) === true) {
+	/**
+	 * Check the resolved catalog and keep the title-matched schema only inside it.
+	 *
+	 * @param SitemapRequest $request The request with its catalog; loses its schema
+	 *                                and register when the schema lies outside the catalog.
+	 *
+	 * @return XMLResponse|null Null when the catalog can list the category, otherwise the error response.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function catalogScopeError(SitemapRequest $request): ?XMLResponse {
+		if (empty($request->catalog) === true) {
 			return new XMLResponse(data: 'Invalid Woo catalog', status: 400);
 		}
 
 		// A title-matched schema outside the catalogue contributes nothing.
-		$scope = $this->catalogScope(catalog: $catalog);
-		if (in_array(needle: $schemaId, haystack: $scope['schemas']) === false) {
-			$schemaId = null;
-			$registerId = null;
+		$scope = $this->catalogScope(catalog: $request->catalog);
+		if (in_array(needle: $request->schemaId, haystack: $scope['schemas']) === false) {
+			$request->schemaId = null;
+			$request->registerId = null;
 		}
 
 		// With neither a filed-category source nor a title-matched schema there
 		// is nothing this catalogue can list for the category.
-		if ($schemaId === null && ($scope['registers'] === [] || $scope['schemas'] === [])) {
+		if ($request->schemaId === null && ($scope['registers'] === [] || $scope['schemas'] === [])) {
 			return new XMLResponse(data: 'Schema not configured in catalog', status: 400);
 		}
 
-		return true;
-	}//end isValidSitemapRequest()
+		return null;
+	}//end catalogScopeError()
+
+	/**
+	 * The register titled `woo` (any case); the last one when there are several.
+	 *
+	 * @param array<int, array<string, mixed>> $registers The available registers.
+	 *
+	 * @return array<string, mixed>|null The register, or null when there is none.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function wooRegister(array $registers): ?array {
+		$wooRegister = null;
+		foreach ($registers as $register) {
+			if (strcasecmp(($register['title'] ?? ''), 'woo') === 0) {
+				$wooRegister = $register;
+			}
+		}
+
+		return $wooRegister;
+	}//end wooRegister()
+
+	/**
+	 * The `woo` register schema whose title matches the category label.
+	 *
+	 * Titles and label are compared trimmed, with `Jaarplan of jaarverslag` read as
+	 * `Jaarplannen en jaarverslagen` because the schema does not follow the Woo
+	 * category name. A category that names its own schemas (REQ-WIC-003) does not
+	 * also get a title-matched schema: the named list is the whole answer.
+	 *
+	 * @param array<int, array<string, mixed>> $schemas The `woo` register schemas.
+	 * @param array<string, mixed> $category The category.
+	 *
+	 * @return mixed The schema id, or null.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function titleMatchedSchemaId(array $schemas, array $category): mixed {
+		$haystack = array_map(
+			static function ($schema) {
+				$title = trim($schema['title']);
+				if ($title === 'Jaarplan of jaarverslag') {
+					return 'Jaarplannen en jaarverslagen';
+				}
+
+				return $title;
+			},
+			$schemas
+		);
+
+		$index = array_search(needle: trim($category['label']), haystack: $haystack);
+		if ($index !== false && isset($schemas[$index]) === true && $category['schemas'] === []) {
+			return $schemas[$index]['id'];
+		}
+
+		return null;
+	}//end titleMatchedSchemaId()
 
 	/**
 	 * Maps publication + file metadata into a DIWOO Document XML array structure.
@@ -957,25 +954,19 @@ class SitemapService implements SitemapServiceInterface {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function validateDiwooOutput(string $catalogSlug, string $categoryCode, int $page = 1): array {
-		$registerId = null;
-		$schemaId = null;
-
 		try {
 			$objectService = $this->getObjectService();
 		} catch (\Throwable $e) {
 			return $this->diwooError(catalogSlug: $catalogSlug, categoryCode: $categoryCode, error: 'OpenRegister is not available');
 		}
 
-		$isValid = $this->isValidSitemapRequest(
-			catalogSlug: $catalogSlug,
-			categoryCode: $categoryCode,
-			objectService: $objectService,
-			registerId: $registerId,
-			schemaId: $schemaId
-		);
-		if ($isValid instanceof XMLResponse === true) {
+		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
+		if ($this->resolveSitemapRequest(request: $request, objectService: $objectService) !== null) {
 			return $this->diwooError(catalogSlug: $catalogSlug, categoryCode: $categoryCode, error: 'Unknown catalog or category');
 		}
+
+		$registerId = $request->registerId;
+		$schemaId = $request->schemaId;
 
 		$searchQuery = [];
 		$searchQuery['@self']['register'] = $registerId;
