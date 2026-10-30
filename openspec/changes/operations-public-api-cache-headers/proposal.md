@@ -28,7 +28,7 @@ The row is `build` under the rule "a featureRequest demand row plus one competit
 - Anonymous answers of the public publication and search API say they may be cached, for a time the administrator sets, and carry an ETag.
 - A reader or CDN that sends the ETag back gets 304 Not Modified when nothing changed.
 - Answers to a signed-in user are marked private, because they can hold records the public cannot read.
-- The federation routes a portal reads (`/api/federation/publications/{id}` and its `/attachments`) send the same headers as the catalogue routes. portaliq's publication page asks for the publication with its schema (`_extend=@self.schema`) on every view; with the tag, an unchanged publication answers 304 and the schema travels only when something changed — and a changed schema changes the tag, so a stale one is never served.
+- The federation routes a portal reads (`/api/federation/publications/{id}` and its `/attachments`) send the same headers as the catalogue routes. portaliq's publication page asks for the publication with its schema (`_extend=@self.schema`) on every view; with the tag, an unchanged publication answers 304 and the schema travels only when something changed — and a changed schema changes the tag, so a cache serves a stale one at most for the configured max-age (default 60 s, at most 3600 s).
 - Answers vary on Origin, so a CDN never hands one site's CORS answer to another.
 
 ## Rows this closes
