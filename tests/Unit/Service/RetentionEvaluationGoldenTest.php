@@ -26,6 +26,7 @@
  * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionRun
  */
 
 declare(strict_types=1);
