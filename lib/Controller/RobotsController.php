@@ -27,14 +27,13 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Contract\WooCategoryRegistryInterface;
 use OCA\OpenCatalogi\Http\TextResponse;
-use OCP\App\IAppManager;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use RuntimeException;
 
@@ -61,8 +60,7 @@ class RobotsController extends Controller {
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
 	 * @param SettingsServiceInterface $settingsService The settings service.
-	 * @param ContainerInterface $container The container for DI.
-	 * @param IAppManager $appManager The app manager.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param IURLGenerator $urlGenerator The URL generator.
 	 * @param IL10N $l10n The localization service.
 	 * @param WooCategoryRegistryInterface $categories The information categories, bundled plus local.
@@ -71,8 +69,7 @@ class RobotsController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly SettingsServiceInterface $settingsService,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IL10N $l10n,
 		private readonly WooCategoryRegistryInterface $categories,
@@ -176,8 +173,8 @@ class RobotsController extends Controller {
 	 *       ObjectService from the container; pure framework plumbing, no domain behavior.
 	 */
 	public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		if ($this->openRegister->isInstalled() === true) {
+			$this->objectService = $this->openRegister->objectService();
 
 			return $this->objectService;
 		}

@@ -26,6 +26,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\RobotsController;
 use OCA\OpenCatalogi\Controller\SearchController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\SettingsService;
@@ -45,6 +46,7 @@ use Psr\Log\LoggerInterface;
  * @covers \OCA\OpenCatalogi\Controller\RobotsController
  * @covers \OCA\OpenCatalogi\Controller\SearchController
  * @uses   \OCA\OpenCatalogi\Controller\AnswersCacheably
+ * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses   \OCA\OpenCatalogi\Http\TextResponse
  * @uses   \OCA\OpenCatalogi\Service\SearchQueryTranslator
  * @uses   \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry
@@ -228,7 +230,7 @@ class OpenRegisterAvailabilityControllerGoldenTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 		);
-		$robots = new RobotsController('opencatalogi', $request, $settings, $container, $appManager, $urls, $l10n, $categories);
+		$robots = new RobotsController('opencatalogi', $request, $settings, new OpenRegisterLookup($container, $appManager), $urls, $l10n, $categories);
 		if ($endpoint === 'robots-accessor') {
 			$first = $robots->getObjectService();
 			$second = $robots->getObjectService();
