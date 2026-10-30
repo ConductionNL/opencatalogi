@@ -77,6 +77,17 @@ use ZipArchive;
 class PublicationService implements PublicationServiceInterface {
 
 	/**
+	 * The result of a single-publication lookup that found nothing.
+	 *
+	 * @var array{success: false, error: string, status: int}
+	 */
+	private const PUBLICATION_NOT_FOUND = [
+		'success' => false,
+		'error' => 'Publication not found',
+		'status' => 404,
+	];
+
+	/**
 	 * The object service instance.
 	 *
 	 * @var object|null
@@ -2681,38 +2692,18 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getFederatedPublication(string $id, array $queryParams = []): array {
-		// Try to get the publication locally first.
 		$localResponse = $this->show(id: $id);
 		$localData = json_decode($localResponse->render(), true);
 
-		// If found locally, return it (unless we want to also search federally for additional data).
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
+
 		if ($localResponse->getStatus() === 200 && empty($localData) === false) {
-			// Check if aggregation is enabled for enrichment.
-			$aggregate = ($queryParams['_aggregate'] ?? 'true');
-			$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-			if ($shouldAggregate === false) {
-				return [
-					'success' => true,
-					'data' => $localData,
-					'status' => 200,
-				];
-			}
-
-			// Add local catalog information to @self.catalogs for local publications
-			// @todo This adds ~200ms overhead - consider making optional via query parameter.
-			if (isset($localData['@self']) === true && is_array($localData['@self']) === true) {
-				$localCatalogs = $this->getLocalCatalogs();
-				if (empty($localCatalogs) === false) {
-					$localData['@self']['catalogs'] = $localCatalogs;
-				}
+			if ($shouldAggregate === true) {
+				$localData = $this->withLocalCatalogs(publication: $localData);
 			}
 
 			return [
@@ -2720,79 +2711,102 @@ class PublicationService implements PublicationServiceInterface {
 				'data' => $localData,
 				'status' => 200,
 			];
-		}//end if
-
-		// Check if aggregation is enabled for federation search.
-		$aggregate = ($queryParams['_aggregate'] ?? 'true');
-		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-		// If aggregation is disabled and not found locally, return 404.
-		if ($shouldAggregate === false) {
-			return [
-				'success' => false,
-				'error' => 'Publication not found',
-				'status' => 404,
-			];
 		}
 
-		try {
-			// Search in federated catalogs.
-			$guzzleConfig = [];
+		if ($shouldAggregate === false) {
+			return self::PUBLICATION_NOT_FOUND;
+		}
 
-			// Allow timeout configuration via query parameter.
-			if (isset($queryParams['timeout']) === true) {
-				$timeout = (int)$queryParams['timeout'];
-				if ($timeout > 0 && $timeout <= 120) {
-					// Max 2 minutes.
-					$guzzleConfig['timeout'] = $timeout;
-				}
-			}
-
-			// Allow connect timeout configuration via query parameter.
-			if (isset($queryParams['connect_timeout']) === true) {
-				$connectTimeout = (int)$queryParams['connect_timeout'];
-				if ($connectTimeout > 0 && $connectTimeout <= 30) {
-					// Max 30 seconds.
-					$guzzleConfig['connect_timeout'] = $connectTimeout;
-				}
-			}
-
-			// Pass through current query parameters (DirectoryService will handle _aggregate and _extend).
-			$guzzleConfig['query_params'] = $queryParams;
-
-			// Get publication from directory service.
-			$federatedResult = $this->directoryService->getPublication($id, $guzzleConfig);
-
-			if (empty($federatedResult) === false && isset($federatedResult['result']) === true) {
-				// Merge the result with source information.
-				$responseData = $federatedResult['result'];
-				$responseData['sources'] = ($federatedResult['source'] ?? []);
-
-				// `federated` marks a peer's publication: it is not this instance's to describe.
-				return [
-					'success' => true,
-					'data' => $responseData,
-					'status' => 200,
-					'federated' => true,
-				];
-			}
-
-			// Not found in federated catalogs either, return 404.
-			return [
-				'success' => false,
-				'error' => 'Publication not found',
-				'status' => 404,
-			];
-		} catch (\Exception $e) {
-			// If federation search fails, return the original local response (likely 404).
-			return [
-				'success' => false,
-				'error' => 'Publication not found',
-				'status' => 404,
-			];
-		}//end try
-
+		return $this->fetchFederatedPublication(id: $id, queryParams: $queryParams);
 	}//end getFederatedPublication()
+
+	/**
+	 * Add this instance's catalogs to the `@self.catalogs` of a local publication.
+	 *
+	 * @param array $publication The local publication.
+	 *
+	 * @return array The publication, with its catalogs when it has an `@self` and any catalog exists.
+	 *
+	 * @todo This adds ~200ms overhead - consider making optional via query parameter.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function withLocalCatalogs(array $publication): array {
+		if (isset($publication['@self']) === false || is_array($publication['@self']) === false) {
+			return $publication;
+		}
+
+		$localCatalogs = $this->getLocalCatalogs();
+		if (empty($localCatalogs) === false) {
+			$publication['@self']['catalogs'] = $localCatalogs;
+		}
+
+		return $publication;
+	}//end withLocalCatalogs()
+
+	/**
+	 * Look a publication up in the federated catalogs.
+	 *
+	 * A failing lookup reads as not found.
+	 *
+	 * @param string $id The ID of the publication.
+	 * @param array $queryParams The caller's query parameters.
+	 *
+	 * @return array The peer's publication with its sources, marked `federated`, or the not-found result.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function fetchFederatedPublication(string $id, array $queryParams): array {
+		try {
+			$federatedResult = $this->directoryService->getPublication($id, $this->federationRequestConfig(queryParams: $queryParams));
+		} catch (\Exception $e) {
+			return self::PUBLICATION_NOT_FOUND;
+		}
+
+		if (empty($federatedResult) === true || isset($federatedResult['result']) === false) {
+			return self::PUBLICATION_NOT_FOUND;
+		}
+
+		$responseData = $federatedResult['result'];
+		$responseData['sources'] = ($federatedResult['source'] ?? []);
+
+		// `federated` marks a peer's publication: it is not this instance's to describe.
+		return [
+			'success' => true,
+			'data' => $responseData,
+			'status' => 200,
+			'federated' => true,
+		];
+	}//end fetchFederatedPublication()
+
+	/**
+	 * The request config for a federated lookup.
+	 *
+	 * `timeout` (at most 120 s) and `connect_timeout` (at most 30 s) are taken from
+	 * the query when positive and in bounds; the query itself is passed through for
+	 * DirectoryService to read `_aggregate` and `_extend` from.
+	 *
+	 * @param array $queryParams The caller's query parameters.
+	 *
+	 * @return array The Guzzle config.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function federationRequestConfig(array $queryParams): array {
+		$guzzleConfig = [];
+		foreach (['timeout' => 120, 'connect_timeout' => 30] as $option => $maximum) {
+			if (isset($queryParams[$option]) === true) {
+				$seconds = (int)$queryParams[$option];
+				if ($seconds > 0 && $seconds <= $maximum) {
+					$guzzleConfig[$option] = $seconds;
+				}
+			}
+		}
+
+		$guzzleConfig['query_params'] = $queryParams;
+
+		return $guzzleConfig;
+	}//end federationRequestConfig()
 
 	/**
 	 * Get publications that use this publication with federation support
