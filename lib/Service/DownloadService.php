@@ -32,6 +32,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use Exception;
+use Mpdf\Mpdf;
 use Mpdf\MpdfException;
 use Mpdf\Output\Destination;
 use OCA\OpenRegister\Service\ObjectService;
@@ -106,6 +107,21 @@ class DownloadService {
 			return $publication;
 		}
 
+		return $this->publicationPdf(publication: $publication);
+	}//end createPublicationFile()
+
+	/**
+	 * The metadata PDF of a publication, named after its title.
+	 *
+	 * @param array<string, mixed> $publication The publication data.
+	 *
+	 * @return array{filename: string, content: string}|JSONResponse The file, or a 500 when it cannot be read back.
+	 *
+	 * @throws LoaderError|RuntimeError|SyntaxError|MpdfException When the template cannot be rendered.
+	 *
+	 * @spec openspec/specs/download-service/spec.md
+	 */
+	private function publicationPdf(array $publication): array|JSONResponse {
 		// Create the PDF file using a twig template and publication data.
 		$mpdf = $this->fileService->createPdf('publication.html.twig', ['publication' => $publication]);
 
@@ -114,25 +130,7 @@ class DownloadService {
 		$title = ($publication['title'] ?? 'publication');
 		$filename = "$title.pdf";
 
-		// Render to a temporary location, read it back, and remove the temporary file.
-		// The metadata PDF is an on-demand artefact — it MUST NOT be written to
-		// Nextcloud user storage by this service (DWN-OR-003).
-		$tempDir = sys_get_temp_dir() . '/mpdf';
-		if (is_dir($tempDir) === false) {
-			mkdir(directory: $tempDir, permissions: 0777, recursive: true);
-		}
-
-		$tempPath = $tempDir . '/' . bin2hex(random_bytes(16)) . '.pdf';
-
-		try {
-			$mpdf->Output($tempPath, Destination::FILE);
-			$content = file_get_contents($tempPath);
-		} finally {
-			if (file_exists($tempPath) === true) {
-				unlink($tempPath);
-			}
-		}
-
+		$content = $this->renderToString(mpdf: $mpdf);
 		if ($content === false) {
 			return new JSONResponse(
 				data: ['error' => 'Failed to read the rendered publication metadata PDF'],
@@ -145,7 +143,38 @@ class DownloadService {
 			'content' => $content,
 		];
 
-	}//end createPublicationFile()
+	}//end publicationPdf()
+
+	/**
+	 * Render a PDF to a temporary file, read it back, and remove the file.
+	 *
+	 * The metadata PDF is an on-demand artefact: it MUST NOT be written to
+	 * Nextcloud user storage by this service (DWN-OR-003).
+	 *
+	 * @param Mpdf $mpdf The PDF to render.
+	 *
+	 * @return string|false The PDF bytes, or false when they cannot be read back.
+	 *
+	 * @spec openspec/specs/download-service/spec.md
+	 */
+	private function renderToString(Mpdf $mpdf): string|false {
+		$tempDir = sys_get_temp_dir() . '/mpdf';
+		if (is_dir($tempDir) === false) {
+			mkdir(directory: $tempDir, permissions: 0777, recursive: true);
+		}
+
+		$tempPath = $tempDir . '/' . bin2hex(random_bytes(16)) . '.pdf';
+
+		try {
+			$mpdf->Output($tempPath, Destination::FILE);
+			return file_get_contents($tempPath);
+		} finally {
+			if (file_exists($tempPath) === true) {
+				unlink($tempPath);
+			}
+		}
+
+	}//end renderToString()
 
 	/**
 	 * Gets a publication and returns it as serialized array.
