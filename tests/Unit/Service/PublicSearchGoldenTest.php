@@ -30,6 +30,7 @@
  * @uses \OCA\OpenCatalogi\Service\CallerScope
  * @uses \OCA\OpenCatalogi\Service\CatalogScopeIds
  * @uses \OCA\OpenCatalogi\Service\SearchRangeGuard
+ * @uses \OCA\OpenCatalogi\Service\PublicSearchAssembly
  */
 
 declare(strict_types=1);
