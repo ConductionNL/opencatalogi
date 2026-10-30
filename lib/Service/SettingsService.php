@@ -1940,11 +1940,13 @@ class SettingsService implements SettingsServiceInterface {
 		return (new CatalogScopeSlugResolver())->resolveScope(
 			registers: $registers,
 			schemas: $schemas,
-			findRegisterId: static fn (string $slug) => $registerMapper?->find($slug, _rbac: false, _multitenancy: false)?->getId(),
-			schemaIdsOfRegister: static fn (int $registerId): array => (
-				$registerMapper?->find($registerId, _rbac: false, _multitenancy: false)?->getSchemas() ?? []
-			),
-			schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper?->find($schemaId, _rbac: false, _multitenancy: false)?->getSlug()
+			lookups: new CatalogScopeLookups(
+				findRegisterId: static fn (string $slug) => $registerMapper?->find($slug, _rbac: false, _multitenancy: false)?->getId(),
+				schemaIdsOfRegister: static fn (int $registerId): array => (
+					$registerMapper?->find($registerId, _rbac: false, _multitenancy: false)?->getSchemas() ?? []
+				),
+				schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper?->find($schemaId, _rbac: false, _multitenancy: false)?->getSlug()
+			)
 		);
 	}//end resolveScopeSlugs()
 

@@ -19,12 +19,14 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
+use OCA\OpenCatalogi\Service\CatalogScopeLookups;
 use OCA\OpenCatalogi\Service\CatalogScopeSlugResolver;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
+ * @uses   \OCA\OpenCatalogi\Service\CatalogScopeLookups
  */
 class CatalogScopeSlugResolverTest extends TestCase {
 
@@ -104,9 +106,11 @@ class CatalogScopeSlugResolverTest extends TestCase {
 		$scope = (new CatalogScopeSlugResolver())->resolveScope(
 			registers: ['stackiq'],
 			schemas: ['organization', 'module'],
-			findRegisterId: $findRegister,
-			schemaIdsOfRegister: $schemasOf,
-			schemaSlugOf: $slugOf
+			lookups: new CatalogScopeLookups(
+				findRegisterId: $findRegister,
+				schemaIdsOfRegister: $schemasOf,
+				schemaSlugOf: $slugOf
+			)
 		);
 
 		$this->assertSame(['20'], $scope['registers']);
@@ -127,9 +131,11 @@ class CatalogScopeSlugResolverTest extends TestCase {
 		$scope = (new CatalogScopeSlugResolver())->resolveScope(
 			registers: ['stackiq'],
 			schemas: ['module', 'usage'],
-			findRegisterId: $findRegister,
-			schemaIdsOfRegister: $schemasOf,
-			schemaSlugOf: $slugOf
+			lookups: new CatalogScopeLookups(
+				findRegisterId: $findRegister,
+				schemaIdsOfRegister: $schemasOf,
+				schemaSlugOf: $slugOf
+			)
 		);
 
 		$this->assertSame(['34', 'usage'], $scope['schemas']);
@@ -147,11 +153,13 @@ class CatalogScopeSlugResolverTest extends TestCase {
 		$scope = (new CatalogScopeSlugResolver())->resolveScope(
 			registers: ['stackiq'],
 			schemas: ['organization'],
-			findRegisterId: static function (string $slug): ?int {
-				throw new RuntimeException('register ' . $slug . ' does not exist');
-			},
-			schemaIdsOfRegister: $schemasOf,
-			schemaSlugOf: $slugOf
+			lookups: new CatalogScopeLookups(
+				findRegisterId: static function (string $slug): ?int {
+					throw new RuntimeException('register ' . $slug . ' does not exist');
+				},
+				schemaIdsOfRegister: $schemasOf,
+				schemaSlugOf: $slugOf
+			)
 		);
 
 		$this->assertSame(['stackiq'], $scope['registers']);
@@ -173,9 +181,11 @@ class CatalogScopeSlugResolverTest extends TestCase {
 		$scope = (new CatalogScopeSlugResolver())->resolveScope(
 			registers: ['20'],
 			schemas: ['33', '34'],
-			findRegisterId: $findRegister,
-			schemaIdsOfRegister: $schemasOf,
-			schemaSlugOf: $slugOf
+			lookups: new CatalogScopeLookups(
+				findRegisterId: $findRegister,
+				schemaIdsOfRegister: $schemasOf,
+				schemaSlugOf: $slugOf
+			)
 		);
 
 		$this->assertFalse($scope['changed']);

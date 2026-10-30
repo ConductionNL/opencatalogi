@@ -1,0 +1,266 @@
+{
+    "register and schema slugs": {
+        "scope": {
+            "registers": [
+                "20"
+            ],
+            "schemas": [
+                "33",
+                "34"
+            ],
+            "changed": true,
+            "pending": []
+        },
+        "calls": [
+            "register:stackiq",
+            "schemas-of:20",
+            "slug-of:33",
+            "slug-of:34",
+            "slug-of:36"
+        ]
+    },
+    "schema slug not listed yet": {
+        "scope": {
+            "registers": [
+                "20"
+            ],
+            "schemas": [
+                "34",
+                "usage"
+            ],
+            "changed": true,
+            "pending": [
+                "20"
+            ]
+        },
+        "calls": [
+            "register:stackiq",
+            "schemas-of:20",
+            "slug-of:33",
+            "slug-of:34",
+            "slug-of:36"
+        ]
+    },
+    "ids only": {
+        "scope": {
+            "registers": [
+                "20",
+                7
+            ],
+            "schemas": [
+                "33",
+                34
+            ],
+            "changed": false,
+            "pending": []
+        },
+        "calls": []
+    },
+    "unknown register": {
+        "scope": {
+            "registers": [
+                "nope"
+            ],
+            "schemas": [
+                "module"
+            ],
+            "changed": false,
+            "pending": [
+                "nope"
+            ]
+        },
+        "calls": [
+            "register:nope"
+        ]
+    },
+    "unknown register and ids": {
+        "scope": {
+            "registers": [
+                "nope",
+                "20"
+            ],
+            "schemas": [
+                "33"
+            ],
+            "changed": false,
+            "pending": [
+                "nope"
+            ]
+        },
+        "calls": [
+            "register:nope"
+        ]
+    },
+    "register lookup throws": {
+        "scope": {
+            "registers": [
+                "boom",
+                "20"
+            ],
+            "schemas": [
+                "34"
+            ],
+            "changed": true,
+            "pending": [
+                "boom"
+            ]
+        },
+        "calls": [
+            "register:boom",
+            "register:stackiq",
+            "schemas-of:20",
+            "slug-of:33",
+            "slug-of:34",
+            "slug-of:36"
+        ]
+    },
+    "register listing throws": {
+        "scope": {
+            "registers": [
+                "30",
+                "20"
+            ],
+            "schemas": [
+                "34"
+            ],
+            "changed": true,
+            "pending": []
+        },
+        "calls": [
+            "register:broken-register",
+            "register:stackiq",
+            "schemas-of:30",
+            "schemas-of:20",
+            "slug-of:33",
+            "slug-of:34",
+            "slug-of:36"
+        ]
+    },
+    "schema slug lookup throws": {
+        "scope": {
+            "registers": [
+                "20"
+            ],
+            "schemas": [
+                "34",
+                "shadow"
+            ],
+            "changed": true,
+            "pending": [
+                "20"
+            ]
+        },
+        "calls": [
+            "register:stackiq",
+            "schemas-of:20",
+            "slug-of:33",
+            "slug-of:34",
+            "slug-of:36"
+        ]
+    },
+    "first register wins": {
+        "scope": {
+            "registers": [
+                "7",
+                "20"
+            ],
+            "schemas": [
+                "9"
+            ],
+            "changed": true,
+            "pending": []
+        },
+        "calls": [
+            "register:publication",
+            "register:stackiq",
+            "schemas-of:7",
+            "slug-of:9",
+            "slug-of:10",
+            "schemas-of:20",
+            "slug-of:33",
+            "slug-of:34",
+            "slug-of:36"
+        ]
+    },
+    "empty scope": {
+        "scope": {
+            "registers": [],
+            "schemas": [],
+            "changed": false,
+            "pending": []
+        },
+        "calls": []
+    },
+    "blank and odd entries": {
+        "scope": {
+            "registers": [
+                "",
+                null,
+                "20",
+                5.5
+            ],
+            "schemas": [
+                "",
+                false,
+                "34"
+            ],
+            "changed": true,
+            "pending": []
+        },
+        "calls": [
+            "register:stackiq",
+            "schemas-of:20",
+            "slug-of:33",
+            "slug-of:34",
+            "slug-of:36",
+            "schemas-of:5"
+        ]
+    },
+    "schema slugs without registers": {
+        "scope": {
+            "registers": [],
+            "schemas": [
+                "module"
+            ],
+            "changed": false,
+            "pending": []
+        },
+        "calls": []
+    },
+    "register resolves to empty id": {
+        "scope": {
+            "registers": [
+                "empty"
+            ],
+            "schemas": [
+                "module"
+            ],
+            "changed": false,
+            "pending": [
+                "empty"
+            ]
+        },
+        "calls": [
+            "register:empty"
+        ]
+    },
+    "duplicate pending": {
+        "scope": {
+            "registers": [
+                "nope",
+                "NOPE"
+            ],
+            "schemas": [
+                "x"
+            ],
+            "changed": false,
+            "pending": [
+                "nope"
+            ]
+        },
+        "calls": [
+            "register:nope",
+            "register:NOPE"
+        ]
+    }
+}
