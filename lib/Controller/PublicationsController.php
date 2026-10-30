@@ -419,6 +419,120 @@ class PublicationsController extends Controller {
 	}//end objectMatchesCatalogScope()
 
 	/**
+	 * Resolve a publication by its slug across every register × schema of a catalogue.
+	 *
+	 * OpenRegister keeps a slug unique per register and schema only, and a
+	 * catalogue spans several schemas, so the same slug can occur more than once
+	 * here. All combinations are searched before deciding: exactly one match is
+	 * returned; more than one is refused (logged with the matching UUIDs, the
+	 * caller gets the plain 404) so the endpoint never returns the wrong
+	 * publication. The lookup filters on `@self.slug` explicitly, so a numeric
+	 * slug is never read as an object id.
+	 *
+	 * @param object        $objectService OpenRegister's ObjectService.
+	 * @param string        $slug          The identifier from the URL.
+	 * @param string        $catalogSlug   The catalogue, for the log line.
+	 * @param array         $registers     The catalogue's register ids.
+	 * @param array         $schemas       The catalogue's schema ids.
+	 *
+	 * @return object|null The one matching publication, or null.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-retrieve-a-single-publication-by-catalog-slug-and-object-uuid-or-slug-pub-002
+	 * @spec openspec/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
+	 */
+	private function findBySlugInCatalogScope(
+		object $objectService,
+		string $slug,
+		string $catalogSlug,
+		array $registers,
+		array $schemas,
+	): ?object {
+		// OpenRegister stores slugs normalised, so the URL id is normalised the
+		// same way before the lookup (`Zaak_2026-0042` finds `zaak-2026-0042`).
+		// An id with nothing left after normalising matches no stored slug.
+		$searchSlug = $this->normaliseSlug(text: $slug);
+		if ($searchSlug === '') {
+			return null;
+		}
+
+		$matches = [];
+		foreach ($registers as $register) {
+			foreach ($schemas as $schema) {
+				$found = $objectService->searchObjects(
+					query: [
+						'@self' => [
+							'slug' => $searchSlug,
+							'register' => $register,
+							'schema' => $schema,
+						],
+						// Only 0 / 1 / more is needed to decide.
+						'_limit' => 2,
+					],
+					_rbac: true,
+					_multitenancy: false,
+				);
+				if (is_array($found) === false) {
+					continue;
+				}
+
+				foreach ($found as $candidate) {
+					$matches[] = $candidate;
+				}
+
+				// Two matches already make the slug ambiguous: skip the remaining
+				// register x schema searches.
+				if (count($matches) > 1) {
+					break 2;
+				}
+			}
+		}
+
+		if (count($matches) === 1) {
+			return $matches[0];
+		}
+
+		if (count($matches) > 1) {
+			$uuids = array_map(
+				static fn ($match): string => (string)$match->getUuid(),
+				$matches
+			);
+			$this->logger->warning(
+				sprintf(
+					'[PublicationsController] Slug "%s" is ambiguous in catalog %s: matches publications %s',
+					$slug,
+					$catalogSlug,
+					implode(', ', $uuids)
+				),
+				['slug' => $slug, 'catalogSlug' => $catalogSlug, 'uuids' => $uuids]
+			);
+		}
+
+		return null;
+	}//end findBySlugInCatalogScope()
+
+	/**
+	 * Normalise a URL id the way OpenRegister normalises a stored slug.
+	 *
+	 * Mirrors OpenRegister's `MetadataHydrationHandler::createSlug()` plus the
+	 * 255-character column cut of `ObjectSlugHandler::candidate()`: lowercase,
+	 * spaces and underscores to hyphens, everything outside a-z, 0-9 and hyphen
+	 * dropped, hyphen runs collapsed, edge hyphens trimmed.
+	 *
+	 * @param string $text The identifier from the URL.
+	 *
+	 * @return string The normalised slug, empty when nothing is left.
+	 */
+	private function normaliseSlug(string $text): string {
+		$slug = strtolower(trim($text));
+		$slug = str_replace([' ', '_'], '-', $slug);
+		$slug = (string)preg_replace('/[^a-z0-9\-]/', '', $slug);
+		$slug = (string)preg_replace('/-+/', '-', $slug);
+		$slug = trim($slug, '-');
+
+		return substr($slug, 0, 255);
+	}//end normaliseSlug()
+
+	/**
 	 * Implements a preflighted CORS response for OPTIONS requests.
 	 *
 	 * @return Response The CORS response
@@ -628,6 +742,7 @@ class PublicationsController extends Controller {
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/specs/publications/spec.md#requirement-slug-resolution-must-be-backwards-compatible-pub-020
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -762,6 +877,29 @@ class PublicationsController extends Controller {
 				}
 			}//end if
 
+			// Slug route (#1592): only when the UUID lookup above found nothing, so
+			// a UUID URL is answered exactly as before. Same catalogue scope and the
+			// same read rules as the UUID path.
+			$publicationId = $id;
+			if ($object === null
+				&& empty($catalogRegisters) === false
+				&& empty($catalogSchemas) === false
+			) {
+				$object = $this->findBySlugInCatalogScope(
+					objectService: $objectService,
+					slug: $id,
+					catalogSlug: $catalogSlug,
+					registers: $catalogRegisters,
+					schemas: $catalogSchemas
+				);
+
+				// Everything downstream (withheld list, view counter) keys on the
+				// publication UUID, not on the slug the URL carried.
+				if ($object !== null) {
+					$publicationId = (string)$object->getUuid();
+				}
+			}
+
 			if ($object === null) {
 				$this->logger->warning(
 					'[PublicationsController::show] Object not found in any register/schema',
@@ -860,7 +998,7 @@ class PublicationsController extends Controller {
 				$response = new JSONResponse($node, 200);
 				$response->addHeader('Content-Type', 'application/ld+json');
 				$this->addCorsHeaders(response: $response);
-				return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
+				return $this->countedView(response: $response, publicationId: $publicationId, catalogSlug: $catalogSlug);
 			}
 
 			// REQ-PDP-004 / REQ-WDW-003: a catalogue that opted in shows what was
@@ -870,7 +1008,7 @@ class PublicationsController extends Controller {
 				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
 					response: $result,
 					catalog: $catalog,
-					publicationId: $id
+					publicationId: $publicationId
 				);
 			}
 
@@ -881,7 +1019,7 @@ class PublicationsController extends Controller {
 			// ANA-001: count this successful public detail view, fire-and-forget.
 			// HEAD requests, non-2xx, and back-office reads never reach this seam
 			// (this is the public detail path that already 404'd above on misses).
-			return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
+			return $this->countedView(response: $response, publicationId: $publicationId, catalogSlug: $catalogSlug);
 		} catch (DoesNotExistException $exception) {
 			return new JSONResponse(
 				[

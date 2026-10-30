@@ -1343,4 +1343,32 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 
 	}//end testHandleObjectUpdateEventsMultipleObjects()
 
+	/**
+	 * An object that fails while it is processed is reported on its own, and the next object is still processed.
+	 */
+	public function testAFailingObjectIsReportedAndTheNextOneStillRuns(): void {
+		$this->settingsServiceMock->method('getPublishingOptions')
+			->willReturn(['auto_publish_objects' => false, 'auto_publish_attachments' => true]);
+
+		$unreadableDate = new class {
+			public function __toString(): string {
+				throw new \RuntimeException('date unreadable');
+			}
+		};
+
+		foreach (['handleObjectCreateEvents', 'handleObjectUpdateEvents'] as $handler) {
+			$result = $this->eventService->$handler(
+				[
+					['publicationDate' => $unreadableDate, '@self' => ['id' => 'bad']],
+					['@self' => ['id' => 'fine']],
+				]
+			);
+
+			$this->assertSame(1, $result['processed'], $handler);
+			$this->assertSame(['Error processing object bad: date unreadable'], $result['errors'], $handler);
+			$this->assertSame(['objectId' => 'bad', 'actions' => [], 'errors' => ['date unreadable']], $result['details'][0], $handler);
+			$this->assertSame(['objectId' => 'fine', 'actions' => [], 'errors' => []], $result['details'][1], $handler);
+		}
+	}//end testAFailingObjectIsReportedAndTheNextOneStillRuns()
+
 }//end class

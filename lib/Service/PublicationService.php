@@ -77,6 +77,17 @@ use ZipArchive;
 class PublicationService implements PublicationServiceInterface {
 
 	/**
+	 * The result of a single-publication lookup that found nothing.
+	 *
+	 * @var array{success: false, error: string, status: int}
+	 */
+	private const PUBLICATION_NOT_FOUND = [
+		'success' => false,
+		'error' => 'Publication not found',
+		'status' => 404,
+	];
+
+	/**
 	 * The object service instance.
 	 *
 	 * @var object|null
@@ -481,58 +492,17 @@ class PublicationService implements PublicationServiceInterface {
 	 * @throws \InvalidArgumentException When invalid registers or schemas are requested
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/publications/spec.md
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	private function searchPublications(null|string|int $catalogId = null, ?array $ids = null, ?array $customParams = null): array {
-		// Use custom parameters if provided, otherwise use request parameters.
-		$searchQuery = ($customParams ?? $this->request->getParams());
+		$searchQuery = $this->normaliseSearchQuery(query: ($customParams ?? $this->request->getParams()));
 
-		// @todo this is a temporary fix to map the parameters to _extend format.
-		// Define parameters that should be mapped to _extend format.
-		$parametersToMap = [
-			'extend',
-			'fields',
-			'facets',
-			'order',
-			'page',
-			'limit',
-		];
+		// Directory and catalogs are virtual fields injected at runtime, not database
+		// columns, so their facet requests never reach OpenRegister.
+		$virtualFacets = $this->virtualFacetRequests(query: $searchQuery);
+		$searchQuery = $this->withoutVirtualFacetRequests(query: $searchQuery);
 
-		// Map specified parameters to _extend format and unset originals.
-		foreach ($parametersToMap as $param) {
-			if (isset($searchQuery[$param]) === true) {
-				// Map the parameter to _extend format.
-				$searchQuery['_extend'] = $searchQuery[$param];
-				// Unset the original parameter to prevent conflicts.
-				unset($searchQuery[$param]);
-			}
-		}
-
-		// Bit of route cleanup.
-		unset($searchQuery['id']);
-		unset($searchQuery['_route']);
-
-		// Filter out virtual field facet requests before passing to OpenRegister.
-		// Directory and catalogs are virtual fields injected at runtime, not database columns.
-		$reqDirFacets = false;
-		$reqCatFacets = false;
-
-		if (isset($searchQuery['_facets']['@self']['directory']) === true) {
-			$reqDirFacets = true;
-			unset($searchQuery['_facets']['@self']['directory']);
-		}
-
-		if (isset($searchQuery['_facets']['@self']['catalogs']) === true) {
-			$reqCatFacets = true;
-			unset($searchQuery['_facets']['@self']['catalogs']);
-		}
-
-		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
 		// FAIL CLOSED on an empty schema or register scope (WOO-581): an empty
@@ -542,47 +512,8 @@ class PublicationService implements PublicationServiceInterface {
 			return ['results' => [], 'facets' => [], 'total' => 0];
 		}
 
-		// Validate requested registers and schemas against the context.
-		$requestedRegisters = ($searchQuery['@self']['register'] ?? []);
-		$requestedSchemas = ($searchQuery['@self']['schema'] ?? []);
-
-		// Ensure requested registers are part of the context.
-		if (empty($requestedRegisters) === false) {
-			// Normalize to array if a single value is provided.
-			if (is_array($requestedRegisters) === false) {
-				$requestedRegisters = [$requestedRegisters];
-			}
-
-			if (count(array_diff($requestedRegisters, $context['registers'])) > 0) {
-				throw new InvalidArgumentException('Invalid register(s) requested');
-			}
-		}
-
-		// Ensure requested schemas are part of the context.
-		if (empty($requestedSchemas) === false) {
-			// Normalize to array if a single value is provided.
-			if (is_array($requestedSchemas) === false) {
-				$requestedSchemas = [$requestedSchemas];
-			}
-
-			if (count(array_diff($requestedSchemas, $context['schemas'])) > 0) {
-				throw new InvalidArgumentException('Invalid schema(s) requested');
-			}
-		}
-
-		// Get the object service.
+		$scope = $this->narrowedSearchScope(context: $context, query: $searchQuery);
 		$objectService = $this->getObjectService();
-
-		// Overwrite certain values in the existing search query.
-		$registers = $context['registers'];
-		if (empty($requestedRegisters) === false) {
-			$registers = $requestedRegisters;
-		}
-
-		$schemas = $context['schemas'];
-		if (empty($requestedSchemas) === false) {
-			$schemas = $requestedSchemas;
-		}
 
 		// Only the (validated) narrowing above survives; every other scope key the
 		// caller sent goes, or OR's facet path follows it (WOO-581 review round 2).
@@ -590,44 +521,158 @@ class PublicationService implements PublicationServiceInterface {
 		// register: a scalar schema next to a register list sends OR to register 1, or
 		// past the scope to the all-tables `_ids` lookup (WOO-581 review round 3).
 		$searchQuery = CallerScope::strip(query: $searchQuery);
-
 		$searchQuery['_includeDeleted'] = false;
 
-		// Add IDs filter if provided (for uses/used functionality).
+		// IDs filter for the uses/used lookups.
 		if ($ids !== null && empty($ids) === false) {
 			$searchQuery['_ids'] = $ids;
 		}
 
-		// Search objects using the new structure with RBAC enforcement.
-		// _rbac: true ensures schema authorization rules are applied.
-		// _multitenancy: false allows cross-org access for public search results
-		// (RBAC rules determine what each user/anonymous can see).
+		// _rbac: true applies the schema authorization rules; _multitenancy: false
+		// allows cross-org access for public search results (RBAC rules determine
+		// what each user/anonymous can see).
 		$result = array_merge(
 			['results' => [], 'facets' => []],
 			$this->searchObjectsWithinScope(
 				objectService: $objectService,
 				query: $searchQuery,
-				registers: $registers,
-				schemas: $schemas
+				registers: $scope['register'],
+				schemas: $scope['schema']
 			)
 		);
 
 		// Visibility is governed entirely by OpenRegister RBAC (the schemas' conditional
 		// public-read rules with the $now variable), applied above via _rbac: true.
-		// Filter unwanted properties from results.
 		$result['results'] = $this->filterUnwantedProperties(objects: $result['results']);
 
-		// Add virtual field facets if they were requested.
-		if (($reqDirFacets === true || $reqCatFacets === true) && isset($result['facets']) === true) {
+		return $this->withVirtualFacets(result: $result, requested: $virtualFacets);
+	}//end searchPublications()
+
+	/**
+	 * Map the legacy parameters to `_extend` and drop the route keys.
+	 *
+	 * Each of `extend`, `fields`, `facets`, `order`, `page` and `limit` that is set
+	 * moves to `_extend`, the last one winning.
+	 *
+	 * @param array $query The request or custom parameters.
+	 *
+	 * @return array The normalised query.
+	 *
+	 * @todo this is a temporary fix to map the parameters to _extend format.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function normaliseSearchQuery(array $query): array {
+		foreach (['extend', 'fields', 'facets', 'order', 'page', 'limit'] as $param) {
+			if (isset($query[$param]) === true) {
+				$query['_extend'] = $query[$param];
+				unset($query[$param]);
+			}
+		}
+
+		unset($query['id']);
+		unset($query['_route']);
+
+		return $query;
+	}//end normaliseSearchQuery()
+
+	/**
+	 * Which virtual-field facets (directory, catalogs) the query asks for.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array{directory: bool, catalogs: bool} The requested virtual facets.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function virtualFacetRequests(array $query): array {
+		return [
+			'directory' => isset($query['_facets']['@self']['directory']),
+			'catalogs' => isset($query['_facets']['@self']['catalogs']),
+		];
+	}//end virtualFacetRequests()
+
+	/**
+	 * The query without its virtual-field facet requests.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array The query OpenRegister can answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function withoutVirtualFacetRequests(array $query): array {
+		foreach (['directory', 'catalogs'] as $virtualField) {
+			if (isset($query['_facets']['@self'][$virtualField]) === true) {
+				unset($query['_facets']['@self'][$virtualField]);
+			}
+		}
+
+		return $query;
+	}//end withoutVirtualFacetRequests()
+
+	/**
+	 * The register and schema scope of a search, narrowed to what the caller asked for.
+	 *
+	 * A requested register or schema (one value or a list) must lie inside the
+	 * catalog context; an empty request keeps the whole context.
+	 *
+	 * @param array $context The catalog context (`registers`, `schemas`).
+	 * @param array $query The search query.
+	 *
+	 * @return array{register: array, schema: array} The scope to search.
+	 *
+	 * @throws InvalidArgumentException When a requested register or schema lies outside the context.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function narrowedSearchScope(array $context, array $query): array {
+		$scope = [
+			'register' => $context['registers'],
+			'schema' => $context['schemas'],
+		];
+
+		foreach ($scope as $key => $allowed) {
+			$requested = ($query['@self'][$key] ?? []);
+			if (empty($requested) === true) {
+				continue;
+			}
+
+			if (is_array($requested) === false) {
+				$requested = [$requested];
+			}
+
+			if (count(array_diff($requested, $allowed)) > 0) {
+				throw new InvalidArgumentException('Invalid ' . $key . '(s) requested');
+			}
+
+			$scope[$key] = $requested;
+		}
+
+		return $scope;
+	}//end narrowedSearchScope()
+
+	/**
+	 * Add the requested virtual-field facets to a search result.
+	 *
+	 * @param array $result The search result.
+	 * @param array{directory: bool, catalogs: bool} $requested The requested virtual facets.
+	 *
+	 * @return array The result, with the virtual facets when any were requested.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function withVirtualFacets(array $result, array $requested): array {
+		if (($requested['directory'] === true || $requested['catalogs'] === true) && isset($result['facets']) === true) {
 			$result['facets'] = $this->addVirtualFieldFacets(
 				existingFacets: $result['facets'],
-				inclDirFacets: $reqDirFacets,
-				inclCatFacets: $reqCatFacets
+				inclDirFacets: $requested['directory'],
+				inclCatFacets: $requested['catalogs']
 			);
 		}
 
 		return $result;
-	}//end searchPublications()
+	}//end withVirtualFacets()
 
 	/**
 	 * Search OpenRegister within the catalogue scope, leaving out the slugs it refuses.
@@ -771,9 +816,8 @@ class PublicationService implements PublicationServiceInterface {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 *
+	 * @spec openspec/specs/federation/spec.md
 	 */
 	private function addVirtualFieldFacets(
 		array $existingFacets,
@@ -786,106 +830,19 @@ class PublicationService implements PublicationServiceInterface {
 				$existingFacets['@self'] = [];
 			}
 
-			// Add directory facets if requested.
 			if ($inclDirFacets === true) {
-				// Get unique directories from the directory service.
-				$uniqueDirectories = $this->directoryService->getUniqueDirectories(availableOnly: true);
-
-				// Add local directory.
-				$directoryBuckets = [
-					[
-						'key' => 'local',
-						'label' => 'local',
-						'results' => 1,
-					],
-				];
-
-				// Add federated directories.
-				foreach ($uniqueDirectories as $directoryUrl) {
-					$directoryName = parse_url($directoryUrl, PHP_URL_HOST);
-					if (empty($directoryName) === true) {
-						$directoryName = $directoryUrl;
-					}
-
-					$directoryBuckets[] = [
-						'key' => $directoryName,
-						'label' => $directoryName,
-						'results' => 1,
-					];
-				}
-
 				$existingFacets['@self']['directory'] = [
 					'type' => 'terms',
-					'buckets' => $directoryBuckets,
+					'buckets' => $this->directoryFacetBuckets(),
 				];
-			}//end if
+			}
 
-			// Add catalog facets if requested.
 			if ($inclCatFacets === true) {
-				$catalogBuckets = [];
-
-				// Get local catalogs.
-				$localCatalogs = $this->getLocalCatalogs();
-				foreach ($localCatalogs as $catalog) {
-					$catalogKey = 'unknown';
-					if (empty($catalog['id']) === false) {
-						$catalogKey = $catalog['id'];
-					} elseif (empty($catalog['title']) === false) {
-						$catalogKey = $catalog['title'];
-					}
-
-					$catalogLabel = 'unknown';
-					if (empty($catalog['title']) === false) {
-						$catalogLabel = $catalog['title'];
-					} elseif (empty($catalog['id']) === false) {
-						$catalogLabel = $catalog['id'];
-					}
-
-					$catalogBuckets[] = [
-						'key' => $catalogKey,
-						'label' => $catalogLabel,
-						'results' => 1,
-					];
-				}//end foreach
-
-				// Get external catalogs from listings.
-				$externalCatalogs = $this->getExternalCatalogsFromListings();
-				foreach ($externalCatalogs as $catalog) {
-					$catalogKey = $catalog['key'];
-					$catalogLabel = $catalog['label'];
-
-					// Check if this catalog is already in our list to avoid duplicates.
-					$exists = false;
-					foreach ($catalogBuckets as $existingCatalog) {
-						if ($existingCatalog['key'] === $catalogKey) {
-							$exists = true;
-							break;
-						}
-					}
-
-					if ($exists === false) {
-						$catalogBuckets[] = [
-							'key' => $catalogKey,
-							'label' => $catalogLabel,
-							'results' => 1,
-						];
-					}
-				}//end foreach
-
-				// If no catalogs found, add a default entry.
-				if (empty($catalogBuckets) === true) {
-					$catalogBuckets[] = [
-						'key' => 'default',
-						'label' => 'Default Catalog',
-						'results' => 1,
-					];
-				}
-
 				$existingFacets['@self']['catalogs'] = [
 					'type' => 'terms',
-					'buckets' => $catalogBuckets,
+					'buckets' => $this->catalogFacetBuckets(),
 				];
-			}//end if
+			}
 
 			return $existingFacets;
 		} catch (\Exception $e) {
@@ -894,6 +851,118 @@ class PublicationService implements PublicationServiceInterface {
 		}//end try
 
 	}//end addVirtualFieldFacets()
+
+	/**
+	 * The directory facet buckets: the local directory, then each federated
+	 * directory by host name.
+	 *
+	 * @return array<int, array{key: string, label: string, results: int}> The buckets.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function directoryFacetBuckets(): array {
+		// Add local directory.
+		$directoryBuckets = [
+			[
+				'key' => 'local',
+				'label' => 'local',
+				'results' => 1,
+			],
+		];
+
+		// Add federated directories.
+		foreach ($this->directoryService->getUniqueDirectories(availableOnly: true) as $directoryUrl) {
+			$directoryName = parse_url($directoryUrl, PHP_URL_HOST);
+			if (empty($directoryName) === true) {
+				$directoryName = $directoryUrl;
+			}
+
+			$directoryBuckets[] = [
+				'key' => $directoryName,
+				'label' => $directoryName,
+				'results' => 1,
+			];
+		}
+
+		return $directoryBuckets;
+
+	}//end directoryFacetBuckets()
+
+	/**
+	 * The catalog facet buckets: the local catalogs, then the external catalogs
+	 * from the directory listings that are not local, or one default bucket when
+	 * there are none.
+	 *
+	 * @return array<int, array{key: mixed, label: mixed, results: int}> The buckets.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function catalogFacetBuckets(): array {
+		$catalogBuckets = array_map(
+			fn ($catalog): array => $this->localCatalogBucket(catalog: $catalog),
+			$this->getLocalCatalogs()
+		);
+
+		foreach ($this->getExternalCatalogsFromListings() as $catalog) {
+			// Skip a catalog that is already in the list.
+			if (in_array($catalog['key'], array_column($catalogBuckets, 'key'), true) === false) {
+				$catalogBuckets[] = [
+					'key' => $catalog['key'],
+					'label' => $catalog['label'],
+					'results' => 1,
+				];
+			}
+		}
+
+		// If no catalogs found, add a default entry.
+		if (empty($catalogBuckets) === true) {
+			$catalogBuckets[] = [
+				'key' => 'default',
+				'label' => 'Default Catalog',
+				'results' => 1,
+			];
+		}
+
+		return $catalogBuckets;
+
+	}//end catalogFacetBuckets()
+
+	/**
+	 * The facet bucket of one local catalog: keyed by id (else title), labelled
+	 * by title (else id), `unknown` when it has neither.
+	 *
+	 * @param mixed $catalog The local catalog.
+	 *
+	 * @return array{key: mixed, label: mixed, results: int} The bucket.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function localCatalogBucket(mixed $catalog): array {
+		$catalogKey = 'unknown';
+		if (empty($catalog['id']) === false) {
+			$catalogKey = $catalog['id'];
+		} elseif (empty($catalog['title']) === false) {
+			$catalogKey = $catalog['title'];
+		}
+
+		$catalogLabel = 'unknown';
+		if (empty($catalog['title']) === false) {
+			$catalogLabel = $catalog['title'];
+		} elseif (empty($catalog['id']) === false) {
+			$catalogLabel = $catalog['id'];
+		}
+
+		return [
+			'key' => $catalogKey,
+			'label' => $catalogLabel,
+			'results' => 1,
+		];
+
+	}//end localCatalogBucket()
 
 	/**
 	 * Retrieves a list of all objects for a specific register and schema
@@ -1338,24 +1407,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			$relations = array_values($relationsArray);
 
-			// Check if relations array is empty.
-			if (empty($relations) === true) {
-				// If relations is empty, return empty paginated response.
-				return new JSONResponse(
-					[
-						'results' => [],
-						'total' => 0,
-						'page' => 1,
-						'pages' => 1,
-						'facets' => [],
-					]
-				);
-			}
-
-			// Use the generic search function with the relation IDs.
-			$result = $this->searchPublications(catalogId: null, ids: $relations);
-
-			return new JSONResponse($result);
+			return $this->relatedPublications(relations: $relations);
 		} catch (\InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], 400);
 		}//end try
@@ -1406,29 +1458,31 @@ class PublicationService implements PublicationServiceInterface {
 			$relationsArray = $objectService->findByRelations($id);
 			$relations = array_map(static fn ($relation) => $relation->getUuid(), $relationsArray);
 
-			// Check if relations array is empty.
-			if (empty($relations) === true) {
-				// If relations is empty, return empty paginated response.
-				return new JSONResponse(
-					[
-						'results' => [],
-						'total' => 0,
-						'page' => 1,
-						'pages' => 1,
-						'facets' => [],
-					]
-				);
-			}
-
-			// Use the generic search function with the relation IDs.
-			$result = $this->searchPublications(catalogId: null, ids: $relations);
-
-			return new JSONResponse($result);
+			return $this->relatedPublications(relations: $relations);
 		} catch (\InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], 400);
 		}//end try
 
 	}//end used()
+
+	/**
+	 * The publications among the given related object ids, as one page.
+	 *
+	 * @param array<int, string> $relations The related object ids.
+	 *
+	 * @return JSONResponse The search result, or an empty page when there are no relations.
+	 *
+	 * @throws \InvalidArgumentException When the search refuses its arguments.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function relatedPublications(array $relations): JSONResponse {
+		if (empty($relations) === true) {
+			return new JSONResponse(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []]);
+		}
+
+		return new JSONResponse($this->searchPublications(catalogId: null, ids: $relations));
+	}//end relatedPublications()
 
 	/**
 	 * Get aggregated publications from local and federated sources
@@ -2681,38 +2735,18 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getFederatedPublication(string $id, array $queryParams = []): array {
-		// Try to get the publication locally first.
 		$localResponse = $this->show(id: $id);
 		$localData = json_decode($localResponse->render(), true);
 
-		// If found locally, return it (unless we want to also search federally for additional data).
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
+
 		if ($localResponse->getStatus() === 200 && empty($localData) === false) {
-			// Check if aggregation is enabled for enrichment.
-			$aggregate = ($queryParams['_aggregate'] ?? 'true');
-			$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-			if ($shouldAggregate === false) {
-				return [
-					'success' => true,
-					'data' => $localData,
-					'status' => 200,
-				];
-			}
-
-			// Add local catalog information to @self.catalogs for local publications
-			// @todo This adds ~200ms overhead - consider making optional via query parameter.
-			if (isset($localData['@self']) === true && is_array($localData['@self']) === true) {
-				$localCatalogs = $this->getLocalCatalogs();
-				if (empty($localCatalogs) === false) {
-					$localData['@self']['catalogs'] = $localCatalogs;
-				}
+			if ($shouldAggregate === true) {
+				$localData = $this->withLocalCatalogs(publication: $localData);
 			}
 
 			return [
@@ -2720,79 +2754,102 @@ class PublicationService implements PublicationServiceInterface {
 				'data' => $localData,
 				'status' => 200,
 			];
-		}//end if
-
-		// Check if aggregation is enabled for federation search.
-		$aggregate = ($queryParams['_aggregate'] ?? 'true');
-		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-		// If aggregation is disabled and not found locally, return 404.
-		if ($shouldAggregate === false) {
-			return [
-				'success' => false,
-				'error' => 'Publication not found',
-				'status' => 404,
-			];
 		}
 
-		try {
-			// Search in federated catalogs.
-			$guzzleConfig = [];
+		if ($shouldAggregate === false) {
+			return self::PUBLICATION_NOT_FOUND;
+		}
 
-			// Allow timeout configuration via query parameter.
-			if (isset($queryParams['timeout']) === true) {
-				$timeout = (int)$queryParams['timeout'];
-				if ($timeout > 0 && $timeout <= 120) {
-					// Max 2 minutes.
-					$guzzleConfig['timeout'] = $timeout;
-				}
-			}
-
-			// Allow connect timeout configuration via query parameter.
-			if (isset($queryParams['connect_timeout']) === true) {
-				$connectTimeout = (int)$queryParams['connect_timeout'];
-				if ($connectTimeout > 0 && $connectTimeout <= 30) {
-					// Max 30 seconds.
-					$guzzleConfig['connect_timeout'] = $connectTimeout;
-				}
-			}
-
-			// Pass through current query parameters (DirectoryService will handle _aggregate and _extend).
-			$guzzleConfig['query_params'] = $queryParams;
-
-			// Get publication from directory service.
-			$federatedResult = $this->directoryService->getPublication($id, $guzzleConfig);
-
-			if (empty($federatedResult) === false && isset($federatedResult['result']) === true) {
-				// Merge the result with source information.
-				$responseData = $federatedResult['result'];
-				$responseData['sources'] = ($federatedResult['source'] ?? []);
-
-				// `federated` marks a peer's publication: it is not this instance's to describe.
-				return [
-					'success' => true,
-					'data' => $responseData,
-					'status' => 200,
-					'federated' => true,
-				];
-			}
-
-			// Not found in federated catalogs either, return 404.
-			return [
-				'success' => false,
-				'error' => 'Publication not found',
-				'status' => 404,
-			];
-		} catch (\Exception $e) {
-			// If federation search fails, return the original local response (likely 404).
-			return [
-				'success' => false,
-				'error' => 'Publication not found',
-				'status' => 404,
-			];
-		}//end try
-
+		return $this->fetchFederatedPublication(id: $id, queryParams: $queryParams);
 	}//end getFederatedPublication()
+
+	/**
+	 * Add this instance's catalogs to the `@self.catalogs` of a local publication.
+	 *
+	 * @param array $publication The local publication.
+	 *
+	 * @return array The publication, with its catalogs when it has an `@self` and any catalog exists.
+	 *
+	 * @todo This adds ~200ms overhead - consider making optional via query parameter.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function withLocalCatalogs(array $publication): array {
+		if (isset($publication['@self']) === false || is_array($publication['@self']) === false) {
+			return $publication;
+		}
+
+		$localCatalogs = $this->getLocalCatalogs();
+		if (empty($localCatalogs) === false) {
+			$publication['@self']['catalogs'] = $localCatalogs;
+		}
+
+		return $publication;
+	}//end withLocalCatalogs()
+
+	/**
+	 * Look a publication up in the federated catalogs.
+	 *
+	 * A failing lookup reads as not found.
+	 *
+	 * @param string $id The ID of the publication.
+	 * @param array $queryParams The caller's query parameters.
+	 *
+	 * @return array The peer's publication with its sources, marked `federated`, or the not-found result.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function fetchFederatedPublication(string $id, array $queryParams): array {
+		try {
+			$federatedResult = $this->directoryService->getPublication($id, $this->federationRequestConfig(queryParams: $queryParams));
+		} catch (\Exception $e) {
+			return self::PUBLICATION_NOT_FOUND;
+		}
+
+		if (empty($federatedResult) === true || isset($federatedResult['result']) === false) {
+			return self::PUBLICATION_NOT_FOUND;
+		}
+
+		$responseData = $federatedResult['result'];
+		$responseData['sources'] = ($federatedResult['source'] ?? []);
+
+		// `federated` marks a peer's publication: it is not this instance's to describe.
+		return [
+			'success' => true,
+			'data' => $responseData,
+			'status' => 200,
+			'federated' => true,
+		];
+	}//end fetchFederatedPublication()
+
+	/**
+	 * The request config for a federated lookup.
+	 *
+	 * `timeout` (at most 120 s) and `connect_timeout` (at most 30 s) are taken from
+	 * the query when positive and in bounds; the query itself is passed through for
+	 * DirectoryService to read `_aggregate` and `_extend` from.
+	 *
+	 * @param array $queryParams The caller's query parameters.
+	 *
+	 * @return array The Guzzle config.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function federationRequestConfig(array $queryParams): array {
+		$guzzleConfig = [];
+		foreach (['timeout' => 120, 'connect_timeout' => 30] as $option => $maximum) {
+			if (isset($queryParams[$option]) === true) {
+				$seconds = (int)$queryParams[$option];
+				if ($seconds > 0 && $seconds <= $maximum) {
+					$guzzleConfig[$option] = $seconds;
+				}
+			}
+		}
+
+		$guzzleConfig['query_params'] = $queryParams;
+
+		return $guzzleConfig;
+	}//end federationRequestConfig()
 
 	/**
 	 * Get publications that use this publication with federation support

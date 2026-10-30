@@ -48,6 +48,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/structured-data-discoverability/spec.md
  */
 class SchemaOrgController extends Controller {
+	use AnswersCrossOriginReadRequests;
+
 	/**
 	 * SchemaOrgController constructor.
 	 *
@@ -75,58 +77,6 @@ class SchemaOrgController extends Controller {
 	}//end __construct()
 
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV);
-	 * '*' (default) emits a literal '*'; an unvetted caller Origin is never echoed back
-	 * unless explicitly allowlisted (mirrors DcatController / PublicationsController #735).
-	 *
-	 * @return string The Access-Control-Allow-Origin value.
-	 *
-	 * @spec exclude CORS-policy plumbing mirroring DcatController; fail-closed, no domain behaviour.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = trim($this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
-	/**
-	 * Build the standard public-CORS header set.
-	 *
-	 * @return array<string, string> The header map.
-	 *
-	 * @spec exclude CORS-header plumbing.
-	 */
-	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
-
-	}//end corsHeaders()
-
-	/**
 	 * Preflighted CORS response for the public schema.org OPTIONS route.
 	 *
 	 * @return Response The CORS preflight response.
@@ -138,14 +88,7 @@ class SchemaOrgController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		foreach ($this->corsHeaders() as $name => $value) {
-			$response->addHeader($name, $value);
-		}
-
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-		return $response;
+		return $this->readOnlyPreflight();
 	}//end preflightedCors()
 
 	/**
@@ -180,11 +123,7 @@ class SchemaOrgController extends Controller {
 			$node = $this->schemaOrgService->buildCatalogNode($catalog, $catalogSlug);
 			$response = new JSONResponse($node, 200);
 			$response->addHeader('Content-Type', 'application/ld+json');
-			foreach ($this->corsHeaders() as $name => $value) {
-				$response->addHeader($name, $value);
-			}
-
-			return $response;
+			return $this->withCorsHeaders(response: $response);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'[SchemaOrgController::catalog] Failed to build schema.org catalog document',

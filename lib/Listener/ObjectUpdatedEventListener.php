@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Listener;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Service\ChecksPublicationWindow;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -52,6 +53,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
  */
 class ObjectUpdatedEventListener implements IEventListener {
+	use ReportsAutoPublishOutcome;
+	use ChecksPublicationWindow;
 	/**
 	 * ObjectUpdatedEventListener constructor.
 	 *
@@ -130,30 +133,7 @@ class ObjectUpdatedEventListener implements IEventListener {
 			// Process the object update event through EventService.
 			$result = $this->eventService->handleObjectUpdateEvents([$newObjectData]);
 
-			// Log successful processing for monitoring.
-			if ($result['processed'] > 0) {
-				$this->logger->info(
-					message: 'OpenCatalogi: Processed object update event',
-					context: [
-						'objectId' => ($newObjectData['@self']['id'] ?? 'unknown'),
-						'published' => $result['published'],
-						'attachmentsPublished' => $result['attachmentsPublished'],
-					]
-				);
-			}
-
-			// Log any errors that occurred during processing.
-			if (empty($result['errors']) === false) {
-				foreach ($result['errors'] as $error) {
-					$this->logger->error(
-						message: 'OpenCatalogi: Error processing object update event',
-						context: [
-							'error' => $error,
-							'objectId' => ($newObjectData['@self']['id'] ?? 'unknown'),
-						]
-					);
-				}
-			}
+			$this->logAutoPublishOutcome(result: $result, about: ['event' => 'update', 'objectId' => ($newObjectData['@self']['id'] ?? 'unknown')]);
 		} catch (\Throwable $e) {
 			// Log unexpected errors and continue gracefully. \Throwable, not
 			// \Exception: a missing class or type error is a PHP Error, and an
@@ -270,41 +250,6 @@ class ObjectUpdatedEventListener implements IEventListener {
 	}//end isObjectEntityPublished()
 
 	/**
-	 * Check if an object data array represents a published object.
-	 *
-	 * @param array $objectData The object data to check.
-	 *
-	 * @return boolean True if the object is published, false otherwise.
-	 *
-	 * @spec openspec/specs/auto-publishing/spec.md
-	 */
-	private function isObjectPublished(array $objectData): bool {
-		// Live OpenRegister RBAC visibility model (APB-006): published iff the
-		// object's own publicationDate is set and reached, and any
-		// depublicationDate is still in the future. The removed object-level
-		// @self.published predicate is no longer consulted.
-		$publicationDate = ($objectData['publicationDate'] ?? null);
-		$depublicationDate = ($objectData['depublicationDate'] ?? null);
-
-		if ($publicationDate === null || $publicationDate === '') {
-			return false;
-		}
-
-		$now = time();
-		$publishedTime = strtotime((string)$publicationDate);
-		if ($publishedTime === false || $publishedTime > $now) {
-			return false;
-		}
-
-		if ($depublicationDate === null || $depublicationDate === '') {
-			return true;
-		}
-
-		$depublishedTime = strtotime((string)$depublicationDate);
-		return ($depublishedTime === false || $depublishedTime > $now);
-	}//end isObjectPublished()
-
-	/**
 	 * Convert ObjectEntity to array format for EventService.
 	 *
 	 * @param \OCA\OpenRegister\Db\ObjectEntity $objectEntity The object entity to convert.
@@ -314,22 +259,7 @@ class ObjectUpdatedEventListener implements IEventListener {
 	 * @spec openspec/specs/auto-publishing/spec.md
 	 */
 	private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array {
-		// Use the ObjectEntity's jsonSerialize method to get array representation.
-		$objectData = $objectEntity->jsonSerialize();
-
-		// Ensure the @self metadata is properly structured.
-		if (isset($objectData['@self']) === false) {
-			$objectData['@self'] = [];
-		}
-
-		// Add essential metadata for event processing.
-		$objectData['@self']['id'] = $objectEntity->getUuid();
-		$objectData['@self']['uuid'] = $objectEntity->getUuid();
-		$objectData['@self']['register'] = $objectEntity->getRegister();
-		$objectData['@self']['schema'] = $objectEntity->getSchema();
-		// Visibility is governed by the object's own publicationDate/depublicationDate
-		// fields (already present via jsonSerialize) under the live OpenRegister RBAC
-		// model (APB-006). The removed object-level @self.published is no longer set.
+		$objectData = $this->eventObjectData(objectEntity: $objectEntity);
 		// Don't fetch files to avoid infinite recursion.
 		$objectData['@self']['files'] = [];
 

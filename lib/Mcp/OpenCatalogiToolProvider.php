@@ -210,11 +210,45 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	 * @param array<string, mixed> $args Tool arguments.
 	 *
 	 * @return array<string, mixed>
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
 	private function handleSearchCatalog(array $args): array {
+		$request = $this->searchCatalogRequest(args: $args);
+		if (isset($request['error']) === true) {
+			return $request;
+		}
+
+		try {
+			$response = $this->publicationService->index(
+				catalogId: $request['catalogId'],
+				customParams: $request['customParams']
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'OpenCatalogi MCP: searchCatalog failed',
+				['caller' => $this->callerUid(), 'exception' => $e->getMessage()]
+			);
+			return $this->error(
+				code: 'internal_error',
+				message: 'Failed to search publications. See server log for details.'
+			);
+		}//end try
+
+		$data = $this->jsonResponseData(response: $response);
+		if (is_array($data) === true && isset($data['error']) === true) {
+			return $this->error(code: 'invalid_arguments', message: (string)$data['error']);
+		}
+
+		return $this->searchCatalogResult(query: $request['customParams']['_search'], data: $data);
+	}//end handleSearchCatalog()
+
+	/**
+	 * The validated searchCatalog arguments as an index() call, or the argument error.
+	 *
+	 * @param array<string, mixed> $args Tool arguments.
+	 *
+	 * @return array<string, mixed> `catalogId` and `customParams`, or an `error` answer.
+	 */
+	private function searchCatalogRequest(array $args): array {
 		$query = $args['query'] ?? null;
 		if (is_string($query) === false || trim($query) === '') {
 			return $this->error(
@@ -234,38 +268,41 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 			}
 		}
 
-		$catalogId = null;
-		if (isset($args['catalog']) === true
-			&& is_string($args['catalog']) === true
-			&& trim($args['catalog']) !== ''
-		) {
-			$catalogId = trim($args['catalog']);
-		}
-
-		$customParams = [
-			'_search' => trim($query),
-			'_limit' => $limit,
-			'_page' => 1,
+		return [
+			'catalogId' => $this->catalogArgument(args: $args),
+			'customParams' => [
+				'_search' => trim($query),
+				'_limit' => $limit,
+				'_page' => 1,
+			],
 		];
+	}//end searchCatalogRequest()
 
-		try {
-			$response = $this->publicationService->index(catalogId: $catalogId, customParams: $customParams);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'OpenCatalogi MCP: searchCatalog failed',
-				['caller' => $this->callerUid(), 'exception' => $e->getMessage()]
-			);
-			return $this->error(
-				code: 'internal_error',
-				message: 'Failed to search publications. See server log for details.'
-			);
-		}//end try
-
-		$data = $this->jsonResponseData(response: $response);
-		if (is_array($data) === true && isset($data['error']) === true) {
-			return $this->error(code: 'invalid_arguments', message: (string)$data['error']);
+	/**
+	 * The trimmed `catalog` argument, or null when it is absent, blank or not a string.
+	 *
+	 * @param array<string, mixed> $args Tool arguments.
+	 *
+	 * @return string|null
+	 */
+	private function catalogArgument(array $args): ?string {
+		$catalog = ($args['catalog'] ?? null);
+		if (is_string($catalog) === false || trim($catalog) === '') {
+			return null;
 		}
 
+		return trim($catalog);
+	}//end catalogArgument()
+
+	/**
+	 * The searchCatalog answer: at most RESULTS_CAP publications with their sources.
+	 *
+	 * @param string $query The trimmed query.
+	 * @param mixed $data The index() response data.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function searchCatalogResult(string $query, mixed $data): array {
 		$results = [];
 		if (is_array($data) === true && isset($data['results']) === true && is_array($data['results']) === true) {
 			$results = $data['results'];
@@ -276,13 +313,12 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 
 		$sources = [];
 		foreach ($results as $publication) {
-			$publicationArray = $this->toArray(item: $publication);
-			$sources[] = $this->buildSource(publication: $publicationArray);
+			$sources[] = $this->buildSource(publication: $this->toArray(item: $publication));
 		}
 
 		$result = [
 			'success' => true,
-			'query' => trim($query),
+			'query' => $query,
 			'publications' => $results,
 			'sources' => $sources,
 		];
@@ -293,7 +329,7 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 		}
 
 		return $result;
-	}//end handleSearchCatalog()
+	}//end searchCatalogResult()
 
 	/**
 	 * Handle opencatalogi.getPublication.

@@ -23,10 +23,10 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeImmutable;
-use OCP\App\IAppManager;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -38,19 +38,18 @@ use Throwable;
  * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
  */
 class WithheldDocumentStore {
+	use ReadsObjectProperties;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig         $config     Holds the register and schema ids.
-	 * @param ContainerInterface $container  Resolves OpenRegister's ObjectService.
-	 * @param IAppManager        $appManager Says whether OpenRegister is there.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param LoggerInterface    $logger     Records an unavailable OpenRegister.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -113,7 +112,7 @@ class WithheldDocumentStore {
 					_rbac: false,
 					_multitenancy: false
 				);
-				$written[] = (string)($this->asArray(object: $saved)['id'] ?? '');
+				$written[] = (string)($this->asRecord(object: $saved)['id'] ?? '');
 			}
 		} catch (Throwable $e) {
 			$this->discard(objects: $objects, register: $register, schema: $schema, ids: $written);
@@ -144,7 +143,7 @@ class WithheldDocumentStore {
 
 		$ids = [];
 		foreach ((array)($result['results'] ?? []) as $row) {
-			$stored = $this->asArray(object: $row);
+			$stored = $this->asRecord(object: $row);
 			if ((string)($stored['publication'] ?? '') !== $publicationId) {
 				continue;
 			}
@@ -227,12 +226,12 @@ class WithheldDocumentStore {
 	 * @return object|null
 	 */
 	private function objects(): ?object {
-		if ($this->appManager->isInstalled('openregister') === false) {
+		if ($this->openRegister->isInstalled() === false) {
 			return null;
 		}
 
 		try {
-			$objects = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$objects = $this->openRegister->objectService();
 		} catch (Throwable $e) {
 			$this->logger->warning('WithheldDocuments: OpenRegister is unavailable', ['exception' => $e->getMessage()]);
 			return null;
@@ -263,30 +262,4 @@ class WithheldDocumentStore {
 
 		return [$register, $schema];
 	}//end target()
-
-	/**
-	 * An OpenRegister object as a flat array with its id.
-	 *
-	 * @param mixed $object The object.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		$id = ($object['id'] ?? ($object['@self']['id'] ?? ($object['uuid'] ?? null)));
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$object = $object['object'];
-		}
-
-		$object['id'] = $id;
-
-		return $object;
-	}//end asArray()
 }//end class

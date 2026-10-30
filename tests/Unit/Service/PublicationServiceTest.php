@@ -1024,6 +1024,7 @@ class PublicationServiceTest extends TestCase {
 		$this->assertSame(0, $data['total']);
 		$this->assertSame(1, $data['page']);
 		$this->assertSame(1, $data['pages']);
+		$this->assertSame(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []], $data);
 	}
 
 	public function testUsesReturnsRelatedObjects(): void {
@@ -1135,6 +1136,7 @@ class PublicationServiceTest extends TestCase {
 		$data = json_decode($response->render(), true);
 		$this->assertSame([], $data['results']);
 		$this->assertSame(0, $data['total']);
+		$this->assertSame(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []], $data);
 	}
 
 	public function testUsedReturnsReferencingObjects(): void {

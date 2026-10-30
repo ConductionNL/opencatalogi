@@ -68,7 +68,11 @@ class FakeObjectService {
 
 /**
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses \OCA\OpenCatalogi\Service\BomCsv
+ * @uses \OCA\OpenCatalogi\Service\RetentionReport
  * @uses \OCA\OpenCatalogi\Service\RetentionPolicyTable
+ * @uses \OCA\OpenCatalogi\Service\RetentionRun
  */
 class RetentionServiceTest extends TestCase {
 

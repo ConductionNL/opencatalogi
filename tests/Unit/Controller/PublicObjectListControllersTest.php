@@ -160,9 +160,9 @@ class PublicObjectListControllersTest extends TestCase {
 	public function testAnUnlistedOriginGetsTheFirstListedOne(string $class, string $prefix): void {
 		$controller = $this->controller($class, $prefix, ['results' => [['id' => 'one']]], ' , https://a.example', 'https://evil.example');
 
-		$this->assertSame('*', $controller->index()->getHeaders()['Access-Control-Allow-Origin']);
-		$this->assertSame('*', $controller->show('one')->getHeaders()['Access-Control-Allow-Origin']);
-		$this->assertSame('*', $controller->preflightedCors()->getHeaders()['Access-Control-Allow-Origin']);
+		$this->assertSame('https://a.example', $controller->index()->getHeaders()['Access-Control-Allow-Origin']);
+		$this->assertSame('https://a.example', $controller->show('one')->getHeaders()['Access-Control-Allow-Origin']);
+		$this->assertSame('https://a.example', $controller->preflightedCors()->getHeaders()['Access-Control-Allow-Origin']);
 	}
 
 	/**
