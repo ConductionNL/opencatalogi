@@ -77,7 +77,8 @@ trait AnswersCrossOriginReadRequests {
 	private function withCorsHeaders(Response $response): Response {
 		foreach ($this->corsHeaders() as $name => $value) {
 			if ($name === 'Vary') {
-				$value = $this->varyWithOrigin(current: (string)($response->getHeaders()['Vary'] ?? ''));
+				$this->addOriginToVary(response: $response);
+				continue;
 			}
 
 			$response->addHeader($name, $value);

@@ -160,6 +160,37 @@ class CorsVaryMergingTest extends TestCase {
 	}//end testEveryResponsePathMergesOriginIntoVary()
 
 	/**
+	 * A Vary set under another letter case is merged into one Vary, not shadowed by a second one.
+	 *
+	 * Nextcloud keeps header names as given and PHP's header() replaces case-insensitively, so a
+	 * second `Vary` beside an existing `vary` would drop what the first one named.
+	 *
+	 * @return void
+	 */
+	public function testAVaryInAnotherLetterCaseIsMergedNotLost(): void {
+		$want = [];
+		$got = [];
+		foreach (self::RESPONSE_PATHS as [$class, $method]) {
+			$controller = $this->build(class: $class, configured: 'https://a.nl,https://b.nl');
+			$response = new JSONResponse([]);
+			$response->addHeader('vary', 'Accept-Encoding');
+			$this->invoke(controller: $controller, method: $method, response: $response);
+			$this->invoke(controller: $controller, method: $method, response: $response);
+
+			$varies = array_filter(
+				$response->getHeaders(),
+				static fn (string $name): bool => strcasecmp($name, 'Vary') === 0,
+				ARRAY_FILTER_USE_KEY
+			);
+			$want[$class.'::'.$method] = ['Vary' => 'Accept-Encoding, Origin'];
+			$got[$class.'::'.$method] = $varies;
+		}
+
+		$this->assertSame($want, $got);
+
+	}//end testAVaryInAnotherLetterCaseIsMergedNotLost()
+
+	/**
 	 * With the wildcard no response path adds a Vary, and an existing one is left alone.
 	 *
 	 * @return void

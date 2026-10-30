@@ -83,13 +83,38 @@ trait ResolvesAllowedOrigin {
 	private function addAllowedOriginHeaders(Response $response): void {
 		foreach ($this->allowedOriginHeaders() as $name => $value) {
 			if ($name === 'Vary') {
-				$value = $this->varyWithOrigin(current: (string)($response->getHeaders()['Vary'] ?? ''));
+				$this->addOriginToVary(response: $response);
+				continue;
 			}
 
 			$response->addHeader($name, $value);
 		}
 
 	}//end addAllowedOriginHeaders()
+
+	/**
+	 * Name Origin in the response's Vary, merging every Vary already set in any letter case.
+	 *
+	 * Nextcloud keeps a header name as given and PHP's header() replaces case-insensitively,
+	 * so a `Vary` written beside an existing `vary` would drop what that one named. The
+	 * existing entries are read, removed and written back as one `Vary`.
+	 *
+	 * @param Response $response The response.
+	 *
+	 * @return void
+	 */
+	private function addOriginToVary(Response $response): void {
+		$current = [];
+		foreach ($response->getHeaders() as $name => $value) {
+			if (strcasecmp((string)$name, 'Vary') === 0) {
+				$current[] = (string)$value;
+				$response->addHeader((string)$name, null);
+			}
+		}
+
+		$response->addHeader('Vary', $this->varyWithOrigin(current: implode(',', $current)));
+
+	}//end addOriginToVary()
 
 	/**
 	 * A Vary value that names Origin, keeping what it already named.
