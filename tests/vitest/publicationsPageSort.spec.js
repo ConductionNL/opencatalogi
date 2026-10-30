@@ -99,7 +99,9 @@ describe('Publications page columns', () => {
 			.filter((col) => typeof col === 'object' && col.sortable === true)
 			.map(keyOf)
 		expect(sortable).toEqual(['@self.name', '@self.updated'])
-		expect(columns.find((col) => keyOf(col) === '@self.files').sortable).toBeUndefined()
+		expect(
+			columns.find((col) => keyOf(col) === '@self.files').sortable,
+		).toBeUndefined()
 	})
 })
 
