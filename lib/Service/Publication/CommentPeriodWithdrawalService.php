@@ -34,6 +34,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
+use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -46,6 +47,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-closed-period-can-withdraw-its-publication-req-pcp-005
  */
 class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceInterface {
+	use ReadsObjectProperties;
 
 	/**
 	 * How many periods one pass considers.
@@ -289,33 +291,4 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		return $channels;
 
 	}//end channels()
-
-	/**
-	 * Read an object's properties, whatever shape OpenRegister returned.
-	 *
-	 * @param mixed $object The result.
-	 *
-	 * @return array<string, mixed> The properties.
-	 *
-	 * @spec exclude pure shape adaptation over the consumed OR ObjectService.
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$properties = $object['object'];
-			$properties['id'] = ($object['id'] ?? ($properties['id'] ?? null));
-
-			return $properties;
-		}
-
-		return $object;
-
-	}//end asArray()
 }//end class
