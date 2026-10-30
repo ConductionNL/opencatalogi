@@ -6,7 +6,10 @@
  * Guards a catalogue's staff access before it is written, and turns it into
  * OpenRegister rules after: only an administrator may change who sees and
  * edits a catalogue's publications, and every catalogue save or delete
- * recomputes the rules of the schemas it covered and covers.
+ * recomputes the rules of the schemas it covered and covers. Because every
+ * catalogue covering a schema feeds that schema's rules, a change to a
+ * catalogue's schemas or filters, and creating or deleting a catalogue, is
+ * guarded the same way when it touches a schema a restricted catalogue covers.
  *
  * @category Listener
  * @package  OCA\OpenCatalogi\Listener
@@ -34,6 +37,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
+use OCA\OpenRegister\Event\ObjectDeletingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCP\EventDispatcher\Event;
@@ -96,6 +100,11 @@ class CatalogAccessListener implements IEventListener {
 			return;
 		}
 
+		if ($event instanceof ObjectDeletingEvent === true) {
+			$this->guard(event: $event, new: null, old: $event->getObject());
+			return;
+		}
+
 		$objects = $this->savedObjects(event: $event);
 		if ($objects === [] || $this->isCatalog(object: $objects[0]) === false) {
 			return;
@@ -113,24 +122,33 @@ class CatalogAccessListener implements IEventListener {
 	}//end handle()
 
 	/**
-	 * Refuse the write when someone other than an administrator changes the staff access.
+	 * Refuse the write when someone other than an administrator changes who may
+	 * see and edit a restricted catalogue's publications.
+	 *
+	 * That is a change to the staff access itself, or a change to the schemas or
+	 * filters (creating and deleting a catalogue included) whose old or new
+	 * schemas include one a restricted catalogue covers. When the catalogues
+	 * cannot be read, a scope change is refused: fail closed.
 	 *
 	 * A write without a session (a background job, an import) is the system's own.
 	 *
-	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event The pre-save event.
-	 * @param ObjectEntity                            $new   The object as it would be written.
-	 * @param ObjectEntity|null                       $old   The object as stored.
+	 * @param ObjectCreatingEvent|ObjectUpdatingEvent|ObjectDeletingEvent $event The pre-save event.
+	 * @param ObjectEntity|null                                           $new   The object as it would be written; null on delete.
+	 * @param ObjectEntity|null                                           $old   The object as stored; null on create.
 	 *
 	 * @return void
 	 */
-	private function guard(ObjectCreatingEvent|ObjectUpdatingEvent $event, ObjectEntity $new, ?ObjectEntity $old): void {
-		if ($this->isCatalog(object: $new) === false) {
+	private function guard(ObjectCreatingEvent|ObjectUpdatingEvent|ObjectDeletingEvent $event, ?ObjectEntity $new, ?ObjectEntity $old): void {
+		$subject = ($new ?? $old);
+		if ($subject === null || $this->isCatalog(object: $subject) === false) {
 			return;
 		}
 
-		$before = (($old?->getObject() ?? [])['staffAccess'] ?? null);
-		$after = (($new->getObject() ?? [])['staffAccess'] ?? null);
-		if ($this->normalise(access: $before) === $this->normalise(access: $after)) {
+		$before = ($old?->getObject() ?? []);
+		$after = ($new?->getObject() ?? []);
+		$accessChanged = $this->normalise(access: ($before['staffAccess'] ?? null)) !== $this->normalise(access: ($after['staffAccess'] ?? null));
+		$scopeChanged = $this->scope(catalog: $before) !== $this->scope(catalog: $after);
+		if ($accessChanged === false && $scopeChanged === false) {
 			return;
 		}
 
@@ -139,10 +157,60 @@ class CatalogAccessListener implements IEventListener {
 			return;
 		}
 
+		if ($accessChanged === false && $this->touchesARestrictedSchema(before: $before, after: $after) === false) {
+			return;
+		}
+
 		$event->setErrors(['message' => self::REFUSAL]);
 		$event->stopPropagation();
 
 	}//end guard()
+
+	/**
+	 * Whether the old or new schemas of a catalogue include one a restricted catalogue covers.
+	 *
+	 * @param array<string, mixed> $before The catalogue as stored.
+	 * @param array<string, mixed> $after  The catalogue as it would be written.
+	 *
+	 * @return bool True when it does, or when the catalogues cannot be read.
+	 */
+	private function touchesARestrictedSchema(array $before, array $after): bool {
+		$touched = array_merge($this->access->schemaIdsOf(catalog: $before), $this->access->schemaIdsOf(catalog: $after));
+		if ($touched === []) {
+			return false;
+		}
+
+		$restricted = $this->access->restrictedSchemaIds();
+		if ($restricted === null) {
+			return true;
+		}
+
+		return array_intersect($touched, $restricted) !== [];
+
+	}//end touchesARestrictedSchema()
+
+	/**
+	 * A catalogue's scope in one comparable shape: its schemas and its filters.
+	 *
+	 * @param array<string, mixed> $catalog The catalogue.
+	 *
+	 * @return array<string, mixed> The shape.
+	 */
+	private function scope(array $catalog): array {
+		$schemas = [];
+		if (is_array($catalog['schemas'] ?? null) === true) {
+			$schemas = array_map(static fn (mixed $entry): string => (string)json_encode($entry), $catalog['schemas']);
+			sort($schemas);
+		}
+
+		$filters = [];
+		if (is_array($catalog['filters'] ?? null) === true) {
+			$filters = $catalog['filters'];
+		}
+
+		return ['schemas' => array_values(array_unique($schemas)), 'filters' => $filters];
+
+	}//end scope()
 
 	/**
 	 * Staff access in one comparable shape; absent and unrestricted-and-empty are equal.

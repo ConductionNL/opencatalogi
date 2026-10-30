@@ -284,4 +284,17 @@ class CatalogAccessServiceTest extends TestCase {
 		$this->assertSame([173], $this->service(null)->coveredSchemaIds());
 
 	}//end testAFailedCatalogueReadStillListsTheSchemasWithASnapshot()
+
+	public function testRestrictedSchemaIdsListsOnlyTheSchemasARestrictedCatalogueCovers(): void {
+		$service = $this->service(
+			[
+				['title' => 'Raadsstukken', 'schemas' => [173, '184'], 'staffAccess' => ['restricted' => true, 'editGroups' => ['griffie']]],
+				['title' => 'Overig', 'schemas' => [173, 190]],
+			]
+		);
+
+		$this->assertSame([173, 184], $service->restrictedSchemaIds());
+		$this->assertNull($this->service(null)->restrictedSchemaIds());
+
+	}//end testRestrictedSchemaIdsListsOnlyTheSchemasARestrictedCatalogueCovers()
 }//end class

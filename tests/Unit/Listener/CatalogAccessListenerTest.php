@@ -18,6 +18,7 @@ use OCA\OpenCatalogi\Service\CatalogAccessService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
+use OCA\OpenRegister\Event\ObjectDeletingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCP\IAppConfig;
@@ -43,7 +44,7 @@ class CatalogAccessListenerTest extends TestCase {
 	protected function setUp(): void {
 		$this->access = $this->getMockBuilder(CatalogAccessService::class)
 			->disableOriginalConstructor()
-			->onlyMethods(['recompute'])
+			->onlyMethods(['recompute', 'restrictedSchemaIds'])
 			->getMock();
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
@@ -147,6 +148,106 @@ class CatalogAccessListenerTest extends TestCase {
 		$this->assertFalse($event->isPropagationStopped());
 
 	}//end testAnotherSchemasObjectIsNotGuarded()
+
+	public function testANonAdministratorCannotCreateAnOpenCatalogueOnARestrictedSchema(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$event = new ObjectCreatingEvent($this->catalog(['title' => 'Alles open', 'schemas' => [173]]));
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+		$this->assertSame(CatalogAccessListener::REFUSAL, $event->getErrors()['message']);
+
+	}//end testANonAdministratorCannotCreateAnOpenCatalogueOnARestrictedSchema()
+
+	public function testANonAdministratorCannotRemoveASchemaFromARestrictedCatalogue(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$access = ['restricted' => true, 'editGroups' => ['griffie']];
+		$event = new ObjectUpdatingEvent(
+			$this->catalog(['title' => 'Raadsstukken', 'schemas' => [], 'staffAccess' => $access]),
+			$this->catalog(['title' => 'Raadsstukken', 'schemas' => [173], 'staffAccess' => $access])
+		);
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+		$this->assertSame(CatalogAccessListener::REFUSAL, $event->getErrors()['message']);
+
+	}//end testANonAdministratorCannotRemoveASchemaFromARestrictedCatalogue()
+
+	public function testANonAdministratorCannotChangeTheFiltersOfACatalogueOnARestrictedSchema(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$event = new ObjectUpdatingEvent(
+			$this->catalog(['schemas' => [173], 'filters' => ['kind' => 'alles']]),
+			$this->catalog(['schemas' => [173], 'filters' => ['kind' => 'overig']])
+		);
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testANonAdministratorCannotChangeTheFiltersOfACatalogueOnARestrictedSchema()
+
+	public function testANonAdministratorCannotDeleteACatalogueOnARestrictedSchema(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$event = new ObjectDeletingEvent($this->catalog(['title' => 'Overig', 'schemas' => [173], 'filters' => ['kind' => 'overig']]));
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testANonAdministratorCannotDeleteACatalogueOnARestrictedSchema()
+
+	public function testANonAdministratorCannotDeleteARestrictedCatalogue(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([]);
+		$event = new ObjectDeletingEvent($this->catalog(['title' => 'Geheim', 'staffAccess' => ['restricted' => true]]));
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testANonAdministratorCannotDeleteARestrictedCatalogue()
+
+	public function testANonAdministratorMayScopeACatalogueOnUnrestrictedSchemas(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([999]);
+		$event = new ObjectUpdatingEvent(
+			$this->catalog(['schemas' => [173, 184], 'filters' => ['kind' => 'raad']]),
+			$this->catalog(['schemas' => [173]])
+		);
+
+		$this->listener->handle($event);
+
+		$this->assertFalse($event->isPropagationStopped());
+
+	}//end testANonAdministratorMayScopeACatalogueOnUnrestrictedSchemas()
+
+	public function testAScopeChangeIsRefusedWhenTheCataloguesCannotBeRead(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn(null);
+		$event = new ObjectCreatingEvent($this->catalog(['schemas' => [173]]));
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testAScopeChangeIsRefusedWhenTheCataloguesCannotBeRead()
+
+	public function testAnAdministratorMayChangeTheScopeOfACatalogueOnARestrictedSchema(): void {
+		$this->signIn(admin: true);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$event = new ObjectCreatingEvent($this->catalog(['schemas' => [173]]));
+
+		$this->listener->handle($event);
+
+		$this->assertFalse($event->isPropagationStopped());
+
+	}//end testAnAdministratorMayChangeTheScopeOfACatalogueOnARestrictedSchema()
 
 	public function testASavedCatalogueRecomputesItsOldAndNewSchemas(): void {
 		$recomputed = [];

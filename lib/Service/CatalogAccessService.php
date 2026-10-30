@@ -187,6 +187,35 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	}//end coveredSchemaIds()
 
 	/**
+	 * Every schema id a restricted catalogue covers.
+	 *
+	 * The catalogue guard refuses a non-administrator's change to a catalogue's
+	 * scope when it touches one of these schemas: every catalogue covering a
+	 * schema feeds its rules, so adding, moving or narrowing an unrestricted
+	 * catalogue changes who may see and edit a restricted catalogue's publications.
+	 *
+	 * @return array<int, int>|null The ids; null when the catalogues cannot be read.
+	 *
+	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
+	 */
+	public function restrictedSchemaIds(): ?array {
+		$catalogs = $this->catalogs();
+		if ($catalogs === null) {
+			return null;
+		}
+
+		$ids = [];
+		foreach ($catalogs as $catalog) {
+			if ($this->isRestricted(catalog: $catalog) === true) {
+				$ids = array_merge($ids, $this->schemaIdsOf(catalog: $catalog));
+			}
+		}
+
+		return array_values(array_unique($ids));
+
+	}//end restrictedSchemaIds()
+
+	/**
 	 * The schema ids a catalogue covers.
 	 *
 	 * @param array<string, mixed> $catalog The catalogue.

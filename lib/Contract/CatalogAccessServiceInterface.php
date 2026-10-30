@@ -63,6 +63,15 @@ interface CatalogAccessServiceInterface {
 	public function coveredSchemaIds(): array;
 
 	/**
+	 * Every schema id a restricted catalogue covers.
+	 *
+	 * @return array<int, int>|null The ids; null when the catalogues cannot be read.
+	 *
+	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
+	 */
+	public function restrictedSchemaIds(): ?array;
+
+	/**
 	 * The schema ids a catalogue covers.
 	 *
 	 * @param array<string, mixed> $catalog The catalogue.
