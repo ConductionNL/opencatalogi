@@ -29,6 +29,7 @@
  * @covers \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
  * @covers \OCA\OpenCatalogi\Controller\ReadsOpenRegisterResults
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginRequests
+ * @covers \OCA\OpenCatalogi\Controller\ReadsPublicationRegister
  * @uses \OCA\OpenCatalogi\Controller\CorsAllowlist
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */

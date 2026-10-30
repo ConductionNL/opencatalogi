@@ -27,6 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCP\AppFramework\Http\Response;
+
 /**
  * Resolve the `Access-Control-Allow-Origin` value for the current request.
  *
@@ -51,4 +53,22 @@ trait AnswersCrossOriginRequests {
 		return $allowlist->allowedFor($this->request->getHeader('Origin'));
 
 	}//end resolveAllowedOrigin()
+
+	/**
+	 * The answer to a GET/POST CORS preflight: origin, methods, max age, headers and no credentials.
+	 *
+	 * @return Response The preflight response.
+	 *
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 */
+	private function readWritePreflight(): Response {
+		$response = new Response();
+		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$response->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+		$response->addHeader('Access-Control-Max-Age', '1728000');
+		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
+		$response->addHeader('Access-Control-Allow-Credentials', 'false');
+
+		return $response;
+	}//end readWritePreflight()
 }//end trait
