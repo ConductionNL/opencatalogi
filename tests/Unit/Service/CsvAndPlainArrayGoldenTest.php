@@ -24,6 +24,8 @@
  *
  * @covers \OCA\OpenCatalogi\Service\WooService
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @covers \OCA\OpenCatalogi\Service\BomCsv
+ * @covers \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 
 declare(strict_types=1);
@@ -124,7 +126,7 @@ class CsvAndPlainArrayGoldenTest extends TestCase {
 		];
 		foreach ([WooService::class, RetentionService::class] as $class) {
 			$service = (new ReflectionClass($class))->newInstanceWithoutConstructor();
-			$method = new ReflectionMethod($service, 'normalise');
+			$method = new ReflectionMethod($service, 'plainArray');
 			foreach ($shapes as $name => [$in, $out]) {
 				$this->assertSame($out, $method->invoke($service, $in), $class . ' ' . $name);
 			}

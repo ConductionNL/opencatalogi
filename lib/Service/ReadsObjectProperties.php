@@ -83,6 +83,24 @@ trait ReadsObjectProperties {
 	}//end asRecord()
 
 	/**
+	 * A result as a plain array: an array as it is, an entity's serialised array, anything else empty.
+	 *
+	 * @param mixed $object The result.
+	 *
+	 * @return array<string, mixed> The array, without unwrapping an envelope.
+	 *
+	 * @spec exclude pure shape adaptation over the consumed OR ObjectService.
+	 */
+	private function plainArray(mixed $object): array {
+		$object = $this->serialised(object: $object);
+		if (is_array($object) === false) {
+			return [];
+		}
+
+		return $object;
+	}//end plainArray()
+
+	/**
 	 * An entity's serialised form; anything else unchanged.
 	 *
 	 * @param mixed $object The result.
