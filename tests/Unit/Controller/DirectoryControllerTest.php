@@ -246,4 +246,29 @@ class DirectoryControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(500, $response->getStatus());
 	}
+
+	/**
+	 * An unreachable peer answers 502 with a generic message and never echoes the upstream error.
+	 */
+	public function testUpdateReturns502WithoutTheUpstreamErrorWhenThePeerCannotBeReached(): void {
+		$this->request->method('getParam')
+			->with('directory')
+			->willReturn('https://example.com/dir');
+
+		$this->directoryService->method('syncDirectory')
+			->willThrowException(new \GuzzleHttp\Exception\TransferException('internal body from 10.0.0.5'));
+
+		$this->request->method('getHeader')
+			->with('Origin')
+			->willReturn('');
+
+		$response = $this->controller->update();
+
+		$this->assertSame(502, $response->getStatus());
+		$this->assertSame(
+			['message' => 'Failed to fetch directory data', 'error' => 'Unable to reach the requested directory'],
+			$response->getData()
+		);
+		$this->assertSame('*', $response->getHeaders()['Access-Control-Allow-Origin']);
+	}
 }

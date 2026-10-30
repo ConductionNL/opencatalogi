@@ -37,6 +37,7 @@ use OCP\AppFramework\Http\JSONResponse;
  */
 trait ListsConfiguredObjects {
 	use AnswersCrossOriginListRequests;
+	use SendsListCorsHeaders;
 
 	/**
 	 * The request's query, without route keys or any caller scope, scoped to the configured pair.
@@ -126,13 +127,7 @@ trait ListsConfiguredObjects {
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
 	private function publicJsonResponse(mixed $data): JSONResponse {
-		$response = new JSONResponse($data);
-
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-		return $response;
+		return $this->withListCorsHeaders(response: new JSONResponse($data));
 
 	}//end publicJsonResponse()
 }//end trait

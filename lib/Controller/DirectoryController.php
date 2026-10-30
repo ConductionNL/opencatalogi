@@ -44,6 +44,7 @@ use Psr\Log\LoggerInterface;
  * Controller for handling directory-related operations.
  */
 class DirectoryController extends Controller {
+	use SendsListCorsHeaders;
 
 	/**
 	 * Allowed CORS methods.
@@ -106,6 +107,8 @@ class DirectoryController extends Controller {
 	 *
 	 * @return string The header value to use for Access-Control-Allow-Origin.
 	 *
+	 * @SuppressWarnings(PHPMD.UnusedPrivateMethod) Called from the SendsListCorsHeaders trait.
+	 *
 	 * @spec exclude CORS-policy plumbing; reads IAppConfig allowlist, no Origin reflection.
 	 */
 	private function resolveAllowedOrigin(): string {
@@ -131,14 +134,7 @@ class DirectoryController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->withListPreflightHeaders(response: new Response());
 	}//end preflightedCors()
 
 	/**
@@ -150,6 +146,9 @@ class DirectoryController extends Controller {
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
+	 *
+	 * @no-admin-idor-exempt DirectoryService::getDirectory() searches only the configured listing and
+	 *       catalog register/schema, with RBAC and multitenancy on; request parameters filter within that scope.
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
@@ -164,11 +163,7 @@ class DirectoryController extends Controller {
 
 			// Create JSON response with CORS headers (#735 — never reflect Origin).
 			$response = new JSONResponse($data);
-			$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-			$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-			$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-			return $response;
+			return $this->withListCorsHeaders(response: $response);
 		} catch (\Exception $e) {
 			// Public endpoint — log details server-side, return generic body (#735).
 			$this->logger?->error(
@@ -182,11 +177,7 @@ class DirectoryController extends Controller {
 				data: ['error' => $this->l10n->t('Internal server error')],
 				statusCode: 500
 			);
-			$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-			$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-			$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-			return $response;
+			return $this->withListCorsHeaders(response: $response);
 		}//end try
 
 	}//end index()
@@ -227,11 +218,7 @@ class DirectoryController extends Controller {
 			);
 
 			// Add CORS headers for public API access (#735 — never reflect Origin).
-			$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-			$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-			$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-			return $response;
+			return $this->withListCorsHeaders(response: $response);
 		}//end if
 
 		// Sync the directory with the provided URL.
@@ -287,10 +274,6 @@ class DirectoryController extends Controller {
 		}//end try
 
 		// Add CORS headers for public API access (#735 — never reflect Origin).
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-		return $response;
+		return $this->withListCorsHeaders(response: $response);
 	}//end update()
 }//end class
