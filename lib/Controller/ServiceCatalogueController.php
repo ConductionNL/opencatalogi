@@ -61,6 +61,7 @@ class ServiceCatalogueController extends Controller {
 	use AnswersCrossOriginRequests;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
+	use SendsListCorsHeaders;
 
 	/**
 	 * Constructor.
@@ -102,13 +103,7 @@ class ServiceCatalogueController extends Controller {
 	 * @return JSONResponse The response, with its headers.
 	 */
 	private function withCors(JSONResponse $response): JSONResponse {
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->withListPreflightHeaders(response: $response);
 
 	}//end withCors()
 
@@ -124,14 +119,7 @@ class ServiceCatalogueController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->withListPreflightHeaders(response: new Response());
 
 	}//end preflightedCors()
 

@@ -33,6 +33,7 @@
  * @covers \OCA\OpenCatalogi\Controller\ListsConfiguredObjects
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginRequests
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginListRequests
+ * @covers \OCA\OpenCatalogi\Controller\SendsListCorsHeaders
  * @uses \OCA\OpenCatalogi\Controller\CorsAllowlist
  */
 

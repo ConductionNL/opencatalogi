@@ -47,6 +47,7 @@ use RuntimeException;
 class CatalogiController extends Controller {
 	use AnswersCrossOriginListRequests;
 	use ResolvesRegisterConfiguration;
+	use SendsListCorsHeaders;
 
 	/**
 	 * Allowed CORS methods.
@@ -151,14 +152,7 @@ class CatalogiController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->withListPreflightHeaders(response: new Response());
 	}//end preflightedCors()
 
 	/**
@@ -220,11 +214,7 @@ class CatalogiController extends Controller {
 		// group read only when published <= $now); the search above runs with _rbac: true.
 		// Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
 		$response = new JSONResponse($result);
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-		return $response;
+		return $this->withListCorsHeaders(response: $response);
 	}//end index()
 
 	/**
@@ -247,10 +237,6 @@ class CatalogiController extends Controller {
 		$response = $this->catalogiService->index($id);
 
 		// Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-		return $response;
+		return $this->withListCorsHeaders(response: $response);
 	}//end show()
 }//end class
