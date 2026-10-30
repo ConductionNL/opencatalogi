@@ -35,6 +35,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for the read-rule backfill repair step.
  *
  * @covers \OCA\OpenCatalogi\Repair\WOO536RepairReadRules
+ * @uses   \OCA\OpenCatalogi\Repair\SchemaRepair
  */
 class ReadRulesRepairGoldenTest extends TestCase {
 
