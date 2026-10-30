@@ -4039,6 +4039,10 @@ class PublicationServiceTest extends TestCase {
 		$fixture->addFromString('Bijlagen/attachment1.txt', 'attachment content');
 		$fixture->close();
 
+		$sharedNode = $this->createMock(\OCP\Files\File::class);
+		$sharedNode->method('getName')->willReturn('attachment1.txt');
+		$fileService->method('getFiles')->willReturn([$sharedNode]);
+
 		$fileService->method('createObjectFilesZip')
 			->willReturn([
 				'path' => $tmpFile,
@@ -4131,7 +4135,7 @@ class PublicationServiceTest extends TestCase {
 	// =======================================================================
 
 	public function testDownloadGivesAnAnonymousCallerOnlySharedFiles(): void {
-		$entries = $this->downloadEntriesFor($this->service);
+		$entries = $this->downloadEntriesFor($this->service, ['shared.pdf']);
 
 		$this->assertContains('shared.pdf', $entries);
 		$this->assertContains('pub-1.pdf', $entries, 'The metadata PDF must stay in the download ZIP.');
@@ -4142,22 +4146,29 @@ class PublicationServiceTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($this->createMock(IUser::class));
 
-		$entries = $this->downloadEntriesFor($this->serviceWithSession($session));
+		$entries = $this->downloadEntriesFor($this->serviceWithSession($session), ['shared.pdf']);
 
 		$this->assertContains('shared.pdf', $entries);
 		$this->assertContains('unshared.pdf', $entries);
 		$this->assertContains('pub-1.pdf', $entries);
 	}
 
+	public function testDownloadGivesAnAnonymousCallerOnlyTheMetadataWhenNoFileIsShared(): void {
+		$entries = $this->downloadEntriesFor($this->service, []);
+
+		$this->assertSame(['pub-1.pdf'], $entries);
+	}
+
 	/**
-	 * Run download() on an object whose files folder holds `shared.pdf` (shared) and
-	 * `unshared.pdf` (not shared), and return the entry names of the ZIP it hands back.
+	 * Run download() on an object whose files folder holds `shared.pdf` and
+	 * `unshared.pdf`, and return the entry names of the ZIP it hands back.
 	 *
-	 * @param PublicationService $service The service under test.
+	 * @param PublicationService $service     The service under test.
+	 * @param list<string>       $sharedNames Names of the files that carry a share.
 	 *
 	 * @return list<string> Entry names of the returned archive.
 	 */
-	private function downloadEntriesFor(PublicationService $service): array {
+	private function downloadEntriesFor(PublicationService $service, array $sharedNames): array {
 		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$fileService = $this->createFileServiceMock();
@@ -4176,10 +4187,15 @@ class PublicationServiceTest extends TestCase {
 				default => $fileService,
 			});
 
-		$sharedNode = $this->createMock(\OCP\Files\File::class);
-		$sharedNode->method('getName')->willReturn('shared.pdf');
+		$sharedNodes = [];
+		foreach ($sharedNames as $sharedName) {
+			$node = $this->createMock(\OCP\Files\File::class);
+			$node->method('getName')->willReturn($sharedName);
+			$sharedNodes[] = $node;
+		}
+
 		$fileService->method('getFiles')
-			->willReturnCallback(fn ($object, ?bool $sharedFilesOnly = false): array => ($sharedFilesOnly === true) ? [$sharedNode] : []);
+			->willReturnCallback(fn ($object, ?bool $sharedFilesOnly = false): array => ($sharedFilesOnly === true) ? $sharedNodes : []);
 
 		$tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
 		$fixture = new \ZipArchive();
