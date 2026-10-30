@@ -52,9 +52,14 @@ use Psr\Log\LoggerInterface;
  * Before a catalogue is written: refuse a staff access change by anyone but
  * an administrator. After: recompute the covered schemas' rules.
  *
+ * The coupling is the five OpenRegister object events it guards and
+ * recomputes on, plus the session, group and catalogue lookups the guard needs.
+ *
  * @template-implements IEventListener<Event>
  *
  * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class CatalogAccessListener implements IEventListener {
 

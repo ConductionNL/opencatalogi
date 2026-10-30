@@ -76,7 +76,11 @@ class DirectoryController extends Controller {
 	/**
 	 * The `cors_allowed_origins` setting for ResolvesAllowedOrigin; '*' without an app config.
 	 *
+	 * Called by ResolvesAllowedOrigin::resolveAllowedOrigin(), which PHPMD does not follow.
+	 *
 	 * @return string The setting.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedPrivateMethod)
 	 */
 	private function allowedOriginsSetting(): string {
 		return ($this->config?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');

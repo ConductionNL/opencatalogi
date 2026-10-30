@@ -45,7 +45,12 @@ use Psr\Log\LoggerInterface;
  * catalogue with filters narrows its rules to them. The public read rules
  * stay first in `read`.
  *
+ * The complexity is the fail-closed handling: every read and write can fail
+ * per schema, and each failure keeps the stored rules and the snapshot.
+ *
  * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class CatalogAccessService implements CatalogAccessServiceInterface {
 	use ReadsObjectProperties;
