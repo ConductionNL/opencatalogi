@@ -8,9 +8,9 @@
  * Origin, and compares the origin it names with the expected table: the
  * wildcard default, blank and padded settings, allowlisted and unlisted
  * callers, empty entries, case-sensitive matching and a missing app config.
- * The list controllers differ in two places, both pinned: a blank first
- * allowlist entry makes them answer with the wildcard, and they read the
- * caller from the server's HTTP_ORIGIN when the Origin header is empty.
+ * Every controller ignores blank allowlist entries. The list controllers
+ * also read the caller from the server's HTTP_ORIGIN when the Origin header
+ * is empty.
  * The GET-only read controllers also pin their CORS header set.
  *
  * @category Test
@@ -94,8 +94,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 	];
 
 	/**
-	 * Controllers that fall back to the server's HTTP_ORIGIN and keep the
-	 * position of a blank first allowlist entry.
+	 * Controllers that fall back to the server's HTTP_ORIGIN.
 	 */
 	private const LIST_RULE = [
 		CatalogiController::class,
@@ -149,8 +148,8 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 			'unlisted caller gets the first entry' => [$pair, 'https://evil.nl', 'https://a.nl'],
 			'no caller gets the first entry' => [$pair, '', 'https://a.nl'],
 			'padded entries are trimmed' => [' , https://a.nl ,  https://b.nl , ', 'https://b.nl', 'https://b.nl'],
-			'padded entries, unlisted caller' => [' , https://a.nl , ', 'https://c.nl', 'https://a.nl', '*'],
-			'blank first entry, no caller' => [',https://a.nl', '', 'https://a.nl', '*'],
+			'padded entries, unlisted caller' => [' , https://a.nl , ', 'https://c.nl', 'https://a.nl'],
+			'blank first entry, no caller' => [',https://a.nl', '', 'https://a.nl'],
 			'blank middle entry, unlisted caller' => ['https://a.nl,,https://b.nl', 'https://c.nl', 'https://a.nl'],
 			'only separators' => [',, ,', 'https://a.nl', '*'],
 			'matching is case sensitive' => ['https://A.nl', 'https://a.nl', 'https://A.nl'],
