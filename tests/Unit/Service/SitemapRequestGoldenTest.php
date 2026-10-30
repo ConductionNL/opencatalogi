@@ -26,6 +26,7 @@
  * @spec openspec/specs/woo-compliance/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\SitemapService
+ * @uses \OCA\OpenCatalogi\Service\SitemapIndexBuilder
  * @uses \OCA\OpenCatalogi\Http\XMLResponse
  * @uses \OCA\OpenCatalogi\Service\SitemapRequest
  */

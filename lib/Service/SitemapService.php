@@ -75,7 +75,6 @@ class SitemapService implements SitemapServiceInterface {
 	 */
 	private const APP_NAME = 'opencatalogi';
 
-
 	/**
 	 * Constructor for SitemapService.
 	 *
@@ -194,70 +193,19 @@ class SitemapService implements SitemapServiceInterface {
 			catalog: $request->catalog,
 			categoryCode: $categoryCode
 		);
+		$builder = new SitemapIndexBuilder(objectService: $objectService, perPage: $this->getMaxPerPage());
 		if ($request->queries === []) {
-			return $this->sitemapIndexResponse(sitemaps: []);
+			return $builder->response(sitemaps: []);
 		}
 
-		return $this->sitemapIndexResponse(
-			sitemaps: $this->sitemapIndexEntries(request: $request, objectService: $objectService)
+		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
+		return $builder->response(
+			sitemaps: $builder->entries(
+				queries: $request->queries,
+				baseUri: "$baseUrl/apps/opencatalogi/api/{$request->catalog->getSlug()}/sitemaps/{$request->categoryCode}/publications"
+			)
 		);
 	}//end buildSitemapIndex()
-
-	/**
-	 * One index entry per sitemap page, with the newest update on that page.
-	 *
-	 * Page N holds page N of every source, so the index runs until no source
-	 * has a further page.
-	 *
-	 * @param SitemapRequest $request The resolved request with its sources.
-	 * @param object $objectService The OpenRegister ObjectService.
-	 *
-	 * @return array<int, array{loc: string, lastmod: string|null}>
-	 *
-	 * @spec openspec/specs/woo-compliance/spec.md
-	 */
-	private function sitemapIndexEntries(SitemapRequest $request, object $objectService): array {
-		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
-		$sitemapBaseUri = "$baseUrl/apps/opencatalogi/api/{$request->catalog->getSlug()}/sitemaps/{$request->categoryCode}/publications";
-
-		$sitemaps = [];
-		$queries = $request->queries;
-		$page = 1;
-		while ($queries !== []) {
-			$batch = $this->searchSitemapPage(objectService: $objectService, queries: $queries, page: $page);
-			if ($batch['results'] === []) {
-				break;
-			}
-
-			$sitemaps[] = [
-				'loc' => "$sitemapBaseUri?page=$page",
-				'lastmod' => $batch['lastMod'],
-			];
-			$queries = $batch['continuing'];
-			$page++;
-		}
-
-		return $sitemaps;
-	}//end sitemapIndexEntries()
-
-	/**
-	 * A sitemap index document over the given entries.
-	 *
-	 * @param array<int, array{loc: string, lastmod: string|null}> $sitemaps The entries.
-	 *
-	 * @return XMLResponse
-	 *
-	 * @spec openspec/specs/woo-compliance/spec.md
-	 */
-	private function sitemapIndexResponse(array $sitemaps): XMLResponse {
-		return new XMLResponse(
-			data: [
-				'@root' => 'sitemapindex',
-				'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
-				'sitemap' => $sitemaps,
-			]
-		);
-	}//end sitemapIndexResponse()
 
 	/**
 	 * Build sitemap based on woo publications.
@@ -288,7 +236,8 @@ class SitemapService implements SitemapServiceInterface {
 		// Fail closed: a schema the read-rule guard drops yields a valid, empty
 		// document list, never a search (see isDroppedByReadRuleGuard()).
 		$queries = $this->sitemapQueries(registerId: $registerId, schemaId: $schemaId, catalog: $catalog, categoryCode: $categoryCode);
-		$publications = $this->searchSitemapPage(objectService: $objectService, queries: $queries, page: $page)['results'];
+		$builder = new SitemapIndexBuilder(objectService: $objectService, perPage: $this->getMaxPerPage());
+		$publications = $builder->page(queries: $queries, page: $page)['results'];
 
 		$fileService = $this->getFileService();
 
@@ -447,59 +396,6 @@ class SitemapService implements SitemapServiceInterface {
 			'schemas' => $clean($object['schemas'] ?? []),
 		];
 	}//end catalogScope()
-
-
-	/**
-	 * Page N of every sitemap source, merged and listed once per publication.
-	 *
-	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param array<int, array<string, mixed>> $queries The sources ({@see sitemapQueries()}).
-	 * @param int $page The page.
-	 *
-	 * @return array{results: array<int, object>, lastMod: string|null, continuing: array<int, array<string, mixed>>}
-	 *   The rows, the newest update among them, and the sources that have a next page.
-	 *
-	 * @spec openspec/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
-	 */
-	private function searchSitemapPage(object $objectService, array $queries, int $page): array {
-		$results = [];
-		$seen = [];
-		$lastMod = null;
-		$continuing = [];
-		foreach ($queries as $query) {
-			$query['_order']['updated'] = 'desc';
-			$query['_limit'] = $this->getMaxPerPage();
-			$query['_page'] = $page;
-			$found = $objectService->searchObjectsPaginated(
-				query: $query,
-				_rbac: true,
-				_multitenancy: false,
-				deleted: false
-			);
-
-			$rows = ($found['results'] ?? []);
-			if ($rows !== [] && ($found['next'] ?? null) !== null) {
-				$continuing[] = $query;
-			}
-
-			foreach ($rows as $row) {
-				$data = $row->jsonSerialize();
-				$key = (string)($data['id'] ?? spl_object_id($row));
-				if (isset($seen[$key]) === true) {
-					continue;
-				}
-
-				$seen[$key] = true;
-				$results[] = $row;
-				$updated = ($data['@self']['updated'] ?? null);
-				if (is_string($updated) === true && ($lastMod === null || strcmp($updated, $lastMod) > 0)) {
-					$lastMod = $updated;
-				}
-			}
-		}//end foreach
-
-		return ['results' => $results, 'lastMod' => $lastMod, 'continuing' => $continuing];
-	}//end searchSitemapPage()
 
 	/**
 	 * Whether the SCH-PFTS-CAT-002 read-rule guard drops the sitemap's schema.
