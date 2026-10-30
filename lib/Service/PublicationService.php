@@ -1407,24 +1407,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			$relations = array_values($relationsArray);
 
-			// Check if relations array is empty.
-			if (empty($relations) === true) {
-				// If relations is empty, return empty paginated response.
-				return new JSONResponse(
-					[
-						'results' => [],
-						'total' => 0,
-						'page' => 1,
-						'pages' => 1,
-						'facets' => [],
-					]
-				);
-			}
-
-			// Use the generic search function with the relation IDs.
-			$result = $this->searchPublications(catalogId: null, ids: $relations);
-
-			return new JSONResponse($result);
+			return $this->relatedPublications(relations: $relations);
 		} catch (\InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], 400);
 		}//end try
@@ -1475,29 +1458,31 @@ class PublicationService implements PublicationServiceInterface {
 			$relationsArray = $objectService->findByRelations($id);
 			$relations = array_map(static fn ($relation) => $relation->getUuid(), $relationsArray);
 
-			// Check if relations array is empty.
-			if (empty($relations) === true) {
-				// If relations is empty, return empty paginated response.
-				return new JSONResponse(
-					[
-						'results' => [],
-						'total' => 0,
-						'page' => 1,
-						'pages' => 1,
-						'facets' => [],
-					]
-				);
-			}
-
-			// Use the generic search function with the relation IDs.
-			$result = $this->searchPublications(catalogId: null, ids: $relations);
-
-			return new JSONResponse($result);
+			return $this->relatedPublications(relations: $relations);
 		} catch (\InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], 400);
 		}//end try
 
 	}//end used()
+
+	/**
+	 * The publications among the given related object ids, as one page.
+	 *
+	 * @param array<int, string> $relations The related object ids.
+	 *
+	 * @return JSONResponse The search result, or an empty page when there are no relations.
+	 *
+	 * @throws \InvalidArgumentException When the search refuses its arguments.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function relatedPublications(array $relations): JSONResponse {
+		if (empty($relations) === true) {
+			return new JSONResponse(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []]);
+		}
+
+		return new JSONResponse($this->searchPublications(catalogId: null, ids: $relations));
+	}//end relatedPublications()
 
 	/**
 	 * Get aggregated publications from local and federated sources
