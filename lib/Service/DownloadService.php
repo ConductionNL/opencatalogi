@@ -108,7 +108,6 @@ class DownloadService {
 		}
 
 		return $this->publicationPdf(publication: $publication);
-
 	}//end createPublicationFile()
 
 	/**
