@@ -52,6 +52,7 @@ use RuntimeException;
  * @spec openspec/specs/publication-retention-lifecycle/spec.md
  */
 class RetentionService implements RetentionServiceInterface {
+	use ReadsObjectProperties;
 
 	/**
 	 * Config key holding the per-catalog retention defaults (JSON).
@@ -430,7 +431,7 @@ class RetentionService implements RetentionServiceInterface {
 			return null;
 		}
 
-		return $this->normalise(object: $saved);
+		return $this->plainArray(object: $saved);
 	}//end applyDefaultsAtPublication()
 
 	/**
@@ -513,7 +514,7 @@ class RetentionService implements RetentionServiceInterface {
 		}
 
 		foreach ($catalogs as $catalog) {
-			$catalogData = $this->normalise(object: $catalog);
+			$catalogData = $this->plainArray(object: $catalog);
 			$registers = array_map('intval', (array)($catalogData['registers'] ?? []));
 			$schemas = array_map('intval', (array)($catalogData['schemas'] ?? []));
 			if (in_array((int)$register, $registers, true) === true
@@ -560,7 +561,7 @@ class RetentionService implements RetentionServiceInterface {
 		}
 
 		foreach ($objects as $object) {
-			$outcome = $this->evaluatePublication(run: $run, data: $this->normalise(object: $object));
+			$outcome = $this->evaluatePublication(run: $run, data: $this->plainArray(object: $object));
 			if ($outcome !== null) {
 				$counts[$outcome]++;
 			}
@@ -706,7 +707,7 @@ class RetentionService implements RetentionServiceInterface {
 		}
 
 		foreach ($objects as $object) {
-			$data = $this->normalise(object: $object);
+			$data = $this->plainArray(object: $object);
 			$status = (string)($data['status'] ?? '');
 			if ($status === 'archived') {
 				$summary['archived']++;
@@ -770,7 +771,7 @@ class RetentionService implements RetentionServiceInterface {
 			throw new RuntimeException('Publication not found: ' . $publicationId);
 		}
 
-		$data = $this->normalise(object: $object);
+		$data = $this->plainArray(object: $object);
 		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
 		switch ($decision) {
@@ -808,7 +809,7 @@ class RetentionService implements RetentionServiceInterface {
 		$this->recordDecision(data: $data, decision: $decision, note: $rationale);
 		$saved = $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
 
-		return $this->normalise(object: $saved);
+		return $this->plainArray(object: $saved);
 	}//end recordHumanDecision()
 
 	/**
@@ -829,7 +830,7 @@ class RetentionService implements RetentionServiceInterface {
 		$report = new RetentionReport(filter: ['catalog' => $catalogSlug, 'from' => $from, 'to' => $to]);
 		$rows = [];
 		foreach ($this->reportPublications() as $object) {
-			$data = $this->normalise(object: $object);
+			$data = $this->plainArray(object: $object);
 			if ($report->includes(data: $data) === true) {
 				$rows[] = $report->row(data: $data);
 			}
@@ -892,28 +893,7 @@ class RetentionService implements RetentionServiceInterface {
 			'decisionNote',
 		];
 
-		$handle = fopen('php://temp', 'r+');
-		// UTF-8 BOM for spreadsheet compatibility.
-		fwrite($handle, "\xEF\xBB\xBF");
-		fputcsv($handle, $headers);
-		foreach ($rows as $row) {
-			$line = [];
-			foreach ($headers as $key) {
-				$line[] = (string)($row[$key] ?? '');
-			}
-
-			fputcsv($handle, $line);
-		}
-
-		rewind($handle);
-		$csv = stream_get_contents($handle);
-		fclose($handle);
-
-		if ($csv === false) {
-			return '';
-		}
-
-		return $csv;
+		return (new BomCsv(columns: array_combine($headers, $headers)))->render(rows: $rows);
 	}//end renderReportCsv()
 
 	/**
@@ -990,30 +970,4 @@ class RetentionService implements RetentionServiceInterface {
 		);
 
 	}//end save()
-
-	/**
-	 * Normalise an OR object (entity or array) into a plain array.
-	 *
-	 * @param mixed $object The OR object.
-	 *
-	 * @return array<string, mixed> The object as an array.
-	 *
-	 * @spec exclude internal normalisation helper.
-	 */
-	private function normalise(mixed $object): array {
-		if (is_array($object) === true) {
-			return $object;
-		}
-
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$serialized = $object->jsonSerialize();
-			if (is_array($serialized) === false) {
-				return [];
-			}
-
-			return $serialized;
-		}
-
-		return [];
-	}//end normalise()
 }//end class

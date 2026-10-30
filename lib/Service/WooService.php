@@ -61,6 +61,7 @@ use RuntimeException;
  *   private methods; the docblocks of those steps push the class past the line threshold.
  */
 class WooService implements WooServiceInterface {
+	use ReadsObjectProperties;
 
 	/**
 	 * Config key holding the WOO batch register id/uuid.
@@ -331,7 +332,7 @@ class WooService implements WooServiceInterface {
 		// First persist the assessment objects so we have their ids for the cards.
 		$assessmentRefs = [];
 		foreach ($documents as $document) {
-			$assessmentRefs[] = $this->normalise(
+			$assessmentRefs[] = $this->plainArray(
 				object: $this->save(
 					objectService: $objectService,
 					register: $register,
@@ -356,7 +357,7 @@ class WooService implements WooServiceInterface {
 		}
 
 		$batch = $this->newBatch(assessmentRefs: $assessmentRefs, batchContext: $batchContext);
-		$savedBatch = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		$savedBatch = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 
 		$savedBatch['assessments'] = $assessmentRefs;
 		$savedBatch['deckLinks'] = $deckLinks;
@@ -588,7 +589,7 @@ class WooService implements WooServiceInterface {
 			throw new RuntimeException('Assessment not found: ' . $assessmentId);
 		}
 
-		$data = $this->normalise(object: $object);
+		$data = $this->plainArray(object: $object);
 		$user = $this->userSession->getUser();
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
@@ -612,7 +613,7 @@ class WooService implements WooServiceInterface {
 		// A partly public document is published only as its verified redacted version (woo-redaction-pipeline).
 		$data = array_merge($data, $this->redactor->forAssessment(assessment: $data, batchId: $batchId, fallbackOwner: $assessedBy));
 
-		$saved = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
+		$saved = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
 
 		// Move the linked Deck card to the matching stack via the leaf (best
 		// effort; the leaf owns the move + stack-driven status sync).
@@ -670,7 +671,7 @@ class WooService implements WooServiceInterface {
 		}
 
 		try {
-			$batch = $this->normalise(object: $objectService->find($batchId));
+			$batch = $this->plainArray(object: $objectService->find($batchId));
 		} catch (\Throwable $e) {
 			throw new RuntimeException('Batch not found: ' . $batchId);
 		}
@@ -717,7 +718,7 @@ class WooService implements WooServiceInterface {
 
 		foreach ($refs as $ref) {
 			try {
-				$out[] = $this->normalise(object: $objectService->find((string)$ref));
+				$out[] = $this->plainArray(object: $objectService->find((string)$ref));
 			} catch (\Throwable $e) {
 				$this->logger->info('[WooService] assessment ' . $ref . ' not loadable: ' . $e->getMessage());
 			}
@@ -772,31 +773,14 @@ class WooService implements WooServiceInterface {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
 	 */
 	public function renderInventarislijstCsv(array $rows): string {
-		$headers = ['Volgnummer', 'Document', 'Datum', 'Beoordeling', 'Weigeringsgronden'];
-		$keys = ['volgnummer', 'document', 'datum', 'beoordeling', 'weigeringsgronden'];
-
-		$handle = fopen('php://temp', 'r+');
-		// UTF-8 BOM for spreadsheet compatibility.
-		fwrite($handle, "\xEF\xBB\xBF");
-		fputcsv($handle, $headers);
-		foreach ($rows as $row) {
-			$line = [];
-			foreach ($keys as $key) {
-				$line[] = (string)($row[$key] ?? '');
-			}
-
-			fputcsv($handle, $line);
-		}
-
-		rewind($handle);
-		$csv = stream_get_contents($handle);
-		fclose($handle);
-
-		if ($csv === false) {
-			return '';
-		}
-
-		return $csv;
+		$columns = [
+			'volgnummer' => 'Volgnummer',
+			'document' => 'Document',
+			'datum' => 'Datum',
+			'beoordeling' => 'Beoordeling',
+			'weigeringsgronden' => 'Weigeringsgronden',
+		];
+		return (new BomCsv(columns: $columns))->render(rows: $rows);
 	}//end renderInventarislijstCsv()
 
 	/**
@@ -881,11 +865,11 @@ class WooService implements WooServiceInterface {
 			throw new RuntimeException('OpenRegister WOO register/schema unavailable');
 		}
 
-		$batch = $this->normalise(object: $objectService->find($batchId));
+		$batch = $this->plainArray(object: $objectService->find($batchId));
 		$batch['status'] = 'ready_for_review';
 		$batch['updatedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
-		return $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		return $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 	}//end markReadyForReview()
 
 	/**
@@ -1043,7 +1027,7 @@ class WooService implements WooServiceInterface {
 		$batch['wooPublication'] = $publicationMeta;
 		unset($batch['documentSummary']);
 
-		$saved = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		$saved = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 		$saved['wooPublication'] = $publicationMeta;
 
 		return $saved;
@@ -1075,30 +1059,4 @@ class WooService implements WooServiceInterface {
 		);
 
 	}//end save()
-
-	/**
-	 * Normalise an OpenRegister return value (entity or array) to a plain array.
-	 *
-	 * @param mixed $object The OR return value.
-	 *
-	 * @return array<string, mixed> The plain array.
-	 *
-	 * @spec exclude internal helper — shape normalisation for OR return values.
-	 */
-	private function normalise(mixed $object): array {
-		if (is_array($object) === true) {
-			return $object;
-		}
-
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$serialized = $object->jsonSerialize();
-			if (is_array($serialized) === false) {
-				return [];
-			}
-
-			return $serialized;
-		}
-
-		return [];
-	}//end normalise()
 }//end class

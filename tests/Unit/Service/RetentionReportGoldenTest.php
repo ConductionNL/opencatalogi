@@ -27,6 +27,8 @@
  * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses \OCA\OpenCatalogi\Service\BomCsv
  * @uses \OCA\OpenCatalogi\Service\RetentionReport
  */
 
