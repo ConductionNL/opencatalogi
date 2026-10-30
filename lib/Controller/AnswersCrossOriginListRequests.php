@@ -25,10 +25,8 @@ namespace OCA\OpenCatalogi\Controller;
 /**
  * Resolve the `Access-Control-Allow-Origin` value the way the list controllers do.
  *
- * Two things set it apart from AnswersCrossOriginRequests: the caller is read
- * from the server's HTTP_ORIGIN when the Origin header is empty, and only the
- * setting's first entry can be the fallback, so a blank first entry names the
- * wildcard.
+ * Unlike AnswersCrossOriginRequests, the caller is read from the server's
+ * HTTP_ORIGIN when the Origin header is empty.
  *
  * Consuming controllers MUST expose a `private readonly IAppConfig $config`
  * property, and inherit `$appName` and `$request` from `OCP\AppFramework\Controller`.
@@ -45,7 +43,7 @@ trait AnswersCrossOriginListRequests {
 	 */
 	private function resolveAllowedOrigin(): string {
 		$allowlist = new CorsAllowlist($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		return $allowlist->allowedForPositionally($this->callerOrigin());
+		return $allowlist->allowedFor($this->callerOrigin());
 	}//end resolveAllowedOrigin()
 
 	/**
