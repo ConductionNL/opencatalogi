@@ -7,6 +7,7 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Service\SitemapRequest;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -211,7 +212,7 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	// ──────────────────────────────────────────────────────────
-	// isValidSitemapRequest (private, via reflection)
+	// resolveSitemapRequest (private, via reflection)
 	// ──────────────────────────────────────────────────────────
 
 	public function testIsValidSitemapRequestNoSettings(): void {
@@ -220,12 +221,8 @@ class SitemapServiceTest extends TestCase {
 
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
-		$result = $method->invokeArgs($this->service, [
-			'test-catalog',
-			'sitemapindex-diwoo-infocat001.xml',
-			$objectService,
-		]);
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
+		$result = $method->invoke($this->service, new SitemapRequest('test-catalog', 'sitemapindex-diwoo-infocat001.xml'), $objectService);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
@@ -240,12 +237,8 @@ class SitemapServiceTest extends TestCase {
 
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
-		$result = $method->invokeArgs($this->service, [
-			'test-catalog',
-			'invalid-category.xml',
-			$objectService,
-		]);
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
+		$result = $method->invoke($this->service, new SitemapRequest('test-catalog', 'invalid-category.xml'), $objectService);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
@@ -289,22 +282,14 @@ class SitemapServiceTest extends TestCase {
 		$objectService->method('searchObjectsPaginated')
 			->willReturn(['results' => [$catalogObj]]);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
 
-		$catalog = null;
-		$schemaId = null;
-		$registerId = null;
+		$request = new SitemapRequest('my-catalog', 'sitemapindex-diwoo-infocat001.xml');
+		$result = $method->invoke($this->service, $request, $objectService);
+		$schemaId = $request->schemaId;
+		$registerId = $request->registerId;
 
-		$result = $method->invokeArgs($this->service, [
-			'my-catalog',
-			'sitemapindex-diwoo-infocat001.xml',
-			$objectService,
-			&$catalog,
-			&$schemaId,
-			&$registerId,
-		]);
-
-		$this->assertTrue($result);
+		$this->assertNull($result);
 		$this->assertEquals('sch-1', $schemaId);
 		$this->assertEquals('reg-woo', $registerId);
 	}
@@ -331,12 +316,8 @@ class SitemapServiceTest extends TestCase {
 		$objectService->method('searchObjectsPaginated')
 			->willReturn(['results' => []]);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
-		$result = $method->invokeArgs($this->service, [
-			'nonexistent-catalog',
-			'sitemapindex-diwoo-infocat001.xml',
-			$objectService,
-		]);
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
+		$result = $method->invoke($this->service, new SitemapRequest('nonexistent-catalog', 'sitemapindex-diwoo-infocat001.xml'), $objectService);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
@@ -370,12 +351,8 @@ class SitemapServiceTest extends TestCase {
 		$objectService->method('searchObjectsPaginated')
 			->willReturn(['results' => [$catalogObj]]);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
-		$result = $method->invokeArgs($this->service, [
-			'my-catalog',
-			'sitemapindex-diwoo-infocat001.xml',
-			$objectService,
-		]);
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
+		$result = $method->invoke($this->service, new SitemapRequest('my-catalog', 'sitemapindex-diwoo-infocat001.xml'), $objectService);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
@@ -414,22 +391,14 @@ class SitemapServiceTest extends TestCase {
 		$objectService->method('searchObjectsPaginated')
 			->willReturn(['results' => [$catalogObj]]);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
 
-		$catalog = null;
-		$schemaId = null;
-		$registerId = null;
+		$request = new SitemapRequest('test-slug', 'sitemapindex-diwoo-infocat012.xml');
+		$result = $method->invoke($this->service, $request, $objectService);
+		$schemaId = $request->schemaId;
+		$registerId = $request->registerId;
 
-		$result = $method->invokeArgs($this->service, [
-			'test-slug',
-			'sitemapindex-diwoo-infocat012.xml',
-			$objectService,
-			&$catalog,
-			&$schemaId,
-			&$registerId,
-		]);
-
-		$this->assertTrue($result);
+		$this->assertNull($result);
 		$this->assertEquals('sch-12', $schemaId);
 	}
 

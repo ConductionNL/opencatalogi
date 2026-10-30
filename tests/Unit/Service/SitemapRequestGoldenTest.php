@@ -27,6 +27,7 @@
  *
  * @covers \OCA\OpenCatalogi\Service\SitemapService
  * @uses \OCA\OpenCatalogi\Http\XMLResponse
+ * @uses \OCA\OpenCatalogi\Service\SitemapRequest
  */
 
 declare(strict_types=1);
@@ -36,6 +37,7 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Service\SitemapRequest;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
@@ -228,11 +230,13 @@ class SitemapRequestGoldenTest extends TestCase {
 			$categories
 		);
 
-		$catalog = (object)[];
-		$schemaId = null;
-		$registerId = null;
-		$method = new \ReflectionMethod(SitemapService::class, 'isValidSitemapRequest');
-		$outcome = $method->invokeArgs($service, ['the-catalog', 'sitemapindex-diwoo-infocat001.xml', $objectService, &$catalog, &$schemaId, &$registerId]);
+		$request = new SitemapRequest(catalogSlug: 'the-catalog', categoryCode: 'sitemapindex-diwoo-infocat001.xml');
+		$request->catalog = (object)[];
+		$method = new \ReflectionMethod(SitemapService::class, 'resolveSitemapRequest');
+		$outcome = ($method->invoke($service, $request, $objectService) ?? true);
+		$catalog = $request->catalog;
+		$schemaId = $request->schemaId;
+		$registerId = $request->registerId;
 
 		if ($outcome instanceof XMLResponse) {
 			$outcome = ['status' => $outcome->getStatus(), 'body' => $outcome->render()];
