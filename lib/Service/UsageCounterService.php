@@ -30,6 +30,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
+use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -198,24 +199,17 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * The stored object contains ONLY publication reference, date, kind, and
 	 * count. No request-derived attribute is ever written (ANA-002).
 	 *
-	 * @param string $publicationId The publication UUID being counted.
-	 * @param string $kind KIND_VIEW or KIND_DOWNLOAD.
+	 * @param PublicationUsage $usage The publication, kind and catalog being counted.
 	 * @param string|null $userAgent Request UA, evaluated for crawler-skip only.
-	 * @param string|null $catalog Optional catalog slug for roll-up labelling.
 	 *
 	 * @return boolean True when a count was recorded; false when skipped/failed.
 	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
-	public function increment(
-		string $publicationId,
-		string $kind,
-		?string $userAgent = null,
-		?string $catalog = null,
-	): bool {
+	public function increment(PublicationUsage $usage, ?string $userAgent = null): bool {
 		try {
-			$count = new UsageCount(publicationId: $publicationId, kind: $kind);
-			$count->catalog = $catalog;
+			$count = new UsageCount(publicationId: $usage->publicationId, kind: $usage->kind);
+			$count->catalog = $usage->catalog;
 
 			// Best-effort bot filtering — evaluated in memory, UA discarded (ANA-003).
 			if ($count->isCountable() === false
@@ -233,7 +227,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 			$this->logger->warning(
 				'[UsageCounterService] count failed (swallowed)',
 				[
-					'kind' => $kind,
+					'kind' => $usage->kind,
 					'error' => $e->getMessage(),
 				]
 			);

@@ -242,7 +242,8 @@ class DcatService implements DcatServiceInterface {
 		$result = $this->searchCatalogPage(scope: $scope, page: $page);
 		$hasNext = (($result['next'] ?? null) !== null);
 
-		$collected = $this->mapCatalogDatasets(publications: ($result['results'] ?? []), scope: $scope, violations: $violations);
+		$collected = $this->mapCatalogDatasets(publications: ($result['results'] ?? []), scope: $scope);
+		array_push($violations, ...$collected['violations']);
 
 		$graph = array_merge([$this->buildCatalogNode(catalog: $catalog, scope: $scope, datasetRefs: $collected['refs'])], $collected['datasets']);
 		$paged = $this->buildHydraPage(catalogIri: $scope['catalogIri'], page: $page, hasNext: $hasNext);
@@ -335,15 +336,14 @@ class DcatService implements DcatServiceInterface {
 	 *
 	 * @param array $publications The publications of this page.
 	 * @param array $scope        The resolved catalog scope.
-	 * @param array<int, array<string, mixed>> $violations Controlled-vocabulary violations collected here (by reference).
 	 *
-	 * @return array{datasets: array, refs: array, maxModified: int}
+	 * @return array{datasets: array, refs: array, maxModified: int, violations: array<int, array<string, mixed>>}
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
 	 */
-	private function mapCatalogDatasets(array $publications, array $scope, array &$violations): array {
+	private function mapCatalogDatasets(array $publications, array $scope): array {
 		$scope['fileService'] = $this->getFileService();
-		$collected = ['datasets' => [], 'refs' => [], 'maxModified' => 0];
+		$collected = ['datasets' => [], 'refs' => [], 'maxModified' => 0, 'violations' => []];
 		foreach ($publications as $publication) {
 			$publication = $this->toArray(item: $publication);
 			$schemaId = (int)($publication['@self']['schema'] ?? 0);
@@ -351,10 +351,10 @@ class DcatService implements DcatServiceInterface {
 				continue;
 			}
 
-			$uuid = (string)($publication['@self']['uuid'] ?? $publication['id'] ?? '');
-			$datasetIri = $this->datasetIri(catalogSlug: $scope['catalogSlug'], uuid: $uuid);
-			$collected['datasets'][] = $this->mapCatalogDataset(publication: $publication, scope: $scope, datasetIri: $datasetIri, violations: $violations);
-			$collected['refs'][] = ['@id' => $datasetIri];
+			$source = $this->datasetSource(publication: $publication, scope: $scope);
+			$collected['datasets'][] = $this->mapCatalogDataset(source: $source, scope: $scope);
+			$collected['refs'][] = ['@id' => $source->datasetIri];
+			array_push($collected['violations'], ...$source->violations);
 
 			$modified = strtotime((string)($publication['@self']['updated'] ?? $publication['publicationDate'] ?? ''));
 			if ($modified !== false && $modified > $collected['maxModified']) {
@@ -366,22 +366,19 @@ class DcatService implements DcatServiceInterface {
 	}//end mapCatalogDatasets()
 
 	/**
-	 * Map one publication to a DCAT dataset with its published attachments.
+	 * One publication with its dataset IRI and its published attachments.
 	 *
 	 * The paginated search omits files, so they are fetched here, as SitemapService
 	 * does; a failing lookup yields a dataset without distributions.
 	 *
-	 * @param array  $publication The publication.
-	 * @param array  $scope       The resolved catalog scope, with the file service.
-	 * @param string $datasetIri  The dataset IRI.
-	 * @param array<int, array<string, mixed>> $violations Controlled-vocabulary violations collected here (by reference).
+	 * @param array $publication The publication.
+	 * @param array $scope       The resolved catalog scope, with the file service.
 	 *
-	 * @return array The dataset node.
+	 * @return DcatDatasetSource
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
 	 */
-	private function mapCatalogDataset(array $publication, array $scope, string $datasetIri, array &$violations): array {
-		$schemaId = (int)($publication['@self']['schema'] ?? 0);
+	private function datasetSource(array $publication, array $scope): DcatDatasetSource {
 		$uuid = (string)($publication['@self']['uuid'] ?? $publication['id'] ?? '');
 
 		$files = [];
@@ -392,7 +389,25 @@ class DcatService implements DcatServiceInterface {
 			$this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
 		}
 
-		$source = new DcatDatasetSource(publication: $publication, datasetIri: $datasetIri, files: $files);
+		return new DcatDatasetSource(
+			publication: $publication,
+			datasetIri: $this->datasetIri(catalogSlug: $scope['catalogSlug'], uuid: $uuid),
+			files: $files
+		);
+	}//end datasetSource()
+
+	/**
+	 * Map one publication to a DCAT dataset; its violations are left on the source.
+	 *
+	 * @param DcatDatasetSource $source The publication, its IRI and its attachments.
+	 * @param array             $scope  The resolved catalog scope.
+	 *
+	 * @return array The dataset node.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+	 */
+	private function mapCatalogDataset(DcatDatasetSource $source, array $scope): array {
+		$schemaId = (int)($source->publication['@self']['schema'] ?? 0);
 		$profile = new DcatMappingProfile(
 			mapping: ($scope['schemaMappings'][$schemaId] ?? DcatMappingService::DEFAULT_MAPPING),
 			defaults: $scope['defaults'],
@@ -400,7 +415,6 @@ class DcatService implements DcatServiceInterface {
 			catalogHvdDefault: $scope['catalogHvdDefault']
 		);
 		$dataset = $this->mappingService->mapDataset(source: $source, profile: $profile);
-		array_push($violations, ...$source->violations);
 
 		// PQM-002: additive DQV measurements, only when the catalog opts in.
 		if ($scope['dqvExposure'] === true && $this->qualityService !== null) {

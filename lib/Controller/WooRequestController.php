@@ -61,6 +61,14 @@ use OCP\IUserSession;
 class WooRequestController extends Controller {
 
 	/**
+	 * The status a request moves to after its term is paused or resumed.
+	 */
+	private const array STATUS_AFTER = [
+		'pause' => 'awaiting_clarification',
+		'resume' => 'in_progress',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $appName The app name.
@@ -361,7 +369,7 @@ class WooRequestController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function pause(string $requestId): JSONResponse {
-		return $this->move(requestId: $requestId, operation: 'pause', status: 'awaiting_clarification');
+		return $this->move(requestId: $requestId, operation: 'pause');
 
 	}//end pause()
 
@@ -376,7 +384,7 @@ class WooRequestController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function resume(string $requestId): JSONResponse {
-		return $this->move(requestId: $requestId, operation: 'resume', status: 'in_progress');
+		return $this->move(requestId: $requestId, operation: 'resume');
 
 	}//end resume()
 
@@ -419,14 +427,14 @@ class WooRequestController extends Controller {
 	 * Suspend or resume the term, and move the request's status with it.
 	 *
 	 * @param string $requestId The request.
-	 * @param string $operation Either pause or resume.
-	 * @param string $status The status the request moves to.
+	 * @param string $operation Either pause or resume; it decides the status
+	 *                          the request moves to.
 	 *
 	 * @return JSONResponse The term, or the refusal.
 	 *
 	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-the-term-pauses-while-clarification-is-awaited-req-wri-004
 	 */
-	private function move(string $requestId, string $operation, string $status): JSONResponse {
+	private function move(string $requestId, string $operation): JSONResponse {
 		$reason = trim((string)$this->request->getParam('reason', ''));
 		if ($reason === '') {
 			return new JSONResponse(
@@ -469,7 +477,7 @@ class WooRequestController extends Controller {
 		}
 
 		$updated = $this->requests->withTerm(request: $loaded, term: $term);
-		$updated['status'] = $status;
+		$updated['status'] = self::STATUS_AFTER[$operation];
 
 		return $this->persist(request: $updated, requestId: $requestId, term: $term);
 

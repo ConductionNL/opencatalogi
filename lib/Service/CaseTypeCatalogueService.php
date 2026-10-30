@@ -106,7 +106,6 @@ class CaseTypeCatalogueService implements CaseTypeCatalogueServiceInterface {
 		$definition['importedSnapshot'] = $snapshot;
 
 		return $definition;
-
 	}//end importDefinition()
 
 	/**
@@ -125,7 +124,6 @@ class CaseTypeCatalogueService implements CaseTypeCatalogueServiceInterface {
 		}
 
 		return $values;
-
 	}//end sourcedValues()
 
 	/**
@@ -149,40 +147,10 @@ class CaseTypeCatalogueService implements CaseTypeCatalogueServiceInterface {
 	public function diffAgainstSource(array $local, string $sourceId, string $externalId): array {
 		$remote = $this->sourceReader->fetchDefinition(sourceId: $sourceId, externalId: $externalId);
 
-		$snapshot = ($local['importedSnapshot'] ?? []);
-		if (is_array($snapshot) === false) {
-			$snapshot = [];
-		}
-
-		$changes = [];
-		$locallyChanged = [];
-
-		foreach (self::SOURCED_PROPERTIES as $property) {
-			$localValue = ($local[$property] ?? null);
-			$sourceValue = ($remote[$property] ?? null);
-			$snapshotValue = ($snapshot[$property] ?? null);
-
-			$changedLocally = ($localValue !== $snapshotValue);
-			if ($changedLocally === true) {
-				$locallyChanged[] = $property;
-			}
-
-			if ($localValue === $sourceValue) {
-				continue;
-			}
-
-			$changes[] = [
-				'property' => $property,
-				'localValue' => $localValue,
-				'sourceValue' => $sourceValue,
-				'locallyChanged' => $changedLocally,
-			];
-		}
-
 		return [
 			'sourceVersion' => (string)($remote['version'] ?? ''),
-			'changes' => $changes,
-			'locallyChanged' => $locallyChanged,
+			'changes' => $this->changes(local: $local, remote: $remote),
+			'locallyChanged' => $this->locallyChanged(local: $local),
 		];
 
 	}//end diffAgainstSource()
@@ -204,46 +172,113 @@ class CaseTypeCatalogueService implements CaseTypeCatalogueServiceInterface {
 	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
 	 */
 	public function applyResync(array $local, array $diff, array $accepted, ?DateTimeInterface $now = null): array {
-		if ($accepted === []) {
+		$applied = $this->acceptedValues(diff: $diff, accepted: $accepted);
+		if ($applied === []) {
 			return $local;
 		}
 
-		$snapshot = ($local['importedSnapshot'] ?? []);
-		if (is_array($snapshot) === false) {
-			$snapshot = [];
-		}
-
-		$appliedAny = false;
-		foreach (($diff['changes'] ?? []) as $change) {
-			$property = (string)($change['property'] ?? '');
-			if ($property === '' || in_array($property, $accepted, true) === false) {
-				continue;
-			}
-
-			$local[$property] = $change['sourceValue'];
-			$snapshot[$property] = $change['sourceValue'];
-			$appliedAny = true;
-		}
-
-		if ($appliedAny === false) {
-			return $local;
+		$snapshot = $this->listField(definition: $local, key: 'importedSnapshot');
+		foreach ($applied as $property => $value) {
+			$local[$property] = $value;
+			$snapshot[$property] = $value;
 		}
 
 		$local['importedSnapshot'] = $snapshot;
 
-		$moment = ($now ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
-		$source = ($local['source'] ?? []);
-		if (is_array($source) === false) {
-			$source = [];
-		}
-
+		$source = $this->listField(definition: $local, key: 'source');
 		$source['version'] = (string)($diff['sourceVersion'] ?? ($source['version'] ?? ''));
-		$source['importedAt'] = $moment->format(DateTimeInterface::ATOM);
+		$source['importedAt'] = ($now ?? new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 		$local['source'] = $source;
 
 		return $local;
-
 	}//end applyResync()
+
+	/**
+	 * The sourced properties whose local value differs from the source's, in
+	 * the order of SOURCED_PROPERTIES.
+	 *
+	 * @param array<string, mixed> $local The local definition.
+	 * @param array<string, mixed> $remote The definition at the source.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function changes(array $local, array $remote): array {
+		$edited = $this->locallyChanged(local: $local);
+		$changes = [];
+		foreach (self::SOURCED_PROPERTIES as $property) {
+			$localValue = ($local[$property] ?? null);
+			$sourceValue = ($remote[$property] ?? null);
+			if ($localValue !== $sourceValue) {
+				$changes[] = [
+					'property' => $property,
+					'localValue' => $localValue,
+					'sourceValue' => $sourceValue,
+					'locallyChanged' => in_array($property, $edited, true),
+				];
+			}
+		}
+
+		return $changes;
+	}//end changes()
+
+	/**
+	 * The sourced properties changed locally since the import: those whose
+	 * value differs from the imported snapshot.
+	 *
+	 * @param array<string, mixed> $local The local definition.
+	 *
+	 * @return array<int, string>
+	 */
+	private function locallyChanged(array $local): array {
+		$snapshot = $this->listField(definition: $local, key: 'importedSnapshot');
+		$changed = [];
+		foreach (self::SOURCED_PROPERTIES as $property) {
+			if (($local[$property] ?? null) !== ($snapshot[$property] ?? null)) {
+				$changed[] = $property;
+			}
+		}
+
+		return $changed;
+	}//end locallyChanged()
+
+	/**
+	 * The source values of the accepted changes, by property; a later change
+	 * of the same property wins.
+	 *
+	 * @param array<string, mixed> $diff The diff.
+	 * @param array<int, string> $accepted The properties the administrator accepted.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function acceptedValues(array $diff, array $accepted): array {
+		$values = [];
+		foreach (($diff['changes'] ?? []) as $change) {
+			$property = (string)($change['property'] ?? '');
+			if ($property !== '' && in_array($property, $accepted, true) === true) {
+				$values[$property] = $change['sourceValue'];
+			}
+		}
+
+		return $values;
+	}//end acceptedValues()
+
+	/**
+	 * A field of a definition that holds a list, or an empty list when it
+	 * is absent or not a list.
+	 *
+	 * @param array<string, mixed> $definition The definition.
+	 * @param string $key The field.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function listField(array $definition, string $key): array {
+		$value = ($definition[$key] ?? []);
+		if (is_array($value) === false) {
+			return [];
+		}
+
+		return $value;
+	}//end listField()
 
 	/**
 	 * The links a published case type carries.
@@ -300,6 +335,5 @@ class CaseTypeCatalogueService implements CaseTypeCatalogueServiceInterface {
 		}
 
 		return $importedAt;
-
 	}//end syncedAt()
 }//end class

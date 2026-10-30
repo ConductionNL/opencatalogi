@@ -168,7 +168,7 @@ class XMLResponse extends Response {
 		$dom->appendChild($root);
 
 		// Build XML structure.
-		$this->buildXmlElement(dom: $dom, element: $root, data: $data);
+		$this->buildXmlElement(element: $root, data: $data);
 
 		// Get XML output.
 		$xmlOutput = $dom->saveXML();
@@ -188,19 +188,17 @@ class XMLResponse extends Response {
 	/**
 	 * Build an XML element with attributes and children in order.
 	 *
-	 * @param DOMDocument $dom The document
 	 * @param DOMElement $element The element to populate
 	 * @param array<string, mixed> $data The data to convert
 	 *
 	 * @return void
 	 *
-	 * @psalm-param DOMDocument $dom
 	 * @psalm-param DOMElement $element
 	 * @psalm-param array<string, mixed> $data
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
-	private function buildXmlElement(DOMDocument $dom, DOMElement $element, array $data): void {
+	private function buildXmlElement(DOMElement $element, array $data): void {
 		// Process attributes first and maintain their order.
 		if (isset($data['@attributes']) === true && is_array($data['@attributes']) === true) {
 			foreach ($data['@attributes'] as $attrKey => $attrValue) {
@@ -213,7 +211,7 @@ class XMLResponse extends Response {
 
 		// Process text content.
 		if (isset($data['#text']) === true) {
-			$element->appendChild($this->createSafeTextNode(dom: $dom, text: (string)$data['#text']));
+			$element->appendChild($this->createSafeTextNode(element: $element, text: (string)$data['#text']));
 			unset($data['#text']);
 		}
 
@@ -225,52 +223,45 @@ class XMLResponse extends Response {
 				$key = "item$key";
 			}
 
-			if (is_array($value) === false) {
-				// Handle simple value elements.
-				$this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $value);
-				continue;
-			}
-
-			// Handle indexed arrays (multiple elements with same name).
-			if (isset($value[0]) === true && is_array($value[0]) === true) {
-				foreach ($value as $item) {
-					$this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $item);
+			foreach ($this->childValues(value: $value) as $item) {
+				$childElement = $element->ownerDocument->createElement($key);
+				if ($childElement !== false) {
+					$element->appendChild($childElement);
+					$this->fillElement(element: $childElement, data: $item);
 				}
-
-				continue;
 			}
-
-			// Handle associative arrays (complex elements).
-			$this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $value);
 		}//end foreach
 
 	}//end buildXmlElement()
 
 	/**
-	 * Create a child element and populate it.
+	 * The values a key becomes elements for: one per item of an indexed list
+	 * of arrays (multiple elements with the same name), else the value itself.
 	 *
-	 * @param DOMDocument $dom The document
-	 * @param DOMElement $parentElement The parent element
-	 * @param string $tagName The tag name for the child element
-	 * @param array<string, mixed>|string|object $data The data for the child element
+	 * @param mixed $value The value of a key.
 	 *
-	 * @return void
-	 *
-	 * @psalm-param DOMDocument $dom
-	 * @psalm-param DOMElement $parentElement
-	 * @psalm-param string $tagName
-	 * @psalm-param array<string, mixed>|string|object $data
+	 * @return array<mixed>
 	 */
-	private function createChildElement(DOMDocument $dom, DOMElement $parentElement, string $tagName, $data): void {
-		$childElement = $dom->createElement($tagName);
-		if ($childElement === false) {
-			return;
+	private function childValues(mixed $value): array {
+		if (is_array($value) === true && isset($value[0]) === true && is_array($value[0]) === true) {
+			return $value;
 		}
 
-		$parentElement->appendChild($childElement);
+		return [$value];
 
+	}//end childValues()
+
+	/**
+	 * Populate a child element with an array, an object or a scalar.
+	 *
+	 * @param DOMElement $element The child element
+	 * @param mixed $data The data for the child element
+	 *
+	 * @return void
+	 */
+	private function fillElement(DOMElement $element, mixed $data): void {
 		if (is_array($data) === true) {
-			$this->buildXmlElement(dom: $dom, element: $childElement, data: $data);
+			$this->buildXmlElement(element: $element, data: $data);
 			return;
 		}
 
@@ -279,9 +270,9 @@ class XMLResponse extends Response {
 			$data = $this->convertObjectToString(data: $data);
 		}
 
-		$childElement->appendChild($this->createSafeTextNode(dom: $dom, text: (string)$data));
+		$element->appendChild($this->createSafeTextNode(element: $element, text: (string)$data));
 
-	}//end createChildElement()
+	}//end fillElement()
 
 	/**
 	 * Convert an object to its string representation.
@@ -304,16 +295,16 @@ class XMLResponse extends Response {
 	/**
 	 * Process text content safely.
 	 *
-	 * @param DOMDocument $dom The document
+	 * @param DOMElement $element The element the node is for
 	 * @param string $text The text to create a node for
 	 *
 	 * @return \DOMNode The created node
 	 *
-	 * @psalm-param  DOMDocument $dom
+	 * @psalm-param  DOMElement $element
 	 * @psalm-param  string $text
 	 * @psalm-return \DOMNode
 	 */
-	private function createSafeTextNode(DOMDocument $dom, string $text): \DOMNode {
+	private function createSafeTextNode(DOMElement $element, string $text): \DOMNode {
 		// Decode any HTML entities to prevent double encoding.
 		// First decode things like &amp; into &.
 		$decodedText = html_entity_decode($text, (ENT_QUOTES | ENT_HTML5), 'UTF-8');
@@ -323,6 +314,6 @@ class XMLResponse extends Response {
 		// Create a text node with the processed text.
 		// Carriage returns will be encoded as decimal entities (&#13;) which are
 		// later converted to hexadecimal (&#xD;) in the arrayToXml method.
-		return $dom->createTextNode($decodedText);
+		return $element->ownerDocument->createTextNode($decodedText);
 	}//end createSafeTextNode()
 }//end class

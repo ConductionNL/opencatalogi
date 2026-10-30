@@ -28,12 +28,14 @@
  *
  * @covers \OCA\OpenCatalogi\Service\UsageCounterService
  * @uses \OCA\OpenCatalogi\Service\UsageCount
+ * @uses \OCA\OpenCatalogi\Contract\PublicationUsage
  */
 
 declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
+use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
@@ -231,7 +233,7 @@ class UsageCountGoldenTest extends TestCase {
 
 		$service = new UsageCounterService($config, $apps, $container, $logger);
 		[$publicationId, $kind, $userAgent, $catalog] = $case['args'];
-		$answer = $service->increment($publicationId, $kind, $userAgent, $catalog);
+		$answer = $service->increment(new PublicationUsage($publicationId, $kind, $catalog), $userAgent);
 
 		return ['answer' => $answer, 'calls' => $calls];
 
