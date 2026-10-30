@@ -119,6 +119,67 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 class ServiceRegistrar {
 
 	/**
+	 * The interfaces callers in other components depend on, bound to their implementation.
+	 *
+	 * @var array<class-string, class-string>
+	 */
+	private const INTERFACE_BINDINGS = [
+		DirectoryServiceInterface::class => DirectoryService::class,
+		PublicationServiceInterface::class => PublicationService::class,
+		PublicationQueryServiceInterface::class => PublicationQueryService::class,
+		SettingsServiceInterface::class => SettingsService::class,
+		RetentionServiceInterface::class => RetentionService::class,
+		WooServiceInterface::class => WooService::class,
+		CatalogiServiceInterface::class => CatalogiService::class,
+		DcatServiceInterface::class => DcatService::class,
+		UsageCounterServiceInterface::class => UsageCounterService::class,
+		WooReadinessServiceInterface::class => WooReadinessService::class,
+		BroadcastServiceInterface::class => BroadcastService::class,
+		SchemaOrgServiceInterface::class => SchemaOrgService::class,
+		NationalIndexServiceInterface::class => NationalIndexService::class,
+		EventServiceInterface::class => EventService::class,
+		PubliccodeHarvestServiceInterface::class => PubliccodeHarvestService::class,
+		OoapiServiceInterface::class => OoapiService::class,
+		QualityServiceInterface::class => QualityService::class,
+		DcatSerializerInterface::class => DcatSerializer::class,
+		StatutoryTermInterface::class => StatutoryTerm::class,
+		CitizenCollectionServiceInterface::class => CitizenCollectionService::class,
+		PublicationRuleServiceInterface::class => PublicationRuleService::class,
+		CommentPeriodServiceInterface::class => CommentPeriodService::class,
+		CatalogAccessServiceInterface::class => CatalogAccessService::class,
+		ConnectionReporterInterface::class => ConnectionReporter::class,
+		CommentPeriodWithdrawalServiceInterface::class => CommentPeriodWithdrawalService::class,
+		SavedSearchMatcherInterface::class => SavedSearchMatcher::class,
+		ObligationReadServiceInterface::class => ObligationReadService::class,
+		AttachmentMigrationServiceInterface::class => AttachmentMigrationService::class,
+		ServiceCatalogueServiceInterface::class => ServiceCatalogueService::class,
+		WooCategoryRegistryInterface::class => WooCategoryRegistry::class,
+		CmsMigrationServiceInterface::class => CmsMigrationService::class,
+		WooRequestServiceInterface::class => WooRequestService::class,
+		StandardsVersionServiceInterface::class => StandardsVersionService::class,
+		CaseTypeCatalogueServiceInterface::class => CaseTypeCatalogueService::class,
+		WooRegistrationServiceInterface::class => WooRegistrationService::class,
+		SavedSearchServiceInterface::class => SavedSearchService::class,
+		DemoDataServiceInterface::class => DemoDataService::class,
+		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
+		WooRequestStoreInterface::class => WooRequestStore::class,
+		PlooiDeliveryServiceInterface::class => PlooiDeliveryService::class,
+		MarkupRenderServiceInterface::class => MarkupRenderService::class,
+		DepublicationServiceInterface::class => DepublicationService::class,
+		InspectionServiceInterface::class => InspectionService::class,
+		StatusPageServiceInterface::class => StatusPageService::class,
+		AtomFeedServiceInterface::class => AtomFeedService::class,
+		WooRequestIntakeInterface::class => WooRequestIntake::class,
+		PublicationStateServiceInterface::class => PublicationStateService::class,
+		CollectionShareServiceInterface::class => CollectionShareService::class,
+		NoticeBoardServiceInterface::class => NoticeBoardService::class,
+		DecisionPublicationValidatorInterface::class => DecisionPublicationValidator::class,
+		BannerServiceInterface::class => BannerService::class,
+		PublishedCollectionsServiceInterface::class => PublishedCollectionsService::class,
+		SitemapServiceInterface::class => SitemapService::class,
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $appName The app id, passed to services that are scoped to it.
@@ -148,9 +209,27 @@ class ServiceRegistrar {
 			GatewayCaseTypeSourceReader::class
 		);
 
-		// The published-collection configuration lives in this app's config, so
-		// adding a collection takes effect on a running instance without a
-		// release.
+		$this->registerPublishedCollections(context: $context);
+
+		foreach (self::INTERFACE_BINDINGS as $interface => $implementation) {
+			$context->registerServiceAlias($interface, $implementation);
+		}
+
+	}//end register()
+
+	/**
+	 * Register the published-collection service, scoped to this app's config.
+	 *
+	 * The configuration lives in this app's config, so adding a collection takes
+	 * effect on a running instance without a release.
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Component wiring; binds an existing service, no behaviour of its own.
+	 */
+	private function registerPublishedCollections(IRegistrationContext $context): void {
 		$appName = $this->appName;
 		$context->registerService(
 			PublishedCollectionsService::class,
@@ -163,60 +242,5 @@ class ServiceRegistrar {
 			}
 		);
 
-		// Callers in other components depend on these interfaces.
-		$context->registerServiceAlias(DirectoryServiceInterface::class, DirectoryService::class);
-		$context->registerServiceAlias(PublicationServiceInterface::class, PublicationService::class);
-		$context->registerServiceAlias(PublicationQueryServiceInterface::class, PublicationQueryService::class);
-		$context->registerServiceAlias(SettingsServiceInterface::class, SettingsService::class);
-		$context->registerServiceAlias(RetentionServiceInterface::class, RetentionService::class);
-		$context->registerServiceAlias(WooServiceInterface::class, WooService::class);
-		$context->registerServiceAlias(CatalogiServiceInterface::class, CatalogiService::class);
-		$context->registerServiceAlias(DcatServiceInterface::class, DcatService::class);
-		$context->registerServiceAlias(UsageCounterServiceInterface::class, UsageCounterService::class);
-		$context->registerServiceAlias(WooReadinessServiceInterface::class, WooReadinessService::class);
-		$context->registerServiceAlias(BroadcastServiceInterface::class, BroadcastService::class);
-		$context->registerServiceAlias(SchemaOrgServiceInterface::class, SchemaOrgService::class);
-		$context->registerServiceAlias(NationalIndexServiceInterface::class, NationalIndexService::class);
-		$context->registerServiceAlias(EventServiceInterface::class, EventService::class);
-		$context->registerServiceAlias(PubliccodeHarvestServiceInterface::class, PubliccodeHarvestService::class);
-		$context->registerServiceAlias(OoapiServiceInterface::class, OoapiService::class);
-		$context->registerServiceAlias(QualityServiceInterface::class, QualityService::class);
-		$context->registerServiceAlias(DcatSerializerInterface::class, DcatSerializer::class);
-		$context->registerServiceAlias(StatutoryTermInterface::class, StatutoryTerm::class);
-		$context->registerServiceAlias(CitizenCollectionServiceInterface::class, CitizenCollectionService::class);
-		$context->registerServiceAlias(PublicationRuleServiceInterface::class, PublicationRuleService::class);
-		$context->registerServiceAlias(CommentPeriodServiceInterface::class, CommentPeriodService::class);
-		$context->registerServiceAlias(CatalogAccessServiceInterface::class, CatalogAccessService::class);
-		$context->registerServiceAlias(ConnectionReporterInterface::class, ConnectionReporter::class);
-		$context->registerServiceAlias(CommentPeriodWithdrawalServiceInterface::class, CommentPeriodWithdrawalService::class);
-		$context->registerServiceAlias(SavedSearchMatcherInterface::class, SavedSearchMatcher::class);
-		$context->registerServiceAlias(ObligationReadServiceInterface::class, ObligationReadService::class);
-		$context->registerServiceAlias(AttachmentMigrationServiceInterface::class, AttachmentMigrationService::class);
-		$context->registerServiceAlias(ServiceCatalogueServiceInterface::class, ServiceCatalogueService::class);
-		$context->registerServiceAlias(WooCategoryRegistryInterface::class, WooCategoryRegistry::class);
-		$context->registerServiceAlias(CmsMigrationServiceInterface::class, CmsMigrationService::class);
-		$context->registerServiceAlias(WooRequestServiceInterface::class, WooRequestService::class);
-		$context->registerServiceAlias(StandardsVersionServiceInterface::class, StandardsVersionService::class);
-		$context->registerServiceAlias(CaseTypeCatalogueServiceInterface::class, CaseTypeCatalogueService::class);
-		$context->registerServiceAlias(WooRegistrationServiceInterface::class, WooRegistrationService::class);
-		$context->registerServiceAlias(SavedSearchServiceInterface::class, SavedSearchService::class);
-		$context->registerServiceAlias(DemoDataServiceInterface::class, DemoDataService::class);
-		$context->registerServiceAlias(WithheldFromPublicationInterface::class, WithheldFromPublication::class);
-		$context->registerServiceAlias(WooRequestStoreInterface::class, WooRequestStore::class);
-		$context->registerServiceAlias(PlooiDeliveryServiceInterface::class, PlooiDeliveryService::class);
-		$context->registerServiceAlias(MarkupRenderServiceInterface::class, MarkupRenderService::class);
-		$context->registerServiceAlias(DepublicationServiceInterface::class, DepublicationService::class);
-		$context->registerServiceAlias(InspectionServiceInterface::class, InspectionService::class);
-		$context->registerServiceAlias(StatusPageServiceInterface::class, StatusPageService::class);
-		$context->registerServiceAlias(AtomFeedServiceInterface::class, AtomFeedService::class);
-		$context->registerServiceAlias(WooRequestIntakeInterface::class, WooRequestIntake::class);
-		$context->registerServiceAlias(PublicationStateServiceInterface::class, PublicationStateService::class);
-		$context->registerServiceAlias(CollectionShareServiceInterface::class, CollectionShareService::class);
-		$context->registerServiceAlias(NoticeBoardServiceInterface::class, NoticeBoardService::class);
-		$context->registerServiceAlias(DecisionPublicationValidatorInterface::class, DecisionPublicationValidator::class);
-		$context->registerServiceAlias(BannerServiceInterface::class, BannerService::class);
-		$context->registerServiceAlias(PublishedCollectionsServiceInterface::class, PublishedCollectionsService::class);
-		$context->registerServiceAlias(SitemapServiceInterface::class, SitemapService::class);
-
-	}//end register()
+	}//end registerPublishedCollections()
 }//end class
