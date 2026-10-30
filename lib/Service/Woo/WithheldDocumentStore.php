@@ -90,56 +90,37 @@ class WithheldDocumentStore {
 	 * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
 	 */
 	public function replace(string $publicationId, array $accepted, string $source): void {
-		$objects = $this->requireObjects();
-		[$register, $schema] = $this->target(key: 'withheld_document_schema');
-
-		$superseded = $this->storedIds(objects: $objects, register: $register, schema: $schema, publicationId: $publicationId);
+		$target = new SchemaObjects(objects: $this->requireObjects(), target: $this->target(key: 'withheld_document_schema'));
+		$superseded = $this->storedIds(target: $target, publicationId: $publicationId);
 
 		$now = (new DateTimeImmutable())->format('c');
 		$written = [];
 		try {
 			foreach ($accepted as $entry) {
-				$saved = $objects->saveObject(
-					object: [
-						'publication' => $publicationId,
-						'position' => $entry['position'],
-						'grounds' => $entry['grounds'],
-						'source' => $source,
-						'recordedAt' => $now,
-					],
-					register: $register,
-					schema: $schema,
-					_rbac: false,
-					_multitenancy: false
-				);
+				$object = ['publication' => $publicationId, 'position' => $entry['position'], 'grounds' => $entry['grounds']];
+				$saved = $target->save(object: $object + ['source' => $source, 'recordedAt' => $now]);
 				$written[] = (string)($this->asRecord(object: $saved)['id'] ?? '');
 			}
 		} catch (Throwable $e) {
-			$this->discard(objects: $objects, register: $register, schema: $schema, ids: $written);
+			$this->discard(target: $target, ids: $written);
 			throw $e;
 		}
 
 		foreach ($superseded as $id) {
-			$objects->deleteObject(uuid: $id, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+			$target->delete(id: $id);
 		}
 	}//end replace()
 
 	/**
 	 * The ids of the entries stored for a publication.
 	 *
-	 * @param object $objects       OpenRegister's ObjectService.
-	 * @param string $register      The register.
-	 * @param string $schema        The schema.
-	 * @param string $publicationId The publication.
+	 * @param SchemaObjects $target        The withheldDocument objects.
+	 * @param string        $publicationId The publication.
 	 *
 	 * @return list<string>
 	 */
-	private function storedIds(object $objects, string $register, string $schema, string $publicationId): array {
-		$result = $objects->searchObjectsPaginated(
-			query: ['@self' => ['register' => $register, 'schema' => $schema], 'publication' => $publicationId, '_limit' => 1000],
-			_rbac: false,
-			_multitenancy: false
-		);
+	private function storedIds(SchemaObjects $target, string $publicationId): array {
+		$result = $target->search(filters: ['publication' => $publicationId, '_limit' => 1000]);
 
 		$ids = [];
 		foreach ((array)($result['results'] ?? []) as $row) {
@@ -157,14 +138,12 @@ class WithheldDocumentStore {
 	/**
 	 * Remove entries a failed replace had already written, so the previous list stands alone.
 	 *
-	 * @param object       $objects  OpenRegister's ObjectService.
-	 * @param string       $register The register.
-	 * @param string       $schema   The schema.
-	 * @param list<string> $ids      The ids written by the failed call.
+	 * @param SchemaObjects $target The withheldDocument objects.
+	 * @param list<string>  $ids    The ids written by the failed call.
 	 *
 	 * @return void
 	 */
-	private function discard(object $objects, string $register, string $schema, array $ids): void {
+	private function discard(SchemaObjects $target, array $ids): void {
 		foreach ($ids as $id) {
 			if ($id === '') {
 				$this->logger->error('WithheldDocuments: an entry of a failed replace came back without an id and could not be removed');
@@ -172,7 +151,7 @@ class WithheldDocumentStore {
 			}
 
 			try {
-				$objects->deleteObject(uuid: $id, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+				$target->delete(id: $id);
 			} catch (Throwable $e) {
 				$this->logger->error('WithheldDocuments: an entry of a failed replace could not be removed', ['id' => $id, 'exception' => $e->getMessage()]);
 			}
