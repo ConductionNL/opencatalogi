@@ -95,6 +95,7 @@ class WithdrawalGoldenObjects {
  * @covers \OCA\OpenCatalogi\Service\Publication\CommentPeriodWithdrawalService
  * @uses   \OCA\OpenCatalogi\Service\Publication\CommentPeriodService
  * @uses   \OCA\OpenCatalogi\Service\Publication\TermRoll
+ * @uses   \OCA\OpenCatalogi\Service\Publication\CommentPeriodWithdrawalRun
  */
 class CommentPeriodWithdrawalGoldenTest extends TestCase {
 
