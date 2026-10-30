@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\DcatDatasetSource;
+use OCA\OpenCatalogi\Service\DcatMappingProfile;
 use OCA\OpenCatalogi\Service\DcatMappingService;
 use PHPUnit\Framework\TestCase;
 
@@ -36,6 +38,29 @@ class DcatMappingServiceTest extends TestCase {
 
 	protected function setUp(): void {
 		$this->service = new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService());
+	}
+
+	/**
+	 * Map one publication through the service with a source and profile built from the parts.
+	 */
+	private function mapDataset(
+		array $publication,
+		array $mapping,
+		array $files,
+		string $datasetIri,
+		array $defaults,
+		?array $hvd = null,
+		?string $catalogHvdDefault = null,
+		array &$violations = [],
+	): array {
+		$source = new DcatDatasetSource(publication: $publication, datasetIri: $datasetIri, files: $files);
+		$dataset = $this->service->mapDataset(
+			source: $source,
+			profile: new DcatMappingProfile(mapping: $mapping, defaults: $defaults, hvd: $hvd, catalogHvdDefault: $catalogHvdDefault)
+		);
+		array_push($violations, ...$source->violations);
+
+		return $dataset;
 	}
 
 	public function testResolveMappingFallsBackToDefaultWhenUnannotated(): void {
@@ -63,7 +88,7 @@ class DcatMappingServiceTest extends TestCase {
 		];
 		$mapping = ['dct:title' => 'naam', 'dcat:keyword' => 'tags[]'];
 
-		$dataset = $this->service->mapDataset(
+		$dataset = $this->mapDataset(
 			publication: $publication,
 			mapping: $mapping,
 			files: [],
@@ -87,7 +112,7 @@ class DcatMappingServiceTest extends TestCase {
 			'@self' => ['uuid' => 'uuid-2', 'updated' => '2025-03-03T00:00:00+00:00'],
 		];
 
-		$dataset = $this->service->mapDataset(
+		$dataset = $this->mapDataset(
 			publication: $publication,
 			mapping: DcatMappingService::DEFAULT_MAPPING,
 			files: [],
@@ -109,7 +134,7 @@ class DcatMappingServiceTest extends TestCase {
 			'@self' => ['uuid' => 'uuid-3'],
 		];
 
-		$dataset = $this->service->mapDataset(
+		$dataset = $this->mapDataset(
 			publication: $publication,
 			mapping: ['dcat:theme' => 'category'],
 			files: [],
@@ -128,7 +153,7 @@ class DcatMappingServiceTest extends TestCase {
 		];
 
 		$violations = [];
-		$dataset = $this->service->mapDataset(
+		$dataset = $this->mapDataset(
 			publication: $publication,
 			mapping: ['dcat:theme' => 'category'],
 			files: [],
@@ -153,7 +178,7 @@ class DcatMappingServiceTest extends TestCase {
 			'@self' => ['uuid' => 'uuid-tt'],
 		];
 
-		$dataset = $this->service->mapDataset(
+		$dataset = $this->mapDataset(
 			publication: $publication,
 			mapping: ['dcat:theme' => 'category'],
 			files: [],
@@ -175,7 +200,7 @@ class DcatMappingServiceTest extends TestCase {
 			'@self' => ['uuid' => 'uuid-h'],
 		];
 
-		$dataset = $this->service->mapDataset(
+		$dataset = $this->mapDataset(
 			publication: $publication,
 			mapping: DcatMappingService::DEFAULT_MAPPING,
 			files: [],
@@ -198,7 +223,7 @@ class DcatMappingServiceTest extends TestCase {
 			'@self' => ['uuid' => 'uuid-nh'],
 		];
 
-		$dataset = $this->service->mapDataset(
+		$dataset = $this->mapDataset(
 			publication: $publication,
 			mapping: DcatMappingService::DEFAULT_MAPPING,
 			files: [],
@@ -217,7 +242,7 @@ class DcatMappingServiceTest extends TestCase {
 			['downloadUrl' => 'https://host/d/2/download', 'extension' => 'csv', 'title' => 'data.csv'],
 		];
 
-		$dataset = $this->service->mapDataset(
+		$dataset = $this->mapDataset(
 			publication: ['id' => 'u', '@self' => ['uuid' => 'u']],
 			mapping: DcatMappingService::DEFAULT_MAPPING,
 			files: $files,
@@ -250,8 +275,8 @@ class DcatMappingServiceTest extends TestCase {
 
 	public function testDatasetIriStableAcrossMappingRuns(): void {
 		$publication = ['id' => 'u', '@self' => ['uuid' => 'u', 'updated' => '2025-01-01T00:00:00+00:00']];
-		$a = $this->service->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/u', []);
-		$b = $this->service->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/u', []);
+		$a = $this->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/u', []);
+		$b = $this->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/u', []);
 		$this->assertSame($a['@id'], $b['@id']);
 		$this->assertSame($a, $b, 'Identical input must produce byte-identical dataset (harvester dedup).');
 	}
@@ -260,7 +285,7 @@ class DcatMappingServiceTest extends TestCase {
 		$publication = ['id' => 'u', '@self' => ['uuid' => 'u']];
 		$defaults = ['organisation' => ['title' => 'Gemeente Tilburg', 'oin' => '00000001002564440000']];
 
-		$dataset = $this->service->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/u', $defaults);
+		$dataset = $this->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/u', $defaults);
 
 		$this->assertSame('foaf:Agent', $dataset['dct:publisher']['@type']);
 		$this->assertSame('Gemeente Tilburg', $dataset['dct:publisher']['foaf:name']);
@@ -271,7 +296,7 @@ class DcatMappingServiceTest extends TestCase {
 		$publication = ['id' => 'u', 'publisher' => 'Gemeente Amsterdam', '@self' => ['uuid' => 'u']];
 		$defaults = ['organisation' => ['title' => 'Fallback Org']];
 
-		$dataset = $this->service->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/u', $defaults);
+		$dataset = $this->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/u', $defaults);
 
 		$this->assertSame('Gemeente Amsterdam', $dataset['dct:publisher']['foaf:name']);
 	}
