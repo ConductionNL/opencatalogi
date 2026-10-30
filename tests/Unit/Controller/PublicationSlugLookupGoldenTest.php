@@ -44,6 +44,7 @@ use ReflectionMethod;
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @uses   \OCA\OpenCatalogi\Controller\CatalogSlugQuery
+ * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
  */
 class PublicationSlugLookupGoldenTest extends TestCase {
 

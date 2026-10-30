@@ -92,8 +92,10 @@ class PublicReadObjectService {
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @covers \OCA\OpenCatalogi\Controller\FederationController
+ * @uses \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses \OCA\OpenCatalogi\Controller\CatalogSlugQuery
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses \OCA\OpenCatalogi\Contract\PublicationUsage
  */
 class WithheldOnThePublicReadTest extends TestCase {
 
