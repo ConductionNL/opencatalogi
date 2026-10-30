@@ -47,6 +47,8 @@ use RuntimeException;
  * @spec openspec/specs/auto-publishing/spec.md
  */
 class EventService implements EventServiceInterface {
+	use ChecksPublicationWindow;
+
 	/**
 	 * EventService constructor.
 	 *
@@ -333,46 +335,6 @@ class EventService implements EventServiceInterface {
 		}//end try
 
 	}//end shouldAutoPublishObject()
-
-	/**
-	 * Check if an object is currently published.
-	 *
-	 * Visibility is governed by the live OpenRegister RBAC model (APB-006): an
-	 * object is public when its own `publicationDate` field is set and is at or
-	 * before "now", and either carries no `depublicationDate` or one that is
-	 * still in the future. The removed object-level `@self.published` /
-	 * `@self.depublished` predicate is no longer consulted.
-	 *
-	 * @param array $objectData The object data to check.
-	 *
-	 * @return boolean True if the object is published, false otherwise.
-	 *
-	 * @spec openspec/specs/auto-publishing/spec.md#APB-006
-	 */
-	private function isObjectPublished(array $objectData): bool {
-		$publicationDate = ($objectData['publicationDate'] ?? null);
-		$depublicationDate = ($objectData['depublicationDate'] ?? null);
-
-		// Not published until a publication date is set and reached.
-		if ($publicationDate === null || $publicationDate === '') {
-			return false;
-		}
-
-		$now = time();
-		$publishedTime = strtotime((string)$publicationDate);
-		if ($publishedTime === false || $publishedTime > $now) {
-			return false;
-		}
-
-		// No depublication date -> still live.
-		if ($depublicationDate === null || $depublicationDate === '') {
-			return true;
-		}
-
-		// Live only while the depublication date is still in the future.
-		$depublishedTime = strtotime((string)$depublicationDate);
-		return ($depublishedTime === false || $depublishedTime > $now);
-	}//end isObjectPublished()
 
 	/**
 	 * Publish an object via the live OpenRegister RBAC model.
