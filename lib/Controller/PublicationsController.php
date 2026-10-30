@@ -34,6 +34,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
@@ -216,10 +217,8 @@ class PublicationsController extends Controller {
 			}
 
 			$this->usageCounterService->increment(
-				publicationId: $publicationId,
-				kind: $kind,
-				userAgent: $this->request->getHeader('User-Agent'),
-				catalog: $catalogSlug
+				usage: new PublicationUsage(publicationId: $publicationId, kind: $kind, catalog: $catalogSlug),
+				userAgent: $this->request->getHeader('User-Agent')
 			);
 		} catch (\Throwable $e) {
 			// Never propagate — a broken counter must not affect the public read.
