@@ -2262,5 +2262,112 @@
         ],
         "notices": [],
         "saves": []
+    },
+    "saved period boundaries": {
+        "stats": {
+            "handled": 1,
+            "notices": 2,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-28T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "s1",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "at-from",
+                        "title": "Publicatie at-from",
+                        "url": "https://example.org/p/at-from",
+                        "publicationDate": "2026-09-29T08:30:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "s1",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "at-to",
+                        "title": "Publicatie at-to",
+                        "url": "https://example.org/p/at-to",
+                        "publicationDate": "2026-09-29T23:59:59+00:00"
+                    }
+                ],
+                "count": 1
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht s1",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": {
+                            "periodFrom": "2026-09-29T08:30:00+00:00",
+                            "periodTo": "2026-09-29T00:00:00+00:00"
+                        },
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "at-from",
+                            "title": "Publicatie at-from",
+                            "url": "https://example.org/p/at-from",
+                            "publicationDate": "2026-09-29T08:30:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "s1"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht s1",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": {
+                            "periodFrom": "2026-09-29T08:30:00+00:00",
+                            "periodTo": "2026-09-29T00:00:00+00:00"
+                        },
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "at-to",
+                            "title": "Publicatie at-to",
+                            "url": "https://example.org/p/at-to",
+                            "publicationDate": "2026-09-29T23:59:59+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "s1"
+                }
+            }
+        ]
     }
 }

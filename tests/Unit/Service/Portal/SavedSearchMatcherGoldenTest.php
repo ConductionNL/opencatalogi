@@ -39,6 +39,7 @@ use RuntimeException;
  * Golden test for SavedSearchMatcher.
  *
  * @covers \OCA\OpenCatalogi\Service\Portal\SavedSearchMatcher
+ * @covers \OCA\OpenCatalogi\Service\Portal\SearchWindow
  */
 class SavedSearchMatcherGoldenTest extends TestCase {
 
@@ -128,6 +129,16 @@ class SavedSearchMatcherGoldenTest extends TestCase {
 			'saved period narrows' => [[
 				'saved' => [self::saved('s1', 'daily', '2026-09-28T07:05:00+02:00', ['periodFrom' => '2026-09-29T08:30:00+00:00', 'periodTo' => '2026-09-29'])],
 				'rows' => $mixed,
+				'now' => '2026-09-30T07:30:00+02:00',
+			]],
+			'saved period boundaries' => [[
+				'saved' => [self::saved('s1', 'immediate', '2026-09-28T07:05:00+02:00', ['periodFrom' => '2026-09-29T08:30:00+00:00', 'periodTo' => '2026-09-29T00:00:00+00:00'])],
+				'rows' => [
+					self::row('at-from', '2026-09-29T08:30:00+00:00'),
+					self::row('before-from', '2026-09-29T08:29:59+00:00'),
+					self::row('at-to', '2026-09-29T23:59:59+00:00'),
+					self::row('after-to', '2026-09-30T00:00:00+00:00'),
+				],
 				'now' => '2026-09-30T07:30:00+02:00',
 			]],
 			'saved period with bad dates' => [[
