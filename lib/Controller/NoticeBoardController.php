@@ -64,6 +64,7 @@ use Psr\Container\ContainerInterface;
 class NoticeBoardController extends Controller {
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
+	use ReadsPublicationRegister;
 
 	/**
 	 * Constructor.
@@ -90,45 +91,6 @@ class NoticeBoardController extends Controller {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve a register and schema pair for one of this change's schemas.
-	 *
-	 * @param string $schemaKey The `<thing>_schema` config key.
-	 *
-	 * @return array<string, string> The register and schema identifiers.
-	 */
-	private function configurationFor(string $schemaKey): array {
-		return $this->resolveRegisterConfiguration(registerKey: 'publication_register', schemaKey: $schemaKey);
-
-	}//end configurationFor()
-
-	/**
-	 * Read every object of one schema.
-	 *
-	 * @param string $schemaKey The `<thing>_schema` config key.
-	 * @param array<string, mixed> $filters Extra filters.
-	 *
-	 * @return array<int, array<string, mixed>> The objects.
-	 *
-	 * @throws CatalogueUnreadableException When OpenRegister cannot be reached.
-	 */
-	private function readAll(string $schemaKey, array $filters = []): array {
-		$config = $this->configurationFor(schemaKey: $schemaKey);
-		$query = $filters;
-		$query['@self'] = ['register' => $config['register'], 'schema' => $config['schema']];
-		$query['_limit'] = ($filters['_limit'] ?? 500);
-
-		$result = $this->objects->getObjectService()->searchObjectsPaginated($query, _rbac: false, _multitenancy: false);
-
-		$objects = [];
-		foreach (($result['results'] ?? []) as $object) {
-			$objects[] = $this->asArray(object: $object);
-		}
-
-		return $objects;
-
-	}//end readAll()
 
 	/**
 	 * The banners the signed-in user should see right now.
