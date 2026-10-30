@@ -115,7 +115,7 @@ class DirectoryController extends Controller {
 		}
 
 		$configured = ($this->config?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
-		return (new CorsAllowlist($configured))->allowedForPositionally($callerOrigin);
+		return (new CorsAllowlist($configured))->allowedFor($callerOrigin);
 	}//end resolveAllowedOrigin()
 
 	/**

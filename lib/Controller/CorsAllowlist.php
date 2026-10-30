@@ -34,9 +34,9 @@ namespace OCA\OpenCatalogi\Controller;
 final class CorsAllowlist {
 
 	/**
-	 * The non-blank allowlist entries, keyed by their position in the setting.
+	 * The non-blank allowlist entries, in the setting's order.
 	 *
-	 * @var array<int, string>
+	 * @var list<string>
 	 */
 	private array $entries = [];
 
@@ -53,9 +53,11 @@ final class CorsAllowlist {
 			return;
 		}
 
-		$this->entries = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
+		$this->entries = array_values(
+			array_filter(
+				array_map('trim', explode(',', $configured)),
+				static fn (string $entry): bool => $entry !== ''
+			)
 		);
 	}//end __construct()
 
@@ -69,39 +71,10 @@ final class CorsAllowlist {
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
 	public function allowedFor(string $callerOrigin): string {
-		if ($this->lists(callerOrigin: $callerOrigin) === true) {
-			return $callerOrigin;
-		}
-
-		return (array_values($this->entries)[0] ?? '*');
-	}//end allowedFor()
-
-	/**
-	 * Like allowedFor(), but an unlisted caller gets the setting's first position,
-	 * so a blank first entry names the wildcard.
-	 *
-	 * @param string $callerOrigin The caller's Origin, or '' when it sent none.
-	 *
-	 * @return string The header value.
-	 *
-	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
-	 */
-	public function allowedForPositionally(string $callerOrigin): string {
-		if ($this->lists(callerOrigin: $callerOrigin) === true) {
+		if ($callerOrigin !== '' && in_array($callerOrigin, $this->entries, true) === true) {
 			return $callerOrigin;
 		}
 
 		return ($this->entries[0] ?? '*');
-	}//end allowedForPositionally()
-
-	/**
-	 * Whether the caller's origin is on the allowlist.
-	 *
-	 * @param string $callerOrigin The caller's Origin, or '' when it sent none.
-	 *
-	 * @return bool True when it is listed.
-	 */
-	private function lists(string $callerOrigin): bool {
-		return ($callerOrigin !== '' && in_array($callerOrigin, $this->entries, true) === true);
-	}//end lists()
+	}//end allowedFor()
 }//end class
