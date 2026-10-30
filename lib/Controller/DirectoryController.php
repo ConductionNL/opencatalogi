@@ -109,30 +109,13 @@ class DirectoryController extends Controller {
 	 * @spec exclude CORS-policy plumbing; reads IAppConfig allowlist, no Origin reflection.
 	 */
 	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->config !== null) {
-			$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
 		$callerOrigin = $this->request->getHeader('Origin');
 		if ($callerOrigin === '') {
 			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
 		}
 
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
+		$configured = ($this->config?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+		return (new CorsAllowlist($configured))->allowedFor($callerOrigin);
 	}//end resolveAllowedOrigin()
 
 	/**

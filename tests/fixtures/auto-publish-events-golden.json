@@ -1,0 +1,926 @@
+{
+    "create, no objects": {
+        "result": {
+            "processed": 0,
+            "published": 0,
+            "attachmentsPublished": 0,
+            "errors": [],
+            "details": []
+        },
+        "calls": []
+    },
+    "create, objects false, attachments false": {
+        "result": {
+            "processed": 10,
+            "published": 0,
+            "attachmentsPublished": 0,
+            "errors": [],
+            "details": [
+                {
+                    "objectId": 1,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 2,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 3,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 4,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 5,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": "unknown",
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 6,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 7,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 8,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 9,
+                    "actions": [],
+                    "errors": []
+                }
+            ]
+        },
+        "calls": []
+    },
+    "create, objects false, attachments true": {
+        "result": {
+            "processed": 10,
+            "published": 0,
+            "attachmentsPublished": 4,
+            "errors": [],
+            "details": [
+                {
+                    "objectId": 1,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 2,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 3,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 4,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 5,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": "unknown",
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 6,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": []
+                },
+                {
+                    "objectId": 7,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to access file service: lookup failed"
+                    ]
+                },
+                {
+                    "objectId": 8,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 9,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                }
+            ]
+        },
+        "calls": [
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            }
+        ]
+    },
+    "create, objects true, attachments false": {
+        "result": {
+            "processed": 10,
+            "published": 3,
+            "attachmentsPublished": 0,
+            "errors": [],
+            "details": [
+                {
+                    "objectId": 1,
+                    "actions": [
+                        "object_published"
+                    ],
+                    "errors": []
+                },
+                {
+                    "objectId": 2,
+                    "actions": [],
+                    "errors": [
+                        "Failed to auto-publish object: save refused"
+                    ]
+                },
+                {
+                    "objectId": 3,
+                    "actions": [
+                        "object_published"
+                    ],
+                    "errors": []
+                },
+                {
+                    "objectId": 4,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 5,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": "unknown",
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 6,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 7,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 8,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 9,
+                    "actions": [
+                        "object_published"
+                    ],
+                    "errors": []
+                }
+            ]
+        },
+        "calls": [
+            {
+                "save": {
+                    "title": "match, live",
+                    "depublicationDate": null
+                },
+                "uuid": null,
+                "register": null,
+                "schema": null
+            },
+            {
+                "save": {
+                    "title": "fail-save",
+                    "depublicationDate": null
+                },
+                "uuid": null,
+                "register": null,
+                "schema": null
+            },
+            {
+                "save": {
+                    "title": "match, not live",
+                    "depublicationDate": null
+                },
+                "uuid": null,
+                "register": null,
+                "schema": null
+            },
+            {
+                "save": {
+                    "title": "id only",
+                    "depublicationDate": null
+                },
+                "uuid": null,
+                "register": null,
+                "schema": null
+            }
+        ]
+    },
+    "create, objects true, attachments true": {
+        "result": {
+            "processed": 10,
+            "published": 3,
+            "attachmentsPublished": 4,
+            "errors": [],
+            "details": [
+                {
+                    "objectId": 1,
+                    "actions": [
+                        "object_published",
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 2,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to auto-publish object: save refused",
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 3,
+                    "actions": [
+                        "object_published"
+                    ],
+                    "errors": []
+                },
+                {
+                    "objectId": 4,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 5,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": "unknown",
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 6,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": []
+                },
+                {
+                    "objectId": 7,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to access file service: lookup failed"
+                    ]
+                },
+                {
+                    "objectId": 8,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 9,
+                    "actions": [
+                        "object_published",
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                }
+            ]
+        },
+        "calls": [
+            {
+                "save": {
+                    "title": "match, live",
+                    "depublicationDate": null
+                },
+                "uuid": null,
+                "register": null,
+                "schema": null
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "save": {
+                    "title": "fail-save",
+                    "depublicationDate": null
+                },
+                "uuid": null,
+                "register": null,
+                "schema": null
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "save": {
+                    "title": "match, not live",
+                    "depublicationDate": null
+                },
+                "uuid": null,
+                "register": null,
+                "schema": null
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "save": {
+                    "title": "id only",
+                    "depublicationDate": null
+                },
+                "uuid": null,
+                "register": null,
+                "schema": null
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            }
+        ]
+    },
+    "create, options unreadable": {
+        "result": {
+            "exception": "RuntimeException",
+            "message": "Failed to handle object create events: options unreadable"
+        },
+        "calls": []
+    },
+    "update, no objects": {
+        "result": {
+            "processed": 0,
+            "published": 0,
+            "attachmentsPublished": 0,
+            "errors": [],
+            "details": []
+        },
+        "calls": []
+    },
+    "update, objects false, attachments false": {
+        "result": {
+            "processed": 10,
+            "published": 0,
+            "attachmentsPublished": 0,
+            "errors": [],
+            "details": [
+                {
+                    "objectId": 1,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 2,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 3,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 4,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 5,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": "unknown",
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 6,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 7,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 8,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 9,
+                    "actions": [],
+                    "errors": []
+                }
+            ]
+        },
+        "calls": []
+    },
+    "update, objects false, attachments true": {
+        "result": {
+            "processed": 10,
+            "published": 0,
+            "attachmentsPublished": 4,
+            "errors": [],
+            "details": [
+                {
+                    "objectId": 1,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 2,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 3,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 4,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 5,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": "unknown",
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 6,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": []
+                },
+                {
+                    "objectId": 7,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to access file service: lookup failed"
+                    ]
+                },
+                {
+                    "objectId": 8,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 9,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                }
+            ]
+        },
+        "calls": [
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            }
+        ]
+    },
+    "update, objects true, attachments false": {
+        "result": {
+            "processed": 10,
+            "published": 0,
+            "attachmentsPublished": 0,
+            "errors": [],
+            "details": [
+                {
+                    "objectId": 1,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 2,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 3,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 4,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 5,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": "unknown",
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 6,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 7,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 8,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 9,
+                    "actions": [],
+                    "errors": []
+                }
+            ]
+        },
+        "calls": []
+    },
+    "update, objects true, attachments true": {
+        "result": {
+            "processed": 10,
+            "published": 0,
+            "attachmentsPublished": 4,
+            "errors": [],
+            "details": [
+                {
+                    "objectId": 1,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 2,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 3,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 4,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                },
+                {
+                    "objectId": 5,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": "unknown",
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 6,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": []
+                },
+                {
+                    "objectId": 7,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to access file service: lookup failed"
+                    ]
+                },
+                {
+                    "objectId": 8,
+                    "actions": [],
+                    "errors": []
+                },
+                {
+                    "objectId": 9,
+                    "actions": [
+                        "attachments_processed"
+                    ],
+                    "errors": [
+                        "Failed to create share link for file missing.txt",
+                        "Failed to create share link for file empty.txt",
+                        "Failed to publish file boom.txt: share refused"
+                    ]
+                }
+            ]
+        },
+        "calls": [
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            },
+            {
+                "share": "/OpenRegister/files/doc.pdf"
+            },
+            {
+                "share": "/OpenRegister/files/missing.txt"
+            },
+            {
+                "share": "/OpenRegister/files/empty.txt"
+            },
+            {
+                "share": "/OpenRegister/files/boom.txt"
+            }
+        ]
+    },
+    "update, options unreadable": {
+        "result": {
+            "exception": "RuntimeException",
+            "message": "Failed to handle object update events: options unreadable"
+        },
+        "calls": []
+    }
+}

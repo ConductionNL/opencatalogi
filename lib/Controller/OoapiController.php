@@ -59,6 +59,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/ooapi-catalog-publication/tasks.md#task-3-public-endpoints-serializer
  */
 class OoapiController extends Controller {
+	use AnswersCrossOriginReadRequests;
 	use ResolvesRegisterConfiguration;
 
 	/**
@@ -93,56 +94,6 @@ class OoapiController extends Controller {
 	}//end __construct()
 
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * '*' (the default) emits a literal '*'; an unvetted caller Origin is never echoed
-	 * back unless explicitly allowlisted — mirrors DcatController/PublicationsController.
-	 *
-	 * @return string The Access-Control-Allow-Origin value.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = trim($this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
-	/**
-	 * Build the standard CORS header set for OOAPI responses.
-	 *
-	 * @return array<string, string> The header map.
-	 *
-	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
-	 */
-	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
-
-	}//end corsHeaders()
-
-	/**
 	 * Build a JSON response carrying the standard OOAPI CORS headers (OOAPI-001).
 	 *
 	 * @param mixed $data The response body.
@@ -151,12 +102,7 @@ class OoapiController extends Controller {
 	 * @return JSONResponse The CORS-headed JSON response.
 	 */
 	private function json(mixed $data, int $status): JSONResponse {
-		$response = new JSONResponse($data, $status);
-		foreach ($this->corsHeaders() as $name => $value) {
-			$response->addHeader($name, $value);
-		}
-
-		return $response;
+		return $this->withCorsHeaders(response: new JSONResponse($data, $status));
 	}//end json()
 
 	/**
@@ -175,14 +121,7 @@ class OoapiController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		foreach ($this->corsHeaders() as $name => $value) {
-			$response->addHeader($name, $value);
-		}
-
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-		return $response;
+		return $this->readOnlyPreflight();
 	}//end preflightedCors()
 
 	/**

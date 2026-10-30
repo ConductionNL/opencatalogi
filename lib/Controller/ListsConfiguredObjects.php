@@ -36,6 +36,8 @@ use OCP\AppFramework\Http\JSONResponse;
  * `$corsMethods` and `$corsAllowedHeaders`.
  */
 trait ListsConfiguredObjects {
+	use AnswersCrossOriginListRequests;
+
 	/**
 	 * The request's query, without route keys or any caller scope, scoped to the configured pair.
 	 *
@@ -133,39 +135,4 @@ trait ListsConfiguredObjects {
 		return $response;
 
 	}//end publicJsonResponse()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the allowlist from the `cors_allowed_origins` app config (CSV). The
-	 * value `*` (the default) means any origin and answers a literal `*`; the
-	 * caller's Origin is never echoed back unless it is on the allowlist (#735).
-	 *
-	 * @return string The header value.
-	 *
-	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-
-	}//end resolveAllowedOrigin()
 }//end trait

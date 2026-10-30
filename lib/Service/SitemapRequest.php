@@ -52,6 +52,13 @@ final class SitemapRequest {
 	public mixed $schemaId = null;
 
 	/**
+	 * The searches that feed the sitemap, without paging.
+	 *
+	 * @var array<int, array<string, mixed>>
+	 */
+	public array $queries = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $catalogSlug The catalog slug.

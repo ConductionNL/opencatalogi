@@ -343,31 +343,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function getCountersForPublication(string $publicationId, ?string $from = null, ?string $to = null): array {
-		$objectService = $this->getObjectService();
-		$register = $this->getRegisterId();
-		$schema = $this->getSchemaId();
-		if ($objectService === null || $register === null || $schema === null) {
-			return [];
-		}
-
-		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-				'publication' => $publicationId,
-			],
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-		$rows = [];
-		if (is_array($results) === true) {
-			$rows = $results;
-		}
-
-		return $this->filterByRange(rows: $rows, from: $from, to: $to);
+		return $this->filterByRange(rows: $this->searchCounters(filter: ['publication' => $publicationId]), from: $from, to: $to);
 	}//end getCountersForPublication()
 
 	/**
@@ -382,31 +358,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function getCountersForCatalog(string $catalog, ?string $from = null, ?string $to = null): array {
-		$objectService = $this->getObjectService();
-		$register = $this->getRegisterId();
-		$schema = $this->getSchemaId();
-		if ($objectService === null || $register === null || $schema === null) {
-			return [];
-		}
-
-		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-				'catalog' => $catalog,
-			],
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-		$rows = [];
-		if (is_array($results) === true) {
-			$rows = $results;
-		}
-
-		return $this->filterByRange(rows: $rows, from: $from, to: $to);
+		return $this->filterByRange(rows: $this->searchCounters(filter: ['catalog' => $catalog]), from: $from, to: $to);
 	}//end getCountersForCatalog()
 
 	/**
@@ -424,6 +376,19 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
 	 */
 	public function getCountersForInstance(?string $from = null, ?string $to = null): array {
+		return $this->filterByRange(rows: $this->searchCounters(filter: []), from: $from, to: $to);
+	}//end getCountersForInstance()
+
+	/**
+	 * Search every counter object on the configured register and schema.
+	 *
+	 * @param array<string, string> $filter The fields the counters must match, next to the register and schema.
+	 *
+	 * @return array<int, mixed> The counter objects, or none when OpenRegister or the configuration is missing.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function searchCounters(array $filter): array {
 		$objectService = $this->getObjectService();
 		$register = $this->getRegisterId();
 		$schema = $this->getSchemaId();
@@ -432,23 +397,17 @@ class UsageCounterService implements UsageCounterServiceInterface {
 		}
 
 		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-			],
+			query: ['@self' => ['register' => $register, 'schema' => $schema]] + $filter,
 			_rbac: false,
 			_multitenancy: false,
 		);
 
-		$rows = [];
-		if (is_array($results) === true) {
-			$rows = $results;
+		if (is_array($results) === false) {
+			return [];
 		}
 
-		return $this->filterByRange(rows: $rows, from: $from, to: $to);
-	}//end getCountersForInstance()
+		return $results;
+	}//end searchCounters()
 
 	/**
 	 * Compute per-publication statistics: totals plus a daily timeseries.

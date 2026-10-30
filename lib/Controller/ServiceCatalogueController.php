@@ -371,41 +371,21 @@ class ServiceCatalogueController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function previewResync(string $id): JSONResponse {
-		try {
-			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
-			$objectService = $this->catalogueService->getObjectService();
-			$local = $this->asArray(
-				object: $objectService->find(
-					id: $id,
-					register: $caseTypeConfig['register'],
-					schema: $caseTypeConfig['schema']
-				)
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(
-				data: ['error' => 'catalogue-unreadable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
+		$target = $this->resyncTarget(id: $id);
+		if ($target instanceof JSONResponse) {
+			return $target;
 		}
 
-		$source = ($local['source'] ?? []);
-		if (is_array($source) === false || ($source['sourceId'] ?? '') === '') {
+		if ($this->isImported(local: $target['local']) === false) {
 			return new JSONResponse(
 				data: ['error' => 'not-imported', 'message' => $this->l10n->t('This definition was not imported, so there is no source to compare it with.')],
 				statusCode: Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		try {
-			$diff = $this->caseTypeService->diffAgainstSource(
-				local: $local,
-				sourceId: (string)$source['sourceId'],
-				externalId: (string)($source['externalId'] ?? '')
-			);
-		} catch (ExternalCatalogueUnreachableException $e) {
-			return $this->unreachableResponse(e: $e);
+		$diff = $this->sourceDiff(local: $target['local']);
+		if ($diff instanceof JSONResponse) {
+			return $diff;
 		}
 
 		return new JSONResponse($diff);
@@ -428,6 +408,50 @@ class ServiceCatalogueController extends Controller {
 			$accepted = [];
 		}
 
+		$target = $this->resyncTarget(id: $id);
+		if ($target instanceof JSONResponse) {
+			return $target;
+		}
+
+		if ($this->isImported(local: $target['local']) === false) {
+			return new JSONResponse(data: ['error' => 'not-imported'], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		$diff = $this->sourceDiff(local: $target['local']);
+		if ($diff instanceof JSONResponse) {
+			return $diff;
+		}
+
+		$updated = $this->caseTypeService->applyResync(
+			local: $target['local'],
+			diff: $diff,
+			accepted: array_values(array_map('strval', $accepted))
+		);
+
+		$saved = $target['objectService']->saveObject(
+			object: $updated,
+			extend: [],
+			register: $target['config']['register'],
+			schema: $target['config']['schema'],
+			uuid: $id
+		);
+
+		return new JSONResponse($this->asArray(object: $saved));
+
+	}//end applyResync()
+
+	/**
+	 * The stored case type definition a resynchronisation works on.
+	 *
+	 * Answers the configuration, the store and the definition, or the refusal when it cannot be read.
+	 *
+	 * @param string $id The local case type definition id.
+	 *
+	 * @return array{config: array<string, mixed>, objectService: object, local: array<string, mixed>}|JSONResponse
+	 *
+	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
+	 */
+	private function resyncTarget(string $id): array|JSONResponse {
 		try {
 			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
 			$objectService = $this->catalogueService->getObjectService();
@@ -444,41 +468,43 @@ class ServiceCatalogueController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		$source = ($local['source'] ?? []);
-		if (is_array($source) === false || ($source['sourceId'] ?? '') === '') {
-			return new JSONResponse(
-				data: ['error' => 'not-imported'],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
+		return ['config' => $caseTypeConfig, 'objectService' => $objectService, 'local' => $local];
+	}//end resyncTarget()
 
+	/**
+	 * Whether a definition was imported, so it has a source to resynchronise against.
+	 *
+	 * @param array<string, mixed> $local The local definition.
+	 *
+	 * @return bool True when it names a source id.
+	 *
+	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
+	 */
+	private function isImported(array $local): bool {
+		$source = ($local['source'] ?? []);
+		return is_array($source) === true && ($source['sourceId'] ?? '') !== '';
+	}//end isImported()
+
+	/**
+	 * The difference between an imported definition and its source.
+	 *
+	 * @param array<string, mixed> $local The imported local definition.
+	 *
+	 * @return array<string, mixed>|JSONResponse The difference, or the 502 when the source cannot be reached.
+	 *
+	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
+	 */
+	private function sourceDiff(array $local): array|JSONResponse {
 		try {
-			$diff = $this->caseTypeService->diffAgainstSource(
+			return $this->caseTypeService->diffAgainstSource(
 				local: $local,
-				sourceId: (string)$source['sourceId'],
-				externalId: (string)($source['externalId'] ?? '')
+				sourceId: (string)$local['source']['sourceId'],
+				externalId: (string)($local['source']['externalId'] ?? '')
 			);
 		} catch (ExternalCatalogueUnreachableException $e) {
 			return $this->unreachableResponse(e: $e);
 		}
-
-		$updated = $this->caseTypeService->applyResync(
-			local: $local,
-			diff: $diff,
-			accepted: array_values(array_map('strval', $accepted))
-		);
-
-		$saved = $objectService->saveObject(
-			object: $updated,
-			extend: [],
-			register: $caseTypeConfig['register'],
-			schema: $caseTypeConfig['schema'],
-			uuid: $id
-		);
-
-		return new JSONResponse($this->asArray(object: $saved));
-
-	}//end applyResync()
+	}//end sourceDiff()
 
 	/**
 	 * The unreachable answer for an external catalogue we could not ask.
