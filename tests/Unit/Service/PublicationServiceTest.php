@@ -4127,6 +4127,91 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	// =======================================================================
+	// download — shared files only for anonymous callers
+	// =======================================================================
+
+	public function testDownloadGivesAnAnonymousCallerOnlySharedFiles(): void {
+		$entries = $this->downloadEntriesFor($this->service);
+
+		$this->assertContains('shared.pdf', $entries);
+		$this->assertContains('pub-1.pdf', $entries, 'The metadata PDF must stay in the download ZIP.');
+		$this->assertNotContains('unshared.pdf', $entries, 'An anonymous caller must not receive unshared files.');
+	}
+
+	public function testDownloadGivesASignedInCallerEveryReadableFile(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$entries = $this->downloadEntriesFor($this->serviceWithSession($session));
+
+		$this->assertContains('shared.pdf', $entries);
+		$this->assertContains('unshared.pdf', $entries);
+		$this->assertContains('pub-1.pdf', $entries);
+	}
+
+	/**
+	 * Run download() on an object whose files folder holds `shared.pdf` (shared) and
+	 * `unshared.pdf` (not shared), and return the entry names of the ZIP it hands back.
+	 *
+	 * @param PublicationService $service The service under test.
+	 *
+	 * @return list<string> Entry names of the returned archive.
+	 */
+	private function downloadEntriesFor(PublicationService $service): array {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+		$objectService->method('searchObjects')->willReturn([$this->createSerializableObject(['registers' => [1], 'schemas' => [1]])]);
+		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+
+		$this->container->method('get')
+			->willReturnCallback(fn (string $class) => match ($class) {
+				\OCA\OpenCatalogi\Service\PublicationQueryService::class => $queryService,
+				'OCA\OpenRegister\Service\ObjectService' => $objectService,
+				default => $fileService,
+			});
+
+		$sharedNode = $this->createMock(\OCP\Files\File::class);
+		$sharedNode->method('getName')->willReturn('shared.pdf');
+		$fileService->method('getFiles')
+			->willReturnCallback(fn ($object, ?bool $sharedFilesOnly = false): array => ($sharedFilesOnly === true) ? [$sharedNode] : []);
+
+		$tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
+		$fixture = new \ZipArchive();
+		$fixture->open($tmpFile, \ZipArchive::OVERWRITE);
+		$fixture->addFromString('shared.pdf', 'shared content');
+		$fixture->addFromString('unshared.pdf', 'unshared content');
+		$fixture->close();
+
+		$fileService->method('createObjectFilesZip')
+			->willReturn(['path' => $tmpFile, 'filename' => 'pub-1.zip', 'mimeType' => 'application/zip']);
+		$this->downloadService->method('createPublicationFile')
+			->willReturn(['filename' => 'pub-1.pdf', 'content' => '%PDF-1.4 metadata']);
+
+		$response = $service->download('pub-1');
+		$this->assertInstanceOf(DataDownloadResponse::class, $response);
+
+		$returnedPath = tempnam(sys_get_temp_dir(), 'returned_zip_');
+		file_put_contents($returnedPath, $response->render());
+		$returned = new \ZipArchive();
+		$this->assertTrue($returned->open($returnedPath) === true);
+		$entries = [];
+		for ($i = 0; $i < $returned->numFiles; $i++) {
+			$entries[] = $returned->getNameIndex($i);
+		}
+
+		$returned->close();
+		unlink($returnedPath);
+
+		return $entries;
+	}
+
+	// =======================================================================
 	// attachments — NotFoundException handling
 	// =======================================================================
 
