@@ -147,6 +147,9 @@ class DirectoryController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
+	 * @no-admin-idor-exempt DirectoryService::getDirectory() searches only the configured listing and
+	 *       catalog register/schema, with RBAC and multitenancy on; request parameters filter within that scope.
+	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
