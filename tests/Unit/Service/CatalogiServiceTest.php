@@ -1784,6 +1784,31 @@ class CatalogiServiceTest extends TestCase {
 	}//end testIndexIgnoresACallerSuppliedSelfScope()
 
 	/**
+	 * A requested page reaches OpenRegister as its page and the offset it implies.
+	 *
+	 * @return void
+	 */
+	public function testIndexPassesThePageAndItsOffset(): void {
+		$this->request->method('getParams')->willReturn(['limit' => '5', 'page' => '3']);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [20], 'schemas' => [28]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => $q['_limit'] === 5 && $q['_offset'] === 10 && $q['_page'] === 3))
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => $schemas);
+
+		$this->assertSame(200, $this->service->index('publications')->getStatus());
+	}//end testIndexPassesThePageAndItsOffset()
+
+	/**
 	 * The catalog's schema list goes through the SCH-PFTS-CAT-002 guard before
 	 * it is searched. Before WOO-581 an anonymous caller read the full record of
 	 * a schema without an `authorization` block here.
