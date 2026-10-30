@@ -151,7 +151,7 @@ class ServiceCatalogueController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-public-catalogue-lists-everything-that-can-be-requested-req-psc-101
-	 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-an-administrator-lists-the-catalogue-entries-with-their-availability-sca-001
+	 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-an-administrator-lists-the-catalogue-entries-with-their-availability-sca-001
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {

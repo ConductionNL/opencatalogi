@@ -35,7 +35,6 @@ finds no publication MUST it be resolved as a slug within the same registers and
 schemas. A publication outside the catalogue's registers and schemas MUST NOT be
 returned by either route.
 
-
 **Priority:** Must **Status:** Implemented
 
 #### Scenario: Get a single publication by UUID
@@ -550,6 +549,22 @@ Resolving by slug MUST NOT change any behaviour for a UUID URL, for a publicatio
 - GIVEN a catalogue with no registers or no schemas configured
 - WHEN any identifier is requested
 - THEN the response MUST be what it was before this change (no fallback search)
+
+### Requirement: Example publications are demo data, installed only on request (REQ-EPD-001)
+
+The publication register imported on install MUST NOT carry example publications, documents or depublications. Example rows MUST live in the demo dataset, which is installed only when an administrator asks for it (ADR-111).
+
+#### Scenario: A municipality's public search after a fresh install
+- GIVEN a fresh install where nobody installed the demo data
+- WHEN a visitor searches the public publications for "Voorbeeld"
+- THEN no example publication or document is found
+- @e2e exclude pinned by `PublicationStateServiceTest::testTheInstalledRegisterCarriesNoExamplePublications`; the bundled register is not a browser surface
+
+#### Scenario: The demo data shows Publish again
+- GIVEN an administrator installed the demo data
+- WHEN they open the withdrawn example publication
+- THEN it is withdrawn, has its depublication, and offers Publish again
+- @e2e exclude pinned by `PublicationStateServiceTest::testTheDemoDataCarriesAWithdrawnPublicationAndItsDepublication`
 
 ## Data Model
 
