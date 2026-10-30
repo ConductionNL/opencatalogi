@@ -492,58 +492,17 @@ class PublicationService implements PublicationServiceInterface {
 	 * @throws \InvalidArgumentException When invalid registers or schemas are requested
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/publications/spec.md
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	private function searchPublications(null|string|int $catalogId = null, ?array $ids = null, ?array $customParams = null): array {
-		// Use custom parameters if provided, otherwise use request parameters.
-		$searchQuery = ($customParams ?? $this->request->getParams());
+		$searchQuery = $this->normaliseSearchQuery(query: ($customParams ?? $this->request->getParams()));
 
-		// @todo this is a temporary fix to map the parameters to _extend format.
-		// Define parameters that should be mapped to _extend format.
-		$parametersToMap = [
-			'extend',
-			'fields',
-			'facets',
-			'order',
-			'page',
-			'limit',
-		];
+		// Directory and catalogs are virtual fields injected at runtime, not database
+		// columns, so their facet requests never reach OpenRegister.
+		$virtualFacets = $this->virtualFacetRequests(query: $searchQuery);
+		$searchQuery = $this->withoutVirtualFacetRequests(query: $searchQuery);
 
-		// Map specified parameters to _extend format and unset originals.
-		foreach ($parametersToMap as $param) {
-			if (isset($searchQuery[$param]) === true) {
-				// Map the parameter to _extend format.
-				$searchQuery['_extend'] = $searchQuery[$param];
-				// Unset the original parameter to prevent conflicts.
-				unset($searchQuery[$param]);
-			}
-		}
-
-		// Bit of route cleanup.
-		unset($searchQuery['id']);
-		unset($searchQuery['_route']);
-
-		// Filter out virtual field facet requests before passing to OpenRegister.
-		// Directory and catalogs are virtual fields injected at runtime, not database columns.
-		$reqDirFacets = false;
-		$reqCatFacets = false;
-
-		if (isset($searchQuery['_facets']['@self']['directory']) === true) {
-			$reqDirFacets = true;
-			unset($searchQuery['_facets']['@self']['directory']);
-		}
-
-		if (isset($searchQuery['_facets']['@self']['catalogs']) === true) {
-			$reqCatFacets = true;
-			unset($searchQuery['_facets']['@self']['catalogs']);
-		}
-
-		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
 		// FAIL CLOSED on an empty schema or register scope (WOO-581): an empty
@@ -553,47 +512,8 @@ class PublicationService implements PublicationServiceInterface {
 			return ['results' => [], 'facets' => [], 'total' => 0];
 		}
 
-		// Validate requested registers and schemas against the context.
-		$requestedRegisters = ($searchQuery['@self']['register'] ?? []);
-		$requestedSchemas = ($searchQuery['@self']['schema'] ?? []);
-
-		// Ensure requested registers are part of the context.
-		if (empty($requestedRegisters) === false) {
-			// Normalize to array if a single value is provided.
-			if (is_array($requestedRegisters) === false) {
-				$requestedRegisters = [$requestedRegisters];
-			}
-
-			if (count(array_diff($requestedRegisters, $context['registers'])) > 0) {
-				throw new InvalidArgumentException('Invalid register(s) requested');
-			}
-		}
-
-		// Ensure requested schemas are part of the context.
-		if (empty($requestedSchemas) === false) {
-			// Normalize to array if a single value is provided.
-			if (is_array($requestedSchemas) === false) {
-				$requestedSchemas = [$requestedSchemas];
-			}
-
-			if (count(array_diff($requestedSchemas, $context['schemas'])) > 0) {
-				throw new InvalidArgumentException('Invalid schema(s) requested');
-			}
-		}
-
-		// Get the object service.
+		$scope = $this->narrowedSearchScope(context: $context, query: $searchQuery);
 		$objectService = $this->getObjectService();
-
-		// Overwrite certain values in the existing search query.
-		$registers = $context['registers'];
-		if (empty($requestedRegisters) === false) {
-			$registers = $requestedRegisters;
-		}
-
-		$schemas = $context['schemas'];
-		if (empty($requestedSchemas) === false) {
-			$schemas = $requestedSchemas;
-		}
 
 		// Only the (validated) narrowing above survives; every other scope key the
 		// caller sent goes, or OR's facet path follows it (WOO-581 review round 2).
@@ -601,44 +521,158 @@ class PublicationService implements PublicationServiceInterface {
 		// register: a scalar schema next to a register list sends OR to register 1, or
 		// past the scope to the all-tables `_ids` lookup (WOO-581 review round 3).
 		$searchQuery = CallerScope::strip(query: $searchQuery);
-
 		$searchQuery['_includeDeleted'] = false;
 
-		// Add IDs filter if provided (for uses/used functionality).
+		// IDs filter for the uses/used lookups.
 		if ($ids !== null && empty($ids) === false) {
 			$searchQuery['_ids'] = $ids;
 		}
 
-		// Search objects using the new structure with RBAC enforcement.
-		// _rbac: true ensures schema authorization rules are applied.
-		// _multitenancy: false allows cross-org access for public search results
-		// (RBAC rules determine what each user/anonymous can see).
+		// _rbac: true applies the schema authorization rules; _multitenancy: false
+		// allows cross-org access for public search results (RBAC rules determine
+		// what each user/anonymous can see).
 		$result = array_merge(
 			['results' => [], 'facets' => []],
 			$this->searchObjectsWithinScope(
 				objectService: $objectService,
 				query: $searchQuery,
-				registers: $registers,
-				schemas: $schemas
+				registers: $scope['register'],
+				schemas: $scope['schema']
 			)
 		);
 
 		// Visibility is governed entirely by OpenRegister RBAC (the schemas' conditional
 		// public-read rules with the $now variable), applied above via _rbac: true.
-		// Filter unwanted properties from results.
 		$result['results'] = $this->filterUnwantedProperties(objects: $result['results']);
 
-		// Add virtual field facets if they were requested.
-		if (($reqDirFacets === true || $reqCatFacets === true) && isset($result['facets']) === true) {
+		return $this->withVirtualFacets(result: $result, requested: $virtualFacets);
+	}//end searchPublications()
+
+	/**
+	 * Map the legacy parameters to `_extend` and drop the route keys.
+	 *
+	 * Each of `extend`, `fields`, `facets`, `order`, `page` and `limit` that is set
+	 * moves to `_extend`, the last one winning.
+	 *
+	 * @param array $query The request or custom parameters.
+	 *
+	 * @return array The normalised query.
+	 *
+	 * @todo this is a temporary fix to map the parameters to _extend format.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function normaliseSearchQuery(array $query): array {
+		foreach (['extend', 'fields', 'facets', 'order', 'page', 'limit'] as $param) {
+			if (isset($query[$param]) === true) {
+				$query['_extend'] = $query[$param];
+				unset($query[$param]);
+			}
+		}
+
+		unset($query['id']);
+		unset($query['_route']);
+
+		return $query;
+	}//end normaliseSearchQuery()
+
+	/**
+	 * Which virtual-field facets (directory, catalogs) the query asks for.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array{directory: bool, catalogs: bool} The requested virtual facets.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function virtualFacetRequests(array $query): array {
+		return [
+			'directory' => isset($query['_facets']['@self']['directory']),
+			'catalogs' => isset($query['_facets']['@self']['catalogs']),
+		];
+	}//end virtualFacetRequests()
+
+	/**
+	 * The query without its virtual-field facet requests.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array The query OpenRegister can answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function withoutVirtualFacetRequests(array $query): array {
+		foreach (['directory', 'catalogs'] as $virtualField) {
+			if (isset($query['_facets']['@self'][$virtualField]) === true) {
+				unset($query['_facets']['@self'][$virtualField]);
+			}
+		}
+
+		return $query;
+	}//end withoutVirtualFacetRequests()
+
+	/**
+	 * The register and schema scope of a search, narrowed to what the caller asked for.
+	 *
+	 * A requested register or schema (one value or a list) must lie inside the
+	 * catalog context; an empty request keeps the whole context.
+	 *
+	 * @param array $context The catalog context (`registers`, `schemas`).
+	 * @param array $query The search query.
+	 *
+	 * @return array{register: array, schema: array} The scope to search.
+	 *
+	 * @throws InvalidArgumentException When a requested register or schema lies outside the context.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function narrowedSearchScope(array $context, array $query): array {
+		$scope = [
+			'register' => $context['registers'],
+			'schema' => $context['schemas'],
+		];
+
+		foreach ($scope as $key => $allowed) {
+			$requested = ($query['@self'][$key] ?? []);
+			if (empty($requested) === true) {
+				continue;
+			}
+
+			if (is_array($requested) === false) {
+				$requested = [$requested];
+			}
+
+			if (count(array_diff($requested, $allowed)) > 0) {
+				throw new InvalidArgumentException('Invalid ' . $key . '(s) requested');
+			}
+
+			$scope[$key] = $requested;
+		}
+
+		return $scope;
+	}//end narrowedSearchScope()
+
+	/**
+	 * Add the requested virtual-field facets to a search result.
+	 *
+	 * @param array $result The search result.
+	 * @param array{directory: bool, catalogs: bool} $requested The requested virtual facets.
+	 *
+	 * @return array The result, with the virtual facets when any were requested.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function withVirtualFacets(array $result, array $requested): array {
+		if (($requested['directory'] === true || $requested['catalogs'] === true) && isset($result['facets']) === true) {
 			$result['facets'] = $this->addVirtualFieldFacets(
 				existingFacets: $result['facets'],
-				inclDirFacets: $reqDirFacets,
-				inclCatFacets: $reqCatFacets
+				inclDirFacets: $requested['directory'],
+				inclCatFacets: $requested['catalogs']
 			);
 		}
 
 		return $result;
-	}//end searchPublications()
+	}//end withVirtualFacets()
 
 	/**
 	 * Search OpenRegister within the catalogue scope, leaving out the slugs it refuses.
