@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\CatalogScopeLookups;
 use OCA\OpenCatalogi\Service\CatalogScopeSlugResolver;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  * Golden test for CatalogScopeSlugResolver::resolveScope.
  *
  * @covers \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
+ * @uses   \OCA\OpenCatalogi\Service\CatalogScopeLookups
  */
 class CatalogScopeResolveGoldenTest extends TestCase {
 
@@ -112,30 +114,32 @@ class CatalogScopeResolveGoldenTest extends TestCase {
 		return (new CatalogScopeSlugResolver())->resolveScope(
 			registers: $registers,
 			schemas: $schemas,
-			findRegisterId: function (string $slug) use ($registerIds) {
-				$this->calls[] = 'register:' . $slug;
-				if ($slug === 'boom') {
-					throw new \RuntimeException('boom');
-				}
+			lookups: new CatalogScopeLookups(
+				findRegisterId: function (string $slug) use ($registerIds) {
+					$this->calls[] = 'register:' . $slug;
+					if ($slug === 'boom') {
+						throw new \RuntimeException('boom');
+					}
 
-				return ($registerIds[$slug] ?? null);
-			},
-			schemaIdsOfRegister: function (int $id) use ($schemasOf): array {
-				$this->calls[] = 'schemas-of:' . $id;
-				if ($id === 30) {
-					throw new \RuntimeException('unreadable');
-				}
+					return ($registerIds[$slug] ?? null);
+				},
+				schemaIdsOfRegister: function (int $id) use ($schemasOf): array {
+					$this->calls[] = 'schemas-of:' . $id;
+					if ($id === 30) {
+						throw new \RuntimeException('unreadable');
+					}
 
-				return ($schemasOf[$id] ?? []);
-			},
-			schemaSlugOf: function (int $id) use ($slugs): ?string {
-				$this->calls[] = 'slug-of:' . $id;
-				if ($id === 36) {
-					throw new \RuntimeException('unreadable');
-				}
+					return ($schemasOf[$id] ?? []);
+				},
+				schemaSlugOf: function (int $id) use ($slugs): ?string {
+					$this->calls[] = 'slug-of:' . $id;
+					if ($id === 36) {
+						throw new \RuntimeException('unreadable');
+					}
 
-				return ($slugs[$id] ?? null);
-			}
+					return ($slugs[$id] ?? null);
+				}
+			)
 		);
 
 	}//end resolve()
