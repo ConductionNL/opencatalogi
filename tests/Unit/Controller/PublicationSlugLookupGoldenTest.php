@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Controller\CatalogSlugQuery;
 use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCP\App\IAppManager;
 use OCP\IL10N;
@@ -42,6 +43,7 @@ use ReflectionMethod;
  * Golden test for the catalogue-scoped slug lookup of PublicationsController.
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
+ * @uses   \OCA\OpenCatalogi\Controller\CatalogSlugQuery
  */
 class PublicationSlugLookupGoldenTest extends TestCase {
 
@@ -138,7 +140,7 @@ class PublicationSlugLookupGoldenTest extends TestCase {
 		[$slug, $catalogSlug, $registers, $schemas] = $args;
 		$method = new ReflectionMethod(PublicationsController::class, 'findBySlugInCatalogScope');
 
-		return $method->invoke($controller, $objectService, $slug, $catalogSlug, $registers, $schemas);
+		return $method->invoke($controller, $objectService, new CatalogSlugQuery($slug, $catalogSlug, $registers, $schemas));
 
 	}//end lookup()
 
