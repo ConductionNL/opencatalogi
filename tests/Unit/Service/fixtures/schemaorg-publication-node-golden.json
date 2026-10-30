@@ -1,0 +1,513 @@
+{
+    "full, not elected": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Report",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/uuid-1",
+            "url": "https://example.test/apps/opencatalogi/api/woo/uuid-1",
+            "name": "Besluit",
+            "description": "Een besluit",
+            "dateModified": "2026-03-04T10:11:12+00:00",
+            "license": "cc0",
+            "keywords": [
+                "a",
+                "3",
+                "1",
+                "b"
+            ],
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "name",
+            "description",
+            "dateModified",
+            "license",
+            "keywords",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:5"
+        ]
+    },
+    "full, elected": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/opendata/uuid-1",
+            "url": "https://example.test/apps/opencatalogi/api/opendata/uuid-1",
+            "name": "Besluit",
+            "description": "Een besluit",
+            "dateModified": "2026-03-04T10:11:12+00:00",
+            "license": "cc0",
+            "keywords": [
+                "a",
+                "3",
+                "1",
+                "b"
+            ],
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente",
+                "@id": "000123"
+            },
+            "distribution": [
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/1",
+                    "encodingFormat": "application/pdf",
+                    "name": "One",
+                    "contentSize": "12"
+                },
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/2",
+                    "encodingFormat": "text/csv",
+                    "name": "Two"
+                }
+            ],
+            "includedInDataCatalog": {
+                "@type": "DataCatalog",
+                "@id": "https://example.test/apps/opencatalogi/api/catalogs/opendata/schema",
+                "name": "Open data"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "name",
+            "description",
+            "dateModified",
+            "license",
+            "keywords",
+            "publisher",
+            "distribution",
+            "includedInDataCatalog"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:5",
+            "container:OCA\\OpenRegister\\Service\\FileService",
+            "files:pub-1"
+        ]
+    },
+    "elected, no files service": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/opendata/uuid-1",
+            "url": "https://example.test/apps/opencatalogi/api/opendata/uuid-1",
+            "name": "Besluit",
+            "description": "Een besluit",
+            "dateModified": "2026-03-04T10:11:12+00:00",
+            "license": "cc0",
+            "keywords": [
+                "a",
+                "3",
+                "1",
+                "b"
+            ],
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente",
+                "@id": "000123"
+            },
+            "includedInDataCatalog": {
+                "@type": "DataCatalog",
+                "@id": "https://example.test/apps/opencatalogi/api/catalogs/opendata/schema",
+                "name": "Open data"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "name",
+            "description",
+            "dateModified",
+            "license",
+            "keywords",
+            "publisher",
+            "includedInDataCatalog"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:5",
+            "container:OCA\\OpenRegister\\Service\\FileService"
+        ]
+    },
+    "elected, files fail": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/opendata/uuid-1",
+            "url": "https://example.test/apps/opencatalogi/api/opendata/uuid-1",
+            "name": "Besluit",
+            "description": "Een besluit",
+            "dateModified": "2026-03-04T10:11:12+00:00",
+            "license": "cc0",
+            "keywords": [
+                "a",
+                "3",
+                "1",
+                "b"
+            ],
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente",
+                "@id": "000123"
+            },
+            "includedInDataCatalog": {
+                "@type": "DataCatalog",
+                "@id": "https://example.test/apps/opencatalogi/api/catalogs/opendata/schema",
+                "name": "Open data"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "name",
+            "description",
+            "dateModified",
+            "license",
+            "keywords",
+            "publisher",
+            "includedInDataCatalog"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:5",
+            "container:OCA\\OpenRegister\\Service\\FileService",
+            "files:pub-1"
+        ]
+    },
+    "elected, no catalog title": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/od/uuid-1",
+            "url": "https://example.test/apps/opencatalogi/api/od/uuid-1",
+            "name": "Besluit",
+            "description": "Een besluit",
+            "dateModified": "2026-03-04T10:11:12+00:00",
+            "license": "cc0",
+            "keywords": [
+                "a",
+                "3",
+                "1",
+                "b"
+            ],
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            },
+            "distribution": [
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/1",
+                    "encodingFormat": "application/pdf",
+                    "name": "One",
+                    "contentSize": "12"
+                },
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/2",
+                    "encodingFormat": "text/csv",
+                    "name": "Two"
+                }
+            ],
+            "includedInDataCatalog": {
+                "@type": "DataCatalog",
+                "@id": "https://example.test/apps/opencatalogi/api/catalogs/od/schema",
+                "name": "od"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "name",
+            "description",
+            "dateModified",
+            "license",
+            "keywords",
+            "publisher",
+            "distribution",
+            "includedInDataCatalog"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:5",
+            "container:OCA\\OpenRegister\\Service\\FileService",
+            "files:pub-1"
+        ]
+    },
+    "elected false string": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Report",
+            "@id": "https://example.test/apps/opencatalogi/api/od/uuid-1",
+            "url": "https://example.test/apps/opencatalogi/api/od/uuid-1",
+            "name": "Besluit",
+            "description": "Een besluit",
+            "dateModified": "2026-03-04T10:11:12+00:00",
+            "license": "cc0",
+            "keywords": [
+                "a",
+                "3",
+                "1",
+                "b"
+            ],
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "name",
+            "description",
+            "dateModified",
+            "license",
+            "keywords",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:5"
+        ]
+    },
+    "minimal": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/x",
+            "url": "https://example.test/apps/opencatalogi/api/woo/x",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:0"
+        ]
+    },
+    "no id at all": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/",
+            "url": "https://example.test/apps/opencatalogi/api/woo/",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:0"
+        ]
+    },
+    "name and summary fallbacks": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/u",
+            "url": "https://example.test/apps/opencatalogi/api/woo/u",
+            "name": "N",
+            "description": "S",
+            "dateModified": "2026-02-03T00:00:00+00:00",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "name",
+            "description",
+            "dateModified",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:0"
+        ]
+    },
+    "empty strings": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/e",
+            "url": "https://example.test/apps/opencatalogi/api/woo/e",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:0"
+        ]
+    },
+    "non-string license and tags": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/n",
+            "url": "https://example.test/apps/opencatalogi/api/woo/n",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:0"
+        ]
+    },
+    "unknown schema marker": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/s",
+            "url": "https://example.test/apps/opencatalogi/api/woo/s",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:9"
+        ]
+    },
+    "no schema mapper": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/s",
+            "url": "https://example.test/apps/opencatalogi/api/woo/s",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    },
+    "publisher from catalog config": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/p",
+            "url": "https://example.test/apps/opencatalogi/api/woo/p",
+            "publisher": {
+                "@type": "Organization",
+                "name": "P"
+            }
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url",
+            "publisher"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:0"
+        ]
+    },
+    "no publisher": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/woo/p",
+            "url": "https://example.test/apps/opencatalogi/api/woo/p"
+        },
+        "keys": [
+            "@context",
+            "@type",
+            "@id",
+            "url"
+        ],
+        "asked": [
+            "container:OCA\\OpenRegister\\Db\\SchemaMapper",
+            "schema:0"
+        ]
+    }
+}

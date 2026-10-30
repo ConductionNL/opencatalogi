@@ -29,11 +29,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Withheld;
 
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenCatalogi\Service\WooService;
-use OCP\App\IAppManager;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Throwable;
 
@@ -59,13 +58,11 @@ class WithheldFromPublicationStore {
 	 * Constructor.
 	 *
 	 * @param IAppConfig         $config     Holds the register and schema ids.
-	 * @param ContainerInterface $container  Resolves OpenRegister's ObjectService.
-	 * @param IAppManager        $appManager Says whether OpenRegister is there.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookup $openRegister,
 	) {
 	}//end __construct()
 
@@ -246,11 +243,11 @@ class WithheldFromPublicationStore {
 	 * @throws RuntimeException When OpenRegister is not available.
 	 */
 	private function objects(): object {
-		if ($this->appManager->isInstalled('openregister') === false) {
+		if ($this->openRegister->isInstalled() === false) {
 			throw new RuntimeException('OpenRegister is not available, so the withheld documents cannot be read.');
 		}
 
-		$objects = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$objects = $this->openRegister->objectService();
 		if (is_object($objects) === false) {
 			throw new RuntimeException('OpenRegister is not available, so the withheld documents cannot be read.');
 		}

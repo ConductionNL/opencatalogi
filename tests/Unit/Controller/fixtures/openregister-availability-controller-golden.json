@@ -1,0 +1,86 @@
+{
+    "robots / absent": {
+        "outcome": {
+            "threw": "RuntimeException",
+            "message": "OpenRegister service is not available."
+        },
+        "asked": []
+    },
+    "robots / unresolvable": {
+        "outcome": {
+            "threw": "RuntimeException",
+            "message": "not resolvable"
+        },
+        "asked": [
+            "container:OCA\\OpenRegister\\Service\\ObjectService"
+        ]
+    },
+    "robots / working": {
+        "outcome": {
+            "status": 200,
+            "body": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat001.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat002.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat003.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat004.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat005.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat006.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat007.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat008.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat009.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat010.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat011.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat012.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat013.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat014.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat015.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat016.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat017.xml\nSitemap: https://host/apps/opencatalogi/api/cat-1/sitemaps/sitemapindex-diwoo-infocat018.xml\n"
+        },
+        "asked": [
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "search:{\"@self\":{\"register\":\"1\",\"schema\":\"2\"},\"hasWooSitemap\":true}"
+        ]
+    },
+    "robots-accessor / absent": {
+        "outcome": {
+            "threw": "RuntimeException",
+            "message": "OpenRegister service is not available."
+        },
+        "asked": []
+    },
+    "robots-accessor / unresolvable": {
+        "outcome": {
+            "threw": "RuntimeException",
+            "message": "not resolvable"
+        },
+        "asked": [
+            "container:OCA\\OpenRegister\\Service\\ObjectService"
+        ]
+    },
+    "robots-accessor / working": {
+        "outcome": {
+            "answer": "same-object"
+        },
+        "asked": [
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "container:OCA\\OpenRegister\\Service\\ObjectService"
+        ]
+    },
+    "search / absent": {
+        "outcome": {
+            "status": 503,
+            "body": {
+                "error": "Search backend is not available."
+            }
+        },
+        "asked": []
+    },
+    "search / unresolvable": {
+        "outcome": {
+            "status": 503,
+            "body": {
+                "error": "Search backend is not available."
+            }
+        },
+        "asked": [
+            "container:OCA\\OpenRegister\\Service\\ObjectService"
+        ]
+    },
+    "search / working": {
+        "outcome": {
+            "status": 200,
+            "body": {
+                "results": [],
+                "with": true
+            }
+        },
+        "asked": [
+            "container:OCA\\OpenRegister\\Service\\ObjectService",
+            "container:OCP\\IUserSession"
+        ]
+    }
+}

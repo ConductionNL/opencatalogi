@@ -54,7 +54,7 @@ class WithheldDocumentStoreTest extends TestCase {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('isInstalled')->willReturn($installed);
 
-		return new WithheldDocumentStore($config, $container, $appManager, new NullLogger());
+		return new WithheldDocumentStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager), new NullLogger());
 	}//end store()
 
 	public function testAReplaceLeavesAnotherPublicationsEntries(): void {
