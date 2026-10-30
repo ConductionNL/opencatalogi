@@ -138,7 +138,8 @@ class WOO536RepairReadRules implements IRepairStep
         $updated = 0;
         $skipped = 0;
         foreach ($schemas as $schema) {
-            if ($this->repairSchema(schemaMapper: $schemaMapper, schema: $schema, output: $output) === true) {
+            $repair = new SchemaRepair(schemaMapper: $schemaMapper, output: $output, schema: $schema);
+            if ($this->repairSchema(repair: $repair) === true) {
                 $updated++;
                 continue;
             }
@@ -161,66 +162,76 @@ class WOO536RepairReadRules implements IRepairStep
      * Repair one schema: translate Dutch match-keys, then (bundled slugs only)
      * upgrade the single-rule read shape, and persist when anything changed.
      *
-     * @param object  $schemaMapper The OpenRegister SchemaMapper (typed as object
-     *                              so this repair step compiles without an OR
-     *                              dependency at analysis-time).
-     * @param object  $schema       The OpenRegister Schema entity.
-     * @param IOutput $output       The output interface for progress reporting.
+     * @param SchemaRepair $repair The schema, its mapper and the output.
      *
      * @return bool True when the schema was updated.
      *
      * @spec openspec/specs/search/spec.md
      */
-    private function repairSchema(object $schemaMapper, object $schema, IOutput $output): bool
+    private function repairSchema(SchemaRepair $repair): bool
     {
-        $slug          = (string) $schema->getSlug();
-        $label         = "schema '{$slug}' (id ".$schema->getId().")";
-        $authorization = $schema->getAuthorization();
+        $slug          = $repair->slug();
+        $label         = $repair->label();
+        $authorization = $repair->schema->getAuthorization();
         if (is_array($authorization) === false) {
             if (in_array($slug, self::TWO_RULE_SLUGS, true) === true) {
-                $output->warning("WOO-536: {$label} has no authorization block — skipping (anonymous read rules missing)");
+                $repair->output->warning("WOO-536: {$label} has no authorization block — skipping (anonymous read rules missing)");
             }
 
             return false;
         }
 
-        $dropped = [];
-        $result  = $this->computeAuthorizationChanges(
-            authorization: $authorization,
-            slug: $slug,
-            dropped: $dropped
-        );
-        foreach ($dropped as $where) {
-            $output->warning(
+        $result = $this->computeAuthorizationChanges(authorization: $authorization, slug: $slug);
+        foreach ($result['dropped'] as $where) {
+            $repair->output->warning(
                 "WOO-573: {$label} — Dutch key dropped at {$where} because the English key already exists; verify the two conditions agreed"
             );
         }
 
         if (empty($result['changes']) === true) {
             if (in_array($slug, self::TWO_RULE_SLUGS, true) === true) {
-                $output->info("WOO-536: {$label} already on two-rule shape or admin-customised — skipping");
+                $repair->output->info("WOO-536: {$label} already on two-rule shape or admin-customised — skipping");
             }
 
             return false;
         }
 
-        $schema->setAuthorization($result['authorization']);
+        $repair->schema->setAuthorization($result['authorization']);
+
+        return $this->persist(repair: $repair, changes: $result['changes']);
+
+    }//end repairSchema()
+
+
+    /**
+     * Save a repaired schema and report the change.
+     *
+     * @param SchemaRepair $repair  The schema, its mapper and the output.
+     * @param string[]     $changes The human-readable change list.
+     *
+     * @return bool True when the schema was saved.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function persist(SchemaRepair $repair, array $changes): bool
+    {
+        $label = $repair->label();
         try {
-            $schemaMapper->update($schema);
+            $repair->schemaMapper->update($repair->schema);
         } catch (\Throwable $e) {
-            $output->warning("WOO-536: failed to update {$label}: {$e->getMessage()}");
+            $repair->output->warning("WOO-536: failed to update {$label}: {$e->getMessage()}");
             return false;
         }
 
-        $output->info("WOO-536: {$label} ".implode(' + ', $result['changes']));
+        $repair->output->info("WOO-536: {$label} ".implode(' + ', $changes));
         $this->logger->info(
             'WOO-536 repair: schema authorization updated',
-            ['schema' => $slug, 'schemaId' => $schema->getId(), 'changes' => $result['changes']]
+            ['schema' => $repair->slug(), 'schemaId' => $repair->schema->getId(), 'changes' => $changes]
         );
 
         return true;
 
-    }//end repairSchema()
+    }//end persist()
 
 
     /**
@@ -231,16 +242,19 @@ class WOO536RepairReadRules implements IRepairStep
      * the single-rule read shape to the depublicationDate-aware two-rule shape,
      * preserving non-conditional elements such as "authenticated".
      *
-     * @param array    $authorization The current authorization block.
-     * @param string   $slug          The schema slug (decides whether step 2 applies).
-     * @param string[] $dropped       By-ref: "action[index].key" of Dutch keys dropped in favour of an existing English key.
+     * @param array  $authorization The current authorization block.
+     * @param string $slug          The schema slug (decides whether step 2 applies).
      *
-     * @return array{authorization: array, changes: string[]} The new block and a human-readable change list (empty = nothing to write).
+     * @return array{authorization: array, changes: string[], dropped: string[]} The new block, a human-readable change list
+     *                                                                          (empty = nothing to write) and the
+     *                                                                          "action[index].key" of Dutch keys dropped in
+     *                                                                          favour of an existing English key.
      *
      * @spec openspec/specs/search/spec.md
      */
-    private function computeAuthorizationChanges(array $authorization, string $slug, array &$dropped): array
+    private function computeAuthorizationChanges(array $authorization, string $slug): array
     {
+        $dropped    = [];
         $changes    = [];
         $translated = $this->translateDutchKeys(authorization: $authorization, dropped: $dropped);
         if ($translated !== $authorization) {
@@ -259,6 +273,7 @@ class WOO536RepairReadRules implements IRepairStep
         return [
             'authorization' => $translated,
             'changes'       => $changes,
+            'dropped'       => $dropped,
         ];
 
     }//end computeAuthorizationChanges()

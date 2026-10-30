@@ -132,6 +132,40 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 	public function withdrawClosedPeriods(?DateTimeInterface $now = null): array {
 		$counts = ['considered' => 0, 'withdrawn' => 0, 'failed' => 0];
 
+		$run = $this->openRun(now: $now);
+		if ($run === null) {
+			return $counts;
+		}
+
+		$rows = $this->readPeriods(run: $run);
+		if ($rows === null) {
+			return $counts;
+		}
+
+		foreach ($rows as $row) {
+			$period = $this->asArray(object: $row);
+			$counts['considered']++;
+			if ($this->periods->withdrawalDue(period: $period, now: $run->moment) === false) {
+				continue;
+			}
+
+			$counts[$this->tryWithdraw(run: $run, period: $period)]++;
+		}
+
+		return $counts;
+
+	}//end withdrawClosedPeriods()
+
+	/**
+	 * Start a pass: the object service, the configured register and schema, and the moment.
+	 *
+	 * @param DateTimeInterface|null $now The moment; defaults to now.
+	 *
+	 * @return CommentPeriodWithdrawalRun|null The pass, or null when the periods cannot be read.
+	 *
+	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-closed-period-can-withdraw-its-publication-req-pcp-005
+	 */
+	private function openRun(?DateTimeInterface $now): ?CommentPeriodWithdrawalRun {
 		$objectService = $this->getObjectService();
 		$register = trim($this->config->getValueString('opencatalogi', 'publication_register', ''));
 		$schema = trim($this->config->getValueString('opencatalogi', 'comment_period_schema', ''));
@@ -144,26 +178,7 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 				. 'considered. This is NOT "nothing to withdraw".'
 			);
 
-			return $counts;
-		}
-
-		try {
-			$result = $objectService->searchObjectsPaginated(
-				query: [
-					'@self' => ['register' => $register, 'schema' => $schema],
-					'automaticWithdrawal' => true,
-					'_limit' => self::PAGE,
-				],
-				_rbac: false,
-				_multitenancy: false
-			);
-			$rows = (array)($result['results'] ?? []);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'[CommentPeriodWithdrawalService] The comment periods could not be read: ' . $e->getMessage()
-			);
-
-			return $counts;
+			return null;
 		}
 
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
@@ -171,94 +186,140 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
 
-		foreach ($rows as $row) {
-			$period = $this->asArray(object: $row);
-			$counts['considered']++;
-			if ($this->periods->withdrawalDue(period: $period, now: $moment) === false) {
-				continue;
-			}
+		return new CommentPeriodWithdrawalRun(
+			objectService: $objectService,
+			register: $register,
+			schema: $schema,
+			moment: $moment
+		);
 
-			try {
-				$this->withdraw(
-					objectService: $objectService,
-					register: $register,
-					schema: $schema,
-					period: $period,
-					moment: $moment
-				);
-				$counts['withdrawn']++;
-			} catch (\Throwable $e) {
-				$counts['failed']++;
-				$this->logger->error(
-					'[CommentPeriodWithdrawalService] The withdrawal for period '
-					. (string)($period['id'] ?? '?') . ' failed: ' . $e->getMessage()
-				);
-			}
+	}//end openRun()
+
+	/**
+	 * Read the periods that asked for a withdrawal.
+	 *
+	 * @param CommentPeriodWithdrawalRun $run The pass.
+	 *
+	 * @return array<int, mixed>|null The periods, or null when they could not be read.
+	 *
+	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-closed-period-can-withdraw-its-publication-req-pcp-005
+	 */
+	private function readPeriods(CommentPeriodWithdrawalRun $run): ?array {
+		try {
+			$result = $run->objectService->searchObjectsPaginated(
+				query: [
+					'@self' => ['register' => $run->register, 'schema' => $run->schema],
+					'automaticWithdrawal' => true,
+					'_limit' => self::PAGE,
+				],
+				_rbac: false,
+				_multitenancy: false
+			);
+
+			return (array)($result['results'] ?? []);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'[CommentPeriodWithdrawalService] The comment periods could not be read: ' . $e->getMessage()
+			);
+
+			return null;
 		}
 
-		return $counts;
+	}//end readPeriods()
 
-	}//end withdrawClosedPeriods()
+	/**
+	 * Withdraw one publication, and log a failure instead of ending the pass.
+	 *
+	 * @param CommentPeriodWithdrawalRun $run The pass.
+	 * @param array<string, mixed> $period The period.
+	 *
+	 * @return string The count it adds to: `withdrawn` or `failed`.
+	 *
+	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-closed-period-can-withdraw-its-publication-req-pcp-005
+	 */
+	private function tryWithdraw(CommentPeriodWithdrawalRun $run, array $period): string {
+		try {
+			$this->withdraw(run: $run, period: $period);
+
+			return 'withdrawn';
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'[CommentPeriodWithdrawalService] The withdrawal for period '
+				. (string)($period['id'] ?? '?') . ' failed: ' . $e->getMessage()
+			);
+
+			return 'failed';
+		}
+
+	}//end tryWithdraw()
 
 	/**
 	 * Withdraw one publication and record it on its period.
 	 *
-	 * @param object $objectService The consumed OR ObjectService.
-	 * @param string $register The register.
-	 * @param string $schema The comment period schema.
+	 * @param CommentPeriodWithdrawalRun $run The pass.
 	 * @param array<string, mixed> $period The period.
-	 * @param DateTimeImmutable $moment The moment.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-closed-period-can-withdraw-its-publication-req-pcp-005
 	 */
-	private function withdraw(
-		object $objectService,
-		string $register,
-		string $schema,
-		array $period,
-		DateTimeImmutable $moment,
-	): void {
+	private function withdraw(CommentPeriodWithdrawalRun $run, array $period): void {
 		$publicationId = (string)($period['publication'] ?? '');
 		$depublication = $this->depublications->depublish(
 			publication: ['id' => $publicationId],
 			reason: self::REASON,
 			depublishedBy: self::ACTOR,
 			channels: $this->channels(),
-			now: $moment
+			now: $run->moment
 		);
 
-		$depublicationSchema = trim($this->config->getValueString('opencatalogi', 'depublication_schema', ''));
-		$depublicationId = '';
-		if ($depublicationSchema !== '') {
-			$saved = $this->asArray(
-				object: $objectService->saveObject(
-					object: $depublication,
-					register: $register,
-					schema: $depublicationSchema,
-					_rbac: false,
-					_multitenancy: false
-				)
-			);
-			$depublicationId = (string)($saved['id'] ?? '');
-		}
+		$depublicationId = $this->saveDepublication(run: $run, depublication: $depublication);
 
-		$period['withdrawnAt'] = $moment->format(DateTimeInterface::ATOM);
+		$period['withdrawnAt'] = $run->moment->format(DateTimeInterface::ATOM);
 		if ($depublicationId !== '') {
 			$period['depublication'] = $depublicationId;
 		}
 
-		$objectService->saveObject(
+		$run->objectService->saveObject(
 			object: $period,
-			register: $register,
-			schema: $schema,
+			register: $run->register,
+			schema: $run->schema,
 			uuid: (string)($period['id'] ?? ''),
 			_rbac: false,
 			_multitenancy: false
 		);
 
 	}//end withdraw()
+
+	/**
+	 * Save the depublication, when a depublication schema is configured.
+	 *
+	 * @param CommentPeriodWithdrawalRun $run The pass.
+	 * @param array<string, mixed> $depublication The depublication.
+	 *
+	 * @return string The saved depublication's id, or an empty string when none was saved.
+	 *
+	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-closed-period-can-withdraw-its-publication-req-pcp-005
+	 */
+	private function saveDepublication(CommentPeriodWithdrawalRun $run, array $depublication): string {
+		$depublicationSchema = trim($this->config->getValueString('opencatalogi', 'depublication_schema', ''));
+		if ($depublicationSchema === '') {
+			return '';
+		}
+
+		$saved = $this->asArray(
+			object: $run->objectService->saveObject(
+				object: $depublication,
+				register: $run->register,
+				schema: $depublicationSchema,
+				_rbac: false,
+				_multitenancy: false
+			)
+		);
+
+		return (string)($saved['id'] ?? '');
+
+	}//end saveDepublication()
 
 	/**
 	 * The channels a withdrawal goes out to: the ones this instance has a source

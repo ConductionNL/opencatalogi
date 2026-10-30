@@ -223,7 +223,7 @@ class WithheldDocumentsRecordTest extends TestCase {
 		);
 
 		return new WithheldDocuments(
-			new WithheldDocumentStore($config, $container, $appManager, new NullLogger()),
+			new WithheldDocumentStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager), new NullLogger()),
 			$container,
 			$appManager
 		);

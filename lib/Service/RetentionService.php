@@ -758,6 +758,41 @@ class RetentionService implements RetentionServiceInterface {
 			throw new RuntimeException('A rationale note is mandatory for retention decisions');
 		}
 
+		$run = $this->decisionRun();
+
+		try {
+			$object = $run->objectService->find($publicationId);
+		} catch (\Throwable $e) {
+			throw new RuntimeException('Publication not found: ' . $publicationId);
+		}
+
+		$data = $this->plainArray(object: $object);
+		if ($decision !== 'extend') {
+			$data = $this->withdrawn(data: $data, decision: $decision);
+		}
+
+		if ($decision === 'extend') {
+			$data['retentionExpiresAt'] = $this->extendedExpiry(data: $data, months: $extendMonths);
+			$data['retentionNote'] = $rationale;
+			$data['retentionLastEvaluatedAt'] = '';
+		}
+
+		$this->recordDecision(data: $data, decision: $decision, note: $rationale);
+		$saved = $this->save(objectService: $run->objectService, register: $run->register, schema: $run->schema, data: $data);
+
+		return $this->plainArray(object: $saved);
+	}//end recordHumanDecision()
+
+	/**
+	 * The object service, register and schema a human decision is saved through.
+	 *
+	 * @return RetentionRun The run.
+	 *
+	 * @throws RuntimeException When OpenRegister, the register or the schema is unavailable.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+	 */
+	private function decisionRun(): RetentionRun {
 		$objectService = $this->getObjectService();
 		$register = $this->getRegister();
 		$schema = $this->getSchema();
@@ -765,33 +800,54 @@ class RetentionService implements RetentionServiceInterface {
 			throw new RuntimeException('OpenRegister publication register/schema unavailable');
 		}
 
-		try {
-			$object = $objectService->find($publicationId);
-		} catch (\Throwable $e) {
-			throw new RuntimeException('Publication not found: ' . $publicationId);
+		return new RetentionRun(objectService: $objectService, register: $register, schema: $schema);
+	}//end decisionRun()
+
+	/**
+	 * The retention expiry moved on by a number of months.
+	 *
+	 * Counted from the stored expiry, or from now when there is none or it cannot be read.
+	 *
+	 * @param array<string, mixed> $data The publication.
+	 * @param int $months How many months to extend by.
+	 *
+	 * @return string The new expiry, as an ATOM date.
+	 *
+	 * @throws RuntimeException When the number of months is not positive.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+	 */
+	private function extendedExpiry(array $data, int $months): string {
+		if ($months <= 0) {
+			throw new RuntimeException('Extend requires a positive number of months');
 		}
 
-		$data = $this->plainArray(object: $object);
 		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		$base = ($data['retentionExpiresAt'] ?? $now->format(DateTimeInterface::ATOM));
+		try {
+			$newExpiry = (new DateTimeImmutable((string)$base))->add(new DateInterval('P' . $months . 'M'));
+		} catch (\Throwable $e) {
+			$newExpiry = $now->add(new DateInterval('P' . $months . 'M'));
+		}
 
+		return $newExpiry->format(DateTimeInterface::ATOM);
+	}//end extendedExpiry()
+
+	/**
+	 * Apply a depublish, archive or dispose decision to a publication.
+	 *
+	 * @param array<string, mixed> $data The publication.
+	 * @param string $decision The decision verb.
+	 *
+	 * @return array<string, mixed> The publication.
+	 *
+	 * @throws RuntimeException On a decision that is none of those.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+	 */
+	private function withdrawn(array $data, string $decision): array {
+		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		switch ($decision) {
-			case 'extend':
-				if ($extendMonths <= 0) {
-					throw new RuntimeException('Extend requires a positive number of months');
-				}
-
-				$base = ($data['retentionExpiresAt'] ?? $now->format(DateTimeInterface::ATOM));
-				try {
-					$newExpiry = (new DateTimeImmutable((string)$base))->add(new DateInterval('P' . $extendMonths . 'M'));
-				} catch (\Throwable $e) {
-					$newExpiry = $now->add(new DateInterval('P' . $extendMonths . 'M'));
-				}
-
-				$data['retentionExpiresAt'] = $newExpiry->format(DateTimeInterface::ATOM);
-				$data['retentionNote'] = $rationale;
-				$data['retentionLastEvaluatedAt'] = '';
-				break;
-
 			case 'depublish':
 				$data['depublicationDate'] = $now->format(DateTimeInterface::ATOM);
 				break;
@@ -806,11 +862,8 @@ class RetentionService implements RetentionServiceInterface {
 				throw new RuntimeException('Unknown retention decision: ' . $decision);
 		}//end switch
 
-		$this->recordDecision(data: $data, decision: $decision, note: $rationale);
-		$saved = $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
-
-		return $this->plainArray(object: $saved);
-	}//end recordHumanDecision()
+		return $data;
+	}//end withdrawn()
 
 	/**
 	 * Build a retention report (rows) for a catalog and date range.

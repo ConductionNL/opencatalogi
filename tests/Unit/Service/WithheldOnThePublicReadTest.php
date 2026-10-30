@@ -93,6 +93,7 @@ class PublicReadObjectService {
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @covers \OCA\OpenCatalogi\Controller\FederationController
  * @uses \OCA\OpenCatalogi\Controller\CorsSettings
+ * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  */
 class WithheldOnThePublicReadTest extends TestCase {
 
@@ -134,7 +135,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn(true);
 
 		$this->withheld = new WithheldFromPublication(
-			store: new WithheldFromPublicationStore(config: $config, container: $container, appManager: $appManager),
+			store: new WithheldFromPublicationStore(config: $config, openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager)),
 			logger: new NullLogger(),
 		);
 	}//end setUp()
@@ -327,7 +328,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn('');
 		$this->withheld = new WithheldFromPublication(
-			store: new WithheldFromPublicationStore(config: $config, container: $this->createMock(ContainerInterface::class), appManager: $this->createMock(IAppManager::class)),
+			store: new WithheldFromPublicationStore(config: $config, openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class))),
 			logger: new NullLogger(),
 		);
 

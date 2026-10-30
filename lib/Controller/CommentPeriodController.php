@@ -31,6 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -128,15 +129,17 @@ class CommentPeriodController extends Controller {
 
 		try {
 			$period = $this->periods->open(
-				publication: ['id' => $publication],
-				termDays: (int)$this->request->getParam('termDays', 0),
-				legalRemedy: trim((string)$this->request->getParam('legalRemedy', '')),
-				announcementUrl: trim((string)$this->request->getParam('announcementUrl', '')),
-				automaticWithdrawal: filter_var(
-					$this->request->getParam('automaticWithdrawal', false),
-					FILTER_VALIDATE_BOOLEAN
-				),
-				openedBy: $openedBy
+				request: new CommentPeriodRequest(
+					publication: ['id' => $publication],
+					termDays: (int)$this->request->getParam('termDays', 0),
+					legalRemedy: trim((string)$this->request->getParam('legalRemedy', '')),
+					announcementUrl: trim((string)$this->request->getParam('announcementUrl', '')),
+					automaticWithdrawal: filter_var(
+						$this->request->getParam('automaticWithdrawal', false),
+						FILTER_VALIDATE_BOOLEAN
+					),
+					openedBy: $openedBy
+				)
 			);
 		} catch (\DomainException $e) {
 			return new JSONResponse(
