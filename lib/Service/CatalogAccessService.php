@@ -95,7 +95,7 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
 	 */
 	public function recompute(int $schemaId): bool {
-		return $this->recomputeMany(schemaIds: [$schemaId]) === 1;
+		return $this->recomputeMany(schemaIds: [$schemaId])['written'] === 1;
 
 	}//end recompute()
 
@@ -108,14 +108,14 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	 *
 	 * @param array<int, int> $schemaIds The schema ids.
 	 *
-	 * @return int How many schemas were written.
+	 * @return array{written: int, failed: array<int, int>} How many schemas were written, and the ids whose rules could not be brought up to date.
 	 *
 	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
 	 */
-	public function recomputeMany(array $schemaIds): int {
+	public function recomputeMany(array $schemaIds): array {
 		$schemaIds = array_values(array_unique($schemaIds));
 		if ($schemaIds === []) {
-			return 0;
+			return ['written' => 0, 'failed' => []];
 		}
 
 		// Fail closed (ADR-102): when the catalogues cannot be read, "no catalogue
@@ -124,16 +124,23 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		// schemas and their snapshots are left exactly as they are.
 		$catalogs = $this->catalogs();
 		if ($catalogs === null) {
-			$this->logger->warning('[CatalogAccessService] schema(s) '.implode(', ', $schemaIds).' left unchanged: the catalogues could not be read');
-			return 0;
+			$this->logger->error('[CatalogAccessService] schema(s) '.implode(', ', $schemaIds).' left unchanged: the catalogues could not be read');
+			return ['written' => 0, 'failed' => $schemaIds];
 		}
 
 		$written = 0;
+		$failed = [];
 		foreach ($schemaIds as $schemaId) {
-			$written += (int)$this->recomputeWith(schemaId: $schemaId, catalogs: $catalogs);
+			$outcome = $this->recomputeWith(schemaId: $schemaId, catalogs: $catalogs);
+			if ($outcome === null) {
+				$failed[] = $schemaId;
+				continue;
+			}
+
+			$written += (int)$outcome;
 		}
 
-		return $written;
+		return ['written' => $written, 'failed' => $failed];
 
 	}//end recomputeMany()
 
@@ -143,32 +150,39 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	 * @param int                              $schemaId The schema id.
 	 * @param array<int, array<string, mixed>> $catalogs Every catalogue.
 	 *
-	 * @return bool Whether the schema was written.
+	 * @return bool|null Whether the schema was written; null when it could not be read or written.
 	 */
-	private function recomputeWith(int $schemaId, array $catalogs): bool {
+	private function recomputeWith(int $schemaId, array $catalogs): ?bool {
 		try {
 			$mapper = $this->container->get(self::SCHEMA_MAPPER);
 			$schema = $mapper->find($schemaId, [], _rbac: false, _multitenancy: false);
 		} catch (\Throwable $e) {
-			$this->logger->warning('[CatalogAccessService] schema '.$schemaId.' could not be read: '.$e->getMessage());
-			return false;
+			$this->logger->error('[CatalogAccessService] schema '.$schemaId.' could not be read: '.$e->getMessage());
+			return null;
 		}
 
 		$current = ($schema->getAuthorization() ?? []);
 		$next = $this->authorizationFor(schemaId: $schemaId, current: $current, catalogs: $catalogs);
-		if ($next === $current) {
-			return false;
+		$written = false;
+		if ($next !== $current) {
+			$schema->setAuthorization($next);
+			try {
+				$mapper->update($schema);
+			} catch (\Throwable $e) {
+				$this->logger->error('[CatalogAccessService] schema '.$schemaId.' could not be written: '.$e->getMessage());
+				return null;
+			}
+
+			$written = true;
 		}
 
-		$schema->setAuthorization($next);
-		try {
-			$mapper->update($schema);
-		} catch (\Throwable $e) {
-			$this->logger->error('[CatalogAccessService] schema '.$schemaId.' could not be written: '.$e->getMessage());
-			return false;
+		// Only once the schema holds its restored rules is the snapshot of them
+		// dropped; a failed write above keeps it for the next recompute.
+		if ($this->restrictingCatalogs(schemaId: $schemaId, catalogs: $catalogs) === []) {
+			$this->forgetSnapshot(schemaId: $schemaId);
 		}
 
-		return true;
+		return $written;
 
 	}//end recomputeWith()
 
@@ -184,21 +198,17 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
 	 */
 	public function authorizationFor(int $schemaId, array $current, array $catalogs): array {
-		$covering = array_values(
-			array_filter($catalogs, fn (array $catalog): bool => in_array($schemaId, $this->ids(value: ($catalog['schemas'] ?? [])), true))
-		);
-		$restricted = array_filter($covering, fn (array $catalog): bool => $this->isRestricted(catalog: $catalog));
+		$covering = $this->coveringCatalogs(schemaId: $schemaId, catalogs: $catalogs);
+		$restricted = $this->restrictingCatalogs(schemaId: $schemaId, catalogs: $catalogs);
 
 		$key = self::PREVIOUS_KEY.$schemaId;
 		$stored = $this->config->getValueString('opencatalogi', $key, '');
 
 		$previous = $this->decode(stored: $stored);
 
+		// Lifted: the remembered rules come back. The snapshot itself is dropped
+		// by the caller only after the schema was written (see recomputeWith()).
 		if ($restricted === []) {
-			if ($stored !== '') {
-				$this->config->deleteKey('opencatalogi', $key);
-			}
-
 			return ($previous ?? $current);
 		}
 
@@ -209,6 +219,50 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		return $this->rulesFrom(base: ($previous ?? $current), catalogs: $covering);
 
 	}//end authorizationFor()
+
+	/**
+	 * The catalogues that cover a schema.
+	 *
+	 * @param int                              $schemaId The schema id.
+	 * @param array<int, array<string, mixed>> $catalogs Every catalogue.
+	 *
+	 * @return array<int, array<string, mixed>> The covering catalogues.
+	 */
+	private function coveringCatalogs(int $schemaId, array $catalogs): array {
+		return array_values(
+			array_filter($catalogs, fn (array $catalog): bool => in_array($schemaId, $this->ids(value: ($catalog['schemas'] ?? [])), true))
+		);
+
+	}//end coveringCatalogs()
+
+	/**
+	 * The restricted catalogues that cover a schema.
+	 *
+	 * @param int                              $schemaId The schema id.
+	 * @param array<int, array<string, mixed>> $catalogs Every catalogue.
+	 *
+	 * @return array<int, array<string, mixed>> The restricted covering catalogues.
+	 */
+	private function restrictingCatalogs(int $schemaId, array $catalogs): array {
+		$covering = $this->coveringCatalogs(schemaId: $schemaId, catalogs: $catalogs);
+		return array_values(array_filter($covering, fn (array $catalog): bool => $this->isRestricted(catalog: $catalog)));
+
+	}//end restrictingCatalogs()
+
+	/**
+	 * Drop a schema's remembered pre-restriction rules, when there are any.
+	 *
+	 * @param int $schemaId The schema id.
+	 *
+	 * @return void
+	 */
+	private function forgetSnapshot(int $schemaId): void {
+		$key = self::PREVIOUS_KEY.$schemaId;
+		if ($this->config->getValueString('opencatalogi', $key, '') !== '') {
+			$this->config->deleteKey('opencatalogi', $key);
+		}
+
+	}//end forgetSnapshot()
 
 	/**
 	 * Every schema id any catalogue covers, and every schema still carrying a

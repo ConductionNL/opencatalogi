@@ -28,6 +28,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for CatalogAccessListener.
@@ -44,6 +45,8 @@ class CatalogAccessListenerTest extends TestCase {
 
 	private CatalogiServiceInterface|MockObject $catalogi;
 
+	private LoggerInterface|MockObject $logger;
+
 	protected function setUp(): void {
 		$this->access = $this->getMockBuilder(CatalogAccessService::class)
 			->disableOriginalConstructor()
@@ -56,7 +59,8 @@ class CatalogAccessListenerTest extends TestCase {
 		$this->session = $this->createMock(IUserSession::class);
 		$this->groups = $this->createMock(IGroupManager::class);
 		$this->catalogi = $this->createMock(CatalogiServiceInterface::class);
-		$this->listener = new CatalogAccessListener($this->access, $config, $this->session, $this->groups, $this->catalogi);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->listener = new CatalogAccessListener($this->access, $config, $this->session, $this->groups, $this->catalogi, $this->logger);
 
 	}//end setUp()
 
@@ -382,13 +386,21 @@ class CatalogAccessListenerTest extends TestCase {
 
 	}//end testDeletingAnUnrestrictedCatalogueWithLeftoverGroupsElsewhereIsAllowed()
 
+	public function testARecomputeThatCouldNotFinishIsLoggedAsAnError(): void {
+		$this->access->method('recomputeMany')->willReturn(['written' => 0, 'failed' => [173]]);
+		$this->logger->expects($this->once())->method('error')->with($this->stringContains('173'));
+
+		$this->listener->handle(new ObjectUpdatedEvent($this->catalog(['schemas' => [173]]), $this->catalog(['schemas' => [173]])));
+
+	}//end testARecomputeThatCouldNotFinishIsLoggedAsAnError()
+
 	public function testASavedCatalogueRecomputesItsOldAndNewSchemasInOneCall(): void {
 		$recomputed = [];
 		$this->access->expects($this->never())->method('recompute');
 		$this->access->expects($this->once())->method('recomputeMany')->willReturnCallback(
-			function (array $schemaIds) use (&$recomputed): int {
+			function (array $schemaIds) use (&$recomputed): array {
 				$recomputed = array_values(array_unique($schemaIds));
-				return count($recomputed);
+				return ['written' => count($recomputed), 'failed' => []];
 			}
 		);
 
@@ -402,7 +414,7 @@ class CatalogAccessListenerTest extends TestCase {
 	}//end testASavedCatalogueRecomputesItsOldAndNewSchemasInOneCall()
 
 	public function testADeletedCatalogueRecomputesItsSchemas(): void {
-		$this->access->expects($this->once())->method('recomputeMany')->with([173]);
+		$this->access->expects($this->once())->method('recomputeMany')->with([173])->willReturn(['written' => 1, 'failed' => []]);
 
 		$this->listener->handle(new ObjectDeletedEvent($this->catalog(['schemas' => ['173']])));
 

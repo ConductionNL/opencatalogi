@@ -51,11 +51,25 @@ class RecomputeCatalogAccessTest extends TestCase {
 		$apps->method('isEnabledForAnyone')->willReturn(true);
 		$access = $this->createMock(CatalogAccessServiceInterface::class);
 		$access->method('coveredSchemaIds')->willReturn([173, 184]);
-		$access->expects($this->once())->method('recomputeMany')->with([173, 184])->willReturn(1);
+		$access->expects($this->once())->method('recomputeMany')->with([173, 184])->willReturn(['written' => 1, 'failed' => []]);
 		$output = $this->createMock(IOutput::class);
 		$output->expects($this->once())->method('info')->with('Catalogue staff access written onto 1 schema(s)');
+		$output->expects($this->never())->method('warning');
 
 		(new RecomputeCatalogAccess($apps, $access))->run($output);
 
 	}//end testEveryCoveredSchemaIsRecomputedInOneCall()
+
+	public function testSchemasThatCouldNotBeWrittenAreReported(): void {
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isEnabledForAnyone')->willReturn(true);
+		$access = $this->createMock(CatalogAccessServiceInterface::class);
+		$access->method('coveredSchemaIds')->willReturn([173, 184]);
+		$access->method('recomputeMany')->willReturn(['written' => 1, 'failed' => [184]]);
+		$output = $this->createMock(IOutput::class);
+		$output->expects($this->once())->method('warning')->with($this->stringContains('184'));
+
+		(new RecomputeCatalogAccess($apps, $access))->run($output);
+
+	}//end testSchemasThatCouldNotBeWrittenAreReported()
 }//end class

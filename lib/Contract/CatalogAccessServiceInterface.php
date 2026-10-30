@@ -41,17 +41,17 @@ interface CatalogAccessServiceInterface {
 
 	/**
 	 * Recompute and, where it changed, write the authorization of several
-	 * schemas, reading the catalogues once; never throws.
+	 * schemas, reading the catalogues once; never throws, reports what failed.
 	 *
 	 * @param array<int, int> $schemaIds The schema ids.
 	 *
-	 * @return int How many schemas were written.
+	 * @return array{written: int, failed: array<int, int>} How many schemas were written, and the ids whose rules could not be brought up to date.
 	 *
 	 * @contract-shift internal-only — implemented only by OpenCatalogi's CatalogAccessService; not shipped in hydra-gates/contracts
 	 *
 	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
 	 */
-	public function recomputeMany(array $schemaIds): int;
+	public function recomputeMany(array $schemaIds): array;
 
 	/**
 	 * The authorization a schema should have, given the catalogues.

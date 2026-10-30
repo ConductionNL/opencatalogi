@@ -80,9 +80,15 @@ class RecomputeCatalogAccess implements IRepairStep {
 			return;
 		}
 
-		$written = $this->access->recomputeMany(schemaIds: $this->access->coveredSchemaIds());
+		$result = $this->access->recomputeMany(schemaIds: $this->access->coveredSchemaIds());
 
-		$output->info('Catalogue staff access written onto '.$written.' schema(s)');
+		$output->info('Catalogue staff access written onto '.$result['written'].' schema(s)');
+		if ($result['failed'] !== []) {
+			$output->warning(
+				'Catalogue staff access could not be written onto schema(s) '.implode(', ', $result['failed'])
+				.'; they keep their previous rules. Run `occ maintenance:repair` again once OpenRegister answers.'
+			);
+		}
 
 	}//end run()
 }//end class

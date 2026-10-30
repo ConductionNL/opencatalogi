@@ -46,6 +46,7 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 
 /**
  * Before a catalogue is written: refuse a staff access change by anyone but
@@ -70,6 +71,7 @@ class CatalogAccessListener implements IEventListener {
 	 * @param IUserSession                  $userSession  The session.
 	 * @param IGroupManager                 $groupManager For the administrator check.
 	 * @param CatalogiServiceInterface      $catalogi     Resolves schema slugs and UUIDs the way the save will.
+	 * @param LoggerInterface               $logger       Reports a recompute that could not finish.
 	 */
 	public function __construct(
 		private readonly CatalogAccessServiceInterface $access,
@@ -77,6 +79,7 @@ class CatalogAccessListener implements IEventListener {
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
 		private readonly CatalogiServiceInterface $catalogi,
+		private readonly LoggerInterface $logger,
 	) {
 
 	}//end __construct()
@@ -123,7 +126,16 @@ class CatalogAccessListener implements IEventListener {
 			$schemaIds = array_merge($schemaIds, $this->access->schemaIdsOf(catalog: ($object->getObject() ?? [])));
 		}
 
-		$this->access->recomputeMany(schemaIds: $schemaIds);
+		$result = $this->access->recomputeMany(schemaIds: $schemaIds);
+		if ($result['failed'] !== []) {
+			// The catalogue is saved but these schemas still carry their old rules,
+			// so what the catalogue shows and what OpenRegister enforces differ until
+			// the next catalogue save or `occ maintenance:repair` recomputes them.
+			$this->logger->error(
+				'[CatalogAccessListener] staff access not written onto schema(s) '.implode(', ', $result['failed'])
+				.' after a catalogue save; they keep their previous rules until the next save or repair run'
+			);
+		}
 
 	}//end handle()
 
