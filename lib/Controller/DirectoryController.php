@@ -47,27 +47,6 @@ class DirectoryController extends Controller {
 	use SendsListCorsHeaders;
 
 	/**
-	 * Allowed CORS methods.
-	 *
-	 * @var string
-	 */
-	private string $corsMethods;
-
-	/**
-	 * Allowed CORS headers.
-	 *
-	 * @var string
-	 */
-	private string $corsAllowedHeaders;
-
-	/**
-	 * CORS max age.
-	 *
-	 * @var integer
-	 */
-	private int $corsMaxAge;
-
-	/**
 	 * DirectoryController constructor.
 	 *
 	 * @param string $appName The name of the app.
@@ -87,14 +66,11 @@ class DirectoryController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?IAppConfig $config = null,
-		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		int $corsMaxAge = 1728000,
+		private readonly string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+		private readonly string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		private readonly int $corsMaxAge = 1728000,
 	) {
 		parent::__construct(appName: $appName, request: $request);
-		$this->corsMethods = $corsMethods;
-		$this->corsAllowedHeaders = $corsAllowedHeaders;
-		$this->corsMaxAge = $corsMaxAge;
 
 	}//end __construct()
 

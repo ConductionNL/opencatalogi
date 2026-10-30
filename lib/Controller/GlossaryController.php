@@ -55,27 +55,6 @@ class GlossaryController extends Controller {
 	use ListsConfiguredObjects;
 
 	/**
-	 * Allowed CORS methods.
-	 *
-	 * @var string Allowed CORS methods
-	 */
-	private string $corsMethods;
-
-	/**
-	 * Allowed CORS headers.
-	 *
-	 * @var string Allowed CORS headers
-	 */
-	private string $corsAllowedHeaders;
-
-	/**
-	 * CORS max age.
-	 *
-	 * @var integer CORS max age
-	 */
-	private int $corsMaxAge;
-
-	/**
 	 * GlossaryController constructor.
 	 *
 	 * @param string $appName The name of the app
@@ -97,14 +76,11 @@ class GlossaryController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly IL10N $l10n,
-		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		int $corsMaxAge = 1728000,
+		private readonly string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+		private readonly string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		private readonly int $corsMaxAge = 1728000,
 	) {
 		parent::__construct(appName: $appName, request: $request);
-		$this->corsMethods = $corsMethods;
-		$this->corsAllowedHeaders = $corsAllowedHeaders;
-		$this->corsMaxAge = $corsMaxAge;
 
 	}//end __construct()
 
