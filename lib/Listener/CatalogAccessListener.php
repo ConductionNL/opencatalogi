@@ -150,8 +150,10 @@ class CatalogAccessListener implements IEventListener {
 			return;
 		}
 
-		$before = ($old?->getObject() ?? []);
-		$after = ($new?->getObject() ?? []);
+		// A soft-deleted catalogue no longer counts (the recompute's search leaves
+		// it out), so soft-deleting is guarded as a delete and restoring as a create.
+		$before = $this->liveData(object: $old);
+		$after = $this->liveData(object: $new);
 		$accessChanged = $this->normalise(access: ($before['staffAccess'] ?? null)) !== $this->normalise(access: ($after['staffAccess'] ?? null));
 		$scopeChanged = $this->scope(catalog: $before) !== $this->scope(catalog: $after);
 		if ($accessChanged === false && $scopeChanged === false) {
@@ -225,6 +227,27 @@ class CatalogAccessListener implements IEventListener {
 		return $this->access->schemaIdsOf(catalog: array_merge($catalog, $rewritten));
 
 	}//end resolvedSchemaIds()
+
+	/**
+	 * A catalogue's data, or none when it is absent or soft-deleted.
+	 *
+	 * @param ObjectEntity|null $object The catalogue.
+	 *
+	 * @return array<string, mixed> Its data.
+	 */
+	private function liveData(?ObjectEntity $object): array {
+		if ($object === null) {
+			return [];
+		}
+
+		$deleted = $object->getDeleted();
+		if (is_array($deleted) === true && $deleted !== []) {
+			return [];
+		}
+
+		return ($object->getObject() ?? []);
+
+	}//end liveData()
 
 	/**
 	 * A catalogue's scope in one comparable shape: its schemas and its filters.

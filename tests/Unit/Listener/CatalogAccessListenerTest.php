@@ -301,6 +301,62 @@ class CatalogAccessListenerTest extends TestCase {
 
 	}//end testANonAdministratorMayCoverAnUnrestrictedSchemaBySlug()
 
+	public function testANonAdministratorCannotSoftDeleteARestrictedCatalogue(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$data = ['title' => 'Raadsstukken', 'schemas' => [173], 'staffAccess' => ['restricted' => true, 'editGroups' => ['griffie']]];
+		$deleted = $this->catalog($data);
+		$deleted->setDeleted(['deleted' => '2026-10-30T10:00:00+00:00', 'deletedBy' => 'pieter']);
+		$event = new ObjectUpdatingEvent($deleted, $this->catalog($data));
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testANonAdministratorCannotSoftDeleteARestrictedCatalogue()
+
+	public function testANonAdministratorCannotSoftDeleteACatalogueOnARestrictedSchema(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$data = ['title' => 'Overig', 'schemas' => [173], 'filters' => ['kind' => 'overig']];
+		$deleted = $this->catalog($data);
+		$deleted->setDeleted(['deleted' => '2026-10-30T10:00:00+00:00']);
+		$event = new ObjectUpdatingEvent($deleted, $this->catalog($data));
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testANonAdministratorCannotSoftDeleteACatalogueOnARestrictedSchema()
+
+	public function testANonAdministratorCannotRestoreARestrictedCatalogue(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([]);
+		$data = ['title' => 'Raadsstukken', 'schemas' => [173], 'staffAccess' => ['restricted' => true, 'editGroups' => ['griffie']]];
+		$deleted = $this->catalog($data);
+		$deleted->setDeleted(['deleted' => '2026-10-30T10:00:00+00:00']);
+		$event = new ObjectUpdatingEvent($this->catalog($data), $deleted);
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testANonAdministratorCannotRestoreARestrictedCatalogue()
+
+	public function testANonAdministratorCannotRestoreACatalogueOntoARestrictedSchema(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$data = ['title' => 'Alles open', 'schemas' => [173]];
+		$deleted = $this->catalog($data);
+		$deleted->setDeleted(['deleted' => '2026-10-30T10:00:00+00:00']);
+		$event = new ObjectUpdatingEvent($this->catalog($data), $deleted);
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testANonAdministratorCannotRestoreACatalogueOntoARestrictedSchema()
+
 	public function testASavedCatalogueRecomputesItsOldAndNewSchemasInOneCall(): void {
 		$recomputed = [];
 		$this->access->expects($this->never())->method('recompute');
