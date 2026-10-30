@@ -8,7 +8,7 @@
  * @param {object} deps.navigationStore The app's navigation store.
  * @return {object} Handlers keyed by the name the manifest uses.
  *
- * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+ * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
  */
 export function createCaseTypeActionHandlers({ navigationStore }) {
 	return {
@@ -18,7 +18,7 @@ export function createCaseTypeActionHandlers({ navigationStore }) {
 		 * @param {{item: object}} payload The action payload.
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+		 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
 		 */
 		openCaseTypeResync({ item }) {
 			navigationStore.setDialog('caseTypeResync', {
