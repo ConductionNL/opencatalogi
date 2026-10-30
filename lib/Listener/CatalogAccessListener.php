@@ -273,7 +273,7 @@ class CatalogAccessListener implements IEventListener {
 	}//end scope()
 
 	/**
-	 * Staff access in one comparable shape; absent and unrestricted-and-empty are equal.
+	 * Effective staff access in one comparable shape; absent and every unrestricted value are equal.
 	 *
 	 * @param mixed $access The stored staff access.
 	 *
@@ -294,8 +294,14 @@ class CatalogAccessListener implements IEventListener {
 			return $list;
 		};
 
+		// Only effective access counts: the edit page keeps the groups when
+		// "restricted" is switched off, and unrestricted groups grant nothing.
+		if (($access['restricted'] ?? false) !== true) {
+			return ['restricted' => false, 'readGroups' => [], 'editGroups' => []];
+		}
+
 		return [
-			'restricted' => ($access['restricted'] ?? false) === true,
+			'restricted' => true,
 			'readGroups' => $groups($access['readGroups'] ?? []),
 			'editGroups' => $groups($access['editGroups'] ?? []),
 		];

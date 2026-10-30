@@ -357,6 +357,31 @@ class CatalogAccessListenerTest extends TestCase {
 
 	}//end testANonAdministratorCannotRestoreACatalogueOntoARestrictedSchema()
 
+	public function testUnrestrictedLeftoverGroupsAreNotAnAccessChange(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$event = new ObjectUpdatingEvent(
+			$this->catalog(['title' => 'Nieuw', 'staffAccess' => ['restricted' => false, 'editGroups' => ['griffie'], 'readGroups' => ['juridisch']]]),
+			$this->catalog(['title' => 'Oud'])
+		);
+
+		$this->listener->handle($event);
+
+		$this->assertFalse($event->isPropagationStopped());
+
+	}//end testUnrestrictedLeftoverGroupsAreNotAnAccessChange()
+
+	public function testDeletingAnUnrestrictedCatalogueWithLeftoverGroupsElsewhereIsAllowed(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$event = new ObjectDeletingEvent($this->catalog(['schemas' => [190], 'staffAccess' => ['restricted' => false, 'editGroups' => ['griffie']]]));
+
+		$this->listener->handle($event);
+
+		$this->assertFalse($event->isPropagationStopped());
+
+	}//end testDeletingAnUnrestrictedCatalogueWithLeftoverGroupsElsewhereIsAllowed()
+
 	public function testASavedCatalogueRecomputesItsOldAndNewSchemasInOneCall(): void {
 		$recomputed = [];
 		$this->access->expects($this->never())->method('recompute');
