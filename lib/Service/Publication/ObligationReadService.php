@@ -294,6 +294,9 @@ class ObligationReadService implements ObligationReadServiceInterface {
 	/**
 	 * An OpenRegister object as a flat array of its properties.
 	 *
+	 * Kept beside ReadsObjectProperties on purpose: it prefers the envelope's
+	 * `uuid` over its `id`, which neither asArray() nor asRecord() does.
+	 *
 	 * @param mixed $object The object or its array.
 	 *
 	 * @return array<string, mixed> The properties.

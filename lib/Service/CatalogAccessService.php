@@ -48,6 +48,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
  */
 class CatalogAccessService implements CatalogAccessServiceInterface {
+	use ReadsObjectProperties;
 
 	/**
 	 * The IAppConfig key prefix holding a schema's authorization from before the first restriction.
@@ -468,28 +469,4 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		return array_values(array_filter(array_map(fn (mixed $object): array => $this->asArray(object: $object), ($result['results'] ?? []))));
 
 	}//end catalogs()
-
-	/**
-	 * An OpenRegister object as an array of its properties.
-	 *
-	 * @param mixed $object The object or its array.
-	 *
-	 * @return array<string, mixed> The properties; empty when it is neither.
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		if (is_array($object['object'] ?? null) === true) {
-			return $object['object'];
-		}
-
-		return $object;
-
-	}//end asArray()
 }//end class

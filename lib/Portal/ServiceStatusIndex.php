@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Portal;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
+use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -43,6 +44,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
  */
 class ServiceStatusIndex {
+	use ReadsObjectProperties;
 
 	/**
 	 * The index item type, and the kind a site page asks for.
@@ -229,28 +231,4 @@ class ServiceStatusIndex {
 		return array_values(array_filter(array_map(fn (mixed $object): array => $this->asArray(object: $object), ($result['results'] ?? []))));
 
 	}//end components()
-
-	/**
-	 * An OpenRegister object as an array of its properties.
-	 *
-	 * @param mixed $object The object or its array.
-	 *
-	 * @return array<string, mixed> The properties; empty when it is neither.
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			return $object['object'];
-		}
-
-		return $object;
-
-	}//end asArray()
 }//end class

@@ -59,6 +59,7 @@ use Psr\Container\ContainerInterface;
 class InspectionController extends Controller {
 	use AnswersCrossOriginRequests;
 	use ResolvesRegisterConfiguration;
+	use ReadsOpenRegisterResults;
 
 	/**
 	 * Constructor.
@@ -278,31 +279,4 @@ class InspectionController extends Controller {
 		return $response;
 
 	}//end withCors()
-
-	/**
-	 * Normalise an OpenRegister result to a plain array.
-	 *
-	 * @param mixed $object The result.
-	 *
-	 * @return array<string, mixed> The properties.
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$properties = $object['object'];
-			$properties['id'] = ($object['id'] ?? ($properties['id'] ?? null));
-
-			return $properties;
-		}
-
-		return $object;
-
-	}//end asArray()
 }//end class
