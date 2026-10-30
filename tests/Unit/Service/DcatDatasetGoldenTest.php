@@ -29,12 +29,16 @@
  *
  * @covers \OCA\OpenCatalogi\Service\DcatMappingService
  * @uses \OCA\OpenCatalogi\Service\DcatVocabularyService
+ * @uses \OCA\OpenCatalogi\Service\DcatDatasetSource
+ * @uses \OCA\OpenCatalogi\Service\DcatMappingProfile
  */
 
 declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\DcatDatasetSource;
+use OCA\OpenCatalogi\Service\DcatMappingProfile;
 use OCA\OpenCatalogi\Service\DcatMappingService;
 use OCA\OpenCatalogi\Service\DcatVocabularyService;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -184,18 +188,20 @@ class DcatDatasetGoldenTest extends TestCase {
 	private function map(array $case): array {
 		$service = new DcatMappingService(new DcatVocabularyService());
 		$violations = [['iri' => 'earlier', 'axis' => 'kept', 'reason' => 'collected before this dataset']];
-		$dataset = $service->mapDataset(
+		$source = new DcatDatasetSource(
 			publication: $case['publication'],
-			mapping: ($case['mapping'] ?? DcatMappingService::DEFAULT_MAPPING),
-			files: ($case['files'] ?? []),
 			datasetIri: ($case['datasetIri'] ?? 'https://host/api/cat/dataset'),
+			files: ($case['files'] ?? [])
+		);
+		$profile = new DcatMappingProfile(
+			mapping: ($case['mapping'] ?? DcatMappingService::DEFAULT_MAPPING),
 			defaults: ($case['defaults'] ?? []),
 			hvd: ($case['hvd'] ?? null),
-			catalogHvdDefault: ($case['catalogHvdDefault'] ?? null),
-			violations: $violations
+			catalogHvdDefault: ($case['catalogHvdDefault'] ?? null)
 		);
+		$dataset = $service->mapDataset(source: $source, profile: $profile);
+		array_push($violations, ...$source->violations);
 
 		return ['dataset' => $dataset, 'violations' => $violations];
-
 	}//end map()
 }//end class
