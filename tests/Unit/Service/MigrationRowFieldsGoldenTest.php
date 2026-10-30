@@ -23,6 +23,7 @@
  *
  * @covers \OCA\OpenCatalogi\Service\CmsMigrationService
  * @covers \OCA\OpenCatalogi\Service\AttachmentMigrationService
+ * @covers \OCA\OpenCatalogi\Service\FlattensObjectRows
  */
 
 declare(strict_types=1);
