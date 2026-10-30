@@ -458,6 +458,96 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertNull($result);
 	}//end testGetCatalogBySlugExceptionReturnsNull()
 
+	public function testGetCatalogBySlugDoesNotServeAnAnonymousCallerWhatASignedInCallerLoaded(): void {
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		// RBAC admits the signed-in caller (first search) and refuses the anonymous one.
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->willReturnOnConsecutiveCalls([$this->createMockCatalogObject(['slug' => 'draft'])], []);
+		$this->injectObjectService($objectService);
+
+		$cacheFactory = $this->arrayBackedCacheFactory();
+		$signedIn = $this->createMock(IUserSession::class);
+		$signedIn->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$this->assertSame(['slug' => 'draft'], $this->catalogiServiceFor($cacheFactory, $signedIn)->getCatalogBySlug('draft'));
+		$this->assertNull($this->catalogiServiceFor($cacheFactory, $this->userSession)->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugDoesNotServeAnAnonymousCallerWhatASignedInCallerLoaded()
+
+	public function testGetCatalogBySlugDoesNotServeASignedInCallerWhatAnotherSignedInCallerLoaded(): void {
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->willReturnOnConsecutiveCalls([$this->createMockCatalogObject(['slug' => 'draft'])], []);
+		$this->injectObjectService($objectService);
+
+		$cacheFactory = $this->arrayBackedCacheFactory();
+		$admin = $this->createMock(IUserSession::class);
+		$admin->method('getUser')->willReturn($this->createMock(IUser::class));
+		$reader = $this->createMock(IUserSession::class);
+		$reader->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$this->assertSame(['slug' => 'draft'], $this->catalogiServiceFor($cacheFactory, $admin)->getCatalogBySlug('draft'));
+		$this->assertNull($this->catalogiServiceFor($cacheFactory, $reader)->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugDoesNotServeASignedInCallerWhatAnotherSignedInCallerLoaded()
+
+	/**
+	 * A cache factory whose distributed cache keeps values in memory, shared by every
+	 * service built from it.
+	 *
+	 * @return ICacheFactory&MockObject
+	 */
+	private function arrayBackedCacheFactory(): ICacheFactory {
+		$store = new \ArrayObject();
+		$cache = $this->createMock(ICache::class);
+		$cache->method('get')->willReturnCallback(static fn (string $key) => $store[$key] ?? null);
+		$cache->method('set')->willReturnCallback(
+			static function (string $key, $value) use ($store): bool {
+				$store[$key] = $value;
+				return true;
+			}
+		);
+
+		$factory = $this->createMock(ICacheFactory::class);
+		$factory->method('createDistributed')->willReturn($cache);
+
+		return $factory;
+	}//end arrayBackedCacheFactory()
+
+	/**
+	 * Build a CatalogiService on the shared mocks with its own cache factory and session.
+	 *
+	 * @param ICacheFactory $cacheFactory The cache factory to use.
+	 * @param IUserSession  $userSession  The caller's session.
+	 *
+	 * @return CatalogiService
+	 */
+	private function catalogiServiceFor(ICacheFactory $cacheFactory, IUserSession $userSession): CatalogiService {
+		return new CatalogiService(
+			$this->config,
+			$this->request,
+			$this->container,
+			$this->appManager,
+			$cacheFactory,
+			$this->logger,
+			$userSession,
+		);
+	}//end catalogiServiceFor()
+
 	// ──────────────────────────────────────────────────────────
 	// invalidateCatalogCache
 	// ──────────────────────────────────────────────────────────
