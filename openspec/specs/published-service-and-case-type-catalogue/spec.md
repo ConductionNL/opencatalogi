@@ -82,9 +82,10 @@ Evidence: one driven passer (dimpact-zac) and one documented (atabix).
 
 The app MUST list, for an administrator, every catalogue entry that is not
 available, with the reason it is unavailable. The list MUST be served on
-`GET /api/service-catalogue/unavailable` and MUST refuse non-administrators.
+`GET /api/service-catalogue/unavailable`, MUST refuse non-administrators, and
+MUST be shown as the "Needs repair" list on the service catalogue page.
 
-> @e2e exclude Admin API without a page yet; covered by the controller unit test until a screen is built.
+> @e2e exclude The list is a manifest widget over the admin endpoint; the endpoint's filter and refusal are covered by ServiceCatalogueControllerTest.
 
 #### Scenario: a broken entry shows up with its reason
 

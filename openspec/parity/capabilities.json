@@ -4991,12 +4991,12 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:89 GET /api/service-catalogue/unavailable (admin); lib/Controller/ServiceCatalogueController.php:220 unavailableEntries filters entries with available=false and a reason (ServiceCatalogueService.php:203-220)",
+				"evidence": "src/manifest.d/service-catalogue-admin-screens.json ServiceCatalogue page widget needs-repair reads /apps/opencatalogi/api/service-catalogue/unavailable (re-measured 2026-10-30); appinfo/routes.php:89 GET /api/service-catalogue/unavailable (admin); lib/Controller/ServiceCatalogueController.php:220 unavailableEntries filters entries with available=false and a reason (ServiceCatalogueService.php:203-220)",
 				"change": "published-service-and-case-type-catalogue",
 				"spec": "openspec/specs/published-service-and-case-type-catalogue",
 				"requirement": "An administrator sees which catalogue entries need repair (REQ-PSC-104)"
 			},
-			"reachedOn": "nothing: admin API only, no page in src/ calls it",
+			"reachedOn": "/service-catalogue \"Needs repair\" list (admin)",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "service-and-case-type-catalogue",
@@ -5057,7 +5057,7 @@
 			"built": {
 				"state": "none",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "Code removed 2026-09-29 by 29e5b27d (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code) together with the knowledge articles of the decided-no row svc-articles: routes, ServiceCatalogueController methods and KnowledgeArticleService are gone from development (re-measured 2026-10-30); before removal: appinfo/routes.php:229 POST /api/knowledge-articles/{id}/verdict @PublicPage; lib/Controller/ServiceCatalogueController.php:499 recordVerdict counts one verdict per reader and returns publicCounts; KnowledgeArticleService.php:203 refuses drafts",
+				"evidence": "Code removed 2026-09-29 by 29e5b27d (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code) together with the knowledge articles of the decided-no row svc-articles: routes, ServiceCatalogueController methods and KnowledgeArticleService are gone from development (re-measured 2026-10-30). The staff Knowledge articles list (src/manifest.d/service-catalogue-admin-screens.json, 23 Oct) shows a helpfulCount column, but no route lets a reader record a verdict; before removal: appinfo/routes.php:229 POST /api/knowledge-articles/{id}/verdict @PublicPage; lib/Controller/ServiceCatalogueController.php:499 recordVerdict counts one verdict per reader and returns publicCounts; KnowledgeArticleService.php:203 refuses drafts",
 				"change": "published-service-and-case-type-catalogue"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/knowledge-articles/{id}/verdict (public). No page or portal calls it or shows the count",
