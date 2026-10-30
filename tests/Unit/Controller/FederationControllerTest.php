@@ -160,6 +160,28 @@ class FederationControllerTest extends TestCase {
 		$this->assertArrayHasKey(key: 'ETag', array: $headers);
 	}
 
+	/**
+	 * A federated publication that is not found, also a peer that failed, carries no public cache header (REQ-PAC-001).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 *
+	 * @return void
+	 */
+	public function testAnAnonymousFederated404CarriesNoPublicCacheHeader(): void {
+		$this->callerIs(signedIn: false);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->method('getHeader')->willReturn('');
+		$this->publicationService->method('getFederatedPublication')
+			->willReturn(['data' => ['error' => 'Not found'], 'status' => 404]);
+
+		$response = $this->controller->publication('pub-1');
+		$headers  = $response->getHeaders();
+
+		$this->assertSame(expected: 404, actual: $response->getStatus());
+		$this->assertArrayNotHasKey(key: 'ETag', array: $headers);
+		$this->assertStringStartsNotWith(prefix: 'public', string: ($headers['Cache-Control'] ?? ''));
+	}
+
 	public function testPublicationsReturnsJsonResponse(): void {
 		$this->request->method('getParams')
 			->willReturn([]);
