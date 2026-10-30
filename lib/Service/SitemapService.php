@@ -666,16 +666,12 @@ class SitemapService implements SitemapServiceInterface {
 	 *
 	 * @return array A DIWOO metadata array ready for XMLResponse
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	private function mapDiwooDocument(array $publication, array $file, array &$violations = []): array {
 		$created = ($publication['@self']['created'] ?? 'now');
 		$updated = ($publication['@self']['updated'] ?? 'now');
 		$published = ($file['published'] ?? $updated);
-		$owner = ($file['owner'] ?? $publication['@self']['owner'] ?? '');
 		$loc = ($file['downloadUrl'] ?? '');
 
 		$formatUri = 'http://publications.europa.eu/resource/authority/file-type/';
@@ -691,71 +687,120 @@ class SitemapService implements SitemapServiceInterface {
 			'loc' => $loc,
 			'lastmod' => date('Y-m-d H:i:s', strtotime($published)),
 			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
+			'diwoo:publisher' => $this->publisherElement(publication: $publication, file: $file),
 		];
-
-		// Publisher: bind @resource to a valid TOOI organisatie URI, or omit it.
-		$publisher = ['#text' => $owner];
-		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->resolveOrganisationTooiIdentifier(publication: $publication));
-		if ($orgUri !== null) {
-			$publisher['@resource'] = $orgUri;
-		} else {
+		if (isset($diwoo['diwoo:publisher']['@resource']) === false) {
 			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no TOOI identifier');
 		}
-
-		$diwoo['diwoo:publisher'] = $publisher;
 
 		$diwoo['diwoo:format'] = [
 			'@resource' => $formatUri,
 			'#text' => strtolower($file['extension']),
 		];
 
-		// Informatiecategorie: bind to an official TOOI category URI, or omit.
+		// Each optional axis is its element, or null with the violation that omits it.
+		$optionalAxes = [
+			'diwoo:classificatiecollectie' => [
+				$this->categoryElement(publication: $publication),
+				'informatiecategorie',
+				'category resolves to no member of the informatiecategorieen waardelijst',
+			],
+			'diwoo:documenthandelingen' => [
+				$this->handlingElement(publication: $publication, handlingTime: $handlingTime),
+				'soortHandeling',
+				'handling type does not resolve to a DiWoo value-list member',
+			],
+		];
+		foreach ($optionalAxes as $key => [$element, $axis, $reason]) {
+			if ($element !== null) {
+				$diwoo[$key] = $element;
+				continue;
+			}
+
+			$this->addViolation(violations: $violations, loc: $loc, axis: $axis, reason: $reason);
+		}
+
+		return ['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]];
+	}//end mapDiwooDocument()
+
+	/**
+	 * The publisher element: the owner as text, with `@resource` bound to a valid
+	 * TOOI organisatie URI, or without `@resource` when there is none.
+	 *
+	 * @param array $publication The publication as returned from ObjectService
+	 * @param array $file        The file metadata belonging to that publication
+	 *
+	 * @return array{'#text': mixed, '@resource'?: string} The publisher element.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function publisherElement(array $publication, array $file): array {
+		$publisher = ['#text' => ($file['owner'] ?? $publication['@self']['owner'] ?? '')];
+		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->resolveOrganisationTooiIdentifier(publication: $publication));
+		if ($orgUri !== null) {
+			$publisher['@resource'] = $orgUri;
+		}
+
+		return $publisher;
+	}//end publisherElement()
+
+	/**
+	 * The informatiecategorie element, bound to an official TOOI category URI,
+	 * or null when the publication's category resolves to none.
+	 *
+	 * @param array $publication The publication as returned from ObjectService
+	 *
+	 * @return array|null The classificatiecollectie element, or null.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function categoryElement(array $publication): ?array {
 		$categoryRaw = (
 			$publication['wooCategory'] ?? $publication['category']
 			?? $publication['tooiCategorieUri'] ?? $publication['tooiCategorieNaam'] ?? null
 		);
 		$category = $this->categories->resolveForDocument($this->stringOrNull(value: $categoryRaw));
-		if ($category !== null) {
-			$diwoo['diwoo:classificatiecollectie'] = [
-				'diwoo:informatiecategorieen' => [
-					'diwoo:informatiecategorie' => [
-						'#text' => $category['label'],
-						'@resource' => $category['uri'],
-					],
-				],
-			];
-		} else {
-			$this->addViolation(
-				violations: $violations,
-				loc: $loc,
-				axis: 'informatiecategorie',
-				reason: 'category resolves to no member of the informatiecategorieen waardelijst'
-			);
+		if ($category === null) {
+			return null;
 		}
 
-		// SoortHandeling: resolve through the DiWoo value list (default: ontvangst).
+		return [
+			'diwoo:informatiecategorieen' => [
+				'diwoo:informatiecategorie' => [
+					'#text' => $category['label'],
+					'@resource' => $category['uri'],
+				],
+			],
+		];
+	}//end categoryElement()
+
+	/**
+	 * The documenthandeling element, resolved through the DiWoo value list
+	 * (default: ontvangst), or null when the handling type resolves to none.
+	 *
+	 * @param array  $publication  The publication as returned from ObjectService
+	 * @param mixed  $handlingTime The moment the document was made public.
+	 *
+	 * @return array|null The documenthandelingen element, or null.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function handlingElement(array $publication, mixed $handlingTime): ?array {
 		$handling = $this->tooiVocabulary->resolveSoortHandeling($this->stringOrNull(value: $publication['soortHandeling'] ?? null));
-		if ($handling !== null) {
-			$diwoo['diwoo:documenthandelingen'] = [
-				'diwoo:documenthandeling' => [
-					'diwoo:soortHandeling' => [
-						'#text' => $handling['label'],
-						'@resource' => $handling['uri'],
-					],
-					'diwoo:atTime' => $handlingTime,
-				],
-			];
-		} else {
-			$this->addViolation(
-				violations: $violations,
-				loc: $loc,
-				axis: 'soortHandeling',
-				reason: 'handling type does not resolve to a DiWoo value-list member'
-			);
+		if ($handling === null) {
+			return null;
 		}
 
-		return ['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]];
-	}//end mapDiwooDocument()
+		return [
+			'diwoo:documenthandeling' => [
+				'diwoo:soortHandeling' => [
+					'#text' => $handling['label'],
+					'@resource' => $handling['uri'],
+				],
+				'diwoo:atTime' => $handlingTime,
+			],
+		];
+	}//end handlingElement()
 
 	/**
 	 * Return the value as a string, or null when it is not a non-empty string.
