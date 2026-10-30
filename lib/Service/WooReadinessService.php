@@ -487,7 +487,6 @@ class WooReadinessService implements WooReadinessServiceInterface {
 		}
 
 		return false;
-
 	}//end recordedVersionMismatch()
 
 	/**
