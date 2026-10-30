@@ -58,6 +58,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class ListingsController extends Controller {
+	use AnswersCrossOriginListRequests;
 	use ResolvesRegisterConfiguration;
 
 	/**
@@ -120,38 +121,6 @@ class ListingsController extends Controller {
 	private function getListingConfiguration(): array {
 		return $this->resolveRegisterConfiguration(registerKey: 'listing_register', schemaKey: 'listing_schema');
 	}//end getListingConfiguration()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
-	 * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
-	 *
-	 * @return string The header value to use for Access-Control-Allow-Origin.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
 
 	/**
 	 * Implements a preflighted CORS response for OPTIONS requests.

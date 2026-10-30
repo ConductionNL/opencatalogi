@@ -57,6 +57,7 @@ use Psr\Container\ContainerInterface;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
 class InspectionController extends Controller {
+	use AnswersCrossOriginRequests;
 	use ResolvesRegisterConfiguration;
 
 	/**
@@ -86,29 +87,6 @@ class InspectionController extends Controller {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value.
-	 *
-	 * @return string The header value.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(array_map('trim', explode(',', $configured)), static fn (string $e): bool => $e !== '')
-		);
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-
-	}//end resolveAllowedOrigin()
 
 	/**
 	 * Answer a CORS preflight.

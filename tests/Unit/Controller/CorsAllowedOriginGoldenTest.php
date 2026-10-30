@@ -40,6 +40,10 @@
  * @covers \OCA\OpenCatalogi\Controller\SchemaOrgController
  * @covers \OCA\OpenCatalogi\Controller\ServiceCatalogueController
  * @covers \OCA\OpenCatalogi\Controller\ThemesController
+ * @covers \OCA\OpenCatalogi\Controller\CorsAllowlist
+ * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginRequests
+ * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginListRequests
+ * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginReadRequests
  */
 
 declare(strict_types=1);
