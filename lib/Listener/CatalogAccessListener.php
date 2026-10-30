@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Listener;
 
 use OCA\OpenCatalogi\Contract\CatalogAccessServiceInterface;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
@@ -65,15 +66,17 @@ class CatalogAccessListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param CatalogAccessServiceInterface $access       Writes the rules.
-	 * @param IAppConfig           $config       App configuration.
-	 * @param IUserSession         $userSession  The session.
-	 * @param IGroupManager        $groupManager For the administrator check.
+	 * @param IAppConfig                    $config       App configuration.
+	 * @param IUserSession                  $userSession  The session.
+	 * @param IGroupManager                 $groupManager For the administrator check.
+	 * @param CatalogiServiceInterface      $catalogi     Resolves schema slugs and UUIDs the way the save will.
 	 */
 	public function __construct(
 		private readonly CatalogAccessServiceInterface $access,
 		private readonly IAppConfig $config,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
+		private readonly CatalogiServiceInterface $catalogi,
 	) {
 
 	}//end __construct()
@@ -178,7 +181,13 @@ class CatalogAccessListener implements IEventListener {
 	 * @return bool True when it does, or when the catalogues cannot be read.
 	 */
 	private function touchesARestrictedSchema(array $before, array $after): bool {
-		$touched = array_merge($this->access->schemaIdsOf(catalog: $before), $this->access->schemaIdsOf(catalog: $after));
+		$beforeIds = $this->resolvedSchemaIds(catalog: $before);
+		$afterIds = $this->resolvedSchemaIds(catalog: $after);
+		if ($beforeIds === null || $afterIds === null) {
+			return true;
+		}
+
+		$touched = array_merge($beforeIds, $afterIds);
 		if ($touched === []) {
 			return false;
 		}
@@ -191,6 +200,31 @@ class CatalogAccessListener implements IEventListener {
 		return array_intersect($touched, $restricted) !== [];
 
 	}//end touchesARestrictedSchema()
+
+	/**
+	 * The schema ids a catalogue covers once its slugs and UUIDs are resolved.
+	 *
+	 * CatalogSchemaEventListener rewrites slug and UUID entries to numeric ids on
+	 * the same save, so the guard resolves them the same way before deciding.
+	 *
+	 * @param array<string, mixed> $catalog The catalogue.
+	 *
+	 * @return array<int, int>|null The ids; null when an entry cannot be resolved.
+	 */
+	private function resolvedSchemaIds(array $catalog): ?array {
+		if (is_array($catalog['schemas'] ?? null) === false || $catalog['schemas'] === []) {
+			return [];
+		}
+
+		try {
+			$rewritten = $this->catalogi->computeRewrittenRegistersAndSchemas($catalog);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		return $this->access->schemaIdsOf(catalog: array_merge($catalog, $rewritten));
+
+	}//end resolvedSchemaIds()
 
 	/**
 	 * A catalogue's scope in one comparable shape: its schemas and its filters.

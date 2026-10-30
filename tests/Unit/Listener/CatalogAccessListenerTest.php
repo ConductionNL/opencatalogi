@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Unit\Listener;
 
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Listener\CatalogAccessListener;
 use OCA\OpenCatalogi\Service\CatalogAccessService;
 use OCA\OpenRegister\Db\ObjectEntity;
@@ -41,6 +42,8 @@ class CatalogAccessListenerTest extends TestCase {
 
 	private CatalogAccessListener $listener;
 
+	private CatalogiServiceInterface|MockObject $catalogi;
+
 	protected function setUp(): void {
 		$this->access = $this->getMockBuilder(CatalogAccessService::class)
 			->disableOriginalConstructor()
@@ -52,7 +55,8 @@ class CatalogAccessListenerTest extends TestCase {
 		);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->groups = $this->createMock(IGroupManager::class);
-		$this->listener = new CatalogAccessListener($this->access, $config, $this->session, $this->groups);
+		$this->catalogi = $this->createMock(CatalogiServiceInterface::class);
+		$this->listener = new CatalogAccessListener($this->access, $config, $this->session, $this->groups, $this->catalogi);
 
 	}//end setUp()
 
@@ -248,6 +252,54 @@ class CatalogAccessListenerTest extends TestCase {
 		$this->assertFalse($event->isPropagationStopped());
 
 	}//end testAnAdministratorMayChangeTheScopeOfACatalogueOnARestrictedSchema()
+
+	public function testANonAdministratorCannotCoverARestrictedSchemaBySlug(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$this->catalogi->method('computeRewrittenRegistersAndSchemas')->willReturn(['schemas' => [173]]);
+		$event = new ObjectCreatingEvent($this->catalog(['title' => 'Alles open', 'schemas' => ['publicatie']]));
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testANonAdministratorCannotCoverARestrictedSchemaBySlug()
+
+	public function testANonAdministratorCannotCoverARestrictedSchemaByUuid(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$this->catalogi->method('computeRewrittenRegistersAndSchemas')->willReturn(['schemas' => [173]]);
+		$event = new ObjectCreatingEvent($this->catalog(['schemas' => ['4f1c9a2e-8a43-4e57-9d4e-2b0c6a1f7e10']]));
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testANonAdministratorCannotCoverARestrictedSchemaByUuid()
+
+	public function testAnUnresolvableSchemaEntryIsRefused(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$this->catalogi->method('computeRewrittenRegistersAndSchemas')->willThrowException(new \RuntimeException('Schema x not found.'));
+		$event = new ObjectCreatingEvent($this->catalog(['schemas' => ['x']]));
+
+		$this->listener->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testAnUnresolvableSchemaEntryIsRefused()
+
+	public function testANonAdministratorMayCoverAnUnrestrictedSchemaBySlug(): void {
+		$this->signIn(admin: false);
+		$this->access->method('restrictedSchemaIds')->willReturn([173]);
+		$this->catalogi->method('computeRewrittenRegistersAndSchemas')->willReturn(['schemas' => [190]]);
+		$event = new ObjectCreatingEvent($this->catalog(['schemas' => ['nieuws']]));
+
+		$this->listener->handle($event);
+
+		$this->assertFalse($event->isPropagationStopped());
+
+	}//end testANonAdministratorMayCoverAnUnrestrictedSchemaBySlug()
 
 	public function testASavedCatalogueRecomputesItsOldAndNewSchemasInOneCall(): void {
 		$recomputed = [];
