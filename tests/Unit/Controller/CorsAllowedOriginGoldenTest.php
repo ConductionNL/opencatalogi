@@ -8,9 +8,9 @@
  * Origin, and compares the origin it names with the expected table: the
  * wildcard default, blank and padded settings, allowlisted and unlisted
  * callers, empty entries, case-sensitive matching and a missing app config.
- * Every controller ignores blank allowlist entries. The list controllers
- * also read the caller from the server's HTTP_ORIGIN when the Origin header
- * is empty.
+ * Every controller ignores blank allowlist entries and reads the caller
+ * from the server's HTTP_ORIGIN when the Origin header is empty, through
+ * the one ResolvesAllowedOrigin trait.
  * The GET-only read controllers also pin their CORS header set.
  *
  * @category Test
@@ -45,6 +45,7 @@
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginRequests
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginListRequests
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginReadRequests
+ * @covers \OCA\OpenCatalogi\Controller\ResolvesAllowedOrigin
  */
 
 declare(strict_types=1);
@@ -96,18 +97,6 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		ThemesController::class,
 	];
 
-	/**
-	 * Controllers that fall back to the server's HTTP_ORIGIN.
-	 */
-	private const LIST_RULE = [
-		CatalogiController::class,
-		DirectoryController::class,
-		GlossaryController::class,
-		ListingsController::class,
-		PublicationsController::class,
-		ThemesController::class,
-	];
-
 	/** Controllers whose app config is optional. */
 	private const OPTIONAL_CONFIG = [
 		ApiDocumentationController::class,
@@ -136,9 +125,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 	/**
 	 * Configured allowlist, caller origin and the expected header value.
 	 *
-	 * The fourth value, when present, is what the list controllers answer.
-	 *
-	 * @return array<string, array{0: string, 1: string, 2: string, 3?: string}>
+	 * @return array<string, array{0: string, 1: string, 2: string}>
 	 */
 	public static function origins(): array {
 		$pair = 'https://a.nl,https://b.nl';
@@ -172,17 +159,16 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 	 * @param string $configured The cors_allowed_origins setting.
 	 * @param string $origin The caller's Origin header.
 	 * @param string $expected The expected Access-Control-Allow-Origin value.
-	 * @param string $listRule The list controllers' value, when it differs.
 	 *
 	 * @return void
 	 */
 	#[DataProvider('origins')]
-	public function testEveryControllerNamesTheSameOrigin(string $configured, string $origin, string $expected, ?string $listRule = null): void {
+	public function testEveryControllerNamesTheSameOrigin(string $configured, string $origin, string $expected): void {
 		$want = [];
 		$got = [];
 		foreach (self::CONTROLLERS as $class) {
 			$controller = $this->build($class, $this->config($configured), $origin);
-			$want[$class] = (in_array($class, self::LIST_RULE, true) === true ? ($listRule ?? $expected) : $expected);
+			$want[$class] = $expected;
 			$got[$class] = (new ReflectionMethod($controller, 'resolveAllowedOrigin'))->invoke($controller);
 		}
 
@@ -191,7 +177,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 	}//end testEveryControllerNamesTheSameOrigin()
 
 	/**
-	 * Only the list controllers read the caller from the server's HTTP_ORIGIN.
+	 * Every controller reads the caller from the server's HTTP_ORIGIN when the Origin header is empty.
 	 *
 	 * @return void
 	 */
@@ -200,7 +186,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		$got = [];
 		foreach (self::CONTROLLERS as $class) {
 			$controller = $this->build($class, $this->config('https://a.nl,https://b.nl'), '', 'https://b.nl');
-			$want[$class] = (in_array($class, self::LIST_RULE, true) === true ? 'https://b.nl' : 'https://a.nl');
+			$want[$class] = 'https://b.nl';
 			$got[$class] = (new ReflectionMethod($controller, 'resolveAllowedOrigin'))->invoke($controller);
 		}
 

@@ -34,17 +34,16 @@ use OCP\AppFramework\Http\Response;
  * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
  */
 trait AnswersCrossOriginReadRequests {
+	use ResolvesAllowedOrigin;
+
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
+	 * The `cors_allowed_origins` setting; '*' without an app config.
 	 *
-	 * @return string The header value.
-	 *
-	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 * @return string The setting.
 	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = ($this->appConfig?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
-		return (new CorsAllowlist($configured))->allowedFor($this->request->getHeader('Origin'));
-	}//end resolveAllowedOrigin()
+	private function allowedOriginsSetting(): string {
+		return ($this->appConfig?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+	}//end allowedOriginsSetting()
 
 	/**
 	 * Build the GET-only public CORS header set.

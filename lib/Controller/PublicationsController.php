@@ -70,6 +70,7 @@ use RuntimeException;
  */
 class PublicationsController extends Controller {
 	use AnswersCacheably;
+	use ResolvesAllowedOrigin;
 
 
 	/**
@@ -255,34 +256,13 @@ class PublicationsController extends Controller {
 	}//end countedView()
 
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
+	 * The `cors_allowed_origins` setting for ResolvesAllowedOrigin; '*' without an app config.
 	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
-	 * — the caller's Origin is NEVER echoed back unless it is explicitly listed in the
-	 * configured allowlist. This prevents arbitrary-origin reflection on public endpoints
-	 * (#735). When credentials are not allowed (as on these public read endpoints) a
-	 * static '*' is the safest default; only operators that need credentialed CORS
-	 * should configure a strict allowlist.
-	 *
-	 * @return string The header value to use for Access-Control-Allow-Origin.
-	 *
-	 * @spec exclude CORS-policy plumbing extracted to fail-closed on Origin reflection;
-	 *       reads an IAppConfig allowlist and never echoes an unvetted caller Origin.
+	 * @return string The setting.
 	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = $this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*');
-		}
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		return (new CorsAllowlist($configured))->allowedFor($callerOrigin);
-	}//end resolveAllowedOrigin()
+	private function allowedOriginsSetting(): string {
+		return ($this->appConfig?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+	}//end allowedOriginsSetting()
 
 	/**
 	 * Add standard CORS headers to a response.
