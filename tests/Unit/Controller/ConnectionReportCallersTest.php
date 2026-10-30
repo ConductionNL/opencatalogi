@@ -63,6 +63,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
  * @uses \OCA\OpenCatalogi\Service\Broadcast\BroadcastResult
  * @uses \OCA\OpenCatalogi\Service\Federation\FederationHostPolicy
+ * @uses \OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard
  */
 class ConnectionReportCallersTest extends TestCase {
 
