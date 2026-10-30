@@ -47,6 +47,8 @@ interface CatalogAccessServiceInterface {
 	 *
 	 * @return int How many schemas were written.
 	 *
+	 * @contract-shift internal-only — implemented only by OpenCatalogi's CatalogAccessService; not shipped in hydra-gates/contracts
+	 *
 	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
 	 */
 	public function recomputeMany(array $schemaIds): int;
@@ -78,6 +80,8 @@ interface CatalogAccessServiceInterface {
 	 * Every schema id a restricted catalogue covers.
 	 *
 	 * @return array<int, int>|null The ids; null when the catalogues cannot be read.
+	 *
+	 * @contract-shift internal-only — implemented only by OpenCatalogi's CatalogAccessService; not shipped in hydra-gates/contracts
 	 *
 	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-staff-access-becomes-openregister-rules-on-the-covered-schemas-req-csa-002
 	 */
