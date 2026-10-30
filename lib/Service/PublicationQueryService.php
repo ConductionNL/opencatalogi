@@ -1935,11 +1935,10 @@ class PublicationQueryService implements PublicationQueryServiceInterface
      * Slug-based fallback lookup for legacy document seeds that carry
      * `_relations['publication.slug'] = <slug>` rather than a UUID.
      *
-     * Runs a targeted `searchObjectsPaginated` on the publication schema with
-     * `slug` as a match filter and the same schema-level RBAC gating as the UUID
-     * fast-path — for anonymous callers, a non-empty result guarantees the
-     * linked publication is publicly visible. Returns null on miss (unknown
-     * slug, non-public, archived) so the caller falls through to the
+     * Scans the publication schema for the slug with the same schema-level RBAC
+     * gating as the UUID fast-path — for anonymous callers, a non-empty result
+     * guarantees the linked publication is publicly visible. Returns null on miss
+     * (unknown slug, non-public, archived) so the caller falls through to the
      * `_relations_contains` path. The read runs as an anonymous caller for every
      * session (WOO-578).
      *
@@ -1950,34 +1949,63 @@ class PublicationQueryService implements PublicationQueryServiceInterface
      *
      * @return array|null The public-visible publication summary + flag, or null on miss.
      *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @spec openspec/specs/search/spec.md
      */
     private function tryPublicationSlugLookup(string $publicationSlug, PublicSearchAssembly $run): ?array
     {
-        $objectService       = $run->objectService;
-        $registerId          = $run->refinementRegisterId;
-        $publicationSchemaId = $run->publicationSchemaId;
+        $rows = $this->scanPublicationSlugs(publicationSlug: $publicationSlug, run: $run);
+        if ($rows === null) {
+            return null;
+        }
 
-        // ObjectService::searchObjectsPaginated normalises the query differently
-        // for `@self.<field>` filters than the HTTP query parser does, so we scan
-        // for a slug match client-side instead of relying on a pushdown filter.
-        // Scope is `_schemas => [$publicationSchemaId]` (+ optional `_register` when
-        // the outer catalog scope collapses to one register) — this is O(500) per
-        // unique slug scanned, capped by `_limit: 500`. Slug collisions across
-        // registers on a multi-register scope are possible. The caller memoises
-        // the result per slug for the duration of the request (see $slugCache in
-        // the row loop), so N documents sharing one slug pay the scan cost once.
-        // Callers holding 500+ publications on the publication schema will see
-        // legacy slugs beyond row 500 fail to resolve — such fleets should migrate
-        // away from the denormalised `publication.slug` shape (WOO-506 legacy).
+        $firstMatch = $this->firstSlugMatch(publicationSlug: $publicationSlug, rows: $rows);
+        if ($firstMatch === null || ($firstMatch['status'] ?? null) === 'archived') {
+            return null;
+        }
+
+        return [
+            'summary' => [
+                'id'    => (string) ($firstMatch['@self']['id'] ?? ($firstMatch['id'] ?? '')),
+                'slug'  => (string) $publicationSlug,
+                'title' => (string) ($firstMatch['title'] ?? ''),
+            ],
+            'public' => true,
+        ];
+
+    }//end tryPublicationSlugLookup()
+
+    /**
+     * The publication rows a slug scan returns, read as an anonymous caller.
+     *
+     * ObjectService::searchObjectsPaginated normalises the query differently
+     * for `@self.<field>` filters than the HTTP query parser does, so the slug
+     * match runs client-side instead of as a pushdown filter. Scope is
+     * `_schemas => [$publicationSchemaId]` (+ `_register` when the outer catalog
+     * scope collapses to one register), capped by `_limit: 500`. Slug collisions
+     * across registers on a multi-register scope are possible. The caller
+     * memoises the result per slug for the request (see $slugCache), so N
+     * documents sharing one slug pay the scan cost once. Legacy slugs beyond row
+     * 500 do not resolve; such fleets should migrate away from the denormalised
+     * `publication.slug` shape (WOO-506 legacy).
+     *
+     * @param string               $publicationSlug The linked publication's slug, for the log.
+     * @param PublicSearchAssembly $run             The search being assembled.
+     *
+     * @return mixed The scanned rows, or null when the scan threw.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function scanPublicationSlugs(string $publicationSlug, PublicSearchAssembly $run): mixed
+    {
+        $objectService = $run->objectService;
         $slugScanQuery = [
-            '_schemas' => [$publicationSchemaId],
+            '_schemas' => [$run->publicationSchemaId],
             '_limit'   => 500,
         ];
-        if ($registerId !== null) {
-            $slugScanQuery['_register'] = $registerId;
+        if ($run->refinementRegisterId !== null) {
+            $slugScanQuery['_register'] = $run->refinementRegisterId;
         }
+
         try {
             // Same anonymous evaluation as the main search (WOO-578).
             $matches = $this->evaluateAsAnonymous(
@@ -1996,50 +2024,51 @@ class PublicationQueryService implements PublicationQueryServiceInterface
             return null;
         }
 
-        $rows = ($matches['results'] ?? []);
+        return ($matches['results'] ?? []);
+
+    }//end scanPublicationSlugs()
+
+    /**
+     * The first scanned publication whose `@self.slug` (or else `slug`) is the given slug.
+     *
+     * OR does not SQL-UNIQUE `slug` at the schema layer, so a collision is
+     * logged at debug (parity with N4b in the `_relations_contains` path; debug
+     * keeps log volume sane on hot public endpoints) and the first row wins.
+     *
+     * @param string $publicationSlug The linked publication's slug.
+     * @param mixed  $rows            The scanned rows, arrays or serialisable objects.
+     *
+     * @return array|null The first match as an array, or null.
+     *
+     * @spec openspec/specs/search/spec.md
+     */
+    private function firstSlugMatch(string $publicationSlug, mixed $rows): ?array
+    {
         $firstMatch = null;
         $matchCount = 0;
         foreach ($rows as $publication) {
             if (is_array($publication) === false) {
                 $publication = $publication->jsonSerialize();
             }
-            $candidateSlug = ($publication['@self']['slug'] ?? ($publication['slug'] ?? ''));
-            if ($candidateSlug !== $publicationSlug) {
+
+            if (($publication['@self']['slug'] ?? ($publication['slug'] ?? '')) !== $publicationSlug) {
                 continue;
             }
+
             $matchCount++;
-            if ($firstMatch === null) {
-                $firstMatch = $publication;
-            }
+            $firstMatch = ($firstMatch ?? $publication);
         }
 
         if ($matchCount > 1) {
-            // Slug collision: OR does not SQL-UNIQUE `slug` at the schema layer.
-            // Parity with N4b (multi-linked documents in the `_relations_contains`
-            // path) — debug (not info) keeps log volume sane on hot public endpoints.
             $this->logger?->debug(
                 'WOO-536: publication slug matched multiple rows; using first-scanned',
                 ['slug' => $publicationSlug, 'count' => $matchCount]
             );
         }
 
-        if ($firstMatch === null) {
-            return null;
-        }
-        if (($firstMatch['status'] ?? null) === 'archived') {
-            return null;
-        }
+        return $firstMatch;
 
-        return [
-            'summary' => [
-                'id'    => (string) ($firstMatch['@self']['id'] ?? ($firstMatch['id'] ?? '')),
-                'slug'  => (string) $publicationSlug,
-                'title' => (string) ($firstMatch['title'] ?? ''),
-            ],
-            'public' => true,
-        ];
-
-    }//end tryPublicationSlugLookup()
+    }//end firstSlugMatch()
 
     /**
      * Find the register and schema IDs for an object UUID within a constrained scope.
