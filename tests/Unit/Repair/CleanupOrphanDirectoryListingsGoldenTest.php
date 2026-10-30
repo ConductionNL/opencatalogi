@@ -38,6 +38,8 @@ use Psr\Container\ContainerInterface;
  * Golden test for CleanupOrphanDirectoryListings.
  *
  * @covers \OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings
+ * @covers \OCA\OpenCatalogi\Repair\ListingTable
+ * @covers \OCA\OpenCatalogi\Repair\OrphanListingSweep
  */
 class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
 {
