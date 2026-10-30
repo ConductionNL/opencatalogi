@@ -36,12 +36,12 @@ final class CommentPeriodRequest {
 	/**
 	 * Constructor.
 	 *
-	 * @param array<string, mixed> $publication         The publication going out for comment.
-	 * @param int                  $termDays            How many days the period runs.
-	 * @param string               $legalRemedy         The remedy open to a reader.
-	 * @param string               $announcementUrl     The official announcement of the period.
-	 * @param bool                 $automaticWithdrawal Whether the close withdraws the publication.
-	 * @param string               $openedBy            Who opened it.
+	 * @param array<string, mixed> $publication The publication going out for comment.
+	 * @param int $termDays How many days the period runs.
+	 * @param string $legalRemedy The remedy open to a reader.
+	 * @param string $announcementUrl The official announcement of the period.
+	 * @param bool $automaticWithdrawal Whether the close withdraws the publication.
+	 * @param string $openedBy Who opened it.
 	 */
 	public function __construct(
 		public readonly array $publication,
