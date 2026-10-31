@@ -105,6 +105,11 @@ class SchemaOrgController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
+	 * @no-admin-idor-exempt the catalog is resolved by CatalogiService::getCatalogBySlug()
+	 *   (OpenRegister searchObjects, RBAC on), anonymous callers see only schemas with read rules
+	 *   (PublicationQueryService::applyCatalogReadRuleGuard()), and SchemaOrgService lists the
+	 *   datasets with searchObjectsPaginated() RBAC on, so only publications the caller may read appear.
+	 *
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
