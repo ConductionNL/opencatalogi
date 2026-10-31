@@ -206,7 +206,11 @@ function unknownFailure() {
  * @param {Function|null} [options.onProgress] - Called after each object
  * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
  */
-async function applyToEach(store, objects, { verb, act, idOf = objectIdOf, onProgress = null }) {
+async function applyToEach(
+	store,
+	objects,
+	{ verb, act, idOf = objectIdOf, onProgress = null },
+) {
 	store.clearAllObjectErrors()
 
 	const results = await Promise.allSettled(
@@ -2678,7 +2682,8 @@ export const useObjectStore = defineStore('object', {
 		async massDeleteObjects(objects, onProgress = null) {
 			return applyToEach(this, objects, {
 				verb: 'delete',
-				act: (obj) => this.deleteObject(typeof obj === 'string' ? { id: obj } : obj),
+				act: (obj) =>
+					this.deleteObject(typeof obj === 'string' ? { id: obj } : obj),
 				idOf: (obj) => (typeof obj === 'string' ? obj : objectIdOf(obj)),
 				onProgress,
 			})
