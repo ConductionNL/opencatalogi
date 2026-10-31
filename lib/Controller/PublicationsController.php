@@ -66,6 +66,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.TooManyMethods) The public read helpers stay private to this controller.
  *
  * @spec openspec/specs/publications/spec.md
  */
@@ -725,10 +726,6 @@ class PublicationsController extends Controller {
 	 * @return JSONResponse JSON response containing the requested publication
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/publications/spec.md
 	 * @spec openspec/specs/publications/spec.md#requirement-slug-resolution-must-be-backwards-compatible-pub-020
 	 */
@@ -737,18 +734,9 @@ class PublicationsController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string $catalogSlug, string $id): JSONResponse {
 		try {
-			// Get the catalog from cache or database.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-
 			if ($catalog === null) {
-				return new JSONResponse(
-					[
-						'error' => $this->l10n->t('Catalog not found'),
-						'message' => $this->l10n->t('The catalog "%s" does not exist.', [$catalogSlug]),
-						'catalogSlug' => $catalogSlug,
-					],
-					404
-				);
+				return $this->catalogNotFound(catalogSlug: $catalogSlug);
 			}
 
 			// WOO-580: keep a schema without `authorization.read` rules out of the
@@ -760,292 +748,432 @@ class PublicationsController extends Controller {
 			// Guarding the catalog covers this route and the scope it hands to the
 			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
-
-			// Get ObjectService directly.
-			$objectService = $this->getObjectService();
-
-			// Build extend parameters with controller-layer allowlist + bounds (#732).
-			// Public extends are restricted to '@self.'-prefixed paths (mirrors
-			// PublicationService::show()) AND a max of 5 entries to prevent N+1
-			// amplification through unbounded extends on anonymous endpoints.
-			$requestParams = $this->request->getParams();
-			$extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
-			// Normalize to array and handle comma-separated strings.
-			if (is_string($extend) === true) {
-				$extend = array_map('trim', explode(',', $extend));
-			} elseif (is_array($extend) === false) {
-				$extend = [$extend];
-			}
-
-			$extend = $this->sanitizePublicExtend(extend: $extend);
-
-			// Resolve catalog scope (parse JSON strings if needed).
-			$catalogRegisters = $this->normaliseIdList(raw: $catalog['registers'] ?? []);
-			$catalogSchemas = $this->normaliseIdList(raw: $catalog['schemas'] ?? []);
-
-			// Debug logging.
-			$this->logger->debug(
-				'[PublicationsController::show] Attempting to find publication',
-				[
-					'id' => $id,
-					'catalogSlug' => $catalogSlug,
-					'catalog' => $catalog,
-					'extend' => $extend,
-					'rbac' => false,
-					'multi' => false,
-				]
+			$query = new CatalogSlugQuery(
+				slug: $id,
+				catalogSlug: $catalogSlug,
+				registers: $this->normaliseIdList(raw: $catalog['registers'] ?? []),
+				schemas: $this->normaliseIdList(raw: $catalog['schemas'] ?? [])
 			);
 
-			// DIRECT OBJECT FETCH: Use searchObjects with UUID filter instead of find()
-			// because find() has a `deleted IS NULL` condition that fails on objects
-			// with `deleted: []` (empty array, not NULL).
-			$object = null;
-			$objects = [];
-
-			// Fast path: try catalog register and schema combinations first.
-			if (empty($catalogRegisters) === false && empty($catalogSchemas) === false) {
-				foreach ($catalogRegisters as $reg) {
-					foreach ($catalogSchemas as $sch) {
-						$searchQuery = [
-							'@self' => [
-								'uuid' => $id,
-								'register' => $reg,
-								'schema' => $sch,
-							],
-						];
-
-						$objects = $objectService->searchObjects(
-							query: $searchQuery,
-							_rbac: true,
-							_multitenancy: false,
-						);
-
-						if (empty($objects) === false) {
-							$object = $objects[0];
-							break 2;
-						}
-					}
-				}//end foreach
-			}//end if
-
-			// Fallback: locate the object's register/schema, but constrained to the
-			// catalog's configured registers/schemas only (#734). Without this scope
-			// findObjectLocation would scan every magic table on the platform and would
-			// return objects outside this catalog's namespace (#733). When the catalog
-			// has no configured scope (e.g. unscoped catalog), the fallback is skipped
-			// entirely — there is no safe namespace to search.
-			if ($object === null
-				&& empty($catalogRegisters) === false
-				&& empty($catalogSchemas) === false
-			) {
-				$location = $this->queryService->findObjectLocation(
-					uuid: $id,
-					allowedRegisters: $catalogRegisters,
-					allowedSchemas: $catalogSchemas
-				);
-
-				if ($location !== null) {
-					$searchQuery = [
-						'@self' => [
-							'uuid' => $id,
-							'register' => $location['register'],
-							'schema' => $location['schema'],
-						],
-					];
-
-					$objects = $objectService->searchObjects(
-						query: $searchQuery,
-						_rbac: true,
-						_multitenancy: false,
-					);
-
-					if (empty($objects) === false) {
-						$object = $objects[0];
-					}
-				}
-			}//end if
-
-			// Slug route (#1592): only when the UUID lookup above found nothing, so
-			// a UUID URL is answered exactly as before. Same catalogue scope and the
-			// same read rules as the UUID path.
-			$publicationId = $id;
-			if ($object === null
-				&& empty($catalogRegisters) === false
-				&& empty($catalogSchemas) === false
-			) {
-				$object = $this->findBySlugInCatalogScope(
-					objectService: $objectService,
-					query: new CatalogSlugQuery(
-						slug: $id,
-						catalogSlug: $catalogSlug,
-						registers: $catalogRegisters,
-						schemas: $catalogSchemas
-					)
-				);
-
-				// Everything downstream (withheld list, view counter) keys on the
-				// publication UUID, not on the slug the URL carried.
-				if ($object !== null) {
-					$publicationId = (string)$object->getUuid();
-				}
-			}
-
-			if ($object === null) {
-				$this->logger->warning(
-					'[PublicationsController::show] Object not found in any register/schema',
-					[
-						'id' => $id,
-						'catalogSlug' => $catalogSlug,
-					]
-				);
-				return new JSONResponse(
-					[
-						'error' => $this->l10n->t('Publication not found'),
-						'message' => $this->l10n->t(
-							'The publication with ID "%s" does not exist or is not accessible.',
-							[$id]
-						),
-						'id' => $id,
-						'catalogSlug' => $catalogSlug,
-					],
-					404
-				);
-			}//end if
-
-			$this->logger->debug(
-				'[PublicationsController::show] Object found successfully',
-				[
-					'id' => $id,
-					'objectId' => $object->getId(),
-					'schema' => $object->getSchema(),
-					'register' => $object->getRegister(),
-				]
-			);
-
-			// Visibility is governed by OpenRegister RBAC: the searches above run with
-			// _rbac: true, so an anonymous caller never receives an unpublished publication
-			// (the publication schema grants public read only when publicationDate <= $now) —
-			// such a request resolves to $object === null and 404s above. No extra check needed.
-			// Catalog-membership validation (#733): the resolved object's
-			// register/schema MUST belong to this catalog's configured scope. Without
-			// this check `/api/{anyCatalogSlug}/{anyUuid}` would return objects from
-			// wholly unrelated catalogs, enabling cross-catalog enumeration. When the
-			// catalog has no configured scope we treat the object as not found —
-			// unscoped catalogs cannot disclose individual objects.
-			if ($this->objectMatchesCatalogScope(
-				object: $object,
-				allowedRegisters: $catalogRegisters,
-				allowedSchemas: $catalogSchemas
-			) === false
-			) {
-				$this->logger->warning(
-					'[PublicationsController::show] Object outside catalog scope',
-					[
-						'id' => $id,
-						'catalogSlug' => $catalogSlug,
-						'objectRegister' => $object->getRegister(),
-						'objectSchema' => $object->getSchema(),
-					]
-				);
-				return new JSONResponse(
-					[
-						'error' => $this->l10n->t('Publication not found'),
-						'message' => $this->l10n->t(
-							'The publication with ID "%s" does not exist or is not accessible.',
-							[$id]
-						),
-						'id' => $id,
-						'catalogSlug' => $catalogSlug,
-					],
-					404
-				);
-			}//end if
-
-			// Render the object with the sanitised extend list. The '@self.'-prefix
-			// allowlist plus max-entries cap has already been applied above (#732).
-			$result = $objectService->renderEntity(
-				entity: $object,
-				_extend: $extend,
-				depth: 0,
-				filter: [],
-				fields: [],
-				unset: [],
-				_rbac: true,
-				_multitenancy: false,
-			);
-
-			// Content-negotiate a schema.org JSON-LD representation (SDD-001/SDD-003):
-			// when the caller asks for application/ld+json (or ?format=schema / a
-			// .jsonld suffix) return the crawler-facing schema.org node instead of the
-			// internal object envelope. Visibility has already been enforced above, so
-			// a non-visible publication never reaches this branch.
-			if ($this->wantsSchemaOrg() === true) {
-				$node = $this->getSchemaOrgService()->buildPublicationNode(
-					object: $result,
+			return $this->showPublication(
+				read: new PublicationRead(
 					catalog: $catalog,
-					catalogSlug: $catalogSlug
-				);
-				$response = new JSONResponse($node, 200);
-				$response->addHeader('Content-Type', 'application/ld+json');
-				$this->addCorsHeaders(response: $response);
-				return $this->countedView(response: $response, publicationId: $publicationId, catalogSlug: $catalogSlug);
-			}
+					query: $query,
+					objectService: $this->getObjectService(),
+					extend: $this->publicExtendFromRequest()
+				)
+			);
+		} catch (\Exception $e) {
+			return $this->showFailed(exception: $e, context: ['id' => $id, 'catalogSlug' => $catalogSlug]);
+		}//end try
 
-			// REQ-PDP-004 / REQ-WDW-003: a catalogue that opted in shows what was
-			// withheld and why. Read only for such a catalogue, so every other
-			// public read stays exactly as it was.
-			if (($catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
-				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
-					response: $result,
-					catalog: $catalog,
-					publicationId: $publicationId
-				);
-			}
+	}//end show()
 
-			// Add CORS headers for public API access.
-			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders(response: $response);
+	/**
+	 * The 404 answer for a catalogue slug that resolves to no catalogue.
+	 *
+	 * @param string $catalogSlug The slug from the URL.
+	 *
+	 * @return JSONResponse The 404 answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function catalogNotFound(string $catalogSlug): JSONResponse {
+		return new JSONResponse(
+			[
+				'error' => $this->l10n->t('Catalog not found'),
+				'message' => $this->l10n->t('The catalog "%s" does not exist.', [$catalogSlug]),
+				'catalogSlug' => $catalogSlug,
+			],
+			404
+		);
 
-			// ANA-001: count this successful public detail view, fire-and-forget.
-			// HEAD requests, non-2xx, and back-office reads never reach this seam
-			// (this is the public detail path that already 404'd above on misses).
-			return $this->countedView(response: $response, publicationId: $publicationId, catalogSlug: $catalogSlug);
-		} catch (DoesNotExistException $exception) {
+	}//end catalogNotFound()
+
+	/**
+	 * The 404 answer for a publication that is missing or not accessible in the catalogue.
+	 *
+	 * @param CatalogSlugQuery $query The id from the URL and the catalogue.
+	 *
+	 * @return JSONResponse The 404 answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function publicationNotAccessible(CatalogSlugQuery $query): JSONResponse {
+		return new JSONResponse(
+			[
+				'error' => $this->l10n->t('Publication not found'),
+				'message' => $this->l10n->t(
+					'The publication with ID "%s" does not exist or is not accessible.',
+					[$query->slug]
+				),
+				'id' => $query->slug,
+				'catalogSlug' => $query->catalogSlug,
+			],
+			404
+		);
+
+	}//end publicationNotAccessible()
+
+	/**
+	 * The answer for a detail read that threw: a 404 for a missing row, else a logged 500.
+	 *
+	 * The 500 body is generic; the exception details go to the server log only (#735).
+	 *
+	 * @param \Exception $exception The exception.
+	 * @param array{id: string, catalogSlug: string} $context The id and the catalogue slug from the URL.
+	 *
+	 * @return JSONResponse The 404 or 500 answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function showFailed(\Exception $exception, array $context): JSONResponse {
+		if ($exception instanceof DoesNotExistException) {
 			return new JSONResponse(
 				[
 					'error' => $this->l10n->t('Publication not found'),
 					'message' => $this->l10n->t(
 						'The publication with ID "%s" does not exist in the database.',
-						[$id]
+						[$context['id']]
 					),
-					'id' => $id,
-					'catalogSlug' => $catalogSlug,
+					'id' => $context['id'],
+					'catalogSlug' => $context['catalogSlug'],
 					'exception' => 'DoesNotExistException',
 				],
 				404
 			);
-		} catch (\Exception $e) {
-			// Public endpoint — log exception details server-side only and return a
-			// generic error body to the caller (#735); never leak raw $e->getMessage().
-			$this->logger->error(
-				'[PublicationsController::show] Failed to retrieve publication',
-				[
-					'id' => $id,
-					'catalogSlug' => $catalogSlug,
-					'error' => $e->getMessage(),
-					'trace' => $e->getTraceAsString(),
-				]
-			);
-			return new JSONResponse(
-				[
-					'error' => $this->l10n->t('Internal server error'),
-					'hint' => $this->l10n->t('Check server logs for more details.'),
-				],
-				500
-			);
-		}//end try
+		}
 
-	}//end show()
+		$this->logger->error(
+			'[PublicationsController::show] Failed to retrieve publication',
+			$context + ['error' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]
+		);
+		return new JSONResponse(
+			[
+				'error' => $this->l10n->t('Internal server error'),
+				'hint' => $this->l10n->t('Check server logs for more details.'),
+			],
+			500
+		);
+
+	}//end showFailed()
+
+	/**
+	 * The sanitised public extend list from the `extend` or `_extend` request parameter.
+	 *
+	 * A comma-separated string is split and any other non-list value is wrapped,
+	 * then the '@self.' allowlist and the breadth cap apply (#732).
+	 *
+	 * @return array<string> The sanitised extend list.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function publicExtendFromRequest(): array {
+		$requestParams = $this->request->getParams();
+		$extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
+		if (is_string($extend) === true) {
+			$extend = array_map('trim', explode(',', $extend));
+		} elseif (is_array($extend) === false) {
+			$extend = [$extend];
+		}
+
+		return $this->sanitizePublicExtend(extend: $extend);
+
+	}//end publicExtendFromRequest()
+
+	/**
+	 * Find the publication of a detail read and answer with it, or with the 404.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 *
+	 * @return JSONResponse The publication, or the 404.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function showPublication(PublicationRead $read): JSONResponse {
+		$this->logger->debug(
+			'[PublicationsController::show] Attempting to find publication',
+			[
+				'id' => $read->query->slug,
+				'catalogSlug' => $read->query->catalogSlug,
+				'catalog' => $read->catalog,
+				'extend' => $read->extend,
+				'rbac' => false,
+				'multi' => false,
+			]
+		);
+
+		$found = $this->findPublication(read: $read);
+		if ($found === null) {
+			$this->logger->warning(
+				'[PublicationsController::show] Object not found in any register/schema',
+				['id' => $read->query->slug, 'catalogSlug' => $read->query->catalogSlug]
+			);
+			return $this->publicationNotAccessible(query: $read->query);
+		}
+
+		return $this->answerFound(read: $read, found: $found);
+
+	}//end showPublication()
+
+	/**
+	 * Find a publication by UUID, then by slug, inside the catalogue scope.
+	 *
+	 * A catalogue without registers or schemas has no safe namespace to search,
+	 * so nothing is found in it (#733, #734). The slug lookup (#1592) runs only
+	 * when the UUID lookup found nothing, so a UUID URL is answered as before.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 *
+	 * @return FoundPublication|null The publication, or null.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-slug-resolution-must-be-backwards-compatible-pub-020
+	 */
+	private function findPublication(PublicationRead $read): ?FoundPublication {
+		$query = $read->query;
+		if (empty($query->registers) === true || empty($query->schemas) === true) {
+			return null;
+		}
+
+		$object = $this->findByUuidInCatalogScope(objectService: $read->objectService, query: $query);
+		if ($object !== null) {
+			return new FoundPublication(object: $object, publicationId: $query->slug);
+		}
+
+		$object = $this->findBySlugInCatalogScope(objectService: $read->objectService, query: $query);
+		if ($object === null) {
+			return null;
+		}
+
+		// Everything downstream (withheld list, view counter) keys on the
+		// publication UUID, not on the slug the URL carried.
+		return new FoundPublication(object: $object, publicationId: (string)$object->getUuid());
+
+	}//end findPublication()
+
+	/**
+	 * Find a publication by UUID in each register × schema of the catalogue, then by its location.
+	 *
+	 * The lookup searches with a UUID filter instead of find(), because find()
+	 * has a `deleted IS NULL` condition that fails on objects with `deleted: []`.
+	 * The location fallback is constrained to the catalogue's registers and
+	 * schemas, so it never scans every magic table on the platform (#733, #734).
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param CatalogSlugQuery $query The UUID from the URL and the catalogue scope.
+	 *
+	 * @return object|null The publication, or null.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function findByUuidInCatalogScope(object $objectService, CatalogSlugQuery $query): ?object {
+		foreach ($query->registers as $register) {
+			foreach ($query->schemas as $schema) {
+				$objects = $this->searchByUuid(
+					objectService: $objectService,
+					self: ['uuid' => $query->slug, 'register' => $register, 'schema' => $schema]
+				);
+				if (empty($objects) === false) {
+					return $objects[0];
+				}
+			}
+		}
+
+		return $this->findByUuidAtLocation(objectService: $objectService, query: $query);
+
+	}//end findByUuidInCatalogScope()
+
+	/**
+	 * Find a publication by UUID in the register and schema its location lookup names.
+	 *
+	 * The location lookup only considers the catalogue's registers and schemas.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param CatalogSlugQuery $query The UUID from the URL and the catalogue scope.
+	 *
+	 * @return object|null The publication, or null.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function findByUuidAtLocation(object $objectService, CatalogSlugQuery $query): ?object {
+		$location = $this->queryService->findObjectLocation(
+			uuid: $query->slug,
+			allowedRegisters: $query->registers,
+			allowedSchemas: $query->schemas
+		);
+		if ($location === null) {
+			return null;
+		}
+
+		$objects = $this->searchByUuid(
+			objectService: $objectService,
+			self: ['uuid' => $query->slug, 'register' => $location['register'], 'schema' => $location['schema']]
+		);
+		if (empty($objects) === true) {
+			return null;
+		}
+
+		return $objects[0];
+
+	}//end findByUuidAtLocation()
+
+	/**
+	 * Search one register and schema for a UUID, under the caller's read rules.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param array<string, mixed> $self The `@self` filter: uuid, register and schema.
+	 *
+	 * @return mixed What the search answered.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function searchByUuid(object $objectService, array $self): mixed {
+		return $objectService->searchObjects(
+			query: ['@self' => $self],
+			_rbac: true,
+			_multitenancy: false,
+		);
+
+	}//end searchByUuid()
+
+	/**
+	 * Answer with a found publication once it is proven to sit in the catalogue scope.
+	 *
+	 * Visibility is governed by OpenRegister RBAC: the searches run with
+	 * `_rbac: true`, so an anonymous caller never receives an unpublished
+	 * publication. The resolved object's register and schema MUST belong to the
+	 * catalogue's scope (#733), or `/api/{anyCatalogSlug}/{anyUuid}` would
+	 * answer objects of unrelated catalogues.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 * @param FoundPublication $found The publication found.
+	 *
+	 * @return JSONResponse The publication, or the 404.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function answerFound(PublicationRead $read, FoundPublication $found): JSONResponse {
+		$object = $found->object;
+		$this->logger->debug(
+			'[PublicationsController::show] Object found successfully',
+			[
+				'id' => $read->query->slug,
+				'objectId' => $object->getId(),
+				'schema' => $object->getSchema(),
+				'register' => $object->getRegister(),
+			]
+		);
+
+		if ($this->inCatalogScope(read: $read, object: $object) === false) {
+			return $this->publicationNotAccessible(query: $read->query);
+		}
+
+		return $this->renderedPublication(read: $read, found: $found);
+
+	}//end answerFound()
+
+	/**
+	 * Whether a found object's register and schema belong to the catalogue scope, logging a miss.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 * @param object $object The found object.
+	 *
+	 * @return bool True when the object sits in the catalogue scope.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function inCatalogScope(PublicationRead $read, object $object): bool {
+		if ($this->objectMatchesCatalogScope(
+			object: $object,
+			allowedRegisters: $read->query->registers,
+			allowedSchemas: $read->query->schemas
+		) === true
+		) {
+			return true;
+		}
+
+		$this->logger->warning(
+			'[PublicationsController::show] Object outside catalog scope',
+			[
+				'id' => $read->query->slug,
+				'catalogSlug' => $read->query->catalogSlug,
+				'objectRegister' => $object->getRegister(),
+				'objectSchema' => $object->getSchema(),
+			]
+		);
+		return false;
+
+	}//end inCatalogScope()
+
+	/**
+	 * Render a publication with the sanitised extend list and answer it as JSON or schema.org JSON-LD.
+	 *
+	 * A catalogue that opted in shows what was withheld and why
+	 * (REQ-PDP-004 / REQ-WDW-003). The answer carries the CORS headers and is
+	 * counted as a view (ANA-001).
+	 *
+	 * @param PublicationRead $read The detail read.
+	 * @param FoundPublication $found The publication found.
+	 *
+	 * @return JSONResponse The publication.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function renderedPublication(PublicationRead $read, FoundPublication $found): JSONResponse {
+		$result = $read->objectService->renderEntity(
+			entity: $found->object,
+			_extend: $read->extend,
+			depth: 0,
+			filter: [],
+			fields: [],
+			unset: [],
+			_rbac: true,
+			_multitenancy: false,
+		);
+
+		if ($this->wantsSchemaOrg() === true) {
+			$response = $this->schemaOrgResponse(read: $read, result: $result);
+		} else {
+			if (($read->catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
+				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
+					response: $result,
+					catalog: $read->catalog,
+					publicationId: $found->publicationId
+				);
+			}
+
+			$response = new JSONResponse($result, 200);
+		}
+
+		$this->addCorsHeaders(response: $response);
+
+		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
+
+	}//end renderedPublication()
+
+	/**
+	 * The schema.org JSON-LD answer for a rendered publication (SDD-001/SDD-003).
+	 *
+	 * @param PublicationRead $read The detail read.
+	 * @param array<string, mixed> $result The rendered publication.
+	 *
+	 * @return JSONResponse The JSON-LD answer.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function schemaOrgResponse(PublicationRead $read, array $result): JSONResponse {
+		$node = $this->getSchemaOrgService()->buildPublicationNode(
+			object: $result,
+			catalog: $read->catalog,
+			catalogSlug: $read->query->catalogSlug
+		);
+		$response = new JSONResponse($node, 200);
+		$response->addHeader('Content-Type', 'application/ld+json');
+
+		return $response;
+
+	}//end schemaOrgResponse()
 
 	/**
 	 * Retrieve attachments/files of a publication.
