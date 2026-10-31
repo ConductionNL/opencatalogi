@@ -627,106 +627,142 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @return array Array of registers with enriched schema data.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	private function enrichRegistersWithSchemas(array $registers): array {
 		try {
-			// Get the schema mapper to fetch full schema objects.
 			$schemaMapper = $this->getSchemaMapper();
 			if ($schemaMapper === null) {
-				// If we can't get the schema mapper, return registers as-is.
 				return $registers;
 			}
 
-			// Normalise every register to its array form once, so the schema-ID
-			// sweep below and the enrichment pass agree on the same shape.
-			$registerArrays = [];
-			foreach ($registers as $register) {
-				$registerArray = (array)$register;
-				if (is_object($register) === true && method_exists($register, 'jsonSerialize') === true) {
-					$registerArray = $register->jsonSerialize();
-				}
+			$registerArrays = array_map(fn ($register) => self::entityArray(entity: $register), $registers);
 
-				$registerArrays[] = $registerArray;
-			}
+			$schemaMap = self::referencedSchemas(schemaMapper: $schemaMapper, registerArrays: $registerArrays);
 
-			// Collect the distinct numeric schema IDs referenced by ALL registers, then
-			// resolve them in ONE batched query. Resolving per-ID inside the register
-			// loop issued a `find()` per schema — on this instance that is 2,814 queries
-			// for 348 registers on every settings request, and dominated the ~11s the
-			// endpoint took to respond.
-			$idsToResolve = [];
-			foreach ($registerArrays as $registerArray) {
-				$schemaIds = $registerArray['schemas'] ?? [];
-				if (is_array($schemaIds) === false) {
-					continue;
-				}
-
-				foreach ($schemaIds as $schemaId) {
-					if (is_numeric($schemaId) === true) {
-						$idsToResolve[(int)$schemaId] = true;
-					}
-				}
-			}
-
-			// The batched lookup chunks its IN() list and returns a map keyed by
-			// schema ID. It reads the table directly, matching the _rbac: false /
-			// _multitenancy: false posture the per-ID find() call used here before.
-			$schemaMap = [];
-			if (empty($idsToResolve) === false) {
-				$schemaMap = $schemaMapper->findMultipleOptimized(ids: array_keys($idsToResolve));
-			}
-
-			$enrichedRegisters = [];
-
-			foreach ($registerArrays as $registerArray) {
-				// Get schema IDs from the register.
-				$schemaIds = $registerArray['schemas'] ?? [];
-
-				// If schemas is not an array or is empty, keep as-is.
-				if (is_array($schemaIds) === false || empty($schemaIds) === true) {
-					$enrichedRegisters[] = $registerArray;
-					continue;
-				}
-
-				// Replace each schema ID with the full schema object from the batch.
-				$fullSchemas = [];
-				foreach ($schemaIds as $schemaId) {
-					// Skip if not a number (already an object).
-					if (is_numeric($schemaId) === false) {
-						$fullSchemas[] = $schemaId;
-						continue;
-					}
-
-					// A schema ID with no row is silently dropped, as before.
-					$schema = $schemaMap[(int)$schemaId] ?? null;
-					if ($schema === null) {
-						continue;
-					}
-
-					// Convert schema entity to array.
-					$schemaArray = (array)$schema;
-					if (is_object($schema) === true && method_exists($schema, 'jsonSerialize') === true) {
-						$schemaArray = $schema->jsonSerialize();
-					}
-
-					$fullSchemas[] = $schemaArray;
-				}//end foreach
-
-				// Replace schema IDs with full schema objects.
-				$registerArray['schemas'] = $fullSchemas;
-				$enrichedRegisters[] = $registerArray;
-			}//end foreach
-
-			return $enrichedRegisters;
+			return array_map(fn (array $register) => self::withFullSchemas(registerArray: $register, schemaMap: $schemaMap), $registerArrays);
 		} catch (\Exception $e) {
-			// If enrichment fails, return registers as-is.
 			return $registers;
 		}//end try
 
 	}//end enrichRegistersWithSchemas()
+
+	/**
+	 * An entity as an array: its jsonSerialize() form, or the array cast.
+	 *
+	 * @param mixed $entity The entity, object or array.
+	 *
+	 * @return array The array form.
+	 *
+	 * @spec exclude Internal shape step of enrichRegistersWithSchemas().
+	 */
+	private static function entityArray(mixed $entity): array {
+		if (is_object($entity) === true && method_exists($entity, 'jsonSerialize') === true) {
+			return $entity->jsonSerialize();
+		}
+
+		return (array)$entity;
+
+	}//end entityArray()
+
+	/**
+	 * The schemas the registers reference, by id, from one batched query.
+	 *
+	 * A find() per ID was 2,814 queries for 348 registers on every settings
+	 * request. The batched lookup reads the table directly, matching the
+	 * _rbac: false / _multitenancy: false posture of the per-ID find().
+	 *
+	 * @param \OCA\OpenRegister\Db\SchemaMapper $schemaMapper The schema mapper.
+	 * @param array<int, array> $registerArrays The registers in array form.
+	 *
+	 * @return array The resolved schemas by id.
+	 *
+	 * @spec exclude Internal lookup step of enrichRegistersWithSchemas().
+	 */
+	private static function referencedSchemas(\OCA\OpenRegister\Db\SchemaMapper $schemaMapper, array $registerArrays): array {
+		$idsToResolve = self::referencedSchemaIds(registerArrays: $registerArrays);
+		if (empty($idsToResolve) === true) {
+			return [];
+		}
+
+		return $schemaMapper->findMultipleOptimized(ids: $idsToResolve);
+
+	}//end referencedSchemas()
+
+	/**
+	 * The distinct numeric schema ids the registers reference, in first-seen order.
+	 *
+	 * @param array<int, array> $registerArrays The registers in array form.
+	 *
+	 * @return array<int, int> The schema ids.
+	 *
+	 * @spec exclude Internal collection step of enrichRegistersWithSchemas().
+	 */
+	private static function referencedSchemaIds(array $registerArrays): array {
+		$idsToResolve = [];
+		foreach ($registerArrays as $registerArray) {
+			$schemaIds = $registerArray['schemas'] ?? [];
+			if (is_array($schemaIds) === false) {
+				continue;
+			}
+
+			foreach (array_filter($schemaIds, 'is_numeric') as $schemaId) {
+				$idsToResolve[(int)$schemaId] = true;
+			}
+		}
+
+		return array_keys($idsToResolve);
+
+	}//end referencedSchemaIds()
+
+	/**
+	 * A register with its schema ids replaced by the resolved schemas.
+	 *
+	 * A register without a schema list keeps it as it is.
+	 *
+	 * @param array $registerArray The register in array form.
+	 * @param array $schemaMap The resolved schemas by id.
+	 *
+	 * @return array The register.
+	 *
+	 * @spec exclude Internal enrichment step of enrichRegistersWithSchemas().
+	 */
+	private static function withFullSchemas(array $registerArray, array $schemaMap): array {
+		$schemaIds = $registerArray['schemas'] ?? [];
+		if (is_array($schemaIds) === false || empty($schemaIds) === true) {
+			return $registerArray;
+		}
+
+		$registerArray['schemas'] = self::resolvedSchemas(schemaIds: $schemaIds, schemaMap: $schemaMap);
+		return $registerArray;
+
+	}//end withFullSchemas()
+
+	/**
+	 * Schema ids replaced by their resolved schemas.
+	 *
+	 * A non-numeric entry is kept as it is; an id with no row is dropped.
+	 *
+	 * @param array $schemaIds The schema ids.
+	 * @param array $schemaMap The resolved schemas by id.
+	 *
+	 * @return array The schemas.
+	 *
+	 * @spec exclude Internal enrichment step of enrichRegistersWithSchemas().
+	 */
+	private static function resolvedSchemas(array $schemaIds, array $schemaMap): array {
+		$fullSchemas = [];
+		foreach ($schemaIds as $schemaId) {
+			if (is_numeric($schemaId) === false) {
+				$fullSchemas[] = $schemaId;
+			} elseif (isset($schemaMap[(int)$schemaId]) === true) {
+				$fullSchemas[] = self::entityArray(entity: $schemaMap[(int)$schemaId]);
+			}
+		}
+
+		return $fullSchemas;
+
+	}//end resolvedSchemas()
 
 	/**
 	 * Keep only the known national channels that name a source slug.
