@@ -12,9 +12,9 @@
 
 ## Task 2: Fix RobotsController hasWooSitemap gate (WOO-008)
 
-- [ ] 2.1 Open `lib/Controller/RobotsController.php` and locate the catalog iteration loop in `getRobots()`
+- [x] 2.1 Open `lib/Controller/RobotsController.php` and locate the catalog iteration loop in `getRobots()` (verified: lib/Controller/RobotsController.php:111)
   - **Spec ref**: `specs/woo-compliance/spec.md` REQ-WOO-004, REQ-WOO-008
-- [ ] 2.2 Add a filter that skips any catalog where `hasWooSitemap !== true` (or where the field is absent/falsy)
+- [x] 2.2 Add a filter that skips any catalog where `hasWooSitemap !== true` (or where the field is absent/falsy) (verified: lib/Controller/RobotsController.php:111,162, tests/Unit/Controller/RobotsControllerTest.php)
   - **Acceptance criteria**: Only catalogs with `hasWooSitemap: true` AND a non-empty `slug` contribute `Sitemap:` lines to the output
   - The existing slug check MUST be preserved alongside the new `hasWooSitemap` check
 - [ ] 2.3 Add `@spec openspec/changes/woo-compliance/tasks.md#task-2` PHPDoc tag to the modified method (per ADR-003 spec traceability requirement)
@@ -23,7 +23,7 @@
 
 ## Task 3: Unit test — robots.txt hasWooSitemap gate
 
-- [ ] 3.1 Create or extend `tests/Unit/Controller/RobotsControllerTest.php`
+- [x] 3.1 Create or extend `tests/Unit/Controller/RobotsControllerTest.php` (verified: tests/Unit/Controller/RobotsControllerTest.php)
   - **Spec ref**: REQ-WOO-004-A, REQ-WOO-004-B, REQ-WOO-004-C, REQ-WOO-008-A
 - [ ] 3.2 Write test: catalog with `hasWooSitemap: true` AND valid slug → 17 `Sitemap:` lines in output
 - [ ] 3.3 Write test: catalog with `hasWooSitemap: false` AND valid slug → zero `Sitemap:` lines (bug fix regression guard)
@@ -36,7 +36,7 @@
 
 ## Task 4: Unit test — DIWOO metadata mapping
 
-- [ ] 4.1 Create or extend `tests/Unit/Service/SitemapServiceTest.php`
+- [x] 4.1 Create or extend `tests/Unit/Service/SitemapServiceTest.php` (verified: tests/Unit/Service/SitemapServiceTest.php)
   - **Spec ref**: REQ-WOO-002-B through REQ-WOO-002-D, REQ-WOO-006-A through REQ-WOO-006-C, REQ-WOO-010-A, REQ-WOO-010-B
 - [ ] 4.2 Write test: all primary source fields populated → each DIWOO XML field uses the documented primary source
   - Fields to assert: `loc`, `lastmod`, `creatiedatum`, `publisher @resource`, `publisher text`, `format @resource`, `format text`, `informatiecategorie @resource`, `informatiecategorie text`, `soortHandeling`, `atTime`
