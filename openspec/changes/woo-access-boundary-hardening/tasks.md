@@ -6,7 +6,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 - [ ] 1.1 Declare `x-openregister-processing` on the five schemas and seed the processing activity, bumping versions (REQ-WAB-001). Verify: `tests/Unit/Settings/WooReadLoggingDeclarationTest.php::testTheFiveSchemasOptIn` and `tests/Unit/Service/WooReadLoggingTest.php::testAReadOfAnAssessmentWritesAnAttributedEntry` (fails today: no opt-in).
 - [ ] 1.2 Report the fallback-attributed count in `WooReadinessService` (REQ-WAB-001). Verify: `tests/Unit/Service/WooReadinessServiceTest.php::testFallbackAttributedReadsAreReported`.
-- [ ] 1.3 Live: read an assessment on the dev instance and paste the processing log entry from `GET /apps/openregister/api/avg/verwerkingen` in the PR body (REQ-WAB-001). Verify: the pasted entry.
+- [ ] 1.3 Live: read an assessment on the dev instance and paste the processing log entry from `GET /apps/openregister/api/avg/verwerkingen` in the PR body (REQ-WAB-001). Verify: the pasted entry. (live pass, decision 139)
 
 ## 2. Boundary suite
 
