@@ -138,36 +138,16 @@ class CleanupOrphanDirectoryListings implements IRepairStep
             return;
         }
 
-        $totalDeleted = 0;
-        $totalKept    = 0;
-        $totalFailed  = 0;
-
+        $sweep = new OrphanListingSweep(objectService: $objectService, output: $output);
         foreach ($registers as $register) {
             $registerSchemas = array_map('intval', ($register->getSchemas() ?? []));
-            if (in_array($schemaId, $registerSchemas, true) === false) {
-                continue;
+            if (in_array($schemaId, $registerSchemas, true) === true) {
+                $table = new ListingTable(registerId: (int) $register->getId(), schemaId: $schemaId);
+                $this->cleanRegister(table: $table, sweep: $sweep);
             }
+        }
 
-            $tally = $this->cleanRegister(
-                registerId: (int) $register->getId(),
-                schemaId: $schemaId,
-                objectService: $objectService,
-                output: $output
-            );
-
-            $totalDeleted += $tally['deleted'];
-            $totalKept    += $tally['kept'];
-            $totalFailed  += $tally['failed'];
-        }//end foreach
-
-        $output->info(
-                sprintf(
-            'Directory-listings cleanup: deleted %d orphan row(s), kept %d valid row(s), %d failure(s)',
-            $totalDeleted,
-            $totalKept,
-            $totalFailed
-        )
-                );
+        $output->info($sweep->summary());
 
     }//end run()
 
@@ -184,60 +164,25 @@ class CleanupOrphanDirectoryListings implements IRepairStep
      * leave every later register uncleaned, which is the failure mode this step
      * exists to prevent.
      *
-     * @param int     $registerId    The register whose listing table to clean.
-     * @param int     $schemaId      The resolved listing schema id.
-     * @param object  $objectService OpenRegister's ObjectService.
-     * @param IOutput $output        Repair output channel.
+     * @param ListingTable       $table The listing table to clean.
+     * @param OrphanListingSweep $sweep The sweep that deletes and tallies.
      *
-     * @return array{deleted: int, kept: int, failed: int} Per-register tally.
+     * @return void
      */
-    private function cleanRegister(int $registerId, int $schemaId, object $objectService, IOutput $output): array
+    private function cleanRegister(ListingTable $table, OrphanListingSweep $sweep): void
     {
-        $tableName = sprintf('openregister_table_%d_%d', $registerId, $schemaId);
-        $tally     = [
-            'deleted' => 0,
-            'kept'    => 0,
-            'failed'  => 0,
-        ];
-
         try {
-            $rows = $this->fetchOrphanRows(tableName: $tableName);
+            $rows = $this->fetchOrphanRows(tableName: $table->name());
         } catch (\Throwable $e) {
-            $output->warning(sprintf('Failed to scan %s: %s', $tableName, $e->getMessage()));
-            return $tally;
+            $sweep->output->warning(sprintf('Failed to scan %s: %s', $table->name(), $e->getMessage()));
+            return;
         }
 
         foreach ($rows as $row) {
-            // No `?? null`: fetchOrphanRows() selects `_uuid` explicitly and
-            // declares `array{_uuid: string, ...}`, so phpstan rightly calls the
-            // coalesce dead code. The empty() guard stays — the column is
-            // selected, but a blank value would still make deleteObject()
-            // address nothing, and that row is counted as a failure rather than
-            // silently skipped.
-            $uuid = $row['_uuid'];
-            if (empty($uuid) === true) {
-                $tally['failed']++;
-                continue;
-            }
+            $sweep->delete(table: $table, row: $row);
+        }
 
-            try {
-                $objectService->deleteObject(
-                    uuid: (string) $uuid,
-                    register: (string) $registerId,
-                    schema: (string) $schemaId,
-                    _rbac: false,
-                    _multitenancy: false
-                );
-                $tally['deleted']++;
-            } catch (\Throwable $e) {
-                $tally['failed']++;
-                $output->warning(sprintf('Failed to delete listing %s: %s', (string) $uuid, $e->getMessage()));
-            }
-        }//end foreach
-
-        $tally['kept'] = $this->countValidRows(tableName: $tableName);
-
-        return $tally;
+        $sweep->kept += $this->countValidRows(tableName: $table->name());
 
     }//end cleanRegister()
 

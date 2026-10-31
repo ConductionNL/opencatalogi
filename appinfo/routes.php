@@ -109,6 +109,8 @@ return [
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
 		['name' => 'inspection#open', 'url' => '/api/inspections', 'verb' => 'POST'],
 		['name' => 'commentPeriod#open', 'url' => '/api/comment-periods', 'verb' => 'POST'],
+		// What must still be published, read from every registered source (woo-obligation-overview).
+		['name' => 'obligation#index', 'url' => '/api/obligations', 'verb' => 'GET'],
 		// Published service and case type catalogue: the admin surfaces.
 		['name' => 'serviceCatalogue#unavailableEntries', 'url' => '/api/service-catalogue/unavailable', 'verb' => 'GET'],
 		['name' => 'serviceCatalogue#importCaseType', 'url' => '/api/case-types/import', 'verb' => 'POST'],

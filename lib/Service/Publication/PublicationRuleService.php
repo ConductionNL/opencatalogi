@@ -35,13 +35,14 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
 
 /**
  * Decides what publishes and what an anonymous reader may read of it.
  *
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
  */
-class PublicationRuleService {
+class PublicationRuleService implements PublicationRuleServiceInterface {
 
 	/**
 	 * The operators a condition may use.

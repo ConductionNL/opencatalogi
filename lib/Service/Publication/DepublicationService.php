@@ -37,6 +37,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -44,7 +45,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
-class DepublicationService {
+class DepublicationService implements DepublicationServiceInterface {
 
 	/**
 	 * Constructor.

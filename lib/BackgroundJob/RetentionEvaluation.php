@@ -31,7 +31,7 @@
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Service\RetentionService;
+use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -47,12 +47,12 @@ class RetentionEvaluation extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory for scheduling.
-	 * @param RetentionService $retentionService The retention service.
+	 * @param RetentionServiceInterface $retentionService The retention service.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly RetentionService $retentionService,
+		private readonly RetentionServiceInterface $retentionService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

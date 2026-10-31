@@ -30,8 +30,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\PublicationService;
-use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -44,6 +44,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling federation endpoints.
+ *
+ * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
 	/**
@@ -51,18 +53,18 @@ class FederationController extends Controller {
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param PublicationService $publicationService The publication service.
+	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param WithheldFromPublication|null $withheld The public withheld list (REQ-WDW-003).
+	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
-		private readonly ?WithheldFromPublication $withheld = null,
+		private readonly ?WithheldFromPublicationInterface $withheld = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -262,6 +264,10 @@ class FederationController extends Controller {
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
+	 *
+	 * @no-admin-idor-exempt PublicationService::attachments() refuses an id outside the configured
+	 *   catalog scope (isObjectInCatalogScope()), reads the object with OpenRegister find() (RBAC on,
+	 *   anonymous callers get public-group reads only) and lists shared files only (sharedFilesOnly).
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */

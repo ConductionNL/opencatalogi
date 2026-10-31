@@ -14,12 +14,10 @@
  * 2026-09-19 and this paragraph names them, because a docblock that still
  * advertises a surface is what stops the next person looking for it.
  *
- * There is NO obligation overview here, and this sentence says so because the
- * previous one claimed there was. `ObligationOverviewService` assembles an
- * overview from what it is given, and nothing gives it anything yet: the
- * per-source readers and the harvest intake it reads from are
- * `harvest-feed-intake`. REQ-PIN-110 is unmet until that lands, and a docblock
- * advertising the surface is what stops the next person checking.
+ * The obligation overview is not here: it is ObligationController
+ * (`GET /api/obligations`), which asks every registered source through
+ * ObligationReadService. The harvest intake is not a source yet; it waits on
+ * `harvest-feed-intake`.
  *
  * Every write here is admin-gated. The two public surfaces of this change live
  * in InspectionController (the inspection link) and in the public search
@@ -46,8 +44,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
-use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
+use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
+use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -79,8 +77,8 @@ class PublicationRulesController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param PublicationRuleService $ruleService The rule evaluator.
-	 * @param DecisionPublicationValidator $decisionValidator The decision type validation.
+	 * @param PublicationRuleServiceInterface $ruleService The rule evaluator.
+	 * @param DecisionPublicationValidatorInterface $decisionValidator The decision type validation.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -90,8 +88,8 @@ class PublicationRulesController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationRuleService $ruleService,
-		private readonly DecisionPublicationValidator $decisionValidator,
+		private readonly PublicationRuleServiceInterface $ruleService,
+		private readonly DecisionPublicationValidatorInterface $decisionValidator,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -109,14 +107,7 @@ class PublicationRulesController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->readWritePreflight();
 
 	}//end preflightedCors()
 

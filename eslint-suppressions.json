@@ -821,7 +821,7 @@
   },
   "src/store/modules/object.js": {
     "no-console": {
-      "count": 26
+      "count": 21
     },
     "no-unused-vars": {
       "count": 10

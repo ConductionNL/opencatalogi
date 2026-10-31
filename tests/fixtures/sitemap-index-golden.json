@@ -1,0 +1,319 @@
+{
+    "guard drops the woo schema": {
+        "status": 200,
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n  <sitemap />\n</sitemapindex>\n",
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ]
+        ]
+    },
+    "next page that is empty": {
+        "status": 200,
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n  <sitemap>\n    <loc>https://catalogus.example/apps/opencatalogi/api/the-catalog/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1</loc>\n    <lastmod>2026-04-01T00:00:00+00:00</lastmod>\n  </sitemap>\n</sitemapindex>\n",
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 2
+                },
+                true,
+                false,
+                false
+            ]
+        ]
+    },
+    "no rows": {
+        "status": 200,
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n  <sitemap />\n</sitemapindex>\n",
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "wooCategory": "infocat001",
+                    "@self": {
+                        "register": "r1",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ]
+        ]
+    },
+    "no source": {
+        "status": 400,
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<response>\n  <value>\n    <content>Schema not configured in catalog</content>\n  </value>\n</response>\n",
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ]
+        ]
+    },
+    "one source, three pages": {
+        "status": 200,
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n  <sitemap>\n    <loc>https://catalogus.example/apps/opencatalogi/api/the-catalog/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1</loc>\n    <lastmod>2026-03-01T00:00:00+00:00</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>https://catalogus.example/apps/opencatalogi/api/the-catalog/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2</loc>\n    <lastmod>2026-02-01T00:00:00+00:00</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>https://catalogus.example/apps/opencatalogi/api/the-catalog/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=3</loc>\n    <lastmod></lastmod>\n  </sitemap>\n</sitemapindex>\n",
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "wooCategory": "infocat001",
+                    "@self": {
+                        "register": "r1",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "wooCategory": "infocat001",
+                    "@self": {
+                        "register": "r1",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 2
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "wooCategory": "infocat001",
+                    "@self": {
+                        "register": "r1",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 3
+                },
+                true,
+                false,
+                false
+            ]
+        ]
+    },
+    "two sources run out apart": {
+        "status": 200,
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n  <sitemap>\n    <loc>https://catalogus.example/apps/opencatalogi/api/the-catalog/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1</loc>\n    <lastmod>2026-05-01T00:00:00+00:00</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>https://catalogus.example/apps/opencatalogi/api/the-catalog/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2</loc>\n    <lastmod>2026-06-01T00:00:00+00:00</lastmod>\n  </sitemap>\n</sitemapindex>\n",
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "wooCategory": "infocat001",
+                    "@self": {
+                        "register": "r1",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 2
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_order": {
+                        "updated": "desc"
+                    },
+                    "_limit": 2,
+                    "_page": 3
+                },
+                true,
+                false,
+                false
+            ]
+        ]
+    },
+    "unknown category": {
+        "status": 400,
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<response>\n  <value>\n    <content>Invalid category code</content>\n  </value>\n</response>\n",
+        "calls": []
+    }
+}

@@ -25,7 +25,7 @@ A fragment `lib/Settings/register.d/woo-decision-shows-what-was-withheld.json` S
 
 ### Requirement: dossiq records the withheld documents through one named method (REQ-WDW-002)
 
-`OCA\OpenCatalogi\Service\Woo\WithheldDocuments::record(string $publicationId, array $entries, string $source): array` SHALL replace the `withheldDocument` objects of that publication with one object per accepted entry, writing as the system. Each entry SHALL be `{position: int, grounds: list<string>}`; any other key, `title` included, SHALL be ignored and not stored. No title SHALL ever be recorded on this path. For each ground code it SHALL call `OCA\Dossiq\Woo\WooRefusalGrounds::byCode($code)` and store `code`, `article` and `label` as answered. It SHALL answer `{recorded: int, refused: list<{position: int, code: string, reason: string}>}`. An entry with a code `byCode()` answers null for SHALL be refused with reason `unknown-ground` and not stored. When dossiq is not installed, when `WooRefusalGrounds` does not resolve from the container, or when `byCode()` throws `WooRefusalGroundsUnavailable`, every entry SHALL be refused with reason `grounds-unavailable`, nothing SHALL be stored or removed, and the vendored snapshot SHALL NOT be read. When the publication does not exist, every entry SHALL be refused with reason `no-publication`. An entry without a position of at least 1 or without a ground code SHALL be refused with reason `invalid-entry` and not stored. A call with an empty `$entries` SHALL remove the publication's stored entries. The dossiq side SHALL call it after `WooPublicationService::publish()` has created or updated the publication, with one entry per `niet_openbaar` assessment holding exactly `position` and `grounds`; that call and its test are `dossiq/woo-decision-records-what-was-withheld`.
+`OCA\OpenCatalogi\Service\Woo\WithheldDocuments::record(string $publicationId, array $entries, string $source): array` SHALL replace the `withheldDocument` objects of that publication with one object per accepted entry, writing as the system. Each entry SHALL be `{position: int, grounds: list<string>}`; any other key, `title` included, SHALL be ignored and not stored. No title SHALL ever be recorded on this path. It SHALL read dossiq's list once per call through `OCA\Dossiq\Woo\WooRefusalGrounds::listWithRetired()`, resolve every ground code against that one read by exact code (the match `byCode()` makes), and store `code`, `article` and `label` as answered; a dossiq without `listWithRetired()` SHALL be asked through `byCode($code)` per code. It SHALL answer `{recorded: int, refused: list<{position: int, code: string, reason: string}>}`. An entry with a code dossiq's list does not hold SHALL be refused with reason `unknown-ground` and not stored. When dossiq is not installed, when `WooRefusalGrounds` does not resolve from the container, or when `listWithRetired()` or `byCode()` throws `WooRefusalGroundsUnavailable`, every entry SHALL be refused with reason `grounds-unavailable`, nothing SHALL be stored or removed, and the vendored snapshot SHALL NOT be read. When OpenRegister answers that the publication does not exist, every entry SHALL be refused with reason `no-publication`. When OpenRegister or the register configuration cannot answer whether it exists, every entry SHALL be refused with reason `unavailable` and nothing SHALL be stored or removed. An entry without a position of at least 1 or without a ground code, and a second entry for a position already accepted in the same call, SHALL be refused with reason `invalid-entry` and not stored. A call with an empty `$entries` SHALL remove the publication's stored entries. The dossiq side SHALL call it after `WooPublicationService::publish()` has created or updated the publication, with one entry per `niet_openbaar` assessment holding exactly `position` and `grounds`; that call and its test are `dossiq/woo-decision-records-what-was-withheld`.
 
 #### Scenario: dossiq records two withheld documents
 <!-- @e2e exclude Cross-app PHP call; proven by WithheldDocumentsRecordTest::testTwoEntriesAreRecordedWithDossiqsLabels, built on a double of WooRefusalGrounds with REQ-WRG-007's exact keys, which fails on today's code because the class does not exist. -->
@@ -56,6 +56,27 @@ A fragment `lib/Settings/register.d/woo-decision-shows-what-was-withheld.json` S
 - **GIVEN** dossiq is not installed and a vendored grounds snapshot is present
 - **WHEN** `record()` is called with one entry
 - **THEN** the entry is refused with `grounds-unavailable`, nothing is stored and the snapshot is not read
+
+#### Scenario: dossiq's list is read once per call
+<!-- @e2e exclude Read-count path; proven by WithheldDocumentsRecordTest::testDossiqsListIsReadOncePerCall and ::testADossiqWithoutTheListMethodIsAskedPerCode. -->
+
+- **GIVEN** a Woo decision with 300 withheld documents that cite the same ground
+- **WHEN** `record()` is called with all 300 entries
+- **THEN** dossiq's list is read once and every entry carries the label of that one read
+
+#### Scenario: An outage is not a missing publication
+<!-- @e2e exclude Fail-closed path; proven by WithheldDocumentsRecordTest::testAnOpenRegisterOutageIsNotAMissingPublication and WithheldDocumentStoreTest::testAFailedLookupIsNotAMissingPublication. -->
+
+- **GIVEN** OpenRegister fails to answer the lookup of the publication
+- **WHEN** `record()` is called with one entry
+- **THEN** the entry is refused with `unavailable`, not `no-publication`, and the stored entries are kept
+
+#### Scenario: A position is recorded once
+<!-- @e2e exclude Validation path; proven by WithheldDocumentsRecordTest::testASecondEntryForTheSamePositionIsRefusedAsInvalid. -->
+
+- **GIVEN** a call with two entries for position 3
+- **WHEN** `record()` stores them
+- **THEN** the first is recorded and the second is refused with `invalid-entry`
 
 #### Scenario: An unknown ground is refused, the rest is kept
 <!-- @e2e exclude Validation path; proven by WithheldDocumentsRecordTest::testAnUnknownGroundRefusesOnlyItsEntry. -->

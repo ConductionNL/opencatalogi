@@ -1,4 +1,4 @@
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TPublicationType } from './publicationType.types'
 
 import { z } from 'zod'
@@ -139,7 +139,7 @@ export class PublicationType implements TPublicationType {
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TPublicationType, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/5og7tj13bkzj5-create-metadata
 		const propertiesDataSchema = z.object({
 			title: z.string().min(1, 'is verplicht'),
@@ -208,7 +208,7 @@ export class PublicationType implements TPublicationType {
 			summary: z.string().min(1, 'is verplicht'),
 			version: z.string(),
 			required: z.string().array(),
-			properties: z.record(propertiesDataSchema), // z.record allows for any amount of any keys, with specific type for value validation
+			properties: z.record(z.string(), propertiesDataSchema), // z.record allows for any amount of any keys, with specific type for value validation
 			archive: z.object({
 				valuation: z.enum(['b', 'v', 'n'], {
 					message: "kan alleen 'b', 'v', of 'n' zijn",

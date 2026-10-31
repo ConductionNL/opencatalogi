@@ -39,11 +39,11 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
+use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCA\OpenCatalogi\Service\Community\AtomFeedService;
-use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
-use OCA\OpenCatalogi\Service\Community\StatusPageService;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -69,6 +69,7 @@ class CommunityController extends Controller {
 	use AnswersCrossOriginRequests;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
+	use ReadsPublicationRegister;
 
 	/**
 	 * Constructor.
@@ -79,10 +80,10 @@ class CommunityController extends Controller {
 	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param StatusPageService $statusService The status page.
-	 * @param AtomFeedService $feedService The catalogue feed.
-	 * @param MarkupRenderService $markupService The markup renderer.
-	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param StatusPageServiceInterface $statusService The status page.
+	 * @param AtomFeedServiceInterface $feedService The catalogue feed.
+	 * @param MarkupRenderServiceInterface $markupService The markup renderer.
+	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -93,10 +94,10 @@ class CommunityController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly StatusPageService $statusService,
-		private readonly AtomFeedService $feedService,
-		private readonly MarkupRenderService $markupService,
-		private readonly ServiceCatalogueService $objects,
+		private readonly StatusPageServiceInterface $statusService,
+		private readonly AtomFeedServiceInterface $feedService,
+		private readonly MarkupRenderServiceInterface $markupService,
+		private readonly ServiceCatalogueServiceInterface $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -129,55 +130,9 @@ class CommunityController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->readWritePreflight();
 
 	}//end preflightedCors()
-
-	/**
-	 * Resolve a register and schema pair for one of this change's schemas.
-	 *
-	 * @param string $schemaKey The `<thing>_schema` config key.
-	 *
-	 * @return array<string, string> The register and schema identifiers.
-	 */
-	private function configurationFor(string $schemaKey): array {
-		return $this->resolveRegisterConfiguration(registerKey: 'publication_register', schemaKey: $schemaKey);
-
-	}//end configurationFor()
-
-	/**
-	 * Read every object of one schema.
-	 *
-	 * @param string $schemaKey The `<thing>_schema` config key.
-	 * @param array<string, mixed> $filters Extra filters.
-	 *
-	 * @return array<int, array<string, mixed>> The objects.
-	 *
-	 * @throws CatalogueUnreadableException When OpenRegister cannot be reached.
-	 */
-	private function readAll(string $schemaKey, array $filters = []): array {
-		$config = $this->configurationFor(schemaKey: $schemaKey);
-		$query = $filters;
-		$query['@self'] = ['register' => $config['register'], 'schema' => $config['schema']];
-		$query['_limit'] = ($filters['_limit'] ?? 500);
-
-		$result = $this->objects->getObjectService()->searchObjectsPaginated($query, _rbac: false, _multitenancy: false);
-
-		$objects = [];
-		foreach (($result['results'] ?? []) as $object) {
-			$objects[] = $this->asArray(object: $object);
-		}
-
-		return $objects;
-
-	}//end readAll()
 
 	/**
 	 * The public status page.
@@ -215,7 +170,7 @@ class CommunityController extends Controller {
 		$stalenessHours = $this->config->getValueInt(
 			$this->appName,
 			'status_staleness_hours',
-			StatusPageService::DEFAULT_STALENESS_HOURS
+			StatusPageServiceInterface::DEFAULT_STALENESS_HOURS
 		);
 
 		return $this->withCors(

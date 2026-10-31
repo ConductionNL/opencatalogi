@@ -26,8 +26,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\UsageCounterService;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -53,8 +53,8 @@ class StatsController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The HTTP request.
-	 * @param UsageCounterService $usageCounterService Aggregation over counter objects.
-	 * @param CatalogiService $catalogiService Catalog resolution by slug.
+	 * @param UsageCounterServiceInterface $usageCounterService Aggregation over counter objects.
+	 * @param CatalogiServiceInterface $catalogiService Catalog resolution by slug.
 	 * @param IAppManager $appManager Detects OpenRegister availability.
 	 * @param ContainerInterface $container DI container for the OR ObjectService.
 	 * @param IL10N $l10n Localization service.
@@ -64,8 +64,8 @@ class StatsController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly UsageCounterService $usageCounterService,
-		private readonly CatalogiService $catalogiService,
+		private readonly UsageCounterServiceInterface $usageCounterService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IAppManager $appManager,
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
@@ -218,6 +218,11 @@ class StatsController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
+	 * @no-admin-idor-exempt requires a session user; the catalog is resolved by
+	 *   CatalogiService::getCatalogBySlug() (OpenRegister searchObjects, RBAC on) and its datasets are
+	 *   read by DcatService::buildCatalogDocument() with RBAC on, so only rows the caller may
+	 *   read are scored.
+	 *
 	 * @spec openspec/specs/publication-quality/spec.md
 	 */
 	public function quality(string $slug): JSONResponse {
@@ -240,8 +245,8 @@ class StatsController extends Controller {
 		}
 
 		try {
-			$dcatService = $this->container->get(\OCA\OpenCatalogi\Service\DcatService::class);
-			$qualityService = $this->container->get(\OCA\OpenCatalogi\Service\QualityService::class);
+			$dcatService = $this->container->get(\OCA\OpenCatalogi\Contract\DcatServiceInterface::class);
+			$qualityService = $this->container->get(\OCA\OpenCatalogi\Contract\QualityServiceInterface::class);
 
 			$document = $dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $slug, page: 1);
 			$nodes = [];
@@ -336,9 +341,9 @@ class StatsController extends Controller {
 			}
 
 			$count = max(0, (int)($row['count'] ?? 0));
-			if (($row['kind'] ?? '') === UsageCounterService::KIND_VIEW) {
+			if (($row['kind'] ?? '') === UsageCounterServiceInterface::KIND_VIEW) {
 				$byPub[$pub]['views'] += $count;
-			} elseif (($row['kind'] ?? '') === UsageCounterService::KIND_DOWNLOAD) {
+			} elseif (($row['kind'] ?? '') === UsageCounterServiceInterface::KIND_DOWNLOAD) {
 				$byPub[$pub]['downloads'] += $count;
 			}
 		}//end foreach

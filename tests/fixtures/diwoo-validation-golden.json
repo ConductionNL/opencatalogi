@@ -1,0 +1,245 @@
+{
+    "no publications": {
+        "report": {
+            "catalogSlug": "the-catalog",
+            "categoryCode": "sitemapindex-diwoo-infocat001.xml",
+            "valid": true,
+            "violations": []
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ]
+        ]
+    },
+    "openregister missing": {
+        "report": {
+            "catalogSlug": "the-catalog",
+            "categoryCode": "sitemapindex-diwoo-infocat001.xml",
+            "valid": false,
+            "violations": [],
+            "error": "OpenRegister is not available"
+        },
+        "calls": []
+    },
+    "page clamped to one": {
+        "report": {
+            "catalogSlug": "the-catalog",
+            "categoryCode": "sitemapindex-diwoo-infocat001.xml",
+            "valid": true,
+            "violations": []
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ]
+        ]
+    },
+    "page three": {
+        "report": {
+            "catalogSlug": "the-catalog",
+            "categoryCode": "sitemapindex-diwoo-infocat001.xml",
+            "valid": true,
+            "violations": []
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_limit": 2,
+                    "_page": 3
+                },
+                true,
+                false,
+                false
+            ]
+        ]
+    },
+    "publication without files": {
+        "report": {
+            "catalogSlug": "the-catalog",
+            "categoryCode": "sitemapindex-diwoo-infocat001.xml",
+            "valid": true,
+            "violations": []
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "getFiles",
+                "p3"
+            ]
+        ]
+    },
+    "publications with files": {
+        "report": {
+            "catalogSlug": "the-catalog",
+            "categoryCode": "sitemapindex-diwoo-infocat001.xml",
+            "valid": false,
+            "violations": [
+                {
+                    "documentLoc": "https://dl.example/1.pdf",
+                    "axis": "publisher",
+                    "reason": "organisation has no TOOI identifier"
+                },
+                {
+                    "documentLoc": "https://dl.example/1.pdf",
+                    "axis": "informatiecategorie",
+                    "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                },
+                {
+                    "documentLoc": "https://dl.example/2.odt",
+                    "axis": "publisher",
+                    "reason": "organisation has no TOOI identifier"
+                },
+                {
+                    "documentLoc": "https://dl.example/2.odt",
+                    "axis": "informatiecategorie",
+                    "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "reg-woo",
+                        "schema": "sch-1"
+                    },
+                    "_limit": 2,
+                    "_page": 1
+                },
+                true,
+                false,
+                false
+            ],
+            [
+                "getFiles",
+                "p1"
+            ],
+            [
+                "getFiles",
+                "p2"
+            ]
+        ]
+    },
+    "unknown category": {
+        "report": {
+            "catalogSlug": "the-catalog",
+            "categoryCode": "sitemapindex-diwoo-infocat001.xml",
+            "valid": false,
+            "violations": [],
+            "error": "Unknown catalog or category"
+        },
+        "calls": []
+    }
+}

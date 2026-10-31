@@ -357,6 +357,53 @@ class SetupControllerTest extends TestCase {
 		$this->assertArrayNotHasKey('schemas', $capturedObject);
 	}
 
+	/**
+	 * The wizard's "Private (explicitly granted groups only)" choice restricts
+	 * the first catalogue's staff access to the named groups, besides leaving
+	 * it unlisted (catalogue-staff-access REQ-CSA-003).
+	 */
+	public function testThePrivateChoiceRestrictsTheCatalogue(): void {
+		$this->wireRegisters();
+		$this->configValues['default_catalog_scope'] = 'private';
+		$this->configValues['default_catalog_groups'] = 'griffie, woo-team';
+		$objectService = $this->mockObjectService([]);
+
+		$capturedObject = null;
+		$saved = $this->makeEntity();
+		$objectService->expects($this->once())
+			->method('saveObject')
+			->willReturnCallback(function ($object) use (&$capturedObject, $saved) {
+				$capturedObject = $object;
+				return $saved;
+			});
+
+		$this->controller->action('create-first-catalog');
+
+		$this->assertFalse($capturedObject['listed']);
+		$this->assertSame(
+			['restricted' => true, 'readGroups' => ['griffie', 'woo-team'], 'editGroups' => ['griffie', 'woo-team']],
+			$capturedObject['staffAccess']
+		);
+	}
+
+	public function testThePublicChoiceLeavesStaffAccessAlone(): void {
+		$this->wireRegisters();
+		$this->configValues['default_catalog_scope'] = 'public';
+		$objectService = $this->mockObjectService([]);
+
+		$capturedObject = null;
+		$saved = $this->makeEntity();
+		$objectService->method('saveObject')
+			->willReturnCallback(function ($object) use (&$capturedObject, $saved) {
+				$capturedObject = $object;
+				return $saved;
+			});
+
+		$this->controller->action('create-first-catalog');
+
+		$this->assertArrayNotHasKey('staffAccess', $capturedObject);
+	}
+
 	public function testCreateFirstCatalogIsIdempotentWhenCatalogExists(): void {
 		$this->wireRegisters();
 		$objectService = $this->mockObjectService([$this->makeEntity()]);

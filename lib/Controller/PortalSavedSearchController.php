@@ -24,8 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Portal\PortalAssertionVerifier;
-use OCA\OpenCatalogi\Service\Portal\SavedSearchService;
+use OCA\OpenCatalogi\Contract\PortalAssertionVerifierInterface;
+use OCA\OpenCatalogi\Contract\SavedSearchServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -48,15 +48,15 @@ class PortalSavedSearchController extends Controller {
 	 *
 	 * @param string                  $appName  The app name.
 	 * @param IRequest                $request  The request.
-	 * @param PortalAssertionVerifier $verifier Verifies portaliq's assertion.
-	 * @param SavedSearchService      $searches The saved searches.
+	 * @param PortalAssertionVerifierInterface $verifier Verifies portaliq's assertion.
+	 * @param SavedSearchServiceInterface      $searches The saved searches.
 	 * @param LoggerInterface         $logger   The logger.
 	 */
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly PortalAssertionVerifier $verifier,
-		private readonly SavedSearchService $searches,
+		private readonly PortalAssertionVerifierInterface $verifier,
+		private readonly SavedSearchServiceInterface $searches,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: $appName, request: $request);
