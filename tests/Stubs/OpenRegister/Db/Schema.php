@@ -17,8 +17,33 @@ namespace OCA\OpenRegister\Db;
 
 /**
  * Minimal stub for Schema entity.
+ *
+ * Extends Entity like the real class, so `getId()`/`setId()` resolve magically
+ * here exactly as they do against OpenRegister.
+ *
+ * @method string|null getUuid()
+ * @method void setUuid(?string $uuid)
+ * @method string|null getSlug()
+ * @method void setSlug(?string $slug)
+ * @method string|null getTitle()
+ * @method void setTitle(?string $title)
  */
-class Schema implements \JsonSerializable {
+class Schema extends \OCP\AppFramework\Db\Entity implements \JsonSerializable {
+
+	/**
+	 * @var string|null
+	 */
+	protected ?string $uuid = null;
+
+	/**
+	 * @var string|null
+	 */
+	protected ?string $slug = null;
+
+	/**
+	 * @var string|null
+	 */
+	protected ?string $title = null;
 
 	/**
 	 * @return array<string,mixed>
@@ -26,18 +51,5 @@ class Schema implements \JsonSerializable {
 	public function jsonSerialize(): array {
 		return [];
 	}//end jsonSerialize()
-
-	/**
-	 * The schema's numeric id, which a search query addresses it by.
-	 *
-	 * Declared so a mock of this stub can answer it. A method absent from the stub
-	 * cannot be stubbed, and PHPUnit's error for that names the method, not the
-	 * stub, which sends the reader looking in the wrong file.
-	 *
-	 * @return integer|null
-	 */
-	public function getId(): ?int {
-		return null;
-	}//end getId()
 
 }//end class

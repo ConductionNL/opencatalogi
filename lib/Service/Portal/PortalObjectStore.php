@@ -26,9 +26,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Portal;
 
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -75,16 +74,14 @@ class PortalObjectStore {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface      $container    Resolves OpenRegister.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param PublicationQueryService $publications The public-ness rule.
 	 * @param LoggerInterface         $logger       The logger.
-	 * @param IAppManager             $appManager   Whether OpenRegister is installed.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly PublicationQueryService $publications,
 		private readonly LoggerInterface $logger,
-		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -368,14 +365,13 @@ class PortalObjectStore {
 	 */
 	private function objectService(): object {
 		if ($this->objectService === null) {
-			// ADR-083: OpenRegister is optional for this app, so establish it
-			// first. The app id is written out: the checker reads the literal.
-			if ($this->appManager->isInstalled('openregister') === false) {
+			// ADR-083: OpenRegister is optional for this app, so establish it first.
+			if ($this->openRegister->isInstalled() === false) {
 				throw new RuntimeException('OpenRegister is not installed');
 			}
 
 			try {
-				$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+				$this->objectService = $this->openRegister->objectService();
 			} catch (Throwable $e) {
 				throw new RuntimeException('OpenRegister is not available: '.$e->getMessage());
 			}

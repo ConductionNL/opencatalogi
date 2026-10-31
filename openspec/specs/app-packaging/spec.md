@@ -93,3 +93,35 @@ capability (FED-001). The document MUST NOT present the unrouted path
   endpoint
 - **AND** the document MUST cross-reference the `federation` capability (FED-001)
 
+### Requirement: The app runs on the organisation's own Nextcloud with no vendor cloud (PKG-005)
+
+OpenCatalogi MUST install and run on a Nextcloud the organisation hosts
+itself, with OpenRegister as its only app dependency. Storing, publishing and
+serving publications MUST NOT need a service hosted by Conduction or another
+vendor. The default directory address MUST only be an optional federation
+peer: catalogues and publications MUST keep working when it is unreachable or
+removed.
+
+> @e2e exclude Packaging and hosting property: verified by installing the app on a self-hosted instance (CI install job), not by a browser journey.
+
+#### Scenario: a self-hosted install publishes without outside services
+
+- **GIVEN** a self-hosted Nextcloud with OpenRegister and OpenCatalogi installed
+- **AND** no network route to the default directory address
+- **WHEN** an editor creates a catalogue and publishes a publication in it
+- **THEN** the publication MUST be served by the public API of that instance
+
+### Requirement: Staff sign in through Nextcloud's own login (PKG-006)
+
+OpenCatalogi MUST NOT have a login of its own. Every staff request MUST take
+the user from the Nextcloud session, so any sign-in backend the Nextcloud
+installation uses (its own accounts, LDAP, OpenID Connect through user_oidc,
+SAML through user_saml) signs staff in to OpenCatalogi as well.
+
+> @e2e exclude Platform property: single sign-on is configured in Nextcloud, not in the app; the app only reads the Nextcloud session.
+
+#### Scenario: a user signed in through single sign-on reaches the app
+
+- **GIVEN** a Nextcloud that signs users in through an OpenID Connect provider
+- **WHEN** a staff member signs in there and opens /apps/opencatalogi
+- **THEN** the app MUST open for that user without asking for credentials again

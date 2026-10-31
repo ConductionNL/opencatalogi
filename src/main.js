@@ -13,12 +13,6 @@ import {
 	registerIcons,
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
-// Font Awesome setup
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { fab } from '@fortawesome/free-brands-svg-icons'
-import { far } from '@fortawesome/free-regular-svg-icons'
-import { fas } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import VueMarkdownEditor from '@kangc/v-md-editor'
 import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
 import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
@@ -53,8 +47,6 @@ import 'gridstack/dist/gridstack.min.css'
 import '@conduction/nextcloud-vue/css/index.css'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
 import '@kangc/v-md-editor/lib/theme/style/github.css'
-library.add(fas, fab, far)
-
 // The runtime public path is now set by webpack itself (`output.publicPath:
 // 'auto'` in webpack.config.js), which derives it from the loading script's own
 // URL. That covers ALL SEVEN entry points; the previous
@@ -406,7 +398,6 @@ app.mixin({ methods: { t, n } })
 app.use(VueMarkdownEditor)
 app.use(pinia)
 app.use(router)
-app.component('FontAwesomeIcon', FontAwesomeIcon)
 
 // ⚠️ Vue 2's `$mount('#content')` REPLACED the matched element; Vue 3's
 // `mount()` renders INSIDE it. `templates/index.php` emits

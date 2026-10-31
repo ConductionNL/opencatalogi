@@ -1596,154 +1596,24 @@ class SettingsService implements SettingsServiceInterface {
 	 */
 	public function backfillCatalogScopes(): void {
 		try {
-			$publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
-			$publicationSchema = $this->config->getValueString($this->appName, 'publication_schema', '');
-			$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
-			$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-
-			if ($publicationRegister === '' || $publicationSchema === ''
-				|| $catalogRegister === '' || $catalogSchema === ''
-			) {
-				// Nothing to backfill against — the caller will surface the
-				// config gap via the setup wizard's reload-settings step.
+			$run = $this->catalogScopeBackfillRun();
+			if ($run === null) {
 				return;
 			}
 
-			if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
-				return;
+			foreach ($this->catalogsToBackfill(run: $run) as $catalog) {
+				$catalogData = $this->catalogArray(catalog: $catalog);
+				if ($catalogData !== null) {
+					$this->backfillCatalogScope(run: $run, catalogData: $catalogData);
+				}
 			}
-
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			// Every catalogue, published or not: this runs from the import and
-			// from register events, often without a user session, and an
-			// unpublished seeded catalogue still needs its scope resolved.
-			$catalogs = $objectService->searchObjects(
-				query: [
-					'@self' => [
-						'register' => $catalogRegister,
-						'schema' => $catalogSchema,
-					],
-				],
-				_rbac: false,
-				_multitenancy: false
-			);
-			if (is_array($catalogs) === false) {
-				$catalogs = [];
-			}
-
-			$pending = [];
-			foreach ($catalogs as $catalog) {
-				$catalogData = $catalog;
-				if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
-					$catalogData = $catalog->jsonSerialize();
-				}
-
-				if (is_array($catalogData) === false) {
-					continue;
-				}
-
-				$registers = ($catalogData['registers'] ?? null);
-				$schemas = ($catalogData['schemas'] ?? null);
-
-				// A seeded catalogue names its scope by slug (the ids only exist
-				// after the import). Resolve those first, or the empty-looking
-				// check below would never see them and the scope would stay
-				// unreadable to isObjectInCatalogScope(), which intvals it.
-				// Schema slugs resolve only inside the catalogue's own registers:
-				// a bare slug like `module` can name another app's schema.
-				$slugsResolved = false;
-				if (is_array($registers) === true && is_array($schemas) === true) {
-					$scope = $this->resolveScopeSlugs(registers: $registers, schemas: $schemas);
-					$registers = $scope['registers'];
-					$schemas = $scope['schemas'];
-					$slugsResolved = $scope['changed'];
-					$pending = array_merge($pending, $scope['pending']);
-				}
-
-				if ($slugsResolved === true) {
-					$catalogData['registers'] = $registers;
-					$catalogData['schemas'] = $schemas;
-				}
-
-				$needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
-				$needsSchemas = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
-
-				if ($needsRegisters === false && $needsSchemas === false && $slugsResolved === false
-					&& $this->shouldPublishResolvedSeed(catalog: $catalogData, registers: $registers, schemas: $schemas) === false
-				) {
-					// Admin has already configured a scope; leave it alone.
-					continue;
-				}
-
-				$catalogId = ($catalogData['@self']['id'] ?? ($catalogData['id'] ?? null));
-				if ($catalogId === null) {
-					continue;
-				}
-
-				// OpenRegister's saveObject re-validates against the full schema,
-				// so we can't send a partial diff — start from the current object
-				// (minus `@self`, which is server-owned) and merge the missing
-				// scope arrays on top.
-				$merged = $catalogData;
-				unset($merged['@self']);
-				if ($needsRegisters === true) {
-					$merged['registers'] = [$publicationRegister];
-				}
-
-				if ($needsSchemas === true) {
-					$merged['schemas'] = [$publicationSchema];
-				}
-
-				// A seeded catalogue that ships unpublished because it names
-				// another app (applicatielandschap names stackiq) is published
-				// once, the first time its scope holds ids only. Without that app
-				// it stays hidden instead of showing an empty catalogue. What it
-				// then publishes is still decided per object by the other app's
-				// read rules, which OpenRegister's own public API already applies.
-				$publishNow = $this->shouldPublishResolvedSeed(catalog: $catalogData, registers: $registers, schemas: $schemas);
-				if ($publishNow === true) {
-					$merged['published'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM);
-				}
-
-				// Persisted date-time fields can come back in the SQL-style
-				// "YYYY-MM-DD HH:MM:SS" shape (no `T`, no timezone) that fails
-				// the schema's ISO 8601 format validator on re-save. Normalise
-				// any string field looking like that back to full ISO 8601 so
-				// the update passes validation without touching the intent of
-				// the value. Non-string / already-ISO values are left alone.
-				foreach ($merged as $key => $value) {
-					if (is_string($value) === true
-						&& preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) === 1
-					) {
-						$merged[$key] = str_replace(' ', 'T', $value) . '+00:00';
-					}
-				}
-
-				try {
-					$objectService->saveObject(
-						object: $merged,
-						register: $catalogRegister,
-						schema: $catalogSchema,
-						uuid: (string)$catalogId,
-						_rbac: false,
-						_multitenancy: false,
-					);
-					if ($publishNow === true) {
-						$this->markSeedPublished(slug: (string)$catalogData['slug']);
-					}
-				} catch (\Exception) {
-					// Per-catalog failure must not abort the whole settings
-					// import; the admin can retro-fit via the catalog edit view.
-					continue;
-				}
-			}//end foreach
 
 			// What a later register event can still complete (stackiq installed
 			// after OpenCatalogi). CatalogScopePendingListener reads this.
 			$this->config->setValueString(
 				$this->appName,
 				self::CATALOG_SCOPE_PENDING_KEY,
-				(string)json_encode(array_values(array_unique($pending)))
+				(string)json_encode(array_values(array_unique($run->pending)))
 			);
 		} catch (\Exception) {
 			// Never let backfill failure sink the settings import — the wizard
@@ -1754,21 +1624,254 @@ class SettingsService implements SettingsServiceInterface {
 	}//end backfillCatalogScopes()
 
 	/**
+	 * Start a backfill run, or null when there is nothing to backfill against.
+	 *
+	 * A config gap is surfaced by the setup wizard's reload-settings step.
+	 *
+	 * @return CatalogScopeBackfill|null
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+	 */
+	private function catalogScopeBackfillRun(): ?CatalogScopeBackfill {
+		$run = new CatalogScopeBackfill(config: $this->config, appName: $this->appName);
+		if ($run->isConfigured() === false
+			|| in_array('openregister', $this->appManager->getInstalledApps(), true) === false
+		) {
+			return null;
+		}
+
+		$run->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $run;
+	}//end catalogScopeBackfillRun()
+
+	/**
+	 * Every catalogue, published or not.
+	 *
+	 * This runs from the import and from register events, often without a user
+	 * session, and an unpublished seeded catalogue still needs its scope resolved.
+	 *
+	 * @param CatalogScopeBackfill $run The backfill run.
+	 *
+	 * @return array<int, mixed>
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+	 */
+	private function catalogsToBackfill(CatalogScopeBackfill $run): array {
+		$catalogs = $run->objectService->searchObjects(
+			query: $run->catalogQuery(),
+			_rbac: false,
+			_multitenancy: false
+		);
+		if (is_array($catalogs) === false) {
+			return [];
+		}
+
+		return $catalogs;
+	}//end catalogsToBackfill()
+
+	/**
+	 * A catalogue as an array, or null when it is neither an array nor serialises to one.
+	 *
+	 * @param mixed $catalog The catalogue as the search returned it.
+	 *
+	 * @return array<string, mixed>|null
+	 *
+	 * @spec exclude Type-narrowing plumbing.
+	 */
+	private function catalogArray(mixed $catalog): ?array {
+		if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+			$catalog = $catalog->jsonSerialize();
+		}
+
+		if (is_array($catalog) === false) {
+			return null;
+		}
+
+		return $catalog;
+	}//end catalogArray()
+
+	/**
+	 * Resolve one catalogue's scope slugs, patch a missing scope, and save it.
+	 *
+	 * A catalogue whose scope is already set, holds no slugs and is not due its
+	 * one automatic publication is left alone. A failed save is skipped: the
+	 * admin can retro-fit it via the catalog edit view.
+	 *
+	 * @param CatalogScopeBackfill $run The backfill run.
+	 * @param array<string, mixed> $catalogData The catalogue as stored.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+	 */
+	private function backfillCatalogScope(CatalogScopeBackfill $run, array $catalogData): void {
+		$scope = $this->resolvedCatalogScope(run: $run, catalogData: $catalogData);
+		$patch = $this->catalogScopePatch(run: $run, scope: $scope);
+		if ($patch === null) {
+			return;
+		}
+
+		try {
+			$run->objectService->saveObject(
+				object: $patch['object'],
+				register: $run->catalogRegister,
+				schema: $run->catalogSchema,
+				uuid: $patch['uuid'],
+				_rbac: false,
+				_multitenancy: false,
+			);
+			if ($patch['publishedSlug'] !== null) {
+				$this->markSeedPublished(slug: $patch['publishedSlug']);
+			}
+		} catch (\Exception) {
+			return;
+		}
+
+	}//end backfillCatalogScope()
+
+	/**
+	 * One catalogue with the slugs in its scope resolved to ids where they can be.
+	 *
+	 * A seeded catalogue names its scope by slug (the ids only exist after the
+	 * import). Schema slugs resolve only inside the catalogue's own registers: a
+	 * bare slug like `module` can name another app's schema. What cannot resolve
+	 * yet is added to the run's pending list.
+	 *
+	 * @param CatalogScopeBackfill $run The backfill run.
+	 * @param array<string, mixed> $catalogData The catalogue as stored.
+	 *
+	 * @return array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool}
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
+	 */
+	private function resolvedCatalogScope(CatalogScopeBackfill $run, array $catalogData): array {
+		$scope = [
+			'data' => $catalogData,
+			'registers' => ($catalogData['registers'] ?? null),
+			'schemas' => ($catalogData['schemas'] ?? null),
+			'changed' => false,
+		];
+		if (is_array($scope['registers']) === false || is_array($scope['schemas']) === false) {
+			return $scope;
+		}
+
+		$resolved = $this->resolveScopeSlugs(registers: $scope['registers'], schemas: $scope['schemas']);
+		$run->pending = array_merge($run->pending, $resolved['pending']);
+		$scope['registers'] = $resolved['registers'];
+		$scope['schemas'] = $resolved['schemas'];
+		$scope['changed'] = $resolved['changed'];
+		if ($resolved['changed'] === true) {
+			$scope['data']['registers'] = $resolved['registers'];
+			$scope['data']['schemas'] = $resolved['schemas'];
+		}
+
+		return $scope;
+	}//end resolvedCatalogScope()
+
+	/**
+	 * The object to save for one catalogue, or null when it needs no save.
+	 *
+	 * OpenRegister's saveObject re-validates against the full schema, so the
+	 * patch is the whole current object (minus the server-owned `@self`) with
+	 * an empty scope filled from the publication register and schema. A seeded
+	 * catalogue due its one automatic publication gets a `published` date.
+	 *
+	 * @param CatalogScopeBackfill $run The backfill run.
+	 * @param array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool} $scope The resolved catalogue.
+	 *
+	 * @return array{object: array<string, mixed>, uuid: string, publishedSlug: string|null}|null
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 */
+	private function catalogScopePatch(CatalogScopeBackfill $run, array $scope): ?array {
+		$data = $scope['data'];
+		$needsRegisters = $this->isEmptyScopeList(value: $scope['registers']);
+		$needsSchemas = $this->isEmptyScopeList(value: $scope['schemas']);
+		$publishNow = $this->shouldPublishResolvedSeed(scope: $scope);
+		$catalogId = ($data['@self']['id'] ?? ($data['id'] ?? null));
+		if (($needsRegisters === false && $needsSchemas === false && $scope['changed'] === false && $publishNow === false)
+			|| $catalogId === null
+		) {
+			return null;
+		}
+
+		$merged = $data;
+		unset($merged['@self']);
+		if ($needsRegisters === true) {
+			$merged['registers'] = [$run->publicationRegister];
+		}
+
+		if ($needsSchemas === true) {
+			$merged['schemas'] = [$run->publicationSchema];
+		}
+
+		$publishedSlug = null;
+		if ($publishNow === true) {
+			$merged['published'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM);
+			$publishedSlug = (string)$data['slug'];
+		}
+
+		return [
+			'object' => $this->withIsoDateTimes(object: $merged),
+			'uuid' => (string)$catalogId,
+			'publishedSlug' => $publishedSlug,
+		];
+	}//end catalogScopePatch()
+
+	/**
+	 * Whether a scope list is missing or empty.
+	 *
+	 * @param mixed $value The registers or schemas of a scope.
+	 *
+	 * @return bool
+	 *
+	 * @spec exclude Type-narrowing plumbing.
+	 */
+	private function isEmptyScopeList(mixed $value): bool {
+		return $value === null || (is_array($value) === true && count($value) === 0);
+	}//end isEmptyScopeList()
+
+	/**
+	 * The object with every SQL-style "YYYY-MM-DD HH:MM:SS" string as full ISO 8601.
+	 *
+	 * Persisted date-time fields can come back in that shape, which fails the
+	 * schema's ISO 8601 format validator on re-save. Other values are kept.
+	 *
+	 * @param array<string, mixed> $object The object to save.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+	 */
+	private function withIsoDateTimes(array $object): array {
+		foreach ($object as $key => $value) {
+			if (is_string($value) === true
+				&& preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) === 1
+			) {
+				$object[$key] = str_replace(' ', 'T', $value) . '+00:00';
+			}
+		}
+
+		return $object;
+	}//end withIsoDateTimes()
+
+	/**
 	 * Whether a seeded catalogue is due its one automatic publication.
 	 *
 	 * True only for a slug in PUBLISH_WHEN_RESOLVED that has no `published`
 	 * date, whose scope holds ids only, and that was never published this way
 	 * before. The last condition keeps an administrator's later unpublish.
 	 *
-	 * @param array<string, mixed> $catalog The catalogue as stored.
-	 * @param mixed $registers The scope's registers after resolution.
-	 * @param mixed $schemas The scope's schemas after resolution.
+	 * @param array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool} $scope The resolved catalogue.
 	 *
 	 * @return bool
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
 	 */
-	private function shouldPublishResolvedSeed(array $catalog, mixed $registers, mixed $schemas): bool {
+	private function shouldPublishResolvedSeed(array $scope): bool {
+		$catalog = $scope['data'];
+		$registers = $scope['registers'];
+		$schemas = $scope['schemas'];
 		$slug = ($catalog['slug'] ?? null);
 		$scopeResolver = new CatalogScopeSlugResolver();
 		if (in_array($slug, self::PUBLISH_WHEN_RESOLVED, true) === false
@@ -1837,11 +1940,13 @@ class SettingsService implements SettingsServiceInterface {
 		return (new CatalogScopeSlugResolver())->resolveScope(
 			registers: $registers,
 			schemas: $schemas,
-			findRegisterId: static fn (string $slug) => $registerMapper?->find($slug, _rbac: false, _multitenancy: false)?->getId(),
-			schemaIdsOfRegister: static fn (int $registerId): array => (
-				$registerMapper?->find($registerId, _rbac: false, _multitenancy: false)?->getSchemas() ?? []
-			),
-			schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper?->find($schemaId, _rbac: false, _multitenancy: false)?->getSlug()
+			lookups: new CatalogScopeLookups(
+				findRegisterId: static fn (string $slug) => $registerMapper?->find($slug, _rbac: false, _multitenancy: false)?->getId(),
+				schemaIdsOfRegister: static fn (int $registerId): array => (
+					$registerMapper?->find($registerId, _rbac: false, _multitenancy: false)?->getSchemas() ?? []
+				),
+				schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper?->find($schemaId, _rbac: false, _multitenancy: false)?->getSlug()
+			)
 		);
 	}//end resolveScopeSlugs()
 

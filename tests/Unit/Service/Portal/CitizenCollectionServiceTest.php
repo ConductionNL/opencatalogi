@@ -109,7 +109,7 @@ class CitizenCollectionServiceTest extends TestCase {
 		$this->assertSame(self::PUB_A, $stored['items'][0]['publication']);
 		$this->assertSame('resident', $stored['items'][0]['addedBy']);
 		$this->assertSame('Besluit windpark', $stored['items'][0]['title']);
-		$this->assertNull($stored['items'][0]['attachment']);
+		$this->assertArrayNotHasKey('attachment', $stored['items'][0]);
 		$this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $stored['items'][0]['id']);
 		$this->assertStoredDossierIsValid($view['id']);
 	}

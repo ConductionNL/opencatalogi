@@ -1319,141 +1319,187 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Detect or generate publication endpoint for a listing
 	 *
-	 * Checks if the listing has a publication endpoint, and if not,
-	 * generates one based on the search endpoint by replacing 'search' with 'publications'.
+	 * Uses the listing's own endpoint when it has one, and otherwise derives
+	 * one from, in turn, the search URL, the catalog directory, the directory
+	 * host and a domain-like title or name.
 	 *
 	 * @param array $listingData The listing data to process
 	 *
 	 * @return string|null The publication endpoint URL or null if cannot be determined
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function detectPublicationEndpoint(array $listingData): ?string {
-		// Check if listing already has a publication endpoint.
 		if (empty($listingData['publications']) === false) {
 			return $listingData['publications'];
 		}
 
-		// Check if listing already has a publication endpoint (alternative field name).
 		if (empty($listingData['publication']) === false) {
 			return $listingData['publication'];
 		}
 
-		// Try to generate from search endpoint.
-		if (empty($listingData['search']) === false) {
-			/*
-			 * Replace 'search' with 'publications' in the URL.
-			 *
-			 * @var string $searchUrl
-			 */
+		return $this->publicationEndpointFromSearch(listingData: $listingData)
+			?? $this->publicationEndpointFromCatalogDirectory(listingData: $listingData)
+			?? $this->publicationEndpointFromDirectory(listingData: $listingData)
+			?? $this->publicationEndpointFromTitle(listingData: $listingData);
+	}//end detectPublicationEndpoint()
 
-			$searchUrl = (string)$listingData['search'];
-			$publicationEndpoint = (string)str_replace('/search', '/publications', $searchUrl);
-
-			// Also handle cases where 'search' might be a query parameter or different pattern.
-			if ($publicationEndpoint === $listingData['search']) {
-				// Try replacing 'search' anywhere in the URL path.
-				$publicationEndpoint = (string)preg_replace('/\/search(?=\/|$)/', '/publications', $listingData['search']);
-			}
-
-			// If still no change, try a more generic approach.
-			if ($publicationEndpoint === $listingData['search']) {
-				// Parse URL and replace 'search' in path segments.
-				$urlParts = parse_url($listingData['search']);
-				if ($urlParts !== false && isset($urlParts['path']) === true) {
-					$pathSegments = explode('/', trim($urlParts['path'], '/'));
-					$pathSegments = array_map(
-						function ($segment) {
-							if ($segment === 'search') {
-								return 'publications';
-							}
-
-							return $segment;
-						},
-						$pathSegments
-					);
-
-					$newPath = '/' . implode('/', $pathSegments);
-					$publicationEndpoint = $urlParts['scheme'] . '://' . $urlParts['host'];
-					if (isset($urlParts['port']) === true) {
-						$publicationEndpoint .= ':' . $urlParts['port'];
-					}
-
-					$publicationEndpoint .= $newPath;
-					if (isset($urlParts['query']) === true) {
-						$publicationEndpoint .= '?' . $urlParts['query'];
-					}
-				}//end if
-			}//end if
-
-			// Only return if we actually made a change.
-			if ($publicationEndpoint !== $listingData['search']) {
-				return $publicationEndpoint;
-			}
-		}//end if
-
-		// Try to construct from catalogDirectory (the actual catalog's directory endpoint from relations).
-		// Format: Replace /api/directory with /api/publications.
-		if (empty($listingData['catalogDirectory']) === false) {
-			/*
-			 * @var string $catalogDir
-			 */
-
-			$catalogDir = (string)$listingData['catalogDirectory'];
-			// Replace /api/directory with /api/publications.
-			$publicationEndpoint = (string)str_replace('/api/directory', '/api/publications', $catalogDir);
-			if ($publicationEndpoint !== $catalogDir) {
-				return $publicationEndpoint;
-			}
+	/**
+	 * The search URL with its `/search` part turned into `/publications`.
+	 *
+	 * When the URL holds no `/search`, it is rebuilt from its parts with every
+	 * `search` path segment replaced; the result counts only when it differs.
+	 *
+	 * @param array $listingData The listing data.
+	 *
+	 * @return string|null The derived endpoint, or null when nothing changed.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function publicationEndpointFromSearch(array $listingData): ?string {
+		if (empty($listingData['search']) === true) {
+			return null;
 		}
 
-		// Try to construct from directory hostname (fallback for listings without proper relations).
-		// Format: https://{directory-host}/apps/opencatalogi/api/publications.
-		if (empty($listingData['directory']) === false) {
-			$directory = $listingData['directory'];
+		$search = $listingData['search'];
+		$publicationEndpoint = (string)str_replace('/search', '/publications', (string)$search);
+		if ($publicationEndpoint === $search) {
+			$publicationEndpoint = $this->rebuildWithPublicationsSegment(url: $search);
+		}
 
-			// If directory is just a hostname (e.g., "directory.opencatalogi.nl" or "opencatalogi.nl").
-			// construct the full publications URL.
-			if (strpos($directory, '://') === false) {
-				// No protocol, assume HTTPS and add standard OpenCatalogi API path.
-				return 'https://' . $directory . '/apps/opencatalogi/api/publications';
-			}
-
-			// Directory is a full URL, extract the base and construct publications endpoint.
-			$urlParts = parse_url($directory);
-			if ($urlParts !== false && isset($urlParts['host']) === true) {
-				$publicationEndpoint = $urlParts['scheme'] . '://' . $urlParts['host'];
-				if (isset($urlParts['port']) === true) {
-					$publicationEndpoint .= ':' . $urlParts['port'];
-				}
-
-				$publicationEndpoint .= '/apps/opencatalogi/api/publications';
-				return $publicationEndpoint;
-			}
-		}//end if
-
-		// Try to infer hostname from catalog title or name.
-		// For catalogs named like "OpenCatalogi.nl", "Example.com", try using that as hostname.
-		$title = ($listingData['title'] ?? $listingData['name'] ?? '');
-		if (empty($title) === false) {
-			// Check if title looks like a domain name (contains a dot and no spaces).
-			if (strpos($title, '.') !== false && strpos($title, ' ') === false) {
-				// Looks like a domain, try using it.
-				$hostname = strtolower(trim($title));
-				// Remove any trailing slashes or paths.
-				$hostname = preg_replace('#[/\\\\].*$#', '', $hostname);
-				if (empty($hostname) === false) {
-					return 'https://' . $hostname . '/apps/opencatalogi/api/publications';
-				}
-			}
+		if ($publicationEndpoint !== $search) {
+			return $publicationEndpoint;
 		}
 
 		return null;
-	}//end detectPublicationEndpoint()
+	}//end publicationEndpointFromSearch()
+
+	/**
+	 * Rebuild a URL from its parts with every `search` path segment replaced by `publications`.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string The rebuilt URL, or the URL itself when it has no path.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function rebuildWithPublicationsSegment(string $url): string {
+		$urlParts = parse_url($url);
+		if ($urlParts === false || isset($urlParts['path']) === false) {
+			return $url;
+		}
+
+		$pathSegments = array_map(
+			static function ($segment) {
+				if ($segment === 'search') {
+					return 'publications';
+				}
+
+				return $segment;
+			},
+			explode('/', trim($urlParts['path'], '/'))
+		);
+
+		$rebuilt = $this->urlOrigin(urlParts: $urlParts) . '/' . implode('/', $pathSegments);
+		if (isset($urlParts['query']) === true) {
+			$rebuilt .= '?' . $urlParts['query'];
+		}
+
+		return $rebuilt;
+	}//end rebuildWithPublicationsSegment()
+
+	/**
+	 * The catalog directory endpoint with `/api/directory` turned into `/api/publications`.
+	 *
+	 * @param array $listingData The listing data.
+	 *
+	 * @return string|null The derived endpoint, or null when nothing changed.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function publicationEndpointFromCatalogDirectory(array $listingData): ?string {
+		if (empty($listingData['catalogDirectory']) === true) {
+			return null;
+		}
+
+		$catalogDir = (string)$listingData['catalogDirectory'];
+		$publicationEndpoint = (string)str_replace('/api/directory', '/api/publications', $catalogDir);
+		if ($publicationEndpoint !== $catalogDir) {
+			return $publicationEndpoint;
+		}
+
+		return null;
+	}//end publicationEndpointFromCatalogDirectory()
+
+	/**
+	 * The standard publications path on the directory's host.
+	 *
+	 * A bare hostname is taken as HTTPS; a full URL keeps its scheme and port.
+	 *
+	 * @param array $listingData The listing data.
+	 *
+	 * @return string|null The derived endpoint, or null when the directory has no host.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function publicationEndpointFromDirectory(array $listingData): ?string {
+		if (empty($listingData['directory']) === true) {
+			return null;
+		}
+
+		$directory = $listingData['directory'];
+		if (strpos($directory, '://') === false) {
+			return 'https://' . $directory . '/apps/opencatalogi/api/publications';
+		}
+
+		$urlParts = parse_url($directory);
+		if ($urlParts !== false && isset($urlParts['host']) === true) {
+			return $this->urlOrigin(urlParts: $urlParts) . '/apps/opencatalogi/api/publications';
+		}
+
+		return null;
+	}//end publicationEndpointFromDirectory()
+
+	/**
+	 * The standard publications path on a host named by a domain-like title or name.
+	 *
+	 * @param array $listingData The listing data.
+	 *
+	 * @return string|null The derived endpoint, or null when the title is not domain-like.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function publicationEndpointFromTitle(array $listingData): ?string {
+		$title = ($listingData['title'] ?? $listingData['name'] ?? '');
+		if (empty($title) === true || strpos($title, '.') === false || strpos($title, ' ') !== false) {
+			return null;
+		}
+
+		$hostname = preg_replace('#[/\\\\].*$#', '', strtolower(trim($title)));
+		if (empty($hostname) === false) {
+			return 'https://' . $hostname . '/apps/opencatalogi/api/publications';
+		}
+
+		return null;
+	}//end publicationEndpointFromTitle()
+
+	/**
+	 * The `scheme://host[:port]` part of a parsed URL.
+	 *
+	 * @param array $urlParts The parse_url() result.
+	 *
+	 * @return string The origin.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function urlOrigin(array $urlParts): string {
+		$origin = $urlParts['scheme'] . '://' . $urlParts['host'];
+		if (isset($urlParts['port']) === true) {
+			$origin .= ':' . $urlParts['port'];
+		}
+
+		return $origin;
+	}//end urlOrigin()
 
 	/**
 	 * Check if incoming listing data is outdated compared to existing data
@@ -2965,15 +3011,13 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * Aggregate facets from multiple directory sources
 	 *
 	 * Combines facet data from different publication endpoints,
-	 * merging counts for the same facet values.
+	 * merging counts for the same facet values. A field whose new or existing
+	 * value is not a list is left as it was.
 	 *
 	 * @param array $existingFacets The current aggregated facets
 	 * @param array $newFacets The new facets to merge in
 	 *
 	 * @return array The merged facets
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
@@ -2987,11 +3031,8 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		$mergedFacets = $existingFacets;
-
 		foreach ($newFacets as $field => $facetValues) {
-			// Skip if facetValues is not an array.
 			if (is_array($facetValues) === false) {
-				// Removed redundant logging.
 				continue;
 			}
 
@@ -3000,75 +3041,104 @@ class DirectoryService implements DirectoryServiceInterface {
 				continue;
 			}
 
-			// Skip if existing field data is not an array.
-			if (is_array($mergedFacets[$field]) === false) {
-				// Removed redundant logging.
-				continue;
-			}
-
-			// Create a lookup map for existing values.
-			$existingValues = [];
-			foreach ($mergedFacets[$field] as $index => $existingFacet) {
-				// Skip if existingFacet is not an array or doesn't have _id.
-				if (is_array($existingFacet) === false || isset($existingFacet['_id']) === false) {
-					// Removed redundant logging.
-					continue;
-				}
-
-				$existingValues[$existingFacet['_id']] = $index;
-			}
-
-			// Merge or add new values.
-			foreach ($facetValues as $facetValue) {
-				// Skip if facetValue is not an array or doesn't have required fields.
-				if (is_array($facetValue) === false || isset($facetValue['_id']) === false) {
-					// Removed redundant logging.
-					continue;
-				}
-
-				$valueId = $facetValue['_id'];
-
-				if (isset($existingValues[$valueId]) === true && isset($facetValue['count']) === true) {
-					// Add to existing count.
-					if (isset($mergedFacets[$field][$existingValues[$valueId]]['count']) === true) {
-						$mergedFacets[$field][$existingValues[$valueId]]['count'] += $facetValue['count'];
-					}
-
-					continue;
-				}
-
-				// Add new value.
-				$mergedFacets[$field][] = $facetValue;
-			}//end foreach
-
-			// Re-sort merged facets by count (descending) and then by value (ascending).
-			// Only sort if we have valid array data.
-			if (is_array($mergedFacets[$field]) === true && empty($mergedFacets[$field]) === false) {
-				usort(
-					$mergedFacets[$field],
-					function ($a, $b) {
-						// Ensure both items are arrays with required fields.
-						if (is_array($a) === false
-							|| is_array($b) === false
-							|| isset($a['_id']) === false
-							|| isset($b['_id']) === false
-						) {
-							return 0;
-						}
-
-						$countA = ($a['count'] ?? 0);
-						$countB = ($b['count'] ?? 0);
-
-						if ($countA === $countB) {
-							return strcmp($a['_id'], $b['_id']);
-						}
-
-						return ($countB <=> $countA);
-					}
+			if (is_array($mergedFacets[$field]) === true) {
+				$mergedFacets[$field] = $this->sortFacetBuckets(
+					buckets: $this->mergeFacetBuckets(buckets: $mergedFacets[$field], incoming: $facetValues)
 				);
-			}//end if
-		}//end foreach
+			}
+		}
 
 		return $mergedFacets;
 	}//end aggregateFacets()
+
+	/**
+	 * Merge one field's incoming facet buckets into its existing buckets.
+	 *
+	 * An incoming bucket whose `_id` an existing bucket has adds its count to
+	 * that bucket; any other bucket with an `_id` is appended. Buckets without
+	 * an `_id` are skipped.
+	 *
+	 * @param array $buckets The existing buckets of the field.
+	 * @param array $incoming The incoming buckets of the field.
+	 *
+	 * @return array The merged buckets.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function mergeFacetBuckets(array $buckets, array $incoming): array {
+		$existingValues = $this->facetBucketPositions(buckets: $buckets);
+		foreach ($incoming as $facetValue) {
+			if (is_array($facetValue) === false || isset($facetValue['_id']) === false) {
+				continue;
+			}
+
+			$index = ($existingValues[$facetValue['_id']] ?? null);
+			if ($index === null || isset($facetValue['count']) === false) {
+				$buckets[] = $facetValue;
+				continue;
+			}
+
+			if (isset($buckets[$index]['count']) === true) {
+				$buckets[$index]['count'] += $facetValue['count'];
+			}
+		}
+
+		return $buckets;
+	}//end mergeFacetBuckets()
+
+	/**
+	 * The position of each existing facet bucket, by its `_id`.
+	 *
+	 * @param array $buckets The buckets of one field.
+	 *
+	 * @return array<int|string, int|string> Bucket key by `_id`.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function facetBucketPositions(array $buckets): array {
+		$positions = [];
+		foreach ($buckets as $index => $bucket) {
+			if (is_array($bucket) === true && isset($bucket['_id']) === true) {
+				$positions[$bucket['_id']] = $index;
+			}
+		}
+
+		return $positions;
+	}//end facetBucketPositions()
+
+	/**
+	 * Sort facet buckets by count (descending), then by `_id` (ascending).
+	 *
+	 * Buckets that are not arrays with an `_id` compare equal to everything.
+	 *
+	 * @param array $buckets The buckets.
+	 *
+	 * @return array The sorted, reindexed buckets.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function sortFacetBuckets(array $buckets): array {
+		if (empty($buckets) === true) {
+			return $buckets;
+		}
+
+		usort(
+			$buckets,
+			static function ($a, $b): int {
+				if (is_array($a) === false || is_array($b) === false || isset($a['_id'], $b['_id']) === false) {
+					return 0;
+				}
+
+				$countA = ($a['count'] ?? 0);
+				$countB = ($b['count'] ?? 0);
+				if ($countA === $countB) {
+					return strcmp($a['_id'], $b['_id']);
+				}
+
+				return ($countB <=> $countA);
+			}
+		);
+
+		return $buckets;
+	}//end sortFacetBuckets()
 }//end class

@@ -30,6 +30,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
+use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -198,84 +199,27 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * The stored object contains ONLY publication reference, date, kind, and
 	 * count. No request-derived attribute is ever written (ANA-002).
 	 *
-	 * @param string $publicationId The publication UUID being counted.
-	 * @param string $kind KIND_VIEW or KIND_DOWNLOAD.
+	 * @param PublicationUsage $usage The publication, kind and catalog being counted.
 	 * @param string|null $userAgent Request UA, evaluated for crawler-skip only.
-	 * @param string|null $catalog Optional catalog slug for roll-up labelling.
 	 *
 	 * @return boolean True when a count was recorded; false when skipped/failed.
 	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
-	public function increment(
-		string $publicationId,
-		string $kind,
-		?string $userAgent = null,
-		?string $catalog = null,
-	): bool {
+	public function increment(PublicationUsage $usage, ?string $userAgent = null): bool {
 		try {
-			if ($publicationId === '' || in_array($kind, [self::KIND_VIEW, self::KIND_DOWNLOAD], true) === false) {
-				return false;
-			}
+			$count = new UsageCount(publicationId: $usage->publicationId, kind: $usage->kind);
+			$count->catalog = $usage->catalog;
 
 			// Best-effort bot filtering — evaluated in memory, UA discarded (ANA-003).
-			if ($this->isCrawler(userAgent: $userAgent) === true) {
+			if ($count->isCountable() === false
+				|| $this->isCrawler(userAgent: $userAgent) === true
+				|| $this->bindCounterStore(count: $count) === false
+			) {
 				return false;
 			}
 
-			$objectService = $this->getObjectService();
-			if ($objectService === null) {
-				return false;
-			}
-
-			$register = $this->getRegisterId();
-			$schema = $this->getSchemaId();
-			if ($register === null || $schema === null) {
-				$this->logger->info('[UsageCounterService] counter register/schema unconfigured; skipping count');
-				return false;
-			}
-
-			$today = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d');
-			$existing = $this->findCounter(
-				objectService: $objectService,
-				register: $register,
-				schema: $schema,
-				publicationId: $publicationId,
-				date: $today,
-				kind: $kind
-			);
-
-			if ($existing !== null) {
-				$data = $this->normaliseCounter(row: $existing);
-				$data['count'] = ((int)($data['count'] ?? 0) + 1);
-				$objectService->saveObject(
-					object: $data,
-					register: $register,
-					schema: $schema,
-					uuid: (string)($data['id'] ?? $data['uuid'] ?? ''),
-					_rbac: false,
-					_multitenancy: false,
-				);
-				return true;
-			}
-
-			// No counter for today yet — create one. Catalog is an optional
-			// roll-up label only (no personal data); it mirrors the publication's
-			// own catalog and never carries request-derived attributes.
-			$objectService->saveObject(
-				object: [
-					'publication' => $publicationId,
-					'catalog' => ($catalog ?? ''),
-					'date' => $today,
-					'kind' => $kind,
-					'count' => 1,
-				],
-				register: $register,
-				schema: $schema,
-				_rbac: false,
-				_multitenancy: false,
-			);
-
+			$this->saveCount(count: $count);
 			return true;
 		} catch (\Throwable $e) {
 			// ANA-001: a counting failure MUST be logged and swallowed, never
@@ -283,7 +227,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 			$this->logger->warning(
 				'[UsageCounterService] count failed (swallowed)',
 				[
-					'kind' => $kind,
+					'kind' => $usage->kind,
 					'error' => $e->getMessage(),
 				]
 			);
@@ -293,38 +237,83 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	}//end increment()
 
 	/**
+	 * Point a count at the counter store: the object service, register and schema.
+	 *
+	 * @param UsageCount $count The count.
+	 *
+	 * @return bool False when OpenRegister is missing or the counter register or schema is unconfigured.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function bindCounterStore(UsageCount $count): bool {
+		$count->objectService = $this->getObjectService();
+		if ($count->objectService === null) {
+			return false;
+		}
+
+		$register = $this->getRegisterId();
+		$schema = $this->getSchemaId();
+		if ($register === null || $schema === null) {
+			$this->logger->info('[UsageCounterService] counter register/schema unconfigured; skipping count');
+			return false;
+		}
+
+		$count->register = $register;
+		$count->schema = $schema;
+		return true;
+	}//end bindCounterStore()
+
+	/**
+	 * Add the count to today's counter, or create that counter with a count of 1.
+	 *
+	 * The catalog is an optional roll-up label only (no personal data); it
+	 * mirrors the publication's own catalog and never carries request-derived
+	 * attributes.
+	 *
+	 * @param UsageCount $count The count, bound to the counter store.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function saveCount(UsageCount $count): void {
+		$existing = $this->findCounter(count: $count);
+		if ($existing === null) {
+			$count->objectService->saveObject(
+				object: $count->firstCounter(),
+				register: $count->register,
+				schema: $count->schema,
+				_rbac: false,
+				_multitenancy: false,
+			);
+			return;
+		}
+
+		$data = $this->normaliseCounter(row: $existing);
+		$data['count'] = ((int)($data['count'] ?? 0) + 1);
+		$count->objectService->saveObject(
+			object: $data,
+			register: $count->register,
+			schema: $count->schema,
+			uuid: (string)($data['id'] ?? $data['uuid'] ?? ''),
+			_rbac: false,
+			_multitenancy: false,
+		);
+	}//end saveCount()
+
+	/**
 	 * Find today's counter object for a (publication, date, kind) tuple.
 	 *
-	 * @param \OCA\OpenRegister\Service\ObjectService $objectService OR object service.
-	 * @param string $register Counter register id.
-	 * @param string $schema Counter schema id.
-	 * @param string $publicationId Publication UUID.
-	 * @param string $date Day (Y-m-d).
-	 * @param string $kind Counter kind.
+	 * @param UsageCount $count The count, bound to the counter store.
 	 *
 	 * @return array<string, mixed>|object|null The counter, or null if absent.
 	 *
 	 * @spec exclude Internal query helper for increment()/aggregate(); the public
 	 *       counting + aggregation contract is covered by increment() and getPublicationStats().
 	 */
-	private function findCounter(
-		\OCA\OpenRegister\Service\ObjectService $objectService,
-		string $register,
-		string $schema,
-		string $publicationId,
-		string $date,
-		string $kind,
-	) {
-		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-				'publication' => $publicationId,
-				'date' => $date,
-				'kind' => $kind,
-			],
+	private function findCounter(UsageCount $count) {
+		$results = $count->objectService->searchObjects(
+			query: $count->counterQuery(),
 			_rbac: false,
 			_multitenancy: false,
 		);
@@ -348,31 +337,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function getCountersForPublication(string $publicationId, ?string $from = null, ?string $to = null): array {
-		$objectService = $this->getObjectService();
-		$register = $this->getRegisterId();
-		$schema = $this->getSchemaId();
-		if ($objectService === null || $register === null || $schema === null) {
-			return [];
-		}
-
-		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-				'publication' => $publicationId,
-			],
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-		$rows = [];
-		if (is_array($results) === true) {
-			$rows = $results;
-		}
-
-		return $this->filterByRange(rows: $rows, from: $from, to: $to);
+		return $this->filterByRange(rows: $this->searchCounters(filter: ['publication' => $publicationId]), from: $from, to: $to);
 	}//end getCountersForPublication()
 
 	/**
@@ -387,31 +352,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function getCountersForCatalog(string $catalog, ?string $from = null, ?string $to = null): array {
-		$objectService = $this->getObjectService();
-		$register = $this->getRegisterId();
-		$schema = $this->getSchemaId();
-		if ($objectService === null || $register === null || $schema === null) {
-			return [];
-		}
-
-		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-				'catalog' => $catalog,
-			],
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-		$rows = [];
-		if (is_array($results) === true) {
-			$rows = $results;
-		}
-
-		return $this->filterByRange(rows: $rows, from: $from, to: $to);
+		return $this->filterByRange(rows: $this->searchCounters(filter: ['catalog' => $catalog]), from: $from, to: $to);
 	}//end getCountersForCatalog()
 
 	/**
@@ -429,6 +370,19 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
 	 */
 	public function getCountersForInstance(?string $from = null, ?string $to = null): array {
+		return $this->filterByRange(rows: $this->searchCounters(filter: []), from: $from, to: $to);
+	}//end getCountersForInstance()
+
+	/**
+	 * Search every counter object on the configured register and schema.
+	 *
+	 * @param array<string, string> $filter The fields the counters must match, next to the register and schema.
+	 *
+	 * @return array<int, mixed> The counter objects, or none when OpenRegister or the configuration is missing.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function searchCounters(array $filter): array {
 		$objectService = $this->getObjectService();
 		$register = $this->getRegisterId();
 		$schema = $this->getSchemaId();
@@ -437,23 +391,17 @@ class UsageCounterService implements UsageCounterServiceInterface {
 		}
 
 		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-			],
+			query: ['@self' => ['register' => $register, 'schema' => $schema]] + $filter,
 			_rbac: false,
 			_multitenancy: false,
 		);
 
-		$rows = [];
-		if (is_array($results) === true) {
-			$rows = $results;
+		if (is_array($results) === false) {
+			return [];
 		}
 
-		return $this->filterByRange(rows: $rows, from: $from, to: $to);
-	}//end getCountersForInstance()
+		return $results;
+	}//end searchCounters()
 
 	/**
 	 * Compute per-publication statistics: totals plus a daily timeseries.

@@ -32,8 +32,6 @@ namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -88,14 +86,12 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container Server container for resolving OpenRegister.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param LoggerInterface $logger Logger.
-	 * @param IAppManager $appManager The app manager, to establish that OpenRegister is there before asking for it.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly LoggerInterface $logger,
-		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -119,19 +115,15 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 		}
 
 		// ADR-083 rule 1: the dependency is optional at runtime, so its presence
-		// is established before it is asked for. Without this the container
-		// lookup is the only place the dependency is declared, which is nowhere
-		// a reader or a gate can see it.
-		// The app id is written out rather than held in a constant: ADR-083's
-		// checker reads the literal, and an indirection here is invisible to it.
-		if ($this->appManager->isInstalled('openregister') === false) {
+		// is established before it is asked for.
+		if ($this->openRegister->isInstalled() === false) {
 			throw new CatalogueUnreadableException(
 				message: 'The service catalogue cannot be read because OpenRegister is not installed.'
 			);
 		}
 
 		try {
-			$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$this->objectService = $this->openRegister->objectService();
 		} catch (\Throwable $e) {
 			$this->logger->error('[ServiceCatalogueService] OpenRegister is unavailable: ' . $e->getMessage());
 			throw new CatalogueUnreadableException(

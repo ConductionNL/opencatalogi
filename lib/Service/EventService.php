@@ -47,6 +47,8 @@ use RuntimeException;
  * @spec openspec/specs/auto-publishing/spec.md
  */
 class EventService implements EventServiceInterface {
+	use ChecksPublicationWindow;
+
 	/**
 	 * EventService constructor.
 	 *
@@ -129,76 +131,10 @@ class EventService implements EventServiceInterface {
 	 * @return array Results of the event processing including any auto-publishing actions.
 	 * @throws \RuntimeException If event processing fails.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/auto-publishing/spec.md
 	 */
 	public function handleObjectCreateEvents(array $objects): array {
-		$results = [
-			'processed' => 0,
-			'published' => 0,
-			'attachmentsPublished' => 0,
-			'errors' => [],
-			'details' => [],
-		];
-
-		try {
-			// Get current publishing options from configuration.
-			$publishingOptions = $this->settingsService->getPublishingOptions();
-
-			// Process each created object.
-			foreach ($objects as $objectData) {
-				$objectResult = [
-					'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
-					'actions' => [],
-					'errors' => [],
-				];
-
-				try {
-					// Check if auto-publish objects is enabled and object should be published.
-					if ($publishingOptions['auto_publish_objects'] === true) {
-						$shouldPublish = $this->shouldAutoPublishObject(objectData: $objectData);
-						if ($shouldPublish === true) {
-							// Auto-publish the object.
-							$publishResult = $this->publishObject(objectData: $objectData);
-							if ($publishResult['success'] === true) {
-								$objectResult['actions'][] = 'object_published';
-								$results['published']++;
-							}
-
-							if ($publishResult['success'] !== true) {
-								$objectResult['errors'][] = 'Failed to auto-publish object: ' . $publishResult['error'];
-							}
-						}
-					}
-
-					// Check if auto-publish attachments is enabled and object has published status.
-					if ($publishingOptions['auto_publish_attachments'] === true
-						&& $this->isObjectPublished(objectData: $objectData) === true
-					) {
-						$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
-						$objectResult['actions'][] = 'attachments_processed';
-						$results['attachmentsPublished'] += $attachmentResult['published'];
-
-						if (empty($attachmentResult['errors']) === false) {
-							$objectResult['errors'] = array_merge($objectResult['errors'], $attachmentResult['errors']);
-						}
-					}
-
-					$results['processed']++;
-				} catch (\Exception $e) {
-					$objectResult['errors'][] = $e->getMessage();
-					$results['errors'][] = 'Error processing object ' . $objectResult['objectId'] . ': ' . $e->getMessage();
-				}//end try
-
-				$results['details'][] = $objectResult;
-			}//end foreach
-
-			return $results;
-		} catch (\Exception $e) {
-			throw new RuntimeException('Failed to handle object create events: ' . $e->getMessage());
-		}//end try
-
+		return $this->handleObjectEvents(objects: $objects, event: 'create');
 	}//end handleObjectCreateEvents()
 
 	/**
@@ -215,6 +151,24 @@ class EventService implements EventServiceInterface {
 	 * @spec openspec/specs/auto-publishing/spec.md
 	 */
 	public function handleObjectUpdateEvents(array $objects): array {
+		return $this->handleObjectEvents(objects: $objects, event: 'update');
+	}//end handleObjectUpdateEvents()
+
+	/**
+	 * Apply the auto-publish rules to every object of one event and tally the outcome.
+	 *
+	 * Only a create event may publish the object itself; both events publish the
+	 * attachments of an object that is live.
+	 *
+	 * @param array $objects The event's object data.
+	 * @param string $event 'create' or 'update'.
+	 *
+	 * @return array The processed, published and attachmentsPublished counts, errors and per-object details.
+	 * @throws \RuntimeException If the publishing options cannot be read.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function handleObjectEvents(array $objects, string $event): array {
 		$results = [
 			'processed' => 0,
 			'published' => 0,
@@ -224,46 +178,91 @@ class EventService implements EventServiceInterface {
 		];
 
 		try {
-			// Get current publishing options from configuration.
-			$publishingOptions = $this->settingsService->getPublishingOptions();
-
-			// Process each updated object.
+			$run = ['event' => $event, 'options' => $this->settingsService->getPublishingOptions()];
 			foreach ($objects as $objectData) {
-				$objectResult = [
-					'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
-					'actions' => [],
-					'errors' => [],
-				];
-
-				try {
-					// Check if auto-publish attachments is enabled and object is published.
-					if ($publishingOptions['auto_publish_attachments'] === true
-						&& $this->isObjectPublished(objectData: $objectData) === true
-					) {
-						$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
-						$objectResult['actions'][] = 'attachments_processed';
-						$results['attachmentsPublished'] += $attachmentResult['published'];
-
-						if (empty($attachmentResult['errors']) === false) {
-							$objectResult['errors'] = array_merge($objectResult['errors'], $attachmentResult['errors']);
-						}
-					}
-
-					$results['processed']++;
-				} catch (\Exception $e) {
-					$objectResult['errors'][] = $e->getMessage();
-					$results['errors'][] = 'Error processing object ' . $objectResult['objectId'] . ': ' . $e->getMessage();
+				$outcome = $this->processObject(objectData: $objectData, run: $run);
+				$results['processed'] += $outcome['processed'];
+				$results['published'] += $outcome['published'];
+				$results['attachmentsPublished'] += $outcome['attachmentsPublished'];
+				if ($outcome['error'] !== null) {
+					$results['errors'][] = $outcome['error'];
 				}
 
-				$results['details'][] = $objectResult;
-			}//end foreach
+				$results['details'][] = $outcome['detail'];
+			}
 
 			return $results;
 		} catch (\Exception $e) {
-			throw new RuntimeException('Failed to handle object update events: ' . $e->getMessage());
+			throw new RuntimeException('Failed to handle object ' . $event . ' events: ' . $e->getMessage());
 		}//end try
 
-	}//end handleObjectUpdateEvents()
+	}//end handleObjectEvents()
+
+	/**
+	 * Apply the auto-publish rules to one object.
+	 *
+	 * @param array $objectData The object data.
+	 * @param array<string, mixed> $run The event ('create' or 'update') and the publishing options.
+	 *
+	 * @return array The object's detail, its counts and the error to report, if any.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function processObject(array $objectData, array $run): array {
+		$outcome = [
+			'detail' => ['objectId' => ($objectData['@self']['id'] ?? 'unknown'), 'actions' => [], 'errors' => []],
+			'processed' => 0,
+			'published' => 0,
+			'attachmentsPublished' => 0,
+			'error' => null,
+		];
+
+		try {
+			if ($run['event'] === 'create' && $run['options']['auto_publish_objects'] === true) {
+				$outcome = $this->autoPublishObject(objectData: $objectData, outcome: $outcome);
+			}
+
+			if ($run['options']['auto_publish_attachments'] === true && $this->isObjectPublished(objectData: $objectData) === true) {
+				$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
+				$outcome['detail']['actions'][] = 'attachments_processed';
+				$outcome['attachmentsPublished'] = $attachmentResult['published'];
+				$outcome['detail']['errors'] = array_merge($outcome['detail']['errors'], $attachmentResult['errors']);
+			}
+
+			$outcome['processed'] = 1;
+		} catch (\Exception $e) {
+			$outcome['detail']['errors'][] = $e->getMessage();
+			$outcome['error'] = 'Error processing object ' . $outcome['detail']['objectId'] . ': ' . $e->getMessage();
+		}//end try
+
+		return $outcome;
+	}//end processObject()
+
+	/**
+	 * Publish an object that matches a catalog, and record the result on its outcome.
+	 *
+	 * @param array $objectData The object data.
+	 * @param array<string, mixed> $outcome The object's outcome so far.
+	 *
+	 * @return array<string, mixed> The outcome with the publish action or error added.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function autoPublishObject(array $objectData, array $outcome): array {
+		if ($this->shouldAutoPublishObject(objectData: $objectData) === false) {
+			return $outcome;
+		}
+
+		$publishResult = $this->publishObject(objectData: $objectData);
+		if ($publishResult['success'] === true) {
+			$outcome['detail']['actions'][] = 'object_published';
+			$outcome['published'] = 1;
+			return $outcome;
+		}
+
+		$outcome['detail']['errors'][] = 'Failed to auto-publish object: ' . $publishResult['error'];
+		return $outcome;
+	}//end autoPublishObject()
 
 	/**
 	 * Determine if an object should be auto-published based on catalog matching.
@@ -336,46 +335,6 @@ class EventService implements EventServiceInterface {
 		}//end try
 
 	}//end shouldAutoPublishObject()
-
-	/**
-	 * Check if an object is currently published.
-	 *
-	 * Visibility is governed by the live OpenRegister RBAC model (APB-006): an
-	 * object is public when its own `publicationDate` field is set and is at or
-	 * before "now", and either carries no `depublicationDate` or one that is
-	 * still in the future. The removed object-level `@self.published` /
-	 * `@self.depublished` predicate is no longer consulted.
-	 *
-	 * @param array $objectData The object data to check.
-	 *
-	 * @return boolean True if the object is published, false otherwise.
-	 *
-	 * @spec openspec/specs/auto-publishing/spec.md#APB-006
-	 */
-	private function isObjectPublished(array $objectData): bool {
-		$publicationDate = ($objectData['publicationDate'] ?? null);
-		$depublicationDate = ($objectData['depublicationDate'] ?? null);
-
-		// Not published until a publication date is set and reached.
-		if ($publicationDate === null || $publicationDate === '') {
-			return false;
-		}
-
-		$now = time();
-		$publishedTime = strtotime((string)$publicationDate);
-		if ($publishedTime === false || $publishedTime > $now) {
-			return false;
-		}
-
-		// No depublication date -> still live.
-		if ($depublicationDate === null || $depublicationDate === '') {
-			return true;
-		}
-
-		// Live only while the depublication date is still in the future.
-		$depublishedTime = strtotime((string)$depublicationDate);
-		return ($depublishedTime === false || $depublishedTime > $now);
-	}//end isObjectPublished()
 
 	/**
 	 * Publish an object via the live OpenRegister RBAC model.

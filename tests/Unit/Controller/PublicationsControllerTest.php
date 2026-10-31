@@ -1738,9 +1738,7 @@ class PublicationsControllerTest extends TestCase {
 			$this->l10n,
 			$this->usageCounterService,
 			$this->appConfig,
-			'GET, POST',
-			'Authorization',
-			3600
+			new \OCA\OpenCatalogi\Controller\CorsSettings('GET, POST', 'Authorization', 3600)
 		);
 
 		$this->request->method('getHeader')

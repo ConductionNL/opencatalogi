@@ -26,6 +26,8 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\OoapiPage;
+use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Controller\OoapiController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\OoapiService;
@@ -175,7 +177,7 @@ class OoapiControllerTest extends TestCase {
 
 		$this->ooapiService->expects($this->once())
 			->method('listCourses')
-			->with($this->anything(), '3', '5', 2, 10)
+			->with($this->scopeOn(register: '3', schema: '5', catalog: ['id' => 'cat-1', 'hasOoapi' => true]), $this->pageOf(number: 2, size: 10))
 			->willReturn(['items' => [['courseId' => 'c1']], 'pageNumber' => 2, 'pageSize' => 10, 'hasNext' => false]);
 
 		$response = $this->controller->courses('hva-onderwijs');
@@ -222,7 +224,7 @@ class OoapiControllerTest extends TestCase {
 
 		$this->ooapiService->expects($this->once())
 			->method('listOfferings')
-			->with($this->anything(), '3', '5', 'course-1', 1, OoapiService::DEFAULT_PAGE_SIZE)
+			->with($this->scopeOn(register: '3', schema: '5'), $this->pageOf(number: 1, size: OoapiService::DEFAULT_PAGE_SIZE), 'course-1')
 			->willReturn(['items' => [], 'pageNumber' => 1, 'pageSize' => OoapiService::DEFAULT_PAGE_SIZE, 'hasNext' => false]);
 
 		$response = $this->controller->courseOfferings('hva-onderwijs', 'course-1');
@@ -338,7 +340,7 @@ class OoapiControllerTest extends TestCase {
 		// is not a sufficient assertion.
 		$this->ooapiService->expects($this->once())
 			->method('listPrograms')
-			->with($this->anything(), '7', '9', 3, 25)
+			->with($this->scopeOn(register: '7', schema: '9'), $this->pageOf(number: 3, size: 25))
 			->willReturn(
 				[
 					'items' => [['programId' => 'p1']],
@@ -393,7 +395,7 @@ class OoapiControllerTest extends TestCase {
 		// the wrong field would 404 every real request.
 		$this->ooapiService->expects($this->once())
 			->method('getResource')
-			->with($this->anything(), '7', '9', 'p1', 'programId')
+			->with($this->scopeOn(register: '7', schema: '9'), 'p1', 'programId')
 			->willReturn(['programId' => 'p1', 'name' => 'Bachelor']);
 
 		$response = $this->controller->program('hva-onderwijs', 'p1');
@@ -433,7 +435,7 @@ class OoapiControllerTest extends TestCase {
 
 		$this->ooapiService->expects($this->once())
 			->method('getResource')
-			->with($this->anything(), '11', '13', 'o1', 'offeringId')
+			->with($this->scopeOn(register: '11', schema: '13'), 'o1', 'offeringId')
 			->willReturn(['offeringId' => 'o1', 'courseId' => 'c1']);
 
 		$response = $this->controller->offering('hva-onderwijs', 'o1');
@@ -559,7 +561,7 @@ class OoapiControllerTest extends TestCase {
 		$this->wireResolvedRegisterConfiguration('3', '5');
 		$this->ooapiService->expects($this->once())
 			->method('organizationById')
-			->with($catalog, 'org-1', '3', '5')
+			->with($this->scopeOn(register: '3', schema: '5', catalog: $catalog), 'org-1')
 			->willReturn(['organizationId' => 'org-1']);
 
 		$response = $this->controller->organization('hva', 'org-1');
@@ -576,7 +578,7 @@ class OoapiControllerTest extends TestCase {
 		$this->wireResolvedRegisterConfiguration('3', '5');
 		$this->ooapiService->expects($this->once())
 			->method('renderOrganization')
-			->with($catalog, '3', '5')
+			->with($this->scopeOn(register: '3', schema: '5', catalog: $catalog))
 			->willReturn(['organizationId' => 'org-1']);
 
 		$response = $this->controller->organizations('hva');
@@ -594,7 +596,7 @@ class OoapiControllerTest extends TestCase {
 		$this->wireResolvedRegisterConfiguration('3', '5');
 		$this->ooapiService->expects($this->once())
 			->method('getResource')
-			->with($this->anything(), '3', '5', 'c1', 'courseId')
+			->with($this->scopeOn(register: '3', schema: '5'), 'c1', 'courseId')
 			->willReturn(['courseId' => 'c1']);
 
 		$response = $this->controller->course('hva', 'c1');
@@ -613,5 +615,36 @@ class OoapiControllerTest extends TestCase {
 		$response = $this->controller->course('hva', 'c1');
 
 		$this->assertSame(500, $response->getStatus());
+	}
+
+	/**
+	 * Matches an OoapiScope on the given register/schema pair and, when given, catalog.
+	 *
+	 * @param string                    $register The register id.
+	 * @param string                    $schema   The schema id.
+	 * @param array<string, mixed>|null $catalog  The catalog, or null for any.
+	 *
+	 * @return \PHPUnit\Framework\Constraint\Callback<OoapiScope> The constraint.
+	 */
+	private function scopeOn(string $register, string $schema, ?array $catalog = null): \PHPUnit\Framework\Constraint\Callback {
+		return $this->callback(
+			static fn (OoapiScope $scope): bool => $scope->register === $register
+				&& $scope->schema === $schema
+				&& ($catalog === null || $scope->catalog === $catalog)
+		);
+	}
+
+	/**
+	 * Matches an OoapiPage with the given number and size and no filter.
+	 *
+	 * @param int $number The page number.
+	 * @param int $size   The page size.
+	 *
+	 * @return \PHPUnit\Framework\Constraint\Callback<OoapiPage> The constraint.
+	 */
+	private function pageOf(int $number, int $size): \PHPUnit\Framework\Constraint\Callback {
+		return $this->callback(
+			static fn (OoapiPage $page): bool => $page->number === $number && $page->size === $size && $page->filter === []
+		);
 	}
 }

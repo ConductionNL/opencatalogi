@@ -45,28 +45,9 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One over the limit since index() strips caller scope via CallerScope (WOO-581).
  */
 class CatalogiController extends Controller {
+	use AnswersCrossOriginListRequests;
 	use ResolvesRegisterConfiguration;
-
-	/**
-	 * Allowed CORS methods.
-	 *
-	 * @var string
-	 */
-	private string $corsMethods;
-
-	/**
-	 * Allowed CORS headers.
-	 *
-	 * @var string
-	 */
-	private string $corsAllowedHeaders;
-
-	/**
-	 * CORS max age.
-	 *
-	 * @var integer
-	 */
-	private int $corsMaxAge;
+	use SendsListCorsHeaders;
 
 	/**
 	 * CatalogiController constructor.
@@ -77,9 +58,7 @@ class CatalogiController extends Controller {
 	 * @param IAppConfig $config App configuration interface.
 	 * @param ContainerInterface $container Server container for DI.
 	 * @param IAppManager $appManager App manager.
-	 * @param string $corsMethods Allowed CORS methods.
-	 * @param string $corsAllowedHeaders Allowed CORS headers.
-	 * @param integer $corsMaxAge CORS max age.
+	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -90,14 +69,9 @@ class CatalogiController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
-		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		int $corsMaxAge = 1728000,
+		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
-		$this->corsMethods = $corsMethods;
-		$this->corsAllowedHeaders = $corsAllowedHeaders;
-		$this->corsMaxAge = $corsMaxAge;
 
 	}//end __construct()
 
@@ -134,40 +108,6 @@ class CatalogiController extends Controller {
 		return $this->resolveRegisterConfiguration(registerKey: 'catalog_register', schemaKey: 'catalog_schema');
 	}//end getCatalogConfiguration()
 
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
-	 * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
-	 *
-	 * @return string The header value to use for Access-Control-Allow-Origin.
-	 *
-	 * @spec exclude CORS-policy plumbing; reads IAppConfig allowlist, no Origin reflection.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
 	// Generous, as for every preflightedCors() in this app: the browser sends
 	// this OPTIONS request BEFORE each cross-origin call it makes. A ceiling
 	// tight enough to bite here would break ordinary cross-origin use rather
@@ -184,14 +124,7 @@ class CatalogiController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->withListPreflightHeaders(response: new Response());
 	}//end preflightedCors()
 
 	/**
@@ -253,11 +186,7 @@ class CatalogiController extends Controller {
 		// group read only when published <= $now); the search above runs with _rbac: true.
 		// Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
 		$response = new JSONResponse($result);
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-		return $response;
+		return $this->withListCorsHeaders(response: $response);
 	}//end index()
 
 	/**
@@ -280,10 +209,6 @@ class CatalogiController extends Controller {
 		$response = $this->catalogiService->index($id);
 
 		// Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-		return $response;
+		return $this->withListCorsHeaders(response: $response);
 	}//end show()
 }//end class

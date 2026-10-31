@@ -86,87 +86,72 @@ interface OoapiServiceInterface {
 	 * Render the catalog's owning Organisation as an OOAPI 5.0 `organization`
 	 * resource, live, with no materialization step (OOAPI-002).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $organizationRegister The resolved organisation register id.
-	 * @param string $organizationSchema The resolved organisation schema id.
+	 * @param OoapiScope $scope The catalog and the organisation register/schema pair.
 	 *
 	 * @return array<string, mixed>|null The rendered `organization` resource, or null when the catalog has none.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
-	public function renderOrganization(array $catalog, string $organizationRegister, string $organizationSchema): ?array;
+	public function renderOrganization(OoapiScope $scope): ?array;
 
 	/**
 	 * Fetch and render a single `organization` resource by id, constrained to
 	 * the catalog's own owning Organisation (D1/D4 — no bespoke query layer,
 	 * reuse the existing single `catalog.organization` reference).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
+	 * @param OoapiScope $scope The catalog and the organisation register/schema pair.
 	 * @param string $id The requested organization id.
-	 * @param string $organizationRegister The resolved organisation register id.
-	 * @param string $organizationSchema The resolved organisation schema id.
 	 *
 	 * @return array<string, mixed>|null The rendered `organization` resource, or null when unresolvable.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
-	public function organizationById(array $catalog, string $id, string $organizationRegister, string $organizationSchema): ?array;
+	public function organizationById(OoapiScope $scope, string $id): ?array;
 
 	/**
 	 * List the materialized `course` resources scoped to a catalog (OOAPI-001).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $register The resolved `ooapi_courses` register id.
-	 * @param string $schema The resolved `ooapi_courses` schema id.
-	 * @param int $page The 1-based page number.
-	 * @param int $pageSize The requested page size.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_courses` register/schema pair.
+	 * @param OoapiPage $page The page asked for.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated course collection.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
-	public function listCourses(array $catalog, string $register, string $schema, int $page, int $pageSize): array;
+	public function listCourses(OoapiScope $scope, OoapiPage $page): array;
 
 	/**
 	 * List the materialized `program` resources scoped to a catalog (OOAPI-001).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $register The resolved `ooapi_programs` register id.
-	 * @param string $schema The resolved `ooapi_programs` schema id.
-	 * @param int $page The 1-based page number.
-	 * @param int $pageSize The requested page size.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_programs` register/schema pair.
+	 * @param OoapiPage $page The page asked for.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated program collection.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
-	public function listPrograms(array $catalog, string $register, string $schema, int $page, int $pageSize): array;
+	public function listPrograms(OoapiScope $scope, OoapiPage $page): array;
 
 	/**
 	 * List the materialized `offering` resources scoped to a catalog, optionally
 	 * filtered to a single parent course (OOAPI-006).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $register The resolved `ooapi_offerings` register id.
-	 * @param string $schema The resolved `ooapi_offerings` schema id.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_offerings` register/schema pair.
+	 * @param OoapiPage $page The page asked for.
 	 * @param string|null $courseId Filter to this parent course's offerings, or null for all.
-	 * @param int $page The 1-based page number.
-	 * @param int $pageSize The requested page size.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated offering collection.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
 	 */
-	public function listOfferings(array $catalog, string $register, string $schema, ?string $courseId, int $page, int $pageSize): array;
+	public function listOfferings(OoapiScope $scope, OoapiPage $page, ?string $courseId): array;
 
 	/**
 	 * Fetch and render a single materialized resource (`course`/`program`/`offering`)
 	 * by id, scoped to the catalog. Returns null when the object does not exist, is
 	 * not scoped to this catalog, or its schema carries no `x-ooapi` annotation.
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $register The resolved register id.
-	 * @param string $schema The resolved schema id.
+	 * @param OoapiScope $scope The catalog and the resolved register/schema pair.
 	 * @param string $id The requested object id.
 	 * @param string $idField The OOAPI resource id field name.
 	 *
@@ -174,20 +159,18 @@ interface OoapiServiceInterface {
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 */
-	public function getResource(array $catalog, string $register, string $schema, string $id, string $idField): ?array;
+	public function getResource(OoapiScope $scope, string $id, string $idField): ?array;
 
 	/**
 	 * Validate a catalog's OOAPI feed against a minimal mandatory-property
 	 * checklist. Advisory only — never gates serving (mirrors DCAT-010's
 	 * precedent, OOAPI-010).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $courseRegister The resolved `ooapi_courses` register id.
-	 * @param string $courseSchema The resolved `ooapi_courses` schema id.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_courses` register/schema pair.
 	 *
 	 * @return array<int, array<string, mixed>> One entry per violating course resource.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-admin-configuration-for-ooapi-publication-ooapi-010
 	 */
-	public function validateCatalog(array $catalog, string $courseRegister, string $courseSchema): array;
+	public function validateCatalog(OoapiScope $scope): array;
 }//end interface

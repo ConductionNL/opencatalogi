@@ -28,6 +28,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCP\App\IAppManager;
@@ -47,7 +48,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
-class SitemapService {
+class SitemapService implements SitemapServiceInterface {
 
 	/**
 	 * Default maximum number of publications fetched per sitemap page.
@@ -73,7 +74,6 @@ class SitemapService {
 	 * @var string
 	 */
 	private const APP_NAME = 'opencatalogi';
-
 
 	/**
 	 * Constructor for SitemapService.
@@ -169,83 +169,42 @@ class SitemapService {
 	/**
 	 * Build sitemap index based on woo category.
 	 *
+	 * Visibility is governed by RBAC in every search (_rbac: true): sitemaps
+	 * expose only the published objects the public group may read.
+	 *
 	 * @param string $catalogSlug The catalog slug identifier.
 	 * @param string $categoryCode The DIWOO category code.
 	 *
 	 * @return XMLResponse The sitemap index XML response.
 	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function buildSitemapIndex(string $catalogSlug, string $categoryCode): XMLResponse {
-		$catalog = (object)[];
-		// Create reference for $catalog.
-		$registerId = null;
-		// Create reference for $registerId.
-		$schemaId = null;
-		// Create reference for $catalogId.
 		$objectService = $this->getObjectService();
-		$isValid = $this->isValidSitemapRequest(
-			catalogSlug: $catalogSlug,
-			categoryCode: $categoryCode,
-			objectService: $objectService,
-			catalog: $catalog,
-			registerId: $registerId,
-			schemaId: $schemaId
-		);
-		if ($isValid instanceof XMLResponse === true) {
-			return $isValid;
+		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
+		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
+		if ($error !== null) {
+			return $error;
 		}
 
-		$emptyIndex = new XMLResponse(
-			data: [
-				'@root' => 'sitemapindex',
-				'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
-				'sitemap' => [],
-			]
+		$request->queries = $this->sitemapQueries(
+			registerId: $request->registerId,
+			schemaId: $request->schemaId,
+			catalog: $request->catalog,
+			categoryCode: $categoryCode
 		);
-
-		$queries = $this->sitemapQueries(registerId: $registerId, schemaId: $schemaId, catalog: $catalog, categoryCode: $categoryCode);
-		if ($queries === []) {
-			return $emptyIndex;
+		$builder = new SitemapIndexBuilder(objectService: $objectService, perPage: $this->getMaxPerPage());
+		if ($request->queries === []) {
+			return $builder->response(sitemaps: []);
 		}
 
-		// Visibility is governed by RBAC in every search (_rbac: true): sitemaps
-		// expose only the published objects the public group may read.
 		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
-		$sitemapBaseUri = "$baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode/publications";
-
-		// One index entry per page; page N holds page N of every source, so the
-		// index runs until no source has a further page.
-		$sitemaps = [];
-		$page = 1;
-		while ($queries !== []) {
-			$batch = $this->searchSitemapPage(objectService: $objectService, queries: $queries, page: $page);
-			if ($batch['results'] === []) {
-				break;
-			}
-
-			$sitemaps[] = [
-				'loc' => "$sitemapBaseUri?page=$page",
-				'lastmod' => $batch['lastMod'],
-			];
-			$queries = $batch['continuing'];
-			$page++;
-		}
-
-		if ($sitemaps === []) {
-			return $emptyIndex;
-		}
-
-		return new XMLResponse(
-			data: [
-				'@root' => 'sitemapindex',
-				'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
-				'sitemap' => $sitemaps,
-			]
+		return $builder->response(
+			sitemaps: $builder->entries(
+				queries: $request->queries,
+				baseUri: "$baseUrl/apps/opencatalogi/api/{$request->catalog->getSlug()}/sitemaps/{$request->categoryCode}/publications"
+			)
 		);
-
 	}//end buildSitemapIndex()
 
 	/**
@@ -263,28 +222,22 @@ class SitemapService {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse {
-		$catalog = (object)[];
-		$registerId = null;
-		// Create reference for $registerId.
-		$schemaId = null;
-		// Create reference for $catalogId.
 		$objectService = $this->getObjectService();
-		$isValid = $this->isValidSitemapRequest(
-			catalogSlug: $catalogSlug,
-			categoryCode: $categoryCode,
-			objectService: $objectService,
-			catalog: $catalog,
-			registerId: $registerId,
-			schemaId: $schemaId
-		);
-		if ($isValid instanceof XMLResponse === true) {
-			return $isValid;
+		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
+		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
+		if ($error !== null) {
+			return $error;
 		}
+
+		$catalog = $request->catalog;
+		$registerId = $request->registerId;
+		$schemaId = $request->schemaId;
 
 		// Fail closed: a schema the read-rule guard drops yields a valid, empty
 		// document list, never a search (see isDroppedByReadRuleGuard()).
 		$queries = $this->sitemapQueries(registerId: $registerId, schemaId: $schemaId, catalog: $catalog, categoryCode: $categoryCode);
-		$publications = $this->searchSitemapPage(objectService: $objectService, queries: $queries, page: $page)['results'];
+		$builder = new SitemapIndexBuilder(objectService: $objectService, perPage: $this->getMaxPerPage());
+		$publications = $builder->page(queries: $queries, page: $page)['results'];
 
 		$fileService = $this->getFileService();
 
@@ -444,64 +397,11 @@ class SitemapService {
 		];
 	}//end catalogScope()
 
-
-	/**
-	 * Page N of every sitemap source, merged and listed once per publication.
-	 *
-	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param array<int, array<string, mixed>> $queries The sources ({@see sitemapQueries()}).
-	 * @param int $page The page.
-	 *
-	 * @return array{results: array<int, object>, lastMod: string|null, continuing: array<int, array<string, mixed>>}
-	 *   The rows, the newest update among them, and the sources that have a next page.
-	 *
-	 * @spec openspec/specs/woo-compliance/spec.md#requirement-each-category-sitemap-lists-the-publications-filed-under-it-req-wpc-002
-	 */
-	private function searchSitemapPage(object $objectService, array $queries, int $page): array {
-		$results = [];
-		$seen = [];
-		$lastMod = null;
-		$continuing = [];
-		foreach ($queries as $query) {
-			$query['_order']['updated'] = 'desc';
-			$query['_limit'] = $this->getMaxPerPage();
-			$query['_page'] = $page;
-			$found = $objectService->searchObjectsPaginated(
-				query: $query,
-				_rbac: true,
-				_multitenancy: false,
-				deleted: false
-			);
-
-			$rows = ($found['results'] ?? []);
-			if ($rows !== [] && ($found['next'] ?? null) !== null) {
-				$continuing[] = $query;
-			}
-
-			foreach ($rows as $row) {
-				$data = $row->jsonSerialize();
-				$key = (string)($data['id'] ?? spl_object_id($row));
-				if (isset($seen[$key]) === true) {
-					continue;
-				}
-
-				$seen[$key] = true;
-				$results[] = $row;
-				$updated = ($data['@self']['updated'] ?? null);
-				if (is_string($updated) === true && ($lastMod === null || strcmp($updated, $lastMod) > 0)) {
-					$lastMod = $updated;
-				}
-			}
-		}//end foreach
-
-		return ['results' => $results, 'lastMod' => $lastMod, 'continuing' => $continuing];
-	}//end searchSitemapPage()
-
 	/**
 	 * Whether the SCH-PFTS-CAT-002 read-rule guard drops the sitemap's schema.
 	 *
 	 * The sitemap picks its schema by woo-register category, but admits it on
-	 * membership of the catalog's `schemas` list ({@see isValidSitemapRequest()})
+	 * membership of the catalog's `schemas` list ({@see resolveSitemapRequest()})
 	 * — the same scope source as every other public catalog reader — and then
 	 * searches it with `_rbac: true`. A schema without an `authorization` block
 	 * is open to every non-private row there, and the sitemap also emits each
@@ -524,128 +424,140 @@ class SitemapService {
 	}//end isDroppedByReadRuleGuard()
 
 	/**
-	 * Validates a sitemap request and resolves catalog, schema, and register IDs.
+	 * Validates a sitemap request and resolves its catalog, schema and register.
 	 *
-	 * Ensures the requested category and catalog exist, resolves the Woo catalog,
-	 * verifies the schema belongs to the configured catalog, and returns either:
-	 * - true on success
-	 * - XMLResponse with error details on failure
+	 * Ensures the requested category and catalog exist, resolves the Woo catalog
+	 * and verifies the schema belongs to it. The catalog, register and schema are
+	 * set on the request.
 	 *
-	 * @param string $catalogSlug The slug of the Woo catalog
-	 * @param string $categoryCode The sitemap category code
+	 * @param SitemapRequest $request The request; receives the resolved catalog, register and schema.
 	 * @param object $objectService The OpenRegister ObjectService
-	 * @param object|null $catalog Resolved catalog object (output reference)
-	 * @param string|null $schemaId Resolved schema ID (output reference)
-	 * @param string|null $registerId Resolved register ID (output reference)
 	 *
-	 * @return boolean|XMLResponse Returns true if the request is valid, otherwise an XMLResponse error.
-	 *
-	 * @psalm-suppress InvalidArrayOffset Array offset types are runtime-determined.
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @return XMLResponse|null Null when the request is valid, otherwise the error response.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function isValidSitemapRequest(
-		string $catalogSlug,
-		string $categoryCode,
-		$objectService,
-		&$catalog = null,
-		&$schemaId = null,
-		&$registerId = null,
-	) {
+	private function resolveSitemapRequest(SitemapRequest $request, $objectService): ?XMLResponse {
 		$settings = $this->settingsService->getSettings();
 
 		if (isset($settings['availableRegisters']) === false) {
 			return new XMLResponse(data: 'Could net fetch settings', status: 500);
 		}
 
-		$schemas = [];
-		foreach ($settings['availableRegisters'] as $register) {
-			if (strcasecmp(($register['title'] ?? ''), 'woo') === 0) {
-				$registerId = $register['id'];
-				$schemas = $register['schemas'];
-			}
+		$wooRegister = $this->wooRegister(registers: $settings['availableRegisters']);
+		if ($wooRegister !== null) {
+			$request->registerId = $wooRegister['id'];
 		}
 
 		// The categories are data (REQ-WIC-001): a file name nothing is served at,
 		// and a local category the registry refused for want of a waardelijst
 		// member, are the same 400 here. That is the guarantee an unmapped local
 		// category cannot reach a sitemap: it has no record, so it has no route.
-		$category = $this->categories->findBySitemapFile(sitemapFile: $categoryCode);
+		$category = $this->categories->findBySitemapFile(sitemapFile: $request->categoryCode);
 		if ($category === null) {
 			return new XMLResponse(data: 'Invalid category code', status: 400);
 		}
 
-		// Off case because our schema does not follow the woo category precisely.
-		$schemas = array_map(
-			function ($schema) {
-				if (trim($schema['title']) === 'Jaarplan of jaarverslag') {
-					$schema['title'] = 'Jaarplannen en jaarverslagen';
-				}
+		$request->schemaId = $this->titleMatchedSchemaId(schemas: ($wooRegister['schemas'] ?? []), category: $category);
 
-				return $schema;
-			},
-			$schemas
-		);
-
-		// Have to trim whitespace because of typo in schema title definition.
-		$needle = trim($category['label']);
-		$haystack = array_map(
-			function ($sch) {
-				return trim($sch['title']);
-			},
-			$schemas
-		);
-
-		// Get current schema belonging to requested category code. A category that
-		// names its own schemas (REQ-WIC-003) does not also get the title-matched
-		// schema of the legacy `woo` register: the named list is the whole answer.
-		$index = array_search(needle: $needle, haystack: $haystack);
-		$schemaId = null;
-		if ($index !== false && isset($schemas[$index]) === true && $category['schemas'] === []) {
-			$schemaId = $schemas[$index]['id'];
-		}
-
-		$searchQuery = [
-			'@self' => [
-				'register' => $settings['configuration']['catalog_register'],
-				'schema' => $settings['configuration']['catalog_schema'],
-			],
-			'slug' => $catalogSlug,
-			'hasWooSitemap' => true,
-		];
-
+		// Visibility governed by RBAC on the search (_rbac: true).
 		$catalogResult = $objectService->searchObjectsPaginated(
-			query: $searchQuery,
+			query: $request->catalogQuery(configuration: $settings['configuration']),
 			_rbac: true,
 			_multitenancy: false,
 			deleted: false
 		);
+		$request->catalog = ($catalogResult['results'][0] ?? []);
 
-		// Visibility governed by RBAC on the search above (_rbac: true).
-		$catalog = ($catalogResult['results'][0] ?? []);
+		return $this->catalogScopeError(request: $request);
+	}//end resolveSitemapRequest()
 
-		if (empty($catalog) === true) {
+	/**
+	 * Check the resolved catalog and keep the title-matched schema only inside it.
+	 *
+	 * @param SitemapRequest $request The request with its catalog; loses its schema
+	 *                                and register when the schema lies outside the catalog.
+	 *
+	 * @return XMLResponse|null Null when the catalog can list the category, otherwise the error response.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function catalogScopeError(SitemapRequest $request): ?XMLResponse {
+		if (empty($request->catalog) === true) {
 			return new XMLResponse(data: 'Invalid Woo catalog', status: 400);
 		}
 
 		// A title-matched schema outside the catalogue contributes nothing.
-		$scope = $this->catalogScope(catalog: $catalog);
-		if (in_array(needle: $schemaId, haystack: $scope['schemas']) === false) {
-			$schemaId = null;
-			$registerId = null;
+		$scope = $this->catalogScope(catalog: $request->catalog);
+		if (in_array(needle: $request->schemaId, haystack: $scope['schemas']) === false) {
+			$request->schemaId = null;
+			$request->registerId = null;
 		}
 
 		// With neither a filed-category source nor a title-matched schema there
 		// is nothing this catalogue can list for the category.
-		if ($schemaId === null && ($scope['registers'] === [] || $scope['schemas'] === [])) {
+		if ($request->schemaId === null && ($scope['registers'] === [] || $scope['schemas'] === [])) {
 			return new XMLResponse(data: 'Schema not configured in catalog', status: 400);
 		}
 
-		return true;
-	}//end isValidSitemapRequest()
+		return null;
+	}//end catalogScopeError()
+
+	/**
+	 * The register titled `woo` (any case); the last one when there are several.
+	 *
+	 * @param array<int, array<string, mixed>> $registers The available registers.
+	 *
+	 * @return array<string, mixed>|null The register, or null when there is none.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function wooRegister(array $registers): ?array {
+		$wooRegister = null;
+		foreach ($registers as $register) {
+			if (strcasecmp(($register['title'] ?? ''), 'woo') === 0) {
+				$wooRegister = $register;
+			}
+		}
+
+		return $wooRegister;
+	}//end wooRegister()
+
+	/**
+	 * The `woo` register schema whose title matches the category label.
+	 *
+	 * Titles and label are compared trimmed, with `Jaarplan of jaarverslag` read as
+	 * `Jaarplannen en jaarverslagen` because the schema does not follow the Woo
+	 * category name. A category that names its own schemas (REQ-WIC-003) does not
+	 * also get a title-matched schema: the named list is the whole answer.
+	 *
+	 * @param array<int, array<string, mixed>> $schemas The `woo` register schemas.
+	 * @param array<string, mixed> $category The category.
+	 *
+	 * @return mixed The schema id, or null.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function titleMatchedSchemaId(array $schemas, array $category): mixed {
+		$haystack = array_map(
+			static function ($schema) {
+				$title = trim($schema['title']);
+				if ($title === 'Jaarplan of jaarverslag') {
+					return 'Jaarplannen en jaarverslagen';
+				}
+
+				return $title;
+			},
+			$schemas
+		);
+
+		$index = array_search(needle: trim($category['label']), haystack: $haystack);
+		if ($index !== false && isset($schemas[$index]) === true && $category['schemas'] === []) {
+			return $schemas[$index]['id'];
+		}
+
+		return null;
+	}//end titleMatchedSchemaId()
 
 	/**
 	 * Maps publication + file metadata into a DIWOO Document XML array structure.
@@ -665,16 +577,12 @@ class SitemapService {
 	 *
 	 * @return array A DIWOO metadata array ready for XMLResponse
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	private function mapDiwooDocument(array $publication, array $file, array &$violations = []): array {
 		$created = ($publication['@self']['created'] ?? 'now');
 		$updated = ($publication['@self']['updated'] ?? 'now');
 		$published = ($file['published'] ?? $updated);
-		$owner = ($file['owner'] ?? $publication['@self']['owner'] ?? '');
 		$loc = ($file['downloadUrl'] ?? '');
 
 		$formatUri = 'http://publications.europa.eu/resource/authority/file-type/';
@@ -690,71 +598,120 @@ class SitemapService {
 			'loc' => $loc,
 			'lastmod' => date('Y-m-d H:i:s', strtotime($published)),
 			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
+			'diwoo:publisher' => $this->publisherElement(publication: $publication, file: $file),
 		];
-
-		// Publisher: bind @resource to a valid TOOI organisatie URI, or omit it.
-		$publisher = ['#text' => $owner];
-		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->resolveOrganisationTooiIdentifier(publication: $publication));
-		if ($orgUri !== null) {
-			$publisher['@resource'] = $orgUri;
-		} else {
+		if (isset($diwoo['diwoo:publisher']['@resource']) === false) {
 			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no TOOI identifier');
 		}
-
-		$diwoo['diwoo:publisher'] = $publisher;
 
 		$diwoo['diwoo:format'] = [
 			'@resource' => $formatUri,
 			'#text' => strtolower($file['extension']),
 		];
 
-		// Informatiecategorie: bind to an official TOOI category URI, or omit.
+		// Each optional axis is its element, or null with the violation that omits it.
+		$optionalAxes = [
+			'diwoo:classificatiecollectie' => [
+				$this->categoryElement(publication: $publication),
+				'informatiecategorie',
+				'category resolves to no member of the informatiecategorieen waardelijst',
+			],
+			'diwoo:documenthandelingen' => [
+				$this->handlingElement(publication: $publication, handlingTime: $handlingTime),
+				'soortHandeling',
+				'handling type does not resolve to a DiWoo value-list member',
+			],
+		];
+		foreach ($optionalAxes as $key => [$element, $axis, $reason]) {
+			if ($element !== null) {
+				$diwoo[$key] = $element;
+				continue;
+			}
+
+			$this->addViolation(violations: $violations, loc: $loc, axis: $axis, reason: $reason);
+		}
+
+		return ['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]];
+	}//end mapDiwooDocument()
+
+	/**
+	 * The publisher element: the owner as text, with `@resource` bound to a valid
+	 * TOOI organisatie URI, or without `@resource` when there is none.
+	 *
+	 * @param array $publication The publication as returned from ObjectService
+	 * @param array $file        The file metadata belonging to that publication
+	 *
+	 * @return array{'#text': mixed, '@resource'?: string} The publisher element.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function publisherElement(array $publication, array $file): array {
+		$publisher = ['#text' => ($file['owner'] ?? $publication['@self']['owner'] ?? '')];
+		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->resolveOrganisationTooiIdentifier(publication: $publication));
+		if ($orgUri !== null) {
+			$publisher['@resource'] = $orgUri;
+		}
+
+		return $publisher;
+	}//end publisherElement()
+
+	/**
+	 * The informatiecategorie element, bound to an official TOOI category URI,
+	 * or null when the publication's category resolves to none.
+	 *
+	 * @param array $publication The publication as returned from ObjectService
+	 *
+	 * @return array|null The classificatiecollectie element, or null.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function categoryElement(array $publication): ?array {
 		$categoryRaw = (
 			$publication['wooCategory'] ?? $publication['category']
 			?? $publication['tooiCategorieUri'] ?? $publication['tooiCategorieNaam'] ?? null
 		);
 		$category = $this->categories->resolveForDocument($this->stringOrNull(value: $categoryRaw));
-		if ($category !== null) {
-			$diwoo['diwoo:classificatiecollectie'] = [
-				'diwoo:informatiecategorieen' => [
-					'diwoo:informatiecategorie' => [
-						'#text' => $category['label'],
-						'@resource' => $category['uri'],
-					],
-				],
-			];
-		} else {
-			$this->addViolation(
-				violations: $violations,
-				loc: $loc,
-				axis: 'informatiecategorie',
-				reason: 'category resolves to no member of the informatiecategorieen waardelijst'
-			);
+		if ($category === null) {
+			return null;
 		}
 
-		// SoortHandeling: resolve through the DiWoo value list (default: ontvangst).
+		return [
+			'diwoo:informatiecategorieen' => [
+				'diwoo:informatiecategorie' => [
+					'#text' => $category['label'],
+					'@resource' => $category['uri'],
+				],
+			],
+		];
+	}//end categoryElement()
+
+	/**
+	 * The documenthandeling element, resolved through the DiWoo value list
+	 * (default: ontvangst), or null when the handling type resolves to none.
+	 *
+	 * @param array  $publication  The publication as returned from ObjectService
+	 * @param mixed  $handlingTime The moment the document was made public.
+	 *
+	 * @return array|null The documenthandelingen element, or null.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function handlingElement(array $publication, mixed $handlingTime): ?array {
 		$handling = $this->tooiVocabulary->resolveSoortHandeling($this->stringOrNull(value: $publication['soortHandeling'] ?? null));
-		if ($handling !== null) {
-			$diwoo['diwoo:documenthandelingen'] = [
-				'diwoo:documenthandeling' => [
-					'diwoo:soortHandeling' => [
-						'#text' => $handling['label'],
-						'@resource' => $handling['uri'],
-					],
-					'diwoo:atTime' => $handlingTime,
-				],
-			];
-		} else {
-			$this->addViolation(
-				violations: $violations,
-				loc: $loc,
-				axis: 'soortHandeling',
-				reason: 'handling type does not resolve to a DiWoo value-list member'
-			);
+		if ($handling === null) {
+			return null;
 		}
 
-		return ['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]];
-	}//end mapDiwooDocument()
+		return [
+			'diwoo:documenthandeling' => [
+				'diwoo:soortHandeling' => [
+					'#text' => $handling['label'],
+					'@resource' => $handling['uri'],
+				],
+				'diwoo:atTime' => $handlingTime,
+			],
+		];
+	}//end handlingElement()
 
 	/**
 	 * Return the value as a string, or null when it is not a non-empty string.
@@ -911,42 +868,56 @@ class SitemapService {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function validateDiwooOutput(string $catalogSlug, string $categoryCode, int $page = 1): array {
-		$registerId = null;
-		$schemaId = null;
-
+		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
 		try {
 			$objectService = $this->getObjectService();
 		} catch (\Throwable $e) {
-			return $this->diwooError(catalogSlug: $catalogSlug, categoryCode: $categoryCode, error: 'OpenRegister is not available');
+			return $this->diwooError(request: $request, error: 'OpenRegister is not available');
 		}
 
-		$isValid = $this->isValidSitemapRequest(
-			catalogSlug: $catalogSlug,
-			categoryCode: $categoryCode,
-			objectService: $objectService,
-			registerId: $registerId,
-			schemaId: $schemaId
-		);
-		if ($isValid instanceof XMLResponse === true) {
-			return $this->diwooError(catalogSlug: $catalogSlug, categoryCode: $categoryCode, error: 'Unknown catalog or category');
+		if ($this->resolveSitemapRequest(request: $request, objectService: $objectService) !== null) {
+			return $this->diwooError(request: $request, error: 'Unknown catalog or category');
 		}
-
-		$searchQuery = [];
-		$searchQuery['@self']['register'] = $registerId;
-		$searchQuery['@self']['schema'] = $schemaId;
-		$searchQuery['_limit'] = $this->getMaxPerPage();
-		$searchQuery['_page'] = max(1, $page);
 
 		$publicationResult = $objectService->searchObjectsPaginated(
-			query: $searchQuery,
+			query: [
+				'@self' => ['register' => $request->registerId, 'schema' => $request->schemaId],
+				'_limit' => $this->getMaxPerPage(),
+				'_page' => max(1, $page),
+			],
 			_rbac: true,
 			_multitenancy: false,
 			deleted: false
 		);
 
+		$violations = $this->collectDiwooViolations(
+			publications: $this->publicationsWithFiles(rows: ($publicationResult['results'] ?? []))
+		);
+
+		return [
+			'catalogSlug' => $catalogSlug,
+			'categoryCode' => $categoryCode,
+			'valid' => ($violations === []),
+			'violations' => $violations,
+		];
+
+	}//end validateDiwooOutput()
+
+	/**
+	 * The publications as arrays, each with its files under `@self.files`.
+	 *
+	 * The search does not return files, so they are fetched per publication.
+	 *
+	 * @param iterable<mixed> $rows The search rows, arrays or serialisable objects.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function publicationsWithFiles(iterable $rows): array {
 		$fileService = $this->getFileService();
 		$publications = [];
-		foreach (($publicationResult['results'] ?? []) as $publication) {
+		foreach ($rows as $publication) {
 			if (is_array($publication) === false) {
 				$publication = $publication->jsonSerialize();
 			}
@@ -959,32 +930,23 @@ class SitemapService {
 			$publications[] = $publication;
 		}
 
-		$violations = $this->collectDiwooViolations(publications: $publications);
-
-		return [
-			'catalogSlug' => $catalogSlug,
-			'categoryCode' => $categoryCode,
-			'valid' => ($violations === []),
-			'violations' => $violations,
-		];
-
-	}//end validateDiwooOutput()
+		return $publications;
+	}//end publicationsWithFiles()
 
 	/**
 	 * Build a DIWOO validator error report.
 	 *
-	 * @param string $catalogSlug The catalog slug.
-	 * @param string $categoryCode The category code.
+	 * @param SitemapRequest $request The catalog slug and category code asked for.
 	 * @param string $error The error message.
 	 *
 	 * @return array{catalogSlug: string, categoryCode: string, valid: bool, violations: array<int, array<string, string>>, error: string}
 	 *
 	 * @spec exclude Error-shape plumbing for the DIWOO validator.
 	 */
-	private function diwooError(string $catalogSlug, string $categoryCode, string $error): array {
+	private function diwooError(SitemapRequest $request, string $error): array {
 		return [
-			'catalogSlug' => $catalogSlug,
-			'categoryCode' => $categoryCode,
+			'catalogSlug' => $request->catalogSlug,
+			'categoryCode' => $request->categoryCode,
 			'valid' => false,
 			'violations' => [],
 			'error' => $error,

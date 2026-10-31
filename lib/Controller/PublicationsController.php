@@ -34,6 +34,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
@@ -84,27 +85,6 @@ class PublicationsController extends Controller {
 	private const MAX_PUBLIC_EXTEND = 5;
 
 	/**
-	 * Allowed CORS methods.
-	 *
-	 * @var string Allowed CORS methods
-	 */
-	private string $corsMethods;
-
-	/**
-	 * Allowed CORS headers.
-	 *
-	 * @var string Allowed CORS headers
-	 */
-	private string $corsAllowedHeaders;
-
-	/**
-	 * CORS max age.
-	 *
-	 * @var integer CORS max age
-	 */
-	private int $corsMaxAge;
-
-	/**
 	 * PublicationsController constructor.
 	 *
 	 * @param string $appName The name of the app
@@ -118,9 +98,7 @@ class PublicationsController extends Controller {
 	 * @param IL10N $l10n Localization service
 	 * @param UsageCounterServiceInterface $usageCounterService Privacy-safe usage counter (fire-and-forget)
 	 * @param IAppConfig|null $appConfig App config for CORS allowlist (optional)
-	 * @param string $corsMethods Allowed CORS methods
-	 * @param string $corsAllowedHeaders Allowed CORS headers
-	 * @param integer $corsMaxAge CORS max age
+	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -136,14 +114,9 @@ class PublicationsController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly UsageCounterServiceInterface $usageCounterService,
 		private readonly ?IAppConfig $appConfig = null,
-		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		int $corsMaxAge = 1728000,
+		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
-		$this->corsMethods = $corsMethods;
-		$this->corsAllowedHeaders = $corsAllowedHeaders;
-		$this->corsMaxAge = $corsMaxAge;
 
 	}//end __construct()
 
@@ -216,10 +189,8 @@ class PublicationsController extends Controller {
 			}
 
 			$this->usageCounterService->increment(
-				publicationId: $publicationId,
-				kind: $kind,
-				userAgent: $this->request->getHeader('User-Agent'),
-				catalog: $catalogSlug
+				usage: new PublicationUsage(publicationId: $publicationId, kind: $kind, catalog: $catalogSlug),
+				userAgent: $this->request->getHeader('User-Agent')
 			);
 		} catch (\Throwable $e) {
 			// Never propagate — a broken counter must not affect the public read.
@@ -310,8 +281,8 @@ class PublicationsController extends Controller {
 	 */
 	private function addCorsHeaders(JSONResponse $response): void {
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
+		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
 
 	}//end addCorsHeaders()
 
@@ -419,6 +390,137 @@ class PublicationsController extends Controller {
 	}//end objectMatchesCatalogScope()
 
 	/**
+	 * Resolve a publication by its slug across every register × schema of a catalogue.
+	 *
+	 * OpenRegister keeps a slug unique per register and schema only, and a
+	 * catalogue spans several schemas, so the same slug can occur more than once
+	 * here. All combinations are searched before deciding: exactly one match is
+	 * returned; more than one is refused (logged with the matching UUIDs, the
+	 * caller gets the plain 404) so the endpoint never returns the wrong
+	 * publication. The lookup filters on `@self.slug` explicitly, so a numeric
+	 * slug is never read as an object id.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param CatalogSlugQuery $query The identifier from the URL and the catalogue scope.
+	 *
+	 * @return object|null The one matching publication, or null.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-retrieve-a-single-publication-by-catalog-slug-and-object-uuid-or-slug-pub-002
+	 * @spec openspec/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
+	 */
+	private function findBySlugInCatalogScope(object $objectService, CatalogSlugQuery $query): ?object {
+		$matches = $this->slugMatches(objectService: $objectService, query: $query);
+		if (count($matches) === 1) {
+			return $matches[0];
+		}
+
+		if (count($matches) > 1) {
+			$this->logAmbiguousSlug(query: $query, matches: $matches);
+		}
+
+		return null;
+	}//end findBySlugInCatalogScope()
+
+	/**
+	 * Search every register x schema of the catalogue for the slug, stopping at two matches.
+	 *
+	 * OpenRegister stores slugs normalised, so the URL id is normalised the same
+	 * way before the lookup (`Zaak_2026-0042` finds `zaak-2026-0042`). An id with
+	 * nothing left after normalising matches no stored slug.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param CatalogSlugQuery $query The identifier from the URL and the catalogue scope.
+	 *
+	 * @return list<object> The matches found, at most the first two searches' worth past one.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
+	 */
+	private function slugMatches(object $objectService, CatalogSlugQuery $query): array {
+		$searchSlug = $this->normaliseSlug(text: $query->slug);
+		if ($searchSlug === '') {
+			return [];
+		}
+
+		$matches = [];
+		foreach ($query->registers as $register) {
+			foreach ($query->schemas as $schema) {
+				$found = $objectService->searchObjects(
+					query: [
+						'@self' => [
+							'slug' => $searchSlug,
+							'register' => $register,
+							'schema' => $schema,
+						],
+						// Only 0 / 1 / more is needed to decide.
+						'_limit' => 2,
+					],
+					_rbac: true,
+					_multitenancy: false,
+				);
+				if (is_array($found) === true) {
+					array_push($matches, ...array_values($found));
+				}
+
+				// Two matches already make the slug ambiguous: skip the remaining
+				// register x schema searches.
+				if (count($matches) > 1) {
+					return $matches;
+				}
+			}
+		}
+
+		return $matches;
+	}//end slugMatches()
+
+	/**
+	 * Log the publications an ambiguous slug matched.
+	 *
+	 * @param CatalogSlugQuery $query The identifier from the URL and the catalogue scope.
+	 * @param list<object> $matches The publications it matched.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-slug-held-by-more-than-one-publication-in-a-catalogue-must-be-refused-pub-019
+	 */
+	private function logAmbiguousSlug(CatalogSlugQuery $query, array $matches): void {
+		$uuids = array_map(
+			static fn ($match): string => (string)$match->getUuid(),
+			$matches
+		);
+		$this->logger->warning(
+			sprintf(
+				'[PublicationsController] Slug "%s" is ambiguous in catalog %s: matches publications %s',
+				$query->slug,
+				$query->catalogSlug,
+				implode(', ', $uuids)
+			),
+			['slug' => $query->slug, 'catalogSlug' => $query->catalogSlug, 'uuids' => $uuids]
+		);
+	}//end logAmbiguousSlug()
+
+	/**
+	 * Normalise a URL id the way OpenRegister normalises a stored slug.
+	 *
+	 * Mirrors OpenRegister's `MetadataHydrationHandler::createSlug()` plus the
+	 * 255-character column cut of `ObjectSlugHandler::candidate()`: lowercase,
+	 * spaces and underscores to hyphens, everything outside a-z, 0-9 and hyphen
+	 * dropped, hyphen runs collapsed, edge hyphens trimmed.
+	 *
+	 * @param string $text The identifier from the URL.
+	 *
+	 * @return string The normalised slug, empty when nothing is left.
+	 */
+	private function normaliseSlug(string $text): string {
+		$slug = strtolower(trim($text));
+		$slug = str_replace([' ', '_'], '-', $slug);
+		$slug = (string)preg_replace('/[^a-z0-9\-]/', '', $slug);
+		$slug = (string)preg_replace('/-+/', '-', $slug);
+		$slug = trim($slug, '-');
+
+		return substr($slug, 0, 255);
+	}//end normaliseSlug()
+
+	/**
 	 * Implements a preflighted CORS response for OPTIONS requests.
 	 *
 	 * @return Response The CORS response
@@ -433,9 +535,9 @@ class PublicationsController extends Controller {
 		// so we never reflect an arbitrary caller-supplied Origin (#735).
 		$response = new Response();
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
+		$response->addHeader('Access-Control-Max-Age', (string)$this->cors->maxAge);
+		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
@@ -628,6 +730,7 @@ class PublicationsController extends Controller {
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/specs/publications/spec.md#requirement-slug-resolution-must-be-backwards-compatible-pub-020
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -762,6 +865,31 @@ class PublicationsController extends Controller {
 				}
 			}//end if
 
+			// Slug route (#1592): only when the UUID lookup above found nothing, so
+			// a UUID URL is answered exactly as before. Same catalogue scope and the
+			// same read rules as the UUID path.
+			$publicationId = $id;
+			if ($object === null
+				&& empty($catalogRegisters) === false
+				&& empty($catalogSchemas) === false
+			) {
+				$object = $this->findBySlugInCatalogScope(
+					objectService: $objectService,
+					query: new CatalogSlugQuery(
+						slug: $id,
+						catalogSlug: $catalogSlug,
+						registers: $catalogRegisters,
+						schemas: $catalogSchemas
+					)
+				);
+
+				// Everything downstream (withheld list, view counter) keys on the
+				// publication UUID, not on the slug the URL carried.
+				if ($object !== null) {
+					$publicationId = (string)$object->getUuid();
+				}
+			}
+
 			if ($object === null) {
 				$this->logger->warning(
 					'[PublicationsController::show] Object not found in any register/schema',
@@ -860,7 +988,7 @@ class PublicationsController extends Controller {
 				$response = new JSONResponse($node, 200);
 				$response->addHeader('Content-Type', 'application/ld+json');
 				$this->addCorsHeaders(response: $response);
-				return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
+				return $this->countedView(response: $response, publicationId: $publicationId, catalogSlug: $catalogSlug);
 			}
 
 			// REQ-PDP-004 / REQ-WDW-003: a catalogue that opted in shows what was
@@ -870,7 +998,7 @@ class PublicationsController extends Controller {
 				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
 					response: $result,
 					catalog: $catalog,
-					publicationId: $id
+					publicationId: $publicationId
 				);
 			}
 
@@ -881,7 +1009,7 @@ class PublicationsController extends Controller {
 			// ANA-001: count this successful public detail view, fire-and-forget.
 			// HEAD requests, non-2xx, and back-office reads never reach this seam
 			// (this is the public detail path that already 404'd above on misses).
-			return $this->countedView(response: $response, publicationId: $id, catalogSlug: $catalogSlug);
+			return $this->countedView(response: $response, publicationId: $publicationId, catalogSlug: $catalogSlug);
 		} catch (DoesNotExistException $exception) {
 			return new JSONResponse(
 				[

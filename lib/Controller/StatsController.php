@@ -218,6 +218,11 @@ class StatsController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
+	 * @no-admin-idor-exempt requires a session user; the catalog is resolved by
+	 *   CatalogiService::getCatalogBySlug() (OpenRegister searchObjects, RBAC on) and its datasets are
+	 *   read by DcatService::buildCatalogDocument() with RBAC on, so only rows the caller may
+	 *   read are scored.
+	 *
 	 * @spec openspec/specs/publication-quality/spec.md
 	 */
 	public function quality(string $slug): JSONResponse {
