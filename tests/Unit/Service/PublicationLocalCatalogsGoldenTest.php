@@ -32,6 +32,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\DownloadService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
@@ -169,6 +170,33 @@ class PublicationLocalCatalogsGoldenTest extends TestCase {
 	}//end testFederatedUsedMatchesTheRecording()
 
 	/**
+	 * A count-shaped catalog search reads as no catalogs.
+	 *
+	 * @return void
+	 */
+	public function testCatalogFiltersTreatACountAsNoCatalogs(): void {
+		$service = $this->service(case: ['count' => true]);
+
+		$this->assertSame(expected: ['registers' => [], 'schemas' => []], actual: $service->getCatalogFilters());
+
+	}//end testCatalogFiltersTreatACountAsNoCatalogs()
+
+	/**
+	 * A string direction next to an indexed order entry sorts by that field and direction.
+	 *
+	 * @return void
+	 */
+	public function testCumulativeOrderingTakesAStringDirection(): void {
+		$method = new \ReflectionMethod(PublicationService::class, 'applyCumulativeOrdering');
+		$results = [['title' => 'apple', 'n' => 1], ['title' => 'cherry', 'n' => 1], ['title' => 'banana', 'n' => 1]];
+
+		$sorted = $method->invoke($this->service(case: []), $results, ['_order' => [0 => ['n' => 'asc'], 'title' => 'desc']]);
+
+		$this->assertSame(expected: ['cherry', 'banana', 'apple'], actual: array_column($sorted, 'title'));
+
+	}//end testCumulativeOrderingTakesAStringDirection()
+
+	/**
 	 * Compare with, or write, the recording of the current data set.
 	 *
 	 * @param array<string, mixed> $actual What the case produced.
@@ -206,18 +234,30 @@ class PublicationLocalCatalogsGoldenTest extends TestCase {
 	private function service(array $case): PublicationService {
 		$objectService = $this->createMock(originalClassName: ObjectService::class);
 		$objectService->method('searchObjects')->willReturnCallback(
-			function (array $query = []) use ($case): array {
+			function (array $query = []) use ($case): array|int {
 				$this->calls[] = ['searchObjects' => ['query' => $query]];
 				if (($case['searchFails'] ?? false) === true) {
 					throw new \RuntimeException('search down');
+				}
+
+				if (($case['count'] ?? false) === true) {
+					return 3;
 				}
 
 				return array_map(fn (array $spec): mixed => $this->catalog(spec: $spec), ($case['catalogs'] ?? []));
 			}
 		);
 
+		$queryService = $this->createMock(originalClassName: PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
-		$container->method('get')->willReturn($objectService);
+		$container->method('get')->willReturnCallback(
+			static fn (string $id): object => match ($id) {
+				PublicationQueryService::class => $queryService,
+				default => $objectService,
+			}
+		);
 
 		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
