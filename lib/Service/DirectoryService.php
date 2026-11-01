@@ -2676,8 +2676,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * from THIS instance, which preserves the historical "no cross-broadcast"
 	 * contract; `includeFederated` also serves the listings learnt from peers.
 	 *
-	 * @param mixed $listingResult    The stored listing entities or their data.
-	 * @param bool  $includeFederated Whether listings of other directories are served too.
+	 * @param mixed $listingResult The stored listing entities or their data.
+	 * @param bool $includeFederated Whether listings of other directories are served too.
 	 *
 	 * @return array<int, array<string, mixed>> The served listings.
 	 */
@@ -2850,7 +2850,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * The core API fields a listing takes from its catalog.
 	 *
-	 * @param mixed $catalog   The catalog data.
+	 * @param mixed $catalog The catalog data.
 	 * @param mixed $catalogId The catalog id, used as the listing id too.
 	 *
 	 * @return array<string, mixed> The fields, in listing order.
