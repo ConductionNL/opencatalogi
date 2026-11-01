@@ -125,27 +125,6 @@
             }
         ]
     ],
-    "subjectRef differs, new wins": [
-        [
-            "container",
-            "OCA\\OpenRegister\\Db\\RegisterMapper"
-        ],
-        [
-            "container",
-            "OCA\\OpenRegister\\Db\\SchemaMapper"
-        ],
-        [
-            "removeEverythingOf",
-            "subject-new"
-        ],
-        [
-            "info",
-            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
-            {
-                "deleted": 1
-            }
-        ]
-    ],
     "subjectRef nowhere": [
         [
             "container",
@@ -156,15 +135,9 @@
             "OCA\\OpenRegister\\Db\\SchemaMapper"
         ],
         [
-            "removeEverythingOf",
-            ""
-        ],
-        [
-            "info",
-            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
-            {
-                "deleted": 1
-            }
+            "warning",
+            "OpenCatalogi: a portal account removal did not keep its subject; nothing was deleted",
+            []
         ]
     ],
     "subjectRef an int": [
@@ -177,15 +150,9 @@
             "OCA\\OpenRegister\\Db\\SchemaMapper"
         ],
         [
-            "removeEverythingOf",
-            "5"
-        ],
-        [
-            "info",
-            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
-            {
-                "deleted": 1
-            }
+            "warning",
+            "OpenCatalogi: a portal account removal did not keep its subject; nothing was deleted",
+            []
         ]
     ],
     "another schema": [
@@ -418,6 +385,21 @@
             {
                 "deleted": 3
             }
+        ]
+    ],
+    "subjectRef differs, nothing deleted": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "warning",
+            "OpenCatalogi: a portal account removal did not keep its subject; nothing was deleted",
+            []
         ]
     ]
 }
