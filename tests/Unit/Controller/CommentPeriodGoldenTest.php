@@ -28,6 +28,10 @@ use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Controller\CommentPeriodController;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
+use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -177,12 +181,14 @@ class CommentPeriodGoldenTest extends TestCase {
 			'open: refused' => [['action' => 'open', 'fail' => 'refuse', 'params' => $form]],
 			'open: term engine unavailable' => [['action' => 'open', 'fail' => 'engine', 'params' => $form]],
 			'open: service throws something else' => [['action' => 'open', 'fail' => 'openOther', 'params' => $form]],
+			'open: an invalid argument is not a refusal' => [['action' => 'open', 'fail' => 'invalid', 'params' => $form]],
 			'open: register unavailable' => [['action' => 'open', 'fail' => 'objects', 'params' => $form]],
 			'open: register not configured' => [['action' => 'open', 'configured' => false, 'params' => $form]],
 			'open: app config unavailable' => [['action' => 'open', 'fail' => 'appConfig', 'params' => $form]],
 			'open: save fails' => [['action' => 'open', 'fail' => 'save', 'params' => $form]],
 			'open: saved as an entity' => [['action' => 'open', 'entity' => true, 'params' => $form]],
 			'show: found' => [['action' => 'show', 'stored' => $stored]],
+			'show: a forged register, schema and id are ignored' => [['action' => 'show', 'stored' => $stored, 'params' => ['register' => '99', 'schema' => '99', 'id' => 'other']]],
 			'show: found as an entity' => [['action' => 'show', 'entity' => true, 'stored' => $stored]],
 			'show: register unavailable' => [['action' => 'show', 'fail' => 'objects']],
 			'show: register not configured' => [['action' => 'show', 'configured' => false]],
@@ -236,6 +242,23 @@ class CommentPeriodGoldenTest extends TestCase {
 		$this->assertSame($recorded[$name], json_decode((string)json_encode($actual), true));
 
 	}//end testCommentPeriodMatchesTheRecording()
+
+	/**
+	 * Opening a period is an admin setting: exactly one AuthorizedAdminSetting
+	 * naming the OpenCatalogi admin section, and nothing that opens it wider.
+	 *
+	 * @return void
+	 */
+	public function testOpenIsGuardedByTheAdminSettingOnly(): void {
+		$method = new \ReflectionMethod(CommentPeriodController::class, 'open');
+
+		$admin = $method->getAttributes(AuthorizedAdminSetting::class);
+		$this->assertCount(1, $admin);
+		$this->assertSame(OpenCatalogiAdmin::class, $admin[0]->newInstance()->getSettings());
+		$this->assertSame([], $method->getAttributes(NoAdminRequired::class));
+		$this->assertSame([], $method->getAttributes(PublicPage::class));
+
+	}//end testOpenIsGuardedByTheAdminSettingOnly()
 
 	/**
 	 * The controller over recording doubles for one case.
@@ -310,6 +333,10 @@ class CommentPeriodGoldenTest extends TestCase {
 
 				if ($fail === 'engine') {
 					throw new TermRollUnavailableException('engine down');
+				}
+
+				if ($fail === 'invalid') {
+					throw new \InvalidArgumentException('bad argument');
 				}
 
 				if ($fail === 'openOther') {

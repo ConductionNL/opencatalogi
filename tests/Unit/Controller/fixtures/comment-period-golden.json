@@ -870,5 +870,70 @@
                 }
             }
         ]
+    },
+    "open: an invalid argument is not a refusal": {
+        "thrown": "InvalidArgumentException: bad argument",
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            }
+        ]
+    },
+    "show: a forged register, schema and id are ignored": {
+        "status": 200,
+        "data": {
+            "state": "open",
+            "publication": "pub-1",
+            "endDate": "2099-04-13T09:00:00+00:00",
+            "legalRemedy": "zienswijze"
+        },
+        "calls": [
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "find": [
+                    "period-1",
+                    "7",
+                    "9"
+                ]
+            },
+            {
+                "publicView": {
+                    "publication": "pub-1",
+                    "endDate": "2099-04-13T09:00:00+00:00",
+                    "legalRemedy": "zienswijze"
+                }
+            }
+        ]
     }
 }
