@@ -36,7 +36,7 @@ interface PublishedCollectionsServiceInterface {
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the stored configuration is not readable JSON.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	public function collections(): array;
 
@@ -47,7 +47,7 @@ interface PublishedCollectionsServiceInterface {
 	 *
 	 * @return array{saved: boolean, errors: array<int, string>}
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	public function save(array $collections): array;
 
@@ -60,7 +60,7 @@ interface PublishedCollectionsServiceInterface {
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration or a condition cannot be read.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	public function publishes(array $record): bool;
 }//end interface

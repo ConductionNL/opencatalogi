@@ -24,7 +24,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
 /**
  * Refuses a decision that does not meet its own type's publication rules.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
  */
 class DecisionPublicationValidator implements DecisionPublicationValidatorInterface {
 
@@ -61,7 +61,7 @@ class DecisionPublicationValidator implements DecisionPublicationValidatorInterf
 	 *
 	 * @return array{publishable: boolean, reasons: array<int, string>, responseDate: string|null, publicationText: string|null}
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function validate(array $decision, array $decisionType): array {
 		$obliged = (bool)($decisionType['publicationObligation'] ?? false);
@@ -111,7 +111,7 @@ class DecisionPublicationValidator implements DecisionPublicationValidatorInterf
 	 *
 	 * @return array{date: DateTimeImmutable|null, reasons: array<int, string>} The date and what was wrong.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	private function readPublicationDate(array $decision): array {
 		$raw = trim((string)($decision['publicationDate'] ?? ''));
@@ -140,7 +140,7 @@ class DecisionPublicationValidator implements DecisionPublicationValidatorInterf
 	 *
 	 * @return string|null The text, or null when the type declares none.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function publicationText(array $decisionType): ?string {
 		$text = trim((string)($decisionType['publicationText'] ?? ''));
@@ -162,7 +162,7 @@ class DecisionPublicationValidator implements DecisionPublicationValidatorInterf
 	 *
 	 * @throws \DomainException When the validation refused.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function applyValidated(array $decision, array $validation): array {
 		if ($validation['publishable'] === false) {

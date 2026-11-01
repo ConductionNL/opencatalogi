@@ -1,33 +1,37 @@
----
-status: proposed
----
+# publication-inspection-and-the-national-indexes Specification
 
-# Publication, inspection and the national indexes
+## Purpose
+TBD - created by archiving change publication-inspection-and-the-national-indexes. Update Purpose after archive.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: A record type is readable without an account, with the visible parts chosen (REQ-PIN-101)
 
-A publication rule MUST name a record type, the properties an anonymous
-reader may read, and the conditions under which a record of that type
-becomes public. Records of that type MUST follow the rule without anyone
-selecting them. The anonymous permission set MUST be enforced where the
-read happens, so a property outside it is absent from the API response
-and from the page alike.
+What an anonymous reader may read MUST be decided by the record's schema in
+OpenRegister: its `authorization.read` rules decide which records are public
+(a publication is public once its publication date has passed and until its
+depublication date), and property-level authorization on the schema decides
+which properties an anonymous reader sees. Records MUST follow those rules
+without anyone selecting them. The check MUST run where the read happens, on
+every public read of this app alike: the catalogue API (`/api/{catalogSlug}`),
+the public search, the catalogue feed and the pages that read them. A schema
+without read rules is readable by nobody anonymously. (Amended 2026-10-10 to
+decision 138, Q-opencatalogi-1: no publication carries a record type, so the
+record-type publication rule is not the access check.)
 
 Evidence: one driven passer (taiga, `projects/models.py:221-226`) and one
 documented (youtrack).
 
 #### Scenario: A new record of a published type is public on arrival
 
-- **GIVEN** a publication rule on a record type
-- **WHEN** a new record of that type meets the rule's conditions
+- **GIVEN** a schema whose read rules admit a record once its publication date has passed
+- **WHEN** a new record's publication date passes
 - **THEN** an anonymous reader can read it without anyone publishing it by hand.
 
 #### Scenario: A property outside the set is absent from the API
 
-- **GIVEN** a record whose type's anonymous set omits a property
-- **WHEN** an anonymous reader reads it through the API
+- **GIVEN** a schema whose property-level authorization withholds a property from anonymous readers
+- **WHEN** an anonymous reader reads a record through the API
 - **THEN** that property is absent from the response.
 
 #### Scenario: A rule is previewed before it is saved
@@ -153,19 +157,21 @@ and visma-circle for the index).
 
 Which collections publish, and under what conditions, MUST be
 configuration rather than code. A change to the configuration MUST take
-effect without a release.
+effect without a release. A collection is published by adding its schema
+to a catalogue; its conditions are the schema's read rules in OpenRegister.
+(Amended 2026-10-10 to decision 138.)
 
 Evidence: documented only (decos-join).
 
 #### Scenario: A collection is added without a release
 
 - **GIVEN** a running instance
-- **WHEN** an administrator adds a collection to the published set
-- **THEN** its records publish under the stated conditions.
+- **WHEN** an administrator adds a schema to a published catalogue
+- **THEN** its records publish under that schema's read rules.
 
 #### Scenario: A condition narrows what publishes
 
-- **GIVEN** a published collection with a condition on a property
+- **GIVEN** a published collection whose read rule has a condition on a property
 - **WHEN** a record fails the condition
 - **THEN** it is not published.
 
@@ -195,7 +201,8 @@ Evidence: documented only (visma-circle).
 Published information MUST be searchable in plain words without an
 account. A result MUST name the dossier the document belongs to and link
 to it. The search MUST run over what the anonymous permission set allows
-and no more.
+and no more: the schemas' read rules, evaluated as an anonymous reader for
+every caller (`GET /api/search`). (Amended 2026-10-10 to decision 138.)
 
 Evidence: documented only (visma-circle).
 
@@ -207,6 +214,6 @@ Evidence: documented only (visma-circle).
 
 #### Scenario: Search respects the anonymous set
 
-- **GIVEN** a record with a property outside the anonymous set
-- **WHEN** an anonymous reader searches a word that occurs only in that property
+- **GIVEN** a record its schema's read rules do not admit for an anonymous reader
+- **WHEN** an anonymous reader searches a word that occurs in it
 - **THEN** the record is not returned.

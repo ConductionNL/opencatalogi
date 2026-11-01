@@ -27,7 +27,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
  */
 
 declare(strict_types=1);
@@ -43,7 +43,7 @@ use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 /**
  * Renders the status page from states an administrator set.
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
  */
 class StatusPageService implements StatusPageServiceInterface {
 
@@ -72,7 +72,7 @@ class StatusPageService implements StatusPageServiceInterface {
 	 *
 	 * @throws DomainException When the state is not one this page knows.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
 	public function setState(
 		string $component,
@@ -116,7 +116,7 @@ class StatusPageService implements StatusPageServiceInterface {
 	 *
 	 * @return array{components: array<int, array<string, mixed>>, stale: integer, probed: boolean}
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
 	public function render(
 		array $components,

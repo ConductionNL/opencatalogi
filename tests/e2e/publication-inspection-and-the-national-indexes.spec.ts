@@ -19,15 +19,15 @@
  * registers were never configured on this instance: run the setup wizard, or
  * POST to /api/settings/load. That is the app refusing correctly, not failing.
  *
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-a-property-outside-the-set-is-absent-from-the-api
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-a-rule-is-previewed-before-it-is-saved
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-a-decision-without-a-publication-date-is-refused
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-response-date-is-computed-not-typed
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-link-works-inside-the-window
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-link-stops-when-the-window-closes
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-an-unacknowledged-withdrawal-is-not-done
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-app-holds-no-transport
- * @e2e openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-search-respects-the-anonymous-set
+ * @e2e openspec/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-a-property-outside-the-set-is-absent-from-the-api
+ * @e2e openspec/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-a-rule-is-previewed-before-it-is-saved
+ * @e2e openspec/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-a-decision-without-a-publication-date-is-refused
+ * @e2e openspec/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-response-date-is-computed-not-typed
+ * @e2e openspec/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-link-works-inside-the-window
+ * @e2e openspec/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-link-stops-when-the-window-closes
+ * @e2e openspec/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-an-unacknowledged-withdrawal-is-not-done
+ * @e2e openspec/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-the-app-holds-no-transport
+ * @e2e openspec/specs/publication-inspection-and-the-national-indexes/spec.md#scenario-search-respects-the-anonymous-set
  */
 import type { APIRequestContext } from '@playwright/test'
 
