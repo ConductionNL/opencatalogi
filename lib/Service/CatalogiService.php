@@ -739,8 +739,9 @@ class CatalogiService implements CatalogiServiceInterface {
 	/**
 	 * Get a catalog by its slug from cache or database.
 	 *
-	 * This method first attempts to retrieve the catalog from cache. If not found in cache,
-	 * it queries the database and stores the result in cache for future requests.
+	 * The lookup runs with RBAC, so its result depends on the caller. Only the anonymous
+	 * view is cached, because it is the same for every anonymous caller; a signed-in
+	 * caller always queries the database.
 	 *
 	 * @param string $slug The slug of the catalog to retrieve
 	 *
@@ -750,16 +751,18 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function getCatalogBySlug(string $slug): ?array {
-		// Step 1: Try to get from cache.
-		$cacheKey = 'catalog_slug_' . $slug;
-		$cachedCatalog = $this->cache->get($cacheKey);
+		$cacheKey = $this->publicCatalogCacheKey(slug: $slug);
+		$useCache = $this->isAnonymousCaller();
+		$cachedCatalog = null;
+		if ($useCache === true) {
+			$cachedCatalog = $this->cache->get($cacheKey);
+		}
 
 		if ($cachedCatalog !== null) {
 			$this->logger->debug('Catalog retrieved from cache', ['slug' => $slug]);
 			return $cachedCatalog;
 		}
 
-		// Step 2: Not in cache, query the database.
 		$this->logger->debug('Catalog not in cache, querying database', ['slug' => $slug]);
 
 		try {
@@ -804,9 +807,10 @@ class CatalogiService implements CatalogiServiceInterface {
 			// (catalog schema grants public read only when published <= $now).
 			$catalog = $catalogs[0]->jsonSerialize();
 
-			// Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
-			$this->cache->set($cacheKey, $catalog, 3600);
-			$this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+			if ($useCache === true) {
+				$this->cache->set($cacheKey, $catalog, 3600);
+				$this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+			}
 
 			return $catalog;
 		} catch (Exception $e) {
@@ -835,11 +839,36 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function invalidateCatalogCache(string $slug): void {
-		$cacheKey = 'catalog_slug_' . $slug;
-		$this->cache->remove($cacheKey);
+		$this->cache->remove($this->publicCatalogCacheKey(slug: $slug));
 		$this->logger->debug('Catalog cache invalidated', ['slug' => $slug]);
 
 	}//end invalidateCatalogCache()
+
+	/**
+	 * Cache key of the anonymous view of a catalog.
+	 *
+	 * @param string $slug The catalog slug.
+	 *
+	 * @return string The cache key.
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function publicCatalogCacheKey(string $slug): string {
+		return 'catalog_public_slug_' . $slug;
+
+	}//end publicCatalogCacheKey()
+
+	/**
+	 * Whether the current request has no signed-in user.
+	 *
+	 * @return bool True for an anonymous caller.
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function isAnonymousCaller(): bool {
+		return $this->userSession === null || $this->userSession->getUser() === null;
+
+	}//end isAnonymousCaller()
 
 	/**
 	 * Invalidate cache for a catalog by its ID.
@@ -1046,7 +1075,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @return array<int, array<string, mixed>> The result rows as arrays.
 	 */
 	private function envelopeResults(array $results): array {
-		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
+		$isAnonymous = $this->isAnonymousCaller();
 
 		return array_map(
 			fn ($object): array => $this->envelopeOf(object: $object, isAnonymous: $isAnonymous),

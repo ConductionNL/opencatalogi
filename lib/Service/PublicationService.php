@@ -1233,9 +1233,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Download all files of an object as a ZIP archive
 	 *
-	 * This method creates a ZIP file containing all files associated with a specific object
-	 * and returns it as a downloadable file. The ZIP file includes all files stored in the
-	 * object's folder with their original names.
+	 * This method creates a ZIP file containing the files of a specific object and returns
+	 * it as a downloadable file. A signed-in caller gets every file OpenRegister admits them
+	 * to; an anonymous caller gets the shared files only.
 	 *
 	 * @param string $id The identifier of the object to download files for
 	 *
@@ -1274,9 +1274,14 @@ class PublicationService implements PublicationServiceInterface {
 				return new JSONResponse(['error' => 'Not Found'], 404);
 			}
 
+			$sharedNames = $this->sharedFileNamesForAnonymousCaller(id: $id);
+
 			// Create the ZIP archive.
 			$fileService = $this->getFileService();
 			$zipInfo = $fileService->createObjectFilesZip($id);
+			if ($sharedNames !== null) {
+				$this->removeZipEntriesNotIn(zipPath: $zipInfo['path'], keepNames: $sharedNames);
+			}
 
 			// Render the publication metadata PDF and pipe it into the ZIP alongside the
 			// attachments streamed from OR's file service (DWN-OR-001 / DWN-OR-003).
@@ -1356,8 +1361,9 @@ class PublicationService implements PublicationServiceInterface {
 	 * @spec openspec/specs/download-service/spec.md
 	 */
 	private function addFileToZip(string $zipPath, string $entryName, string $content): void {
+		// CREATE: an archive whose every entry was removed no longer exists on disk.
 		$zip = new ZipArchive();
-		if ($zip->open($zipPath) !== true) {
+		if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
 			throw new Exception('Failed to open ZIP archive to add the publication metadata PDF');
 		}
 
@@ -1369,6 +1375,82 @@ class PublicationService implements PublicationServiceInterface {
 		$zip->close();
 
 	}//end addFileToZip()
+
+	/**
+	 * Names of the shared files of an object when the caller is anonymous.
+	 *
+	 * Anonymous callers may only receive shared files, as in attachments() and
+	 * OpenRegister's own file listing. Signed-in callers get null: their archive keeps
+	 * every file OpenRegister admits them to.
+	 *
+	 * @param string $id The object identifier.
+	 *
+	 * @return list<string>|null File names to keep, or null when nothing is filtered.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function sharedFileNamesForAnonymousCaller(string $id): ?array {
+		if ($this->isAnonymousCaller() === false) {
+			return null;
+		}
+
+		$sharedFiles = $this->getFileService()->getFiles(object: $id, sharedFilesOnly: true);
+
+		return array_values(array_map(static fn ($file): string => $file->getName(), $sharedFiles));
+
+	}//end sharedFileNamesForAnonymousCaller()
+
+	/**
+	 * Remove every entry from a ZIP archive whose file name is not in the keep list.
+	 *
+	 * Entries are matched on their base name, so files placed in a sub folder of the
+	 * archive are matched as well.
+	 *
+	 * @param string       $zipPath   Absolute path of the ZIP archive.
+	 * @param list<string> $keepNames File names that may stay in the archive.
+	 *
+	 * @return void
+	 *
+	 * @throws Exception When the archive cannot be opened or an entry cannot be removed.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function removeZipEntriesNotIn(string $zipPath, array $keepNames): void {
+		$zip = new ZipArchive();
+		if ($zip->open($zipPath) !== true) {
+			throw new Exception('Failed to open ZIP archive to remove unshared files');
+		}
+
+		$removeNames = [];
+		for ($index = 0; $index < $zip->numFiles; $index++) {
+			$entryName = (string) $zip->getNameIndex($index);
+			if (in_array(basename($entryName), $keepNames, true) === false) {
+				$removeNames[] = $entryName;
+			}
+		}
+
+		foreach ($removeNames as $entryName) {
+			if ($zip->deleteName($entryName) === false) {
+				$zip->close();
+				throw new Exception('Failed to remove an unshared file from the ZIP archive');
+			}
+		}
+
+		$zip->close();
+
+	}//end removeZipEntriesNotIn()
+
+	/**
+	 * Whether the current request has no signed-in user.
+	 *
+	 * @return bool True for an anonymous caller.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function isAnonymousCaller(): bool {
+		return $this->userSession === null || $this->userSession->getUser() === null;
+
+	}//end isAnonymousCaller()
 
 	/**
 	 * Filter out unwanted properties from objects
@@ -1395,7 +1477,7 @@ class PublicationService implements PublicationServiceInterface {
 		// Single source of truth for the anonymous strip list (authenticated-read-parity,
 		// CAT-AUTH-001) — see CatalogiService::UNWANTED_SELF_PROPERTIES.
 		$unwantedProperties = CatalogiService::UNWANTED_SELF_PROPERTIES;
-		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
+		$isAnonymous = $this->isAnonymousCaller();
 
 		// Filter each object.
 		return array_map(
