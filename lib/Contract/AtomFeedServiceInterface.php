@@ -56,6 +56,10 @@ interface AtomFeedServiceInterface {
 	 * @return array<int, array<string, mixed>> The catalogue's notices.
 	 *
 	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 *
+	 * @contract-shift internal-only — AtomFeedService is its only implementation, CommunityController its only caller.
+	 * A grep of every app under apps-extra and a GitHub code search over ConductionNL find no other
+	 * reference to AtomFeedServiceInterface, so no consumer doubles it.
 	 */
 	public function noticesOfCatalogue(string $catalogId, array $boards, array $notices): array;
 
