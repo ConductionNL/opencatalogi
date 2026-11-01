@@ -1,0 +1,513 @@
+{
+    "schema ids unreadable": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: could not resolve schema ids; skipping.",
+                {
+                    "exception": "schemas table locked"
+                }
+            ]
+        },
+        {
+            "info": "RenameDutchPublicationColumns: no publication shard tables on this install; nothing to do."
+        }
+    ],
+    "no schema ids": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "info": "RenameDutchPublicationColumns: no publication shard tables on this install; nothing to do."
+        }
+    ],
+    "tables unlistable": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "prepare": "SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern"
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: could not list tables; skipping.",
+                {
+                    "exception": "information_schema unavailable"
+                }
+            ]
+        },
+        {
+            "info": "RenameDutchPublicationColumns: no publication shard tables on this install; nothing to do."
+        }
+    ],
+    "no shard tables": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "prepare": "SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern"
+        },
+        {
+            "bindValue": [
+                "pattern",
+                "%openregister\\_table\\_%"
+            ]
+        },
+        {
+            "execute": {
+                "pattern": "%openregister\\_table\\_%"
+            }
+        },
+        {
+            "info": "RenameDutchPublicationColumns: no publication shard tables on this install; nothing to do."
+        }
+    ],
+    "renames and back-fills": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "prepare": "SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern"
+        },
+        {
+            "bindValue": [
+                "pattern",
+                "%openregister\\_table\\_%"
+            ]
+        },
+        {
+            "execute": {
+                "pattern": "%openregister\\_table\\_%"
+            }
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_1_4"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_1_4"
+            }
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_1_4\" SET \"publication_date\" = \"publicatiedatum\" WHERE \"publication_date\" IS NULL AND \"publicatiedatum\" IS NOT NULL"
+        },
+        {
+            "executeStatement": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"depublicatiedatum\" TO \"depublication_date\""
+        },
+        {
+            "executeStatement": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"besluit\" TO \"decision_letter\""
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_2_9"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_2_9"
+            }
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_2_9\" SET \"decision_letter\" = \"besluit\" WHERE \"decision_letter\" IS NULL AND \"besluit\" IS NOT NULL"
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_2_9\" SET \"inventory_list\" = \"inventarislijst\" WHERE \"inventory_list\" IS NULL AND \"inventarislijst\" IS NOT NULL"
+        },
+        {
+            "info": "RenameDutchPublicationColumns: 2 column(s) renamed, 3 column(s) back-filled, across 2 shard table(s)."
+        }
+    ],
+    "a table without the Dutch columns": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "prepare": "SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern"
+        },
+        {
+            "bindValue": [
+                "pattern",
+                "%openregister\\_table\\_%"
+            ]
+        },
+        {
+            "execute": {
+                "pattern": "%openregister\\_table\\_%"
+            }
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_1_4"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_1_4"
+            }
+        },
+        {
+            "info": "RenameDutchPublicationColumns: 0 column(s) renamed, 0 column(s) back-filled, across 1 shard table(s)."
+        }
+    ],
+    "columns of one table unreadable": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "prepare": "SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern"
+        },
+        {
+            "bindValue": [
+                "pattern",
+                "%openregister\\_table\\_%"
+            ]
+        },
+        {
+            "execute": {
+                "pattern": "%openregister\\_table\\_%"
+            }
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_1_4"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_1_4"
+            }
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: could not read columns; skipping table.",
+                {
+                    "table": "oc_openregister_table_1_4",
+                    "exception": "columns unreadable"
+                }
+            ]
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_2_9"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_2_9"
+            }
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_2_9\" SET \"decision_letter\" = \"besluit\" WHERE \"decision_letter\" IS NULL AND \"besluit\" IS NOT NULL"
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_2_9\" SET \"inventory_list\" = \"inventarislijst\" WHERE \"inventory_list\" IS NULL AND \"inventarislijst\" IS NOT NULL"
+        },
+        {
+            "info": "RenameDutchPublicationColumns: 0 column(s) renamed, 2 column(s) back-filled, across 2 shard table(s)."
+        }
+    ],
+    "some statements fail": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "prepare": "SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern"
+        },
+        {
+            "bindValue": [
+                "pattern",
+                "%openregister\\_table\\_%"
+            ]
+        },
+        {
+            "execute": {
+                "pattern": "%openregister\\_table\\_%"
+            }
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_1_4"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_1_4"
+            }
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_1_4\" SET \"publication_date\" = \"publicatiedatum\" WHERE \"publication_date\" IS NULL AND \"publicatiedatum\" IS NOT NULL"
+        },
+        {
+            "executeStatement": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"depublicatiedatum\" TO \"depublication_date\""
+        },
+        {
+            "executeStatement": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"besluit\" TO \"decision_letter\""
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: statement failed; leaving the column as it was.",
+                {
+                    "sql": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"besluit\" TO \"decision_letter\"",
+                    "exception": "statement refused"
+                }
+            ]
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_2_9"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_2_9"
+            }
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_2_9\" SET \"decision_letter\" = \"besluit\" WHERE \"decision_letter\" IS NULL AND \"besluit\" IS NOT NULL"
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_2_9\" SET \"inventory_list\" = \"inventarislijst\" WHERE \"inventory_list\" IS NULL AND \"inventarislijst\" IS NOT NULL"
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: statement failed; leaving the column as it was.",
+                {
+                    "sql": "UPDATE \"oc_openregister_table_2_9\" SET \"inventory_list\" = \"inventarislijst\" WHERE \"inventory_list\" IS NULL AND \"inventarislijst\" IS NOT NULL",
+                    "exception": "statement refused"
+                }
+            ]
+        },
+        {
+            "info": "RenameDutchPublicationColumns: 1 column(s) renamed, 2 column(s) back-filled, across 2 shard table(s)."
+        }
+    ],
+    "every statement fails": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "prepare": "SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern"
+        },
+        {
+            "bindValue": [
+                "pattern",
+                "%openregister\\_table\\_%"
+            ]
+        },
+        {
+            "execute": {
+                "pattern": "%openregister\\_table\\_%"
+            }
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_1_4"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_1_4"
+            }
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_1_4\" SET \"publication_date\" = \"publicatiedatum\" WHERE \"publication_date\" IS NULL AND \"publicatiedatum\" IS NOT NULL"
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: statement failed; leaving the column as it was.",
+                {
+                    "sql": "UPDATE \"oc_openregister_table_1_4\" SET \"publication_date\" = \"publicatiedatum\" WHERE \"publication_date\" IS NULL AND \"publicatiedatum\" IS NOT NULL",
+                    "exception": "statement refused"
+                }
+            ]
+        },
+        {
+            "executeStatement": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"depublicatiedatum\" TO \"depublication_date\""
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: statement failed; leaving the column as it was.",
+                {
+                    "sql": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"depublicatiedatum\" TO \"depublication_date\"",
+                    "exception": "statement refused"
+                }
+            ]
+        },
+        {
+            "executeStatement": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"besluit\" TO \"decision_letter\""
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: statement failed; leaving the column as it was.",
+                {
+                    "sql": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"besluit\" TO \"decision_letter\"",
+                    "exception": "statement refused"
+                }
+            ]
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_2_9"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_2_9"
+            }
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_2_9\" SET \"decision_letter\" = \"besluit\" WHERE \"decision_letter\" IS NULL AND \"besluit\" IS NOT NULL"
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: statement failed; leaving the column as it was.",
+                {
+                    "sql": "UPDATE \"oc_openregister_table_2_9\" SET \"decision_letter\" = \"besluit\" WHERE \"decision_letter\" IS NULL AND \"besluit\" IS NOT NULL",
+                    "exception": "statement refused"
+                }
+            ]
+        },
+        {
+            "executeStatement": "UPDATE \"oc_openregister_table_2_9\" SET \"inventory_list\" = \"inventarislijst\" WHERE \"inventory_list\" IS NULL AND \"inventarislijst\" IS NOT NULL"
+        },
+        {
+            "warning": [
+                "RenameDutchPublicationColumns: statement failed; leaving the column as it was.",
+                {
+                    "sql": "UPDATE \"oc_openregister_table_2_9\" SET \"inventory_list\" = \"inventarislijst\" WHERE \"inventory_list\" IS NULL AND \"inventarislijst\" IS NOT NULL",
+                    "exception": "statement refused"
+                }
+            ]
+        },
+        {
+            "info": "RenameDutchPublicationColumns: 0 column(s) renamed, 0 column(s) back-filled, across 2 shard table(s)."
+        }
+    ]
+}
