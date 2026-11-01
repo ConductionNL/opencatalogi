@@ -149,7 +149,7 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 		$objects = $this->createMock(ObjectService::class);
 		$objects->method('searchObjects')->willReturnCallback(
 			function (...$args) use ($case): mixed {
-				$this->log[] = ['search' => $args];
+				$this->log[] = ['search' => self::passedArguments(method: 'searchObjects', args: $args)];
 				if (($case['fail'] ?? null) === 'search') {
 					throw new RuntimeException('search down');
 				}
@@ -159,7 +159,7 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 		);
 		$objects->method('saveObject')->willReturnCallback(
 			function (...$args) use ($case): mixed {
-				$this->log[] = ['save' => $args];
+				$this->log[] = ['save' => self::passedArguments(method: 'saveObject', args: $args)];
 				if (($case['fail'] ?? null) === 'save') {
 					throw new RuntimeException('save broke');
 				}
@@ -204,4 +204,34 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 		);
 
 	}//end controller()
+
+	/**
+	 * The arguments of an ObjectService call by parameter name, without those left at their default.
+	 *
+	 * A mock receives every parameter of the loaded ObjectService, so a positional list
+	 * would record that class's signature: the test stub's locally and OpenRegister's
+	 * own in CI. Named and without defaults, the record is what the controller passed.
+	 *
+	 * @param string            $method The ObjectService method.
+	 * @param array<int, mixed> $args   The arguments the mock received.
+	 *
+	 * @return array<string, mixed> The passed arguments by name.
+	 */
+	private static function passedArguments(string $method, array $args): array {
+		$named = [];
+		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+			if (array_key_exists($position, $args) === false) {
+				continue;
+			}
+
+			if ($parameter->isDefaultValueAvailable() === true && $args[$position] === $parameter->getDefaultValue()) {
+				continue;
+			}
+
+			$named[$parameter->getName()] = $args[$position];
+		}
+
+		return $named;
+
+	}//end passedArguments()
 }//end class

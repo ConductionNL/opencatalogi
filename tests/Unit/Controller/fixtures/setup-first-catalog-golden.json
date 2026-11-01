@@ -19,19 +19,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -52,8 +49,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -66,16 +63,11 @@
                             "6"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -105,19 +97,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -141,8 +130,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -166,16 +155,11 @@
                             "6"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -205,19 +189,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -241,8 +222,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -260,16 +241,11 @@
                             "6"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -299,19 +275,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -332,8 +305,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -346,16 +319,11 @@
                             "6"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -385,19 +353,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -418,8 +383,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -429,16 +394,11 @@
                             "6"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -468,19 +428,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -501,8 +458,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -512,16 +469,11 @@
                             "5"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -569,19 +521,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -602,8 +551,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -616,16 +565,11 @@
                             "6"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -655,19 +599,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -697,19 +638,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -730,8 +668,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -744,16 +682,11 @@
                             "6"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -783,19 +716,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -816,8 +746,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -830,16 +760,11 @@
                             "6"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "write": [
@@ -947,19 +872,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
@@ -980,8 +902,8 @@
                 "read": "publication_schema"
             },
             {
-                "save": [
-                    {
+                "save": {
+                    "object": {
                         "title": "My first catalog",
                         "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
                         "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
@@ -994,16 +916,11 @@
                             "6"
                         ]
                     },
-                    [],
-                    "1",
-                    "2",
-                    null,
-                    false,
-                    false,
-                    false,
-                    null,
-                    null
-                ]
+                    "register": "1",
+                    "schema": "2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "error": "Setup create-first-catalog failed: save broke",
@@ -1029,19 +946,16 @@
                 "read": "catalog_schema"
             },
             {
-                "search": [
-                    {
+                "search": {
+                    "query": {
                         "@self": {
                             "register": "1",
                             "schema": "2"
                         }
                     },
-                    false,
-                    false,
-                    null,
-                    null,
-                    null
-                ]
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
             },
             {
                 "get": "OCA\\OpenRegister\\Service\\ObjectService"
