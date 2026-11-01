@@ -45,6 +45,8 @@ use Throwable;
  * Re-runs the catalogue scope backfill when a pending register is created or updated.
  *
  * @template-implements IEventListener<Event>
+ *
+ * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
  */
 class CatalogScopePendingListener implements IEventListener {
 
