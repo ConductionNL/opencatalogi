@@ -44,6 +44,7 @@ use Psr\Container\ContainerInterface;
  * Golden test for PublicationStateController::withdraw().
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationStateController
+ * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 class PublicationWithdrawGoldenTest extends TestCase {
 
