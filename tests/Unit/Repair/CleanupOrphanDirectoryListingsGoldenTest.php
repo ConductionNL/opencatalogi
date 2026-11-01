@@ -111,6 +111,14 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
                     'valid'     => ['openregister_table_1_7' => 3],
                 ],
             ],
+            'another listing schema id'     => [
+                [
+                    'schemaId'  => '12',
+                    'registers' => [1 => [7], 4 => [12, 7]],
+                    'orphans'   => ['openregister_table_4_12' => [['_uuid' => 'd-1']]],
+                    'valid'     => ['openregister_table_4_12' => 1],
+                ],
+            ],
             'every delete fails'            => [
                 [
                     'registers' => [1 => [7]],
@@ -208,8 +216,8 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
         $registers = ($world['registers'] ?? []);
         $log       = &$this->log;
 
-        $schemaMapper = new class($fail) {
-            public function __construct(private string $fail)
+        $schemaMapper = new class($fail, (string) ($world['schemaId'] ?? '7')) {
+            public function __construct(private string $fail, private string $schemaId)
             {
             }
 
@@ -223,14 +231,14 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
                     return null;
                 }
 
-                return new class($slug.'@'.$app) {
-                    public function __construct(private string $key)
+                return new class($slug.'@'.$app, $this->schemaId) {
+                    public function __construct(private string $key, private string $id)
                     {
                     }
 
                     public function getId(): string
                     {
-                        return ($this->key === 'listing@opencatalogi') ? '7' : '0';
+                        return ($this->key === 'listing@opencatalogi') ? $this->id : '0';
                     }
                 };
             }

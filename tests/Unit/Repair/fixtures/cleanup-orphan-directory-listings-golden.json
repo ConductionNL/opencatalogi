@@ -225,5 +225,32 @@
                 "count"
             ]
         ]
+    },
+    "another listing schema id": {
+        "output": [
+            [
+                "info",
+                "Directory-listings cleanup: deleted 1 orphan row(s), kept 1 valid row(s), 0 failure(s)"
+            ]
+        ],
+        "deleted": [
+            [
+                "d-1",
+                "4",
+                "12",
+                false,
+                false
+            ]
+        ],
+        "tables": [
+            [
+                "openregister_table_4_12",
+                "scan"
+            ],
+            [
+                "openregister_table_4_12",
+                "count"
+            ]
+        ]
     }
 }
