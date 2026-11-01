@@ -488,7 +488,7 @@ class PublicationService implements PublicationServiceInterface {
 		}
 
 		if ($catalogId !== null) {
-			$catalogs = [$this->getObjectService()->find($catalogId)];
+			$catalogs = $this->findCatalogInScope(catalogId: $catalogId, scope: $scope);
 		}
 
 		// Remove duplicate values and assign to class properties.
@@ -511,6 +511,37 @@ class PublicationService implements PublicationServiceInterface {
 
 		return $result;
 	}//end getCatalogFilters()
+
+	/**
+	 * Find one catalog, but only when it lives in the configured catalog register and schema.
+	 *
+	 * OpenRegister's find() falls back to a cross-table lookup for a UUID it cannot
+	 * place in the given schema, so the hint alone does not bound the result: the
+	 * found object's own register and schema are checked as well.
+	 *
+	 * @param string|integer $catalogId The catalog id, UUID or slug.
+	 * @param array{register: string, schema: string} $scope The configured catalog register and schema.
+	 *
+	 * @return array<int, \OCA\OpenRegister\Db\ObjectEntity> The catalog, or an empty list when it is not a catalog.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function findCatalogInScope(string|int $catalogId, array $scope): array {
+		$catalog = $this->getObjectService()->find(
+			id: $catalogId,
+			register: $scope['register'],
+			schema: $scope['schema']
+		);
+
+		if ($catalog === null
+			|| (string)$catalog->getRegister() !== $scope['register']
+			|| (string)$catalog->getSchema() !== $scope['schema']
+		) {
+			return [];
+		}
+
+		return [$catalog];
+	}//end findCatalogInScope()
 
 	/**
 	 * Get the list of available registers.
