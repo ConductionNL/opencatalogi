@@ -91,6 +91,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			'depublication store denied' => [['params' => $why, 'saveFails' => ['opencatalogi/depublication_schema' => 'denied']]],
 			'forged actor' => [['params' => $why + self::FORGED]],
 			'forged actor, scheduled' => [['state' => 'scheduled', 'params' => $why + self::FORGED]],
+			'publication owned by someone else' => [['find' => ['id' => 'pub-1', 'title' => 'Plan', 'owner' => 'mallory'], 'params' => $why]],
+			'forged withdrawnReason' => [['params' => $why + ['withdrawnReason' => 'forged', 'depublicationReason' => 'forged']]],
+			'file, blank reason' => [['file' => true, 'params' => ['reason' => '   ']]],
+			'file, padded reason' => [['file' => true, 'params' => ['reason' => '  x  '] + self::FORGED]],
+			'file, forged withdrawnReason' => [['file' => true, 'params' => ['reason' => 'x', 'withdrawnReason' => 'forged']]],
+			'file, unpublish fails' => [['file' => true, 'unpublishFails' => true, 'params' => ['reason' => 'x']]],
 			'wrapped object' => [['find' => ['id' => 'uuid-9', 'object' => ['title' => 'Wrapped', 'id' => 'inner']], 'params' => $why]],
 			'properties without id' => [['find' => ['title' => 'No id'], 'params' => $why]],
 		];
@@ -110,7 +116,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$calls = [];
 
 		$controller = $this->controller(case: $case, calls: $calls);
-		$response = $controller->withdraw('pub-1');
+		$response = (($case['file'] ?? false) === true ? $controller->withdrawFile('pub-1', '17') : $controller->withdraw('pub-1'));
 
 		$actual = ['status' => $response->getStatus(), 'data' => $response->getData(), 'calls' => $calls];
 
@@ -169,7 +175,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			$this->states(case: $case, calls: $calls),
 			$rights,
 			$this->depublisher(case: $case, calls: $calls),
-			$this->container(case: $case),
+			$this->container(case: $case, calls: $calls),
 			$this->objects(case: $case, calls: $calls)
 		);
 
@@ -257,21 +263,26 @@ class PublicationWithdrawGoldenTest extends TestCase {
 	}//end depublisher()
 
 	/**
-	 * A container double with the app config, or without it.
+	 * A container double with the app config, or without it, and a file service.
 	 *
-	 * @param array<string, mixed> $case The case.
+	 * @param array<string, mixed>          $case  The case.
+	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return ContainerInterface The double.
 	 */
-	private function container(array $case): ContainerInterface {
+	private function container(array $case, array &$calls): ContainerInterface {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => $app . '/' . $key);
 
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			static function (string $id) use ($config, $case) {
+			function (string $id) use ($config, $case, &$calls) {
 				if ($id === IAppConfig::class && ($case['appConfig'] ?? true) === true) {
 					return $config;
+				}
+
+				if ($id === 'OCA\\OpenRegister\\Service\\FileService') {
+					return $this->fileService(case: $case, calls: $calls);
 				}
 
 				throw new \RuntimeException('not available: ' . $id);
@@ -281,6 +292,40 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		return $container;
 
 	}//end container()
+
+	/**
+	 * A file service double that records unpublishFile() into the call log.
+	 *
+	 * @param array<string, mixed>          $case  The case.
+	 * @param array<int, array<int, mixed>> $calls The ordered calls.
+	 *
+	 * @return object The double.
+	 */
+	private function fileService(array $case, array &$calls): object {
+		$record = static function (array $entry) use (&$calls): void {
+			$calls[] = $entry;
+		};
+
+		return new class($record, ($case['unpublishFails'] ?? false)) {
+			/**
+			 * @param \Closure $record Appends to the call log.
+			 * @param bool     $fails  Whether unpublishing fails.
+			 */
+			public function __construct(private \Closure $record, private bool $fails) {
+			}
+
+			/**
+			 * Record the unpublish, or fail it.
+			 */
+			public function unpublishFile(object $object, int $filePath): void {
+				($this->record)(['unpublishFile', $object->jsonSerialize(), $filePath]);
+				if ($this->fails === true) {
+					throw new \RuntimeException('file gone');
+				}
+			}
+		};
+
+	}//end fileService()
 
 	/**
 	 * An OpenRegister reader double over a recording ObjectService.

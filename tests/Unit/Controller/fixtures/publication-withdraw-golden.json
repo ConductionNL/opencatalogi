@@ -1865,5 +1865,505 @@
                 }
             ]
         ]
+    },
+    "publication owned by someone else": {
+        "status": 200,
+        "data": {
+            "state": "withdrawn",
+            "depublication": {
+                "saved": {
+                    "stored": {
+                        "publication": "pub-1",
+                        "reason": "Published in error",
+                        "by": "editor",
+                        "channels": [
+                            "plooi",
+                            "koop"
+                        ]
+                    }
+                }
+            },
+            "outstandingChannels": [],
+            "complete": true
+        },
+        "calls": [
+            [
+                "find",
+                {
+                    "id": "pub-1",
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/publication_schema"
+                }
+            ],
+            [
+                "mayUpdate",
+                {
+                    "id": "pub-1",
+                    "title": "Plan",
+                    "owner": "mallory"
+                }
+            ],
+            [
+                "stateOf",
+                {
+                    "id": "pub-1",
+                    "title": "Plan",
+                    "owner": "mallory"
+                },
+                null
+            ],
+            [
+                "withdrawnRecord",
+                {
+                    "id": "pub-1",
+                    "title": "Plan",
+                    "owner": "mallory"
+                },
+                null
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "withdrawn": true,
+                        "title": "Plan",
+                        "owner": "mallory"
+                    },
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/publication_schema",
+                    "uuid": "pub-1"
+                }
+            ],
+            [
+                "channelsReached",
+                {
+                    "id": "pub-1",
+                    "title": "Plan",
+                    "owner": "mallory"
+                }
+            ],
+            [
+                "depublish",
+                {
+                    "id": "pub-1",
+                    "title": "Plan",
+                    "owner": "mallory"
+                },
+                "Published in error",
+                "editor",
+                [
+                    "plooi",
+                    "koop"
+                ],
+                null
+            ],
+            [
+                "storable",
+                {
+                    "publication": "pub-1",
+                    "reason": "Published in error",
+                    "by": "editor",
+                    "channels": [
+                        "plooi",
+                        "koop"
+                    ]
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "stored": {
+                            "publication": "pub-1",
+                            "reason": "Published in error",
+                            "by": "editor",
+                            "channels": [
+                                "plooi",
+                                "koop"
+                            ]
+                        }
+                    },
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/depublication_schema"
+                }
+            ],
+            [
+                "outstandingChannels",
+                {
+                    "publication": "pub-1",
+                    "reason": "Published in error",
+                    "by": "editor",
+                    "channels": [
+                        "plooi",
+                        "koop"
+                    ]
+                }
+            ]
+        ]
+    },
+    "forged withdrawnReason": {
+        "status": 200,
+        "data": {
+            "state": "withdrawn",
+            "depublication": {
+                "saved": {
+                    "stored": {
+                        "publication": "pub-1",
+                        "reason": "Published in error",
+                        "by": "editor",
+                        "channels": [
+                            "plooi",
+                            "koop"
+                        ]
+                    }
+                }
+            },
+            "outstandingChannels": [],
+            "complete": true
+        },
+        "calls": [
+            [
+                "find",
+                {
+                    "id": "pub-1",
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/publication_schema"
+                }
+            ],
+            [
+                "mayUpdate",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                }
+            ],
+            [
+                "stateOf",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                },
+                null
+            ],
+            [
+                "withdrawnRecord",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                },
+                null
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "withdrawn": true,
+                        "title": "Plan"
+                    },
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/publication_schema",
+                    "uuid": "pub-1"
+                }
+            ],
+            [
+                "channelsReached",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                }
+            ],
+            [
+                "depublish",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                },
+                "Published in error",
+                "editor",
+                [
+                    "plooi",
+                    "koop"
+                ],
+                null
+            ],
+            [
+                "storable",
+                {
+                    "publication": "pub-1",
+                    "reason": "Published in error",
+                    "by": "editor",
+                    "channels": [
+                        "plooi",
+                        "koop"
+                    ]
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "stored": {
+                            "publication": "pub-1",
+                            "reason": "Published in error",
+                            "by": "editor",
+                            "channels": [
+                                "plooi",
+                                "koop"
+                            ]
+                        }
+                    },
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/depublication_schema"
+                }
+            ],
+            [
+                "outstandingChannels",
+                {
+                    "publication": "pub-1",
+                    "reason": "Published in error",
+                    "by": "editor",
+                    "channels": [
+                        "plooi",
+                        "koop"
+                    ]
+                }
+            ]
+        ]
+    },
+    "file, blank reason": {
+        "status": 400,
+        "data": {
+            "error": "reason-missing",
+            "message": "T:Say why it is being withdrawn."
+        },
+        "calls": [
+            [
+                "find",
+                {
+                    "id": "pub-1",
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/publication_schema"
+                }
+            ],
+            [
+                "mayUpdate",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                }
+            ]
+        ]
+    },
+    "file, padded reason": {
+        "status": 200,
+        "data": {
+            "state": "withdrawn",
+            "depublication": {
+                "saved": {
+                    "stored": {
+                        "publication": "pub-1",
+                        "reason": "x",
+                        "by": "editor",
+                        "channels": [],
+                        "file": "17"
+                    }
+                }
+            },
+            "outstandingChannels": [],
+            "complete": true
+        },
+        "calls": [
+            [
+                "find",
+                {
+                    "id": "pub-1",
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/publication_schema"
+                }
+            ],
+            [
+                "mayUpdate",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                }
+            ],
+            [
+                "unpublishFile",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                },
+                17
+            ],
+            [
+                "depublish",
+                {
+                    "id": "pub-1"
+                },
+                "x",
+                "editor",
+                [],
+                null
+            ],
+            [
+                "storable",
+                {
+                    "publication": "pub-1",
+                    "reason": "x",
+                    "by": "editor",
+                    "channels": [],
+                    "file": "17"
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "stored": {
+                            "publication": "pub-1",
+                            "reason": "x",
+                            "by": "editor",
+                            "channels": [],
+                            "file": "17"
+                        }
+                    },
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/depublication_schema"
+                }
+            ],
+            [
+                "outstandingChannels",
+                {
+                    "publication": "pub-1",
+                    "reason": "x",
+                    "by": "editor",
+                    "channels": [],
+                    "file": "17"
+                }
+            ]
+        ]
+    },
+    "file, unpublish fails": {
+        "status": 404,
+        "data": {
+            "error": "file-not-withdrawn",
+            "message": "file gone"
+        },
+        "calls": [
+            [
+                "find",
+                {
+                    "id": "pub-1",
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/publication_schema"
+                }
+            ],
+            [
+                "mayUpdate",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                }
+            ],
+            [
+                "unpublishFile",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                },
+                17
+            ]
+        ]
+    },
+    "file, forged withdrawnReason": {
+        "status": 200,
+        "data": {
+            "state": "withdrawn",
+            "depublication": {
+                "saved": {
+                    "stored": {
+                        "publication": "pub-1",
+                        "reason": "x",
+                        "by": "editor",
+                        "channels": [],
+                        "file": "17"
+                    }
+                }
+            },
+            "outstandingChannels": [],
+            "complete": true
+        },
+        "calls": [
+            [
+                "find",
+                {
+                    "id": "pub-1",
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/publication_schema"
+                }
+            ],
+            [
+                "mayUpdate",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                }
+            ],
+            [
+                "unpublishFile",
+                {
+                    "id": "pub-1",
+                    "title": "Plan"
+                },
+                17
+            ],
+            [
+                "depublish",
+                {
+                    "id": "pub-1"
+                },
+                "x",
+                "editor",
+                [],
+                null
+            ],
+            [
+                "storable",
+                {
+                    "publication": "pub-1",
+                    "reason": "x",
+                    "by": "editor",
+                    "channels": [],
+                    "file": "17"
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "stored": {
+                            "publication": "pub-1",
+                            "reason": "x",
+                            "by": "editor",
+                            "channels": [],
+                            "file": "17"
+                        }
+                    },
+                    "register": "opencatalogi/publication_register",
+                    "schema": "opencatalogi/depublication_schema"
+                }
+            ],
+            [
+                "outstandingChannels",
+                {
+                    "publication": "pub-1",
+                    "reason": "x",
+                    "by": "editor",
+                    "channels": [],
+                    "file": "17"
+                }
+            ]
+        ]
     }
 }
