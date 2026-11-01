@@ -268,4 +268,50 @@ class AttachDocumentsApplyTest extends TestCase {
 		return 'doc-1 (A Document) -> publication '.self::PUB.", 2 file(s), window 2024-01-01T00:00:00+00:00 to open\n".$tail;
 
 	}//end expectedDisplay()
+	/**
+	 * Mixed runs over several documents: the per-document lines, the tally and the exit code.
+	 *
+	 * @return array<string, array{0: array<string, mixed>, 1: array<string, bool>}>
+	 */
+	public static function mixedRuns(): array {
+		return [
+			'apply' => [['--apply' => true], []],
+			'apply, keep documents' => [['--apply' => true, '--keep-documents' => true], []],
+			'dry run' => [[], []],
+			'apply, a move fails' => [['--apply' => true], ['moveFile' => true]],
+			'apply, removal fails' => [['--apply' => true], ['deleteObject' => true]],
+		];
+
+	}//end mixedRuns()
+
+	/**
+	 * A run over a document without uuid, one without publication and two that migrate matches the recording.
+	 *
+	 * @param array<string, bool> $options The command options.
+	 * @param array<string, bool> $fail    Which collaborator throws.
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('mixedRuns')]
+	public function testAMixedRunMatchesTheRecording(array $options, array $fail): void {
+		$second = $this->document();
+		$second['@self']['uuid'] = 'doc-2';
+		$documents = [['title' => 'No uuid'], $this->document(), ['@self' => ['uuid' => 'doc-3'], 'title' => 'Orphan'], $second];
+		$tester = $this->commandOver(documents: $documents, fileIds: [7, 8], fail: $fail);
+		$actual = ['exit' => $tester->execute($options), 'display' => explode("\n", $tester->getDisplay()), 'calls' => $this->calls];
+
+		$fixture = __DIR__ . '/fixtures/attach-documents-mixed-run-golden.json';
+		$recorded = [];
+		if (file_exists($fixture) === true) {
+			$recorded = json_decode((string)file_get_contents($fixture), true);
+		}
+
+		if (getenv('GOLDEN_RECORD') === '1') {
+			$recorded[$this->dataName()] = $actual;
+			file_put_contents($fixture, json_encode($recorded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertSame($recorded[$this->dataName()], $actual);
+
+	}//end testAMixedRunMatchesTheRecording()
 }//end class

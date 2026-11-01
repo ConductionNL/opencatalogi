@@ -505,6 +505,44 @@ class SetupController extends Controller {
 			return new JSONResponse(['success' => false, 'message' => $this->l10n->t('Configure the catalog register and schema first.')]);
 		}
 
+		return $this->saveFirstCatalog(objectService: $objectService, target: ['register' => $register, 'schema' => $schema]);
+	}//end createFirstCatalog()
+
+	/**
+	 * Store the first catalog in the catalog register and schema, then mark onboarding done.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param array<string, string> $target The catalog `register` and `schema`.
+	 *
+	 * @return JSONResponse The result.
+	 */
+	private function saveFirstCatalog(object $objectService, array $target): JSONResponse {
+		$catalog = $this->firstCatalogObject();
+		try {
+			$objectService->saveObject(
+				object: $catalog,
+				register: $target['register'],
+				schema: $target['schema'],
+				_rbac: false,
+				_multitenancy: false,
+			);
+		} catch (\Exception $e) {
+			$this->logger->error('Setup create-first-catalog failed: ' . $e->getMessage(), ['app' => $this->appName]);
+			return new JSONResponse(['success' => false, 'message' => $e->getMessage()]);
+		}
+
+		// Onboarding has produced a catalog; record it so the gate clears for good.
+		$this->config->setValueString($this->appName, 'onboarding_completed_version', (string)self::SETUP_VERSION);
+
+		return new JSONResponse(['success' => true, 'message' => $this->l10n->t('Your first catalog was created.')]);
+	}//end saveFirstCatalog()
+
+	/**
+	 * The first catalog: listed for a public default scope, staff-restricted for a private one.
+	 *
+	 * @return array<string, mixed> The catalog object.
+	 */
+	private function firstCatalogObject(): array {
 		// Resolve the publication register/schema that this catalog should
 		// scope. Both values are already required for a working install (the
 		// publish flow depends on them), so a missing value here is a config
@@ -521,17 +559,38 @@ class SetupController extends Controller {
 			'listed' => ($scope === 'public'),
 			'status' => 'development',
 		];
-		// "Private (explicitly granted groups only)" restricts the catalogue's staff
-		// access to the groups named in `default_catalog_groups` (comma separated);
-		// none named leaves it to administrators until groups are granted.
 		if ($scope === 'private') {
-			$groups = array_values(array_filter(array_map('trim', explode(',', $this->config->getValueString($this->appName, 'default_catalog_groups', '')))));
-			$catalogObject['staffAccess'] = ['restricted' => true, 'readGroups' => $groups, 'editGroups' => $groups];
+			$catalogObject['staffAccess'] = $this->privateStaffAccess();
 		}
 
-		// Read each key immediately above the check that handles its empty case.
-		// These two used to be read at the top of the method, thirteen lines up,
-		// which separated them from the only thing that makes an empty value safe.
+		return $this->withPublicationScope(catalogObject: $catalogObject);
+	}//end firstCatalogObject()
+
+	/**
+	 * Staff access for a private first catalog: the groups named in `default_catalog_groups`.
+	 *
+	 * "Private (explicitly granted groups only)" restricts the catalogue's staff
+	 * access to those groups (comma separated); none named leaves it to
+	 * administrators until groups are granted.
+	 *
+	 * @return array<string, mixed> The staff access.
+	 */
+	private function privateStaffAccess(): array {
+		$groups = array_values(array_filter(array_map('trim', explode(',', $this->config->getValueString($this->appName, 'default_catalog_groups', '')))));
+
+		return ['restricted' => true, 'readGroups' => $groups, 'editGroups' => $groups];
+	}//end privateStaffAccess()
+
+	/**
+	 * A catalog object scoped to the configured publication register and schema, when they are set (WOO-529).
+	 *
+	 * Each key is read immediately above the check that handles its empty case.
+	 *
+	 * @param array<string, mixed> $catalogObject The catalog object.
+	 *
+	 * @return array<string, mixed> The scoped catalog object.
+	 */
+	private function withPublicationScope(array $catalogObject): array {
 		$publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
 		if ($publicationRegister !== '') {
 			$catalogObject['registers'] = [$publicationRegister];
@@ -542,24 +601,8 @@ class SetupController extends Controller {
 			$catalogObject['schemas'] = [$publicationSchema];
 		}
 
-		try {
-			$objectService->saveObject(
-				object: $catalogObject,
-				register: $register,
-				schema: $schema,
-				_rbac: false,
-				_multitenancy: false,
-			);
-		} catch (\Exception $e) {
-			$this->logger->error('Setup create-first-catalog failed: ' . $e->getMessage(), ['app' => $this->appName]);
-			return new JSONResponse(['success' => false, 'message' => $e->getMessage()]);
-		}
-
-		// Onboarding has produced a catalog; record it so the gate clears for good.
-		$this->config->setValueString($this->appName, 'onboarding_completed_version', (string)self::SETUP_VERSION);
-
-		return new JSONResponse(['success' => true, 'message' => $this->l10n->t('Your first catalog was created.')]);
-	}//end createFirstCatalog()
+		return $catalogObject;
+	}//end withPublicationScope()
 
 	/**
 	 * Connect to the federated network — pull peer listings AND announce this instance.

@@ -1,0 +1,603 @@
+{
+	"statusOptions": [
+		{
+			"id": "development",
+			"label": "Development"
+		},
+		{
+			"id": "active",
+			"label": "Active"
+		}
+	],
+	"organizations": [
+		{
+			"id": 5,
+			"title": "Org5"
+		},
+		{
+			"id": null,
+			"title": "NoId"
+		},
+		{
+			"id": "abc",
+			"title": "OrgAbc"
+		}
+	],
+	"registers": [
+		{
+			"id": 1,
+			"title": "R1"
+		},
+		{
+			"id": 2,
+			"title": ""
+		}
+	],
+	"schemas": [
+		{
+			"id": "s1",
+			"title": "S1"
+		}
+	],
+	"cases": [
+		{
+			"name": "other modal",
+			"input": {
+				"modal": "publication",
+				"isEdit": true,
+				"catalog": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					]
+				}
+			},
+			"state": {
+				"hasUpdated": false,
+				"isEdit": true,
+				"catalogi": "untouched",
+				"selectedOrganization": "untouched",
+				"selectedRegisters": "untouched",
+				"selectedSchemas": "untouched"
+			},
+			"error": null
+		},
+		{
+			"name": "already updated",
+			"input": {
+				"modal": "catalog",
+				"isEdit": true,
+				"hasUpdated": true,
+				"catalog": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					]
+				}
+			},
+			"state": {
+				"hasUpdated": true,
+				"isEdit": true,
+				"catalogi": "untouched",
+				"selectedOrganization": "untouched",
+				"selectedRegisters": "untouched",
+				"selectedSchemas": "untouched"
+			},
+			"error": null
+		},
+		{
+			"name": "create mode",
+			"input": {
+				"modal": "catalog",
+				"isEdit": false,
+				"catalog": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					]
+				}
+			},
+			"state": {
+				"hasUpdated": true,
+				"isEdit": false,
+				"catalogi": "untouched",
+				"selectedOrganization": "untouched",
+				"selectedRegisters": "untouched",
+				"selectedSchemas": "untouched"
+			},
+			"error": null
+		},
+		{
+			"name": "edit full",
+			"input": {
+				"modal": "catalog",
+				"isEdit": true,
+				"catalog": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"id": "c1",
+					"status": "ACTIVE",
+					"organization": 5,
+					"filters": {
+						"a": 1
+					},
+					"extra": "x"
+				}
+			},
+			"state": {
+				"hasUpdated": true,
+				"isEdit": true,
+				"catalogi": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"id": "c1",
+					"status": {
+						"id": "active",
+						"label": "Active"
+					},
+					"organization": 5,
+					"filters": {
+						"a": 1
+					},
+					"extra": "x"
+				},
+				"selectedOrganization": {
+					"id": 5,
+					"label": "Org5"
+				},
+				"selectedRegisters": [
+					{
+						"id": 1,
+						"label": "R1"
+					},
+					{
+						"id": 2,
+						"label": 2
+					},
+					{
+						"id": 3,
+						"label": 3
+					}
+				],
+				"selectedSchemas": [
+					{
+						"id": "s1",
+						"label": "S1"
+					},
+					{
+						"id": "s2",
+						"label": "s2"
+					}
+				]
+			},
+			"error": null
+		},
+		{
+			"name": "edit self id",
+			"input": {
+				"modal": "catalog",
+				"isEdit": true,
+				"catalog": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"@self": {
+						"id": "selfid"
+					},
+					"status": "unknown",
+					"organization": "abc",
+					"filters": []
+				}
+			},
+			"state": {
+				"hasUpdated": true,
+				"isEdit": true,
+				"catalogi": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"@self": {
+						"id": "selfid"
+					},
+					"status": {
+						"id": "development",
+						"label": "Development"
+					},
+					"organization": "abc",
+					"filters": {},
+					"id": "selfid"
+				},
+				"selectedOrganization": {
+					"id": "abc",
+					"label": "OrgAbc"
+				},
+				"selectedRegisters": [
+					{
+						"id": 1,
+						"label": "R1"
+					},
+					{
+						"id": 2,
+						"label": 2
+					},
+					{
+						"id": 3,
+						"label": 3
+					}
+				],
+				"selectedSchemas": [
+					{
+						"id": "s1",
+						"label": "S1"
+					},
+					{
+						"id": "s2",
+						"label": "s2"
+					}
+				]
+			},
+			"error": null
+		},
+		{
+			"name": "edit no id",
+			"input": {
+				"modal": "catalog",
+				"isEdit": true,
+				"catalog": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"organization": "9"
+				}
+			},
+			"state": {
+				"hasUpdated": true,
+				"isEdit": true,
+				"catalogi": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"organization": "9",
+					"id": "",
+					"filters": {},
+					"status": {
+						"id": "development",
+						"label": "Development"
+					}
+				},
+				"selectedOrganization": null,
+				"selectedRegisters": [
+					{
+						"id": 1,
+						"label": "R1"
+					},
+					{
+						"id": 2,
+						"label": 2
+					},
+					{
+						"id": 3,
+						"label": 3
+					}
+				],
+				"selectedSchemas": [
+					{
+						"id": "s1",
+						"label": "S1"
+					},
+					{
+						"id": "s2",
+						"label": "s2"
+					}
+				]
+			},
+			"error": null
+		},
+		{
+			"name": "edit null filters, no status",
+			"input": {
+				"modal": "catalog",
+				"isEdit": true,
+				"catalog": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"filters": null,
+					"status": ""
+				}
+			},
+			"state": {
+				"hasUpdated": true,
+				"isEdit": true,
+				"catalogi": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"filters": {},
+					"status": {
+						"id": "development",
+						"label": "Development"
+					},
+					"id": ""
+				},
+				"selectedOrganization": null,
+				"selectedRegisters": [
+					{
+						"id": 1,
+						"label": "R1"
+					},
+					{
+						"id": 2,
+						"label": 2
+					},
+					{
+						"id": 3,
+						"label": 3
+					}
+				],
+				"selectedSchemas": [
+					{
+						"id": "s1",
+						"label": "S1"
+					},
+					{
+						"id": "s2",
+						"label": "s2"
+					}
+				]
+			},
+			"error": null
+		},
+		{
+			"name": "edit empty lists",
+			"input": {
+				"modal": "catalog",
+				"isEdit": true,
+				"catalog": {
+					"title": "E",
+					"registers": [],
+					"schemas": [],
+					"organization": null
+				}
+			},
+			"state": {
+				"hasUpdated": true,
+				"isEdit": true,
+				"catalogi": {
+					"title": "E",
+					"registers": [],
+					"schemas": [],
+					"organization": null,
+					"id": "",
+					"filters": {},
+					"status": {
+						"id": "development",
+						"label": "Development"
+					}
+				},
+				"selectedOrganization": null,
+				"selectedRegisters": [],
+				"selectedSchemas": []
+			},
+			"error": null
+		},
+		{
+			"name": "edit numeric org string match",
+			"input": {
+				"modal": "catalog",
+				"isEdit": true,
+				"catalog": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"organization": "5",
+					"status": "development"
+				}
+			},
+			"state": {
+				"hasUpdated": true,
+				"isEdit": true,
+				"catalogi": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"organization": "5",
+					"status": {
+						"id": "development",
+						"label": "Development"
+					},
+					"id": "",
+					"filters": {}
+				},
+				"selectedOrganization": {
+					"id": 5,
+					"label": "Org5"
+				},
+				"selectedRegisters": [
+					{
+						"id": 1,
+						"label": "R1"
+					},
+					{
+						"id": 2,
+						"label": 2
+					},
+					{
+						"id": 3,
+						"label": 3
+					}
+				],
+				"selectedSchemas": [
+					{
+						"id": "s1",
+						"label": "S1"
+					},
+					{
+						"id": "s2",
+						"label": "s2"
+					}
+				]
+			},
+			"error": null
+		},
+		{
+			"name": "edit organization 0",
+			"input": {
+				"modal": "catalog",
+				"isEdit": true,
+				"catalog": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"organization": 0
+				}
+			},
+			"state": {
+				"hasUpdated": true,
+				"isEdit": true,
+				"catalogi": {
+					"title": "Cat",
+					"registers": [
+						1,
+						2,
+						3
+					],
+					"schemas": [
+						"s1",
+						"s2"
+					],
+					"organization": 0,
+					"id": "",
+					"filters": {},
+					"status": {
+						"id": "development",
+						"label": "Development"
+					}
+				},
+				"selectedOrganization": null,
+				"selectedRegisters": [
+					{
+						"id": 1,
+						"label": "R1"
+					},
+					{
+						"id": 2,
+						"label": 2
+					},
+					{
+						"id": 3,
+						"label": 3
+					}
+				],
+				"selectedSchemas": [
+					{
+						"id": "s1",
+						"label": "S1"
+					},
+					{
+						"id": "s2",
+						"label": "s2"
+					}
+				]
+			},
+			"error": null
+		}
+	]
+}

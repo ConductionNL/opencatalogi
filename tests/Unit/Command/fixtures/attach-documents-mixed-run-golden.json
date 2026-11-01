@@ -1,0 +1,141 @@
+{
+    "apply": {
+        "exit": 0,
+        "display": [
+            "  SKIP a document with no uuid.",
+            "doc-1 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  MIGRATED 2 file(s); document removed.",
+            "SKIP doc-3 (Orphan): it names no publication, so there is nowhere to attach it.",
+            "doc-2 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  MIGRATED 2 file(s); document removed.",
+            "Done. Migrated=2 documents, files moved=4, skipped=2, failed=0",
+            ""
+        ],
+        "calls": [
+            "move 7 from doc-1 to 11111111-2222-4333-8444-555555555555",
+            "description 107 About it",
+            "labels 107 A Document",
+            "window 107 2024-01-01 ",
+            "move 8 from doc-1 to 11111111-2222-4333-8444-555555555555",
+            "description 108 About it",
+            "labels 108 A Document",
+            "window 108 2024-01-01 ",
+            "delete doc-1 {\"_rbac\":false,\"_multitenancy\":false}",
+            "move 7 from doc-2 to 11111111-2222-4333-8444-555555555555",
+            "description 107 About it",
+            "labels 107 A Document",
+            "window 107 2024-01-01 ",
+            "move 8 from doc-2 to 11111111-2222-4333-8444-555555555555",
+            "description 108 About it",
+            "labels 108 A Document",
+            "window 108 2024-01-01 ",
+            "delete doc-2 {\"_rbac\":false,\"_multitenancy\":false}"
+        ]
+    },
+    "apply, keep documents": {
+        "exit": 0,
+        "display": [
+            "  SKIP a document with no uuid.",
+            "doc-1 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  MOVED 2 file(s); document kept.",
+            "SKIP doc-3 (Orphan): it names no publication, so there is nowhere to attach it.",
+            "doc-2 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  MOVED 2 file(s); document kept.",
+            "Done. Migrated=2 documents, files moved=4, skipped=2, failed=0",
+            ""
+        ],
+        "calls": [
+            "move 7 from doc-1 to 11111111-2222-4333-8444-555555555555",
+            "description 107 About it",
+            "labels 107 A Document",
+            "window 107 2024-01-01 ",
+            "move 8 from doc-1 to 11111111-2222-4333-8444-555555555555",
+            "description 108 About it",
+            "labels 108 A Document",
+            "window 108 2024-01-01 ",
+            "move 7 from doc-2 to 11111111-2222-4333-8444-555555555555",
+            "description 107 About it",
+            "labels 107 A Document",
+            "window 107 2024-01-01 ",
+            "move 8 from doc-2 to 11111111-2222-4333-8444-555555555555",
+            "description 108 About it",
+            "labels 108 A Document",
+            "window 108 2024-01-01 "
+        ]
+    },
+    "dry run": {
+        "exit": 0,
+        "display": [
+            "Running in DRY-RUN mode. Nothing is moved and nothing is removed. Re-run with --apply to migrate.",
+            "  SKIP a document with no uuid.",
+            "doc-1 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  WOULD MOVE",
+            "SKIP doc-3 (Orphan): it names no publication, so there is nowhere to attach it.",
+            "doc-2 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  WOULD MOVE",
+            "Done. Migrated=0 documents, files moved=0, skipped=2, failed=0 (dry run, nothing written)",
+            ""
+        ],
+        "calls": []
+    },
+    "apply, a move fails": {
+        "exit": 1,
+        "display": [
+            "  SKIP a document with no uuid.",
+            "doc-1 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  FAILED to move file 8: move broke",
+            "SKIP doc-3 (Orphan): it names no publication, so there is nowhere to attach it.",
+            "doc-2 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  FAILED to move file 8: move broke",
+            "Done. Migrated=0 documents, files moved=0, skipped=2, failed=2",
+            ""
+        ],
+        "calls": [
+            "move 7 from doc-1 to 11111111-2222-4333-8444-555555555555",
+            "description 107 About it",
+            "labels 107 A Document",
+            "window 107 2024-01-01 ",
+            "move 8 from doc-1 to 11111111-2222-4333-8444-555555555555",
+            "move 7 from doc-2 to 11111111-2222-4333-8444-555555555555",
+            "description 107 About it",
+            "labels 107 A Document",
+            "window 107 2024-01-01 ",
+            "move 8 from doc-2 to 11111111-2222-4333-8444-555555555555"
+        ]
+    },
+    "apply, removal fails": {
+        "exit": 1,
+        "display": [
+            "  SKIP a document with no uuid.",
+            "doc-1 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  Files moved but the document could not be removed: delete broke",
+            "  doc-1 now has no files and a re-run will skip it as metadata-only. Remove it by hand: occ openregister:objects:delete doc-1",
+            "SKIP doc-3 (Orphan): it names no publication, so there is nowhere to attach it.",
+            "doc-2 (A Document) -> publication 11111111-2222-4333-8444-555555555555, 2 file(s), window 2024-01-01T00:00:00+00:00 to open",
+            "  Files moved but the document could not be removed: delete broke",
+            "  doc-2 now has no files and a re-run will skip it as metadata-only. Remove it by hand: occ openregister:objects:delete doc-2",
+            "Done. Migrated=0 documents, files moved=4, skipped=2, failed=2",
+            ""
+        ],
+        "calls": [
+            "move 7 from doc-1 to 11111111-2222-4333-8444-555555555555",
+            "description 107 About it",
+            "labels 107 A Document",
+            "window 107 2024-01-01 ",
+            "move 8 from doc-1 to 11111111-2222-4333-8444-555555555555",
+            "description 108 About it",
+            "labels 108 A Document",
+            "window 108 2024-01-01 ",
+            "delete doc-1 {\"_rbac\":false,\"_multitenancy\":false}",
+            "move 7 from doc-2 to 11111111-2222-4333-8444-555555555555",
+            "description 107 About it",
+            "labels 107 A Document",
+            "window 107 2024-01-01 ",
+            "move 8 from doc-2 to 11111111-2222-4333-8444-555555555555",
+            "description 108 About it",
+            "labels 108 A Document",
+            "window 108 2024-01-01 ",
+            "delete doc-2 {\"_rbac\":false,\"_multitenancy\":false}"
+        ]
+    }
+}

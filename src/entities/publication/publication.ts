@@ -4,6 +4,7 @@ import type { TCatalogi } from '../'
 import type { TPublication } from './publication.types'
 
 import { z } from 'zod'
+import { languageSchema } from '../languageSchema.js'
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
@@ -27,9 +28,11 @@ function objectOr<T>(value: unknown, fallback: T): T {
  * @return Whether the publication is featured
  */
 function featuredFlag(value: unknown): boolean {
-	return (typeof value === 'boolean' && value)
+	return (
+		(typeof value === 'boolean' && value)
 		|| (typeof value === 'string' && !!parseInt(value))
 		|| false
+	)
 }
 
 /**
@@ -188,23 +191,7 @@ export class Publication implements TPublication {
 				anonymized: z.boolean(),
 				results: z.string().max(2500, 'kan niet langer dan 2500 zijn'),
 			}),
-			language: z.object({
-				// this regex checks if the code has either 2 or 3 characters per group, and the -aaa after the first is optional
-				code: z
-					.string()
-					.regex(
-						/^([a-z]{2,3})(-[a-z]{2,3})?$/g,
-						'is niet een geldige ISO 639-1 code (e.g. en-us)',
-					)
-					.or(z.literal('')),
-				level: z
-					.string()
-					.regex(
-						/^(A|B|C)(1|2)$/g,
-						'is niet een geldige CEFRL level (e.g. A1)',
-					)
-					.or(z.literal('')),
-			}),
+			language: languageSchema(),
 			published: z.string().datetime({ offset: true }).or(z.literal('')),
 			modified: z.string().datetime({ offset: true }).or(z.literal('')),
 			license: z.string(),
@@ -232,10 +219,6 @@ export class Publication implements TPublication {
 				.refine((val) => val.toString().length > 0, 'schema is verplicht'),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }
